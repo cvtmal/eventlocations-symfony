@@ -114,6 +114,13 @@
         </div>
     </section>
 
+    <section class="sg" id="sg-breadcrumb" data-component="breadcrumb" aria-labelledby="sg-breadcrumb-h">
+        <h2 id="sg-breadcrumb-h">{{ 'styleguide.breadcrumb.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-card">
+            {{ include('components/_breadcrumb.html.twig', {label: 'styleguide.breadcrumb.label'|trans({}, 'styleguide'), items: [{name: 'styleguide.breadcrumb.listing'|trans({}, 'styleguide'), url: path('_styleguide')}, {name: 'styleguide.breadcrumb.canton'|trans({}, 'styleguide'), url: path('_styleguide')}, {name: 'styleguide.breadcrumb.town'|trans({}, 'styleguide')}]}, with_context = false) }}
+        </div>
+    </section>
+
     <section class="sg" id="sg-text-input" data-component="text-input" aria-labelledby="sg-text-input-h">
         <h2 id="sg-text-input-h">{{ 'styleguide.text_input.heading'|trans({}, 'styleguide') }}</h2>
         <div class="overlay--region sg-tone">

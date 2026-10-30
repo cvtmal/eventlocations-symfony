@@ -5,23 +5,31 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Search;
 
 use App\Geo\ReadModel\PlaceResolver;
+use App\Geo\ValueObject\Canton;
 use App\Media\ValueObject\ImageFormat;
+use App\Search\LandingPaths;
 use App\Search\ReadModel\CardPhoto;
 use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\KnownTerms;
+use App\Search\ReadModel\LandingFooter;
+use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\Twig\ListingExtension;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Search\LandingFixtures;
 use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
+use Zenstruck\Foundry\Test\Factories;
 
 /**
  * The listing's Twig helpers against the real router and translator, plus the
@@ -29,7 +37,9 @@ use Twig\Environment;
  */
 final class ListingExtensionTest extends KernelTestCase
 {
+    use Factories;
     use ImportsTownDataset;
+    use LandingFixtures;
 
     private const PHOTO_ID = '0198a3c4-6b1e-7f3a-9c2d-1e4f5a6b7c8d';
 
@@ -37,14 +47,46 @@ final class ListingExtensionTest extends KernelTestCase
 
     protected function setUp(): void
     {
+        $this->extension = $this->extension();
+    }
+
+    /**
+     * By hand, not from the container: a private service used once may be inlined there. Built
+     * after a test's fixtures, because LandingPages memoizes the live pages.
+     */
+    private function extension(): ListingExtension
+    {
         $urls = self::getContainer()->get('router');
         $translator = self::getContainer()->get('translator');
         self::assertInstanceOf(UrlGeneratorInterface::class, $urls);
         self::assertInstanceOf(TranslatorInterface::class, $translator);
-        // By hand, not from the container: a private service used once may be inlined there.
         $connection = self::getContainer()->get(Connection::class);
         self::assertInstanceOf(Connection::class, $connection);
-        $this->extension = new ListingExtension($urls, $translator, new PlaceResolver($connection), new FilterDataQuery($connection, ListingQueryTest::enabledLocale()));
+        $landings = new LandingPages($connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), 5);
+
+        return new ListingExtension($urls, $translator, new PlaceResolver($connection), new FilterDataQuery($connection, ListingQueryTest::enabledLocale()), $landings, new LandingPaths($landings, $urls));
+    }
+
+    public function test_listing_paths_take_the_landing_path_of_a_live_canton(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+        $em->getConnection()->beginTransaction();
+        try {
+            $this->inCanton(Canton::ZH, 5);
+            $extension = $this->extension();
+            $criteria = $this->criteria(['canton' => 'zh', 'guests' => '80']);
+
+            self::assertSame('/hochzeitslocations/zuerich?guests=80', $extension->listingPath($criteria));
+            self::assertSame('/hochzeitslocations/zuerich?guests=80&page=2', $extension->listingPath($criteria, 2), 'Pagination keeps the path.');
+            self::assertSame('/hochzeitslocations?guests=80', $extension->listingPathWithout($criteria, 'canton'));
+            self::assertSame('/hochzeitslocations/zuerich', $extension->listingPathWithout($criteria, 'guests'));
+            self::assertSame('/hochzeitslocations?canton=be', $extension->listingPath($this->criteria(['canton' => 'be'])), 'A thin canton stays in the query.');
+            self::assertSame(['zh' => '/hochzeitslocations/zuerich'], $extension->landingCantonPaths());
+        } finally {
+            $em->clear();
+            $em->getConnection()->rollBack();
+        }
     }
 
     public function test_listing_path_with_and_without_a_page(): void

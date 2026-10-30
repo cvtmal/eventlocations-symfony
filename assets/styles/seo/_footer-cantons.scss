@@ -1,0 +1,15 @@
+// Footer canton links (#17); the list itself is .site-footer__links.
+.footer-cantons__title {
+    margin: 0 0 var(--space-s);
+    font-size: var(--fs-small);
+    font-weight: 600;
+}
+
+.footer-cantons a {
+    color: var(--c-muted);
+
+    &:hover,
+    &:focus-visible {
+        color: var(--c-ink);
+    }
+}

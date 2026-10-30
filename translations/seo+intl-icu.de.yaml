@@ -5,6 +5,34 @@ listing:
     title_page: 'Hochzeitslocations Schweiz – Seite {page} | {site}'
     description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
     description_page: 'Hochzeitslocations in der Schweiz, Seite {page}: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
+# Landing pages (#17), first fit wins (TitleChain), the h1 cut as the last resort:
+# canton and town title_count, title, title_short, title_name, numbered title_page, title_page_short, title_page_bare;
+# building title_count, title, numbered title_page, title_page_bare. A bare title drops {site}, so a numbered page keeps its number. {heading} is the building page's h1 (search catalogue).
+landing:
+    canton:
+        title_count: '{count} Hochzeitslocations im Kanton {canton} | {site}'
+        title: 'Hochzeitslocations im Kanton {canton} | {site}'
+        title_short: 'Hochzeitslocations Kanton {canton} | {site}'
+        title_name: 'Hochzeitslocations {canton} | {site}'
+        title_page: 'Hochzeitslocations im Kanton {canton} – Seite {page} | {site}'
+        title_page_short: 'Hochzeitslocations {canton} – Seite {page} | {site}'
+        title_page_bare: 'Hochzeitslocations {canton} – Seite {page}'
+        description: 'Hochzeitslocations im Kanton {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
+    town:
+        title_count: '{count} Hochzeitslocations in {town} | {site}'
+        title: 'Hochzeitslocations in {town} | {site}'
+        title_short: 'Hochzeitslocations {town} | {site}'
+        title_name: 'Hochzeit {town} | {site}'
+        title_page: 'Hochzeitslocations in {town} – Seite {page} | {site}'
+        title_page_short: 'Hochzeitslocations {town} – Seite {page} | {site}'
+        title_page_bare: 'Hochzeit {town} – Seite {page}'
+        description: 'Hochzeitslocations in {town}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
+    building:
+        title_count: '{heading}: {count} Locations | {site}'
+        title: '{heading} | {site}'
+        title_page: '{heading} – Seite {page} | {site}'
+        title_page_bare: '{heading} – Seite {page}'
+        description: '{heading}: {count, plural, one {# Location} other {# Locations}} in der Schweiz mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
 # First fit wins (TitleChain): title_town_long, title_town, title_name.
 venue:
     title_town_long: '{name} in {town} mieten | {site}'
@@ -14,6 +42,9 @@ venue:
     canton_area: 'Kanton {canton}'
 breadcrumb:
     listing: Hochzeitslocations
+    canton: 'Kanton {canton}'
+footer:
+    cantons_title: Hochzeitslocations nach Kanton
 error:
     not_found:
         title: Seite nicht gefunden

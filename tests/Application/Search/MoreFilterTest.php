@@ -7,8 +7,10 @@ namespace App\Tests\Application\Search;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\ListingQuery;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Search\LandingFixtures;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -28,6 +30,7 @@ final class MoreFilterTest extends WebTestCase
 {
     use Factories;
     use ImportsTownDataset;
+    use LandingFixtures;
 
     /** FI-4's 11 building chips, in order. */
     private const PRIMARY_BUILDINGS = [
@@ -274,7 +277,7 @@ final class MoreFilterTest extends WebTestCase
 
         $form = $crawler->filter('form#filter-more-form[data-live-count][data-overlay-form]');
         self::assertCount(1, $form);
-        self::assertSame('/_search/count', $form->attr('data-live-count-url'));
+        self::assertSame('/_search/count?', $form->attr('data-live-count-url'));
         self::assertSame('/hochzeitslocations', $form->attr('action'));
         self::assertSame('off', $form->attr('autocomplete'));
         $button = $crawler->filter('#filter-more .overlay__footer button[form="filter-more-form"][data-live-count-label]');
@@ -312,8 +315,31 @@ final class MoreFilterTest extends WebTestCase
         $holder->reset();
         $this->get('/hochzeitslocations');
 
-        // Cards, photos, count, known terms, top cantons, filter flags, filter terms.
+        // Cards, photos, count, known terms, landing pages, filter flags, filter terms.
         self::assertCount(7, $holder->getData()['default'] ?? []);
+    }
+
+    public function test_a_canton_page_runs_seven_queries(): void
+    {
+        $this->inCanton(Canton::ZH, 5);
+
+        // The same seven: the landing pages' one statement also resolves the route.
+        self::assertSame(7, $this->queriesOf('/hochzeitslocations/zuerich'));
+    }
+
+    public function test_a_building_page_runs_seven_queries(): void
+    {
+        $this->withBuilding($this->inCanton(Canton::ZH, 5), 'castle');
+
+        self::assertSame(7, $this->queriesOf('/hochzeitslocations/schloss'));
+    }
+
+    public function test_a_town_page_runs_eight_queries(): void
+    {
+        $this->inTown('Stäfa', 5);
+
+        // The seven, plus selected_place() for the town's `place` (#10's chip and form).
+        self::assertSame(8, $this->queriesOf('/hochzeitslocations/zuerich/staefa'));
     }
 
     private function assertOnlyTheNameField(Crawler $crawler): void
@@ -325,6 +351,17 @@ final class MoreFilterTest extends WebTestCase
         self::assertSame('weitere Filter +', $crawler->filter('.filter-bar [popovertarget="filter-more"]:not([popovertargetaction])')->text());
         self::assertCount(1, $crawler->filter('#filter-more .overlay__footer button[form="filter-more-form"]'));
         self::assertCount(1, $crawler->filter('#filter-more a[data-overlay-clear]'));
+    }
+
+    private function queriesOf(string $uri): int
+    {
+        $holder = self::getContainer()->get('doctrine.debug_data_holder');
+        self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
+
+        $holder->reset();
+        $this->get($uri);
+
+        return \count($holder->getData()['default'] ?? []);
     }
 
     private function get(string $uri): Crawler

@@ -278,7 +278,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertCount(1, $form);
         self::assertSame('get', $form->attr('method'));
         self::assertSame('/hochzeitslocations', $form->attr('action'));
-        self::assertSame('/_search/count', $form->attr('data-live-count-url'));
+        self::assertSame('/_search/count?', $form->attr('data-live-count-url'));
         self::assertSame('Wo soll eure Hochzeit stattfinden?', $crawler->filter('#filter-region-title')->text());
 
         // The other groups travel as hidden state; this overlay's own fields do not.
@@ -465,18 +465,29 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame(self::getContainer()->getParameter('kernel.debug') ? 'noindex' : null, $response->headers->get('X-Robots-Tag'));
     }
 
-    public function test_related_searches_link_top_cantons(): void
+    public function test_related_searches_link_the_live_canton_pages(): void
     {
-        $this->venue(['town' => $this->town('Zürich')]);
-        $this->venue(['town' => $this->town('Stäfa')]);
-        $this->venue(['town' => $this->town('Bern')]);
+        foreach (['Zürich' => 3, 'Stäfa' => 3, 'Bern' => 5, 'Luzern' => 4] as $town => $count) {
+            for ($i = 0; $i < $count; ++$i) {
+                $this->venue(['town' => $this->town($town)]);
+            }
+        }
 
         $crawler = $this->get('/hochzeitslocations');
 
         self::assertSelectorTextSame('.related__title', 'Andere suchten auch nach');
         $links = $crawler->filter('.related__list a');
-        self::assertSame(['Hochzeit Zürich', 'Hochzeit Bern'], $links->each(static fn (Crawler $a): string => $a->text()));
-        self::assertSame('/hochzeitslocations?canton=zh', $links->first()->attr('href'));
+        self::assertSame(['Hochzeit Zürich', 'Hochzeit Bern'], $links->each(static fn (Crawler $a): string => $a->text()), 'Most venues first; Luzern is under the threshold of 5.');
+        self::assertSame('/hochzeitslocations/zuerich', $links->first()->attr('href'));
+    }
+
+    public function test_no_related_searches_without_a_landing_page(): void
+    {
+        $this->venue(['town' => $this->town('Zürich')]);
+
+        $this->get('/hochzeitslocations');
+
+        self::assertSelectorNotExists('.related');
     }
 
     public function test_meta_title_description_and_single_h1(): void

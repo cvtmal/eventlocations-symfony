@@ -1,0 +1,15 @@
+{#
+    The footer's "Hochzeitslocations nach Kanton" (#17). It reads the cache item LandingPages writes
+    and never queries, so the 500 page still renders it during a database outage; a cold pool renders nothing.
+#}
+{% set cantons = footer_landing_cantons() %}
+{% if cantons is not empty %}
+    <nav class="footer-cantons" aria-labelledby="footer-cantons-title">
+        <h2 class="footer-cantons__title" id="footer-cantons-title">{{ 'footer.cantons_title'|trans({}, 'seo') }}</h2>
+        <ul class="site-footer__links">
+            {% for entry in cantons %}
+                <li><a href="{{ path('listing_landing', {slug: entry.slug}) }}">{{ entry.canton|trans }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
+{% endif %}

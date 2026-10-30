@@ -101,6 +101,35 @@ final class VenueSitemapQuery
     }
 
     /**
+     * One statement for every landing page's `lastmod` (#17). `PUBLISHED` ends in its WHERE, so the
+     * venues are a CTE and the building terms join it.
+     */
+    public function newestChangeByGroup(): SitemapChanges
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            'WITH changed AS (SELECT v.id, v.canton_code, v.town_id, '.self::LASTMOD.' AS lastmod '.self::PUBLISHED.")
+             SELECT 'canton' AS grp, canton_code AS key, max(lastmod) AS lastmod FROM changed WHERE canton_code IS NOT NULL GROUP BY canton_code
+             UNION ALL
+             SELECT 'town', town_id::text, max(lastmod) FROM changed WHERE town_id IS NOT NULL GROUP BY town_id
+             UNION ALL
+             SELECT 'building', vt.term_code, max(c.lastmod) FROM changed c
+             JOIN venue_terms vt ON vt.venue_id = c.id AND vt.term_group = 'building'
+             GROUP BY vt.term_code",
+            ['default_locale' => $this->enabledLocale->default()],
+        );
+
+        $groups = ['canton' => [], 'town' => [], 'building' => []];
+        foreach ($rows as $row) {
+            \assert(\is_string($row['grp']) && isset($groups[$row['grp']]));
+            \assert(\is_string($row['key']));
+            \assert(\is_string($row['lastmod']));
+            $groups[$row['grp']][$row['key']] = new \DateTimeImmutable($row['lastmod']);
+        }
+
+        return new SitemapChanges($groups['canton'], $groups['town'], $groups['building']);
+    }
+
+    /**
      * @return list<string>
      */
     private function imageUrls(int $number, ?string $photos): array

@@ -33,6 +33,12 @@
     line-height: var(--lh-hero);
 }
 
+.listing-hero__intro {
+    max-width: 40rem;
+    margin: var(--space-xs) auto 0;
+    font-size: var(--fs-small);
+}
+
 .listing-hero__count {
     margin: var(--space-2xs) 0 var(--space-m);
     font-size: var(--fs-count);

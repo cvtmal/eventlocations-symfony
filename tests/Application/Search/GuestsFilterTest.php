@@ -6,6 +6,8 @@ namespace App\Tests\Application\Search;
 
 use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Geo\ValueObject\Canton;
+use App\Tests\Support\Search\LandingFixtures;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -21,6 +23,7 @@ use Zenstruck\Foundry\Test\Factories;
 final class GuestsFilterTest extends WebTestCase
 {
     use Factories;
+    use LandingFixtures;
 
     private const array PICKS = ['20', '30', '50', '80', '100', '150', '200', '350', '500'];
 
@@ -131,7 +134,7 @@ final class GuestsFilterTest extends WebTestCase
         $form = $crawler->filter('#filter-guests-form');
         self::assertSame('get', $form->attr('method'));
         self::assertSame('/hochzeitslocations', $form->attr('action'));
-        self::assertSame('/_search/count', $form->attr('data-live-count-url'));
+        self::assertSame('/_search/count?', $form->attr('data-live-count-url'));
         self::assertNotNull($form->attr('data-live-count'));
         self::assertNotNull($form->attr('data-overlay-form'));
 
@@ -221,6 +224,28 @@ final class GuestsFilterTest extends WebTestCase
         self::assertResponseIsSuccessful();
         parse_str((string) parse_url((string) $this->client->getRequest()->getUri(), \PHP_URL_QUERY), $query);
         self::assertSame(['canton' => 'zh', 'guests' => '150'], $query);
+    }
+
+    public function test_both_forms_keep_a_canton_landing_path(): void
+    {
+        $this->inCanton(Canton::ZH, 5);
+
+        $crawler = $this->get('/hochzeitslocations/zuerich?guests=80&setting[]=lake');
+
+        // listing_form() (#17): the path facet stays in the action and out of the hidden state and the count query.
+        foreach (['#filter-guests-form', 'form.guests-bubbles'] as $form) {
+            self::assertSame('/hochzeitslocations/zuerich', $crawler->filter($form)->attr('action'), $form);
+            self::assertSame(['setting[]=lake'], $this->hiddenState($crawler, $form), $form);
+        }
+        self::assertSame('/_search/count?canton=zh&', $crawler->filter('#filter-guests-form')->attr('data-live-count-url'));
+
+        $this->client->submit($crawler->filter('form.guests-bubbles button[value="150"]')->form());
+
+        self::assertResponseIsSuccessful();
+        $uri = (string) $this->client->getRequest()->getUri();
+        parse_str((string) parse_url($uri, \PHP_URL_QUERY), $query);
+        self::assertSame('/hochzeitslocations/zuerich', parse_url($uri, \PHP_URL_PATH));
+        self::assertSame(['guests' => '150', 'setting' => ['lake']], $query);
     }
 
     private function get(string $uri): Crawler

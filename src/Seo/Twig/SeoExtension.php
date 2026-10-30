@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Seo\Twig;
 
+use App\Geo\ValueObject\Canton;
+use App\Search\ReadModel\LandingFooter;
+use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\ListingPage;
 use App\Search\ReadModel\SearchCriteria;
 use App\Seo\BreadcrumbJsonLd;
@@ -18,15 +21,19 @@ use App\Seo\VenueMeta;
 use App\Venues\ReadModel\VenueDetail;
 use Symfony\Component\HttpFoundation\UrlHelper;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Attribute\AsTwigFunction;
 
 /**
  * The seam between pages and Seo. Search and Venues never depend on Seo in PHP: their templates
  * call these functions.
  *
- * - `listing_seo(criteria, page)`, `venue_seo(venue)`: the PageMeta for `seo/_meta.html.twig`.
+ * - `listing_seo(criteria, page, landing = null)`, `venue_seo(venue)`: the PageMeta for
+ *   `seo/_meta.html.twig`; `landing` is the LandingPage the route matched (#17).
  * - `site_jsonld()`, `venue_jsonld(venue)`, `breadcrumb_jsonld(items)`, `listing_jsonld(page)`:
  *   a ready script block; `listing_jsonld` is empty for a page without cards.
+ * - `footer_landing_cantons()`: the live canton pages for the footer (#17), by name, from the
+ *   cache item only, never a query (error pages render it).
  */
 final class SeoExtension
 {
@@ -40,13 +47,31 @@ final class SeoExtension
         private readonly ListingJsonLd $listingJsonLd,
         private readonly UrlGeneratorInterface $urls,
         private readonly UrlHelper $urlHelper,
+        private readonly LandingFooter $landingFooter,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
-    #[AsTwigFunction('listing_seo')]
-    public function listingSeo(SearchCriteria $criteria, ListingPage $page): PageMeta
+    /**
+     * @return list<array{canton: Canton, slug: string}>
+     */
+    #[AsTwigFunction('footer_landing_cantons')]
+    public function footerLandingCantons(): array
     {
-        return $this->listingMeta->for($criteria, $page);
+        $cantons = $this->landingFooter->cantons();
+        $collator = new \Collator($this->translator->getLocale());
+        usort($cantons, fn (array $a, array $b): int => (int) $collator->compare(
+            $a['canton']->trans($this->translator),
+            $b['canton']->trans($this->translator),
+        ));
+
+        return $cantons;
+    }
+
+    #[AsTwigFunction('listing_seo')]
+    public function listingSeo(SearchCriteria $criteria, ListingPage $page, ?LandingPage $landing = null): PageMeta
+    {
+        return $this->listingMeta->for($criteria, $page, $landing);
     }
 
     #[AsTwigFunction('venue_seo')]

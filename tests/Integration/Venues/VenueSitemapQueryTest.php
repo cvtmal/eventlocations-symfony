@@ -7,8 +7,10 @@ namespace App\Tests\Integration\Venues;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Geo\ValueObject\Canton;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
+use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use App\Venues\ReadModel\SitemapFile;
@@ -24,6 +26,10 @@ final class VenueSitemapQueryTest extends KernelTestCase
 {
     use Factories;
     use ImportsTownDataset;
+    use LandingFixtures;
+
+    private const string BASE = '2026-01-01 10:00:00+00';
+    private const string BASE_C = '2026-01-01T10:00:00+00:00';
 
     private EntityManagerInterface $em;
     private Connection $connection;
@@ -141,6 +147,78 @@ final class VenueSitemapQueryTest extends KernelTestCase
         self::assertSame('2030-01-01T10:00:00+00:00', $this->query->newestChange()?->format('c'));
     }
 
+    public function test_newest_change_by_group_is_empty_without_venues(): void
+    {
+        $changes = $this->query->newestChangeByGroup();
+
+        self::assertSame([], $changes->cantons);
+        self::assertSame([], $changes->towns);
+        self::assertSame([], $changes->buildings);
+    }
+
+    public function test_newest_change_by_group_is_the_newest_venue_of_each_canton_town_and_building(): void
+    {
+        $staefa = $this->withBuilding($this->inTown('Stäfa', 2), 'castle');
+        $zurichOnly = $this->inCanton(Canton::ZH, 1);
+        $bern = $this->withBuilding($this->inCanton(Canton::BE, 2), 'hotel');
+        $this->withBuilding([$bern[0]], 'castle');
+        $this->backdateAll();
+        $this->setUpdatedAt('venues', 'id', $staefa[1]->id(), '2026-02-01 10:00:00+00');
+        $this->setUpdatedAt('venues', 'id', $zurichOnly[0]->id(), '2026-03-01 10:00:00+00');
+        $this->setUpdatedAt('venues', 'id', $bern[1]->id(), '2026-04-01 10:00:00+00');
+        $this->setUpdatedAt('venues', 'id', $bern[0]->id(), '2026-01-15 10:00:00+00');
+
+        $changes = $this->query->newestChangeByGroup();
+
+        self::assertSame(['be' => '2026-04-01T10:00:00+00:00', 'zh' => '2026-03-01T10:00:00+00:00'], $this->formatted($changes->cantons));
+        self::assertSame([$this->town('Stäfa')->id() => '2026-02-01T10:00:00+00:00'], $this->formatted($changes->towns));
+        self::assertSame(['castle' => '2026-02-01T10:00:00+00:00', 'hotel' => '2026-04-01T10:00:00+00:00'], $this->formatted($changes->buildings));
+    }
+
+    public function test_newest_change_by_group_ignores_unpublished_and_untranslated_venues(): void
+    {
+        $this->withBuilding($this->inTown('Stäfa', 1), 'castle');
+        $unpublished = $this->withBuilding($this->inCanton(Canton::ZH, 1, VenueStatus::Unpublished), 'castle');
+        $hidden = $this->withBuilding($this->inCanton(Canton::BE, 1, VenueStatus::Unpublished), 'hotel');
+        $untranslated = VenueFactory::createOne(['town' => $this->town('Stäfa')]);
+        $this->withBuilding([$untranslated], 'castle');
+        $this->backdateAll();
+        $this->setUpdatedAt('venues', 'id', $unpublished[0]->id(), '2030-01-01 10:00:00+00');
+        $this->setUpdatedAt('venues', 'id', $hidden[0]->id(), '2030-01-01 10:00:00+00');
+        $this->setUpdatedAt('venues', 'id', $untranslated->id(), '2030-01-01 10:00:00+00');
+
+        $changes = $this->query->newestChangeByGroup();
+
+        self::assertSame(['zh' => '2026-01-01T10:00:00+00:00'], $this->formatted($changes->cantons));
+        self::assertSame([$this->town('Stäfa')->id() => '2026-01-01T10:00:00+00:00'], $this->formatted($changes->towns));
+        self::assertSame(['castle' => '2026-01-01T10:00:00+00:00'], $this->formatted($changes->buildings));
+    }
+
+    public function test_newest_change_by_group_follows_the_translation_and_the_photos(): void
+    {
+        $staefa = $this->withBuilding($this->inTown('Stäfa', 2), 'castle');
+        VenuePhotoFactory::createOne(['venue' => $staefa[1], 'position' => 1]);
+        $bern = $this->withBuilding($this->inCanton(Canton::BE, 1), 'hotel');
+        $this->backdateAll();
+
+        $this->setUpdatedAt('venue_translations', 'venue_id', $staefa[0]->id(), '2026-03-01 10:00:00+00');
+        $changes = $this->query->newestChangeByGroup();
+        self::assertSame('2026-03-01T10:00:00+00:00', $changes->cantons['zh']->format('c'));
+        self::assertSame('2026-03-01T10:00:00+00:00', $changes->towns[$this->town('Stäfa')->id()]->format('c'));
+        self::assertSame('2026-03-01T10:00:00+00:00', $changes->buildings['castle']->format('c'));
+        self::assertSame(self::BASE_C, $changes->buildings['hotel']->format('c'));
+
+        $this->setUpdatedAt('venue_photos', 'venue_id', $staefa[1]->id(), '2026-05-01 10:00:00+00');
+        $changes = $this->query->newestChangeByGroup();
+        self::assertSame('2026-05-01T10:00:00+00:00', $changes->cantons['zh']->format('c'));
+        self::assertSame('2026-05-01T10:00:00+00:00', $changes->towns[$this->town('Stäfa')->id()]->format('c'));
+        self::assertSame('2026-05-01T10:00:00+00:00', $changes->buildings['castle']->format('c'));
+        self::assertSame(self::BASE_C, $changes->cantons['be']->format('c'));
+
+        $this->setUpdatedAt('venue_translations', 'venue_id', $bern[0]->id(), '2026-06-01 10:00:00+00');
+        self::assertSame('2026-06-01T10:00:00+00:00', $this->query->newestChangeByGroup()->buildings['hotel']->format('c'));
+    }
+
     /**
      * @return list<Venue>
      */
@@ -168,6 +246,27 @@ final class VenueSitemapQueryTest extends KernelTestCase
     {
         $this->em->flush();
         $this->connection->executeStatement(\sprintf('UPDATE %s SET updated_at = :at WHERE %s = :id', $table, $column), ['at' => $at, 'id' => $id]);
+    }
+
+    /** Every venue, translation and photo of the test to one old timestamp, so a single edit decides. */
+    private function backdateAll(): void
+    {
+        $this->em->flush();
+        foreach (['venues', 'venue_translations', 'venue_photos'] as $table) {
+            $this->connection->executeStatement(\sprintf('UPDATE %s SET updated_at = :at', $table), ['at' => self::BASE]);
+        }
+    }
+
+    /**
+     * @param array<string, \DateTimeImmutable> $changes
+     *
+     * @return array<string, string>
+     */
+    private function formatted(array $changes): array
+    {
+        ksort($changes);
+
+        return array_map(static fn (\DateTimeImmutable $at): string => $at->format('c'), $changes);
     }
 
     private function venuePhotoId(Venue $venue): string

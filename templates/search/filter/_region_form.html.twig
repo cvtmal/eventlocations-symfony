@@ -8,14 +8,17 @@
     While no published venue has a town (#21, filter_has_data('place')) the form only offers cantons: the modifier hides
     the tabs and the Ort panel and `disabled` keeps those fields out of a no-JS submit. Nothing is removed, because
     js/region-filter.js reads these elements unguarded. A bookmarked ?place= keeps the full form for that request.
+    Landing pages (#17): the action stays the plain listing and the hidden state keeps every other filter, a building
+    page's `building` included. `data-landing` maps each canton with a page to its path; region-filter.js submits a
+    canton choice there (S5: no redirect). Without JS a canton is ?canton=…, noindexed and canonical to its path.
 #}
 {%- set cantons = enum_cases('App\\Geo\\ValueObject\\Canton')|map(c => {code: c.value, label: c|trans})|sort((a, b) => a.label <=> b.label) -%}
 {%- set selected_canton = criteria.canton ? criteria.canton.value : '' -%}
 {%- set default_radius = constant('App\\Search\\ReadModel\\SearchCriteria::DEFAULT_RADIUS') -%}
 {%- set canton_only = criteria.place is null and not filter_has_data('place') -%}
 <form id="filter-region-form" class="region-filter{% if canton_only %} region-filter--canton-only{% endif %}" method="get" action="{{ path('listing') }}" autocomplete="off"
-      data-live-count data-live-count-url="{{ path('_search_count') }}"
-      data-region-filter data-places-url="{{ path('_search_places') }}"
+      data-live-count data-live-count-url="{{ path('_search_count') }}?"
+      data-region-filter data-places-url="{{ path('_search_places') }}" data-landing="{{ landing_canton_paths()|json_encode }}"
       data-no-places="{{ 'filter.no_places'|trans({}, 'search') }}"
       data-radius-zero="{{ 'filter.radius_value'|trans({radius: 0, formatted: '0'}, 'search') }}"
       data-radius-other="{{ 'filter.radius_value'|trans({radius: 2, formatted: '%n'}, 'search') }}">

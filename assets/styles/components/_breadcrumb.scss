@@ -1,0 +1,31 @@
+// Breadcrumb (#17): one line of small links, "›" between steps, the current page unlinked.
+.breadcrumb__list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2xs);
+    margin: 0 0 var(--space-xs);
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+}
+
+.breadcrumb__item {
+    display: inline-flex;
+    gap: var(--space-2xs);
+
+    & + &::before {
+        content: '›';
+        color: var(--c-muted);
+    }
+}
+
+.breadcrumb__link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: .15em;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
