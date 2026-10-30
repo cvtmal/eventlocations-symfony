@@ -1,0 +1,437 @@
+{#- One section per kit component with every variant (#23, S11). `ComponentStyleguideTest` lists the data-component names. -#}
+{% form_theme form 'admin/form/theme.html.twig' %}
+{% form_theme invalid_form 'admin/form/theme.html.twig' %}
+
+{% macro section_open(name, key) %}
+    <section class="card" data-component="{{ name }}" aria-labelledby="sg-c-{{ name }}">
+        <div class="card__head"><h2 id="sg-c-{{ name }}">{{ ('ui.styleguide.section.' ~ key)|trans({}, 'admin') }}</h2></div>
+{% endmacro %}
+
+{% import _self as sg %}
+
+{{ sg.section_open('button', 'button') }}
+    <div class="card__body styleguide__stack">
+        <div class="styleguide__row">
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_primary'|trans({}, 'admin'), variant: 'primary'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_secondary'|trans({}, 'admin')}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_ghost'|trans({}, 'admin'), variant: 'ghost'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_danger'|trans({}, 'admin'), variant: 'danger'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.more'|trans({}, 'admin'), icon: 'ellipsis', icon_only: true}, with_context = false) }}
+        </div>
+        <div class="styleguide__row">
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_primary'|trans({}, 'admin'), variant: 'primary', icon: 'plus'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_small'|trans({}, 'admin'), size: 'sm'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_small'|trans({}, 'admin'), size: 'xs', variant: 'ghost'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.more'|trans({}, 'admin'), icon: 'ellipsis', icon_only: true, size: 'sm'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.open'|trans({}, 'admin'), href: path('admin_styleguide')}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'styleguide.button_secondary'|trans({}, 'admin'), attributes: {'aria-disabled': 'true'}}, with_context = false) }}
+        </div>
+    </div>
+</section>
+
+{{ sg.section_open('pill', 'pill') }}
+    <div class="card__body styleguide__stack">
+        <div class="styleguide__row">
+            {% for tone, key in {green: 'pill_green', grey: 'pill_grey', pink: 'pill_pink', blue: 'pill_blue', amber: 'pill_amber', red: 'pill_red', dark: 'pill_dark'} %}
+                {{ include('admin/components/_pill.html.twig', {label: ('styleguide.' ~ key)|trans({}, 'admin'), tone: tone}, with_context = false) }}
+            {% endfor %}
+        </div>
+        <div class="styleguide__row">
+            {{ include('admin/components/_pill.html.twig', {label: 'styleguide.pill_green'|trans({}, 'admin'), tone: 'green', dot: true}, with_context = false) }}
+            {{ include('admin/components/_pill.html.twig', {label: 'styleguide.pill_grey'|trans({}, 'admin'), dot: true}, with_context = false) }}
+        </div>
+    </div>
+</section>
+
+{{ sg.section_open('tier-badge', 'tier_badge') }}
+    <div class="card__body styleguide__row">
+        {% for tier in ['beliebte_location', 'empfehlung', 'top_premium', 'premium', 'basic'] %}
+            {{ include('admin/components/_tier_badge.html.twig', {tier: tier, label: ('tier.' ~ tier)|trans({}, 'venues')}, with_context = false) }}
+        {% endfor %}
+    </div>
+</section>
+
+{{ sg.section_open('avatar', 'avatar') }}
+    <div class="card__body styleguide__row">
+        {{ include('admin/components/_avatar.html.twig', {initials: 'AK', size: 24}, with_context = false) }}
+        {{ include('admin/components/_avatar.html.twig', {initials: 'AK'}, with_context = false) }}
+        {{ include('admin/components/_avatar.html.twig', {initials: 'AK', size: 56}, with_context = false) }}
+        {{ include('admin/components/_avatar.html.twig', {initials: 'SE', square: true}, with_context = false) }}
+        {{ include('admin/components/_avatar.html.twig', {initials: 'AK', size: 24, label: 'ui.styleguide.sample.deal_owner'|trans({}, 'admin')}, with_context = false) }}
+    </div>
+</section>
+
+<div data-component="card">
+    {% embed 'admin/components/_card.html.twig' with {title: 'ui.styleguide.section.card'|trans({}, 'admin'), id: 'sg-c-card'} only %}
+        {% block actions %}{{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.edit'|trans({}, 'admin'), size: 'sm'}, with_context = false) }}{% endblock %}
+        {% block body %}<p>{{ 'styleguide.text_sample'|trans({}, 'admin') }}</p>{% endblock %}
+        {% block foot %}{{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.save'|trans({}, 'admin'), variant: 'primary'}, with_context = false) }}{% endblock %}
+    {% endembed %}
+</div>
+
+<div class="styleguide__section" data-component="table">
+    <h2>{{ 'ui.styleguide.section.table'|trans({}, 'admin') }}</h2>
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'ui.styleguide.sample.table_label'|trans({}, 'admin'),
+        columns: [
+            {label: 'ui.styleguide.sample.column_venue'|trans({}, 'admin'), sort_key: 'name'},
+            {label: 'ui.styleguide.sample.column_town'|trans({}, 'admin'), sort_key: 'town'},
+            {label: 'ui.styleguide.sample.column_guests'|trans({}, 'admin')},
+        ],
+        sort: 'name',
+        dir: 'asc',
+        select_label: 'ui.styleguide.sample.selection'|trans({}, 'admin'),
+        actions_label: 'ui.styleguide.sample.actions'|trans({}, 'admin'),
+    } only %}
+        {% block rows %}
+            {% for number in [1042, 1043] %}
+                {% embed 'admin/components/_table_row.html.twig' with {select_name: 'venue[]', select_value: number, select_label: 'ui.styleguide.sample.select_row'|trans({}, 'admin') ~ ' ' ~ number, actions_column: true, number: number} only %}
+                    {% block cells %}
+                        <td><a class="table__name" href="{{ path('admin_styleguide') }}">{{ 'ui.styleguide.sample.venue'|trans({}, 'admin') }}</a></td>
+                        <td>{{ 'ui.styleguide.sample.town'|trans({}, 'admin') }}</td>
+                        <td>{{ swiss_range(40, 220) }}</td>
+                    {% endblock %}
+                    {% block actions %}
+                        {% embed 'admin/components/_dropdown.html.twig' with {id: 'sg-row-menu-' ~ number, label: 'ui.styleguide.sample.menu_label'|trans({}, 'admin')} only %}
+                            {% block items %}
+                                <li><a class="dropdown__item" href="{{ path('admin_styleguide') }}">{{ 'ui.styleguide.sample.edit'|trans({}, 'admin') }}</a></li>
+                                <li><button class="dropdown__item dropdown__item--danger" type="button">{{ 'ui.styleguide.sample.delete'|trans({}, 'admin') }}</button></li>
+                            {% endblock %}
+                        {% endembed %}
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block foot %}
+            {{ include('admin/components/_pagination.html.twig', {
+                page: 3, last_page: 12, total: 574, per_page: 50,
+                label: 'ui.styleguide.sample.pagination_label'|trans({}, 'admin'),
+                previous_label: 'ui.styleguide.sample.previous'|trans({}, 'admin'),
+                next_label: 'ui.styleguide.sample.next'|trans({}, 'admin'),
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'ui.styleguide.sample.table_label'|trans({}, 'admin'),
+        columns: [{label: 'ui.styleguide.sample.column_venue'|trans({}, 'admin')}, {label: 'ui.styleguide.sample.column_town'|trans({}, 'admin')}],
+    } only %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'search', title: 'ui.styleguide.sample.empty_title'|trans({}, 'admin'), text: 'ui.styleguide.sample.empty_text'|trans({}, 'admin')}, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+</div>
+
+{{ sg.section_open('pagination', 'pagination') }}
+    <div class="card__body">
+        {{ include('admin/components/_pagination.html.twig', {
+            page: 1, last_page: 3, total: 120, per_page: 50,
+            label: 'ui.styleguide.sample.pagination_label'|trans({}, 'admin'),
+            previous_label: 'ui.styleguide.sample.previous'|trans({}, 'admin'),
+            next_label: 'ui.styleguide.sample.next'|trans({}, 'admin'),
+        }, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('filter-bar', 'filter_bar') }}
+    <div class="card__body">
+        {% embed 'admin/components/_filter_bar.html.twig' with {
+            action: path('admin_styleguide'),
+            id: 'sg-filter',
+            search_label: 'ui.styleguide.sample.search'|trans({}, 'admin'),
+            search_placeholder: 'ui.styleguide.sample.search_placeholder'|trans({}, 'admin'),
+            submit_label: 'ui.styleguide.sample.filter'|trans({}, 'admin'),
+            reset_href: path('admin_styleguide'),
+            reset_label: 'ui.styleguide.sample.reset_filters'|trans({}, 'admin'),
+            chips: [{
+                label: 'ui.styleguide.sample.canton_chip'|trans({}, 'admin'),
+                remove_href: path('admin_styleguide'),
+                remove_label: 'ui.styleguide.sample.remove_filter'|trans({}, 'admin'),
+            }],
+        } only %}
+            {% block filters %}
+                <label class="visually-hidden" for="sg-filter-canton">{{ 'ui.styleguide.sample.canton'|trans({}, 'admin') }}</label>
+                <select class="filter-bar__control" id="sg-filter-canton" name="canton">
+                    <option value="">{{ 'ui.styleguide.sample.all_cantons'|trans({}, 'admin') }}</option>
+                    <option value="zh" selected>{{ 'ui.styleguide.sample.canton_zh'|trans({}, 'admin') }}</option>
+                    <option value="be">{{ 'ui.styleguide.sample.canton_be'|trans({}, 'admin') }}</option>
+                </select>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</section>
+
+{{ sg.section_open('tabs', 'tabs') }}
+    <div class="card__body">
+        {{ include('admin/components/_tabs.html.twig', {
+            label: 'ui.styleguide.sample.status_label'|trans({}, 'admin'),
+            items: [
+                {label: 'ui.styleguide.sample.tab_all'|trans({}, 'admin'), href: path('admin_styleguide'), count: 1758, active: true},
+                {label: 'ui.styleguide.sample.tab_published'|trans({}, 'admin'), href: path('admin_styleguide'), count: 742},
+                {label: 'ui.styleguide.sample.tab_draft'|trans({}, 'admin'), href: path('admin_styleguide'), count: 16, tone: 'pink'},
+            ],
+        }, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('record-tabs', 'record_tabs') }}
+    <div class="card__body">
+        {{ include('admin/components/_record_tabs.html.twig', {
+            label: 'ui.styleguide.sample.sections_label'|trans({}, 'admin'),
+            current_route: 'admin_styleguide',
+            tabs: [
+                {label: t('ui.styleguide.sample.tab_overview', {}, 'admin'), route: 'admin_styleguide', routeParameters: {}},
+                {label: t('ui.styleguide.sample.tab_photos', {}, 'admin'), route: 'admin_audit_log', routeParameters: {}},
+                {label: t('ui.styleguide.sample.tab_rooms', {}, 'admin'), route: 'admin_users', routeParameters: {}},
+            ],
+        }, with_context = false) }}
+    </div>
+</section>
+
+<div class="card table-card" data-component="record-header">
+    {% embed 'admin/components/_record_header.html.twig' with {
+        title: 'ui.styleguide.sample.venue'|trans({}, 'admin'),
+        subtitle: 'ui.styleguide.sample.detail'|trans({}, 'admin'),
+    } only %}
+        {% block meta %}
+            {{ include('admin/components/_tier_badge.html.twig', {tier: 'beliebte_location', label: 'tier.beliebte_location'|trans({}, 'venues')}, with_context = false) }}
+            {{ include('admin/components/_pill.html.twig', {label: 'styleguide.pill_green'|trans({}, 'admin'), tone: 'green', dot: true}, with_context = false) }}
+        {% endblock %}
+        {% block actions %}
+            {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.open'|trans({}, 'admin')}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.more'|trans({}, 'admin'), icon: 'ellipsis', icon_only: true}, with_context = false) }}
+        {% endblock %}
+        {% block tabs %}
+            {{ include('admin/components/_record_tabs.html.twig', {
+                label: 'ui.styleguide.sample.sections_label'|trans({}, 'admin'),
+                current_route: 'admin_styleguide',
+                tabs: [{label: t('ui.styleguide.sample.tab_overview', {}, 'admin'), route: 'admin_styleguide', routeParameters: {}}],
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+</div>
+
+{{ sg.section_open('property', 'property') }}
+    <div class="card__body">
+        {{ include('admin/components/_property.html.twig', {label: 'ui.styleguide.sample.property_label'|trans({}, 'admin'), value: 'ui.styleguide.sample.property_value'|trans({}, 'admin'), edit_href: path('admin_styleguide'), edit_label: 'ui.styleguide.sample.edit'|trans({}, 'admin')}, with_context = false) }}
+        {{ include('admin/components/_property.html.twig', {label: 'ui.styleguide.sample.column_town'|trans({}, 'admin'), value: 'ui.styleguide.sample.town'|trans({}, 'admin')}, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('modal', 'modal') }}
+    <div class="card__body styleguide__row">
+        {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.modal_open'|trans({}, 'admin'), attributes: {commandfor: 'sg-modal', command: 'show-modal'}}, with_context = false) }}
+        {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.confirm_open'|trans({}, 'admin'), variant: 'danger', attributes: {commandfor: 'sg-confirm', command: 'show-modal'}}, with_context = false) }}
+        {% embed 'admin/components/_modal.html.twig' with {id: 'sg-modal', title: 'ui.styleguide.sample.modal_title'|trans({}, 'admin'), close_label: 'ui.styleguide.sample.close'|trans({}, 'admin')} only %}
+            {% block body %}<p>{{ 'ui.styleguide.sample.modal_body'|trans({}, 'admin') }}</p>{% endblock %}
+            {% block footer %}
+                <form method="dialog">{{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.cancel'|trans({}, 'admin'), type: 'submit'}, with_context = false) }}</form>
+                <form method="dialog">{{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.save'|trans({}, 'admin'), variant: 'primary', type: 'submit'}, with_context = false) }}</form>
+            {% endblock %}
+        {% endembed %}
+        {% embed 'admin/components/_modal.html.twig' with {id: 'sg-confirm', title: 'ui.styleguide.sample.confirm_title'|trans({}, 'admin'), close_label: 'ui.styleguide.sample.close'|trans({}, 'admin'), danger: true} only %}
+            {% block body %}<p>{{ 'ui.styleguide.sample.confirm_body'|trans({}, 'admin') }}</p>{% endblock %}
+            {% block footer %}
+                <form method="dialog">{{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.cancel'|trans({}, 'admin'), type: 'submit', attributes: {autofocus: 'autofocus'}}, with_context = false) }}</form>
+                <form method="dialog">{{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.delete'|trans({}, 'admin'), variant: 'danger', type: 'submit'}, with_context = false) }}</form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</section>
+
+{{ sg.section_open('drawer', 'drawer') }}
+    <div class="card__body">
+        {{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.drawer_open'|trans({}, 'admin'), attributes: {commandfor: 'sg-drawer', command: 'show-modal'}}, with_context = false) }}
+        {% embed 'admin/components/_drawer.html.twig' with {id: 'sg-drawer', title: 'ui.styleguide.sample.drawer_title'|trans({}, 'admin'), close_label: 'ui.styleguide.sample.close'|trans({}, 'admin')} only %}
+            {% block body %}<p>{{ 'ui.styleguide.sample.drawer_body'|trans({}, 'admin') }}</p>{% endblock %}
+            {% block footer %}
+                <form method="dialog">{{ include('admin/components/_button.html.twig', {label: 'ui.styleguide.sample.save'|trans({}, 'admin'), variant: 'primary', type: 'submit'}, with_context = false) }}</form>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</section>
+
+{{ sg.section_open('dropdown', 'dropdown') }}
+    <div class="card__body">
+        {% embed 'admin/components/_dropdown.html.twig' with {id: 'sg-menu', label: 'ui.styleguide.sample.actions'|trans({}, 'admin'), icon: 'chevron-down', icon_only: false, variant: 'secondary'} only %}
+            {% block items %}
+                <li><a class="dropdown__item" href="{{ path('admin_styleguide') }}">{{ 'ui.styleguide.sample.edit'|trans({}, 'admin') }}</a></li>
+                <li><a class="dropdown__item" href="{{ path('admin_styleguide') }}">{{ 'ui.styleguide.sample.open'|trans({}, 'admin') }}</a></li>
+                <li><button class="dropdown__item dropdown__item--danger" type="button">{{ 'ui.styleguide.sample.delete'|trans({}, 'admin') }}</button></li>
+            {% endblock %}
+        {% endembed %}
+    </div>
+</section>
+
+{{ sg.section_open('toast', 'toast') }}
+    <div class="card__body styleguide__row">
+        <div class="toast toast--success">
+            {{ admin_icon('check') }}
+            <span class="toast__message">{{ 'ui.styleguide.sample.toast_success'|trans({}, 'admin') }}</span>
+            <button class="toast__dismiss" type="button" aria-label="{{ 'ui.styleguide.sample.dismiss'|trans({}, 'admin') }}">{{ admin_icon('x') }}</button>
+        </div>
+        <div class="toast toast--error">
+            {{ admin_icon('x') }}
+            <span class="toast__message">{{ 'ui.styleguide.sample.toast_error'|trans({}, 'admin') }}</span>
+            <button class="toast__dismiss" type="button" aria-label="{{ 'ui.styleguide.sample.dismiss'|trans({}, 'admin') }}">{{ admin_icon('x') }}</button>
+        </div>
+    </div>
+</section>
+
+{{ form_start(form, {attr: {class: 'styleguide__stack', novalidate: 'novalidate'}}) }}
+    {{ sg.section_open('combobox', 'combobox') }}
+        <div class="card__body form-grid">
+            {{ form_row(form.town) }}
+            {{ form_row(form.owner) }}
+        </div>
+    </section>
+
+    {{ sg.section_open('date-input', 'date_input') }}
+        <div class="card__body">{{ form_row(form.date) }}</div>
+    </section>
+
+    {{ sg.section_open('money-input', 'money_input') }}
+        <div class="card__body">{{ form_row(form.amount) }}</div>
+    </section>
+
+    {{ sg.section_open('markdown', 'markdown') }}
+        <div class="card__body">{{ form_row(form.description) }}</div>
+    </section>
+
+    {{ sg.section_open('form', 'form') }}
+        <div class="card__body form-grid">
+            <div class="field--wide">{{ include('admin/components/_required_hint.html.twig', with_context = false) }}</div>
+            {{ form_row(form.name, {row_attr: {class: 'field--wide'}}) }}
+            {{ form_row(form.street) }}
+            {{ form_row(form.daylight) }}
+            {{ form_row(form.summary, {row_attr: {class: 'field--wide'}}) }}
+            {{ form_row(form.setting) }}
+            {{ form_row(form.newsletter) }}
+        </div>
+    </section>
+{{ form_end(form) }}
+
+{{ sg.section_open('form-errors', 'form_errors') }}
+    <div class="card__body">
+        {{ form_start(invalid_form, {attr: {class: 'form-grid', novalidate: 'novalidate'}}) }}
+            <div class="field--wide">{{ form_errors(invalid_form) }}</div>
+            {{ form_row(invalid_form.name) }}
+            {{ form_row(invalid_form.summary) }}
+            {{ form_rest(invalid_form) }}
+        {{ form_end(invalid_form) }}
+    </div>
+</section>
+
+{{ sg.section_open('dropzone', 'dropzone') }}
+    <div class="card__body">
+        {{ include('admin/components/_dropzone.html.twig', {id: 'sg-dropzone', name: 'files[]', label: 'ui.styleguide.sample.dropzone_label'|trans({}, 'admin'), hint: 'ui.styleguide.sample.dropzone_hint'|trans({}, 'admin'), accept: 'image/*', multiple: true}, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('sortable', 'sortable') }}
+    {% set sortable_items = [
+        {id: 'a', label: 'ui.styleguide.sample.sortable_first'|trans({}, 'admin')},
+        {id: 'b', label: 'ui.styleguide.sample.sortable_second'|trans({}, 'admin')},
+        {id: 'c', label: 'ui.styleguide.sample.sortable_third'|trans({}, 'admin')},
+    ] %}
+    <div class="card__body styleguide__grid">
+        {{ include('admin/components/_sortable.html.twig', {
+            label: 'ui.styleguide.sample.sortable_label'|trans({}, 'admin'),
+            up_label: 'ui.styleguide.sample.move_up'|trans({}, 'admin'),
+            down_label: 'ui.styleguide.sample.move_down'|trans({}, 'admin'),
+            csrf_token: 'styleguide',
+            items: sortable_items|map(item => item|merge({move_up_url: '#', move_down_url: '#'})),
+        }, with_context = false) }}
+        {{ admin_island('styleguide-sortable', {
+            items: sortable_items,
+            label: 'ui.styleguide.sample.sortable_label'|trans({}, 'admin'),
+            upLabel: 'ui.styleguide.sample.move_up'|trans({}, 'admin'),
+            downLabel: 'ui.styleguide.sample.move_down'|trans({}, 'admin'),
+            movedLabel: 'ui.styleguide.sample.moved'|trans({}, 'admin'),
+        }) }}
+    </div>
+</section>
+
+{{ sg.section_open('kanban', 'kanban') }}
+    <div class="card__body kanban">
+        {% embed 'admin/components/_kanban_column.html.twig' with {title: 'ui.styleguide.sample.column_title'|trans({}, 'admin'), count: 2, level: 3} only %}
+            {% block cards %}
+                {{ include('admin/components/_kanban_card.html.twig', {title: 'ui.styleguide.sample.deal_title'|trans({}, 'admin'), href: path('admin_styleguide'), meta: 'ui.styleguide.sample.deal_meta'|trans({}, 'admin'), owner_initials: 'AK', owner_label: 'ui.styleguide.sample.deal_owner'|trans({}, 'admin')}, with_context = false) }}
+                {{ include('admin/components/_kanban_card.html.twig', {title: 'ui.styleguide.sample.deal_title'|trans({}, 'admin'), href: path('admin_styleguide')}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+        {% embed 'admin/components/_kanban_column.html.twig' with {title: 'ui.styleguide.sample.column_title'|trans({}, 'admin'), count: 0, level: 3} only %}{% endembed %}
+    </div>
+</section>
+
+{{ sg.section_open('timeline', 'timeline') }}
+    <div class="card__body">
+        <ol class="timeline">
+            {{ include('admin/components/_timeline_item.html.twig', {icon: 'mail', tone: 'blue', title: 'ui.styleguide.sample.timeline_title'|trans({}, 'admin'), meta: 'ui.styleguide.sample.timeline_meta'|trans({}, 'admin'), body: 'ui.styleguide.sample.timeline_body'|trans({}, 'admin')}, with_context = false) }}
+            {{ include('admin/components/_timeline_item.html.twig', {variant: 'system', icon: 'history', title: 'ui.styleguide.sample.timeline_system'|trans({}, 'admin'), meta: 'ui.styleguide.sample.timeline_meta'|trans({}, 'admin')}, with_context = false) }}
+        </ol>
+    </div>
+</section>
+
+{{ sg.section_open('empty', 'empty') }}
+    {{ include('admin/components/_empty.html.twig', {icon: 'inbox', title: 'ui.styleguide.sample.empty_title'|trans({}, 'admin'), text: 'ui.styleguide.sample.empty_text'|trans({}, 'admin')}, with_context = false) }}
+</section>
+
+{{ sg.section_open('skeleton', 'skeleton') }}
+    <div class="card__body styleguide__stack">
+        {{ include('admin/components/_skeleton.html.twig', {}, with_context = false) }}
+        {{ include('admin/components/_skeleton.html.twig', {variant: 'block'}, with_context = false) }}
+        {{ include('admin/components/_skeleton.html.twig', {variant: 'circle'}, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('kpi', 'kpi') }}
+    <div class="card__body styleguide__grid">
+        {{ include('admin/components/_kpi.html.twig', {label: 'ui.styleguide.sample.kpi_label'|trans({}, 'admin'), value: 23|swiss_number, detail: 'ui.styleguide.sample.kpi_detail'|trans({}, 'admin'), href: path('admin_styleguide')}, with_context = false) }}
+        {{ include('admin/components/_kpi.html.twig', {label: 'ui.styleguide.sample.kpi_label'|trans({}, 'admin'), value: 742|swiss_number, detail: 'ui.styleguide.sample.kpi_plain'|trans({}, 'admin')}, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('chips', 'chips') }}
+    <div class="card__body styleguide__row">
+        {{ include('admin/components/_chip_check.html.twig', {name: 'sg-chip[]', value: 'lake', id: 'sg-chip-lake', label: 'ui.styleguide.sample.chip_lake'|trans({}, 'admin'), checked: true}, with_context = false) }}
+        {{ include('admin/components/_chip_check.html.twig', {name: 'sg-chip[]', value: 'land', id: 'sg-chip-land', label: 'ui.styleguide.sample.chip_land'|trans({}, 'admin')}, with_context = false) }}
+        {{ include('admin/components/_chip_check.html.twig', {name: 'sg-chip[]', value: 'city', id: 'sg-chip-city', label: 'ui.styleguide.sample.chip_city'|trans({}, 'admin')}, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('seg', 'seg') }}
+    <div class="card__body">
+        {{ include('admin/components/_seg.html.twig', {
+            label: 'ui.styleguide.sample.seg_label'|trans({}, 'admin'),
+            items: [
+                {label: 'ui.styleguide.sample.seg_board'|trans({}, 'admin'), href: path('admin_styleguide'), active: true},
+                {label: 'ui.styleguide.sample.seg_list'|trans({}, 'admin'), href: path('admin_styleguide')},
+            ],
+        }, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('progress', 'progress') }}
+    <div class="card__body">
+        {{ include('admin/components/_progress.html.twig', {label: 'ui.styleguide.sample.progress_file'|trans({}, 'admin'), value: 64, status: 'ui.styleguide.sample.progress_status'|trans({}, 'admin')}, with_context = false) }}
+    </div>
+</section>
+
+{{ sg.section_open('locale-tabs', 'locale_tabs') }}
+    {% set text_de %}<p>{{ 'ui.styleguide.sample.locale_text_de'|trans({}, 'admin') }}</p>{% endset %}
+    {% set text_fr %}<p>{{ 'ui.styleguide.sample.locale_text_fr'|trans({}, 'admin') }}</p>{% endset %}
+    <div class="card__body styleguide__grid">
+        {{ include('admin/components/_locale_tabs.html.twig', {
+            id: 'sg-locale-one',
+            label: 'ui.styleguide.sample.locale_label'|trans({}, 'admin'),
+            locales: [{code: 'de', label: 'ui.styleguide.sample.locale_de'|trans({}, 'admin')}],
+            panels: {de: text_de},
+        }, with_context = false) }}
+        {{ include('admin/components/_locale_tabs.html.twig', {
+            id: 'sg-locale-two',
+            label: 'ui.styleguide.sample.locale_label'|trans({}, 'admin'),
+            locales: [{code: 'de', label: 'ui.styleguide.sample.locale_de'|trans({}, 'admin')}, {code: 'fr', label: 'ui.styleguide.sample.locale_fr'|trans({}, 'admin')}],
+            panels: {de: text_de, fr: text_fr},
+        }, with_context = false) }}
+    </div>
+</section>

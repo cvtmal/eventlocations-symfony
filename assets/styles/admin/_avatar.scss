@@ -1,0 +1,30 @@
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--a-grey-bg);
+    color: var(--a-grey);
+    font: 700 12px/1 var(--a-font);
+}
+
+.avatar--24 {
+    width: 24px;
+    height: 24px;
+    background: var(--a-ink);
+    color: var(--a-on-ink);
+    font-size: 10px;
+}
+
+.avatar--56 {
+    width: 56px;
+    height: 56px;
+    font-size: 18px;
+}
+
+.avatar--square {
+    border-radius: var(--a-r-md);
+}

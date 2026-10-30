@@ -1,0 +1,17 @@
+{#
+    A row of `_table`. Embed with `{% embed 'admin/components/_table_row.html.twig' with {…} only %}`:
+      select_name, select_value, select_label (translated; together they add the checkbox of the selection column),
+      actions_column (true when the table has `actions_label`: the last cell is then printed even for a row without
+      actions, so every row has as many cells as the header).
+    Blocks: cells (<td>s), actions (a `_dropdown` or buttons, in the last cell).
+#}
+{%- set actions_markup %}{% block actions %}{% endblock %}{% endset -%}
+<tr>
+    {%- if select_name|default(false) -%}
+        <td class="table__select"><input type="checkbox" name="{{ select_name }}" value="{{ select_value }}" aria-label="{{ select_label }}"></td>
+    {%- endif -%}
+    {% block cells %}{% endblock %}
+    {%- if actions_column|default(false) or actions_markup|trim is not empty -%}
+        <td class="table__actions">{{ actions_markup }}</td>
+    {%- endif -%}
+</tr>

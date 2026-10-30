@@ -1,0 +1,15 @@
+{#
+    KPI card (Main). Include with `with_context = false`: label, value, detail (all translated or formatted),
+    href (turns the detail into a link).
+#}
+<div class="card kpi">
+    <span class="kpi__label">{{ label }}</span>
+    <span class="kpi__value">{{ value }}</span>
+    {% if detail|default(false) %}
+        {% if href|default(false) %}
+            <a class="kpi__detail" href="{{ href }}">{{ detail }}</a>
+        {% else %}
+            <span class="kpi__detail">{{ detail }}</span>
+        {% endif %}
+    {% endif %}
+</div>

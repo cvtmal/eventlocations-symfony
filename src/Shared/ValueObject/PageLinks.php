@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Search\ValueObject;
+namespace App\Shared\ValueObject;
 
 /**
- * The page numbers the listing's pagination links to: the first and the last page plus a
+ * The page numbers a pagination links to: the first and the last page plus a
  * window of three around the current one (pages 1–3 on page 1, the last three on the last
  * page). A gap of exactly one page shows that page; a longer gap is null ("…").
  *

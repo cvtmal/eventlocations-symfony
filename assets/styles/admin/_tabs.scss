@@ -1,0 +1,37 @@
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-6);
+    border-bottom: 1px solid var(--a-line);
+}
+
+// Record tabs scroll instead of wrapping (390 px).
+.tabs--record {
+    flex-wrap: nowrap;
+    gap: 28px;
+    overflow-x: auto;
+    border-bottom: 0;
+}
+
+.tab {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    gap: 6px;
+    height: 44px;
+    padding: 0 2px;
+    border-bottom: 2px solid transparent;
+    color: var(--a-muted);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--a-ink);
+    }
+}
+
+.tab--active {
+    border-bottom-color: var(--a-ink);
+    color: var(--a-ink);
+}

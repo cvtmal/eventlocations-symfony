@@ -1,0 +1,7 @@
+{#
+    Active filter with its remove link. Include with `with_context = false`: label, remove_href, remove_label (translated).
+#}
+<span class="filter-chip">
+    {{- label -}}
+    <a class="filter-chip__remove" href="{{ remove_href }}" aria-label="{{ remove_label }}">{{ admin_icon('x') }}</a>
+</span>

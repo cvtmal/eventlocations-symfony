@@ -1,0 +1,9 @@
+{#
+    Progress bar (Photos), a native <progress>. Include with `with_context = false`: label (translated), value, max (default 100),
+    status (translated, optional).
+#}
+<div class="progress">
+    <span class="progress__label">{{ label }}</span>
+    <progress class="progress__bar" value="{{ value }}" max="{{ max|default(100) }}" aria-label="{{ label }}"></progress>
+    {% if status|default(false) %}<span class="muted">{{ status }}</span>{% endif %}
+</div>

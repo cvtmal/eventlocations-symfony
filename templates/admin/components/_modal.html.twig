@@ -1,0 +1,15 @@
+{#
+    Modal dialog, the contract of `components/_dialog`. Embed with `{% embed 'admin/components/_modal.html.twig' with {…} only %}`:
+      id, title, close_label (translated), danger (bool). Blocks: body, footer.
+    Open it with `<button type="button" commandfor="{{ id }}" command="show-modal">`; js/dialog.js is the fallback and closes on a backdrop click.
+    A destructive confirm gives Cancel `autofocus`.
+#}
+{%- set footer_markup %}{% block footer %}{% endblock %}{% endset -%}
+<dialog class="modal{{ danger|default(false) ? ' modal--danger' }}" id="{{ id }}" aria-labelledby="{{ id }}-title" data-dialog>
+    <div class="modal__header">
+        <h2 class="modal__title" id="{{ id }}-title">{{ title }}</h2>
+        <form method="dialog"><button class="btn btn--ghost btn--icon" aria-label="{{ close_label }}">{{ admin_icon('x') }}</button></form>
+    </div>
+    <div class="modal__body">{% block body %}{% endblock %}</div>
+    {% if footer_markup|trim is not empty %}<div class="modal__footer">{{ footer_markup }}</div>{% endif %}
+</dialog>

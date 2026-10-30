@@ -1,0 +1,36 @@
+.progress {
+    display: flex;
+    align-items: center;
+    gap: var(--a-space-3);
+}
+
+.progress__label {
+    flex: 0 1 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Native <progress>: Twig has no CSP-safe way to set a width.
+.progress__bar {
+    flex: 1;
+    min-width: 0;
+    height: 6px;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--a-r-pill);
+    background: var(--a-grey-bg);
+    appearance: none;
+
+    &::-webkit-progress-bar {
+        background: var(--a-grey-bg);
+    }
+
+    &::-webkit-progress-value {
+        background: var(--a-ink);
+    }
+
+    &::-moz-progress-bar {
+        background: var(--a-ink);
+    }
+}

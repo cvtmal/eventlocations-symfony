@@ -9,7 +9,7 @@ use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\ReadModel\TopCantonsQuery;
-use App\Search\ValueObject\PageLinks;
+use App\Shared\ValueObject\PageLinks;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

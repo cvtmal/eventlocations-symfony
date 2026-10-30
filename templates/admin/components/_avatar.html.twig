@@ -1,0 +1,6 @@
+{#
+    Initials. Include with `with_context = false`: initials, size 24|32|56 (default 32), square (bool),
+    label (translated; without it the avatar is decorative, because a name stands next to it).
+#}
+{%- set size = size|default(32) -%}
+<span class="avatar{{ size != 32 ? ' avatar--' ~ size }}{{ square|default(false) ? ' avatar--square' }}"{% if label|default(false) %} role="img" aria-label="{{ label }}"{% else %} aria-hidden="true"{% endif %}>{{ initials }}</span>

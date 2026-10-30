@@ -3,7 +3,7 @@
 ## Source
 
 - `sprite.svg`: 39 icons from [`lucide-static` 1.57.0](https://cdn.jsdelivr.net/npm/lucide-static@1.57.0/) (`icons/<name>.svg`), the inner elements copied unchanged into `<symbol id="<name>" viewBox="0 0 24 24">`. The presentation attributes (`stroke`, `fill`, `stroke-width`, …) of the Lucide root were dropped; `.icon` in `assets/styles/components/_icon.scss` sets them.
-- `admin-sprite.svg`: 21 icons for the back office (#22), same source and treatment. A separate file, so public pages never download them.
+- `admin-sprite.svg`: 28 icons for the back office (#22, #23), same source and treatment. A separate file, so public pages never download them.
 - `favicon.svg`: derived from the Lucide `heart` icon (pink stroke).
 - Nothing in this directory is copied from eventlokale.
 
@@ -13,7 +13,7 @@
 - **Lage** (taxonomy key → icon): `am_fluss` → `waves`, `am_see` → `sailboat`, `auf_dem_land` → `trees`, `in_den_bergen` → `mountain-snow`, `in_der_stadt` → `building-2`.
 - **Highlights** (rating category → icon): `architektur` → `landmark`, `stil_atmosphare` → `sparkles`, `ausstattung` → `sofa`, `lage_aussicht` → `binoculars`, `erreichbarkeit` → `route`, `kulinarik` → `utensils`, `programm` → `music`, `freundlichkeit` → `smile`, `preis_leistung` → `coins`.
 
-- **Back office (`admin-sprite.svg`, used through `admin_icon()`):** bell, building-2, check, chevron-right, download, ellipsis, file-text, history, inbox, landmark, layout-dashboard, log-out, mail, plus, search, shield, square-check-big, square-kanban, type, users, x.
+- **Back office (`admin-sprite.svg`, used through `admin_icon()`):** arrow-down, arrow-up, bell, building-2, check, chevron-down, chevron-left, chevron-right, chevrons-up-down, download, ellipsis, file-text, grip-vertical, history, inbox, landmark, layout-dashboard, log-out, mail, plus, search, shield, square-check-big, square-kanban, type, upload, users, x.
 
 A new icon is a `<symbol>` added to `sprite.svg` (sorted by id, no presentation attributes) plus its name in the list above.
 

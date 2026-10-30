@@ -62,6 +62,22 @@ final class IslandManifestTest extends TestCase
         self::assertFalse($manifest->anyUsed());
     }
 
+    public function test_a_deferred_entry_is_the_entry_and_marks_nothing_as_used(): void
+    {
+        $manifest = self::manifest();
+
+        self::assertSame('assets/main-123.js', $manifest->deferredEntry('hello'));
+        self::assertFalse($manifest->anyUsed());
+    }
+
+    public function test_a_deferred_island_must_exist(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Unknown island "nope"');
+
+        self::manifest()->deferredEntry('nope');
+    }
+
     public function test_a_page_without_an_island_gets_no_assets_and_needs_no_build(): void
     {
         self::assertSame('', (new IslandExtension(new IslandManifest('/nonexistent/manifest.json')))->assets());
@@ -75,6 +91,25 @@ final class IslandManifestTest extends TestCase
             '<div data-island="hello" data-props="{&quot;greeting&quot;:&quot;Grüezi &lt;b&gt;&quot;}"></div>',
             $extension->island('hello', ['greeting' => 'Grüezi <b>']),
         );
+    }
+
+    public function test_a_fallback_goes_inside_the_mount_point_unescaped(): void
+    {
+        self::assertSame(
+            '<div data-island="hello" data-props="{}"><input name="town"></div>',
+            (new IslandExtension(self::manifest()))->island('hello', [], '<input name="town">'),
+        );
+    }
+
+    public function test_a_deferred_mount_point_names_the_entry_and_loads_nothing(): void
+    {
+        $extension = new IslandExtension(self::manifest());
+
+        self::assertSame(
+            '<div data-island="hello" data-props="{&quot;a&quot;:&quot;b&quot;}" data-island-defer="/admin-build/assets/main-123.js"></div>',
+            $extension->deferred('hello', ['a' => 'b']),
+        );
+        self::assertSame('', $extension->assets());
     }
 
     public function test_empty_props_are_a_json_object(): void

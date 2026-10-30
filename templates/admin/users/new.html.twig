@@ -1,5 +1,7 @@
 {% extends 'admin/base.html.twig' %}
 
+{% form_theme form 'admin/form/theme.html.twig' %}
+
 {% block title %}{{ 'users.new'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
 
 {% block breadcrumbs %}
@@ -14,11 +16,12 @@
 {% block main %}
     <div class="card card__body">
         {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.email}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.displayName}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.role}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.plainPassword.first, help: 'users.form.password_help'|trans({}, 'admin')}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.plainPassword.second}) }}
+            {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+            {{ form_row(form.email) }}
+            {{ form_row(form.displayName) }}
+            {{ form_row(form.role) }}
+            {{ form_row(form.plainPassword.first) }}
+            {{ form_row(form.plainPassword.second) }}
             <div><button class="btn btn--primary" type="submit">{{ 'users.form.create'|trans({}, 'admin') }}</button></div>
         {{ form_end(form) }}
     </div>

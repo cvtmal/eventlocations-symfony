@@ -1,0 +1,22 @@
+{#
+    Pagination with numbers (Locations). Include with `with_context = false`: page, last_page, total, per_page, label, previous_label, next_label (translated).
+    URLs keep the current query. Numbers come from `admin_page_links()`, a null is a gap.
+#}
+{%- set from = total > 0 ? (page - 1) * per_page + 1 : 0 -%}
+{%- set to = min(page * per_page, total) -%}
+<div class="pagination">
+    <span class="muted">{{ 'ui.pagination.status'|trans({from: from|swiss_number, to: to|swiss_number, total: total|swiss_number}, 'admin') }}</span>
+    {% if last_page > 1 %}
+        <nav class="pagination__pages" aria-label="{{ label }}">
+            {% if page > 1 %}<a class="btn" rel="prev" href="{{ admin_query_path({page: page > 2 ? page - 1 : null}) }}">{{ previous_label }}</a>{% endif %}
+            {% for number in admin_page_links(page, last_page) %}
+                {% if number is null %}
+                    <span class="pagination__gap" aria-hidden="true">…</span>
+                {% else %}
+                    <a class="btn btn--icon{{ number == page ? ' pagination__current' }}" href="{{ admin_query_path({page: number > 1 ? number : null}) }}"{% if number == page %} aria-current="page"{% endif %}>{{ number|swiss_number }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page < last_page %}<a class="btn" rel="next" href="{{ admin_query_path({page: page + 1}) }}">{{ next_label }}</a>{% endif %}
+        </nav>
+    {% endif %}
+</div>

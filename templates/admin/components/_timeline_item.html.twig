@@ -1,0 +1,19 @@
+{#
+    One entry of a timeline; wrap the entries in <ol class="timeline">. Include with `with_context = false`:
+      variant card|system (default card), icon, tone blue|pink|green, title, meta, body (all translated).
+#}
+{%- set variant = variant|default('card') -%}
+<li class="timeline-item timeline-item--{{ variant }}">
+    <span class="timeline-item__icon{{ tone|default(false) ? ' timeline-item__icon--' ~ tone }}">{{ admin_icon(icon) }}</span>
+    {% if variant == 'system' %}
+        <span>{{ title }}{% if meta|default(false) %} · {{ meta }}{% endif %}</span>
+    {% else %}
+        <div class="timeline-item__content">
+            <div class="timeline-item__head">
+                <span class="timeline-item__title">{{ title }}</span>
+                {% if meta|default(false) %}<span class="timeline-item__meta">{{ meta }}</span>{% endif %}
+            </div>
+            {% if body|default(false) %}<span class="muted">{{ body }}</span>{% endif %}
+        </div>
+    {% endif %}
+</li>

@@ -27,10 +27,135 @@
     }
 }
 
+// The list table of Locations: a muted head, a tighter grid, a hover on the rows.
+.table--list {
+    th {
+        padding: 10px var(--a-space-4);
+        background: var(--a-surface-muted);
+    }
+
+    td {
+        padding: 10px var(--a-space-4);
+        white-space: nowrap;
+    }
+
+    tbody tr:hover td {
+        background: var(--a-row-hover);
+    }
+
+    // The empty state has nothing to point at.
+    tbody tr:hover td.table__empty {
+        background: none;
+    }
+}
+
+// The record's name in a list: it reads as the row's title, and its link shows on hover.
+.table__name {
+    color: var(--a-ink);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--a-link);
+        text-decoration: underline;
+    }
+}
+
+.table__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--a-space-1);
+    color: var(--a-muted);
+    text-decoration: none;
+
+    &:hover {
+        color: var(--a-ink);
+        text-decoration: underline;
+    }
+
+    .icon {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+[aria-sort] .table__sort {
+    color: var(--a-ink);
+}
+
+.table__select {
+    width: 40px;
+
+    input {
+        display: block;
+        width: 18px;
+        height: 18px;
+        accent-color: var(--a-ink);
+    }
+}
+
+.table__actions {
+    width: 1%;
+    text-align: right;
+    white-space: nowrap;
+}
+
+td.table__empty {
+    padding: 0;
+    border-bottom: 0;
+}
+
+.table-card {
+    overflow: hidden;
+
+    .table-wrap {
+        // Keyboard users scroll it, so its focus ring must stay inside the card.
+        &:focus-visible {
+            outline-offset: -2px;
+        }
+    }
+}
+
+.table-card__foot {
+    padding: var(--a-space-3) var(--a-space-4);
+    border-top: 1px solid var(--a-line);
+}
+
 .pagination {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--a-space-3);
+}
+
+.pagination__pages {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-1);
+
+    // Four-digit page numbers must not overflow the square.
+    .btn--icon {
+        width: auto;
+        min-width: 36px;
+        padding: 0 var(--a-space-2);
+    }
+}
+
+.pagination__current {
+    border-color: var(--a-ink);
+    background: var(--a-ink);
+    color: var(--a-on-ink);
+
+    &:hover {
+        background: var(--a-ink-hover);
+        color: var(--a-on-ink);
+    }
+}
+
+.pagination__gap {
+    min-width: 24px;
+    color: var(--a-muted);
+    text-align: center;
 }

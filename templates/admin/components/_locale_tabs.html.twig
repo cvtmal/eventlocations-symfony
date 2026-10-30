@@ -1,0 +1,23 @@
+{#
+    One panel per enabled locale (S4). Include with `with_context = false`: id, label (translated), locales list<{code, label}>,
+    panels map code → captured markup.
+    With two or more locales it is a tablist (js/admin/tabs.js; without JS all panels show). With one it is a plain label and its panel,
+    so a new language adds a tab without rework.
+#}
+<div class="locale-tabs">
+    {% if locales|length > 1 %}
+        <div class="seg" role="tablist" aria-label="{{ label }}">
+            {% for locale in locales %}
+                <button class="seg__item" type="button" role="tab" id="{{ id }}-tab-{{ locale.code }}" aria-controls="{{ id }}-panel-{{ locale.code }}" aria-selected="{{ loop.first ? 'true' : 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ locale.label }}</button>
+            {% endfor %}
+        </div>
+        {% for locale in locales %}
+            <div class="locale-tabs__panel" role="tabpanel" id="{{ id }}-panel-{{ locale.code }}" aria-labelledby="{{ id }}-tab-{{ locale.code }}">{{ panels[locale.code] }}</div>
+        {% endfor %}
+    {% else %}
+        {% for locale in locales %}
+            <p class="field__label">{{ locale.label }}</p>
+            <div class="locale-tabs__panel">{{ panels[locale.code] }}</div>
+        {% endfor %}
+    {% endif %}
+</div>

@@ -1,0 +1,175 @@
+{#
+    The back office's form theme (ADM-7). Per template, never in `twig.form_themes`, which would reach the public inquiry form:
+    `{% form_theme form 'admin/form/theme.html.twig' %}`, then `form_row(form.x)`.
+
+    - A field's `aria-describedby` joins help, counter and error, then any caller value; an invalid field has `aria-invalid`.
+    - `required: false` gives no marker and no attribute; a form with required fields also includes `components/_required_hint`.
+    - `attr: {'data-counter-max': 200}` adds the counter. A data attribute, not `maxlength`: pasted text must not be cut silently.
+    - Expanded choices are a fieldset; `attr: {class: 'chips'}` turns checkboxes into chips.
+    - Money fields set `html5: true`, so the value does not go through the `de` locale.
+#}
+{% use 'form_div_layout.html.twig' %}
+{% use 'form_div_layout.html.twig' with form_label as base_form_label %}
+
+{%- block form_row -%}
+    {%- set has_errors = errors|length > 0 -%}
+    {%- set described_by = [
+        help is not empty ? id ~ '_help' : null,
+        attr['data-counter-max'] is defined ? id ~ '_counter' : null,
+        has_errors ? id ~ '_error' : null,
+        attr['aria-describedby'] ?? null,
+    ]|filter(entry => entry is not null) -%}
+    {%- set widget_attr = attr|merge(described_by ? {'aria-describedby': described_by|join(' ')} : {})|merge(has_errors ? {'aria-invalid': 'true'} : {}) -%}
+    <div{% with {attr: row_attr|merge({class: ('field ' ~ row_attr.class|default(''))|trim})} %}{{ block('attributes') }}{% endwith %}>
+        {{- form_label(form) -}}
+        {{- form_widget(form, {attr: widget_attr}) -}}
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock form_row -%}
+
+{%- block form_label -%}
+    {%- if checked is defined -%}
+        {{- block('base_form_label') -}}
+    {%- else -%}
+        {%- set counter_max = attr['data-counter-max'] ?? null -%}
+        {%- if label is not same as(false) or counter_max is not null -%}
+            <div class="field__label-row">
+                {%- if label is not same as(false) -%}
+                    {%- if not compound -%}
+                        {%- set label_attr = label_attr|merge({for: id}) -%}
+                    {%- endif -%}
+                    <label{% if label_attr %}{% with {attr: label_attr} %}{{ block('attributes') }}{% endwith %}{% endif %}>
+                        {{- block('form_label_content') -}}
+                        {%- if required %}<span class="field__required" aria-hidden="true">*</span>{% endif -%}
+                    </label>
+                {%- endif -%}
+                {%- if counter_max is not null -%}
+                    <span class="field__counter{{ value|default('')|length > counter_max ? ' field__counter--over' }}" id="{{ id }}_counter" data-counter-for="{{ id }}">{{ value|default('')|length }} / {{ counter_max }}</span>
+                {%- endif -%}
+            </div>
+        {%- endif -%}
+    {%- endif -%}
+{%- endblock form_label -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        {%- if form is rootform -%}
+            {%- for error in errors -%}
+                <p class="form-error" role="alert">{{ error.message }}</p>
+            {%- endfor -%}
+        {%- else -%}
+            <span class="field__error" id="{{ id }}_error">{{ errors|map(error => error.message)|join(' ') }}</span>
+        {%- endif -%}
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{%- block form_help -%}
+    {%- if help is not empty -%}
+        {%- set help_attr = help_attr|merge({class: ('field__help ' ~ help_attr.class|default(''))|trim}) -%}
+        <span id="{{ id }}_help"{% with {attr: help_attr} %}{{ block('attributes') }}{% endwith %}>
+            {{- block('form_help_content') -}}
+        </span>
+    {%- endif -%}
+{%- endblock form_help -%}
+
+{#- A label pointing at the choices' div would name nothing, so errors and help hang on the fieldset. -#}
+{%- block choice_row -%}
+    {%- if expanded -%}
+        {%- set described_by = [
+            help is not empty ? id ~ '_help' : null,
+            errors|length > 0 ? id ~ '_error' : null,
+        ]|filter(entry => entry is not null) -%}
+        <fieldset class="field field--group"{% if described_by %} aria-describedby="{{ described_by|join(' ') }}"{% endif %}>
+            {%- if label is not same as(false) -%}
+                <legend class="field__label">
+                    {{- block('form_label_content') -}}
+                    {%- if required %}<span class="field__required" aria-hidden="true">*</span>{% endif -%}
+                </legend>
+            {%- endif -%}
+            {{- form_widget(form) -}}
+            {{- form_help(form) -}}
+            {{- form_errors(form) -}}
+        </fieldset>
+    {%- else -%}
+        {{- block('form_row') -}}
+    {%- endif -%}
+{%- endblock choice_row -%}
+
+{%- block choice_widget_expanded -%}
+    {%- set is_chips = 'chips' in attr.class|default('')|split(' ') -%}
+    {%- set attr = attr|merge({class: ('choice-list ' ~ attr.class|default(''))|trim}) -%}
+    <div {{ block('widget_container_attributes') }}>
+        {%- for child in form -%}
+            <div class="{{ is_chips ? 'chip-check' : 'choice' }}">
+                {{- form_widget(child) -}}
+                {{- form_label(child, null, {translation_domain: choice_translation_domain}) -}}
+            </div>
+        {%- endfor -%}
+    </div>
+{%- endblock choice_widget_expanded -%}
+
+{%- block checkbox_row -%}
+    {%- set has_errors = errors|length > 0 -%}
+    {%- set described_by = [
+        help is not empty ? id ~ '_help' : null,
+        has_errors ? id ~ '_error' : null,
+    ]|filter(entry => entry is not null) -%}
+    <div class="field">
+        <div class="choice">
+            {{- form_widget(form, {attr: attr|merge(described_by ? {'aria-describedby': described_by|join(' ')} : {})|merge(has_errors ? {'aria-invalid': 'true'} : {})}) -}}
+            {{- form_label(form) -}}
+        </div>
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock checkbox_row -%}
+
+{%- block money_widget -%}
+    <div class="field__addon">
+        <span class="field__addon-text">{{ 'ui.money.currency'|trans({}, 'admin') }}</span>
+        {{- block('form_widget_simple') -}}
+    </div>
+{%- endblock money_widget -%}
+
+{#- The plain input is the island's fallback: before the mount and without JS the field still submits. -#}
+{%- block combobox_widget -%}
+    {%- set placeholder_text = attr.placeholder ?? null -%}
+    {%- if placeholder_text is not null and translation_domain is not same as(false) -%}
+        {%- set placeholder_text = placeholder_text|trans(attr_translation_parameters, translation_domain) -%}
+    {%- endif -%}
+    {%- set field_label = label is empty ? null : (translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain)) -%}
+    {{- admin_island('combobox', {
+        id: id,
+        name: full_name,
+        value: value|default('') ~ '',
+        display: display_value,
+        freeText: free_text,
+        url: url,
+        options: static_options,
+        listLabel: field_label,
+        describedBy: attr['aria-describedby'] ?? null,
+        invalid: attr['aria-invalid'] is defined,
+        required: required,
+        placeholder: placeholder_text,
+        noResultsLabel: 'ui.combobox.no_results'|trans({}, 'admin'),
+        sessionGoneLabel: 'ui.combobox.session_gone'|trans({}, 'admin'),
+        errorLabel: 'ui.combobox.error'|trans({}, 'admin'),
+    }, fallback = block('form_widget_simple')) -}}
+{%- endblock combobox_widget -%}
+
+{%- block markdown_widget -%}
+    <div class="markdown" data-markdown data-markdown-url="{{ path('admin_api_markdown_preview') }}" data-session-gone="{{ 'ui.markdown.session_gone'|trans({}, 'admin') }}" data-error="{{ 'ui.markdown.error'|trans({}, 'admin') }}">
+        <div class="seg" role="tablist" aria-label="{{ 'ui.markdown.tabs_label'|trans({}, 'admin') }}">
+            <button class="seg__item" type="button" role="tab" id="{{ id }}_write_tab" aria-controls="{{ id }}_write" aria-selected="true">{{ 'ui.markdown.write'|trans({}, 'admin') }}</button>
+            <button class="seg__item" type="button" role="tab" id="{{ id }}_preview_tab" aria-controls="{{ id }}_preview" aria-selected="false" tabindex="-1" data-markdown-preview>{{ 'ui.markdown.preview'|trans({}, 'admin') }}</button>
+        </div>
+        <div class="markdown__panel" role="tabpanel" id="{{ id }}_write" aria-labelledby="{{ id }}_write_tab">
+            {{- block('textarea_widget') -}}
+        </div>
+        <div class="markdown__panel" role="tabpanel" id="{{ id }}_preview" aria-labelledby="{{ id }}_preview_tab" hidden>
+            <p class="markdown__status" role="status" data-markdown-status hidden></p>
+            <div class="markdown__preview" data-markdown-output></div>
+        </div>
+    </div>
+{%- endblock markdown_widget -%}

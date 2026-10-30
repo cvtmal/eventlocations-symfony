@@ -1,0 +1,29 @@
+.property {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 9px 10px;
+    border-radius: var(--a-r-md);
+
+    &:hover {
+        background: var(--a-bg);
+    }
+}
+
+.property__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--a-space-2);
+}
+
+.property__label {
+    color: var(--a-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.property__edit {
+    font-size: 12px;
+    font-weight: 600;
+}

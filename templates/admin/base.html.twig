@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noindex, nofollow">
         <meta name="csrf-token" content="{{ csrf_token('admin_api') }}">
+        <meta name="admin-sprite" content="{{ asset('icons/admin-sprite.svg') }}">
         <title>{% block title %}{{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}</title>
         <link rel="preload" href="{{ asset('fonts/sofia-sans-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
         <link rel="stylesheet" href="{{ asset('styles/admin.scss') }}">
@@ -33,6 +34,7 @@
         </div>
         {{ include('admin/layout/_flash.html.twig') }}
         <script type="module" src="{{ asset('js/admin/toast.js') }}"></script>
+        {{ include('admin/components/_scripts.html.twig') }}
         {% block scripts %}{% endblock %}
         {{ admin_island_assets(csp_nonce()) }}
     </body>

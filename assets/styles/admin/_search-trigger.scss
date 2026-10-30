@@ -1,0 +1,94 @@
+// Holds the deferred mount too, which must not add a gap to the sidebar's column.
+.sidebar__search-slot {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar__search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid var(--a-nav-border);
+    border-radius: var(--a-r-md);
+    background: var(--a-nav-surface);
+    color: var(--a-nav-soft);
+    font: 400 14px var(--a-font);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--a-nav-surface-2);
+    }
+
+    .icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    kbd {
+        padding: 2px 5px;
+        border: 1px solid var(--a-nav-kbd);
+        border-radius: 4px;
+        color: var(--a-nav-muted);
+        font: 600 11px var(--a-font);
+    }
+}
+
+.sidebar__search-label {
+    flex: 1;
+}
+
+.palette {
+    margin-top: 12vh;
+    max-height: 76dvh;
+}
+
+.palette__input {
+    width: 100%;
+    height: 44px;
+    padding: 0 var(--a-space-3);
+    border: 1px solid var(--a-field-strong);
+    border-radius: var(--a-r-md);
+    background: var(--a-surface);
+    color: var(--a-ink);
+    font: 400 16px var(--a-font);
+}
+
+.palette__status {
+    min-height: 20px;
+    margin-top: var(--a-space-2);
+    color: var(--a-muted);
+    font-size: 13px;
+}
+
+.palette__group {
+    margin-top: var(--a-space-2);
+}
+
+.palette__group-label {
+    padding: var(--a-space-1) var(--a-space-2);
+    color: var(--a-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.palette__option {
+    display: flex;
+    flex-direction: column;
+    padding: var(--a-space-2);
+    border-radius: var(--a-r-md);
+    cursor: pointer;
+
+    &[aria-selected='true'] {
+        background: var(--a-hover);
+        outline: 2px solid var(--a-ink);
+        outline-offset: -2px;
+    }
+}
+
+.palette__detail {
+    color: var(--a-muted);
+    font-size: 13px;
+}

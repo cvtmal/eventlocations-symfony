@@ -1,0 +1,9 @@
+{#
+    Segmented control of links (Pipeline, Company). Include with `with_context = false`:
+      label (translated), items list<{label, href, active}>.
+#}
+<nav class="seg" aria-label="{{ label }}">
+    {% for item in items %}
+        <a class="seg__item" href="{{ item.href }}"{% if item.active|default(false) %} aria-current="page"{% endif %}>{{ item.label }}</a>
+    {% endfor %}
+</nav>

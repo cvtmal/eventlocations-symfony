@@ -13,7 +13,7 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 final class PriorityOrder
 {
     /**
-     * @template T of NavigationItem|DashboardWidget|RecordTab|RecordPanel
+     * @template T of NavigationItem|DashboardWidget|RecordTab|RecordPanel|SearchProvider
      *
      * @param iterable<T> $extensions
      *

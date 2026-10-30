@@ -1,0 +1,9 @@
+{#
+    A checkbox that looks like a chip (LocationEdit). Include with `with_context = false`: name, value, label (translated), checked (bool), id.
+    The state is the input's, so it works without JS. The form theme renders the same markup for `attr.class: chips`.
+#}
+{%- set id = id|default(name ~ '-' ~ value) -%}
+<div class="chip-check">
+    <input type="checkbox" id="{{ id }}" name="{{ name }}" value="{{ value }}"{% if checked|default(false) %} checked{% endif %}>
+    <label for="{{ id }}">{{ label }}</label>
+</div>

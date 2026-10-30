@@ -1,0 +1,16 @@
+{#
+    Card shell. Embed with `{% embed 'admin/components/_card.html.twig' with {…} only %}`:
+      title (translated), id (the heading's id, names the section). Blocks: actions, body, foot.
+#}
+{%- set actions_markup %}{% block actions %}{% endblock %}{% endset -%}
+{%- set foot_markup %}{% block foot %}{% endblock %}{% endset -%}
+<section class="card"{% if title|default(false) and id|default(false) %} aria-labelledby="{{ id }}"{% endif %}>
+    {% if title|default(false) %}
+        <div class="card__head">
+            <h2{% if id|default(false) %} id="{{ id }}"{% endif %}>{{ title }}</h2>
+            {{ actions_markup }}
+        </div>
+    {% endif %}
+    <div class="card__body">{% block body %}{% endblock %}</div>
+    {% if foot_markup|trim is not empty %}<div class="card__foot">{{ foot_markup }}</div>{% endif %}
+</section>

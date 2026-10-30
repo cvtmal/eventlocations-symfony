@@ -5,25 +5,81 @@
     max-width: 480px;
 }
 
+// LocationEdit: fields flow in columns, a wide one takes the whole row.
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px 20px;
+}
+
+// Paired fields, such as km and name of a distance (#24).
+.field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--a-space-3);
+}
+
 .field {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
+}
+
+.field--wide {
+    grid-column: 1 / -1;
+}
+
+// A fieldset for radios and checkboxes (form theme).
+.field--group {
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    legend {
+        margin-bottom: 8px;
+        padding: 0;
+    }
+}
+
+.field__label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--a-space-3);
 }
 
 .field__label,
-.field label {
+.field > label,
+.field__label-row label {
     font-size: 13px;
     font-weight: 600;
 }
 
+.field__required {
+    margin-left: 2px;
+    color: var(--a-danger);
+}
+
+.field__counter {
+    flex: none;
+    color: var(--a-muted);
+    font-size: 12px;
+}
+
+.field__counter--over {
+    color: var(--a-danger);
+    font-weight: 600;
+}
+
 .field__input,
-.field input:not([type='hidden']),
-.field select {
+.field input:not([type='hidden'], [type='checkbox'], [type='radio'], [type='file']),
+.field select,
+.field textarea {
     width: 100%;
     height: 38px;
     padding: 0 var(--a-space-3);
-    border: 1px solid var(--a-field);
+    border: 1px solid var(--a-field-strong);
     border-radius: var(--a-r-md);
     background: var(--a-surface);
     color: var(--a-ink);
@@ -45,6 +101,57 @@
     }
 }
 
+.field textarea {
+    height: auto;
+    min-height: 96px;
+    padding: 10px var(--a-space-3);
+    line-height: 22px;
+    resize: vertical;
+}
+
+// A prefix fused with its input: CHF, or the slug's base address.
+.field__addon {
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid var(--a-field-strong);
+    border-radius: var(--a-r-md);
+    background: var(--a-surface);
+
+    &:has(:focus-visible) {
+        outline: 2px solid var(--a-ink);
+        outline-offset: 1px;
+    }
+
+    &:has([aria-invalid='true']) {
+        border-color: var(--a-danger);
+        box-shadow: 0 0 0 1px var(--a-danger);
+    }
+
+    input:not([type='hidden'], [type='checkbox'], [type='radio'], [type='file']) {
+        min-width: 0;
+        height: 36px;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+
+        &:focus-visible {
+            outline: none;
+        }
+    }
+}
+
+.field__addon-text {
+    display: flex;
+    flex: none;
+    align-items: center;
+    padding: 0 10px;
+    border-right: 1px solid var(--a-field-strong);
+    background: var(--a-bg);
+    color: var(--a-muted);
+    font-size: 14px;
+}
+
 .field__help {
     color: var(--a-muted);
     font-size: 12px;
@@ -53,6 +160,30 @@
 .field__error,
 .form-error {
     color: var(--a-danger);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
+}
+
+.form-hint {
+    color: var(--a-muted);
+    font-size: 12px;
+}
+
+.choice-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-2) var(--a-space-4);
+    min-height: 38px;
+}
+
+.choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+
+    input {
+        accent-color: var(--a-ink);
+    }
 }

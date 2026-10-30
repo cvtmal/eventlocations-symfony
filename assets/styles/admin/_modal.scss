@@ -1,0 +1,67 @@
+.modal {
+    width: min(520px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 0;
+    border-radius: var(--a-r-lg);
+    background: var(--a-surface);
+    box-shadow: var(--a-sh-modal);
+    color: var(--a-ink);
+
+    &[open] {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &::backdrop {
+        background: var(--a-scrim);
+    }
+
+    // The palette's dialog sits inside the dark sidebar, which switches the ring to white.
+    :focus-visible {
+        outline-color: var(--a-ink);
+    }
+}
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--a-space-3);
+    padding: var(--a-space-3) var(--a-space-3) var(--a-space-3) var(--a-space-5);
+    border-bottom: 1px solid var(--a-line);
+}
+
+.modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--a-space-5);
+}
+
+.modal__footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--a-space-2);
+    padding: var(--a-space-3) var(--a-space-5);
+    border-top: 1px solid var(--a-line-soft);
+    background: var(--a-surface-muted);
+
+    &:empty {
+        display: none;
+    }
+}
+
+.modal--danger .modal__title {
+    color: var(--a-danger);
+}
+
+// A dialog at the right edge: the room editor (#25) needs its height.
+.modal.drawer {
+    width: min(480px, 100vw);
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    margin: 0 0 0 auto;
+    border-radius: 0;
+}

@@ -43,3 +43,21 @@
     flex-direction: column;
     gap: var(--a-space-4);
 }
+
+.styleguide__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--a-space-4);
+}
+
+.styleguide__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-3);
+}
+
+.styleguide__dark {
+    padding: var(--a-space-3);
+    border-radius: var(--a-r-md);
+    background: var(--a-column);
+}

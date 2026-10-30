@@ -1,0 +1,13 @@
+{#
+    A dialog at the right edge, opened and closed like `_modal`. Embed with `{% embed 'admin/components/_drawer.html.twig' with {…} only %}`:
+      id, title, close_label (translated), danger (bool). Blocks: body, footer.
+#}
+{%- set footer_markup %}{% block footer %}{% endblock %}{% endset -%}
+<dialog class="modal drawer{{ danger|default(false) ? ' modal--danger' }}" id="{{ id }}" aria-labelledby="{{ id }}-title" data-dialog>
+    <div class="modal__header">
+        <h2 class="modal__title" id="{{ id }}-title">{{ title }}</h2>
+        <form method="dialog"><button class="btn btn--ghost btn--icon" aria-label="{{ close_label }}">{{ admin_icon('x') }}</button></form>
+    </div>
+    <div class="modal__body">{% block body %}{% endblock %}</div>
+    {% if footer_markup|trim is not empty %}<div class="modal__footer">{{ footer_markup }}</div>{% endif %}
+</dialog>

@@ -117,13 +117,19 @@ trait ChecksAdminRoutes
         $enrolled = $this->createStaff();
         $unenrolled = $this->createStaff(enrolled: false, displayName: 'Beat Meier');
 
-        $this->walkTrailingSlash(fn () => $this->client->getCookieJar()->clear(), $turnedAwayBy(self::LOGIN));
+        // A GET JSON route gets the answer it gets without the slash: no guard redirects a JSON client to a page.
+        $this->walkTrailingSlash(
+            fn () => $this->client->getCookieJar()->clear(),
+            static fn (array $endpoint): array => self::isJsonEndpoint($endpoint) ? [Response::HTTP_UNAUTHORIZED, null] : [Response::HTTP_FOUND, self::LOGIN],
+        );
         $this->walkTrailingSlash(fn () => $this->startOver($enrolled['user']->email()), $turnedAwayBy(self::CODE_STEP));
         $this->walkTrailingSlash(
             fn () => $this->startOver($unenrolled['user']->email()),
-            static fn (array $endpoint): array => \in_array($endpoint['name'], ['admin_login', 'admin_totp_enrol'], true)
-                ? [Response::HTTP_MOVED_PERMANENTLY, $endpoint['path']]
-                : [Response::HTTP_FOUND, self::ENROLMENT],
+            static fn (array $endpoint): array => match (true) {
+                self::isJsonEndpoint($endpoint) => [Response::HTTP_FORBIDDEN, null],
+                \in_array($endpoint['name'], ['admin_login', 'admin_totp_enrol'], true) => [Response::HTTP_MOVED_PERMANENTLY, $endpoint['path']],
+                default => [Response::HTTP_FOUND, self::ENROLMENT],
+            },
         );
         $this->walkTrailingSlash(
             fn () => $this->startOverLoggedIn($enrolled['user'], $enrolled['secret']),
@@ -282,8 +288,8 @@ trait ChecksAdminRoutes
         $this->walk(
             fn () => $this->startOverLoggedIn($staff['user'], $staff['secret']),
             fn (array $endpoint): ?array => match (true) {
-                // Without the CSRF header, which is all a walk can say about a JSON route.
-                self::isJsonEndpoint($endpoint) => [Response::HTTP_FORBIDDEN, null],
+                // Without the CSRF header, which is all a walk can say about a JSON write. A JSON read needs none.
+                self::isJsonEndpoint($endpoint) && 'GET' !== $endpoint['method'] => [Response::HTTP_FORBIDDEN, null],
                 \in_array($endpoint['name'], ['_logout_admin', 'admin_2fa_login', 'admin_2fa_check'], true) => [Response::HTTP_FORBIDDEN, null],
                 'admin_login' === $endpoint['name'] => null,
                 'admin_totp_enrol' === $endpoint['name'] => [Response::HTTP_FOUND, '/admin'],

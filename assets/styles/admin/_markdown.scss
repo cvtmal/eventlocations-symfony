@@ -1,0 +1,39 @@
+.markdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-2);
+}
+
+.markdown__preview {
+    min-height: 96px;
+    padding: 10px var(--a-space-3);
+    border: 1px solid var(--a-line);
+    border-radius: var(--a-r-md);
+    background: var(--a-surface-muted);
+    overflow-wrap: anywhere;
+
+    &[hidden] {
+        display: none;
+    }
+
+    p,
+    ul,
+    ol,
+    pre,
+    blockquote {
+        margin: 0 0 var(--a-space-2);
+    }
+}
+
+.markdown__status {
+    color: var(--a-muted);
+    font-size: 13px;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.markdown__panel[hidden] {
+    display: none;
+}

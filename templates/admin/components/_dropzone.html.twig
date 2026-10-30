@@ -1,0 +1,10 @@
+{#
+    File drop zone (Photos). Include with `with_context = false`: id, name, label, hint (translated), accept, multiple (bool).
+    A real file input covers the zone, so it works with a drop, a click and the keyboard.
+#}
+<div class="dropzone">
+    <input class="dropzone__input" id="{{ id }}" type="file" name="{{ name }}"{% if accept|default(false) %} accept="{{ accept }}"{% endif %}{% if multiple|default(false) %} multiple{% endif %}{% if hint|default(false) %} aria-describedby="{{ id }}-hint"{% endif %}>
+    {{ admin_icon('upload') }}
+    <label class="dropzone__label" for="{{ id }}">{{ label }}</label>
+    {% if hint|default(false) %}<span class="dropzone__hint" id="{{ id }}-hint">{{ hint }}</span>{% endif %}
+</div>

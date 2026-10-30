@@ -14,6 +14,7 @@ use App\Tests\Fixtures\Admin\FakeModule\FakeNavigationItem;
 use App\Tests\Fixtures\Admin\FakeModule\FakeRecordController;
 use App\Tests\Fixtures\Admin\FakeModule\FakeRecordPanel;
 use App\Tests\Fixtures\Admin\FakeModule\FakeRecordTab;
+use App\Tests\Fixtures\Admin\FakeModule\FakeSearchProvider;
 use App\Tests\Fixtures\Admin\FakeModule\FakeSecondNavigationItem;
 use App\Tests\Fixtures\I18n\I18nProbeKernel;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -38,6 +39,7 @@ class AdminExtensionProbeKernel extends I18nProbeKernel
         FakeRecordController::class,
         FakeJsonController::class,
         FakeAdminOnlyJsonController::class,
+        FakeSearchProvider::class,
     ];
 
     protected function configureProbe(ContainerConfigurator $container): void
