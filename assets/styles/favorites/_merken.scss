@@ -26,6 +26,11 @@
     }
 }
 
+// Saved. The white stroke stays: below lg the heart sits on a veil over a photo, where accent alone can fall to 1.1:1.
+.merken__button[aria-pressed='true'] .icon {
+    fill: var(--c-accent);
+}
+
 // The word stays the accessible name's visible part from lg; below that only the heart shows.
 .merken__text {
     @include bp.down(lg) {

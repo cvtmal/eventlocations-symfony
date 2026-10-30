@@ -25,6 +25,18 @@ final class ListingQuery
     public const PER_PAGE = 48;
     private const PHOTOS_PER_CARD = 8;
 
+    /**
+     * The columns of a card and the join to its town, shared by every card query so that they
+     * cannot drift. The town is optional (#21), hence the LEFT JOIN, in one place for both.
+     */
+    private const CARD_COLUMNS = <<<'SQL'
+        v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max, v.rating_score, v.rating_count,
+            tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary,
+            (SELECT COALESCE(jsonb_agg(h.code ORDER BY h.position), '[]'::jsonb)
+                FROM venue_rating_highlights h WHERE h.venue_id = v.id) AS highlights
+        SQL;
+    private const CARD_TOWN_JOIN = 'LEFT JOIN towns tw ON tw.id = v.town_id';
+
     public function __construct(
         private readonly Connection $connection,
         private readonly TranslationJoin $translationJoin,
@@ -38,17 +50,49 @@ final class ListingQuery
         $statement = $this->cardStatement($criteria, $locale);
         $rows = $this->connection->fetchAllAssociative($statement->sql, $statement->params, $statement->types);
 
-        $numbers = [];
-        foreach ($rows as $row) {
-            \assert(\is_string($row['id']));
-            \assert(\is_int($row['number']));
-            $numbers[$row['id']] = $row['number'];
+        return ListingPage::of($this->cards($rows, $locale), $this->count($criteria), $criteria->page, self::PER_PAGE);
+    }
+
+    /**
+     * The published venues among the given numbers, in the given order (the Merkliste's saved
+     * order). Unknown and unpublished numbers are left out, so the caller can see what is stale.
+     * Two queries, none for an empty list.
+     *
+     * @param list<int> $numbers
+     *
+     * @return list<ListingCard>
+     */
+    public function cardsByNumbers(array $numbers, string $locale): array
+    {
+        if ([] === $numbers) {
+            return [];
         }
-        $photos = [] === $numbers ? [] : $this->photos($numbers, $locale);
 
-        $cards = array_map(fn (array $row): ListingCard => $this->card($row, $photos), $rows);
+        $filter = new ListingSql(SearchCriteria::none(), $this->enabledLocale->default());
+        $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
+        $columns = self::CARD_COLUMNS;
+        $townJoin = self::CARD_TOWN_JOIN;
 
-        return ListingPage::of($cards, $this->count($criteria), $criteria->page, self::PER_PAGE);
+        $rows = $this->connection->fetchAllAssociative(
+            <<<SQL
+                SELECT {$columns}
+                FROM {$filter->from}
+                {$townJoin}
+                {$translation}
+                WHERE {$filter->where} AND v.number IN (:numbers)
+                SQL,
+            $filter->params + $this->translationJoin->parameters($locale) + ['numbers' => $numbers],
+            $filter->types + ['numbers' => ArrayParameterType::INTEGER],
+        );
+
+        $position = array_flip($numbers);
+        usort($rows, static function (array $a, array $b) use ($position): int {
+            \assert(\is_int($a['number']) && \is_int($b['number']));
+
+            return $position[$a['number']] <=> $position[$b['number']];
+        });
+
+        return $this->cards($rows, $locale);
     }
 
     public function count(SearchCriteria $criteria): int
@@ -64,15 +108,14 @@ final class ListingQuery
     {
         $filter = new ListingSql($criteria, $this->enabledLocale->default());
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
+        $columns = self::CARD_COLUMNS;
+        $townJoin = self::CARD_TOWN_JOIN;
 
         $sql = <<<SQL
             {$filter->with}
-            SELECT v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max, v.rating_score, v.rating_count,
-                tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary,
-                (SELECT COALESCE(jsonb_agg(h.code ORDER BY h.position), '[]'::jsonb)
-                    FROM venue_rating_highlights h WHERE h.venue_id = v.id) AS highlights
+            SELECT {$columns}
             FROM {$filter->from}
-            LEFT JOIN towns tw ON tw.id = v.town_id
+            {$townJoin}
             {$translation}
             WHERE {$filter->where}
             ORDER BY v.tier_rank, md5(v.id::text || :seed), v.id
@@ -108,6 +151,24 @@ final class ListingQuery
     private function seed(): string
     {
         return $this->clock->now()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('Y-m-d');
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rows
+     *
+     * @return list<ListingCard>
+     */
+    private function cards(array $rows, string $locale): array
+    {
+        $numbers = [];
+        foreach ($rows as $row) {
+            \assert(\is_string($row['id']));
+            \assert(\is_int($row['number']));
+            $numbers[$row['id']] = $row['number'];
+        }
+        $photos = [] === $numbers ? [] : $this->photos($numbers, $locale);
+
+        return array_map(fn (array $row): ListingCard => $this->card($row, $photos), $rows);
     }
 
     /**

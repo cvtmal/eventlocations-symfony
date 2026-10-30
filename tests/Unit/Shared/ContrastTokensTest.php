@@ -38,6 +38,9 @@ final class ContrastTokensTest extends TestCase
         // WCAG 1.4.11: the borders of the inquiry form's controls on the detail page's surface.
         yield 'control border muted on surface' => ['muted', 'surface', 3.0];
         yield 'control border accent on surface' => ['accent', 'surface', 3.0];
+
+        // WCAG 1.4.11: the filled heart of a saved venue on the card and on the detail action card.
+        yield 'heart accent on surface-2' => ['accent', 'surface-2', 3.0];
     }
 
     #[DataProvider('pairs')]

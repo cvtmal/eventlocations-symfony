@@ -1,0 +1,51 @@
+@use '../abstracts/breakpoints' as bp;
+
+// The /merkliste page (favorites/merkliste.html.twig) and its remove button. Cards are #7's.
+.merkliste__title {
+    margin: var(--space-l) 0 0;
+    padding-top: var(--space-l);
+    font-size: var(--fs-hero);
+    line-height: var(--lh-hero);
+}
+
+.merkliste__count {
+    margin: var(--space-2xs) 0 0;
+    font-size: var(--fs-count);
+    line-height: var(--lh-count);
+}
+
+.merkliste__notice {
+    margin: var(--space-m) 0 0;
+}
+
+// Above the title link's stretched ::after, or the whole card would catch the click.
+.merkliste-remove {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    margin: 0;
+}
+
+.merkliste-remove__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--c-ink);
+    font-size: var(--fs-body);
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// Below lg the detail page's action bar is fixed to the bottom of the viewport.
+.page-venue .toast-region {
+    @include bp.down(lg) {
+        bottom: 5.5rem;
+    }
+}
