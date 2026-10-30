@@ -227,6 +227,89 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame('Merkliste', $crawler->filter('.filter-bar__aside a.btn--round')->text());
     }
 
+    public function test_region_filters_narrow_results_through_the_query_string(): void
+    {
+        $zurich = $this->town('Zürich');
+        $stafa = $this->town('Stäfa');
+        $bern = $this->town('Bern');
+        $this->venue(['name' => 'Remise Zürich', 'town' => $zurich, 'lat' => $zurich->lat(), 'lng' => $zurich->lng()]);
+        $this->venue(['name' => 'Seehaus Stäfa', 'town' => $stafa, 'zip' => '8712', 'lat' => $stafa->lat(), 'lng' => $stafa->lng()]);
+        $this->venue(['name' => 'Landgut Bern', 'town' => $bern, 'lat' => $bern->lat(), 'lng' => $bern->lng()]);
+
+        $crawler = $this->get('/hochzeitslocations?canton=zh');
+        self::assertSame(['Remise Zürich', 'Seehaus Stäfa'], $this->names($crawler));
+        self::assertSame(['Zürich'], $this->chips($crawler));
+
+        $crawler = $this->get('/hochzeitslocations?place='.$stafa->id().'&radius=0');
+        self::assertSame(['Seehaus Stäfa'], $this->names($crawler));
+        self::assertSame(['Stäfa'], $this->chips($crawler));
+
+        $crawler = $this->get('/hochzeitslocations?place='.$stafa->id().'&radius=25');
+        self::assertSame(['Remise Zürich', 'Seehaus Stäfa'], $this->names($crawler));
+        self::assertSame(['Stäfa + 25 km'], $this->chips($crawler));
+        self::assertSame('/hochzeitslocations', $crawler->filter('.filter-bar .chip')->attr('href'));
+
+        $crawler = $this->get('/hochzeitslocations?place=8712');
+        self::assertSame(['Seehaus Stäfa'], $this->names($crawler));
+        self::assertSame(['8712 Stäfa + 5 km'], $this->chips($crawler));
+        $place = $crawler->filter('#filter-region-form input[type="hidden"][name="place"]');
+        self::assertSame('8712', $place->attr('value'));
+        self::assertEqualsWithDelta($stafa->lat(), (float) $place->attr('data-lat'), 0.0001);
+        self::assertEqualsWithDelta($stafa->lng(), (float) $place->attr('data-lng'), 0.0001);
+        self::assertSame('8712 Stäfa', $crawler->filter('#filter-region-place')->attr('data-display'));
+
+        self::assertSame(['9999 + 5 km'], $this->chips($this->get('/hochzeitslocations?place=9999')));
+        self::assertSame(['Ort + 5 km'], $this->chips($this->get('/hochzeitslocations?place=0198a3c4-6b1e-7f3a-9c2d-1e4f5a6b7c8d')));
+    }
+
+    public function test_region_overlay_is_a_get_form_that_keeps_other_filters(): void
+    {
+        $this->venue(['town' => $this->town('Zürich')]);
+
+        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=80&setting[]=lake');
+        $form = $crawler->filter('#filter-region form#filter-region-form');
+
+        self::assertCount(1, $form);
+        self::assertSame('get', $form->attr('method'));
+        self::assertSame('/hochzeitslocations', $form->attr('action'));
+        self::assertSame('/_search/count', $form->attr('data-live-count-url'));
+        self::assertSame('Wo soll eure Hochzeit stattfinden?', $crawler->filter('#filter-region-title')->text());
+
+        // The other groups travel as hidden state; this overlay's own fields do not.
+        self::assertSame('80', $form->filter('input[type="hidden"][name="guests"]')->attr('value'));
+        self::assertSame('lake', $form->filter('input[type="hidden"][name="setting[]"]')->attr('value'));
+        self::assertCount(0, $form->filter('input[type="hidden"][name="radius"]'));
+
+        $button = $crawler->filter('#filter-region .overlay__footer button');
+        self::assertSame('submit', $button->attr('type'));
+        self::assertSame('filter-region-form', $button->attr('form'));
+        self::assertSame('Resultate anzeigen', $button->text());
+        self::assertSame('Keine Resultate', $button->attr('data-count-zero'));
+        self::assertSame('1 Resultat anzeigen', $button->attr('data-count-one'));
+        self::assertSame('%n Resultate anzeigen', $button->attr('data-count-other'));
+
+        // No JS: the <select> and the text field work, and the hidden fields stay out of the way.
+        $options = $form->filter('noscript select[name="canton"] option');
+        self::assertCount(27, $options);
+        self::assertSame('Alle Kantone', $options->first()->text());
+        self::assertSame('zh', $form->filter('noscript select[name="canton"] option[selected]')->attr('value'));
+        self::assertSame('zh', $form->filter('input[type="hidden"][name="canton"][disabled]')->attr('value'));
+        self::assertCount(1, $form->filter('input[type="hidden"][name="place"][disabled]'));
+        self::assertCount(1, $form->filter('[role="tablist"][hidden]'));
+
+        self::assertCount(26, $form->filter('[role="option"]'));
+        self::assertSame('Zürich', $form->filter('#filter-region-canton')->attr('value'));
+        self::assertNull($form->filter('#filter-region-canton')->attr('name'));
+
+        $radius = $form->filter('input[type="range"][name="radius"]');
+        self::assertSame('0', $radius->attr('min'));
+        self::assertSame('50', $radius->attr('max'));
+        self::assertSame('5', $radius->attr('value'));
+
+        self::assertCount(1, $form->filter('#ch-zh'));
+        self::assertStringContainsString('Bundesamt für Statistik (BFS)', $form->filter('.region-filter__credit')->text());
+    }
+
     public function test_empty_state(): void
     {
         $this->venue([]);
@@ -311,6 +394,14 @@ final class ListingControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         return $crawler;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function chips(Crawler $crawler): array
+    {
+        return $crawler->filter('.filter-bar .chip')->each(static fn (Crawler $chip): string => $chip->text());
     }
 
     private function card(Crawler $crawler, string $name): Crawler

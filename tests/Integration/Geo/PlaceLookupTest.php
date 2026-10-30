@@ -31,8 +31,11 @@ final class PlaceLookupTest extends KernelTestCase
 
         self::assertSame(PlaceType::Canton, $suggestions[0]->type);
         self::assertSame('zh', $suggestions[0]->cantonCode);
+        self::assertNull($suggestions[0]->lat);
         self::assertSame(PlaceType::Town, $suggestions[1]->type);
         self::assertSame('Zürich', $suggestions[1]->name);
+        self::assertNotNull($suggestions[1]->lat);
+        self::assertNotNull($suggestions[1]->lng);
     }
 
     public function test_exact_zip_comes_first(): void
@@ -43,6 +46,8 @@ final class PlaceLookupTest extends KernelTestCase
         self::assertSame('8712', $first->zip);
         self::assertSame('zh', $first->cantonCode);
         self::assertNotNull($first->townId);
+        self::assertEqualsWithDelta(47.24, (float) $first->lat, 0.1);
+        self::assertEqualsWithDelta(8.72, (float) $first->lng, 0.1);
     }
 
     public function test_zip_of_a_town_with_one_postcode(): void

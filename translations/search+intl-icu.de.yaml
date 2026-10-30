@@ -18,6 +18,21 @@ filter:
     more_title: Weitere Filter
     reset: Filter löschen
     merkliste: Merkliste
+    region_title: Wo soll eure Hochzeit stattfinden?
+    region_tab_canton: Kanton
+    region_tab_place: Ort/PLZ
+    canton_placeholder: Kanton eingeben
+    canton_all: Alle Kantone
+    place_placeholder: Ort oder PLZ eingeben
+    radius_label: Umkreis
+    # formatted = the radius, or %n for JS
+    radius_value: '{radius, plural, =0 {0 km} other {+{formatted} km}}'
+    no_places: Kein Ort gefunden
+    # formatted = count|swiss_number, or %n for live-count.js
+    show_results: '{count, plural, =0 {Keine Resultate} one {# Resultat anzeigen} other {{formatted} Resultate anzeigen}}'
+    show_results_plain: Resultate anzeigen
+    map_label: Karte der Schweizer Kantone
+    map_credit: 'Quelle: Bundesamt für Statistik (BFS), GEOSTAT'
 chip:
     remove: 'Filter {label} entfernen'
     place_generic: Ort

@@ -1,8 +1,9 @@
 {#
-    Filter-bar slot "Region" (canton, place + radius). Created by #7 as a placeholder; #10 replaces this file's contents
-    and never edits _filter_bar. Included twice with `with_context = false`: criteria (SearchCriteria), part: chips|trigger.
-    Renders <li class="filter-bar__item">s: one chip per active value (part chips), or the trigger plus its overlay (part trigger).
-    Place and radius form one chip; #10 resolves town names (until then "Ort").
+    Filter-bar slot "Region" (canton, place + radius, #10). Included twice with `with_context = false`: criteria
+    (SearchCriteria), part: chips|trigger. Renders <li class="filter-bar__item">s: one chip per active value (part chips),
+    or the trigger plus its overlay (part trigger). Place and radius form one chip: a town id shows the town ("Stäfa"), a
+    ZIP shows ZIP and town ("8712 Stäfa", because radius 0 filters on that ZIP); unknown values show the ZIP or "Ort".
+    The form lives in search/filter/_region_form.html.twig; the footer's submit button joins it by its `form` attribute.
 #}
 {%- if part == 'chips' -%}
     {%- if criteria.canton is not null -%}
@@ -10,16 +11,30 @@
         <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, 'canton'), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
     {%- endif -%}
     {%- if criteria.place is not null -%}
-        {%- set place = criteria.isZipPlace() ? criteria.place : 'chip.place_generic'|trans({}, 'search') -%}
+        {%- set selected = selected_place(criteria) -%}
+        {%- if selected is null -%}
+            {%- set place = criteria.isZipPlace() ? criteria.place : 'chip.place_generic'|trans({}, 'search') -%}
+        {%- else -%}
+            {%- set place = criteria.isZipPlace() ? selected.label : selected.name -%}
+        {%- endif -%}
         {%- set label = criteria.radius > 0 ? 'chip.place_radius'|trans({place: place, radius: criteria.radius}, 'search') : 'chip.place'|trans({place: place}, 'search') -%}
         <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, ['place', 'radius']), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
     {%- endif -%}
 {%- elseif part == 'trigger' -%}
     <li class="filter-bar__item">
         {{- include('components/_button.html.twig', {label: 'filter.region'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-region'}}, with_context = false) -}}
-        {% embed 'components/_overlay.html.twig' with {id: 'filter-region', tone: 'region', title: 'filter.region'|trans({}, 'search'), criteria: criteria} only %}
-            {% block overlay_body %}{% endblock %}
-            {% block overlay_footer %}{{ include('components/_button.html.twig', {href: listing_path_without(criteria, ['canton', 'place', 'radius']), label: 'filter.reset'|trans({}, 'search'), variant: 'black'}, with_context = false) }}{% endblock %}
+        {% embed 'components/_overlay.html.twig' with {id: 'filter-region', tone: 'region', title: 'filter.region_title'|trans({}, 'search'), criteria: criteria, selected: selected_place(criteria)} only %}
+            {% block overlay_body %}{{ include('search/filter/_region_form.html.twig', {criteria: criteria, selected: selected}, with_context = false) }}{% endblock %}
+            {% block overlay_footer %}
+                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'black', type: 'submit', attributes: {
+                    form: 'filter-region-form',
+                    'data-live-count-label': '',
+                    'data-count-zero': 'filter.show_results'|trans({count: 0, formatted: '0'}, 'search'),
+                    'data-count-one': 'filter.show_results'|trans({count: 1, formatted: '1'}, 'search'),
+                    'data-count-other': 'filter.show_results'|trans({count: 2, formatted: '%n'}, 'search'),
+                }}, with_context = false) -}}
+                <a class="overlay__clear" href="{{ listing_path_without(criteria, ['canton', 'place', 'radius']) }}" data-region-clear>{{ 'filter.reset'|trans({}, 'search') }}</a>
+            {%- endblock %}
         {% endembed %}
     </li>
 {%- endif -%}

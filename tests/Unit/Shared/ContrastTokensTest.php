@@ -23,6 +23,7 @@ final class ContrastTokensTest extends TestCase
             ['ink', 'overlay-region'], ['ink', 'overlay-guests'], ['ink', 'overlay-more'], ['ink', 'overlay-more-bar'],
             ['ink', 'surface'], ['ink', 'surface-2'], ['ink', 'surface-3'], ['ink', 'surface-footer'], ['ink', 'bg'],
             ['muted', 'surface-2'], ['ink', 'black'], ['ink-inverse', 'tooltip-bg'],
+            ['ink', 'dropdown'],
         ];
         foreach ($text as [$fg, $bg]) {
             yield "text {$fg} on {$bg}" => [$fg, $bg, 4.5];

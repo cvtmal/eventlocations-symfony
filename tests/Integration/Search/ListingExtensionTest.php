@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Search;
 
+use App\Geo\ReadModel\PlaceResolver;
 use App\Media\ValueObject\ImageFormat;
 use App\Search\ReadModel\CardPhoto;
 use App\Search\ReadModel\KnownTerms;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\Twig\ListingExtension;
+use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\ValueObject\RatingLabel;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\InputBag;
@@ -24,6 +27,8 @@ use Twig\Environment;
  */
 final class ListingExtensionTest extends KernelTestCase
 {
+    use ImportsTownDataset;
+
     private const PHOTO_ID = '0198a3c4-6b1e-7f3a-9c2d-1e4f5a6b7c8d';
 
     private ListingExtension $extension;
@@ -34,7 +39,10 @@ final class ListingExtensionTest extends KernelTestCase
         $translator = self::getContainer()->get('translator');
         self::assertInstanceOf(UrlGeneratorInterface::class, $urls);
         self::assertInstanceOf(TranslatorInterface::class, $translator);
-        $this->extension = new ListingExtension($urls, $translator);
+        // By hand, not from the container: a private service used once may be inlined there.
+        $connection = self::getContainer()->get(Connection::class);
+        self::assertInstanceOf(Connection::class, $connection);
+        $this->extension = new ListingExtension($urls, $translator, new PlaceResolver($connection));
     }
 
     public function test_listing_path_with_and_without_a_page(): void
@@ -55,6 +63,13 @@ final class ListingExtensionTest extends KernelTestCase
         self::assertSame('/hochzeitslocations?setting%5B0%5D=lake&setting%5B1%5D=river&access%5B0%5D=station', $path);
 
         self::assertSame($criteria->toQuery(), $this->criteria(Request::create($path)->query->all())->toQuery());
+    }
+
+    public function test_selected_place(): void
+    {
+        self::assertNull($this->extension->selectedPlace(SearchCriteria::none()));
+        self::assertSame('Stäfa', $this->extension->selectedPlace($this->criteria(['place' => '8712']))?->name);
+        self::assertNull($this->extension->selectedPlace($this->criteria(['place' => self::PHOTO_ID])));
     }
 
     public function test_listing_path_without(): void

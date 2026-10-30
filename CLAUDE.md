@@ -118,6 +118,11 @@ Built in #3:
 - Labels: the `Canton` enum (`Geo\ValueObject`, implements `TranslatableInterface`) and the `geo` domain (`translations/geo+intl-icu.de.yaml`, keys `canton.<code>`). Canton suggestions carry only the code.
 - Map: `{{ canton_map() }}` inlines `assets/maps/cantons.svg` (`<g id="cantons">` with `<path id="ch-<code>">`, `<g id="lakes">`); source, licence and build recipe in `assets/maps/LICENSES.md`. Dataset source note: `data/geo/SOURCE.md`.
 
+Built in #10 (`filter-region`):
+
+- `Geo\ReadModel\PlaceResolver::resolve(string $place): ?ResolvedPlace` (town UUID or 4-digit ZIP; a ZIP means its most populous town, the rule of `ListingSql`; memoized per value, misses too, `kernel.reset`). `ResolvedPlace`: `name`, `zip`, `lat`, `lng`, `label()` ("8712 Stäfa").
+- `PlaceSuggestion` has `lat`/`lng` (null for a canton), so town entries of `/_search/places` now end in `"lat", "lng"`. A map pin uses the affine fit in `assets/js/region-filter.js` (2.29 SVG units per km, 96.4 % of towns land in their own canton).
+
 ### Media
 
 Image variant generation, `<picture>` Twig helper.
@@ -198,6 +203,16 @@ Venue aggregate (translations, terms, rooms, photos, documents, reviews), detail
 - **Tests:** `ListingControllerTest` (rendering, carousel loading rules, chips, pagination, 404, headers), `ListingHtmlBudgetTest` (48 cards × 8 photos ≤ 60 KB gzip), `ListingExtensionTest`, `TopCantonsQueryTest`, `PageLinksTest`, `tests/Application/Shared/HomeRedirectTest`.
 
 **Built in #8 (`venue-detail-page`):** `Search\Controller\SimilarVenuesController` has no route on purpose; the Venues detail template embeds it (`render(controller(…, {venueId}))`) and it renders `templates/search/_similar_venues.html.twig` (12 compact cards built with #7's `card_picture()`, `search/_card_facts` and `components/_badge`; "Alle Locations" → `listing`), styles `assets/styles/search/_similar-venues.scss`, strings `similar.*`.
+
+**Built in #10 (`filter-region`).** No migration. `_filter_bar`, `_overlay` and `SearchCriteria` are unchanged.
+
+- **Slot:** `search/filter/_region.html.twig` (chips, trigger, overlay) plus `search/filter/_region_form.html.twig` (`criteria`, `selected`), the GET form `#filter-region-form`. Its submit button sits in the shell's footer and joins through `form="filter-region-form"`. `.filter-bar` text must not contain "Karte" (`ListingControllerTest`), so the map's name stays in `aria-label`.
+- **Twig:** `selected_place(criteria): ?ResolvedPlace` on `ListingExtension` (third constructor argument `PlaceResolver`). Chip: a town id shows "Stäfa", a ZIP "8712 Stäfa", unknown values the ZIP or "Ort".
+- **`assets/js/live-count.js`:** the shared count; #11 and #12 add no script tag. Contract: `.claude/rules/frontend.md` (Overlays). Strings: `filter.show_results`, rendered three times with `count` 0, 1, 2 and `formatted: '%n'` for the 2.
+- **`assets/js/region-filter.js`:** tabs, canton combobox, map (roving tabindex, `role="button"`, `aria-pressed`, tooltip through `el.style.left/top`, never `setAttribute('style')`, CSP #16), place combobox, radius, pin and "Filter löschen". One form with two tabs: only the active tab's hidden field is enabled; the Ort tab sets `inert` on the map. Closing the overlay discards pending changes; text without a choice clears the value (four digits count as that ZIP). Without JS: `<noscript><select name="canton">`, a text field for a ZIP, the native radius.
+- **Verified in Chromium 156 (not Firefox or Safari):** a `formdata` listener's edits reach the submitted URL, and `preventDefault()` on Esc in a `keydown` keeps a popover open, so Esc closes the list first.
+- **Styles:** `assets/styles/search/_filter-region.scss`, tokens `--c-dropdown`, `--c-map-radius`. `[hidden]` has no global rule: a class that sets `display` needs its own `&[hidden] { display: none; }`. Grid layout only under `:popover-open`.
+- **Budget:** `AssetBudgetTest` holds `overlay.js + live-count.js + region-filter.js` to 6 KB gzip.
 
 ### Favorites
 
