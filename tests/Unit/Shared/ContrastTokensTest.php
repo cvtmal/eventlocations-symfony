@@ -24,6 +24,7 @@ final class ContrastTokensTest extends TestCase
             ['ink', 'surface'], ['ink', 'surface-2'], ['ink', 'surface-3'], ['ink', 'surface-footer'], ['ink', 'bg'],
             ['muted', 'surface-2'], ['ink', 'black'], ['ink-inverse', 'tooltip-bg'],
             ['ink', 'dropdown'],
+            ['muted', 'surface'], ['accent-soft', 'surface'],
         ];
         foreach ($text as [$fg, $bg]) {
             yield "text {$fg} on {$bg}" => [$fg, $bg, 4.5];
@@ -33,6 +34,10 @@ final class ContrastTokensTest extends TestCase
         foreach (['surface', 'surface-2', 'surface-3', 'bg', 'overlay-region', 'overlay-guests', 'overlay-more'] as $bg) {
             yield "focus on {$bg}" => ['focus', $bg, 3.0];
         }
+
+        // WCAG 1.4.11: the borders of the inquiry form's controls on the detail page's surface.
+        yield 'control border muted on surface' => ['muted', 'surface', 3.0];
+        yield 'control border accent on surface' => ['accent', 'surface', 3.0];
     }
 
     #[DataProvider('pairs')]

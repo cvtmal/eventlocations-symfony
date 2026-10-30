@@ -1,0 +1,123 @@
+@use '../abstracts/breakpoints' as bp;
+
+// "{Name} kontaktieren" (#14, DP-13). No JS. An invalid field has an error text and a thicker
+// border, never colour alone.
+.inquiry-form__promises {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-m);
+    margin: 0 0 var(--space-m);
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2xs);
+        font-weight: var(--fw-semibold);
+    }
+}
+
+.inquiry-form__summary {
+    margin-bottom: var(--space-m);
+    padding: var(--space-s) var(--space-m);
+    border: 2px solid var(--c-accent);
+    border-radius: var(--r-bar);
+    background: var(--c-surface);
+
+    p,
+    ul {
+        margin: 0;
+    }
+
+    ul {
+        margin-top: var(--space-2xs);
+        padding-left: var(--space-m);
+    }
+}
+
+.inquiry-form__form {
+    display: grid;
+    gap: var(--space-m);
+}
+
+.inquiry-form__row {
+    display: grid;
+    gap: var(--space-m);
+
+    @include bp.up(sm) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.inquiry-form__row--three {
+    @include bp.up(md) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+// Grid children must be able to shrink: a date input has a wide intrinsic size.
+.inquiry-form__field {
+    min-width: 0;
+}
+
+.inquiry-form__label {
+    display: block;
+    margin-bottom: var(--space-2xs);
+    font-weight: var(--fw-semibold);
+}
+
+.inquiry-form__hint {
+    color: var(--c-muted);
+    font-weight: var(--fw-regular);
+}
+
+.inquiry-form__control {
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: var(--space-xs) var(--space-s);
+    border: 1px solid var(--c-muted);
+    border-radius: var(--r-button);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    color-scheme: dark;
+    font: inherit;
+
+    &[aria-invalid='true'] {
+        border: 2px solid var(--c-accent);
+    }
+}
+
+textarea.inquiry-form__control {
+    min-height: 10rem;
+    resize: vertical;
+}
+
+.inquiry-form__error {
+    margin: var(--space-2xs) 0 0;
+    color: var(--c-accent-soft);
+    font-size: var(--fs-small);
+}
+
+// Off-screen, not display: none: a bot that skips hidden fields would miss the trap.
+.inquiry-form__trap {
+    position: absolute;
+    left: -9999px;
+}
+
+.inquiry-form__actions {
+    display: grid;
+    gap: var(--space-xs);
+    justify-items: start;
+}
+
+.inquiry-form__privacy {
+    margin: 0;
+    color: var(--c-muted);
+    font-size: var(--fs-small);
+}
+
+.inquiry-form--sent p:last-child {
+    margin-bottom: 0;
+}

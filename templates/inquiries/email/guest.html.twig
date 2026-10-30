@@ -1,0 +1,15 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+{% import 'inquiries/email/_facts.html.twig' as inquiry %}
+
+{% block preheader %}{{ 'email.guest.preheader'|trans({venue: venue_name}, 'inquiries') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('email.guest.greeting'|trans({name: first_name}, 'inquiries')) }}
+{{ blocks.p('email.guest.intro'|trans({venue: venue_name}, 'inquiries')) }}
+{{ inquiry.facts(occasion, guests, event_date, first_name, last_name, guest_email, phone) }}
+{{ blocks.quote(message) }}
+{{ blocks.rule() }}
+{{ blocks.note('email.guest.answer_note'|trans({venue: venue_name}, 'inquiries')) }}
+{{ blocks.button('email.guest.button'|trans({}, 'inquiries'), url('venue_show', {slug: venue_slug})) }}
+{% endblock %}

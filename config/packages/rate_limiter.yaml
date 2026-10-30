@@ -1,6 +1,8 @@
 # Rate limiters (#8 venue-detail-page). `phone_reveal` guards GET /hochzeitslocation/{slug}/telefon
 # (DP-11): 20 reveals per 10 minutes per client IP. No lock (symfony/lock is not installed, so the
 # `lock_factory: auto` default resolves to none); the state lives in its own cache pool.
+# `inquiry_submit` (#14, IQ-3) guards POST /hochzeitslocation/{slug}/anfrage: 5 inquiries per hour
+# per client IP, consumed only after the form is valid and the fill time has passed.
 framework:
     rate_limiter:
         phone_reveal:
@@ -8,10 +10,17 @@ framework:
             limit: 20
             interval: '10 minutes'
             cache_pool: cache.phone_reveal
+        inquiry_submit:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+            cache_pool: cache.inquiry_submit
     cache:
         pools:
             cache.phone_reveal:
                 adapter: cache.app
+            cache.inquiry_submit:
+                adapter: cache.app
 
-# Tests clear the pool in setUp(): an array adapter would not work there, because the test client
+# Tests clear the pools in setUp(): an array adapter would not work there, because the test client
 # resets services (and so array pools) between requests.

@@ -13,6 +13,10 @@ parameters:
     # Venue content folders (S8, #9) and the import's variant staging directory.
     app.content_root: '%env(resolve:CONTENT_ROOT)%'
     app.import_staging_dir: '%kernel.project_dir%/var/import-staging'
+    # Public contact address of the site (Q5); the guest copy's Reply-To (#14).
+    site.contact_email: 'hallo@hochzeitslocation.ch'
+    # LEG-2: app:inquiries:purge deletes inquiries older than this (#18 documents it).
+    inquiries.retention_months: 12
 
 services:
     # default configuration for services in *this* file

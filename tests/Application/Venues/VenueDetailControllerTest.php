@@ -147,9 +147,8 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertCount(2, $crawler->filter('.venue-documents a[href^="/media/'.$venue->number().'/"][href$=".pdf"]'));
         self::assertSelectorTextContains('.venue-documents', 'Preisliste');
 
-        // Slot for #14: present and empty.
-        self::assertCount(1, $crawler->filter('section#anfrage'));
-        self::assertSame('', trim($crawler->filter('section#anfrage')->html()));
+        // #14's form fills the slot.
+        self::assertCount(1, $crawler->filter('section#anfrage form'));
 
         // Reviews: three visible, the fourth behind "Alle Kommentare".
         self::assertCount(3, $crawler->filter('.venue-reviews > .venue-review'));

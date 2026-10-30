@@ -3,6 +3,9 @@ framework:
     form:
         csrf_protection:
             token_id: submit
+            # Header-based check only (Sec-Fetch-Site, Origin, Referer): the forms render into
+            # cached pages, so there is no JS double-submit cookie.
+            field_attr: {}
 
     csrf_protection:
         stateless_token_ids:
