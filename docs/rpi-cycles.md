@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -96,7 +96,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 21 | `legacy-data-import` | W5 | DATA-3 | 3, 9 | `venues`: address, town, canton and coordinates become optional; `venue_translations.region` | ~~Q4~~, ~~Q12~~ | ✅ Done |
 | 22 | `admin-foundation` | W4 | ADM-1–ADM-6, ADM-8 | 1, 2 | `admin_users`, `admin_audit_log` | ~~Q9~~ | ✅ Done |
 | 23 | `admin-ui-kit` | W5 | ADM-4, ADM-7 | 22 | — | ~~Q11~~ | ✅ Done |
-| 24 | `cms-venues` | W6 | CMS-1–CMS-4, CMS-9–CMS-11 | 8, 9, 21, 23, 31 | `venues.cms_edited_at` | — | Research |
+| 24 | `cms-venues` | W6 | CMS-1–CMS-4, CMS-9–CMS-11 | 8, 9, 21, 23, 31 | `venues.cms_edited_at` | — | ✅ Done |
 | 25 | `cms-venue-media` | W6 | CMS-5–CMS-8 | 9, 23 | — | — | Research |
 | 26 | `cms-pages` | W7 | CMS-12 | 17, 23 | `content_blocks` (+ columns on #17's `landing_pages`, if it exists) | — | Research |
 | 27 | `crm-foundation` | W9 | CRM-1–CRM-6, CRM-11 | 20, 24 | `crm_companies`, `crm_contacts`, `crm_company_venues`, `crm_activity_*`, `crm_activities`, `crm_tasks` | ~~Q8~~, ~~Q10~~ | Research |
@@ -1987,6 +1987,33 @@ W6. Depends on #8 (preview and links), #9 (Venues write side), #21 (the optional
   - an integration test proves the import guard;
   - the screenshot comparison with the design reference passes;
   - keyboard walkthrough of the editor.
+
+**Outcome (2026-10-30).** Done in commit `cms-venues` (review: Complete, 0 critical, 1 major, 5 minor; the major was the rebase onto #15, fixed by the finisher). Migration `Version20261030212027`, no new Composer or npm package. Staff can now list, create, edit, publish, unpublish, delete and preview venues under `/admin/locations`; the import no longer overwrites their edits. Read `CLAUDE.md` `### Venues` and `### Cms` ("Built in #24") before touching venue writes or the editor.
+
+- **Schema:** `venues.cms_edited_at` (set by every CMS write, cleared when an import applies) and `venues.coordinates_from_town` ("Ortsmitte übernehmen"; `chk_venues_coordinates_from_town` needs coordinates). With the flag set, Seo drops the coordinates (no `og:type place`, no `geo`) and #15's `VenueMapExtension::location()` shows no map. Also `content_imports.overwrote_cms_edits` / `venues_cms_edited` and the table `venue_deleted_content_keys`, the tombstone that keeps a deleted content venue deleted.
+- **Write side (`Venues`):** 12 audited commands, one handler each: `ChangeVenueBasics`, `ChangeVenueTexts`, `RelocateVenue`, `ChangeVenueTerms`, `ChangeVenueWeddingFacts`, `ChangeVenueContact`, `AnswerVenueFaq`, `RateVenue`, `PublishVenue`, `UnpublishVenue`, `DeleteVenue`, and `RecordVenueCreated` (dispatched inside `CreateVenue`, which is not audited itself). Every handler goes through `Venues\VenueEditing`: `lock()` (row lock), `open()` (lock plus the stale check), `close($venue, purgeListings)` (sets `cms_edited_at`, purges after the commit). Errors: `StaleEdit::forVenue()` (409 on the card), `VenueNotFound`, and `VenueRuleViolation` with `$field` and `$missing` (the publish gaps `summary`, `main_building`, `photo`). Slug changes keep #9's history, so the old URL answers 301.
+- **Import guard (S8, CMS-11):** the import and `--prune` lock the row and skip a venue with `cms_edited_at` set. The skip is reported as `cms_edited` and counted in `content_imports`. `--force` never overwrites a CMS edit; `app:venues:import --overwrite-cms-edits` does. A venue deleted in the CMS stays deleted on the next import.
+- **Screens (`Cms`):** 16 `admin_locations…` routes, all `ROLE_EDITOR`, delete also `ROLE_ADMIN` and only while unpublished. They are: the list (status tabs, search, tier, canton, without address, sort, 50 per page), `/neu`, the editor with eight cards (Stammdaten, Texte, Adresse & Lage, Merkmale, Hochzeit, Kontakt, Häufige Fragen, Bewertung; each card saves on its own, and an idle save writes nothing), publish, unpublish, delete, the preview (`/vorschau`, `noindex`, banner, no inquiry form) and the town lookup `admin_api_cms_towns`. `{number}` uses `Cms\ValueObject\VenueNumber::REQUIREMENT`. All record tabs share `_layout.html.twig` (block `record_main`), and its header comes from `VenueHeaderQuery::find()`. The sidebar item "Locations" has priority 300, above #26's 200 and 100. There is a global search provider, plus two dashboard widgets: "Unvollständige Locations" and "Zuletzt bearbeitet".
+- **Shared and Admin:** `Shared\Validator\CleanText` refuses NUL bytes and invalid UTF-8. `AdminTextConstraintExtension` puts it on every back-office text field. The route walker fills `{number}` with `1` and asserts `< 500`. `_record_header` gained a `media` block and `_locale_tabs` an `active` locale. `dialog.js` now returns focus to a popover's trigger when a dialog that the popover opened closes.
+- **For #25 (`cms-venue-media`), plan Step 0.3:** every name it checks landed as planned:
+  - `VenueEditing::lock()` / `close(…, purgeListings)`, `StaleEdit::forVenue()`, `VenueRuleViolation` (`unwrap()`, `translationKey()`, `all()`), `VenueNotFound::forNumber()`;
+  - `VenueNumber::REQUIREMENT`, `Shared\Validator\CleanText`, `Cms\Form\DecimalTextType`;
+  - `_layout.html.twig` (`record_main`, param `venue`), `VenueHeaderQuery::find()`, `VenueOverviewRecordTab` (priority 1000), `_locale_tabs` `active`, `_record_header` `media`;
+  - `RemoveVenueFiles::$wholeVenue`, `CmsTranslationKeysTest`, the `cms` key `error.stale`, the folder `assets/styles/cms/`.
+
+  One item differs: there is no admin textarea CRLF extension, because Symfony 7.4's `TextareaType` already turns CRLF into LF, on every form.
+- **Deviations:**
+  - `CleanText` is its own validator, not a `Compound`: ICU throws on invalid UTF-8 in a message parameter. For the same reason the card `Regex`/`Email` rules use `normalizer: 'mb_scrub'`.
+  - `DeleteVenue` carries `?contentKey` for its audit summary.
+  - A no-op publish or unpublish is not dispatched.
+  - Kontakt and Häufige Fragen are two cards; Hochzeit and Bewertung are extra cards. There is a canton select and region fields, the main building and main setting are selects, and there is no CSV button.
+  - Two small fixes in #23's area: `.table-wrap` got `position: relative` (390 px overflow), and `dialog.js` got the focus return.
+  - Finisher fixes from the review: the TriState questions no longer show `*`, the preview banner wording holds for published venues too, and an invalid list filter shows a notice.
+  - The browser walk ran partly in headless Chromium, because Chrome's window would not resize.
+- **Carry-forwards:**
+  - **Test-suite memory:** the PHPUnit peak is about 215 MB of 256 MB. `AdminSession` (#22) disables the kernel reboot, so every admin GET keeps memory, the editor about 6.6 MB each. Find the retained object before adding many-request admin tests.
+  - **Import race:** harden the race between a CMS delete and an import by re-checking the row after the lock in `ImportVenueContentHandler`.
+  - **For a human:** VoiceOver on the town combobox and the editor's errors, and a keyboard walk in real Chrome at 390 px.
 
 ### 25. `cms-venue-media`
 

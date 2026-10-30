@@ -1,0 +1,94 @@
+// #24's venue editor (/admin/locations/{n}, LocationEdit artboard): a column of card forms, the address card's
+// coordinates and distances, the terms' "more" chips and the checklist beside them.
+.venue-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-5);
+    min-width: 0;
+}
+
+.venue-card {
+    // The anchor a save redirects to: keep the card's title clear of the top bar.
+    scroll-margin-top: var(--a-space-7);
+
+    .card__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--a-space-4);
+    }
+}
+
+.venue-card__coordinates {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    align-items: end;
+}
+
+.venue-card__town-centre {
+    justify-content: flex-end;
+}
+
+.venue-card__hint {
+    margin: calc(-1 * var(--a-space-2)) 0 0;
+}
+
+.venue-card__distances {
+    display: grid;
+    gap: var(--a-space-3);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+}
+
+.venue-card__more {
+    margin-top: var(--a-space-2);
+
+    > summary {
+        width: fit-content;
+        color: var(--a-link);
+        font-size: 13px;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--a-link-hover);
+        }
+    }
+
+    > .choice-list {
+        margin-top: var(--a-space-2);
+    }
+}
+
+.venue-card__stale {
+    margin: 0;
+    font-weight: 600;
+}
+
+.venue-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.venue-checklist__item {
+    display: flex;
+    align-items: center;
+    gap: var(--a-space-2);
+    color: var(--a-muted);
+
+    > .icon {
+        flex: none;
+        color: var(--a-danger);
+    }
+}
+
+.venue-checklist__item--done {
+    color: var(--a-ink);
+
+    > .icon {
+        color: var(--a-green);
+    }
+}

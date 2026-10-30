@@ -192,6 +192,7 @@
         title: 'ui.styleguide.sample.venue'|trans({}, 'admin'),
         subtitle: 'ui.styleguide.sample.detail'|trans({}, 'admin'),
     } only %}
+        {% block media %}<span class="record-header__placeholder">{{ admin_icon('landmark') }}</span>{% endblock %}
         {% block meta %}
             {{ include('admin/components/_tier_badge.html.twig', {tier: 'beliebte_location', label: 'tier.beliebte_location'|trans({}, 'venues')}, with_context = false) }}
             {{ include('admin/components/_pill.html.twig', {label: 'styleguide.pill_green'|trans({}, 'admin'), tone: 'green', dot: true}, with_context = false) }}
@@ -432,6 +433,13 @@
             label: 'ui.styleguide.sample.locale_label'|trans({}, 'admin'),
             locales: [{code: 'de', label: 'ui.styleguide.sample.locale_de'|trans({}, 'admin')}, {code: 'fr', label: 'ui.styleguide.sample.locale_fr'|trans({}, 'admin')}],
             panels: {de: text_de, fr: text_fr},
+        }, with_context = false) }}
+        {{ include('admin/components/_locale_tabs.html.twig', {
+            id: 'sg-locale-active',
+            label: 'ui.styleguide.sample.locale_label'|trans({}, 'admin'),
+            locales: [{code: 'de', label: 'ui.styleguide.sample.locale_de'|trans({}, 'admin')}, {code: 'fr', label: 'ui.styleguide.sample.locale_fr'|trans({}, 'admin')}],
+            panels: {de: text_de, fr: text_fr},
+            active: 'fr',
         }, with_context = false) }}
     </div>
 </section>

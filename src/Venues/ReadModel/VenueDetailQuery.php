@@ -133,7 +133,7 @@ final class VenueDetailQuery
                     v.phone IS NOT NULL AS has_phone, v.inquiry_email, v.website, v.contact_person,
                     v.own_catering, v.daylight, v.rating_score, v.rating_count,
                     v.price_level, v.capacity_seated, v.capacity_standing, v.party, v.has_curfew,
-                    to_char(v.curfew_at, 'HH24:MI') AS curfew_at, v.instagram,
+                    to_char(v.curfew_at, 'HH24:MI') AS curfew_at, v.instagram, v.coordinates_from_town,
                     t.slug, t.summary, t.description, t.meta_description, t.parking_text,
                     t.ambience, t.capacity_note, t.party_note, t.opening_hours, t.region,
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
@@ -233,6 +233,7 @@ final class VenueDetailQuery
             $venuePhotos,
             self::wedding($row, $termsByGroup),
             self::nullableString($row['instagram']),
+            (bool) $row['coordinates_from_town'],
         );
     }
 

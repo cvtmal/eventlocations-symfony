@@ -1,0 +1,36 @@
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'create.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_locations') }}">{{ 'list.title'|trans({}, 'cms') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'create.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ 'create.title'|trans({}, 'cms') }}</h1></div>
+{% endblock %}
+
+{% block main %}
+    {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {title: 'create.card'|trans({}, 'cms'), id: 'create-venue-title', create_form: form} only %}
+            {% block body %}
+                <p class="muted">{{ 'create.intro'|trans({}, 'cms') }}</p>
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_errors(create_form) }}
+                {{ form_row(create_form.name) }}
+                <div class="field-row">
+                    {{ form_row(create_form.tier) }}
+                    {{ form_row(create_form.capacityMax) }}
+                </div>
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'create.submit'|trans({}, 'cms'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                {{ include('admin/components/_button.html.twig', {label: 'create.cancel'|trans({}, 'cms'), variant: 'ghost', href: path('admin_locations')}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}

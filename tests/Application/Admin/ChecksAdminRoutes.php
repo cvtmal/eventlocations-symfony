@@ -6,6 +6,7 @@ namespace App\Tests\Application\Admin;
 
 use App\Admin\Entity\AdminUser;
 use App\Admin\ValueObject\AdminRole;
+use App\Cms\ValueObject\VenueNumber;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouterInterface;
@@ -233,12 +234,26 @@ trait ChecksAdminRoutes
             }
 
             foreach ($route->getMethods() ?: ['GET', 'POST'] as $method) {
-                $path = (string) preg_replace('/\{[^}]+\}/', self::UUID, $route->getPath());
+                $path = (string) preg_replace_callback(
+                    '/\{([^}]+)\}/',
+                    static fn (array $match): string => self::routeSample($route, $match[1]),
+                    $route->getPath(),
+                );
                 $endpoints[] = ['name' => $name, 'route' => $route, 'method' => $method, 'path' => $path];
             }
         }
 
         return $endpoints;
+    }
+
+    /**
+     * A value the parameter's requirement accepts: a venue number for `VenueNumber::REQUIREMENT`, a UUID for
+     * everything else. A route with another strict requirement still gets the UUID, its 404 fails the walk,
+     * and the parameter has to be taught here.
+     */
+    private static function routeSample(Route $route, string $parameter): string
+    {
+        return VenueNumber::REQUIREMENT === $route->getRequirement($parameter) ? '1' : self::UUID;
     }
 
     private function isWalked(string $routeName): bool
@@ -353,6 +368,7 @@ trait ChecksAdminRoutes
     private function assertNotTurnedAway(array $answer, string $label): void
     {
         self::assertNotContains($answer['status'], [Response::HTTP_UNAUTHORIZED, Response::HTTP_FORBIDDEN], $label);
+        self::assertLessThan(Response::HTTP_INTERNAL_SERVER_ERROR, $answer['status'], $label);
         self::assertNotContains($answer['location'], [self::LOGIN, self::CODE_STEP, self::ENROLMENT], $label);
     }
 

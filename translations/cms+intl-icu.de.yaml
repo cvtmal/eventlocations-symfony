@@ -1,1 +1,299 @@
 # Strings of the Cms module (#24–#26). Keys: <context>.<description>.
+
+venue:
+    error:
+        slug_taken: 'Diesen Slug hat schon eine andere Location, jetzt oder früher.'
+        slug_without_letters: 'Der Slug braucht mindestens einen Buchstaben oder eine Ziffer.'
+        unknown_town: 'Diesen Ort kennen wir nicht. Bitte PLZ und Ort prüfen, zum Beispiel «8706 Meilen».'
+        ambiguous_town: 'PLZ und Ort passen zu mehreren Orten. Bitte den Kanton wählen.'
+        town_centre_needs_town: 'Für die Ortsmitte braucht es zuerst einen Ort unter «PLZ / Ort».'
+        coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
+        not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
+        still_published: 'Eine veröffentlichte Location kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
+
+nav:
+    section: CMS
+    locations: Locations
+
+list:
+    title: Locations
+    new: Location erfassen
+    table_label: Locations
+    tabs:
+        label: Status
+        all: Alle
+    status:
+        published: Publiziert
+        unpublished: Unpubliziert
+        incomplete: Unvollständig
+    filter:
+        search: Suchen
+        search_placeholder: Name, Ort, PLZ oder Nummer
+        tier: Tier
+        all_tiers: Alle Tiers
+        canton: Kanton
+        all_cantons: Alle Kantone
+        canton_none: Ohne Kanton
+        address: Adresse
+        all_addresses: Alle Adressen
+        address_missing: Ohne Adresse
+        status: Status
+        submit: Filtern
+        reset: Filter löschen
+        invalid: Ein Filter war ungültig. Die Liste zeigt alle Locations.
+    chip:
+        search: 'Suche: «{q}»'
+        tier: 'Tier: {label}'
+        canton: 'Kanton: {label}'
+        address_missing: Ohne Adresse
+        remove: 'Filter «{label}» entfernen'
+    column:
+        location: Location
+        tier: Tier
+        guests: Gäste
+        photos: Fotos
+        status: Status
+        edited: Bearbeitet
+        actions: Aktionen
+    row:
+        number: 'Nr. {number}'
+        number_place: 'Nr. {number} · {place}'
+        import: Import
+        actions: 'Aktionen für {name}'
+        edit: Bearbeiten
+        preview: Vorschau
+        website: Auf der Website
+    pagination:
+        label: Seiten
+        previous: Zurück
+        next: Weiter
+    empty:
+        title: Keine Locations
+        text: Keine Location passt zu diesen Filtern.
+
+create:
+    title: Location erfassen
+    card: Neue Location
+    intro: Die Location startet unpubliziert. Alles Weitere folgt im Editor.
+    submit: Erfassen
+    cancel: Abbrechen
+    flash: '«{name}» ist erfasst. Sie bleibt unpubliziert, bis Kurztext, Haupt-Gebäudeart und ein Foto da sind.'
+
+editor:
+    title: '{name} bearbeiten'
+    tabs_label: Bereiche der Location
+    overview: Übersicht
+    locales_label: Sprache
+    locale:
+        de: Deutsch
+        fr: Französisch
+        it: Italienisch
+        en: Englisch
+    meta:
+        number: 'Nr. {number}'
+        edited_by: 'zuletzt bearbeitet von {name}, {date}'
+        edited_at: 'zuletzt bearbeitet am {date}'
+        imported_at: 'zuletzt importiert am {date}'
+    action:
+        preview: Vorschau
+        website: Auf der Website
+        more: Weitere Aktionen
+    save: Speichern
+    saved: '«{card}» gespeichert.'
+    unchanged: 'Keine Änderungen in «{card}».'
+    card:
+        basics: Stammdaten
+        texts: Texte
+        address: Adresse & Lage
+        terms: Merkmale
+        wedding: Hochzeit
+        contact: Kontakt
+        faq: Häufige Fragen
+        rating: Bewertung
+    checklist:
+        title: Bereit zum Publizieren
+        done: erledigt
+        missing: fehlt
+        item:
+            summary: Kurztext
+            main_building: Haupt-Gebäudeart
+            photo: Mindestens ein Foto
+
+basics:
+    field:
+        name: Name
+        slug: Adresse der Seite
+        tier: Tier
+        capacity_min: Gäste min.
+        capacity_max: Gäste max.
+    help:
+        slug: Ändert sich die Adresse, leitet die alte mit 301 weiter.
+    slug_prefix: hochzeitslocation.ch/hochzeitslocation/
+
+texts:
+    field:
+        summary: Kurztext (Karte)
+        description: Beschreibung
+        meta_description: Meta-Beschreibung
+        parking_text: Parkieren
+    help:
+        summary: Erscheint auf der Karte in der Liste. Pflicht auf Deutsch.
+        meta_description: Für Google. Ohne Text gilt der Kurztext.
+
+address:
+    field:
+        town: PLZ / Ort
+        canton: Kanton
+        street: Strasse
+        lat: Breite
+        lng: Länge
+        station_km: Bahnhof (km)
+        station_name: Bahnhof (Name)
+        highway_km: Autobahn (km)
+        highway_name: Autobahn (Ausfahrt)
+        airport_km: Flughafen (km)
+        airport_name: Flughafen (Name)
+        region: Region
+    help:
+        town: 'Zum Beispiel «8706 Meilen». Der Kanton folgt dem Ort.'
+        region: Freier Ort für Locations ohne Kanton. Verschwindet, sobald ein Ort oder Kanton gesetzt ist.
+    placeholder:
+        canton: Kein Kanton
+    action:
+        town_centre: Ortsmitte übernehmen
+        default_submit: Speichern
+    hint:
+        town_centre: 'Ortsmitte von {town}, auf der Website ohne Karte'
+    distances: Distanzen
+    distances_help: in km; ohne Distanz zählt die Location nicht als «nahe».
+
+terms:
+    legend: Merkmale
+    more: '+ {count} weitere'
+    field:
+        main_building: Haupt-Gebäudeart
+        main_setting: Haupt-Lage
+    placeholder:
+        main: Keine
+
+wedding:
+    field:
+        price_level: Preisniveau
+        capacity_seated: Gäste sitzend
+        capacity_standing: Gäste stehend
+        party: Party
+        has_curfew: Sperrstunde?
+        curfew_at: Sperrstunde um
+        ambience: Stimmung
+        capacity_note: Hinweis zur Kapazität
+        party_note: Hinweis zur Party
+        opening_hours: Öffnungszeiten
+    help:
+        ambience: Ein paar Worte, erscheint als Tag auf der Karte.
+    placeholder:
+        unknown: Keine Angabe
+
+contact:
+    field:
+        phone: Telefon
+        inquiry_email: Anfrage-E-Mail
+        website: Website
+        contact_person: Kontaktperson
+        instagram: Instagram
+    help:
+        phone: 'Zum Beispiel «044 123 45 67» oder «+41 44 123 45 67».'
+        inquiry_email: Hierhin gehen die Anfragen der Paare.
+
+faq:
+    field:
+        own_catering: Eigenes Catering?
+        daylight: Tageslicht?
+    placeholder:
+        unknown: Keine Angabe
+
+rating:
+    field:
+        score: Note
+        count: Anzahl Bewertungen
+        highlights: Hervorgehoben
+    help:
+        score: 0 bis 10, eine Stelle nach dem Komma. Note und Anzahl gehören zusammen.
+        highlights: Höchstens drei, nur mit einer Note.
+
+tri_state:
+    yes: Ja
+    no: Nein
+    unknown: Keine Angabe
+
+publish:
+    action:
+        publish: Publizieren
+        unpublish: Unpublizieren
+    flash:
+        published: '«{name}» ist publiziert.'
+        unpublished: '«{name}» ist offline.'
+        already_published: '«{name}» war schon publiziert.'
+        already_unpublished: '«{name}» war schon offline.'
+    error:
+        missing: 'Noch nicht publizierbar. Es fehlt: {missing}.'
+
+delete:
+    action: Löschen
+    title: Location löschen?
+    text: '«{name}» wird mit allen Fotos, Räumen und Dokumenten gelöscht. Das lässt sich nicht rückgängig machen.'
+    confirm: Endgültig löschen
+    cancel: Abbrechen
+    close: Schliessen
+    flash: '«{name}» ist gelöscht.'
+
+preview:
+    title: 'Vorschau: {name}'
+    banner: 'Vorschau: So sieht die Seite aus. Gäste sehen sie nur, wenn die Location publiziert ist.'
+    back: Zurück zum Editor
+    inquiry_note: In der Vorschau ist das Anfrageformular ausgeschaltet.
+
+history:
+    title: Verlauf
+    all: Ganzer Verlauf
+    empty: Noch keine Änderungen im Backoffice.
+    entry: '{actor} hat {action}'
+    actor:
+        admin_user: Jemand
+        console: Die Konsole
+        system: Das System
+    command:
+        fallback: die Location geändert
+        RecordVenueCreated: die Location erfasst
+        ChangeVenueBasics: die Stammdaten geändert
+        ChangeVenueTexts: die Texte geändert
+        RelocateVenue: Adresse und Lage geändert
+        ChangeVenueTerms: die Merkmale geändert
+        ChangeVenueWeddingFacts: die Hochzeitsangaben geändert
+        ChangeVenueContact: den Kontakt geändert
+        AnswerVenueFaq: die häufigen Fragen beantwortet
+        RateVenue: die Bewertung geändert
+        PublishVenue: die Location publiziert
+        UnpublishVenue: die Location offline genommen
+
+search:
+    label: Locations
+
+dashboard:
+    new: Neu
+    incomplete:
+        title: Unvollständige Locations
+        empty: Alle Locations sind vollständig.
+        all: '{count, plural, one {# unvollständige ansehen} other {Alle # unvollständigen ansehen}}'
+        missing:
+            photo: Keine Fotos
+            inquiry_email: Keine Anfrage-E-Mail
+            summary: Kurztext fehlt
+            main_building: Haupt-Gebäudeart fehlt
+    recent:
+        title: Zuletzt bearbeitet
+        empty: Noch nichts im Backoffice bearbeitet.
+        by: '{date} · {name}'
+
+error:
+    stale: Diese Location wurde inzwischen geändert. Bitte neu laden; die Eingaben in diesem Abschnitt gehen dabei verloren.
+    stale_reload: Seite neu laden

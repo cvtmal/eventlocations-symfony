@@ -1,0 +1,9 @@
+{#
+    Card "Häufige Fragen". Include with `with_context = false`: form, card, number, stale.
+#}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale} only %}
+    {% block fields %}
+        {{ form_row(form.ownCatering) }}
+        {{ form_row(form.daylight) }}
+    {% endblock %}
+{% endembed %}

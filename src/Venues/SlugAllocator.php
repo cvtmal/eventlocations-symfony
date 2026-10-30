@@ -64,6 +64,15 @@ final class SlugAllocator
     }
 
     /**
+     * Whether another venue than $venueId holds the slug in this locale, now or in its
+     * history. The venue's own history slugs are free for it to take back.
+     */
+    public function isTaken(string $locale, string $slug, ?string $venueId): bool
+    {
+        return $this->venues->isSlugTaken($locale, $slug, $venueId);
+    }
+
+    /**
      * Cuts a slug to at most $length characters, at a hyphen when it has to cut.
      */
     private static function cut(string $slug, int $length): string

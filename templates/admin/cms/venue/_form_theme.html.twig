@@ -1,0 +1,12 @@
+{#
+    The venue editor's form theme: #23's admin theme plus the slug's address prefix. Use it in place of the admin theme
+    on the editor's cards: `{% form_theme form 'admin/cms/venue/_form_theme.html.twig' %}`.
+#}
+{% extends 'admin/form/theme.html.twig' %}
+
+{%- block _venue_basics_slug_widget -%}
+    <div class="field__addon">
+        <span class="field__addon-text">{{ 'basics.slug_prefix'|trans({}, 'cms') }}</span>
+        {{- block('form_widget_simple') -}}
+    </div>
+{%- endblock -%}

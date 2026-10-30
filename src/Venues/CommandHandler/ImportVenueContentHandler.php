@@ -43,6 +43,7 @@ use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueImportOutcome;
 use App\Venues\ValueObject\VenueStatus;
 use App\Venues\VenueSlugs;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
@@ -51,7 +52,12 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * Imports one content folder into its venue (#9, docs/content-format.md).
  *
  * 1. Read and validate the folder; a problem is a failed outcome, nothing is written.
- * 2. An existing venue with the same content hash is unchanged (skipped, no I/O) unless forced.
+ * 2. The guard (#24, S8). Outside a dry run the existing venue's row is locked first, so a
+ *    staff save cannot slip in between the check and the write (it waits, then is stale).
+ *    A venue the CMS deleted (venue_deleted_content_keys) or edited since its last import
+ *    (cms_edited_at set) is reported as cms_edited and left alone, also when forced, unless
+ *    the import is told to overwrite CMS edits. Then an existing venue with the same content
+ *    hash is unchanged (skipped, no I/O) unless forced, or unless overwriting a CMS edit.
  * 3. Resolve the town (ZIP + name, optionally canton) when the folder names one; none or
  *    several is a failed outcome. Without a town the canton comes from address.canton, if any.
  * 4. A dry run stops here with the would-be counts.
@@ -102,8 +108,19 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         }
 
         $venue = $this->venues->findOneByContentKey($content->key);
-        if (null !== $venue && $venue->contentHash() === $content->contentHash && !$command->force) {
+        if (null !== $venue && !$command->dryRun) {
+            // A staff save cannot pass the guard unseen: it waits for this row, then is stale.
+            $this->em->refresh($venue, LockMode::PESSIMISTIC_WRITE);
+        }
+        if (null === $venue && !$command->overwriteCmsEdits && $this->venues->isContentKeyDeleted($content->key)) {
+            return VenueImportOutcome::cmsEdited($content->key, $command->dryRun);
+        }
+        $edited = null !== $venue?->cmsEditedAt();
+        if (null !== $venue && $venue->contentHash() === $content->contentHash && !$command->force && !($command->overwriteCmsEdits && $edited)) {
             return VenueImportOutcome::unchanged($content->key, $command->dryRun);
+        }
+        if ($edited && !$command->overwriteCmsEdits) {
+            return VenueImportOutcome::cmsEdited($content->key, $command->dryRun);
         }
 
         try {
@@ -285,6 +302,9 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
 
             RoomSummary::apply($venue, array_values($rooms));
             $venue->recordContentHash($content->contentHash);
+            if ($isNew) {
+                $this->venues->forgetDeletedContentKey($content->key); // recreated by an overwrite
+            }
             $this->em->flush();
 
             foreach ($newPhotos as [$photo, $stagedPhoto]) {
@@ -336,7 +356,8 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
             $venue->changeTier($content->tier);
             VenueStatus::Published === $content->status ? $venue->publish() : $venue->unpublish();
             $venue->changeCapacity($content->capacityMax, $content->capacityMin);
-            $venue->relocate($town, $content->zip, $content->street, $content->lat, $content->lng, $canton);
+            // A folder's coordinates are the venue's own point, so a town centre set in the CMS goes.
+            $venue->relocate($town, $content->zip, $content->street, $content->lat, $content->lng, $canton, coordinatesFromTown: false);
         }
         $venue->changeContact($content->phone, $content->inquiryEmail, $content->website, $content->contactPerson);
         $venue->changeDistances($content->stationKm, $content->stationName, $content->highwayKm, $content->highwayName, $content->airportKm, $content->airportName);

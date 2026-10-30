@@ -10,26 +10,28 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * The constraints of content_imports (#9), proven with raw SQL inside a rolled-back
- * transaction. test_every_constraint_has_a_rejection_case() fails for a new constraint
+ * The constraints of content_imports (#9) and venue_deleted_content_keys (#24), proven with
+ * raw SQL inside a rolled-back transaction. test_every_constraint_has_a_rejection_case() fails for a new constraint
  * without a case here.
  */
 final class ContentImportSchemaTest extends KernelTestCase
 {
-    private const TABLES = ['content_imports'];
+    private const TABLES = ['content_imports', 'venue_deleted_content_keys'];
 
     private const ID = '019a0000-0000-7000-8000-000000000901';
 
     private const INSERT = <<<'SQL'
         INSERT INTO content_imports (
-            id, source_path, only_key, pruned, forced, venues_seen, venues_created, venues_updated,
-            venues_unchanged, venues_failed, venues_unpublished, photos_added, photos_removed,
-            documents_added, documents_removed, errors, started_at, finished_at
+            id, source_path, only_key, pruned, forced, overwrote_cms_edits, venues_seen, venues_created,
+            venues_updated, venues_unchanged, venues_failed, venues_unpublished, venues_cms_edited,
+            photos_added, photos_removed, documents_added, documents_removed, errors, started_at, finished_at
         ) VALUES (
-            '{id}', '/content', NULL, FALSE, FALSE, 2, 1, 0, 0, 1, 0, 3, 0, 1, 0,
+            '{id}', '/content', NULL, FALSE, FALSE, FALSE, 2, 1, 0, 0, 1, 0, 0, 3, 0, 1, 0,
             '[{"key": "b-venue", "messages": ["unknown town"]}]', '2026-10-30 10:00:00+01', '2026-10-30 10:01:00+01'
         )
         SQL;
+
+    private const INSERT_DELETED_KEY = "INSERT INTO venue_deleted_content_keys (id, content_key) VALUES ('{id}', 'schloss-beispiel-1093')";
 
     private Connection $connection;
 
@@ -40,6 +42,7 @@ final class ContentImportSchemaTest extends KernelTestCase
         $this->connection = $connection;
         $this->connection->beginTransaction();
         $this->sql(self::INSERT);
+        $this->sql(self::INSERT_DELETED_KEY);
     }
 
     protected function tearDown(): void
@@ -59,6 +62,10 @@ final class ContentImportSchemaTest extends KernelTestCase
         yield 'finished before started' => ['chk_content_imports_finished_at', "UPDATE content_imports SET finished_at = started_at - INTERVAL '1 second' WHERE id = '{id}'"];
         yield 'errors an object' => ['chk_content_imports_errors', "UPDATE content_imports SET errors = '{}' WHERE id = '{id}'"];
         yield 'only key not kebab case' => ['chk_content_imports_only_key', "UPDATE content_imports SET only_key = 'Schloss Beispiel' WHERE id = '{id}'"];
+        yield 'negative CMS-edited count' => ['chk_content_imports_venues_cms_edited', "UPDATE content_imports SET venues_cms_edited = -1 WHERE id = '{id}'"];
+        yield 'duplicate deleted key id' => ['pk_venue_deleted_content_keys', "INSERT INTO venue_deleted_content_keys (id, content_key) VALUES ('{id}', 'other-key')"];
+        yield 'deleted key twice' => ['uk_venue_deleted_content_keys_content_key', "INSERT INTO venue_deleted_content_keys (id, content_key) VALUES (gen_random_uuid(), 'schloss-beispiel-1093')"];
+        yield 'deleted key not kebab case' => ['chk_venue_deleted_content_keys_content_key', "UPDATE venue_deleted_content_keys SET content_key = 'Schloss_Beispiel' WHERE id = '{id}'"];
     }
 
     #[DataProvider('rejections')]
@@ -76,6 +83,8 @@ final class ContentImportSchemaTest extends KernelTestCase
     {
         self::assertSame(1, $this->sql("UPDATE content_imports SET only_key = 'schloss-beispiel-1093', errors = '[]', finished_at = started_at WHERE id = '{id}'"));
         self::assertSame(1, $this->sql("UPDATE content_imports SET venues_seen = 0, venues_created = 0, venues_failed = 0, photos_added = 0, documents_added = 0 WHERE id = '{id}'"));
+        self::assertSame(1, $this->sql("UPDATE content_imports SET overwrote_cms_edits = TRUE, venues_cms_edited = 3 WHERE id = '{id}'"));
+        self::assertSame(1, $this->sql("UPDATE venue_deleted_content_keys SET content_key = 'a-1' WHERE id = '{id}'"));
     }
 
     public function test_every_constraint_has_a_rejection_case(): void
@@ -91,7 +100,7 @@ final class ContentImportSchemaTest extends KernelTestCase
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
         foreach ($tested as $name) {
-            self::assertContains($name, $names, $name.' is not a constraint of content_imports');
+            self::assertContains($name, $names, $name.' is not a constraint of these tables');
         }
     }
 

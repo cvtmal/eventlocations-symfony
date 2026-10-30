@@ -1,0 +1,40 @@
+{#
+    Card "Merkmale" (D16). Include with `with_context = false`: form, card, number, stale.
+    Building shows the listing's primary chips, the rest in a <details>. Main building and main setting are selects under
+    their chips (P15).
+#}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale} only %}
+    {% block fields %}
+        {% for group in constant('App\\Cms\\Form\\VenueTermsData::GROUPS')|map(group => group.value) %}
+            {% if group == 'building' %}
+                {% set primary = form.vars.primary_building_codes %}
+                {% set rest = form.building|filter(chip => chip.vars.value not in primary) %}
+                <fieldset class="field field--group"{% if not form.building.vars.valid %} aria-describedby="{{ form.building.vars.id }}_error"{% endif %}>
+                    <legend class="field__label">{{ form.building.vars.label|trans }}</legend>
+                    <div class="choice-list chips">
+                        {% for code in primary %}
+                            {% for chip in form.building|filter(chip => chip.vars.value == code) %}
+                                <div class="chip-check">{{ form_widget(chip) }}{{ form_label(chip, null, {translation_domain: 'venues'}) }}</div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                    {% if rest is not empty %}
+                        <details class="venue-card__more"{% if rest|filter(chip => chip.vars.checked)|length > 0 %} open{% endif %}>
+                            <summary>{{ 'terms.more'|trans({count: rest|length}, 'cms') }}</summary>
+                            <div class="choice-list chips">
+                                {% for chip in rest %}
+                                    <div class="chip-check">{{ form_widget(chip) }}{{ form_label(chip, null, {translation_domain: 'venues'}) }}</div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    {% endif %}
+                    {{ form_errors(form.building) }}
+                </fieldset>
+                {{ form_row(form.mainBuilding) }}
+            {% else %}
+                {{ form_row(form[group]) }}
+                {% if group == 'setting' %}{{ form_row(form.mainSetting) }}{% endif %}
+            {% endif %}
+        {% endfor %}
+    {% endblock %}
+{% endembed %}

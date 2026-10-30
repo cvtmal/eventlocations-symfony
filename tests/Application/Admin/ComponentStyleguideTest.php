@@ -79,10 +79,25 @@ final class ComponentStyleguideTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/_styleguide');
         $section = $crawler->filter('[data-component="locale-tabs"]');
 
-        self::assertCount(1, $section->filter('[role="tablist"]'));
-        self::assertCount(2, $section->filter('[role="tab"]'));
-        self::assertCount(3, $section->filter('.locale-tabs__panel'));
-        self::assertCount(2, $section->filter('[role="tabpanel"]'));
+        self::assertCount(2, $section->filter('[role="tablist"]'));
+        self::assertCount(4, $section->filter('[role="tab"]'));
+        self::assertCount(5, $section->filter('.locale-tabs__panel'));
+        self::assertCount(4, $section->filter('[role="tabpanel"]'));
+        // `active` (#24) opens another locale than the first, e.g. the first one with an error after a 422.
+        self::assertSame('true', $section->filter('#sg-locale-two-tab-de')->attr('aria-selected'));
+        self::assertSame('false', $section->filter('#sg-locale-active-tab-de')->attr('aria-selected'));
+        self::assertSame('-1', $section->filter('#sg-locale-active-tab-de')->attr('tabindex'));
+        self::assertSame('true', $section->filter('#sg-locale-active-tab-fr')->attr('aria-selected'));
+        self::assertNull($section->filter('#sg-locale-active-tab-fr')->attr('tabindex'));
+    }
+
+    public function test_the_record_header_has_an_optional_media_slot(): void
+    {
+        $this->logInAs();
+
+        $crawler = $this->client->request('GET', '/admin/_styleguide');
+
+        self::assertCount(1, $crawler->filter('[data-component="record-header"] .record-header__media'));
     }
 
     public function test_an_empty_table_is_one_row_across_all_columns(): void

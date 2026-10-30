@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Admin;
 
+use App\Admin\Extension\DashboardWidgetRegistry;
+use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\AdminSession;
+use App\Venues\ValueObject\VenueStatus;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 final class DashboardTest extends WebTestCase
@@ -36,12 +42,55 @@ final class DashboardTest extends WebTestCase
         self::assertSelectorTextSame('.dashboard__date', 'Samstag, 31. Oktober 2026');
     }
 
+    public function test_it_shows_the_cms_widgets_and_the_new_action(): void
+    {
+        $this->logInAs(displayName: 'Andrea Keller');
+        $hut = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished]);
+        $connection = self::getContainer()->get(Connection::class);
+        self::assertInstanceOf(Connection::class, $connection);
+        $connection->executeStatement("UPDATE venues SET cms_edited_at = '2026-10-28 09:00:00+00' WHERE id = ?", [$hut->id()]);
+
+        $crawler = $this->client->request('GET', '/admin');
+
+        self::assertResponseIsSuccessful();
+        $new = $crawler->filter('.topbar__actions a.btn--primary');
+        self::assertSame('Neu', $new->text());
+        self::assertSame('/admin/locations', $new->attr('href'));
+        self::assertSame(['Unvollständige Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
+
+        $incomplete = $crawler->filter('.widget')->eq(0);
+        self::assertSame('/admin/locations/'.$hut->number(), $incomplete->filter('.venue-widget__name')->attr('href'));
+        self::assertSame(['Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Haupt-Gebäudeart fehlt'], $incomplete->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
+        $all = $incomplete->filter('.venue-widget__foot a');
+        self::assertSame('1 unvollständige ansehen', $all->text());
+        self::assertSame('/admin/locations?status=incomplete', $all->attr('href'));
+
+        $recent = $crawler->filter('.widget')->eq(1);
+        self::assertSame('Waldhütte Eichholz', $recent->filter('.venue-widget__name')->text());
+        self::assertSame('Nr. '.$hut->number(), $recent->filter('.venue-widget__main .muted')->text());
+        self::assertSame('28.10.2026', $recent->filter('.venue-widget__meta')->text());
+    }
+
+    public function test_each_widget_has_its_own_empty_text(): void
+    {
+        $this->logInAs();
+
+        $crawler = $this->client->request('GET', '/admin');
+
+        self::assertSame(['Alle Locations sind vollständig.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
+    }
+
     public function test_without_widgets_it_shows_the_empty_state(): void
     {
         $this->logInAs();
+        // The CMS registers its widgets; an empty registry stands for a back office with no content module.
+        $authorization = self::getContainer()->get(AuthorizationCheckerInterface::class);
+        self::assertInstanceOf(AuthorizationCheckerInterface::class, $authorization);
+        self::getContainer()->set(DashboardWidgetRegistry::class, new DashboardWidgetRegistry([], $authorization));
 
         $this->client->request('GET', '/admin');
 
         self::assertSelectorTextContains('.empty__title', 'Noch keine Inhalte');
+        self::assertSelectorNotExists('.widget');
     }
 }

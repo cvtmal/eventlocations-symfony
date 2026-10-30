@@ -1,0 +1,39 @@
+{#
+    Frame of a venue editor card: the form sits around the `_card` embed, so body and foot are inside one form (Step 8.7).
+    Embed with `{% embed 'admin/cms/venue/_card_shell.html.twig' with {…} only %}`:
+      form (the card's FormView), card (`Cms\ValueObject\VenueCard`), number, stale (bool: a 409 re-render of this card),
+      required (bool: the card has required fields, so it shows `_required_hint`).
+    Block: fields. The form's id is the card's anchor (`#stammdaten` …), where a save redirects to.
+#}
+{% form_theme form 'admin/cms/venue/_form_theme.html.twig' %}
+{%- set fields_markup %}{% block fields %}{% endblock %}{% endset -%}
+{{ form_start(form, {attr: {
+    id: card.anchor,
+    class: 'venue-card',
+    novalidate: 'novalidate',
+    'aria-labelledby': 'venue-card-' ~ card.value,
+    'data-unsaved-guard': '',
+}}) }}
+    {% embed 'admin/components/_card.html.twig' with {
+        title: ('editor.card.' ~ card.value)|trans({}, 'cms'),
+        id: 'venue-card-' ~ card.value,
+        card_form: form,
+        card: card,
+        number: number,
+        stale: stale|default(false),
+        required: required|default(false),
+        fields_markup: fields_markup,
+    } only %}
+        {% block body %}
+            {{ form_errors(card_form) }}
+            {% if stale %}
+                <p class="venue-card__stale"><a href="{{ path('admin_locations_edit', {number: number}) }}#{{ card.anchor }}">{{ 'error.stale_reload'|trans({}, 'cms') }}</a></p>
+            {% endif %}
+            {% if required %}{{ include('admin/components/_required_hint.html.twig', with_context = false) }}{% endif %}
+            {{ fields_markup }}
+        {% endblock %}
+        {% block foot %}
+            {{ include('admin/components/_button.html.twig', {label: 'editor.save'|trans({}, 'cms'), variant: 'primary', type: 'submit'}, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{{ form_end(form) }}

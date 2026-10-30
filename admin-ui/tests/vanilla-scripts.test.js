@@ -12,6 +12,8 @@ beforeAll(async () => {
 
     await import('../../assets/js/admin/char-counter.js');
     await import('../../assets/js/admin/markdown-preview.js');
+    await import('../../assets/js/admin/unsaved-cards.js');
+    await import('../../assets/js/dialog.js');
 });
 
 afterEach(() => {
@@ -166,5 +168,107 @@ describe('markdown-preview.js', () => {
 
         document.querySelector('[data-markdown-preview]').click();
         await vi.waitFor(() => expect(status.textContent).toBe('Fehler'));
+    });
+});
+
+describe('unsaved-cards.js', () => {
+    function cards() {
+        document.body.innerHTML = `
+            <form id="a" data-unsaved-guard><input name="a"><button>Speichern</button></form>
+            <form id="b" data-unsaved-guard><textarea name="b"></textarea><select name="c"><option>1</option><option>2</option></select></form>
+            <form id="publish"><button>Publizieren</button></form>`;
+    }
+
+    function type(selector) {
+        document.querySelector(selector).dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function submit(id) {
+        document.getElementById(id).dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    }
+
+    function leaving() {
+        const event = new Event('beforeunload', { cancelable: true });
+        window.dispatchEvent(event);
+
+        return event.defaultPrevented;
+    }
+
+    it('warns when another card has input while one card is saved', () => {
+        cards();
+        type('#b textarea');
+        submit('a');
+
+        expect(leaving()).toBe(true);
+    });
+
+    it('lets the card with the input save without a warning', () => {
+        cards();
+        type('#a input');
+        submit('a');
+
+        expect(leaving()).toBe(false);
+    });
+
+    it('stays quiet on a page left without input', () => {
+        cards();
+
+        expect(leaving()).toBe(false);
+    });
+
+    it('warns on a change of a select and on a form that is not a card', () => {
+        cards();
+        document.querySelector('#b select').dispatchEvent(new Event('change', { bubbles: true }));
+        submit('publish');
+
+        expect(leaving()).toBe(true);
+    });
+
+    it('ignores input in a form without the attribute', () => {
+        document.body.innerHTML = '<form id="search"><input name="q"></form>';
+        type('#search input');
+
+        expect(leaving()).toBe(false);
+    });
+
+    it('judges a second attempt after a cancelled leave on its own', () => {
+        cards();
+        type('#a input');
+        submit('a');
+        expect(leaving()).toBe(false);
+
+        expect(leaving()).toBe(true);
+    });
+});
+
+describe('dialog.js', () => {
+    it('returns focus to the popover trigger when the opener sits in a closed popover', () => {
+        document.body.innerHTML = `
+            <button popovertarget="more">Mehr</button>
+            <div id="more" popover><button commandfor="confirm" command="show-modal">Löschen</button></div>
+            <dialog id="confirm" data-dialog><button>Abbrechen</button></dialog>`;
+        const dialog = document.getElementById('confirm');
+        dialog.showModal();
+        dialog.querySelector('button').focus();
+
+        dialog.close();
+
+        expect(document.activeElement).toBe(document.querySelector('[popovertarget]'));
+    });
+
+    it('returns focus to a visible opener and leaves focus that moved elsewhere alone', () => {
+        document.body.innerHTML = `
+            <button commandfor="confirm" command="show-modal">Öffnen</button><input>
+            <dialog id="confirm" data-dialog><button>Abbrechen</button></dialog>`;
+        const dialog = document.getElementById('confirm');
+        dialog.showModal();
+        document.activeElement.blur();
+        dialog.close();
+        expect(document.activeElement).toBe(document.querySelector('[commandfor]'));
+
+        dialog.showModal();
+        document.querySelector('input').focus();
+        dialog.close();
+        expect(document.activeElement).toBe(document.querySelector('input'));
     });
 });

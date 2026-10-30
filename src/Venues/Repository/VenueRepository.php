@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Venues\Repository;
 
 use App\Venues\Entity\Venue;
+use App\Venues\Entity\VenueDeletedContentKey;
+use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -37,6 +39,84 @@ class VenueRepository extends ServiceEntityRepository
     public function findOneByContentKey(string $key): ?Venue
     {
         return $this->findOneBy(['contentKey' => $key]);
+    }
+
+    /**
+     * The venue's id for its public number, without loading the entity (VenueEditing locks
+     * it by id).
+     */
+    public function idByNumber(int $number): ?string
+    {
+        $id = $this->getEntityManager()->getConnection()->fetchOne('SELECT id FROM venues WHERE number = :number', ['number' => $number]);
+
+        return false === $id ? null : (string) $id;
+    }
+
+    /**
+     * The venue's translations by locale, for the CMS handlers (#24) that write them.
+     *
+     * @return array<string, VenueTranslation>
+     */
+    public function translationsByLocale(Venue $venue): array
+    {
+        $rows = [];
+        foreach ($this->getEntityManager()->getRepository(VenueTranslation::class)->findBy(['venue' => $venue]) as $row) {
+            $rows[$row->locale()] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Whether a venue with this content key was deleted in the CMS (#24): its folder must
+     * not bring it back unless the import is told to overwrite CMS edits.
+     */
+    public function isContentKeyDeleted(string $key): bool
+    {
+        return false !== $this->getEntityManager()->getConnection()->fetchOne(
+            'SELECT 1 FROM venue_deleted_content_keys WHERE content_key = :key',
+            ['key' => $key],
+        );
+    }
+
+    /**
+     * Removes the tombstone of a deleted venue's content key, when the import recreates it.
+     */
+    public function forgetDeletedContentKey(string $key): void
+    {
+        $this->getEntityManager()->createQueryBuilder()
+            ->delete(VenueDeletedContentKey::class, 'k')
+            ->where('k.contentKey = :key')
+            ->setParameter('key', $key)
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * The originals (photo original_path, document path, relative to MEDIA_ROOT) of this
+     * venue that no other venue's row uses, so deleting the venue may delete these files
+     * and no others. Demo venues share their originals.
+     *
+     * @return list<string> sorted
+     */
+    public function originalsUsedOnlyBy(Venue $venue): array
+    {
+        /** @var list<string> $paths */
+        $paths = $this->getEntityManager()->getConnection()->fetchFirstColumn(
+            <<<'SQL'
+                SELECT p.original_path FROM venue_photos p
+                WHERE p.venue_id = :venue
+                    AND NOT EXISTS (SELECT 1 FROM venue_photos o WHERE o.original_path = p.original_path AND o.venue_id <> :venue)
+                UNION
+                SELECT d.path FROM venue_documents d
+                WHERE d.venue_id = :venue
+                    AND NOT EXISTS (SELECT 1 FROM venue_documents o WHERE o.path = d.path AND o.venue_id <> :venue)
+                ORDER BY 1
+                SQL,
+            ['venue' => $venue->id()],
+        );
+
+        return $paths;
     }
 
     /**

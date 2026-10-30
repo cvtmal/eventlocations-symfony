@@ -41,6 +41,15 @@ final readonly class VenueImportOutcome
     }
 
     /**
+     * The folder was not applied: the CMS edited the venue since its last import, or deleted
+     * it (#24, S8).
+     */
+    public static function cmsEdited(string $key, bool $dryRun): self
+    {
+        return new self($key, ImportStatus::CmsEdited, $dryRun);
+    }
+
+    /**
      * @param list<string> $messages
      */
     public static function failed(string $key, bool $dryRun, array $messages): self

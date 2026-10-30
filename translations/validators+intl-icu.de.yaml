@@ -1,5 +1,62 @@
 # Constraint messages of the application's forms (the validator translates them in this domain).
 # Keys: <form>.<field>.<rule>.
+cms:
+    venue:
+        loaded_at:
+            invalid: Das Formular ist veraltet. Bitte die Seite neu laden.
+        too_long: Bitte höchstens {limit} Zeichen eingeben.
+        choice:
+            required: Bitte eine Antwort wählen.
+        name:
+            required: Bitte einen Namen eingeben.
+            no_slug: Der Name braucht mindestens einen Buchstaben oder eine Ziffer.
+        slug:
+            required: Bitte einen Slug eingeben.
+            format: Nur Kleinbuchstaben, Ziffern und einzelne Bindestriche, zum Beispiel «schloss-seeblick».
+        tier:
+            required: Bitte ein Tier wählen.
+        capacity:
+            range: Bitte eine Zahl zwischen {min} und {max} eingeben.
+            max_required: Bitte die maximale Anzahl Gäste eingeben.
+            max_below_min: Die maximale Anzahl Gäste ist kleiner als die minimale.
+        summary:
+            required: Bitte einen Kurztext eingeben.
+        town:
+            format: Bitte PLZ und Ort eingeben, zum Beispiel «8706 Meilen».
+        street:
+            needs_town: Eine Strasse braucht PLZ und Ort.
+        coordinates:
+            both: Bitte Breite und Länge zusammen eingeben.
+        decimal:
+            format: Bitte eine Zahl mit Punkt eingeben, zum Beispiel «47.2694».
+        lat:
+            range: Die Breite muss in der Schweiz liegen, zwischen {min} und {max}.
+        lng:
+            range: Die Länge muss in der Schweiz liegen, zwischen {min} und {max}.
+        km:
+            format: Bitte Kilometer mit höchstens einer Nachkommastelle eingeben, zum Beispiel «1.5».
+            range: Bitte zwischen {min} und {max} km eingeben.
+            needs_km: Zu einem Namen gehört die Distanz in km.
+        terms:
+            main_not_selected: Die Hauptangabe muss oben ausgewählt sein.
+        curfew:
+            needs_yes: Eine Uhrzeit gibt es nur, wenn die Sperrstunde auf «Ja» steht.
+            format: Bitte eine Uhrzeit wie «23:30» eingeben.
+        phone:
+            invalid: Bitte eine Telefonnummer wie «044 123 45 67» oder «+41 44 123 45 67» eingeben.
+        email:
+            invalid: Bitte eine gültige E-Mail-Adresse eingeben.
+        website:
+            scheme: Die Adresse muss mit «https://» oder «http://» beginnen.
+        instagram:
+            scheme: Der Instagram-Link muss mit «https://» beginnen.
+        rating:
+            format: Bitte eine Note wie «8.4» eingeben, mit höchstens einer Nachkommastelle.
+            range: Die Note liegt zwischen {min} und {max}.
+            count_range: Bitte eine Anzahl ab 0 eingeben.
+            both: Note und Anzahl Bewertungen gehören zusammen.
+            highlights_max: Bitte höchstens {limit} Highlights wählen.
+            highlights_need_rating: Highlights gibt es nur mit einer Bewertung.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.
@@ -27,3 +84,6 @@ inquiry:
         too_long: Die E-Mail-Adresse darf höchstens 254 Zeichen lang sein.
     phone:
         invalid: Bitte gib eine gültige Telefonnummer an.
+shared:
+    text:
+        invalid: Der Text enthält ungültige Zeichen.

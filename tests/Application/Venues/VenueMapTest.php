@@ -146,6 +146,21 @@ final class VenueMapTest extends WebTestCase
         self::assertCount(0, $crawler->filter('.venue-map'));
     }
 
+    public function test_town_centre_coordinates_show_no_map(): void
+    {
+        $this->start('test-key');
+        $venue = $this->venueAt(47.366667, 8.55);
+        $this->em->getConnection()->executeStatement('UPDATE venues SET coordinates_from_town = TRUE WHERE number = ?', [$venue->number()]);
+
+        $html = $this->html(DetailVenues::FULL_SLUG);
+        $crawler = new Crawler($html);
+
+        self::assertCount(1, $crawler->filter('#standort'));
+        self::assertCount(1, $crawler->filter('.venue-location__address'));
+        self::assertCount(0, $crawler->filter('.venue-map'));
+        self::assertStringNotContainsString('google.', $html);
+    }
+
     public function test_the_map_keeps_the_page_cacheable_and_inline_free(): void
     {
         $this->start('test-key');

@@ -232,6 +232,7 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame(50, $detail->capacityMin);
         self::assertSame(300, $detail->capacityMax);
         self::assertEqualsWithDelta(DetailVenues::town('Zürich')->lat(), $detail->lat, 0.0001);
+        self::assertFalse($detail->coordinatesFromTown);
 
         self::assertEquals(new Term(TermGroup::Building, 'castle'), $detail->mainBuilding);
         self::assertEquals(new Term(TermGroup::Setting, 'lake'), $detail->mainSetting);
@@ -301,6 +302,19 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame(['Aussicht 1', 'Aussicht 2', 'Schloss Seeblick, Bild 3'], array_map(static fn (Picture $p): string => $p->alt, $detail->photos));
         self::assertSame($venue->number(), $detail->photos[0]->venueNumber);
         self::assertSame(1600, $detail->photos[0]->width);
+    }
+
+    public function test_town_centre_coordinates_are_flagged(): void
+    {
+        $venue = DetailVenues::full($this->em);
+        $venue->relocate($venue->town(), $venue->zip(), $venue->street(), $venue->lat(), $venue->lng(), coordinatesFromTown: true);
+        $this->em->flush();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertTrue($detail->coordinatesFromTown);
+        self::assertNotNull($detail->lat, 'the coordinates stay; the page decides what to show');
     }
 
     public function test_a_minimal_venue_has_empty_sections(): void

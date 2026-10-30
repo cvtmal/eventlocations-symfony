@@ -1,0 +1,69 @@
+{#
+    The venue editor (CMS-2): one card per `Cms\ValueObject\VenueCard`, each its own form. Context from
+    `VenueEditController`: venue (VenueHeader), edit (VenueEdit), forms (card value → FormView), bound_card, stale,
+    locales list<{code, label}>, missing (codes of `VenueEdit::missingForPublish()`), history list<{actor, action, at}>,
+    cards (the VenueCard cases).
+#}
+{% extends 'admin/cms/venue/_layout.html.twig' %}
+
+{% set record_route = 'admin_locations_edit' %}
+
+{% block title %}{{ 'editor.title'|trans({name: venue.name}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block record_main %}
+    <div class="venue-editor">
+        {% for card in cards %}
+            {{ include('admin/cms/venue/_card_' ~ card.value ~ '.html.twig', {
+                form: forms[card.value],
+                card: card,
+                number: venue.number,
+                stale: stale and bound_card == card.value,
+                locales: locales,
+                town_centre_hint: edit.townCentreHint,
+            }, with_context = false) }}
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{% block record_aside_start %}
+    {% embed 'admin/components/_card.html.twig' with {title: 'editor.checklist.title'|trans({}, 'cms'), id: 'venue-checklist', missing: missing} only %}
+        {% block body %}
+            <ul class="venue-checklist">
+                {% for item in ['summary', 'main_building', 'photo'] %}
+                    {% set done = item not in missing %}
+                    <li class="venue-checklist__item{{ done ? ' venue-checklist__item--done' }}">
+                        {{ admin_icon(done ? 'check' : 'x') }}
+                        <span>{{ ('editor.checklist.item.' ~ item)|trans({}, 'cms') }}</span>
+                        <span class="visually-hidden">{{ (done ? 'editor.checklist.done' : 'editor.checklist.missing')|trans({}, 'cms') }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
+
+{% block record_aside_end %}
+    {% embed 'admin/components/_card.html.twig' with {title: 'history.title'|trans({}, 'cms'), id: 'venue-history', history: history, number: venue.number} only %}
+        {% block body %}
+            {% if history is empty %}
+                <p class="muted">{{ 'history.empty'|trans({}, 'cms') }}</p>
+            {% else %}
+                <ol class="timeline">
+                    {% for entry in history %}
+                        {{ include('admin/components/_timeline_item.html.twig', {
+                            variant: 'system',
+                            icon: 'history',
+                            title: 'history.entry'|trans({actor: entry.actor, action: entry.action}, 'cms'),
+                            meta: entry.at|swiss_date ~ ', ' ~ entry.at|date('H:i', 'Europe/Zurich'),
+                        }, with_context = false) }}
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        {% endblock %}
+        {% block foot %}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_audit_log', {subject_type: 'venue', subject_id: number}) }}">{{ 'history.all'|trans({}, 'cms') }}</a>
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
