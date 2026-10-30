@@ -1,0 +1,8 @@
+framework:
+    default_locale: de
+    enabled_locales: [de]
+    set_locale_from_accept_language: false   # the locale comes from the URL; pages stay cacheable (S10)
+    set_content_language_from_locale: true
+    translator:
+        default_path: '%kernel.project_dir%/translations'
+        fallbacks: [de]

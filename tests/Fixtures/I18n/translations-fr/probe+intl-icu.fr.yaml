@@ -1,0 +1,4 @@
+# probe_extra deliberately has no French file: it proves the fallback to German.
+page:
+    title: "Page d'essai"
+    heading: "Bienvenue sur la page d'essai"

@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
+_Last updated: 2026-10-30 (#0 project-skeleton and #2 i18n-foundation done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award, no back office.
 
@@ -64,7 +64,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 |---|---|---|---|---|---|---|---|
 | 0 | `project-skeleton` | W0 | OP-1, GEN-2 | — | — | — | ✅ Done |
 | 1 | `design-system` | W1 | GEN-3, A11Y-1, PERF-1 (CSS, fonts) | 0 | — | — | Research |
-| 2 | `i18n-foundation` | W1 | GEN-1, SEO-6 | 0 | — | — | Research |
+| 2 | `i18n-foundation` | W1 | GEN-1, SEO-6 | 0 | — | — | ✅ Done |
 | 3 | `geo-reference-data` | W1 | FI-1 (data), FI-2 (data) | 0 | `cantons`, `towns` | — | Research |
 | 4 | `venue-schema` | W2 | DATA-2, DP-5–DP-15 (data), LP-2 (data) | 2, 3 | `venues`, `venue_*`, `rooms`, `room_*`, `taxonomy_terms` | — | Research |
 | 5 | `venue-media` | W3 | PERF-2, LP-3 (images), DP-2 (images) | 4 | `venue_photos` (columns for variants) | — | Research |
@@ -491,6 +491,32 @@ IDs are referenced by the overview and the cycles.
   - a demo route renders German strings from two domains;
   - the localized-route test fails for a plain route and passes for a localized one;
   - adding a dummy `fr` catalogue plus `enabled_locales: [de, fr]` in a test kernel serves `/fr/...` without code changes (proven in a test, not shipped).
+
+**Outcome (2026-10-30).** Done in commit `i18n-foundation`. The full guidance is in `.claude/rules/i18n.md`; read it before writing a route, a template or a translated table.
+
+- **Package and config:** `symfony/translation` 7.4.22. `config/packages/translation.yaml`: `default_locale: de`, `enabled_locales: [de]`, translator `fallbacks: [de]`, `set_locale_from_accept_language: false` (the locale comes from the URL only, so no `Vary: Accept-Language`), `set_content_language_from_locale: true` (every response sends `Content-Language: de`). No migration, no env var.
+- **`App\Shared\Translation\EnabledLocale`** (from songrequest): `all()`, `default()`, `isEnabled()`, `clamp()`. It is the only place in `src/` that reads `%kernel.enabled_locales%` / `%kernel.default_locale%`.
+- **Localized routes:** every public route uses Symfony's localized form, `#[Route(path: ['de' => '/hochzeitslocations'], name: 'listing')]`. German paths are unprefixed; Symfony registers `listing.de`; templates call `path('listing')` without a suffix. Exempt: route names starting with `_` (`_styleguide`, `_profiler*`, `_wdt*`, `_preview_error`), paths starting with `/_` (`/_search/*`), and a route that opts out with `options: [LocalizedRoutes::UNLOCALIZED => true]` (`App\Shared\Translation\LocalizedRoutes`). `health` opts out this way. `tests/Application/Shared/Translation/PublicRoutesAreLocalizedTest.php` runs `LocalizedRoutes::violations()` over the app router. It fails for a plain route and for a localized route with no path for an enabled locale.
+- **Swiss formats:** `App\Shared\Twig\SwissFormatExtension` has the filters `swiss_number` (`1'234'567.5`, `|swiss_number(2)` for fixed decimals) and `swiss_date` (`05.10.2026`), plus the **function** `swiss_range(min, max)` (`{{ swiss_range(50, 450) }}` renders "50 - 450"; equal bounds render one number). Never use `|date` or `number_format`. Pass numbers into messages pre-formatted with `swiss_number`, not through ICU `{n, number}`, because the translator locale is `de`, not `de_CH`.
+- **hreflang:** the Twig function `hreflang_alternates(query = {})` (`App\Shared\Twig\HreflangExtension`, backed by `App\Shared\Translation\HreflangAlternates` → `HreflangAlternate{hreflang, href}`) returns one absolute `<locale>-CH` URL per enabled locale, plus `x-default` (today: `de-CH` and `x-default`). The partial `templates/shared/_hreflang.html.twig` renders them as `<link rel="alternate">`. **`base.html.twig` must include it inside its `{% block hreflang %}` as `{{ include('shared/_hreflang.html.twig', ignore_missing = true) }}`.** Whichever of #1 and #2 lands second adds that line. Pass `{query: {page: 2}}` for parameters that select a different page. Routes not in the localized form get no alternates.
+- **Content translations:** a plain per-module entity (e.g. `Venues\Entity\VenueTranslation`, unidirectional `ManyToOne` to its owner). There is no shared trait and no mapped superclass. Table `<entity>_translations (id UUID PK, <entity>_id UUID NOT NULL FK, locale VARCHAR(2) NOT NULL, …fields, created_at, updated_at)` with `uk_<table>_<entity>_id_locale UNIQUE (<entity>_id, locale)`, `chk_<table>_locale CHECK (locale ~ '^[a-z]{2}$')` and an index on the FK. The write side validates `locale` with `EnabledLocale::isEnabled()`; every owner has a `de` row. Read models use `App\Shared\Translation\TranslationJoin::localized($table, $foreignKey, $ownerIdSql, $alias)`, which returns a `LEFT JOIN LATERAL` that takes the requested locale's row or else the `de` row (per row, so all fields come from one language). Bind it with `->parameters($locale)` (`:i18n_locale`, `:i18n_fallback_locale`). The venue name stays on `venues`. Fixed vocabularies are PHP enums implementing `TranslatableInterface`, keyed `<context>.<case value>`, and each such enum gets a test that every key exists.
+- **Catalogues:** ICU, one domain per module, `translations/<domain>+intl-icu.de.yaml`. Empty stubs exist for `shared`, `media`, `venues`, `search`, `favorites`, `inquiries` and `seo`; add keys to them. `messages` (layout strings) is #1's file and `geo` is #3's; each cycle creates its own.
+- **Checks:** `make lint-translations` (`lint:translations`, ICU syntax) is part of `make lint`. `make test` adds, under `tests/Integration/Shared/Translation/`:
+  - `TranslationCompletenessTest`: `debug:translation --only-missing` per enabled locale, so a missing key fails;
+  - `CatalogueParityTest`: every enabled locale has exactly `de`'s keys;
+  - `TemplatesHaveNoRawTextTest`: raw text, letters in `alt`/`title`/`aria-label`/`placeholder`, or a printed literal outside `|trans` fails. The scanner is `tests/Support/Twig/RawTextScanner.php`, with its self-test `RawTextScannerTest`.
+  - The raw-text test's `BASELINE` only shrinks (a stale entry fails): **#1 removes `'base.html.twig' => ['Welcome!']`** when it rewrites the layout, and **#7 removes `'site/placeholder.html.twig' => ['Hochzeitslocation']`**.
+  - The scanner cannot see literals passed as variables to includes or macros, nor strings in PHP; those remain a review checklist item.
+- **Probe kernels (test-only, not shipped):** `tests/Fixtures/I18n/` (`I18nProbeKernel`, `FrenchProbeKernel`, `ProbeController`, its own templates and catalogues). `I18nProbeTest` proves a German page with two domains, `50 - 450` and hreflang. `FrenchLocaleProbeTest` proves that `enabled_locales: [de, fr]` plus a `fr` catalogue serves `/fr/...` with no change to `src/` or `config/`. Helpers: `tests/Support/Translation/{CatalogueParity,KernelLocales}.php`.
+- **Deviations:**
+  - Research D7 was wrong. The router drops `_canonical_route` from the matched request and reports the canonical name in `_route` (`listing` for a match of `listing.de`). `HreflangAlternates` reads `_route` and requires `_route_params._locale`. Without this fix, hreflang would have rendered nothing on every page.
+  - The raw-text scanner also detects printed literals from the token stream, because Twig's optimizer turns `{{ 'Text' }}` into a `TextNode`. It also keeps adjacent block bodies apart.
+  - The probe kernels' `configureContainer()`/`configureRoutes()` are `protected`, not `private` (PHPStan `method.unused`).
+  - `config/reference.php` changed by one regenerated line.
+- **Carried forward:**
+  - Review F-m1, for #16: once error templates extend `base.html.twig`, a 404/500 thrown inside a matched localized route would render hreflang links, because the extension reads the main request. Fix: return `[]` when the request has an `exception` attribute, or empty the `hreflang` block in the error templates. Then also correct the "error pages" sentence in `.claude/rules/i18n.md`.
+  - `.claude/rules/i18n.md` says "Never read `%kernel.enabled_locales%` elsewhere". It should say "elsewhere in `src/`", since test helpers read it.
+  - CLAUDE.md's commands-table row for `make lint` (`cs-check` + `phpstan`) does not list `lint-translations`. The `### Shared` paragraph documents it.
 
 ### 3. `geo-reference-data`
 

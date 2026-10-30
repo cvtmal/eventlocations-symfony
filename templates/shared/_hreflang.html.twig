@@ -1,0 +1,9 @@
+{#
+    hreflang alternates of the current page (SEO-6): one <link> per enabled locale plus x-default.
+    Wire it into the hreflang block of base.html.twig (#1) with:
+        {{ include('shared/_hreflang.html.twig', ignore_missing = true) }}
+    Optional variable `query`: extra URL parameters for the alternates, e.g. {page: 2}.
+#}
+{% for alternate in hreflang_alternates(query|default({})) %}
+    <link rel="alternate" hreflang="{{ alternate.hreflang }}" href="{{ alternate.href }}">
+{% endfor %}
