@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton and #2 i18n-foundation done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #2 i18n-foundation and #3 geo-reference-data done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award, no back office.
 
@@ -65,7 +65,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 0 | `project-skeleton` | W0 | OP-1, GEN-2 | — | — | — | ✅ Done |
 | 1 | `design-system` | W1 | GEN-3, A11Y-1, PERF-1 (CSS, fonts) | 0 | — | — | Research |
 | 2 | `i18n-foundation` | W1 | GEN-1, SEO-6 | 0 | — | — | ✅ Done |
-| 3 | `geo-reference-data` | W1 | FI-1 (data), FI-2 (data) | 0 | `cantons`, `towns` | — | Research |
+| 3 | `geo-reference-data` | W1 | FI-1 (data), FI-2 (data) | 0 | `cantons`, `towns` | — | ✅ Done |
 | 4 | `venue-schema` | W2 | DATA-2, DP-5–DP-15 (data), LP-2 (data) | 2, 3 | `venues`, `venue_*`, `rooms`, `room_*`, `taxonomy_terms` | — | Research |
 | 5 | `venue-media` | W3 | PERF-2, LP-3 (images), DP-2 (images) | 4 | `venue_photos` (columns for variants) | — | Research |
 | 6 | `search-query` | W3 | LP-4, FI-5, FI-6, PERF-3 (query) | 4 | indexes only | — | Research |
@@ -532,6 +532,34 @@ IDs are referenced by the overview and the cycles.
   - all 26 cantons and about 3,960 towns are imported idempotently;
   - integration tests cover autocomplete ("zuer" → Zürich, "8712" → Stäfa, "rapperswil" → Rapperswil-Jona) and radius;
   - the SVG renders in the styleguide with every canton id present (test).
+
+**Outcome (2026-10-30).** Done in commit `geo-reference-data`. No Composer changes, no routes.
+
+- **Migration `Version20261030105455`** (full `down()`) adds three SQL functions and three tables:
+  - `geo_fold(text)` (lower-case, `unaccent`, non-alphanumerics → one space), `geo_fold_de(text)` (ä/ö/ü → ae/oe/ue, then `geo_fold`) and `geo_search_key(text)` (`geo_fold_de || ' ' || geo_fold`), all `IMMUTABLE PARALLEL SAFE STRICT` with SQL-standard `RETURN` bodies. They exist because `unaccent()` is only STABLE and cannot be used in an index expression; the wrappers call it with an explicit dictionary, which makes the index possible. New SQL that compares place names must fold through them so it hits the index.
+  - `cantons`: PK `code` VARCHAR(2), lower-case (`zh`), a code-keyed vocabulary (documented exception to `EntityId`); `bfs_number` (1–26, unique), `slug` (German ASCII, unique: `zuerich`, `st-gallen`), `svg_id` (`CHECK svg_id = 'ch-' || code`), `centroid_lat`/`centroid_lng` (inner points of the BFS 2026 polygons). The 26 rows are seeded by the migration itself.
+  - `towns`: PK `id` UUID; `canton_code` FK → `cantons(code)` ON DELETE RESTRICT; `zip` (the lowest of the town), `name` (official Ortschaft), `slug` (AsciiSlugger de), `bfs_number`, `lat`, `lng`, `population` (per **municipality**). Constraints `uk_towns_canton_code_name`, `uk_towns_canton_code_slug`, CHECKs on zip/lat/lng/population. Indexes: GIN trigram `idx_towns_search_key` on `geo_search_key(name)` (the spec's "trigram on `unaccent(name)`"), GiST `idx_towns_earth` on `ll_to_earth(lat, lng)` (radius), btree `idx_towns_zip`, `idx_towns_canton_code`. The expression indexes are deliberately not mapped in Doctrine (`schema:validate` stays green).
+  - `town_zips`: PK `(zip, town_id)`, FK `town_id` → `towns(id)` ON DELETE CASCADE; every ZIP of a town, so all of them stay searchable.
+- **Entities / repository:** `App\Geo\Entity\Canton`, `App\Geo\Entity\Town` (ManyToOne `canton()`), `App\Geo\Entity\TownZip`, mapped by the new `orm.mappings.Geo` block in `config/packages/doctrine.yaml`; `App\Geo\Repository\TownRepository` (DBAL upserts for the import). **#4 references them by FK:** `town_id UUID → towns(id)` and/or `canton_code VARCHAR(2) → cantons(code)` (Venues → Geo is allowed by S2, so a ManyToOne to `Geo\Entity\Town` is fine).
+- **`App\Geo\ValueObject\Canton`:** string enum, 26 cases in BFS order (`ZH = 'zh'` … `JU = 'ju'`), implements `TranslatableInterface` (`trans()` → `canton.<code>` in the `geo` domain). Slug, `svg_id` and centroid live only in the `cantons` table. Labels: `translations/geo+intl-icu.de.yaml` (`canton.zh: Zürich`, …). Also `PlaceType` (`Canton|Town`).
+- **Import:** `bin/console app:geo:import-towns [path]` (`App\Geo\Console\ImportTownsCommand` → `App\Geo\Command\ImportTowns(csvPath)` on `command.bus` → `App\Geo\CommandHandler\ImportTownsHandler` → `TownRepository`). It reads `data/geo/towns.csv` (byte copy from the Laravel project, `-text` in `.gitattributes`, sources in `data/geo/SOURCE.md`) and collapses 4,057 rows to **one town per `(canton, name)` with the lowest ZIP** supplying every field, keeping all 4,057 ZIPs in `town_zips` → 3,959 towns. Idempotent (`ON CONFLICT … DO UPDATE … WHERE … IS DISTINCT FROM`; second run: `0 inserted, 0 updated, 3959 unchanged`), one transaction, **never deletes towns** (stale towns are only reported as `Name (CANTON)`), deletes only stale ZIP rows. **`make seed` now runs it first**, before `foundry:load-fixtures`; production must run it once after migrating (#20).
+- **Read models** (no caller yet, so the services are removed at compile time until #6 injects them):
+  - `App\Geo\ReadModel\PlaceLookup::suggest(string $q): list<PlaceSuggestion>`: trims and cuts input to 100 chars; returns `[]` if it has no letter or digit; 1–4 digits → ZIP prefix (exact first); text → cantons by slug prefix first, then towns by name prefix → word prefix → trigram, each by population; at most 8. `PlaceSuggestion`: `type` (`PlaceType`), `cantonCode`, `?townId`, `?name`, `?zip`; canton entries carry only the code (label via the enum).
+  - `App\Geo\ReadModel\TownLocator::withinKm(string $townId, float $km): list<TownDistance>`: throws `InvalidArgumentException` unless 0 < km ≤ 200; returns `[]` for a non-UUID id; `earth_box` + `earth_distance`, nearest first, centre town included. `TownDistance`: `townId`, `name`, `cantonCode`, `zip`, `distanceKm`.
+- **Canton map:** `assets/maps/cantons.svg`, 26,690 bytes, `viewBox="0 0 800 533"` only, `<g id="cantons">` with 26 `<path id="ch-xx">`, `<g id="lakes">` with 22 lakes on top, presentation attributes only on the groups. Source: BFS GEOSTAT *Generalisierte Gemeindegrenzen* / Historized boundaries K4, **state 1.1.2026** (Moutier already in JU), simplified with mapshaper + SVGO; recipe and Moutier check in `assets/maps/LICENSES.md`. Twig: `{{ canton_map() }}` (`App\Geo\Twig\CantonMapExtension`, `isSafe: html`, file read once) inlines it.
+- **Licences:** canton map OPEN-BY (BFS DAM asset 36389714), credit "Quelle: Bundesamt für Statistik (BFS), GEOSTAT"; town data swisstopo free geodata + BFS OPEN-BY, credit "Quelle: swisstopo, Amtliches Ortschaftenverzeichnis; Bundesamt für Statistik (BFS)". Both require the source to be named where the data is used.
+- **Docs:** `CLAUDE.md` `### Geo` describes all of the above.
+- **Deviations:** "rapperswil" resolves to Rapperswil SG (the dataset has Ortschaften, no municipality names such as Rapperswil-Jona); the trigram index is on `geo_search_key(name)`, not `unaccent(name)`; `pg_trgm`'s weak-similarity `weak_search` was not adopted; the SVG came from the data.geo.admin.ch STAC item of the same BFS edition (full `Cantons_K4` layer, not the productive-area `kanton_vf`); `staleTownNames` reports `Name (CANTON)` because La Cibourg exists in BE and NE.
+- **Rebase onto #2:** `tests/Application/Shared/Translation/FrenchLocaleProbeTest::test_parity_check_reports_the_untranslated_domain` now checks parity over the probe fixtures' domains only. It used to include `translations/`, which held only empty stubs; `geo` now has 26 keys and no `fr` catalogue, so the French probe kernel reported `fr/geo` as missing. The app-wide parity check (`CatalogueParityTest`, enabled locales only) is unchanged.
+- **Carried forward:**
+  - F-m1: the data sources must be credited on the public site: #10 shows the BFS credit near the canton map, #18 lists both credits in the Impressum ("Datenquellen").
+  - F-m2: #20 re-checks the canton-map licence before launch: written confirmation of OPEN-BY from BFS GEOSTAT, or rebuild the SVG from swissBOUNDARIES3D (commercial use allowed, "© swisstopo"; option documented in `LICENSES.md`).
+  - F-m4: #6 fixes `PlaceLookup` letting non-Latin input through: the guard checks the raw input, but e.g. `日本` folds to `''`, so `suggest('日本')` currently returns 8 cantons. Guard on the folded value (`q.de <> ''`) and add a test.
+  - #6/#10: ranking by municipal population favours hamlets of large municipalities on 1–2 letter queries (`a` → Aldesago, part of Lugano, before Aarau; `ge` → Gerlikon second). A tie-break (Ortschaft name = municipality, or shortest name) may help.
+  - The styleguide canton-map section (D9) goes to whoever lands after #1 (#10 at the latest).
+  - #21's aliases (Genf, Davos Platz/Dorf); FR/IT canton names and town exonyms belong to the language cycles.
+  - `symfony/string` and `symfony/translation-contracts` are used transitively (`symfony/translation` is declared since #2); a later cycle may declare them in `composer.json`.
+  - #2 landed first and left `geo` to #3 (no stub), as planned. An integration assertion `trans('canton.zh', [], 'geo') === 'Zürich'` through the real translator is still open; the next cycle that touches Geo labels (#6 or #10) may add it.
 
 ## W2 Data model
 
