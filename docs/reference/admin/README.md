@@ -4,7 +4,7 @@ The target look for the back office at `/admin` (`docs/rpi-cycles.md` S12, Q11).
 
 - **Live design (clickable):** https://claude.ai/artifact/LDRuCKBiQoQkUXNAG7vEtY. Open it with Claude in Chrome, or read it with the Artifact tool's `read` action. Press Play on an artboard to click through: the sidebar links the screens, and the photo grid, composer tabs, pipeline "Weiter →" and inbox list react.
 - **Source in this folder:** one `*.dc.html` per artboard plus `canvas.json`. They need the design canvas's runtime to render, so read them for markup, values and copy rather than opening them in a browser. If the live design and these files differ, the live design wins; copy it back here.
-- **Status:** drafted in the planning session on 2026-10-30. The owner reviews it before #22 starts. Changes are recorded in #22's or #23's Outcome.
+- **Status:** drafted in the planning session and **approved by the owner on 2026-10-30**. Deviations are recorded in #22's or #23's Outcome.
 - **Screenshots:** at its start, #22 saves a 1440 px PNG of each artboard here (`<artboard>.png`), taken from the live design.
 
 ## Screens
