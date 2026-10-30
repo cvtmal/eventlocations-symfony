@@ -27,6 +27,7 @@ Code lives in `src/<Module>/<Layer>/`. Modules: `Geo`, `Media`, `Venues`, `Searc
 | `Exception` | Business errors of the module |
 | `Form` | Form types and form data classes |
 | `EventListener` | Kernel and Doctrine event listeners |
+| `Event` | A module's published events and the small service that publishes them |
 | `Console` | Console commands (`#[AsCommand]`, invokable) |
 | `Twig` | Twig filters and functions, `#[AsTwigFilter]` / `#[AsTwigFunction]` |
 | `Mailer` | Builds and sends a module's emails |
@@ -46,6 +47,7 @@ Do not invent new layer names without updating `tests/Architecture/` — the rul
 | ReadModel | yes | — | |
 | ValueObject | yes | yes | enums excepted |
 | EventListener | yes | — | |
+| Event | yes | yes | |
 | Console | yes | — | invokable, `#[AsCommand]` |
 | Twig | yes | — | |
 | Mailer | yes | — | |

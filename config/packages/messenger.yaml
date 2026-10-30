@@ -1,6 +1,6 @@
 framework:
     messenger:
-        # Single bus, synchronous: there is no async transport (#14 decides on mail delivery).
+        # Single bus, synchronous: there is no async transport; mail is sent synchronously (#14).
         # dispatch_after_current_bus is part of the default middleware.
         default_bus: command.bus
 

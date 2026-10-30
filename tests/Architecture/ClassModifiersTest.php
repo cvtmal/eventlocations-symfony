@@ -94,6 +94,22 @@ final class ClassModifiersTest extends ArchitectureRules
             ->because('Mailers are services, composed not inherited.');
     }
 
+    public function test_events_are_final(): Rule
+    {
+        return PHPat::rule()
+            ->classes(self::layer('Event'))
+            ->should()->beFinal()
+            ->because('Events and their publishers are composed, not inherited.');
+    }
+
+    public function test_events_are_readonly(): Rule
+    {
+        return PHPat::rule()
+            ->classes(self::layer('Event'))
+            ->should()->beReadonly()
+            ->because('An event is a fact; subscribers must not change it.');
+    }
+
     public function test_read_models_are_final(): Rule
     {
         return PHPat::rule()

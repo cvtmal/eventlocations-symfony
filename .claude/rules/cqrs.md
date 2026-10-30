@@ -38,4 +38,4 @@ There is exactly one bus, `command.bus` (default bus, wrapped in a Doctrine tran
 
 ## Async messages
 
-There is no async transport; `command.bus` handles every message synchronously. #14 decides whether mail goes async.
+There is no async transport; `command.bus` handles every message synchronously, mail included (#14). `DeliverInquiry` is its own command so the row is committed before any SMTP call. If #20 measures SMTP above about 2 s, drain-on-terminate is the documented fallback.

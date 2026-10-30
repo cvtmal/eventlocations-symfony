@@ -1,0 +1,13 @@
+{# The inquiry's facts, the same in both mails: the rows for the facts macro of emails/_blocks.html.twig. #}
+{% macro facts(occasion, guests, event_date, first_name, last_name, guest_email, phone) %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+{% set rows = [
+    {label: 'email.fact.occasion'|trans({}, 'inquiries'), value: occasion|trans},
+    {label: 'email.fact.guests'|trans({}, 'inquiries'), value: guests|swiss_number},
+    {label: 'email.fact.date'|trans({}, 'inquiries'), value: event_date ? event_date|swiss_date : 'email.date_open'|trans({}, 'inquiries')},
+    {label: 'email.fact.name'|trans({}, 'inquiries'), value: first_name ~ ' ' ~ last_name},
+    {label: 'email.fact.email'|trans({}, 'inquiries'), value: guest_email},
+] %}
+{% if phone %}{% set rows = rows|merge([{label: 'email.fact.phone'|trans({}, 'inquiries'), value: phone}]) %}{% endif %}
+{{ blocks.facts(rows) }}
+{% endmacro %}

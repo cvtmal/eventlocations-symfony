@@ -1,0 +1,57 @@
+{#
+    "{Name} kontaktieren" (DP-13), rendered by inquiry_form() into the detail page's #anfrage. Params: venue, form.
+    No JS. An error is text linked to its field with aria-describedby, plus aria-invalid (form_row would set these,
+    the local macro does not use it). Labels are here so optional fields can carry their hint.
+#}
+{% macro field(field, label, optional = false) %}
+    {%- set errors = field.vars.errors -%}
+    {%- set attr = field.vars.attr|merge({class: 'inquiry-form__control'}) -%}
+    {%- if errors|length > 0 %}{% set attr = attr|merge({'aria-invalid': 'true', 'aria-describedby': field.vars.id ~ '_error'}) %}{% endif -%}
+    <div class="inquiry-form__field">
+        <label class="inquiry-form__label" for="{{ field.vars.id }}">{{ label }}{% if optional %} <span class="inquiry-form__hint">{{ 'form.optional'|trans({}, 'inquiries') }}</span>{% endif %}</label>
+        {{ form_widget(field, {attr: attr}) }}
+        {% if errors|length > 0 %}<p class="inquiry-form__error" id="{{ field.vars.id }}_error">{% for error in errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}</p>{% endif %}
+    </div>
+{% endmacro %}
+{% import _self as inquiry %}
+<div class="inquiry-form venue-section">
+    <h2 class="venue-section__title">{{ 'form.heading'|trans({name: venue.name}, 'inquiries') }}</h2>
+    <ul class="inquiry-form__promises">
+        <li>{{ icon('check') }}<span>{{ 'form.promise.free'|trans({}, 'inquiries') }}</span></li>
+        <li>{{ icon('check') }}<span>{{ 'form.promise.noncommittal'|trans({}, 'inquiries') }}</span></li>
+        <li>{{ icon('check') }}<span>{{ 'form.promise.direct'|trans({}, 'inquiries') }}</span></li>
+    </ul>
+    {% if not form.vars.valid %}
+        <div class="inquiry-form__summary" role="alert">
+            <p>{{ 'form.error.summary'|trans({}, 'inquiries') }}</p>
+            {% if form.vars.errors|length > 0 %}
+                <ul>{% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+    {% endif %}
+    {{ form_start(form, {attr: {class: 'inquiry-form__form'}}) }}
+        <div class="inquiry-form__row inquiry-form__row--three">
+            {{ inquiry.field(form.occasion, 'form.field.occasion'|trans({}, 'inquiries')) }}
+            {{ inquiry.field(form.guests, 'form.field.guests'|trans({}, 'inquiries')) }}
+            {{ inquiry.field(form.eventDate, 'form.field.event_date'|trans({}, 'inquiries'), true) }}
+        </div>
+        {{ inquiry.field(form.message, 'form.field.message'|trans({}, 'inquiries')) }}
+        <div class="inquiry-form__row">
+            {{ inquiry.field(form.firstName, 'form.field.first_name'|trans({}, 'inquiries')) }}
+            {{ inquiry.field(form.lastName, 'form.field.last_name'|trans({}, 'inquiries')) }}
+        </div>
+        <div class="inquiry-form__row">
+            {{ inquiry.field(form.email, 'form.field.email'|trans({}, 'inquiries')) }}
+            {{ inquiry.field(form.phone, 'form.field.phone'|trans({}, 'inquiries'), true) }}
+        </div>
+        <div class="inquiry-form__trap">
+            <label for="{{ form.website.vars.id }}">{{ 'form.field.website'|trans({}, 'inquiries') }}</label>
+            {{ form_widget(form.website) }}
+        </div>
+        {{ form_rest(form) }}
+        <div class="inquiry-form__actions">
+            {{ include('components/_button.html.twig', {label: 'form.submit'|trans({}, 'inquiries'), type: 'submit'}, with_context = false) }}
+            <p class="inquiry-form__privacy">{{ 'form.privacy'|trans({name: venue.name}, 'inquiries') }}</p>
+        </div>
+    {{ form_end(form) }}
+</div>

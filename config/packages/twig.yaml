@@ -3,6 +3,8 @@ twig:
     # Display only: storage and PHP stay UTC.
     date:
         timezone: Europe/Zurich
+    mailer:
+        html_to_text_converter: App\Shared\Mailer\EmailHtmlToTextConverter
 
 when@test:
     twig:
