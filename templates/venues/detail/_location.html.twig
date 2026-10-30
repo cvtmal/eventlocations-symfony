@@ -1,0 +1,15 @@
+{# Standort text (DP-10): address and distances. The map (#15) follows in show.html.twig's {% block map %}. Params: venue. #}
+{% set access_icons = {station: 'train-front', highway: 'car', airport: 'plane'} %}
+<h2 id="standort-title" class="venue-section__title">{{ 'detail.location.heading'|trans({}, 'venues') }}</h2>
+<p class="venue-location__address">
+    {{ icon('map-pin') }}
+    <span>{% if venue.street %}{{ 'detail.location.address'|trans({street: venue.street, zip: venue.zip, town: venue.townName}, 'venues') }}{% else %}{{ 'detail.location.address_no_street'|trans({zip: venue.zip, town: venue.townName}, 'venues') }}{% endif %}</span>
+</p>
+{% if venue.distances is not empty %}
+    <ul class="venue-location__distances" aria-label="{{ 'detail.location.distances_label'|trans({}, 'venues') }}">
+        {% for distance in venue.distances %}
+            {% set key = 'detail.location.' ~ distance.access.value ~ (distance.name ? '' : '_unnamed') %}
+            <li>{{ icon(access_icons[distance.access.value]) }}<span>{{ key|trans({km: distance.km|swiss_number(1), name: distance.name}, 'venues') }}</span></li>
+        {% endfor %}
+    </ul>
+{% endif %}

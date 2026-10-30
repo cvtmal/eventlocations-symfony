@@ -2,13 +2,13 @@
 
 ## Source
 
-- `sprite.svg`: 36 icons from [`lucide-static` 1.57.0](https://cdn.jsdelivr.net/npm/lucide-static@1.57.0/) (`icons/<name>.svg`), the inner elements copied unchanged into `<symbol id="<name>" viewBox="0 0 24 24">`. The presentation attributes (`stroke`, `fill`, `stroke-width`, …) of the Lucide root were dropped; `.icon` in `assets/styles/components/_icon.scss` sets them.
+- `sprite.svg`: 38 icons from [`lucide-static` 1.57.0](https://cdn.jsdelivr.net/npm/lucide-static@1.57.0/) (`icons/<name>.svg`), the inner elements copied unchanged into `<symbol id="<name>" viewBox="0 0 24 24">`. The presentation attributes (`stroke`, `fill`, `stroke-width`, …) of the Lucide root were dropped; `.icon` in `assets/styles/components/_icon.scss` sets them.
 - `favicon.svg`: derived from the Lucide `heart` icon (pink stroke).
 - Nothing in this directory is copied from eventlokale.
 
 ## Icons
 
-- **UI:** calendar, car, chevron-down, chevron-left, chevron-right, file-text, globe, heart (also the filled heart via `.icon--filled`), info, mail, map-pin, maximize, menu, phone, plane, printer, search, share-2, thumbs-up, train-front, user, x.
+- **UI:** calendar, car, check (#8, detail fact lists), chevron-down, chevron-left, chevron-right, file-text, globe, heart (also the filled heart via `.icon--filled`), house (#8, building type on the detail page), info, mail, map-pin, maximize, menu, phone, plane, printer, search, share-2, thumbs-up, train-front, user, x.
 - **Lage** (taxonomy key → icon): `am_fluss` → `waves`, `am_see` → `sailboat`, `auf_dem_land` → `trees`, `in_den_bergen` → `mountain-snow`, `in_der_stadt` → `building-2`.
 - **Highlights** (rating category → icon): `architektur` → `landmark`, `stil_atmosphare` → `sparkles`, `ausstattung` → `sofa`, `lage_aussicht` → `binoculars`, `erreichbarkeit` → `route`, `kulinarik` → `utensils`, `programm` → `music`, `freundlichkeit` → `smile`, `preis_leistung` → `coins`.
 

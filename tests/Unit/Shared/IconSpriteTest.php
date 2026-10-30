@@ -13,7 +13,7 @@ final class IconSpriteTest extends TestCase
 {
     private const array REQUIRED = [
         // UI
-        'calendar', 'car', 'chevron-down', 'chevron-left', 'chevron-right', 'file-text', 'globe', 'heart', 'info', 'mail',
+        'calendar', 'car', 'check', 'chevron-down', 'chevron-left', 'chevron-right', 'file-text', 'globe', 'heart', 'house', 'info', 'mail',
         'map-pin', 'maximize', 'menu', 'phone', 'plane', 'printer', 'search', 'share-2', 'thumbs-up', 'train-front', 'user', 'x',
         // Lage
         'building-2', 'mountain-snow', 'sailboat', 'trees', 'waves',
@@ -38,7 +38,7 @@ final class IconSpriteTest extends TestCase
         $missing = array_diff(self::REQUIRED, self::ids());
 
         self::assertSame([], array_values($missing));
-        self::assertCount(36, self::REQUIRED);
+        self::assertCount(38, self::REQUIRED);
     }
 
     public function test_symbols_carry_no_presentation_attributes(): void

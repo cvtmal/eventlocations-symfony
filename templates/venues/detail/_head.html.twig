@@ -1,0 +1,19 @@
+{# Head block (DP-5): name + tier badge, "PLZ Ort", icon row, description. Params: venue. #}
+{% set setting_icons = {river: 'waves', lake: 'sailboat', countryside: 'trees', mountains: 'mountain-snow', city: 'building-2'} %}
+<section id="beschreibung" class="venue-section venue-head" aria-labelledby="venue-name">
+    <h1 id="venue-name" class="venue-head__name">
+        {{ venue.name }}
+        {% if venue.tier.value != 'basic' %}{{ include('components/_badge.html.twig', {label: venue.tier|trans}, with_context = false) }}{% endif %}
+    </h1>
+    <p class="venue-head__place">{{ 'detail.head.place'|trans({zip: venue.zip, town: venue.townName}, 'venues') }}</p>
+    <ul class="venue-head__facts" aria-label="{{ 'detail.head.facts_label'|trans({}, 'venues') }}">
+        {% if venue.mainBuilding %}<li>{{ icon('house') }}<span>{{ venue.mainBuilding|trans }}</span></li>{% endif %}
+        {% if venue.mainSetting %}<li>{{ icon(setting_icons[venue.mainSetting.code] ?? 'map-pin') }}<span>{{ venue.mainSetting|trans }}</span></li>{% endif %}
+        <li>{{ icon('user') }}<span>{{ 'detail.head.capacity'|trans({range: swiss_range(venue.capacityMin ?? venue.capacityMax, venue.capacityMax)}, 'venues') }}</span></li>
+    </ul>
+    <div class="venue-head__description">
+        {% for paragraph in venue.descriptionText()|split("\n\n") %}
+            <p>{{ paragraph|trim|nl2br }}</p>
+        {% endfor %}
+    </div>
+</section>

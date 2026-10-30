@@ -1,0 +1,74 @@
+// Print (DP-16, D16): facts, rooms (dialog content inline), FAQ, address and contact; no navigation or forms.
+@media print {
+    body.page-venue {
+        padding-bottom: 0; // no fixed bottom bar on paper
+    }
+
+    .page-venue {
+        background: none;
+        color: var(--c-ink-inverse);
+
+        main {
+            padding: 0;
+            background: none;
+        }
+
+        .site-header,
+        .site-footer,
+        .toast-region,
+        .skip-link,
+        .venue-nav,
+        .venue-actions,
+        .venue-hero,
+        .venue-gallery,
+        .venue-inquiry,
+        .similar-venues,
+        .carousel__controls,
+        .venue-room__links,
+        .venue-reviews__more,
+        .dialog__header form,
+        .btn {
+            display: none;
+        }
+
+        .venue-layout {
+            display: block;
+            max-width: none;
+        }
+
+        .venue-section {
+            padding-top: 1rem;
+            break-inside: avoid-page;
+        }
+
+        .carousel__track {
+            display: block;
+            overflow: visible;
+        }
+
+        .venue-room {
+            margin-bottom: 1rem;
+            background: none;
+            break-inside: avoid;
+        }
+
+        .venue-room__picture,
+        .venue-room__placeholder {
+            display: none;
+        }
+
+        .venue-rooms dialog {
+            position: static;
+            display: block;
+            max-width: none;
+            margin: 0;
+            padding: 0 1rem;
+            background: none;
+            color: inherit;
+        }
+
+        a {
+            text-decoration: none;
+        }
+    }
+}

@@ -1,0 +1,9 @@
+{# Dokumente (DP-12): PDF links with titles. Rendered only with documents. Params: venue. #}
+<section class="venue-section venue-documents" aria-labelledby="venue-documents-title">
+    <h2 id="venue-documents-title" class="venue-section__title">{{ 'detail.documents.heading'|trans({}, 'venues') }}</h2>
+    <ul class="venue-documents__list">
+        {% for document in venue.documents %}
+            <li><a class="venue-contact__link" href="{{ document_url(venue.number, document.id) }}">{{ icon('file-text') }}<span>{{ document.title }}</span></a></li>
+        {% endfor %}
+    </ul>
+</section>

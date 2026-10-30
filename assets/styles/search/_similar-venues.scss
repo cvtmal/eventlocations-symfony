@@ -1,0 +1,95 @@
+@use '../abstracts/breakpoints' as bp;
+
+// "Ähnliche Locations" (DP-15, Search fragment of the detail page): compact cards in a carousel.
+.similar-venues {
+    padding-block: var(--space-2xl) 0;
+    background: var(--c-surface);
+
+    .carousel__track {
+        gap: var(--space-m);
+    }
+
+    .carousel__slide {
+        flex-basis: 70%;
+
+        @include bp.up(md) {
+            flex-basis: calc((100% - 2 * var(--space-m)) / 3);
+        }
+
+        @include bp.up(xl) {
+            flex-basis: calc((100% - 3 * var(--space-m)) / 4);
+        }
+    }
+
+    .carousel__controls {
+        position: static;
+        justify-content: flex-end;
+        gap: var(--space-xs);
+        margin-top: var(--space-s);
+    }
+}
+
+.similar-venues__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-m);
+    margin-bottom: var(--space-m);
+}
+
+.similar-venues__title {
+    font-size: 1.5rem;
+}
+
+.similar-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.similar-card__picture,
+.similar-card__placeholder {
+    display: block;
+    aspect-ratio: 3 / 2;
+    border-radius: var(--r-bar);
+    background: var(--c-surface-3);
+    overflow: hidden;
+
+    .picture__img {
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.similar-card__body {
+    padding-top: var(--space-s);
+
+    .badge {
+        margin-bottom: var(--space-2xs);
+    }
+}
+
+.similar-card__name {
+    font-size: 1.125rem;
+    line-height: 1.3;
+
+    a {
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.similar-card__town,
+.similar-card__capacity {
+    margin: var(--space-2xs) 0 0;
+    font-size: var(--fs-small);
+}
+
+.similar-card__capacity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+}

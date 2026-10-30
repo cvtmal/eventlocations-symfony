@@ -160,3 +160,96 @@ reviewer_role:
     visitor_m: Besucher
     organiser_f: Veranstalterin
     organiser_m: Veranstalter
+
+# Detail page (#8, venue_show). Numbers arrive pre-formatted (swiss_number, swiss_range).
+detail:
+    title: '{name} in {town} für die Hochzeit mieten'
+    hero:
+        label: 'Bilder von {name}'
+        open_gallery: Bilder ansehen
+    gallery:
+        title: 'Bilder von {name}'
+        label: Bildergalerie
+    nav:
+        label: Abschnitte der Location
+        description: Beschreibung
+        photos: Bilder
+        contact: Kontakt
+        location: Standort
+        rating: Bewertung
+    actions:
+        label: 'Anfragen & Merken'
+        check_availability: Verfügbarkeit prüfen
+        merken: Location merken
+        share: Teilen
+        copy_link: Link kopieren
+        link_copied: Link kopiert
+        whatsapp: WhatsApp
+        email: E-Mail
+        share_text: '{name} in {town}'
+        print: Drucken
+    head:
+        place: '{zip} {town}'
+        capacity: '{range} Personen'
+        facts_label: Auf einen Blick
+    rating:
+        heading: Bewertung
+        summary_labelled: '{label} ({score}) | {count}'
+        summary: '{score} | {count}'
+        highlights_intro: 'Was Besucher/innen und Veranstalter/innen an dieser Location besonders gefällt:'
+    facts:
+        heading: Ausstattung und Eignung
+    rooms:
+        heading: Räume
+        label: 'Räume von {name}'
+        capacity: '{range} Personen'
+        info: Rauminfos
+        facts: Eckdaten
+        info_title: 'Rauminfos: {name}'
+        facts_title: 'Eckdaten: {name}'
+        capacities: Kapazitäten
+        description: Beschreibung
+        seating_line: '{seating}: {range} Personen'
+        area: 'Fläche: {area} m²'
+        height: 'Raumhöhe: {height} m'
+        floor: 'Boden: {floor}'
+        seating:
+            banquet: Bankett (sitzend)
+            seminar: Seminar (sitzend)
+            concert: Theater (sitzend)
+            apero: 'Apéro, Party (stehend)'
+    faq:
+        heading: Häufige Fragen
+        own_catering: Eigenes Catering?
+        daylight: Tageslicht?
+        parking: Parking?
+        'yes': Ja
+        'no': Nein
+    location:
+        heading: Standort
+        address: '{street}, {zip} {town}'
+        address_no_street: '{zip} {town}'
+        distances_label: Entfernungen
+        station: '{km} km bis Bahnhof {name}'
+        station_unnamed: '{km} km bis Bahnhof'
+        highway: '{km} km bis Autobahn {name}'
+        highway_unnamed: '{km} km bis Autobahn'
+        airport: '{km} km bis Flughafen {name}'
+        airport_unnamed: '{km} km bis Flughafen'
+    contact:
+        heading: Kontakt
+        phone_reveal: Telefonnummer anzeigen
+        email: E-Mail
+        website: Website
+        person: 'Kontaktperson: {name}'
+    documents:
+        heading: Dokumente
+    reviews:
+        heading: Das sagen Besucher- und Veranstalterinnen
+        byline: '{name} - {role}, {month, date, ::MMMMyyyy}'
+        all: Alle Kommentare
+    phone:
+        title: 'Telefonnummer von {name}'
+        heading: 'Telefonnummer von {name}'
+        call: 'Anrufen: {display}'
+        back: 'Zurück zu {name}'

@@ -1,0 +1,27 @@
+// Bewertung (DP-6).
+.venue-rating__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: var(--fw-semibold);
+}
+
+.venue-rating__intro {
+    margin: var(--space-m) 0 var(--space-xs);
+}
+
+.venue-rating__highlights {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+}

@@ -1,0 +1,54 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// Fact lists (DP-7): label column + values in three columns; one column on small screens.
+.venue-facts__list {
+    display: grid;
+    gap: var(--space-m);
+    margin: 0;
+}
+
+.venue-facts__row {
+    display: grid;
+    gap: var(--space-xs);
+
+    @include bp.up(md) {
+        grid-template-columns: 9rem minmax(0, 1fr);
+    }
+
+    dt {
+        font-weight: var(--fw-semibold);
+    }
+
+    dd {
+        margin: 0;
+    }
+}
+
+.venue-facts__values {
+    display: grid;
+    gap: var(--space-xs) var(--space-m);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+
+    @include bp.up(sm) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+}
+
+.venue-facts__rule {
+    margin: var(--space-l) 0;
+    border: 0;
+    border-top: 1px solid var(--c-line-muted);
+}

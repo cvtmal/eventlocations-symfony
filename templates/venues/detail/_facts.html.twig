@@ -1,0 +1,29 @@
+{#
+    Fact lists (DP-7): one row per non-empty taxonomy group, a rule between the first three (building, setting,
+    suitable for) and the last four groups. Rendered only when hasFacts(). Params: venue.
+#}
+{% set setting_icons = {river: 'waves', lake: 'sailboat', countryside: 'trees', mountains: 'mountain-snow', city: 'building-2'} %}
+{% set first_half = venue.factGroups|filter(g => g.group.value in ['building', 'setting', 'suitable_for']) %}
+{% set second_half = venue.factGroups|filter(g => g.group.value not in ['building', 'setting', 'suitable_for']) %}
+<section class="venue-section venue-facts" aria-labelledby="venue-facts-title">
+    <h2 id="venue-facts-title" class="visually-hidden">{{ 'detail.facts.heading'|trans({}, 'venues') }}</h2>
+    {% for half in [first_half, second_half] %}
+        {% if half is not empty %}
+            {% if not loop.first and first_half is not empty %}<hr class="venue-facts__rule">{% endif %}
+            <dl class="venue-facts__list">
+                {% for group in half %}
+                    <div class="venue-facts__row">
+                        <dt>{{ group.group|trans }}</dt>
+                        <dd>
+                            <ul class="venue-facts__values">
+                                {% for term in group.terms %}
+                                    <li>{{ icon(group.group.value == 'setting' ? (setting_icons[term.code] ?? 'check') : (group.group.value == 'building' ? 'house' : 'check')) }}<span>{{ term|trans }}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </dd>
+                    </div>
+                {% endfor %}
+            </dl>
+        {% endif %}
+    {% endfor %}
+</section>

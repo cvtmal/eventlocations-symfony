@@ -1,0 +1,34 @@
+{#
+    "Ähnliche Locations" (DP-15), rendered by App\Search\Controller\SimilarVenuesController and embedded by the
+    Venues detail page. Params: items (list of {venue: SimilarVenue, picture: ?Picture}).
+    Second lander of #7/#8: switch to card_picture() + _card_facts + _badge (D19).
+#}
+<section class="similar-venues" aria-labelledby="similar-venues-title">
+    <div class="container">
+        <div class="similar-venues__header">
+            <h2 id="similar-venues-title" class="similar-venues__title">{{ 'similar.heading'|trans({}, 'search') }}</h2>
+            {# Second lander of #7/#8: path('listing') #}
+            <a class="similar-venues__all" href="{{ path('home') }}">{{ 'similar.all'|trans({}, 'search') }}</a>
+        </div>
+        {% embed 'components/_carousel.html.twig' with {id: 'similar-venues', label: 'similar.label'|trans({}, 'search'), items: items} only %}
+            {% block slides %}
+                {% for item in items %}
+                    {% set venue = item.venue %}
+                    <li class="carousel__slide similar-card">
+                        {% if item.picture %}
+                            {{ venue_picture(item.picture, sizes='(min-width: 1024px) 280px, 70vw', widths=[360, 640], class='similar-card__picture') }}
+                        {% else %}
+                            <span class="similar-card__placeholder"></span>
+                        {% endif %}
+                        <div class="similar-card__body">
+                            {% if venue.tier.value != 'basic' %}{{ include('components/_badge.html.twig', {label: venue.tier|trans}, with_context = false) }}{% endif %}
+                            <h3 class="similar-card__name"><a href="{{ path('venue_show', {slug: venue.slug}) }}">{{ venue.name }}</a></h3>
+                            <p class="similar-card__town">{{ venue.townName }}</p>
+                            <p class="similar-card__capacity">{{ icon('user') }}<span>{{ 'similar.capacity'|trans({range: swiss_range(venue.capacityMin ?? venue.capacityMax, venue.capacityMax)}, 'search') }}</span></p>
+                        </div>
+                    </li>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</section>

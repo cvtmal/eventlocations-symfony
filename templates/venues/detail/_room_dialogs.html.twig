@@ -1,0 +1,30 @@
+{# The "Rauminfos" and "Eckdaten" dialogs of one room (D3): each line only when its value exists. Params: room, room_id. #}
+{% if room.hasInfo() %}
+    {% embed 'components/_dialog.html.twig' with {id: room_id ~ '-info', title: 'detail.rooms.info_title'|trans({name: room.name}, 'venues'), room: room} only %}
+        {% block dialog_body %}
+            {% if room.seatings is not empty %}
+                <h3 class="venue-room-dialog__heading">{{ 'detail.rooms.capacities'|trans({}, 'venues') }}</h3>
+                <ul class="venue-room-dialog__list">
+                    {% for seating in room.seatings %}
+                        <li>{{ 'detail.rooms.seating_line'|trans({seating: ('detail.rooms.seating.' ~ seating.seating.value)|trans({}, 'venues'), range: swiss_range(seating.min ?? seating.max, seating.max)}, 'venues') }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% if room.description %}
+                <h3 class="venue-room-dialog__heading">{{ 'detail.rooms.description'|trans({}, 'venues') }}</h3>
+                <p>{{ room.description|nl2br }}</p>
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+{% endif %}
+{% if room.hasFacts() %}
+    {% embed 'components/_dialog.html.twig' with {id: room_id ~ '-facts', title: 'detail.rooms.facts_title'|trans({name: room.name}, 'venues'), room: room} only %}
+        {% block dialog_body %}
+            <ul class="venue-room-dialog__list">
+                {% if room.areaM2 %}<li>{{ 'detail.rooms.area'|trans({area: room.areaM2|swiss_number}, 'venues') }}</li>{% endif %}
+                {% if room.heightM %}<li>{{ 'detail.rooms.height'|trans({height: room.heightM|swiss_number}, 'venues') }}</li>{% endif %}
+                {% if room.floorMaterial %}<li>{{ 'detail.rooms.floor'|trans({floor: room.floorMaterial|trans}, 'venues') }}</li>{% endif %}
+            </ul>
+        {% endblock %}
+    {% endembed %}
+{% endif %}

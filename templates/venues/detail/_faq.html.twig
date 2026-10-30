@@ -1,0 +1,9 @@
+{# Häufige Fragen (DP-9, D15): a row only when its answer exists. Rendered only when hasFaq(). Params: venue. #}
+<section class="venue-section venue-faq" aria-labelledby="venue-faq-title">
+    <h2 id="venue-faq-title" class="venue-section__title">{{ 'detail.faq.heading'|trans({}, 'venues') }}</h2>
+    <dl class="venue-faq__list">
+        {% if venue.ownCatering %}<div><dt>{{ 'detail.faq.own_catering'|trans({}, 'venues') }}</dt><dd>{{ venue.ownCatering|trans }}</dd></div>{% endif %}
+        {% if venue.daylight is not null %}<div><dt>{{ 'detail.faq.daylight'|trans({}, 'venues') }}</dt><dd>{{ (venue.daylight ? 'detail.faq.yes' : 'detail.faq.no')|trans({}, 'venues') }}</dd></div>{% endif %}
+        {% if venue.parkingText %}<div><dt>{{ 'detail.faq.parking'|trans({}, 'venues') }}</dt><dd>{{ venue.parkingText }}</dd></div>{% endif %}
+    </dl>
+</section>
