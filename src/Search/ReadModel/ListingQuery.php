@@ -1,0 +1,196 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Search\ReadModel;
+
+use App\Shared\Translation\EnabledLocale;
+use App\Shared\Translation\TranslationJoin;
+use App\Venues\ValueObject\RatingHighlight;
+use App\Venues\ValueObject\Tier;
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Connection;
+use Psr\Clock\ClockInterface;
+
+/**
+ * The venue listing (LP-1…LP-4): one page of cards and the total, in at most three queries
+ * (cards, their photos, the count; two when the page is empty).
+ *
+ * Order (S6): tier first, then a shuffle that is stable for a day and changes with the date
+ * (md5 of the venue id and today's date in Europe/Zurich), then the id so the order is total.
+ */
+final class ListingQuery
+{
+    public const PER_PAGE = 48;
+    private const PHOTOS_PER_CARD = 8;
+
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly TranslationJoin $translationJoin,
+        private readonly EnabledLocale $enabledLocale,
+        private readonly ClockInterface $clock,
+    ) {
+    }
+
+    public function results(SearchCriteria $criteria, string $locale): ListingPage
+    {
+        $statement = $this->cardStatement($criteria, $locale);
+        $rows = $this->connection->fetchAllAssociative($statement->sql, $statement->params, $statement->types);
+
+        $numbers = [];
+        foreach ($rows as $row) {
+            \assert(\is_string($row['id']));
+            \assert(\is_int($row['number']));
+            $numbers[$row['id']] = $row['number'];
+        }
+        $photos = [] === $numbers ? [] : $this->photos($numbers, $locale);
+
+        $cards = array_map(fn (array $row): ListingCard => $this->card($row, $photos), $rows);
+
+        return ListingPage::of($cards, $this->count($criteria), $criteria->page, self::PER_PAGE);
+    }
+
+    public function count(SearchCriteria $criteria): int
+    {
+        $statement = $this->countStatement($criteria);
+        $count = $this->connection->fetchOne($statement->sql, $statement->params, $statement->types);
+        \assert(\is_int($count));
+
+        return $count;
+    }
+
+    public function cardStatement(SearchCriteria $criteria, string $locale): SqlStatement
+    {
+        $filter = new ListingSql($criteria, $this->enabledLocale->default());
+        $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
+
+        $sql = <<<SQL
+            {$filter->with}
+            SELECT v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max, v.rating_score, v.rating_count,
+                tw.name AS town_name, t.slug, t.summary,
+                (SELECT COALESCE(jsonb_agg(h.code ORDER BY h.position), '[]'::jsonb)
+                    FROM venue_rating_highlights h WHERE h.venue_id = v.id) AS highlights
+            FROM {$filter->from}
+            JOIN towns tw ON tw.id = v.town_id
+            {$translation}
+            WHERE {$filter->where}
+            ORDER BY v.tier_rank, md5(v.id::text || :seed), v.id
+            LIMIT :limit OFFSET :offset
+            SQL;
+
+        return new SqlStatement(
+            $sql,
+            $filter->params + $this->translationJoin->parameters($locale) + [
+                'seed' => $this->seed(),
+                'limit' => self::PER_PAGE,
+                'offset' => ($criteria->page - 1) * self::PER_PAGE,
+            ],
+            $filter->types,
+        );
+    }
+
+    public function countStatement(SearchCriteria $criteria): SqlStatement
+    {
+        $filter = new ListingSql($criteria, $this->enabledLocale->default());
+
+        return new SqlStatement(
+            <<<SQL
+                {$filter->with}
+                SELECT count(*) FROM {$filter->from}
+                WHERE {$filter->where}
+                SQL,
+            $filter->params,
+            $filter->types,
+        );
+    }
+
+    private function seed(): string
+    {
+        return $this->clock->now()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('Y-m-d');
+    }
+
+    /**
+     * The first eight venue-level photos (room photos belong to the room cards) per venue.
+     *
+     * @param array<string, int> $numbers venue id → venue number
+     *
+     * @return array<string, list<CardPhoto>> venue id → photos in position order
+     */
+    private function photos(array $numbers, string $locale): array
+    {
+        $translation = $this->translationJoin->localized('venue_photo_translations', 'venue_photo_id', 'p.id', 'pt');
+        $limit = self::PHOTOS_PER_CARD;
+
+        $rows = $this->connection->fetchAllAssociative(
+            <<<SQL
+                SELECT ids.venue_id, to_jsonb(p) AS photo, pt.alt
+                FROM unnest(ARRAY[:ids]::uuid[]) AS ids(venue_id)
+                CROSS JOIN LATERAL (
+                    SELECT vp.* FROM venue_photos vp
+                    WHERE vp.venue_id = ids.venue_id AND vp.room_id IS NULL
+                    ORDER BY vp.position
+                    LIMIT {$limit}
+                ) p
+                {$translation}
+                ORDER BY ids.venue_id, p.position
+                SQL,
+            ['ids' => array_keys($numbers)] + $this->translationJoin->parameters($locale),
+            ['ids' => ArrayParameterType::STRING],
+        );
+
+        $photos = [];
+        foreach ($rows as $row) {
+            \assert(\is_string($row['venue_id']));
+            \assert(\is_string($row['photo']));
+            \assert(null === $row['alt'] || \is_string($row['alt']));
+            $photo = json_decode($row['photo'], true, 512, \JSON_THROW_ON_ERROR);
+            \assert(\is_array($photo));
+            $photos[$row['venue_id']][] = CardPhoto::fromRow($numbers[$row['venue_id']], $photo, $row['alt']);
+        }
+
+        return $photos;
+    }
+
+    /**
+     * @param array<string, mixed>           $row
+     * @param array<string, list<CardPhoto>> $photos
+     */
+    private function card(array $row, array $photos): ListingCard
+    {
+        \assert(\is_string($row['id']));
+        \assert(\is_int($row['number']));
+        \assert(\is_string($row['slug']));
+        \assert(\is_string($row['name']));
+        \assert(\is_string($row['tier']));
+        \assert(null === $row['capacity_min'] || \is_int($row['capacity_min']));
+        \assert(\is_int($row['capacity_max']));
+        \assert(\is_string($row['town_name']));
+        \assert(\is_string($row['summary']));
+        \assert(null === $row['rating_score'] || is_numeric($row['rating_score']));
+        \assert(null === $row['rating_count'] || \is_int($row['rating_count']));
+        \assert(\is_string($row['highlights']));
+
+        $highlights = json_decode($row['highlights'], true, 512, \JSON_THROW_ON_ERROR);
+        \assert(\is_array($highlights));
+
+        return new ListingCard(
+            $row['id'],
+            $row['number'],
+            $row['slug'],
+            $row['name'],
+            Tier::from($row['tier']),
+            $row['capacity_min'],
+            $row['capacity_max'],
+            $row['town_name'],
+            $row['summary'],
+            null === $row['rating_score'] ? null : (float) $row['rating_score'],
+            $row['rating_count'],
+            array_values(array_map(static function (mixed $code): RatingHighlight {
+                \assert(\is_string($code));
+
+                return RatingHighlight::from($code);
+            }, $highlights)),
+            $photos[$row['id']] ?? [],
+        );
+    }
+}

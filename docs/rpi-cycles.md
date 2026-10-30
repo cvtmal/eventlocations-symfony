@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema and #5 venue-media done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media and #6 search-query done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award, no back office.
 
@@ -68,7 +68,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 3 | `geo-reference-data` | W1 | FI-1 (data), FI-2 (data) | 0 | `cantons`, `towns` | — | ✅ Done |
 | 4 | `venue-schema` | W2 | DATA-2, DP-5–DP-15 (data), LP-2 (data) | 2, 3 | `venues`, `venue_*`, `rooms`, `room_*`, `taxonomy_terms` | — | ✅ Done |
 | 5 | `venue-media` | W3 | PERF-2, LP-3 (images), DP-2 (images) | 4 | `venue_photos` (columns for variants) | — | ✅ Done |
-| 6 | `search-query` | W3 | LP-4, FI-5, FI-6, PERF-3 (query) | 4 | indexes only | — | Research |
+| 6 | `search-query` | W3 | LP-4, FI-5, FI-6, PERF-3 (query) | 4 | indexes only | — | ✅ Done |
 | 7 | `listing-page` | W4 | LP-1–LP-3, LP-5, LP-6 | 1, 5, 6 | — | — | Research |
 | 8 | `venue-detail-page` | W4 | DP-1–DP-12, DP-14–DP-16 | 1, 5, 6 | — | — | Research |
 | 9 | `venue-content-import` | W4 | DATA-1 | 4, 5 | `content_imports` | — | Research |
@@ -785,6 +785,83 @@ IDs are referenced by the overview and the cycles.
   - unit tests cover the codec (round trip, garbage input);
   - integration tests cover every filter, the ordering (tier first, stable for a day, changes with the date) and the counts;
   - the performance numbers are recorded in the Outcome.
+
+**Outcome (2026-10-30).** Done in commit `search-query`, rebased onto #5. No routes besides the two JSON endpoints, no Twig functions, no catalogue domains, no new Makefile targets or console commands. Composer: `symfony/clock: 7.4.*` declared (it was already installed transitively; the lock changed only its content hash). Read `CLAUDE.md` `### Search` before touching the listing query.
+
+- **Migration `Version20261030115117`** (indexes only, full `down()`): `idx_venues_earth` (GiST on `ll_to_earth(lat, lng)`) and `idx_venues_search_key` (GIN trigram on `geo_search_key(name)`). Both are unmapped expression indexes, like Geo's (`Venue`'s docblock says so). No btree on capacity, rooms, area or height (not selective). Its timestamp is older than #5's `Version20261030125302`; the order does not matter (indexes vs. columns).
+- **Evidence-settled answers** (eventlokale live, 15 GETs on 2026-10-30):
+
+  | Question | Decision |
+  |---|---|
+  | Lage `setting[]` | OR (am_see + auf_dem_land → 573; OR ≈ 607, AND ≈ 89) |
+  | Gebäudeart `building[]` | OR (302; OR ≈ 304, AND ≈ 1) |
+  | Infrastruktur `infra[]` | AND (218; AND ≈ 233, OR ≈ 715) |
+  | Umgebung `surroundings[]` | AND (76; AND ≈ 81, OR ≈ 582) |
+  | Mobiliar `furniture[]`, Technik `tech[]` | AND, inferred (same bundle loop as infra/surroundings; not measured) |
+  | Erreichbarkeit `access[]` | multi-value AND (our decision; eventlokale is single-select) |
+  | Between groups | AND |
+  | Guests | `capacity_max ≥ g AND (capacity_min IS NULL OR capacity_min ≤ g)` (`personen=10` → 680; min ≤ g ≤ max ≈ 684 vs max-only ≈ 918) |
+  | Radius | default 5 km once a place is picked, 0–50 km in whole km, 0 = the place only; measured on the venue's coordinates from the town centre (a ZIP's centre is its most populous town); an unknown place matches nothing |
+  | Erreichbarkeit thresholds | station ≤ 1 km, highway ≤ 10 km, airport ≤ 30 km; NULL distance = not near (`App\Venues\ValueObject\Access::maxDistanceKm()`) |
+  | Anzahl Räume `rooms` | 1–6 (6 = "≥ 6"), `room_count ≥ n` |
+  | Grösster Raum `area` | 50, 100, 150, 200, 250, 300 m², `largest_room_m2 ≥ n` |
+  | Min. Raumhöhe `height` | 2.5, 3.0, 3.5, 4.0, 4.5, 5.0 m, `max_room_height_m ≥ n` |
+
+- **`App\Search\ReadModel\SearchCriteria`** (`final readonly`, hotspot owned by #6; filter UIs only render it). Build it with `none()`, `fromQuery(InputBag $query, KnownTerms $known)`, `withPage(int)`, `withCanton(?Canton)`; read `termCodes(TermGroup)`, `isZipPlace()`. Constants `PARAMS` (param → `TermGroup`), `DEFAULT_RADIUS` 5, `MAX_RADIUS` 50, `AREAS`, `HEIGHTS`, `MAX_PAGE` 1000, `MAX_GUESTS` 50000, `MAX_ROOMS` 6.
+  - **Grammar of `fromQuery()`.** Invalid values are dropped silently, never a 4xx/5xx. It reads `$query->all()` once and type-checks every value (`InputBag::get()`/`all($key)` would answer a scalar/array mismatch with a 400).
+    - `canton`: one code, case-insensitive.
+    - `place`: a town UUID (lower-cased) or a 4-digit ZIP. `radius` 0–50, kept only with `place`, default 5.
+    - `guests`: 1–50000.
+    - `q`: trimmed, whitespace collapsed, ≤ 100 chars, needs `\p{L}\p{N}`, invalid UTF-8 dropped. The SQL also guards `geo_fold_de(:q) <> ''`, so `日本` matches nothing.
+    - `setting[] building[] infra[] furniture[] tech[] surroundings[]`: known `taxonomy_terms` codes of the matching group only (`infra` → `infrastructure`, `tech` → `technology`; `TermGroup`'s docblock says so). A scalar is taken as a one-element list; nested arrays are skipped. `suitable_for` is not a listing filter.
+    - `access[]`: `station|highway|airport`.
+    - `rooms`, `area`, `height`: the dropdown values above. `page`: 1–1000.
+  - **`toQuery()` is canonical:** key order `canton, place, radius, guests, q, setting, access, building, infra, furniture, tech, surroundings, rooms, area, height, page`; sorted, deduplicated lists; `height` with one decimal; page 1 and radius 5 omitted. One filter state = one URL (the S10 cache relies on it). Build URLs with `http_build_query($criteria->toQuery())`.
+  - **`KnownTerms`** (`of()`, `fromPairs()`, `has(TermGroup, code)`, `count()`) is the vocabulary the codec checks against; **`KnownTermsQuery::all()`** loads the 90 pairs once per request (memoized, `ResetInterface` / `kernel.reset`).
+- **`App\Search\ReadModel\ListingQuery`** (DBAL): `results(SearchCriteria, string $locale): ListingPage`, `count(SearchCriteria): int`, `PER_PAGE` 48, plus `cardStatement()`/`countStatement()` (return `SqlStatement` {`sql`, `params`, `types`} for EXPLAIN).
+  - **`ListingSql`** is the one WHERE / `WITH centre` / `FROM` builder shared by cards, count and similar venues, so they can never disagree. Published = `status = 'published'` **and** a default-locale (`de`) translation. The radius centre must stay a joined `MATERIALIZED` CTE (`CROSS JOIN centre c`), or the planner skips the GiST.
+  - Order (S6): `tier_rank, md5(id || seed), id`, seed = today in Europe/Zurich via `Psr\Clock\ClockInterface` (`MockClock` in tests): stable within a Zurich day, changes at Zurich midnight.
+  - Exactly 3 queries (cards, photos, count), 2 for an empty page, proved via `doctrine.debug_data_holder`. The codec's `KnownTermsQuery` is a fourth, memoized query.
+  - **`ListingPage`** {`cards: list<ListingCard>`, `total`, `page`, `perPage`, `lastPage`} (`of()`). **`ListingCard`** {`id`, `number`, `slug`, `name`, `tier: Tier`, `capacityMin: ?int`, `capacityMax`, `townName`, `summary`, `ratingScore: ?float`, `ratingCount: ?int`, `highlights: list<RatingHighlight>`, `photos: list<CardPhoto>` (≤ 8)}. Highlights come as `jsonb_agg`.
+  - **`CardPhoto`** {`venueNumber`, `photoId`, `position`, `originalPath`, `width: ?int`, `height: ?int`, `dominantColor: ?string`, `variants: ?array{widths, formats}`, `alt: ?string`}, `hasVariants()`. Read from `to_jsonb(venue_photos)`: the first 8 **venue-level** photos (`room_id IS NULL`) in position order, so #5's columns appear without an SQL change. Search does not reference Media classes.
+- **#7 maps `CardPhoto` to `App\Media\ValueObject\Picture`** (the `venue_photos` columns are on main since #5): only when `$p->hasVariants()`, `new Picture($p->venueNumber, $p->photoId, $p->width, $p->height, $p->dominantColor, ImageVariants::fromArray($p->variants), $p->alt ?? 'picture.alt_fallback'|trans({name: card.name, position: p.position}, 'media'))`, rendered with `venue_picture(…, widths=[360, 640, 960])`.
+- **`App\Search\ReadModel\SimilarVenuesQuery::forVenue(string $venueId, string $locale): list<SimilarVenue>`** (`LIMIT` 12): other published venues ordered by same canton → capacity overlap (`v.max ≥ COALESCE(me.min,1) AND COALESCE(v.min,1) ≤ me.max`; ranks, does not filter) → `earth_distance` → id. `SimilarVenue` {`id`, `number`, `slug`, `name`, `tier`, `townName`, `capacityMin`, `capacityMax`, `photo: ?CardPhoto`} (first venue photo). An invalid or unknown id gives `[]`.
+- **Endpoints** (`App\Search\Controller\{CountController, PlacesController}`), unlocalized (`_` prefix), `X-Robots-Tag: noindex`, no session, no cookie (application-tested):
+  - `_search_count`, `GET /_search/count?<listing query>` → `{"count": n}`, `Cache-Control: public, max-age=60, s-maxage=600, stale-while-revalidate=86400`. Garbage gives 200 with the unfiltered count.
+  - `_search_places`, `GET /_search/places?q=` → `{"places": [{"type":"canton","canton":"zh","label":"Zürich"} | {"type":"town","id","name","zip","canton"}]}`, `Cache-Control: public, max-age=3600, s-maxage=86400`. Backed by Geo's `PlaceLookup`.
+- **Performance** (`tests/Integration/Search/ListingQueryPerformanceTest.php`: DemoStory ×10 = 600 venues, 6,000 photos cloned by SQL in a rolled-back transaction, `ANALYZE`; PostgreSQL 18.6; `EXPLAIN ANALYZE` Execution Time, second run; `SEARCH_PERF_REPORT=1` prints them). Budget 20 ms.
+
+  | Statement | ms | Plan uses |
+  |---|---|---|
+  | Heaviest, literal values (0 matches), cards / count | 0.23–0.29 / 0.14–0.26 | `idx_venues_earth`, `pk_venue_terms` (index-only), `idx_venue_terms_venue_id` |
+  | Heaviest, matching variant (10 matches), cards / count | 0.56–0.83 / 0.38–0.51 | same |
+  | Unfiltered page 11 (offset 480), cards / count | 3.3–4.6 / 0.22–0.39 | seq scan + sort (parameterised md5 seed, unavoidable) |
+  | Photo query, 48 cards × ≤ 8 | 1.4–1.8 | profiler incl. round trip; reported, not asserted |
+  | Radius 50 km only (seqscan + indexscan off) | 2.9–3.3 | `idx_venues_earth` |
+  | `q=hof` only (seqscan + indexscan off) | 2.1–4.8 | `idx_venues_search_key` |
+  | `setting[]=mountains` only (seqscan + indexscan off) | 2.2–2.4 | `idx_venue_terms_term_group_term_code` |
+
+  "Heaviest" = radius 50 km around Zürich, guests 80, `q=hof`, access station, rooms 2, area 100, height 2.5, the 3 most used settings, the 4 most used buildings, the most used code of each AND group. The class has two tests (budget; the three index checks, each in a savepoint), so it builds DemoStory ×10 twice; it gets `DemoStory` from the container and removes `%app.media_public_dir%` in `tearDown()`.
+- **Tests:** `tests/Unit/Search/{SearchCriteriaTest,CardPhotoTest}.php` (round trip, canonical form, ~45 garbage cases), `tests/Unit/Venues/AccessTest.php`, `tests/Integration/Search/{SearchIndexesMigrationTest,KnownTermsQueryTest,ListingQueryTest,SimilarVenuesQueryTest,ListingQueryPerformanceTest}.php`, `tests/Application/Search/{CountControllerTest,PlacesControllerTest}.php`. Read models are built by hand in tests (`TranslationJoin` is removed from the test container; `ListingQueryTest::enabledLocale()`).
+- **Closed carried items:** #0 F-m1 (`because()` wording) and F-m2 (`self::layer('Repository')` in `InfrastructureAccessTest`); #3 F-m4 (`PlaceLookup` guards the folded value, `WHERE q.de <> ''`: `日本`/`Ελλάδα` → []); #3 short-query ranking (≤ 2 folded chars rank by `least(zip_count, 3)` first: `a` → Aarau, `ba` → Basel); #3 optional `trans('canton.zh', [], 'geo') === 'Zürich'` (asserted in `PlacesControllerTest`); #4 Erreichbarkeit thresholds (`Access::maxDistanceKm()`); `symfony/clock` declared.
+- **Deviations:**
+  - Highlights as `jsonb_agg`, not `ARRAY(…)` (DBAL returns a PG array literal).
+  - "Published" includes a default-locale translation, in card and count query.
+  - Performance assertions split: budget on heaviest/count/page 11; per-index usability with seqscan **and** indexscan off (with seqscan off alone the planner flipped between the GIN and an unrelated btree full scan at 600 rows). A second "matching" heaviest variant was added because the literal values match 0 DemoStory venues.
+  - `SimilarVenuesQuery` orders canton → capacity overlap → distance, not the spec's "same canton first, then nearest by distance, capacity overlap": distance is continuous, so overlap after distance would never break a tie; before distance it actually ranks.
+  - `KnownTerms::count()` added; `KnownTermsQuery` orders by `term_group, position`.
+- **Hand-offs:**
+  - **#7:** the `CardPhoto` → `Picture` mapping above; answer 404 when `page > ListingPage::lastPage`; paginate with `withPage()`; URLs via `http_build_query($criteria->toQuery())`.
+  - **#8:** `SimilarVenuesQuery::forVenue()` (DP-15) and `Access::maxDistanceKm()` (DP-10).
+  - **#10:** the places JSON shape above and `_search_count` for the live overlay count. **#11/#12** use `_search_count` the same way.
+  - **#12:** access thresholds from `Access::maxDistanceKm()`; new term filters are AND unless the group is setting/building.
+  - **#16:** `Disallow: /_search/` in robots.txt.
+  - **#17:** `SearchCriteria::withCanton()`.
+  - **#19:** retune the cache values (count 60/600/swr 86400; places 3600/86400).
+- **Carried forward:**
+  - Demo originals stay in `var/test-media/originals` after tests (`DemoMedia` copies the 30 originals there; git-ignored, #5's `DemoStoryTest` leaves them too).
+  - `composer validate --strict` fails on the pre-existing missing `name`/`description` in `composer.json` (plain `validate` passes).
+  - A NUL byte in `q` is truncated by the driver (`?q=a%00b` counts like `?q=a`); harmless, the codec does not strip control characters.
 
 ## W4 Pages (parallel)
 
