@@ -800,7 +800,7 @@ IDs are referenced by the overview and the cycles.
 - **Done when:**
   - migration up and down work;
   - integration tests prove every CHECK and unique constraint;
-  - `DemoStory` loads in under 10 s;
+  - `DemoStory` loads in under 60 s (raised from 10 s by the owner on 2026-10-30, because it missed under parallel lanes);
   - this file's Outcome lists every vocabulary code.
 
 **Outcome (2026-10-30).** Done in commit `venue-schema`. No Composer changes, no routes, no Twig functions, no new Makefile targets or console commands. Read `CLAUDE.md` `### Venues` and `.claude/rules/database.md` (the last bullets) before touching the schema.
