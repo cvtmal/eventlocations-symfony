@@ -1,0 +1,17 @@
+{#
+    Breadcrumb (#17, landing pages). Include with `only`: items (list<{name, url?}>, translated; the last is the
+    current page and has no url), label (translated aria-label of the nav).
+#}
+<nav class="breadcrumb" aria-label="{{ label }}">
+    <ol class="breadcrumb__list">
+        {%- for item in items %}
+        <li class="breadcrumb__item">
+            {%- if item.url is defined and not loop.last -%}
+            <a class="breadcrumb__link" href="{{ item.url }}">{{ item.name }}</a>
+            {%- else -%}
+            <span aria-current="page">{{ item.name }}</span>
+            {%- endif -%}
+        </li>
+        {%- endfor %}
+    </ol>
+</nav>

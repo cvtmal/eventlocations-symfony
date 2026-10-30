@@ -1,6 +1,20 @@
 {% extends 'base.html.twig' %}
 
-{% set seo = listing_seo(criteria, page) %}
+{% set seo = listing_seo(criteria, page, landing) %}
+{#- #17: a landing page has its own h1, intro and breadcrumb; the plain listing keeps listing.heading. -#}
+{% set count = {count: landing.venues ?? 0} %}
+{% if landing is null %}
+    {% set heading = 'listing.heading'|trans({}, 'search') %}
+    {% set intro = null %}
+{% elseif landing.type.value == 'building' %}
+    {% set heading = ('landing.building.' ~ landing.building ~ '.heading')|trans({}, 'search') %}
+    {% set intro = ('landing.building.' ~ landing.building ~ '.intro')|trans(count, 'search') %}
+{% else %}
+    {% set place = {canton: landing.canton ? landing.canton|trans : '', town: landing.townName ?? ''} %}
+    {% set heading = ('landing.' ~ landing.type.value ~ '.heading')|trans(place, 'search') %}
+    {% set intro = ('landing.' ~ landing.type.value ~ '.intro')|trans(place|merge(count), 'search') %}
+{% endif %}
+{% set breadcrumb = landing_breadcrumb(landing) %}
 {% set share_photo = page.cards[0].photos[0] ?? null %}
 {% set share_picture = share_photo ? card_picture(share_photo, page.cards[0].name) : null %}
 
@@ -12,10 +26,10 @@
 
 {% block hreflang %}{% if not seo.noindex %}{{ include('shared/_hreflang.html.twig', {query: page.page > 1 ? {page: page.page} : {}}, with_context = false) }}{% endif %}{% endblock %}
 
-{% block jsonld %}{{ parent() }}{% if not seo.noindex %}{{ listing_jsonld(page) }}{% endif %}{% endblock %}
+{% block jsonld %}{{ parent() }}{% if not seo.noindex %}{{ listing_jsonld(page) }}{% endif %}{% if breadcrumb %}{{ breadcrumb_jsonld(breadcrumb) }}{% endif %}{% endblock %}
 
 {% block hero %}
-    {{ include('search/_hero.html.twig', {heading: 'listing.heading'|trans({}, 'search'), total: page.total, criteria: criteria}, with_context = false) }}
+    {{ include('search/_hero.html.twig', {heading: heading, intro: intro, breadcrumb: breadcrumb, total: page.total, criteria: criteria}, with_context = false) }}
 {% endblock %}
 
 {% block main %}
@@ -30,7 +44,7 @@
         {%- else %}
         {{ include('search/_empty.html.twig', with_context = false) }}
         {%- endif %}
-        {{ include('search/_related_searches.html.twig', {links: related_cantons|map(r => {label: 'related.canton'|trans({canton: r.canton|trans}, 'search'), href: r.href})}, with_context = false) }}
+        {{ include('search/_related_searches.html.twig', {links: landing_links(landing)}, with_context = false) }}
     </div>
 {% endblock %}
 

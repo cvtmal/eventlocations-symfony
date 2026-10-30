@@ -30,7 +30,7 @@
             }
             controller = new AbortController();
             try {
-                const response = await fetch(`${form.dataset.liveCountUrl}?${query}`, { signal: controller.signal });
+                const response = await fetch(form.dataset.liveCountUrl + query, { signal: controller.signal });
                 if (!response.ok) {
                     throw new Error(response.statusText);
                 }

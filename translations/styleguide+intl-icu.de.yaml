@@ -32,6 +32,12 @@ styleguide:
     badge:
         heading: Badge
         popular: Beliebte Location
+    breadcrumb:
+        heading: Breadcrumb
+        label: Navigationspfad
+        listing: Hochzeitslocations
+        canton: Kanton Zürich
+        town: Stäfa
     text_input:
         heading: Eingabefeld
         label: Name der Location

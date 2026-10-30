@@ -8,6 +8,8 @@ use App\Factory\VenuePhotoFactory;
 use App\Geo\Entity\Town;
 use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\KnownTermsQuery;
+use App\Search\ReadModel\LandingFooter;
+use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\ReadModel\SqlStatement;
@@ -18,9 +20,11 @@ use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\InputBag;
+use Symfony\Component\Translation\IdentityTranslator;
 use Zenstruck\Foundry\Test\Factories;
 
 use function Zenstruck\Foundry\Persistence\repository;
@@ -90,6 +94,8 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $filterData = new FilterDataQuery($this->connection, ListingQueryTest::enabledLocale());
         $timings['filter data, flags'] = $this->executionMs($filterData->flagsStatement());
         $timings['filter data, terms'] = $this->executionMs($filterData->termsStatement());
+        $landingPages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), new IdentityTranslator(), new LandingFooter(new ArrayAdapter()), 5);
+        $timings['landing pages'] = $this->executionMs($landingPages->statement());
         foreach ($timings as $what => $ms) {
             $this->report($what, $ms);
         }

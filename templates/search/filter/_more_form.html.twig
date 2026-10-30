@@ -74,8 +74,10 @@
     {%- endif -%}
 {%- endset -%}
 
-<form id="filter-more-form" class="filter-more" method="get" action="{{ path('listing') }}" autocomplete="off" data-live-count data-live-count-url="{{ path('_search_count') }}" data-overlay-form>
-    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: params}, with_context = false) }}
+{#- #17: the action is the landing path of the other filters, whose facets leave the hidden state for the count URL. -#}
+{%- set target = listing_form(criteria, params) -%}
+<form id="filter-more-form" class="filter-more" method="get" action="{{ target.action }}" autocomplete="off" data-live-count data-live-count-url="{{ target.count }}" data-overlay-form>
+    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: target.except}, with_context = false) }}
     <div class="filter-more__group">
         {{ include('components/_text_input.html.twig', {id: 'filter-more-q', name: 'q', label: 'filter.more_name_title'|trans({}, 'search'), label_hidden: false, placeholder: 'filter.more_name_placeholder'|trans({}, 'search'), value: criteria.q}, with_context = false) }}
     </div>

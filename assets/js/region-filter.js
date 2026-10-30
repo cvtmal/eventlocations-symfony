@@ -390,4 +390,14 @@
             focusEmpty();
         }
     });
+
+    // A canton with a landing page (#17) submits to its path (S5), no redirect; pageshow undoes it after Back.
+    const landing = JSON.parse(form.dataset.landing || '{}');
+    const base = form.action;
+    form.addEventListener('submit', () => {
+        const path = form.dataset.tab !== 'place' && landing[canton.value];
+        form.action = path || base;
+        canton.disabled = form.dataset.tab === 'place' || !!path;
+    });
+    addEventListener('pageshow', () => (canton.disabled = form.dataset.tab === 'place'));
 })();

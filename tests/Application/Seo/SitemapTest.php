@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Application\Seo;
 
 use App\Factory\VenueFactory;
+use App\Factory\VenuePhotoFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Geo\ValueObject\Canton;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
@@ -17,12 +20,13 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * SEO-3. The schemas are local copies, so the test needs no network. Paging past 1,000 venues is
- * proven at query level (VenueSitemapQueryTest).
+ * proven at query level (VenueSitemapQueryTest), as is `lastmod` per landing group.
  */
 final class SitemapTest extends WebTestCase
 {
     use Factories;
     use ImportsTownDataset;
+    use LandingFixtures;
 
     private const string SITEMAP_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9';
     private const string IMAGE_NS = 'http://www.google.com/schemas/sitemap-image/1.1';
@@ -101,6 +105,48 @@ final class SitemapTest extends WebTestCase
         $this->assertValid($xml, 'sitemap-with-images.xsd');
     }
 
+    public function test_the_pages_file_lists_every_live_landing_page_once_with_its_newest_change(): void
+    {
+        $staefa = $this->inTown('Stäfa', 5);
+        $this->withBuilding(\array_slice($staefa, 0, 4), 'hotel');
+        $bern = $this->withBuilding($this->inCanton(Canton::BE, 5), 'castle');
+        $luzern = $this->inCanton(Canton::LU, 4);
+        VenuePhotoFactory::createOne(['venue' => $bern[4], 'position' => 1]);
+        $this->em->flush();
+        foreach (['venues', 'venue_translations', 'venue_photos'] as $table) {
+            $this->connection->executeStatement(\sprintf('UPDATE %s SET updated_at = :at', $table), ['at' => '2026-01-01 10:00:00+00']);
+        }
+        $this->setUpdatedAt('venue_translations', 'venue_id', $staefa[2]->id(), '2026-03-01 10:00:00+00');
+        $this->setUpdatedAt('venue_photos', 'venue_id', $bern[4]->id(), '2026-02-01 10:00:00+00');
+        $this->setUpdatedAt('venues', 'id', $luzern[0]->id(), '2026-09-01 10:00:00+00');
+
+        $xml = $this->fetch('/sitemap-pages.xml');
+
+        $lastmods = [];
+        foreach ($xml->getElementsByTagNameNS(self::SITEMAP_NS, 'url') as $url) {
+            $loc = $url->getElementsByTagNameNS(self::SITEMAP_NS, 'loc')->item(0)?->textContent;
+            self::assertIsString($loc);
+            self::assertArrayNotHasKey($loc, $lastmods, $loc.' is listed twice');
+            $lastmods[$loc] = $url->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod')->item(0)?->textContent;
+        }
+        self::assertSame('http://localhost/hochzeitslocations', array_key_first($lastmods));
+        ksort($lastmods);
+        // Luzern (4 venues) and the hotels (4) are under the threshold; Luzern still moves the listing.
+        self::assertSame([
+            'http://localhost/hochzeitslocations' => '2026-09-01T10:00:00+00:00',
+            'http://localhost/hochzeitslocations/bern' => '2026-02-01T10:00:00+00:00',
+            'http://localhost/hochzeitslocations/schloss' => '2026-02-01T10:00:00+00:00',
+            'http://localhost/hochzeitslocations/zuerich' => '2026-03-01T10:00:00+00:00',
+            'http://localhost/hochzeitslocations/zuerich/staefa' => '2026-03-01T10:00:00+00:00',
+        ], $lastmods);
+        $this->assertValid($xml, 'sitemap-with-images.xsd');
+
+        foreach (array_keys($lastmods) as $loc) {
+            $this->client->request('GET', $loc);
+            self::assertResponseIsSuccessful($loc);
+        }
+    }
+
     public function test_without_venues_the_listing_has_no_lastmod(): void
     {
         $xml = $this->fetch('/sitemap-pages.xml');
@@ -146,6 +192,11 @@ final class SitemapTest extends WebTestCase
         $lastmod->textContent = 'gestern';
 
         self::assertFalse($this->isValid($xml, 'sitemap-with-images.xsd'));
+    }
+
+    private function setUpdatedAt(string $table, string $column, string $id, string $at): void
+    {
+        $this->connection->executeStatement(\sprintf('UPDATE %s SET updated_at = :at WHERE %s = :id', $table, $column), ['at' => $at, 'id' => $id]);
     }
 
     private function fetch(string $path): \DOMDocument

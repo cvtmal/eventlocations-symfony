@@ -17,3 +17,9 @@ framework:
         # Namespaced pools use the above "app" backend by default
         #pools:
             #my.dedicated.cache: null
+        pools:
+            # #17: the footer's canton links, written by LandingPages when they change, read by
+            # error pages that must not query. No expiry: a stale list is replaced on the next listing view.
+            cache.landing_pages:
+                adapter: cache.app
+                default_lifetime: 0

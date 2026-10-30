@@ -23,6 +23,8 @@ parameters:
     site.operator_city: 'Zürich'
     # LEG-2: app:inquiries:purge deletes inquiries older than this (#18 documents it).
     inquiries.retention_months: 12
+    # #17: a canton, town or building landing page exists from this many published venues, below it 404 (one rule, #26 reads it).
+    landing.min_venues: 5
 
 services:
     # default configuration for services in *this* file
@@ -46,6 +48,11 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+when@dev:
+    parameters:
+        # DemoStory's 60 venues give a handful of canton pages at 3 (S11 checks on the dev site).
+        landing.min_venues: 3
 
 when@test:
     parameters:
