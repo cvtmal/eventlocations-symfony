@@ -32,7 +32,10 @@ final class PlacesControllerTest extends WebTestCase
         self::assertSame('zh', $towns[0]['canton']);
         self::assertIsString($towns[0]['id']);
         self::assertMatchesRegularExpression('/^\d{4}$/', (string) $towns[0]['zip']);
-        self::assertSame(['type', 'id', 'name', 'zip', 'canton'], array_keys($towns[0]));
+        self::assertSame(['type', 'id', 'name', 'zip', 'canton', 'lat', 'lng'], array_keys($towns[0]));
+        // A whole-degree coordinate decodes as an int.
+        self::assertIsNumeric($towns[0]['lat']);
+        self::assertIsNumeric($towns[0]['lng']);
     }
 
     public function test_a_zip_suggests_its_town_first(): void

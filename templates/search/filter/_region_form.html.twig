@@ -1,0 +1,65 @@
+{#
+    The Region overlay's GET form (#10). Include with `with_context = false`: criteria (SearchCriteria), selected
+    (?ResolvedPlace). Its submit button sits in the overlay footer and joins through form="filter-region-form".
+    Without JS: both panels show, the <select> carries `canton` and the text field a ZIP as `place`, and the radius works
+    natively. With JS (js/region-filter.js): the tabs appear, the hidden fields carry the values and only the active
+    tab's field is enabled, so the two tabs never compete at submit. Never write "Karte" as visible text here: the map's
+    name stays in aria-label (ListingControllerTest checks the bar's text).
+#}
+{%- set cantons = enum_cases('App\\Geo\\ValueObject\\Canton')|map(c => {code: c.value, label: c|trans})|sort((a, b) => a.label <=> b.label) -%}
+{%- set selected_canton = criteria.canton ? criteria.canton.value : '' -%}
+{%- set default_radius = constant('App\\Search\\ReadModel\\SearchCriteria::DEFAULT_RADIUS') -%}
+<form id="filter-region-form" class="region-filter" method="get" action="{{ path('listing') }}" autocomplete="off"
+      data-live-count data-live-count-url="{{ path('_search_count') }}"
+      data-region-filter data-places-url="{{ path('_search_places') }}"
+      data-no-places="{{ 'filter.no_places'|trans({}, 'search') }}"
+      data-radius-zero="{{ 'filter.radius_value'|trans({radius: 0, formatted: '0'}, 'search') }}"
+      data-radius-other="{{ 'filter.radius_value'|trans({radius: 2, formatted: '%n'}, 'search') }}">
+    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: ['canton', 'place', 'radius']}, with_context = false) -}}
+    <input type="hidden" name="canton" value="{{ selected_canton }}" data-region-value="canton" disabled>
+    <input type="hidden" name="place" value="{{ criteria.place ?? '' }}" data-region-value="place"{% if selected %} data-lat="{{ selected.lat }}" data-lng="{{ selected.lng }}"{% endif %} disabled>
+    <div class="region-filter__tabs" role="tablist" hidden data-region-tabs>
+        {%- for tab, label in {canton: 'filter.region_tab_canton', place: 'filter.region_tab_place'} %}
+        <button type="button" class="region-filter__tab" role="tab" id="filter-region-tab-{{ tab }}" aria-controls="filter-region-panel-{{ tab }}" data-tab="{{ tab }}">{{ label|trans({}, 'search') }}</button>
+        {%- endfor %}
+    </div>
+    <div class="region-filter__panel" id="filter-region-panel-canton" role="tabpanel" aria-labelledby="filter-region-tab-canton" data-panel="canton">
+        <noscript>
+            <label class="text-input__label" for="filter-region-canton-select">{{ 'filter.region_tab_canton'|trans({}, 'search') }}</label>
+            <select class="region-filter__select" id="filter-region-canton-select" name="canton">
+                <option value="">{{ 'filter.canton_all'|trans({}, 'search') }}</option>
+                {%- for canton in cantons %}
+                <option value="{{ canton.code }}"{% if canton.code == selected_canton %} selected{% endif %}>{{ canton.label }}</option>
+                {%- endfor %}
+            </select>
+        </noscript>
+        <div class="text-input region-filter__combobox" hidden data-region-js>
+            <label class="text-input__label visually-hidden" for="filter-region-canton">{{ 'filter.region_tab_canton'|trans({}, 'search') }}</label>
+            <input class="text-input__field" id="filter-region-canton" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="filter-region-canton-list" autocomplete="off" placeholder="{{ 'filter.canton_placeholder'|trans({}, 'search') }}" value="{{ criteria.canton ? criteria.canton|trans : '' }}">
+            <ul class="region-filter__list" role="listbox" id="filter-region-canton-list" aria-label="{{ 'filter.region_tab_canton'|trans({}, 'search') }}" hidden>
+                {%- for canton in cantons %}
+                <li role="option" id="filter-region-canton-{{ canton.code }}" data-value="{{ canton.code }}" aria-selected="false" hidden>{{ canton.label }}</li>
+                {%- endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="region-filter__panel" id="filter-region-panel-place" role="tabpanel" aria-labelledby="filter-region-tab-place" data-panel="place">
+        <div class="text-input region-filter__combobox">
+            <label class="text-input__label visually-hidden" for="filter-region-place">{{ 'filter.region_tab_place'|trans({}, 'search') }}</label>
+            <input class="text-input__field" id="filter-region-place" name="place" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="filter-region-place-list" autocomplete="off" placeholder="{{ 'filter.place_placeholder'|trans({}, 'search') }}" value="{{ criteria.isZipPlace() ? criteria.place : '' }}" data-display="{{ selected ? selected.label : '' }}">
+            <ul class="region-filter__list" role="listbox" id="filter-region-place-list" aria-label="{{ 'filter.region_tab_place'|trans({}, 'search') }}" hidden></ul>
+        </div>
+        <div class="region-filter__radius">
+            <label for="filter-region-radius">{{ 'filter.radius_label'|trans({}, 'search') }}</label>
+            <output for="filter-region-radius" hidden></output>
+            <input type="range" id="filter-region-radius" name="radius" min="0" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_RADIUS') }}" step="1" value="{{ criteria.radius ?? default_radius }}" data-default="{{ default_radius }}">
+        </div>
+    </div>
+    <div class="region-filter__side">
+        <div class="region-filter__map" role="group" aria-label="{{ 'filter.map_label'|trans({}, 'search') }}" data-region-map>
+            {{- canton_map() -}}
+            <div class="region-filter__tooltip" data-region-tooltip aria-hidden="true" hidden></div>
+        </div>
+        <p class="region-filter__credit">{{ 'filter.map_credit'|trans({}, 'search') }}</p>
+    </div>
+</form>

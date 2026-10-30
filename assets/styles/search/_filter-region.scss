@@ -1,0 +1,327 @@
+@use '../abstracts/breakpoints' as bp;
+
+// The Region overlay (#10): `search/filter/_region_form.html.twig` inside #1's overlay shell, which stays unedited.
+// Below lg a column; from lg a two-column grid in which `display: contents` dissolves the shell's body and the form, so
+// title, tabs, panels and the shell's footer share the left column and the map fills the right one. `[hidden]` has no
+// global rule, so every rule here that sets `display` also needs `&[hidden]`.
+.overlay--region:popover-open {
+    display: flex;
+    flex-direction: column;
+
+    .overlay__body {
+        flex: 1 0 auto;
+    }
+
+    @include bp.up(lg) {
+        display: grid;
+        grid-template-columns: minmax(0, 21.875rem) minmax(0, 1fr);
+        // The outer flexible rows centre the left column; the map spans them, so it never stretches the rows between.
+        grid-template-rows: 1fr repeat(5, auto) 1fr;
+        column-gap: var(--space-xl);
+        padding: 3rem 4.5rem 0;
+
+        .overlay__body,
+        .region-filter {
+            display: contents;
+        }
+
+        .overlay__title {
+            grid-area: 2 / 1;
+            margin-bottom: 0;
+            padding-right: 0;
+        }
+
+        .region-filter__tabs {
+            grid-area: 3 / 1;
+        }
+
+        [data-panel='canton'] {
+            grid-area: 4 / 1;
+        }
+
+        [data-panel='place'] {
+            grid-area: 5 / 1;
+        }
+
+        .region-filter__side {
+            grid-area: 1 / 2 / -1;
+            align-self: safe center;
+        }
+
+        .overlay__footer {
+            grid-area: 6 / 1;
+            position: static;
+            padding-block: 0;
+        }
+
+        .overlay__footer-inner {
+            max-width: none;
+            padding-inline: 0;
+        }
+    }
+
+    @include bp.up(xl) {
+        grid-template-columns: min(37.5rem, 45%) minmax(0, 1fr);
+        padding: 0 7rem;
+    }
+}
+
+// Below md the title and input are centred; the title needs padding on both sides to stay centred past the close button.
+.overlay--region .overlay__title {
+    margin-bottom: 0;
+}
+
+.region-filter__tabs {
+    display: flex;
+    gap: var(--space-m);
+    margin-block: var(--space-m) var(--space-l);
+
+    &[hidden] {
+        display: none;
+    }
+
+    @include bp.up(lg) {
+        margin-block: 2.8125rem 1.25rem;
+    }
+
+    @include bp.up(xl) {
+        margin-block: 3.75rem 2rem;
+    }
+}
+
+.region-filter__tab {
+    min-height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    background: none;
+    color: var(--c-ink);
+    font-size: .9375rem;
+    font-weight: var(--fw-regular);
+    line-height: 1.25rem;
+    cursor: pointer;
+
+    &[aria-selected='true'] {
+        border-bottom-color: var(--c-line);
+        font-weight: var(--fw-semibold);
+    }
+}
+
+.region-filter__panel {
+    margin-bottom: var(--space-l);
+
+    @include bp.up(lg) {
+        margin-bottom: 2.1rem;
+    }
+
+    @include bp.up(xl) {
+        margin-bottom: 7.5rem;
+    }
+}
+
+// The slider fills the margin the Kanton tab leaves, so switching tabs does not move the title.
+[data-panel='place'].region-filter__panel {
+    @include bp.up(xl) {
+        margin-bottom: 2.8125rem;
+    }
+}
+
+// Without JS the tabs stay hidden and both panels show, one under the other.
+.region-filter__tabs[hidden] ~ .region-filter__panel {
+    margin-block: var(--space-l);
+}
+
+.region-filter .text-input {
+    position: relative;
+    max-width: none;
+}
+
+// The input carries the caret, as on the original; focus doubles its underline instead of boxing it.
+.region-filter .text-input__field:focus-visible {
+    outline: none;
+    box-shadow: 0 1px 0 var(--c-focus);
+}
+
+.region-filter__select {
+    width: 100%;
+    max-width: 25rem;
+    min-height: 2.75rem;
+    margin-bottom: var(--space-m);
+    padding-inline: var(--space-xs);
+    background: var(--c-tooltip-bg);
+    color: var(--c-ink-inverse);
+    font-size: var(--fs-body);
+}
+
+.region-filter__list {
+    position: absolute;
+    z-index: 2;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    background: var(--c-dropdown);
+    box-shadow: var(--sh-dropdown);
+    list-style: none;
+
+    [role='option'] {
+        padding-inline: var(--space-m);
+        font-size: 1.125rem;
+        line-height: 2.8125rem;
+        cursor: pointer;
+
+        &[aria-selected='true'] {
+            background: var(--c-surface-footer);
+        }
+
+        &[aria-disabled='true'] {
+            cursor: default;
+        }
+    }
+}
+
+.region-filter__radius {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-xs) var(--space-xs);
+    margin-top: var(--space-l);
+    font-size: .9375rem;
+
+    label {
+        font-weight: var(--fw-semibold);
+    }
+
+    input {
+        grid-column: 1 / -1;
+        width: 100%;
+        margin: 0;
+        accent-color: var(--c-ink);
+    }
+}
+
+.region-filter__map {
+    position: relative;
+
+    svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-width: 56.25rem;
+        filter: var(--sh-map);
+    }
+
+    #cantons path {
+        outline: none; // keyboard focus is the stroke below; an outline would sit under the neighbouring cantons
+        fill: var(--c-map-land);
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible,
+        &[aria-pressed='true'] {
+            fill: var(--c-accent-strong);
+        }
+
+        &:focus-visible {
+            stroke: var(--c-focus);
+            stroke-width: 2.5;
+        }
+    }
+
+    // After the cantons in the file: a click on a lake must reach the canton below it.
+    #lakes {
+        fill: var(--c-lake);
+        pointer-events: none;
+    }
+}
+
+// The town pin and radius circle (region-filter.js) exist only on the Ort tab's map, and never catch a pointer.
+.region-filter__area {
+    fill: var(--c-map-radius);
+    pointer-events: none;
+}
+
+.region-filter__pin {
+    fill: var(--c-ink);
+    stroke: var(--c-accent-strong);
+    stroke-width: 2;
+    pointer-events: none;
+}
+
+.region-filter[data-tab='canton'] {
+    .region-filter__area,
+    .region-filter__pin {
+        display: none;
+    }
+}
+
+.region-filter__tooltip {
+    position: absolute;
+    z-index: 1;
+    padding: var(--space-2xs) .4375rem;
+    border-radius: var(--r-tooltip);
+    background: var(--c-tooltip-bg);
+    box-shadow: var(--sh-tooltip);
+    color: var(--c-ink-inverse);
+    font-size: var(--fs-tooltip);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-tooltip);
+    white-space: nowrap;
+    pointer-events: none;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        border: 5px solid transparent;
+        border-top-color: var(--c-tooltip-bg);
+    }
+
+    &--right-top::after {
+        right: -5px;
+        border-left-color: var(--c-tooltip-bg);
+    }
+
+    &--left-top::after {
+        left: -5px;
+        border-right-color: var(--c-tooltip-bg);
+    }
+}
+
+.region-filter__credit {
+    margin-top: var(--space-s);
+    font-size: var(--fs-tag);
+    line-height: var(--lh-tag);
+    text-align: end;
+}
+
+@include bp.down(md) {
+    .overlay--region .overlay__title {
+        max-width: none;
+        padding-inline: 3rem;
+        text-align: center;
+    }
+
+    .region-filter__tabs {
+        justify-content: center;
+    }
+
+    .region-filter .text-input {
+        width: 100%;
+        max-width: 17.5rem;
+        margin-inline: auto;
+    }
+
+    .region-filter .text-input__field {
+        text-align: center;
+    }
+
+    .overlay--region .overlay__footer-inner {
+        flex-direction: column;
+        gap: var(--space-s);
+
+        .btn {
+            width: 100%;
+        }
+    }
+}

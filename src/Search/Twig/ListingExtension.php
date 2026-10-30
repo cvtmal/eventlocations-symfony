@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Search\Twig;
 
+use App\Geo\ReadModel\PlaceResolver;
+use App\Geo\ReadModel\ResolvedPlace;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Search\ReadModel\CardPhoto;
@@ -23,12 +25,14 @@ use Twig\Attribute\AsTwigFunction;
  * - `card_picture(photo, venueName)`: the CardPhoto → Picture recipe of #6, null without variants.
  * - `rating_label(score)`: RatingLabel::fromScore() (Twig cannot call static enum methods).
  * - `venue_path(slug)`: the detail page's path (#8's `venue_show`).
+ * - `selected_place(criteria)`: the filter's `place` resolved to its town, null without a place or for an unknown one.
  */
 final class ListingExtension
 {
     public function __construct(
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly PlaceResolver $places,
     ) {
     }
 
@@ -100,5 +104,11 @@ final class ListingExtension
     public function venuePath(string $slug): string
     {
         return $this->urls->generate('venue_show', ['slug' => $slug]);
+    }
+
+    #[AsTwigFunction('selected_place')]
+    public function selectedPlace(SearchCriteria $criteria): ?ResolvedPlace
+    {
+        return null === $criteria->place ? null : $this->places->resolve($criteria->place);
     }
 }

@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import and #31 venue-wedding-facts done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region and #31 venue-wedding-facts done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -82,7 +82,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 7 | `listing-page` | W4 | LP-1–LP-3, LP-5, LP-6 | 1, 5, 6 | — | — | ✅ Done |
 | 8 | `venue-detail-page` | W4 | DP-1–DP-12, DP-14–DP-16 | 1, 5, 6 | — | — | ✅ Done |
 | 9 | `venue-content-import` | W4 | DATA-1 | 4, 5 | `content_imports` | — | ✅ Done |
-| 10 | `filter-region` | W5 | FI-1, FI-2 | 3, 7 | — | — | Research |
+| 10 | `filter-region` | W5 | FI-1, FI-2 | 3, 7 | — | — | ✅ Done |
 | 11 | `filter-guests` | W5 | FI-3 | 7 | — | — | Plan |
 | 12 | `filter-more` | W5 | FI-4 | 7 | — | — | Research |
 | 13 | `merkliste` | W5 | MK-1–MK-4 | 7, 8 | — | — | Research |
@@ -1225,6 +1225,65 @@ IDs are referenced by the overview and the cycles.
   - the screenshot comparison with both region screenshots passes (default and Zürich selected/hover);
   - keyboard-only selection works;
   - the JS for the overlay plus the map is ≤ 6 KB gzip.
+
+**Outcome (2026-10-30).** Done in commit `filter-region`. No migration, no table, no new route, no Composer change, no new Makefile target or console command. Catalogue domain `search` extended by 13 `filter.*` keys, none added. `_filter_bar`, `_overlay` and `SearchCriteria` are unedited. Read `CLAUDE.md` `### Geo` and `### Search` ("Built in #10") and `.claude/rules/frontend.md` (live count) before touching the overlay.
+
+- **The overlay:** `templates/search/filter/_region.html.twig` (chips, trigger, overlay; #7's slot file) plus the new `templates/search/filter/_region_form.html.twig` (`criteria`, `selected`), one GET form `#filter-region-form` with two tabs. Its submit button sits in the shell's footer and joins through `form="filter-region-form"`. Kanton tab: client-side combobox over the 26 names in the HTML and #3's inline map (roving tabindex, one Tab stop, `role="button"`, `aria-pressed`, tooltip, one canton at a time). Ort/PLZ tab: debounced, aborting `/_search/places` combobox (six towns at most), radius slider, town pin and radius circle on the map. Styles `assets/styles/search/_filter-region.scss` (one `@use` in `app.scss`), tokens `--c-dropdown`, `--c-map-radius`. Lighthouse, prod-like, mobile: 99 / 100 / 100 / 100.
+- **Without JS:** `<noscript><select name="canton">`, a text field that submits a ZIP as `place`, the native radius. Both panels show, one under the other. A no-JS visitor who re-submits on a town-UUID URL loses the town (accepted).
+- **`assets/js/region-filter.js`:** tabs, both comboboxes, map, tooltip, radius, pin, "Filter löschen" and discard-on-close. Only the active tab's hidden field is enabled, so the two tabs never compete at submit; the Ort tab sets `inert` on the map. Text without a choice clears the value; four digits count as that ZIP. A keystroke closes the place list at once, so Enter can never take a row older than the text. Tooltip through `el.style.left/top`, never `setAttribute('style')` (CSP, #16).
+- **`assets/js/live-count.js`, contract (final; #11 and #12 build on this):**
+
+  ```html
+  <form id="filter-x-form" method="get" action="{{ path('listing') }}"
+        data-live-count data-live-count-url="{{ path('_search_count') }}">
+      {{ include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: [...]}, with_context = false) }}
+      … the overlay's named controls, inside the form …
+  </form>
+  …
+  <button type="submit" form="filter-x-form" class="btn btn--black"
+          data-live-count-label
+          data-count-zero="Keine Resultate"
+          data-count-one="1 Resultat anzeigen"
+          data-count-other="%n Resultate anzeigen"><span>Resultate anzeigen</span></button>
+  ```
+
+  - **Binding:** every `form[data-live-count]`. The label is found through `form.elements`, so the button may sit outside the form (the shell's footer) as long as it has `form="…"`. The `<span>`'s text is replaced.
+  - **Recount triggers:** (1) `input` and `change` bubbling from inside the form, debounced 150 ms; (2) the overlay opening (`toggle` with `newState === 'open'` on `form.closest('[popover]')`), immediately.
+  - **Programmatic changes:** hidden inputs fire nothing, so after setting a value dispatch `new Event('change', {bubbles: true})` on the control. That is the whole API; there is no global.
+  - **Query:** `new URLSearchParams(new FormData(form))`, exactly what the form would submit. Disabled controls are skipped by the platform. A `formdata` listener removes empty values, repeated keys keep their non-empty values (`setting[]` is safe). **Verified in Chromium 156: this also holds on submit, so `?canton=&place=` reaches neither the fetch nor the URL.**
+  - **Label:** `count === 0` → zero string, `1` → one string, else the other string with `%n` replaced by the Swiss-formatted number (`1'500`, straight apostrophe, matching `swiss_number`).
+  - **Failure and races:** a new recount aborts the previous one. On a failed fetch (HTTP error or network) the label returns to its server-rendered text and the next change retries; the form still submits. Implementation detail: a query equal to the last successful one is not fetched again.
+  - **Strings:** one ICU key, `filter.show_results`, rendered three times in the template (count 0, 1, and 2 with `formatted: '%n'`). Pass them through `_button`'s `attributes`.
+  - **Loading:** one `<script type="module" src="{{ asset('js/live-count.js') }}">` in `listing.html.twig`'s `{% block scripts %}`, added by #10. #11 and #12 add nothing.
+- **Twig:** `selected_place(criteria): ?App\Geo\ReadModel\ResolvedPlace` on `App\Search\Twig\ListingExtension`, whose constructor gained a third argument, `PlaceResolver`. Null without a place or for an unknown one. Chip: a town id shows "Stäfa", a ZIP "8712 Stäfa", unknown values the ZIP or "Ort".
+- **Geo:** `App\Geo\ReadModel\PlaceResolver::resolve(string $place): ?ResolvedPlace` takes a town UUID or a 4-digit ZIP (a ZIP means its most populous town, the rule of `ListingSql`), memoized per value including misses, `kernel.reset`. `App\Geo\ReadModel\ResolvedPlace` has `name`, `zip`, `lat`, `lng`, `label()` ("8712 Stäfa").
+- **`GET /_search/places`:** town entries now end in `"lat"` and `"lng"`; canton entries and headers are unchanged. `PlaceSuggestion` gained `lat`/`lng` (null for a canton). A map pin uses the affine fit in `region-filter.js` (2.29 SVG units per km, 96.4 % of towns land in their own canton).
+- **Budget:** `AssetBudgetTest` holds the sum `overlay.js + live-count.js + region-filter.js` to 6 KB gzip (6,144 B). It stands at **5,980 B** (610 + 1,130 + 4,240, level 9), and at 6,037 B on the wire (nginx level 5), so **107 B of wire headroom** remain. Any further edit to those three files must find its bytes first. The source ships unminified, so its comments are the first place to look. All page JS also counts in the 15 KB test.
+- **Deviations from the plan:**
+  - `_region_form` wraps map and credit in `.region-filter__side`, so the credit stays under the map at 1440×900.
+  - Grid rows are `1fr repeat(5, auto) 1fr` with the side column spanning all rows, not `align-content: center`.
+  - Below `md` the input is `17.5rem`, not the original's 195 px, or "Ort oder PLZ eingeben" clips.
+  - In this overlay text inputs show focus as a doubled underline, not #1's box, scoped to `.region-filter`.
+  - `#cantons path { outline: none }` is unconditional, because Chromium drew a dark outline on a clicked path, partly under its neighbours. Keyboard focus shows as the path's stroke.
+  - `autocomplete="off"` on the form, because Chromium can restore JS-set hidden values on history navigation.
+  - Accepted against the original: full-screen instead of the sheet below 768 px, no ghost suggestion, no × in the input, no "Wird aktualisiert" state, computed tooltip positions, the "8712 Stäfa" list format, no auto-focus on open with a coarse pointer, and no third portrait circle at 390 px (it would mean editing #1's shell).
+- **Accepted limits:** a typed ZIP counts and submits but shows no pin until the page reloads. "zue" also lists Zug (the fold reduces it to "zu"). Esc closes a shown list first, otherwise the overlay, which discards. A quick Enter on unfinished text shows every venue: typing "Stäfa" and Enter in one motion at ≤ 180 ms per key lands without a place filter, while a slower pace lets the fresh row take the Enter.
+- **Carried forward:**
+  - **#11, #12:** the seam gives you the count, not the overlay's behaviour. The stay-open "Filter löschen" and discard-on-close live in `region-filter.js`, not in the shared seam. Without own JS the reset link navigates and applies at once (it works, but differs from the original), and pending values survive closing. "Add nothing" above and "add no script tag" in `CLAUDE.md` are about `live-count.js` only.
+  - **#11:** needs its own module for FI-3's bubbles anyway. It stays outside the 6 KB sum, which names three files, and counts only in the 15 KB test. #12 can decide.
+  - **#11, #12, markup traps:** `.filter-bar` text must not contain "Karte" (`ListingControllerTest::test_filter_bar_has_three_triggers_and_overlays`; the overlays render inside the bar, visible text and `<noscript>` count, `aria-label` does not). `[hidden]` has no global CSS rule, so any class that sets `display` needs its own `&[hidden] { display: none; }`. Layout rules that set `display` on an overlay belong under `:popover-open`, or the closed popover shows. `#filter-x .overlay__footer a` must stay the reset link, so the submit button is a `<button>`. A no-JS `<select>` inside `<noscript>` needs an explicit `color` and `background`. `AssetBudgetTest` greps the raw JS, comments included, for the words `export ` and `console.`.
+  - **#16, #19:** a submitted overlay does not produce what `toQuery()` writes, on five counts: `radius=5`, the default, stays in the URL after a town is chosen; hidden state comes first (`guests=80&…&canton=zh`), not in `toQuery()`'s fixed key order; repeated params are `setting[]`, where `http_build_query` gives `setting[0]`; no-JS submits add `canton=&place=&radius=5`; JS with nothing chosen lands on a bare `/hochzeitslocations?`. All five parse to identical criteria, so behaviour is correct and the URL code stays as it is. #16 decides the `canonical` tag; for #19 the cost is one page under several cache keys, hit rate only.
+  - **#21:** the owner decided that the Ort/PLZ tab is hidden until venues have towns, and #21 hides it. The mechanism, from #21's research (D5):
+    - `Search\ReadModel\FilterDataQuery` runs one `SELECT EXISTS` on `ListingSql`'s published predicate, memoized per request, with `place` meaning at least one published venue with a town. `filter_has_data('place')` on `ListingExtension` exposes it, because `_filter_bar` passes only `criteria` and `part`.
+    - When that is false and `criteria.place` is null, `_region_form` gets a modifier class. Two CSS rules hide the tablist and the Ort panel in both the JS and the no-JS view, and Twig adds `disabled` to the Ort input and the slider, so a no-JS submit sends no empty `place=`.
+    - **Keep the markup and change no JS.** `region-filter.js` reads the place input, list, slider and `<output>` unguarded and unhides the tablist itself, so removing them breaks the module, null guards do not fit the 107 B, and the hiding has to be `display: none` from the modifier, not `hidden`.
+    - A bookmarked `?place=` still filters and its chip still renders; the tab shows for that request. The first venue with a town brings the tab back with no flag and no deploy (CMS writes purge the listing). Demo data has towns, so #10's tests keep working; #21 adds a test on town-less venues.
+  - **Owner options, none blocks:**
+    - the selected canton is dark; the original's is white (one declaration on `[aria-pressed='true']`);
+    - the place list flickers at ordinary typing pace (F-m4: on "Winterthur", at 250–300 ms per key it shows about 7 times in 10 keys for under 100 ms each; nothing moves). The other route keeps the list, drops the highlight on `input` and lets Enter without a highlight submit, which costs bytes from the 107;
+    - five details at 390 px differ from the original (F-m5): tabs centred, not left at x 16; Ort input 280 px centred, not full width; "Umkreis +5 km" and slider on two rows, not one; map directly under the input, not centred in the free space; button 358 px at x 16, not 326 px at x 32. One small styling pass if wanted;
+    - if the Ort/PLZ tab returns, whether an exact name typed in one motion plus Enter should filter rather than show everything.
+  - **Pending human:** Firefox and Safari (`formdata`, Esc, `inert`, `popover`; every check ran in Chromium 156 or real Chrome), a real phone at 390 px (small cantons, soft keyboard, `scrollIntoView` with it up), a screen reader (including `aria-expanded` toggling per keystroke), and a human look at `var/shots/region-*.png` beside `docs/reference/`.
 
 ### 11. `filter-guests`
 

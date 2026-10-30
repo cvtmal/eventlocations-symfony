@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * S11 budgets for the shipped assets (#1): CSS ≤ 25 KB gzip, JS ≤ 15 KB gzip per page, carousel.js ≤ 2 KB gzip,
- * at most two font files, and self-contained JS modules. Reads the CSS `make sass` builds (a prerequisite of `make test`).
+ * the Region overlay's JS ≤ 6 KB gzip (#10), at most two font files, and self-contained JS modules. Reads the CSS `make sass` builds (a prerequisite of `make test`).
  */
 final class AssetBudgetTest extends TestCase
 {
@@ -27,6 +27,16 @@ final class AssetBudgetTest extends TestCase
     public function test_carousel_js_is_within_2_kb_gzip(): void
     {
         self::assertLessThanOrEqual(2048, self::gzipSize((string) file_get_contents(self::root().'/assets/js/carousel.js')));
+    }
+
+    public function test_region_overlay_javascript_is_within_6_kb_gzip(): void
+    {
+        $total = 0;
+        foreach (['overlay.js', 'live-count.js', 'region-filter.js'] as $file) {
+            $total += self::gzipSize((string) file_get_contents(self::root().'/assets/js/'.$file));
+        }
+
+        self::assertLessThanOrEqual(6 * 1024, $total);
     }
 
     public function test_page_javascript_is_within_15_kb_gzip(): void

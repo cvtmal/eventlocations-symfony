@@ -55,9 +55,9 @@ final class PlaceLookup
     {
         $rows = $this->connection->fetchAllAssociative(
             <<<'SQL'
-                SELECT id, name, canton_code, zip
+                SELECT id, name, canton_code, zip, lat, lng
                 FROM (
-                    SELECT DISTINCT ON (t.id) t.id, t.name, t.canton_code, tz.zip, t.population
+                    SELECT DISTINCT ON (t.id) t.id, t.name, t.canton_code, tz.zip, t.lat, t.lng, t.population
                     FROM town_zips tz
                     JOIN towns t ON t.id = tz.town_id
                     WHERE tz.zip LIKE :prefix || '%'
@@ -111,9 +111,9 @@ final class PlaceLookup
         $rows = $this->connection->fetchAllAssociative(
             <<<'SQL'
                 WITH q AS (SELECT geo_fold_de(:q) AS de, geo_fold(:q) AS plain)
-                SELECT id, name, canton_code, zip
+                SELECT id, name, canton_code, zip, lat, lng
                 FROM (
-                    SELECT t.id, t.name, t.canton_code, t.zip, t.population,
+                    SELECT t.id, t.name, t.canton_code, t.zip, t.lat, t.lng, t.population,
                         (SELECT count(*) FROM town_zips z WHERE z.town_id = t.id) AS zip_count,
                         char_length(q.de) AS qlen,
                         CASE
@@ -147,7 +147,9 @@ final class PlaceLookup
         \assert(\is_string($row['name']));
         \assert(\is_string($row['canton_code']));
         \assert(\is_string($row['zip']));
+        \assert(\is_float($row['lat']));
+        \assert(\is_float($row['lng']));
 
-        return PlaceSuggestion::town($row['id'], $row['name'], $row['canton_code'], $row['zip']);
+        return PlaceSuggestion::town($row['id'], $row['name'], $row['canton_code'], $row['zip'], $row['lat'], $row['lng']);
     }
 }

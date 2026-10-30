@@ -8,8 +8,8 @@ use App\Geo\ValueObject\PlaceType;
 
 /**
  * One Ort/PLZ autocomplete entry. A canton carries only its code (the label comes from the
- * `geo` catalogue via App\Geo\ValueObject\Canton); a town carries its id, official name and
- * the ZIP to show (the matched one for a ZIP search, else the town's lowest).
+ * `geo` catalogue via App\Geo\ValueObject\Canton); a town carries its id, official name,
+ * coordinates and the ZIP to show (the matched one for a ZIP search, else the town's lowest).
  */
 final readonly class PlaceSuggestion
 {
@@ -19,16 +19,18 @@ final readonly class PlaceSuggestion
         public ?string $townId,
         public ?string $name,
         public ?string $zip,
+        public ?float $lat,
+        public ?float $lng,
     ) {
     }
 
     public static function canton(string $code): self
     {
-        return new self(PlaceType::Canton, $code, null, null, null);
+        return new self(PlaceType::Canton, $code, null, null, null, null, null);
     }
 
-    public static function town(string $id, string $name, string $cantonCode, string $zip): self
+    public static function town(string $id, string $name, string $cantonCode, string $zip, float $lat, float $lng): self
     {
-        return new self(PlaceType::Town, $cantonCode, $id, $name, $zip);
+        return new self(PlaceType::Town, $cantonCode, $id, $name, $zip, $lat, $lng);
     }
 }

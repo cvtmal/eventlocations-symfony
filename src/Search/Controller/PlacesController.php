@@ -18,7 +18,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Ort/PLZ autocomplete: `GET /_search/places?q=` → `{"places": [...]}` with entries
  * `{"type":"canton","canton":"zh","label":"Zürich"}` or
- * `{"type":"town","id":"…","name":"Stäfa","zip":"8712","canton":"zh"}`.
+ * `{"type":"town","id":"…","name":"Stäfa","zip":"8712","canton":"zh","lat":47.24,"lng":8.72}`.
  * Unlocalized, noindex, no session, publicly cacheable (towns change only on import).
  */
 final class PlacesController extends AbstractController
@@ -44,7 +44,7 @@ final class PlacesController extends AbstractController
     }
 
     /**
-     * @return array<string, string|null>
+     * @return array<string, string|float|null>
      */
     private function entry(PlaceSuggestion $suggestion): array
     {
@@ -62,6 +62,8 @@ final class PlacesController extends AbstractController
             'name' => $suggestion->name,
             'zip' => $suggestion->zip,
             'canton' => $suggestion->cantonCode,
+            'lat' => $suggestion->lat,
+            'lng' => $suggestion->lng,
         ];
     }
 }
