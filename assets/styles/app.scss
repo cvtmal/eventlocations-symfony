@@ -1,0 +1,17 @@
+// Hotspot (#1, docs/rpi-cycles.md "Hotspot files"): later cycles append ONE `@use` line for their own partial at the end.
+@use 'abstracts/tokens';
+@use 'base/fonts';
+@use 'base/base';
+@use 'base/typography';
+@use 'layout/container';
+@use 'layout/header';
+@use 'layout/footer';
+@use 'components/icon';
+@use 'components/button';
+@use 'components/chip';
+@use 'components/badge';
+@use 'components/text-input';
+@use 'components/overlay';
+@use 'components/dialog';
+@use 'components/carousel';
+@use 'components/toast';

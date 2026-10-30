@@ -24,7 +24,8 @@
         "symfony/twig-bundle": "7.4.*",
         "symfony/uid": "7.4.*",
         "symfony/validator": "7.4.*",
-        "symfony/yaml": "7.4.*"
+        "symfony/yaml": "7.4.*",
+        "symfonycasts/sass-bundle": "^0.10"
     },
     "config": {
         "allow-plugins": {

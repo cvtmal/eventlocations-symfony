@@ -1,0 +1,10 @@
+// Tier badge (E11: #535353, 3 px radius, 12/20 px, weight 400).
+.badge {
+    display: inline-block;
+    padding: .1875rem .625rem;
+    border-radius: var(--r-badge);
+    background: var(--c-surface-3);
+    color: var(--c-ink);
+    font: var(--fw-regular) var(--fs-tag) / var(--lh-tag) var(--font-sans);
+    white-space: nowrap;
+}

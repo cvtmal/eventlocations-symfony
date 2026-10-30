@@ -1,0 +1,6 @@
+symfonycasts_sass:
+    root_sass:
+        - '%kernel.project_dir%/assets/styles/app.scss'
+        - '%kernel.project_dir%/assets/styles/styleguide.scss'
+    sass_options:
+        style: compressed

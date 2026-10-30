@@ -17,8 +17,6 @@ use Twig\Environment;
 final class TemplatesHaveNoRawTextTest extends KernelTestCase
 {
     private const BASELINE = [
-        // Removed by #1 (design-system) when it rewrites the layout.
-        'base.html.twig' => ['Welcome!'],
         // Removed by #7 when the real homepage replaces the placeholder.
         'site/placeholder.html.twig' => ['Hochzeitslocation'],
     ];

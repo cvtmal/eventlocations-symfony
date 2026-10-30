@@ -101,6 +101,8 @@ Built in #0: the building blocks above, the placeholder `HomeController` (`home`
 
 Built in #2: `Shared\Translation\{EnabledLocale, LocalizedRoutes, HreflangAlternates, TranslationJoin}`, `Shared\Twig\{SwissFormatExtension, HreflangExtension}` (`swiss_number`, `swiss_date`, `swiss_range`, `hreflang_alternates`), `templates/shared/_hreflang.html.twig`, catalogue stubs, and `make lint-translations`, which `make lint` now also runs. Rules: `.claude/rules/i18n.md`.
 
+Built in #1 (design system): design tokens in `assets/styles/abstracts/_tokens.scss` (CSS custom properties on `:root`) and the Sass entry `assets/styles/app.scss`, compiled by `symfonycasts/sass-bundle` with the dart-sass binary from the PHP image (hotspot: later cycles append one `@use` line for their own partial). `App\Shared\Twig\IconExtension` provides `{{ icon('name', {label?, class?}) }}` from the Lucide sprite `assets/icons/sprite.svg`. `templates/base.html.twig` has the blocks `title`, `meta`, `canonical`, `hreflang`, `stylesheets`, `jsonld`, `body_class`, `hero`, `main`, `scripts`; the header, menu and footer partials live in `templates/layout/` and the shared components in `templates/components/`. `/_styleguide` (dev and test only) renders every component. `make sass` builds the CSS (it runs automatically before `make test` and in `make init`), `make sass-watch` rebuilds on change, `make lighthouse URL=/path` writes reports to `var/lighthouse/`, and `make validate-html URL=/path` runs the Nu Html Checker. Frontend conventions: `.claude/rules/frontend.md`.
+
 ### Geo
 
 Cantons, towns, postcode/town lookup, distances.

@@ -1,0 +1,33 @@
+// Modal dialog shell (`components/_dialog.html.twig`): <dialog> opened by commandfor/show-modal (D6).
+.dialog {
+    max-width: min(36rem, calc(100% - 2rem));
+    padding: var(--space-l);
+    border: 0;
+    border-radius: var(--r-bar);
+    background: var(--c-surface-2);
+    color: var(--c-ink);
+
+    &::backdrop {
+        background: rgb(0 0 0 / .6);
+    }
+}
+
+.dialog__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-m);
+    margin-bottom: var(--space-m);
+}
+
+.dialog__title {
+    font-size: 1.25rem;
+    line-height: 1.4;
+}
+
+.dialog__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-s);
+    margin-top: var(--space-l);
+}

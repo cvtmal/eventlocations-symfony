@@ -1,0 +1,189 @@
+// Styleguide-only styles (/_styleguide, dev and test). A separate sass root (PD-2), so nothing here counts
+// against the app.css budget. Uses the breakpoints only; the tokens come from app.css (no second :root).
+@use 'abstracts/breakpoints' as bp;
+
+$color-tokens: 'bg', 'ink', 'ink-inverse', 'surface', 'surface-2', 'surface-3', 'surface-footer', 'hero-circle',
+    'line', 'line-muted', 'muted', 'accent', 'accent-hover', 'accent-strong', 'accent-soft', 'black', 'overlay-region',
+    'overlay-guests', 'overlay-more', 'overlay-more-bar', 'overlay-circle', 'lake', 'map-land', 'tooltip-bg', 'focus';
+
+.sg-page {
+    padding-block: var(--space-xl);
+}
+
+.sg {
+    padding-block: var(--space-xl);
+    border-top: 1px solid var(--c-line-muted);
+
+    > h2 {
+        margin-bottom: var(--space-l);
+        font-size: 1.5rem;
+    }
+
+    @include bp.up(md) {
+        padding-block: var(--space-2xl);
+    }
+}
+
+.sg-intro {
+    margin: var(--space-s) 0 0;
+    color: var(--c-muted);
+}
+
+.sg-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-m) var(--space-l);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sg-grid--top {
+    align-items: flex-start;
+}
+
+.sg-swatch {
+    display: block;
+    width: 4.5rem;
+    height: 4.5rem;
+    margin-bottom: var(--space-xs);
+    border: 1px solid var(--c-line-muted);
+    border-radius: var(--r-badge);
+}
+
+@each $token in $color-tokens {
+    .sg-swatch--#{$token} {
+        background: var(--c-#{$token});
+    }
+}
+
+.sg-swatch-item {
+    width: 8.5rem;
+    font-size: var(--fs-tag);
+    line-height: var(--lh-tag);
+
+    code {
+        display: block;
+        overflow-wrap: anywhere;
+    }
+}
+
+.sg-type-sample {
+    margin: 0 0 var(--space-m);
+
+    code {
+        display: block;
+        color: var(--c-muted);
+        font-size: var(--fs-tag);
+    }
+}
+
+.sg-space {
+    display: block;
+    height: 1rem;
+    background: var(--c-accent);
+}
+
+@each $step in 2xs, xs, s, m, l, xl, 2xl, 3xl {
+    .sg-space--#{$step} {
+        width: var(--space-#{$step});
+    }
+}
+
+.sg-box {
+    display: grid;
+    place-items: center;
+    width: 7rem;
+    height: 4.5rem;
+    background: var(--c-surface-2);
+    font-size: var(--fs-tag);
+    text-align: center;
+}
+
+.sg-box--r-badge { border-radius: var(--r-badge); }
+.sg-box--r-tooltip { border-radius: var(--r-tooltip); }
+.sg-box--r-bar { border-radius: var(--r-bar); }
+.sg-box--r-pill { border-radius: var(--r-pill); }
+.sg-box--r-round { border-radius: var(--r-round); }
+.sg-box--sh-bubble { border-radius: var(--r-round); background: var(--c-accent); color: var(--c-ink-inverse); box-shadow: var(--sh-bubble); }
+.sg-box--sh-round { border-radius: var(--r-round); box-shadow: var(--sh-round); }
+.sg-box--sh-tooltip { background: var(--c-tooltip-bg); color: var(--c-ink-inverse); border-radius: var(--r-tooltip); box-shadow: var(--sh-tooltip); }
+.sg-box--sh-dropdown { box-shadow: var(--sh-dropdown); }
+.sg-box--sh-map { background: var(--c-map-land); color: var(--c-ink-inverse); filter: var(--sh-map); }
+
+.sg-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    gap: var(--space-m);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: var(--fs-tag);
+    }
+}
+
+.sg-tone {
+    padding: var(--space-xl) var(--space-l);
+    background: var(--overlay-bg);
+}
+
+.sg-card {
+    padding: var(--space-l) var(--space-m);
+    background: var(--c-surface-2);
+}
+
+.sg-surface {
+    padding: var(--space-l);
+    background: var(--c-surface-3);
+    border-radius: var(--r-bar);
+}
+
+.sg-lage {
+    margin-top: var(--space-xl);
+}
+
+.sg-lage h3 {
+    margin-bottom: var(--space-m);
+}
+
+.sg-slide {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    max-height: 26rem;
+    width: 100%;
+    background: var(--c-surface-2);
+    font-size: var(--fs-count);
+    font-weight: var(--fw-semibold);
+}
+
+.carousel__slide:nth-child(even) .sg-slide {
+    background: var(--c-surface-3);
+}
+
+.sg-carousel + .sg-carousel {
+    margin-top: var(--space-xl);
+}
+
+.sg-toast-demo {
+    display: flex;
+}
+
+// Canton map slot (#3's `canton_map()`, plan Step 7.4).
+.sg-map svg {
+    display: block;
+    width: 100%;
+    max-width: 56.25rem;
+    height: auto;
+    filter: var(--sh-map);
+}
+
+.sg-map [id^="ch-"]:hover {
+    fill: var(--c-accent-strong);
+}

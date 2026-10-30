@@ -27,6 +27,7 @@ logs: ## Follow logs of all services
 init: ## First run: build, install vendors, create and migrate the database, start everything
 	docker compose up -d --build --wait php database
 	$(MAKE) vendor
+	$(MAKE) sass
 	$(MAKE) db-create
 	$(MAKE) db-migrate
 	docker compose up -d
@@ -43,6 +44,13 @@ sf: ## Run a console command, e.g. make sf c="debug:router"
 
 cache-clear: ## Clear the Symfony cache
 	$(CONSOLE) cache:clear
+
+## —— Assets ——
+.PHONY: sass sass-watch
+sass: ## Build the Sass entry points into var/sass/ (needed before rendering any page)
+	$(CONSOLE) sass:build
+sass-watch: ## Rebuild Sass on change
+	$(CONSOLE) sass:build --watch
 
 ## —— Database ——
 db-create: ## Create the database if missing
@@ -68,10 +76,10 @@ seed: ## Import towns and load the demo data (Foundry story "main") into the dev
 	$(CONSOLE) foundry:load-fixtures main --append --no-interaction
 
 ## —— Tests ——
-test: db-test ## Run all test suites
+test: sass db-test ## Run all test suites
 	$(EXEC) php vendor/bin/phpunit
 
-test-short: ## Run tests, stop on first failure
+test-short: sass ## Run tests, stop on first failure
 	$(EXEC) php vendor/bin/phpunit --stop-on-defect
 
 ## —— Quality ——
@@ -92,3 +100,21 @@ lint: cs-check phpstan lint-translations ## Run all static checks (the CI gate)
 
 audit: ## Check dependencies for security advisories
 	$(EXEC) composer audit
+
+## —— Quality tooling (UI) ——
+.PHONY: lighthouse validate-html
+# URL is a path on this lane's app, e.g. URL=/_styleguide. _profile=0 keeps the dev toolbar (inline scripts) out.
+TOOL_URL = http://localhost$(URL)$(if $(findstring ?,$(URL)),&,?)_profile=0
+TOOL_NAME = $(shell date +%Y%m%d-%H%M%S)-$(or $(subst /,-,$(patsubst /%,%,$(firstword $(subst ?, ,$(URL))))),home)
+
+lighthouse: ## Lighthouse (mobile) against URL=/path; reports in var/lighthouse/
+	@test -n "$(URL)" || { echo 'Usage: make lighthouse URL=/_styleguide'; exit 1; }
+	@mkdir -p var/lighthouse
+	docker compose --profile tools run --rm lighthouse '$(TOOL_URL)' '$(TOOL_NAME)'
+
+# vnu refuses to fetch localhost URLs, so the php container saves the page (via nginx) and vnu reads the file.
+validate-html: ## Nu Html Checker on the rendered HTML of URL=/path
+	@test -n "$(URL)" || { echo 'Usage: make validate-html URL=/_styleguide'; exit 1; }
+	@mkdir -p var/validate
+	$(EXEC) curl -fsS '$(subst localhost,nginx,$(TOOL_URL))' -o var/validate/page.html
+	docker compose --profile tools run --rm vnu --format text /work/page.html

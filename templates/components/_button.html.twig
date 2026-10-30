@@ -1,0 +1,22 @@
+{#
+    Button. Include with `only`:
+      label (required, translated), variant: primary|black|outline|round|round-lg|icon|close (default primary),
+      href (→ <a>, else <button>), type (default button), icon (sprite id), label_hidden (default false: label
+      becomes aria-label), attributes (map of extra attributes; keys are developer-controlled, values are escaped).
+#}
+{%- set variant = variant|default('primary') -%}
+{%- set label_hidden = label_hidden|default(false) -%}
+{%- set icon_name = icon|default(null) -%}
+{%- set href = href|default(null) -%}
+{%- set extra -%}
+    {%- for key, value in attributes|default({}) %} {{ key }}="{{ value }}"{% endfor -%}
+{%- endset -%}
+{%- set content -%}
+    {%- if icon_name %}{{ icon(icon_name) }}{% endif -%}
+    {%- if not label_hidden %}<span>{{ label }}</span>{% endif -%}
+{%- endset -%}
+{%- if href is not null -%}
+<a class="btn btn--{{ variant }}" href="{{ href }}"{% if label_hidden %} aria-label="{{ label }}"{% endif %}{{ extra }}>{{ content }}</a>
+{%- else -%}
+<button type="{{ type|default('button') }}" class="btn btn--{{ variant }}"{% if label_hidden %} aria-label="{{ label }}"{% endif %}{{ extra }}>{{ content }}</button>
+{%- endif -%}

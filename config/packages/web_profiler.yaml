@@ -5,6 +5,9 @@ when@dev:
     framework:
         profiler:
             collect_serializer_data: true
+            # `?_profile=0` turns the profiler (and its inline-script toolbar) off for one request,
+            # so `make lighthouse` and `make validate-html` see the page as prod renders it.
+            collect_parameter: _profile
 
 when@test:
     framework:

@@ -1,0 +1,28 @@
+// Toast (`components/_toast.html.twig`); live region `[data-toast-region]` sits in base.html.twig (D7).
+.toast-region {
+    position: fixed;
+    inset-inline: var(--space-m);
+    bottom: var(--space-m);
+    z-index: 1000;
+    display: grid;
+    justify-items: center;
+    gap: var(--space-xs);
+    pointer-events: none;
+}
+
+.toast {
+    max-width: 30rem;
+    padding: var(--space-s) var(--space-m);
+    border-radius: var(--r-tooltip);
+    background: var(--c-ink);
+    color: var(--c-ink-inverse);
+    box-shadow: var(--sh-tooltip);
+    font-size: var(--fs-small);
+    pointer-events: auto;
+}
+
+.toast__link {
+    margin-left: var(--space-xs);
+    font-weight: var(--fw-semibold);
+    text-decoration: underline;
+}

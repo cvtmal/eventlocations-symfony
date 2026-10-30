@@ -1,0 +1,75 @@
+# Demo copy for /_styleguide (dev and test only). Venue names are fictional; nothing is copied from eventlokale.
+styleguide:
+    page_title: Styleguide
+    title: Styleguide
+    intro: Alle Bausteine der Oberfläche auf einer Seite. Spätere Zyklen vergleichen ihre Seiten mit dieser.
+    colors:
+        heading: Farben
+    typography:
+        heading: Typografie
+        sample: Die schönsten Hochzeitslocations der Schweiz
+    spacing:
+        heading: Abstände
+    radii_shadows:
+        heading: Radien und Schatten
+    icons:
+        heading: Icons
+    buttons:
+        heading: Buttons
+        check_availability: Verfügbarkeit prüfen
+        show_results: 931 Resultate anzeigen
+        save_location: Location merken
+        share: Teilen
+        print: Drucken
+        map: Karte
+        favorites: Merkliste
+        disabled: Nicht verfügbar
+    chips:
+        heading: Chips
+        zurich: Zürich
+        remove_zurich: Filter Zürich entfernen
+        region: Region
+    badge:
+        heading: Badge
+        popular: Beliebte Location
+    text_input:
+        heading: Eingabefeld
+        label: Name der Location
+        placeholder: Name eingeben
+    overlays:
+        heading: Overlays
+        open_region: Region
+        open_guests: Anzahl Gäste
+        open_more: weitere Filter
+        region_title: Wähle deine Region
+        guests_title: Wie viele Gäste erwartest du?
+        more_title: Wähle weitere Filter & Möglichkeiten
+        canton_label: Kanton
+        canton_placeholder: Kanton eingeben
+        guests_label: Anzahl Gäste
+        guests_placeholder: Anzahl Gäste
+        lage: Lage
+        clear: Filter löschen
+    lage:
+        am_fluss: Am Fluss
+        am_see: Am See
+        auf_dem_land: Auf dem Land
+        in_den_bergen: In den Bergen
+        in_der_stadt: In der Stadt
+    dialog:
+        heading: Dialog
+        open: Dialog öffnen
+        title: Anfrage gesendet
+        body: Vielen Dank. Die Location meldet sich in den nächsten Tagen bei dir.
+        confirm: Alles klar
+    carousel:
+        heading: Karussell
+        label: Bilder
+        single_label: Einzelnes Bild
+        slide: 'Bild {number}'
+    toast:
+        heading: Toast
+        message: Seehaus Beispiel wurde deiner Merkliste hinzugefügt.
+        link: Zur Merkliste
+    map:
+        heading: Karte

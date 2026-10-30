@@ -1,0 +1,11 @@
+{#
+    Filter chip. Include with `only`:
+      label (translated), href (the link that removes the filter), remove_label (aria-label, e.g. "Filter Zürich entfernen"),
+      variant: active|neutral (default active; neutral has no × and no aria-label).
+#}
+{%- set variant = variant|default('active') -%}
+{%- if variant == 'neutral' -%}
+<a class="chip chip--neutral" href="{{ href }}"><span>{{ label }}</span></a>
+{%- else -%}
+<a class="chip" href="{{ href }}" aria-label="{{ remove_label }}"><span>{{ label }}</span>{{ icon('x', {class: 'icon--sm'}) }}</a>
+{%- endif -%}

@@ -1,0 +1,90 @@
+// Header as in the original (E11: 70 px, #272727): hamburger left, centred wordmark, search and heart right.
+.site-header {
+    background: var(--c-surface);
+    height: var(--header-h);
+}
+
+.site-header__inner {
+    // Full width like the original: the icons sit at the page edges, not inside the container.
+    padding-inline: var(--space-xs);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    height: 100%;
+}
+
+.site-header__wordmark {
+    justify-self: center;
+    font-weight: var(--fw-semibold);
+    font-size: 1.375rem;
+    line-height: 1;
+    text-decoration: none;
+    letter-spacing: -.01em;
+}
+
+.site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+}
+
+.site-header__favorites {
+    position: relative;
+}
+
+.count-badge {
+    position: absolute;
+    top: .25rem;
+    right: .125rem;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    padding: 0 .25rem;
+    border-radius: .5625rem;
+    background: var(--c-accent);
+    color: var(--c-ink-inverse);
+    font-size: .6875rem;
+    font-weight: var(--fw-semibold);
+    line-height: 1.125rem;
+    text-align: center;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+// Main menu: a popover panel from the left (opened by the hamburger, closes on Esc natively).
+.main-menu[popover] {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(22rem, 100%);
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: var(--space-m);
+    border: 0;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    overflow: auto;
+}
+
+.main-menu::backdrop {
+    background: rgb(0 0 0 / .6);
+}
+
+.main-menu__list {
+    margin: var(--space-l) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 1.25rem;
+    line-height: 1.4;
+
+    a {
+        display: block;
+        padding: var(--space-xs) 0;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+}

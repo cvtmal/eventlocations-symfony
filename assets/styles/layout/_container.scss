@@ -1,0 +1,24 @@
+@use '../abstracts/breakpoints' as bp;
+
+// Max-widths from eventlokale's .container (E11); the padding sits inside the max-width.
+.container {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--space-m);
+
+    @include bp.up(sm) {
+        max-width: 494px;
+    }
+
+    @include bp.up(md) {
+        max-width: 678px;
+    }
+
+    @include bp.up(lg) {
+        max-width: 958px;
+    }
+
+    @include bp.up(xl) {
+        max-width: 1248px;
+    }
+}

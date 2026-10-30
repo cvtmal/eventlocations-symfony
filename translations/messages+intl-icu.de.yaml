@@ -1,0 +1,19 @@
+# Layout strings only (#1 owns this file; docs/rpi-cycles.md "Hotspot files"). Each module has its own domain.
+layout:
+    site_name: Hochzeitslocation
+    skip_to_content: Zum Inhalt springen
+    close: Schliessen
+    header:
+        menu_open: Menü öffnen
+        menu_label: Hauptnavigation
+        actions_label: Schnellzugriff
+        search: Suche
+        favorites: Merkliste
+        home: Startseite
+    footer:
+        label: Fusszeile
+        copyright: © Hochzeitslocation
+    carousel:
+        previous: Vorheriges Bild
+        next: Nächstes Bild
+        counter: '{current} / {total}'

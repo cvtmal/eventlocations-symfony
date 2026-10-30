@@ -1,0 +1,9 @@
+<footer class="site-footer" aria-label="{{ 'layout.footer.label'|trans }}">
+    <div class="container">
+        {# Slot for #17: "Hochzeitslocations nach Kanton" link list #}
+        {{ include('seo/_footer_cantons.html.twig', ignore_missing = true) }}
+        {# Slot for #18: Impressum / Datenschutz links #}
+        {{ include('site/legal/_footer_links.html.twig', ignore_missing = true) }}
+        <p class="site-footer__copy">{{ 'layout.footer.copyright'|trans }}</p>
+    </div>
+</footer>

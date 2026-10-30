@@ -1,0 +1,95 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font: var(--fw-regular) var(--fs-body) / var(--lh-body) var(--font-sans);
+}
+
+// Scroll lock while an overlay or a modal dialog is open (D5).
+body:has(:popover-open),
+body:has(dialog[open]) {
+    overflow: hidden;
+}
+
+a {
+    color: inherit;
+}
+
+img,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+}
+
+:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+main:focus {
+    outline: none;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+
+    &:focus {
+        position: fixed;
+        left: var(--space-m);
+        top: var(--space-m);
+        z-index: 2000;
+        padding: var(--space-xs) var(--space-m);
+        background: var(--c-bg);
+        color: var(--c-ink);
+        font-weight: var(--fw-semibold);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

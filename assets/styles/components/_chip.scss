@@ -1,0 +1,32 @@
+// Filter chip with × (E11 pill: 20px radius, 12/22 px, padding 0 1.0625rem). Text on pink is dark (D4).
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: 1.5rem;
+    padding: 0 1.0625rem;
+    border-radius: var(--r-pill);
+    background: var(--c-accent-hover);
+    color: var(--c-ink-inverse);
+    font: var(--fw-semibold) var(--fs-tag) / var(--lh-pill) var(--font-sans);
+    text-decoration: none;
+
+    .icon {
+        width: 1em;
+        height: 1em;
+    }
+
+    &:hover {
+        background: var(--c-accent);
+    }
+}
+
+.chip--neutral {
+    background: transparent;
+    color: var(--c-ink);
+
+    &:hover {
+        background: transparent;
+        text-decoration: underline;
+    }
+}
