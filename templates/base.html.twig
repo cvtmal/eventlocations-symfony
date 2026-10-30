@@ -20,6 +20,7 @@
         <main id="main" tabindex="-1">{% block main %}{% endblock %}</main>
         {{ include('layout/_footer.html.twig') }}
         <div class="toast-region" role="status" aria-live="polite" data-toast-region></div>
+        <script type="module" src="{{ asset('js/overlay.js') }}"></script>
         {% block scripts %}{% endblock %}
     </body>
 </html>

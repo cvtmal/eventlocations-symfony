@@ -1,0 +1,15 @@
+{#
+    "Andere suchten auch nach" (LP-5): neutral chips. Include with `only`:
+      links (list<{label, href}>, labels translated), title (default 'related.title'|trans({}, 'search')).
+    Renders nothing without links. #17 passes its landing pages as links; this partial does not change.
+#}
+{%- if links is not empty -%}
+<section class="related" aria-labelledby="related-title">
+    <h2 class="related__title" id="related-title">{{ title|default('related.title'|trans({}, 'search')) }}</h2>
+    <ul class="related__list">
+        {%- for link in links %}
+        <li>{{ include('components/_chip.html.twig', {label: link.label, href: link.href, variant: 'neutral'}, with_context = false) }}</li>
+        {%- endfor %}
+    </ul>
+</section>
+{%- endif -%}

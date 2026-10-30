@@ -16,10 +16,8 @@ use Twig\Environment;
  */
 final class TemplatesHaveNoRawTextTest extends KernelTestCase
 {
-    private const BASELINE = [
-        // Removed by #7 when the real homepage replaces the placeholder.
-        'site/placeholder.html.twig' => ['Hochzeitslocation'],
-    ];
+    /** Empty since #7 removed the placeholder; read through baseline() so the type stays a map. */
+    private const BASELINE = [];
 
     public function test_templates_have_no_untranslated_text(): void
     {
@@ -37,19 +35,27 @@ final class TemplatesHaveNoRawTextTest extends KernelTestCase
             $name = str_replace('\\', '/', $file->getRelativePathname());
             $seen[$name] = true;
 
-            $expected = self::BASELINE[$name] ?? [];
+            $expected = self::baseline()[$name] ?? [];
             $found = $scanner->scan($file->getContents(), $name);
             if ($found !== $expected) {
                 $mismatches[] = \sprintf('%s: found %s, allowed %s', $name, json_encode($found, \JSON_UNESCAPED_UNICODE), json_encode($expected, \JSON_UNESCAPED_UNICODE));
             }
         }
 
-        foreach (array_keys(self::BASELINE) as $name) {
+        foreach (array_keys(self::baseline()) as $name) {
             if (!isset($seen[$name])) {
                 $mismatches[] = \sprintf('%s: listed in the baseline but no such template exists; remove the entry', $name);
             }
         }
 
         self::assertSame([], $mismatches, implode("\n", $mismatches));
+    }
+
+    /**
+     * @return array<string, list<string>> template → its allowed raw texts
+     */
+    private static function baseline(): array
+    {
+        return self::BASELINE;
     }
 }

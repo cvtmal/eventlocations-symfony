@@ -80,7 +80,8 @@ final class StyleguideTest extends WebTestCase
         $crawler = $this->styleguide();
 
         $overlays = $crawler->filter('[data-overlay]');
-        self::assertCount(3, $overlays);
+        // The three filter overlays plus #main-menu, an overlay since #7 (#1 F-m2: focus wrap).
+        self::assertCount(4, $overlays);
         foreach ($overlays as $overlay) {
             \assert($overlay instanceof \DOMElement);
             $id = $overlay->getAttribute('id');

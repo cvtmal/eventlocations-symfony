@@ -1,0 +1,21 @@
+{#
+    The rating summary: "{label} ({score}) | {count} 👍" plus up to three highlights. Shared (the listing card;
+    #8 may reuse it for DP-6's summary line). Include with `only`: score (float), count (int), highlights (list<RatingHighlight>).
+    Below 7.7 there is no label, so only "({score}) | {count}" shows.
+#}
+{%- set label = rating_label(score) -%}
+<div class="rating-summary">
+    <p class="rating-summary__line">
+        {%- if label is not null -%}
+            {{ 'card.rating'|trans({label: label|trans, score: score|swiss_number(1), count: count|swiss_number}, 'search') }}
+        {%- else -%}
+            {{ 'card.rating_unlabelled'|trans({score: score|swiss_number(1), count: count|swiss_number}, 'search') }}
+        {%- endif %} {{ icon('thumbs-up', {label: 'card.rating_count'|trans({}, 'search')}) }}</p>
+    {%- if highlights is not empty %}
+    <ul class="rating-summary__highlights">
+        {%- for highlight in highlights|slice(0, 3) %}
+        <li>{{ icon(highlight.icon()) }}{{ 'card.highlight'|trans({highlight: highlight|trans}, 'search') }}</li>
+        {%- endfor %}
+    </ul>
+    {%- endif %}
+</div>

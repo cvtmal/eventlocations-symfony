@@ -1,0 +1,13 @@
+{#
+    The "Merken ♡" button (S7, no-JS form). Include with `only`:
+      number (venue number), name (venue name), label (visible text, translated; default 'merken.label'|trans({}, 'favorites')),
+      variant: card|detail (default card).
+    Created by #7; owned by #13 from now on. #8 includes it with variant: 'detail', label: 'merken.label_detail'|trans({}, 'favorites').
+#}
+{#
+    The action is the literal S5 path: #13 adds the route POST /merkliste/{number} (path() on a missing route would throw).
+    No CSRF token, so the listing stays session-free (S10); #13 decides on protection.
+#}
+{%- set label = label|default('merken.label'|trans({}, 'favorites')) -%}
+{%- set variant = variant|default('card') -%}
+<form class="merken merken--{{ variant }}" method="post" action="/merkliste/{{ number }}"><button type="submit" class="merken__button" aria-pressed="false" aria-label="{{ 'merken.label_for'|trans({name: name}, 'favorites') }}" data-merken="{{ number }}" data-merken-name="{{ name }}">{{ icon('heart') }}<span class="merken__text">{{ label }}</span></button></form>

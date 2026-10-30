@@ -1,1 +1,8 @@
 # Strings of the Favorites module. Keys: <context>.<description>.
+merken:
+    # The visible text of the Merken button on a card.
+    label: Merken
+    # The detail page's button (#8).
+    label_detail: Location merken
+    # The accessible name, so the 48 buttons of a listing are distinguishable.
+    label_for: '{name} merken'

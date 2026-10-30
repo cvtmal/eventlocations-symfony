@@ -1,0 +1,11 @@
+{#
+    The listing's hero band: h1, result count and the filter bar (LP-1). Include with `only`:
+      heading (translated h1; #17 passes "… im Kanton Zürich"), total (int), criteria (SearchCriteria).
+#}
+<section class="listing-hero">
+    <div class="container">
+        <h1 class="listing-hero__title">{{ heading }}</h1>
+        <p class="listing-hero__count">{{ 'listing.count'|trans({count: total, formatted: total|swiss_number}, 'search') }}</p>
+        {{ include('search/_filter_bar.html.twig', {criteria: criteria}, with_context = false) }}
+    </div>
+</section>

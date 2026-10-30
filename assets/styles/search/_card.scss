@@ -1,0 +1,286 @@
+@use '../abstracts/breakpoints' as bp;
+
+// The listing card (#7, LP-2): stacked below md, a row from md with the photo sticking out above the card,
+// the rating as a bordered column from xl. The title link stretches over the card; the photo column sits
+// above that link so the carousel can be swiped and its arrows clicked, and each slide links to the detail
+// page itself (.card__photo-link), so a tap on a photo still opens the venue.
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--c-surface);
+
+    &:has(.card__link:focus-visible) {
+        outline: var(--focus-ring);
+        outline-offset: 2px;
+    }
+
+    @include bp.up(md) {
+        flex-direction: row;
+        align-items: flex-start;
+        padding: var(--space-l) var(--space-m) var(--space-m);
+        background: var(--c-surface-2);
+    }
+
+    @include bp.up(lg) {
+        padding-top: 2.0625rem;
+    }
+
+    @include bp.up(xl) {
+        padding: var(--space-xl) 1.5rem 1.5rem;
+    }
+}
+
+.card__media {
+    position: relative;
+    z-index: 1;
+    height: 20rem;
+
+    @include bp.up(md) {
+        flex: 0 0 21.75rem;
+        top: -2.4375rem;
+        height: 14.875rem;
+        margin-bottom: -2.4375rem;
+    }
+
+    @include bp.up(lg) {
+        top: -2.8125rem;
+        margin-bottom: -2.8125rem;
+    }
+
+    @include bp.up(xl) {
+        flex-basis: 28rem;
+        top: -3.75rem;
+        height: 16.4375rem;
+        margin-bottom: -3.75rem;
+    }
+
+    .carousel,
+    .carousel__track,
+    .carousel__slide {
+        height: 100%;
+    }
+
+    // Below md the next photo peeks in (93 % slides, as the original).
+    .carousel__track {
+        gap: .5rem;
+
+        @include bp.up(md) {
+            gap: 0;
+        }
+    }
+
+    .carousel__slide {
+        flex-basis: 93%;
+
+        @include bp.up(md) {
+            flex-basis: 100%;
+        }
+    }
+}
+
+// The per-slide link (tabindex -1, aria-hidden): fills the slide so a tap anywhere on the photo navigates.
+.card__photo-link {
+    display: block;
+    height: 100%;
+}
+
+// The frame has a fixed height, so the varying photo ratios cause no layout shift.
+.card__picture {
+    height: 100%;
+
+    picture {
+        display: block;
+        height: 100%;
+    }
+
+    .picture__img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.card__placeholder {
+    height: 100%;
+    background: var(--c-surface-3);
+}
+
+.card__body {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-xs) var(--space-s) var(--space-m);
+
+    @include bp.up(md) {
+        padding: 0 0 0 1.5rem;
+    }
+
+    @include bp.up(xl) {
+        padding-left: 2rem;
+
+        &:has(.card__rating) {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 39%;
+            grid-template-areas:
+                'top top'
+                'title rating'
+                'summary rating';
+            align-content: start;
+        }
+    }
+}
+
+.card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-m);
+    padding: var(--space-m) 0 var(--space-xs);
+
+    @include bp.up(md) {
+        margin-bottom: 1.125rem;
+        padding: 0;
+    }
+
+    @include bp.up(xl) {
+        grid-area: top;
+    }
+}
+
+.card__title {
+    margin: 0 0 var(--space-xs);
+    overflow: hidden;
+    font-size: var(--fs-card-title);
+    line-height: var(--lh-card-title);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    .badge {
+        display: none;
+        margin-right: var(--space-s);
+        vertical-align: middle;
+
+        @include bp.up(lg) {
+            display: inline-block;
+        }
+    }
+
+    @include bp.up(md) {
+        margin-bottom: var(--space-s);
+    }
+
+    @include bp.up(xl) {
+        grid-area: title;
+    }
+}
+
+.card__link {
+    text-decoration: none;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+    }
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+}
+
+.card__summary {
+    display: -webkit-box;
+    max-width: 38.125rem;
+    margin: 0;
+    overflow: hidden;
+    font-size: var(--fs-excerpt);
+    line-height: var(--lh-excerpt);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+
+    @include bp.up(md) {
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+    }
+
+    @include bp.up(xl) {
+        grid-area: summary;
+    }
+}
+
+.card__rating {
+    margin-top: var(--space-m);
+
+    @include bp.up(xl) {
+        grid-area: rating;
+        margin: 0 0 0 1.875rem;
+        padding: var(--space-xs) 0 0 1.875rem;
+        border-left: 1px solid var(--c-line);
+    }
+}
+
+.card-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-l);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-excerpt);
+    line-height: 1.5rem;
+}
+
+.card-facts__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+.rating-summary__line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    margin: 0 0 var(--space-xs);
+    font-size: var(--fs-body);
+    line-height: 1.5rem;
+
+    .icon {
+        width: 1rem;
+        height: 1rem;
+        fill: currentColor;
+    }
+
+    @include bp.up(xl) {
+        font-size: var(--fs-small);
+    }
+}
+
+.rating-summary__highlights {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+    line-height: 1.5rem;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-s);
+        margin-top: var(--space-2xs);
+    }
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}

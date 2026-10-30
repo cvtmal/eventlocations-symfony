@@ -1,0 +1,40 @@
+{#
+    Filter-bar slot "weitere Filter" (name search, property terms, access, room facts). Created by #7 as a placeholder;
+    #12 replaces this file's contents (and may summarise the chips) and never edits _filter_bar.
+    Included twice with `with_context = false`: criteria (SearchCriteria), part: chips|trigger.
+    Renders <li class="filter-bar__item">s: one chip per active value (part chips), or the trigger plus its overlay (part trigger).
+#}
+{%- if part == 'chips' -%}
+    {%- set chips = [] -%}
+    {%- if criteria.q is not null -%}
+        {%- set chips = chips|merge([{label: 'chip.q'|trans({q: criteria.q}, 'search'), href: listing_path_without(criteria, 'q')}]) -%}
+    {%- endif -%}
+    {%- for param, group in constant('App\\Search\\ReadModel\\SearchCriteria::PARAMS') -%}
+        {%- for code in criteria.termCodes(group) -%}
+            {%- set chips = chips|merge([{label: ('term.' ~ group.value ~ '.' ~ code)|trans({}, 'venues'), href: listing_path_without(criteria, param, code)}]) -%}
+        {%- endfor -%}
+    {%- endfor -%}
+    {%- for access in criteria.access -%}
+        {%- set chips = chips|merge([{label: access|trans, href: listing_path_without(criteria, 'access', access.value)}]) -%}
+    {%- endfor -%}
+    {%- if criteria.rooms is not null -%}
+        {%- set chips = chips|merge([{label: 'chip.rooms'|trans({rooms: criteria.rooms}, 'search'), href: listing_path_without(criteria, 'rooms')}]) -%}
+    {%- endif -%}
+    {%- if criteria.area is not null -%}
+        {%- set chips = chips|merge([{label: 'chip.area'|trans({area: criteria.area|swiss_number}, 'search'), href: listing_path_without(criteria, 'area')}]) -%}
+    {%- endif -%}
+    {%- if criteria.height is not null -%}
+        {%- set chips = chips|merge([{label: 'chip.height'|trans({height: criteria.height|swiss_number(1)}, 'search'), href: listing_path_without(criteria, 'height')}]) -%}
+    {%- endif -%}
+    {%- for chip in chips -%}
+        <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: chip.label, href: chip.href, remove_label: 'chip.remove'|trans({label: chip.label}, 'search'), variant: 'active'}, with_context = false) }}</li>
+    {%- endfor -%}
+{%- elseif part == 'trigger' -%}
+    <li class="filter-bar__item">
+        {{- include('components/_button.html.twig', {label: 'filter.more'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-more'}}, with_context = false) -}}
+        {% embed 'components/_overlay.html.twig' with {id: 'filter-more', tone: 'more', title: 'filter.more_title'|trans({}, 'search'), criteria: criteria} only %}
+            {% block overlay_body %}{% endblock %}
+            {% block overlay_footer %}{{ include('components/_button.html.twig', {href: listing_path_without(criteria, ['q', 'setting', 'building', 'infra', 'furniture', 'tech', 'surroundings', 'access', 'rooms', 'area', 'height']), label: 'filter.reset'|trans({}, 'search'), variant: 'black'}, with_context = false) }}{% endblock %}
+        {% endembed %}
+    </li>
+{%- endif -%}

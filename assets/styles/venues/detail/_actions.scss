@@ -18,8 +18,7 @@
 
     @include bp.down(lg) {
         .venue-actions__row .btn,
-        .merken-button--detail .btn,
-        .merken-button--detail button {
+        .merken--detail .merken__button {
             width: 2.75rem;
             padding: 0;
 
@@ -71,8 +70,15 @@
     }
 }
 
-.venue-actions__primary {
+// `.venue-actions .venue-actions__primary` outranks the `.btn { flex: 0 0 auto }` above: below lg the primary
+// button is the one that gives way, so the bar (with the Merken button) fits 390 px and wraps its label below that.
+.venue-actions .venue-actions__primary {
     flex: 1 1 auto;
+    min-width: 0;
+
+    @include bp.down(lg) {
+        padding-inline: var(--space-s);
+    }
 }
 
 .venue-actions__row {
