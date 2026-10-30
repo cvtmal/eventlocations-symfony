@@ -1,0 +1,25 @@
+{#
+    /impressum (#18, Q5). Variables: site (operator, street, postcode, city, uid, email) from the `site.*` parameters.
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'legal.imprint.page_title'|trans({}, 'shared') }}{% endblock %}
+
+{% block meta %}<meta name="description" content="{{ 'legal.imprint.meta_description'|trans({}, 'shared') }}">{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ url('impressum') }}">{% endblock %}
+
+{% block main %}
+    <div class="container legal">
+        <h1 class="legal__title">{{ 'legal.imprint.title'|trans({}, 'shared') }}</h1>
+        <section class="legal__section">
+            <h2>{{ 'legal.imprint.operator'|trans({}, 'shared') }}</h2>
+            {{ include('site/legal/_operator.html.twig', {site: site}, with_context = false) }}
+            <p>{{ 'legal.imprint.uid'|trans({uid: site.uid}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.imprint.contact'|trans({}, 'shared') }}</h2>
+            <p><a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
+        </section>
+    </div>
+{% endblock %}

@@ -51,7 +51,7 @@
         {{ form_rest(form) }}
         <div class="inquiry-form__actions">
             {{ include('components/_button.html.twig', {label: 'form.submit'|trans({}, 'inquiries'), type: 'submit'}, with_context = false) }}
-            <p class="inquiry-form__privacy">{{ 'form.privacy'|trans({name: venue.name}, 'inquiries') }}</p>
+            <p class="inquiry-form__privacy">{{ 'form.privacy'|trans({name: venue.name}, 'inquiries') }} <a href="{{ path('datenschutz') }}">{{ 'form.privacy_link'|trans({}, 'inquiries') }}</a></p>
         </div>
     {{ form_end(form) }}
 </div>

@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -90,7 +90,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 15 | `venue-map` | W5 | DP-10 (map) | 8 | — | Q3 (production key only) | ✅ Done |
 | 16 | `seo-foundation` | W6 | SEO-1–SEO-3, SEO-5, SEC-1 | 7, 8 | — | — | ✅ Done |
 | 17 | `seo-landing-pages` | W6 | SEO-4, LP-5 | 10, 16 | `landing_pages` (if needed) | — | ✅ Done |
-| 18 | `legal-pages` | W6 | LEG-1, LEG-2 | 1, 13, 14 | — | ~~Q5~~ | Plan |
+| 18 | `legal-pages` | W6 | LEG-1, LEG-2 | 1, 13, 14 | — | ~~Q5~~ | ✅ Done |
 | 19 | `performance-caching` | W7 | PERF-1–PERF-3, ADM-6 | 10–17, 24, 25, 33 | — | — | Research |
 | 20 | `prod-deploy` | W8 | OP-2, OP-3, OP-4 | 19, 21, 26, 32 | — | ~~Q1~~, ~~Q2~~ (Hostpoint + Neon), Q14 (redirects only) | Research |
 | 21 | `legacy-data-import` | W5 | DATA-3 | 3, 9 | `venues`: address, town, canton and coordinates become optional; `venue_translations.region` | ~~Q4~~, ~~Q12~~ | ✅ Done |
@@ -1556,6 +1556,33 @@ IDs are referenced by the overview and the cycles.
 - **Done when:**
   - application tests show both pages render and are linked from every page;
   - every remaining `TODO owner` marker is listed in the Outcome so #20 can block on them.
+
+**Outcome (2026-10-30).** Done in commit `legal-pages`. No migration, no Composer change, no new Makefile target or console command, no new catalogue domain. Read `CLAUDE.md` `### Shared` ("Built in #18") before touching the legal pages. **The text is a draft for the owner, not legal advice**: the owner must approve it (T7) before go-live.
+
+- **What exists:** `App\Shared\Controller\LegalController` with `impressum` `GET /impressum` and `datenschutz` `GET /datenschutz` (localized, `#[Cache(public, s-maxage=600, stale-while-revalidate=86400)]`, no query, no session, no cookie, indexable, self canonical). Templates `templates/site/legal/{impressum, datenschutz, _operator, _footer_links}.html.twig`; `_operator` is the one address block both pages print, `_footer_links` fills the footer's `nav.footer-legal` on every page (query-free, so the error pages keep working). Styles `assets/styles/shared/_legal.scss`. Every sentence is a key under `legal.*` in the `shared` catalogue; the inquiry form links Datenschutz (`inquiries` `form.privacy_link`).
+- **One source per fact:** the operator from `site.operator_{name,street,postcode,city}`, `site.contact_email` and the new `site.operator_uid` (`config/services.yaml`); the inquiry retention from `%inquiries.retention_months%` (12, the purge's own parameter); the cookie lifetime from `LegalController::MERKLISTE_DAYS` (400, pinned to `MerklisteCookie::MAX_AGE_SECONDS`); the Maps sentences quote #15's `venues` labels `detail.location.map.load`/`.open`, pinned through the translator.
+- **Sitemap:** `Seo\PagesSitemap::urls()` lists both pages after the landing pages, without `lastmod` (the text changes only with a deploy); the early return for "no landing pages" became a guard.
+- **Tests:** `tests/Application/Shared/LegalPagesTest.php` (Q5 facts verbatim, every Datenschutz section, cache headers and no `Set-Cookie`, footer links on listing, detail and both pages, retention and cookie lifetime follow their sources, Maps labels follow #15, and a guard that fails if "TODO", Sentry, Google Analytics, Google Fonts or Mailchimp reaches either page's HTML); extended `SitemapTest` and `InquiryFormRenderingTest`.
+- **How later cycles use it:** a new processor, cookie or data flow updates `legal.privacy.*` in the same cycle. Open points are `# TODO owner (Tn)` YAML comments above the key in `translations/shared+intl-icu.de.yaml`; they never render. #19 purges `/impressum` and `/datenschutz` with the other static pages.
+- **Deviations:** one template per page with catalogue keys instead of songrequest's per-locale templates (`TemplatesHaveNoRawTextTest`, S4); the abuse sentence (`legal.privacy.abuse.text`) reworded, because the per-IP limiter state stays in the filesystem pool until pruned ("läuft spätestens zwei Stunden nach deiner letzten Anfrage ab, abgelaufene Zähler löschen wir regelmässig"), marker T10 added; the Google Maps section uses #15's research text, as #15 landed first (T8 kept only for Google's address); the shared `_operator` partial; the footer links are muted like #17's canton links (`--c-muted` on `--c-surface-footer`). Literal heading sizes in `_legal.scss` stay (review F-m1: no fixed `--fs-*` token matches; `layout/_header.scss` does the same).
+- **Owner markers** (#20 blocks on T1–T8 and T10; #29 on T9):
+
+  | Marker | What it needs | Who resolves it | Where |
+  |---|---|---|---|
+  | T1 | Neon: name the state of the chosen region (nDSG Art. 19 para. 4), check Neon's data processing terms | #20, owner | catalogue `legal.privacy.hosting.database` |
+  | T2 | Hostpoint: company name, data location, how long web logs are kept | #20, owner | catalogue `legal.privacy.hosting.web` |
+  | T3 | Confirm the production mail provider | #20 | catalogue `legal.privacy.hosting.mail` |
+  | T4 | Sentry: add a paragraph if #20 installs it, with `send_default_pii` off | #20 | Outcome only |
+  | T5 | `hallo@hochzeitslocation.ch` exists and receives mail (Q5) | #20 | Outcome only |
+  | T6 | `app:inquiries:purge` runs daily (cron), or the 12-month retention sentence is false | #20 | catalogue `legal.privacy.inquiry.retention` |
+  | T7 | The owner approves both texts. Points for that read: the iOS/Safari 24-hour case (landing via a link-decorated URL from a tracker-classified domain; the page says 7 days), "Wunschdatum" is optional like the phone, a paragraph on venue operators' contact data from the Wix form, the "du" tone on a legal page | Owner | catalogue `legal.privacy` (top) |
+  | T8 | Check Google's controller and address against policies.google.com/privacy; an embed with Q3's key needs more | Owner before go-live (#15) | catalogue `legal.privacy.maps.text` |
+  | T9 | CRM paragraph (S13) | #29 | Outcome only |
+  | T10 | `cache:pool:prune` runs on a schedule (cron), or expired per-IP counters stay on the server | #20 | catalogue `legal.privacy.abuse.text` |
+
+- **#20's blockers from #18:** T1–T5, the **daily `app:inquiries:purge` cron (T6)** and the **`cache:pool:prune` cron (T10)**; T7 and T8 before go-live.
+- **Pending human:** owner approval of both texts (T7); the S11 pass at 390/1440 in a real browser (only the headless Chromium fallback ran, Claude in Chrome would not resize).
+- **Later:** Open Graph tags on the legal pages (needs a Seo helper; Shared may not use Seo).
 
 ## W7–W8 Launch
 

@@ -66,6 +66,7 @@ final class InquiryFormRenderingTest extends WebTestCase
             self::assertCount(1, $crawler->filter('#anfrage #inquiry_'.$field), $field);
         }
         self::assertSelectorTextContains('#anfrage button[type="submit"]', 'Anfragen');
+        self::assertSame('/datenschutz', $crawler->filter('#anfrage .inquiry-form__privacy a')->attr('href'));
 
         self::assertSame('wedding', $crawler->filter('#inquiry_occasion option[selected]')->attr('value'));
         self::assertSame(['Hochzeit', 'Standesamtliche Trauung', 'Hochzeitsapéro', 'Verlobungsfeier', 'Anderer Anlass'], $crawler->filter('#inquiry_occasion option')->each(static fn (Crawler $option): string => $option->text()));

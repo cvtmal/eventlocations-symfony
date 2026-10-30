@@ -100,7 +100,7 @@ final class SitemapTest extends WebTestCase
 
         $xml = $this->fetch('/sitemap-pages.xml');
 
-        self::assertSame(['http://localhost/hochzeitslocations'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertSame(['http://localhost/hochzeitslocations', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
         self::assertCount(1, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
         $this->assertValid($xml, 'sitemap-with-images.xsd');
     }
@@ -133,11 +133,13 @@ final class SitemapTest extends WebTestCase
         ksort($lastmods);
         // Luzern (4 venues) and the hotels (4) are under the threshold; Luzern still moves the listing.
         self::assertSame([
+            'http://localhost/datenschutz' => null,
             'http://localhost/hochzeitslocations' => '2026-09-01T10:00:00+00:00',
             'http://localhost/hochzeitslocations/bern' => '2026-02-01T10:00:00+00:00',
             'http://localhost/hochzeitslocations/schloss' => '2026-02-01T10:00:00+00:00',
             'http://localhost/hochzeitslocations/zuerich' => '2026-03-01T10:00:00+00:00',
             'http://localhost/hochzeitslocations/zuerich/staefa' => '2026-03-01T10:00:00+00:00',
+            'http://localhost/impressum' => null,
         ], $lastmods);
         $this->assertValid($xml, 'sitemap-with-images.xsd');
 

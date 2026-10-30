@@ -1,0 +1,67 @@
+{#
+    /datenschutz (#18). A draft for the owner's review, not legal advice. Every sentence is a literal key in
+    `shared` (`legal.privacy.*`); the variable facts come from the controller.
+    Variables: site (as /impressum), retention_months (%inquiries.retention_months%), merkliste_days (LegalController::MERKLISTE_DAYS).
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'legal.privacy.page_title'|trans({}, 'shared') }}{% endblock %}
+
+{% block meta %}<meta name="description" content="{{ 'legal.privacy.meta_description'|trans({}, 'shared') }}">{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ url('datenschutz') }}">{% endblock %}
+
+{% block main %}
+    <div class="container legal">
+        <h1 class="legal__title">{{ 'legal.privacy.title'|trans({}, 'shared') }}</h1>
+        <p class="legal__updated">{{ 'legal.privacy.updated'|trans({}, 'shared') }}</p>
+        <p>{{ 'legal.privacy.intro'|trans({}, 'shared') }}</p>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.controller.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.controller.text'|trans({}, 'shared') }}</p>
+            {{ include('site/legal/_operator.html.twig', {site: site}, with_context = false) }}
+            <p><a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.inquiry.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.inquiry.data'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.inquiry.purpose'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.inquiry.retention'|trans({months: retention_months}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.merkliste.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.merkliste.text'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.merkliste.content'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.merkliste.lifetime'|trans({days: merkliste_days}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.merkliste.processing'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.merkliste.control'|trans({}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.abuse.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.abuse.text'|trans({}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.hosting.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.hosting.web'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.hosting.database'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.hosting.mail'|trans({}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.maps.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.maps.text'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.maps.policy'|trans({}, 'shared') }} <a href="https://policies.google.com/privacy">{{ 'legal.privacy.maps.policy_link'|trans({}, 'shared') }}</a></p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.links.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.links.text'|trans({}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.staff.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.staff.text'|trans({}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.rights.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.rights.text'|trans({}, 'shared') }}</p>
+        </section>
+    </div>
+{% endblock %}

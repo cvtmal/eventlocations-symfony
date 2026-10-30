@@ -18,6 +18,7 @@ form:
     optional: (optional)
     submit: Anfragen
     privacy: Deine Angaben gehen direkt an {name}.
+    privacy_link: Datenschutz
     message_default: "Liebes {name}-Team,\n\nwir planen unsere Hochzeit und interessieren uns für eure Location. Könnt ihr uns sagen, ob unser Wunschtermin noch frei ist?\n\nHerzliche Grüsse"
     error:
         summary: Bitte prüfe deine Angaben.

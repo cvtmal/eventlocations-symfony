@@ -21,6 +21,8 @@ parameters:
     site.operator_street: 'Sonneggstrasse 61'
     site.operator_postcode: '8006'
     site.operator_city: 'Zürich'
+    # Q5: the Impressum's UID line (#18).
+    site.operator_uid: 'CHE-134.034.546 MWST'
     # LEG-2: app:inquiries:purge deletes inquiries older than this (#18 documents it).
     inquiries.retention_months: 12
     # #17: a canton, town or building landing page exists from this many published venues, below it 404 (one rule, #26 reads it).
