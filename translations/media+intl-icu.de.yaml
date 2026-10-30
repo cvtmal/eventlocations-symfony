@@ -1,1 +1,4 @@
 # Strings of the Media module. Keys: <context>.<description>.
+picture:
+    # Alt text of a venue photo without a venue_photo_translations row (read models of #7/#8).
+    alt_fallback: '{name}, Bild {position}'

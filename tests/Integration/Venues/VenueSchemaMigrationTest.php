@@ -36,6 +36,12 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         '{missing}' => '019a0000-0000-7000-8000-000000000999',
     ];
 
+    /** The NOT NULL image variant columns of venue_photos (#5) with valid values. */
+    private const PHOTO_COLUMNS = [
+        '{photo-cols}' => 'width, height, dominant_color, variants',
+        '{photo-vals}' => '1600, 1067, \'#b9a58c\', \'{"widths": [360, 640, 960, 1280], "formats": ["avif", "webp", "jpg"]}\'',
+    ];
+
     private const SEED = [
         "INSERT INTO towns (id, canton_code, zip, name, slug, bfs_number, lat, lng, population) VALUES ('{town}', 'zh', '8999', 'Testdorf Venues', 'testdorf-venues', 9999, 47.3, 8.5, 100)",
         "INSERT INTO venues (id, name, tier, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES ('{venue}', 'Testhaus', 'premium', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5), ('{venue2}', 'Zweithaus', 'basic', 'published', 50, '8999', '{town}', 'zh', 47.3, 8.5)",
@@ -49,7 +55,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         "INSERT INTO venue_documents (id, venue_id, position, path, size_bytes) VALUES ('{doc}', '{venue}', 1, 'demo/a.pdf', 1000)",
         "INSERT INTO venue_document_translations (id, venue_document_id, locale, title) VALUES (gen_random_uuid(), '{doc}', 'de', 'Preisliste')",
         // A venue photo and a room photo may share a position: the sequences are separate.
-        "INSERT INTO venue_photos (id, venue_id, room_id, position, original_path) VALUES ('{photo}', '{venue}', NULL, 1, 'demo/a.jpg'), (gen_random_uuid(), '{venue}', '{room}', 1, 'demo/b.jpg')",
+        "INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES ('{photo}', '{venue}', NULL, 1, 'demo/a.jpg', {photo-vals}), (gen_random_uuid(), '{venue}', '{room}', 1, 'demo/b.jpg', {photo-vals})",
         "INSERT INTO venue_photo_translations (id, venue_photo_id, locale, alt) VALUES (gen_random_uuid(), '{photo}', 'de', 'Aussenansicht')",
     ];
 
@@ -195,11 +201,20 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'title of unknown document' => ['fk_venue_document_translations_venue_document_id', ["INSERT INTO venue_document_translations (id, venue_document_id, locale, title) VALUES (gen_random_uuid(), '{missing}', 'de', 'Menü')"]];
 
         // venue_photos
-        yield 'venue photo position taken (NULLS NOT DISTINCT)' => ['uk_venue_photos_venue_id_room_id_position', ["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path) VALUES (gen_random_uuid(), '{venue}', NULL, 1, 'demo/c.jpg')"]];
-        yield 'room photo position taken' => ['uk_venue_photos_venue_id_room_id_position', ["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path) VALUES (gen_random_uuid(), '{venue}', '{room}', 1, 'demo/c.jpg')"]];
+        yield 'venue photo position taken (NULLS NOT DISTINCT)' => ['uk_venue_photos_venue_id_room_id_position', ["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES (gen_random_uuid(), '{venue}', NULL, 1, 'demo/c.jpg', {photo-vals})"]];
+        yield 'room photo position taken' => ['uk_venue_photos_venue_id_room_id_position', ["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES (gen_random_uuid(), '{venue}', '{room}', 1, 'demo/c.jpg', {photo-vals})"]];
         yield 'photo position zero' => ['chk_venue_photos_position', ["UPDATE venue_photos SET position = 0 WHERE id = '{photo}'"]];
-        yield 'photo of unknown venue' => ['fk_venue_photos_venue_id', ["INSERT INTO venue_photos (id, venue_id, position, original_path) VALUES (gen_random_uuid(), '{missing}', 1, 'demo/c.jpg')"]];
-        yield 'photo of unknown room' => ['fk_venue_photos_room_id', ["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path) VALUES (gen_random_uuid(), '{venue}', '{missing}', 2, 'demo/c.jpg')"]];
+        yield 'photo of unknown venue' => ['fk_venue_photos_venue_id', ["INSERT INTO venue_photos (id, venue_id, position, original_path, {photo-cols}) VALUES (gen_random_uuid(), '{missing}', 1, 'demo/c.jpg', {photo-vals})"]];
+        yield 'photo width zero' => ['chk_venue_photos_width', ["UPDATE venue_photos SET width = 0 WHERE id = '{photo}'"]];
+        yield 'photo height negative' => ['chk_venue_photos_height', ["UPDATE venue_photos SET height = -1 WHERE id = '{photo}'"]];
+        yield 'dominant colour upper case' => ['chk_venue_photos_dominant_color', ["UPDATE venue_photos SET dominant_color = '#B9A58C' WHERE id = '{photo}'"]];
+        yield 'dominant colour without hash' => ['chk_venue_photos_dominant_color', ["UPDATE venue_photos SET dominant_color = 'b9a58c' WHERE id = '{photo}'"]];
+        yield 'variants a list' => ['chk_venue_photos_variants', ["UPDATE venue_photos SET variants = '[]' WHERE id = '{photo}'"]];
+        yield 'variants without widths' => ['chk_venue_photos_variants', ["UPDATE venue_photos SET variants = '{\"widths\": [], \"formats\": [\"jpg\"]}' WHERE id = '{photo}'"]];
+        yield 'variants without jpg' => ['chk_venue_photos_variants', ["UPDATE venue_photos SET variants = '{\"widths\": [360], \"formats\": [\"webp\"]}' WHERE id = '{photo}'"]];
+        yield 'variants without widths key' => ['chk_venue_photos_variants', ["UPDATE venue_photos SET variants = '{\"formats\": [\"jpg\"]}' WHERE id = '{photo}'"]];
+        yield 'variants widths a number' => ['chk_venue_photos_variants', ["UPDATE venue_photos SET variants = '{\"widths\": 360, \"formats\": [\"jpg\"]}' WHERE id = '{photo}'"]];
+        yield 'photo of unknown room' => ['fk_venue_photos_room_id', ["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES (gen_random_uuid(), '{venue}', '{missing}', 2, 'demo/c.jpg', {photo-vals})"]];
 
         // venue_photo_translations
         yield 'second de alt' => ['uk_venue_photo_translations_venue_photo_id_locale', ["INSERT INTO venue_photo_translations (id, venue_photo_id, locale, alt) VALUES (gen_random_uuid(), '{photo}', 'de', 'Garten')"]];
@@ -227,7 +242,8 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'main setting and main building, other venue main building' => [["INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES ('{venue2}', 'building', 'castle', TRUE), ('{venue2}', 'setting', 'lake', TRUE), ('{venue2}', 'setting', 'city', FALSE)"]];
         yield 'three highlights' => [["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 2, 'value'), ('{venue}', 3, 'location')"]];
         yield 'room at its bounds' => [["UPDATE rooms SET capacity_min = 1, capacity_max = 50000, area_m2 = 50000, height_m = 30, floor_material = 'parquet', capacity_seminar_min = 20, capacity_seminar_max = 20, capacity_concert_max = 50000 WHERE id = '{room}'"]];
-        yield 'second venue photo' => [["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path) VALUES (gen_random_uuid(), '{venue}', NULL, 2, 'demo/c.jpg'), (gen_random_uuid(), '{venue2}', NULL, 1, 'demo/d.jpg')"]];
+        yield 'photo with a single width in webp and jpg' => [["UPDATE venue_photos SET width = 300, height = 1, dominant_color = '#000000', variants = '{\"widths\": [300], \"formats\": [\"webp\", \"jpg\"]}' WHERE id = '{photo}'"]];
+        yield 'second venue photo' => [["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES (gen_random_uuid(), '{venue}', NULL, 2, 'demo/c.jpg', {photo-vals}), (gen_random_uuid(), '{venue2}', NULL, 1, 'demo/d.jpg', {photo-vals})"]];
     }
 
     /**
@@ -359,6 +375,6 @@ final class VenueSchemaMigrationTest extends KernelTestCase
 
     private function sql(string $sql): int
     {
-        return (int) $this->connection->executeStatement(strtr($sql, self::IDS));
+        return (int) $this->connection->executeStatement(strtr($sql, [...self::IDS, ...self::PHOTO_COLUMNS]));
     }
 }

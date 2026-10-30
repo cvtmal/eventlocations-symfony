@@ -9,6 +9,8 @@ use App\Factory\RoomTranslationFactory;
 use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueDocumentTranslationFactory;
 use App\Factory\VenueFactory;
+use App\Factory\VenuePhotoFactory;
+use App\Factory\VenuePhotoTranslationFactory;
 use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueReviewFactory;
 use App\Factory\VenueTermFactory;
@@ -16,8 +18,10 @@ use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
 use App\Geo\Repository\TownRepository;
 use App\Geo\ValueObject\Canton;
+use App\Venues\Entity\Room;
 use App\Venues\Entity\TaxonomyTerm;
 use App\Venues\Entity\Venue;
+use App\Venues\Entity\VenueDocument;
 use App\Venues\Repository\TaxonomyTermRepository;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\FloorMaterial;
@@ -27,6 +31,8 @@ use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use Faker\Generator;
+use Random\Engine\Mt19937;
+use Random\Randomizer;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use Zenstruck\Foundry\Story;
 
@@ -42,7 +48,15 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  *   one main setting each, "Hochzeit" always), about one in three without a rating.
  * - Deterministic: faker is seeded and the distribution is index-based.
  * - Idempotent: it does nothing when venues exist, because `make seed` appends.
- * - Needs the towns of app:geo:import-towns (make seed runs it first). No photos (#5).
+ * - Needs the towns of app:geo:import-towns (make seed runs it first).
+ * - Photos (#5): 3–8 gallery photos per venue (8 for every tenth), 1–2 in the first room of
+ *   every third venue, from DemoMedia's 30 drawn originals; odd positions get a German alt
+ *   row, even ones exercise the fallback alt. Every document gets a real one-page PDF, so
+ *   size_bytes is its size. Media is created after all venues and uses its own seeded RNG,
+ *   so the venue data stays exactly #4's (factory defaults draw from the shared faker).
+ * - Variants are cached in var/demo-media/ per original: the first, cold `make seed` renders
+ *   them (10–15 s once), later loads only copy files into public/media/<number>/. Before
+ *   publishing, a venue's public/media/<number>/ is emptied (numbers restart after db-fresh).
  *
  * Names come from the word lists below and texts from faker; nothing is taken from
  * eventlokale.
@@ -70,11 +84,16 @@ final class DemoStory extends Story
     private const CAPACITIES = [40, 60, 80, 100, 120, 150, 180, 200, 250, 300, 400, 500, 600, 800, 1000, 1200];
     private const ROOM_NAMES = ['Saal', 'Foyer', 'Gewölbekeller', 'Salon', 'Wintergarten'];
     private const DOCUMENT_TITLES = ['Preisliste', 'Bankettmappe'];
+    private const ALT_PHRASES = [
+        'Aussenansicht', 'Festsaal mit gedeckten Tischen', 'Garten im Sommer', 'Apéro auf der Terrasse',
+        'Eingangsbereich', 'Blick in den Saal', 'Bankett bei Kerzenlicht', 'Lounge am Abend',
+    ];
 
     public function __construct(
         private readonly VenueRepository $venues,
         private readonly TaxonomyTermRepository $terms,
         private readonly TownRepository $towns,
+        private readonly DemoMedia $media,
     ) {
     }
 
@@ -94,6 +113,7 @@ final class DemoStory extends Story
         foreach (TermGroup::cases() as $group) {
             $terms[$group->value] = $this->terms->byGroup($group);
         }
+        $created = [];
         $tiers = [];
         foreach (self::TIER_COUNTS as $tier => $count) {
             array_push($tiers, ...array_fill(0, $count, Tier::from($tier)));
@@ -106,14 +126,22 @@ final class DemoStory extends Story
             $name = self::PREFIXES[$i % 12].' '.self::SUFFIXES[$i % 15];
             $tier = $tiers[($i * self::TIER_STRIDE) % self::VENUES];
 
-            flush_after(fn () => $this->createVenue($faker, $i, $name, $slugger->slug($name)->lower()->toString(), $tier, $town, $terms));
+            $created[$i] = [$name, ...flush_after(fn (): array => $this->createVenue($faker, $i, $name, $slugger->slug($name)->lower()->toString(), $tier, $town, $terms))];
+        }
+
+        // After the loop: the photo factories' defaults draw from the shared faker, which must
+        // not shift the venue data. The venue numbers exist now (identity, set on flush).
+        foreach ($created as $i => [$name, $venue, $rooms, $documents]) {
+            flush_after(fn () => $this->createMedia($i, $name, $venue, $rooms, $documents));
         }
     }
 
     /**
      * @param array<string, list<TaxonomyTerm>> $terms
+     *
+     * @return array{Venue, list<Room>, list<VenueDocument>}
      */
-    private function createVenue(Generator $faker, int $i, string $name, string $slug, Tier $tier, Town $town, array $terms): void
+    private function createVenue(Generator $faker, int $i, string $name, string $slug, Tier $tier, Town $town, array $terms): array
     {
         $capacityMax = (int) $faker->randomElement(self::CAPACITIES);
         $factory = VenueFactory::new()->withFaq();
@@ -148,7 +176,7 @@ final class DemoStory extends Story
             'parkingText' => $faker->boolean() ? self::text($faker, 200) : null,
         ]);
 
-        $this->createRooms($faker, $venue, $capacityMax);
+        $rooms = $this->createRooms($faker, $venue, $capacityMax);
         $this->assignTerms($faker, $venue, $terms);
 
         if ($rated) {
@@ -168,16 +196,71 @@ final class DemoStory extends Story
             ]);
         }
 
-        for ($position = 1, $documents = $faker->numberBetween(0, 2); $position <= $documents; ++$position) {
-            VenueDocumentTranslationFactory::createOne([
+        $documents = [];
+        for ($position = 1, $count = $faker->numberBetween(0, 2); $position <= $count; ++$position) {
+            // The fictional size of #4 is still drawn (and discarded), so faker's sequence stays #4's.
+            $faker->numberBetween(40_000, 2_500_000);
+            $path = \sprintf('demo/%s/%d.pdf', $slug, $position);
+            $documents[] = VenueDocumentTranslationFactory::createOne([
                 'document' => VenueDocumentFactory::new([
                     'venue' => $venue,
                     'position' => $position,
-                    'path' => \sprintf('demo/%s/%d.pdf', $slug, $position),
-                    'sizeBytes' => $faker->numberBetween(40_000, 2_500_000),
+                    'path' => $path,
+                    'sizeBytes' => $this->media->writePdf($path, self::DOCUMENT_TITLES[$position - 1].' '.$name),
                 ]),
                 'locale' => 'de',
                 'title' => self::DOCUMENT_TITLES[$position - 1],
+            ])->document();
+        }
+
+        return [$venue, $rooms, $documents];
+    }
+
+    /**
+     * Publishes the venue's PDFs and gives it its photos (see the class docblock).
+     *
+     * @param list<Room>          $rooms
+     * @param list<VenueDocument> $documents
+     */
+    private function createMedia(int $i, string $name, Venue $venue, array $rooms, array $documents): void
+    {
+        $number = $venue->number();
+        $this->media->resetVenue($number);
+        foreach ($documents as $document) {
+            $this->media->publishDocument($document->path(), $number, $document->id());
+        }
+
+        $random = new Randomizer(new Mt19937(20261030 + $i));
+        $originals = array_fill(1, DemoMedia::ORIGINALS, true);
+        $gallery = $random->shuffleArray($random->pickArrayKeys($originals, 0 === $i % 10 ? 8 : $random->getInt(3, 8)));
+        foreach ($gallery as $index => $original) {
+            $this->createPhoto($random, $name, $venue, null, $index + 1, (int) $original, $number);
+        }
+        if (0 === $i % 3) {
+            foreach ($random->pickArrayKeys($originals, $random->getInt(1, 2)) as $index => $original) {
+                $this->createPhoto($random, $name, $venue, $rooms[0], $index + 1, (int) $original, $number);
+            }
+        }
+    }
+
+    private function createPhoto(Randomizer $random, string $name, Venue $venue, ?Room $room, int $position, int $original, int $number): void
+    {
+        \assert($original >= 1 && $original <= DemoMedia::ORIGINALS);
+        [$image, $directory] = $this->media->variants($original);
+        $photo = VenuePhotoFactory::createOne([
+            'venue' => $venue,
+            'room' => $room,
+            'position' => $position,
+            'originalPath' => DemoMedia::originalPath($original),
+            'image' => $image,
+        ]);
+        $this->media->publishPhoto($image, $directory, $number, $photo->id());
+
+        if (1 === $position % 2) {
+            VenuePhotoTranslationFactory::createOne([
+                'photo' => $photo,
+                'locale' => 'de',
+                'alt' => self::ALT_PHRASES[$random->getInt(0, \count(self::ALT_PHRASES) - 1)].', '.$name,
             ]);
         }
     }
@@ -185,9 +268,12 @@ final class DemoStory extends Story
     /**
      * 1–5 rooms; the first one holds the venue's full capacity. The room facts on the venue
      * are computed from them.
+     *
+     * @return list<Room>
      */
-    private function createRooms(Generator $faker, Venue $venue, int $capacityMax): void
+    private function createRooms(Generator $faker, Venue $venue, int $capacityMax): array
     {
+        $rooms = [];
         $count = $faker->numberBetween(1, 5);
         $largest = 0;
         $tallest = 0.0;
@@ -210,12 +296,15 @@ final class DemoStory extends Story
                 'heightM' => \sprintf('%.2f', $faker->randomFloat(2, 2.4, 9.5)),
                 'floorMaterial' => $faker->randomElement([...FloorMaterial::cases(), null]),
             ]);
+            $rooms[] = $room;
             RoomTranslationFactory::createOne(['room' => $room, 'locale' => 'de', 'name' => self::ROOM_NAMES[$position - 1], 'description' => $faker->boolean() ? self::text($faker, 300) : null]);
             $largest = max($largest, (int) $room->areaM2());
             $tallest = max($tallest, (float) $room->heightM());
         }
 
         $venue->summariseRooms($count, $largest, \sprintf('%.2f', $tallest));
+
+        return $rooms;
     }
 
     /**

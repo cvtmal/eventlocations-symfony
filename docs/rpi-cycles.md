@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data and #4 venue-schema done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema and #5 venue-media done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award, no back office.
 
@@ -67,7 +67,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 2 | `i18n-foundation` | W1 | GEN-1, SEO-6 | 0 | — | — | ✅ Done |
 | 3 | `geo-reference-data` | W1 | FI-1 (data), FI-2 (data) | 0 | `cantons`, `towns` | — | ✅ Done |
 | 4 | `venue-schema` | W2 | DATA-2, DP-5–DP-15 (data), LP-2 (data) | 2, 3 | `venues`, `venue_*`, `rooms`, `room_*`, `taxonomy_terms` | — | ✅ Done |
-| 5 | `venue-media` | W3 | PERF-2, LP-3 (images), DP-2 (images) | 4 | `venue_photos` (columns for variants) | — | Research |
+| 5 | `venue-media` | W3 | PERF-2, LP-3 (images), DP-2 (images) | 4 | `venue_photos` (columns for variants) | — | ✅ Done |
 | 6 | `search-query` | W3 | LP-4, FI-5, FI-6, PERF-3 (query) | 4 | indexes only | — | Research |
 | 7 | `listing-page` | W4 | LP-1–LP-3, LP-5, LP-6 | 1, 5, 6 | — | — | Research |
 | 8 | `venue-detail-page` | W4 | DP-1–DP-12, DP-14–DP-16 | 1, 5, 6 | — | — | Research |
@@ -710,6 +710,58 @@ IDs are referenced by the overview and the cycles.
   - integration tests prove variants exist with correct dimensions and orientation;
   - an application test renders a `<picture>` with AVIF/WebP sources (or the documented fallback);
   - a card-size AVIF is ≤ 40 KB at 640 px for the demo images.
+
+**Outcome (2026-10-30).** Done in commit `venue-media`. No Composer or Dockerfile change, no routes, no new Makefile targets. Built on gd (the PHP image already encodes AVIF). Read `CLAUDE.md` `### Media` before touching images.
+
+- **Migration `Version20261030125302`** (full `down()`) adds four columns to `venue_photos`. #5 owns them; #6 owns only the indexes on the table. `id`, `venue_id`, `room_id`, `position`, `original_path` are unchanged. No backfill (no rows existed); a photo row is written only after its variants exist.
+  - `width INTEGER NOT NULL` (`chk_venue_photos_width`, > 0) and `height INTEGER NOT NULL` (`chk_venue_photos_height`, > 0): the **EXIF-oriented original's** pixel size. Use them for `<img width height>` (aspect ratio), not the variant size.
+  - `dominant_color VARCHAR(7) NOT NULL` (`chk_venue_photos_dominant_color`, `^#[0-9a-f]{6}$`, lower case): the placeholder colour.
+  - `variants JSONB NOT NULL` (`chk_venue_photos_variants`: a `CASE` that rejects anything but an object with a non-empty `widths` array and a `formats` array containing `"jpg"`), shape exactly `{"widths": [360, 640, 960, 1280], "formats": ["avif", "webp", "jpg"]}`.
+    - `widths`: ascending ints, the subset of 360/640/960/1280/1920 not wider than the original (no upscaling), or `[<original width>]` when the original is narrower than 360.
+    - `formats`: preference order avif, webp, jpg; `jpg` always, avif/webp only if the encoding host supported them. Every width exists in every listed format.
+    - The CHECK checks the shape only (`{"widths": ["x"], …}` passes the DB); `ImageVariants::fromArray()` rejects it on read.
+- **Files and URLs:**
+  - Originals under `MEDIA_ROOT` (env; `.env` `%kernel.project_dir%/var/media`, `.env.test` `var/test-media/originals`). `venue_photos.original_path` and `venue_documents.path` are relative to it.
+  - Variants: `public/media/<venues.number>/<venue_photos.id>-<w>.<avif|webp|jpg>`, URL `/media/<venue-number>/<photo-id>-<w>.<ext>`. Documents: `public/media/<number>/<venue_documents.id>.pdf`, URL `/media/<number>/<id>.pdf`.
+  - Parameters `app.media_root` and `app.media_public_dir` (`config/services.yaml`; `when@test`: `var/test-media/public`). `/public/media/` is git-ignored; nginx serves it statically with the right MIME types.
+- **Media module** (depends on nothing):
+  - `App\Media\ImageVariantGenerator::generate(string $sourceFile, string $targetDirectory, string $basename): GeneratedImage`. Constants `WIDTHS`, AVIF q52 speed 6, WebP 80, progressive JPEG 82, `SETTINGS_VERSION`; `availableFormats()`, `formats()`, `fingerprint()`. Applies EXIF orientation, strips metadata and ICC, flattens alpha onto white, detects formats at runtime, verifies every file, writes `.tmp` + rename, removes stale widths.
+  - `App\Media\MediaPublisher` (`copyVariants()`: direct copy, new photo ids only; `publishDocument()`: `.tmp` + rename; `removeVenue()`) and `App\Media\MediaPaths` (`original()` validates the path, `variantFile()`, `documentFile()`, `documentUrl()`, `mediaRoot()`, `publicDirectory()`, `URL_PREFIX = '/media'`).
+  - Value objects `App\Media\ValueObject\{ImageFormat, ImageVariants, GeneratedImage, Picture}`. `ImageVariants` has `fromArray`/`fromJson`/`toArray`/`has`/`smallest`/`largest`.
+  - Exceptions `App\Media\Exception\{MissingOriginal, UnreadableImage, InvalidMediaPath}` (domain exceptions; an empty file is `UnreadableImage`). An encoder failure is a `\RuntimeException`.
+- **For read models (#6/#7/#8):** select `p.id, p.position, p.width, p.height, p.dominant_color, p.variants`, plus `v.number` and the alt via `TranslationJoin` on `venue_photo_translations`; build `new Picture(int $venueNumber, string $photoId, int $width, int $height, string $dominantColor, ImageVariants::fromJson($row['variants']), string $alt)`. Without an alt row use `'picture.alt_fallback'|trans({name, position}, 'media')` ("{name}, Bild {position}").
+- **Twig** (`App\Media\Twig\MediaExtension`, styles `assets/styles/media/_picture.scss`):
+  - `{{ venue_picture(picture, sizes='(min-width: 900px) 520px, 100vw', loading='lazy', priority=false, widths=null, class='') }}` renders `<span class="picture"><svg class="picture__placeholder" aria-hidden="true"><rect … fill="#rrggbb"/></svg><picture><source type="image/avif" srcset…><source type="image/webp" srcset…><img class="picture__img" width height …></picture></span>`. The placeholder is an SVG, not an inline `style`, so it is CSP-safe (no `[style]` attributes). Only listed formats get a `<source>`.
+  - Cards pass `widths=[360, 640, 960]` (listing HTML budget). The LCP image gets `priority=true` (`loading="eager" fetchpriority="high"`); LP-3's second card uses `loading='eager'` without priority. `loading` other than lazy/eager throws.
+  - `{{ document_url(venueNumber, documentId) }}` returns `/media/<number>/<id>.pdf`.
+- **Venues:**
+  - `VenuePhoto(Venue, ?Room, int $position, string $originalPath, GeneratedImage $image)`, `recordVariants(GeneratedImage)`, getters `width()`, `height()`, `dominantColor()`, `variants()`. `VenueRepository::numbers(?int $only = null): list<int>`.
+  - `VenuePhotoFactory` writes rows only (default 1600×1067, widths 360–1280, all formats), no files.
+  - `app:media:regenerate [--venue=<number>]` (`App\Venues\Console\RegenerateMediaCommand` → `App\Venues\Command\RegenerateMedia` → `App\Venues\CommandHandler\RegenerateMediaHandler`, result `App\Venues\ValueObject\RegenerateMediaResult`) re-renders the variants and re-publishes the documents; continues past missing originals, exits 1 on any failure. It rewrites the same URLs, so #19 must not mark `/media` `immutable`.
+- **Demo data** (`App\Story\DemoMedia`, used by `DemoStory`):
+  - Every venue gets 3–8 gallery photos (every tenth venue 8) and every third venue 1–2 photos in its first room: 390 photos. They come from 30 gd-drawn originals (`MEDIA_ROOT/demo/photo-01.jpg` … `photo-30.jpg`: gradient, translucent shapes, the venue initial; numbers 5, 10, …, 30 are 2000 px wide, so 1920 exists; ratios 3:2, 4:3, 16:9, 2:3, 1:1). Odd positions have a German alt row; even ones exercise the fallback.
+  - Every document has a real one-page PDF; `size_bytes` is its size.
+  - #4's venue data is byte-identical (photos are created in a second loop after all 60 venues, with their own seeded RNG).
+  - Variants are cached per original in `var/demo-media/` (git-ignored). Seed times (M4 Pro, bind mount): cold first `make seed` ~22 s (21.9), warm ~9.6 s (the #4 seed was 3.6 s); `DemoStory` alone 7.2–7.5 s warm (budget 10 s).
+  - Demo 640 px AVIFs are 2.4–5.1 KB (budget 40 KB). `public/media` holds 47 MB / 4,673 files, `var/demo-media` 3.7 MB.
+- **Measured:** about 2.1–2.3 CPU-s and 1.56 MB of variants per 15 MP photo (research sample).
+- **Tests:** `tests/Unit/Media/`, `tests/Integration/Media/{ImageVariantGeneratorTest,MediaPublisherTest}.php` (dimensions, orientations 1/2/3/6/8, metadata stripping, peak memory), `tests/Application/Media/VenuePictureTest.php`, `tests/Integration/Venues/RegenerateMediaCommandTest.php`, helpers `App\Tests\Support\Media\{TestImages, MediaFiles}` (`MediaFiles::removeDirectory()`). A test that builds `DemoStory` must clean `MediaPaths->publicDirectory()` in `tearDown()`. 449 tests in total.
+- **Deviations:**
+  - `variants` is an object `{widths, formats}`, not a list (all widths share one format set).
+  - `document_url(venueNumber, documentId)` takes two scalars instead of `document_url(doc)` (Media cannot know `VenueDocument`).
+  - `venue_picture()` takes a `Picture` view object (not the entity) and has extra `widths` and `class` parameters; the alt fallback is in the `media` catalogue, not `venues`; no `focusable` on the SVG; no styleguide example (#7/#8).
+  - The `variants` CHECK is a `CASE … ELSE FALSE END` (the plan's AND chain let a missing key through as NULL).
+  - `copyVariants()` copies directly, without `.tmp` + rename (hard links measured slower); the generator and `publishDocument()` keep `.tmp` + rename.
+  - The white canvas uses `imagefilledrectangle()` instead of `imagefill()` (flood-fill memory).
+  - The demo palette is computed (HSL), not a literal list; `DemoMedia::variants()` is memoised per process.
+- **Carried forward:**
+  - **#20:** verify AVIF on Hostpoint over SSH (`/usr/local/php85/bin/php -r 'var_dump(imagetypes() & IMG_AVIF, imagetypes() & IMG_WEBP);'`, `php -m | grep -E "gd|imagick|exif"`, `memory_limit ≥ 256M`). Recommended: generate the variants locally (Docker image with AVIF) and rsync `public/media`; check that ~7–15 GB of variants fit the disk quota (first lever: fewer JPEG widths). Plan B if gd lacks AVIF but Imagick has it: Imagick inside the one generator class.
+  - **#21:** measure encode time and size on the real originals from the SSD; count CMYK and non-sRGB originals (gd ignores ICC; slight shifts accepted). AVIF speed 8 is the lever if the bulk encode is too slow.
+  - **#9:** copy the original into `MEDIA_ROOT`, `generate()` into a staging directory, create the `VenuePhoto` with the result, then `MediaPublisher::copyVariants()` (new photo ids only; a changed original gets a new id); documents via `publishDocument()`.
+  - **#7:** map #6's `CardPhoto` to `Picture` (alt fallback key `picture.alt_fallback` in `media`).
+  - **#6** (not yet landed): its `ListingQueryPerformanceTest` must build `DemoStory` from the container (it now also needs `DemoMedia`) and clean `MediaPaths->publicDirectory()` in `tearDown()`; expect `make test` to grow by ~30 s. Migration order with #6's `Version20261030115117` does not matter (indexes vs. columns).
+  - EXIF orientations 4/5/7 are untested (code-checked only).
+  - `DemoStory` clears `public/media/<n>/` only for numbers 1–60; stale media directories of higher venue numbers from older dev databases stay (dev only, harmless).
 
 ### 6. `search-query`
 

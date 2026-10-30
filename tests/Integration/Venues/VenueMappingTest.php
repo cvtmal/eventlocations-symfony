@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Venues;
 
 use App\Geo\Entity\Town;
+use App\Media\ValueObject\GeneratedImage;
+use App\Media\ValueObject\ImageFormat;
+use App\Media\ValueObject\ImageVariants;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\Entity\Room;
 use App\Venues\Entity\RoomTranslation;
@@ -95,7 +98,7 @@ final class VenueMappingTest extends KernelTestCase
         $room = new Room($venue, 1, 10, 120, 180, '4.20', FloorMaterial::Parquet);
         $room->offerSeating(Seating::Banquet, 20, 100);
         $document = new VenueDocument($venue, 1, 'demo/testhaus-vier/1.pdf', 2048);
-        $photo = new VenuePhoto($venue, $room, 1, 'demo/testhaus-vier/saal.jpg');
+        $photo = new VenuePhoto($venue, $room, 1, 'demo/testhaus-vier/saal.jpg', new GeneratedImage(2400, 1600, '#8a7f70', new ImageVariants([360, 640, 960, 1280, 1920], [ImageFormat::Avif, ImageFormat::Webp, ImageFormat::Jpeg])));
         $building = $this->em->find(TaxonomyTerm::class, ['termGroup' => TermGroup::Building, 'code' => 'villa']);
         $setting = $this->em->find(TaxonomyTerm::class, ['termGroup' => TermGroup::Setting, 'code' => 'lake']);
         self::assertInstanceOf(TaxonomyTerm::class, $building);
@@ -160,6 +163,17 @@ final class VenueMappingTest extends KernelTestCase
         $loadedPhoto = $this->em->getRepository(VenuePhoto::class)->findOneBy(['venue' => $loaded]);
         self::assertInstanceOf(VenuePhoto::class, $loadedPhoto);
         self::assertSame($room->id(), $loadedPhoto->room()?->id());
+        self::assertSame([2400, 1600, '#8a7f70'], [$loadedPhoto->width(), $loadedPhoto->height(), $loadedPhoto->dominantColor()]);
+        self::assertSame(['widths' => [360, 640, 960, 1280, 1920], 'formats' => ['avif', 'webp', 'jpg']], $loadedPhoto->variants()->toArray());
+
+        $loadedPhoto->recordVariants(new GeneratedImage(300, 200, '#000000', new ImageVariants([300], [ImageFormat::Webp, ImageFormat::Jpeg])));
+        $this->em->flush();
+        $this->em->clear();
+
+        $regenerated = $this->em->find(VenuePhoto::class, $photo->id());
+        self::assertInstanceOf(VenuePhoto::class, $regenerated);
+        self::assertSame([300, 200, '#000000'], [$regenerated->width(), $regenerated->height(), $regenerated->dominantColor()]);
+        self::assertSame(['widths' => [300], 'formats' => ['webp', 'jpg']], $regenerated->variants()->toArray());
     }
 
     private function venue(string $name): Venue
