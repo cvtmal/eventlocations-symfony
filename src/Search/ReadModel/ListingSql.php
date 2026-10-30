@@ -100,11 +100,7 @@ final readonly class ListingSql
         }
 
         foreach ($criteria->access as $access) {
-            $column = match ($access) {
-                Access::Station => 'distance_station_km',
-                Access::Highway => 'distance_highway_km',
-                Access::Airport => 'distance_airport_km',
-            };
+            $column = self::accessColumn($access);
             $where[] = "v.{$column} <= :km_{$access->value}";
             $params['km_'.$access->value] = $access->maxDistanceKm();
         }
@@ -134,5 +130,17 @@ final readonly class ListingSql
         $this->where = implode("\n  AND ", $where);
         $this->params = $params;
         $this->types = $types;
+    }
+
+    /**
+     * The venues column an Access filter compares with its threshold.
+     */
+    public static function accessColumn(Access $access): string
+    {
+        return match ($access) {
+            Access::Station => 'distance_station_km',
+            Access::Highway => 'distance_highway_km',
+            Access::Airport => 'distance_airport_km',
+        };
     }
 }

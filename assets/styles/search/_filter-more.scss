@@ -1,0 +1,407 @@
+@use '../abstracts/breakpoints' as bp;
+
+// The "weitere Filter" overlay (#12, FI-4): `search/filter/_more_form.html.twig` inside #1's overlay shell, which stays
+// unedited, and the pill that replaces the trigger. Native checkboxes are visually hidden; their labels are the tiles and
+// chips, so the states read `input:checked + label` and work without JS.
+
+// The footer stays at the bottom when only "Name eingeben" renders.
+.overlay--more:popover-open {
+    display: flex;
+    flex-direction: column;
+
+    .overlay__body {
+        flex: 1 0 auto;
+    }
+}
+
+// The overlay is long, and the original's sticky title bar needs JS; this keeps × in reach (deviation 4).
+.overlay--more .overlay__close {
+    position: fixed;
+}
+
+.overlay--more .overlay__body {
+    @include bp.up(lg) {
+        padding-top: 2.75rem;
+    }
+}
+
+.overlay--more .overlay__title {
+    max-width: none;
+}
+
+.overlay--more .overlay__footer {
+    padding-block: .75rem;
+
+    @include bp.up(md) {
+        padding-block: var(--space-m);
+    }
+}
+
+// The bar runs the full width with the button at the left edge, not aligned with the content.
+.overlay--more .overlay__footer-inner {
+    justify-content: space-between;
+    max-width: none;
+    padding-inline: 1.5rem;
+
+    @include bp.up(md) {
+        justify-content: flex-start;
+        padding-inline: 2rem;
+    }
+}
+
+// Rules only from lg, as on the original.
+.filter-more__group + .filter-more__group {
+    margin-top: var(--space-xl);
+
+    @include bp.up(lg) {
+        margin-top: var(--space-3xl);
+        padding-top: var(--space-3xl);
+        border-top: 1px solid var(--c-line);
+    }
+}
+
+.filter-more__section {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    & + & {
+        margin-top: var(--space-xl);
+
+        @include bp.up(lg) {
+            margin-top: var(--space-2xl);
+        }
+    }
+}
+
+.filter-more__title,
+.filter-more .text-input__label {
+    display: block;
+    width: 100%;
+    margin-bottom: var(--space-m);
+    padding: 0;
+    font-size: 1.125rem;
+    line-height: 2.0625rem;
+    font-weight: var(--fw-semibold);
+
+    @include bp.up(lg) {
+        margin-bottom: var(--space-l);
+        font-size: 1.875rem;
+        line-height: 2.5rem;
+    }
+}
+
+.filter-more__title {
+    border-bottom: 1px solid var(--c-line);
+
+    @include bp.up(md) {
+        border-bottom: 0;
+    }
+}
+
+// —— Round tiles: below md a circle with the text under it, from md the label is the circle.
+.filter-more__tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+    gap: var(--space-m) var(--space-s);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(md) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-l);
+    }
+}
+
+.filter-more__tile {
+    position: relative;
+
+    label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: .8125rem;
+        line-height: 1.125rem;
+        font-weight: var(--fw-semibold);
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .icon {
+        width: 4.5rem;
+        height: 4.5rem;
+        padding: 1.25rem;
+        border-radius: var(--r-round);
+        background: var(--c-overlay-more-tile);
+        box-shadow: var(--sh-round);
+    }
+
+    label:hover .icon {
+        background: var(--c-overlay-more-bar);
+    }
+
+    input:checked + label .icon {
+        background: var(--c-ink);
+        color: var(--c-overlay-more-tile);
+    }
+
+    input:focus-visible + label .icon {
+        outline: var(--focus-ring);
+        outline-offset: 2px;
+    }
+
+    @include bp.up(md) {
+        label {
+            justify-content: center;
+            gap: var(--space-2xs);
+            width: 10rem;
+            height: 10rem;
+            padding: var(--space-m);
+            border-radius: var(--r-round);
+            background: var(--c-overlay-more-tile);
+            box-shadow: var(--sh-round);
+            font-size: 1rem;
+            line-height: 1.25rem;
+        }
+
+        .icon,
+        label:hover .icon,
+        input:checked + label .icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        label:hover {
+            background: var(--c-overlay-more-bar);
+        }
+
+        input:checked + label {
+            background: var(--c-ink);
+            color: var(--c-overlay-more-tile);
+        }
+
+        input:focus-visible + label {
+            outline: var(--focus-ring);
+            outline-offset: 2px;
+        }
+
+        input:focus-visible + label .icon {
+            outline: 0;
+        }
+    }
+
+    @include bp.up(lg) {
+        label {
+            width: 12.5rem;
+            height: 12.5rem;
+        }
+
+        .icon,
+        label:hover .icon,
+        input:checked + label .icon {
+            width: 5.5rem;
+            height: 5.5rem;
+        }
+    }
+}
+
+// —— Chips: below lg list rows with a check mark, from lg a grid of tiles.
+.filter-more__chips {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(lg) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 2rem 1.1875rem;
+    }
+
+    @include bp.up(xl) {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+}
+
+.filter-more__chip {
+    position: relative;
+
+    label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 3rem;
+        padding: .625rem 1.25rem .625rem 0;
+        border-bottom: 1px solid var(--c-line);
+        font-size: .9375rem;
+        line-height: 1.25rem;
+        font-weight: var(--fw-semibold);
+        cursor: pointer;
+    }
+
+    input:checked + label::after {
+        content: '';
+        flex: none;
+        width: .5rem;
+        height: 1rem;
+        margin-right: .375rem;
+        border: solid currentcolor;
+        border-width: 0 2px 2px 0;
+        rotate: 45deg;
+    }
+
+    input:focus-visible + label {
+        outline: var(--focus-ring);
+        outline-offset: 2px;
+    }
+
+    @include bp.up(lg) {
+        label {
+            justify-content: center;
+            min-height: 2.4375rem;
+            padding: .25rem .5rem;
+            border-bottom: 0;
+            border-radius: var(--r-bar);
+            background: var(--c-overlay-more-tile);
+            text-align: center;
+        }
+
+        label:hover {
+            background: var(--c-overlay-more-bar);
+        }
+
+        input:checked + label {
+            background: var(--c-ink);
+            color: var(--c-overlay-more-tile);
+        }
+
+        input:checked + label::after {
+            content: none;
+        }
+    }
+}
+
+// "Alle Gebäudearten": no JS, so the summary sits under the chips (deviation 5) and swaps its text on [open].
+.filter-more__all {
+    margin-top: var(--space-m);
+
+    @include bp.up(lg) {
+        margin-top: 2rem;
+    }
+
+    &[open] > .filter-more__chips {
+        margin-top: var(--space-m);
+
+        @include bp.up(lg) {
+            margin-top: 2rem;
+        }
+    }
+
+    summary::-webkit-details-marker {
+        display: none;
+    }
+}
+
+.filter-more__all-toggle {
+    display: inline-block;
+    padding: .5625rem 1.5rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-bar);
+    font-size: .9375rem;
+    line-height: 1.25rem;
+    font-weight: var(--fw-semibold);
+    list-style: none;
+    cursor: pointer;
+
+    span + span,
+    .filter-more__all[open] & span:first-child {
+        display: none;
+    }
+
+    .filter-more__all[open] & span + span {
+        display: inline;
+    }
+}
+
+// —— Raumangebot: the label is the empty first option.
+.filter-more__selects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-m) 4%;
+
+    @include bp.up(lg) {
+        flex-wrap: nowrap;
+    }
+}
+
+.filter-more__select {
+    position: relative;
+    flex: 1 1 100%;
+
+    @include bp.up(md) {
+        flex: 0 1 48%;
+    }
+
+    @include bp.up(lg) {
+        flex: 1 1 0;
+    }
+
+    select {
+        width: 100%;
+        padding: .5rem 2rem .5rem 0;
+        border: 0;
+        border-bottom: 1px solid var(--c-line);
+        border-radius: 0;
+        background: transparent;
+        color: var(--c-ink);
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+        font-weight: var(--fw-semibold);
+        appearance: none;
+        cursor: pointer;
+    }
+
+    // The open list is the platform's own: without these it can be white on white.
+    option {
+        background: var(--c-tooltip-bg);
+        color: var(--c-ink-inverse);
+    }
+
+    .icon {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        translate: 0 -50%;
+        pointer-events: none;
+    }
+}
+
+// `[hidden]` has no global rule; this covers every class above that sets `display`.
+.filter-more [hidden] {
+    display: none;
+}
+
+// —— The pill "weitere Filter (N)": #1's chip look, with a button to open and a link to clear.
+.chip__open {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.chip__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+    color: inherit;
+}

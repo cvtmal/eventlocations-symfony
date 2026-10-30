@@ -1,0 +1,14 @@
+{#
+    One select of Raumangebot in the "weitere Filter" overlay. Include with `only`: id, name, label (translated, also the empty
+    first option), options: list of {value, label} strings, selected (string, '' for none).
+#}
+<div class="filter-more__select">
+    <label class="visually-hidden" for="{{ id }}">{{ label }}</label>
+    <select id="{{ id }}" name="{{ name }}">
+        <option value="">{{ label }}</option>
+        {%- for option in options %}
+        <option value="{{ option.value }}"{% if option.value is same as(selected) %} selected{% endif %}>{{ option.label }}</option>
+        {%- endfor %}
+    </select>
+    {{ icon('chevron-down') }}
+</div>
