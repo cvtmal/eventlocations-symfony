@@ -99,6 +99,12 @@ class VenuePhoto
         $this->updatedAt = new \DateTimeImmutable();
     }
 
+    public function moveTo(int $position): void
+    {
+        $this->position = $position;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);

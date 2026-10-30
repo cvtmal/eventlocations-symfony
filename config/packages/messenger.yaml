@@ -7,4 +7,8 @@ framework:
         buses:
             command.bus:
                 middleware:
+                    # Resets a closed EntityManager so one failed command does not break the
+                    # next (app:venues:import, #9). The stock doctrine_ping_connection does this
+                    # only for messages consumed by a worker.
+                    - App\Shared\Messenger\ResetClosedEntityManagerMiddleware
                     - doctrine_transaction

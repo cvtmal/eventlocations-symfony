@@ -1,0 +1,139 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Unit\Venues;
+
+use App\Venues\ContentSchema;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * docs/content-format.schema.json through ContentSchema: a complete document passes, and
+ * each failure names its JSON pointer.
+ */
+final class ContentSchemaTest extends TestCase
+{
+    /**
+     * Every field of the format, fictional values.
+     *
+     * @return array<string, mixed>
+     */
+    public static function full(): array
+    {
+        return [
+            'name' => 'Schloss Beispiel',
+            'tier' => 'premium',
+            'status' => 'published',
+            'capacity' => ['min' => 20, 'max' => 180],
+            'address' => ['street' => 'Seestrasse 1', 'zip' => '8001', 'town' => 'Zürich', 'canton' => 'zh'],
+            'geo' => ['lat' => 47.37, 'lng' => 8.54],
+            'distances' => [
+                'station' => ['km' => 0.9, 'name' => 'Bahnhof Beispiel'],
+                'highway' => ['km' => 3.2, 'name' => 'A1'],
+                'airport' => ['km' => 12.0],
+            ],
+            'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster'],
+            'faq' => ['own_catering' => 'allowed', 'daylight' => null],
+            'rating' => ['score' => 9.0, 'count' => 47, 'highlights' => ['food', 'atmosphere']],
+            'terms' => ['setting' => ['lake'], 'building' => ['castle', 'event_venue'], 'suitable_for' => ['wedding'], 'surroundings' => ['garden']],
+            'main_terms' => ['building' => 'castle', 'setting' => 'lake'],
+            'translations' => ['de' => ['summary' => 'Kurz.', 'description' => 'Lang.', 'meta_description' => 'Meta.', 'parking_text' => 'Parkplätze.']],
+            'photos' => [['file' => 'aussen.jpg', 'alt' => ['de' => 'Schloss am See']], ['file' => 'innen.PNG']],
+            'rooms' => [[
+                'key' => 'rittersaal',
+                'translations' => ['de' => ['name' => 'Rittersaal', 'description' => 'Gross.']],
+                'capacity' => ['min' => 20, 'max' => 120],
+                'area_m2' => 180,
+                'height_m' => 6.5,
+                'floor_material' => 'parquet',
+                'seating' => ['banquet' => ['min' => 20, 'max' => 100], 'apero' => ['max' => 150]],
+                'photos' => [['file' => 'saal.webp']],
+            ]],
+            'documents' => [['file' => 'preisliste.pdf', 'title' => ['de' => 'Preisliste']]],
+            'reviews' => [['first_name' => 'Laura', 'role' => 'visitor_f', 'month' => '2025-06', 'locale' => 'de', 'text' => 'Schön.']],
+        ];
+    }
+
+    public function test_a_complete_document_is_valid(): void
+    {
+        self::assertSame([], self::schema()->validate(self::object(self::full())));
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function failures(): iterable
+    {
+        $full = self::full();
+        $set = static function (array $data, string $path, mixed $value): array {
+            $ref = &$data;
+            foreach (explode('.', $path) as $segment) {
+                $ref = &$ref[$segment];
+            }
+            $ref = $value;
+
+            return $data;
+        };
+
+        yield 'unknown term code' => [$set($full, 'terms.building', ['castle', 'palace']), '/terms/building/1: "palace" is not an allowed value'];
+        yield 'unknown tier' => [$set($full, 'tier', 'gold'), '/tier: "gold" is not an allowed value'];
+        yield 'extra property' => [$set($full, 'slug', 'schloss'), '/: Unknown properties: slug'];
+        yield 'unquoted zip' => [$set($full, 'address.zip', 8001), '/address/zip:'];
+        yield 'month as int' => [$set($full, 'reviews.0.month', 202506), '/reviews/0/month:'];
+        yield 'bad phone' => [$set($full, 'contact.phone', '044 123 45 67'), '/contact/phone:'];
+        yield 'four highlights' => [$set($full, 'rating.highlights', ['food', 'atmosphere', 'value', 'location']), '/rating/highlights:'];
+        yield 'missing de translation' => [$set($full, 'translations', ['fr' => ['summary' => 'Court.']]), '/translations:'];
+        yield 'empty seating entry' => [$set($full, 'rooms.0.seating', ['concert' => []]), '/rooms/0/seating/concert:'];
+        yield 'gif photo' => [$set($full, 'photos.0.file', 'a.gif'), '/photos/0/file:'];
+        yield 'photo in a sub folder' => [$set($full, 'photos.0.file', 'sub/a.jpg'), '/photos/0/file:'];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('failures')]
+    public function test_a_failure_names_its_pointer(array $data, string $expected): void
+    {
+        $errors = self::schema()->validate(self::object($data));
+
+        self::assertNotSame([], $errors);
+        self::assertNotEmpty(array_filter($errors, static fn (string $error): bool => str_starts_with($error, $expected)), implode("\n", $errors));
+    }
+
+    public function test_one_failing_field_does_not_report_its_valid_siblings_as_unknown(): void
+    {
+        $data = self::full();
+        $data['terms']['building'] = ['palace'];
+
+        $errors = self::schema()->validate(self::object($data));
+
+        self::assertSame(['/terms/building/0: "palace" is not an allowed value'], $errors);
+    }
+
+    public function test_several_failures_come_back_together(): void
+    {
+        $data = self::full();
+        $data['tier'] = 'gold';
+        $data['address']['zip'] = '80';
+        unset($data['geo']);
+
+        self::assertGreaterThanOrEqual(3, \count(self::schema()->validate(self::object($data))));
+    }
+
+    public static function schema(): ContentSchema
+    {
+        return new ContentSchema(\dirname(__DIR__, 3));
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function object(array $data): \stdClass
+    {
+        $object = json_decode(json_encode($data, \JSON_THROW_ON_ERROR), flags: \JSON_THROW_ON_ERROR);
+        \assert($object instanceof \stdClass);
+
+        return $object;
+    }
+}

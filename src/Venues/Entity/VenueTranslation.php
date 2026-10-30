@@ -74,6 +74,19 @@ class VenueTranslation
         $this->updatedAt = $this->createdAt;
     }
 
+    /**
+     * Replaces the slug and the texts (the import updates the row in place, #9).
+     */
+    public function revise(string $slug, string $summary, ?string $description, ?string $metaDescription, ?string $parkingText): void
+    {
+        $this->slug = $slug;
+        $this->summary = $summary;
+        $this->description = $description;
+        $this->metaDescription = $metaDescription;
+        $this->parkingText = $parkingText;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);

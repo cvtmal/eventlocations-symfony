@@ -8,7 +8,9 @@ use App\Media\ValueObject\GeneratedImage;
 use App\Media\ValueObject\ImageFormat;
 use App\Media\ValueObject\ImageVariants;
 use App\Venues\Entity\Room;
+use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenuePhoto;
+use App\Venues\Entity\VenueTranslation;
 use App\Venues\Exception\RoomOfAnotherVenue;
 use PHPUnit\Framework\TestCase;
 
@@ -45,6 +47,33 @@ final class VenuePhotoTest extends TestCase
         self::assertSame([300, 450, '#102030'], [$photo->width(), $photo->height(), $photo->dominantColor()]);
         self::assertSame(['widths' => [300], 'formats' => ['jpg']], $photo->variants()->toArray());
         self::assertGreaterThanOrEqual($before, $photo->updatedAt());
+    }
+
+    public function test_move_to_changes_the_position(): void
+    {
+        $photo = new VenuePhoto(VenueObjects::venue(), null, 1, 'content/x/a.jpg', self::image());
+        $document = new VenueDocument(VenueObjects::venue(), 1, 'content/x/a.pdf', 1000);
+        $before = $photo->updatedAt();
+        usleep(1);
+
+        $photo->moveTo(4);
+        $document->moveTo(2);
+
+        self::assertSame(4, $photo->position());
+        self::assertSame(2, $document->position());
+        self::assertGreaterThan($before, $photo->updatedAt());
+    }
+
+    public function test_translation_revise_replaces_slug_and_texts(): void
+    {
+        $translation = new VenueTranslation(VenueObjects::venue(), 'de', 'seehaus-mittelwil', 'Kurz.', 'Lang.', 'Meta.', 'Parkplätze.');
+
+        $translation->revise('seehaus-oberwil', 'Neu.', null, null, 'Am See.');
+
+        self::assertSame(['seehaus-oberwil', 'Neu.', null, null, 'Am See.'], [
+            $translation->slug(), $translation->summary(), $translation->description(), $translation->metaDescription(), $translation->parkingText(),
+        ]);
+        self::assertSame('de', $translation->locale());
     }
 
     private static function image(): GeneratedImage

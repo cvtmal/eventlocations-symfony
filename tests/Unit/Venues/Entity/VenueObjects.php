@@ -25,10 +25,10 @@ final class VenueObjects
         return new Town($canton ?? self::canton(), '8712', $name, 'staefa', 158, 47.24, 8.72, 14700);
     }
 
-    public static function venue(?Town $town = null): Venue
+    public static function venue(?Town $town = null, ?string $contentKey = null): Venue
     {
         $town ??= self::town();
 
-        return new Venue('Seehaus Mittelwil', Tier::Premium, VenueStatus::Published, 150, 20, $town, $town->zip(), 'Seestrasse 1', $town->lat(), $town->lng());
+        return new Venue('Seehaus Mittelwil', Tier::Premium, VenueStatus::Published, 150, 20, $town, $town->zip(), 'Seestrasse 1', $town->lat(), $town->lng(), $contentKey);
     }
 }

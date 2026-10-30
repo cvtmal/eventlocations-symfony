@@ -10,6 +10,9 @@ parameters:
     # Originals (S9): MEDIA_ROOT; generated variants and published PDFs: public/media/<venue-number>/.
     app.media_root: '%env(resolve:MEDIA_ROOT)%'
     app.media_public_dir: '%kernel.project_dir%/public/media'
+    # Venue content folders (S8, #9) and the import's variant staging directory.
+    app.content_root: '%env(resolve:CONTENT_ROOT)%'
+    app.import_staging_dir: '%kernel.project_dir%/var/import-staging'
 
 services:
     # default configuration for services in *this* file
@@ -28,6 +31,9 @@ services:
         exclude:
             - '../src/*/Entity/'
 
+    # S10: no HTTP cache yet; #19 points this alias at its proxy's purge (#9 P24).
+    App\Venues\HttpCachePurger: '@App\Venues\NullHttpCachePurger'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
@@ -35,3 +41,9 @@ when@test:
     parameters:
         # Tests never touch the dev demo files.
         app.media_public_dir: '%kernel.project_dir%/var/test-media/public'
+
+    services:
+        # Tests assert the Venues handlers' purges (S10, #9 P24) through the real container.
+        App\Tests\Support\Http\RecordingHttpCachePurger:
+            public: true
+        App\Venues\HttpCachePurger: '@App\Tests\Support\Http\RecordingHttpCachePurger'

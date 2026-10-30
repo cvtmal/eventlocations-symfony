@@ -11,7 +11,8 @@ use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Bulk writes for app:geo:import-towns. Plain SQL upserts: ~4k rows, idempotent, and an
- * unchanged row is never touched (updated_at stays).
+ * unchanged row is never touched (updated_at stays). Also the exact ZIP + name lookup of
+ * the content import (#9).
  *
  * @extends ServiceEntityRepository<Town>
  */
@@ -163,6 +164,37 @@ class TownRepository extends ServiceEntityRepository
         );
 
         return $names;
+    }
+
+    /**
+     * The towns with this ZIP (any of their ZIPs, through town_zips) whose name matches
+     * after geo_fold_de() (case, umlauts, punctuation), optionally in one canton. More than
+     * one town means the caller must ask for the canton.
+     *
+     * @return list<Town> ordered by id
+     */
+    public function findByZipAndName(string $zip, string $name, ?string $cantonCode = null): array
+    {
+        $sql = <<<'SQL'
+            SELECT t.id
+            FROM town_zips tz
+            JOIN towns t ON t.id = tz.town_id
+            WHERE tz.zip = :zip AND geo_fold_de(t.name) = geo_fold_de(:name)
+            SQL;
+        $params = ['zip' => $zip, 'name' => $name];
+        if (null !== $cantonCode) {
+            $sql .= ' AND t.canton_code = :canton';
+            $params['canton'] = $cantonCode;
+        }
+        /** @var list<string> $ids */
+        $ids = $this->connection()->fetchFirstColumn($sql.' ORDER BY t.id', $params);
+        if ([] === $ids) {
+            return [];
+        }
+        $towns = $this->findBy(['id' => $ids]);
+        usort($towns, static fn (Town $a, Town $b): int => strcmp($a->id(), $b->id()));
+
+        return $towns;
     }
 
     public function countZips(): int
