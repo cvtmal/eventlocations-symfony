@@ -334,6 +334,10 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         $venue->changeContact($content->phone, $content->inquiryEmail, $content->website, $content->contactPerson);
         $venue->changeDistances($content->stationKm, $content->stationName, $content->highwayKm, $content->highwayName, $content->airportKm, $content->airportName);
         $venue->answerFaq($content->ownCatering, $content->daylight);
+        $venue->changePriceLevel($content->priceLevel);
+        $venue->changeSeatingCapacity($content->capacitySeated, $content->capacityStanding);
+        $venue->describePartyRules($content->party, $content->hasCurfew, $content->curfewAt);
+        $venue->changeInstagram($content->instagram);
         $venue->rate($content->ratingScore, $content->ratingCount);
 
         return $venue;
@@ -372,10 +376,12 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
             $slug = $this->slugs->assign($venue, $locale, $content->name, $town, $row, $oldName !== $content->name);
 
             if (null === $row) {
-                $this->em->persist(new VenueTranslation($venue, $locale, $slug, $text['summary'], $text['description'], $text['metaDescription'], $text['parkingText']));
+                $row = new VenueTranslation($venue, $locale, $slug, $text['summary'], $text['description'], $text['metaDescription'], $text['parkingText']);
+                $this->em->persist($row);
             } else {
                 $row->revise($slug, $text['summary'], $text['description'], $text['metaDescription'], $text['parkingText']);
             }
+            $row->describeWedding($text['ambience'], $text['capacityNote'], $text['partyNote'], $text['openingHours']);
         }
         foreach (array_diff_key($rows, $content->translations) as $row) {
             $this->em->remove($row);

@@ -22,9 +22,12 @@ use App\Venues\Entity\Room;
 use App\Venues\Entity\TaxonomyTerm;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
+use App\Venues\Entity\VenueTranslation;
 use App\Venues\Repository\TaxonomyTermRepository;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\FloorMaterial;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
@@ -57,6 +60,10 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  * - Variants are cached in var/demo-media/ per original: the first, cold `make seed` renders
  *   them (10–15 s once), later loads only copy files into public/media/<number>/. Before
  *   publishing, a venue's public/media/<number>/ is emptied (numbers restart after db-fresh).
+ * - Wedding facts (#31): every second venue (even index) has the owner facts of S14, the
+ *   others none, so both states of the detail page stay visible. Their share of each fact is
+ *   index-based, all four curfew states occur, and the terms come from a seeded RNG of their
+ *   own, after the media step, so nothing before it shifts.
  *
  * Names come from the word lists below and texts from faker; nothing is taken from
  * eventlokale.
@@ -87,6 +94,10 @@ final class DemoStory extends Story
     private const ALT_PHRASES = [
         'Aussenansicht', 'Festsaal mit gedeckten Tischen', 'Garten im Sommer', 'Apéro auf der Terrasse',
         'Eingangsbereich', 'Blick in den Saal', 'Bankett bei Kerzenlicht', 'Lounge am Abend',
+    ];
+    private const AMBIENCES = [
+        'Romantisch mit Seesicht', 'Rustikal im Grünen', 'Elegant und hell', 'Historisch mit Charme',
+        'Ländlich mit Weitblick', 'Alpin und gemütlich', 'Urban und unkompliziert',
     ];
 
     public function __construct(
@@ -134,12 +145,14 @@ final class DemoStory extends Story
         foreach ($created as $i => [$name, $venue, $rooms, $documents]) {
             flush_after(fn () => $this->createMedia($i, $name, $venue, $rooms, $documents));
         }
+
+        flush_after(fn () => $this->createWeddingFacts($created, $terms));
     }
 
     /**
      * @param array<string, list<TaxonomyTerm>> $terms
      *
-     * @return array{Venue, list<Room>, list<VenueDocument>}
+     * @return array{Venue, list<Room>, list<VenueDocument>, VenueTranslation}
      */
     private function createVenue(Generator $faker, int $i, string $name, string $slug, Tier $tier, Town $town, array $terms): array
     {
@@ -166,7 +179,7 @@ final class DemoStory extends Story
             'street' => $faker->streetAddress(),
         ]);
 
-        VenueTranslationFactory::createOne([
+        $translation = VenueTranslationFactory::createOne([
             'venue' => $venue,
             'locale' => 'de',
             'slug' => $slug,
@@ -213,7 +226,56 @@ final class DemoStory extends Story
             ])->document();
         }
 
-        return [$venue, $rooms, $documents];
+        return [$venue, $rooms, $documents, $translation];
+    }
+
+    /**
+     * The owner facts of the even-index venues (see the class docblock). All fictional.
+     *
+     * @param array<int, array{string, Venue, list<Room>, list<VenueDocument>, VenueTranslation}> $created by index
+     * @param array<string, list<TaxonomyTerm>>                                                   $terms
+     */
+    private function createWeddingFacts(array $created, array $terms): void
+    {
+        foreach ($created as $i => [, $venue, , , $translation]) {
+            if (0 !== $i % 2) {
+                continue;
+            }
+            $random = new Randomizer(new Mt19937(20261030 + $i));
+            $step = intdiv($i, 2);
+
+            $venue->changePriceLevel(PriceLevel::cases()[$step % 3]);
+            if (0 !== $step % 5) {
+                $venue->changeSeatingCapacity(max(1, intdiv($venue->capacityMax() * 2, 3)), $venue->capacityMax());
+            }
+            match ($step % 4) {
+                1 => $venue->describePartyRules(PartyAllowed::Yes, false, null),
+                2 => $venue->describePartyRules(PartyAllowed::Limited, true, new \DateTimeImmutable('1970-01-01 02:00:00')),
+                3 => $venue->describePartyRules(PartyAllowed::No, true, null),
+                default => null,
+            };
+            if (0 === $step % 3) {
+                $venue->changeInstagram('https://www.instagram.com/demo-location-'.$i);
+            }
+            $translation->describeWedding(
+                self::AMBIENCES[$step % \count(self::AMBIENCES)],
+                0 === $step % 4 ? 'Mit Tanzfläche sind es etwas weniger Sitzplätze.' : null,
+                2 === $step % 4 ? 'Ab Mitternacht nur noch Musik in Zimmerlautstärke.' : null,
+                0 === $step % 3 ? 'Mai bis Oktober, täglich ab 10 Uhr' : null,
+            );
+
+            foreach ([TermGroup::Ceremony, TermGroup::Amenity, TermGroup::Dining, TermGroup::Vendor, TermGroup::Usage, TermGroup::Language] as $group) {
+                $count = TermGroup::Usage === $group ? 1 : $random->getInt(0, 3);
+                if (0 === $count) {
+                    continue;
+                }
+                $groupTerms = $terms[$group->value];
+                \assert([] !== $groupTerms);
+                foreach ($random->pickArrayKeys($groupTerms, $count) as $key) {
+                    VenueTermFactory::createOne(['venue' => $venue, 'term' => $groupTerms[$key], 'isMain' => false]);
+                }
+            }
+        }
     }
 
     /**

@@ -9,6 +9,7 @@
         {% if venue.hasPhone %}<li><a class="venue-contact__link" href="{{ path('venue_phone', {slug: venue.slug}) }}" rel="nofollow" data-phone-reveal>{{ icon('phone') }}<span>{{ 'detail.contact.phone_reveal'|trans({}, 'venues') }}</span></a></li>{% endif %}
         {% if venue.inquiryEmail %}<li><a class="venue-contact__link" href="mailto:{{ venue.inquiryEmail }}">{{ icon('mail') }}<span>{{ 'detail.contact.email'|trans({}, 'venues') }}</span></a></li>{% endif %}
         {% if venue.website %}<li><a class="venue-contact__link" href="{{ venue.website }}" rel="nofollow noopener" target="_blank">{{ icon('globe') }}<span>{{ 'detail.contact.website'|trans({}, 'venues') }}</span></a></li>{% endif %}
+        {% if venue.instagram %}<li><a class="venue-contact__link" href="{{ venue.instagram }}" rel="nofollow noopener" target="_blank">{{ icon('camera') }}<span>{{ 'detail.contact.instagram'|trans({}, 'venues') }}</span></a></li>{% endif %}
         {% if venue.contactPerson %}<li class="venue-contact__person">{{ icon('user') }}<span>{{ 'detail.contact.person'|trans({name: venue.contactPerson}, 'venues') }}</span></li>{% endif %}
     </ul>
 </section>

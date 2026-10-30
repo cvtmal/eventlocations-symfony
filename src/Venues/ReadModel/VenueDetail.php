@@ -12,7 +12,7 @@ use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\Tier;
 
 /**
- * Everything the venue detail page (`venue_show`, DP-2 to DP-16) renders, in one locale. The
+ * Everything the venue detail page (`venue_show`, DP-2 to DP-17) renders, in one locale. The
  * phone number itself is not part of it (DP-11: never in the page HTML), only `hasPhone`.
  */
 final readonly class VenueDetail
@@ -61,6 +61,8 @@ final readonly class VenueDetail
         public array $reviews,
         public array $rooms,
         public array $photos,
+        public DetailWedding $wedding,
+        public ?string $instagram,
     ) {
     }
 
@@ -89,6 +91,6 @@ final readonly class VenueDetail
 
     public function hasContact(): bool
     {
-        return $this->hasPhone || null !== $this->inquiryEmail || null !== $this->website || null !== $this->contactPerson;
+        return $this->hasPhone || null !== $this->inquiryEmail || null !== $this->website || null !== $this->instagram || null !== $this->contactPerson;
     }
 }

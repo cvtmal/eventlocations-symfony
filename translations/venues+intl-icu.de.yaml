@@ -1,6 +1,7 @@
 # Strings of the Venues module. Keys: <context>.<description>.
 # Vocabulary keys are <context>.<case value> (App\Venues\ValueObject\*) and
-# term.<group>.<code> (rows of taxonomy_terms). Term labels are eventlokale's, copied 1:1 (FI-4).
+# term.<group>.<code> (rows of taxonomy_terms). The labels of the seven filter groups are
+# eventlokale's, copied 1:1 (FI-4); the six groups of #31 use the owner form's wording (S14).
 
 term_group:
     setting: Lage
@@ -10,6 +11,12 @@ term_group:
     furniture: Mobiliar
     technology: Technik
     surroundings: Umgebung
+    ceremony: Trauung
+    amenity: Ausstattung
+    dining: Essen
+    vendor: Dienstleister
+    usage: Nutzung
+    language: Sprachen
 
 term:
     setting:
@@ -109,6 +116,68 @@ term:
         playground: Spielplatz
         barbecue: Grill
         golf: Golf
+    ceremony:
+        civil_ceremony: Zivile Trauung möglich
+        free_ceremony: Freie Trauung möglich
+        church_nearby: Kirche in Gehdistanz
+        rain_alternative: Schlechtwetter-Alternative vorhanden
+        registry_office: Offizielles Standesamt-Lokal
+        chapel: Kapelle
+    amenity:
+        overnight: Übernachtung
+        panorama: Panoramablick
+        lake_view: Seeblick
+        dance_floor: Tanzfläche
+        kids_room: Kinderraum
+        outdoor_dining: Essen im Freien
+        parking: Parkplätze
+        parking_area: Parkbereich
+        own_kitchen: Eigene Küche
+        catering_available: Catering möglich
+        external_caterers: Externe Caterer erlaubt
+        corkage: Zapfengeld
+        wheelchair_access: Rollstuhlgängig
+        public_transport: ÖV-Anbindung
+        tent: Zelt
+    dining:
+        vegetarian: Vegetarisch
+        vegan: Vegan
+        gluten_free: Glutenfrei
+        organic: Bio
+        allergy_friendly: Allergiker
+        diabetic: Diabetiker
+        halal: Halal
+        kosher: Koscher
+        kids_menu: Kindermenü
+        wedding_cake: Hochzeitstorte
+        buffet: Buffet
+        grill: Grill
+        anything_possible: Alles möglich
+    vendor:
+        flowers_decor: 'Blumen/Deko'
+        photography: Fotografie
+        videography: Videografie
+        officiant: Trauredner
+        dj: DJs
+        musicians: Musiker
+        furniture: Mobiliar
+        wedding_planner: Weddingplanner
+    usage:
+        exclusive: Exklusiv (nur eine Hochzeit)
+        multiple_weddings: Nicht exklusiv (mehrere Veranstaltungen gleichzeitig möglich)
+        wedding_and_regular: Hochzeit + Normalbetrieb
+    language:
+        de: Deutsch
+        en: Englisch
+        fr: Französisch
+        it: Italienisch
+        es: Spanisch
+        pt: Portugiesisch
+        nl: Niederländisch
+        cs: Tschechisch
+        ru: Russisch
+        hu: Ungarisch
+        gsw: Schweizerdeutsch
 
 access:
     station: Nähe Bahnhof
@@ -137,6 +206,16 @@ rating_highlight:
     equipment: Moderne Ausstattung
     programme: Attraktives Programm
     value: 'Top Preis/Leistung'
+
+price_level:
+    moderate: Moderat
+    medium: Mittel
+    exclusive: Exklusiv
+
+party:
+    'yes': Ja
+    limited: Mit Einschränkung
+    'no': Nein
 
 own_catering:
     allowed: Eigenes Catering möglich
@@ -199,6 +278,18 @@ detail:
         highlights_intro: 'Was Besucher/innen und Veranstalter/innen an dieser Location besonders gefällt:'
     facts:
         heading: Ausstattung und Eignung
+    wedding:
+        heading: Hochzeit
+        price_level: Preisniveau
+        ambience: Ambiente
+        capacity: Sitzplätze und Stehplätze
+        seated: '{count} Sitzplätze'
+        standing: '{count} Stehplätze'
+        party: Party und Sperrstunde
+        no_curfew: Keine Sperrstunde
+        curfew_at: 'Sperrstunde {time} Uhr'
+        curfew_unknown_time: Sperrstunde vorhanden
+        opening_hours: Öffnungszeiten
     rooms:
         heading: Räume
         label: 'Räume von {name}'
@@ -241,6 +332,7 @@ detail:
         phone_reveal: Telefonnummer anzeigen
         email: E-Mail
         website: Website
+        instagram: Instagram
         person: 'Kontaktperson: {name}'
     documents:
         heading: Dokumente

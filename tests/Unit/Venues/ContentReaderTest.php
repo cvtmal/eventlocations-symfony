@@ -11,6 +11,8 @@ use App\Venues\ContentReader;
 use App\Venues\Exception\InvalidContent;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Tier;
@@ -61,7 +63,11 @@ final class ContentReaderTest extends TestCase
         self::assertSame([RatingHighlight::Food, RatingHighlight::Atmosphere], $venue->highlights);
         self::assertSame(['castle', 'event_venue'], $venue->terms['building']);
         self::assertSame(['building' => 'castle', 'setting' => 'lake'], $venue->mainTerms);
-        self::assertSame(['summary' => 'Kurz.', 'description' => 'Lang.', 'metaDescription' => 'Meta.', 'parkingText' => 'Parkplätze.'], $venue->translations['de']);
+        self::assertSame(['summary' => 'Kurz.', 'description' => 'Lang.', 'metaDescription' => 'Meta.', 'parkingText' => 'Parkplätze.', 'ambience' => 'Romantisch am See', 'capacityNote' => 'Mit Tanzfläche 100 Plätze.', 'partyNote' => 'Musik bis 2 Uhr.', 'openingHours' => 'Mai bis Oktober'], $venue->translations['de']);
+        self::assertSame([PriceLevel::Medium, 120, 180], [$venue->priceLevel, $venue->capacitySeated, $venue->capacityStanding]);
+        self::assertSame([PartyAllowed::Limited, true, '02:00'], [$venue->party, $venue->hasCurfew, $venue->curfewAt?->format('H:i')]);
+        self::assertSame('https://www.instagram.com/schloss-beispiel', $venue->instagram);
+        self::assertSame(['de', 'gsw'], $venue->terms['language']);
         self::assertCount(1, $venue->photos);
         self::assertSame(['aussen.JPEG', 'jpg', ['de' => 'Aussen']], [$venue->photos[0]->file, $venue->photos[0]->extension, $venue->photos[0]->alt]);
         self::assertSame(hash_file('sha256', $this->content->folder('schloss-beispiel').'/photos/aussen.JPEG'), $venue->photos[0]->sha256);
@@ -165,6 +171,16 @@ final class ContentReaderTest extends TestCase
 
             return 'a-venue';
         }, '/main_terms/building: "castle" is not listed under terms.building'];
+        yield 'curfew time without has_curfew' => [static function (ContentFolder $c): string {
+            $c->venue('a-venue', ['party' => ['curfew_at' => '02:00']]);
+
+            return 'a-venue';
+        }, '/party/curfew_at: needs has_curfew: true'];
+        yield 'curfew time with has_curfew false' => [static function (ContentFolder $c): string {
+            $c->venue('a-venue', ['party' => ['has_curfew' => false, 'curfew_at' => '02:00']]);
+
+            return 'a-venue';
+        }, '/party/curfew_at: needs has_curfew: true'];
         yield 'fr translation' => [static function (ContentFolder $c): string {
             $c->venue('a-venue', ['translations' => ['fr' => ['summary' => 'Court.']]]);
 

@@ -18,6 +18,8 @@ use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\ReviewerRole;
@@ -269,12 +271,71 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame([], $detail->highlights);
         self::assertFalse($detail->hasFaq());
         self::assertSame([], $detail->distances);
+        self::assertFalse($detail->wedding->hasAny());
+        self::assertNull($detail->instagram);
         self::assertFalse($detail->hasPhone);
         self::assertFalse($detail->hasContact());
         self::assertSame([], $detail->documents);
         self::assertSame([], $detail->reviews);
         self::assertSame([], $detail->rooms);
         self::assertSame([], $detail->photos);
+    }
+
+    public function test_maps_every_wedding_fact_of_a_full_venue(): void
+    {
+        $venue = DetailVenues::full($this->em);
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        $wedding = $detail->wedding;
+        self::assertTrue($wedding->hasAny());
+        self::assertSame([PriceLevel::Medium, 1200, 1500], [$wedding->priceLevel, $wedding->capacitySeated, $wedding->capacityStanding]);
+        self::assertSame([PartyAllowed::Limited, true, '02:00'], [$wedding->party, $wedding->hasCurfew, $wedding->curfewAt]);
+        self::assertSame(
+            ['Romantisch am Wasser', 'Mit Tanzfläche 900 Sitzplätze.', 'Musik im Saal bis 2 Uhr.', 'Mai bis Oktober, täglich ab 10 Uhr'],
+            [$wedding->ambience, $wedding->capacityNote, $wedding->partyNote, $wedding->openingHours],
+        );
+        $codes = static fn (array $terms): array => array_map(static fn (Term $term): string => $term->code, $terms);
+        self::assertSame(['free_ceremony'], $codes($wedding->ceremony));
+        self::assertSame(['dance_floor'], $codes($wedding->amenities));
+        self::assertSame(['vegetarian', 'gluten_free'], $codes($wedding->dining), 'position order, not insertion order');
+        self::assertSame(['exclusive'], $codes($wedding->usage));
+        self::assertSame(['dj'], $codes($wedding->vendors));
+        self::assertSame(['de', 'en'], $codes($wedding->languages));
+        self::assertSame('https://www.instagram.com/schloss-seeblick', $detail->instagram);
+
+        self::assertSame(
+            [TermGroup::Building, TermGroup::Setting, TermGroup::SuitableFor, TermGroup::Infrastructure, TermGroup::Surroundings],
+            array_map(static fn (DetailFactGroup $group): TermGroup => $group->group, $detail->factGroups),
+            'the owner groups stay out of the fact lists',
+        );
+    }
+
+    public function test_a_venue_with_only_instagram_has_a_contact_section(): void
+    {
+        $venue = DetailVenues::minimal();
+        $venue->changeInstagram('https://www.instagram.com/gartenhaus');
+        $this->em->flush();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertTrue($detail->hasContact());
+        self::assertFalse($detail->wedding->hasAny(), 'Instagram belongs to Kontakt');
+    }
+
+    public function test_no_curfew_alone_is_a_known_fact(): void
+    {
+        $venue = DetailVenues::minimal();
+        $venue->describePartyRules(null, false, null);
+        $this->em->flush();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertFalse($detail->wedding->hasCurfew);
+        self::assertTrue($detail->wedding->hasAny());
     }
 
     public function test_a_score_below_the_threshold_has_no_label(): void
