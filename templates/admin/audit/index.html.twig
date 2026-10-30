@@ -1,5 +1,7 @@
 {% extends 'admin/base.html.twig' %}
 
+{% form_theme form 'admin/form/theme.html.twig' %}
+
 {% block title %}{{ 'audit.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
 
 {% block breadcrumbs %}
@@ -14,11 +16,11 @@
 {% block main %}
     <div class="card card__body">
         {{ form_start(form, {attr: {class: 'audit-filter'}}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.actor}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.subject_type}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.subject_id}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.from}) }}
-            {{ include('admin/form/_field.html.twig', {field: form.to}) }}
+            {{ form_row(form.actor) }}
+            {{ form_row(form.subject_type) }}
+            {{ form_row(form.subject_id) }}
+            {{ form_row(form.from) }}
+            {{ form_row(form.to) }}
             <div class="audit-filter__actions">
                 <button class="btn btn--primary" type="submit">{{ 'audit.filter.submit'|trans({}, 'admin') }}</button>
                 <a class="btn" href="{{ path('admin_audit_log') }}">{{ 'audit.filter.reset'|trans({}, 'admin') }}</a>
@@ -75,11 +77,11 @@
         {% if log.lastPage > 1 %}
             <nav class="pagination" aria-label="{{ 'audit.pagination.label'|trans({}, 'admin') }}">
                 {% if log.page > 1 %}
-                    <a class="btn btn--sm" rel="prev" href="{{ path('admin_audit_log', app.request.query.all|merge({page: log.page - 1})) }}">{{ 'audit.pagination.previous'|trans({}, 'admin') }}</a>
+                    <a class="btn btn--sm" rel="prev" href="{{ admin_query_path({page: log.page - 1}) }}">{{ 'audit.pagination.previous'|trans({}, 'admin') }}</a>
                 {% endif %}
                 <span class="muted">{{ 'audit.pagination.status'|trans({page: log.page|swiss_number, last: log.lastPage|swiss_number}, 'admin') }}</span>
                 {% if log.page < log.lastPage %}
-                    <a class="btn btn--sm" rel="next" href="{{ path('admin_audit_log', app.request.query.all|merge({page: log.page + 1})) }}">{{ 'audit.pagination.next'|trans({}, 'admin') }}</a>
+                    <a class="btn btn--sm" rel="next" href="{{ admin_query_path({page: log.page + 1}) }}">{{ 'audit.pagination.next'|trans({}, 'admin') }}</a>
                 {% endif %}
             </nav>
         {% endif %}

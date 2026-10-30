@@ -1,0 +1,15 @@
+{#
+    Disclosure list of links and buttons, a popover rather than role="menu" (research D9): Esc, light dismiss and focus return are native.
+    Embed with `{% embed 'admin/components/_dropdown.html.twig' with {…} only %}`: id, label (translated), icon (default ellipsis), icon_only (default true), variant (default ghost).
+    Block: items (`<li><a class="dropdown__item" href="…">…</a></li>`, also `button`, `--danger`). js/admin/dropdown.js places it.
+#}
+{{ include('admin/components/_button.html.twig', {
+    label: label,
+    variant: variant|default('ghost'),
+    icon: icon|default('ellipsis'),
+    icon_only: icon_only ?? true,
+    attributes: {popovertarget: id},
+}, with_context = false) }}
+<div class="dropdown" id="{{ id }}" popover>
+    <ul class="dropdown__list">{% block items %}{% endblock %}</ul>
+</div>

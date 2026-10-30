@@ -1,0 +1,41 @@
+// A checkbox that looks like a chip: the state lives in the input, so it needs no JS.
+.chip-check {
+    position: relative;
+    display: inline-flex;
+
+    input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding: 0 var(--a-space-3);
+        border: 1px solid var(--a-field-strong);
+        border-radius: var(--a-r-pill);
+        background: var(--a-surface);
+        color: var(--a-ink);
+        font: 400 14px var(--a-font);
+    }
+
+    &:has(:checked) label {
+        border-color: var(--a-ink);
+        background: var(--a-ink);
+        color: var(--a-on-ink);
+        font-weight: 600;
+    }
+
+    &:has(:focus-visible) {
+        outline: 2px solid var(--a-ink);
+        outline-offset: 2px;
+        border-radius: var(--a-r-pill);
+    }
+}

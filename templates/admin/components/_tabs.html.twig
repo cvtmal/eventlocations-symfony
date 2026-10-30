@@ -1,0 +1,14 @@
+{#
+    Status tabs: links, with the state in the query string. Include with `with_context = false`:
+      label (translated), items list<{label, href, count?, tone?, active?}>; count goes through swiss_number.
+#}
+<nav class="tabs" aria-label="{{ label }}">
+    {% for item in items %}
+        <a class="tab{{ item.active|default(false) ? ' tab--active' }}" href="{{ item.href }}"{% if item.active|default(false) %} aria-current="page"{% endif %}>
+            {{- item.label -}}
+            {% if item.count is defined and item.count is not null %}
+                {{- include('admin/components/_pill.html.twig', {label: item.count|swiss_number, tone: item.tone|default('grey')}, with_context = false) -}}
+            {% endif %}
+        </a>
+    {% endfor %}
+</nav>

@@ -1,0 +1,13 @@
+{#
+    A deal on the board (Pipeline). Include with `with_context = false`: title, href, meta (translated),
+    owner_initials, owner_label (translated, "Zuständig: …"). Moves are #28's.
+#}
+<article class="kanban-card">
+    <div class="kanban-card__head">
+        <a class="kanban-card__title" href="{{ href }}">{{ title }}</a>
+        {% if owner_initials|default(false) %}
+            {{- include('admin/components/_avatar.html.twig', {initials: owner_initials, size: 24, label: owner_label|default(null)}, with_context = false) -}}
+        {% endif %}
+    </div>
+    {% if meta|default(false) %}<span class="kanban-card__meta">{{ meta }}</span>{% endif %}
+</article>

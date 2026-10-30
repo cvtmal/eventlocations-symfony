@@ -1,0 +1,31 @@
+{#
+    Reorder by move buttons, as POST forms for server pages (#25's documents). Vue's UiSortableList adds drag and drop.
+    Include with `with_context = false`: label, up_label, down_label (translated), csrf_token,
+      items list<{id, label, move_up_url, move_down_url}>.
+    The boundary buttons use aria-disabled, so focus stays on them (research D10).
+#}
+<ol class="sortable" aria-label="{{ label }}">
+    {% for item in items %}
+        <li class="sortable__item">
+            <span class="sortable__label">{{ item.label }}</span>
+            <div class="sortable__moves">
+                <form method="post" action="{{ item.move_up_url }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token }}">
+                    {{ include('admin/components/_button.html.twig', {
+                        label: up_label ~ ': ' ~ item.label, size: 'sm', icon: 'arrow-up', icon_only: true,
+                        type: loop.first ? 'button' : 'submit',
+                        attributes: loop.first ? {'aria-disabled': 'true'} : {},
+                    }, with_context = false) }}
+                </form>
+                <form method="post" action="{{ item.move_down_url }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token }}">
+                    {{ include('admin/components/_button.html.twig', {
+                        label: down_label ~ ': ' ~ item.label, size: 'sm', icon: 'arrow-down', icon_only: true,
+                        type: loop.last ? 'button' : 'submit',
+                        attributes: loop.last ? {'aria-disabled': 'true'} : {},
+                    }, with_context = false) }}
+                </form>
+            </div>
+        </li>
+    {% endfor %}
+</ol>

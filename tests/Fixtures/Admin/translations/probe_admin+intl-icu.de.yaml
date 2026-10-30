@@ -9,3 +9,5 @@ tab:
     label: Fake Tab
 panel:
     body: 'Panel {id}'
+search:
+    label: Fake Treffer

@@ -9,9 +9,10 @@ export default [
     {
         languageOptions: { globals: globals.browser },
         rules: {
-            // S12: styles live in admin.scss, strings arrive as props translated by Twig (S4).
+            // S12: styles live in admin.scss, strings arrive as props translated by Twig (S4). #16's CSP forbids style attributes.
             'vue/no-restricted-block': ['error', 'style'],
             'vue/no-bare-strings-in-template': 'error',
+            'vue/no-static-inline-styles': 'error',
             'no-console': 'error',
         },
     },

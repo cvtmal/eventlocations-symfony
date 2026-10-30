@@ -1,0 +1,88 @@
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-2);
+}
+
+.filter-bar__search {
+    position: relative;
+    flex: 1 1 260px;
+    max-width: 360px;
+
+    .icon {
+        position: absolute;
+        top: 10px;
+        left: 11px;
+        width: 16px;
+        height: 16px;
+        color: var(--a-muted);
+        pointer-events: none;
+    }
+
+    input {
+        padding-left: 34px;
+    }
+}
+
+.filter-bar__control {
+    width: 100%;
+    max-width: 100%;
+    height: 36px;
+    padding: 0 var(--a-space-3);
+    border: 1px solid var(--a-field-strong);
+    border-radius: var(--a-r-md);
+    background: var(--a-surface);
+    color: var(--a-ink);
+    font: 400 14px var(--a-font);
+}
+
+select.filter-bar__control {
+    width: auto;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 3px 0 var(--a-space-3);
+    border-radius: var(--a-r-pill);
+    background: var(--a-ink);
+    color: var(--a-on-ink);
+    font-size: 13px;
+    font-weight: 600;
+
+    :focus-visible {
+        outline-color: var(--a-on-ink);
+        outline-offset: -2px;
+    }
+}
+
+// 24 px, not the reference's 22: WCAG 2.5.8 (research D16).
+.filter-chip__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--a-ink-hover);
+    color: var(--a-on-ink);
+
+    &:hover {
+        color: var(--a-on-ink);
+    }
+
+    .icon {
+        width: 12px;
+        height: 12px;
+        stroke-width: 2.5;
+    }
+}
+
+.filter-bar__reset {
+    margin-left: var(--a-space-1);
+    font-size: 13px;
+    font-weight: 600;
+}

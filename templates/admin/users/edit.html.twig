@@ -1,5 +1,8 @@
 {% extends 'admin/base.html.twig' %}
 
+{% form_theme role_form 'admin/form/theme.html.twig' %}
+{% form_theme password_form 'admin/form/theme.html.twig' %}
+
 {% block title %}{{ user.displayName }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
 
 {% block breadcrumbs %}
@@ -21,10 +24,9 @@
         <div class="card__head"><h2 id="section-role">{{ 'users.section.role'|trans({}, 'admin') }}</h2></div>
         <div class="card__body">
             {{ form_start(role_form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
-                {% for error in role_form.vars.errors %}
-                    <p class="form-error" role="alert">{{ error.message }}</p>
-                {% endfor %}
-                {{ include('admin/form/_field.html.twig', {field: role_form.role}) }}
+                {{ form_errors(role_form) }}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(role_form.role) }}
                 <div><button class="btn btn--primary" type="submit">{{ 'users.form.save'|trans({}, 'admin') }}</button></div>
             {{ form_end(role_form) }}
         </div>
@@ -34,8 +36,9 @@
         <div class="card__head"><h2 id="section-password">{{ 'users.section.password'|trans({}, 'admin') }}</h2></div>
         <div class="card__body">
             {{ form_start(password_form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
-                {{ include('admin/form/_field.html.twig', {field: password_form.plainPassword.first, help: 'users.form.password_help'|trans({}, 'admin')}) }}
-                {{ include('admin/form/_field.html.twig', {field: password_form.plainPassword.second}) }}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(password_form.plainPassword.first) }}
+                {{ form_row(password_form.plainPassword.second) }}
                 <div><button class="btn btn--primary" type="submit">{{ 'users.form.save'|trans({}, 'admin') }}</button></div>
             {{ form_end(password_form) }}
         </div>

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Unit\Search;
+namespace App\Tests\Unit\Shared\ValueObject;
 
-use App\Search\ValueObject\PageLinks;
+use App\Shared\ValueObject\PageLinks;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

@@ -17,8 +17,9 @@ use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 final class AdminIconSpriteTest extends TestCase
 {
     private const array REQUIRED = [
-        'bell', 'building-2', 'check', 'chevron-right', 'download', 'ellipsis', 'file-text', 'history', 'inbox', 'landmark', 'layout-dashboard',
-        'log-out', 'mail', 'plus', 'search', 'shield', 'square-check-big', 'square-kanban', 'type', 'users', 'x',
+        'arrow-down', 'arrow-up', 'bell', 'building-2', 'check', 'chevron-down', 'chevron-left', 'chevron-right', 'chevrons-up-down', 'download',
+        'ellipsis', 'file-text', 'grip-vertical', 'history', 'inbox', 'landmark', 'layout-dashboard', 'log-out', 'mail', 'plus', 'search', 'shield',
+        'square-check-big', 'square-kanban', 'type', 'upload', 'users', 'x',
     ];
 
     public function test_ids_are_unique_and_sorted(): void
@@ -56,6 +57,24 @@ final class AdminIconSpriteTest extends TestCase
         foreach ($files as $file) {
             \assert($file instanceof \SplFileInfo);
             preg_match_all("/admin_icon\\(\\s*'([a-z0-9-]+)'/", (string) file_get_contents($file->getPathname()), $matches);
+            foreach ($matches[1] as $name) {
+                self::assertContains($name, $ids, $file->getPathname());
+                ++$checked;
+            }
+        }
+
+        self::assertGreaterThan(0, $checked);
+    }
+
+    public function test_every_icon_used_in_the_vue_kit_exists(): void
+    {
+        $ids = self::ids();
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(self::root().'/admin-ui/src', \FilesystemIterator::SKIP_DOTS));
+        $checked = 0;
+
+        foreach ($files as $file) {
+            \assert($file instanceof \SplFileInfo);
+            preg_match_all('/<(?:UiIcon|UiButton|UiEmpty)\b[^>]*?\s(?:name|icon)="([a-z0-9-]+)"/s', (string) file_get_contents($file->getPathname()), $matches);
             foreach ($matches[1] as $name) {
                 self::assertContains($name, $ids, $file->getPathname());
                 ++$checked;

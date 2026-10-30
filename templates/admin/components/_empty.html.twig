@@ -1,0 +1,8 @@
+{#
+    Empty state. Include with `with_context = false`: icon, title and text (translated).
+#}
+<div class="empty">
+    {{ admin_icon(icon) }}
+    <strong class="empty__title">{{ title }}</strong>
+    {% if text|default(false) %}<span class="empty__text">{{ text }}</span>{% endif %}
+</div>

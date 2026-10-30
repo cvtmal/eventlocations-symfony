@@ -1,0 +1,10 @@
+{#
+    Tabs of a record page. Include with `with_context = false`: label (translated),
+      tabs (from `admin_record_tabs(type, id)`), current_route (`app.request.attributes.get('_route')`).
+#}
+<nav class="tabs tabs--record" aria-label="{{ label }}">
+    {% for tab in tabs %}
+        {% set active = tab.route == current_route %}
+        <a class="tab{{ active ? ' tab--active' }}" href="{{ path(tab.route, tab.routeParameters) }}"{% if active %} aria-current="page"{% endif %}>{{ tab.label|trans }}</a>
+    {% endfor %}
+</nav>

@@ -1,0 +1,17 @@
+{#
+    Head of a record page (LocationEdit). Embed with `{% embed 'admin/components/_record_header.html.twig' with {…} only %}` in `{% block page_header %}`:
+      title, subtitle. Blocks: meta (pills next to the title), actions, tabs (`_record_tabs`).
+#}
+<div class="record-header">
+    <div class="record-header__top">
+        <div class="record-header__main">
+            <div class="record-header__title">
+                <h1>{{ title }}</h1>
+                {% block meta %}{% endblock %}
+            </div>
+            {% if subtitle|default(false) %}<span class="record-header__subtitle">{{ subtitle }}</span>{% endif %}
+        </div>
+        <div class="record-header__actions">{% block actions %}{% endblock %}</div>
+    </div>
+    {% block tabs %}{% endblock %}
+</div>

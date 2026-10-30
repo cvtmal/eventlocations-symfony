@@ -1,0 +1,51 @@
+// The segmented control of Company and Pipeline; also the look of tablists (locale tabs, Markdown).
+.seg {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-self: flex-start;
+    gap: var(--a-space-1);
+    padding: 3px;
+    border-radius: var(--a-r-md);
+    background: var(--a-hover);
+}
+
+.seg__item {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 var(--a-space-3);
+    border: 0;
+    border-radius: var(--a-r-sm);
+    background: transparent;
+    color: var(--a-muted);
+    font: 600 13px var(--a-font);
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--a-ink);
+    }
+
+    &[aria-current='page'],
+    &[aria-selected='true'] {
+        background: var(--a-surface);
+        box-shadow: var(--a-sh-seg);
+        color: var(--a-ink);
+    }
+}
+
+.locale-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-3);
+}
+
+.locale-tabs__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    &[hidden] {
+        display: none;
+    }
+}

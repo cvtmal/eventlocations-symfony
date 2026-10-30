@@ -1,0 +1,11 @@
+{#
+    Board column. Embed with `{% embed 'admin/components/_kanban_column.html.twig' with {…} only %}`:
+      title (translated), count, level (heading level, default 2). Block: cards.
+#}
+<section class="kanban-column" aria-label="{{ title }}">
+    <div class="kanban-column__head">
+        <h{{ level|default(2) }}>{{ title }}</h{{ level|default(2) }}>
+        {{- include('admin/components/_pill.html.twig', {label: count|swiss_number}, with_context = false) -}}
+    </div>
+    {% block cards %}{% endblock %}
+</section>

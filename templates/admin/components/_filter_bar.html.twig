@@ -1,0 +1,19 @@
+{#
+    Search and filters as a GET form, with an explicit submit (research D8). Embed with `{% embed 'admin/components/_filter_bar.html.twig' with {…} only %}`:
+      action, id (default filter), search_name (default q), search_value, search_label, search_placeholder, submit_label, reset_href, reset_label,
+      chips list<{label, remove_href, remove_label}>. Block: filters (a visually hidden <label> plus `<select class="filter-bar__control">`).
+#}
+{%- set id = id|default('filter') -%}
+<form class="filter-bar" method="get" action="{{ action }}" role="search">
+    <label class="visually-hidden" for="{{ id }}-q">{{ search_label }}</label>
+    <div class="filter-bar__search">
+        {{ admin_icon('search') }}
+        <input class="filter-bar__control" id="{{ id }}-q" type="search" name="{{ search_name|default('q') }}" value="{{ search_value|default('') }}"{% if search_placeholder|default(false) %} placeholder="{{ search_placeholder }}"{% endif %}>
+    </div>
+    {% block filters %}{% endblock %}
+    {{ include('admin/components/_button.html.twig', {label: submit_label, type: 'submit'}, with_context = false) }}
+    {% for chip in chips|default([]) %}
+        {{ include('admin/components/_filter_chip.html.twig', chip, with_context = false) }}
+    {% endfor %}
+    {% if reset_href|default(false) %}<a class="filter-bar__reset" href="{{ reset_href }}">{{ reset_label }}</a>{% endif %}
+</form>

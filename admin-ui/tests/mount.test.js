@@ -46,6 +46,19 @@ describe('mountIslands', () => {
         expect(createApp).toHaveBeenCalledTimes(1);
     });
 
+    it('skips a deferred island until the attribute is gone', async () => {
+        const { createApp } = fakeCreateApp();
+        const page = root('<div data-island="hello" data-island-defer="/admin-build/main.js"></div>');
+        const registry = { hello: async () => ({ default: {} }) };
+
+        await mountIslands(page, registry, createApp);
+        expect(createApp).not.toHaveBeenCalled();
+
+        page.firstElementChild.removeAttribute('data-island-defer');
+        await mountIslands(page, registry, createApp);
+        expect(createApp).toHaveBeenCalledTimes(1);
+    });
+
     it('rejects an unknown name', async () => {
         const { createApp } = fakeCreateApp();
 

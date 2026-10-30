@@ -1,5 +1,7 @@
 {% extends 'admin/security/_layout.html.twig' %}
 
+{% form_theme form 'admin/form/theme.html.twig' %}
+
 {% block title %}{{ 'totp.enrol.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
 
 {% block form %}
@@ -12,7 +14,8 @@
                 {{ 'totp.enrol.key_label'|trans({}, 'admin') }}
                 <code class="auth__key-value">{{ secret_groups }}</code>
             </p>
-            {{ include('admin/form/_field.html.twig', {field: form.code}) }}
+            {{ form_row(form.code) }}
+            {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
             <button class="btn btn--primary btn--lg" type="submit">{{ 'totp.enrol.submit'|trans({}, 'admin') }}</button>
         {{ form_end(form) }}
         <form method="post" action="{{ path('_logout_admin') }}">

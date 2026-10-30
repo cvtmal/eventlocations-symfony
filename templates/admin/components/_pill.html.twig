@@ -1,0 +1,7 @@
+{#
+    Status pill. Include with `with_context = false`: label (translated), tone green|grey|pink|blue|amber|red|dark (default grey), dot (bool).
+#}
+<span class="pill pill--{{ tone|default('grey') }}">
+    {%- if dot|default(false) %}<span class="pill__dot"></span>{% endif -%}
+    {{- label -}}
+</span>

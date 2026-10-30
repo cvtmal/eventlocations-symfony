@@ -1,0 +1,43 @@
+{#
+    Data table in a card. Embed with `{% embed 'admin/components/_table.html.twig' with {…} only %}`:
+      label (translated, names the scroll region), id, columns list<{label, sort_key?}> (sort_key makes the header a link
+      with `sort` and `dir` in the query string), sort, dir (asc|desc), select_label (translated; adds the selection column),
+      actions_label (translated; adds the actions column; each `_table_row` then gets `actions_column: true`).
+    Blocks: rows (`_table_row`s), empty (one colspan row when there are no rows), foot (`_pagination`).
+#}
+{%- set rows_markup %}{% block rows %}{% endblock %}{% endset -%}
+{%- set foot_markup %}{% block foot %}{% endblock %}{% endset -%}
+{%- set column_count = columns|length + (select_label|default(false) ? 1 : 0) + (actions_label|default(false) ? 1 : 0) -%}
+<div class="card table-card">
+    <div class="table-wrap" tabindex="0" role="region" aria-label="{{ label }}">
+        <table class="table table--list"{% if id|default(false) %} id="{{ id }}"{% endif %}>
+            <thead>
+                <tr>
+                    {% if select_label|default(false) %}<th scope="col"><span class="visually-hidden">{{ select_label }}</span></th>{% endif %}
+                    {% for column in columns %}
+                        {% set sorted = column.sort_key|default(false) and column.sort_key == sort|default(null) %}
+                        <th scope="col"{% if sorted %} aria-sort="{{ dir|default('asc') == 'desc' ? 'descending' : 'ascending' }}"{% endif %}>
+                            {%- if column.sort_key|default(false) -%}
+                                <a class="table__sort" href="{{ admin_query_path({sort: column.sort_key, dir: sorted and dir|default('asc') == 'asc' ? 'desc' : 'asc'}) }}">
+                                    {{- column.label -}}
+                                    {{ admin_icon(sorted ? (dir|default('asc') == 'desc' ? 'arrow-down' : 'arrow-up') : 'chevrons-up-down') }}
+                                </a>
+                            {%- else -%}
+                                {{- column.label -}}
+                            {%- endif -%}
+                        </th>
+                    {% endfor %}
+                    {% if actions_label|default(false) %}<th scope="col"><span class="visually-hidden">{{ actions_label }}</span></th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% if rows_markup|trim is not empty %}
+                    {{ rows_markup }}
+                {% else %}
+                    <tr><td class="table__empty" colspan="{{ column_count }}">{% block empty %}{% endblock %}</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    {% if foot_markup|trim is not empty %}<div class="table-card__foot">{{ foot_markup }}</div>{% endif %}
+</div>

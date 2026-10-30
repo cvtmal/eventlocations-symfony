@@ -9,6 +9,7 @@
     --a-line: #e7e4df;
     --a-line-soft: #f0ede8;
     --a-field: #d6d2cb;
+    --a-field-strong: #8c8880;
     --a-accent: #ff5a75;
     --a-on-accent: #121212;
     --a-link: #b03a50;
@@ -16,6 +17,10 @@
     --a-danger: #a3261d;
     --a-danger-line: #e9c3bf;
     --a-hover: #f1efeb;
+    --a-row-hover: #faf9f7;
+    --a-dropzone: #cfcac2;
+    --a-column: #efede9;
+    --a-card-hover: #b9b4ac;
 
     --a-nav-text: #d6d3ce;
     --a-nav-muted: #a9a6a0;
@@ -48,6 +53,7 @@
     --a-space-5: 20px;
     --a-space-6: 24px;
     --a-space-7: 32px;
+    --a-gutter: clamp(16px, 4vw, 32px);
 
     --a-r-sm: 6px;
     --a-r-md: 8px;
@@ -56,6 +62,10 @@
     --a-r-pill: 999px;
 
     --a-sh-toast: 0 8px 24px rgb(0 0 0 / 18%);
+    --a-sh-seg: 0 1px 2px rgb(0 0 0 / 8%);
+    --a-sh-menu: 0 8px 24px rgb(0 0 0 / 14%);
+    --a-sh-modal: 0 16px 48px rgb(0 0 0 / 24%);
+    --a-scrim: rgb(0 0 0 / 40%);
 
     --a-font: 'Sofia Sans', system-ui, sans-serif;
 }

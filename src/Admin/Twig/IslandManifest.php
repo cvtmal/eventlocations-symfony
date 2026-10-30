@@ -53,6 +53,19 @@ final class IslandManifest implements ResetInterface
     }
 
     /**
+     * The entry a deferred island loads on first use. Not marked as used: a page that only has a deferred
+     * island loads no Vue (ADM-8).
+     *
+     * @return string relative to public/admin-build/
+     */
+    public function deferredEntry(string $island): string
+    {
+        $this->chunkKey($island);
+
+        return $this->entryFile();
+    }
+
+    /**
      * What the page should preload: the entry's static imports, then each used island with its imports.
      *
      * @return list<string> files relative to public/admin-build/

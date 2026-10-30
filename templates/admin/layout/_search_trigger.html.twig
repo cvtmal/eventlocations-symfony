@@ -1,0 +1,25 @@
+{#- The sidebar's global search. The palette is deferred: a page without an island loads no Vue until first use (ADM-8). -#}
+{% if app.user %}
+    <div class="sidebar__search-slot">
+        <button class="sidebar__search" type="button" data-palette-open aria-keyshortcuts="Meta+K Control+K">
+            {{ admin_icon('search') }}
+            <span class="sidebar__search-label">{{ 'ui.search.trigger'|trans({}, 'admin') }}</span>
+            <kbd data-shortcut-other="{{ 'ui.search.shortcut_other'|trans({}, 'admin') }}">{{ 'ui.search.shortcut_mac'|trans({}, 'admin') }}</kbd>
+        </button>
+        {{ admin_island_deferred('command-palette', {
+            searchUrl: path('admin_api_search'),
+            loginUrl: path('admin_login'),
+            title: 'ui.search.title'|trans({}, 'admin'),
+            inputLabel: 'ui.search.input_label'|trans({}, 'admin'),
+            placeholder: 'ui.search.placeholder'|trans({}, 'admin'),
+            closeLabel: 'shell.dismiss'|trans({}, 'admin'),
+            hintLabel: 'ui.search.hint'|trans({}, 'admin'),
+            emptyLabel: 'ui.search.empty'|trans({}, 'admin'),
+            resultsOne: 'ui.search.results_one'|trans({}, 'admin'),
+            resultsOther: 'ui.search.results_other'|trans({}, 'admin'),
+            sessionGoneLabel: 'ui.search.session_gone'|trans({}, 'admin'),
+            loginLabel: 'ui.search.login'|trans({}, 'admin'),
+            errorLabel: 'ui.search.error'|trans({}, 'admin'),
+        }) }}
+    </div>
+{% endif %}

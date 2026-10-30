@@ -1,0 +1,11 @@
+{#
+    Label and value of a record (Company). Include with `with_context = false`: label (translated), value,
+    edit_href and edit_label (the inline-edit affordance, a link until #27 decides more).
+#}
+<div class="property">
+    <div class="property__head">
+        <span class="property__label">{{ label }}</span>
+        {% if edit_href|default(false) %}<a class="property__edit" href="{{ edit_href }}">{{ edit_label }}</a>{% endif %}
+    </div>
+    <span class="property__value">{{ value }}</span>
+</div>

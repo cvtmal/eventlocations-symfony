@@ -52,3 +52,31 @@
     height: 44px;
     font-size: 15px;
 }
+
+.btn--icon {
+    width: 36px;
+    padding: 0;
+
+    &.btn--sm {
+        width: 30px;
+    }
+
+    &.btn--xs {
+        width: 26px;
+    }
+}
+
+.btn--xs {
+    height: 26px;
+    padding: 0 var(--a-space-2);
+    border-radius: var(--a-r-sm);
+    font-size: 12px;
+}
+
+// Kept focusable, so keyboard users stay where they are at the ends of a list (research D10).
+.btn[aria-disabled='true'] {
+    border-color: var(--a-line);
+    background: var(--a-surface-muted);
+    color: var(--a-muted);
+    cursor: not-allowed;
+}

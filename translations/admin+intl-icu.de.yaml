@@ -171,3 +171,186 @@ error:
     unauthenticated: Du bist nicht angemeldet.
     forbidden: Dafür fehlt dir die Berechtigung.
     totp_required: Richte zuerst die Zwei-Faktor-Anmeldung ein.
+ui:
+    money:
+        currency: CHF
+    form:
+        required_hint: Felder mit * sind Pflichtfelder.
+    pagination:
+        status: '{from} – {to} von {total} Resultaten'
+    search:
+        trigger: Suchen …
+        shortcut_mac: ⌘K
+        shortcut_other: Strg+K
+        title: Suchen
+        input_label: Suchbegriff
+        placeholder: Suchbegriff eingeben
+        hint: Mindestens 2 Zeichen eingeben.
+        empty: Keine Treffer.
+        results_one: 1 Treffer
+        results_other: '%n Treffer'
+        session_gone: Deine Sitzung ist abgelaufen.
+        login: Neu anmelden
+        error: Die Suche ist gerade nicht möglich. Versuche es noch einmal.
+    combobox:
+        no_results: Keine Treffer.
+        session_gone: Deine Sitzung ist abgelaufen. Lade die Seite neu und melde dich an.
+        error: Die Vorschläge konnten nicht geladen werden. Du kannst trotzdem weiterschreiben.
+    markdown:
+        tabs_label: Ansicht
+        write: Schreiben
+        preview: Vorschau
+        session_gone: Deine Sitzung ist abgelaufen. Lade die Seite neu und melde dich an.
+        error: Die Vorschau konnte nicht geladen werden. Dein Text bleibt erhalten.
+    styleguide:
+        sample:
+            save: Speichern
+            cancel: Abbrechen
+            delete: Löschen
+            more: Weitere Aktionen
+            edit: Bearbeiten
+            open: Öffnen
+            venue: Schloss Seeblick
+            town: Meilen
+            person: Laura Meier
+            detail: Nr. 1042 · Meilen ZH
+            remove_filter: Filter entfernen
+            reset_filters: Filter löschen
+            search: Suchen
+            search_placeholder: Name, Nummer oder Ort
+            filter: Filtern
+            all_cantons: Alle Kantone
+            canton: Kanton
+            canton_chip: 'Kanton: Zürich'
+            canton_zh: Zürich
+            canton_be: Bern
+            tab_all: Alle
+            tab_published: Publiziert
+            tab_draft: Unpubliziert
+            tab_overview: Übersicht
+            tab_photos: Fotos
+            tab_rooms: Räume
+            status_label: Status
+            sections_label: Bereiche der Location
+            pagination_label: Seiten
+            previous: Zurück
+            next: Weiter
+            actions: Aktionen
+            selection: Auswahl
+            select_row: Zeile auswählen
+            column_venue: Location
+            column_town: Ort
+            column_guests: Gäste
+            table_label: Locations
+            empty_title: Keine Treffer
+            empty_text: Passe die Filter an oder lösche sie.
+            kpi_label: Neue Anfragen (7 Tage)
+            kpi_detail: 4 noch ungesehen
+            kpi_plain: CHF 14'200 Vertragswert
+            progress_file: seesaal-abend.jpg
+            progress_status: Varianten … 64 %
+            property_label: Telefon
+            property_value: +41 44 000 00 00
+            seg_label: Ansicht
+            seg_board: Board
+            seg_list: Liste
+            chip_lake: Am See
+            chip_land: Auf dem Land
+            chip_city: In der Stadt
+            timeline_title: E-Mail gesendet
+            timeline_meta: 29.10.2026, 14:02
+            timeline_body: Offerte Verlängerung 2027
+            timeline_system: Andrea Keller hat den Deal verschoben
+            column_title: Verhandlung
+            deal_title: Verlängerung 2027
+            deal_meta: Seeblick Events GmbH
+            deal_owner: 'Zuständig: Andrea Keller'
+            sortable_label: Dokumente
+            sortable_first: Menüvorschläge
+            sortable_second: Raumplan
+            sortable_third: Preisliste
+            move_up: Nach oben
+            move_down: Nach unten
+            moved: '%label ist jetzt an Position %position.'
+            dropzone_label: Fotos hierher ziehen oder auswählen
+            dropzone_hint: JPEG, PNG oder WebP, bis 25 MB.
+            modal_title: Änderungen verwerfen?
+            modal_body: Nicht gespeicherte Eingaben gehen verloren.
+            modal_open: Dialog öffnen
+            confirm_title: Location löschen?
+            confirm_body: Diese Aktion lässt sich nicht rückgängig machen.
+            confirm_open: Löschen bestätigen
+            drawer_title: Raum bearbeiten
+            drawer_body: Der Raumeditor öffnet sich am rechten Rand.
+            drawer_open: Seitenfenster öffnen
+            close: Schliessen
+            toast_success: Texte gespeichert.
+            toast_error: Speichern fehlgeschlagen.
+            dismiss: Schliessen
+            locale_de: Deutsch
+            locale_fr: Französisch
+            locale_label: Sprache
+            locale_single: Eine Sprache
+            locale_two: Zwei Sprachen
+            locale_text_de: Text auf Deutsch
+            locale_text_fr: Text auf Französisch
+            kit_title: Komponenten
+            menu_label: Aktionen für Schloss Seeblick
+        section:
+            button: Button
+            pill: Status-Pill
+            tier_badge: Tier
+            avatar: Avatar
+            card: Karte
+            table: Tabelle
+            pagination: Seitennavigation
+            filter_bar: Filterleiste
+            tabs: Status-Tabs
+            record_tabs: Datensatz-Tabs
+            record_header: Datensatz-Kopf
+            property: Eigenschaft
+            modal: Dialog
+            drawer: Seitenfenster
+            dropdown: Menü
+            toast: Toast
+            combobox: Combobox
+            date_input: Datum
+            money_input: Betrag
+            markdown: Markdown
+            dropzone: Upload
+            sortable: Sortierbare Liste
+            kanban: Kanban
+            timeline: Timeline
+            empty: Leerzustand
+            skeleton: Skeleton
+            kpi: Kennzahl
+            chips: Chips
+            seg: Segmente
+            progress: Fortschritt
+            form: Formular
+            form_errors: Formular mit Fehlern
+            locale_tabs: Sprach-Tabs
+        form:
+            name: Name
+            name_help: So erscheint die Location auf der Website.
+            street: Strasse
+            summary: Kurztext
+            amount: Wert
+            date: Stichtag
+            town: PLZ / Ort
+            town_help: Freitext; eine Auswahl füllt das Feld.
+            owner: Zuständig
+            owner_help: Auswahl; gesendet wird die ID.
+            description: Beschreibung
+            daylight: Tageslicht?
+            daylight_yes: 'Ja'
+            daylight_no: 'Nein'
+            daylight_unknown: Keine Angabe
+            setting: Lage
+            newsletter: Im Newsletter zeigen
+            form_error: Bitte prüfe die markierten Felder.
+            option_meilen: 8706 Meilen
+            option_stafa: 8712 Stäfa
+            option_kuesnacht: 8700 Küsnacht
+            option_andrea: Andrea Keller
+            option_beat: Beat Meier

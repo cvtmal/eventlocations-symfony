@@ -1,0 +1,51 @@
+.record-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+    padding: var(--a-space-5) var(--a-gutter) 0;
+    border-bottom: 1px solid var(--a-line);
+    background: var(--a-surface);
+}
+
+// In a page's header block it is the white band under the top bar, as in LocationEdit.
+.shell__main > .record-header {
+    margin: calc(-1 * var(--a-gutter)) calc(-1 * var(--a-gutter)) 0;
+}
+
+.record-header__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-4);
+}
+
+.record-header__main {
+    display: flex;
+    flex: 1 1 280px;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.record-header__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+
+    h1 {
+        font-size: 26px;
+        line-height: 32px;
+        letter-spacing: -0.01em;
+    }
+}
+
+.record-header__subtitle {
+    color: var(--a-muted);
+}
+
+.record-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-2);
+}
