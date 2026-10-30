@@ -11,6 +11,8 @@ filter:
     bar_label: Filter
     region: Region
     guests: Anzahl Gäste
+    guests_title: Wieviele Gäste erwartest du?
+    guests_picks: Gästezahl wählen
     more: weitere Filter +
     more_title: Wähle weitere Filter & Möglichkeiten
     more_active: 'weitere Filter ({count})'
@@ -55,7 +57,8 @@ chip:
     place_generic: Ort
     place: '{place}'
     place_radius: '{place} + {radius} km'
-    guests: '{guests} Gäste'
+    # guests = count|swiss_number; count = the number, for the plural only.
+    guests: '{count, plural, one {{guests} Gast} other {{guests} Gäste}}'
 card:
     # Visually hidden before the price tag, so "Mittel" is not read alone.
     price_level: 'Preisniveau:'
