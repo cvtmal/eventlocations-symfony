@@ -1,0 +1,18 @@
+{#
+    One section of round tiles in the "weitere Filter" overlay (Lage, Erreichbarkeit). Include with `only`: title (translated),
+    param (query name), items: list of {value, label (translated), icon, checked}. Renders nothing without items, so a
+    section without data disappears with its legend. The native checkbox stays in the tab order; its label is the tile.
+#}
+{%- if items is not empty -%}
+<fieldset class="filter-more__section">
+    <legend class="filter-more__title">{{ title }}</legend>
+    <ul class="filter-more__tiles">
+        {%- for item in items %}
+        <li class="filter-more__tile">
+            <input class="visually-hidden" type="checkbox" id="filter-more-{{ param }}-{{ item.value }}" name="{{ param }}[]" value="{{ item.value }}"{% if item.checked %} checked{% endif %}>
+            <label for="filter-more-{{ param }}-{{ item.value }}">{{ icon(item.icon) }}<span>{{ item.label }}</span></label>
+        </li>
+        {%- endfor %}
+    </ul>
+</fieldset>
+{%- endif -%}

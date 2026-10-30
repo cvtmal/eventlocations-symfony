@@ -12,6 +12,7 @@ use App\Search\ReadModel\CardPhoto;
 use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\SearchCriteria;
 use App\Venues\ValueObject\RatingLabel;
+use App\Venues\ValueObject\TermGroup;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Attribute\AsTwigFunction;
@@ -28,6 +29,7 @@ use Twig\Attribute\AsTwigFunction;
  * - `venue_path(slug)`: the detail page's path (#8's `venue_show`).
  * - `selected_place(criteria)`: the filter's `place` resolved to its town, null without a place or for an unknown one.
  * - `filter_has_data(filter)`: whether a published venue carries the filter's data (FilterDataQuery).
+ * - `filter_terms(group, criteria)`: the group's codes with data or active, in vocabulary order.
  */
 final class ListingExtension
 {
@@ -119,5 +121,14 @@ final class ListingExtension
     public function filterHasData(string $filter): bool
     {
         return $this->filterData->has($filter);
+    }
+
+    /**
+     * @return list<string>
+     */
+    #[AsTwigFunction('filter_terms')]
+    public function filterTerms(TermGroup $group, SearchCriteria $criteria): array
+    {
+        return $this->filterData->terms($group, $criteria->termCodes($group));
     }
 }

@@ -1,0 +1,84 @@
+{#
+    The GET form of the "weitere Filter" overlay (FI-4). Include with `only`: criteria (SearchCriteria), params (the slot's
+    param names, from _more.html.twig). Hiding rule: a control shows when it has data or is active. Data means a published
+    venue carries that one value (FilterDataQuery), so nothing is faceted; active is needed because _hidden_state skips
+    these params, and a hidden active value would be dropped on the next submit. Only "Name eingeben" always shows. A
+    group between the rules renders only when something in it does, so a rule never stands alone.
+#}
+{%- set query = criteria.toQuery() -%}
+{%- set groups = constant('App\\Search\\ReadModel\\SearchCriteria::PARAMS') -%}
+{%- set active_access = query.access|default([]) -%}
+{%- set setting_icons = {river: 'waves', lake: 'sailboat', countryside: 'trees', mountains: 'mountain-snow', city: 'building-2'} -%}
+{%- set access_icons = {station: 'train-front', highway: 'car', airport: 'plane'} -%}
+{%- set active_setting = criteria.termCodes(groups.setting) -%}
+{%- set max_rooms = constant('App\\Search\\ReadModel\\SearchCriteria::MAX_ROOMS') -%}
+{%- set areas = constant('App\\Search\\ReadModel\\SearchCriteria::AREAS') -%}
+{%- set heights = constant('App\\Search\\ReadModel\\SearchCriteria::HEIGHTS') -%}
+
+{%- set location -%}
+    {{ include('search/filter/_more_tiles.html.twig', {
+        title: ('term_group.' ~ groups.setting.value)|trans({}, 'venues'),
+        param: 'setting',
+        items: filter_terms(groups.setting, criteria)|map(code => {value: code, label: ('term.setting.' ~ code)|trans({}, 'venues'), icon: setting_icons[code], checked: code in active_setting}),
+    }, with_context = false) }}
+    {{ include('search/filter/_more_tiles.html.twig', {
+        title: 'filter.more_access'|trans({}, 'search'),
+        param: 'access',
+        items: enum_cases('App\\Venues\\ValueObject\\Access')
+            |filter(access => filter_has_data('access.' ~ access.value) or access.value in active_access)
+            |map(access => {value: access.value, label: access|trans, icon: access_icons[access.value], checked: access.value in active_access}),
+    }, with_context = false) }}
+{%- endset -%}
+
+{%- set buildings -%}
+    {{ include('search/filter/_more_terms.html.twig', {param: 'building', group: groups.building, criteria: criteria, collapse: true}, with_context = false) }}
+{%- endset -%}
+
+{%- set properties -%}
+    {%- for param in ['infra', 'furniture', 'tech', 'surroundings'] -%}
+        {{ include('search/filter/_more_terms.html.twig', {param: param, group: groups[param], criteria: criteria}, with_context = false) }}
+    {%- endfor -%}
+{%- endset -%}
+
+{%- set room_selects -%}
+    {%- if filter_has_data('rooms') or query.rooms is defined -%}
+        {{ include('search/filter/_more_select.html.twig', {
+            id: 'filter-more-rooms', name: 'rooms', label: 'filter.more_rooms'|trans({}, 'search'), selected: query.rooms|default(''),
+            options: (1..max_rooms)|map(rooms => {value: '' ~ rooms, label: (rooms == max_rooms ? 'filter.more_rooms_max' : 'filter.more_rooms_option')|trans({rooms: rooms}, 'search')}),
+        }, with_context = false) }}
+    {%- endif -%}
+    {%- if filter_has_data('area') or query.area is defined -%}
+        {{ include('search/filter/_more_select.html.twig', {
+            id: 'filter-more-area', name: 'area', label: 'filter.more_area'|trans({}, 'search'), selected: query.area|default(''),
+            options: areas|map(area => {value: '' ~ area, label: (area == areas|last ? 'filter.more_area_max' : 'filter.more_area_option')|trans({area: area|swiss_number}, 'search')}),
+        }, with_context = false) }}
+    {%- endif -%}
+    {%- if filter_has_data('height') or query.height is defined -%}
+        {{ include('search/filter/_more_select.html.twig', {
+            id: 'filter-more-height', name: 'height', label: 'filter.more_height'|trans({}, 'search'), selected: query.height|default(''),
+            options: heights|map(height => {value: '%.1F'|format(height), label: (height == heights|last ? 'filter.more_height_max' : 'filter.more_height_option')|trans({height: height|swiss_number(1)}, 'search')}),
+        }, with_context = false) }}
+    {%- endif -%}
+{%- endset -%}
+
+{%- set rooms -%}
+    {%- if room_selects|trim is not empty -%}
+    <fieldset class="filter-more__section">
+        <legend class="filter-more__title">{{ 'filter.more_rooms_title'|trans({}, 'search') }}</legend>
+        <div class="filter-more__selects">{{ room_selects }}</div>
+    </fieldset>
+    {%- endif -%}
+{%- endset -%}
+
+<form id="filter-more-form" class="filter-more" method="get" action="{{ path('listing') }}" autocomplete="off" data-live-count data-live-count-url="{{ path('_search_count') }}" data-overlay-form>
+    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: params}, with_context = false) }}
+    <div class="filter-more__group">
+        {{ include('components/_text_input.html.twig', {id: 'filter-more-q', name: 'q', label: 'filter.more_name_title'|trans({}, 'search'), label_hidden: false, placeholder: 'filter.more_name_placeholder'|trans({}, 'search'), value: criteria.q}, with_context = false) }}
+    </div>
+    {# #33 inserts its "Hochzeit" group here (FI-7): include search/filter/_more_wedding.html.twig in its own .filter-more__group. #}
+    {%- for group in [location, buildings, properties, rooms] %}
+        {%- if group|trim is not empty %}
+    <div class="filter-more__group">{{ group }}</div>
+        {%- endif %}
+    {%- endfor %}
+</form>

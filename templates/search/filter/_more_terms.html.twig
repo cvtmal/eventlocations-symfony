@@ -1,0 +1,37 @@
+{#
+    One section of toggle chips in the "weitere Filter" overlay, with the hiding rule inside: filter_terms() returns the codes
+    that have data or are active, and without any the section disappears with its legend. Include with `only`: param (query
+    name), group (TermGroup), criteria (SearchCriteria), collapse (default false). With collapse and more than 11 codes,
+    the first 11 in vocabulary order stay flat and the rest go into <details>, open when the group is active.
+    #33 reuses this partial for `ceremony` and `amenity`.
+#}
+{%- macro chip(param, group, code, checked) -%}
+    <li class="filter-more__chip">
+        <input class="visually-hidden" type="checkbox" id="filter-more-{{ param }}-{{ code }}" name="{{ param }}[]" value="{{ code }}"{% if checked %} checked{% endif %}>
+        <label for="filter-more-{{ param }}-{{ code }}">{{ ('term.' ~ group.value ~ '.' ~ code)|trans({}, 'venues') }}</label>
+    </li>
+{%- endmacro -%}
+{%- import _self as more -%}
+{%- set terms = filter_terms(group, criteria) -%}
+{%- if terms is not empty -%}
+    {%- set active = criteria.termCodes(group) -%}
+    {%- set split = collapse|default(false) and terms|length > 11 -%}
+<fieldset class="filter-more__section">
+    <legend class="filter-more__title">{{ ('term_group.' ~ group.value)|trans({}, 'venues') }}</legend>
+    <ul class="filter-more__chips">
+        {%- for code in split ? terms|slice(0, 11) : terms %}
+        {{ more.chip(param, group, code, code in active) }}
+        {%- endfor %}
+    </ul>
+    {%- if split %}
+    <details class="filter-more__all"{% if active is not empty %} open{% endif %}>
+        <summary class="filter-more__all-toggle"><span>{{ 'filter.more_buildings_all'|trans({}, 'search') }}</span><span>{{ 'filter.more_buildings_close'|trans({}, 'search') }}</span></summary>
+        <ul class="filter-more__chips">
+            {%- for code in terms|slice(11) %}
+            {{ more.chip(param, group, code, code in active) }}
+            {%- endfor %}
+        </ul>
+    </details>
+    {%- endif %}
+</fieldset>
+{%- endif -%}

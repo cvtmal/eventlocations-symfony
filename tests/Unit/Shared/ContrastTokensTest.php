@@ -20,7 +20,7 @@ final class ContrastTokensTest extends TestCase
     {
         $text = [
             ['ink-inverse', 'accent'], ['ink-inverse', 'accent-hover'],
-            ['ink', 'overlay-region'], ['ink', 'overlay-guests'], ['ink', 'overlay-more'], ['ink', 'overlay-more-bar'],
+            ['ink', 'overlay-region'], ['ink', 'overlay-guests'], ['ink', 'overlay-more'], ['ink', 'overlay-more-bar'], ['ink', 'overlay-more-tile'],
             ['ink', 'surface'], ['ink', 'surface-2'], ['ink', 'surface-3'], ['ink', 'surface-footer'], ['ink', 'bg'],
             ['muted', 'surface-2'], ['ink', 'black'], ['ink-inverse', 'tooltip-bg'],
             ['ink', 'dropdown'],
@@ -31,7 +31,7 @@ final class ContrastTokensTest extends TestCase
         }
 
         // WCAG 1.4.11: the white focus ring against every surface it can sit on.
-        foreach (['surface', 'surface-2', 'surface-3', 'bg', 'overlay-region', 'overlay-guests', 'overlay-more'] as $bg) {
+        foreach (['surface', 'surface-2', 'surface-3', 'bg', 'overlay-region', 'overlay-guests', 'overlay-more', 'overlay-more-tile'] as $bg) {
             yield "focus on {$bg}" => ['focus', $bg, 3.0];
         }
 

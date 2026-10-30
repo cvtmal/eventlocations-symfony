@@ -15,7 +15,25 @@ filter:
     region: Region
     guests: Anzahl Gäste
     more: weitere Filter +
-    more_title: Weitere Filter
+    more_title: Wähle weitere Filter & Möglichkeiten
+    more_active: 'weitere Filter ({count})'
+    more_remove: Weitere Filter entfernen
+    more_name_title: Suche eine konkrete Location
+    more_name_placeholder: Name eingeben
+    more_access: Erreichbarkeit
+    more_buildings_all: Alle Gebäudearten
+    more_buildings_close: Gebäudearten schliessen
+    more_rooms_title: Raumangebot
+    more_rooms: Anzahl Räume
+    more_area: Grösster Raum
+    more_height: Min. Raumhöhe
+    more_rooms_option: '{rooms, plural, one {# Raum} other {# Räume}}'
+    more_rooms_max: '≥ {rooms} Räume'
+    # area and height are swiss_number output
+    more_area_option: '{area} m²'
+    more_area_max: '≥ {area} m²'
+    more_height_option: '{height} m'
+    more_height_max: '≥ {height} m'
     reset: Filter löschen
     merkliste: Merkliste
     region_title: Wo soll eure Hochzeit stattfinden?
@@ -39,10 +57,6 @@ chip:
     place: '{place}'
     place_radius: '{place} + {radius} km'
     guests: '{guests} Gäste'
-    q: '“{q}”'
-    rooms: '{rooms, plural, one {ab # Raum} other {ab # Räume}}'
-    area: 'ab {area} m²'
-    height: 'ab {height} m'
 card:
     photos_label: 'Bilder von {name}'
     rating: '{label} ({score}) | {count}'

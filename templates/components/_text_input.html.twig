@@ -4,6 +4,6 @@
       autocomplete (default off), label_hidden (default true).
 #}
 <div class="text-input">
-    <label class="text-input__label{% if label_hidden|default(true) %} visually-hidden{% endif %}" for="{{ id }}">{{ label }}</label>
+    <label class="text-input__label{% if label_hidden ?? true %} visually-hidden{% endif %}" for="{{ id }}">{{ label }}</label>
     <input class="text-input__field" id="{{ id }}" name="{{ name }}" type="{{ type|default('text') }}" value="{{ value|default('') }}" placeholder="{{ placeholder|default('') }}" autocomplete="{{ autocomplete|default('off') }}">
 </div>

@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Search;
 
 use App\Factory\VenuePhotoFactory;
 use App\Geo\Entity\Town;
+use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
@@ -86,6 +87,9 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         }
         $timings['unfiltered page 11, cards'] = $this->executionMs($this->query->cardStatement(SearchCriteria::none()->withPage(11), 'de'));
         $timings['unfiltered, count'] = $this->executionMs($this->query->countStatement(SearchCriteria::none()));
+        $filterData = new FilterDataQuery($this->connection, ListingQueryTest::enabledLocale());
+        $timings['filter data, flags'] = $this->executionMs($filterData->flagsStatement());
+        $timings['filter data, terms'] = $this->executionMs($filterData->termsStatement());
         foreach ($timings as $what => $ms) {
             $this->report($what, $ms);
         }

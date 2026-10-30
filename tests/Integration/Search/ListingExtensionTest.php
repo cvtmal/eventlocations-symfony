@@ -13,6 +13,7 @@ use App\Search\ReadModel\SearchCriteria;
 use App\Search\Twig\ListingExtension;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\ValueObject\RatingLabel;
+use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -71,6 +72,12 @@ final class ListingExtensionTest extends KernelTestCase
         self::assertNull($this->extension->selectedPlace(SearchCriteria::none()));
         self::assertSame('Stäfa', $this->extension->selectedPlace($this->criteria(['place' => '8712']))?->name);
         self::assertNull($this->extension->selectedPlace($this->criteria(['place' => self::PHOTO_ID])));
+    }
+
+    public function test_filter_terms_keeps_an_active_code_without_data(): void
+    {
+        self::assertSame([], $this->extension->filterTerms(TermGroup::Setting, SearchCriteria::none()));
+        self::assertSame(['river'], $this->extension->filterTerms(TermGroup::Setting, $this->criteria(['setting' => ['river']])));
     }
 
     public function test_listing_path_without(): void

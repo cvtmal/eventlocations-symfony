@@ -205,9 +205,9 @@ final class ListingControllerTest extends WebTestCase
 
         $crawler = $this->get('/hochzeitslocations?setting[]=lake&setting[]=river');
         self::assertSame(['Remise Zürich', 'Seehaus Zürich'], $this->names($crawler));
-        $chips = $crawler->filter('.filter-bar .chip');
-        self::assertSame(['Am See', 'Am Fluss'], $chips->each(static fn (Crawler $c): string => $c->text()));
-        self::assertSame(['/hochzeitslocations?setting%5B0%5D=river', '/hochzeitslocations?setting%5B0%5D=lake'], $chips->each(static fn (Crawler $c): ?string => $c->attr('href')));
+        self::assertSame(['weitere Filter (1)'], $crawler->filter('.filter-bar .chip')->each(static fn (Crawler $c): string => $c->text()));
+        self::assertSame('/hochzeitslocations', $crawler->filter('.filter-bar .chip a')->attr('href'));
+        self::assertCount(1, $crawler->filter('#filter-more input[name="setting[]"][value="lake"][checked]'));
 
         $crawler = $this->get('/hochzeitslocations?canton=zh&guests=120&setting[]=lake&page=1');
         self::assertSame('/hochzeitslocations?guests=120&setting%5B0%5D=lake', $crawler->filter('#filter-region .overlay__footer a')->attr('href'));
