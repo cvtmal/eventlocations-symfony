@@ -33,6 +33,7 @@ phpstan.neon
 /.rpi-tracking/
 /compose.override.yaml
 /bin/dart-sass/
+/public/media/
 ###< hochzeitslocation ###
 
 ###> symfonycasts/sass-bundle ###

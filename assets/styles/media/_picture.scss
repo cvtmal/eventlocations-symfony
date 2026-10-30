@@ -1,0 +1,21 @@
+// venue_picture() (Media, #5): the dominant-colour placeholder is an SVG under the image,
+// because a `style` background would need style-src-attr 'unsafe-inline' (CSP, #16).
+.picture {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.picture__placeholder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.picture__img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+}

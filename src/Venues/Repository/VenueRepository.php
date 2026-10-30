@@ -17,4 +17,19 @@ class VenueRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Venue::class);
     }
+
+    /**
+     * Every venue number ascending; with $only, `[$only]` if that venue exists, else `[]`.
+     *
+     * @return list<int>
+     */
+    public function numbers(?int $only = null): array
+    {
+        $query = $this->createQueryBuilder('v')->select('v.number')->orderBy('v.number');
+        if (null !== $only) {
+            $query->where('v.number = :number')->setParameter('number', $only);
+        }
+
+        return array_values(array_map('intval', $query->getQuery()->getSingleColumnResult()));
+    }
 }
