@@ -1,0 +1,35 @@
+{#
+    "Anfragen & Merken" (DP-4): a sticky card on desktop, a fixed bottom bar below lg (CSS only). Params: venue.
+    Merken: #7's favorites/_merken_button.html.twig (ignore_missing until it lands; #13 adds the behaviour).
+    Teilen: a popover menu without JS; share.js uses the Web Share API when there is one.
+    Drucken: hidden without JS; print.js shows it.
+#}
+{% set share_url = url('venue_show', {slug: venue.slug}) %}
+{% set share_text = 'detail.actions.share_text'|trans({name: venue.name, town: venue.townName}, 'venues') %}
+<aside class="venue-actions" aria-labelledby="venue-actions-title">
+    <h2 id="venue-actions-title" class="venue-actions__title">{{ 'detail.actions.label'|trans({}, 'venues') }}</h2>
+    <a class="btn btn--primary venue-actions__primary" href="#anfrage">{{ icon('calendar') }}<span>{{ 'detail.actions.check_availability'|trans({}, 'venues') }}</span></a>
+    {{ include('favorites/_merken_button.html.twig', {number: venue.number, name: venue.name, label: 'detail.actions.merken'|trans({}, 'venues'), variant: 'detail'}, ignore_missing = true, with_context = false) }}
+    <div class="venue-actions__row">
+        {{ include('components/_button.html.twig', {
+            label: 'detail.actions.share'|trans({}, 'venues'),
+            variant: 'outline',
+            icon: 'share-2',
+            attributes: {popovertarget: 'venue-share', 'data-share-url': share_url, 'data-share-title': share_text},
+        }, with_context = false) }}
+        {{ include('components/_button.html.twig', {
+            label: 'detail.actions.print'|trans({}, 'venues'),
+            variant: 'outline',
+            icon: 'printer',
+            attributes: {hidden: 'hidden', 'data-print': ''},
+        }, with_context = false) }}
+    </div>
+    <div id="venue-share" class="venue-share" popover>
+        <ul class="venue-share__list">
+            <li><button type="button" class="venue-share__item" hidden data-share-copy data-copied-label="{{ 'detail.actions.link_copied'|trans({}, 'venues') }}">{{ 'detail.actions.copy_link'|trans({}, 'venues') }}</button></li>
+            <li><a class="venue-share__item" href="https://wa.me/?text={{ (share_text ~ ' ' ~ share_url)|url_encode }}" rel="noopener" target="_blank">{{ 'detail.actions.whatsapp'|trans({}, 'venues') }}</a></li>
+            <li><a class="venue-share__item" href="mailto:?subject={{ share_text|url_encode }}&amp;body={{ share_url|url_encode }}">{{ 'detail.actions.email'|trans({}, 'venues') }}</a></li>
+        </ul>
+        <p class="venue-share__status" aria-live="polite" data-share-status></p>
+    </div>
+</aside>

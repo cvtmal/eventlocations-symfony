@@ -1,0 +1,34 @@
+{#
+    Räume (DP-8): a carousel of room cards. "Rauminfos" and "Eckdaten" open modal dialogs (D3, D4); a button is
+    omitted when its dialog would be empty. The dialogs sit inside the room's slide so print shows them inline. Params: venue.
+#}
+<section class="venue-section venue-rooms" aria-labelledby="venue-rooms-title">
+    <h2 id="venue-rooms-title" class="venue-section__title">{{ 'detail.rooms.heading'|trans({}, 'venues') }}</h2>
+    {% embed 'components/_carousel.html.twig' with {id: 'venue-rooms', label: 'detail.rooms.label'|trans({name: venue.name}, 'venues'), rooms: venue.rooms} only %}
+        {% block slides %}
+            {% for room in rooms %}
+                {% set room_id = 'room-' ~ loop.index %}
+                <li class="carousel__slide venue-room">
+                    {% if room.photo %}
+                        {{ venue_picture(room.photo, sizes='(min-width: 1024px) 320px, 80vw', widths=[360, 640, 960], class='venue-room__picture') }}
+                    {% else %}
+                        <span class="venue-room__placeholder"></span>
+                    {% endif %}
+                    <div class="venue-room__body">
+                        <h3 class="venue-room__name">{{ room.name }}</h3>
+                        {% if room.capacityMax or room.capacityMin %}
+                            <p class="venue-room__capacity">{{ icon('user') }}<span>{{ 'detail.rooms.capacity'|trans({range: swiss_range(room.capacityMin ?? room.capacityMax, room.capacityMax ?? room.capacityMin)}, 'venues') }}</span></p>
+                        {% endif %}
+                        {% if room.hasInfo() or room.hasFacts() %}
+                            <p class="venue-room__links">
+                                {% if room.hasInfo() %}<button type="button" class="venue-room__link" commandfor="{{ room_id }}-info" command="show-modal">{{ icon('info') }}<span>{{ 'detail.rooms.info'|trans({}, 'venues') }}</span></button>{% endif %}
+                                {% if room.hasFacts() %}<button type="button" class="venue-room__link" commandfor="{{ room_id }}-facts" command="show-modal">{{ icon('maximize') }}<span>{{ 'detail.rooms.facts'|trans({}, 'venues') }}</span></button>{% endif %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    {{ include('venues/detail/_room_dialogs.html.twig', {room: room, room_id: room_id}, with_context = false) }}
+                </li>
+            {% endfor %}
+        {% endblock %}
+    {% endembed %}
+</section>

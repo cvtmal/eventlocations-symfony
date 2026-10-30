@@ -1,0 +1,20 @@
+{#
+    Reviews (DP-14): the first three quotes, the rest behind "Alle Kommentare". Carries the #bewertung anchor when
+    there is no rating section (P12). Rendered only with reviews. Params: venue.
+#}
+{% macro review(review) %}
+    <figure class="venue-review">
+        <blockquote class="venue-review__text"><p>{{ review.text }}</p></blockquote>
+        <figcaption class="venue-review__byline">{{ 'detail.reviews.byline'|trans({name: review.firstName, role: review.role|trans, month: review.month}, 'venues') }}</figcaption>
+    </figure>
+{% endmacro %}
+<section{% if not venue.hasRatingSection() %} id="bewertung"{% endif %} class="venue-section venue-reviews" aria-labelledby="venue-reviews-title">
+    <h2 id="venue-reviews-title" class="venue-section__title">{{ 'detail.reviews.heading'|trans({}, 'venues') }}</h2>
+    {% for review in venue.reviews|slice(0, 3) %}{{ _self.review(review) }}{% endfor %}
+    {% if venue.reviews|length > 3 %}
+        <details class="venue-reviews__more">
+            <summary class="btn btn--outline">{{ 'detail.reviews.all'|trans({}, 'venues') }}</summary>
+            {% for review in venue.reviews|slice(3) %}{{ _self.review(review) }}{% endfor %}
+        </details>
+    {% endif %}
+</section>

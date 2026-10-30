@@ -1,0 +1,294 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Application\Venues;
+
+use App\Factory\VenueFactory;
+use App\Factory\VenueReviewFactory;
+use App\Factory\VenueSlugHistoryFactory;
+use App\Factory\VenueTranslationFactory;
+use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\ValueObject\PhoneNumber;
+use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
+use Zenstruck\Foundry\Test\Factories;
+
+/**
+ * The venue detail page (#8). The client shares the test's connection (no reboot), so the
+ * venues created here are visible to the request and rolled back afterwards.
+ */
+final class VenueDetailControllerTest extends WebTestCase
+{
+    use Factories;
+    use ImportsTownDataset;
+
+    private KernelBrowser $client;
+    private Connection $connection;
+    private EntityManagerInterface $em;
+
+    protected function setUp(): void
+    {
+        $this->client = self::createClient();
+        $this->client->disableReboot();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+        $this->em = $em;
+        $this->connection = $em->getConnection();
+        $this->connection->beginTransaction();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->em->clear();
+        $this->connection->rollBack();
+        parent::tearDown();
+    }
+
+    public function test_renders_every_section_of_a_full_venue(): void
+    {
+        $venue = DetailVenues::full($this->em);
+        for ($i = 1; $i <= 13; ++$i) {
+            DetailVenues::minimal('andere-location-'.$i, 'Andere Location '.$i);
+        }
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+
+        self::assertSame('Schloss Seeblick in Zürich für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Schloss Seeblick: Hochzeit am See.', $crawler->filter('meta[name="description"]')->attr('content'));
+        self::assertCount(1, $crawler->filter('h1'));
+        self::assertStringContainsString('Schloss Seeblick', $crawler->filter('h1')->text());
+        self::assertSelectorTextContains('h1 .badge', 'Premium');
+
+        // Nav: every item points at an existing section.
+        $targets = $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
+        self::assertSame(['#beschreibung', '#bilder', '#kontakt', '#standort', '#bewertung'], $targets);
+        foreach ($targets as $target) {
+            self::assertCount(1, $crawler->filter($target), $target);
+        }
+
+        // Hero and gallery.
+        self::assertCount(1, $crawler->filter('[fetchpriority="high"]'));
+        self::assertCount(3, $crawler->filter('#bilder .carousel__slide'));
+        self::assertSelectorExists('button[commandfor="venue-gallery"][command="show-modal"]');
+        self::assertSelectorExists('dialog#venue-gallery[data-dialog]');
+        self::assertCount(3, $crawler->filter('#venue-gallery .carousel__slide'));
+
+        // Actions card.
+        self::assertSelectorExists('aside.venue-actions a[href="#anfrage"]');
+        self::assertSelectorExists('aside.venue-actions [data-print][hidden]');
+        self::assertSelectorExists('aside.venue-actions [popovertarget="venue-share"][data-share-url="http://localhost/hochzeitslocation/schloss-seeblick"]');
+        self::assertSelectorExists('#venue-share[popover] a[href^="https://wa.me/?text="]');
+
+        // Head.
+        self::assertSelectorTextContains('.venue-head__place', '8001 Zürich');
+        $facts = $crawler->filter('.venue-head__facts li')->each(static fn (Crawler $li): string => $li->text());
+        self::assertSame(['Schloss', 'Am See', '50 - 300 Personen'], $facts);
+        self::assertCount(2, $crawler->filter('.venue-head__description p'));
+
+        // Bewertung.
+        self::assertSelectorTextContains('#bewertung .venue-rating__summary', 'Herausragend (9.2) | 474');
+        self::assertSame(['Feines Essen', 'Stilvolle Atmosphäre', 'Einmalige Lage'], $crawler->filter('.venue-rating__highlights li')->each(static fn (Crawler $li): string => $li->text()));
+
+        // Fact lists: groups in DP-7 order, a rule between the halves.
+        self::assertSame(
+            ['Gebäudeart', 'Lage', 'Geeignet für', 'Infrastruktur', 'Umgebung'],
+            $crawler->filter('.venue-facts dt')->each(static fn (Crawler $dt): string => $dt->text()),
+        );
+        self::assertCount(1, $crawler->filter('.venue-facts hr'));
+
+        // Räume with both dialogs on the first room and none on the second.
+        self::assertSame(['Rittersaal', 'Gewölbekeller'], $crawler->filter('.venue-room__name')->each(static fn (Crawler $h): string => $h->text()));
+        self::assertSelectorExists('button[commandfor="room-1-info"]');
+        self::assertSelectorExists('button[commandfor="room-1-facts"]');
+        self::assertSelectorNotExists('button[commandfor^="room-2-"]');
+        self::assertSelectorTextContains('#room-1-info', 'Theater (sitzend): 60 - 250 Personen');
+        self::assertSelectorTextContains('#room-1-info', 'Seminar (sitzend): 120 Personen');
+        self::assertSelectorTextContains('#room-1-info', 'Der grosse Saal mit Kronleuchtern.');
+        self::assertSelectorTextContains('#room-1-facts', 'Fläche: 220 m²');
+        self::assertSelectorTextContains('#room-1-facts', 'Raumhöhe: 4 m');
+        self::assertSelectorTextContains('#room-1-facts', 'Boden: Parkett');
+
+        // Häufige Fragen.
+        self::assertSame(
+            ['Eigenes Catering?', 'Tageslicht?', 'Parking?'],
+            $crawler->filter('.venue-faq dt')->each(static fn (Crawler $dt): string => $dt->text()),
+        );
+        self::assertSelectorTextContains('.venue-faq', 'Eigenes Catering möglich');
+        self::assertSelectorTextContains('.venue-faq', '100 Parkplätze (kostenlos)');
+
+        // Standort.
+        self::assertSelectorTextContains('#standort', 'Seestrasse 1, 8001 Zürich');
+        self::assertSame(
+            ['0.9 km bis Bahnhof Zürich Stadelhofen', '3.2 km bis Autobahn', '12.0 km bis Flughafen Zürich'],
+            $crawler->filter('.venue-location__distances li')->each(static fn (Crawler $li): string => $li->text()),
+        );
+
+        // Kontakt: the reveal link, never the number.
+        self::assertSelectorExists('#kontakt a[data-phone-reveal][rel="nofollow"][href="/hochzeitslocation/schloss-seeblick/telefon"]');
+        self::assertSelectorExists('#kontakt a[href="mailto:info@seeblick.example"]');
+        self::assertSelectorExists('#kontakt a[href="https://seeblick.example"][rel="nofollow noopener"]');
+        self::assertSelectorTextContains('#kontakt', 'Anna Muster');
+        $html = (string) $this->client->getResponse()->getContent();
+        self::assertStringNotContainsString(DetailVenues::FULL_PHONE, $html);
+        self::assertStringNotContainsString(PhoneNumber::fromE164(DetailVenues::FULL_PHONE)->display(), $html);
+        self::assertStringNotContainsString('441234567', $html);
+
+        // Dokumente.
+        self::assertCount(2, $crawler->filter('.venue-documents a[href^="/media/'.$venue->number().'/"][href$=".pdf"]'));
+        self::assertSelectorTextContains('.venue-documents', 'Preisliste');
+
+        // Slot for #14: present and empty.
+        self::assertCount(1, $crawler->filter('section#anfrage'));
+        self::assertSame('', trim($crawler->filter('section#anfrage')->html()));
+
+        // Reviews: three visible, the fourth behind "Alle Kommentare".
+        self::assertCount(3, $crawler->filter('.venue-reviews > .venue-review'));
+        self::assertSelectorTextContains('.venue-reviews > .venue-review', 'Loreana - Besucherin, April 2025');
+        self::assertSelectorTextContains('.venue-reviews details summary', 'Alle Kommentare');
+        self::assertCount(1, $crawler->filter('.venue-reviews details .venue-review'));
+
+        // Ähnliche Locations: 12 cards, linking to the detail pages, and "Alle Locations".
+        self::assertSelectorTextContains('.similar-venues h2', 'Ähnliche Locations');
+        self::assertCount(12, $crawler->filter('.similar-venues .similar-card'));
+        self::assertSelectorExists('.similar-venues .similar-card a[href^="/hochzeitslocation/andere-location-"]');
+        self::assertSelectorTextContains('.similar-venues__all', 'Alle Locations');
+
+        // No empty headings, no inline styles or scripts.
+        $this->assertNoEmptyHeadings($crawler);
+        self::assertCount(0, $crawler->filter('[style]'));
+        self::assertCount(0, $crawler->filter('style'));
+        self::assertCount(0, $crawler->filter('script:not([src])'));
+    }
+
+    public function test_headers_are_publicly_cacheable_without_session(): void
+    {
+        DetailVenues::minimal();
+
+        $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->assertPublicCache();
+    }
+
+    public function test_a_minimal_venue_hides_its_empty_sections(): void
+    {
+        DetailVenues::minimal();
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+
+        self::assertSame(['#beschreibung', '#standort'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
+        self::assertSelectorNotExists('#bilder');
+        self::assertSelectorNotExists('button[commandfor="venue-gallery"]');
+        self::assertSelectorNotExists('#venue-gallery');
+        self::assertSelectorNotExists('[fetchpriority="high"]');
+        self::assertSelectorNotExists('h1 .badge');
+        self::assertSelectorNotExists('#bewertung');
+        self::assertSelectorNotExists('.venue-rating');
+        self::assertSelectorNotExists('.venue-facts');
+        self::assertSelectorNotExists('.venue-rooms');
+        self::assertSelectorNotExists('.venue-faq');
+        self::assertSelectorNotExists('#kontakt');
+        self::assertSelectorNotExists('.venue-documents');
+        self::assertSelectorNotExists('.venue-reviews');
+        self::assertSelectorNotExists('.similar-venues');
+        self::assertSelectorNotExists('.venue-location__distances');
+        self::assertSelectorTextContains('#standort', DetailVenues::town('Bern')->zip().' Bern');
+        self::assertSame(['80 Personen'], $crawler->filter('.venue-head__facts li')->each(static fn (Crawler $li): string => $li->text()));
+        self::assertSame('Ein kleines Gartenhaus.', $crawler->filter('meta[name="description"]')->attr('content'));
+        self::assertSelectorTextContains('.venue-head__description', 'Ein kleines Gartenhaus.');
+        $this->assertNoEmptyHeadings($crawler);
+    }
+
+    public function test_reviews_carry_the_rating_anchor_when_there_is_no_score(): void
+    {
+        $venue = DetailVenues::minimal();
+        VenueReviewFactory::createOne(['venue' => $venue, 'firstName' => 'Lea', 'reviewedMonth' => new \DateTimeImmutable('2024-11-01')]);
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+
+        self::assertSame(['#beschreibung', '#standort', '#bewertung'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
+        self::assertSelectorExists('section#bewertung.venue-reviews');
+        self::assertSelectorNotExists('.venue-reviews details');
+        self::assertSelectorTextContains('.venue-review__byline', 'November 2024');
+    }
+
+    public function test_an_old_slug_redirects_permanently(): void
+    {
+        $venue = DetailVenues::minimal();
+        VenueSlugHistoryFactory::createOne(['venue' => $venue, 'slug' => 'altes-gartenhaus']);
+
+        $this->client->request('GET', '/hochzeitslocation/altes-gartenhaus');
+
+        self::assertResponseStatusCodeSame(301);
+        self::assertResponseRedirects('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG, 301);
+        $this->assertPublicCache();
+    }
+
+    public function test_unknown_and_garbage_slugs_are_not_found(): void
+    {
+        DetailVenues::minimal();
+
+        $this->client->request('GET', '/hochzeitslocation/gibt-es-nicht');
+        self::assertResponseStatusCodeSame(404);
+
+        $this->client->request('GET', '/hochzeitslocation/Foo%20Bar');
+        self::assertResponseStatusCodeSame(404);
+
+        $this->client->request('GET', '/hochzeitslocation/-kaputt-');
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function test_an_unpublished_venue_is_gone(): void
+    {
+        $venue = DetailVenues::minimal();
+        VenueSlugHistoryFactory::createOne(['venue' => $venue, 'slug' => 'altes-gartenhaus']);
+        $venue->unpublish();
+        $this->em->flush();
+
+        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        self::assertResponseStatusCodeSame(410);
+
+        $this->client->request('GET', '/hochzeitslocation/altes-gartenhaus');
+        self::assertResponseStatusCodeSame(410);
+    }
+
+    public function test_a_venue_without_a_german_translation_is_not_reachable(): void
+    {
+        // No `de` translation row means no German slug to match: 404 (its history slugs give 410).
+        $venue = VenueFactory::createOne(['town' => DetailVenues::town('Bern')]);
+        VenueTranslationFactory::createOne(['venue' => $venue, 'locale' => 'fr', 'slug' => 'maison-sans-allemand']);
+
+        $this->client->request('GET', '/hochzeitslocation/maison-sans-allemand');
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    private function page(string $uri): Crawler
+    {
+        $crawler = $this->client->request('GET', $uri);
+        self::assertResponseIsSuccessful();
+
+        return $crawler;
+    }
+
+    private function assertPublicCache(): void
+    {
+        $response = $this->client->getResponse();
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        self::assertStringContainsString('public', $cacheControl);
+        self::assertStringContainsString('s-maxage=600', $cacheControl);
+        self::assertStringContainsString('stale-while-revalidate=86400', $cacheControl);
+        self::assertStringNotContainsString('private', $cacheControl);
+        self::assertFalse($response->headers->has('Set-Cookie'));
+        self::assertSame([], $response->headers->getCookies());
+    }
+
+    private function assertNoEmptyHeadings(Crawler $crawler): void
+    {
+        foreach ($crawler->filter('h1, h2, h3') as $heading) {
+            self::assertNotSame('', trim($heading->textContent), 'Empty heading.');
+        }
+    }
+}

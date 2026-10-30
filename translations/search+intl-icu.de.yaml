@@ -1,1 +1,7 @@
 # Strings of the Search module. Keys: <context>.<description>.
+# "Ähnliche Locations" on the detail page (#8, SimilarVenuesController fragment).
+similar:
+    heading: Ähnliche Locations
+    all: Alle Locations
+    label: Ähnliche Locations
+    capacity: '{range} Personen'

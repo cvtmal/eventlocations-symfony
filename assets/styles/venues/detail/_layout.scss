@@ -1,0 +1,57 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// Below lg the actions are a fixed bottom bar (_actions.scss, about 4.4rem high). The clearance
+// sits on the body, not on main, so the site footer scrolls fully above the bar as well.
+body.page-venue {
+    @include bp.down(lg) {
+        padding-bottom: 4.5rem;
+    }
+}
+
+// Page frame: content column plus, from lg, the 360 px actions column on the right (D12).
+.page-venue main {
+    background: var(--c-surface);
+    padding-bottom: var(--space-2xl);
+}
+
+.venue-layout {
+    display: grid;
+    gap: 0 var(--space-xl);
+
+    @include bp.up(lg) {
+        grid-template-columns: minmax(0, 1fr) 17rem;
+        align-items: start;
+    }
+
+    @include bp.up(xl) {
+        grid-template-columns: minmax(0, 1fr) 22.5rem;
+    }
+}
+
+.venue-content {
+    min-width: 0;
+
+    @include bp.up(lg) {
+        grid-column: 1;
+        grid-row: 1;
+    }
+}
+
+.venue-section {
+    padding-block: var(--space-xl) 0;
+    scroll-margin-top: 4rem;
+}
+
+.venue-section__title {
+    margin-bottom: var(--space-m);
+    font-size: 1.5rem;
+    line-height: 1.3;
+}
+
+.venue-inquiry {
+    scroll-margin-top: 4rem;
+
+    &:empty {
+        display: none;
+    }
+}

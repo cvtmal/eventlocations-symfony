@@ -1,0 +1,65 @@
+// Häufige Fragen, Standort, Kontakt, Dokumente (DP-9 to DP-12).
+.venue-faq__list {
+    display: grid;
+    gap: var(--space-s);
+    margin: 0;
+
+    div {
+        display: grid;
+        grid-template-columns: minmax(8rem, auto) 1fr;
+        gap: var(--space-m);
+    }
+
+    dt {
+        font-weight: var(--fw-semibold);
+    }
+
+    dd {
+        margin: 0;
+    }
+}
+
+.venue-location__address {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-s);
+}
+
+.venue-location__distances,
+.venue-contact__list,
+.venue-documents__list {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+}
+
+.venue-contact__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: 2.75rem;
+}
+
+.venue-phone {
+    padding-block: var(--space-2xl);
+}
+
+.venue-phone__heading {
+    margin-bottom: var(--space-l);
+    font-size: 1.75rem;
+}
+
+.venue-phone__back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+}

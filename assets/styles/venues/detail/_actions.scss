@@ -1,0 +1,138 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// "Anfragen & Merken" (DP-4, D12). Below lg a fixed bottom bar; from lg a sticky card overlapping the hero's edge.
+.venue-actions {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-m);
+    background: var(--c-surface-2);
+    box-shadow: var(--sh-dropdown);
+
+    .btn {
+        flex: 0 0 auto;
+    }
+
+    @include bp.down(lg) {
+        .venue-actions__row .btn,
+        .merken-button--detail .btn,
+        .merken-button--detail button {
+            width: 2.75rem;
+            padding: 0;
+
+            span {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+                white-space: nowrap;
+            }
+        }
+    }
+
+    @include bp.up(lg) {
+        position: sticky;
+        inset: auto;
+        top: 3.75rem;
+        z-index: 25; // above the sticky nav, which it overlaps together with the hero's edge
+
+        grid-column: 2;
+        grid-row: 1;
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-m);
+        margin-top: calc(-1 * (var(--venue-nav-h) + 2.75rem));
+        padding: var(--space-l);
+        border-radius: var(--r-bar);
+        box-shadow: none;
+    }
+}
+
+.venue-actions__title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+
+    @include bp.up(lg) {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip-path: none;
+        font-size: 1.0625rem;
+        text-align: center;
+    }
+}
+
+.venue-actions__primary {
+    flex: 1 1 auto;
+}
+
+.venue-actions__row {
+    display: flex;
+    gap: var(--space-xs);
+
+    @include bp.up(lg) {
+        gap: var(--space-s);
+
+        .btn {
+            flex: 1 1 0;
+            padding-inline: var(--space-xs);
+            font-weight: var(--fw-regular);
+            font-size: var(--fs-small);
+        }
+    }
+}
+
+// The Teilen fallback menu (popover; works without JS).
+.venue-share {
+    margin: auto auto 5rem;
+    min-width: 14rem;
+    padding: var(--space-xs);
+    border: 0;
+    border-radius: var(--r-bar);
+    background: var(--c-surface-3);
+    color: var(--c-ink);
+    box-shadow: var(--sh-dropdown);
+
+    @include bp.up(lg) {
+        margin: auto;
+    }
+}
+
+.venue-share__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.venue-share__item {
+    display: block;
+    width: 100%;
+    padding: var(--space-xs) var(--space-s);
+    border: 0;
+    background: none;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.venue-share__status:empty {
+    display: none;
+}
+
+.venue-share__status {
+    margin: var(--space-2xs) var(--space-s);
+    font-size: var(--fs-small);
+}

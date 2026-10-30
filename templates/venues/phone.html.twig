@@ -1,0 +1,14 @@
+{# Phone reveal without JS (DP-11): the answer of venue_phone for a plain link. noindex, never cached. #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'detail.phone.title'|trans({name: name}, 'venues') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block main %}
+    <div class="venue-phone container">
+        <h1 class="venue-phone__heading">{{ 'detail.phone.heading'|trans({name: name}, 'venues') }}</h1>
+        <p class="venue-phone__number"><a class="btn btn--primary" href="tel:{{ e164 }}">{{ icon('phone') }}<span>{{ 'detail.phone.call'|trans({display: display}, 'venues') }}</span></a></p>
+        <p><a class="venue-phone__back" href="{{ path('venue_show', {slug: slug}) }}">{{ icon('chevron-left') }}<span>{{ 'detail.phone.back'|trans({name: name}, 'venues') }}</span></a></p>
+    </div>
+{% endblock %}

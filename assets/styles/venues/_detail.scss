@@ -1,0 +1,13 @@
+// Venue detail page (#8, `templates/venues/detail/*`). One partial per part; the print stylesheet (DP-16) last.
+@use 'detail/layout';
+@use 'detail/hero';
+@use 'detail/gallery';
+@use 'detail/nav';
+@use 'detail/actions';
+@use 'detail/head';
+@use 'detail/rating';
+@use 'detail/facts';
+@use 'detail/rooms';
+@use 'detail/sections';
+@use 'detail/reviews';
+@use 'detail/print';

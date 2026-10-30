@@ -1,0 +1,61 @@
+// Full-screen gallery dialog (DP-2, D11).
+.venue-gallery {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: var(--space-m);
+    border: 0;
+    background: var(--c-bg);
+    color: var(--c-ink);
+
+    &[open] {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &::backdrop {
+        background: var(--c-bg);
+    }
+}
+
+.venue-gallery__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-m);
+    margin-bottom: var(--space-m);
+}
+
+.venue-gallery__title {
+    font-size: 1.25rem;
+}
+
+.venue-gallery__body {
+    flex: 1;
+    min-height: 0;
+
+    .carousel,
+    .carousel__track {
+        height: 100%;
+    }
+
+    .carousel__slide {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 4rem;
+    }
+}
+
+.venue-gallery__picture {
+    max-height: 100%;
+
+    .picture__img {
+        max-height: calc(100vh - 10rem);
+        width: auto;
+        margin-inline: auto;
+        object-fit: contain;
+    }
+}

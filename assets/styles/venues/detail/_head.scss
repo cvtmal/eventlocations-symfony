@@ -1,0 +1,56 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// Head block (DP-5): name + badge, place, icon row, description.
+.venue-head {
+    scroll-margin-top: 4rem;
+}
+
+.venue-head__name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    font-size: 1.75rem;
+    line-height: 1.2;
+
+    .badge {
+        margin-top: .25rem;
+    }
+
+    @include bp.up(md) {
+        font-size: 2.25rem;
+    }
+}
+
+.venue-head__place {
+    margin: var(--space-xs) 0 0;
+    font-size: 1.25rem;
+}
+
+.venue-head__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-l);
+    margin: var(--space-l) 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-tag);
+
+    li {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-2xs);
+        text-align: center;
+    }
+}
+
+.venue-head__description p {
+    margin: 0 0 var(--space-m);
+    font-size: var(--fs-small);
+    line-height: 1.6;
+
+    @include bp.up(md) {
+        font-size: var(--fs-body);
+    }
+}

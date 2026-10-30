@@ -1,0 +1,19 @@
+{#
+    Full-screen gallery (DP-2), opened by "Bilder ansehen". Written here rather than with the _dialog shell, which
+    has no full-screen variant; same close-form pattern. Images are lazy: a closed dialog is not rendered. Params: venue.
+#}
+<dialog id="venue-gallery" class="venue-gallery" aria-labelledby="venue-gallery-title" data-dialog>
+    <div class="venue-gallery__header">
+        <h2 id="venue-gallery-title" class="venue-gallery__title">{{ 'detail.gallery.title'|trans({name: venue.name}, 'venues') }}</h2>
+        <form method="dialog"><button class="btn btn--close" aria-label="{{ 'layout.close'|trans }}">{{ icon('x') }}</button></form>
+    </div>
+    <div class="venue-gallery__body" aria-live="polite">
+        {% embed 'components/_carousel.html.twig' with {id: 'venue-gallery-carousel', label: 'detail.gallery.label'|trans({}, 'venues'), photos: venue.photos} only %}
+            {% block slides %}
+                {% for photo in photos %}
+                    <li class="carousel__slide">{{ venue_picture(photo, sizes='100vw', loading='lazy', class='venue-gallery__picture') }}</li>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+</dialog>
