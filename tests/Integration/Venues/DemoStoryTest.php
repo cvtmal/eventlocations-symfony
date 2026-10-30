@@ -66,6 +66,10 @@ final class DemoStoryTest extends KernelTestCase
         self::assertLessThan(60.0, $seconds);
         self::assertSame(DemoStory::VENUES, $this->rows('SELECT count(*) FROM venues'));
         self::assertSame(26, $this->rows('SELECT count(DISTINCT canton_code) FROM venues'));
+        self::assertSame(4, $this->rows('SELECT count(*) FROM venues WHERE town_id IS NULL'));
+        self::assertSame(2, $this->rows('SELECT count(*) FROM venues WHERE town_id IS NULL AND canton_code IS NOT NULL'));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM venues WHERE town_id IS NULL AND (zip IS NOT NULL OR street IS NOT NULL OR lat IS NOT NULL)'));
+        self::assertSame(1, $this->rows('SELECT count(*) FROM venue_translations WHERE region IS NOT NULL'));
         self::assertSame(
             ['beliebte_location' => 3, 'empfehlung' => 6, 'top_premium' => 9, 'premium' => 12, 'basic' => 30],
             array_map('intval', $this->connection->fetchAllKeyValue('SELECT tier, count(*) FROM venues GROUP BY tier ORDER BY min(tier_rank)')),

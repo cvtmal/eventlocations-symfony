@@ -11,11 +11,13 @@ use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -136,6 +138,9 @@ final class ListingControllerTest extends WebTestCase
 
         $placeholder = $this->card($crawler, 'Ohne Bilder');
         self::assertCount(1, $placeholder->filter('.card__placeholder'));
+        // The photo column sits above the title link's overlay, so the placeholder must link itself.
+        self::assertSame($placeholder->filter('.card__link')->attr('href'), $placeholder->filter('a.card__placeholder')->attr('href'));
+        self::assertSame('-1', $placeholder->filter('a.card__placeholder')->attr('tabindex'));
         self::assertCount(0, $placeholder->filter('[data-carousel]'));
     }
 
@@ -310,6 +315,106 @@ final class ListingControllerTest extends WebTestCase
         self::assertStringContainsString('Bundesamt für Statistik (BFS)', $form->filter('.region-filter__credit')->text());
     }
 
+    public function test_venues_without_a_town_are_listed(): void
+    {
+        $this->venue(['name' => 'Gasthof Linde', 'town' => $this->town('Stäfa')]);
+        DetailVenues::inCantonOnly();
+        DetailVenues::inRegionOnly($this->em(), 'Schweizweit');
+        DetailVenues::withoutPlace();
+
+        $crawler = $this->get('/hochzeitslocations');
+
+        self::assertSelectorTextSame('.listing-hero__count', '4 Resultate');
+        self::assertSame(['Gasthof Linde', 'Remise Nur Region', 'Scheune Nur Kanton', 'Wiesenhof Ohne Ort'], $this->names($crawler));
+    }
+
+    public function test_a_card_shows_what_is_known_about_the_place(): void
+    {
+        DetailVenues::inCantonOnly();
+        DetailVenues::inRegionOnly($this->em(), 'Schweizweit');
+        DetailVenues::withoutPlace();
+
+        $crawler = $this->get('/hochzeitslocations');
+
+        self::assertSame(['Kanton Zürich'], $this->cardPlace($crawler, 'Scheune Nur Kanton'));
+        self::assertSame(['Schweizweit'], $this->cardPlace($crawler, 'Remise Nur Region'));
+        self::assertSame([], $this->cardPlace($crawler, 'Wiesenhof Ohne Ort'), 'no pin and no empty item');
+    }
+
+    public function test_a_canton_filter_keeps_the_canton_only_venue_and_not_the_region_only_one(): void
+    {
+        DetailVenues::inCantonOnly();
+        DetailVenues::inRegionOnly($this->em(), 'Schweizweit');
+
+        $crawler = $this->get('/hochzeitslocations?canton=zh');
+
+        self::assertSame(['Scheune Nur Kanton'], $this->names($crawler));
+    }
+
+    public function test_a_radius_search_excludes_venues_without_a_town(): void
+    {
+        $this->venue(['name' => 'Gasthof Linde', 'town' => $this->town('Zürich')]);
+        DetailVenues::inCantonOnly();
+        DetailVenues::withoutPlace();
+
+        $crawler = $this->get('/hochzeitslocations?place='.$this->town('Zürich')->id().'&radius=10');
+
+        self::assertSame(['Gasthof Linde'], $this->names($crawler));
+    }
+
+    public function test_the_region_form_offers_only_cantons_until_a_venue_has_a_town(): void
+    {
+        DetailVenues::inCantonOnly();
+        DetailVenues::withoutPlace();
+
+        $form = $this->get('/hochzeitslocations')->filter('#filter-region-form');
+
+        self::assertStringContainsString('region-filter--canton-only', (string) $form->attr('class'));
+        self::assertNotNull($form->filter('#filter-region-place')->attr('disabled'));
+        self::assertNotNull($form->filter('#filter-region-radius')->attr('disabled'));
+
+        // region-filter.js reads every one of these unguarded.
+        foreach (['[role="tablist"][hidden]', '[data-panel="canton"]', '[data-panel="place"]', '#filter-region-place-list', 'output', '[data-region-map]', '[data-region-tooltip]', '[data-region-value="place"]', '[data-region-value="canton"]'] as $selector) {
+            self::assertCount(1, $form->filter($selector), $selector);
+        }
+    }
+
+    public function test_the_ort_tab_comes_back_with_the_first_town(): void
+    {
+        DetailVenues::inCantonOnly();
+        $this->venue(['name' => 'Gasthof Linde', 'town' => $this->town('Stäfa')]);
+
+        $form = $this->get('/hochzeitslocations')->filter('#filter-region-form');
+
+        self::assertStringNotContainsString('region-filter--canton-only', (string) $form->attr('class'));
+        self::assertNull($form->filter('#filter-region-place')->attr('disabled'));
+        self::assertNull($form->filter('#filter-region-radius')->attr('disabled'));
+    }
+
+    public function test_a_bookmarked_place_keeps_the_full_form_and_its_chip(): void
+    {
+        DetailVenues::inCantonOnly();
+
+        $crawler = $this->get('/hochzeitslocations?place=8001');
+
+        $form = $crawler->filter('#filter-region-form');
+        self::assertStringNotContainsString('region-filter--canton-only', (string) $form->attr('class'));
+        self::assertNull($form->filter('#filter-region-place')->attr('disabled'));
+        self::assertSame('8001', $form->filter('#filter-region-place')->attr('value'));
+        self::assertCount(1, $crawler->filter('.filter-bar .chip'));
+    }
+
+    public function test_the_canton_only_form_keeps_the_page_public_and_cookie_free(): void
+    {
+        DetailVenues::inCantonOnly();
+
+        $this->get('/hochzeitslocations');
+
+        $response = $this->client->getResponse();
+        self::assertTrue($response->headers->hasCacheControlDirective('public'));
+        self::assertSame([], $response->headers->getCookies());
+    }
+
     public function test_empty_state(): void
     {
         $this->venue([]);
@@ -421,6 +526,26 @@ final class ListingControllerTest extends WebTestCase
         sort($names);
 
         return $names;
+    }
+
+    /**
+     * The facts of a card without its capacity, which is always first.
+     *
+     * @return list<string>
+     */
+    private function cardPlace(Crawler $crawler, string $name): array
+    {
+        $card = $crawler->filter('.card')->reduce(static fn (Crawler $card): bool => $card->filter('.card__link')->text() === $name);
+
+        return \array_slice($card->filter('.card-facts__item')->each(static fn (Crawler $item): string => $item->text()), 1);
+    }
+
+    private function em(): EntityManagerInterface
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+
+        return $em;
     }
 
     /**

@@ -59,6 +59,9 @@ class VenueTranslation
     #[ORM\Column(type: Types::STRING, length: 250, nullable: true)]
     private ?string $openingHours = null;
 
+    #[ORM\Column(type: Types::STRING, length: 60, nullable: true)]
+    private ?string $region = null;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -108,6 +111,15 @@ class VenueTranslation
         $this->capacityNote = $capacityNote;
         $this->partyNote = $partyNote;
         $this->openingHours = $openingHours;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    /**
+     * Where the venue is when it has no canton (#21), verbatim; NULL otherwise.
+     */
+    public function changeRegion(?string $region): void
+    {
+        $this->region = $region;
         $this->updatedAt = new \DateTimeImmutable();
     }
 
@@ -171,6 +183,11 @@ class VenueTranslation
     public function openingHours(): ?string
     {
         return $this->openingHours;
+    }
+
+    public function region(): ?string
+    {
+        return $this->region;
     }
 
     public function createdAt(): \DateTimeImmutable

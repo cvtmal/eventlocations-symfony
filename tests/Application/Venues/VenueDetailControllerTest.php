@@ -208,6 +208,58 @@ final class VenueDetailControllerTest extends WebTestCase
         $this->assertNoEmptyHeadings($crawler);
     }
 
+    public function test_a_venue_with_no_place_renders_without_a_location(): void
+    {
+        DetailVenues::withoutPlace();
+        DetailVenues::minimal();
+
+        $crawler = $this->page('/hochzeitslocation/wiesenhof-ohne-ort');
+
+        self::assertSame('Wiesenhof Ohne Ort für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertCount(0, $crawler->filter('#standort'));
+        self::assertCount(0, $crawler->filter('.venue-nav a[href="#standort"]'));
+        self::assertCount(0, $crawler->filter('.venue-head__place'));
+        self::assertSame('Wiesenhof Ohne Ort', $crawler->filter('[data-share-title]')->attr('data-share-title'));
+        self::assertCount(1, $crawler->filter('.similar-venues .similar-card'));
+    }
+
+    public function test_a_canton_only_venue_names_its_canton(): void
+    {
+        DetailVenues::inCantonOnly();
+
+        $crawler = $this->page('/hochzeitslocation/scheune-nur-kanton');
+
+        self::assertSame('Scheune Nur Kanton im Kanton Zürich für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSelectorTextSame('.venue-head__place', 'Kanton Zürich');
+        self::assertCount(0, $crawler->filter('#standort'));
+        self::assertSame('Scheune Nur Kanton im Kanton Zürich', $crawler->filter('[data-share-title]')->attr('data-share-title'));
+    }
+
+    public function test_a_region_only_venue_shows_the_text_verbatim(): void
+    {
+        DetailVenues::inRegionOnly($this->em, 'Schweizweit');
+
+        $crawler = $this->page('/hochzeitslocation/remise-nur-region');
+
+        self::assertSame('Remise Nur Region für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSelectorTextSame('.venue-head__place', 'Schweizweit');
+        self::assertSame('Remise Nur Region', $crawler->filter('[data-share-title]')->attr('data-share-title'));
+    }
+
+    public function test_distances_alone_keep_the_location_section_without_an_address(): void
+    {
+        $venue = DetailVenues::withoutPlace();
+        $venue->changeDistances('0.9', 'Bahnhof Beispiel', null, null, null, null);
+        $this->em->flush();
+
+        $crawler = $this->page('/hochzeitslocation/wiesenhof-ohne-ort');
+
+        self::assertCount(1, $crawler->filter('#standort'));
+        self::assertCount(1, $crawler->filter('.venue-nav a[href="#standort"]'));
+        self::assertCount(0, $crawler->filter('.venue-location__address'));
+        self::assertSelectorTextContains('.venue-location__distances', 'Bahnhof Beispiel');
+    }
+
     public function test_the_wedding_section_shows_every_fact(): void
     {
         DetailVenues::full($this->em);

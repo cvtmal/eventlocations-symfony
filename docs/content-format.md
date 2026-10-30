@@ -3,7 +3,7 @@
 Real venues reach the site only through content folders (S8): one folder per venue with a
 `venue.yaml` and its photos and PDFs. `app:venues:import` validates the folders and writes
 them into the database; nothing else edits a content venue. This page is the reference for
-writing folders by hand and for the legacy import (#21), which generates them.
+writing folders by hand and for the CSV export (#21, #32), which generates them.
 
 The machine-readable definition is the JSON Schema
 [`content-format.schema.json`](content-format.schema.json) (draft-07). The import validates
@@ -32,16 +32,18 @@ across imports and **never changes**. It is not the URL: the URL slug comes from
 
 - Renaming the venue: change `name:` and keep the folder. The old URL redirects to the new one.
 - Renaming the folder makes a new venue; the old one disappears only with `--prune`.
-- Recommendation for #21: `<ascii-name-slug>-<eventlokale-id>`, e.g. `schloss-beispiel-1093`.
-  The id makes it unique (legacy slugs are not) and the name keeps it readable.
+- Generated folders use `<ascii-name-slug>-<first 8 of the Wix id>`, e.g.
+  `schloss-beispiel-1a2b3c4d`. The name keeps it readable; the id keeps it unique. A later
+  export finds the folder by its last 8 characters, so a changed name does not make a new
+  folder.
 
 Room keys (`rooms[].key`) follow the same rules, are unique within the venue and never
 change either: they keep a room's photos attached to it when rooms are reordered.
 
 ## Example
 
-Every field, with fictional values. Only `name`, `tier`, `capacity.max`, `address.zip`,
-`address.town`, `geo` and `translations.de.summary` are required.
+Every field, with fictional values. Only `name`, `tier`, `capacity.max` and
+`translations.de.summary` are required. A venue may have no address at all.
 
 ```yaml
 # yaml-language-server: $schema=../../../docs/content-format.schema.json
@@ -54,12 +56,12 @@ capacity:
   max: 180                            # required, 1–50000
   seated: 120                         # optional, 1–50000, seats at a seated dinner
   standing: 180                       # optional, 1–50000, guests at a standing reception
-address:
-  street: Seestrasse 1                # optional, ≤ 150
-  zip: '8001'                         # four digits, quoted
-  town: Zürich                        # official town name (Ortschaft)
-  canton: zh                          # optional; only when ZIP and name match two towns
-geo:
+address:                              # optional
+  street: Seestrasse 1                # optional, ≤ 150, needs zip and town
+  zip: '8001'                         # optional, four digits, quoted; zip and town come together
+  town: Zürich                        # optional, official town name (Ortschaft)
+  canton: zh                          # optional; the venue's canton, alone or to tell two towns apart
+geo:                                  # optional, both or neither
   lat: 47.3723                        # 45.8–47.9
   lng: 8.5423                         # 5.9–10.6
 distances:                            # each optional; km 0–500 with at most one decimal
@@ -113,6 +115,7 @@ translations:
     capacity_note: 120 Sitzplätze im Rittersaal, 60 im Keller.   # optional, ≤ 250
     party_note: Musik bis 2 Uhr, danach Ausklang im Keller.   # optional, ≤ 250
     opening_hours: Mai bis Oktober, täglich ab 10 Uhr.   # optional, ≤ 250
+    region: Seeland                   # optional, ≤ 60, verbatim; where the venue is when it has no canton
 photos:                               # gallery, in display order; files in photos/
   - file: aussen.jpg
     alt: {de: Schloss Beispiel vom See aus}   # optional, ≤ 700
@@ -158,11 +161,11 @@ reviews:                              # replaced as a whole on every change
 | `price_level` | code | `moderate`, `medium`, `exclusive`. |
 | `capacity.min`, `capacity.max` | 1–50000 | `max` required; `min` ≤ `max`. |
 | `capacity.seated`, `capacity.standing` | 1–50000 | The venue's own numbers; not compared with `max`. |
-| `address.street` | text ≤ 150 | |
-| `address.zip` | `'NNNN'` | Quote it. Any ZIP of the town works, not only the lowest. |
+| `address.street` | text ≤ 150 | Needs `zip` and `town`. |
+| `address.zip` | `'NNNN'` | Quote it. Any ZIP of the town works, not only the lowest. `zip` and `town` come together. |
 | `address.town` | text | Official town name; matched exactly after folding case and umlauts (`Zürich` = `ZÜRICH` = `Zuerich`, but not `Zurich`). |
-| `address.canton` | `zh`, `be`, … | Only when ZIP and name match more than one town (the import then says so). |
-| `geo.lat`, `geo.lng` | decimal degrees | Inside Switzerland. |
+| `address.canton` | one of the 26 codes (`zh`, `be`, …) | The venue's canton when there is no town, or to tell two towns apart (the import then says so). With a town it must match the town's canton; a mismatch fails the venue as an unknown town. |
+| `geo.lat`, `geo.lng` | decimal degrees | Inside Switzerland. Optional, both or neither. |
 | `distances.<station\|highway\|airport>` | `km` 0–500 (one decimal), `name` ≤ 150 | A name needs its km. |
 | `contact.phone` | E.164 (`'+41…'`) | Quote it. |
 | `contact.inquiry_email` | e-mail ≤ 254 | |
@@ -178,7 +181,7 @@ reviews:                              # replaced as a whole on every change
 | `rating.highlights` | ≤ 3 codes | `food`, `atmosphere`, `architecture`, `location`, `hospitality`, `reachability`, `equipment`, `programme`, `value`. |
 | `terms.<group>` | list of codes | See the vocabulary below. |
 | `main_terms.<setting\|building\|suitable_for>` | one code | Must also be listed under `terms`. |
-| `translations.<locale>` | `summary` ≤ 200 (required), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250, `ambience` ≤ 60, `capacity_note`, `party_note`, `opening_hours` ≤ 250 | `de` is required; other locales only once the site serves them (today only `de`). |
+| `translations.<locale>` | `summary` ≤ 200 (required), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250, `ambience` ≤ 60, `capacity_note`, `party_note`, `opening_hours` ≤ 250, `region` ≤ 60 | `de` is required; other locales only once the site serves them (today only `de`). |
 | `photos[]` | `file`, `alt.<locale>` ≤ 700 | Order = display order. |
 | `rooms[]` | `key`, `translations.<locale>.name` ≤ 100 (+ `description`), `capacity`, `area_m2` 1–50000, `height_m` (> 0, ≤ 30, two decimals), `floor_material`, `seating`, `photos` | Order = display order. A seating entry needs `min` or `max`. |
 | `documents[]` | `file` (`.pdf`), `title.<locale>` ≤ 200 | `title.de` is required. |
@@ -249,10 +252,11 @@ make sf c="app:venues:import [path] [--dry-run] [--only=key] [--prune] [--force]
    skipped: running the import twice changes nothing.
 3. Creates or updates the venue by key. The venue number (used in saved favourites) never
    changes. Rooms keep their identity by key, photos and documents by their bytes.
-4. Slugs: the name's slug; when another venue has it (also as an old slug), the town is
-   appended (`schloss-beispiel-zuerich`), then a counter (`-2`, `-3`). Old slugs are kept so
-   their URLs redirect; renaming back takes the old slug back.
-5. Towns are resolved by ZIP and name; no match or several matches fail the venue.
+4. Slugs: the name's slug; when another venue has it (also as an old slug), the town, if
+   there is one, is appended (`schloss-beispiel-zuerich`), then a counter (`-2`, `-3`). Old
+   slugs are kept so their URLs redirect; renaming back takes the old slug back.
+5. When a folder names a town, it is resolved by ZIP and name; no match or several fail the
+   venue.
 6. Originals are copied to `MEDIA_ROOT/content/<key>/<sha256>.<ext>`; the web sizes are
    generated only for new photos. Files of removed photos and documents are deleted after
    the database commit.
@@ -285,11 +289,25 @@ first line comment; the path is relative to the `venue.yaml`:
 
 The editor then completes codes (`tier`, `terms.building`, …) and shows each field's limits.
 
+## Generated folders
+
+`app:legacy:export-content <csv> [path] [--dry-run]` turns the owner's Wix CSV into these
+folders; `app:venues:import` then loads them. The CSV stays under the git-ignored
+`content/owner/`.
+
+The export owns exactly these paths and keeps every other key, so another tool or a hand can
+add to a generated file:
+
+- `name`, `capacity.max`, `address.canton`
+- `contact.phone`, `contact.inquiry_email`, `contact.website`
+- `translations.de.summary`, `translations.de.description`, `translations.de.region`
+
+A value the CSV no longer holds removes its path. `tier` is written only when the file has
+none, so a tier set later survives a re-export. Comments do not survive a re-export that
+changes the file. The export removes no folder: one the CSV no longer has is reported as
+stale. `photos/`, `rooms/` and `documents/` are never touched.
+
 ## What is not in the format
 
-The format holds every venue column of the site and nothing else. These legacy fields have
-no place, so #21 drops them: single and double rooms, barrier-free, free parking, room
-width/length/daylight, ground plans, YouTube links and the header video, photo type tags,
-`boost` and `label_text` (the tier carries the listing order). #21 must also clean values
-the schema rejects: capacity 0, coordinates 0/0, summaries over 200 characters, room
-heights over 30 m, rooms without a name, numeric airport/highway "names" and GIF photos.
+The format holds every venue column of the site and nothing else. Barrier-free access and
+free parking are `amenity` codes (`wheelchair_access`, `parking`), not fields of their own.

@@ -1,14 +1,22 @@
 {#
     Venue detail page (#8, DP-1 to DP-16). Sections in the original's order (research D2).
     Slots for later cycles (final names, see CLAUDE.md "Venues"):
-      - {% block map %} at the end of <section id="standort"> (#15);
+      - {% block map %} at the end of <section id="standort"> (#15), which renders only on venue.hasLocation();
       - {% block inquiry %} inside <section id="anfrage"> (#14 fills it with inquiry_form(); `inquiry` is the bound form of a POST re-render, and no whitespace, so :empty hides the section);
       - the Merken button in _actions via favorites/_merken_button.html.twig (#7/#13).
     Both blocks live in this file on purpose: a block inside an included partial cannot be overridden.
 #}
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ 'detail.title'|trans({name: venue.name, town: venue.townName}, 'venues') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+{% block title %}
+    {%- if venue.place.townName -%}
+        {{ 'detail.title'|trans({name: venue.name, town: venue.place.townName}, 'venues') }}
+    {%- elseif venue.place.canton -%}
+        {{ 'detail.title_canton'|trans({name: venue.name, canton: venue.place.canton|trans}, 'venues') }}
+    {%- else -%}
+        {{ 'detail.title_no_place'|trans({name: venue.name}, 'venues') }}
+    {%- endif %} | {{ 'layout.site_name'|trans }}
+{%- endblock %}
 
 {% block meta %}<meta name="description" content="{{ venue.metaDescription ?? venue.summary }}">{% endblock %}
 
@@ -34,10 +42,12 @@
             {% if venue.wedding.hasAny() %}{{ include('venues/detail/_wedding.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.rooms is not empty %}{{ include('venues/detail/_rooms.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.hasFaq() %}{{ include('venues/detail/_faq.html.twig', {venue: venue}, with_context = false) }}{% endif %}
+            {% if venue.hasLocation() %}
             <section id="standort" class="venue-section venue-location" aria-labelledby="standort-title">
                 {{ include('venues/detail/_location.html.twig', {venue: venue}, with_context = false) }}
                 {% block map %}{% endblock %}
             </section>
+            {% endif %}
             {% if venue.hasContact() %}{{ include('venues/detail/_contact.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.documents is not empty %}{{ include('venues/detail/_documents.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             <section id="anfrage" class="venue-inquiry">{% block inquiry %}{{ inquiry_form(venue, inquiry ?? null) }}{% endblock %}</section>

@@ -12,6 +12,7 @@ use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
+use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\KnownTerms;
 use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\ListingCard;
@@ -20,10 +21,12 @@ use App\Search\ReadModel\SearchCriteria;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Doctrine\DBAL\Connection;
@@ -67,6 +70,34 @@ final class ListingQueryTest extends KernelTestCase
         $this->em->clear();
         $this->connection->rollBack();
         parent::tearDown();
+    }
+
+    public function test_a_venue_without_a_town_is_a_card_and_is_counted(): void
+    {
+        $this->venue('Seehaus Stäfa', ['town' => $this->town('Stäfa')]);
+        DetailVenues::withoutPlace();
+        DetailVenues::inCantonOnly();
+
+        $page = $this->query()->results(SearchCriteria::none(), 'de');
+
+        self::assertSame(3, $page->total);
+        self::assertCount(3, $page->cards);
+        self::assertArrayHasKey('Wiesenhof Ohne Ort', $this->byName($page->cards));
+    }
+
+    public function test_a_card_carries_the_place_it_knows(): void
+    {
+        $this->venue('Seehaus Stäfa', ['town' => $this->town('Stäfa')]);
+        DetailVenues::withoutPlace();
+        DetailVenues::inCantonOnly();
+        DetailVenues::inRegionOnly($this->em, 'Schweizweit');
+
+        $cards = $this->byName($this->query()->results(SearchCriteria::none(), 'de')->cards);
+
+        self::assertEquals(new VenuePlace('Stäfa', Canton::ZH, null), $cards['Seehaus Stäfa']->place);
+        self::assertEquals(new VenuePlace(null, Canton::ZH, null), $cards['Scheune Nur Kanton']->place);
+        self::assertEquals(new VenuePlace(null, null, 'Schweizweit'), $cards['Remise Nur Region']->place);
+        self::assertEquals(new VenuePlace(null, null, null), $cards['Wiesenhof Ohne Ort']->place);
     }
 
     public function test_canton(): void
@@ -359,7 +390,7 @@ final class ListingQueryTest extends KernelTestCase
         self::assertSame(Tier::Premium, $card->tier);
         self::assertSame(20, $card->capacityMin);
         self::assertSame(150, $card->capacityMax);
-        self::assertSame('Stäfa', $card->townName);
+        self::assertSame('Stäfa', $card->place->townName);
         self::assertSame('Am Zürichsee.', $card->summary);
         self::assertSame(8.4, $card->ratingScore);
         self::assertSame(12, $card->ratingCount);

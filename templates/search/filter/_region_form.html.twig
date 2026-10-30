@@ -5,11 +5,15 @@
     natively. With JS (js/region-filter.js): the tabs appear, the hidden fields carry the values and only the active
     tab's field is enabled, so the two tabs never compete at submit. Never write "Karte" as visible text here: the map's
     name stays in aria-label (ListingControllerTest checks the bar's text).
+    While no published venue has a town (#21, filter_has_data('place')) the form only offers cantons: the modifier hides
+    the tabs and the Ort panel and `disabled` keeps those fields out of a no-JS submit. Nothing is removed, because
+    js/region-filter.js reads these elements unguarded. A bookmarked ?place= keeps the full form for that request.
 #}
 {%- set cantons = enum_cases('App\\Geo\\ValueObject\\Canton')|map(c => {code: c.value, label: c|trans})|sort((a, b) => a.label <=> b.label) -%}
 {%- set selected_canton = criteria.canton ? criteria.canton.value : '' -%}
 {%- set default_radius = constant('App\\Search\\ReadModel\\SearchCriteria::DEFAULT_RADIUS') -%}
-<form id="filter-region-form" class="region-filter" method="get" action="{{ path('listing') }}" autocomplete="off"
+{%- set canton_only = criteria.place is null and not filter_has_data('place') -%}
+<form id="filter-region-form" class="region-filter{% if canton_only %} region-filter--canton-only{% endif %}" method="get" action="{{ path('listing') }}" autocomplete="off"
       data-live-count data-live-count-url="{{ path('_search_count') }}"
       data-region-filter data-places-url="{{ path('_search_places') }}"
       data-no-places="{{ 'filter.no_places'|trans({}, 'search') }}"
@@ -46,13 +50,13 @@
     <div class="region-filter__panel" id="filter-region-panel-place" role="tabpanel" aria-labelledby="filter-region-tab-place" data-panel="place">
         <div class="text-input region-filter__combobox">
             <label class="text-input__label visually-hidden" for="filter-region-place">{{ 'filter.region_tab_place'|trans({}, 'search') }}</label>
-            <input class="text-input__field" id="filter-region-place" name="place" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="filter-region-place-list" autocomplete="off" placeholder="{{ 'filter.place_placeholder'|trans({}, 'search') }}" value="{{ criteria.isZipPlace() ? criteria.place : '' }}" data-display="{{ selected ? selected.label : '' }}">
+            <input class="text-input__field" id="filter-region-place" name="place" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="filter-region-place-list" autocomplete="off" placeholder="{{ 'filter.place_placeholder'|trans({}, 'search') }}" value="{{ criteria.isZipPlace() ? criteria.place : '' }}" data-display="{{ selected ? selected.label : '' }}"{% if canton_only %} disabled{% endif %}>
             <ul class="region-filter__list" role="listbox" id="filter-region-place-list" aria-label="{{ 'filter.region_tab_place'|trans({}, 'search') }}" hidden></ul>
         </div>
         <div class="region-filter__radius">
             <label for="filter-region-radius">{{ 'filter.radius_label'|trans({}, 'search') }}</label>
             <output for="filter-region-radius" hidden></output>
-            <input type="range" id="filter-region-radius" name="radius" min="0" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_RADIUS') }}" step="1" value="{{ criteria.radius ?? default_radius }}" data-default="{{ default_radius }}">
+            <input type="range" id="filter-region-radius" name="radius" min="0" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_RADIUS') }}" step="1" value="{{ criteria.radius ?? default_radius }}" data-default="{{ default_radius }}"{% if canton_only %} disabled{% endif %}>
         </div>
     </div>
     <div class="region-filter__side">

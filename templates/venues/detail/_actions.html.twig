@@ -6,7 +6,13 @@
     The primary link goes to the form, else to Kontakt, else it is left out: neither section exists then (#14).
 #}
 {% set share_url = url('venue_show', {slug: venue.slug}) %}
-{% set share_text = 'detail.actions.share_text'|trans({name: venue.name, town: venue.townName}, 'venues') %}
+{% if venue.place.townName %}
+    {% set share_text = 'detail.actions.share_text'|trans({name: venue.name, town: venue.place.townName}, 'venues') %}
+{% elseif venue.place.canton %}
+    {% set share_text = 'detail.actions.share_text_canton'|trans({name: venue.name, canton: venue.place.canton|trans}, 'venues') %}
+{% else %}
+    {% set share_text = venue.name %}
+{% endif %}
 {% set primary_target = venue.inquiryEmail ? '#anfrage' : (venue.hasContact() ? '#kontakt' : null) %}
 <aside class="venue-actions" aria-labelledby="venue-actions-title">
     <h2 id="venue-actions-title" class="venue-actions__title">{{ 'detail.actions.label'|trans({}, 'venues') }}</h2>

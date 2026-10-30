@@ -12,6 +12,7 @@ use App\Search\ReadModel\SimilarVenue;
 use App\Search\ReadModel\SimilarVenuesQuery;
 use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
@@ -97,6 +98,35 @@ final class SimilarVenuesQueryTest extends KernelTestCase
         self::assertSame(['Publiziert'], $this->names($me));
     }
 
+    public function test_a_candidate_without_a_town_appears(): void
+    {
+        $me = $this->venue('Ich', $this->zurich);
+        DetailVenues::inCantonOnly();
+
+        self::assertSame(['Scheune Nur Kanton'], $this->names($me));
+    }
+
+    public function test_a_candidate_without_a_canton_sorts_after_the_same_canton(): void
+    {
+        $me = $this->venue('Ich', $this->zurich);
+        DetailVenues::withoutPlace();
+        $this->venue('Zürich nebenan', $this->zurich);
+
+        self::assertSame(['Zürich nebenan', 'Wiesenhof Ohne Ort'], $this->names($me));
+    }
+
+    public function test_a_venue_without_a_place_still_gets_similar_venues(): void
+    {
+        $me = DetailVenues::withoutPlace();
+        $this->venue('Mit Ort', $this->zurich);
+        DetailVenues::inRegionOnly($this->em, 'Schweizweit');
+
+        $names = $this->names($me);
+        sort($names);
+
+        self::assertSame(['Mit Ort', 'Remise Nur Region'], $names);
+    }
+
     public function test_an_invalid_or_unknown_id_gives_nothing(): void
     {
         $this->venue('Andere', $this->zurich);
@@ -120,7 +150,7 @@ final class SimilarVenuesQueryTest extends KernelTestCase
         self::assertSame($first->id(), $similar[0]->photo->photoId);
         self::assertSame($withPhotos->number(), $similar[0]->photo->venueNumber);
         self::assertSame($withPhotos->number(), $similar[0]->number);
-        self::assertSame('Zürich', $similar[0]->townName);
+        self::assertSame('Zürich', $similar[0]->place->townName);
         self::assertNull($similar[1]->photo);
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues\CommandHandler;
 
+use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
 use App\Media\MediaPublisher;
 use App\Shared\Messenger\CommandHandlerInterface;
@@ -51,7 +52,8 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  *
  * 1. Read and validate the folder; a problem is a failed outcome, nothing is written.
  * 2. An existing venue with the same content hash is unchanged (skipped, no I/O) unless forced.
- * 3. Resolve the town (ZIP + name, optionally canton); none or several is a failed outcome.
+ * 3. Resolve the town (ZIP + name, optionally canton) when the folder names one; none or
+ *    several is a failed outcome. Without a town the canton comes from address.canton, if any.
  * 4. A dry run stops here with the would-be counts.
  * 5. New photos: store the original content-addressed under MEDIA_ROOT and render the
  *    variants into a staging directory, all before the first DB write.
@@ -105,7 +107,9 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         }
 
         try {
-            $town = $this->towns->resolve($content->zip, $content->townName, $content->cantonCode);
+            $town = null !== $content->zip && null !== $content->townName
+                ? $this->towns->resolve($content->zip, $content->townName, $content->cantonCode)
+                : null;
         } catch (UnresolvedTown $exception) {
             return VenueImportOutcome::failed($content->key, $command->dryRun, [
                 $exception->isAmbiguous()
@@ -168,7 +172,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
     private function write(
         VenueContent $content,
         ?Venue $venue,
-        Town $town,
+        ?Town $town,
         array $existing,
         array $photoPlan,
         array $documentPlan,
@@ -319,17 +323,20 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
             : VenueImportOutcome::updated($content->key, false, \count($photoPlan['new']), \count($photoPlan['removed']), \count($documentPlan['new']), \count($documentPlan['removed']));
     }
 
-    private function applyVenueFields(VenueContent $content, ?Venue $venue, Town $town): Venue
+    private function applyVenueFields(VenueContent $content, ?Venue $venue, ?Town $town): Venue
     {
+        // The code passed the schema's enum, so the reference can never miss the FK.
+        $canton = null === $town && null !== $content->cantonCode ? $this->em->getReference(Canton::class, $content->cantonCode) : null;
+
         if (null === $venue) {
-            $venue = new Venue($content->name, $content->tier, $content->status, $content->capacityMax, $content->capacityMin, $town, $content->zip, $content->street, $content->lat, $content->lng, $content->key);
+            $venue = new Venue($content->name, $content->tier, $content->status, $content->capacityMax, $content->capacityMin, $town, $content->zip, $content->street, $content->lat, $content->lng, $content->key, $canton);
             $this->em->persist($venue);
         } else {
             $venue->rename($content->name);
             $venue->changeTier($content->tier);
             VenueStatus::Published === $content->status ? $venue->publish() : $venue->unpublish();
             $venue->changeCapacity($content->capacityMax, $content->capacityMin);
-            $venue->relocate($town, $content->zip, $content->street, $content->lat, $content->lng);
+            $venue->relocate($town, $content->zip, $content->street, $content->lat, $content->lng, $canton);
         }
         $venue->changeContact($content->phone, $content->inquiryEmail, $content->website, $content->contactPerson);
         $venue->changeDistances($content->stationKm, $content->stationName, $content->highwayKm, $content->highwayName, $content->airportKm, $content->airportName);
@@ -369,7 +376,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
      *
      * @param array<string, VenueTranslation> $rows the venue's current rows by locale
      */
-    private function applyTranslations(VenueContent $content, Venue $venue, Town $town, ?string $oldName, array $rows): void
+    private function applyTranslations(VenueContent $content, Venue $venue, ?Town $town, ?string $oldName, array $rows): void
     {
         foreach ($content->translations as $locale => $text) {
             $row = $rows[$locale] ?? null;
@@ -382,6 +389,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
                 $row->revise($slug, $text['summary'], $text['description'], $text['metaDescription'], $text['parkingText']);
             }
             $row->describeWedding($text['ambience'], $text['capacityNote'], $text['partyNote'], $text['openingHours']);
+            $row->changeRegion($text['region']);
         }
         foreach (array_diff_key($rows, $content->translations) as $row) {
             $this->em->remove($row);

@@ -132,9 +132,37 @@ final class ContentSchemaTest extends TestCase
         $data = self::full();
         $data['tier'] = 'gold';
         $data['address']['zip'] = '80';
-        unset($data['geo']);
+        $data['geo']['lat'] = 1.0;
 
         self::assertGreaterThanOrEqual(3, \count(self::schema()->validate(self::object($data))));
+    }
+
+    public function test_a_venue_needs_only_the_required_fields(): void
+    {
+        $errors = self::schema()->validate(self::object([
+            'name' => 'Gasthaus Beispiel',
+            'tier' => 'basic',
+            'capacity' => ['max' => 80],
+            'translations' => ['de' => ['summary' => 'Kurz.']],
+        ]));
+
+        self::assertSame([], $errors);
+    }
+
+    public function test_geo_needs_both_coordinates(): void
+    {
+        $data = self::full();
+        unset($data['geo']['lng']);
+
+        self::assertNotSame([], self::schema()->validate(self::object($data)));
+    }
+
+    public function test_an_unknown_canton_is_rejected(): void
+    {
+        $data = self::full();
+        $data['address'] = ['canton' => 'xx'];
+
+        self::assertSame(['/address/canton: "xx" is not an allowed value'], self::schema()->validate(self::object($data)));
     }
 
     public static function schema(): ContentSchema

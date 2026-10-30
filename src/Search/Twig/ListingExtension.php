@@ -9,6 +9,7 @@ use App\Geo\ReadModel\ResolvedPlace;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Search\ReadModel\CardPhoto;
+use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\SearchCriteria;
 use App\Venues\ValueObject\RatingLabel;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -26,6 +27,7 @@ use Twig\Attribute\AsTwigFunction;
  * - `rating_label(score)`: RatingLabel::fromScore() (Twig cannot call static enum methods).
  * - `venue_path(slug)`: the detail page's path (#8's `venue_show`).
  * - `selected_place(criteria)`: the filter's `place` resolved to its town, null without a place or for an unknown one.
+ * - `filter_has_data(filter)`: whether a published venue carries the filter's data (FilterDataQuery).
  */
 final class ListingExtension
 {
@@ -33,6 +35,7 @@ final class ListingExtension
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly PlaceResolver $places,
+        private readonly FilterDataQuery $filterData,
     ) {
     }
 
@@ -110,5 +113,11 @@ final class ListingExtension
     public function selectedPlace(SearchCriteria $criteria): ?ResolvedPlace
     {
         return null === $criteria->place ? null : $this->places->resolve($criteria->place);
+    }
+
+    #[AsTwigFunction('filter_has_data')]
+    public function filterHasData(string $filter): bool
+    {
+        return $this->filterData->has($filter);
     }
 }

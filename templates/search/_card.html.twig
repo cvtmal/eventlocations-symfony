@@ -1,12 +1,13 @@
 {#
     One venue card (LP-2, LP-3). Owned by #7; #13 reuses it on /merkliste. Include with `only`:
       card (a ListingCard, or anything with its public properties: number, slug, name, tier, capacityMin, capacityMax,
-      townName, summary, ratingScore, ratingCount, highlights, photos),
+      place, summary, ratingScore, ratingCount, highlights, photos),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
       action: merken|none (default merken).
     The title link stretches over the card (.card__link::after) and is the card's one accessible link. The photo column
     sits above that overlay so the carousel can be swiped and its arrows clicked; each slide therefore carries its own
-    link to the detail page (tabindex="-1", aria-hidden="true": no extra tab stop or screen-reader link), and the
+    link to the detail page (tabindex="-1", aria-hidden="true": no extra tab stop or screen-reader link), the placeholder
+    of a venue without photos is the same link (#21: without one the whole column would be dead), and the
     Merken form sits above both. No interactive content is nested in the title link.
 #}
 {%- set index = index|default(99) -%}
@@ -24,12 +25,12 @@
             {% endblock %}
         {% endembed %}
         {%- else %}
-        <div class="card__placeholder"></div>
+        <a class="card__photo-link card__placeholder" href="{{ href }}" tabindex="-1" aria-hidden="true"></a>
         {%- endif %}
     </div>
     <div class="card__body">
         <div class="card__top">
-            {{ include('search/_card_facts.html.twig', {capacity_min: card.capacityMin, capacity_max: card.capacityMax, town_name: card.townName}, with_context = false) }}
+            {{ include('search/_card_facts.html.twig', {capacity_min: card.capacityMin, capacity_max: card.capacityMax, place: card.place}, with_context = false) }}
             {%- if action == 'merken' %}
             {{ include('favorites/_merken_button.html.twig', {number: card.number, name: card.name, variant: 'card'}, with_context = false) }}
             {%- endif %}

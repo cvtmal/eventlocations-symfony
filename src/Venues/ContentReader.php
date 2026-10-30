@@ -130,6 +130,14 @@ final class ContentReader
             }
         }
 
+        // chk_venues_address would catch these at the flush, without naming the field.
+        if (isset($data->address->zip) !== isset($data->address->town)) {
+            $errors[] = '/address: zip and town come together';
+        }
+        if (isset($data->address->street) && !isset($data->address->zip, $data->address->town)) {
+            $errors[] = '/address/street: needs zip and town';
+        }
+
         // chk_venues_curfew_at would catch this at the flush, without naming the field.
         if (isset($data->party->curfew_at) && true !== ($data->party->has_curfew ?? null)) {
             $errors[] = '/party/curfew_at: needs has_curfew: true';
@@ -307,6 +315,7 @@ final class ContentReader
                 'capacityNote' => $text->capacity_note ?? null,
                 'partyNote' => $text->party_note ?? null,
                 'openingHours' => $text->opening_hours ?? null,
+                'region' => $text->region ?? null,
             ];
         }
         $terms = [];
@@ -335,11 +344,11 @@ final class ContentReader
             capacityMax: $data->capacity->max,
             capacityMin: $data->capacity->min ?? null,
             street: $data->address->street ?? null,
-            zip: $data->address->zip,
-            townName: $data->address->town,
+            zip: $data->address->zip ?? null,
+            townName: $data->address->town ?? null,
             cantonCode: $data->address->canton ?? null,
-            lat: (float) $data->geo->lat,
-            lng: (float) $data->geo->lng,
+            lat: isset($data->geo) ? (float) $data->geo->lat : null,
+            lng: isset($data->geo) ? (float) $data->geo->lng : null,
             stationKm: self::decimal($distance('station')?->km, 1),
             stationName: $distance('station')->name ?? null,
             highwayKm: self::decimal($distance('highway')?->km, 1),

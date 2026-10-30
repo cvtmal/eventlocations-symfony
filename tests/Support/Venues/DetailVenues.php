@@ -15,6 +15,7 @@ use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueReviewFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\FloorMaterial;
@@ -149,11 +150,49 @@ final class DetailVenues
         return $venue;
     }
 
+    /** A published venue with no place at all (#21). */
+    public static function withoutPlace(string $slug = 'wiesenhof-ohne-ort', string $name = 'Wiesenhof Ohne Ort'): Venue
+    {
+        return self::locationless($slug, $name, null);
+    }
+
+    /** A published venue that knows only its canton, as most of the owner's data does (#21). */
+    public static function inCantonOnly(string $slug = 'scheune-nur-kanton', string $name = 'Scheune Nur Kanton', string $cantonCode = 'zh'): Venue
+    {
+        $canton = repository(Canton::class)->find($cantonCode);
+        \assert($canton instanceof Canton);
+
+        return self::locationless($slug, $name, $canton);
+    }
+
+    /** A published venue that knows only a region text (#21). */
+    public static function inRegionOnly(EntityManagerInterface $em, string $region, string $slug = 'remise-nur-region', string $name = 'Remise Nur Region'): Venue
+    {
+        $venue = self::locationless($slug, $name, null, $region);
+        $em->flush();
+
+        return $venue;
+    }
+
     public static function town(string $name): Town
     {
         $town = repository(Town::class)->findOneBy(['name' => $name]);
         \assert($town instanceof Town);
 
         return $town;
+    }
+
+    private static function locationless(string $slug, string $name, ?Canton $canton, ?string $region = null): Venue
+    {
+        $venue = VenueFactory::new()->withoutLocation($canton)->create([
+            'name' => $name,
+            'tier' => Tier::Basic,
+            'status' => VenueStatus::Published,
+            'capacityMin' => null,
+            'capacityMax' => 80,
+        ]);
+        VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug, 'summary' => 'Ein Ort für die Hochzeit.'])->changeRegion($region);
+
+        return $venue;
     }
 }

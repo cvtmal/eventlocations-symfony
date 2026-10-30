@@ -99,6 +99,12 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'zip of three digits' => ['chk_venues_zip', ["UPDATE venues SET zip = '871' WHERE id = '{venue}'"]];
         yield 'lat outside Switzerland' => ['chk_venues_lat', ["UPDATE venues SET lat = 45.79 WHERE id = '{venue}'"]];
         yield 'lng outside Switzerland' => ['chk_venues_lng', ["UPDATE venues SET lng = 10.61 WHERE id = '{venue}'"]];
+        yield 'zip without a town' => ['chk_venues_address', ["UPDATE venues SET town_id = NULL WHERE id = '{venue}'"]];
+        yield 'town without a zip' => ['chk_venues_address', ["UPDATE venues SET zip = NULL WHERE id = '{venue}'"]];
+        yield 'street without a town' => ['chk_venues_address', ["UPDATE venues SET town_id = NULL, zip = NULL, street = 'Weg 1' WHERE id = '{venue}'"]];
+        yield 'lat without lng' => ['chk_venues_coordinates', ["UPDATE venues SET lng = NULL WHERE id = '{venue}'"]];
+        yield 'lng without lat' => ['chk_venues_coordinates', ["UPDATE venues SET lat = NULL WHERE id = '{venue}'"]];
+        yield 'town without a canton' => ['chk_venues_town_canton', ["UPDATE venues SET canton_code = NULL WHERE id = '{venue}'"]];
         yield 'distance above 500 km' => ['chk_venues_distances', ["UPDATE venues SET distance_airport_km = 500.1 WHERE id = '{venue}'"]];
         yield 'negative distance' => ['chk_venues_distances', ["UPDATE venues SET distance_station_km = -0.1 WHERE id = '{venue}'"]];
         yield 'station name without distance' => ['chk_venues_distance_names', ["UPDATE venues SET station_name = 'Stäfa' WHERE id = '{venue}'"]];
@@ -254,6 +260,9 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'capacity 1 to 50000' => [["UPDATE venues SET capacity_min = 1, capacity_max = 50000 WHERE id = '{venue}'"]];
         yield 'capacity min equals max' => [["UPDATE venues SET capacity_min = 100 WHERE id = '{venue}'"]];
         yield 'Swiss box corners' => [["UPDATE venues SET lat = 45.8, lng = 10.6 WHERE id = '{venue}'", "UPDATE venues SET lat = 47.9, lng = 5.9 WHERE id = '{venue}'"]];
+        yield 'no location at all' => [["UPDATE venues SET town_id = NULL, zip = NULL, street = NULL, canton_code = NULL, lat = NULL, lng = NULL WHERE id = '{venue}'"]];
+        yield 'canton only' => [["UPDATE venues SET town_id = NULL, zip = NULL, street = NULL, lat = NULL, lng = NULL WHERE id = '{venue}'"]];
+        yield 'coordinates without a town' => [["UPDATE venues SET town_id = NULL, zip = NULL, street = NULL WHERE id = '{venue}'"]];
         yield 'distances 0 and 500 with names' => [["UPDATE venues SET distance_station_km = 0, station_name = 'Stäfa', distance_highway_km = 500, highway_name = 'A3', distance_airport_km = 12.5, airport_name = NULL WHERE id = '{venue}'"]];
         yield 'contact fields' => [["UPDATE venues SET phone = '+41441234567', inquiry_email = 'info@example.ch', website = 'https://example.ch', contact_person = 'Frau Muster' WHERE id = '{venue}'"]];
         yield 'rating 0 and 10 with count 0' => [["UPDATE venues SET rating_score = 0, rating_count = 0 WHERE id = '{venue}'", "UPDATE venues SET rating_score = 10.0, rating_count = 4766 WHERE id = '{venue}'"]];

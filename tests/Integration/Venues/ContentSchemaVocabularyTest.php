@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues;
 
+use App\Geo\ValueObject\Canton;
 use App\Venues\ContentFormat;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
@@ -39,6 +40,7 @@ final class ContentSchemaVocabularyTest extends KernelTestCase
         yield 'reviewer role' => ['properties.reviews.items.properties.role.enum', ReviewerRole::class];
         yield 'price level' => ['properties.price_level.enum', PriceLevel::class];
         yield 'party' => ['properties.party.properties.allowed.enum', PartyAllowed::class];
+        yield 'canton' => ['properties.address.properties.canton.enum', Canton::class];
     }
 
     /**
