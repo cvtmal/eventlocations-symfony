@@ -16,10 +16,13 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 /**
  * Every URL of the sitemap that is not a venue. The one place #17 and #18 add their pages to.
  * Landing pages (#17) follow the listing: every live one, page 1, unfiltered, with the newest
- * change among its venues.
+ * change among its venues. The legal pages (#18) come last, without `lastmod`: their text changes
+ * only with a deploy, and no date of it is stored.
  */
 final class PagesSitemap
 {
+    private const array LEGAL_ROUTES = ['impressum', 'datenschutz'];
+
     public function __construct(
         private readonly UrlGeneratorInterface $urls,
         private readonly VenueSitemapQuery $venues,
@@ -38,16 +41,18 @@ final class PagesSitemap
         ];
 
         $landings = $this->landingPages->all();
-        if ([] === $landings) {
-            return $urls;
+        if ([] !== $landings) {
+            $changes = $this->venues->newestChangeByGroup();
+            foreach ($landings as $page) {
+                $urls[] = new SitemapUrl(
+                    $this->landingPaths->path($page, [], UrlGeneratorInterface::ABSOLUTE_URL),
+                    $this->lastmod($page, $changes),
+                );
+            }
         }
 
-        $changes = $this->venues->newestChangeByGroup();
-        foreach ($landings as $page) {
-            $urls[] = new SitemapUrl(
-                $this->landingPaths->path($page, [], UrlGeneratorInterface::ABSOLUTE_URL),
-                $this->lastmod($page, $changes),
-            );
+        foreach (self::LEGAL_ROUTES as $route) {
+            $urls[] = new SitemapUrl($this->urls->generate($route, [], UrlGeneratorInterface::ABSOLUTE_URL), null);
         }
 
         return $urls;

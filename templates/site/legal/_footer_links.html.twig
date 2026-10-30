@@ -1,0 +1,7 @@
+{# The footer's legal links (#18), in the slot of layout/_footer.html.twig. Query-free: the error pages render it. #}
+<nav class="footer-legal" aria-label="{{ 'legal.nav_label'|trans({}, 'shared') }}">
+    <ul class="site-footer__links">
+        <li><a href="{{ path('impressum') }}">{{ 'legal.imprint.link'|trans({}, 'shared') }}</a></li>
+        <li><a href="{{ path('datenschutz') }}">{{ 'legal.privacy.link'|trans({}, 'shared') }}</a></li>
+    </ul>
+</nav>
