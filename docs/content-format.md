@@ -48,9 +48,12 @@ Every field, with fictional values. Only `name`, `tier`, `capacity.max`, `addres
 name: Schloss Beispiel                # ≤ 150 characters, not translated; the URL slug comes from it
 tier: premium                         # beliebte_location | empfehlung | top_premium | premium | basic
 status: published                     # optional: published (default) or unpublished
+price_level: medium                   # optional: moderate | medium | exclusive
 capacity:
   min: 20                             # optional, 1–50000, at most max
   max: 180                            # required, 1–50000
+  seated: 120                         # optional, 1–50000, seats at a seated dinner
+  standing: 180                       # optional, 1–50000, guests at a standing reception
 address:
   street: Seestrasse 1                # optional, ≤ 150
   zip: '8001'                         # four digits, quoted
@@ -68,9 +71,14 @@ contact:                              # all optional
   inquiry_email: anfragen@example.ch  # receives the inquiries
   website: https://example.ch         # starts with http:// or https://
   contact_person: Anna Muster
+  instagram: https://www.instagram.com/schloss-beispiel   # starts with https://
 faq:                                  # optional; null or missing = unknown
   own_catering: allowed               # allowed | fixed_caterer
   daylight: true
+party:                                # optional; missing = unknown; its fields may be null
+  allowed: limited                    # 'yes' | limited | 'no', quote yes and no
+  has_curfew: true                    # false = no curfew
+  curfew_at: '02:00'                  # HH:MM 00:00–23:59, quoted; needs has_curfew: true
 rating:                               # optional; score and count together
   score: 9.0                          # 0–10, at most one decimal
   count: 47
@@ -83,6 +91,12 @@ terms:                                # lists of codes per group (see the table 
   furniture: [chairs, tables]
   technology: [sound_system, projector_screen]
   surroundings: [garden, terrace]
+  ceremony: [free_ceremony, rain_alternative]
+  amenity: [overnight, dance_floor]
+  dining: [vegetarian, vegan]
+  vendor: [flowers_decor, dj]
+  usage: [exclusive]
+  language: [de, en, fr]
 main_terms:                           # optional; each code must be listed under terms
   setting: lake
   building: castle
@@ -95,6 +109,10 @@ translations:
       Zwei Säle, ein Gewölbekeller und eine Terrasse.
     meta_description: Fiktives Schloss Beispiel am See, Hochzeiten bis 180 Gäste.   # optional, ≤ 160
     parking_text: 40 Parkplätze direkt beim Schloss.   # optional, ≤ 250
+    ambience: Romantisch mit Seesicht   # optional, ≤ 60, verbatim
+    capacity_note: 120 Sitzplätze im Rittersaal, 60 im Keller.   # optional, ≤ 250
+    party_note: Musik bis 2 Uhr, danach Ausklang im Keller.   # optional, ≤ 250
+    opening_hours: Mai bis Oktober, täglich ab 10 Uhr.   # optional, ≤ 250
 photos:                               # gallery, in display order; files in photos/
   - file: aussen.jpg
     alt: {de: Schloss Beispiel vom See aus}   # optional, ≤ 700
@@ -137,7 +155,9 @@ reviews:                              # replaced as a whole on every change
 | `name` | text ≤ 150, required | Proper noun, not translated. Changing it changes the URL slug; the old slug redirects. |
 | `tier` | code, required | `beliebte_location`, `empfehlung`, `top_premium`, `premium`, `basic` (S6: sets the listing order). |
 | `status` | code | `published` (default) or `unpublished` (hidden, kept). |
+| `price_level` | code | `moderate`, `medium`, `exclusive`. |
 | `capacity.min`, `capacity.max` | 1–50000 | `max` required; `min` ≤ `max`. |
+| `capacity.seated`, `capacity.standing` | 1–50000 | The venue's own numbers; not compared with `max`. |
 | `address.street` | text ≤ 150 | |
 | `address.zip` | `'NNNN'` | Quote it. Any ZIP of the town works, not only the lowest. |
 | `address.town` | text | Official town name; matched exactly after folding case and umlauts (`Zürich` = `ZÜRICH` = `Zuerich`, but not `Zurich`). |
@@ -148,17 +168,28 @@ reviews:                              # replaced as a whole on every change
 | `contact.inquiry_email` | e-mail ≤ 254 | |
 | `contact.website` | URL ≤ 500 | `http://` or `https://`. |
 | `contact.contact_person` | text ≤ 150 | |
+| `contact.instagram` | URL ≤ 500 | `https://` only. |
 | `faq.own_catering` | `allowed`, `fixed_caterer`, null | |
 | `faq.daylight` | true, false, null | |
+| `party.allowed` | `'yes'`, `limited`, `'no'`, null | Quote yes and no. |
+| `party.has_curfew` | true, false, null | `false` means no curfew, null unknown. |
+| `party.curfew_at` | `'HH:MM'` `00:00`–`23:59`, null | Quote it. Needs `has_curfew: true`. Midnight is `'00:00'`. |
 | `rating.score`, `rating.count` | 0–10 (one decimal), ≥ 0 | Both or neither. |
 | `rating.highlights` | ≤ 3 codes | `food`, `atmosphere`, `architecture`, `location`, `hospitality`, `reachability`, `equipment`, `programme`, `value`. |
 | `terms.<group>` | list of codes | See the vocabulary below. |
 | `main_terms.<setting\|building\|suitable_for>` | one code | Must also be listed under `terms`. |
-| `translations.<locale>` | `summary` ≤ 200 (required), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250 | `de` is required; other locales only once the site serves them (today only `de`). |
+| `translations.<locale>` | `summary` ≤ 200 (required), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250, `ambience` ≤ 60, `capacity_note`, `party_note`, `opening_hours` ≤ 250 | `de` is required; other locales only once the site serves them (today only `de`). |
 | `photos[]` | `file`, `alt.<locale>` ≤ 700 | Order = display order. |
 | `rooms[]` | `key`, `translations.<locale>.name` ≤ 100 (+ `description`), `capacity`, `area_m2` 1–50000, `height_m` (> 0, ≤ 30, two decimals), `floor_material`, `seating`, `photos` | Order = display order. A seating entry needs `min` or `max`. |
 | `documents[]` | `file` (`.pdf`), `title.<locale>` ≤ 200 | `title.de` is required. |
 | `reviews[]` | `first_name` ≤ 50, `role`, `month` `'YYYY-MM'`, `locale`, `text` ≤ 1000 | |
+
+The wedding facts (`price_level`, `capacity.seated`, `capacity.standing`, `party`,
+`contact.instagram`, the term groups `ceremony` to `language` and the four texts `ambience`,
+`capacity_note`, `party_note`, `opening_hours`) are all optional. A missing one is unknown
+and the detail page shows nothing for it. Nothing is inferred: set a fact only when the
+venue stated it. The import applies a folder as a whole, so a field omitted on an update
+resets to unknown.
 
 ### Vocabulary
 
@@ -171,6 +202,12 @@ reviews:                              # replaced as a whole on every change
 | `furniture` | `flipchart`, `magnetic_board`, `moderation_kit`, `chairs`, `tables` |
 | `technology` | `sound_system`, `projector_screen`, `interpreting_system`, `lighting_system`, `tv_screens` |
 | `surroundings` | `garden`, `spa_wellness`, `terrace`, `playground`, `barbecue`, `golf` |
+| `ceremony` | `civil_ceremony`, `free_ceremony`, `church_nearby`, `rain_alternative`, `registry_office`, `chapel` |
+| `amenity` | `overnight`, `panorama`, `lake_view`, `dance_floor`, `kids_room`, `outdoor_dining`, `parking`, `parking_area`, `own_kitchen`, `catering_available`, `external_caterers`, `corkage`, `wheelchair_access`, `public_transport`, `tent` |
+| `dining` | `vegetarian`, `vegan`, `gluten_free`, `organic`, `allergy_friendly`, `diabetic`, `halal`, `kosher`, `kids_menu`, `wedding_cake`, `buffet`, `grill`, `anything_possible` |
+| `vendor` | `flowers_decor`, `photography`, `videography`, `officiant`, `dj`, `musicians`, `furniture`, `wedding_planner` |
+| `usage` | `exclusive`, `multiple_weddings`, `wedding_and_regular` |
+| `language` | `de`, `en`, `fr`, `it`, `es`, `pt`, `nl`, `cs`, `ru`, `hu`, `gsw` |
 
 An unknown code fails the venue with its position, e.g. `/terms/building/0: "palace" is not an allowed value`.
 
@@ -178,6 +215,9 @@ An unknown code fails the venue with its position, e.g. `/terms/building/0: "pal
 
 - Quote the ZIP (`'8001'`), the phone (`'+41441234567'`) and the review month (`'2025-06'`).
   Unquoted, YAML reads numbers (and full dates as timestamps) and the schema rejects them.
+- Quote `'yes'` and `'no'` under `party.allowed`, and the curfew (`'02:00'`).
+- Midnight is `'00:00'`. `24:00` is rejected, because the database time would come back as
+  `00:00` of the next day.
 - Unknown fields are errors, at every level (a typo like `sumary:` is reported, not ignored).
 - Decimals use a dot (`6.5`), never a comma.
 

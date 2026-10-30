@@ -24,6 +24,8 @@ use App\Venues\Entity\VenueTerm;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\ReviewerRole;
@@ -94,6 +96,13 @@ final class VenueMappingTest extends KernelTestCase
         $venue->answerFaq(OwnCatering::FixedCaterer, true);
         $venue->rate('9.1', 42);
         $venue->summariseRooms(1, 180, '4.20');
+        $venue->changePriceLevel(PriceLevel::Exclusive);
+        $venue->changeSeatingCapacity(120, 180);
+        $venue->describePartyRules(PartyAllowed::Limited, true, new \DateTimeImmutable('1970-01-01 02:30:00'));
+        $venue->changeInstagram('https://www.instagram.com/testhaus-vier');
+
+        $translation = new VenueTranslation($venue, 'de', 'testhaus-vier-mapping', 'Kurz.', 'Lang.', 'Meta.', 'Parkplätze vor dem Haus.');
+        $translation->describeWedding('Romantisch am See', 'Mit Bühne 100 Plätze.', 'Musik bis 2 Uhr.', 'Mai bis Oktober');
 
         $room = new Room($venue, 1, 10, 120, 180, '4.20', FloorMaterial::Parquet);
         $room->offerSeating(Seating::Banquet, 20, 100);
@@ -105,7 +114,7 @@ final class VenueMappingTest extends KernelTestCase
         self::assertInstanceOf(TaxonomyTerm::class, $setting);
 
         foreach ([
-            new VenueTranslation($venue, 'de', 'testhaus-vier-mapping', 'Kurz.', 'Lang.', 'Meta.', 'Parkplätze vor dem Haus.'),
+            $translation,
             new VenueSlugHistory($venue, 'de', 'testhaus-4-mapping'),
             new VenueTerm($venue, $building, true),
             new VenueTerm($venue, $setting, true),
@@ -137,6 +146,20 @@ final class VenueMappingTest extends KernelTestCase
         self::assertSame(1.5, $loaded->distanceStationKm());
         self::assertSame(4.2, $loaded->maxRoomHeightM());
         self::assertSame('zh', $loaded->canton()->code());
+        self::assertSame(PriceLevel::Exclusive, $loaded->priceLevel());
+        self::assertSame(120, $loaded->capacitySeated());
+        self::assertSame(180, $loaded->capacityStanding());
+        self::assertSame(PartyAllowed::Limited, $loaded->party());
+        self::assertTrue($loaded->hasCurfew());
+        self::assertSame('02:30', $loaded->curfewAt()?->format('H:i'));
+        self::assertSame('https://www.instagram.com/testhaus-vier', $loaded->instagram());
+
+        $loadedTranslation = $this->em->getRepository(VenueTranslation::class)->findOneBy(['venue' => $loaded]);
+        self::assertInstanceOf(VenueTranslation::class, $loadedTranslation);
+        self::assertSame('Romantisch am See', $loadedTranslation->ambience());
+        self::assertSame('Mit Bühne 100 Plätze.', $loadedTranslation->capacityNote());
+        self::assertSame('Musik bis 2 Uhr.', $loadedTranslation->partyNote());
+        self::assertSame('Mai bis Oktober', $loadedTranslation->openingHours());
 
         $terms = $this->em->getRepository(VenueTerm::class)->findBy(['venue' => $loaded]);
         self::assertCount(2, $terms);

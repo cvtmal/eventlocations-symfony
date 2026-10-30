@@ -7,6 +7,8 @@ namespace App\Tests\Integration\Venues;
 use App\Venues\ContentFormat;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
@@ -35,6 +37,8 @@ final class ContentSchemaVocabularyTest extends KernelTestCase
         yield 'floor material' => ['properties.rooms.items.properties.floor_material.enum', FloorMaterial::class];
         yield 'seating' => ['properties.rooms.items.properties.seating.propertyNames.enum', Seating::class];
         yield 'reviewer role' => ['properties.reviews.items.properties.role.enum', ReviewerRole::class];
+        yield 'price level' => ['properties.price_level.enum', PriceLevel::class];
+        yield 'party' => ['properties.party.properties.allowed.enum', PartyAllowed::class];
     }
 
     /**

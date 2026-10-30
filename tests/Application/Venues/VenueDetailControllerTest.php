@@ -10,9 +10,12 @@ use App\Factory\VenueSlugHistoryFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PhoneNumber;
+use App\Venues\ValueObject\PriceLevel;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -204,6 +207,89 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertSame('Ein kleines Gartenhaus.', $crawler->filter('meta[name="description"]')->attr('content'));
         self::assertSelectorTextContains('.venue-head__description', 'Ein kleines Gartenhaus.');
         $this->assertNoEmptyHeadings($crawler);
+    }
+
+    public function test_the_wedding_section_shows_every_fact(): void
+    {
+        DetailVenues::full($this->em);
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+
+        self::assertSelectorTextSame('.venue-wedding h2', 'Hochzeit');
+        self::assertSame(
+            ['Preisniveau', 'Ambiente', 'Sitzplätze und Stehplätze', 'Trauung', 'Party und Sperrstunde', 'Ausstattung', 'Essen', 'Nutzung', 'Dienstleister', 'Sprachen', 'Öffnungszeiten'],
+            $crawler->filter('.venue-wedding dt')->each(static fn (Crawler $dt): string => $dt->text()),
+        );
+        self::assertSame(
+            [
+                'Mittel',
+                'Romantisch am Wasser',
+                "1'200 Sitzplätze 1'500 Stehplätze Mit Tanzfläche 900 Sitzplätze.",
+                'Freie Trauung möglich',
+                'Mit Einschränkung Sperrstunde 02:00 Uhr Musik im Saal bis 2 Uhr.',
+                'Tanzfläche',
+                'Vegetarisch Glutenfrei',
+                'Exklusiv (nur eine Hochzeit)',
+                'DJs',
+                'Deutsch Englisch',
+                'Mai bis Oktober, täglich ab 10 Uhr',
+            ],
+            $crawler->filter('.venue-wedding dd')->each(static fn (Crawler $dd): string => $dd->text()),
+        );
+        self::assertSelectorExists('.venue-facts + .venue-wedding');
+        $instagram = $crawler->filter('#kontakt a[href="https://www.instagram.com/schloss-seeblick"]');
+        self::assertCount(1, $instagram);
+        self::assertSame('Instagram', $instagram->text());
+        self::assertSame('nofollow noopener', $instagram->attr('rel'));
+        self::assertSame('_blank', $instagram->attr('target'));
+    }
+
+    public function test_the_wedding_section_shows_only_known_facts(): void
+    {
+        $venue = DetailVenues::minimal();
+        $venue->changePriceLevel(PriceLevel::Exclusive);
+        $venue->describePartyRules(null, false, null);
+        $this->em->flush();
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+
+        self::assertSame(['Preisniveau', 'Party und Sperrstunde'], $crawler->filter('.venue-wedding dt')->each(static fn (Crawler $dt): string => $dt->text()));
+        self::assertSame(['Exklusiv', 'Keine Sperrstunde'], $crawler->filter('.venue-wedding dd')->each(static fn (Crawler $dd): string => $dd->text()));
+        self::assertSelectorNotExists('.venue-wedding .venue-facts__values');
+    }
+
+    /**
+     * @return iterable<string, array{?bool, ?string, string}>
+     */
+    public static function curfews(): iterable
+    {
+        yield 'a curfew with a time' => [true, '02:00', 'Ja Sperrstunde 02:00 Uhr'];
+        yield 'midnight' => [true, '00:00', 'Ja Sperrstunde 00:00 Uhr'];
+        yield 'a curfew at an unknown time' => [true, null, 'Ja Sperrstunde vorhanden'];
+        yield 'no curfew' => [false, null, 'Ja Keine Sperrstunde'];
+        yield 'unknown' => [null, null, 'Ja'];
+    }
+
+    #[DataProvider('curfews')]
+    public function test_the_curfew_line(?bool $hasCurfew, ?string $time, string $expected): void
+    {
+        $venue = DetailVenues::minimal();
+        $venue->describePartyRules(PartyAllowed::Yes, $hasCurfew, null === $time ? null : new \DateTimeImmutable('1970-01-01 '.$time));
+        $this->em->flush();
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+
+        self::assertSame($expected, $crawler->filter('.venue-wedding dd')->text());
+    }
+
+    public function test_a_venue_without_facts_has_no_wedding_section(): void
+    {
+        DetailVenues::minimal();
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+
+        self::assertCount(0, $crawler->filter('.venue-wedding'));
+        self::assertCount(0, $crawler->filter('a[href*="instagram"]'));
     }
 
     public function test_reviews_carry_the_rating_anchor_when_there_is_no_score(): void

@@ -31,6 +31,7 @@
             {{ include('venues/detail/_head.html.twig', {venue: venue}, with_context = false) }}
             {% if venue.hasRatingSection() %}{{ include('venues/detail/_rating.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.hasFacts() %}{{ include('venues/detail/_facts.html.twig', {venue: venue}, with_context = false) }}{% endif %}
+            {% if venue.wedding.hasAny() %}{{ include('venues/detail/_wedding.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.rooms is not empty %}{{ include('venues/detail/_rooms.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.hasFaq() %}{{ include('venues/detail/_faq.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             <section id="standort" class="venue-section venue-location" aria-labelledby="standort-title">

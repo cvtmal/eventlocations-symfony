@@ -7,6 +7,8 @@ namespace App\Tests\Unit\Venues;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\ReviewerRole;
@@ -40,6 +42,8 @@ final class VocabularyCatalogueTest extends TestCase
         yield 'Seating' => [Seating::class, 'seating'];
         yield 'ReviewerRole' => [ReviewerRole::class, 'reviewer_role'];
         yield 'Access' => [Access::class, 'access'];
+        yield 'PriceLevel' => [PriceLevel::class, 'price_level'];
+        yield 'PartyAllowed' => [PartyAllowed::class, 'party'];
     }
 
     /**

@@ -25,7 +25,8 @@ final class ContentSchemaTest extends TestCase
             'name' => 'Schloss Beispiel',
             'tier' => 'premium',
             'status' => 'published',
-            'capacity' => ['min' => 20, 'max' => 180],
+            'price_level' => 'medium',
+            'capacity' => ['min' => 20, 'max' => 180, 'seated' => 120, 'standing' => 180],
             'address' => ['street' => 'Seestrasse 1', 'zip' => '8001', 'town' => 'Zürich', 'canton' => 'zh'],
             'geo' => ['lat' => 47.37, 'lng' => 8.54],
             'distances' => [
@@ -33,12 +34,19 @@ final class ContentSchemaTest extends TestCase
                 'highway' => ['km' => 3.2, 'name' => 'A1'],
                 'airport' => ['km' => 12.0],
             ],
-            'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster'],
+            'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster', 'instagram' => 'https://www.instagram.com/schloss-beispiel'],
             'faq' => ['own_catering' => 'allowed', 'daylight' => null],
+            'party' => ['allowed' => 'limited', 'has_curfew' => true, 'curfew_at' => '02:00'],
             'rating' => ['score' => 9.0, 'count' => 47, 'highlights' => ['food', 'atmosphere']],
-            'terms' => ['setting' => ['lake'], 'building' => ['castle', 'event_venue'], 'suitable_for' => ['wedding'], 'surroundings' => ['garden']],
+            'terms' => [
+                'setting' => ['lake'], 'building' => ['castle', 'event_venue'], 'suitable_for' => ['wedding'], 'surroundings' => ['garden'],
+                'ceremony' => ['free_ceremony'], 'amenity' => ['overnight', 'dance_floor'], 'dining' => ['vegan'], 'vendor' => ['dj'], 'usage' => ['exclusive'], 'language' => ['de', 'gsw'],
+            ],
             'main_terms' => ['building' => 'castle', 'setting' => 'lake'],
-            'translations' => ['de' => ['summary' => 'Kurz.', 'description' => 'Lang.', 'meta_description' => 'Meta.', 'parking_text' => 'Parkplätze.']],
+            'translations' => ['de' => [
+                'summary' => 'Kurz.', 'description' => 'Lang.', 'meta_description' => 'Meta.', 'parking_text' => 'Parkplätze.',
+                'ambience' => 'Romantisch am See', 'capacity_note' => 'Mit Tanzfläche 100 Plätze.', 'party_note' => 'Musik bis 2 Uhr.', 'opening_hours' => 'Mai bis Oktober',
+            ]],
             'photos' => [['file' => 'aussen.jpg', 'alt' => ['de' => 'Schloss am See']], ['file' => 'innen.PNG']],
             'rooms' => [[
                 'key' => 'rittersaal',
@@ -87,6 +95,14 @@ final class ContentSchemaTest extends TestCase
         yield 'empty seating entry' => [$set($full, 'rooms.0.seating', ['concert' => []]), '/rooms/0/seating/concert:'];
         yield 'gif photo' => [$set($full, 'photos.0.file', 'a.gif'), '/photos/0/file:'];
         yield 'photo in a sub folder' => [$set($full, 'photos.0.file', 'sub/a.jpg'), '/photos/0/file:'];
+        yield 'unknown price level' => [$set($full, 'price_level', 'cheap'), '/price_level: "cheap" is not an allowed value'];
+        yield 'curfew at 24:00' => [$set($full, 'party.curfew_at', '24:00'), '/party/curfew_at:'];
+        yield 'curfew without a leading zero' => [$set($full, 'party.curfew_at', '2:00'), '/party/curfew_at:'];
+        yield 'instagram over http' => [$set($full, 'contact.instagram', 'http://www.instagram.com/beispiel'), '/contact/instagram:'];
+        yield 'seated capacity zero' => [$set($full, 'capacity.seated', 0), '/capacity/seated:'];
+        yield 'unknown party value' => [$set($full, 'party.allowed', 'maybe'), '/party/allowed: "maybe" is not an allowed value'];
+        yield 'ambience of 61 characters' => [$set($full, 'translations.de.ambience', str_repeat('a', 61)), '/translations/de/ambience:'];
+        yield 'empty opening hours' => [$set($full, 'translations.de.opening_hours', ''), '/translations/de/opening_hours:'];
     }
 
     /**

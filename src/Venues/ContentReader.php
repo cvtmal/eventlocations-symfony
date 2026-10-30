@@ -13,6 +13,8 @@ use App\Venues\ValueObject\Content\RoomContent;
 use App\Venues\ValueObject\Content\VenueContent;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Tier;
@@ -126,6 +128,11 @@ final class ContentReader
             if (!\in_array($code, $data->terms->{$group} ?? [], true)) {
                 $errors[] = \sprintf('/main_terms/%s: "%s" is not listed under terms.%s', $group, $code, $group);
             }
+        }
+
+        // chk_venues_curfew_at would catch this at the flush, without naming the field.
+        if (isset($data->party->curfew_at) && true !== ($data->party->has_curfew ?? null)) {
+            $errors[] = '/party/curfew_at: needs has_curfew: true';
         }
 
         $errors = [...$errors, ...$this->localeErrors('/translations', $data->translations)];
@@ -296,6 +303,10 @@ final class ContentReader
                 'description' => $text->description ?? null,
                 'metaDescription' => $text->meta_description ?? null,
                 'parkingText' => $text->parking_text ?? null,
+                'ambience' => $text->ambience ?? null,
+                'capacityNote' => $text->capacity_note ?? null,
+                'partyNote' => $text->party_note ?? null,
+                'openingHours' => $text->opening_hours ?? null,
             ];
         }
         $terms = [];
@@ -309,6 +320,11 @@ final class ContentReader
             $reviews[] = new ReviewContent($review->first_name, ReviewerRole::from($review->role), $month, $review->locale ?? 'de', $review->text);
         }
         $distance = static fn (string $name): ?\stdClass => $data->distances->{$name} ?? null;
+        $curfewAt = null;
+        if (isset($data->party->curfew_at)) {
+            $curfewAt = \DateTimeImmutable::createFromFormat('!H:i', $data->party->curfew_at);
+            \assert(false !== $curfewAt);
+        }
 
         return new VenueContent(
             key: $key,
@@ -336,6 +352,13 @@ final class ContentReader
             contactPerson: $data->contact->contact_person ?? null,
             ownCatering: isset($data->faq->own_catering) ? OwnCatering::from($data->faq->own_catering) : null,
             daylight: $data->faq->daylight ?? null,
+            priceLevel: isset($data->price_level) ? PriceLevel::from($data->price_level) : null,
+            capacitySeated: $data->capacity->seated ?? null,
+            capacityStanding: $data->capacity->standing ?? null,
+            party: isset($data->party->allowed) ? PartyAllowed::from($data->party->allowed) : null,
+            hasCurfew: $data->party->has_curfew ?? null,
+            curfewAt: $curfewAt,
+            instagram: $data->contact->instagram ?? null,
             ratingScore: self::decimal($data->rating->score ?? null, 1),
             ratingCount: $data->rating->count ?? null,
             highlights: array_values(array_map(static fn (string $code): RatingHighlight => RatingHighlight::from($code), $data->rating->highlights ?? [])),

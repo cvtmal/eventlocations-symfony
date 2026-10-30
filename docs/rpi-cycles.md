@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page and #9 venue-content-import done; owner answered Q1, Q2, Q4–Q11; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q12–Q14 open) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import and #31 venue-wedding-facts done; owner answered Q1, Q2, Q4–Q11; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q12–Q14 open) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -103,7 +103,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 28 | `crm-deals` | W10 | CRM-7, CRM-8 | 27 | `crm_deal_stages`, `crm_deals`, `crm_deal_contacts`, `crm_activity_deals` | — | Research |
 | 29 | `crm-inquiries` | W10 | CRM-9, CRM-11 (couples) | 14, 27 | `crm_inquiry_links` | — | Research |
 | 30 | `crm-email` | W10 | CRM-10 | 27 | `crm_email_templates`, `crm_emails` | — | Research |
-| 31 | `venue-wedding-facts` | W5 | DATA-4, DP-17 | 8, 9 | new columns on `venues` and `venue_translations`; new `taxonomy_terms` groups and rows | — | Research |
+| 31 | `venue-wedding-facts` | W5 | DATA-4, DP-17 | 8, 9 | new columns on `venues` and `venue_translations`; new `taxonomy_terms` groups and rows | — | ✅ Done |
 | 32 | `owner-content-import` | W6 | DATA-5 | 9, 21, 31 | — | Q12, Q13, Q14 (tier only) | Research |
 | 33 | `filter-wedding` | W6 | FI-7, LP-7 | 12, 31 | indexes only, if needed | — | Research |
 
@@ -1444,6 +1444,29 @@ W5. Depends on #8 (detail page) and #9 (content format, Venues write side). Read
   - an application test covers DP-17 with all facts, with some, and with none;
   - the UI checks of S11 pass on a venue with and without the section;
   - `make db-fresh && make seed` works.
+
+**Outcome (2026-10-30).** Done in commit `venue-wedding-facts`. No Composer change, no routes, no Twig functions, no catalogue domains, no new Makefile targets or console commands. Nothing in `src/Search` or `templates/search` changed: the six new groups have no filter and no card until #33. Read `CLAUDE.md` `### Venues` ("Built in #31") and `docs/content-format.md` before touching these facts.
+
+- **Schema:** one additive, reversible migration, `Version20261030160506`. `venues`: `price_level`, `capacity_seated`, `capacity_standing` (1–50000; the owner's numbers, not compared with `capacity_max`), `party`, `has_curfew` (NULL = unknown), `curfew_at` (`TIME(0)`), `instagram`, all nullable, with `chk_venues_{price_level,capacity_seated,capacity_standing,party,curfew_at,instagram}`. `chk_venues_curfew_at` is `curfew_at IS NULL OR has_curfew IS TRUE`, because the plain form is NULL for a time with `has_curfew` NULL and a NULL CHECK passes. `venue_translations`: `ambience` (≤ 60), `capacity_note`, `party_note`, `opening_hours` (≤ 250 each), kept verbatim. `taxonomy_terms` now holds **13 groups and 146 rows** (56 new, `primary_position` NULL); `chk_taxonomy_terms_term_group` lists the groups in `TermGroup` case order. No index: #33 decides after `EXPLAIN`.
+- **Vocabularies:** `Venues\ValueObject\{PriceLevel, PartyAllowed}`, and `TermGroup::{Ceremony, Amenity, Dining, Vendor, Usage, Language}`. Catalogue `venues`: `price_level.*`, `party.*`, `term_group.*`, `term.<group>.<code>`, `detail.wedding.*`, `detail.contact.instagram`.
+- **Entities:** `Venue::{changePriceLevel, changeSeatingCapacity, describePartyRules, changeInstagram}`, `VenueTranslation::describeWedding(?ambience, ?capacityNote, ?partyNote, ?openingHours)`, bare-name getters. `revise()` and the constructor did not change, so #24 writes the texts with a second call.
+- **Content format (the one write path):** the YAML names are `price_level`, `capacity.seated`, `capacity.standing`, `party.allowed`, `party.has_curfew`, `party.curfew_at`, `contact.instagram`, `terms.<ceremony|amenity|dining|vendor|usage|language>` and `translations.<locale>.{ambience, capacity_note, party_note, opening_hours}`, all optional; an omitted field resets to NULL on update. `party` is an object with nullable fields, shaped like `faq`; a missing block means unknown, and a null block (`party:` with nothing after it) is rejected. `curfew_at` is `HH:MM` at every boundary (`to_char(…, 'HH24:MI')` in SQL, `H:i` in PHP), midnight is `'00:00'` and `24:00` is rejected; `ContentReader` reports `/party/curfew_at` without `has_curfew: true`. **#32 writes `24.00 Uhr` as `'00:00'` and keeps the wording in `party_note`.** `ContentFormat::VERSION` stays 1, so #31 alone triggers no re-import.
+- **Detail page (DP-17):** `Venues\ReadModel\DetailWedding` (`hasAny()`; `hasCurfew` false counts, because "Keine Sperrstunde" is a known fact) is `venue.wedding`; `venue.instagram` also feeds `hasContact()`. `VenueDetailQuery::detail()` stays at 3 queries and the six groups never join `factGroups`. `templates/venues/detail/_wedding.html.twig` follows `_facts` in `show.html.twig`, reuses the `venue-facts__*` classes (no new SCSS) and prints through `_print.scss` unchanged. The Instagram link is in `_contact` with `rel="nofollow noopener"`.
+- **Demo data and tests:** `DemoStory::createWeddingFacts()` runs after the media step and gives the 30 even-index venues the facts, with its own seeded RNG; `DetailVenues::full()` and `ContentSchemaTest::full()` carry every fact, `minimal()` none. Round trip: `tests/Integration/Venues/ImportWeddingFactsTest.php`. `make test` was 813 tests before the rebase.
+- **Later cycles:** #24's form "Hochzeit" composes the entity methods above. #33 reads `venue_terms` by code and these columns directly. #16 adds `venue.instagram` to `sameAs`. A new term needs a migration plus its label; `TaxonomyTermsTest` and `ContentSchemaVocabularyTest` fail until the schema enum and the catalogue agree.
+- **Decisions taken (research §Open Decisions):**
+  1. `amenity` shows as a line "Ausstattung" before Essen. That goes beyond DP-17's list, because FI-7 filters on these codes.
+  2. `cs`, `ru`, `hu`, `gsw` ship now as `language` rows, by S14's ≥ 3 rule on the CSV. A new language at ≥ 3 in a fresh export needs a small `INSERT` migration in #32.
+  3. `party_note` stays ≤ 250. #32 trims it to what fits and reports the rest.
+  4. Instagram uses the `camera` icon with the text "Instagram", because Lucide ships no brand marks (sprite: 39 icons).
+- **Deviations:** the plan's `WEDDING_GROUP_ORDER`-style selection became six named lists on `DetailWedding`, since the template fixes the order; no `_wedding.scss` was needed; the catalogue's header comment was corrected, since not all term labels are eventlokale's any more. Plain-text rows in the section use body size and term rows `--fs-small`: acceptable, a design call for the owner.
+- **Carried forward:**
+  - **Owner, open:** the three manual checks. S11 at 390 and 1440 px in a real browser (only headless evidence exists), the browser print preview, and reading the German labels (`/hochzeitslocation/landgut-rebhalde` has the section, `/hochzeitslocation/seehaus-mittelwil` has none).
+  - **#32:** the tokens `laktosefrei`, `bar`, `lift`, `mikrofon` have no code and go to its report.
+  - **#33:** the docblock of `Search\ReadModel\KnownTermsQuery` ("about 90 rows") and the "90" in `CLAUDE.md` `### Search` are stale; both were left for it, because #31 changes nothing in Search.
+  - **Not measured:** the detail page p95 at demo data ×10 (S11: ≤ 120 ms). It is not in this cycle's done-when, and the query count and shape are unchanged apart from extra columns.
+  - **`DemoStoryTest`'s 10 s budget** is load-sensitive and misses when several lanes run. Measured as not caused by #31: `createWeddingFacts()` takes a median of 0.25 s, and the base commit misses the budget at the same rate (2 of 8 at host load 16–27). The budget was not changed; any decision on it belongs outside this cycle.
+  - **Pre-existing:** `docs/content-format.md`'s `faq:` comment says a null block is valid, but the schema rejects it, as it does for `party`.
 
 ### 32. `owner-content-import`
 

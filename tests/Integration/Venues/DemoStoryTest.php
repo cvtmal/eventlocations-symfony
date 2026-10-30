@@ -100,6 +100,7 @@ final class DemoStoryTest extends KernelTestCase
             self::assertSame((int) $venue['capacity_max'], (int) $venue['largest_room_capacity']);
         }
 
+        $this->assertWeddingFacts();
         $this->assertPhotos();
         $this->assertDocuments();
 
@@ -115,6 +116,26 @@ final class DemoStoryTest extends KernelTestCase
         $this->expectExceptionMessage('app:geo:import-towns');
 
         $this->story()->build();
+    }
+
+    private function assertWeddingFacts(): void
+    {
+        self::assertSame(30, $this->rows('SELECT count(*) FROM venues WHERE price_level IS NOT NULL'));
+        self::assertSame(0, $this->rows(<<<'SQL'
+            SELECT count(*) FROM venues v
+            JOIN venue_translations t ON t.venue_id = v.id
+            WHERE v.price_level IS NULL AND (
+                v.capacity_seated IS NOT NULL OR v.capacity_standing IS NOT NULL OR v.party IS NOT NULL
+                OR v.has_curfew IS NOT NULL OR v.curfew_at IS NOT NULL OR v.instagram IS NOT NULL
+                OR t.ambience IS NOT NULL OR t.capacity_note IS NOT NULL OR t.party_note IS NOT NULL OR t.opening_hours IS NOT NULL
+                OR EXISTS (SELECT 1 FROM venue_terms vt WHERE vt.venue_id = v.id AND vt.term_group IN ('ceremony', 'amenity', 'dining', 'vendor', 'usage', 'language'))
+            )
+            SQL));
+        self::assertSame(30, $this->rows("SELECT count(*) FROM venue_terms WHERE term_group = 'usage'"));
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE has_curfew IS FALSE'));
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE has_curfew AND curfew_at IS NOT NULL'));
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE has_curfew AND curfew_at IS NULL'));
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE price_level IS NOT NULL AND has_curfew IS NULL'));
     }
 
     private function assertPhotos(): void

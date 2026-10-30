@@ -9,6 +9,8 @@ use App\Geo\Entity\Town;
 use App\Shared\Uid\EntityId;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PartyAllowed;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
@@ -35,6 +37,9 @@ use Doctrine\ORM\Mapping as ORM;
  *   by `app:venues:import` (nothing else edits it). `content_hash` is the hash of the
  *   content it was last imported from (the import skips an unchanged venue); NULL after a
  *   prune so a reappearing folder is applied again. Demo venues have neither.
+ * - The owner facts (#31, S14) are all nullable, NULL meaning unknown, and the page shows
+ *   nothing for them. `capacity_seated` / `capacity_standing` are the owner's numbers and are
+ *   not checked against `capacity_max`. Their translated texts live in VenueTranslation.
  */
 #[ORM\Entity(repositoryClass: VenueRepository::class)]
 #[ORM\Table(name: 'venues')]
@@ -124,6 +129,27 @@ class Venue
 
     #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
     private ?bool $daylight = null;
+
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true, enumType: PriceLevel::class)]
+    private ?PriceLevel $priceLevel = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $capacitySeated = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $capacityStanding = null;
+
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true, enumType: PartyAllowed::class)]
+    private ?PartyAllowed $party = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
+    private ?bool $hasCurfew = null;
+
+    #[ORM\Column(type: Types::TIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $curfewAt = null;
+
+    #[ORM\Column(type: Types::STRING, length: 500, nullable: true)]
+    private ?string $instagram = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 1, nullable: true)]
     private ?string $ratingScore = null;
@@ -268,6 +294,41 @@ class Venue
     {
         $this->ownCatering = $ownCatering;
         $this->daylight = $daylight;
+        $this->touch();
+    }
+
+    public function changePriceLevel(?PriceLevel $priceLevel): void
+    {
+        $this->priceLevel = $priceLevel;
+        $this->touch();
+    }
+
+    /**
+     * The owner's seated and standing capacity (S14), beside the capacity range of
+     * changeCapacity().
+     */
+    public function changeSeatingCapacity(?int $seated, ?int $standing): void
+    {
+        $this->capacitySeated = $seated;
+        $this->capacityStanding = $standing;
+        $this->touch();
+    }
+
+    /**
+     * NULL means unknown. A curfew time needs $hasCurfew true (chk_venues_curfew_at); read it
+     * only as H:i, its date part means nothing.
+     */
+    public function describePartyRules(?PartyAllowed $party, ?bool $hasCurfew, ?\DateTimeImmutable $curfewAt): void
+    {
+        $this->party = $party;
+        $this->hasCurfew = $hasCurfew;
+        $this->curfewAt = $curfewAt;
+        $this->touch();
+    }
+
+    public function changeInstagram(?string $instagram): void
+    {
+        $this->instagram = $instagram;
         $this->touch();
     }
 
@@ -458,6 +519,41 @@ class Venue
     public function daylight(): ?bool
     {
         return $this->daylight;
+    }
+
+    public function priceLevel(): ?PriceLevel
+    {
+        return $this->priceLevel;
+    }
+
+    public function capacitySeated(): ?int
+    {
+        return $this->capacitySeated;
+    }
+
+    public function capacityStanding(): ?int
+    {
+        return $this->capacityStanding;
+    }
+
+    public function party(): ?PartyAllowed
+    {
+        return $this->party;
+    }
+
+    public function hasCurfew(): ?bool
+    {
+        return $this->hasCurfew;
+    }
+
+    public function curfewAt(): ?\DateTimeImmutable
+    {
+        return $this->curfewAt;
+    }
+
+    public function instagram(): ?string
+    {
+        return $this->instagram;
     }
 
     public function ratingScore(): ?float
