@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import and #31 venue-wedding-facts done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content source changed to the Wix CSV + submissions export) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import and #31 venue-wedding-facts done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -93,7 +93,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 18 | `legal-pages` | W6 | LEG-1, LEG-2 | 1, 13, 14 | — | ~~Q5~~ | Plan |
 | 19 | `performance-caching` | W7 | PERF-1–PERF-3, ADM-6 | 10–17, 24, 25, 33 | — | — | Research |
 | 20 | `prod-deploy` | W8 | OP-2, OP-3, OP-4 | 19, 21, 26, 32 | — | ~~Q1~~, ~~Q2~~ (Hostpoint + Neon), Q14 (redirects only) | Research |
-| 21 | `legacy-data-import` | W5 | DATA-3 | 3, 9 | — | ~~Q4~~, ~~Q12~~ (needs the Wix submissions export file) | Research |
+| 21 | `legacy-data-import` | W5 | DATA-3 | 3, 9 | `venues`: address, town, canton and coordinates become optional | ~~Q4~~, ~~Q12~~ | Research |
 | 22 | `admin-foundation` | W4 | ADM-1–ADM-6, ADM-8 | 1, 2 | `admin_users`, `admin_audit_log` | ~~Q9~~ | Research |
 | 23 | `admin-ui-kit` | W5 | ADM-4, ADM-7 | 22 | — | ~~Q11~~ | Research |
 | 24 | `cms-venues` | W6 | CMS-1–CMS-4, CMS-9–CMS-11 | 8, 9, 23, 31 | `venues.cms_edited_at` | — | Research |
@@ -131,8 +131,8 @@ W5 holds nine cycles; with three to four lanes it runs in two or three rounds. S
 
 **Milestones.**
 - After #8: you can browse the listing and detail pages locally with demo data. This is the first owner review of look and feel.
-- After #21: the local app runs on the real venues (about 247, base data; see the source change in #21). This is the second owner review.
-- After #32: the local app runs on about 247 venues with the owners' own texts, photos, prices and wedding facts. This is the owner review of the data merge.
+- After #21: the local app runs on the 243 real venues (base data; see the source change in #21). This is the second owner review.
+- After #32: the local app runs on the 243 venues with the owners' own texts, photos, prices and wedding facts. This is the owner review of the data merge.
 - After #15: the MVP is feature-complete (all filters, Merkliste, inquiry, map).
 - After #25: the owner can edit every venue field, photo, room and document in the CMS locally. This is the owner review of the back office.
 - After #19 and #26: launch-ready (SEO, legal pages, performance budgets met, CMS complete).
@@ -159,7 +159,7 @@ Each gate has a default, so no cycle is blocked as a whole. The owner answers he
 | ~~Q9~~ | Who logs in to the back office? | **Only our staff.** | No venue self-service (it is a proposal). Accounts are created by a console command, there are two roles (`admin`, `editor`), and 2FA is required (S12). |
 | ~~Q10~~ | Which HubSpot concepts go into the CRM? | **Companies, contacts, timeline with notes, calls and tasks; deals pipeline; inquiries → contacts; sending e-mails.** | #27 (base), #28 (deals), #29 (inquiries), #30 (e-mail). Custom properties, inbox sync and reporting are proposals. |
 | ~~Q11~~ | Visual design of the back office? | **A design reference made with Claude's design tool in the planning session; approved by the owner on 2026-10-30.** | Lives in `docs/reference/admin/` (S12). #22 and #23 build the tokens, the shell and the components from it, and every back-office cycle compares against it. |
-| ~~Q12~~ | Can the owner export the Wix form submissions? They should hold the address, contact person and Instagram that the CSV lacks (S14). | **Yes (2026-10-30). The Wix submissions export plus `Locations+Startseite.csv` are the only production sources.** The external SSD is lost, and the eventlokale crawl cache and the Laravel project are out for everything. The export file has not been delivered yet. | #21 and #32 read these two files and nothing else. A CSV row without a match in the export is skipped and reported, never guessed. See the source change at the top of #21. |
+| ~~Q12~~ | Can the owner export the Wix form submissions? They should hold the address, contact person and Instagram that the CSV lacks (S14). | **No (2026-10-30). `Locations+Startseite.csv` is the only production source, and venues without an address are accepted.** There is no form export. The external SSD is lost, and the eventlokale crawl cache and the Laravel project are out for everything. | Address, town, canton and coordinates become optional (#21). See the source change at the top of #21. |
 | Q13 | Do the 4 Liechtenstein venues go on the site? | **Open.** | Default: no. `cantons` and `towns` are Swiss (#3), and the canton map and landing pages assume 26 cantons. #32 skips them and lists them in its report. A yes needs a small cycle of its own (proposal). |
 | Q14 | What happens to deine-hochzeitslocation.ch at launch, and does any venue pay there (its home page mentions a "Premium-Eintrag")? | **Open.** | Default: the old site keeps running, no redirects are built, and a venue only in the CSV starts as `basic`. If the site is retired, #20 adds 301s from its `/hochzeitslocations/<slug>` and region URLs to the new pages, and `/listing` needs a replacement (proposal). A list of paying venues sets `tier` in #32. |
 
@@ -269,7 +269,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 
 - **Until the CMS (#24/#25):** real content lives in files, one YAML per venue plus a photo folder, kept outside `public/` (default `content/`, configurable via `CONTENT_ROOT`). `app:venues:import` (#9) imports it idempotently.
 - **Dev and test** use Foundry: a `DemoStory` with about 60 fictional venues across all 26 cantons and all tiers, with generated placeholder photos (#4/#5).
-- **Production content** comes from the Wix CSV and submissions export (Q12): #21 turns them into content folders in `CONTENT_ROOT`, and #9 imports them like any other content. #32 then overlays those folders with the S14 facts and photos, so #9 stays the only write path.
+- **Production content** comes from the Wix CSV (Q12): #21 turns it into content folders in `CONTENT_ROOT`, and #9 imports them like any other content. #32 then overlays those folders with the S14 facts and photos, so #9 stays the only write path.
 - **From the CMS on, the database is the master.** Venues are created and edited in the CMS. The file import stays as a bulk path for onboarding (new keys) and for re-imports. It never silently overwrites a CMS edit: a venue with `cms_edited_at` later than its last import is skipped and reported, unless `--overwrite-cms-edits` is given (#24). Database and `MEDIA_ROOT` backups are therefore the content backups (#20).
 - **One write path:** the import (#9) and the CMS (#24/#25) dispatch the same `Venues` commands. Slug history, room summaries, the photo pipeline (S9) and the cache purge live once, in Venues handlers.
 - No eventlokale content goes into the repo; see **Important**.
@@ -344,7 +344,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 
 ### S14. Owner data (deine-hochzeitslocation.ch)
 
-**Source change (owner, 2026-10-30).** Q12 supersedes every part of this section that relies on the crawl or on #21's 758 venues: there is no crawl match, no merge with crawl data, and no "crawl wins" field. The owner's two files are the only source, so rooms, ratings, reviews, FAQ, documents and distances stay empty for now.
+**Source change (owner, 2026-10-30).** Q12 supersedes every part of this section that relies on the crawl, on #21's 758 venues or on an address: there is no crawl match, no merge with crawl data, and no "crawl wins" field. The CSV is the only source, so addresses, coordinates, rooms, ratings, reviews, FAQ, documents and distances stay empty unless staff enter them in the CMS.
 
 - **Source.** The owner's current Wix site `deine-hochzeitslocation.ch` collects venue data from venue operators through the form "Location eintragen" (`/listing`). `Locations+Startseite.csv` is the export of its collection: 247 venues, snapshot of 2026-10-30. Unlike the crawl behind #21, the venues gave us this data themselves, so it wins wherever it says something. The file holds contact data and stays outside the repository (`CONTENT_ROOT/owner/`); tests use a small fictional fixture in the same shape.
 - **Measured on the snapshot** (planning session, 2026-10-30; #32's research re-measures):
@@ -1401,11 +1401,13 @@ IDs are referenced by the overview and the cycles.
 
 **Source change (owner, 2026-10-30): this block supersedes the section below wherever they differ. The slug stays.**
 
-- **Sources:** only `Locations+Startseite.csv` (247 rows; path passed as an argument, never committed) and the Wix form submissions export (Q12). The three sources below (Laravel DB, crawl cache, SSD), the Selection and the crawl-specific mapping rules no longer apply. No other data of any kind goes into production content.
-- **Blocked until the export file is delivered.** The CSV has no street, ZIP, town or coordinates, and `docs/content-format.md` requires `address.town` and `geo`.
-- **Output:** the base folders for #9 (name, address, capacity, contact, text). #32 overlays facts and photos.
-- **Matching:** export to CSV rows. A row with no match, or a weak one, is reported, never guessed.
-- **Defaults, each until the owner decides otherwise:** coordinates are the town centre from `data/geo/towns.csv` (exact pins through swisstopo would be a third source); `tier` is `basic` for every venue (Q14); Liechtenstein is skipped (Q13).
+- **Source:** only `Locations+Startseite.csv` (247 rows; path passed as an argument, never committed). The three sources below (Laravel DB, crawl cache, SSD), the Selection and the crawl-specific mapping rules no longer apply. No other data of any kind goes into production content, and nothing is guessed: the CSV has no street, ZIP, town or coordinates, and the 2 streets and 2 ZIPs in its texts are not addresses.
+- **Schema (this cycle owns it, a design change like S12's):** `venues` address, town, canton and coordinates become optional, with a hand-written migration; `docs/content-format.md` and its schema follow. The rule that the canton is always the town's canton holds when a town exists. Without a town, the canton is set only when `Region` names exactly one canton.
+- **`Region`:** 223 venues name a canton, and `Rümlang` is a town in ZH (224). `Basel`, `Appenzell`, `Romandie` and `Schweizweit` (19) get no canton; research decides how their text is kept for display. `Liechtenstein` (4) is skipped (Q13), so 243 venues go live.
+- **Every read path must handle a missing town, canton and coordinates:** cards, the detail page, similar venues, listing filters, radius SQL, sitemap and JSON-LD. Run this cycle after #10 and #14 land, because it touches the same files.
+- **Output:** the base folders for #9 (name, canton, capacity, contact, text). #32 overlays facts and photos.
+- **Later cycles:** the Ort/PLZ tab and radius (#10), `access`, rooms, area and height (#12), the map (#15), town landing pages (#17) and the address in JSON-LD (#16) have no data until staff enter addresses (#24, optional fields). Default: hide a control that has no data rather than offer a search that returns 0; the code stays.
+- **Defaults:** `tier` is `basic` for every venue (Q14). Contact person and Instagram stay empty.
 
 - **Q4 answered:** copy the content from the Laravel project. It becomes the production content (S8).
 - **Output:** a console command `app:legacy:export-content` (in `Venues\Console`; it may be deleted once production runs on it). It reads the legacy sources and **writes #9's content folders** into `CONTENT_ROOT`. It never writes to our DB directly, so #9's import stays the only write path. Then `app:venues:import` loads them.
@@ -1480,9 +1482,7 @@ W5. Depends on #8 (detail page) and #9 (content format, Venues write side). Read
 
 ### 32. `owner-content-import`
 
-**Source change (owner, 2026-10-30): this block supersedes the section below wherever they differ.** #32 reads the same two files as #21 and uses no crawl: the match to the crawl, the `--also` ids and the address steps fall away, because #21 already wrote the folders and addresses. It overlays them with the S14 facts and the Wix photos. The owner's go or no-go on #32 and #33 is still open; without #32 the site has no real photos.
-
-W6. Depends on #9 (format and import), #21 (the folders it overlays), #31 (the fields). Gates: Q12 (addresses), Q13 (Liechtenstein), Q14 (`tier`). Read S14 first.
+**Source change (owner, 2026-10-30): this block supersedes the section below wherever they differ.** #32 reads the same CSV as #21 and uses nothing else: the match to the crawl, the `--also` ids and the address steps fall away. It overlays #21's folders with the S14 facts and the Wix photos. The owner said go on #32 and #33.
 
 - **Output:** a console command `app:owner:export-content <csv> [--dry-run]` (in `Venues\Console`; it may be deleted once the CMS is the master). Like #21, it **only writes content folders** into `CONTENT_ROOT`, never the DB, so `app:venues:import` stays the only write path. Then the import loads them.
 - **Steps:**
