@@ -1,7 +1,51 @@
 # Strings of the Search module. Keys: <context>.<description>.
+listing:
+    meta_title: Hochzeitslocations in der Schweiz | Hochzeitslocation
+    # Static until #16's SEO-1 patterns replace it (plan P2).
+    meta_description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
+    heading: Hochzeitslocations in der Schweiz
+    # formatted = count|swiss_number
+    count: '{count, plural, one {# Resultat} other {{formatted} Resultate}}'
+    results_label: Suchresultate
+    empty:
+        title: Keine Location passt zu deinen Filtern
+        reset: Filter löschen
+filter:
+    bar_label: Filter
+    region: Region
+    guests: Anzahl Gäste
+    more: weitere Filter +
+    more_title: Weitere Filter
+    reset: Filter löschen
+    merkliste: Merkliste
+chip:
+    remove: 'Filter {label} entfernen'
+    place_generic: Ort
+    place: '{place}'
+    place_radius: '{place} + {radius} km'
+    guests: '{guests} Gäste'
+    q: '“{q}”'
+    rooms: '{rooms, plural, one {ab # Raum} other {ab # Räume}}'
+    area: 'ab {area} m²'
+    height: 'ab {height} m'
+card:
+    photos_label: 'Bilder von {name}'
+    rating: '{label} ({score}) | {count}'
+    rating_unlabelled: '({score}) | {count}'
+    # The accessible name of the thumbs-up icon after the count.
+    rating_count: Bewertungen
+    highlight: '“{highlight}”'
+pagination:
+    label: Seiten
+    range: '{from} - {to} von {total} Resultaten'
+    previous: Vorherige Seite
+    next: Nächste Seite
+    page: 'Seite {page}'
+related:
+    title: Andere suchten auch nach
+    canton: 'Hochzeit {canton}'
 # "Ähnliche Locations" on the detail page (#8, SimilarVenuesController fragment).
 similar:
     heading: Ähnliche Locations
     all: Alle Locations
     label: Ähnliche Locations
-    capacity: '{range} Personen'

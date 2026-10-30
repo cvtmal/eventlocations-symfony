@@ -1,0 +1,37 @@
+{#
+    "1 - 48 von N Resultaten" plus the page links (LP-1). Include with `only`:
+      criteria (SearchCriteria), page (ListingPage), links (list<int|null> from PageLinks::around; null = gap).
+    The links render only when there is more than one page.
+#}
+{%- set from = (page.page - 1) * page.perPage + 1 -%}
+{%- set to = from + page.cards|length - 1 -%}
+<nav class="pagination" aria-label="{{ 'pagination.label'|trans({}, 'search') }}">
+    <p class="pagination__count">{{ 'pagination.range'|trans({from: from|swiss_number, to: to|swiss_number, total: page.total|swiss_number}, 'search') }}</p>
+    {%- if page.lastPage > 1 %}
+    <ol class="pagination__list">
+        <li>
+            {%- if page.page > 1 -%}
+                <a class="pagination__arrow" href="{{ listing_path(criteria, page.page - 1) }}" aria-label="{{ 'pagination.previous'|trans({}, 'search') }}">{{ icon('chevron-left') }}</a>
+            {%- else -%}
+                <span class="pagination__arrow" aria-hidden="true">{{ icon('chevron-left') }}</span>
+            {%- endif -%}
+        </li>
+        {%- for n in links %}
+        <li>
+            {%- if n is null -%}
+                <span class="pagination__gap" aria-hidden="true">…</span>
+            {%- else -%}
+                <a class="pagination__page" href="{{ listing_path(criteria, n) }}" aria-label="{{ 'pagination.page'|trans({page: n}, 'search') }}"{% if n == page.page %} aria-current="page"{% endif %}>{{ n }}</a>
+            {%- endif -%}
+        </li>
+        {%- endfor %}
+        <li>
+            {%- if page.page < page.lastPage -%}
+                <a class="pagination__arrow" href="{{ listing_path(criteria, page.page + 1) }}" aria-label="{{ 'pagination.next'|trans({}, 'search') }}">{{ icon('chevron-right') }}</a>
+            {%- else -%}
+                <span class="pagination__arrow" aria-hidden="true">{{ icon('chevron-right') }}</span>
+            {%- endif -%}
+        </li>
+    </ol>
+    {%- endif %}
+</nav>

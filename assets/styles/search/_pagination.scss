@@ -1,0 +1,57 @@
+// Pagination (#7, LP-1): "1 - 48 von N Resultaten" and the page circles. The current page is pink with
+// dark text (#1 deviation 1: white on pink is 3.01:1).
+.pagination {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: var(--space-xl) 0;
+}
+
+.pagination__count {
+    margin: 0 0 1.5rem;
+    font-size: var(--fs-body);
+}
+
+.pagination__list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pagination__page,
+.pagination__arrow,
+.pagination__gap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+}
+
+.pagination__page {
+    border-radius: var(--r-round);
+    font-size: var(--fs-small);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &[aria-current='page'] {
+        background: var(--c-accent);
+        color: var(--c-ink-inverse);
+        font-weight: var(--fw-semibold);
+    }
+}
+
+span.pagination__arrow {
+    color: var(--c-line-muted);
+}
+
+.pagination__arrow .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}

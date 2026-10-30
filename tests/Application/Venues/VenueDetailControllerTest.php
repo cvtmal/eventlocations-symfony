@@ -83,6 +83,8 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertSelectorExists('aside.venue-actions [data-print][hidden]');
         self::assertSelectorExists('aside.venue-actions [popovertarget="venue-share"][data-share-url="http://localhost/hochzeitslocation/schloss-seeblick"]');
         self::assertSelectorExists('#venue-share[popover] a[href^="https://wa.me/?text="]');
+        // Merken: #7's no-JS form (#13 adds the route and the behaviour).
+        self::assertSelectorExists('aside.venue-actions form.merken--detail[method="post"][action="/merkliste/'.$venue->number().'"] button.merken__button');
 
         // Head.
         self::assertSelectorTextContains('.venue-head__place', '8001 Zürich');
@@ -157,6 +159,8 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertCount(12, $crawler->filter('.similar-venues .similar-card'));
         self::assertSelectorExists('.similar-venues .similar-card a[href^="/hochzeitslocation/andere-location-"]');
         self::assertSelectorTextContains('.similar-venues__all', 'Alle Locations');
+        self::assertSame('/hochzeitslocations', $crawler->filter('.similar-venues__all')->attr('href'));
+        self::assertCount(12, $crawler->filter('.similar-venues .similar-card .card-facts'));
 
         // No empty headings, no inline styles or scripts.
         $this->assertNoEmptyHeadings($crawler);

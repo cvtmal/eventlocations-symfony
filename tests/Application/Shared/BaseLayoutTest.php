@@ -90,7 +90,7 @@ final class BaseLayoutTest extends WebTestCase
     private function home(): Crawler
     {
         $this->client = self::createClient();
-        $crawler = $this->client->request('GET', '/');
+        $crawler = $this->client->request('GET', '/hochzeitslocations');
         self::assertResponseIsSuccessful();
 
         return $crawler;

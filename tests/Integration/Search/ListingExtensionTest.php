@@ -1,0 +1,172 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Integration\Search;
+
+use App\Media\ValueObject\ImageFormat;
+use App\Search\ReadModel\CardPhoto;
+use App\Search\ReadModel\KnownTerms;
+use App\Search\ReadModel\SearchCriteria;
+use App\Search\Twig\ListingExtension;
+use App\Venues\ValueObject\RatingLabel;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpFoundation\InputBag;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment;
+
+/**
+ * The listing's Twig helpers against the real router and translator, plus the
+ * hidden-state partial that #10–#12's GET forms use.
+ */
+final class ListingExtensionTest extends KernelTestCase
+{
+    private const PHOTO_ID = '0198a3c4-6b1e-7f3a-9c2d-1e4f5a6b7c8d';
+
+    private ListingExtension $extension;
+
+    protected function setUp(): void
+    {
+        $urls = self::getContainer()->get('router');
+        $translator = self::getContainer()->get('translator');
+        self::assertInstanceOf(UrlGeneratorInterface::class, $urls);
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+        $this->extension = new ListingExtension($urls, $translator);
+    }
+
+    public function test_listing_path_with_and_without_a_page(): void
+    {
+        $criteria = $this->criteria(['guests' => '120', 'canton' => 'ZH', 'page' => '3']);
+
+        self::assertSame('/hochzeitslocations?canton=zh&guests=120&page=3', $this->extension->listingPath($criteria));
+        self::assertSame('/hochzeitslocations?canton=zh&guests=120&page=2', $this->extension->listingPath($criteria, 2));
+        self::assertSame('/hochzeitslocations?canton=zh&guests=120', $this->extension->listingPath($criteria, 1));
+        self::assertSame('/hochzeitslocations', $this->extension->listingPath(SearchCriteria::none()));
+    }
+
+    public function test_list_params_round_trip_through_the_codec(): void
+    {
+        $criteria = $this->criteria(['setting' => ['river', 'lake'], 'access' => 'station']);
+        $path = $this->extension->listingPath($criteria);
+
+        self::assertSame('/hochzeitslocations?setting%5B0%5D=lake&setting%5B1%5D=river&access%5B0%5D=station', $path);
+
+        self::assertSame($criteria->toQuery(), $this->criteria(Request::create($path)->query->all())->toQuery());
+    }
+
+    public function test_listing_path_without(): void
+    {
+        $criteria = $this->criteria([
+            'canton' => 'zh', 'place' => '8001', 'radius' => '10', 'guests' => '80',
+            'setting' => ['lake', 'river'], 'page' => '2',
+        ]);
+
+        self::assertSame(
+            '/hochzeitslocations?place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            $this->extension->listingPathWithout($criteria, 'canton'),
+        );
+        self::assertSame(
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80&setting%5B0%5D=river',
+            $this->extension->listingPathWithout($criteria, 'setting', 'lake'),
+        );
+        self::assertSame(
+            '/hochzeitslocations?canton=zh&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            $this->extension->listingPathWithout($criteria, ['place', 'radius']),
+        );
+        self::assertSame(
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80',
+            $this->extension->listingPathWithout($this->criteria([
+                'canton' => 'zh', 'place' => '8001', 'radius' => '10', 'guests' => '80', 'setting' => ['river'],
+            ]), 'setting', 'river'),
+            'Removing the last value drops the key.',
+        );
+        self::assertSame(
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            $this->extension->listingPathWithout($criteria, 'rooms'),
+            'An absent param changes nothing but page.',
+        );
+        self::assertSame(
+            '/hochzeitslocations?place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            $this->extension->listingPathWithout($criteria, 'canton', 'zh'),
+            'A scalar equal to the value is dropped.',
+        );
+        self::assertSame(
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            $this->extension->listingPathWithout($criteria, 'canton', 'be'),
+        );
+    }
+
+    public function test_card_picture(): void
+    {
+        self::assertNull($this->extension->cardPicture(CardPhoto::fromRow(7, $this->photoRow(false), null), 'Seehaus'));
+
+        $fallback = $this->extension->cardPicture(CardPhoto::fromRow(7, $this->photoRow(true), null), 'Seehaus');
+        self::assertNotNull($fallback);
+        self::assertSame('Seehaus, Bild 3', $fallback->alt);
+        self::assertSame(7, $fallback->venueNumber);
+        self::assertSame(self::PHOTO_ID, $fallback->photoId);
+        self::assertSame([360, 640, 960, 1280], $fallback->variants->widths);
+        self::assertSame('/media/7/'.self::PHOTO_ID.'-640.webp', $fallback->url(640, ImageFormat::Webp));
+
+        $stored = $this->extension->cardPicture(CardPhoto::fromRow(7, $this->photoRow(true), 'Seeterrasse'), 'Seehaus');
+        self::assertNotNull($stored);
+        self::assertSame('Seeterrasse', $stored->alt);
+    }
+
+    public function test_rating_label_and_venue_path(): void
+    {
+        self::assertSame(RatingLabel::Outstanding, $this->extension->ratingLabel(9.0));
+        self::assertNull($this->extension->ratingLabel(7.0));
+        self::assertSame('/hochzeitslocation/schloss-au', $this->extension->venuePath('schloss-au'));
+    }
+
+    public function test_hidden_state_keeps_the_other_groups(): void
+    {
+        $twig = self::getContainer()->get('twig');
+        self::assertInstanceOf(Environment::class, $twig);
+        $criteria = $this->criteria(['canton' => 'zh', 'guests' => '80', 'setting' => ['lake', 'river'], 'q' => 'See', 'page' => '2']);
+
+        $crawler = new Crawler($twig->render('search/filter/_hidden_state.html.twig', ['criteria' => $criteria, 'except' => ['guests', 'q']]));
+        $inputs = $crawler->filter('input')->each(
+            static fn (Crawler $input): array => [$input->attr('type'), $input->attr('name'), $input->attr('value')],
+        );
+
+        self::assertSame([
+            ['hidden', 'canton', 'zh'],
+            ['hidden', 'setting[]', 'lake'],
+            ['hidden', 'setting[]', 'river'],
+        ], $inputs);
+    }
+
+    /**
+     * @param array<string, mixed> $query
+     */
+    private function criteria(array $query): SearchCriteria
+    {
+        /** @var InputBag<string> $bag the shape Request::$query has */
+        $bag = new InputBag($query);
+
+        return SearchCriteria::fromQuery($bag, KnownTerms::of(['setting' => ['lake', 'river', 'city']]));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function photoRow(bool $withVariants): array
+    {
+        $row = ['id' => self::PHOTO_ID, 'position' => 3, 'original_path' => 'demo/seehaus.jpg'];
+        if ($withVariants) {
+            $row += [
+                'width' => 1600,
+                'height' => 1067,
+                'dominant_color' => '#b9a58c',
+                'variants' => ['widths' => [360, 640, 960, 1280], 'formats' => ['avif', 'webp', 'jpg']],
+            ];
+        }
+
+        return $row;
+    }
+}

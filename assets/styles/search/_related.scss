@@ -1,0 +1,24 @@
+@use '../abstracts/breakpoints' as bp;
+
+// "Andere suchten auch nach" (#7, LP-5): neutral tag links (the original's .internal-links).
+.related {
+    margin: var(--space-2xl) 0 var(--space-xl);
+}
+
+.related__title {
+    margin-bottom: var(--space-m);
+    font-size: var(--fs-body);
+}
+
+.related__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(sm) {
+        gap: 1rem;
+    }
+}

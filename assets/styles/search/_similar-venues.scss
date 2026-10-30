@@ -82,14 +82,15 @@
     }
 }
 
-.similar-card__town,
-.similar-card__capacity {
-    margin: var(--space-2xs) 0 0;
+// #7's search/_card_facts, smaller than on the listing card.
+.similar-card .card-facts {
+    gap: var(--space-2xs) var(--space-m);
+    margin-top: var(--space-2xs);
     font-size: var(--fs-small);
-}
+    line-height: 1.4;
 
-.similar-card__capacity {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2xs);
+    .icon {
+        width: 1rem;
+        height: 1rem;
+    }
 }

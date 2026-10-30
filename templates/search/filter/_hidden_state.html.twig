@@ -1,0 +1,14 @@
+{#
+    Hidden inputs that carry the current filter state through a filter overlay's GET form, so changing one group keeps
+    the others (#10–#12; no caller in #7). Include with `only`: criteria (SearchCriteria), except (list of param names
+    the form itself submits). `page` is never carried: a changed filter starts at page 1.
+#}
+{%- for key, value in criteria.toQuery() -%}
+    {%- if key not in except|default([]) and key != 'page' -%}
+        {%- if value is iterable -%}
+            {%- for item in value %}<input type="hidden" name="{{ key }}[]" value="{{ item }}">{% endfor -%}
+        {%- else -%}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+        {%- endif -%}
+    {%- endif -%}
+{%- endfor -%}

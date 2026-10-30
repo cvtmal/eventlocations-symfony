@@ -1,0 +1,25 @@
+{#
+    Filter-bar slot "Region" (canton, place + radius). Created by #7 as a placeholder; #10 replaces this file's contents
+    and never edits _filter_bar. Included twice with `with_context = false`: criteria (SearchCriteria), part: chips|trigger.
+    Renders <li class="filter-bar__item">s: one chip per active value (part chips), or the trigger plus its overlay (part trigger).
+    Place and radius form one chip; #10 resolves town names (until then "Ort").
+#}
+{%- if part == 'chips' -%}
+    {%- if criteria.canton is not null -%}
+        {%- set label = criteria.canton|trans -%}
+        <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, 'canton'), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
+    {%- endif -%}
+    {%- if criteria.place is not null -%}
+        {%- set place = criteria.isZipPlace() ? criteria.place : 'chip.place_generic'|trans({}, 'search') -%}
+        {%- set label = criteria.radius > 0 ? 'chip.place_radius'|trans({place: place, radius: criteria.radius}, 'search') : 'chip.place'|trans({place: place}, 'search') -%}
+        <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, ['place', 'radius']), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
+    {%- endif -%}
+{%- elseif part == 'trigger' -%}
+    <li class="filter-bar__item">
+        {{- include('components/_button.html.twig', {label: 'filter.region'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-region'}}, with_context = false) -}}
+        {% embed 'components/_overlay.html.twig' with {id: 'filter-region', tone: 'region', title: 'filter.region'|trans({}, 'search'), criteria: criteria} only %}
+            {% block overlay_body %}{% endblock %}
+            {% block overlay_footer %}{{ include('components/_button.html.twig', {href: listing_path_without(criteria, ['canton', 'place', 'radius']), label: 'filter.reset'|trans({}, 'search'), variant: 'black'}, with_context = false) }}{% endblock %}
+        {% endembed %}
+    </li>
+{%- endif -%}

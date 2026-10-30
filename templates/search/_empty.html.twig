@@ -1,0 +1,5 @@
+{# The listing without results: a message and "Filter löschen" (back to the unfiltered listing). No parameters. #}
+<div class="listing-empty">
+    <p class="listing-empty__title">{{ 'listing.empty.title'|trans({}, 'search') }}</p>
+    {{ include('components/_button.html.twig', {href: path('listing'), label: 'listing.empty.reset'|trans({}, 'search')}, with_context = false) }}
+</div>

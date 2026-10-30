@@ -1,0 +1,72 @@
+@use '../abstracts/breakpoints' as bp;
+
+// The listing's filter bar (#7, LP-6): active-filter chips, then the three triggers, in one horizontally
+// scrollable bar (the original's .search-page__sticky-filter__list), and the round Merkliste button beside it.
+.filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-m);
+    padding-bottom: var(--space-m);
+
+    @include bp.up(md) {
+        gap: var(--space-l);
+        padding-bottom: 0;
+    }
+}
+
+.filter-bar__list {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    margin: 0;
+    padding: .625rem 2px;
+    overflow-x: auto;
+    list-style: none;
+    white-space: nowrap;
+    background: var(--c-surface-3);
+    scrollbar-width: thin;
+
+    @include bp.up(md) {
+        padding: 1rem 2px;
+        border-radius: .375rem;
+    }
+}
+
+.filter-bar__item {
+    display: flex;
+    flex: none;
+    align-items: center;
+    padding: 0 var(--space-s);
+
+    @include bp.up(md) {
+        padding: 0 var(--space-m);
+    }
+
+    & + & {
+        border-left: 1px solid var(--c-line-muted);
+    }
+
+    // The overlays live inside the bar but render in the top layer; undo the bar's text settings.
+    .overlay {
+        text-align: start;
+        white-space: normal;
+    }
+}
+
+// The triggers read as plain text items separated by lines, as on the original.
+.filter-bar .btn--outline {
+    min-height: 2.75rem;
+    padding: 0 var(--space-2xs);
+    border: 0;
+    font-size: .9375rem;
+    font-weight: var(--fw-regular);
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.filter-bar__aside {
+    flex: none;
+}

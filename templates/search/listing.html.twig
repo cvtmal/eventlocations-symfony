@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'listing.meta_title'|trans({}, 'search') }}{% endblock %}
+
+{# Static until #16's SEO-1 patterns replace the block and the key. #}
+{% block meta %}<meta name="description" content="{{ 'listing.meta_description'|trans({}, 'search') }}">{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ url('listing', page.page > 1 ? {page: page.page} : {}) }}">{% endblock %}
+
+{% block hreflang %}{{ include('shared/_hreflang.html.twig', {query: page.page > 1 ? {page: page.page} : {}}, with_context = false) }}{% endblock %}
+
+{% block hero %}
+    {{ include('search/_hero.html.twig', {heading: 'listing.heading'|trans({}, 'search'), total: page.total, criteria: criteria}, with_context = false) }}
+{% endblock %}
+
+{% block main %}
+    <div class="listing container">
+        {%- if page.total > 0 %}
+        <ol class="listing__results" aria-label="{{ 'listing.results_label'|trans({}, 'search') }}">
+            {%- for card in page.cards %}
+            <li class="listing__item">{{ include('search/_card.html.twig', {card: card, index: loop.index0}, with_context = false) }}</li>
+            {%- endfor %}
+        </ol>
+        {{ include('search/_pagination.html.twig', {criteria: criteria, page: page, links: page_links}, with_context = false) }}
+        {%- else %}
+        {{ include('search/_empty.html.twig', with_context = false) }}
+        {%- endif %}
+        {{ include('search/_related_searches.html.twig', {links: related_cantons|map(r => {label: 'related.canton'|trans({canton: r.canton|trans}, 'search'), href: r.href})}, with_context = false) }}
+    </div>
+{% endblock %}
+
+{% block scripts %}<script type="module" src="{{ asset('js/carousel.js') }}"></script>{% endblock %}

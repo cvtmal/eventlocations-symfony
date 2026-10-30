@@ -1,0 +1,19 @@
+{#
+    Filter-bar slot "Anzahl Gäste". Created by #7 as a placeholder; #11 replaces this file's contents and never edits
+    _filter_bar. Included twice with `with_context = false`: criteria (SearchCriteria), part: chips|trigger.
+    Renders <li class="filter-bar__item">s: one chip per active value (part chips), or the trigger plus its overlay (part trigger).
+#}
+{%- if part == 'chips' -%}
+    {%- if criteria.guests is not null -%}
+        {%- set label = 'chip.guests'|trans({guests: criteria.guests|swiss_number}, 'search') -%}
+        <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, 'guests'), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
+    {%- endif -%}
+{%- elseif part == 'trigger' -%}
+    <li class="filter-bar__item">
+        {{- include('components/_button.html.twig', {label: 'filter.guests'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-guests'}}, with_context = false) -}}
+        {% embed 'components/_overlay.html.twig' with {id: 'filter-guests', tone: 'guests', title: 'filter.guests'|trans({}, 'search'), criteria: criteria} only %}
+            {% block overlay_body %}{% endblock %}
+            {% block overlay_footer %}{{ include('components/_button.html.twig', {href: listing_path_without(criteria, ['guests']), label: 'filter.reset'|trans({}, 'search'), variant: 'black'}, with_context = false) }}{% endblock %}
+        {% endembed %}
+    </li>
+{%- endif -%}

@@ -3,13 +3,12 @@
         <button type="button" class="btn btn--icon site-header__menu" popovertarget="main-menu" aria-label="{{ 'layout.header.menu_open'|trans }}">{{ icon('menu') }}</button>
         <a class="site-header__wordmark" href="{{ path('home') }}">{{ 'layout.site_name'|trans }}</a>
         <nav class="site-header__actions" aria-label="{{ 'layout.header.actions_label'|trans }}">
-            {# #7 changes path('home') to its listing route #}
-            <a class="btn btn--icon" href="{{ path('home') }}" aria-label="{{ 'layout.header.search'|trans }}">{{ icon('search') }}</a>
+            <a class="btn btn--icon" href="{{ path('listing') }}" aria-label="{{ 'layout.header.search'|trans }}">{{ icon('search') }}</a>
             {# #13 changes path('home') to its Merkliste route; merkliste.js fills and unhides the badge #}
             <a class="btn btn--icon site-header__favorites" href="{{ path('home') }}" aria-label="{{ 'layout.header.favorites'|trans }}">{{ icon('heart') }}<span class="count-badge" data-merkliste-count hidden></span></a>
         </nav>
     </div>
-    <div id="main-menu" class="main-menu" popover>
+    <div id="main-menu" class="main-menu" popover data-overlay>
         <nav aria-label="{{ 'layout.header.menu_label'|trans }}">
             <button type="button" class="btn btn--close" popovertarget="main-menu" popovertargetaction="hide" aria-label="{{ 'layout.close'|trans }}">{{ icon('x') }}</button>
             <ul class="main-menu__list">{{ include('layout/_main_menu.html.twig') }}</ul>

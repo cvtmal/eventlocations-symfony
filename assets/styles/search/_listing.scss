@@ -1,0 +1,78 @@
+@use '../abstracts/breakpoints' as bp;
+@use 'card';
+@use 'filter-bar';
+@use 'pagination';
+@use 'related';
+
+// The listing page (#7, LP-1): hero band with h1, count and filter bar, then the result cards.
+// Values from eventlokale's .search-page__header / __article (research subagents/listing-page-eventlokale.md).
+.listing-hero {
+    padding-top: var(--space-l);
+    background: var(--c-surface-3);
+    text-align: center;
+
+    // From md the band is #272727 with the original's large decorative circle, and the filter bar
+    // straddles its lower edge (the last 2.25rem of the band show the page background).
+    @include bp.up(md) {
+        padding-top: var(--space-xl);
+        background:
+            linear-gradient(to bottom, transparent calc(100% - 2.25rem), var(--c-bg) 0),
+            radial-gradient(circle at 72% 62%, var(--c-hero-circle) 0 24rem, transparent 24rem),
+            var(--c-surface);
+    }
+
+    @include bp.up(lg) {
+        padding-top: var(--space-2xl);
+    }
+}
+
+.listing-hero__title {
+    max-width: 59.8125rem;
+    margin-inline: auto;
+    font-size: var(--fs-hero);
+    line-height: var(--lh-hero);
+}
+
+.listing-hero__count {
+    margin: var(--space-2xs) 0 var(--space-m);
+    font-size: var(--fs-count);
+    line-height: var(--lh-count);
+
+    @include bp.up(md) {
+        margin: var(--space-s) 0 var(--space-l);
+    }
+
+    @include bp.up(lg) {
+        margin: var(--space-l) 0 var(--space-l);
+    }
+}
+
+.listing__results {
+    margin: 0;
+    padding: var(--space-l) 0 0;
+    list-style: none;
+
+    // Room for the straddling filter bar and the photo that sticks out above each card.
+    @include bp.up(md) {
+        padding-top: 4.5rem;
+    }
+}
+
+.listing__item {
+    margin-bottom: 1.5rem;
+
+    @include bp.up(md) {
+        margin-bottom: 4.125rem;
+    }
+}
+
+.listing-empty {
+    padding: var(--space-2xl) 0 var(--space-xl);
+    text-align: center;
+}
+
+.listing-empty__title {
+    margin: 0 0 var(--space-l);
+    font-size: var(--fs-count);
+    line-height: var(--lh-count);
+}
