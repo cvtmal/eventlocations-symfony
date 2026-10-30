@@ -8,6 +8,7 @@ use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
@@ -67,11 +68,11 @@ final class ListingQuery
         $sql = <<<SQL
             {$filter->with}
             SELECT v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max, v.rating_score, v.rating_count,
-                tw.name AS town_name, t.slug, t.summary,
+                tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary,
                 (SELECT COALESCE(jsonb_agg(h.code ORDER BY h.position), '[]'::jsonb)
                     FROM venue_rating_highlights h WHERE h.venue_id = v.id) AS highlights
             FROM {$filter->from}
-            JOIN towns tw ON tw.id = v.town_id
+            LEFT JOIN towns tw ON tw.id = v.town_id
             {$translation}
             WHERE {$filter->where}
             ORDER BY v.tier_rank, md5(v.id::text || :seed), v.id
@@ -164,7 +165,9 @@ final class ListingQuery
         \assert(\is_string($row['tier']));
         \assert(null === $row['capacity_min'] || \is_int($row['capacity_min']));
         \assert(\is_int($row['capacity_max']));
-        \assert(\is_string($row['town_name']));
+        \assert(null === $row['town_name'] || \is_string($row['town_name']));
+        \assert(null === $row['canton_code'] || \is_string($row['canton_code']));
+        \assert(null === $row['region'] || \is_string($row['region']));
         \assert(\is_string($row['summary']));
         \assert(null === $row['rating_score'] || is_numeric($row['rating_score']));
         \assert(null === $row['rating_count'] || \is_int($row['rating_count']));
@@ -181,7 +184,7 @@ final class ListingQuery
             Tier::from($row['tier']),
             $row['capacity_min'],
             $row['capacity_max'],
-            $row['town_name'],
+            VenuePlace::of($row['town_name'], $row['canton_code'], $row['region']),
             $row['summary'],
             null === $row['rating_score'] ? null : (float) $row['rating_score'],
             $row['rating_count'],

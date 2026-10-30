@@ -10,7 +10,8 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
 /**
  * Chooses a venue's URL slug from its name (#9, D7): the name's slug, else
  * `<slug>-<town-slug>`, else `<slug>-<town-slug>-2`, `-3`, …, each at most 160 characters.
- * A slug is taken when another venue has it in the locale, as current or history slug.
+ * A venue without a town goes from the name's slug straight to `<slug>-2`, `-3`, … A slug is
+ * taken when another venue has it in the locale, as current or history slug.
  */
 final class SlugAllocator
 {
@@ -33,7 +34,7 @@ final class SlugAllocator
     /**
      * @return \Generator<int, string>
      */
-    public static function candidates(string $name, string $townSlug): \Generator
+    public static function candidates(string $name, ?string $townSlug): \Generator
     {
         $base = self::base($name);
         if ('' === $base) {
@@ -41,14 +42,17 @@ final class SlugAllocator
         }
         yield $base;
 
-        $withTown = static fn (string $suffix): string => self::cut($base, self::MAX_LENGTH - \strlen('-'.$townSlug.$suffix)).'-'.$townSlug.$suffix;
-        yield $withTown('');
+        $tail = null === $townSlug ? '' : '-'.$townSlug;
+        $withTail = static fn (string $suffix): string => self::cut($base, self::MAX_LENGTH - \strlen($tail.$suffix)).$tail.$suffix;
+        if (null !== $townSlug) {
+            yield $withTail('');
+        }
         for ($n = 2;; ++$n) {
-            yield $withTown('-'.$n);
+            yield $withTail('-'.$n);
         }
     }
 
-    public function allocate(string $locale, string $name, string $townSlug, ?string $venueId): string
+    public function allocate(string $locale, string $name, ?string $townSlug, ?string $venueId): string
     {
         foreach (self::candidates($name, $townSlug) as $candidate) {
             if (!$this->venues->isSlugTaken($locale, $candidate, $venueId)) {

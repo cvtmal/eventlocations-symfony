@@ -131,6 +131,19 @@
     margin-block: var(--space-l);
 }
 
+// #21: no published venue has a town yet. `display: none` and not `[hidden]`, because region-filter.js unhides the
+// tablist. The panel takes over the margin the tabs carried, or the input would touch the title.
+.region-filter--canton-only {
+    .region-filter__tabs,
+    [data-panel='place'] {
+        display: none;
+    }
+
+    [data-panel='canton'] {
+        margin-top: var(--space-l);
+    }
+}
+
 .region-filter .text-input {
     position: relative;
     max-width: none;

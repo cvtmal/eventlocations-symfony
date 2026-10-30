@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Venues;
 use App\Factory\VenueFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Geo\ValueObject\Canton;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
@@ -27,6 +28,7 @@ use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -89,6 +91,34 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame(DetailVenues::MINIMAL_SLUG, $match->currentSlug);
         self::assertFalse($match->isCurrent);
         self::assertTrue($match->isPublished);
+    }
+
+    public function test_a_published_venue_without_a_town_has_a_detail(): void
+    {
+        $venue = DetailVenues::inCantonOnly();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertSame('Scheune Nur Kanton', $detail->name);
+        self::assertNull($detail->street);
+        self::assertNull($detail->zip);
+        self::assertNull($detail->lat, 'NULL stays NULL, not 0.0');
+        self::assertNull($detail->lng);
+        self::assertFalse($detail->hasLocation());
+        self::assertEquals(new VenuePlace(null, Canton::ZH, null), $detail->place);
+    }
+
+    public function test_distances_alone_are_a_location(): void
+    {
+        $venue = DetailVenues::withoutPlace();
+        $venue->changeDistances('0.9', 'Bahnhof', null, null, null, null);
+        $this->em->flush();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertTrue($detail->hasLocation());
     }
 
     public function test_an_unpublished_venue_is_matched_but_not_published(): void
@@ -174,7 +204,9 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame("Erster Absatz über das Schloss.\n\nZweiter Absatz mit dem Park.", $detail->descriptionText());
         self::assertSame('Schloss Seeblick: Hochzeit am See.', $detail->metaDescription);
         self::assertSame('Seestrasse 1', $detail->street);
-        self::assertSame('Zürich', $detail->townName);
+        self::assertSame('Zürich', $detail->place->townName);
+        self::assertSame(Canton::ZH, $detail->place->canton);
+        self::assertNull($detail->place->region);
         self::assertSame(50, $detail->capacityMin);
         self::assertSame(300, $detail->capacityMax);
         self::assertEqualsWithDelta(DetailVenues::town('Zürich')->lat(), $detail->lat, 0.0001);

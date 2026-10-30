@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Search;
 use App\Geo\ReadModel\PlaceResolver;
 use App\Media\ValueObject\ImageFormat;
 use App\Search\ReadModel\CardPhoto;
+use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\KnownTerms;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\Twig\ListingExtension;
@@ -42,7 +43,7 @@ final class ListingExtensionTest extends KernelTestCase
         // By hand, not from the container: a private service used once may be inlined there.
         $connection = self::getContainer()->get(Connection::class);
         self::assertInstanceOf(Connection::class, $connection);
-        $this->extension = new ListingExtension($urls, $translator, new PlaceResolver($connection));
+        $this->extension = new ListingExtension($urls, $translator, new PlaceResolver($connection), new FilterDataQuery($connection, ListingQueryTest::enabledLocale()));
     }
 
     public function test_listing_path_with_and_without_a_page(): void

@@ -63,7 +63,7 @@ final class ContentReaderTest extends TestCase
         self::assertSame([RatingHighlight::Food, RatingHighlight::Atmosphere], $venue->highlights);
         self::assertSame(['castle', 'event_venue'], $venue->terms['building']);
         self::assertSame(['building' => 'castle', 'setting' => 'lake'], $venue->mainTerms);
-        self::assertSame(['summary' => 'Kurz.', 'description' => 'Lang.', 'metaDescription' => 'Meta.', 'parkingText' => 'Parkplätze.', 'ambience' => 'Romantisch am See', 'capacityNote' => 'Mit Tanzfläche 100 Plätze.', 'partyNote' => 'Musik bis 2 Uhr.', 'openingHours' => 'Mai bis Oktober'], $venue->translations['de']);
+        self::assertSame(['summary' => 'Kurz.', 'description' => 'Lang.', 'metaDescription' => 'Meta.', 'parkingText' => 'Parkplätze.', 'ambience' => 'Romantisch am See', 'capacityNote' => 'Mit Tanzfläche 100 Plätze.', 'partyNote' => 'Musik bis 2 Uhr.', 'openingHours' => 'Mai bis Oktober', 'region' => null], $venue->translations['de']);
         self::assertSame([PriceLevel::Medium, 120, 180], [$venue->priceLevel, $venue->capacitySeated, $venue->capacityStanding]);
         self::assertSame([PartyAllowed::Limited, true, '02:00'], [$venue->party, $venue->hasCurfew, $venue->curfewAt?->format('H:i')]);
         self::assertSame('https://www.instagram.com/schloss-beispiel', $venue->instagram);
@@ -87,6 +87,25 @@ final class ContentReaderTest extends TestCase
         self::assertSame(VenueStatus::Published, $venue->status);
         self::assertSame('de', $venue->reviews[0]->locale);
         self::assertSame([], $venue->photos);
+    }
+
+    public function test_a_folder_with_only_a_canton_is_read(): void
+    {
+        $this->content->venue('a-venue', ['address' => ['street' => null, 'zip' => null, 'town' => null, 'canton' => 'be'], 'geo' => null]);
+
+        $venue = $this->reader->read($this->content->folder('a-venue'));
+
+        self::assertSame([null, null, null, 'be', null, null], [$venue->street, $venue->zip, $venue->townName, $venue->cantonCode, $venue->lat, $venue->lng]);
+    }
+
+    public function test_a_folder_with_no_address_and_a_region_is_read(): void
+    {
+        $this->content->venue('a-venue', ['address' => null, 'geo' => null, 'translations' => ['de' => ['region' => 'Schweizweit']]]);
+
+        $venue = $this->reader->read($this->content->folder('a-venue'));
+
+        self::assertSame([null, null, null, null, null], [$venue->zip, $venue->townName, $venue->cantonCode, $venue->lat, $venue->lng]);
+        self::assertSame('Schweizweit', $venue->translations['de']['region']);
     }
 
     public function test_the_hash_is_stable_and_follows_the_files(): void
@@ -235,6 +254,21 @@ final class ContentReaderTest extends TestCase
 
             return 'a-venue';
         }, 'documents/a.pdf: not a PDF'];
+        yield 'zip without a town' => [static function (ContentFolder $c): string {
+            $c->venue('a-venue', ['address' => ['street' => null, 'town' => null]]);
+
+            return 'a-venue';
+        }, '/address: zip and town come together'];
+        yield 'town without a zip' => [static function (ContentFolder $c): string {
+            $c->venue('a-venue', ['address' => ['street' => null, 'zip' => null]]);
+
+            return 'a-venue';
+        }, '/address: zip and town come together'];
+        yield 'street without a town' => [static function (ContentFolder $c): string {
+            $c->venue('a-venue', ['address' => ['zip' => null, 'town' => null]]);
+
+            return 'a-venue';
+        }, '/address/street: needs zip and town'];
         yield 'name without letters' => [static function (ContentFolder $c): string {
             $c->venue('a-venue', name: '…');
 

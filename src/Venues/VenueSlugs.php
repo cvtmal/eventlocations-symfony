@@ -33,13 +33,13 @@ final class VenueSlugs
      *
      * @return string the slug the locale's translation must carry
      */
-    public function assign(Venue $venue, string $locale, string $name, Town $town, ?VenueTranslation $current, bool $nameChanged): string
+    public function assign(Venue $venue, string $locale, string $name, ?Town $town, ?VenueTranslation $current, bool $nameChanged): string
     {
         if (null !== $current && !$nameChanged) {
             return $current->slug();
         }
 
-        $slug = $this->allocator->allocate($locale, $name, $town->slug(), $venue->id());
+        $slug = $this->allocator->allocate($locale, $name, $town?->slug(), $venue->id());
         if (null === $current || $current->slug() !== $slug) {
             $this->em->createQuery(\sprintf('DELETE FROM %s h WHERE h.venue = :venue AND h.locale = :locale AND h.slug = :slug', VenueSlugHistory::class))
                 ->setParameters(['venue' => $venue, 'locale' => $locale, 'slug' => $slug])

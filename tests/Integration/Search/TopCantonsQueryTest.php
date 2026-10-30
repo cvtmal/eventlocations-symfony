@@ -11,6 +11,7 @@ use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\CantonCount;
 use App\Search\ReadModel\TopCantonsQuery;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -67,6 +68,16 @@ final class TopCantonsQueryTest extends KernelTestCase
 
         self::assertSame([['be', 1], ['ge', 1]], $this->pairs($this->query()->top(2)));
         self::assertSame(Canton::ZH, $this->query()->top()[2]->canton);
+    }
+
+    public function test_venues_without_a_canton_are_left_out(): void
+    {
+        $this->venues('Zürich', 2);
+        DetailVenues::withoutPlace();
+        DetailVenues::inRegionOnly($this->em, 'Schweizweit');
+        DetailVenues::inCantonOnly('scheune-bern', 'Scheune Bern', 'be');
+
+        self::assertSame([['zh', 2], ['be', 1]], $this->pairs($this->query()->top()));
     }
 
     public function test_no_published_venue_gives_no_canton(): void

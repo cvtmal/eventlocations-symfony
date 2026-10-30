@@ -7,13 +7,16 @@ namespace App\Search\ReadModel;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * "Ähnliche Locations" for a venue: other published venues, same canton first, then those
  * whose capacity range overlaps, then the nearest. Overlap ranks, it does not filter, so
- * the result is always full when enough venues are published.
+ * the result is always full when enough venues are published. `IS TRUE` because a NULL
+ * canton would otherwise sort first under DESC; without coordinates the distance is NULL,
+ * which sorts last, and the id decides.
  */
 final class SimilarVenuesQuery
 {
@@ -47,10 +50,10 @@ final class SimilarVenuesQuery
                     FROM venues WHERE id = :id
                 )
                 SELECT v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max,
-                    tw.name AS town_name, t.slug, ph.photo, pt.alt
+                    tw.name AS town_name, v.canton_code, t.region, t.slug, ph.photo, pt.alt
                 FROM me
                 JOIN venues v ON v.id <> me.id
-                JOIN towns tw ON tw.id = v.town_id
+                LEFT JOIN towns tw ON tw.id = v.town_id
                 {$translation}
                 LEFT JOIN LATERAL (
                     SELECT to_jsonb(vp) AS photo, vp.id FROM venue_photos vp
@@ -60,7 +63,7 @@ final class SimilarVenuesQuery
                 ) ph ON TRUE
                 {$photoTranslation}
                 WHERE {$published->where}
-                ORDER BY (v.canton_code = me.canton_code) DESC,
+                ORDER BY ((v.canton_code = me.canton_code) IS TRUE) DESC,
                     (v.capacity_max >= COALESCE(me.capacity_min, 1) AND COALESCE(v.capacity_min, 1) <= me.capacity_max) DESC,
                     earth_distance(me.e, ll_to_earth(v.lat, v.lng)),
                     v.id
@@ -76,7 +79,9 @@ final class SimilarVenuesQuery
             \assert(\is_string($row['slug']));
             \assert(\is_string($row['name']));
             \assert(\is_string($row['tier']));
-            \assert(\is_string($row['town_name']));
+            \assert(null === $row['town_name'] || \is_string($row['town_name']));
+            \assert(null === $row['canton_code'] || \is_string($row['canton_code']));
+            \assert(null === $row['region'] || \is_string($row['region']));
             \assert(null === $row['capacity_min'] || \is_int($row['capacity_min']));
             \assert(\is_int($row['capacity_max']));
             \assert(null === $row['photo'] || \is_string($row['photo']));
@@ -95,7 +100,7 @@ final class SimilarVenuesQuery
                 $row['slug'],
                 $row['name'],
                 Tier::from($row['tier']),
-                $row['town_name'],
+                VenuePlace::of($row['town_name'], $row['canton_code'], $row['region']),
                 $row['capacity_min'],
                 $row['capacity_max'],
                 $photo,

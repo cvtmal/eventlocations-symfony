@@ -22,7 +22,7 @@
                         <div class="similar-card__body">
                             {% if venue.tier.value != 'basic' %}{{ include('components/_badge.html.twig', {label: venue.tier|trans}, with_context = false) }}{% endif %}
                             <h3 class="similar-card__name"><a href="{{ path('venue_show', {slug: venue.slug}) }}">{{ venue.name }}</a></h3>
-                            {{ include('search/_card_facts.html.twig', {capacity_min: venue.capacityMin, capacity_max: venue.capacityMax, town_name: venue.townName}, with_context = false) }}
+                            {{ include('search/_card_facts.html.twig', {capacity_min: venue.capacityMin, capacity_max: venue.capacityMax, place: venue.place}, with_context = false) }}
                         </div>
                     </li>
                 {% endfor %}

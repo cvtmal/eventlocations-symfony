@@ -10,6 +10,7 @@ use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
 
 /**
  * Everything the venue detail page (`venue_show`, DP-2 to DP-17) renders, in one locale. The
@@ -36,10 +37,10 @@ final readonly class VenueDetail
         public ?string $description,
         public ?string $metaDescription,
         public ?string $street,
-        public string $zip,
-        public string $townName,
-        public float $lat,
-        public float $lng,
+        public ?string $zip,
+        public VenuePlace $place,
+        public ?float $lat,
+        public ?float $lng,
         public ?int $capacityMin,
         public int $capacityMax,
         public ?Term $mainBuilding,
@@ -87,6 +88,14 @@ final readonly class VenueDetail
     public function hasFaq(): bool
     {
         return null !== $this->ownCatering || null !== $this->daylight || null !== $this->parkingText;
+    }
+
+    /**
+     * Whether the Standort section has anything to show (town, coordinates or distances).
+     */
+    public function hasLocation(): bool
+    {
+        return null !== $this->place->townName || null !== $this->lat || [] !== $this->distances;
     }
 
     public function hasContact(): bool

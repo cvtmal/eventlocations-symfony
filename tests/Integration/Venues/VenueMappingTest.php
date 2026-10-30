@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues;
 
+use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
 use App\Media\ValueObject\GeneratedImage;
 use App\Media\ValueObject\ImageFormat;
@@ -145,7 +146,7 @@ final class VenueMappingTest extends KernelTestCase
         self::assertSame(RatingLabel::Outstanding, $loaded->ratingLabel());
         self::assertSame(1.5, $loaded->distanceStationKm());
         self::assertSame(4.2, $loaded->maxRoomHeightM());
-        self::assertSame('zh', $loaded->canton()->code());
+        self::assertSame('zh', $loaded->canton()?->code());
         self::assertSame(PriceLevel::Exclusive, $loaded->priceLevel());
         self::assertSame(120, $loaded->capacitySeated());
         self::assertSame(180, $loaded->capacityStanding());
@@ -197,6 +198,36 @@ final class VenueMappingTest extends KernelTestCase
         self::assertInstanceOf(VenuePhoto::class, $regenerated);
         self::assertSame([300, 200, '#000000'], [$regenerated->width(), $regenerated->height(), $regenerated->dominantColor()]);
         self::assertSame(['widths' => [300], 'formats' => ['webp', 'jpg']], $regenerated->variants()->toArray());
+    }
+
+    public function test_a_venue_without_a_location_round_trips(): void
+    {
+        $canton = $this->em->find(Canton::class, 'be');
+        self::assertInstanceOf(Canton::class, $canton);
+        $cantonOnly = new Venue('Testhaus Kanton', Tier::Basic, VenueStatus::Published, 80, null, null, null, null, null, null, null, $canton);
+        $nothing = new Venue('Testhaus Nichts', Tier::Basic, VenueStatus::Published, 80, null, null, null, null, null, null);
+        $translation = new VenueTranslation($nothing, 'de', 'testhaus-nichts', 'Kurz.');
+        $translation->changeRegion('Schweizweit');
+        foreach ([$cantonOnly, $nothing, $translation] as $entity) {
+            $this->em->persist($entity);
+        }
+        $this->em->flush();
+        $this->em->clear();
+
+        $loadedCantonOnly = $this->em->find(Venue::class, $cantonOnly->id());
+        self::assertInstanceOf(Venue::class, $loadedCantonOnly);
+        self::assertSame('be', $loadedCantonOnly->canton()?->code());
+        self::assertNull($loadedCantonOnly->town());
+        self::assertNull($loadedCantonOnly->zip());
+        self::assertNull($loadedCantonOnly->lat());
+        self::assertNull($loadedCantonOnly->lng());
+
+        $loadedNothing = $this->em->find(Venue::class, $nothing->id());
+        self::assertInstanceOf(Venue::class, $loadedNothing);
+        self::assertNull($loadedNothing->canton());
+        $loadedTranslation = $this->em->getRepository(VenueTranslation::class)->findOneBy(['venue' => $loadedNothing]);
+        self::assertInstanceOf(VenueTranslation::class, $loadedTranslation);
+        self::assertSame('Schweizweit', $loadedTranslation->region());
     }
 
     private function venue(string $name): Venue

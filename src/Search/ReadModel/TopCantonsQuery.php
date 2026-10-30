@@ -34,7 +34,7 @@ final class TopCantonsQuery
                 {$filter->with}
                 SELECT v.canton_code, count(*) AS venues
                 FROM {$filter->from}
-                WHERE {$filter->where}
+                WHERE {$filter->where} AND v.canton_code IS NOT NULL
                 GROUP BY v.canton_code
                 ORDER BY venues DESC, v.canton_code
                 LIMIT :limit

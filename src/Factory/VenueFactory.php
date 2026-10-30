@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Factory;
 
+use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\OwnCatering;
@@ -15,8 +16,9 @@ use function Zenstruck\Foundry\Persistence\repository;
 
 /**
  * Needs imported towns (app:geo:import-towns): without a `town` attribute it picks a random
- * one and takes zip, lat and lng from it. The name is fictional; uniqueness is not
- * required (the slug on VenueTranslation is unique per locale).
+ * one and takes zip, lat and lng from it; `withoutLocation()` makes a venue with none of
+ * them. The name is fictional; uniqueness is not required (the slug on VenueTranslation is
+ * unique per locale).
  *
  * @extends PersistentObjectFactory<Venue>
  */
@@ -43,12 +45,20 @@ final class VenueFactory extends PersistentObjectFactory
     {
         return $this->afterInstantiate(static fn (Venue $venue) => $venue->changeDistances(
             (string) self::faker()->randomFloat(1, 0.1, 15),
-            $venue->town()->name(),
+            $venue->town()?->name(),
             (string) self::faker()->randomFloat(1, 0.5, 40),
             null,
             (string) self::faker()->randomFloat(1, 5, 150),
             null,
         ));
+    }
+
+    /**
+     * A venue with no address (#21), optionally with the canton its source named.
+     */
+    public function withoutLocation(?Canton $canton = null): self
+    {
+        return $this->with(['town' => null, 'zip' => null, 'street' => null, 'lat' => null, 'lng' => null, 'canton' => $canton]);
     }
 
     public function withFaq(): self
@@ -75,6 +85,11 @@ final class VenueFactory extends PersistentObjectFactory
     protected function initialize(): static
     {
         return $this->beforeInstantiate(static function (array $attributes): array {
+            // `??` below would replace an explicit null, which is withoutLocation().
+            if (\array_key_exists('town', $attributes) && null === $attributes['town']) {
+                return $attributes;
+            }
+
             $town = $attributes['town'] ?? repository(Town::class)->random();
             \assert($town instanceof Town);
 

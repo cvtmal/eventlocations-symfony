@@ -100,6 +100,15 @@ final class DemoStory extends Story
         'Ländlich mit Weitblick', 'Alpin und gemütlich', 'Urban und unkompliziert',
     ];
 
+    /**
+     * Venues in the owner's shape (#21): no address, a canton, a region text, or nothing. Each
+     * is the third of its canton, so every canton keeps its two venues with a town.
+     */
+    private const CANTON_ONLY = [52, 53];
+    private const REGION_ONLY = 54;
+    private const NO_PLACE = 55;
+    private const REGION_TEXT = 'Schweizweit';
+
     public function __construct(
         private readonly VenueRepository $venues,
         private readonly TaxonomyTermRepository $terms,
@@ -170,14 +179,20 @@ final class DemoStory extends Story
             $factory = $factory->rated(4 === $i ? '7.4' : \sprintf('%.1f', $faker->randomFloat(1, 7.0, 9.6)), $faker->numberBetween(1, 400));
         }
 
-        $venue = $factory->create([
+        $hasAddress = !\in_array($i, [...self::CANTON_ONLY, self::REGION_ONLY, self::NO_PLACE], true);
+        if (!$hasAddress) {
+            $factory = $factory->withoutLocation(\in_array($i, self::CANTON_ONLY, true) ? $town->canton() : null);
+        }
+        $attributes = [
             'name' => $name,
             'tier' => $tier,
             'capacityMax' => $capacityMax,
             'capacityMin' => $faker->boolean(35) ? null : $faker->numberBetween(10, intdiv($capacityMax, 2)),
             'town' => $town,
+            // Drawn for every venue, so faker's sequence and the other venues stay as they were.
             'street' => $faker->streetAddress(),
-        ]);
+        ];
+        $venue = $factory->create($hasAddress ? $attributes : array_diff_key($attributes, ['town' => true, 'street' => true]));
 
         $translation = VenueTranslationFactory::createOne([
             'venue' => $venue,
@@ -188,6 +203,9 @@ final class DemoStory extends Story
             'metaDescription' => self::text($faker, 150),
             'parkingText' => $faker->boolean() ? self::text($faker, 200) : null,
         ]);
+        if (self::REGION_ONLY === $i) {
+            $translation->changeRegion(self::REGION_TEXT);
+        }
 
         $rooms = $this->createRooms($faker, $venue, $capacityMax);
         $this->assignTerms($faker, $venue, $terms);

@@ -241,8 +241,12 @@ reviewer_role:
     organiser_m: Veranstalter
 
 # Detail page (#8, venue_show). Numbers arrive pre-formatted (swiss_number, swiss_range).
+place:
+    canton: 'Kanton {canton}'
 detail:
     title: '{name} in {town} für die Hochzeit mieten'
+    title_canton: '{name} im Kanton {canton} für die Hochzeit mieten'
+    title_no_place: '{name} für die Hochzeit mieten'
     hero:
         label: 'Bilder von {name}'
         open_gallery: Bilder ansehen
@@ -266,6 +270,7 @@ detail:
         whatsapp: WhatsApp
         email: E-Mail
         share_text: '{name} in {town}'
+        share_text_canton: '{name} im Kanton {canton}'
         print: Drucken
     head:
         place: '{zip} {town}'

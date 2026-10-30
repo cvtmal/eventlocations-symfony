@@ -30,6 +30,30 @@ final class SlugCandidatesTest extends TestCase
         self::assertSame(['schloss-beispiel', 'schloss-beispiel-zuerich', 'schloss-beispiel-zuerich-2', 'schloss-beispiel-zuerich-3'], $candidates);
     }
 
+    public function test_without_a_town_the_counter_follows_the_name(): void
+    {
+        $candidates = [];
+        foreach (SlugAllocator::candidates('Schloss Beispiel', null) as $candidate) {
+            $candidates[] = $candidate;
+            if (3 === \count($candidates)) {
+                break;
+            }
+        }
+
+        self::assertSame(['schloss-beispiel', 'schloss-beispiel-2', 'schloss-beispiel-3'], $candidates);
+    }
+
+    public function test_without_a_town_a_long_name_is_cut_for_the_counter(): void
+    {
+        $generator = SlugAllocator::candidates(trim(str_repeat('Langer Name ', 20)), null);
+        $generator->next();
+        $withCounter = $generator->current();
+
+        self::assertLessThanOrEqual(160, \strlen($withCounter));
+        self::assertStringEndsWith('-2', $withCounter);
+        self::assertMatchesRegularExpression('/^[a-z0-9]+(-[a-z0-9]+)*$/', $withCounter);
+    }
+
     public function test_a_long_name_is_cut_at_a_hyphen(): void
     {
         $name = trim(str_repeat('Langer Name ', 20));

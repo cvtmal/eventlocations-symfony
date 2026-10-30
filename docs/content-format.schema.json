@@ -2,15 +2,13 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "https://hochzeitslocation.ch/schema/content-format-v1.json",
     "title": "Venue content (venue.yaml)",
-    "description": "One venue of hochzeitslocation.ch, written by hand or by the legacy import (#21) and read by app:venues:import. See docs/content-format.md.",
+    "description": "One venue of hochzeitslocation.ch, written by hand or by the CSV export (#21, #32) and read by app:venues:import. See docs/content-format.md.",
     "type": "object",
     "additionalProperties": false,
     "required": [
         "name",
         "tier",
         "capacity",
-        "address",
-        "geo",
         "translations"
     ],
     "definitions": {
@@ -159,7 +157,7 @@
         },
         "address": {
             "type": "object",
-            "description": "Postal address; the town is resolved by ZIP and name.",
+            "description": "Postal address, or only the canton; a town is resolved by ZIP and name.",
             "additionalProperties": false,
             "properties": {
                 "street": {
@@ -183,16 +181,37 @@
                 },
                 "canton": {
                     "type": "string",
-                    "minLength": 2,
-                    "description": "Canton code in lower case (zh); only needed when ZIP and name match two towns.",
-                    "maxLength": 2,
-                    "pattern": "^[a-z]{2}$"
+                    "description": "The venue's canton, alone or to tell two towns apart.",
+                    "enum": [
+                        "zh",
+                        "be",
+                        "lu",
+                        "ur",
+                        "sz",
+                        "ow",
+                        "nw",
+                        "gl",
+                        "zg",
+                        "fr",
+                        "so",
+                        "bs",
+                        "bl",
+                        "sh",
+                        "ar",
+                        "ai",
+                        "sg",
+                        "gr",
+                        "ag",
+                        "tg",
+                        "ti",
+                        "vd",
+                        "vs",
+                        "ne",
+                        "ge",
+                        "ju"
+                    ]
                 }
-            },
-            "required": [
-                "zip",
-                "town"
-            ]
+            }
         },
         "geo": {
             "type": "object",
@@ -809,6 +828,12 @@
                         "minLength": 1,
                         "description": "Opening hours, verbatim (≤ 250).",
                         "maxLength": 250
+                    },
+                    "region": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Where the venue is, when it has no canton; verbatim (≤ 60).",
+                        "maxLength": 60
                     }
                 },
                 "required": [

@@ -6,6 +6,7 @@ namespace App\Search\ReadModel;
 
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
 
 /**
  * One venue card of the listing (LP-2): everything the card renders, including its first
@@ -25,7 +26,7 @@ final readonly class ListingCard
         public Tier $tier,
         public ?int $capacityMin,
         public int $capacityMax,
-        public string $townName,
+        public VenuePlace $place,
         public string $summary,
         public ?float $ratingScore,
         public ?int $ratingCount,

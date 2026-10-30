@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Venues\Entity;
 
+use App\Geo\Entity\Canton;
+use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\RatingLabel;
+use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\TestCase;
 
@@ -30,6 +33,52 @@ final class VenueTest extends TestCase
         self::assertSame($bern, $venue->canton());
         self::assertSame('3600', $venue->zip());
         self::assertNull($venue->street());
+    }
+
+    public function test_a_venue_without_a_town_can_have_no_canton(): void
+    {
+        $venue = $this->venueWithoutTown(null);
+
+        self::assertNull($venue->town());
+        self::assertNull($venue->canton());
+        self::assertNull($venue->zip());
+        self::assertNull($venue->lat());
+        self::assertNull($venue->lng());
+    }
+
+    public function test_a_venue_without_a_town_keeps_the_canton_it_was_given(): void
+    {
+        $bern = VenueObjects::canton('be');
+
+        self::assertSame($bern, $this->venueWithoutTown($bern)->canton());
+    }
+
+    public function test_the_town_wins_over_a_passed_canton(): void
+    {
+        $zurich = VenueObjects::canton('zh');
+        $town = VenueObjects::town($zurich);
+        $venue = new Venue('Seehaus', Tier::Basic, VenueStatus::Published, 80, null, $town, $town->zip(), null, null, null, null, VenueObjects::canton('be'));
+
+        self::assertSame($zurich, $venue->canton());
+
+        $venue->relocate($town, $town->zip(), null, null, null, VenueObjects::canton('be'));
+
+        self::assertSame($zurich, $venue->canton());
+    }
+
+    public function test_relocate_to_no_town_keeps_the_passed_canton_and_clears_the_rest(): void
+    {
+        $venue = VenueObjects::venue();
+        $bern = VenueObjects::canton('be');
+
+        $venue->relocate(null, null, null, null, null, $bern);
+
+        self::assertNull($venue->town());
+        self::assertSame($bern, $venue->canton());
+        self::assertNull($venue->zip());
+        self::assertNull($venue->street());
+        self::assertNull($venue->lat());
+        self::assertNull($venue->lng());
     }
 
     public function test_unrated_venue_has_no_label(): void
@@ -108,5 +157,10 @@ final class VenueTest extends TestCase
         $this->expectException(\AssertionError::class);
 
         VenueObjects::venue()->recordContentHash(str_repeat('ab', 32));
+    }
+
+    private function venueWithoutTown(?Canton $canton): Venue
+    {
+        return new Venue('Seehaus', Tier::Basic, VenueStatus::Published, 80, null, null, null, null, null, null, null, $canton);
     }
 }

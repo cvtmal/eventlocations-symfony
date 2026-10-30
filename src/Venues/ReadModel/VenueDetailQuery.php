@@ -20,6 +20,7 @@ use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -126,7 +127,7 @@ final class VenueDetailQuery
         $row = $this->connection->fetchAssociative(
             <<<SQL
                 SELECT v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max, v.street, v.zip,
-                    tw.name AS town_name, v.lat, v.lng,
+                    tw.name AS town_name, v.canton_code, v.lat, v.lng,
                     v.distance_station_km, v.station_name, v.distance_highway_km, v.highway_name,
                     v.distance_airport_km, v.airport_name,
                     v.phone IS NOT NULL AS has_phone, v.inquiry_email, v.website, v.contact_person,
@@ -134,7 +135,7 @@ final class VenueDetailQuery
                     v.price_level, v.capacity_seated, v.capacity_standing, v.party, v.has_curfew,
                     to_char(v.curfew_at, 'HH24:MI') AS curfew_at, v.instagram,
                     t.slug, t.summary, t.description, t.meta_description, t.parking_text,
-                    t.ambience, t.capacity_note, t.party_note, t.opening_hours,
+                    t.ambience, t.capacity_note, t.party_note, t.opening_hours, t.region,
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
                             ORDER BY tt.position), '[]'::jsonb)
                         FROM venue_terms vt
@@ -150,7 +151,7 @@ final class VenueDetailQuery
                             ORDER BY r.reviewed_month DESC, r.id), '[]'::jsonb)
                         FROM venue_reviews r WHERE r.venue_id = v.id) AS reviews
                 FROM venues v
-                JOIN towns tw ON tw.id = v.town_id
+                LEFT JOIN towns tw ON tw.id = v.town_id
                 {$translation}
                 WHERE v.number = :number AND t.slug IS NOT NULL AND {$published}
                 SQL,
@@ -166,8 +167,10 @@ final class VenueDetailQuery
         \assert(\is_string($row['tier']));
         \assert(\is_string($row['slug']));
         \assert(\is_string($row['summary']));
-        \assert(\is_string($row['zip']));
-        \assert(\is_string($row['town_name']));
+        \assert(null === $row['zip'] || \is_string($row['zip']));
+        \assert(null === $row['town_name'] || \is_string($row['town_name']));
+        \assert(null === $row['canton_code'] || \is_string($row['canton_code']));
+        \assert(null === $row['region'] || \is_string($row['region']));
         \assert(\is_int($row['capacity_max']));
         \assert(null === $row['capacity_min'] || \is_int($row['capacity_min']));
         \assert(\is_bool($row['has_phone']));
@@ -196,9 +199,9 @@ final class VenueDetailQuery
             self::nullableString($row['meta_description']),
             self::nullableString($row['street']),
             $row['zip'],
-            $row['town_name'],
-            self::float($row['lat']),
-            self::float($row['lng']),
+            VenuePlace::of($row['town_name'], $row['canton_code'], $row['region']),
+            self::nullableFloat($row['lat']),
+            self::nullableFloat($row['lng']),
             $row['capacity_min'],
             $row['capacity_max'],
             $mainBuilding,
