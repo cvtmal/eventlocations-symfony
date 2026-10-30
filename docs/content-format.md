@@ -1,8 +1,10 @@
 # Venue content format
 
-Real venues reach the site only through content folders (S8): one folder per venue with a
+Real venues reach the site through content folders (S8): one folder per venue with a
 `venue.yaml` and its photos and PDFs. `app:venues:import` validates the folders and writes
-them into the database; nothing else edits a content venue. This page is the reference for
+them into the database. Staff can also edit a venue in the back office (CMS, #24); the
+import then keeps that venue as it is until told otherwise (see
+[After a CMS edit](#after-a-cms-edit)). This page is the reference for
 writing folders by hand and for the CSV export (#21, #32), which generates them.
 
 The machine-readable definition is the JSON Schema
@@ -243,14 +245,16 @@ An unknown code fails the venue with its position, e.g. `/terms/building/0: "pal
 ## What the import does
 
 ```
-make sf c="app:venues:import [path] [--dry-run] [--only=key] [--prune] [--force]"
+make sf c="app:venues:import [path] [--dry-run] [--only=key] [--prune] [--force] [--overwrite-cms-edits]"
 ```
 
 1. Reads every folder under `venues/` (in name order), validates it against the schema and
    the rules above. A folder with problems fails **alone**, with every problem listed; the
    others are imported. One folder is one transaction.
-2. A folder whose content (fields and file bytes) is unchanged since the last import is
-   skipped: running the import twice changes nothing.
+2. A venue edited or deleted in the CMS since its last import is kept as it is and listed
+   as `cms_edited` (see [After a CMS edit](#after-a-cms-edit)). A folder whose content
+   (fields and file bytes) is unchanged since the last import is skipped: running the
+   import twice changes nothing.
 3. Creates or updates the venue by key. The venue number (used in saved favourites) never
    changes. Rooms keep their identity by key, photos and documents by their bytes.
 4. Slugs: the name's slug; when another venue has it (also as an old slug), the town, if
@@ -268,16 +272,36 @@ make sf c="app:venues:import [path] [--dry-run] [--only=key] [--prune] [--force]
 | Option | Effect |
 |---|---|
 | `path` | Content root that contains `venues/` (default `CONTENT_ROOT`). |
-| `--dry-run` | Validates and reports what would be created, updated, unchanged, failed (and unpublished with `--prune`); writes nothing, records nothing. |
+| `--dry-run` | Validates and reports what would be created, updated, unchanged, failed, kept because of a CMS edit (and unpublished with `--prune`); writes nothing, records nothing. |
 | `--only=<key>` | Imports one folder. |
-| `--prune` | Unpublishes content venues whose folder is gone (files kept; the folder coming back publishes it again). A folder that exists but is invalid is not pruned. Not combinable with `--only`. |
-| `--force` | Applies every folder even when unchanged (photos are still not regenerated). |
+| `--prune` | Unpublishes content venues whose folder is gone (files kept; the folder coming back publishes an unedited venue again). A folder that exists but is invalid is not pruned. A venue edited in the CMS is kept published and listed, unless `--overwrite-cms-edits` is given too. Not combinable with `--only`. |
+| `--force` | Applies every folder even when unchanged (photos are still not regenerated). It never overwrites a venue edited in the CMS. |
+| `--overwrite-cms-edits` | Also applies the folders of venues edited in the CMS since their last import, even when the folder is unchanged, and recreates venues deleted in the CMS (with a new number). **Every CMS edit of those venues is lost**, including photos, rooms, documents and reviews added by hand. With `--prune` it also unpublishes edited venues whose folder is gone. |
 | `-v` | Also lists the unchanged venues. |
 
 The exit code is `1` when any folder failed (the message lists `<key>: <problem>` for each),
-otherwise `0`. To hide a venue by hand, set `status: unpublished`.
+otherwise `0`. Venues kept because of a CMS edit are listed after the summary and do not
+change the exit code. To hide a venue by hand, set `status: unpublished`.
 
-Run one import at a time; there is no lock.
+Run one import at a time; there is no lock between two imports. A CMS save and the import
+of the same venue do not interleave: the import locks the venue's row before it checks the
+guard.
+
+### After a CMS edit
+
+Every save in the CMS marks the venue (`venues.cms_edited_at`). While the mark is set, the
+import does not apply that venue's folder, not with `--force` and not with `--prune`; it
+lists the venue as `cms_edited` instead. The guard is per venue, not per field: a folder
+change to a field the CMS never touched is not applied either.
+
+- To take the folder's content again, run the import with `--overwrite-cms-edits` (with
+  `--only=<key>` for one venue). The folder then replaces the venue as a whole and the mark
+  is cleared; a later import applies the folder as usual.
+- To keep the CMS version for good, leave it: the folder is skipped on every run. Changes
+  to it belong in the CMS from then on, or in the folder followed by an overwrite.
+- A venue deleted in the CMS keeps its key in `venue_deleted_content_keys`, so its folder
+  does not bring it back. `--overwrite-cms-edits` recreates it with a new number, and old
+  Merkliste entries of it do not return.
 
 The import (and `app:media:regenerate`) raises PHP's `memory_limit` to `512M` for the run,
 never lowering a higher one, and warns when it cannot: rendering the web sizes of a photo

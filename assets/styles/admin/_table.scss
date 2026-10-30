@@ -1,4 +1,6 @@
 .table-wrap {
+    // Containing block for the visually hidden header labels, so they cannot widen the page.
+    position: relative;
     overflow-x: auto;
 }
 

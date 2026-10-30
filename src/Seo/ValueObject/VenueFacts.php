@@ -37,6 +37,9 @@ final readonly class VenueFacts
     }
 
     /**
+     * Town-centre coordinates (#24's "Ortsmitte übernehmen") are not the venue's point, so they
+     * become no geo data: og:type stays `website` and the JSON-LD has no `geo`.
+     *
      * @param list<string> $imageUrls absolute
      */
     public static function fromDetail(VenueDetail $venue, string $url, array $imageUrls): self
@@ -52,8 +55,8 @@ final readonly class VenueFacts
             $venue->zip,
             $town,
             $canton,
-            $venue->lat,
-            $venue->lng,
+            $venue->coordinatesFromTown ? null : $venue->lat,
+            $venue->coordinatesFromTown ? null : $venue->lng,
             $venue->ratingScore,
             $venue->ratingCount,
             $imageUrls,

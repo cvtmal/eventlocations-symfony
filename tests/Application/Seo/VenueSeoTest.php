@@ -173,6 +173,21 @@ final class VenueSeoTest extends WebTestCase
         self::assertArrayNotHasKey('aggregateRating', $venue);
     }
 
+    public function test_town_centre_coordinates_are_no_place_and_no_geo(): void
+    {
+        $venue = DetailVenues::full($this->em);
+        $venue->relocate($venue->town(), $venue->zip(), $venue->street(), $venue->lat(), $venue->lng(), coordinatesFromTown: true);
+        $this->em->flush();
+
+        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+
+        self::assertSame('website', $crawler->filter('meta[property="og:type"]')->attr('content'));
+        self::assertCount(0, $crawler->filter('meta[property="place:location:latitude"]'));
+        $node = $this->venueNode($crawler);
+        self::assertArrayNotHasKey('geo', $node);
+        self::assertIsArray($node['address']);
+    }
+
     /**
      * @return array<string, mixed>
      */

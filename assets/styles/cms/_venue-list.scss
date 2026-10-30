@@ -1,0 +1,58 @@
+// #24's venue list (/admin/locations, Locations artboard): the Location cell with its 48×34 thumbnail. The table
+// scrolls inside `.table-wrap` (#23), so the page never does at 390 px.
+.venue-list__location {
+    display: flex;
+    align-items: center;
+    gap: var(--a-space-3);
+    min-width: 220px;
+}
+
+.venue-list__thumb {
+    display: grid;
+    flex: none;
+    width: 48px;
+    height: 34px;
+    overflow: hidden;
+    border-radius: var(--a-r-sm);
+    background: var(--a-line-soft);
+    color: var(--a-muted);
+    place-items: center;
+
+    // The public `.picture` styles live in app.css; here the photo just fills the frame.
+    .picture,
+    picture,
+    img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .picture__placeholder {
+        display: none;
+    }
+}
+
+.venue-list__name {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+
+.venue-list__link {
+    color: var(--a-ink);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--a-link-hover);
+        text-decoration: underline;
+    }
+}
+
+.venue-list__status {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-1);
+}

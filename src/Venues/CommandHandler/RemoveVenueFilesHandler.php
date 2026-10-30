@@ -10,7 +10,8 @@ use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Command\RemoveVenueFiles;
 
 /**
- * Deletes the files of removed photos and documents and the originals no row uses any more.
+ * Deletes the files of removed photos and documents and the originals no row uses any more,
+ * and a deleted venue's whole public media directory.
  * It runs after the venue's commit, so it is best effort and never throws: a file left
  * behind is harmless, a failure here must not report the committed import as failed.
  */
@@ -35,6 +36,9 @@ final class RemoveVenueFilesHandler implements CommandHandlerInterface
             } catch (InvalidMediaPath) {
                 // Paths come from rows the import wrote; an invalid one has no file to remove.
             }
+        }
+        if ($command->wholeVenue) {
+            $this->publisher->removeVenue($command->venueNumber);
         }
     }
 }

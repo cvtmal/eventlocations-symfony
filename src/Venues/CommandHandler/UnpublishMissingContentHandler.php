@@ -8,6 +8,9 @@ use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Command\PurgeVenueCache;
 use App\Venues\Command\UnpublishMissingContent;
 use App\Venues\Repository\VenueRepository;
+use App\Venues\ValueObject\PruneOutcome;
+use Doctrine\DBAL\LockMode;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
 
@@ -16,27 +19,43 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * folder that comes back is applied (and published) again, and purges its pages from the
  * HTTP cache after the commit (PurgeVenueCache). Files and rows are kept.
  *
- * @return int the number of venues unpublished (or that a dry run would unpublish)
+ * A venue the CMS edited since its last import (#24, S8) is kept as it is and reported,
+ * unless the command says to overwrite CMS edits. Even then its cms_edited_at stays: a prune
+ * applies no content. Outside a dry run each venue's row is locked before its guard is read,
+ * as in ImportVenueContentHandler.
  */
 final class UnpublishMissingContentHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly VenueRepository $venues,
+        private readonly EntityManagerInterface $em,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
 
-    public function __invoke(UnpublishMissingContent $command): int
+    public function __invoke(UnpublishMissingContent $command): PruneOutcome
     {
-        $missing = $this->venues->contentVenuesMissingFrom($command->presentKeys);
-        if (!$command->dryRun) {
-            foreach ($missing as $venue) {
+        $unpublished = 0;
+        $kept = [];
+        foreach ($this->venues->contentVenuesMissingFrom($command->presentKeys) as $venue) {
+            if (!$command->dryRun) {
+                $this->em->refresh($venue, LockMode::PESSIMISTIC_WRITE);
+            }
+            if (null !== $venue->cmsEditedAt() && !$command->overwriteCmsEdits) {
+                $key = $venue->contentKey();
+                \assert(null !== $key);
+                $kept[] = $key;
+
+                continue;
+            }
+            ++$unpublished;
+            if (!$command->dryRun) {
                 $venue->unpublish();
                 $venue->forgetContentHash();
                 $this->commandBus->dispatch(new PurgeVenueCache($venue->number()), [new DispatchAfterCurrentBusStamp()]);
             }
         }
 
-        return \count($missing);
+        return new PruneOutcome($unpublished, $kept);
     }
 }

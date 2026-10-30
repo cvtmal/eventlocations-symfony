@@ -1,0 +1,17 @@
+{#
+    Card "Kontakt". Kept apart from "Häufige Fragen" (recorded deviation from LocationEdit). Include with
+    `with_context = false`: form, card, number, stale.
+#}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale} only %}
+    {% block fields %}
+        <div class="field-row">
+            {{ form_row(form.phone) }}
+            {{ form_row(form.inquiryEmail) }}
+        </div>
+        <div class="field-row">
+            {{ form_row(form.website) }}
+            {{ form_row(form.contactPerson) }}
+        </div>
+        {{ form_row(form.instagram) }}
+    {% endblock %}
+{% endembed %}

@@ -32,6 +32,9 @@ class ContentImport
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $forced;
 
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private bool $overwroteCmsEdits;
+
     #[ORM\Column(type: Types::INTEGER)]
     private int $venuesSeen;
 
@@ -49,6 +52,9 @@ class ContentImport
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $venuesUnpublished;
+
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $venuesCmsEdited;
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $photosAdded;
@@ -86,12 +92,14 @@ class ContentImport
         ?string $onlyKey,
         bool $pruned,
         bool $forced,
+        bool $overwroteCmsEdits,
         int $venuesSeen,
         int $venuesCreated,
         int $venuesUpdated,
         int $venuesUnchanged,
         int $venuesFailed,
         int $venuesUnpublished,
+        int $venuesCmsEdited,
         int $photosAdded,
         int $photosRemoved,
         int $documentsAdded,
@@ -105,12 +113,14 @@ class ContentImport
         $this->onlyKey = $onlyKey;
         $this->pruned = $pruned;
         $this->forced = $forced;
+        $this->overwroteCmsEdits = $overwroteCmsEdits;
         $this->venuesSeen = $venuesSeen;
         $this->venuesCreated = $venuesCreated;
         $this->venuesUpdated = $venuesUpdated;
         $this->venuesUnchanged = $venuesUnchanged;
         $this->venuesFailed = $venuesFailed;
         $this->venuesUnpublished = $venuesUnpublished;
+        $this->venuesCmsEdited = $venuesCmsEdited;
         $this->photosAdded = $photosAdded;
         $this->photosRemoved = $photosRemoved;
         $this->documentsAdded = $documentsAdded;
@@ -149,6 +159,11 @@ class ContentImport
         return $this->forced;
     }
 
+    public function overwroteCmsEdits(): bool
+    {
+        return $this->overwroteCmsEdits;
+    }
+
     public function venuesSeen(): int
     {
         return $this->venuesSeen;
@@ -177,6 +192,14 @@ class ContentImport
     public function venuesUnpublished(): int
     {
         return $this->venuesUnpublished;
+    }
+
+    /**
+     * Venues the run kept because the CMS edited them (skipped folders and prune candidates).
+     */
+    public function venuesCmsEdited(): int
+    {
+        return $this->venuesCmsEdited;
     }
 
     public function photosAdded(): int

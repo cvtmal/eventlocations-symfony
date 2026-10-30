@@ -1,0 +1,123 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Application\Cms;
+
+use App\Admin\ValueObject\AdminRole;
+use App\Factory\VenueSlugHistoryFactory;
+use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Admin\AdminSession;
+use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\Entity\Venue;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Zenstruck\Foundry\Test\Factories;
+
+final class VenuePreviewTest extends WebTestCase
+{
+    use AdminSession;
+    use Factories;
+    use ImportsTownDataset;
+
+    public function test_an_unpublished_venue_previews_with_the_banner_and_no_inquiry_form(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::full($this->em());
+        $this->em()->flush();
+        $this->unpublish($venue);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Vorschau: Schloss Seeblick', $crawler->filter('title')->text());
+        self::assertStringContainsString('Gäste sehen sie nur, wenn die Location publiziert ist.', $crawler->filter('.preview-banner')->text());
+        self::assertSame($this->editorUrl($venue), $crawler->filter('.preview-banner a')->attr('href'));
+        self::assertStringStartsWith('Schloss Seeblick', $crawler->filter('main h1')->text());
+        self::assertSame('In der Vorschau ist das Anfrageformular ausgeschaltet.', $crawler->filter('#anfrage')->text());
+        self::assertSelectorNotExists('form.inquiry-form__form');
+        // Nothing for search engines or social previews.
+        self::assertSelectorNotExists('link[rel="canonical"]');
+        self::assertSelectorNotExists('link[rel="alternate"]');
+        self::assertSelectorNotExists('script[type="application/ld+json"]');
+        self::assertSelectorNotExists('meta[property^="og:"]');
+        self::assertSame('noindex, nofollow', $crawler->filter('meta[name="robots"]')->attr('content'));
+        self::assertResponseHeaderSame('X-Robots-Tag', 'noindex, nofollow');
+        $cacheControl = (string) $this->client->getResponse()->headers->get('Cache-Control');
+        self::assertStringContainsString('no-store', $cacheControl);
+        self::assertStringContainsString('private', $cacheControl);
+        // The public page itself stays gone.
+        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        self::assertResponseStatusCodeSame(410);
+    }
+
+    public function test_anonymous_is_sent_to_the_login(): void
+    {
+        $venue = DetailVenues::minimal();
+
+        $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseRedirects('/admin/login');
+    }
+
+    public function test_a_venue_with_a_history_slug_previews(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::minimal();
+        VenueSlugHistoryFactory::createOne(['venue' => $venue, 'slug' => 'altes-gartenhaus']);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Gartenhaus Minimal', $crawler->filter('main h1')->text());
+    }
+
+    public function test_a_venue_without_a_place_previews(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::withoutPlace();
+        $this->unpublish($venue);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Wiesenhof Ohne Ort', $crawler->filter('main h1')->text());
+        self::assertSelectorNotExists('#standort');
+    }
+
+    public function test_a_venue_without_a_default_translation_or_an_unknown_number_is_a_404(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::minimal();
+        $this->connection->executeStatement('DELETE FROM venue_translations WHERE venue_id = ?', [$venue->id()]);
+
+        $this->client->request('GET', $this->url($venue));
+        self::assertResponseStatusCodeSame(404);
+
+        $this->client->request('GET', '/admin/locations/99999999/vorschau');
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    private function unpublish(Venue $venue): void
+    {
+        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished' WHERE id = ?", [$venue->id()]);
+    }
+
+    private function url(Venue $venue): string
+    {
+        return $this->editorUrl($venue).'/vorschau';
+    }
+
+    private function editorUrl(Venue $venue): string
+    {
+        return '/admin/locations/'.$venue->number();
+    }
+
+    private function em(): EntityManagerInterface
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+
+        return $em;
+    }
+}

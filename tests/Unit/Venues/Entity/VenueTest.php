@@ -159,6 +159,42 @@ final class VenueTest extends TestCase
         VenueObjects::venue()->recordContentHash(str_repeat('ab', 32));
     }
 
+    public function test_a_cms_edit_is_marked_and_an_applied_import_clears_it(): void
+    {
+        $venue = VenueObjects::venue(contentKey: 'seehaus-mittelwil');
+        self::assertNull($venue->cmsEditedAt());
+
+        $at = new \DateTimeImmutable('2026-10-30 12:00:00+01:00');
+        $venue->markCmsEdited($at);
+        self::assertSame($at, $venue->cmsEditedAt());
+        self::assertSame($at, $venue->updatedAt());
+
+        $venue->forgetContentHash();
+        self::assertSame($at, $venue->cmsEditedAt(), 'A prune applies no content.');
+
+        $venue->recordContentHash(str_repeat('ab', 32));
+        self::assertNull($venue->cmsEditedAt());
+    }
+
+    public function test_relocate_sets_and_clears_the_town_centre_flag(): void
+    {
+        $venue = VenueObjects::venue();
+        self::assertFalse($venue->coordinatesFromTown());
+
+        $venue->relocate($venue->town(), $venue->zip(), null, 47.2, 8.7, coordinatesFromTown: true);
+        self::assertTrue($venue->coordinatesFromTown());
+
+        $venue->relocate($venue->town(), $venue->zip(), null, 47.2, 8.7);
+        self::assertFalse($venue->coordinatesFromTown());
+    }
+
+    public function test_the_town_centre_flag_needs_coordinates(): void
+    {
+        $this->expectException(\AssertionError::class);
+
+        VenueObjects::venue()->relocate(null, null, null, null, null, coordinatesFromTown: true);
+    }
+
     private function venueWithoutTown(?Canton $canton): Venue
     {
         return new Venue('Seehaus', Tier::Basic, VenueStatus::Published, 80, null, null, null, null, null, null, null, $canton);

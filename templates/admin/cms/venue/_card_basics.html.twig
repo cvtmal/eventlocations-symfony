@@ -1,0 +1,14 @@
+{#
+    Card "Stammdaten" (CMS-2). Include with `with_context = false`: form, card, number, stale.
+#}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, required: true} only %}
+    {% block fields %}
+        {{ form_row(form.name) }}
+        {{ form_row(form.slug) }}
+        <div class="field-row">
+            {{ form_row(form.tier) }}
+            {{ form_row(form.capacityMin) }}
+            {{ form_row(form.capacityMax) }}
+        </div>
+    {% endblock %}
+{% endembed %}

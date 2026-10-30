@@ -1,0 +1,26 @@
+{#
+    Card "Texte", one tab per enabled locale (S4). Include with `with_context = false`: form, card, number, stale,
+    locales list<{code, label}>. After a 422 the first locale with an error is the open tab (L2).
+#}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, required: true, locales: locales} only %}
+    {% block fields %}
+        {% set panels = {} %}
+        {% for locale in locales %}
+            {% set texts = form.texts[locale.code] %}
+            {% set panel %}
+                {{ form_row(texts.summary) }}
+                {{ form_row(texts.description, {attr: {rows: 8}}) }}
+                {{ form_row(texts.metaDescription) }}
+                {{ form_row(texts.parkingText) }}
+            {% endset %}
+            {% set panels = panels|merge({(locale.code): panel}) %}
+        {% endfor %}
+        {{ include('admin/components/_locale_tabs.html.twig', {
+            id: 'venue-texts',
+            label: 'editor.locales_label'|trans({}, 'cms'),
+            locales: locales,
+            panels: panels,
+            active: locales|filter(locale => not form.texts[locale.code].vars.valid)|map(locale => locale.code)|first|default(null),
+        }, with_context = false) }}
+    {% endblock %}
+{% endembed %}

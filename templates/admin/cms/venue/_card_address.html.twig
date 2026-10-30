@@ -1,0 +1,53 @@
+{#
+    Card "Adresse & Lage" (D1–D4). Include with `with_context = false`: form, card, number, stale, locales,
+    town_centre_hint (the town's name when the coordinates are its centre, L1; else null).
+    The first submit button is a nameless, hidden "Speichern" (P4): Enter in any field submits through it, never through
+    "Ortsmitte übernehmen", which would overwrite the coordinates.
+#}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, locales: locales, town_centre_hint: town_centre_hint} only %}
+    {% block fields %}
+        <button class="visually-hidden" type="submit" tabindex="-1" aria-hidden="true">{{ 'address.action.default_submit'|trans({}, 'cms') }}</button>
+        <div class="field-row">
+            {{ form_row(form.town) }}
+            {{ form_row(form.canton) }}
+        </div>
+        {{ form_row(form.street) }}
+        <div class="field-row venue-card__coordinates">
+            {{ form_row(form.lat) }}
+            {{ form_row(form.lng) }}
+            <div class="field venue-card__town-centre">
+                {{ form_widget(form.useTownCentre, {attr: {class: 'btn'}}) }}
+            </div>
+        </div>
+        {% if town_centre_hint %}
+            <p class="form-hint venue-card__hint">{{ 'address.hint.town_centre'|trans({town: town_centre_hint}, 'cms') }}</p>
+        {% endif %}
+        {% if form.regions is defined %}
+            {% set panels = {} %}
+            {% set region_locales = locales|filter(locale => form.regions[locale.code] is defined) %}
+            {% for locale in region_locales %}
+                {# A capture, not `form_row()` in an expression: only a capture keeps the markup safe. #}
+                {% set panel %}{{ form_row(form.regions[locale.code]) }}{% endset %}
+                {% set panels = panels|merge({(locale.code): panel}) %}
+            {% endfor %}
+            {{ include('admin/components/_locale_tabs.html.twig', {
+                id: 'venue-region',
+                label: 'editor.locales_label'|trans({}, 'cms'),
+                locales: region_locales,
+                panels: panels,
+                active: region_locales|filter(locale => not form.regions[locale.code].vars.valid)|map(locale => locale.code)|first|default(null),
+            }, with_context = false) }}
+            {% do form.regions.setRendered() %}
+        {% endif %}
+        <fieldset class="field field--group venue-card__distances">
+            <legend class="field__label">{{ 'address.distances'|trans({}, 'cms') }}</legend>
+            {% for kind in ['station', 'highway', 'airport'] %}
+                <div class="field-row">
+                    {{ form_row(form[kind ~ 'Km']) }}
+                    {{ form_row(form[kind ~ 'Name']) }}
+                </div>
+            {% endfor %}
+            <p class="form-hint">{{ 'address.distances_help'|trans({}, 'cms') }}</p>
+        </fieldset>
+    {% endblock %}
+{% endembed %}

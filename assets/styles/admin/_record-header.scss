@@ -49,3 +49,30 @@
     flex-wrap: wrap;
     gap: var(--a-space-2);
 }
+
+// Optional `media` block (#24): the venue's cover, 64×45 like the list's thumbnail at a larger scale.
+.record-header__media {
+    flex: none;
+    width: 64px;
+    height: 45px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--a-line-soft);
+
+    img,
+    picture,
+    .picture {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.record-header__placeholder {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    color: var(--a-muted);
+}

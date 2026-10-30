@@ -1,0 +1,120 @@
+{#
+    Layout of every record page of a venue: #24's editor and #25's Fotos, Räume, Dokumente and Bewertungen.
+    Contract: extend it, pass `venue` (`Cms\ReadModel\VenueHeader`, from `VenueHeaderQuery::find()`), fill `record_main`.
+    Optional: `record_aside_start` (before the registry's panels), `record_aside_end` (after them), `record_route` (the
+    route whose tab is marked; default the current route, the editor sets `admin_locations_edit` so a re-rendered card
+    POST keeps "Übersicht" marked).
+    The header holds the cover, name, tier, status, the line "Nr. … · address · zuletzt bearbeitet …", Vorschau, Auf der
+    Website (published only), Publizieren or Unpublizieren, and for admins on an unpublished venue Löschen with its modal;
+    the forms come from `cms_venue_action_form()`, so a controller passes nothing else (P20).
+    Tabs and side panels come from the registries, `admin_record_tabs('venue', number)` and `admin_record_panels(…)`.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ venue.name }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_locations') }}">{{ 'list.title'|trans({}, 'cms') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ venue.name }}</li>
+{% endblock %}
+
+{% block page_header %}
+    {%- set parts = ['editor.meta.number'|trans({number: venue.number}, 'cms')] -%}
+    {%- if venue.place.isKnown -%}
+        {%- set place = venue.place|trans -%}
+        {%- if venue.zip and venue.place.townName -%}
+            {%- set place = venue.zip ~ ' ' ~ place ~ (venue.place.canton ? ' ' ~ venue.place.canton.value|upper : '') -%}
+        {%- endif -%}
+        {%- set parts = parts|merge([venue.street ? venue.street ~ ', ' ~ place : place]) -%}
+    {%- endif -%}
+    {%- if venue.cmsEditedAt is null and venue.contentKey -%}
+        {%- set parts = parts|merge(['editor.meta.imported_at'|trans({date: venue.updatedAt|swiss_date}, 'cms')]) -%}
+    {%- elseif venue.lastEditor -%}
+        {%- set when = venue.lastEditor.at|swiss_date ~ ', ' ~ venue.lastEditor.at|date('H:i', 'Europe/Zurich') -%}
+        {%- set parts = parts|merge([venue.lastEditor.name
+            ? 'editor.meta.edited_by'|trans({name: venue.lastEditor.name, date: when}, 'cms')
+            : 'editor.meta.edited_at'|trans({date: when}, 'cms')]) -%}
+    {%- endif -%}
+    {% embed 'admin/components/_record_header.html.twig' with {
+        title: venue.name,
+        subtitle: parts|join(' · '),
+        venue: venue,
+        tabs: admin_record_tabs('venue', venue.number ~ ''),
+        current_route: record_route|default(app.request.attributes.get('_route')),
+    } only %}
+        {% block media %}
+            {%- if venue.cover -%}
+                {{ venue_picture(venue.cover, sizes: '64px', widths: [360]) }}
+            {%- else -%}
+                <span class="record-header__placeholder">{{ admin_icon('landmark') }}</span>
+            {%- endif -%}
+        {% endblock %}
+        {% block meta %}
+            {{ include('admin/components/_tier_badge.html.twig', {tier: venue.tier.value, label: venue.tier|trans}, with_context = false) }}
+            {{ include('admin/components/_pill.html.twig', {
+                label: ('list.status.' ~ venue.status.value)|trans({}, 'cms'),
+                tone: venue.status.value == 'published' ? 'green' : 'grey',
+                dot: true,
+            }, with_context = false) }}
+        {% endblock %}
+        {% block actions %}
+            {{ include('admin/components/_button.html.twig', {label: 'editor.action.preview'|trans({}, 'cms'), icon: 'eye', href: path('admin_locations_preview', {number: venue.number})}, with_context = false) }}
+            {% if venue.isPublished and venue.slug %}
+                {{ include('admin/components/_button.html.twig', {
+                    label: 'editor.action.website'|trans({}, 'cms'),
+                    icon: 'external-link',
+                    href: path('venue_show', {slug: venue.slug}),
+                    attributes: {target: '_blank', rel: 'noopener'},
+                }, with_context = false) }}
+            {% endif %}
+            {% set published = venue.status.value == 'published' %}
+            {% set status_form = cms_venue_action_form(published ? 'unpublish' : 'publish', venue.number) %}
+            {{ form_start(status_form, {attr: {class: 'record-header__form'}}) }}
+                {{ include('admin/components/_button.html.twig', {
+                    label: (published ? 'publish.action.unpublish' : 'publish.action.publish')|trans({}, 'cms'),
+                    variant: published ? 'secondary' : 'primary',
+                    type: 'submit',
+                }, with_context = false) }}
+            {{ form_end(status_form) }}
+            {% if is_granted('ROLE_ADMIN') and not published %}
+                {% embed 'admin/components/_dropdown.html.twig' with {id: 'venue-more', label: 'editor.action.more'|trans({}, 'cms')} only %}
+                    {% block items %}
+                        <li><button class="dropdown__item dropdown__item--danger" type="button" commandfor="venue-delete" command="show-modal">{{ 'delete.action'|trans({}, 'cms') }}</button></li>
+                    {% endblock %}
+                {% endembed %}
+                {% embed 'admin/components/_modal.html.twig' with {
+                    id: 'venue-delete',
+                    title: 'delete.title'|trans({}, 'cms'),
+                    close_label: 'delete.close'|trans({}, 'cms'),
+                    danger: true,
+                    venue: venue,
+                } only %}
+                    {% block body %}<p>{{ 'delete.text'|trans({name: venue.name}, 'cms') }}</p>{% endblock %}
+                    {% block footer %}
+                        <form method="dialog"><button class="btn" autofocus>{{ 'delete.cancel'|trans({}, 'cms') }}</button></form>
+                        {% set delete_form = cms_venue_action_form('delete', venue.number) %}
+                        {{ form_start(delete_form) }}
+                            {{ include('admin/components/_button.html.twig', {label: 'delete.confirm'|trans({}, 'cms'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                        {{ form_end(delete_form) }}
+                    {% endblock %}
+                {% endembed %}
+            {% endif %}
+        {% endblock %}
+        {% block tabs %}
+            {% if tabs is not empty %}
+                {{ include('admin/components/_record_tabs.html.twig', {label: 'editor.tabs_label'|trans({}, 'cms'), tabs: tabs, current_route: current_route}, with_context = false) }}
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
+
+{% block main %}{% block record_main %}{% endblock %}{% endblock %}
+
+{% block aside %}
+    {%- block record_aside_start %}{% endblock -%}
+    {%- for panel in admin_record_panels('venue', venue.number ~ '') -%}
+        {{ include(panel.template, panel.context) }}
+    {%- endfor -%}
+    {%- block record_aside_end %}{% endblock -%}
+{% endblock %}

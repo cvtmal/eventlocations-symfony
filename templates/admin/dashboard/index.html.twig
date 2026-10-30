@@ -6,6 +6,10 @@
     <li class="breadcrumbs__item" aria-current="page">{{ 'dashboard.title'|trans({}, 'admin') }}</li>
 {% endblock %}
 
+{% block page_actions %}
+    {{ include('admin/components/_button.html.twig', {label: 'dashboard.new'|trans({}, 'cms'), variant: 'primary', icon: 'plus', href: path('admin_locations')}, with_context = false) }}
+{% endblock %}
+
 {% block page_header %}
     <div class="page-header">
         <div class="page-header__title">

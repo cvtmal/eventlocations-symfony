@@ -16,6 +16,7 @@ use Twig\Environment;
  * session, and renders the same for every visitor, so the detail page stays cacheable (S10):
  *
  * - nothing without both coordinates, so no pin is ever guessed from a town or canton;
+ * - nothing for town-centre coordinates (#24 'Ortsmitte übernehmen'): they are not the venue's position;
  * - with an empty or unset `GOOGLE_MAPS_EMBED_KEY`, the facade with the Google Maps link only (Q3);
  * - with a key, also "Karte laden" and the embed iframe, inert in a `<template>` until the click.
  */
@@ -48,7 +49,7 @@ final class VenueMapExtension
     /** The one rule for "has a map". */
     private function location(VenueDetail $venue): ?MapLocation
     {
-        if (null === $venue->lat || null === $venue->lng) {
+        if (null === $venue->lat || null === $venue->lng || $venue->coordinatesFromTown) {
             return null;
         }
 

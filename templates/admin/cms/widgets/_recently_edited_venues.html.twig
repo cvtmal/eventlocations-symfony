@@ -1,0 +1,31 @@
+{#
+    Dashboard widget "Zuletzt bearbeitet" (`Cms\Extension\RecentlyEditedVenuesWidget`).
+      rows: list<VenueListRow>, newest staff edit first.
+#}
+{% if rows is empty %}
+    <p class="card__body muted">{{ 'dashboard.recent.empty'|trans({}, 'cms') }}</p>
+{% else %}
+    <ul class="venue-widget">
+        {% for row in rows %}
+            <li class="venue-widget__row">
+                <span class="venue-widget__main">
+                    <a class="venue-widget__name" href="{{ path('admin_locations_edit', {number: row.number}) }}">{{ row.name }}</a>
+                    <span class="muted">
+                        {%- if row.place.isKnown -%}
+                            {{ 'list.row.number_place'|trans({number: row.number, place: row.place|trans}, 'cms') }}
+                        {%- else -%}
+                            {{ 'list.row.number'|trans({number: row.number}, 'cms') }}
+                        {%- endif -%}
+                    </span>
+                </span>
+                <span class="venue-widget__meta muted">
+                    {%- if row.editorName -%}
+                        {{ 'dashboard.recent.by'|trans({name: row.editorName, date: row.cmsEditedAt|swiss_date}, 'cms') }}
+                    {%- else -%}
+                        {{ row.cmsEditedAt|swiss_date }}
+                    {%- endif -%}
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

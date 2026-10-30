@@ -11,6 +11,7 @@ use App\Venues\Command\UnpublishMissingContent;
 use App\Venues\ContentFormat;
 use App\Venues\ContentReader;
 use App\Venues\ValueObject\ImportStatus;
+use App\Venues\ValueObject\PruneOutcome;
 use App\Venues\ValueObject\VenueImportOutcome;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Console\Attribute\Argument;
@@ -24,8 +25,10 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 
 /**
- * Imports the venue content folders (`<path>/venues/<key>/`, docs/content-format.md), the
- * only write path for real venues (S8, #9).
+ * Imports the venue content folders (`<path>/venues/<key>/`, docs/content-format.md) into
+ * the venues (S8, #9). The CMS (#24) writes the same venues: a venue it edited since its last
+ * import, or deleted, is kept as it is and listed after the summary (also under --force and
+ * --prune) until --overwrite-cms-edits replaces it.
  *
  * Idempotent: an unchanged folder is skipped by its content hash, so a second run writes
  * nothing. One transaction per venue: a failing folder is reported and the run goes on;
@@ -61,8 +64,10 @@ final class ImportContentCommand
         ?string $only = null,
         #[Option('Unpublish content venues whose folder is gone')]
         bool $prune = false,
-        #[Option('Apply every folder, even when its content is unchanged')]
+        #[Option('Apply every folder, even when its content is unchanged (never over a CMS edit)')]
         bool $force = false,
+        #[Option('Also apply folders of venues edited in the CMS since their last import, and recreate deleted venues')]
+        bool $overwriteCmsEdits = false,
     ): int {
         if (!ImageVariantGenerator::raiseBatchMemoryLimit()) {
             $io->warning(ImageVariantGenerator::BATCH_MEMORY_WARNING);
@@ -100,10 +105,11 @@ final class ImportContentCommand
             $keys = [$only];
         }
 
-        $counts = array_fill_keys(['created', 'updated', 'unchanged', 'failed', 'photosAdded', 'photosRemoved', 'documentsAdded', 'documentsRemoved'], 0);
+        $counts = array_fill_keys(['created', 'updated', 'unchanged', 'failed', 'cms_edited', 'photosAdded', 'photosRemoved', 'documentsAdded', 'documentsRemoved'], 0);
         $errors = [];
+        $cmsEditedKeys = [];
         foreach ($keys as $key) {
-            $outcome = $this->import($root.'/venues/'.$key, $key, $dryRun, $force);
+            $outcome = $this->import(new ImportVenueContent($root.'/venues/'.$key, $key, $dryRun, $force, $overwriteCmsEdits));
             ++$counts[$outcome->status->value];
             $counts['photosAdded'] += $outcome->photosAdded;
             $counts['photosRemoved'] += $outcome->photosRemoved;
@@ -112,6 +118,9 @@ final class ImportContentCommand
             if (ImportStatus::Failed === $outcome->status) {
                 $errors[] = ['key' => $key, 'messages' => $outcome->messages];
             }
+            if (ImportStatus::CmsEdited === $outcome->status) {
+                $cmsEditedKeys[] = $key;
+            }
             if (ImportStatus::Unchanged !== $outcome->status || $io->isVerbose()) {
                 $io->writeln(\sprintf('%-9s  %s', $outcome->status->value, $key));
             }
@@ -119,9 +128,10 @@ final class ImportContentCommand
 
         $unpublished = 0;
         if ($prune) {
-            $result = $this->commandBus->dispatch(new UnpublishMissingContent($presentKeys, $dryRun))->last(HandledStamp::class)?->getResult();
-            \assert(\is_int($result));
-            $unpublished = $result;
+            $result = $this->commandBus->dispatch(new UnpublishMissingContent($presentKeys, $dryRun, $overwriteCmsEdits))->last(HandledStamp::class)?->getResult();
+            \assert($result instanceof PruneOutcome);
+            $unpublished = $result->unpublished;
+            $cmsEditedKeys = [...$cmsEditedKeys, ...$result->cmsEditedKeys];
         }
 
         if (!$dryRun) {
@@ -130,12 +140,14 @@ final class ImportContentCommand
                 $only,
                 $prune,
                 $force,
+                $overwriteCmsEdits,
                 \count($keys),
                 $counts['created'],
                 $counts['updated'],
                 $counts['unchanged'],
                 $counts['failed'],
                 $unpublished,
+                \count($cmsEditedKeys),
                 $counts['photosAdded'],
                 $counts['photosRemoved'],
                 $counts['documentsAdded'],
@@ -161,6 +173,15 @@ final class ImportContentCommand
             $counts['documentsRemoved'],
         ));
 
+        if ([] !== $cmsEditedKeys) {
+            $io->writeln(\sprintf(
+                '%d venue%s kept because the CMS edited them; --overwrite-cms-edits replaces them:',
+                \count($cmsEditedKeys),
+                1 === \count($cmsEditedKeys) ? '' : 's',
+            ));
+            $io->listing($cmsEditedKeys);
+        }
+
         if ([] !== $errors) {
             $io->error(\sprintf('%d venue folder%s failed:', \count($errors), 1 === \count($errors) ? '' : 's'));
             $lines = [];
@@ -181,10 +202,12 @@ final class ImportContentCommand
      * Dispatches one folder; a failure of its transaction becomes a failed outcome so the
      * run goes on. Errors (\Error: programming mistakes) still stop the run.
      */
-    private function import(string $folder, string $key, bool $dryRun, bool $force): VenueImportOutcome
+    private function import(ImportVenueContent $command): VenueImportOutcome
     {
+        $key = $command->key;
+        $dryRun = $command->dryRun;
         try {
-            $outcome = $this->commandBus->dispatch(new ImportVenueContent($folder, $key, $dryRun, $force))->last(HandledStamp::class)?->getResult();
+            $outcome = $this->commandBus->dispatch($command)->last(HandledStamp::class)?->getResult();
             \assert($outcome instanceof VenueImportOutcome);
 
             return $outcome;

@@ -103,6 +103,16 @@ class VenueTranslation
     }
 
     /**
+     * A slug chosen by hand in the CMS (#24); VenueSlugs::change() checks it and keeps the
+     * history.
+     */
+    public function changeSlug(string $slug): void
+    {
+        $this->slug = $slug;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    /**
      * The owner's wedding texts (#31, S14), kept verbatim; NULL means unknown.
      */
     public function describeWedding(?string $ambience, ?string $capacityNote, ?string $partyNote, ?string $openingHours): void

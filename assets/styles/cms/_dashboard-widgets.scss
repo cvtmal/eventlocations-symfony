@@ -1,0 +1,47 @@
+// #24's dashboard widgets (Main artboard): "Unvollständige Locations" and "Zuletzt bearbeitet".
+.venue-widget {
+    margin: 0;
+    padding: var(--a-space-1) 0;
+    list-style: none;
+}
+
+.venue-widget__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-2);
+    padding: 10px var(--a-space-5);
+}
+
+.venue-widget__name {
+    flex: 1 1 160px;
+    font-weight: 600;
+}
+
+.venue-widget__main {
+    display: flex;
+    flex: 1 1 160px;
+    flex-direction: column;
+
+    // In a column the row rule's 160px basis would become the name's height.
+    .venue-widget__name {
+        flex: none;
+    }
+}
+
+.venue-widget__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-1);
+}
+
+.venue-widget__meta {
+    font-size: 13px;
+}
+
+.venue-widget__foot {
+    padding: var(--a-space-3) var(--a-space-5);
+    border-top: 1px solid var(--a-line-soft);
+    font-size: 13px;
+    font-weight: 600;
+}

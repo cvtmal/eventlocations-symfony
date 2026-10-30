@@ -34,10 +34,17 @@ use Doctrine\ORM\Mapping as ORM;
  * - The search indexes idx_venues_earth (GiST on ll_to_earth(lat, lng)) and
  *   idx_venues_search_key (GIN trigram on geo_search_key(name)) are expression indexes that
  *   exist in the database only and are deliberately not mapped here (as on Town).
- * - `content_key` is the content folder's name (#9, S8); a venue with a key is written only
- *   by `app:venues:import` (nothing else edits it). `content_hash` is the hash of the
- *   content it was last imported from (the import skips an unchanged venue); NULL after a
- *   prune so a reappearing folder is applied again. Demo venues have neither.
+ * - `content_key` is the content folder's name (#9, S8). A venue with a key is written by
+ *   `app:venues:import` and by the CMS (#24). `content_hash` is the hash of the content it
+ *   was last imported from (the import skips an unchanged venue); NULL after a prune so a
+ *   reappearing folder is applied again. Demo venues have neither.
+ * - `cms_edited_at` is set by every CMS save (markCmsEdited(), through VenueEditing) and
+ *   cleared when an import applies (recordContentHash()). While it is set, the import skips
+ *   the venue unless told to overwrite CMS edits (S8), so staff work is never lost silently.
+ *   A prune leaves it as it is: it applies no content.
+ * - `coordinates_from_town` marks coordinates copied from the town centre ("Ortsmitte
+ *   übernehmen" in the CMS), not the venue's own point: no map pin or geo data may claim
+ *   them. Only with coordinates (chk_venues_coordinates_from_town); the import writes false.
  * - The owner facts (#31, S14) are all nullable, NULL meaning unknown, and the page shows
  *   nothing for them. `capacity_seated` / `capacity_standing` are the owner's numbers and are
  *   not checked against `capacity_max`. Their translated texts live in VenueTranslation.
@@ -173,6 +180,12 @@ class Venue
     #[ORM\Column(type: Types::STRING, length: 64, nullable: true)]
     private ?string $contentHash = null;
 
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $cmsEditedAt = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $coordinatesFromTown = false;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -221,16 +234,27 @@ class Venue
 
     /**
      * Moves the venue to another address; the canton follows the town, and $canton counts
-     * only without one.
+     * only without one. $coordinatesFromTown says the coordinates are the town centre, not the
+     * venue's own point; it needs coordinates.
      */
-    public function relocate(?Town $town, ?string $zip, ?string $street, ?float $lat, ?float $lng, ?Canton $canton = null): void
-    {
+    public function relocate(
+        ?Town $town,
+        ?string $zip,
+        ?string $street,
+        ?float $lat,
+        ?float $lng,
+        ?Canton $canton = null,
+        bool $coordinatesFromTown = false,
+    ): void {
+        \assert(!$coordinatesFromTown || null !== $lat, 'Town-centre coordinates need coordinates.');
+
         $this->town = $town;
         $this->canton = $town?->canton() ?? $canton;
         $this->zip = $zip;
         $this->street = $street;
         $this->lat = $lat;
         $this->lng = $lng;
+        $this->coordinatesFromTown = $coordinatesFromTown;
         $this->touch();
     }
 
@@ -367,7 +391,18 @@ class Venue
         \assert(null !== $this->contentKey, 'Only a venue with a content key has a content hash.');
 
         $this->contentHash = $hash;
+        $this->cmsEditedAt = null;
         $this->touch();
+    }
+
+    /**
+     * Records a CMS save (#24, S8): the import skips this venue until an import applies or is
+     * told to overwrite. Called by VenueEditing::close() only, never by the import.
+     */
+    public function markCmsEdited(\DateTimeImmutable $at): void
+    {
+        $this->cmsEditedAt = $at;
+        $this->updatedAt = $at;
     }
 
     /**
@@ -597,6 +632,16 @@ class Venue
     public function contentHash(): ?string
     {
         return $this->contentHash;
+    }
+
+    public function cmsEditedAt(): ?\DateTimeImmutable
+    {
+        return $this->cmsEditedAt;
+    }
+
+    public function coordinatesFromTown(): bool
+    {
+        return $this->coordinatesFromTown;
     }
 
     public function createdAt(): \DateTimeImmutable

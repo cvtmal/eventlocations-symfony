@@ -1,0 +1,23 @@
+{#
+    Dashboard widget "Unvollständige Locations" (`Cms\Extension\IncompleteVenuesWidget`).
+      incomplete: VenueIncompleteList (rows: the first five by name, total: all of them).
+#}
+{% if incomplete.rows is empty %}
+    <p class="card__body muted">{{ 'dashboard.incomplete.empty'|trans({}, 'cms') }}</p>
+{% else %}
+    <ul class="venue-widget">
+        {% for row in incomplete.rows %}
+            <li class="venue-widget__row">
+                <a class="venue-widget__name" href="{{ path('admin_locations_edit', {number: row.number}) }}">{{ row.name }}</a>
+                <span class="venue-widget__pills">
+                    {% for code in row.missing %}
+                        {{ include('admin/components/_pill.html.twig', {label: ('dashboard.incomplete.missing.' ~ code)|trans({}, 'cms'), tone: 'grey'}, with_context = false) }}
+                    {% endfor %}
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+    <p class="venue-widget__foot">
+        <a href="{{ path('admin_locations', {status: 'incomplete'}) }}">{{ 'dashboard.incomplete.all'|trans({count: incomplete.total}, 'cms') }}</a>
+    </p>
+{% endif %}

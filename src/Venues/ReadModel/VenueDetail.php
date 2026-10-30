@@ -15,6 +15,8 @@ use App\Venues\ValueObject\VenuePlace;
 /**
  * Everything the venue detail page (`venue_show`, DP-2 to DP-17) renders, in one locale. The
  * phone number itself is not part of it (DP-11: never in the page HTML), only `hasPhone`.
+ * `coordinatesFromTown` says lat/lng are the town centre ("Ortsmitte übernehmen", #24), not
+ * the venue's own point: no map pin and no geo data may claim them.
  */
 final readonly class VenueDetail
 {
@@ -64,6 +66,7 @@ final readonly class VenueDetail
         public array $photos,
         public DetailWedding $wedding,
         public ?string $instagram,
+        public bool $coordinatesFromTown,
     ) {
     }
 

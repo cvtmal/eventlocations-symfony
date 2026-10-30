@@ -32,4 +32,17 @@
             target.close();
         }
     });
+
+    // `close` does not bubble, hence capture. The browser returns focus to the opener, but an opener inside a popover
+    // is hidden by then and focus falls to <body>: hand it to the popover's trigger instead (APG dialog pattern).
+    document.addEventListener('close', (event) => {
+        const dialog = event.target;
+        if (!(dialog instanceof HTMLDialogElement) || !dialog.id || (document.activeElement !== document.body && !dialog.contains(document.activeElement))) {
+            return;
+        }
+        const opener = [...document.querySelectorAll('[commandfor]')].find((el) => el.getAttribute('commandfor') === dialog.id);
+        const popover = opener?.closest('[popover]');
+        const trigger = popover?.id ? [...document.querySelectorAll('[popovertarget]')].find((el) => el.getAttribute('popovertarget') === popover.id) : null;
+        (trigger ?? opener)?.focus();
+    }, true);
 })();

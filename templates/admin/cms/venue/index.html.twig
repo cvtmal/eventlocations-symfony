@@ -1,0 +1,180 @@
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'list.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'list.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'list.title'|trans({}, 'cms') }} <span class="muted">{{ list.counts.all|swiss_number }}</span></h1>
+        </div>
+        <div class="page-header__actions">
+            {{ include('admin/components/_button.html.twig', {label: 'list.new'|trans({}, 'cms'), variant: 'primary', icon: 'plus', href: path('admin_locations_new')}, with_context = false) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% set tab_items = [{label: 'list.tabs.all'|trans({}, 'cms'), href: admin_query_path({status: null}), count: list.counts.all, active: filter.status is null}] %}
+    {% for status in ['published', 'unpublished', 'incomplete'] %}
+        {% set tab_items = tab_items|merge([{
+            label: ('list.status.' ~ status)|trans({}, 'cms'),
+            href: admin_query_path({status: status}),
+            count: list.counts.forStatus(status),
+            tone: status == 'incomplete' ? 'amber' : 'grey',
+            active: filter.status == status,
+        }]) %}
+    {% endfor %}
+    {{ include('admin/components/_tabs.html.twig', {label: 'list.tabs.label'|trans({}, 'cms'), items: tab_items}, with_context = false) }}
+
+    {% set chips = [] %}
+    {% if filter.q %}
+        {% set label = 'list.chip.search'|trans({q: filter.q}, 'cms') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({q: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'cms')}]) %}
+    {% endif %}
+    {% if filter.tier %}
+        {% set label = 'list.chip.tier'|trans({label: filter.tier|trans}, 'cms') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({tier: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'cms')}]) %}
+    {% endif %}
+    {% if filter.canton %}
+        {% set label = 'list.chip.canton'|trans({label: filter.canton == 'none' ? 'list.filter.canton_none'|trans({}, 'cms') : ('canton.' ~ filter.canton)|trans({}, 'geo')}, 'cms') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({canton: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'cms')}]) %}
+    {% endif %}
+    {% if filter.address %}
+        {% set label = 'list.chip.address_missing'|trans({}, 'cms') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({address: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'cms')}]) %}
+    {% endif %}
+
+    {% do form.q.setRendered() %}
+    {% do form.status.setRendered() %}
+    {% embed 'admin/components/_filter_bar.html.twig' with {
+        action: path('admin_locations'),
+        id: 'venue-filter',
+        search_value: filter.q,
+        search_label: 'list.filter.search'|trans({}, 'cms'),
+        search_placeholder: 'list.filter.search_placeholder'|trans({}, 'cms'),
+        submit_label: 'list.filter.submit'|trans({}, 'cms'),
+        reset_href: chips is empty ? null : path('admin_locations', filter.status ? {status: filter.status} : {}),
+        reset_label: 'list.filter.reset'|trans({}, 'cms'),
+        chips: chips,
+        filter_form: form,
+        status: filter.status,
+        sort: sort,
+        dir: dir,
+    } only %}
+        {% block filters %}
+            {% for field in ['tier', 'canton', 'address'] %}
+                <label class="visually-hidden" for="{{ filter_form[field].vars.id }}">{{ filter_form[field].vars.label|trans({}, 'cms') }}</label>
+                {{ form_widget(filter_form[field], {attr: {class: 'filter-bar__control'}}) }}
+            {% endfor %}
+            {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+            <input type="hidden" name="sort" value="{{ sort }}">
+            <input type="hidden" name="dir" value="{{ dir }}">
+        {% endblock %}
+    {% endembed %}
+    {% if form.vars.submitted and not form.vars.valid %}
+        <p class="form-error" role="alert">{{ 'list.filter.invalid'|trans({}, 'cms') }}</p>
+    {% endif %}
+
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'list.table_label'|trans({}, 'cms'),
+        id: 'venue-list',
+        columns: [
+            {label: 'list.column.location'|trans({}, 'cms'), sort_key: 'name'},
+            {label: 'list.column.tier'|trans({}, 'cms'), sort_key: 'tier'},
+            {label: 'list.column.guests'|trans({}, 'cms'), sort_key: 'capacity'},
+            {label: 'list.column.photos'|trans({}, 'cms')},
+            {label: 'list.column.status'|trans({}, 'cms')},
+            {label: 'list.column.edited'|trans({}, 'cms'), sort_key: 'updated'},
+        ],
+        sort: sort,
+        dir: dir,
+        actions_label: 'list.column.actions'|trans({}, 'cms'),
+        list: list,
+    } only %}
+        {% block rows %}
+            {% for row in list.rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {row: row, actions_column: true} only %}
+                    {% block cells %}
+                        <td>
+                            <div class="venue-list__location">
+                                <span class="venue-list__thumb">
+                                    {%- if row.thumbnail -%}
+                                        {{ venue_picture(row.thumbnail, sizes: '48px', widths: [360]) }}
+                                    {%- else -%}
+                                        {{ admin_icon('landmark') }}
+                                    {%- endif -%}
+                                </span>
+                                <span class="venue-list__name">
+                                    <a class="venue-list__link" href="{{ path('admin_locations_edit', {number: row.number}) }}">{{ row.name }}</a>
+                                    <span class="muted">
+                                        {%- if row.place.isKnown -%}
+                                            {{ 'list.row.number_place'|trans({number: row.number, place: row.place|trans}, 'cms') }}
+                                        {%- else -%}
+                                            {{ 'list.row.number'|trans({number: row.number}, 'cms') }}
+                                        {%- endif -%}
+                                    </span>
+                                </span>
+                            </div>
+                        </td>
+                        <td>{{ include('admin/components/_tier_badge.html.twig', {tier: row.tier.value, label: row.tier|trans}, with_context = false) }}</td>
+                        <td>{{ row.capacityMin ? swiss_range(row.capacityMin, row.capacityMax) : row.capacityMax|swiss_number }}</td>
+                        <td>{{ row.photoCount|swiss_number }}</td>
+                        <td>
+                            <span class="venue-list__status">
+                                {{ include('admin/components/_pill.html.twig', {
+                                    label: ('list.status.' ~ (row.isPublished ? 'published' : 'unpublished'))|trans({}, 'cms'),
+                                    tone: row.isPublished ? 'green' : 'grey',
+                                    dot: true,
+                                }, with_context = false) }}
+                                {% if row.isIncomplete %}
+                                    {{ include('admin/components/_pill.html.twig', {label: 'list.status.incomplete'|trans({}, 'cms'), tone: 'amber'}, with_context = false) }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="muted">
+                            {%- if row.cmsEditedAt -%}
+                                {{ row.cmsEditedAt|swiss_date }}{% if row.editorInitials %} · <abbr title="{{ row.editorName }}">{{ row.editorInitials }}</abbr>{% endif %}
+                            {%- elseif row.contentKey -%}
+                                {{ row.updatedAt|swiss_date }} · {{ 'list.row.import'|trans({}, 'cms') }}
+                            {%- else -%}
+                                {{ row.updatedAt|swiss_date }}
+                            {%- endif -%}
+                        </td>
+                    {% endblock %}
+                    {% block actions %}
+                        {% embed 'admin/components/_dropdown.html.twig' with {id: 'venue-actions-' ~ row.number, label: 'list.row.actions'|trans({name: row.name}, 'cms'), row: row} only %}
+                            {% block items %}
+                                <li><a class="dropdown__item" href="{{ path('admin_locations_edit', {number: row.number}) }}">{{ 'list.row.edit'|trans({}, 'cms') }}</a></li>
+                                <li><a class="dropdown__item" href="{{ path('admin_locations_preview', {number: row.number}) }}">{{ 'list.row.preview'|trans({}, 'cms') }}</a></li>
+                                {% if row.isPublished and row.slug %}
+                                    <li><a class="dropdown__item" href="{{ path('venue_show', {slug: row.slug}) }}" target="_blank" rel="noopener">{{ 'list.row.website'|trans({}, 'cms') }}</a></li>
+                                {% endif %}
+                            {% endblock %}
+                        {% endembed %}
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'landmark', title: 'list.empty.title'|trans({}, 'cms'), text: 'list.empty.text'|trans({}, 'cms')}, with_context = false) }}
+        {% endblock %}
+        {% block foot %}
+            {{ include('admin/components/_pagination.html.twig', {
+                page: list.page,
+                last_page: list.lastPage,
+                total: list.total,
+                per_page: list.perPage,
+                label: 'list.pagination.label'|trans({}, 'cms'),
+                previous_label: 'list.pagination.previous'|trans({}, 'cms'),
+                next_label: 'list.pagination.next'|trans({}, 'cms'),
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
