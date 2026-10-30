@@ -1,0 +1,829 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://hochzeitslocation.ch/schema/content-format-v1.json",
+    "title": "Venue content (venue.yaml)",
+    "description": "One venue of hochzeitslocation.ch, written by hand or by the legacy import (#21) and read by app:venues:import. See docs/content-format.md.",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name",
+        "tier",
+        "capacity",
+        "address",
+        "geo",
+        "translations"
+    ],
+    "definitions": {
+        "capacity_range": {
+            "type": "object",
+            "description": "Number of guests from min to max.",
+            "additionalProperties": false,
+            "properties": {
+                "min": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Fewest guests (1–50000); at most max.",
+                    "maximum": 50000
+                },
+                "max": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Most guests (1–50000).",
+                    "maximum": 50000
+                }
+            }
+        },
+        "photo": {
+            "type": "object",
+            "description": "One photo; the list order is the display order.",
+            "additionalProperties": false,
+            "properties": {
+                "file": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "File name in the photos folder (jpg, jpeg, png or webp).",
+                    "maxLength": 255,
+                    "pattern": "^[^/\\\\.][^/\\\\]*\\.([jJ][pP][eE]?[gG]|[pP][nN][gG]|[wW][eE][bB][pP])$"
+                },
+                "alt": {
+                    "type": "object",
+                    "description": "Alt text per locale (≤ 700 characters).",
+                    "propertyNames": {
+                        "pattern": "^(de|fr|it|en)$"
+                    },
+                    "minProperties": 1,
+                    "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Alt text.",
+                        "maxLength": 700
+                    }
+                }
+            },
+            "required": [
+                "file"
+            ]
+        },
+        "distance": {
+            "type": "object",
+            "description": "Distance to a point of reference.",
+            "additionalProperties": false,
+            "properties": {
+                "km": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 500,
+                    "description": "Kilometres, at most one decimal (0–500)."
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Name of the place, e.g. the station (≤ 150).",
+                    "maxLength": 150
+                }
+            },
+            "required": [
+                "km"
+            ]
+        }
+    },
+    "properties": {
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Name of the venue (≤ 150, not translated). The URL slug is made from it.",
+            "maxLength": 150
+        },
+        "tier": {
+            "description": "Listing tier (S6): sets the order in listings.",
+            "enum": [
+                "beliebte_location",
+                "empfehlung",
+                "top_premium",
+                "premium",
+                "basic"
+            ],
+            "type": "string"
+        },
+        "status": {
+            "description": "published (default) or unpublished to hide the venue.",
+            "enum": [
+                "published",
+                "unpublished"
+            ],
+            "type": "string",
+            "default": "published"
+        },
+        "capacity": {
+            "type": "object",
+            "description": "Guests of the whole venue; max is required.",
+            "additionalProperties": false,
+            "properties": {
+                "min": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Fewest guests (1–50000); at most max.",
+                    "maximum": 50000
+                },
+                "max": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Most guests (1–50000).",
+                    "maximum": 50000
+                }
+            },
+            "required": [
+                "max"
+            ]
+        },
+        "address": {
+            "type": "object",
+            "description": "Postal address; the town is resolved by ZIP and name.",
+            "additionalProperties": false,
+            "properties": {
+                "street": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Street and number (≤ 150).",
+                    "maxLength": 150
+                },
+                "zip": {
+                    "type": "string",
+                    "minLength": 4,
+                    "description": "Swiss ZIP, four digits, quoted ('8001').",
+                    "maxLength": 4,
+                    "pattern": "^[0-9]{4}$"
+                },
+                "town": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Official town name (Ortschaft), e.g. Zürich.",
+                    "maxLength": 100
+                },
+                "canton": {
+                    "type": "string",
+                    "minLength": 2,
+                    "description": "Canton code in lower case (zh); only needed when ZIP and name match two towns.",
+                    "maxLength": 2,
+                    "pattern": "^[a-z]{2}$"
+                }
+            },
+            "required": [
+                "zip",
+                "town"
+            ]
+        },
+        "geo": {
+            "type": "object",
+            "description": "Coordinates (WGS84) inside Switzerland.",
+            "additionalProperties": false,
+            "properties": {
+                "lat": {
+                    "type": "number",
+                    "minimum": 45.8,
+                    "maximum": 47.9,
+                    "description": "Latitude (45.8–47.9)."
+                },
+                "lng": {
+                    "type": "number",
+                    "minimum": 5.9,
+                    "maximum": 10.6,
+                    "description": "Longitude (5.9–10.6)."
+                }
+            },
+            "required": [
+                "lat",
+                "lng"
+            ]
+        },
+        "distances": {
+            "type": "object",
+            "description": "Distances to the nearest station, highway and airport.",
+            "additionalProperties": false,
+            "properties": {
+                "station": {
+                    "$ref": "#/definitions/distance"
+                },
+                "highway": {
+                    "$ref": "#/definitions/distance"
+                },
+                "airport": {
+                    "$ref": "#/definitions/distance"
+                }
+            }
+        },
+        "contact": {
+            "type": "object",
+            "description": "Contact details; all optional.",
+            "additionalProperties": false,
+            "properties": {
+                "phone": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Phone in E.164, quoted ('+41441234567').",
+                    "maxLength": 16,
+                    "pattern": "^\\+[1-9][0-9]{6,14}$"
+                },
+                "inquiry_email": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Address that receives inquiries (≤ 254).",
+                    "maxLength": 254,
+                    "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+                },
+                "website": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Website, starting with http:// or https:// (≤ 500).",
+                    "maxLength": 500,
+                    "pattern": "^https?://"
+                },
+                "contact_person": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Name of the contact person (≤ 150).",
+                    "maxLength": 150
+                }
+            }
+        },
+        "faq": {
+            "type": "object",
+            "description": "FAQ answers; null or missing means unknown.",
+            "additionalProperties": false,
+            "properties": {
+                "own_catering": {
+                    "description": "allowed (own catering allowed) or fixed_caterer.",
+                    "enum": [
+                        "allowed",
+                        "fixed_caterer",
+                        null
+                    ],
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "daylight": {
+                    "type": [
+                        "boolean",
+                        "null"
+                    ],
+                    "description": "Whether the rooms have daylight."
+                }
+            }
+        },
+        "rating": {
+            "type": "object",
+            "description": "Guest rating; score and count together.",
+            "additionalProperties": false,
+            "properties": {
+                "score": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10,
+                    "description": "Score 0–10, at most one decimal."
+                },
+                "count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Number of ratings."
+                },
+                "highlights": {
+                    "type": "array",
+                    "maxItems": 3,
+                    "uniqueItems": true,
+                    "description": "Up to three highlights, in display order.",
+                    "items": {
+                        "description": "Highlight code.",
+                        "enum": [
+                            "food",
+                            "atmosphere",
+                            "architecture",
+                            "location",
+                            "hospitality",
+                            "reachability",
+                            "equipment",
+                            "programme",
+                            "value"
+                        ],
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "score",
+                "count"
+            ]
+        },
+        "terms": {
+            "type": "object",
+            "description": "Vocabulary terms per group (lists of codes).",
+            "additionalProperties": false,
+            "properties": {
+                "setting": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Location (Lage): where the venue is.",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "river",
+                            "lake",
+                            "countryside",
+                            "mountains",
+                            "city"
+                        ]
+                    }
+                },
+                "building": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Building type (Art der Location).",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "bar_club",
+                            "farm_barn",
+                            "mountain_hut",
+                            "brewery_winery",
+                            "medieval_castle",
+                            "cafe",
+                            "casino",
+                            "digital_venue",
+                            "experience_creative",
+                            "event_hall",
+                            "event_venue",
+                            "factory_hall",
+                            "mobile_venue",
+                            "leisure_facility",
+                            "gallery_studio",
+                            "garden_greenhouse",
+                            "hangar_shipyard",
+                            "historic_site",
+                            "wedding_venue",
+                            "cave_fortress",
+                            "hotel",
+                            "cinema",
+                            "congress_centre",
+                            "cultural_centre",
+                            "exhibition_hall",
+                            "museum",
+                            "open_air",
+                            "party_room",
+                            "restaurant",
+                            "ship",
+                            "castle",
+                            "seminar_room",
+                            "meeting_room",
+                            "theatre",
+                            "tram_train_bus",
+                            "villa",
+                            "forest_hut",
+                            "tent",
+                            "guild_hall"
+                        ]
+                    }
+                },
+                "suitable_for": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Occasions the venue suits (Geeignet für).",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "wedding",
+                            "family_celebration",
+                            "birthday",
+                            "club_event",
+                            "party_celebration",
+                            "class_reunion",
+                            "private_event",
+                            "meeting",
+                            "conference",
+                            "congress",
+                            "corporate_event",
+                            "general_assembly",
+                            "apero",
+                            "team_event",
+                            "christmas_party",
+                            "concert",
+                            "theatre",
+                            "party",
+                            "sports_event",
+                            "trade_fair",
+                            "public_event"
+                        ]
+                    }
+                },
+                "infrastructure": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Infrastructure on site.",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "wifi",
+                            "air_conditioning",
+                            "stage",
+                            "shower",
+                            "cloakroom",
+                            "heating_ventilation",
+                            "kitchen",
+                            "backstage_rooms",
+                            "lectern"
+                        ]
+                    }
+                },
+                "furniture": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Furniture available.",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "flipchart",
+                            "magnetic_board",
+                            "moderation_kit",
+                            "chairs",
+                            "tables"
+                        ]
+                    }
+                },
+                "technology": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Technical equipment.",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "sound_system",
+                            "projector_screen",
+                            "interpreting_system",
+                            "lighting_system",
+                            "tv_screens"
+                        ]
+                    }
+                },
+                "surroundings": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "description": "Outdoor and surroundings.",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "garden",
+                            "spa_wellness",
+                            "terrace",
+                            "playground",
+                            "barbecue",
+                            "golf"
+                        ]
+                    }
+                }
+            }
+        },
+        "main_terms": {
+            "type": "object",
+            "description": "The main term of a group, shown first; it must also be listed under terms.",
+            "additionalProperties": false,
+            "properties": {
+                "setting": {
+                    "type": "string",
+                    "enum": [
+                        "river",
+                        "lake",
+                        "countryside",
+                        "mountains",
+                        "city"
+                    ],
+                    "description": "Main setting term."
+                },
+                "building": {
+                    "type": "string",
+                    "enum": [
+                        "bar_club",
+                        "farm_barn",
+                        "mountain_hut",
+                        "brewery_winery",
+                        "medieval_castle",
+                        "cafe",
+                        "casino",
+                        "digital_venue",
+                        "experience_creative",
+                        "event_hall",
+                        "event_venue",
+                        "factory_hall",
+                        "mobile_venue",
+                        "leisure_facility",
+                        "gallery_studio",
+                        "garden_greenhouse",
+                        "hangar_shipyard",
+                        "historic_site",
+                        "wedding_venue",
+                        "cave_fortress",
+                        "hotel",
+                        "cinema",
+                        "congress_centre",
+                        "cultural_centre",
+                        "exhibition_hall",
+                        "museum",
+                        "open_air",
+                        "party_room",
+                        "restaurant",
+                        "ship",
+                        "castle",
+                        "seminar_room",
+                        "meeting_room",
+                        "theatre",
+                        "tram_train_bus",
+                        "villa",
+                        "forest_hut",
+                        "tent",
+                        "guild_hall"
+                    ],
+                    "description": "Main building term."
+                },
+                "suitable_for": {
+                    "type": "string",
+                    "enum": [
+                        "wedding",
+                        "family_celebration",
+                        "birthday",
+                        "club_event",
+                        "party_celebration",
+                        "class_reunion",
+                        "private_event",
+                        "meeting",
+                        "conference",
+                        "congress",
+                        "corporate_event",
+                        "general_assembly",
+                        "apero",
+                        "team_event",
+                        "christmas_party",
+                        "concert",
+                        "theatre",
+                        "party",
+                        "sports_event",
+                        "trade_fair",
+                        "public_event"
+                    ],
+                    "description": "Main suitable_for term."
+                }
+            }
+        },
+        "translations": {
+            "type": "object",
+            "description": "Texts per locale; de is required.",
+            "propertyNames": {
+                "pattern": "^(de|fr|it|en)$"
+            },
+            "minProperties": 1,
+            "additionalProperties": {
+                "type": "object",
+                "description": "Texts in one locale.",
+                "additionalProperties": false,
+                "properties": {
+                    "summary": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Short summary for listings (≤ 200).",
+                        "maxLength": 200
+                    },
+                    "description": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Full description (Markdown-free text)."
+                    },
+                    "meta_description": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Meta description for search engines (≤ 160).",
+                        "maxLength": 160
+                    },
+                    "parking_text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Parking information (≤ 250).",
+                        "maxLength": 250
+                    }
+                },
+                "required": [
+                    "summary"
+                ]
+            },
+            "required": [
+                "de"
+            ]
+        },
+        "photos": {
+            "type": "array",
+            "description": "Gallery photos in photos/, in display order.",
+            "items": {
+                "$ref": "#/definitions/photo"
+            }
+        },
+        "rooms": {
+            "type": "array",
+            "description": "Rooms in display order.",
+            "items": {
+                "type": "object",
+                "description": "One room.",
+                "additionalProperties": false,
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Room key (kebab case, ≤ 100), unique in the venue, never changed; room photos live in rooms/<key>/photos/.",
+                        "maxLength": 100,
+                        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                    },
+                    "translations": {
+                        "type": "object",
+                        "description": "Room texts per locale; de is required.",
+                        "propertyNames": {
+                            "pattern": "^(de|fr|it|en)$"
+                        },
+                        "minProperties": 1,
+                        "additionalProperties": {
+                            "type": "object",
+                            "description": "Room texts in one locale.",
+                            "additionalProperties": false,
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "Room name (≤ 100).",
+                                    "maxLength": 100
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "description": "Room description."
+                                }
+                            },
+                            "required": [
+                                "name"
+                            ]
+                        },
+                        "required": [
+                            "de"
+                        ]
+                    },
+                    "capacity": {
+                        "$ref": "#/definitions/capacity_range"
+                    },
+                    "area_m2": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Area in square metres (1–50000).",
+                        "maximum": 50000
+                    },
+                    "height_m": {
+                        "type": "number",
+                        "exclusiveMinimum": 0,
+                        "maximum": 30,
+                        "description": "Ceiling height in metres (> 0, ≤ 30), at most two decimals."
+                    },
+                    "floor_material": {
+                        "description": "Floor.",
+                        "enum": [
+                            "various",
+                            "parquet",
+                            "carpet",
+                            "stone",
+                            "wood"
+                        ],
+                        "type": "string"
+                    },
+                    "seating": {
+                        "type": "object",
+                        "description": "Capacity per seating type.",
+                        "propertyNames": {
+                            "enum": [
+                                "seminar",
+                                "banquet",
+                                "apero",
+                                "concert"
+                            ]
+                        },
+                        "additionalProperties": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/capacity_range"
+                                }
+                            ],
+                            "minProperties": 1
+                        }
+                    },
+                    "photos": {
+                        "type": "array",
+                        "description": "Room photos in rooms/<key>/photos/, in display order.",
+                        "items": {
+                            "$ref": "#/definitions/photo"
+                        }
+                    }
+                },
+                "required": [
+                    "key",
+                    "translations"
+                ]
+            }
+        },
+        "documents": {
+            "type": "array",
+            "description": "PDFs in documents/, in display order.",
+            "items": {
+                "type": "object",
+                "description": "One PDF.",
+                "additionalProperties": false,
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "File name in the documents folder (pdf).",
+                        "maxLength": 255,
+                        "pattern": "^[^/\\\\.][^/\\\\]*\\.[pP][dD][fF]$"
+                    },
+                    "title": {
+                        "type": "object",
+                        "description": "Title per locale (≤ 200); de is required.",
+                        "propertyNames": {
+                            "pattern": "^(de|fr|it|en)$"
+                        },
+                        "minProperties": 1,
+                        "additionalProperties": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Title.",
+                            "maxLength": 200
+                        },
+                        "required": [
+                            "de"
+                        ]
+                    }
+                },
+                "required": [
+                    "file",
+                    "title"
+                ]
+            }
+        },
+        "reviews": {
+            "type": "array",
+            "description": "Guest reviews; the list is replaced as a whole.",
+            "items": {
+                "type": "object",
+                "description": "One review.",
+                "additionalProperties": false,
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "First name of the reviewer (≤ 50).",
+                        "maxLength": 50
+                    },
+                    "role": {
+                        "description": "Reviewer role.",
+                        "enum": [
+                            "visitor_f",
+                            "visitor_m",
+                            "organiser_f",
+                            "organiser_m"
+                        ],
+                        "type": "string"
+                    },
+                    "month": {
+                        "type": "string",
+                        "minLength": 7,
+                        "description": "Month of the review, quoted ('2025-06').",
+                        "maxLength": 7,
+                        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+                    },
+                    "locale": {
+                        "description": "Language of the text (default de).",
+                        "enum": [
+                            "de",
+                            "fr",
+                            "it",
+                            "en"
+                        ],
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Review text (≤ 1000).",
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "first_name",
+                    "role",
+                    "month",
+                    "text"
+                ]
+            }
+        }
+    }
+}

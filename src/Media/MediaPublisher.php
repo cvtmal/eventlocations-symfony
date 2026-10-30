@@ -81,6 +81,66 @@ final class MediaPublisher
         self::removeDirectory($this->paths->photoDirectory($venueNumber));
     }
 
+    /**
+     * Copies a file into MEDIA_ROOT at `<relativePath>` (content-addressed originals, #9);
+     * an existing target is kept as it is.
+     *
+     * @return bool true when the file was copied, false when the target already existed
+     *
+     * @throws InvalidMediaPath  when the path leaves MEDIA_ROOT
+     * @throws \RuntimeException when the file cannot be copied
+     */
+    public function storeOriginal(string $sourceFile, string $relativePath): bool
+    {
+        $target = $this->paths->original($relativePath);
+        if (is_file($target)) {
+            return false;
+        }
+        self::ensureDirectory(\dirname($target));
+        $tmp = $target.'.tmp';
+        if (!@copy($sourceFile, $tmp) || !rename($tmp, $target)) {
+            @unlink($tmp);
+
+            throw new \RuntimeException(\sprintf('Cannot copy "%s" to "%s".', $sourceFile, $target));
+        }
+
+        return true;
+    }
+
+    /**
+     * Deletes `MEDIA_ROOT/<relativePath>`; nothing happens when it is missing.
+     *
+     * @throws InvalidMediaPath when the path leaves MEDIA_ROOT
+     */
+    public function removeOriginal(string $relativePath): void
+    {
+        $file = $this->paths->original($relativePath);
+        if (is_file($file)) {
+            @unlink($file);
+        }
+    }
+
+    /**
+     * Deletes every variant of one photo (`<public>/<venueNumber>/<photoId>-*.{avif,webp,jpg}`).
+     */
+    public function removePhoto(int $venueNumber, string $photoId): void
+    {
+        foreach (glob($this->paths->photoDirectory($venueNumber).'/'.$photoId.'-*.{avif,webp,jpg}', \GLOB_BRACE) ?: [] as $file) {
+            @unlink($file);
+        }
+    }
+
+    /**
+     * Deletes one published PDF; nothing happens when it is missing.
+     */
+    public function removeDocument(int $venueNumber, string $documentId): void
+    {
+        $file = $this->paths->documentFile($venueNumber, $documentId);
+        if (is_file($file)) {
+            @unlink($file);
+        }
+    }
+
     private static function ensureDirectory(string $directory): void
     {
         if (!is_dir($directory) && !@mkdir($directory, 0o775, true) && !is_dir($directory)) {

@@ -31,12 +31,17 @@ use Doctrine\ORM\Mapping as ORM;
  * - The search indexes idx_venues_earth (GiST on ll_to_earth(lat, lng)) and
  *   idx_venues_search_key (GIN trigram on geo_search_key(name)) are expression indexes that
  *   exist in the database only and are deliberately not mapped here (as on Town).
+ * - `content_key` is the content folder's name (#9, S8); a venue with a key is written only
+ *   by `app:venues:import` (nothing else edits it). `content_hash` is the hash of the
+ *   content it was last imported from (the import skips an unchanged venue); NULL after a
+ *   prune so a reappearing folder is applied again. Demo venues have neither.
  */
 #[ORM\Entity(repositoryClass: VenueRepository::class)]
 #[ORM\Table(name: 'venues')]
 #[ORM\Index(name: 'idx_venues_town_id', columns: ['town_id'])]
 #[ORM\Index(name: 'idx_venues_canton_code', columns: ['canton_code'])]
 #[ORM\UniqueConstraint(name: 'uk_venues_number', columns: ['number'])]
+#[ORM\UniqueConstraint(name: 'uk_venues_content_key', columns: ['content_key'])]
 class Venue
 {
     #[ORM\Id]
@@ -135,6 +140,12 @@ class Venue
     #[ORM\Column(name: 'max_room_height_m', type: Types::DECIMAL, precision: 4, scale: 2, nullable: true)]
     private ?string $maxRoomHeightM = null;
 
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private ?string $contentKey;
+
+    #[ORM\Column(type: Types::STRING, length: 64, nullable: true)]
+    private ?string $contentHash = null;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -152,6 +163,7 @@ class Venue
         ?string $street,
         float $lat,
         float $lng,
+        ?string $contentKey = null,
     ) {
         $this->id = EntityId::generate();
         $this->name = $name;
@@ -165,8 +177,18 @@ class Venue
         $this->street = $street;
         $this->lat = $lat;
         $this->lng = $lng;
+        $this->contentKey = $contentKey;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
+    }
+
+    /**
+     * Changes the name; the slug is the write side's business (VenueTranslation, history).
+     */
+    public function rename(string $name): void
+    {
+        $this->name = $name;
+        $this->touch();
     }
 
     /**
@@ -269,6 +291,27 @@ class Venue
         $this->roomCount = $roomCount;
         $this->largestRoomM2 = $largestRoomM2;
         $this->maxRoomHeightM = $maxRoomHeightM;
+        $this->touch();
+    }
+
+    /**
+     * Records the hash of the content this venue was imported from; only content venues
+     * have one (chk_venues_content_hash).
+     */
+    public function recordContentHash(string $hash): void
+    {
+        \assert(null !== $this->contentKey, 'Only a venue with a content key has a content hash.');
+
+        $this->contentHash = $hash;
+        $this->touch();
+    }
+
+    /**
+     * Forgets the content hash, so the next import applies the content again.
+     */
+    public function forgetContentHash(): void
+    {
+        $this->contentHash = null;
         $this->touch();
     }
 
@@ -445,6 +488,16 @@ class Venue
     public function maxRoomHeightM(): ?float
     {
         return self::toFloat($this->maxRoomHeightM);
+    }
+
+    public function contentKey(): ?string
+    {
+        return $this->contentKey;
+    }
+
+    public function contentHash(): ?string
+    {
+        return $this->contentHash;
     }
 
     public function createdAt(): \DateTimeImmutable

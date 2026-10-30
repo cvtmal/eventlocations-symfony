@@ -34,6 +34,7 @@ phpstan.neon
 /compose.override.yaml
 /bin/dart-sass/
 /public/media/
+/content/
 ###< hochzeitslocation ###
 
 ###> symfonycasts/sass-bundle ###

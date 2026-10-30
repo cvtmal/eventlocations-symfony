@@ -16,12 +16,14 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * The capacities per seating type are column pairs (capacity_<seating>_min/_max), one per
  * Seating case; read and write them through seatingMin()/seatingMax()/offerSeating().
- * The height is a decimal string ('4.20') read back as a float.
+ * The height is a decimal string ('4.20') read back as a float. `content_key` is the room's
+ * key in venue.yaml (#9); NULL for rooms not written by the import.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'rooms')]
 #[ORM\Index(name: 'idx_rooms_venue_id', columns: ['venue_id'])]
 #[ORM\UniqueConstraint(name: 'uk_rooms_venue_id_position', columns: ['venue_id', 'position'])]
+#[ORM\UniqueConstraint(name: 'uk_rooms_venue_id_content_key', columns: ['venue_id', 'content_key'])]
 class Room
 {
     #[ORM\Id]
@@ -74,6 +76,9 @@ class Room
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $capacityConcertMax = null;
 
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private ?string $contentKey;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -88,6 +93,7 @@ class Room
         ?int $areaM2 = null,
         ?string $heightM = null,
         ?FloorMaterial $floorMaterial = null,
+        ?string $contentKey = null,
     ) {
         $this->id = EntityId::generate();
         $this->venue = $venue;
@@ -97,8 +103,28 @@ class Room
         $this->areaM2 = $areaM2;
         $this->heightM = $heightM;
         $this->floorMaterial = $floorMaterial;
+        $this->contentKey = $contentKey;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
+    }
+
+    public function moveTo(int $position): void
+    {
+        $this->position = $position;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    /**
+     * Replaces the room's facts; the height is a decimal string ('4.20').
+     */
+    public function reshape(?int $capacityMin, ?int $capacityMax, ?int $areaM2, ?string $heightM, ?FloorMaterial $floorMaterial): void
+    {
+        $this->capacityMin = $capacityMin;
+        $this->capacityMax = $capacityMax;
+        $this->areaM2 = $areaM2;
+        $this->heightM = $heightM;
+        $this->floorMaterial = $floorMaterial;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     /**
@@ -175,6 +201,11 @@ class Room
     public function floorMaterial(): ?FloorMaterial
     {
         return $this->floorMaterial;
+    }
+
+    public function contentKey(): ?string
+    {
+        return $this->contentKey;
     }
 
     public function createdAt(): \DateTimeImmutable

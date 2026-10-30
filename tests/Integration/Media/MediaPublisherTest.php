@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Media;
 
+use App\Media\Exception\InvalidMediaPath;
 use App\Media\Exception\MissingOriginal;
 use App\Media\ImageVariantGenerator;
 use App\Media\MediaPaths;
@@ -99,5 +100,60 @@ final class MediaPublisherTest extends KernelTestCase
 
         $this->publisher->removeVenue(self::VENUE);
         self::assertDirectoryDoesNotExist($this->paths->photoDirectory(self::VENUE));
+    }
+
+    public function test_stores_an_original_once(): void
+    {
+        $source = TestImages::write($this->staging, 'in.jpg', TestImages::jpeg(100, 50));
+        $relative = basename($this->originals).'/ab/c.jpg';
+        $target = $this->paths->original($relative);
+
+        self::assertTrue($this->publisher->storeOriginal($source, $relative));
+        self::assertFileEquals($source, $target);
+        touch($target, 1_000_000_000);
+        clearstatcache();
+
+        self::assertFalse($this->publisher->storeOriginal($source, $relative));
+        clearstatcache();
+        self::assertSame(1_000_000_000, filemtime($target));
+        self::assertFileDoesNotExist($target.'.tmp');
+    }
+
+    public function test_store_original_rejects_a_path_outside_media_root(): void
+    {
+        $source = TestImages::write($this->staging, 'in.jpg', 'x');
+
+        $this->expectException(InvalidMediaPath::class);
+
+        $this->publisher->storeOriginal($source, '../x.jpg');
+    }
+
+    public function test_removes_one_photo_and_keeps_the_others(): void
+    {
+        $directory = $this->paths->photoDirectory(self::VENUE);
+        foreach (['a-360.jpg', 'a-640.webp', 'a-360.avif', 'b-360.jpg', 'b-640.avif', 'doc.pdf'] as $file) {
+            TestImages::write($directory, $file, 'x');
+        }
+
+        $this->publisher->removePhoto(self::VENUE, 'a');
+
+        $files = array_map('basename', glob($directory.'/*') ?: []);
+        sort($files);
+        self::assertSame(['b-360.jpg', 'b-640.avif', 'doc.pdf'], $files);
+    }
+
+    public function test_removes_a_document_and_an_original_and_tolerates_missing_ones(): void
+    {
+        TestImages::write($this->paths->photoDirectory(self::VENUE), 'doc-id.pdf', '%PDF-');
+        TestImages::write($this->originals, 'o.pdf', '%PDF-');
+        $relative = basename($this->originals).'/o.pdf';
+
+        $this->publisher->removeDocument(self::VENUE, 'doc-id');
+        $this->publisher->removeOriginal($relative);
+        $this->publisher->removeDocument(self::VENUE, 'doc-id');
+        $this->publisher->removeOriginal($relative);
+
+        self::assertFileDoesNotExist($this->paths->documentFile(self::VENUE, 'doc-id'));
+        self::assertFileDoesNotExist($this->paths->original($relative));
     }
 }

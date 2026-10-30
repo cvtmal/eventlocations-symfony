@@ -124,6 +124,14 @@ final class VenueSchemaMigrationTest extends KernelTestCase
             "DELETE FROM towns WHERE canton_code = 'ju'",
             "DELETE FROM cantons WHERE code = 'ju'",
         ]];
+        // Content key and hash (#9)
+        yield 'content key taken' => ['uk_venues_content_key', [
+            "UPDATE venues SET content_key = 'testhaus' WHERE id = '{venue}'",
+            "UPDATE venues SET content_key = 'testhaus' WHERE id = '{venue2}'",
+        ]];
+        yield 'content key not kebab case' => ['chk_venues_content_key', ["UPDATE venues SET content_key = 'Bad_Key' WHERE id = '{venue}'"]];
+        yield 'content hash without key' => ['chk_venues_content_hash', ["UPDATE venues SET content_hash = repeat('a', 64) WHERE id = '{venue}'"]];
+        yield 'content hash not hex' => ['chk_venues_content_hash', ["UPDATE venues SET content_key = 'testhaus', content_hash = 'xyz' WHERE id = '{venue}'"]];
 
         // venue_translations
         yield 'second de translation' => ['uk_venue_translations_venue_id_locale', ["INSERT INTO venue_translations (id, venue_id, locale, slug, summary) VALUES (gen_random_uuid(), '{venue}', 'de', 'testhaus-zwei', 'Kurz.')"]];
@@ -181,6 +189,11 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'banquet zero' => ['chk_rooms_capacity_banquet', ["UPDATE rooms SET capacity_banquet_min = 0 WHERE id = '{room}'"]];
         yield 'apero above 50000' => ['chk_rooms_capacity_apero', ["UPDATE rooms SET capacity_apero_max = 50001 WHERE id = '{room}'"]];
         yield 'concert min above max' => ['chk_rooms_capacity_concert', ["UPDATE rooms SET capacity_concert_min = 300, capacity_concert_max = 200 WHERE id = '{room}'"]];
+        yield 'room key taken in the venue' => ['uk_rooms_venue_id_content_key', [
+            "UPDATE rooms SET content_key = 'saal' WHERE id = '{room}'",
+            "INSERT INTO rooms (id, venue_id, position, content_key) VALUES (gen_random_uuid(), '{venue}', 2, 'saal')",
+        ]];
+        yield 'room key not kebab case' => ['chk_rooms_content_key', ["UPDATE rooms SET content_key = 'Gross Saal' WHERE id = '{room}'"]];
         yield 'room of unknown venue' => ['fk_rooms_venue_id', ["INSERT INTO rooms (id, venue_id, position) VALUES (gen_random_uuid(), '{missing}', 1)"]];
 
         // room_translations
@@ -243,6 +256,8 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'three highlights' => [["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 2, 'value'), ('{venue}', 3, 'location')"]];
         yield 'room at its bounds' => [["UPDATE rooms SET capacity_min = 1, capacity_max = 50000, area_m2 = 50000, height_m = 30, floor_material = 'parquet', capacity_seminar_min = 20, capacity_seminar_max = 20, capacity_concert_max = 50000 WHERE id = '{room}'"]];
         yield 'photo with a single width in webp and jpg' => [["UPDATE venue_photos SET width = 300, height = 1, dominant_color = '#000000', variants = '{\"widths\": [300], \"formats\": [\"webp\", \"jpg\"]}' WHERE id = '{photo}'"]];
+        yield 'content key and hash' => [["UPDATE venues SET content_key = 'testhaus-8999', content_hash = repeat('0f', 32) WHERE id = '{venue}'", "UPDATE venues SET content_key = NULL, content_hash = NULL WHERE id = '{venue}'"]];
+        yield 'same room key in two venues' => [["UPDATE rooms SET content_key = 'saal' WHERE id = '{room}'", "INSERT INTO rooms (id, venue_id, position, content_key) VALUES (gen_random_uuid(), '{venue2}', 1, 'saal')"]];
         yield 'second venue photo' => [["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES (gen_random_uuid(), '{venue}', NULL, 2, 'demo/c.jpg', {photo-vals}), (gen_random_uuid(), '{venue2}', NULL, 1, 'demo/d.jpg', {photo-vals})"]];
     }
 

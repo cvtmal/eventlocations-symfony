@@ -75,4 +75,38 @@ final class VenueTest extends TestCase
         $venue->publish();
         self::assertTrue($venue->isPublished());
     }
+
+    public function test_rename_changes_the_name_and_touches(): void
+    {
+        $venue = VenueObjects::venue();
+        $before = $venue->updatedAt();
+        usleep(1);
+
+        $venue->rename('Seehaus Oberwil');
+
+        self::assertSame('Seehaus Oberwil', $venue->name());
+        self::assertGreaterThan($before, $venue->updatedAt());
+    }
+
+    public function test_content_key_and_hash(): void
+    {
+        self::assertNull(VenueObjects::venue()->contentKey());
+
+        $venue = VenueObjects::venue(contentKey: 'seehaus-mittelwil');
+        self::assertSame('seehaus-mittelwil', $venue->contentKey());
+        self::assertNull($venue->contentHash());
+
+        $venue->recordContentHash(str_repeat('ab', 32));
+        self::assertSame(str_repeat('ab', 32), $venue->contentHash());
+
+        $venue->forgetContentHash();
+        self::assertNull($venue->contentHash());
+    }
+
+    public function test_a_venue_without_content_key_has_no_content_hash(): void
+    {
+        $this->expectException(\AssertionError::class);
+
+        VenueObjects::venue()->recordContentHash(str_repeat('ab', 32));
+    }
 }
