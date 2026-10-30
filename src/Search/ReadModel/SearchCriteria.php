@@ -6,6 +6,7 @@ namespace App\Search\ReadModel;
 
 use App\Geo\ValueObject\Canton;
 use App\Venues\ValueObject\Access;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\Uid\Uuid;
@@ -23,8 +24,11 @@ use Symfony\Component\Uid\Uuid;
  * - `q`: name search, trimmed, whitespace collapsed, at most 100 characters, needs a letter
  *   or digit.
  * - `setting[]`, `building[]` (OR inside the group), `infra[]`, `furniture[]`, `tech[]`,
- *   `surroundings[]` (AND inside the group): known codes of the matching TermGroup.
+ *   `surroundings[]`, `ceremony[]`, `amenity[]`, `usage[]` (AND inside the group): known codes
+ *   of the matching TermGroup; `amenity[]` and `usage[]` only those of FILTER_CODES.
  * - `access[]`: Access values (AND).
+ * - `price[]`: PriceLevel values (OR, a venue has one).
+ * - `curfew`: exactly `none`, the venue stated it has no curfew.
  * - `rooms` 1–6, `area` one of AREAS, `height` one of HEIGHTS (all "at least").
  * - `page`: 1–1000, default 1.
  *
@@ -42,6 +46,18 @@ final readonly class SearchCriteria
         'furniture' => TermGroup::Furniture,
         'tech' => TermGroup::Technology,
         'surroundings' => TermGroup::Surroundings,
+        'ceremony' => TermGroup::Ceremony,
+        'amenity' => TermGroup::Amenity,
+        'usage' => TermGroup::Usage,
+    ];
+    /**
+     * TermGroup value → the only codes that filter (FI-7). A group that is not listed filters on
+     * all its codes. Here and not in a template, because a code the URL accepts but no control
+     * shows would narrow the results invisibly.
+     */
+    public const FILTER_CODES = [
+        'amenity' => ['overnight', 'dance_floor', 'lake_view', 'panorama', 'outdoor_dining', 'external_caterers', 'wheelchair_access'],
+        'usage' => ['exclusive'],
     ];
     public const DEFAULT_RADIUS = 5;
     public const MAX_RADIUS = 50;
@@ -56,6 +72,7 @@ final readonly class SearchCriteria
     /**
      * @param array<string, list<string>> $terms  TermGroup value → sorted, deduplicated codes; only non-empty groups
      * @param list<Access>                $access sorted by value, deduplicated
+     * @param list<PriceLevel>            $prices sorted by value, deduplicated
      */
     private function __construct(
         public ?Canton $canton,
@@ -65,6 +82,8 @@ final readonly class SearchCriteria
         public ?string $q,
         public array $terms,
         public array $access,
+        public array $prices,
+        public bool $noCurfew,
         public ?int $rooms,
         public ?int $area,
         public ?float $height,
@@ -74,7 +93,17 @@ final readonly class SearchCriteria
 
     public static function none(): self
     {
-        return new self(null, null, null, null, null, [], [], null, null, null, 1);
+        return new self(null, null, null, null, null, [], [], [], false, null, null, null, 1);
+    }
+
+    /**
+     * Whether a code of a group can be a filter value: every code, unless FILTER_CODES lists the group.
+     */
+    public static function offers(TermGroup $group, string $code): bool
+    {
+        $codes = self::FILTER_CODES[$group->value] ?? null;
+
+        return null === $codes || \in_array($code, $codes, true);
     }
 
     /**
@@ -95,7 +124,7 @@ final readonly class SearchCriteria
         foreach (self::PARAMS as $param => $group) {
             $codes = array_values(array_filter(
                 self::strings($raw[$param] ?? null),
-                static fn (string $code): bool => $known->has($group, $code),
+                static fn (string $code): bool => $known->has($group, $code) && self::offers($group, $code),
             ));
             if ([] !== $codes) {
                 $terms[$group->value] = $codes;
@@ -111,6 +140,15 @@ final readonly class SearchCriteria
         }
         ksort($access, \SORT_STRING);
 
+        $prices = [];
+        foreach (self::strings($raw['price'] ?? null) as $value) {
+            $case = PriceLevel::tryFrom($value);
+            if (null !== $case) {
+                $prices[$case->value] = $case;
+            }
+        }
+        ksort($prices, \SORT_STRING);
+
         $area = self::int($raw['area'] ?? null, 1, max(self::AREAS));
 
         return new self(
@@ -121,6 +159,8 @@ final readonly class SearchCriteria
             self::q($raw['q'] ?? null),
             $terms,
             array_values($access),
+            array_values($prices),
+            'none' === ($raw['curfew'] ?? null),
             self::int($raw['rooms'] ?? null, 1, self::MAX_ROOMS),
             null !== $area && \in_array($area, self::AREAS, true) ? $area : null,
             self::height($raw['height'] ?? null),
@@ -132,7 +172,7 @@ final readonly class SearchCriteria
     {
         return new self(
             $this->canton, $this->place, $this->radius, $this->guests, $this->q, $this->terms, $this->access,
-            $this->rooms, $this->area, $this->height, max(1, min(self::MAX_PAGE, $page)),
+            $this->prices, $this->noCurfew, $this->rooms, $this->area, $this->height, max(1, min(self::MAX_PAGE, $page)),
         );
     }
 
@@ -140,7 +180,7 @@ final readonly class SearchCriteria
     {
         return new self(
             $canton, $this->place, $this->radius, $this->guests, $this->q, $this->terms, $this->access,
-            $this->rooms, $this->area, $this->height, $this->page,
+            $this->prices, $this->noCurfew, $this->rooms, $this->area, $this->height, $this->page,
         );
     }
 
@@ -185,6 +225,12 @@ final readonly class SearchCriteria
             if ('setting' === $param && [] !== $this->access) {
                 $query['access'] = array_map(static fn (Access $access): string => $access->value, $this->access);
             }
+        }
+        if ([] !== $this->prices) {
+            $query['price'] = array_map(static fn (PriceLevel $price): string => $price->value, $this->prices);
+        }
+        if ($this->noCurfew) {
+            $query['curfew'] = 'none';
         }
         if (null !== $this->rooms) {
             $query['rooms'] = (string) $this->rooms;

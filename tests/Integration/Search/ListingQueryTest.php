@@ -23,6 +23,8 @@ use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\Entity\VenueTranslation;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
@@ -237,6 +239,55 @@ final class ListingQueryTest extends KernelTestCase
         yield 'furniture' => ['furniture', TermGroup::Furniture, 'chairs', 'tables'];
         yield 'technology' => ['tech', TermGroup::Technology, 'sound_system', 'projector_screen'];
         yield 'surroundings' => ['surroundings', TermGroup::Surroundings, 'garden', 'terrace'];
+        yield 'ceremony' => ['ceremony', TermGroup::Ceremony, 'chapel', 'free_ceremony'];
+        yield 'amenity' => ['amenity', TermGroup::Amenity, 'overnight', 'lake_view'];
+    }
+
+    public function test_usage_filters_on_its_one_code(): void
+    {
+        $this->venue('Exklusiv', terms: [[TermGroup::Usage, 'exclusive']]);
+        $this->venue('Mehrere', terms: [[TermGroup::Usage, 'multiple_weddings']]);
+
+        $this->assertMatches(['Exklusiv'], 'usage[]=exclusive');
+    }
+
+    public function test_price_levels_combine_with_or(): void
+    {
+        $this->venue('Moderat', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Moderate));
+        $this->venue('Mittel', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
+        $this->venue('Exklusiv', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive));
+        $this->venue('Unbekannt');
+
+        $this->assertMatches(['Mittel'], 'price[]=medium');
+        $this->assertMatches(['Mittel', 'Moderat'], 'price[]=medium&price[]=moderate');
+    }
+
+    public function test_no_curfew_means_the_venue_said_so(): void
+    {
+        $this->venue('Ohne', change: static fn (Venue $venue) => $venue->describePartyRules(null, false, null));
+        $this->venue('Mit', change: static fn (Venue $venue) => $venue->describePartyRules(null, true, null));
+        $this->venue('Unbekannt');
+
+        $this->assertMatches(['Ohne'], 'curfew=none');
+    }
+
+    public function test_the_wedding_filters_combine_with_and(): void
+    {
+        $this->venue('Alles', terms: [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight']], change: static function (Venue $venue): void {
+            $venue->changePriceLevel(PriceLevel::Medium);
+            $venue->describePartyRules(null, false, null);
+        });
+        $this->venue('Ohne Preis', terms: [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight']], change: static fn (Venue $venue) => $venue->describePartyRules(null, false, null));
+        $this->venue('Mit Sperrstunde', terms: [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight']], change: static function (Venue $venue): void {
+            $venue->changePriceLevel(PriceLevel::Medium);
+            $venue->describePartyRules(null, true, null);
+        });
+        $this->venue('Ohne Kapelle', terms: [[TermGroup::Amenity, 'overnight']], change: static function (Venue $venue): void {
+            $venue->changePriceLevel(PriceLevel::Medium);
+            $venue->describePartyRules(null, false, null);
+        });
+
+        $this->assertMatches(['Alles'], 'price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight');
     }
 
     #[DataProvider('accessThresholds')]
@@ -365,6 +416,24 @@ final class ListingQueryTest extends KernelTestCase
         self::assertSame([], $page->cards);
         self::assertSame(0, $page->total);
         self::assertSame(1, $page->lastPage);
+    }
+
+    public function test_a_card_carries_the_price_level_and_ambience(): void
+    {
+        $venue = VenueFactory::new()
+            ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive))
+            ->create(['name' => 'Schloss Mit Fakten']);
+        VenueTranslationFactory::new()
+            ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding('Romantisch', null, null, null))
+            ->create(['venue' => $venue]);
+        $this->venue('Ohne Fakten');
+
+        $cards = $this->byName($this->query()->results(SearchCriteria::none(), 'de')->cards);
+
+        self::assertSame(PriceLevel::Exclusive, $cards['Schloss Mit Fakten']->priceLevel);
+        self::assertSame('Romantisch', $cards['Schloss Mit Fakten']->ambience);
+        self::assertNull($cards['Ohne Fakten']->priceLevel);
+        self::assertNull($cards['Ohne Fakten']->ambience);
     }
 
     public function test_card_fields(): void
@@ -576,10 +645,14 @@ final class ListingQueryTest extends KernelTestCase
      * @param list<array{TermGroup, string}>   $terms
      * @param array{?string, ?string, ?string} $distances  station, highway, airport km
      * @param array{int, ?int, ?string}|null   $rooms      room count, largest m², max height
+     * @param (callable(Venue): void)|null     $change     applied before the venue is stored
      */
-    private function venue(string $name, array $attributes = [], array $terms = [], array $distances = [null, null, null], ?array $rooms = null): Venue
+    private function venue(string $name, array $attributes = [], array $terms = [], array $distances = [null, null, null], ?array $rooms = null, ?callable $change = null): Venue
     {
         $factory = VenueFactory::new();
+        if (null !== $change) {
+            $factory = $factory->afterInstantiate($change(...));
+        }
         if ([null, null, null] !== $distances) {
             $factory = $factory->afterInstantiate(static fn (Venue $venue) => $venue->changeDistances($distances[0], null, $distances[1], null, $distances[2], null));
         }

@@ -13,6 +13,8 @@ use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\Entity\Venue;
+use App\Venues\Entity\VenueTranslation;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
@@ -21,9 +23,10 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * S11: the listing HTML stays ≤ 60 KB gzip in the worst case, a full page of 48 cards with
- * eight photos (three widths × three formats each), a 200-character summary, a rating with
- * three highlights and a badge, with the "weitere Filter" overlay full: one venue carries every
- * value, so 72 checkboxes (69 terms, 3 access) and 21 options render.
+ * eight photos (three widths × three formats each), a 200-character summary, both tags (a price
+ * level, all three across the page, and a 60-character ambience), a rating with three highlights
+ * and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 90
+ * checkboxes (83 terms, 3 access, 3 price, 1 curfew) and 21 options render.
  */
 final class ListingHtmlBudgetTest extends WebTestCase
 {
@@ -41,11 +44,17 @@ final class ListingHtmlBudgetTest extends WebTestCase
         $connection->beginTransaction();
 
         try {
+            $ambience = mb_substr(str_repeat('Romantisch und ländlich am See. ', 2), 0, 60);
             for ($i = 1; $i <= ListingQuery::PER_PAGE; ++$i) {
-                $factory = VenueFactory::new()->rated('8.7', 1234);
+                $price = PriceLevel::cases()[$i % 3];
+                $factory = VenueFactory::new()->rated('8.7', 1234)
+                    ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel($price));
                 if (1 === $i) {
                     $factory = $factory->withRoomFacts(6, 300, '5.0')
-                        ->afterInstantiate(static fn (Venue $venue) => $venue->changeDistances('0.5', 'Bahnhof', '5.0', null, '20.0', null));
+                        ->afterInstantiate(static function (Venue $venue): void {
+                            $venue->changeDistances('0.5', 'Bahnhof', '5.0', null, '20.0', null);
+                            $venue->describePartyRules(null, false, null);
+                        });
                 }
                 $venue = $factory->create([
                     'name' => 'Schlossgut Hohenrain am See '.$i,
@@ -53,7 +62,9 @@ final class ListingHtmlBudgetTest extends WebTestCase
                     'capacityMin' => 40,
                     'capacityMax' => 1200,
                 ]);
-                VenueTranslationFactory::createOne(['venue' => $venue, 'summary' => mb_substr(str_repeat('Hochzeit am See mit Garten. ', 8), 0, 200)]);
+                VenueTranslationFactory::new()
+                    ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null))
+                    ->create(['venue' => $venue, 'summary' => mb_substr(str_repeat('Hochzeit am See mit Garten. ', 8), 0, 200)]);
                 foreach ([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Architecture] as $position => $code) {
                     VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => $position + 1, 'code' => $code]);
                 }
@@ -69,7 +80,8 @@ final class ListingHtmlBudgetTest extends WebTestCase
             self::assertResponseIsSuccessful();
             self::assertCount(ListingQuery::PER_PAGE, $crawler->filter('.card'));
             self::assertCount(ListingQuery::PER_PAGE * 8, $crawler->filter('.listing__results img'));
-            self::assertCount(72, $crawler->filter('#filter-more input[type="checkbox"]'));
+            self::assertCount(ListingQuery::PER_PAGE * 2, $crawler->filter('.card__tags .badge'));
+            self::assertCount(90, $crawler->filter('#filter-more input[type="checkbox"]'));
             self::assertCount(21, $crawler->filter('#filter-more option'));
 
             $html = (string) $client->getResponse()->getContent();

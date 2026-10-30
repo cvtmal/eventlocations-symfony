@@ -1,7 +1,7 @@
 {#
     One venue card (LP-2, LP-3). Owned by #7; #13 reuses it on /merkliste. Include with `only`:
       card (a ListingCard, or anything with its public properties: number, slug, name, tier, capacityMin, capacityMax,
-      place, summary, ratingScore, ratingCount, highlights, photos),
+      place, summary, priceLevel, ambience, ratingScore, ratingCount, highlights, photos),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
       action: merken|remove|none (default merken).
     The title link stretches over the card (.card__link::after) and is the card's one accessible link. The photo column
@@ -9,6 +9,8 @@
     link to the detail page (tabindex="-1", aria-hidden="true": no extra tab stop or screen-reader link), the placeholder
     of a venue without photos is the same link (#21: without one the whole column would be dead), and the
     Merken form sits above both. No interactive content is nested in the title link.
+    The owner's price level and ambience are tags under the summary (#33, LP-7), price first; a card without either has
+    no .card__tags, so it stays exactly LP-2.
 #}
 {%- set index = index|default(99) -%}
 {%- set action = action|default('merken') -%}
@@ -44,6 +46,16 @@
             <a class="card__link" href="{{ href }}">{{ card.name }}</a>
         </h2>
         <p class="card__summary">{{ card.summary }}</p>
+        {%- if card.priceLevel is not null or card.ambience is not null %}
+        <ul class="card__tags">
+            {%- if card.priceLevel is not null %}
+            <li><span class="visually-hidden">{{ 'card.price_level'|trans({}, 'search') }} </span>{{ include('components/_badge.html.twig', {label: card.priceLevel|trans}, with_context = false) }}</li>
+            {%- endif %}
+            {%- if card.ambience is not null %}
+            <li>{{ include('components/_badge.html.twig', {label: card.ambience}, with_context = false) }}</li>
+            {%- endif %}
+        </ul>
+        {%- endif %}
         {%- if card.ratingScore is not null %}
         <div class="card__rating">
             {{ include('search/_card_rating.html.twig', {score: card.ratingScore, count: card.ratingCount ?? 0, highlights: card.highlights}, with_context = false) }}

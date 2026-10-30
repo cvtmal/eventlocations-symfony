@@ -18,6 +18,8 @@ filter:
     more_name_title: Suche eine konkrete Location
     more_name_placeholder: Name eingeben
     more_access: Erreichbarkeit
+    more_price: Preisniveau
+    more_wedding: Feier und Ausstattung
     more_buildings_all: Alle Gebäudearten
     more_buildings_close: Gebäudearten schliessen
     more_rooms_title: Raumangebot
@@ -55,6 +57,8 @@ chip:
     place_radius: '{place} + {radius} km'
     guests: '{guests} Gäste'
 card:
+    # Visually hidden before the price tag, so "Mittel" is not read alone.
+    price_level: 'Preisniveau:'
     photos_label: 'Bilder von {name}'
     rating: '{label} ({score}) | {count}'
     rating_unlabelled: '({score}) | {count}'

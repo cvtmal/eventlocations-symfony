@@ -169,8 +169,13 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             'rooms=2',
             'area=100',
             'height=2.5',
+            'price[]=medium',
+            'price[]=moderate',
+            'curfew=none',
+            'amenity[]=overnight',
+            'usage[]=exclusive',
         ];
-        $groups = ['setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'surroundings' => 1];
+        $groups = ['setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'surroundings' => 1, 'ceremony' => 1];
         $values = ['infra' => 'infrastructure', 'tech' => 'technology'];
         foreach ($groups as $param => $n) {
             foreach ($this->topCodes($values[$param] ?? $param, $n) as $code) {
@@ -188,7 +193,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
     private function matchingHeaviestQuery(): string
     {
         $venue = $this->connection->fetchAssociative(<<<'SQL'
-            SELECT v.id, v.name, v.capacity_min, v.capacity_max, v.room_count, v.largest_room_m2,
+            SELECT v.id, v.name, v.capacity_min, v.capacity_max, v.room_count, v.largest_room_m2, v.price_level, v.has_curfew,
                 v.distance_station_km <= 1 AS station, v.distance_highway_km <= 10 AS highway, v.distance_airport_km <= 30 AS airport
             FROM venues v, towns z
             WHERE z.name = 'Zürich'
@@ -219,7 +224,13 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             'area='.($venue['largest_room_m2'] >= 100 ? 100 : 50),
             'height=2.5',
         ];
-        $groups = ['setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'surroundings' => 1];
+        if (\is_string($venue['price_level'])) {
+            $parts[] = 'price[]='.$venue['price_level'];
+        }
+        if (false === $venue['has_curfew']) {
+            $parts[] = 'curfew=none';
+        }
+        $groups = ['setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'surroundings' => 1, 'ceremony' => 1];
         $values = ['infra' => 'infrastructure', 'tech' => 'technology'];
         foreach ($groups as $param => $n) {
             $group = $values[$param] ?? $param;
