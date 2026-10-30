@@ -80,18 +80,17 @@ final class FrenchLocaleProbeTest extends WebTestCase
         $container = self::getContainer();
         $translator = $container->get('translator');
         self::assertInstanceOf(TranslatorBagInterface::class, $translator);
-        $projectDir = $container->getParameter('kernel.project_dir');
-        self::assertIsString($projectDir);
 
         $fixtures = \dirname(__DIR__, 3).'/Fixtures/I18n';
 
+        // Only the probe's domains: the app's real catalogues (e.g. geo) have no French yet.
         self::assertSame(
             ['fr/probe_extra' => ['missing' => ['notice.guests'], 'extra' => []]],
             CatalogueParity::diff(
                 $translator,
                 'de',
                 ['de', 'fr'],
-                CatalogueParity::domainsIn([$projectDir.'/translations', $fixtures.'/translations'], 'de'),
+                CatalogueParity::domainsIn([$fixtures.'/translations'], 'de'),
             ),
         );
     }

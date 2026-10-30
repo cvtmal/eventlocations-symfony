@@ -63,7 +63,8 @@ db-fresh: ## Drop, recreate and migrate the database
 	$(MAKE) db-migrate
 	docker compose restart php
 
-seed: ## Load the demo data (Foundry story "main") into the dev database
+seed: ## Import towns and load the demo data (Foundry story "main") into the dev database
+	$(CONSOLE) app:geo:import-towns --no-interaction
 	$(CONSOLE) foundry:load-fixtures main --append --no-interaction
 
 ## —— Tests ——
