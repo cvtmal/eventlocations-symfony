@@ -21,6 +21,9 @@ final class LegacyVenueText
 
     private const string KEY_ID_SEPARATOR = '-';
 
+    /** A folder key ends in the first 8 characters of the venue's Wix id. */
+    private const string FOLDER_WITH_ID = '/-([0-9a-f]{8})$/D';
+
     /** The section headings of a Vorstellungstext, folded; measured on the owner's file. */
     private const array FACT_LABELS = [
         'nutzung',
@@ -139,6 +142,46 @@ final class LegacyVenueText
         $tail = self::KEY_ID_SEPARATOR.$id8;
 
         return rtrim(substr(SlugAllocator::base($name), 0, ContentFormat::KEY_MAX_LENGTH - \strlen($tail)), '-').$tail;
+    }
+
+    /**
+     * The fact sections of a Vorstellungstext (#32): each folded fact label with the
+     * paragraphs up to the next fact or description label, unchanged. Text before the first
+     * label and after a description label belongs to no section; a repeated label appends.
+     *
+     * @param list<string> $paragraphs
+     *
+     * @return array<string, list<string>>
+     */
+    public static function sections(array $paragraphs): array
+    {
+        $sections = [];
+        $current = null;
+        foreach ($paragraphs as $paragraph) {
+            $folded = self::fold($paragraph);
+            if (\in_array($folded, self::FACT_LABELS, true)) {
+                $current = $folded;
+                $sections[$current] ??= [];
+                continue;
+            }
+            if (\in_array($folded, self::DESCRIPTION_LABELS, true)) {
+                $current = null;
+                continue;
+            }
+            if (null !== $current) {
+                $sections[$current][] = $paragraph;
+            }
+        }
+
+        return $sections;
+    }
+
+    /**
+     * The Wix id8 a folder key ends in, or null for a folder that no export wrote.
+     */
+    public static function folderId(string $key): ?string
+    {
+        return 1 === preg_match(self::FOLDER_WITH_ID, $key, $match) ? $match[1] : null;
     }
 
     /**

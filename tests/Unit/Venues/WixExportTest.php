@@ -64,6 +64,18 @@ final class WixExportTest extends TestCase
         iterator_to_array(WixExport::rows($file));
     }
 
+    public function test_the_owner_columns_need_typ_and_the_legacy_columns_do_not(): void
+    {
+        $file = $this->file([WixCsv::row()], array_values(array_diff(WixCsv::COLUMNS, ['Typ'])));
+
+        self::assertCount(1, iterator_to_array(WixExport::rows($file)));
+
+        $this->expectException(InvalidWixExport::class);
+        $this->expectExceptionMessage('Typ');
+
+        iterator_to_array(WixExport::rows($file, WixExport::OWNER_COLUMNS));
+    }
+
     public function test_a_row_with_too_few_fields_fails_the_file(): void
     {
         $file = $this->file([WixCsv::row()]);

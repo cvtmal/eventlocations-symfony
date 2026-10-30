@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues\Console;
 
+use App\Media\ImageVariantGenerator;
 use App\Venues\Command\ImportVenueContent;
 use App\Venues\Command\RecordContentImport;
 use App\Venues\Command\UnpublishMissingContent;
@@ -34,6 +35,9 @@ use Symfony\Component\Messenger\Stamp\HandledStamp;
  *
  * Run one import at a time: there is no lock (the database's unique keys prevent
  * corruption, not a confusing interleaving).
+ *
+ * memory_limit is raised to ImageVariantGenerator::BATCH_MEMORY_LIMIT first, because the
+ * owner's photos reach 60 MP (#32 D9); where that fails the command warns and goes on.
  */
 #[AsCommand(name: 'app:venues:import', description: 'Import the venue content folders (validate, create/update by key, photos, documents)')]
 final class ImportContentCommand
@@ -60,6 +64,9 @@ final class ImportContentCommand
         #[Option('Apply every folder, even when its content is unchanged')]
         bool $force = false,
     ): int {
+        if (!ImageVariantGenerator::raiseBatchMemoryLimit()) {
+            $io->warning(ImageVariantGenerator::BATCH_MEMORY_WARNING);
+        }
         $startedAt = $this->clock->now();
         $root = rtrim($path ?? $this->contentRoot, '/');
         if (null !== $only && $prune) {

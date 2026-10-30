@@ -113,6 +113,7 @@ final class RegenerateMediaCommandTest extends KernelTestCase
         self::assertSame(Command::FAILURE, $this->tester->execute(['--venue' => '999999']));
 
         self::assertStringContainsString('No venue with number 999999.', $this->tester->getDisplay());
+        self::assertStringNotContainsString('memory_limit', $this->tester->getDisplay(), 'the test container can raise it');
     }
 
     public function test_without_a_number_every_venue_is_processed(): void

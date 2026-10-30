@@ -167,6 +167,7 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $this->import(['--dry-run' => true]), $this->display());
 
         self::assertStringContainsString('Dry run: Venues: 2 seen, 2 created, 0 updated, 0 unchanged, 0 failed, 0 unpublished. Photos: +1 −0.', $this->display());
+        self::assertStringNotContainsString('memory_limit', $this->display(), 'the test container can raise it');
         self::assertSame(0, $this->rows('venues WHERE content_key IS NOT NULL'));
         self::assertSame(0, $this->rows('content_imports'));
         self::assertSame([], $this->fileTimes());

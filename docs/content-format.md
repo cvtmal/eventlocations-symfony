@@ -210,7 +210,7 @@ resets to unknown.
 | `dining` | `vegetarian`, `vegan`, `gluten_free`, `organic`, `allergy_friendly`, `diabetic`, `halal`, `kosher`, `kids_menu`, `wedding_cake`, `buffet`, `grill`, `anything_possible` |
 | `vendor` | `flowers_decor`, `photography`, `videography`, `officiant`, `dj`, `musicians`, `furniture`, `wedding_planner` |
 | `usage` | `exclusive`, `multiple_weddings`, `wedding_and_regular` |
-| `language` | `de`, `en`, `fr`, `it`, `es`, `pt`, `nl`, `cs`, `ru`, `hu`, `gsw` |
+| `language` | `de`, `en`, `fr`, `it`, `es`, `pt`, `nl`, `cs`, `ru`, `hu`, `gsw`, `ro` |
 
 An unknown code fails the venue with its position, e.g. `/terms/building/0: "palace" is not an allowed value`.
 
@@ -227,7 +227,8 @@ An unknown code fails the venue with its position, e.g. `/terms/building/0: "pal
 ## Files
 
 - Photos: `.jpg`, `.jpeg`, `.png`, `.webp` (any case). The import checks the bytes, not only
-  the extension; GIF and other formats fail.
+  the extension; GIF, AVIF and other formats fail. A generated folder never holds an AVIF
+  photo: the export leaves it out and reports it.
 - Documents: PDF only (the file must start with `%PDF-`).
 - Every file in `photos/`, `rooms/<key>/photos/` and `documents/` must be listed in
   `venue.yaml`, and every listed file must exist. Files starting with a dot (`.DS_Store`)
@@ -278,6 +279,14 @@ otherwise `0`. To hide a venue by hand, set `status: unpublished`.
 
 Run one import at a time; there is no lock.
 
+The import (and `app:media:regenerate`) raises PHP's `memory_limit` to `512M` for the run,
+never lowering a higher one, and warns when it cannot: rendering the web sizes of a photo
+above about 40 MP needs more than the stock 256M (a 60 MP photo peaks at about 310 MiB). The
+owner export leaves out photos above 100 MP, so a generated folder stays within that limit.
+Run a full import with `--no-debug` in dev: with debug on, Doctrine keeps every query and
+its backtrace for the whole command (about 2.5 KB each), and the 243 owner venues then peak
+at about 505 MiB of the 512M.
+
 ## Editor support
 
 Point the YAML language server (VS Code "YAML" extension, PhpStorm) at the schema with a
@@ -306,6 +315,48 @@ A value the CSV no longer holds removes its path. `tier` is written only when th
 none, so a tier set later survives a re-export. Comments do not survive a re-export that
 changes the file. The export removes no folder: one the CSV no longer has is reported as
 stale. `photos/`, `rooms/` and `documents/` are never touched.
+
+`app:owner:export-content <csv> [path] [--dry-run]` then adds the owner's wedding facts and
+the Wix photos to the same folders. It writes folders only, never the database, and needs
+the folder of each row, so the run order is:
+
+```
+make sf c="app:legacy:export-content content/owner/<export>.csv"
+make sf c="app:owner:export-content content/owner/<export>.csv"
+make sf c="--no-debug app:venues:import"
+```
+
+It owns exactly these paths and keeps every other key, including the paths above:
+
+- `price_level`, `capacity.seated`, `capacity.standing`, `party`, `faq.own_catering`
+- `terms.setting`, `terms.building`, `terms.suitable_for`, `terms.infrastructure`,
+  `terms.technology`, `terms.surroundings`, `terms.ceremony`, `terms.amenity`,
+  `terms.dining`, `terms.vendor`, `terms.usage`, `terms.language`
+- `main_terms.setting`, `main_terms.building`, `main_terms.suitable_for`
+- `translations.de.ambience`, `translations.de.capacity_note`,
+  `translations.de.party_note`, `translations.de.opening_hours`,
+  `translations.de.parking_text`
+- `photos` and the files in `photos/`
+
+It never touches `tier`, `faq.daylight`, `terms.furniture`, `rooms`, `documents`, `rating`,
+`reviews` or `contact.instagram`. A value the CSV no longer holds removes its path, and a
+section left empty goes with it; the codes in a group are sorted, so running either export
+again, in either order, leaves the file byte-identical. Facts come only from the CSV's
+fixed columns and its form answers, matched whole against fixed tables; anything else goes
+to a `*_note` field or to the report, never into a code.
+
+Photos are the cover (`Anzeigebild`) followed by the images in the text, in order, without
+repeats. They are downloaded one at a time into `content/owner/photos/` (a cache: a second
+run downloads nothing, and a failed download is retried on the next run) and linked or
+copied into the folder's `photos/`; files there that are no longer listed are deleted. A
+photo is left out and reported, never failing its venue, when it is AVIF, not a JPEG, PNG or
+WebP, above 100 megapixels, not decodable, or the same image as an earlier one; the next
+photo then becomes the cover.
+
+The console prints counts and `<key>: <reason>` only. The details (unmapped answers, photos
+left out, notes cut to 250 characters) go to `content/owner/export-report.md`, which
+`--dry-run` also writes; a dry run writes nothing else and downloads nothing. The exit code is
+`1` when a row has no folder or a download failed, otherwise `0`.
 
 ## What is not in the format
 

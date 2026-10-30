@@ -24,7 +24,7 @@ final class KnownTermsQueryTest extends KernelTestCase
     {
         $terms = $this->query->all();
 
-        self::assertSame(146, $terms->count());
+        self::assertSame(147, $terms->count());
         self::assertTrue($terms->has(TermGroup::Setting, 'lake'));
         self::assertTrue($terms->has(TermGroup::Infrastructure, 'wifi'));
         self::assertFalse($terms->has(TermGroup::Infrastructure, 'lake'));

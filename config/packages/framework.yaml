@@ -19,8 +19,27 @@ framework:
     #esi: true
     #fragments: true
 
+    # Wix's media server, for app:owner:export-content's photos (#32). One request at a time is
+    # the caller's rule (Venues\WixPhotoCache); retries cover 5xx, 429 and transport errors.
+    http_client:
+        scoped_clients:
+            wix.client:
+                base_uri: 'https://static.wixstatic.com'
+                timeout: 30
+                max_duration: 300
+                retry_failed:
+                    max_retries: 3
+
 when@test:
     framework:
         test: true
+        # Replaces the transport under every client, so no test can reach Wix (#32 PD10).
+        http_client:
+            mock_response_factory: App\Tests\Support\Http\WixImageResponses
+            scoped_clients:
+                wix.client:
+                    base_uri: 'https://static.wixstatic.com'
+                    retry_failed:
+                        delay: 0
         session:
             storage_factory_id: session.storage.factory.mock_file

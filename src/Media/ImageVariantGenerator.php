@@ -42,6 +42,21 @@ final class ImageVariantGenerator
     /** Bump when the rendering changes, so caches keyed by fingerprint() are rebuilt. */
     public const int SETTINGS_VERSION = 1;
 
+    /**
+     * The memory a console batch (import, regenerate, owner export) needs: gd holds a decoded
+     * original at about 5 bytes a pixel, so a 60 MP photo stops PHP's stock 256M (#32 D9).
+     */
+    public const string BATCH_MEMORY_LIMIT = '512M';
+
+    /**
+     * The largest original a batch accepts at BATCH_MEMORY_LIMIT, checked by the owner export
+     * before it decodes, so a larger photo is left out rather than stopping the run.
+     */
+    public const int BATCH_MAX_PIXELS = 100_000_000;
+
+    /** What a batch command prints when raiseBatchMemoryLimit() fails; it goes on regardless. */
+    public const string BATCH_MEMORY_WARNING = 'memory_limit could not be raised to '.self::BATCH_MEMORY_LIMIT.': photos above about 40 MP may stop the run.';
+
     /** @var list<ImageFormat> */
     private readonly array $formats;
 
@@ -51,6 +66,27 @@ final class ImageVariantGenerator
     public function __construct(?array $formats = null)
     {
         $this->formats = (new ImageVariants([1], $formats ?? self::availableFormats()))->formats;
+    }
+
+    /**
+     * Raises memory_limit to BATCH_MEMORY_LIMIT for a console batch, never lowers it (a host's
+     * 1G or -1 stays), and tells whether the limit now suffices; false where ini_set() is
+     * disabled, so the caller can warn.
+     *
+     * Web requests keep php-fpm's limit, behind the 40 MP cap of the upload form (#25,
+     * MEDIA_MAX_PIXELS). Neither limit belongs in this class or in PhotoPipeline: a pixel
+     * check here would fail the imported photos above 40 MP (#32 PD4). Never call this from
+     * a request.
+     */
+    public static function raiseBatchMemoryLimit(): bool
+    {
+        $wanted = ini_parse_quantity(self::BATCH_MEMORY_LIMIT);
+        if (self::memoryLimitReaches($wanted)) {
+            return true;
+        }
+        @ini_set('memory_limit', self::BATCH_MEMORY_LIMIT);
+
+        return self::memoryLimitReaches($wanted);
     }
 
     /**
@@ -287,5 +323,12 @@ final class ImageVariantGenerator
                 }
             }
         }
+    }
+
+    private static function memoryLimitReaches(int $bytes): bool
+    {
+        $limit = (string) \ini_get('memory_limit');
+
+        return '-1' === $limit || ini_parse_quantity($limit) >= $bytes;
     }
 }

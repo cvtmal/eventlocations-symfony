@@ -38,6 +38,46 @@ final class WixRichText
     }
 
     /**
+     * The IMAGE nodes of the field, in text order, lists included (#32). A node without a
+     * media id is skipped; an empty alt text is null.
+     *
+     * @return list<array{id: string, alt: ?string}>
+     *
+     * @throws \JsonException
+     */
+    public static function images(string $json): array
+    {
+        $document = json_decode($json, true, 64, \JSON_THROW_ON_ERROR);
+
+        $images = [];
+        self::collectImages(\is_array($document) ? self::children($document) : [], $images);
+
+        return $images;
+    }
+
+    /**
+     * @param list<array<mixed>>                    $nodes
+     * @param list<array{id: string, alt: ?string}> $images
+     */
+    private static function collectImages(array $nodes, array &$images): void
+    {
+        foreach ($nodes as $node) {
+            if ('IMAGE' === ($node['type'] ?? null)) {
+                $data = \is_array($node['imageData'] ?? null) ? $node['imageData'] : [];
+                $image = \is_array($data['image'] ?? null) ? $data['image'] : [];
+                $src = \is_array($image['src'] ?? null) ? $image['src'] : [];
+                $id = $src['id'] ?? null;
+                if (\is_string($id) && '' !== $id) {
+                    $alt = \is_string($data['altText'] ?? null) ? self::clean($data['altText']) : '';
+                    $images[] = ['id' => $id, 'alt' => '' === $alt ? null : $alt];
+                }
+                continue;
+            }
+            self::collectImages(self::children($node), $images);
+        }
+    }
+
+    /**
      * @param list<array<mixed>>        $nodes
      * @param list<array{string, bool}> $blocks text and whether it is a list item, in order
      */

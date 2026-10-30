@@ -71,10 +71,10 @@ final class LegacyVenueMapper
      */
     public function map(array $row): LegacyVenue
     {
-        $region = self::text($row['Region'] ?? '');
-        if (self::SKIPPED_REGION === $region) {
+        if (self::isSkipped($row)) {
             return LegacyVenue::skipped();
         }
+        $region = self::text($row['Region'] ?? '');
 
         $id = $row['ID'] ?? '';
         if (1 !== preg_match('/^[0-9a-f]{8}/', $id)) {
@@ -95,6 +95,10 @@ final class LegacyVenueMapper
         ['text' => $summary, 'source' => $source] = LegacyVenueText::summary($description, self::text($row['Ambiente'] ?? ''));
         if ('' === $summary) {
             throw InvalidWixExport::unresolvedRow('neither a Vorstellungstext nor an Ambiente');
+        }
+        if (mb_strlen($summary) > LegacyVenueText::SUMMARY_MAX_LENGTH) {
+            // Only an Ambiente summary can be this long; the import would reject the folder.
+            throw InvalidWixExport::unresolvedRow(\sprintf('the summary from the Ambiente is longer than %d characters', LegacyVenueText::SUMMARY_MAX_LENGTH));
         }
 
         $notes = [];
@@ -136,6 +140,16 @@ final class LegacyVenueMapper
             $source,
             $notes,
         );
+    }
+
+    /**
+     * A row outside Switzerland (Q13): skipped by #21 and #32 alike, before any download.
+     *
+     * @param array<string, string> $row
+     */
+    public static function isSkipped(array $row): bool
+    {
+        return self::SKIPPED_REGION === self::text($row['Region'] ?? '');
     }
 
     private static function name(string $value): string
