@@ -1,0 +1,26 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-30T16:00:00Z"},
+  "title": "Hochzeitslocation Backoffice",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 1000, "title": "Übersicht (Dashboard)", "expand": "fill", "is_interactive": true},
+    "Locations.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 1000, "title": "CMS · Locations", "expand": "fill", "is_interactive": true},
+    "LocationEdit.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 1600, "title": "CMS · Location bearbeiten", "expand": "fill", "is_interactive": true},
+    "Photos.dc.html": {"x": 4560, "y": 0, "w": 1440, "h": 1100, "title": "CMS · Fotos", "expand": "fill", "is_interactive": true},
+    "Company.dc.html": {"x": 0, "y": 1960, "w": 1440, "h": 1150, "title": "CRM · Firma", "expand": "fill", "is_interactive": true},
+    "Pipeline.dc.html": {"x": 1520, "y": 1960, "w": 1440, "h": 1000, "title": "CRM · Deals-Pipeline", "expand": "fill", "is_interactive": true},
+    "Inbox.dc.html": {"x": 3040, "y": 1960, "w": 1440, "h": 1000, "title": "CRM · Anfragen", "expand": "fill", "is_interactive": true},
+    "Login.dc.html": {"x": 0, "y": 3470, "w": 1440, "h": 900, "title": "Login & 2FA", "expand": "fill", "is_interactive": true},
+    "Tokens.dc.html": {"x": 1520, "y": 3470, "w": 1440, "h": 1300, "title": "Tokens & Komponenten", "expand": "fill"},
+    "Sidebar.dc.html": {"x": 3040, "y": 3470, "w": 248, "h": 1000, "title": "Sidebar (Komponente)", "is_interactive": true}
+  },
+  "order": ["Main.dc.html", "Locations.dc.html", "LocationEdit.dc.html", "Photos.dc.html", "Company.dc.html", "Pipeline.dc.html", "Inbox.dc.html", "Login.dc.html", "Tokens.dc.html", "Sidebar.dc.html"],
+  "notes": {
+    "rowCms": {"x": 0, "y": -260, "text": "Übersicht & CMS", "kind": "title1", "maxW": 6000},
+    "rowCrm": {"x": 0, "y": 1700, "text": "CRM", "kind": "title1", "maxW": 4480},
+    "rowBase": {"x": 0, "y": 3210, "text": "Basis: Login, Tokens, Komponenten", "kind": "title1", "maxW": 3288}
+  },
+  "designSystems": []
+}

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Schloss Seeblick bearbeiten – Backoffice</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F6F5F2;font-family:'Sofia Sans',system-ui,sans-serif;color:#1B1B1B}
+a{color:#B03A50}a:hover{color:#8A2C3E}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;box-sizing:border-box;border-radius:8px;border:1px solid #D6D2CB;background:#FFFFFF;color:#1B1B1B;font:600 14px/1 'Sofia Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#F1EFEB;color:#1B1B1B}
+.btn-primary{background:#1B1B1B;border-color:#1B1B1B;color:#FFFFFF}
+.btn-primary:hover{background:#3A3A3A;color:#FFFFFF}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn-icon{width:36px;padding:0;justify-content:center}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font:600 12px/1 'Sofia Sans',sans-serif;white-space:nowrap}
+.pill-green{background:#E3F3EA;color:#17603D}
+.pill-amber{background:#FBEFD5;color:#7A4E00}
+.pill-blue{background:#E6EDFA;color:#1F4C99}
+.pill-grey{background:#EEECE8;color:#4A4945}
+.pill-pink{background:#FFE4E9;color:#9E2F44}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.card{background:#FFFFFF;border:1px solid #E7E4DF;border-radius:12px}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 24px;border-bottom:1px solid #E7E4DF}
+.card-h h2{margin:0;font-size:17px;font-weight:700}
+.card-b{padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px 20px}
+.card-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 24px;border-top:1px solid #F0EDE8;background:#FBFAF8;border-radius:0 0 12px 12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.wide{grid-column:1/-1}
+.lbl{font-size:13px;font-weight:600;color:#1B1B1B}
+.help{font-size:12px;color:#66645F}
+.err{font-size:12px;font-weight:600;color:#A3261D}
+.input{height:38px;box-sizing:border-box;border:1px solid #D6D2CB;border-radius:8px;padding:0 12px;font:400 15px 'Sofia Sans',sans-serif;color:#1B1B1B;background:#FFFFFF;width:100%}
+.input-err{border-color:#A3261D;box-shadow:0 0 0 1px #A3261D}
+textarea.input{height:auto;padding:10px 12px;line-height:22px;resize:vertical}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;box-sizing:border-box;border-radius:999px;border:1px solid #D6D2CB;background:#FFFFFF;color:#1B1B1B;font:400 14px 'Sofia Sans',sans-serif;cursor:pointer}
+.chip-on{background:#1B1B1B;border-color:#1B1B1B;color:#FFFFFF;font-weight:600}
+.tab{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 2px;font-size:14px;font-weight:600;color:#66645F;text-decoration:none;border-bottom:2px solid transparent}
+.tab:hover{color:#1B1B1B}
+.tab-on{color:#1B1B1B;border-bottom-color:#1B1B1B}
+.muted{color:#66645F}
+.side h3{margin:0;font-size:14px;font-weight:700}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:6px 0}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1600px; background: #F6F5F2">
+  <div style="flex: 1 1 248px; max-width: 100%; background: #1B1B1B">
+    <dc-import name="Sidebar" active="locations" hint-size="248px,1000px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 60px; padding: 0 32px; background: #FFFFFF; font-size: 14px">
+      <span class="muted">CMS</span><span class="muted" aria-hidden="true">/</span>
+      <a href="Locations.dc.html" class="muted" style="text-decoration: none">Locations</a><span class="muted" aria-hidden="true">/</span>
+      <span style="font-weight: 600">Schloss Seeblick</span>
+    </header>
+
+    <div style="background: #FFFFFF; border-bottom: 1px solid #E7E4DF; padding: 20px 32px 0; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+        <svg aria-hidden="true" width="72" height="52" viewBox="0 0 72 52" style="flex: none"><rect width="72" height="52" rx="8" fill="#8a7f6b"/></svg>
+        <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+            <h1 style="margin: 0; font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: -0.01em">Schloss Seeblick</h1>
+            <span class="pill pill-pink">Beliebte Location</span>
+            <span class="pill pill-green"><span class="dot"></span>Publiziert</span>
+          </div>
+          <span class="muted" style="font-size: 14px">Nr. 1042 · Seestrasse 12, 8706 Meilen ZH · zuletzt bearbeitet von Andrea Keller, heute 09:14</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <a class="btn" href="#">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            Vorschau
+          </a>
+          <a class="btn" href="#">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            Auf der Website
+          </a>
+          <button type="button" class="btn">Unpublizieren</button>
+          <button type="button" class="btn btn-icon" aria-label="Weitere Aktionen">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          </button>
+        </div>
+      </div>
+      <nav aria-label="Bereiche der Location" style="display: flex; flex-wrap: wrap; gap: 28px">
+        <a class="tab tab-on" href="#" aria-current="page">Übersicht</a>
+        <a class="tab" href="Photos.dc.html">Fotos <span class="pill pill-grey">18</span></a>
+        <a class="tab" href="#">Räume <span class="pill pill-grey">4</span></a>
+        <a class="tab" href="#">Dokumente <span class="pill pill-grey">2</span></a>
+        <a class="tab" href="#">Bewertungen <span class="pill pill-grey">12</span></a>
+      </nav>
+    </div>
+
+    <main style="padding: 24px 32px 48px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; box-sizing: border-box; width: 100%">
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+        <form class="card" aria-labelledby="s-basics" onSubmit="{{noSubmit}}">
+          <div class="card-h"><h2 id="s-basics">Stammdaten</h2></div>
+          <div class="card-b">
+            <div class="field wide"><label class="lbl" for="f-name">Name</label><input id="f-name" class="input" value="Schloss Seeblick"></div>
+            <div class="field wide">
+              <label class="lbl" for="f-slug">Adresse der Seite</label>
+              <div style="display: flex; align-items: center; border: 1px solid #D6D2CB; border-radius: 8px; overflow: hidden">
+                <span class="muted" style="padding: 0 10px; font-size: 14px; background: #F6F5F2; align-self: stretch; display: flex; align-items: center; border-right: 1px solid #D6D2CB">hochzeitslocation.ch/hochzeitslocation/</span>
+                <input id="f-slug" class="input" value="schloss-seeblick-meilen" style="border: 0; border-radius: 0">
+              </div>
+              <span class="help">Ändert sich der Name, leitet die alte Adresse mit 301 weiter.</span>
+            </div>
+            <div class="field"><label class="lbl" for="f-tier">Tier</label><select id="f-tier" class="input"><option selected>Beliebte Location</option><option>Empfehlung</option><option>Top Premium</option><option>Premium</option><option>Standard</option></select></div>
+            <div class="field"><label class="lbl" for="f-min">Gäste min.</label><input id="f-min" class="input" inputmode="numeric" value="40"></div>
+            <div class="field">
+              <label class="lbl" for="f-max">Gäste max.</label>
+              <input id="f-max" class="input input-err" inputmode="numeric" value="30" aria-invalid="true" aria-describedby="e-max">
+              <span id="e-max" class="err">Muss mindestens so gross sein wie «Gäste min.».</span>
+            </div>
+          </div>
+          <div class="card-f"><button type="submit" class="btn btn-primary">Speichern</button></div>
+        </form>
+
+        <form class="card" aria-labelledby="s-texts" onSubmit="{{noSubmit}}">
+          <div class="card-h">
+            <h2 id="s-texts">Texte</h2>
+            <div role="tablist" aria-label="Sprache" style="display: flex; gap: 4px; background: #F1EFEB; border-radius: 8px; padding: 3px">
+              <button type="button" role="tab" aria-selected="true" style="height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: #FFFFFF; font: 600 13px 'Sofia Sans', sans-serif; color: #1B1B1B">Deutsch</button>
+            </div>
+          </div>
+          <div class="card-b">
+            <div class="field wide">
+              <div style="display: flex; justify-content: space-between"><label class="lbl" for="f-summary">Kurztext (Karte)</label><span class="help">148 / 200</span></div>
+              <textarea id="f-summary" class="input" rows="3">Historisches Schloss direkt am Zürichsee mit eigenem Park, Bootssteg und drei Sälen für Trauung, Apéro und Fest bis 220 Gäste.</textarea>
+            </div>
+            <div class="field wide">
+              <label class="lbl" for="f-desc">Beschreibung</label>
+              <textarea id="f-desc" class="input" rows="6">[Beschreibung der Location, mehrere Absätze]</textarea>
+            </div>
+            <div class="field wide">
+              <div style="display: flex; justify-content: space-between"><label class="lbl" for="f-meta">Meta-Beschreibung</label><span class="help">131 / 160</span></div>
+              <input id="f-meta" class="input" value="Schloss Seeblick in Meilen: Hochzeit am Zürichsee mit Park, Bootssteg und drei Sälen für 40 bis 220 Gäste.">
+            </div>
+            <div class="field wide"><label class="lbl" for="f-parking">Parkieren</label><input id="f-parking" class="input" value="40 Parkplätze beim Schloss, weitere beim Bahnhof Meilen."></div>
+          </div>
+          <div class="card-f"><button type="submit" class="btn btn-primary">Speichern</button></div>
+        </form>
+
+        <form class="card" aria-labelledby="s-place" onSubmit="{{noSubmit}}">
+          <div class="card-h"><h2 id="s-place">Adresse &amp; Lage</h2></div>
+          <div class="card-b">
+            <div class="field wide"><label class="lbl" for="f-street">Strasse</label><input id="f-street" class="input" value="Seestrasse 12"></div>
+            <div class="field wide">
+              <label class="lbl" for="f-town">PLZ / Ort</label>
+              <input id="f-town" class="input" value="8706 Meilen (ZH)" role="combobox" aria-expanded="false" aria-autocomplete="list">
+            </div>
+            <div class="field"><label class="lbl" for="f-lat">Breite</label><input id="f-lat" class="input" value="47.2694"></div>
+            <div class="field"><label class="lbl" for="f-lng">Länge</label><input id="f-lng" class="input" value="8.6439"></div>
+            <div class="field" style="justify-content: flex-end"><button type="button" class="btn">Ortsmitte übernehmen</button></div>
+            <div class="field wide">
+              <span class="lbl">Distanzen</span>
+              <div style="display: grid; grid-template-columns: 110px 100px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 14px">
+                <span class="muted">Bahnhof</span><input class="input" aria-label="Distanz Bahnhof in km" value="0.8"><input class="input" aria-label="Name Bahnhof" value="Bahnhof Meilen">
+                <span class="muted">Autobahn</span><input class="input" aria-label="Distanz Autobahn in km" value="6.2"><input class="input" aria-label="Name Autobahn" value="Autobahn A3">
+                <span class="muted">Flughafen</span><input class="input" aria-label="Distanz Flughafen in km" value="24"><input class="input" aria-label="Name Flughafen" value="Flughafen Zürich">
+              </div>
+              <span class="help">in km; ohne Distanz zählt die Location nicht als «nahe».</span>
+            </div>
+          </div>
+          <div class="card-f"><button type="submit" class="btn btn-primary">Speichern</button></div>
+        </form>
+
+        <form class="card" aria-labelledby="s-terms" onSubmit="{{noSubmit}}">
+          <div class="card-h"><h2 id="s-terms">Merkmale</h2><span class="help">★ = Haupt-Lage bzw. Haupt-Gebäudeart</span></div>
+          <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 18px">
+            <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+              <legend class="lbl" style="padding: 0; margin-bottom: 8px">Lage</legend>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <button type="button" class="chip" aria-pressed="false">Am Fluss</button>
+                <button type="button" class="chip chip-on" aria-pressed="true">★ Am See</button>
+                <button type="button" class="chip chip-on" aria-pressed="true">Auf dem Land</button>
+                <button type="button" class="chip" aria-pressed="false">In den Bergen</button>
+                <button type="button" class="chip" aria-pressed="false">In der Stadt</button>
+              </div>
+            </fieldset>
+            <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+              <legend class="lbl" style="padding: 0; margin-bottom: 8px">Gebäudeart</legend>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <button type="button" class="chip chip-on" aria-pressed="true">★ Schloss</button>
+                <button type="button" class="chip chip-on" aria-pressed="true">Hochzeitslocation</button>
+                <button type="button" class="chip" aria-pressed="false">Eventlocation</button>
+                <button type="button" class="chip" aria-pressed="false">Restaurant</button>
+                <button type="button" class="chip" aria-pressed="false">Hotel, Seminarhotel</button>
+                <button type="button" class="chip" aria-pressed="false">Villa</button>
+                <button type="button" class="chip" aria-pressed="false" style="border-style: dashed">+ 33 weitere</button>
+              </div>
+            </fieldset>
+            <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+              <legend class="lbl" style="padding: 0; margin-bottom: 8px">Infrastruktur</legend>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <button type="button" class="chip chip-on" aria-pressed="true">WLAN / Internet</button>
+                <button type="button" class="chip" aria-pressed="false">Klimaanlage</button>
+                <button type="button" class="chip chip-on" aria-pressed="true">Bühne</button>
+                <button type="button" class="chip chip-on" aria-pressed="true">Garderobe</button>
+                <button type="button" class="chip" aria-pressed="false">Küche zur Nutzung</button>
+              </div>
+            </fieldset>
+            <span class="help">Geeignet für, Mobiliar, Technik und Umgebung folgen im gleichen Muster.</span>
+          </div>
+          <div class="card-f"><button type="submit" class="btn btn-primary">Speichern</button></div>
+        </form>
+
+        <form class="card" aria-labelledby="s-contact" onSubmit="{{noSubmit}}">
+          <div class="card-h"><h2 id="s-contact">Kontakt &amp; Häufige Fragen</h2></div>
+          <div class="card-b">
+            <div class="field"><label class="lbl" for="f-phone">Telefon</label><input id="f-phone" class="input" value="+41 44 000 00 00"></div>
+            <div class="field"><label class="lbl" for="f-mail">Anfrage-E-Mail</label><input id="f-mail" class="input" value="events@[location].ch"><span class="help">Hierhin gehen die Anfragen der Paare.</span></div>
+            <div class="field"><label class="lbl" for="f-web">Website</label><input id="f-web" class="input" value="https://[location].ch"></div>
+            <div class="field"><label class="lbl" for="f-person">Kontaktperson</label><input id="f-person" class="input" value="Laura Meier"></div>
+            <div class="field"><label class="lbl" for="f-catering">Eigenes Catering?</label><select id="f-catering" class="input"><option>Erlaubt</option><option selected>Fester Caterer</option><option>Keine Angabe</option></select></div>
+            <fieldset class="field" style="border: 0; margin: 0; padding: 0">
+              <legend class="lbl" style="padding: 0; margin-bottom: 6px">Tageslicht?</legend>
+              <div style="display: flex; gap: 16px; font-size: 14px; height: 38px; align-items: center">
+                <label><input type="radio" name="daylight" checked style="accent-color: #1B1B1B"> Ja</label>
+                <label><input type="radio" name="daylight" style="accent-color: #1B1B1B"> Nein</label>
+                <label><input type="radio" name="daylight" style="accent-color: #1B1B1B"> Keine Angabe</label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="card-f"><button type="submit" class="btn btn-primary">Speichern</button></div>
+        </form>
+      </div>
+
+      <aside class="side" aria-label="Seitenleiste" style="flex: 1 1 300px; max-width: 100%; display: flex; flex-direction: column; gap: 16px">
+        <section class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+          <h3>Bereit zum Publizieren</h3>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+            <li style="display: flex; gap: 8px; align-items: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17603D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Kurztext</li>
+            <li style="display: flex; gap: 8px; align-items: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17603D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Haupt-Gebäudeart</li>
+            <li style="display: flex; gap: 8px; align-items: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17603D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Mindestens ein Foto</li>
+            <li style="display: flex; gap: 8px; align-items: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#17603D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Ort</li>
+          </ul>
+        </section>
+
+        <section class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; justify-content: space-between; align-items: center"><h3>CRM</h3><a href="Company.dc.html" style="font-size: 13px; font-weight: 600">Firma öffnen</a></div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 8px; background: #EEECE8; color: #4A4945; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center">SE</span>
+            <span style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 14px">Seeblick Events GmbH</span><span class="muted" style="font-size: 13px">Kunde · seit 2024</span></span>
+          </div>
+          <div style="border-top: 1px solid #F0EDE8; padding-top: 10px">
+            <div class="kv"><span class="muted">Kontakt</span><span>Laura Meier</span></div>
+            <div class="kv"><span class="muted">Offener Deal</span><a href="Pipeline.dc.html">Verlängerung 2027</a></div>
+            <div class="kv"><span class="muted">Phase</span><span class="pill pill-amber">Verhandlung</span></div>
+            <div class="kv"><span class="muted">Wert</span><span style="font-weight: 600">CHF 4'800</span></div>
+          </div>
+        </section>
+
+        <section class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+          <h3>Verlauf</h3>
+          <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 18px">
+            <li><strong style="font-weight: 600">Andrea Keller</strong> hat Texte geändert<br><span class="muted">heute, 09:14</span></li>
+            <li><strong style="font-weight: 600">Andrea Keller</strong> hat 3 Fotos hochgeladen<br><span class="muted">gestern, 16:40</span></li>
+            <li><strong style="font-weight: 600">Import</strong> hat die Location aktualisiert<br><span class="muted">12.10.2026</span></li>
+          </ol>
+          <a href="#" style="font-size: 13px; font-weight: 600">Ganzer Verlauf</a>
+        </section>
+      </aside>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { noSubmit: (e) => e.preventDefault() };
+  }
+}
+</script>
+</body>
+</html>

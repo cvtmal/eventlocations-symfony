@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Anfragen – CRM</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F6F5F2;font-family:'Sofia Sans',system-ui,sans-serif;color:#1B1B1B}
+a{color:#B03A50}a:hover{color:#8A2C3E}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;box-sizing:border-box;border-radius:8px;border:1px solid #D6D2CB;background:#FFFFFF;color:#1B1B1B;font:600 14px/1 'Sofia Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#F1EFEB;color:#1B1B1B}
+.btn-primary{background:#1B1B1B;border-color:#1B1B1B;color:#FFFFFF}
+.btn-primary:hover{background:#3A3A3A;color:#FFFFFF}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font:600 12px/1 'Sofia Sans',sans-serif;white-space:nowrap}
+.pill-green{background:#E3F3EA;color:#17603D}
+.pill-blue{background:#E6EDFA;color:#1F4C99}
+.pill-grey{background:#EEECE8;color:#4A4945}
+.pill-pink{background:#FFE4E9;color:#9E2F44}
+.pill-red{background:#FBE3E1;color:#A3261D}
+.card{background:#FFFFFF;border:1px solid #E7E4DF;border-radius:12px}
+.muted{color:#66645F}
+.tab{display:inline-flex;align-items:center;gap:6px;height:40px;font-size:14px;font-weight:600;color:#66645F;text-decoration:none;border-bottom:2px solid transparent}
+.tab-on{color:#1B1B1B;border-bottom-color:#1B1B1B}
+.row{display:flex;gap:12px;width:100%;text-align:left;padding:14px 16px;border:0;border-bottom:1px solid #F0EDE8;background:#FFFFFF;font:inherit;color:inherit;cursor:pointer}
+.row:hover{background:#FAF9F7}
+.kv{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px 16px;font-size:14px;margin:0}
+.kv dt{color:#66645F}
+.kv dd{margin:0}
+.input{height:36px;box-sizing:border-box;border:1px solid #D6D2CB;border-radius:8px;padding:0 12px;font:400 14px 'Sofia Sans',sans-serif;color:#1B1B1B;background:#FFFFFF}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1000px; background: #F6F5F2">
+  <div style="flex: 1 1 248px; max-width: 100%; background: #1B1B1B">
+    <dc-import name="Sidebar" active="inbox" hint-size="248px,1000px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 60px; padding: 0 32px; background: #FFFFFF; border-bottom: 1px solid #E7E4DF; font-size: 14px">
+      <span class="muted">CRM</span><span class="muted" aria-hidden="true">/</span>
+      <span style="font-weight: 600">Anfragen</span>
+    </header>
+    <main style="padding: 24px 32px 40px; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box; width: 100%">
+      <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px">
+        <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.01em">Anfragen</h1>
+        <span class="muted" style="font-size: 15px">Die Paare schreiben direkt an die Location; hier ist die Kopie fürs CRM.</span>
+      </div>
+      <nav aria-label="Status" style="display: flex; flex-wrap: wrap; gap: 24px; border-bottom: 1px solid #E7E4DF">
+        <a class="tab tab-on" href="#" aria-current="page">Neu <span class="pill pill-pink">4</span></a>
+        <a class="tab" href="#">Gesehen <span class="pill pill-grey">11</span></a>
+        <a class="tab" href="#">Erledigt <span class="pill pill-grey">302</span></a>
+        <a class="tab" href="#">Alle</a>
+      </nav>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+        <section class="card" aria-label="Liste" style="flex: 1 1 340px; max-width: 100%; overflow: hidden">
+          <ul style="list-style: none; margin: 0; padding: 0">
+            <sc-for list="{{items}}" as="it" hint-placeholder-count="5">
+              <li>
+                <button type="button" class="row" style="{{it.bg}}" aria-current="{{it.current}}" onClick="{{it.pick}}">
+                  <span aria-hidden="true" style="{{it.dot}}"></span>
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                    <span style="display: flex; justify-content: space-between; gap: 8px"><strong style="font-weight: 600; font-size: 14px">{{it.name}}</strong><span class="muted" style="font-size: 12px">{{it.when}}</span></span>
+                    <span style="font-size: 14px">{{it.venue}}</span>
+                    <span class="muted" style="font-size: 13px">{{it.guests}} Gäste · {{it.date}}</span>
+                  </span>
+                </button>
+              </li>
+            </sc-for>
+          </ul>
+        </section>
+
+        <article class="card" aria-label="Anfrage" style="flex: 999 1 460px; min-width: 0; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <h2 style="margin: 0; font-size: 22px; line-height: 28px; font-weight: 700">{{cur.name}}</h2>
+              <span class="muted" style="font-size: 14px">Anfrage für <a href="LocationEdit.dc.html">{{cur.venue}}</a> · {{cur.when}}</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <a class="btn" href="Company.dc.html">Kontakt öffnen</a>
+              <button type="button" class="btn btn-primary">Als erledigt markieren</button>
+            </div>
+          </div>
+          <dl class="kv">
+            <dt>Anlass</dt><dd>Hochzeit</dd>
+            <dt>Anzahl Gäste</dt><dd>{{cur.guests}}</dd>
+            <dt>Wunschtermin</dt><dd>{{cur.date}}</dd>
+            <dt>E-Mail</dt><dd><a href="#">{{cur.email}}</a></dd>
+            <dt>Telefon</dt><dd>{{cur.phone}}</dd>
+          </dl>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 700">Nachricht</h3>
+            <p style="margin: 0; padding: 14px 16px; background: #F6F5F2; border-radius: 10px; font-size: 15px; line-height: 23px; white-space: pre-line">{{cur.message}}</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 700">Zustellung</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; align-items: center">
+              <span class="{{cur.venueMailClass}}">{{cur.venueMail}}</span>
+              <span class="pill pill-green">Bestätigung ans Paar zugestellt</span>
+            </div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-top: 1px solid #F0EDE8; padding-top: 16px; font-size: 14px">
+            <label for="st" class="muted">Status</label>
+            <select id="st" class="input"><option>Neu</option><option selected>Gesehen</option><option>Erledigt</option></select>
+            <span class="muted" style="font-size: 13px; flex: 1 1 200px">Wird nach 12 Monaten ohne Aktivität gelöscht (Datenschutz).</span>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { selected: 0 };
+  }
+  renderVals() {
+    const data = [
+      { name: 'Sina Huber', venue: 'Schloss Seeblick', when: 'vor 12 Min.', guests: 120, date: 'Sa, 12.06.2027', email: 'sina.huber@example.ch', phone: '+41 79 000 00 01', ok: true, message: 'Liebes Schloss Seeblick-Team\n\nwir möchten im Juni 2027 heiraten und suchen einen Ort für Trauung, Apéro und Fest mit etwa 120 Gästen. Ist der 12. Juni noch frei, und gibt es den Seesaal auch mit Tanzfläche?\n\nHerzliche Grüsse\nSina und Marco' },
+      { name: 'Jonas Frei', venue: 'Gutshof Lindenhalde', when: 'vor 2 Std.', guests: 80, date: 'Sa, 04.09.2027', email: 'jonas.frei@example.ch', phone: '+41 79 000 00 02', ok: true, message: 'Liebes Gutshof Lindenhalde-Team\n\nwir interessieren uns für eine Scheunenhochzeit im September 2027 mit 80 Gästen. Dürfen wir unseren eigenen Caterer mitbringen?\n\nViele Grüsse\nJonas' },
+      { name: 'Elena Rossi', venue: 'Alte Spinnerei', when: 'gestern', guests: 150, date: 'Fr, 21.05.2027', email: 'elena.rossi@example.ch', phone: '–', ok: false, message: 'Liebes Alte Spinnerei-Team\n\nfür unsere Hochzeit suchen wir eine Industriehalle für rund 150 Personen. Wie sieht es mit Parkplätzen aus?\n\nGrüsse\nElena' },
+      { name: 'Noah Steiner', venue: 'Berghaus Alpenrose', when: '28.10.2026', guests: 60, date: 'Sa, 18.09.2027', email: 'noah.steiner@example.ch', phone: '+41 79 000 00 04', ok: true, message: 'Liebes Berghaus Alpenrose-Team\n\nkleine Berghochzeit mit 60 Gästen, gerne mit Übernachtung. Habt ihr Zimmer?\n\nNoah' },
+    ];
+    const sel = this.state.selected;
+    const items = data.map((d, idx) => ({
+      ...d,
+      current: idx === sel ? 'true' : 'false',
+      bg: idx === sel ? 'background: #F6F5F2' : '',
+      dot: 'flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; background: ' + (idx < 2 ? '#FF5A75' : 'transparent'),
+      pick: () => this.setState({ selected: idx }),
+    }));
+    const c = data[sel];
+    return {
+      items,
+      cur: {
+        ...c,
+        venueMail: c.ok ? 'An die Location zugestellt' : 'Zustellung an die Location fehlgeschlagen',
+        venueMailClass: c.ok ? 'pill pill-green' : 'pill pill-red',
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

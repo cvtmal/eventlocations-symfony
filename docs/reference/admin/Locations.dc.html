@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Locations – Backoffice</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F6F5F2;font-family:'Sofia Sans',system-ui,sans-serif;color:#1B1B1B}
+a{color:#B03A50}a:hover{color:#8A2C3E}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;box-sizing:border-box;border-radius:8px;border:1px solid #D6D2CB;background:#FFFFFF;color:#1B1B1B;font:600 14px/1 'Sofia Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#F1EFEB;color:#1B1B1B}
+.btn-primary{background:#1B1B1B;border-color:#1B1B1B;color:#FFFFFF}
+.btn-primary:hover{background:#3A3A3A;color:#FFFFFF}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn-icon{width:36px;padding:0;justify-content:center}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font:600 12px/1 'Sofia Sans',sans-serif;white-space:nowrap}
+.pill-green{background:#E3F3EA;color:#17603D}
+.pill-amber{background:#FBEFD5;color:#7A4E00}
+.pill-blue{background:#E6EDFA;color:#1F4C99}
+.pill-grey{background:#EEECE8;color:#4A4945}
+.pill-pink{background:#FFE4E9;color:#9E2F44}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.card{background:#FFFFFF;border:1px solid #E7E4DF;border-radius:12px}
+.input{height:36px;box-sizing:border-box;border:1px solid #D6D2CB;border-radius:8px;padding:0 12px;font:400 14px 'Sofia Sans',sans-serif;color:#1B1B1B;background:#FFFFFF}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:20px}
+.tbl th{text-align:left;font-weight:600;font-size:12px;color:#66645F;padding:10px 16px;border-bottom:1px solid #E7E4DF;white-space:nowrap;background:#FBFAF8}
+.tbl td{padding:10px 16px;border-bottom:1px solid #F0EDE8;vertical-align:middle;white-space:nowrap}
+.tbl tbody tr:hover td{background:#FAF9F7}
+.tab{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 2px;font-size:14px;font-weight:600;color:#66645F;text-decoration:none;border-bottom:2px solid transparent}
+.tab-on{color:#1B1B1B;border-bottom-color:#1B1B1B}
+.muted{color:#66645F}
+.thumb{width:48px;height:34px;border-radius:6px;flex:none;display:block}
+.name{color:#1B1B1B;font-weight:600;text-decoration:none}
+.name:hover{color:#B03A50;text-decoration:underline}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1000px; background: #F6F5F2">
+  <div style="flex: 1 1 248px; max-width: 100%; background: #1B1B1B">
+    <dc-import name="Sidebar" active="locations" hint-size="248px,1000px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 60px; padding: 0 32px; background: #FFFFFF; border-bottom: 1px solid #E7E4DF; font-size: 14px">
+      <span class="muted">CMS</span>
+      <span class="muted" aria-hidden="true">/</span>
+      <span style="font-weight: 600; flex: 1">Locations</span>
+    </header>
+
+    <main style="padding: 28px 32px 40px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box; width: 100%">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.01em">Locations</h1>
+          <span class="muted" style="font-size: 15px">758</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <a class="btn" href="#">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            CSV
+          </a>
+          <a class="btn btn-primary" href="LocationEdit.dc.html">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Location erfassen
+          </a>
+        </div>
+      </div>
+
+      <nav aria-label="Status" style="display: flex; flex-wrap: wrap; gap: 24px; border-bottom: 1px solid #E7E4DF">
+        <a class="tab tab-on" href="#" aria-current="page">Alle <span class="pill pill-grey">758</span></a>
+        <a class="tab" href="#">Publiziert <span class="pill pill-grey">742</span></a>
+        <a class="tab" href="#">Unpubliziert <span class="pill pill-grey">16</span></a>
+        <a class="tab" href="#">Unvollständig <span class="pill pill-grey">31</span></a>
+      </nav>
+
+      <form style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px" onSubmit="{{noSubmit}}">
+        <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Suchen</label>
+        <div style="position: relative; flex: 1 1 260px; max-width: 360px">
+          <svg aria-hidden="true" style="position: absolute; left: 11px; top: 10px; color: #66645F" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="q" class="input" type="search" placeholder="Name, Nummer oder Ort" style="width: 100%; padding-left: 34px">
+        </div>
+        <label for="f-tier" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Tier</label>
+        <select id="f-tier" class="input"><option>Alle Tiers</option><option>Beliebte Location</option><option>Empfehlung</option><option>Top Premium</option><option>Premium</option><option>Standard</option></select>
+        <label for="f-canton" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Kanton</label>
+        <select id="f-canton" class="input"><option>Alle Kantone</option><option selected>Zürich</option><option>Bern</option></select>
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 12px; border-radius: 999px; background: #1B1B1B; color: #FFFFFF; font-size: 13px; font-weight: 600">
+          Kanton: Zürich
+          <button type="button" aria-label="Filter Kanton entfernen" style="width: 22px; height: 22px; border-radius: 50%; border: 0; background: #3A3A3A; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </span>
+        <a href="#" style="font-size: 13px; font-weight: 600; margin-left: 4px">Filter löschen</a>
+      </form>
+
+      <div class="card" style="overflow: hidden">
+        <div style="overflow-x: auto">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th scope="col" style="width: 40%"><a href="#" style="color: #1B1B1B; text-decoration: none">Location ↓</a></th>
+                <th scope="col">Tier</th>
+                <th scope="col">Gäste</th>
+                <th scope="col">Fotos</th>
+                <th scope="col">Status</th>
+                <th scope="col">Bearbeitet</th>
+                <th scope="col"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Aktionen</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+                <tr>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 12px">
+                      <svg class="thumb" aria-hidden="true" viewBox="0 0 48 34"><rect width="48" height="34" rx="6" fill="{{r.color}}"/></svg>
+                      <div style="display: flex; flex-direction: column; min-width: 0">
+                        <a class="name" href="LocationEdit.dc.html">{{r.name}}</a>
+                        <span class="muted" style="font-size: 13px">Nr. {{r.number}} · {{r.town}}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="{{r.tierClass}}">{{r.tier}}</span></td>
+                  <td>{{r.capacity}}</td>
+                  <td>{{r.photos}}</td>
+                  <td><span class="{{r.statusClass}}"><span class="dot"></span>{{r.status}}</span></td>
+                  <td class="muted">{{r.edited}}</td>
+                  <td style="text-align: right">
+                    <button type="button" class="btn btn-ghost btn-icon" aria-label="Aktionen für {{r.name}}">
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid #E7E4DF; font-size: 14px">
+          <span class="muted">1 – 50 von 214 Resultaten</span>
+          <nav aria-label="Seiten" style="display: flex; gap: 4px">
+            <a class="btn btn-icon" href="#" aria-current="page" style="background: #1B1B1B; color: #FFFFFF; border-color: #1B1B1B">1</a>
+            <a class="btn btn-icon" href="#">2</a>
+            <a class="btn btn-icon" href="#">3</a>
+            <a class="btn btn-icon" href="#">4</a>
+            <a class="btn btn-icon" href="#">5</a>
+            <a class="btn" href="#">Weiter</a>
+          </nav>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tiers = {
+      beliebte: ['Beliebte Location', 'pill pill-pink'],
+      empfehlung: ['Empfehlung', 'pill pill-amber'],
+      top: ['Top Premium', 'pill pill-blue'],
+      premium: ['Premium', 'pill pill-green'],
+      basic: ['Standard', 'pill pill-grey'],
+    };
+    const raw = [
+      ['Schloss Seeblick', '1042', 'Meilen', 'beliebte', '40 - 220', 18, true, 'heute, 09:14 · AK', '#8a7f6b'],
+      ['Alte Spinnerei', '874', 'Uster', 'empfehlung', '80 - 450', 24, true, 'gestern · AK', '#6b7a86'],
+      ['Seegarten Halbinsel Au', '1290', 'Wädenswil', 'top', '20 - 160', 12, true, '27.10.2026 · MS', '#5f7f73'],
+      ['Villa Sonnenhalde', '1011', 'Küsnacht', 'premium', '30 - 120', 9, true, '25.10.2026 · Import', '#a08a72'],
+      ['Zunfthaus zur Linde', '688', 'Zürich', 'premium', '50 - 300', 15, true, '24.10.2026 · Import', '#7a6a62'],
+      ['Waldhütte Eichholz', '1402', 'Bauma', 'basic', '20 - 70', 0, false, '22.10.2026 · AK', '#5d6b55'],
+      ['Gasthof Rössli', '933', 'Stäfa', 'basic', '30 - 140', 7, true, '19.10.2026 · Import', '#8c7a5e'],
+      ['Kulturhaus Weidli', '1355', 'Winterthur', 'basic', '60 - 250', 0, false, '18.10.2026 · Import', '#6e6e78'],
+    ];
+    return {
+      noSubmit: (e) => e.preventDefault(),
+      rows: raw.map(([name, number, town, tier, capacity, photos, published, edited, color]) => ({
+        name, number, town, capacity, photos, edited, color,
+        tier: tiers[tier][0],
+        tierClass: tiers[tier][1],
+        status: published ? 'Publiziert' : 'Unpubliziert',
+        statusClass: published ? 'pill pill-green' : 'pill pill-grey',
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

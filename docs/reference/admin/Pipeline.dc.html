@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Deals – CRM</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F6F5F2;font-family:'Sofia Sans',system-ui,sans-serif;color:#1B1B1B}
+a{color:#B03A50}a:hover{color:#8A2C3E}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;box-sizing:border-box;border-radius:8px;border:1px solid #D6D2CB;background:#FFFFFF;color:#1B1B1B;font:600 14px/1 'Sofia Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#F1EFEB;color:#1B1B1B}
+.btn-primary{background:#1B1B1B;border-color:#1B1B1B;color:#FFFFFF}
+.btn-primary:hover{background:#3A3A3A;color:#FFFFFF}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn-xs{height:26px;padding:0 8px;font-size:12px;border-radius:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font:600 12px/1 'Sofia Sans',sans-serif;white-space:nowrap}
+.pill-green{background:#E3F3EA;color:#17603D}
+.pill-amber{background:#FBEFD5;color:#7A4E00}
+.pill-blue{background:#E6EDFA;color:#1F4C99}
+.pill-grey{background:#EEECE8;color:#4A4945}
+.pill-pink{background:#FFE4E9;color:#9E2F44}
+.muted{color:#66645F}
+.input{height:36px;box-sizing:border-box;border:1px solid #D6D2CB;border-radius:8px;padding:0 12px;font:400 14px 'Sofia Sans',sans-serif;color:#1B1B1B;background:#FFFFFF}
+.seg{height:30px;padding:0 12px;border:0;border-radius:6px;background:transparent;font:600 13px 'Sofia Sans',sans-serif;color:#66645F;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.seg-on{background:#FFFFFF;color:#1B1B1B;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.col{flex:0 0 268px;display:flex;flex-direction:column;gap:10px;background:#EFEDE9;border-radius:12px;padding:12px}
+.deal{background:#FFFFFF;border:1px solid #E7E4DF;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:grab}
+.deal:hover{border-color:#B9B4AC}
+.av{flex:none;width:24px;height:24px;border-radius:50%;background:#1B1B1B;color:#FFFFFF;font:700 10px 'Sofia Sans',sans-serif;display:inline-flex;align-items:center;justify-content:center}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1000px; background: #F6F5F2">
+  <div style="flex: 1 1 248px; max-width: 100%; background: #1B1B1B">
+    <dc-import name="Sidebar" active="deals" hint-size="248px,1000px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 60px; padding: 0 32px; background: #FFFFFF; border-bottom: 1px solid #E7E4DF; font-size: 14px">
+      <span class="muted">CRM</span><span class="muted" aria-hidden="true">/</span>
+      <span style="font-weight: 600">Deals</span>
+    </header>
+    <main style="padding: 24px 32px 40px; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box; width: 100%; min-width: 0">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px">
+          <h1 style="margin: 0; font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.01em">Deals</h1>
+          <span class="muted" style="font-size: 15px">Offen: CHF {{openSum}} · {{openCount}} Deals</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+          <div style="display: flex; gap: 4px; background: #E9E6E1; border-radius: 8px; padding: 3px">
+            <a class="seg seg-on" href="#" aria-current="page">Board</a>
+            <a class="seg" href="#">Liste</a>
+          </div>
+          <label for="f-owner" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Zuständig</label>
+          <select id="f-owner" class="input"><option>Alle Zuständigen</option><option>Andrea Keller</option><option>Marco Sutter</option></select>
+          <label for="f-close" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Abschluss</label>
+          <select id="f-close" class="input"><option>Abschluss: alle</option><option>November 2026</option><option>Dezember 2026</option></select>
+          <a class="btn btn-primary" href="#">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Deal
+          </a>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto; padding-bottom: 8px">
+        <div style="display: flex; gap: 12px; align-items: flex-start; min-width: min-content">
+          <sc-for list="{{columns}}" as="c" hint-placeholder-count="6">
+            <section class="col" aria-label="{{c.name}}">
+              <div style="display: flex; flex-direction: column; gap: 2px; padding: 2px 4px 4px">
+                <div style="display: flex; align-items: center; justify-content: space-between">
+                  <h2 style="margin: 0; font-size: 14px; font-weight: 700">{{c.name}}</h2>
+                  <span class="pill pill-grey" style="background: #FFFFFF">{{c.count}}</span>
+                </div>
+                <span class="muted" style="font-size: 13px">CHF {{c.sum}}</span>
+              </div>
+              <sc-for list="{{c.deals}}" as="d" hint-placeholder-count="2">
+                <article class="deal">
+                  <div style="display: flex; justify-content: space-between; gap: 8px">
+                    <a href="Company.dc.html" style="color: #1B1B1B; font-weight: 600; font-size: 14px; line-height: 19px; text-decoration: none">{{d.name}}</a>
+                    <span class="av" aria-label="Zuständig: {{d.ownerName}}" role="img">{{d.owner}}</span>
+                  </div>
+                  <span class="muted" style="font-size: 13px">{{d.company}}</span>
+                  <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px">
+                    <span class="{{d.tierClass}}">{{d.tier}}</span>
+                    <span style="font-weight: 700; font-size: 14px">CHF {{d.amount}}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; border-top: 1px solid #F0EDE8; padding-top: 8px">
+                    <span class="muted" style="font-size: 12px">{{d.date}}</span>
+                    <sc-if value="{{d.canMove}}" hint-placeholder-val="{{ true }}">
+                      <button type="button" class="btn btn-ghost btn-xs" onClick="{{d.next}}" aria-label="{{d.nextLabel}}">Weiter →</button>
+                    </sc-if>
+                  </div>
+                </article>
+              </sc-for>
+            </section>
+          </sc-for>
+        </div>
+      </div>
+      <span class="muted" style="font-size: 13px">Karten ziehen oder «Weiter →» bzw. das Menü «Verschieben nach» benutzen. Bei «Gewonnen» fragt das CRM, ob der Tier auf die Location angewendet werden soll.</span>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      deals: [
+        { id: 1, name: 'Premium 2027', company: 'Gutshof Lindenhalde AG', tier: 'premium', amount: 2400, date: 'Abschluss 15.11.2026', owner: 'AK', stage: 0 },
+        { id: 2, name: 'Neukunde Empfehlung', company: 'Weingut am Rhein', tier: 'empfehlung', amount: 3200, date: 'Abschluss 30.11.2026', owner: 'MS', stage: 0 },
+        { id: 3, name: 'Top Premium Zürichsee', company: 'Seegarten Au GmbH', tier: 'top', amount: 3600, date: 'Abschluss 20.11.2026', owner: 'AK', stage: 1 },
+        { id: 4, name: 'Upgrade auf Empfehlung', company: 'Restaurant Rebberg', tier: 'empfehlung', amount: 3200, date: 'Abschluss 01.12.2026', owner: 'MS', stage: 2 },
+        { id: 5, name: 'Premium 2027', company: 'Berghaus Alpenrose', tier: 'premium', amount: 2400, date: 'Abschluss 10.12.2026', owner: 'AK', stage: 2 },
+        { id: 6, name: 'Verlängerung 2027', company: 'Seeblick Events GmbH', tier: 'beliebte', amount: 4800, date: 'Abschluss 15.12.2026', owner: 'AK', stage: 3 },
+        { id: 7, name: 'Verlängerung 2027', company: 'Seehotel Bellerive', tier: 'top', amount: 3600, date: 'Abschluss 30.11.2026', owner: 'MS', stage: 3 },
+        { id: 8, name: 'Premium 2026/27', company: 'Villa Sonnenhalde', tier: 'premium', amount: 2400, date: 'Gewonnen 21.10.2026', owner: 'AK', stage: 4 },
+        { id: 9, name: 'Empfehlung 2026', company: 'Gasthof Rössli', tier: 'empfehlung', amount: 3200, date: 'Verloren: Budget', owner: 'MS', stage: 5 },
+      ],
+    };
+  }
+  renderVals() {
+    const stages = ['Neu', 'Kontaktiert', 'Angebot', 'Verhandlung', 'Gewonnen', 'Verloren'];
+    const tiers = {
+      beliebte: ['Beliebte Location', 'pill pill-pink'],
+      empfehlung: ['Empfehlung', 'pill pill-amber'],
+      top: ['Top Premium', 'pill pill-blue'],
+      premium: ['Premium', 'pill pill-green'],
+    };
+    const owners = { AK: 'Andrea Keller', MS: 'Marco Sutter' };
+    const chf = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    const moveNext = (id) => this.setState({
+      deals: this.state.deals.map((d) => (d.id === id ? { ...d, stage: Math.min(d.stage + 1, 4) } : d)),
+    });
+    const columns = stages.map((name, idx) => {
+      const deals = this.state.deals.filter((d) => d.stage === idx).map((d) => ({
+        ...d,
+        amount: chf(d.amount),
+        tier: tiers[d.tier][0],
+        tierClass: tiers[d.tier][1],
+        ownerName: owners[d.owner],
+        canMove: d.stage < 4,
+        nextLabel: d.name + ' nach ' + stages[Math.min(d.stage + 1, 4)] + ' verschieben',
+        next: () => moveNext(d.id),
+      }));
+      const sum = this.state.deals.filter((d) => d.stage === idx).reduce((s, d) => s + d.amount, 0);
+      return { name, deals, count: deals.length, sum: chf(sum) };
+    });
+    const open = this.state.deals.filter((d) => d.stage < 4);
+    return {
+      columns,
+      openCount: open.length,
+      openSum: chf(open.reduce((s, d) => s + d.amount, 0)),
+    };
+  }
+}
+</script>
+</body>
+</html>
