@@ -11,7 +11,9 @@ use Doctrine\DBAL\Connection;
  *
  * Digits search ZIPs by prefix (exact match first). Text lists matching cantons first
  * (by German slug), then towns ranked name prefix → word prefix → trigram similarity, each
- * by population. Folding goes through the SQL functions geo_fold / geo_fold_de /
+ * by population. For a folded query of one or two characters, towns with more ZIPs (capped
+ * at 3) come first inside a rank, so "a" finds Aarau and "ba" Basel before small places.
+ * Folding goes through the SQL functions geo_fold / geo_fold_de /
  * geo_search_key, so "zuer", "Zuerich", "Zurich" and "zürich" all find Zürich.
  */
 final class PlaceLookup
@@ -31,6 +33,8 @@ final class PlaceLookup
     {
         $q = mb_substr(trim($q), 0, self::MAX_INPUT);
         // A fold without letters or digits is empty, and LIKE '' || '%' would match everything.
+        // This raw guard catches punctuation; the SQL also guards the folded value, since
+        // letters outside the fold's alphabet (日本, Ελλάδα) pass here but fold to ''.
         if (1 !== preg_match('/[\p{L}\p{N}]/u', $q)) {
             return [];
         }
@@ -78,9 +82,10 @@ final class PlaceLookup
                 WITH q AS (SELECT geo_fold_de(:q) AS de, geo_fold(:q) AS plain)
                 SELECT c.code
                 FROM cantons c, q
-                WHERE replace(c.slug, '-', ' ') LIKE q.de || '%'
-                   OR replace(c.slug, '-', ' ') LIKE q.plain || '%'
-                   OR q.de <% replace(c.slug, '-', ' ')
+                WHERE q.de <> ''
+                  AND (replace(c.slug, '-', ' ') LIKE q.de || '%'
+                    OR replace(c.slug, '-', ' ') LIKE q.plain || '%'
+                    OR q.de <% replace(c.slug, '-', ' '))
                 ORDER BY c.bfs_number
                 LIMIT :limit
                 SQL,
@@ -109,19 +114,22 @@ final class PlaceLookup
                 SELECT id, name, canton_code, zip
                 FROM (
                     SELECT t.id, t.name, t.canton_code, t.zip, t.population,
+                        (SELECT count(*) FROM town_zips z WHERE z.town_id = t.id) AS zip_count,
+                        char_length(q.de) AS qlen,
                         CASE
                             WHEN geo_fold_de(t.name) LIKE q.de || '%' OR geo_fold(t.name) LIKE q.plain || '%' THEN 0
                             WHEN geo_search_key(t.name) LIKE '% ' || q.de || '%' OR geo_search_key(t.name) LIKE '% ' || q.plain || '%' THEN 1
                             ELSE 2
                         END AS rank
                     FROM towns t, q
-                    WHERE geo_fold_de(t.name) LIKE q.de || '%'
-                       OR geo_fold(t.name) LIKE q.plain || '%'
-                       OR geo_search_key(t.name) LIKE '% ' || q.de || '%'
-                       OR geo_search_key(t.name) LIKE '% ' || q.plain || '%'
-                       OR q.de <% geo_search_key(t.name)
+                    WHERE q.de <> ''
+                      AND (geo_fold_de(t.name) LIKE q.de || '%'
+                        OR geo_fold(t.name) LIKE q.plain || '%'
+                        OR geo_search_key(t.name) LIKE '% ' || q.de || '%'
+                        OR geo_search_key(t.name) LIKE '% ' || q.plain || '%'
+                        OR q.de <% geo_search_key(t.name))
                 ) matches
-                ORDER BY rank, population DESC, name
+                ORDER BY rank, CASE WHEN qlen <= 2 THEN least(zip_count, 3) END DESC NULLS LAST, population DESC, name
                 LIMIT :limit
                 SQL,
             ['q' => $q, 'limit' => $limit],

@@ -19,7 +19,7 @@ final class PlaceLookupTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        // Not wired anywhere yet (#6 adds the endpoint), so the container has removed the service.
+        // Built by hand like every read-model test: the class's own SQL is under test, not its wiring.
         $connection = self::getContainer()->get(Connection::class);
         self::assertInstanceOf(Connection::class, $connection);
         $this->lookup = new PlaceLookup($connection);
@@ -125,6 +125,31 @@ final class PlaceLookupTest extends KernelTestCase
         yield 'empty' => [''];
         yield 'blank' => ['   '];
         yield 'punctuation' => ['--'];
+    }
+
+    #[DataProvider('unfoldableInputs')]
+    public function test_non_latin_input_that_folds_to_nothing_suggests_nothing(string $q): void
+    {
+        self::assertSame([], $this->lookup->suggest($q));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unfoldableInputs(): iterable
+    {
+        yield 'Japanese' => ['日本'];
+        yield 'Greek' => ['Ελλάδα'];
+    }
+
+    public function test_single_letter_prefers_the_main_town(): void
+    {
+        self::assertSame('Aarau', $this->firstTown('a')->name);
+    }
+
+    public function test_two_letters_prefer_the_main_town(): void
+    {
+        self::assertSame('Basel', $this->firstTown('ba')->name);
     }
 
     public function test_canton_suggestion_carries_only_its_code(): void

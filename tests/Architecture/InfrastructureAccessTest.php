@@ -17,7 +17,7 @@ final class InfrastructureAccessTest extends ArchitectureRules
             ->classes(self::layer('Controller'))
             ->shouldNot()->dependOn()
             ->classes(Selector::classname(EntityManagerInterface::class))
-            ->because('Writes go through command handlers; reads go through repositories.');
+            ->because('Writes go through command handlers; reads go through the module\'s ReadModel.');
     }
 
     public function test_console_commands_do_not_use_the_entity_manager(): Rule
@@ -26,7 +26,7 @@ final class InfrastructureAccessTest extends ArchitectureRules
             ->classes(self::layer('Console'))
             ->shouldNot()->dependOn()
             ->classes(Selector::classname(EntityManagerInterface::class))
-            ->because('Writes go through command handlers; reads go through repositories.');
+            ->because('Writes go through command handlers; reads go through the module\'s ReadModel.');
     }
 
     public function test_read_models_do_not_use_entities_or_the_entity_manager(): Rule
@@ -34,8 +34,8 @@ final class InfrastructureAccessTest extends ArchitectureRules
         return PHPat::rule()
             ->classes(self::layer('ReadModel'))
             ->shouldNot()->dependOn()
-            ->classes(self::layer('Entity'), Selector::classname(EntityManagerInterface::class))
-            ->because('Public pages read through hand-written SQL into view objects and never hydrate entities (S2).');
+            ->classes(self::layer('Entity'), self::layer('Repository'), Selector::classname(EntityManagerInterface::class))
+            ->because('Public pages read through hand-written SQL into view objects and never hydrate entities or use repositories (S2).');
     }
 
     public function test_modules_do_not_depend_on_test_code(): Rule

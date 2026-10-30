@@ -28,6 +28,9 @@ use Doctrine\ORM\Mapping as ORM;
  *   and are read back as floats.
  * - The slug and all venue-authored text live in VenueTranslation; the name is a proper
  *   noun and stays here.
+ * - The search indexes idx_venues_earth (GiST on ll_to_earth(lat, lng)) and
+ *   idx_venues_search_key (GIN trigram on geo_search_key(name)) are expression indexes that
+ *   exist in the database only and are deliberately not mapped here (as on Town).
  */
 #[ORM\Entity(repositoryClass: VenueRepository::class)]
 #[ORM\Table(name: 'venues')]
