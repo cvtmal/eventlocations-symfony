@@ -1406,7 +1406,7 @@ IDs are referenced by the overview and the cycles.
 - **`Region`:** 223 venues name a canton, and `Rümlang` is a town in ZH (224). `Basel`, `Appenzell`, `Romandie` and `Schweizweit` (19) get no canton; research decides how their text is kept for display. `Liechtenstein` (4) is skipped (Q13), so 243 venues go live.
 - **Every read path must handle a missing town, canton and coordinates:** cards, the detail page, similar venues, listing filters, radius SQL, sitemap and JSON-LD. Run this cycle after #10 and #14 land, because it touches the same files.
 - **Output:** the base folders for #9 (name, canton, capacity, contact, text). #32 overlays facts and photos.
-- **Later cycles:** the Ort/PLZ tab and radius (#10), `access`, rooms, area and height (#12), the map (#15), town landing pages (#17) and the address in JSON-LD (#16) have no data until staff enter addresses (#24, optional fields). Default: hide a control that has no data rather than offer a search that returns 0; the code stays.
+- **Later cycles:** the Ort/PLZ tab and radius (#10), `access`, rooms, area and height (#12), the map (#15), town landing pages (#17) and the address in JSON-LD (#16) have no data until staff enter addresses (#24, optional fields). **Owner decision (2026-10-30):** the Ort/PLZ tab is hidden until venues have towns, and filters without data (`access`, rooms, area, height and the like) are hidden rather than offering a search that always returns 0. The code stays and returns when the data exists. #21 does this for #10's tab; #12 builds its filters the same way.
 - **Defaults:** `tier` is `basic` for every venue (Q14). Contact person and Instagram stay empty.
 
 - **Q4 answered:** copy the content from the Laravel project. It becomes the production content (S8).
