@@ -1,0 +1,17 @@
+# Activate once per clone: brew install pre-commit && pre-commit install
+# Both hooks run inside the php container, so the stack must be up (make up).
+repos:
+  - repo: local
+    hooks:
+      - id: php-cs-fixer
+        name: php-cs-fixer
+        entry: make cs-fix
+        language: system
+        pass_filenames: false
+        files: \.php$
+      - id: phpstan
+        name: phpstan
+        entry: make phpstan
+        language: system
+        pass_filenames: false
+        files: \.php$

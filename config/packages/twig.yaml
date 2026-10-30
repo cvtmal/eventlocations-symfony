@@ -1,0 +1,9 @@
+twig:
+    file_name_pattern: '*.twig'
+    # Display only: storage and PHP stay UTC.
+    date:
+        timezone: Europe/Zurich
+
+when@test:
+    twig:
+        strict_variables: true

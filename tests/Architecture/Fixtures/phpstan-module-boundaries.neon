@@ -1,0 +1,13 @@
+includes:
+    - ../../../vendor/phpat/phpat/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - ModuleBoundaries
+    tmpDir: ../../../var/cache/phpstan-module-boundaries
+
+services:
+    -
+        class: App\Tests\Architecture\ModuleBoundariesTest
+        tags: [phpat.test]
