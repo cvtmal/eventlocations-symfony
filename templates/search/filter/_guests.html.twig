@@ -1,19 +1,29 @@
 {#
-    Filter-bar slot "Anzahl Gäste". Created by #7 as a placeholder; #11 replaces this file's contents and never edits
-    _filter_bar. Included twice with `with_context = false`: criteria (SearchCriteria), part: chips|trigger.
-    Renders <li class="filter-bar__item">s: one chip per active value (part chips), or the trigger plus its overlay (part trigger).
+    Filter-bar slot "Anzahl Gäste" (#11, FI-3). Included twice with `with_context = false`: criteria (SearchCriteria),
+    part: chips|trigger. Renders <li class="filter-bar__item">s: one chip per active value (part chips), or the trigger
+    plus its overlay (part trigger). The forms live in search/filter/_guests_form.html.twig; the footer's submit button
+    joins the number input's form by its `form` attribute, and "Filter löschen" is js/overlay-form.js's clear link.
 #}
 {%- if part == 'chips' -%}
     {%- if criteria.guests is not null -%}
-        {%- set label = 'chip.guests'|trans({guests: criteria.guests|swiss_number}, 'search') -%}
+        {%- set label = 'chip.guests'|trans({count: criteria.guests, guests: criteria.guests|swiss_number}, 'search') -%}
         <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, 'guests'), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
     {%- endif -%}
 {%- elseif part == 'trigger' -%}
     <li class="filter-bar__item">
         {{- include('components/_button.html.twig', {label: 'filter.guests'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-guests'}}, with_context = false) -}}
-        {% embed 'components/_overlay.html.twig' with {id: 'filter-guests', tone: 'guests', title: 'filter.guests'|trans({}, 'search'), criteria: criteria} only %}
-            {% block overlay_body %}{% endblock %}
-            {% block overlay_footer %}{{ include('components/_button.html.twig', {href: listing_path_without(criteria, ['guests']), label: 'filter.reset'|trans({}, 'search'), variant: 'black'}, with_context = false) }}{% endblock %}
+        {% embed 'components/_overlay.html.twig' with {id: 'filter-guests', tone: 'guests', title: 'filter.guests_title'|trans({}, 'search'), criteria: criteria} only %}
+            {% block overlay_body %}{{ include('search/filter/_guests_form.html.twig', {criteria: criteria}, with_context = false) }}{% endblock %}
+            {% block overlay_footer %}
+                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'black', type: 'submit', attributes: {
+                    form: 'filter-guests-form',
+                    'data-live-count-label': '',
+                    'data-count-zero': 'filter.show_results'|trans({count: 0, formatted: '0'}, 'search'),
+                    'data-count-one': 'filter.show_results'|trans({count: 1, formatted: '1'}, 'search'),
+                    'data-count-other': 'filter.show_results'|trans({count: 2, formatted: '%n'}, 'search'),
+                }}, with_context = false) -}}
+                <a class="overlay__clear" href="{{ listing_path_without(criteria, ['guests']) }}" data-overlay-clear>{{ 'filter.reset'|trans({}, 'search') }}</a>
+            {%- endblock %}
         {% endembed %}
     </li>
 {%- endif -%}

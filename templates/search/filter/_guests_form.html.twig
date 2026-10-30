@@ -1,0 +1,22 @@
+{#
+    The guests overlay's two GET forms (#11, FI-3). Include with `with_context = false`: criteria (SearchCriteria).
+    #filter-guests-form holds the number input; its submit button sits in the overlay footer and joins through
+    form="filter-guests-form". The bubbles are submit buttons in a second, sibling form: inside the first one a bubble
+    would be the form's default button, so Enter in the input would submit 20 instead of the typed number. Each form
+    carries the other filters, so without JS a bubble applies its number at once. With JS (js/guests-filter.js) a bubble
+    fills the input instead, and aria-pressed follows the input's value.
+#}
+{%- set picks = [20, 30, 50, 80, 100, 150, 200, 350, 500] -%}
+<form id="filter-guests-form" class="guests-filter" method="get" action="{{ path('listing') }}" autocomplete="off" data-live-count data-live-count-url="{{ path('_search_count') }}" data-overlay-form>
+    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: ['guests']}, with_context = false) -}}
+    <div class="text-input guests-filter__field">
+        <label class="text-input__label visually-hidden" for="filter-guests-input">{{ 'filter.guests'|trans({}, 'search') }}</label>
+        <input class="text-input__field guests-filter__input" id="filter-guests-input" name="guests" type="number" min="1" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_GUESTS') }}" step="1" inputmode="numeric" autocomplete="off" placeholder="{{ 'filter.guests'|trans({}, 'search') }}" value="{{ criteria.guests }}">
+    </div>
+</form>
+<form class="guests-bubbles" method="get" action="{{ path('listing') }}" aria-label="{{ 'filter.guests_picks'|trans({}, 'search') }}" data-guests-bubbles>
+    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: ['guests']}, with_context = false) -}}
+    {%- for n in picks %}
+    <button type="submit" class="guests-bubble guests-bubble--{{ n }}" name="guests" value="{{ n }}" aria-pressed="{{ criteria.guests == n ? 'true' : 'false' }}">{{ n }}</button>
+    {%- endfor %}
+</form>

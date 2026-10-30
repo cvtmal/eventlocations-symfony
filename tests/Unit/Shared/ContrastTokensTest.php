@@ -25,6 +25,7 @@ final class ContrastTokensTest extends TestCase
             ['muted', 'surface-2'], ['ink', 'black'], ['ink-inverse', 'tooltip-bg'],
             ['ink', 'dropdown'],
             ['muted', 'surface'], ['accent-soft', 'surface'],
+            ['ink-inverse', 'ink'], ['ink-inverse', 'accent-soft'],
         ];
         foreach ($text as [$fg, $bg]) {
             yield "text {$fg} on {$bg}" => [$fg, $bg, 4.5];
