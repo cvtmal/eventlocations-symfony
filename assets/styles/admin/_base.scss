@@ -1,0 +1,87 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--a-bg);
+    color: var(--a-ink);
+    font-family: var(--a-font);
+    font-size: 14px;
+    line-height: 20px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 34px;
+    font-weight: 700;
+}
+
+h2 {
+    margin: 0;
+    font-size: 17px;
+    line-height: 24px;
+    font-weight: 700;
+}
+
+p {
+    margin: 0;
+}
+
+a {
+    color: var(--a-link);
+
+    &:hover {
+        color: var(--a-link-hover);
+    }
+}
+
+// ADM-7: never remove it. Dark surfaces switch the colour, see _sidebar and _toast.
+:focus-visible {
+    outline: 2px solid var(--a-ink);
+    outline-offset: 2px;
+}
+
+.icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.muted {
+    color: var(--a-muted);
+}
+
+.skip-link {
+    position: absolute;
+    top: var(--a-space-2);
+    left: var(--a-space-2);
+    z-index: 20;
+    padding: var(--a-space-2) var(--a-space-3);
+    border-radius: var(--a-r-md);
+    background: var(--a-surface);
+    color: var(--a-ink);
+    font-weight: 600;
+    transform: translateY(-200%);
+
+    &:focus {
+        transform: none;
+    }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}

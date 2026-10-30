@@ -1,0 +1,62 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'users.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section.settings'|trans({}, 'admin') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'users.title'|trans({}, 'admin') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>{{ 'users.title'|trans({}, 'admin') }}</h1>
+        <div class="page-header__actions">
+            <a class="btn btn--primary" href="{{ path('admin_users_new') }}">{{ admin_icon('plus') }}{{ 'users.new'|trans({}, 'admin') }}</a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    <div class="card table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'users.table.name'|trans({}, 'admin') }}</th>
+                    <th scope="col">{{ 'users.table.email'|trans({}, 'admin') }}</th>
+                    <th scope="col">{{ 'users.table.role'|trans({}, 'admin') }}</th>
+                    <th scope="col">{{ 'users.table.totp'|trans({}, 'admin') }}</th>
+                    <th scope="col">{{ 'users.table.status'|trans({}, 'admin') }}</th>
+                    <th scope="col">{{ 'users.table.last_login'|trans({}, 'admin') }}</th>
+                    <th scope="col">{{ 'users.table.actions'|trans({}, 'admin') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.displayName }}</td>
+                        <td>{{ user.email }}</td>
+                        <td><span class="pill pill--{{ user.role.value == 'admin' ? 'dark' : 'grey' }}">{{ user.role.label|trans }}</span></td>
+                        <td>
+                            {% if user.totpEnrolled %}
+                                <span class="pill pill--green">{{ 'users.totp.enrolled'|trans({}, 'admin') }}</span>
+                            {% else %}
+                                <span class="pill pill--amber">{{ 'users.totp.pending'|trans({}, 'admin') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.active %}
+                                <span class="pill pill--green">{{ 'users.status.active'|trans({}, 'admin') }}</span>
+                            {% else %}
+                                <span class="pill pill--grey">{{ 'users.status.inactive'|trans({}, 'admin') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.lastLoginAt ? user.lastLoginAt|swiss_date : 'users.last_login_never'|trans({}, 'admin') }}</td>
+                        <td><a href="{{ path('admin_users_edit', {id: user.id}) }}" aria-label="{{ 'users.edit_label'|trans({name: user.displayName}, 'admin') }}">{{ 'users.edit_link'|trans({}, 'admin') }}</a></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7">{{ 'users.empty'|trans({}, 'admin') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

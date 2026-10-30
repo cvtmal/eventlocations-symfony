@@ -1,0 +1,7 @@
+{
+  "_vendor-abc.js": { "file": "assets/vendor-abc.js", "name": "vendor" },
+  "_shared-def.js": { "file": "assets/shared-def.js", "name": "shared", "imports": ["_vendor-abc.js"] },
+  "src/main.js": { "file": "assets/main-123.js", "name": "main", "src": "src/main.js", "isEntry": true, "imports": ["_vendor-abc.js"], "dynamicImports": ["src/islands/HelloIsland.vue", "src/islands/PhotoManagerIsland.vue"] },
+  "src/islands/HelloIsland.vue": { "file": "assets/HelloIsland-456.js", "src": "src/islands/HelloIsland.vue", "isDynamicEntry": true, "imports": ["src/main.js", "_shared-def.js"] },
+  "src/islands/PhotoManagerIsland.vue": { "file": "assets/PhotoManagerIsland-789.js", "src": "src/islands/PhotoManagerIsland.vue", "isDynamicEntry": true, "imports": ["src/main.js"] }
+}

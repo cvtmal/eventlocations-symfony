@@ -1,0 +1,70 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ user.displayName }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('admin_users') }}">{{ 'users.title'|trans({}, 'admin') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ user.displayName }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ user.displayName }}</h1>
+            <p class="muted">{{ user.email }}</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    <section class="card" aria-labelledby="section-role">
+        <div class="card__head"><h2 id="section-role">{{ 'users.section.role'|trans({}, 'admin') }}</h2></div>
+        <div class="card__body">
+            {{ form_start(role_form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+                {% for error in role_form.vars.errors %}
+                    <p class="form-error" role="alert">{{ error.message }}</p>
+                {% endfor %}
+                {{ include('admin/form/_field.html.twig', {field: role_form.role}) }}
+                <div><button class="btn btn--primary" type="submit">{{ 'users.form.save'|trans({}, 'admin') }}</button></div>
+            {{ form_end(role_form) }}
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="section-password">
+        <div class="card__head"><h2 id="section-password">{{ 'users.section.password'|trans({}, 'admin') }}</h2></div>
+        <div class="card__body">
+            {{ form_start(password_form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+                {{ include('admin/form/_field.html.twig', {field: password_form.plainPassword.first, help: 'users.form.password_help'|trans({}, 'admin')}) }}
+                {{ include('admin/form/_field.html.twig', {field: password_form.plainPassword.second}) }}
+                <div><button class="btn btn--primary" type="submit">{{ 'users.form.save'|trans({}, 'admin') }}</button></div>
+            {{ form_end(password_form) }}
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="section-access">
+        <div class="card__head"><h2 id="section-access">{{ 'users.section.access'|trans({}, 'admin') }}</h2></div>
+        <div class="card__body user-actions">
+            {% if user.active %}
+                <div class="user-action">
+                    <p class="user-action__hint">{{ 'users.action.deactivate_hint'|trans({}, 'admin') }}</p>
+                    {{ form_start(deactivate_form) }}
+                        <button class="btn btn--danger" type="submit">{{ 'users.action.deactivate'|trans({}, 'admin') }}</button>
+                    {{ form_end(deactivate_form) }}
+                </div>
+            {% else %}
+                <div class="user-action">
+                    <p class="user-action__hint">{{ 'users.action.reactivate_hint'|trans({}, 'admin') }}</p>
+                    {{ form_start(reactivate_form) }}
+                        <button class="btn" type="submit">{{ 'users.action.reactivate'|trans({}, 'admin') }}</button>
+                    {{ form_end(reactivate_form) }}
+                </div>
+            {% endif %}
+            <div class="user-action">
+                <p class="user-action__hint">{{ 'users.action.reset_totp_hint'|trans({}, 'admin') }}</p>
+                {{ form_start(reset_totp_form) }}
+                    <button class="btn btn--danger" type="submit">{{ 'users.action.reset_totp'|trans({}, 'admin') }}</button>
+                {{ form_end(reset_totp_form) }}
+            </div>
+        </div>
+    </section>
+{% endblock %}

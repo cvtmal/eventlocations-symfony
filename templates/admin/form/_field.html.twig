@@ -1,0 +1,14 @@
+{# One form row with its error linked to the input (ADM-7). Variables: field, help (optional, translated). #}
+{% set help_id = field.vars.id ~ '_help' %}
+{% set error_id = field.vars.id ~ '_error' %}
+{% set described_by = [help is defined ? help_id : null, field.vars.valid ? null : error_id]|filter(id => id is not null) %}
+<div class="field">
+    {{ form_label(field) }}
+    {{ form_widget(field, {attr: (described_by ? {'aria-describedby': described_by|join(' ')} : {})|merge(field.vars.valid ? {} : {'aria-invalid': 'true'})}) }}
+    {% if help is defined %}
+        <span class="field__help" id="{{ help_id }}">{{ help }}</span>
+    {% endif %}
+    {% if not field.vars.valid %}
+        <span class="field__error" id="{{ error_id }}">{{ field.vars.errors|map(error => error.message)|join(' ') }}</span>
+    {% endif %}
+</div>

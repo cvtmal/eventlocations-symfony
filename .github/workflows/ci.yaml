@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: make vendor
 
+      - name: Install admin UI dependencies
+        run: make admin-install
+
       - name: Lint (coding standards, PHPStan + architecture rules)
         run: make lint
 

@@ -3,7 +3,18 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # Only the back office ever starts one (S10, S12): the cookie is scoped to /admin, so public
+    # URLs never see it. 7200 s matches the 2-hour idle timeout (Admin\EventListener\IdleTimeoutListener);
+    # PHP's default of 1440 s would end sessions after 24 idle minutes.
+    session:
+        handler_id: session.handler.native_file
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+        cookie_path: /admin
+        cookie_samesite: strict
+        cookie_secure: auto
+        cookie_httponly: true
+        cookie_lifetime: 0
+        gc_maxlifetime: 7200
 
     #esi: true
     #fragments: true

@@ -1,0 +1,7 @@
+# Replaces the route Symfony generates for `logout.path`, which allows any method. The logout listener looks
+# at the path only and the router runs first, so this is what keeps a GET from logging anyone out.
+_logout_admin:
+    path: /admin/logout
+    methods: [POST]
+    options:
+        unlocalized: true

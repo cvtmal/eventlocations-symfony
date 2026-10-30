@@ -1,0 +1,19 @@
+// Back-office stylesheet (#22, S12). Never loaded with app.css. Hotspot: append one @use per partial.
+@use 'admin/tokens';
+@use 'admin/fonts';
+@use 'admin/base';
+@use 'admin/layout';
+@use 'admin/sidebar';
+@use 'admin/topbar';
+@use 'admin/page-header';
+@use 'admin/button';
+@use 'admin/card';
+@use 'admin/table';
+@use 'admin/field';
+@use 'admin/pill';
+@use 'admin/dashboard';
+@use 'admin/toast';
+@use 'admin/login';
+@use 'admin/users';
+@use 'admin/audit';
+@use 'admin/styleguide';

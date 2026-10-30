@@ -1,0 +1,36 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'dashboard.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item" aria-current="page">{{ 'dashboard.title'|trans({}, 'admin') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1 class="dashboard__greeting">{{ 'dashboard.greeting'|trans({name: first_name}, 'admin') }}</h1>
+            <p class="dashboard__date">{{ 'dashboard.date'|trans({date: today}, 'admin') }}</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% set widgets = admin_dashboard_widgets() %}
+    {% if widgets is empty %}
+        <div class="card empty">
+            {{ admin_icon('inbox') }}
+            <strong class="empty__title">{{ 'dashboard.empty.title'|trans({}, 'admin') }}</strong>
+            <span class="empty__text">{{ 'dashboard.empty.text'|trans({}, 'admin') }}</span>
+        </div>
+    {% else %}
+        <div class="dashboard__widgets">
+            {% for widget in widgets %}
+                <section class="card widget widget--{{ widget.size.value }}" aria-labelledby="widget-{{ loop.index }}">
+                    <div class="card__head"><h2 id="widget-{{ loop.index }}">{{ widget.title|trans }}</h2></div>
+                    {{ include(widget.template, widget.context) }}
+                </section>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

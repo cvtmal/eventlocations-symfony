@@ -1,0 +1,11 @@
+nav:
+    first: Fake Erster
+    second: Fake Zweiter
+    admin_only: Fake Nur Admin
+widget:
+    title: Fake Widget
+    body: 'Inhalt {count}'
+tab:
+    label: Fake Tab
+panel:
+    body: 'Panel {id}'

@@ -1,0 +1,23 @@
+{% extends 'admin/security/_layout.html.twig' %}
+
+{% block title %}{{ 'totp.enrol.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block form %}
+    <div class="auth__form">
+        {{ form_start(form, {attr: {class: 'auth__form', novalidate: 'novalidate'}}) }}
+            <h1>{{ 'totp.enrol.title'|trans({}, 'admin') }}</h1>
+            <p class="auth__intro">{{ 'totp.enrol.intro'|trans({}, 'admin') }}</p>
+            <div class="auth__qr" role="img" aria-label="{{ 'totp.enrol.qr_label'|trans({}, 'admin') }}">{{ qr_code }}</div>
+            <p class="auth__key">
+                {{ 'totp.enrol.key_label'|trans({}, 'admin') }}
+                <code class="auth__key-value">{{ secret_groups }}</code>
+            </p>
+            {{ include('admin/form/_field.html.twig', {field: form.code}) }}
+            <button class="btn btn--primary btn--lg" type="submit">{{ 'totp.enrol.submit'|trans({}, 'admin') }}</button>
+        {{ form_end(form) }}
+        <form method="post" action="{{ path('_logout_admin') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button class="auth__cancel" type="submit">{{ 'shell.logout'|trans({}, 'admin') }}</button>
+        </form>
+    </div>
+{% endblock %}

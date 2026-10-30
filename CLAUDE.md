@@ -24,11 +24,15 @@ Never run `composer` or `bin/console` on the host. The host has a different PHP 
 | `make vendor` | `composer install` |
 | `make db-migrate` / `make db-fresh` | Run migrations / drop, recreate and migrate |
 | `make seed` | Load the demo data (Foundry story `main`) into the dev database |
-| `make test` | Prepare `app_test`, run all suites |
-| `make test-short` | Run tests, stop at the first failure |
+| `make test` | Prepare `app_test`, build Sass and the islands, run PHPUnit, then Vitest |
+| `make test-short` | Run PHPUnit, stop at the first failure |
 | `make cs-fix` / `make cs-check` | Fix / check coding standards |
 | `make phpstan` | PHPStan level 8 + architecture rules |
-| `make lint` | `cs-check` + `phpstan` (the CI gate) |
+| `make lint` | `cs-check` + `phpstan` + `lint-translations` + `admin-lint` (the CI gate) |
+| `make admin-install` | `npm ci` for `admin-ui/` (in the `node` tools service) |
+| `make admin-build` / `make admin-watch` | Build the Vue islands into `public/admin-build/` / rebuild on change |
+| `make admin-test` / `make admin-lint` | Vitest / ESLint on `admin-ui/` |
+| `make lighthouse URL=/path ADMIN=1` / `make validate-html URL=/path ADMIN=1` | The same tools logged in as the dev admin (dev only) |
 
 App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http://localhost:8025.
 
@@ -51,8 +55,8 @@ App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http:
 
 Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\<Layer>`.
 
-- Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, plus `Shared` for building blocks.
-- Layers inside a module: `Controller`, `Command` (command DTOs), `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console` (console commands), `Twig` (Twig filters and functions), `Mailer` (a module's emails), `EventListener`, `Event` (a module's published events).
+- Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, the back office's `Admin`, `Cms`, `Crm`, plus `Shared` for building blocks.
+- Layers inside a module: `Controller`, `Command` (command DTOs), `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console` (console commands), `Twig` (Twig filters and functions), `Mailer` (a module's emails), `EventListener`, `Event` (a module's published events), `Extension` (back-office extension points and their implementations), `Security` (security user, provider, authenticators), `Messenger` (bus middleware).
 - Allowed module dependencies (everything may use `Shared`; `Shared` uses no module):
 
   | Module | May depend on |
@@ -64,6 +68,11 @@ Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\
   | Favorites | Search, Venues |
   | Inquiries | Venues |
   | Seo | Search, Venues, Geo |
+  | Admin | — |
+  | Cms | Admin, Venues, Geo, Media |
+  | Crm | Admin, Venues, Geo, Inquiries |
+
+  No public module depends on `Admin`, `Cms` or `Crm`.
 
 - Reads: public pages go controller → `ReadModel` (DBAL, `final readonly` view objects), never entities. Writes: controller or console command → command → `command.bus` → handler. There is no query bus.
 - phpat enforces layers, modifiers and module boundaries during `make phpstan` (rules in `tests/Architecture/`). Details: `.claude/rules/php-architecture.md`, `.claude/rules/cqrs.md`, `.claude/rules/read-model.md`.
@@ -244,6 +253,36 @@ Inquiry form, entity, mails.
 ### Seo
 
 Sitemap, robots, JSON-LD builders, landing page definitions.
+
+_Nothing built yet; the owning cycle appends here._
+
+### Admin
+
+Back-office foundation at `/admin` (S12): staff login, shell, extension points, audit log, Vue islands.
+
+**Built in #22 (`admin-foundation`).** Migration `Version20261030152714`; mapping `orm.mappings.Admin`; Composer `symfony/security-bundle`, `scheb/2fa-bundle`, `scheb/2fa-totp`, `bacon/bacon-qr-code`; `config/packages/security.yaml` is #22's hotspot (others use `#[IsGranted]`).
+
+- **Dev admin:** `make seed` creates `admin@hochzeitslocation.test`, password `admin-dev-password`, TOTP secret `JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP` (`App\Story\AdminStory`; public on purpose, dev data only). `make sf c="app:admin:reset-2fa admin@hochzeitslocation.test"` lets you enrol your own app.
+- **Tables:** `admin_users` (e-mail stored lower-case, `role` admin|editor, `totp_secret_encrypted` NULL until enrolled, `is_active`; deactivated, never deleted) and `admin_audit_log` (append-only, so no `updated_at`; `actor_type` admin_user|console|system, `actor_id` only for admin_user, `changes` JSONB). `AdminUser(string $id, …)` takes its id from the caller (`EntityId::generate()` before dispatch), so `auditSubject()` knows it.
+- **Security:** one firewall on `^/admin(/|$)`, nothing elsewhere, so public pages stay session-free (S10); the session cookie is `SameSite=Strict`, `HttpOnly`, path `/admin`. Form login (5 tries per 15 minutes), mandatory TOTP (`TotpSecretCipher`, sodium secretbox, key `ADMIN_TOTP_KEY`; #20 generates production's), first-login enrolment at `/admin/2fa/einrichten` (`RequireTotpEnrolmentListener`), 5 wrong codes per user per 15 minutes (`TotpThrottleListener` + `TotpFailureHandler`, limiter `admin_totp`), 2-hour idle timeout (`IdleTimeoutListener`, session key `admin.last_seen`), `Cache-Control: no-store, private` and `X-Robots-Tag: noindex, nofollow` on everything under `/admin` (`AdminResponseHeadersListener`). A deactivated account is refused after the password check (`RefuseInactiveAdminListener`, a `CheckPassportEvent` listener: `checkPreAuth` would disclose it, and scheb stops the event `checkPostAuth` runs on for a user with TOTP). **Anything that decides by "is this the back office?" asks `Security\AdminArea` (`contains()`, `isJson()`), never the raw path:** the router and the firewall decode the path, so `/%61dmin/benutzer` is `/admin/benutzer` to them. `Security\AdminIdentity` is the security user, built per request by `AdminUserProvider`; the session holds fingerprints only, so a password, role or 2FA change ends that user's sessions. `ROLE_ADMIN` includes `ROLE_EDITOR`.
+- **Routes:** `admin_dashboard` `/admin`, `admin_login`, `admin_2fa_login`, `admin_2fa_check`, `admin_totp_enrol`, `_logout_admin` (POST only, declared in `config/routes/security.yaml` because Symfony's generated route allows any method), `admin_users*` `/admin/benutzer…`, `admin_audit_log` `/admin/audit-log` (filters `actor`, `subject_type`, `subject_id`, `from`, `to`), `admin_styleguide` `/admin/_styleguide` (dev, test). New routes: `options: [LocalizedRoutes::UNLOCALIZED => true]`, a name starting `admin_`, `#[IsGranted]`. `AdminRoutesAreProtectedTest` walks the router (trait `ChecksAdminRoutes`) for every route and method as anonymous, in the code step, unenrolled, editor and admin, canonical and percent-encoded. It fills every route parameter with a UUID, so a new route is covered without touching the test only if its parameters accept one: with a stricter requirement such as `\d+` the walker gets a 404 and fails loudly until it is taught that parameter's value (`ChecksAdminRoutes::adminEndpoints()`). `ExtensionPointsTest` runs the same walk on the fake module's routes.
+- **Console:** `app:admin:create-user <email> --role=admin|editor [--name=…]`, `app:admin:reset-2fa <email>`, `app:admin:reset-password <email>`.
+- **Audit:** a command implements `Shared\Messenger\AuditableCommand` (`auditSubject(): AuditSubject`, `auditSummary()`, never a password or secret) and `Admin\Messenger\AuditLogMiddleware` writes the row inside the transaction. `Admin\ReadModel\AuditLogQuery::forSubject($type, $id, $limit)` serves "Zuletzt bearbeitet von" and the CRM timeline.
+- **Extension points** (`Admin\Extension`): implement `NavigationItem`, `DashboardWidget`, `RecordTab`, `RecordPanel` or `SearchProvider` in your module's `Extension` layer; autoconfiguration registers it. Twig: `admin_navigation()`, `admin_dashboard_widgets()`, `admin_record_tabs(type, id)`, `admin_record_panels(type, id)`; all filter by `requiredRole()` and sort by `priority()` descending. The fake module in `tests/Fixtures/Admin/` shows each one.
+- **Shell:** `templates/admin/base.html.twig` blocks `title`, `body_class`, `breadcrumbs` (`<li class="breadcrumbs__item">`), `page_actions`, `page_header`, `main`, `aside`, `scripts`; `layout/_sidebar`, `_topbar`, `_flash`; the search trigger is the slot `admin/layout/_search_trigger.html.twig` (#23). Flashes are toasts: types `success`, `error`, the message a key of the `admin` catalogue. `templates/admin/form/_field.html.twig` renders one form row with its error linked to the input. Styles: `assets/styles/admin.scss` (append one `@use` per partial) with `--a-*` tokens, never loaded with `app.css`. Icons: `{{ admin_icon('name', label) }}` from `assets/icons/admin-sprite.svg`. Strings: the `admin` domain.
+- **Vue islands:** one line in `admin-ui/src/islands.js`, the file `admin-ui/src/islands/<Pascal>Island.vue` (`<script setup>`, no `<style>`, no bare strings). In Twig: `{{ admin_island('hello', {greeting: '…'|trans({}, 'admin')}) }}`. `admin_island_assets(nonce = null)` closes `base.html.twig` and loads only what the page used.
+- **JSON endpoints:** `/admin/api/<module>/…`, route names `admin_api_<module>_…`, class-level `#[IsGranted]` and `#[IsCsrfTokenValid('admin_api', tokenKey: 'X-CSRF-Token', tokenSource: IsCsrfTokenValid::SOURCE_HEADER, methods: [...])]` (the token is in `<meta name="csrf-token">`); validation errors answer 422 with `ValidationErrors::fromViolations()|fromForm()`, `{"errors": {"field": ["message"]}}`; 401 and 403 are JSON too.
+- **Budgets (ADM-8):** `AdminAssetBudgetTest`: shared JS ≤ 60 KB gzip, each island ≤ 30 KB, admin CSS ≤ 30 KB.
+
+### Cms
+
+Back-office screens for venues, photos, landing pages and text blocks.
+
+_Nothing built yet; the owning cycle appends here._
+
+### Crm
+
+Back-office companies, contacts, deals, tasks, activities and inquiries.
 
 _Nothing built yet; the owning cycle appends here._
 

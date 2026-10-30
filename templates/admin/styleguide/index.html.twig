@@ -1,0 +1,81 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'styleguide.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item" aria-current="page">{{ 'styleguide.title'|trans({}, 'admin') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ 'styleguide.title'|trans({}, 'admin') }}</h1></div>
+{% endblock %}
+
+{% block main %}
+    <section class="card" aria-labelledby="sg-colours">
+        <div class="card__head"><h2 id="sg-colours">{{ 'styleguide.colours'|trans({}, 'admin') }}</h2></div>
+        <div class="card__body">
+            <ul class="swatches">
+                {% for token in ['--a-bg', '--a-surface', '--a-ink', '--a-muted', '--a-line', '--a-field', '--a-accent', '--a-link', '--a-danger', '--a-nav-active'] %}
+                    <li class="swatch">
+                        <span class="swatch__colour swatch__colour--{{ token|slice(4) }}"></span>
+                        <code>{{ token }}</code>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="sg-type">
+        <div class="card__head"><h2 id="sg-type">{{ 'styleguide.type'|trans({}, 'admin') }}</h2></div>
+        <div class="card__body styleguide__stack">
+            <p class="dashboard__greeting">{{ 'styleguide.h1_sample'|trans({}, 'admin') }}</p>
+            <p>{{ 'styleguide.text_sample'|trans({}, 'admin') }}</p>
+            <p class="muted">{{ 'styleguide.help_sample'|trans({}, 'admin') }}</p>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="sg-components">
+        <div class="card__head"><h2 id="sg-components">{{ 'styleguide.components'|trans({}, 'admin') }}</h2></div>
+        <div class="card__body styleguide__stack">
+            <div class="styleguide__row">
+                <button class="btn btn--primary" type="button">{{ 'styleguide.button_primary'|trans({}, 'admin') }}</button>
+                <button class="btn" type="button">{{ 'styleguide.button_secondary'|trans({}, 'admin') }}</button>
+                <button class="btn btn--ghost" type="button">{{ 'styleguide.button_ghost'|trans({}, 'admin') }}</button>
+                <button class="btn btn--danger" type="button">{{ 'styleguide.button_danger'|trans({}, 'admin') }}</button>
+                <button class="btn btn--sm" type="button">{{ 'styleguide.button_small'|trans({}, 'admin') }}</button>
+            </div>
+            <div class="styleguide__row">
+                <span class="pill pill--green">{{ 'styleguide.pill_green'|trans({}, 'admin') }}</span>
+                <span class="pill pill--grey">{{ 'styleguide.pill_grey'|trans({}, 'admin') }}</span>
+                <span class="pill pill--pink">{{ 'styleguide.pill_pink'|trans({}, 'admin') }}</span>
+                <span class="pill pill--blue">{{ 'styleguide.pill_blue'|trans({}, 'admin') }}</span>
+                <span class="pill pill--amber">{{ 'styleguide.pill_amber'|trans({}, 'admin') }}</span>
+                <span class="pill pill--red">{{ 'styleguide.pill_red'|trans({}, 'admin') }}</span>
+                <span class="pill pill--dark">{{ 'styleguide.pill_dark'|trans({}, 'admin') }}</span>
+            </div>
+            <div class="field">
+                <label class="field__label" for="sg-field">{{ 'styleguide.field_sample'|trans({}, 'admin') }}</label>
+                <input class="field__input" id="sg-field" type="text" aria-describedby="sg-field-help">
+                <span class="field__help" id="sg-field-help">{{ 'styleguide.help_sample'|trans({}, 'admin') }}</span>
+            </div>
+            <div class="field">
+                <label class="field__label" for="sg-error">{{ 'styleguide.field_sample'|trans({}, 'admin') }}</label>
+                <input class="field__input" id="sg-error" type="text" aria-invalid="true" aria-describedby="sg-error-text">
+                <span class="field__error" id="sg-error-text">{{ 'styleguide.error_sample'|trans({}, 'admin') }}</span>
+            </div>
+        </div>
+    </section>
+
+    {{ include('admin/styleguide/_components.html.twig', ignore_missing = true) }}
+
+    <section class="card" aria-labelledby="sg-island">
+        <div class="card__head"><h2 id="sg-island">{{ 'styleguide.island'|trans({}, 'admin') }}</h2></div>
+        <div class="card__body">
+            {{ admin_island('hello', {
+                greeting: 'styleguide.hello.greeting'|trans({}, 'admin'),
+                countLabel: 'styleguide.hello.count_label'|trans({}, 'admin'),
+                buttonLabel: 'styleguide.hello.button_label'|trans({}, 'admin'),
+            }) }}
+        </div>
+    </section>
+{% endblock %}

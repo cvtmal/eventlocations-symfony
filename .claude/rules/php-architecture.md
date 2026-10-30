@@ -13,7 +13,7 @@ paths:
 
 ## Modules and layers
 
-Code lives in `src/<Module>/<Layer>/`. Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, and `Shared` for cross-cutting building blocks.
+Code lives in `src/<Module>/<Layer>/`. Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, the back office's `Admin`, `Cms`, `Crm`, and `Shared` for cross-cutting building blocks.
 
 | Layer | Holds |
 |---|---|
@@ -31,6 +31,9 @@ Code lives in `src/<Module>/<Layer>/`. Modules: `Geo`, `Media`, `Venues`, `Searc
 | `Console` | Console commands (`#[AsCommand]`, invokable) |
 | `Twig` | Twig filters and functions, `#[AsTwigFilter]` / `#[AsTwigFunction]` |
 | `Mailer` | Builds and sends a module's emails |
+| `Extension` | Back-office extension points and their implementations |
+| `Security` | Security user, provider, checkers, authenticators |
+| `Messenger` | Bus middleware and message contracts |
 
 Do not invent new layer names without updating `tests/Architecture/` — the rules match these folder names.
 
@@ -51,6 +54,9 @@ Do not invent new layer names without updating `tests/Architecture/` — the rul
 | Console | yes | — | invokable, `#[AsCommand]` |
 | Twig | yes | — | |
 | Mailer | yes | — | |
+| Extension | yes (interfaces and enums excepted) | — | |
+| Security | yes | — | |
+| Messenger | yes (interfaces excepted) | — | |
 
 Anything else (services, value objects, form types) is `final` by default.
 
@@ -81,6 +87,9 @@ Anything else (services, value objects, form types) is `final` by default.
 | Favorites | Search, Venues, Shared |
 | Inquiries | Venues, Shared |
 | Seo | Search, Venues, Geo, Shared |
+| Admin | Shared |
+| Cms | Admin, Venues, Geo, Media, Shared |
+| Crm | Admin, Venues, Geo, Inquiries, Shared |
 
 If a feature seems to need a forbidden direction, put an interface in the lower module (or `Shared`) and implement it in the higher one. Changing the matrix is a deliberate decision: update the table here, in `CLAUDE.md` and in the test together.
 

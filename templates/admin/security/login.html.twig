@@ -1,0 +1,28 @@
+{% extends 'admin/security/_layout.html.twig' %}
+
+{% block title %}{{ 'login.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block form %}
+    {% set flash_errors = app.flashes('error') %}
+    {% set has_error = error_key or flash_errors is not empty %}
+    <form class="auth__form" method="post" action="{{ path('admin_login') }}">
+        <h1>{{ 'login.title'|trans({}, 'admin') }}</h1>
+        {% for message in flash_errors %}
+            <p class="form-error" id="login-flash-{{ loop.index }}" role="alert">{{ message|trans({}, 'admin') }}</p>
+        {% endfor %}
+        {% if error_key %}
+            <p class="form-error" id="login-error" role="alert">{{ error_key|trans({}, 'admin') }}</p>
+        {% endif %}
+        <div class="field">
+            <label class="field__label" for="login-email">{{ 'login.email'|trans({}, 'admin') }}</label>
+            <input class="field__input" id="login-email" type="email" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus{% if error_key %} aria-invalid="true" aria-describedby="login-error"{% endif %}>
+        </div>
+        <div class="field">
+            <label class="field__label" for="login-password">{{ 'login.password'|trans({}, 'admin') }}</label>
+            <input class="field__input" id="login-password" type="password" name="_password" autocomplete="current-password" required{% if error_key %} aria-invalid="true" aria-describedby="login-error"{% endif %}>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <button class="btn btn--primary btn--lg" type="submit">{{ 'login.submit'|trans({}, 'admin') }}</button>
+        <span class="auth__help">{{ 'login.forgot'|trans({}, 'admin') }}</span>
+    </form>
+{% endblock %}

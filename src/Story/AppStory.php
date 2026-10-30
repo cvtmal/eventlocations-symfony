@@ -13,5 +13,6 @@ final class AppStory extends Story
     public function build(): void
     {
         DemoStory::load();
+        AdminStory::load();
     }
 }

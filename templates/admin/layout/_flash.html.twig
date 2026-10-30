@@ -1,0 +1,11 @@
+<div class="toast-region" role="status" aria-live="polite">
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="toast toast--{{ type }}" data-toast{% if type == 'success' %} data-toast-autohide{% endif %}>
+                {{ admin_icon(type == 'success' ? 'check' : 'x') }}
+                <span class="toast__message">{{ message|trans({}, 'admin') }}</span>
+                <button class="toast__dismiss" type="button" data-toast-dismiss aria-label="{{ 'shell.dismiss'|trans({}, 'admin') }}">{{ admin_icon('x') }}</button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+</div>

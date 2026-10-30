@@ -1,0 +1,8 @@
+<header class="topbar">
+    <nav class="topbar__crumbs" aria-label="{{ 'shell.breadcrumbs'|trans({}, 'admin') }}">
+        <ol class="breadcrumbs">{{ breadcrumbs }}</ol>
+    </nav>
+    {% if actions|trim is not empty %}
+        <div class="topbar__actions">{{ actions }}</div>
+    {% endif %}
+</header>

@@ -1,0 +1,25 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'users.new'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('admin_users') }}">{{ 'users.title'|trans({}, 'admin') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'users.new'|trans({}, 'admin') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ 'users.new'|trans({}, 'admin') }}</h1></div>
+{% endblock %}
+
+{% block main %}
+    <div class="card card__body">
+        {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.email}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.displayName}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.role}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.plainPassword.first, help: 'users.form.password_help'|trans({}, 'admin')}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.plainPassword.second}) }}
+            <div><button class="btn btn--primary" type="submit">{{ 'users.form.create'|trans({}, 'admin') }}</button></div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
