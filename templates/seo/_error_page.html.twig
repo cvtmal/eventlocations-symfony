@@ -1,0 +1,19 @@
+{#
+    Shell of the error pages (SEO-5). It must not touch the database: the 500 page has to survive an outage, which is
+    why the footer's #17 list stays query-free (ErrorPagesQueryFreeTest). The exception's message is never printed.
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{% block error_title %}{% endblock %} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block hreflang %}{% endblock %}
+
+{% block jsonld %}{% endblock %}
+
+{% block main %}
+    <div class="error-page container">
+        <h1 class="error-page__heading">{% block error_heading %}{% endblock %}</h1>
+        <p class="error-page__text">{% block error_text %}{% endblock %}</p>
+        {% include 'components/_button.html.twig' with {label: 'error.to_listing'|trans({}, 'seo'), variant: 'primary', href: path('listing')} only %}
+    </div>
+{% endblock %}

@@ -1,0 +1,13 @@
+.error-page {
+    padding-block: var(--space-2xl);
+}
+
+.error-page__heading {
+    margin-bottom: var(--space-l);
+    font-size: 1.75rem;
+}
+
+.error-page__text {
+    margin-bottom: var(--space-l);
+    max-width: 60ch;
+}

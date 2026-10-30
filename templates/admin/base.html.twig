@@ -34,6 +34,6 @@
         {{ include('admin/layout/_flash.html.twig') }}
         <script type="module" src="{{ asset('js/admin/toast.js') }}"></script>
         {% block scripts %}{% endblock %}
-        {{ admin_island_assets() }}
+        {{ admin_island_assets(csp_nonce()) }}
     </body>
 </html>

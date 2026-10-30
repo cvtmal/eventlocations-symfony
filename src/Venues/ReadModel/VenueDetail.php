@@ -102,4 +102,17 @@ final readonly class VenueDetail
     {
         return $this->hasPhone || null !== $this->inquiryEmail || null !== $this->website || null !== $this->instagram || null !== $this->contactPerson;
     }
+
+    /**
+     * Share-image paths of the first photos, as plain strings: Seo may not name a Media type.
+     *
+     * @return list<string>
+     */
+    public function imageUrls(int $limit): array
+    {
+        return array_map(
+            static fn (Picture $photo): string => $photo->shareImage()->url,
+            \array_slice($this->photos, 0, $limit),
+        );
+    }
 }

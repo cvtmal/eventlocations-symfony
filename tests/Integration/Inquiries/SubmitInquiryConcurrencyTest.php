@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Process;
 use Zenstruck\Foundry\Test\Factories;
@@ -65,6 +66,15 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
         self::assertInstanceOf(CacheItemPoolInterface::class, $pool);
         $pool->clear();
 
+        // The two children are the suite's first renders of base.html.twig, and they render at
+        // the same moment. On Docker Desktop's bind mount (virtiofs) `rename` is not atomic, so a
+        // child can find an asset_mapper cache file the other is replacing, then fail to read it
+        // (ENOENT inside asset(), a 500). Filling that cache here, before any child starts,
+        // closes the window; the bootstrap's cache wipe would otherwise open it on every run.
+        $assetMapper = self::getContainer()->get('asset_mapper');
+        self::assertInstanceOf(AssetMapperInterface::class, $assetMapper);
+        iterator_to_array($assetMapper->allAssets());
+
         $this->removeFixtures();
         $this->venueId = DetailVenues::full($em, self::SLUG, self::NAME)->id();
     }
@@ -90,7 +100,7 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
         $this->waitForBoth(self::WAITING_FOR_THE_FINGERPRINT, $posts);
         $this->connection->fetchOne("SELECT pg_advisory_unlock({$lock})", $fingerprint);
 
-        self::assertSame([303, 303], $this->statusCodes($posts));
+        $this->assertStatusCodes([303, 303], $posts);
         self::assertSame([['sent', 'sent']], $this->statuses());
         self::assertSame([[self::VENUE_MAIL_RECIPIENT], [self::GUEST]], $this->sink->delivered());
     }
@@ -115,7 +125,7 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
         $this->waitForBoth(self::WAITING_FOR_THE_ROW, $posts);
         $this->connection->commit();
 
-        self::assertSame([303, 303], $this->statusCodes($posts));
+        $this->assertStatusCodes([303, 303], $posts);
         self::assertSame([['sent', 'sent']], $this->statuses());
         self::assertSame([[self::VENUE_MAIL_RECIPIENT], [self::GUEST]], $this->sink->delivered());
     }
@@ -134,7 +144,7 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
         $this->waitForBoth(self::WAITING_FOR_THE_ROW, $posts);
         $this->connection->commit();
 
-        self::assertSame([503, 503], $this->statusCodes($posts));
+        $this->assertStatusCodes([503, 503], $posts);
         self::assertSame([['failed', 'skipped']], $this->statuses());
     }
 
@@ -175,20 +185,24 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
     }
 
     /**
-     * @param array{Process, Process} $posts
+     * A child's stderr holds the kernel's log lines (ids and paths, no addresses), so a wrong
+     * status names its own cause.
      *
-     * @return list<int>
+     * @param list<int>               $expected
+     * @param array{Process, Process} $posts
      */
-    private function statusCodes(array $posts): array
+    private function assertStatusCodes(array $expected, array $posts): void
     {
         $codes = [];
+        $errors = '';
         foreach ($posts as $post) {
             $post->wait();
             self::assertSame(0, $post->getExitCode(), $post->getErrorOutput());
             $codes[] = (int) $post->getOutput();
+            $errors .= $post->getErrorOutput();
         }
 
-        return $codes;
+        self::assertSame($expected, $codes, "The children's stderr:\n".$errors);
     }
 
     private function command(): SubmitInquiry

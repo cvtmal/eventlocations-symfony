@@ -11,6 +11,8 @@ namespace App\Media\ValueObject;
  */
 final readonly class ImageVariants
 {
+    private const int SHARE_WIDTH = 1200;
+
     /** @var list<int> ascending, unique, > 0 */
     public array $widths;
 
@@ -114,5 +116,20 @@ final readonly class ImageVariants
     public function largest(): int
     {
         return $this->widths[\count($this->widths) - 1];
+    }
+
+    /**
+     * The width a share image uses: the smallest at least SHARE_WIDTH wide, else the largest.
+     * S9 has no 1200 variant, so a full photo shares its 1280.
+     */
+    public function shareWidth(): int
+    {
+        foreach ($this->widths as $width) {
+            if ($width >= self::SHARE_WIDTH) {
+                return $width;
+            }
+        }
+
+        return $this->largest();
     }
 }

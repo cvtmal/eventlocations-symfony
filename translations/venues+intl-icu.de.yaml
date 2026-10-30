@@ -244,9 +244,6 @@ reviewer_role:
 place:
     canton: 'Kanton {canton}'
 detail:
-    title: '{name} in {town} für die Hochzeit mieten'
-    title_canton: '{name} im Kanton {canton} für die Hochzeit mieten'
-    title_no_place: '{name} für die Hochzeit mieten'
     hero:
         label: 'Bilder von {name}'
         open_gallery: Bilder ansehen

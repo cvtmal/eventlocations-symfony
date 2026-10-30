@@ -61,7 +61,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
 
-        self::assertSame('Schloss Seeblick in Zürich für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Schloss Seeblick in Zürich mieten | Hochzeitslocation', $crawler->filter('title')->text());
         self::assertSame('Schloss Seeblick: Hochzeit am See.', $crawler->filter('meta[name="description"]')->attr('content'));
         self::assertCount(1, $crawler->filter('h1'));
         self::assertStringContainsString('Schloss Seeblick', $crawler->filter('h1')->text());
@@ -168,7 +168,7 @@ final class VenueDetailControllerTest extends WebTestCase
         $this->assertNoEmptyHeadings($crawler);
         self::assertCount(0, $crawler->filter('[style]'));
         self::assertCount(0, $crawler->filter('style'));
-        self::assertCount(0, $crawler->filter('script:not([src])'));
+        self::assertCount(0, $crawler->filter('script:not([src]):not([type="application/ld+json"])'));
     }
 
     public function test_headers_are_publicly_cacheable_without_session(): void
@@ -215,7 +215,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/wiesenhof-ohne-ort');
 
-        self::assertSame('Wiesenhof Ohne Ort für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Wiesenhof Ohne Ort | Hochzeitslocation', $crawler->filter('title')->text());
         self::assertCount(0, $crawler->filter('#standort'));
         self::assertCount(0, $crawler->filter('.venue-nav a[href="#standort"]'));
         self::assertCount(0, $crawler->filter('.venue-head__place'));
@@ -229,7 +229,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/scheune-nur-kanton');
 
-        self::assertSame('Scheune Nur Kanton im Kanton Zürich für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Scheune Nur Kanton im Kanton Zürich | Hochzeitslocation', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Kanton Zürich');
         self::assertCount(0, $crawler->filter('#standort'));
         self::assertSame('Scheune Nur Kanton im Kanton Zürich', $crawler->filter('[data-share-title]')->attr('data-share-title'));
@@ -241,7 +241,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/remise-nur-region');
 
-        self::assertSame('Remise Nur Region für die Hochzeit mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Remise Nur Region | Hochzeitslocation', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Schweizweit');
         self::assertSame('Remise Nur Region', $crawler->filter('[data-share-title]')->attr('data-share-title'));
     }

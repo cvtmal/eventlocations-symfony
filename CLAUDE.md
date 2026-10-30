@@ -50,6 +50,7 @@ App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http:
 - PHPUnit fails on deprecations, notices and warnings coming from `src/`.
 - Factories use Foundry (`zenstruck/foundry`).
 - The phpat rule classes in `tests/Architecture/` run inside `make phpstan`, not PHPUnit.
+- Never run two `phpunit` processes in one lane: `tests/bootstrap.php` deletes `var/cache/test` at start, which wipes the cache of a suite already running.
 
 ## Architecture
 
@@ -115,6 +116,8 @@ Built in #1 (design system): design tokens in `assets/styles/abstracts/_tokens.s
 
 Built in #9: `Shared\Messenger\ResetClosedEntityManagerMiddleware` (before `doctrine_transaction`: resets an EntityManager a failed command closed, so the next dispatch in the same process works; the stock `doctrine_ping_connection` acts only for worker-consumed messages).
 
+Built in #16: `Shared\Security\CspNonce` (lazy, per response, `kernel.reset`), `Shared\Twig\CspExtension` (`csp_nonce()`) and `Shared\EventListener\SecurityHeadersListener`: SEC-1 on every main response, `/admin` included, at priority −10 (after `ResponseListener`, which fills in `Content-Type`; before Symfony's CSP removal and the toolbar at −128). `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` (never `no-referrer`: #13's no-JS toggle and #14's CSRF fallback read the same-origin `Referer`), `Permissions-Policy`, HSTS only when `isSecure()`, and the CSP on `text/html`. No debug branch: `ErrorListener` and `ProfilerController` lift the policy from Symfony's own debug pages, so a 422 re-render keeps it. Public pages are cached (S10), so they send `script-src 'self'` with no nonce and must use a hash for any inline code, #19's critical CSS included; `/admin` is `no-store` and uses real nonces. The real header bytes are only visible with `createClient(['debug' => false])`, because the toolbar rewrites the policy in debug. `tests/bootstrap.php` wipes `var/cache/test` on every PHPUnit start: a kernel with debug off never checks freshness and would otherwise run on an old container, routes, catalogues and Twig cache. `site.name`, `site.operator_name`, `site.operator_street`, `site.operator_postcode`, `site.operator_city` sit next to `site.contact_email` in `config/services.yaml`. `HreflangExtension` returns nothing for a request that is not safe.
+
 ### Geo
 
 Cantons, towns, postcode/town lookup, distances.
@@ -146,6 +149,8 @@ Image variant generation, `<picture>` Twig helper.
 - **Regenerate:** `make sf c="app:media:regenerate [--venue=<number>]"` (lives in Venues) re-renders variants in place and re-publishes PDFs; it continues past missing originals and exits 1 if any were skipped. URLs stay the same, so `/media` is not `immutable` across it (#19).
 - **Demo media:** `App\Story\DemoMedia` draws 30 originals (`MEDIA_ROOT/demo/photo-NN.jpg`) and caches their variants in `var/demo-media/<fingerprint+hash>/`, shared by dev and test. The first `make seed` on a checkout is cold (~22 s on an M4 Pro), later ones copy only (~10 s).
 - **Tests:** test images are drawn at runtime (`tests/Support/Media/TestImages.php`, no binary fixtures); media tests clean up with `MediaFiles::removeDirectory()`.
+
+**Built in #16.** `Picture::shareImage(): ShareImage` (`url`, `width`, `height`): JPEG at `ImageVariants::shareWidth()`, the smallest width ≥ 1200, else the largest. It is the one source of a photo's public share URL (`og:image`, JSON-LD, sitemap).
 
 ### Venues
 
@@ -194,6 +199,8 @@ Venue aggregate (translations, terms, rooms, photos, documents, reviews), detail
 - **Format:** only `name`, `tier`, `capacity.max`, `translations.de.summary` are required. `address.canton` is an enum of the 26 codes (the import uses `getReference()`, so a bad code cannot reach the FK), and `ContentReader` rejects half an address. `SlugAllocator::candidates($name, ?$townSlug)` goes `x`, `x-2`, `x-3` without a town.
 - **Export:** `app:legacy:export-content <csv> [path] [--dry-run]` (`Venues\Console\ExportLegacyContentCommand` → `LegacyContentExporter`) writes #9 folders, never the DB. Its input is the owner's Wix CSV, copied to the git-ignored `content/owner/`, the only production content source. `WixExport::rows()` (BOM, multi-line fields; a shifted row fails the file), `WixRichText::paragraphs()` (recursive, NFC, no U+200B, NBSP-only paragraphs dropped, `IMAGE` skipped with its caption), `LegacyVenueText` (`description()` rules 1–4, `summary()`, `key()`), `LegacyVenueMapper` (`Region` → canton, region text, Liechtenstein skip, phone to E.164, bad contact values dropped and noted), `LegacyFolderWriter` (owns `name`, `capacity.max`, `address.canton`, `contact.{phone,inquiry_email,website}`, `translations.de.{summary,description,region}`; keeps every other key; `tier: basic` only when absent; byte-stable, so a second run writes nothing), `InvalidWixExport`. Keys are `<ascii-name-slug>-<id8>`, and an existing folder ending in `-<id8>` is reused. Console output holds counts and `<key>: <reason>`, never a contact value. Tests use `tests/Support/Content/WixCsv.php`, a fictional CSV built at runtime.
 - **#32 reuses** `WixExport`, `WixRichText`, `LegacyVenueText` and the key rule, stays off the paths above, and sets `tier`.
+
+**Built in #16.** `VenueDetail::imageUrls(int $limit): list<string>` gives Seo share-image paths as plain strings, because Seo may not name a Media type. `Venues\ReadModel\VenueSitemapQuery` (`PER_FILE` 1000; `files()`, `page($file)`, `newestChange()`; `SitemapFile`, `SitemapVenue`): published venues in the default locale, `lastmod` = newest of `venues.updated_at`, the translation's and the photos', never a join on `towns`. The detail title is now `Seo\TitleChain`'s (`venue_seo()`); `detail.title`, `detail.title_canton` and `detail.title_no_place` are deleted, and the share text stays #21's.
 
 ### Search
 
@@ -292,7 +299,14 @@ Inquiry form, entity, mails.
 
 Sitemap, robots, JSON-LD builders, landing page definitions.
 
-_Nothing built yet; the owning cycle appends here._
+**Built in #16 (`seo-foundation`).** No migration, no new package. Search and Venues never depend on Seo in PHP: their templates call Seo's Twig functions.
+
+- **Meta:** `listing_seo(criteria, page)` (`Seo\ListingMeta`) and `venue_seo(venue)` (`Seo\VenueMeta`) return `Seo\ValueObject\PageMeta` (`title`, `description`, `canonical`, `noindex`, `ogType`, `latitude`, `longitude`); set it once at the top of a page and fill `title`, `meta`, `canonical`, `hreflang`, `jsonld`. `templates/seo/_meta.html.twig` (`seo`, `picture` ?Picture; `with_context = false`) renders description, robots, Open Graph and Twitter tags. "Filtered" is `[] !== $criteria->withPage(1)->toQuery()`, so every URL shape follows from the parsed criteria: a filter state is `noindex, follow`, canonicalises to the clean path whatever its page and has no hreflang; an unfiltered page N canonicalises to itself. `SearchCriteria` stays closed: add a method to `ListingMeta` for a landing variant.
+- **Titles and descriptions:** patterns in the `seo` catalogue. `Seo\TitleChain::fit(patterns, name)` takes `list<[key, params]>`, most specific first, returns the first ≤ 60 and as a last resort cuts the name at a word, keeping the suffix. `{site}` is supplied. Venue chain: `{name} in {town} mieten`, `{name} in {town}`, `{name}`; canton only: `{name} im Kanton {canton}`, `{name}`; region text never reaches a title. `Seo\MetaDescription::fit()`: whitespace collapsed, ≤ 155, ends at a sentence (at least 70 characters) else at a word with `…`.
+- **Venue facts:** `Seo\ValueObject\VenueFacts` has every place fact nullable (`street`, `zip`, `town`, `canton`, `lat`, `lng`) and `fromDetail()` is the one adapter from `VenueDetail`. `og:type` is `place` only with coordinates.
+- **JSON-LD:** `site_jsonld()` (default of `base.html.twig`'s `jsonld` block; children call `parent()`), `venue_jsonld(venue)`, `breadcrumb_jsonld(items)` (`list<{name, url?}>`, last item without `url`), `listing_jsonld(page)` (`ItemList`; call it only when `not seo.noindex`). `Seo\JsonLdScript::render()` escapes so a value cannot close the block. `VenueJsonLd`: `["EventVenue","LocalBusiness"]` with `address` only with ZIP and town; otherwise `EventVenue`, with `containedInPlace` `AdministrativeArea` when the canton is known. Nulls and empties are dropped, so no empty key or placeholder is ever emitted. `aggregateRating` (`bestRating: 10`) only in the `LocalBusiness` shape. **Never** `telephone` or `email`: JSON-LD is page HTML and DP-11 keeps the number out of it.
+- **Sitemap and robots:** `sitemap` `/sitemap.xml` is always an index, `sitemap_pages` `/sitemap-pages.xml` lists `Seo\PagesSitemap::urls()` (the one class #17 and #18 extend), `sitemap_venues` `/sitemap-venues-{n}.xml` holds 1,000 URLs each and answers 404 past the last file (`Seo\Controller\SitemapController`, `templates/seo/sitemap_{index,urlset}.xml.twig`). Only `loc`, `lastmod`, `image:image`/`image:loc`. `robots` `/robots.txt` (`Seo\Controller\RobotsController`; body built in PHP because the raw-text scanner flags it in a template). All unlocalized, `public, s-maxage=600, stale-while-revalidate=86400`; #19 must purge them. Scheme and host come from the request, so production needs #20's `trusted_proxies`. Local copies of the schemas: `tests/Fixtures/Seo/` (`sitemap-with-images.xsd` wraps the two, because `sitemap.xsd` alone rejects `image:image`).
+- **Error pages:** `templates/seo/_error_page.html.twig` and `templates/bundles/TwigBundle/Exception/{error404, error410, error}.html.twig`, styles `assets/styles/seo/_error-page.scss`, strings `error.*`. They override `hreflang` and `jsonld` with nothing and run no query, so the 500 page survives a database outage: `seo/_footer_cantons.html.twig` (#17) must stay query-free or `ErrorPagesQueryFreeTest` fails. `/admin` errors use the same public pages. The custom templates render only with debug off; preview them at `/_error/404`.
 
 ### Admin
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <sitemap>
+        <loc>{{ url('sitemap_pages') }}</loc>
+{% if pages_lastmod %}        <lastmod>{{ pages_lastmod|date('c', 'UTC') }}</lastmod>
+{% endif %}    </sitemap>
+{% for file in files %}
+    <sitemap>
+        <loc>{{ url('sitemap_venues', {n: file.number}) }}</loc>
+        <lastmod>{{ file.lastmod|date('c', 'UTC') }}</lastmod>
+    </sitemap>
+{% endfor %}
+</sitemapindex>

@@ -65,6 +65,28 @@ final class VenueDetailQueryTest extends KernelTestCase
         parent::tearDown();
     }
 
+    public function test_image_urls_are_share_image_paths_up_to_the_limit(): void
+    {
+        $venue = DetailVenues::full($this->em);
+        $detail = $this->query->detail($venue->number(), 'de');
+        self::assertNotNull($detail);
+
+        $urls = $detail->imageUrls(1);
+
+        self::assertCount(1, $urls);
+        self::assertSame($detail->photos[0]->shareImage()->url, $urls[0]);
+        self::assertMatchesRegularExpression('#^/media/\d+/[0-9a-f-]+-1280\.jpg$#', $urls[0]);
+    }
+
+    public function test_a_venue_without_photos_has_no_image_urls(): void
+    {
+        $venue = DetailVenues::minimal();
+        $detail = $this->query->detail($venue->number(), 'de');
+        self::assertNotNull($detail);
+
+        self::assertSame([], $detail->imageUrls(3));
+    }
+
     public function test_resolves_a_current_slug(): void
     {
         $venue = DetailVenues::minimal();

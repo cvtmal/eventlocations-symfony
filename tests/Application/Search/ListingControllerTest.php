@@ -491,7 +491,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertLessThanOrEqual(155, mb_strlen($description));
         self::assertCount(1, $crawler->filter('h1'));
         self::assertCount(0, $crawler->filter('[style]'));
-        self::assertCount(0, $crawler->filter('script:not([src])'));
+        self::assertCount(0, $crawler->filter('script:not([src]):not([type="application/ld+json"])'));
     }
 
     private function get(string $uri): Crawler

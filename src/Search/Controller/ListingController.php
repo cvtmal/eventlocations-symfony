@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * The public listing `/hochzeitslocations` (LP-1…LP-6): the filter state from the query
  * string (#6 codec), one page of cards, and "Andere suchten auch nach". A page beyond the
  * last answers 404; invalid values are ignored. No session, publicly cacheable (S10); no
- * X-Robots-Tag (#16 decides noindex for filter combinations).
+ * X-Robots-Tag: the template's robots meta marks filter states `noindex, follow` (#16).
  */
 final class ListingController extends AbstractController
 {
