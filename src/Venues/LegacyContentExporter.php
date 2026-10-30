@@ -18,8 +18,6 @@ use App\Venues\ValueObject\Content\LegacyVenue;
  */
 final class LegacyContentExporter
 {
-    private const string FOLDER_WITH_ID = '/-([0-9a-f]{8})$/D';
-
     public function __construct(
         private readonly ContentReader $reader,
         private readonly LegacyVenueMapper $mapper,
@@ -37,8 +35,9 @@ final class LegacyContentExporter
 
         $folders = [];
         foreach ($existing as $key) {
-            if (1 === preg_match(self::FOLDER_WITH_ID, $key, $match)) {
-                $folders[$match[1]][] = $key;
+            $id8 = LegacyVenueText::folderId($key);
+            if (null !== $id8) {
+                $folders[$id8][] = $key;
             }
         }
 
@@ -49,8 +48,18 @@ final class LegacyContentExporter
         $notes = [];
         $unresolved = [];
         $exported = [];
+        // Every row's id, mapped or not, so a row that fails is not also called stale (F-m3).
+        $seen = [];
+        $skippedIds = [];
 
         foreach ($rows as $number => $row) {
+            $id8 = self::id8($row);
+            if (null !== $id8) {
+                $seen[$id8] = true;
+                if (LegacyVenueMapper::isSkipped($row)) {
+                    $skippedIds[$id8] = true;
+                }
+            }
             try {
                 $venue = $this->mapper->map($row);
                 if ($venue->skipped) {
@@ -81,13 +90,28 @@ final class LegacyContentExporter
         }
 
         foreach ($existing as $key) {
-            if (1 !== preg_match(self::FOLDER_WITH_ID, $key, $match) || !isset($exported[$match[1]])) {
+            $id8 = LegacyVenueText::folderId($key);
+            if (null !== $id8 && isset($exported[$id8])) {
+                continue;
+            }
+            if (null !== $id8 && isset($skippedIds[$id8])) {
+                $notes[] = $key.': in the CSV but not in Switzerland; left alone';
+            } elseif (null === $id8 || !isset($seen[$id8])) {
                 $notes[] = $key.': stale, not in the CSV; left alone';
             }
+            // Else the row is in the CSV and already reported as unresolved.
         }
         arsort($regions);
 
         return new LegacyExportReport($dryRun, $counts, $regions, array_keys($cantons), $notes, $unresolved);
+    }
+
+    /**
+     * @param array<string, string> $row
+     */
+    private static function id8(array $row): ?string
+    {
+        return 1 === preg_match('/^[0-9a-f]{8}/', $row['ID'] ?? '', $match) ? $match[0] : null;
     }
 
     /**

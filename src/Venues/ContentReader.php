@@ -32,7 +32,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class ContentReader
 {
-    private const array SNIFFED_IMAGE_TYPES = [\IMAGETYPE_JPEG, \IMAGETYPE_PNG, \IMAGETYPE_WEBP];
+    public const array SNIFFED_IMAGE_TYPES = [\IMAGETYPE_JPEG, \IMAGETYPE_PNG, \IMAGETYPE_WEBP];
 
     private const string NO_LINKS = 'symbolic links are not allowed';
 

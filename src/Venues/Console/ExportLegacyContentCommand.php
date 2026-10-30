@@ -39,12 +39,8 @@ final class ExportLegacyContentCommand
         #[Option('Report what would change; write nothing')]
         bool $dryRun = false,
     ): int {
+        // No mkdir here: the writer creates each folder, so a file that fails leaves nothing.
         $root = rtrim($path ?? $this->contentRoot, '/');
-        if (!$dryRun && !is_dir($root.'/venues') && !mkdir($root.'/venues', 0775, true) && !is_dir($root.'/venues')) {
-            $io->error(\sprintf('"%s" cannot be created.', $root.'/venues'));
-
-            return Command::FAILURE;
-        }
 
         try {
             $report = $this->exporter->export($csv, $root, $dryRun);

@@ -39,4 +39,9 @@ final class InvalidWixExport extends DomainException
     {
         return new self(\sprintf('%s: venue.yaml cannot be read; the folder was left alone', $key));
     }
+
+    public static function noFolder(): self
+    {
+        return new self('no content folder for this row; run app:legacy:export-content first');
+    }
 }

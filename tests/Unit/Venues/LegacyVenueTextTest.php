@@ -133,4 +133,32 @@ final class LegacyVenueTextTest extends TestCase
         self::assertTrue(ContentFormat::isKey($key), $key);
         self::assertStringEndsWith('-1a2b3c4d', $key);
     }
+
+    public function test_a_section_spans_paragraphs_up_to_the_next_label(): void
+    {
+        $sections = LegacyVenueText::sections(['Vorwort', 'Einrichtung:', 'Tanzfläche', 'Garten', 'Sperrstunde', 'Keine']);
+
+        self::assertSame(['einrichtung' => ['Tanzfläche', 'Garten'], 'sperrstunde' => ['Keine']], $sections);
+    }
+
+    public function test_a_repeated_label_appends_and_an_empty_section_stays(): void
+    {
+        $sections = LegacyVenueText::sections(['Essen', 'Vegan', 'Nutzung', 'Essen', 'Halal']);
+
+        self::assertSame(['essen' => ['Vegan', 'Halal'], 'nutzung' => []], $sections);
+    }
+
+    public function test_a_description_label_ends_a_section(): void
+    {
+        $sections = LegacyVenueText::sections(['Service', 'Fotograf', 'Beschrieb', 'Ein Absatz über das Haus.', 'Party möglich?', 'Ja']);
+
+        self::assertSame(['service' => ['Fotograf'], 'party möglich?' => ['Ja']], $sections);
+    }
+
+    public function test_the_folder_id_is_the_last_8_hex_characters(): void
+    {
+        self::assertSame('1a2b3c4d', LegacyVenueText::folderId('haus-am-see-1a2b3c4d'));
+        self::assertNull(LegacyVenueText::folderId('haus-am-see'));
+        self::assertNull(LegacyVenueText::folderId('haus-am-see-1A2B3C4D'));
+    }
 }

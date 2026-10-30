@@ -11,7 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * The 146 taxonomy_terms rows the migrations seed: counts, order, the 11 primary buildings,
+ * The 147 taxonomy_terms rows the migrations seed: counts, order, the 11 primary buildings,
  * and a catalogue label for every row (and a row for every label).
  */
 final class TaxonomyTermsTest extends KernelTestCase
@@ -31,7 +31,7 @@ final class TaxonomyTermsTest extends KernelTestCase
         'dining' => 13,
         'vendor' => 8,
         'usage' => 3,
-        'language' => 11,
+        'language' => 12,
     ];
 
     private const PRIMARY_BUILDINGS = [
@@ -50,7 +50,7 @@ final class TaxonomyTermsTest extends KernelTestCase
 
     public function test_every_group_has_its_terms_at_positions_one_to_n(): void
     {
-        self::assertSame(146, (int) $this->connection->fetchOne('SELECT count(*) FROM taxonomy_terms'));
+        self::assertSame(147, (int) $this->connection->fetchOne('SELECT count(*) FROM taxonomy_terms'));
         self::assertSame(array_map(static fn (TermGroup $group): string => $group->value, TermGroup::cases()), array_keys(self::COUNTS));
 
         foreach (self::COUNTS as $group => $count) {

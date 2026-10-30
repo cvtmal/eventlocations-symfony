@@ -15,15 +15,20 @@ final class WixExport
     /** The columns #21 and #32 rely on; the file has more. */
     public const array COLUMNS = ['Name', 'Region', 'Kapazität', 'Ambiente', 'Vorstellungstext', 'Telefon', 'Website', 'Email', 'ID'];
 
+    /** #32 needs four more; #21 must not start requiring them. */
+    public const array OWNER_COLUMNS = [...self::COLUMNS, 'Typ', 'Preisniveau', 'Anzeigebild', 'Öffnungszeiten'];
+
     private const string BOM = "\u{FEFF}";
 
     /**
+     * @param list<string> $columns the columns the caller needs
+     *
      * @return \Generator<int, array<string, string>> the rows by column name, 1-based
      *
      * @throws InvalidWixExport on the first read: a shifted row would put values into the
      *                          wrong fields, so it fails the file
      */
-    public static function rows(string $path): \Generator
+    public static function rows(string $path, array $columns = self::COLUMNS): \Generator
     {
         $handle = is_file($path) && is_readable($path) ? fopen($path, 'r') : false;
         if (false === $handle) {
@@ -38,10 +43,10 @@ final class WixExport
             }
             $header = fgetcsv($handle, null, ',', '"', '');
             if (false === $header) {
-                throw InvalidWixExport::missingColumns(self::COLUMNS);
+                throw InvalidWixExport::missingColumns($columns);
             }
             $header = array_map(strval(...), $header);
-            $missing = array_values(array_diff(self::COLUMNS, $header));
+            $missing = array_values(array_diff($columns, $header));
             if ([] !== $missing) {
                 throw InvalidWixExport::missingColumns($missing);
             }

@@ -64,3 +64,10 @@ when@test:
         App\Tests\Support\Http\RecordingHttpCachePurger:
             public: true
         App\Venues\HttpCachePurger: '@App\Tests\Support\Http\RecordingHttpCachePurger'
+        # The transport of every HTTP client in tests (framework.yaml, when@test, #32 PD10).
+        App\Tests\Support\Http\WixImageResponses:
+            public: true
+        # WixPhotoCacheTest takes the real service, wired to wix.client and its retries.
+        App\Venues\WixPhotoCache:
+            autowire: true
+            public: true

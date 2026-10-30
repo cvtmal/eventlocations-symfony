@@ -147,6 +147,19 @@ final class LegacyVenueMapperTest extends TestCase
         self::assertSame(['the text contains something like an address or a phone number'], $venue->notes);
     }
 
+    public function test_an_ambience_summary_of_exactly_200_characters_passes(): void
+    {
+        $venue = self::map(['Vorstellungstext' => WixCsv::richText(), 'Ambiente' => str_repeat('a', 200)]);
+
+        self::assertSame(200, mb_strlen($venue->summary));
+    }
+
+    public function test_the_skip_rule_is_public_for_the_owner_export(): void
+    {
+        self::assertTrue(LegacyVenueMapper::isSkipped(WixCsv::row(['Region' => ' Liechtenstein '])));
+        self::assertFalse(LegacyVenueMapper::isSkipped(WixCsv::row()));
+    }
+
     /**
      * @return iterable<string, array{array<string, string>, string}>
      */
@@ -162,6 +175,7 @@ final class LegacyVenueMapperTest extends TestCase
         yield 'invalid rich text' => [['Vorstellungstext' => '{kein json'], 'rich text'];
         yield 'no text at all' => [['Vorstellungstext' => WixCsv::richText(), 'Ambiente' => ''], 'Ambiente'];
         yield 'long region' => [['Region' => str_repeat('a', 61)], 'Region'];
+        yield 'an Ambiente summary above 200 characters' => [['Vorstellungstext' => WixCsv::richText(), 'Ambiente' => str_repeat('a', 201)], 'summary from the Ambiente'];
     }
 
     /**

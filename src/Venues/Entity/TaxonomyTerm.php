@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * One term of a taxonomy group (Lage, Gebäudeart, …). Code-keyed vocabulary row (S4): the
  * primary key is the natural key (term_group, code), a documented exception to EntityId
- * like Geo\Entity\Canton. The 146 rows are seeded by the migration; the label is
+ * like Geo\Entity\Canton. The 147 rows are seeded by the migrations; the label is
  * `term.<group>.<code>` in the `venues` catalogue (see term()).
  *
  * `position` orders the terms of a group; `primary_position` orders the building chips

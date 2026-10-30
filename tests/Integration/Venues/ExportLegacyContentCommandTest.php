@@ -204,6 +204,41 @@ final class ExportLegacyContentCommandTest extends KernelTestCase
         self::assertContains($stale, $this->folders());
     }
 
+    public function test_a_shifted_row_writes_no_venues_directory(): void
+    {
+        $this->csv([WixCsv::row()]);
+        file_put_contents($this->csv, "\"nur\",\"zwei\"\n", \FILE_APPEND);
+
+        self::assertSame(Command::FAILURE, $this->export());
+
+        self::assertDirectoryDoesNotExist($this->content->path().'/venues');
+    }
+
+    public function test_a_row_with_an_unreadable_venue_yaml_is_not_also_stale(): void
+    {
+        $this->csv([WixCsv::row()]);
+        $this->export();
+        file_put_contents($this->file(self::key()), "name: Kaputt\n  tier: basic\n");
+
+        self::assertSame(Command::FAILURE, $this->export());
+
+        self::assertStringContainsString('venue.yaml cannot be read', $this->exporter->getDisplay());
+        self::assertStringNotContainsString('stale', $this->exporter->getDisplay());
+    }
+
+    public function test_the_old_folder_of_a_liechtenstein_row_gets_its_own_line(): void
+    {
+        $this->csv([WixCsv::row(), WixCsv::row(['Name' => 'Scheune Zwei', 'ID' => self::SECOND_ID])]);
+        $this->export();
+        $this->csv([WixCsv::row(), WixCsv::row(['Name' => 'Scheune Zwei', 'ID' => self::SECOND_ID, 'Region' => 'Liechtenstein'])]);
+
+        self::assertSame(Command::SUCCESS, $this->export());
+
+        $key = self::key('Scheune Zwei', self::SECOND_ID);
+        self::assertStringContainsString($key.': in the CSV but not in Switzerland; left alone', $this->exporter->getDisplay());
+        self::assertStringNotContainsString($key.': stale', $this->exporter->getDisplay());
+    }
+
     public function test_the_output_never_holds_a_contact_value(): void
     {
         $this->csv([

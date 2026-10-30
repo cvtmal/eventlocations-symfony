@@ -40,7 +40,7 @@ final class WixCsv
             'Kapazität' => '120 Personen',
             'Kapazität-Filter' => '120',
             'Ambiente' => 'Ländlich',
-            'Preisniveau' => '$$',
+            'Preisniveau' => 'Mittel',
             'Vorstellungstext' => self::richText(self::paragraph('Beschrieb:'), self::paragraph(self::DESCRIPTION), self::paragraph('Kapazität:'), self::paragraph('120 Gäste')),
             'Öffnungszeiten' => '',
             'Telefon' => self::PHONE,
@@ -130,6 +130,96 @@ final class WixCsv
     public static function image(string $caption): array
     {
         return ['type' => 'IMAGE', 'nodes' => [['type' => 'CAPTION', 'nodes' => [self::text($caption)]]]];
+    }
+
+    /**
+     * An Anzeigebild cell in Wix's shape, for an invented media id.
+     */
+    public static function cover(string $id, int $width = 1600, int $height = 1067): string
+    {
+        return \sprintf('wix:image://v1/%s/name.jpg#originWidth=%d&originHeight=%d', $id, $width, $height);
+    }
+
+    /**
+     * An IMAGE node of a Vorstellungstext in the real shape: the media id under
+     * imageData.image.src.id, the alt text under imageData.altText.
+     *
+     * @return array<string, mixed>
+     */
+    public static function photo(string $id, ?string $alt = null): array
+    {
+        $data = [
+            'containerData' => ['width' => ['size' => 'CONTENT'], 'alignment' => 'CENTER'],
+            'image' => ['src' => ['id' => $id], 'width' => 1600, 'height' => 1067],
+        ];
+        if (null !== $alt) {
+            $data['altText'] = $alt;
+        }
+
+        return ['type' => 'IMAGE', 'id' => substr(md5($id), 0, 5), 'nodes' => [], 'imageData' => $data];
+    }
+
+    /**
+     * A Vorstellungstext in the older form's labels (Einrichtung, Service, Essen / Trinken,
+     * Sperrstunde), with invented selections. $sections replaces a label's lines; null drops
+     * the label. A list of lines becomes a bulleted list, a string one paragraph. $images
+     * follow the description.
+     *
+     * @param array<string, list<string>|string|null> $sections
+     * @param list<array<string, mixed>>              $images
+     */
+    public static function olderForm(array $sections = [], array $images = []): string
+    {
+        return self::form($sections + [
+            'Kapazität für gesetztes Essen:' => '120 Personen',
+            'Kapazität für Stehempfang / Apéro:' => '150 Personen',
+            'Einrichtung:' => ['Tanzfläche', 'Garten', 'Räumlichkeiten für standesamtliche Hochzeiten', 'Kapelle'],
+            'Sperrstunde:' => '2 Uhr',
+            'Service:' => ['Fotograf', 'DJ'],
+            'Essen / Trinken:' => ['Vegetarisch', 'Vegan'],
+            'Sprachen die vom Personal gesprochen werden:' => 'Deutsch, Englisch',
+            'Nutzung:' => 'Exklusiv',
+        ], $images);
+    }
+
+    /**
+     * A Vorstellungstext in the newer form's labels (Infrastruktur, Zeremonie, Essen,
+     * Zusammenarbeit Dienstleister?, Party möglich?), with invented selections; as olderForm().
+     *
+     * @param array<string, list<string>|string|null> $sections
+     * @param list<array<string, mixed>>              $images
+     */
+    public static function newerForm(array $sections = [], array $images = []): string
+    {
+        return self::form($sections + [
+            'Nutzung:' => 'Hochzeit + Normalbetrieb',
+            'Kapazität für gesetztes Essen:' => '80 Personen',
+            'Kapazität für Stehempfang / Apéro:' => '100 Personen',
+            'Infrastruktur:' => ['Tanzfläche', 'Terrasse', 'Parkplätze'],
+            'Zeremonie:' => ['Zivile Trauung möglich', 'Freie Trauung möglich'],
+            'Essen:' => ['Glutenfrei', 'Kindermenü'],
+            'Zusammenarbeit Dienstleister?' => ['Weddingplanner', 'Trauredner'],
+            'Party möglich?' => 'Ja, bis 2 Uhr',
+            'Sprachen, die vom Personal gesprochen werden:' => 'Deutsch, Französisch',
+        ], $images);
+    }
+
+    /**
+     * @param array<string, list<string>|string|null> $sections
+     * @param list<array<string, mixed>>              $images
+     */
+    private static function form(array $sections, array $images): string
+    {
+        $nodes = [self::paragraph('Beschrieb:'), self::paragraph(self::DESCRIPTION), ...$images];
+        foreach ($sections as $label => $lines) {
+            if (null === $lines) {
+                continue;
+            }
+            $nodes[] = self::paragraph($label);
+            $nodes[] = \is_string($lines) ? self::paragraph($lines) : self::list(...$lines);
+        }
+
+        return self::richText(...$nodes);
     }
 
     /**

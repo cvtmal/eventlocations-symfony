@@ -58,4 +58,41 @@ final class WixRichTextTest extends TestCase
 
         WixRichText::paragraphs('{kein json');
     }
+
+    public function test_images_come_out_in_text_order_with_their_alt_text(): void
+    {
+        $json = WixCsv::richText(
+            WixCsv::photo('aaa_1~mv2.jpg', 'Saal'),
+            WixCsv::paragraph('Text'),
+            WixCsv::list('Punkt', ['type' => 'LIST_ITEM', 'nodes' => [WixCsv::photo('bbb_2~mv2.png')]]),
+            WixCsv::photo('ccc_3~mv2.jpg', "Garten\u{200B} "),
+            WixCsv::photo('ddd_4~mv2.jpg', '  '),
+        );
+
+        self::assertSame([
+            ['id' => 'aaa_1~mv2.jpg', 'alt' => 'Saal'],
+            ['id' => 'bbb_2~mv2.png', 'alt' => null],
+            ['id' => 'ccc_3~mv2.jpg', 'alt' => 'Garten'],
+            ['id' => 'ddd_4~mv2.jpg', 'alt' => null],
+        ], WixRichText::images($json));
+    }
+
+    public function test_an_alt_text_comes_out_composed(): void
+    {
+        $images = WixRichText::images(WixCsv::richText(WixCsv::photo('aaa_1~mv2.jpg', "Ku\u{0308}che")));
+
+        self::assertSame('Küche', $images[0]['alt']);
+    }
+
+    public function test_an_image_without_a_media_id_is_skipped(): void
+    {
+        $json = WixCsv::richText(['type' => 'IMAGE', 'nodes' => [], 'imageData' => ['image' => ['src' => []]]], WixCsv::photo('aaa_1~mv2.jpg'));
+
+        self::assertSame([['id' => 'aaa_1~mv2.jpg', 'alt' => null]], WixRichText::images($json));
+    }
+
+    public function test_images_do_not_change_the_paragraphs(): void
+    {
+        self::assertSame(['Text'], WixRichText::paragraphs(WixCsv::richText(WixCsv::photo('aaa_1~mv2.jpg', 'Saal'), WixCsv::paragraph('Text'))));
+    }
 }
