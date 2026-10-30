@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Fotos – Schloss Seeblick – Backoffice</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F6F5F2;font-family:'Sofia Sans',system-ui,sans-serif;color:#1B1B1B}
+a{color:#B03A50}a:hover{color:#8A2C3E}
+.btn{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;box-sizing:border-box;border-radius:8px;border:1px solid #D6D2CB;background:#FFFFFF;color:#1B1B1B;font:600 14px/1 'Sofia Sans',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#F1EFEB;color:#1B1B1B}
+.btn-primary{background:#1B1B1B;border-color:#1B1B1B;color:#FFFFFF}
+.btn-primary:hover{background:#3A3A3A;color:#FFFFFF}
+.btn-danger{color:#A3261D;border-color:#E9C3BF}
+.btn-ghost{border-color:transparent;background:transparent}
+.btn-sm{height:30px;padding:0 10px;font-size:13px}
+.btn-icon{width:36px;padding:0;justify-content:center}
+.btn-icon.btn-sm{width:30px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font:600 12px/1 'Sofia Sans',sans-serif;white-space:nowrap}
+.pill-green{background:#E3F3EA;color:#17603D}
+.pill-amber{background:#FBEFD5;color:#7A4E00}
+.pill-grey{background:#EEECE8;color:#4A4945}
+.pill-pink{background:#FFE4E9;color:#9E2F44}
+.pill-dark{background:#1B1B1B;color:#FFFFFF}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.card{background:#FFFFFF;border:1px solid #E7E4DF;border-radius:12px}
+.tab{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 2px;font-size:14px;font-weight:600;color:#66645F;text-decoration:none;border-bottom:2px solid transparent}
+.tab:hover{color:#1B1B1B}
+.tab-on{color:#1B1B1B;border-bottom-color:#1B1B1B}
+.muted{color:#66645F}
+.lbl{font-size:13px;font-weight:600}
+.input{height:38px;box-sizing:border-box;border:1px solid #D6D2CB;border-radius:8px;padding:0 12px;font:400 15px 'Sofia Sans',sans-serif;color:#1B1B1B;background:#FFFFFF;width:100%}
+textarea.input{height:auto;padding:10px 12px;line-height:22px;resize:vertical}
+.tile{display:flex;flex-direction:column;border-radius:10px;background:#FFFFFF;border:1px solid #E7E4DF;overflow:hidden;cursor:pointer;text-align:left;padding:0;font:inherit;color:inherit}
+.tile:hover{border-color:#B9B4AC}
+.bar{height:6px;border-radius:999px;background:#EEECE8;overflow:hidden}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 1100px; background: #F6F5F2">
+  <div style="flex: 1 1 248px; max-width: 100%; background: #1B1B1B">
+    <dc-import name="Sidebar" active="locations" hint-size="248px,1000px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 60px; padding: 0 32px; background: #FFFFFF; font-size: 14px">
+      <span class="muted">CMS</span><span class="muted" aria-hidden="true">/</span>
+      <a href="Locations.dc.html" class="muted" style="text-decoration: none">Locations</a><span class="muted" aria-hidden="true">/</span>
+      <a href="LocationEdit.dc.html" class="muted" style="text-decoration: none">Schloss Seeblick</a><span class="muted" aria-hidden="true">/</span>
+      <span style="font-weight: 600">Fotos</span>
+    </header>
+    <div style="background: #FFFFFF; border-bottom: 1px solid #E7E4DF; padding: 16px 32px 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <h1 style="margin: 0; font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: -0.01em">Schloss Seeblick</h1>
+        <span class="pill pill-pink">Beliebte Location</span>
+        <span class="pill pill-green"><span class="dot"></span>Publiziert</span>
+      </div>
+      <nav aria-label="Bereiche der Location" style="display: flex; flex-wrap: wrap; gap: 28px">
+        <a class="tab" href="LocationEdit.dc.html">Übersicht</a>
+        <a class="tab tab-on" href="#" aria-current="page">Fotos <span class="pill pill-grey">18</span></a>
+        <a class="tab" href="#">Räume <span class="pill pill-grey">4</span></a>
+        <a class="tab" href="#">Dokumente <span class="pill pill-grey">2</span></a>
+        <a class="tab" href="#">Bewertungen <span class="pill pill-grey">12</span></a>
+      </nav>
+    </div>
+
+    <main style="padding: 24px 32px 48px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; box-sizing: border-box; width: 100%">
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px; border: 2px dashed #CFCAC2; border-radius: 12px; background: #FBFAF8; text-align: center">
+          <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#66645F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          <span style="font-size: 15px"><strong style="font-weight: 600">Fotos hierher ziehen</strong> oder <label for="upload" style="color: #B03A50; font-weight: 600; text-decoration: underline; cursor: pointer">auswählen</label></span>
+          <input id="upload" type="file" multiple accept="image/*" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+          <span class="muted" style="font-size: 13px">JPEG, PNG, WebP oder HEIC, bis 25 MB. Die Fotos werden einzeln hochgeladen und sofort in alle Grössen umgerechnet.</span>
+        </div>
+
+        <section class="card" aria-label="Uploads" style="padding: 14px 18px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 14px">
+            <span style="flex: 0 0 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">seesaal-abend.jpg</span>
+            <div class="bar" style="flex: 1" role="progressbar" aria-valuenow="64" aria-valuemin="0" aria-valuemax="100" aria-label="seesaal-abend.jpg"><div style="width: 64%; height: 100%; background: #1B1B1B"></div></div>
+            <span class="muted" style="flex: 0 0 120px; text-align: right">Varianten … 64 %</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 14px">
+            <span style="flex: 0 0 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">park-drohne.jpg</span>
+            <div class="bar" style="flex: 1"></div>
+            <span class="muted" style="flex: 0 0 120px; text-align: right">wartet</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; font-size: 14px">
+            <span style="flex: 0 0 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">menu.pdf</span>
+            <span style="flex: 1; color: #A3261D; font-weight: 600; font-size: 13px">Keine lesbare Bilddatei.</span>
+            <button type="button" class="btn btn-ghost btn-sm">Ausblenden</button>
+          </div>
+        </section>
+
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+          <h2 style="margin: 0; font-size: 17px; font-weight: 700">Galerie <span class="muted" style="font-weight: 400">· 14 Fotos</span></h2>
+          <span class="muted" style="font-size: 13px">Ziehen zum Sortieren, oder Foto wählen und ↑ ↓ benutzen. Das erste Foto ist das Titelbild.</span>
+        </div>
+        <ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px">
+          <sc-for list="{{photos}}" as="p" hint-placeholder-count="8">
+            <li>
+              <button type="button" class="tile" style="{{p.ring}}" aria-pressed="{{p.selected}}" onClick="{{p.pick}}">
+                <svg aria-hidden="true" viewBox="0 0 160 107" style="display: block; width: 100%; height: auto"><rect width="160" height="107" fill="{{p.color}}"/></svg>
+                <span style="display: flex; align-items: center; gap: 6px; padding: 8px 10px; font-size: 13px; min-height: 22px">
+                  <span style="font-weight: 700; min-width: 18px">{{p.pos}}</span>
+                  <sc-if value="{{p.cover}}" hint-placeholder-val="{{ false }}"><span class="pill pill-dark">Titelbild</span></sc-if>
+                  <sc-if value="{{p.noAlt}}" hint-placeholder-val="{{ false }}"><span class="pill pill-amber">Alt-Text fehlt</span></sc-if>
+                  <sc-if value="{{p.room}}" hint-placeholder-val="{{ false }}"><span class="pill pill-grey">{{p.room}}</span></sc-if>
+                </span>
+              </button>
+            </li>
+          </sc-for>
+        </ol>
+      </div>
+
+      <aside aria-label="Ausgewähltes Foto" class="card" style="flex: 1 1 300px; max-width: 100%; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 700">Foto {{sel.pos}}</h2>
+          <div style="display: flex; gap: 4px">
+            <button type="button" class="btn btn-icon btn-sm" aria-label="Nach vorne schieben" onClick="{{moveUp}}">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+            </button>
+            <button type="button" class="btn btn-icon btn-sm" aria-label="Nach hinten schieben" onClick="{{moveDown}}">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+            </button>
+          </div>
+        </div>
+        <svg aria-hidden="true" viewBox="0 0 160 107" style="display: block; width: 100%; height: auto; border-radius: 8px"><rect width="160" height="107" fill="{{sel.color}}"/></svg>
+        <span class="muted" style="font-size: 13px">2400 × 1600 px · AVIF, WebP, JPEG · 360–1920 px</span>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <label class="lbl" for="alt">Alt-Text (Deutsch)</label>
+          <textarea id="alt" class="input" rows="3" placeholder="Was ist auf dem Foto zu sehen?">{{sel.alt}}</textarea>
+          <span class="muted" style="font-size: 12px">Ohne Text: «Schloss Seeblick, Bild {{sel.pos}}».</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <label class="lbl" for="room">Zugeordnet</label>
+          <select id="room" class="input"><option>Location (Galerie)</option><option>Seesaal</option><option>Rittersaal</option><option>Orangerie</option><option>Schlosskeller</option></select>
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 8px; padding-top: 4px">
+          <button type="button" class="btn btn-danger">Entfernen</button>
+          <button type="button" class="btn btn-primary">Speichern</button>
+        </div>
+      </aside>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selected: 2,
+      order: [
+        ['#8a7f6b', 'Schloss Seeblick von der Seeseite', ''],
+        ['#6f8794', 'Bootssteg im Abendlicht', ''],
+        ['#a08a72', '', ''],
+        ['#5f7f73', 'Park mit alten Platanen', ''],
+        ['#7a6a62', 'Seesaal mit Banketttischen', 'Seesaal'],
+        ['#8c7a5e', '', 'Seesaal'],
+        ['#6e6e78', 'Rittersaal', 'Rittersaal'],
+        ['#9a8f80', 'Orangerie mit Glasdach', 'Orangerie'],
+        ['#5d6b55', 'Apéro auf der Terrasse', ''],
+        ['#84776d', '', ''],
+        ['#6b7a86', 'Treppe zum Eingang', ''],
+        ['#a38c7b', 'Schlosskeller', 'Schlosskeller'],
+      ],
+    };
+  }
+  move(delta) {
+    const order = this.state.order.slice();
+    const from = this.state.selected;
+    const to = from + delta;
+    if (to < 0 || to >= order.length) return;
+    const [item] = order.splice(from, 1);
+    order.splice(to, 0, item);
+    this.setState({ order, selected: to });
+  }
+  renderVals() {
+    const sel = this.state.selected;
+    const photos = this.state.order.map(([color, alt, room], idx) => ({
+      color, room,
+      pos: idx + 1,
+      cover: idx === 0,
+      noAlt: alt === '',
+      selected: idx === sel ? 'true' : 'false',
+      ring: idx === sel ? 'border-color: #1B1B1B; box-shadow: 0 0 0 2px #1B1B1B' : '',
+      pick: () => this.setState({ selected: idx }),
+    }));
+    const s = this.state.order[sel];
+    return {
+      photos,
+      sel: { pos: sel + 1, color: s[0], alt: s[1] },
+      moveUp: () => this.move(-1),
+      moveDown: () => this.move(1),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,8 +1,10 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media and #6 search-query done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media and #6 search-query done; owner answered Q1, Q2, Q4–Q11; back office (CMS #22–#26, CRM #27–#30) added) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
 
-We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award, no back office.
+We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
+
+Behind it sits a small **back office** for our own staff at `/admin` (S12): a **CMS** to manage venues, photos, rooms, documents and landing-page texts, and a HubSpot-style **CRM** for the venue operators we sell tiers to and the couples who send inquiries. Both are lightweight and minimalist, and open for extensions. The CMS goes live with the site; the CRM follows after launch (Q8).
 
 This file turns that scope into `/rpi` cycles and sets the order to run them in. One cycle = one slug = one pass through Research → Plan → Implement → Review. A cycle ends with `make lint` and `make test` green and exactly one commit. The cycles are grouped in **waves**: cycles in the same wave depend only on earlier waves, so they can run in parallel sessions.
 
@@ -24,6 +26,7 @@ Artifacts land in `.rpi-tracking/{research,plans,changes,reviews}/<date>/<slug>-
 - Every full cycle ends with exactly one commit, created when the owner says "commit". The commit message is the cycle slug, and the commit is pushed to `main` (see **Running cycles in parallel** for the rebase step). If a cycle needs rework, the rework goes in a new commit on top.
 - Never copy eventlokale's texts, photos, logos, icons or font files into this repository, the demo data or the tests. We copy layout, structure, interaction and colour values. Reference screenshots stay in `docs/reference/` as documentation only. The one exception is the venue content from the legacy import (#21, Q4). It lives in `CONTENT_ROOT` / `MEDIA_ROOT` outside the repository and is never committed.
 - Every UI cycle compares its result with the matching screenshot in `docs/reference/` at 390 px and 1440 px width, using Claude in Chrome against the local app. The live eventlokale page may be visited for behaviour questions: slowly, at most about 20 requests per session (Cloudflare rate-limits at ~35 rapid requests), never with forms submitted.
+- Every back-office cycle (#22–#30) compares its screens with the design reference in `docs/reference/admin/` (S12) at 1440 px, and checks that they stay usable at 390 px. The reference is the target; eventlokale is not.
 - The app must stay reachable locally at `http://localhost:${NGINX_HOST_PORT}` after every cycle, with demo data loaded (`make db-fresh && make seed`).
 
 ## Running cycles in parallel
@@ -47,7 +50,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 
    | File | Owner | Others may |
    |---|---|---|
-   | `tests/Architecture/ArchitectureRules.php` (module table) | #0 declares **all** modules of this file up front | nothing; a needed change goes back to the owner as a design change |
+   | `tests/Architecture/ArchitectureRules.php` (module table) | #0 declares **all** modules of this file up front | nothing; a needed change goes back to the owner as a design change. S12 is such a change: #22 adds `Admin`, `Cms` and `Crm` (next row) |
    | `templates/base.html.twig`, `templates/layout/*` | #1 | fill the blocks #1 provides |
    | `assets/styles/app.scss` (list of partial imports) | #1 | append one `@use` line for their own partial |
    | `config/packages/translation.yaml`, `src/Shared/Translation/*` | #2 | nothing |
@@ -55,6 +58,13 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
    | `src/Search/ReadModel/SearchCriteria.php` and its URL codec | #6 | nothing; filter UIs (#10–#12) only render it |
    | `templates/search/_filter_bar.html.twig` | #7 | fill their own `{% include %}` slot |
    | `CLAUDE.md` | #0 | append to their module's section |
+   | `tests/Architecture/ArchitectureRules.php` `MODULES` and `ModuleBoundariesTest` | #22 adds `Admin`, `Cms` and `Crm` once (the design change of S12) | nothing |
+   | `config/packages/security.yaml` | #22 | nothing; guard routes with `#[IsGranted]` |
+   | `templates/admin/base.html.twig`, `templates/admin/layout/*`, `assets/styles/admin.scss` (list of partial imports) | #22 | fill the blocks; append one `@use` line for their own partial |
+   | `templates/admin/components/*`, `admin-ui/src/components/*`, `templates/admin/form/theme.html.twig` | #23 | use them; a missing variant goes into their own module folder first |
+   | `admin-ui/src/islands.js` (island registry), `admin-ui/src/timeline/types.js` (timeline renderers) | #22 / #27 | append one line per island or activity type |
+   | `admin-ui/package.json`, `package-lock.json` | #22 | add a dependency only with a one-line reason in the Outcome; on a rebase conflict, take `main`'s lock file and run `make admin-install` again |
+   | `translations/admin+intl-icu.de.yaml` (shell strings) | #22 | nothing; CMS strings go to `cms`, CRM strings to `crm` |
 
 6. **Concurrency.** Three to four sessions at a time is the sweet spot. More than that and the rebase step and the owner's reviews become the bottleneck.
 
@@ -81,9 +91,18 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 16 | `seo-foundation` | W6 | SEO-1–SEO-3, SEO-5, SEC-1 | 7, 8 | — | — | Research |
 | 17 | `seo-landing-pages` | W6 | SEO-4, LP-5 | 10, 16 | `landing_pages` (if needed) | — | Research |
 | 18 | `legal-pages` | W6 | LEG-1, LEG-2 | 1, 13, 14 | — | ~~Q5~~ | Plan |
-| 19 | `performance-caching` | W7 | PERF-1–PERF-3 | 10–17 | — | — | Research |
-| 20 | `prod-deploy` | W7 | OP-2, OP-3 | 19, 21 | — | ~~Q1~~, ~~Q2~~ (Hostpoint + Neon) | Research |
+| 19 | `performance-caching` | W7 | PERF-1–PERF-3, ADM-6 | 10–17, 24, 25 | — | — | Research |
+| 20 | `prod-deploy` | W8 | OP-2, OP-3, OP-4 | 19, 21, 26 | — | ~~Q1~~, ~~Q2~~ (Hostpoint + Neon) | Research |
 | 21 | `legacy-data-import` | W5 | DATA-3 | 3, 9 | — | ~~Q4~~ (yes) | Research |
+| 22 | `admin-foundation` | W4 | ADM-1–ADM-6, ADM-8 | 1, 2 | `admin_users`, `admin_audit_log` | ~~Q9~~ | Research |
+| 23 | `admin-ui-kit` | W5 | ADM-4, ADM-7 | 22 | — | ~~Q11~~ | Research |
+| 24 | `cms-venues` | W6 | CMS-1–CMS-4, CMS-9–CMS-11 | 8, 9, 23 | `venues.cms_edited_at` | — | Research |
+| 25 | `cms-venue-media` | W6 | CMS-5–CMS-8 | 9, 23 | — | — | Research |
+| 26 | `cms-pages` | W7 | CMS-12 | 17, 23 | `content_blocks` (+ columns on #17's `landing_pages`, if it exists) | — | Research |
+| 27 | `crm-foundation` | W9 | CRM-1–CRM-6, CRM-11 | 20, 24 | `crm_companies`, `crm_contacts`, `crm_company_venues`, `crm_activity_*`, `crm_activities`, `crm_tasks` | ~~Q8~~, ~~Q10~~ | Research |
+| 28 | `crm-deals` | W10 | CRM-7, CRM-8 | 27 | `crm_deal_stages`, `crm_deals`, `crm_deal_contacts`, `crm_activity_deals` | — | Research |
+| 29 | `crm-inquiries` | W10 | CRM-9, CRM-11 (couples) | 14, 27 | `crm_inquiry_links` | — | Research |
+| 30 | `crm-email` | W10 | CRM-10 | 27 | `crm_email_templates`, `crm_emails` | — | Research |
 
 ### Waves at a glance
 
@@ -92,22 +111,31 @@ W0  #0 project-skeleton
 W1  #1 design-system  ‖  #2 i18n-foundation  ‖  #3 geo-reference-data
 W2  #4 venue-schema                                   (#1 may still be running)
 W3  #5 venue-media  ‖  #6 search-query                (#1 may still be running)
-W4  #7 listing-page  ‖  #8 venue-detail-page  ‖  #9 venue-content-import
-W5  #10 filter-region ‖ #11 filter-guests ‖ #12 filter-more ‖ #13 merkliste ‖ #14 inquiry-form ‖ #15 venue-map ‖ #21 legacy-data-import
+W4  #7 listing-page  ‖  #8 venue-detail-page  ‖  #9 venue-content-import  ‖  #22 admin-foundation
+W5  #10 filter-region ‖ #11 filter-guests ‖ #12 filter-more ‖ #13 merkliste ‖ #14 inquiry-form ‖ #15 venue-map ‖ #21 legacy-data-import ‖ #23 admin-ui-kit
 W6  #16 seo-foundation  ‖  #18 legal-pages   →   #17 seo-landing-pages (needs #16)
-W7  #19 performance-caching  →  #20 prod-deploy
+    #24 cms-venues  ‖  #25 cms-venue-media                (back office, parallel to the SEO lanes)
+W7  #19 performance-caching  ‖  #26 cms-pages
+W8  #20 prod-deploy                                       (launch: site + CMS)
+W9  #27 crm-foundation                                    (after launch)
+W10 #28 crm-deals  ‖  #29 crm-inquiries  ‖  #30 crm-email
 ```
 
-**Critical path:** #0 → #2/#3 → #4 → #6 → #7 → #10 → #17 → #19 → #20. #1 runs alongside W1–W3 and must be done before W4. #9 and #21 are off the critical path until #20, which needs the real content; demo data from #4/#5 carries every UI cycle.
+W5 holds eight cycles; with three to four lanes it runs in two or three rounds. Start #14 and #21 early in W5, because #29 and #20 wait for them.
+
+**Critical path:** #0 → #2/#3 → #4 → #6 → #7 → #10 → #17 → #19 → #20. #1 runs alongside W1–W3 and must be done before W4. #9 and #21 are off the critical path until #20, which needs the real content; demo data from #4/#5 carries every UI cycle. The back-office path #22 → #23 → #24/#25 → #26 runs beside it and joins at #20; #26 waits for #17, so it is as long as the SEO path.
 
 **Milestones.**
 - After #8: you can browse the listing and detail pages locally with demo data. This is the first owner review of look and feel.
 - After #21: the local app runs on the real ~758 venues. This is the second owner review, now with real photos and texts.
 - After #15: the MVP is feature-complete (all filters, Merkliste, inquiry, map).
-- After #19: launch-ready (SEO, legal pages, performance budgets met).
-- After #20: live on hochzeitslocation.ch.
+- After #25: the owner can edit every venue field, photo, room and document in the CMS locally. This is the owner review of the back office.
+- After #19 and #26: launch-ready (SEO, legal pages, performance budgets met, CMS complete).
+- After #20: live on hochzeitslocation.ch, and the database is the content master (S8).
+- After #27: the CRM is live, with companies built from the venues.
+- After #28–#30: the CRM is complete (pipeline, inquiries, e-mail).
 
-**What can move.** #9 can run any time after #5. #21 can run any time after #9, and the earlier the better, because #17's landing-page thresholds and #19's measurements should use the real data. #15 and #18 have nothing depending on them except #19 and can slip. #11 is small and can be folded into #12 if a lane is short of work.
+**What can move.** #9 can run any time after #5. #21 can run any time after #9, and the earlier the better, because #17's landing-page thresholds and #19's measurements should use the real data. #15 and #18 have nothing depending on them except #19 and can slip. #11 is small and can be folded into #12 if a lane is short of work. #22 needs only W1, so it can start before the other W4 cycles. #23 can start as soon as #22 is done, without waiting for W4. #27's research and plan may run during W8, but it is merged only after #20 is `Complete` (Q8). #30 needs #20's mail setup (SPF/DKIM) only for its production check; it can be built before that.
 
 ## Owner gates
 
@@ -122,6 +150,10 @@ Each gate has a default, so no cycle is blocked as a whole. The owner answers he
 | ~~Q5~~ | Legal entity for Impressum and Datenschutz? | **Pick n Roll GmbH**, Sonneggstrasse 61, 8006 Zürich, UID-Nr.: CHE-134.034.546 MWST. Contact email **hallo@hochzeitslocation.ch**. | #18 uses this verbatim; no phone number. The mailbox does not exist yet: #20 creates it on Hostpoint and proves it receives mail before go-live. #18 drafts the Datenschutz text from the processors in LEG-1 for the owner to review. |
 | ~~Q6~~ | Where do inquiries go in production? | **Directly to the venue by email.** Later they also go to our own CMS/CRM, built later. | IQ-2 sends to the venue's inquiry address in production. `INQUIRY_RECIPIENT_OVERRIDE` is for dev and staging only (Mailpit). Every inquiry is stored in `inquiries` with its full payload and mail status, so the future CRM can read the history. |
 | ~~Q7~~ | Order of the paid tiers? | **As observed on eventlokale.** | Beliebte Location → Empfehlung → Top Premium → Premium → no badge (S6). |
+| ~~Q8~~ | Are the CMS and the CRM live at launch? | **The CMS before launch, the CRM after.** | #22–#26 come before #20, which deploys them. From then on the database is the content master (S8). #27–#30 form W9–W10 after #20 and deploy themselves through #20's workflow. The CRM backfills the inquiries stored since launch (IQ-1). |
+| ~~Q9~~ | Who logs in to the back office? | **Only our staff.** | No venue self-service (it is a proposal). Accounts are created by a console command, there are two roles (`admin`, `editor`), and 2FA is required (S12). |
+| ~~Q10~~ | Which HubSpot concepts go into the CRM? | **Companies, contacts, timeline with notes, calls and tasks; deals pipeline; inquiries → contacts; sending e-mails.** | #27 (base), #28 (deals), #29 (inquiries), #30 (e-mail). Custom properties, inbox sync and reporting are proposals. |
+| ~~Q11~~ | Visual design of the back office? | **A design reference made with Claude's design tool in the planning session, reviewed by the owner.** | Lives in `docs/reference/admin/` (S12). #22 and #23 build the tokens, the shell and the components from it, and every back-office cycle compares against it. |
 
 ## Settled decisions
 
@@ -131,7 +163,8 @@ These are settled now so that parallel cycles do not each decide them differentl
 
 - **Runtime:** Symfony 7.4 LTS on PHP 8.5, PostgreSQL 18, Doctrine ORM 3 / DBAL 4, Twig, Symfony Mailer, AssetMapper, nginx + php-fpm in Docker Compose (`php`, `nginx`, `database`, `mailpit`).
 - **Same versions as `../songrequest`,** so its `CLAUDE.md`, `.claude/rules/*`, `Makefile`, `compose.yaml`, CI workflow and phpat tests can be copied and trimmed rather than invented.
-- **No Node at runtime and no JS framework or library:** no Stimulus, Turbo, Swiper or jQuery. Build-time tools in a container are fine, e.g. the dart-sass standalone binary through `symfonycasts/sass-bundle`, or Lighthouse CLI for checks.
+- **No Node at runtime and no JS framework or library on the public site:** no Stimulus, Turbo, Swiper or jQuery. Build-time tools in a container are fine, e.g. the dart-sass standalone binary through `symfonycasts/sass-bundle`, or Lighthouse CLI for checks.
+- **The one exception is the back office** (`/admin`, S12): Vue 3 islands, compiled at build time by Vite in a Node tools container. Node never runs on the server, and no public page loads Vue.
 - **PostgreSQL over MariaDB.** No requirement here needs MariaDB, and Postgres gives us:
   - the owner's existing toolchain and rules (songrequest, DEP);
   - `pg_trgm` + `unaccent` for "Name eingeben" and the Ort/PLZ autocomplete, with typo and umlaut tolerance ("Zuerich", "Zurich" → Zürich);
@@ -155,8 +188,12 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 | `Favorites` | Merkliste cookie codec, toggle endpoint, `/merkliste` page | Search, Venues |
 | `Inquiries` | inquiry form, entity, mails | Venues |
 | `Seo` | sitemap, robots, JSON-LD builders, landing page definitions | Search, Venues, Geo |
+| `Admin` | back-office shell: staff users, login + 2FA, layout, dashboard, extension points, audit log, Vue island loader (S12) | — |
+| `Cms` | back-office screens and read models for venues, rooms, photos, documents, landing-page texts, content blocks | Admin, Venues, Geo, Media |
+| `Crm` | companies, contacts, timeline, tasks, deals, inquiry inbox, e-mail (S13) | Admin, Venues, Geo, Inquiries |
 
-- **Layers:** `Controller`, `Command`, `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console`, `Twig`, `Mailer`, `EventListener`.
+- No public module depends on `Admin`, `Cms` or `Crm`. `Cms` and `Crm` do not depend on each other: a CRM panel on a CMS page goes through an `Admin` extension point (S12).
+- **Layers:** `Controller`, `Command`, `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console`, `Twig`, `Mailer`, `EventListener`, and from #22 `Extension` (a module's implementations of the `Admin` extension points).
 - **Reads:** public pages go controller → `ReadModel` with hand-written SQL, and never hydrate entities for rendering. **Writes:** controller or console command → command → `command.bus` → handler. There is no query bus.
 - **Enforcement:** phpat inside PHPStan **level 8** (greenfield), PHP-CS-Fixer `@Symfony` + `@Symfony:risky`. Test suites are `Unit`, `Integration`, `Application` and `Architecture`, with Foundry fixtures. The validation strategy is songrequest's three layers (form → handler → DB constraint). Migrations are hand-written SQL only, each with a `down()`.
 
@@ -220,11 +257,13 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 - **`/merkliste` page:** it reads the cookie server-side and sends `Cache-Control: private, no-store` and `noindex`.
 - **Privacy:** this is a functional cookie, described in the Datenschutz page. There is no consent banner, which is the owner's decision from the earlier attempt.
 
-### S8. Content without a CMS
+### S8. Content files, then the CMS
 
-- **Real content** lives in files: one YAML per venue plus a photo folder, kept outside `public/` (default `content/`, configurable via `CONTENT_ROOT`). `app:venues:import` (#9) imports it idempotently.
+- **Until the CMS (#24/#25):** real content lives in files, one YAML per venue plus a photo folder, kept outside `public/` (default `content/`, configurable via `CONTENT_ROOT`). `app:venues:import` (#9) imports it idempotently.
 - **Dev and test** use Foundry: a `DemoStory` with about 60 fictional venues across all 26 cantons and all tiers, with generated placeholder photos (#4/#5).
-- **Production content** is the legacy import (#21, Q4). It turns the Laravel project's ~758 venues into content folders in `CONTENT_ROOT`, and #9 imports them like any other content. New venues later go through the same folder format until the CMS exists.
+- **Production content** starts as the legacy import (#21, Q4). It turns the Laravel project's ~758 venues into content folders in `CONTENT_ROOT`, and #9 imports them like any other content.
+- **From the CMS on, the database is the master.** Venues are created and edited in the CMS. The file import stays as a bulk path for onboarding (new keys) and for re-imports. It never silently overwrites a CMS edit: a venue with `cms_edited_at` later than its last import is skipped and reported, unless `--overwrite-cms-edits` is given (#24). Database and `MEDIA_ROOT` backups are therefore the content backups (#20).
+- **One write path:** the import (#9) and the CMS (#24/#25) dispatch the same `Venues` commands. Slug history, room summaries, the photo pipeline (S9) and the cache purge live once, in Venues handlers.
 - No eventlokale content goes into the repo; see **Important**.
 
 ### S9. Images
@@ -237,7 +276,8 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 
 - Public GET pages start no session and set no cookies; an application test asserts this.
 - They send `Cache-Control: public, s-maxage=600, stale-while-revalidate=86400` (#19 tunes the values).
-- #19 picks the reverse proxy: Symfony `HttpCache`, which works on shared hosting, or Cloudflare. #9's import purges it.
+- #19 picks the reverse proxy: Symfony `HttpCache`, which works on shared hosting, or Cloudflare. #9's import purges it, and so does every CMS write that changes a public page (#24–#26).
+- `/admin` is the only path with a session or cookies. It sends `Cache-Control: private, no-store` and `X-Robots-Tag: noindex, nofollow`, and the reverse proxy never stores it.
 
 ### S11. Budgets and quality gates
 
@@ -255,6 +295,44 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
   - `make lighthouse URL=…` (added in #1) on the pages it touched;
   - a keyboard-only walkthrough;
   - the W3C validator on the rendered HTML.
+- **Every back-office UI cycle instead:**
+  - the comparison with `docs/reference/admin/` at 1440 px, and a check that every screen it touched is usable at 390 px;
+  - a keyboard-only walkthrough, and `make lighthouse URL=…` with an Accessibility score ≥ 95 on one screen it touched (logged in; #22 makes Lighthouse able to log in);
+  - `make admin-lint` and `make admin-test`;
+  - the ADM-8 JS budget.
+
+### S12. Back office (`/admin`)
+
+- **Users:** staff only (Q9). There is no sign-up. `app:admin:create-user <email> --role=admin|editor` creates an account, and `app:admin:reset-2fa <email>` resets 2FA. `admin` may do everything, including users; `editor` may use the CMS and the CRM but not users or deletions of companies and contacts. A role check is `#[IsGranted]` on the controller, never in Twig alone.
+- **Security:** a firewall `^/admin` only, so public pages stay without a session (S10). It has form login, `login_throttling` (5 attempts per 15 min), TOTP 2FA required for every user (`scheb/2fa-bundle` + `scheb/2fa-totp`; research may pick an alternative), a session cookie with `SameSite=Strict`, `Secure` and `HttpOnly`, a 2-hour idle timeout, CSRF on every form and on every JSON write (a header token), and the S10 headers. The TOTP secret is encrypted at rest with a key from the environment.
+- **Routes:** `/admin/…`, unlocalized (`LocalizedRoutes::UNLOCALIZED`), German UI only. There is one catalogue domain per module: `admin` (shell), `cms`, `crm`. Content forms show one tab per enabled locale (only `de` now), so a later language adds a tab without rework (S4).
+- **Rendering:** server pages first, with Vue islands only where interaction pays off. A page is Twig plus Symfony Forms with POST → redirect → GET, like the rest of the app. A **Vue 3 island** is mounted on `<div data-island="name" data-props='{…}'>` by one loader entry, which lazy-loads the island's chunk. There is no SPA, no client router and no global store. Islands talk to JSON endpoints under `/admin/api/…`, which are ordinary controllers that read through read models and write through commands. The planned islands are the photo manager (#25), the room editor (#25), the global search / command palette (#23), the timeline composer (#27), the pipeline board (#28) and the e-mail composer (#30). Everything else is a server page, and a new island needs a reason in its research.
+- **Toolchain:** `admin-ui/` at the repository root is a Vite project: plain JavaScript with `<script setup>` single-file components, and no TypeScript (GEN-2's spirit). Vitest + `@vue/test-utils`, ESLint. A `node` tools service in Compose (`profiles: [tools]`, like `lighthouse`) runs `make admin-install`, `make admin-build`, `make admin-watch`, `make admin-test` and `make admin-lint`. The build writes `public/admin-build/` (git-ignored) with Vite's `manifest.json`, and a Twig function `admin_island_assets()` reads the manifest. `make test` builds it first, as it does Sass, and `make lint` includes `admin-lint`. CI runs both. Production gets the built files from the deploy workflow, never from Node on the server (#20).
+- **Styles:** one Sass root `assets/styles/admin.scss` (compiled by the existing sass-bundle) with its own tokens (`--a-*`) from the design reference, the shared Sofia Sans files and the Lucide sprite. Twig pages and Vue components use the same classes; SFCs have no `<style>` blocks, so there is one CSS system. CSP-safe: no inline scripts or `style` attributes in Twig, and Vue's runtime-only build (templates are precompiled, so there is no `unsafe-eval`).
+- **Reads and writes:** as S2. Admin list and edit screens read through `Cms\ReadModel` / `Crm\ReadModel` (DBAL view objects). An edit form is filled from a read model into a form data class, and submitting it dispatches a command. Venue commands live in `Venues` (S8, one write path). Each edit form carries the `updated_at` it was loaded with, and the handler rejects a stale save with a `StaleEdit` domain exception ("Diese Location wurde inzwischen geändert"). This is optimistic locking without a version column.
+- **Audit log:** a `command.bus` middleware (in `Admin`) writes `admin_audit_log` (actor, command, subject type and id, changed fields, time) for every command that implements `Shared\Messenger\AuditableCommand`. Public modules implement that Shared interface and never see `Admin`. The CRM timeline (#27) shows the audit entries of a company's venues.
+- **Extension points** (the "open for extensions" part; interfaces in `Admin\Extension`, implemented in a module's `Extension` layer, autoconfigured as tagged services, ordered by a priority and filtered by role). A new back-office feature plugs in here, without editing the shell:
+  - `NavigationItem`: an entry in the sidebar (section, label, icon, route, badge count);
+  - `DashboardWidget`: a card on `/admin` (title, Twig template, size);
+  - `RecordTab`: a tab on a record page (`venue`, `company`, `contact`, `deal`), e.g. #25's Fotos/Räume/Dokumente on the venue;
+  - `RecordPanel`: a side panel on a record page, e.g. #27's "CRM" panel on the CMS venue page;
+  - `SearchProvider`: results for the global search (venues, companies, contacts, deals);
+  - `TimelineActivityType` (from #27): a kind of timeline entry with its renderer.
+- **Design reference:** `docs/reference/admin/` holds the design from the planning session (Q11): the canvas source (`*.dc.html`, `canvas.json`), a `README.md` with the screen list, the `--a-*` token table and the link to the live, clickable design (https://claude.ai/artifact/LDRuCKBiQoQkUXNAG7vEtY). At its start, #22 adds a 1440 px screenshot per screen. Its look: calm, light work surfaces (a dark theme is a proposal) with the brand pink as the one accent; Sofia Sans; a HubSpot-like structure of a left sidebar, list views with filters in the query string, and record pages with properties on the left, the timeline or content in the middle and associations on the right. #22 and #23 turn it into tokens and components. Deviations are recorded in their Outcomes.
+- **Uploads:** one file per request, so a slow host never times out on a batch. The photo manager uploads sequentially with progress. Photos are processed synchronously with #5's generator at upload time (S9: at import time, never on request). The limits are 25 MB per photo and 15 MB per PDF, and #20 sets PHP's `upload_max_filesize`/`post_max_size` to match.
+- **Not in the back office:** venue self-service, public accounts, a WYSIWYG page builder, custom fields, a separate admin domain (all proposals).
+
+### S13. CRM model (HubSpot, minimal)
+
+- **Objects:** **companies** (the venue operators we sell to; a company has 0..n venues through `crm_company_venues`), **contacts** (people; 0..1 company; a `kind` of `venue_contact`, `couple` or `other`; e-mail unique when present, case-insensitively), **deals** (#28) and **tasks**. There are no leads, tickets, products or quotes.
+- **Lifecycle:** a company has a `stage` of `prospect`, `customer` or `former_customer`, derived from its deals once #28 exists and set by hand before that. Contacts have no lifecycle.
+- **Timeline:** one `crm_activities` table (type, `occurred_at`, actor, a short title, a body, and a JSONB `payload` per type), linked to objects through one join table per object (`crm_activity_companies`, `crm_activity_contacts`, and later `crm_activity_deals`). Types are code-keyed rows in `crm_activity_types` (`note`, `call`, `meeting`, `email_logged` in #27; `inquiry` in #29; `email_sent` in #30; `deal_stage_changed` in #28). A later cycle adds a type by inserting a row in its own migration, never by altering a CHECK. System events (venue published, tier changed) come from `admin_audit_log` at read time and are not copied.
+- **Tasks:** title, due date, assignee (an admin user), done flag, linked to one object. "Heute fällig" and "Überfällig" sit on the dashboard.
+- **Owner:** companies, contacts and deals have an optional owner (an admin user). With one or two staff it is mostly informative.
+- **Lists:** every object list has search, filters and sorting in the query string, so a saved view is a bookmark. CSV export goes to `admin` users only.
+- **Vocabularies** (contact kind, company stage, deal stages, activity types, lost reasons) are code-keyed rows or enums with labels in the `crm` catalogue (S4). Pipeline stages are rows, so the owner's later wish for another stage is a migration, not a code change.
+- **Money:** CHF only, stored as integer Rappen (`amount_rappen BIGINT`), shown with `swiss_number`. No VAT logic and no invoicing.
+- **Personal data (nDSG):** a contact can be exported (JSON) and erased by an `admin` user. Erasure deletes the contact and anonymises their timeline entries. Couples from inquiries follow the inquiry retention (LEG-2, #29). The Datenschutz page names the CRM as an internal processing purpose (#29 adds the paragraph to #18's text).
 
 ## Requirements
 
@@ -262,7 +340,7 @@ IDs are referenced by the overview and the cycles.
 
 **General**
 - **GEN-1** German UI only for now, with every string in translation catalogues (S4).
-- **GEN-2** Server-rendered Symfony + Twig. No TypeScript or JS framework or library; every page is usable without JS (S3).
+- **GEN-2** Server-rendered Symfony + Twig. No TypeScript or JS framework or library; every public page is usable without JS (S3). The back office is the one exception: Vue islands, no TypeScript (S12).
 - **GEN-3** Layout, style and colours copy eventlokale's wedding search (`docs/reference/`); brand design comes later.
 
 **Listing page (LP)**
@@ -342,7 +420,7 @@ IDs are referenced by the overview and the cycles.
 - **DP-16** The print stylesheet prints the facts, rooms, contact and address without navigation or forms.
 
 **Inquiries (IQ)**
-- **IQ-1** Inquiries are stored in `inquiries` with venue, full payload, created_at and a status for the mail outcome. The schema is designed so the later CMS/CRM can take them over unchanged (Q6).
+- **IQ-1** Inquiries are stored in `inquiries` with venue, full payload, created_at and a status for the mail outcome. The schema is designed so the CRM (#29) can take them over unchanged (Q6): it reads `inquiries` and never alters the table.
 - **IQ-2** In production, a mail goes directly to the venue's inquiry address (Q6), with the guest's address as `Reply-To` and a sender on `hochzeitslocation.ch`. The guest gets a confirmation copy. Both mails are German and in the site's look.
 - **IQ-3** Spam protection without a CAPTCHA: honeypot field, minimum fill time, rate limiter per IP (Symfony RateLimiter), server-side validation.
 - **IQ-4** `INQUIRY_RECIPIENT_OVERRIDE` redirects all venue mails in dev and staging (Mailpit), so no real venue is ever mailed from outside production. Production leaves it unset; a test asserts the production config does not set it.
@@ -381,6 +459,44 @@ IDs are referenced by the overview and the cycles.
 - **OP-1** Docker dev stack, Makefile, CI (lint + test) on GitHub Actions.
 - **OP-2** Production deploy with HTTPS, a manual deploy workflow gated on green CI, and a health check.
 - **OP-3** Error monitoring (Sentry, EU region, like songrequest) and database backups.
+- **OP-4** The back office in production: the deploy ships the built `admin-ui` files, PHP's upload limits match S12, `MEDIA_ROOT` is persistent and backed up (S8: the database and media are the master), and the first `admin` user with 2FA exists.
+
+**Back office (ADM)**, per S12
+- **ADM-1** Staff login at `/admin/login` with e-mail and password, then TOTP. Logout. Login throttling. No sign-up and no password-reset mail (an `admin` user resets passwords from the users screen or the console).
+- **ADM-2** Roles `admin` and `editor` (S12). A users screen (`admin` only) lists, creates, deactivates users and resets their 2FA.
+- **ADM-3** An audit log of every back-office write (S12), with a screen (`admin` only) filtered by actor, subject and date.
+- **ADM-4** The shell per `docs/reference/admin/`: sidebar with sections (Übersicht, CMS, CRM, Einstellungen), a top bar with global search (⌘K / Ctrl+K), user menu, flash toasts, breadcrumbs; a dashboard of widgets. German UI from the catalogues.
+- **ADM-5** Extension points (S12) with a test that a fake module's navigation item, dashboard widget, record tab and record panel appear.
+- **ADM-6** The back office never changes public behaviour: public responses still start no session and set no cookie, `/admin` is `private, no-store` and `noindex`, and `robots.txt` disallows `/admin` (#16).
+- **ADM-7** WCAG 2.2 AA in the back office too: keyboard-operable tables, forms, drag and drop with a keyboard alternative (move up/down buttons), visible focus, labelled controls, errors linked to their fields.
+- **ADM-8** Budgets: shared admin JS (loader + Vue runtime) ≤ 60 KB gzip, each island chunk ≤ 30 KB gzip, admin CSS ≤ 30 KB gzip. A server page loads no island it does not use. Uncached admin pages answer in p95 ≤ 300 ms locally with the real data.
+
+**CMS**
+- **CMS-1** Venue list (`/admin/locations`): search by name or number, filters for status, tier, canton and "unvollständig" (no photo, no inquiry e-mail, summary missing, no main building), sorting, 50 per page, the counts per status. Every row links to the editor and to the public page.
+- **CMS-2** Venue editor in sections that match #4's fields. **Stammdaten:** name, tier, capacity. **Texte:** summary (with a ≤ 200 counter), description, meta description, parking, one tab per locale. **Adresse & Lage:** street, ZIP/town through #3's lookup, coordinates with a "Ortsmitte übernehmen" button, distances with names. **Merkmale:** chips per term group, with main building and main setting. **Kontakt:** phone, inquiry e-mail, website, contact person. **Häufige Fragen.** **Bewertung:** score, count, highlights. Every rule of #4's CHECKs is a form error before it is a DB error (validation strategy).
+- **CMS-3** Create a venue (it starts unpublished), publish and unpublish (publishing needs a summary, a main building, ≥ 1 photo and a town), change the tier, delete only when unpublished and only for `admin` (with confirmation; media removed via `MediaPublisher::removeVenue()`).
+- **CMS-4** A name change proposes a new slug; saving keeps the old one in `venue_slug_history` (301, S5). The slug can be edited by hand and is checked for uniqueness.
+- **CMS-5** Rooms: add, edit (name and description per locale, capacity, area, height, floor material, the four seating capacities), reorder and delete. The venue's room facts are recomputed on every save (#4's `summariseRooms()`).
+- **CMS-6** Photos: upload (JPEG/PNG/WebP/HEIC if gd reads it; ≤ 25 MB) with variants generated at upload (S9), reorder by drag and drop and by keyboard, alt text per locale, assign to a room or the venue, delete, see the first photo marked as the card/LCP image. A replaced original gets a new photo id (#5).
+- **CMS-7** Documents: upload a PDF (≤ 15 MB), title per locale, reorder, delete.
+- **CMS-8** Reviews and rating: edit the imported reviews (first name, role, month, text), delete one, add one by hand; edit score, count and the three highlights.
+- **CMS-9** Preview: any venue, published or not, can be viewed as its public detail page at `/admin/locations/{number}/vorschau` (inside the admin firewall, `noindex`, never cached, with a "Vorschau" banner). Published venues also get an "Auf der Website ansehen" link.
+- **CMS-10** Every CMS write that changes a public page purges the affected URLs through #9's `HttpCachePurger` (the detail page, the listing, the venue's canton page, the sitemap).
+- **CMS-11** DB is master (S8): the import guard with `cms_edited_at` and `--overwrite-cms-edits`, and a "Zuletzt bearbeitet von … am …" line from the audit log.
+- **CMS-12** Pages and text blocks: the intro text, SEO title and meta description of each landing page (#17: canton, town and building type), and a registry of named text blocks (Markdown, safe-rendered) that modules declare for their slots, e.g. the listing intro or the footer note. Legal pages stay in Twig under version control (#18) and are not editable here.
+
+**CRM**, per S13
+- **CRM-1** Companies: list, create, edit (name, legal name, website, phone, e-mail, address, stage, owner, notes), link and unlink venues, delete (`admin`). `app:crm:bootstrap` and a button create one company per venue that has none, with the venue's contact person as a `venue_contact` contact. It is idempotent.
+- **CRM-2** Contacts: list, create, edit (first name, last name, e-mail, phone, role/position, kind, company, owner), delete and export (`admin`, S13).
+- **CRM-3** Record page per object as in the design reference: properties on the left (inline editable, saved per field), timeline in the middle, associations on the right (company ↔ contacts ↔ venues ↔ deals), and record tabs and panels from the extension points.
+- **CRM-4** Timeline: log a note, call, meeting or e-mail (manually) with date and text; edit or delete your own entries; filter by type. System events from the audit log appear read-only.
+- **CRM-5** Tasks: create from any record or the task list, with a due date, an assignee and done/undone; a task list (`/admin/crm/aufgaben`) with "Meine", "Heute", "Überfällig"; dashboard widgets.
+- **CRM-6** Lists: search, filters, sorting in the query string, 50 per page, CSV export (`admin`), global search results (S12 `SearchProvider`).
+- **CRM-7** Deals: name, company, contacts, venue, tier, amount (CHF), contract start and end, expected close date, stage, owner, lost reason. A pipeline board (Kanban) per stage with a sum per column; drag and drop plus a keyboard "move to stage" menu; a list view as an alternative. Stages: Neu → Kontaktiert → Angebot → Verhandlung → Gewonnen / Verloren.
+- **CRM-8** Won and renewals: a won deal offers "Tier auf Location anwenden", which dispatches Venues' tier command (audited, cache purged). A deal whose contract ends within 60 days shows in the "Verlängerungen" widget, and `app:crm:renewal-tasks` (daily cron) creates one renewal task per deal, idempotently. "Verlängern" copies the deal into the next period.
+- **CRM-9** Inquiries: every inquiry from #14 creates or updates a `couple` contact (by e-mail) and adds an `inquiry` entry to that contact's timeline and to the timeline of the venue's company. An inbox `/admin/crm/anfragen` lists them with a status (neu, gesehen, erledigt) and the mail outcome. `app:crm:backfill-inquiries` imports the history. Ingestion runs after the inquiry is stored and never makes the guest wait or fail.
+- **CRM-10** E-mail: compose from a contact or company record (to the contact's e-mail, optional CC), from a template with merge fields (`{contact.first_name}`, `{company.name}`, `{venue.name}`; single braces, so a template is never Twig), sent through Symfony Mailer from the `hochzeitslocation.ch` sender with the staff member's name and `Reply-To: hallo@hochzeitslocation.ch`, logged as an `email_sent` activity with its delivery status. Replies arrive in the mailbox and are not tracked (inbox sync is a proposal). `INQUIRY_RECIPIENT_OVERRIDE`'s rule holds here too: outside production every CRM mail goes to Mailpit (`CRM_MAIL_OVERRIDE`).
+- **CRM-11** Personal data: export and erasure per S13; couples whose last activity is older than the inquiry retention (LEG-2, 12 months) and who have no deal are deleted by `app:crm:purge` (cron), together with their inquiry links.
 
 ## Reference material
 
@@ -901,6 +1017,7 @@ IDs are referenced by the overview and the cycles.
   - an anchor `#anfrage` with an empty `{% block inquiry %}` for #14;
   - Ähnliche Locations (12, via `SimilarVenuesQuery`) + "Alle Locations".
 - **Print stylesheet** (DP-16).
+- **For the CMS preview (#24):** `VenueDetailQuery` takes the venue by number and has an option to include unpublished venues; the page template does not assume it is reached through the public route (no `app.request` route checks inside sections).
 - **Done when:**
   - application tests cover 200/301/404/410, all sections rendering with a full demo venue, and missing optional data (no rating, no rooms, no documents) hiding its section instead of leaving empty headings;
   - the screenshot comparison with `detail-page-top.jpg` and the live page's lower sections passes;
@@ -919,6 +1036,7 @@ IDs are referenced by the overview and the cycles.
   - unpublishes venues missing from the content set only with `--prune`;
   - records a `content_imports` row (counts, errors);
   - purges the HTTP cache (an interface now; #19 implements it).
+- **One write path for the CMS (S8):** the import dispatches `Venues` commands, and the handlers hold the logic: slug + history, town resolution, room summaries, the photo pipeline (stage → `VenuePhoto` → `copyVariants()`), document publishing and the cache purge. The CMS (#24/#25) reuses them with finer-grained commands, so no business rule lives in the import command itself. Name the purge interface `Venues\…\HttpCachePurger` (or Shared if research prefers), with `purgeVenue(int $number)` and `purgeListings()`, which #24–#26 call.
 - **Done when:**
   - integration tests cover a fixture content folder for create, update, rename (301 works), photo change, invalid vocabulary and `--dry-run`;
   - running the import twice changes nothing.
@@ -997,6 +1115,7 @@ IDs are referenced by the overview and the cycles.
   - the guest sees a confirmation (303 to `#anfrage` with a signed success flag, as songrequest's sent page does).
 - **Validation:** form (shape) → handler (venue published, guests within 1–5,000, date not in the past) → DB constraints.
 - **Retention:** `app:inquiries:purge` deletes inquiries older than 12 months (LEG-2), run by cron.
+- **For the CRM (#29):** after the inquiry is stored, the handler dispatches nothing CRM-specific. It publishes a Symfony event `Inquiries\…\InquirySubmitted` (inquiry id) after the transaction commits, so #29 can subscribe without Inquiries knowing the CRM. The purge must also remove what #29 derived (#29 subscribes to an `InquiryPurged` event, or its FK cascades; research picks).
 - **Done when:**
   - application tests cover success, 422 with values kept, honeypot, too-fast submission and the rate limit;
   - Mailpit receives both mails;
@@ -1026,6 +1145,7 @@ IDs are referenced by the overview and the cycles.
 - **SEO-3:** `/sitemap.xml` (index plus pages: listing, canton pages from #17 once they exist, venues with `lastmod` = `updated_at`, images via `image:image`) and `/robots.txt` (https sitemap, disallow `/_search/`, `/merkliste`).
 - **SEO-5:** error pages (`templates/bundles/TwigBundle/Exception/error404.html.twig`, `error.html.twig`) render with the right status. A test forces a 500 and asserts it is not 404.
 - **SEC-1:** security headers through an event listener or `nelmio/security-bundle` (research picks), with a nonce-based CSP. Check AssetMapper's importmap output against the CSP; we load modules with plain `<script type="module" src>` tags.
+- **Back office (#22, S12):** the same headers and CSP cover `/admin`. `admin_island_assets()` gets the nonce, Vite's chunks load from `'self'`, and `connect-src 'self'` covers `/admin/api`. `robots.txt` disallows `/admin`. A test logs in and asserts the CSP on an admin page with an island.
 - **Done when:**
   - application tests cover meta, canonical, robots meta per page type, the JSON-LD (validated against schema.org shapes: required keys present, no email key), the sitemap XML (schema-valid, every venue present) and the security headers on every public response;
   - Google's Rich Results Test passes on the deployed preview or with copied HTML (recorded in the review).
@@ -1058,12 +1178,15 @@ IDs are referenced by the overview and the cycles.
   - application tests show both pages render and are linked from every page;
   - every remaining `TODO owner` marker is listed in the Outcome so #20 can block on them.
 
-## W7 Launch
+## W7–W8 Launch
+
+#19 runs in W7 beside #26; #20 is W8 alone.
 
 ### 19. `performance-caching`
 
 - **Reverse proxy** (S10): Symfony `HttpCache` vs Cloudflare vs both. Decide for Hostpoint + Neon (Q2): `HttpCache` needs only a writable `var/`, and it is what hides Neon's cold start.
-  - Implement `Cache-Control`/`Vary`, the `HttpCachePurger` from #9, and a no-session guard (a test fails if any public route starts a session).
+  - Implement `Cache-Control`/`Vary`, the `HttpCachePurger` from #9, and a no-session guard (a test fails if any public route starts a session). `/admin` is the one allowed exception (ADM-6); the guard asserts that it is the only one.
+  - Prove that a CMS save (#24/#25) purges the detail page, the listing and the canton page through `HttpCache`. #26 runs in parallel and calls the same purger.
   - No ESI needed: the only cookie-dependent bits (Merkliste hearts and count) are client-side by design.
 - **Measure against PERF-1** with `make lighthouse` on listing (no filters, three filters), detail (rich venue) and a canton page; with k6 or `ab` for server time (songrequest has a k6 setup to copy); and with byte budgets (CSS, JS, HTML, fonts). Fix what misses: critical CSS inline if needed (nonce), font subsetting, image `sizes`, query tuning.
 - **CI:** `make perf-check` runs the byte budgets (no Lighthouse in CI unless it proves stable).
@@ -1090,7 +1213,13 @@ IDs are referenced by the overview and the cycles.
 - **Content and media:** the #21 content (~758 venues, ~9,200 photos, about 43 GB of originals plus derivatives in the Laravel layout) reaches the server as rsync of `CONTENT_ROOT` plus a server-side `app:venues:import`, or as locally generated variants rsynced to `public/media`. Research picks one against Hostpoint's disk quota and CPU limits. Hostpoint's quota may rule out keeping originals on the server.
 - **Mailbox:** create `hallo@hochzeitslocation.ch` on Hostpoint (the Impressum contact, Q5) and send it a test mail from outside before go-live.
 - **Mail:** a sender on `hochzeitslocation.ch` with SPF/DKIM/DMARC set for Hostpoint's SMTP (or the chosen provider), because inquiries go straight to venues (Q6) and must not land in spam.
-- **Cron:** `app:inquiries:purge`; the cache warm-up after import.
+- **Cron:** `app:inquiries:purge`; the cache warm-up after import. The CRM cycles add `app:crm:renewal-tasks` and `app:crm:purge` to the same crontab later.
+- **Back office (OP-4, S12):**
+  - the deploy workflow runs `make admin-build` in GitHub Actions and ships `public/admin-build/` with the release (the server has no Node);
+  - PHP `upload_max_filesize` / `post_max_size` ≥ 26 MB and `max_execution_time` ≥ 60 s for `/admin` uploads; gd on Hostpoint encodes what #5's `availableFormats()` reports, and CMS uploads are processed on the server, so `MEDIA_ROOT` lives on the server with enough quota for new originals (the legacy originals may stay local, per #5's carried-forward note);
+  - the session directory (`var/sessions`) is writable and survives deploys;
+  - the TOTP encryption key and the first `admin` user are created on the server; the owner enrols 2FA;
+  - the backups now include `MEDIA_ROOT` and are restore-tested, because the database is the master (S8).
 - **Monitoring and backups** (OP-3): Sentry (EU region, `send_default_pii: false`, prod only); DB backups (Neon PITR or a nightly `pg_dump`, with a restore test); content and media backups.
 - **Done when:**
   - the site answers on HTTPS at hochzeitslocation.ch, and the non-canonical host 301s to the canonical one;
@@ -1100,7 +1229,8 @@ IDs are referenced by the overview and the cycles.
   - a Sentry test error arrives;
   - a backup restore is tested;
   - Lighthouse against production meets PERF-1;
-  - #18's placeholders are replaced.
+  - #18's placeholders are replaced;
+  - the owner logs in to `/admin` in production with 2FA, edits a venue, uploads a photo, and sees the change on the public page after the purge.
 
 ## Real content (W5, runs alongside the feature cycles; required by #20)
 
@@ -1134,9 +1264,153 @@ IDs are referenced by the overview and the cycles.
   - the owner spot-checks five venues (one Schloss, one Hotel, one with rooms and documents, one without a rating, Utopia Aarau) side by side with the eventlokale page;
   - the Outcome records the counts (venues, photos, rooms, venues without an inquiry email).
 
+## Back office: CMS (W4–W7, before launch)
+
+Read S12 and the design reference `docs/reference/admin/` before any of these cycles. The CMS is a set of `Cms` screens on top of the `Venues` write side; it adds no second way to change a venue (S8).
+
+### 22. `admin-foundation`
+
+W4. Depends only on W1 (#1 fonts and icons, #2 catalogues and route rules).
+
+- **Modules (the S12 design change):** add `Admin`, `Cms` and `Crm` to `ArchitectureRules::MODULES` and to `ModuleBoundariesTest`, with the S2 rows: `Admin` → Shared; `Cms` → Admin, Venues, Geo, Media; `Crm` → Admin, Venues, Geo, Inquiries. Add the three to the deny-lists of the existing public-module rules, so no public module may use them. Add the `Extension` layer. Extend `ModuleBoundariesProbeTest` with one probe (`Cms` → `Crm` fails). Update `CLAUDE.md`'s module table, and add `### Admin`, `### Cms`, `### Crm` stubs to its `## Modules`.
+- **Security** per S12 and ADM-1/ADM-2:
+  - `admin_users` (`id`, `email` unique on `lower(email)`, `display_name`, `password_hash`, `role` CHECK `admin|editor`, `totp_secret_encrypted` NULL until enrolled, `is_active`, `last_login_at`, timestamps) with entity, repository and user provider;
+  - firewall `^/admin` (form login, logout, `login_throttling`, 2FA with enrolment on first login showing a QR code, rendered server-side as SVG so no external service sees the secret), session cookie per S12, idle timeout;
+  - `app:admin:create-user`, `app:admin:reset-2fa`, the users screen;
+  - a test proves every `/admin` route except login and 2FA requires a fully authenticated user, and that public routes still start no session (S10, ADM-6).
+- **Shell** (ADM-4) per the design reference: `templates/admin/base.html.twig` (blocks `title`, `page_header`, `page_actions`, `main`, `aside`, `scripts`), `templates/admin/layout/{_sidebar,_topbar,_flash}.html.twig`, login and 2FA screens, a dashboard at `/admin` built from `DashboardWidget`s (empty-state widget when none), the `admin` catalogue, `assets/styles/admin.scss` with the `--a-*` tokens and the shell partials, and the S10 headers on every `/admin` response.
+- **Extension points** (ADM-5): the interfaces of S12 in `Admin\Extension` plus their registries and Twig functions (`admin_navigation()`, `admin_dashboard_widgets()`, `admin_record_tabs(type, id)`, `admin_record_panels(type, id)`), tested with a fixture module.
+- **Audit log** (ADM-3): `Shared\Messenger\AuditableCommand` (`auditSubject()`, `auditSummary()`), the `command.bus` middleware writing `admin_audit_log` (`id`, `actor_id` NULL for console, `command`, `subject_type`, `subject_id`, `changes` JSONB, `created_at`), and the audit screen. Console commands record the actor as `console`.
+- **Vue toolchain** (S12): `admin-ui/` (Vite, Vue 3, Vitest, ESLint), the `node` tools service, the Make targets, the island loader `admin-ui/src/main.js` + registry `admin-ui/src/islands.js`, the `admin_island_assets()` Twig function (manifest, `modulepreload`, nonce-ready), one demo island (`hello`) with a Vitest test and an Application test that renders its mount point, CI steps, `.gitignore` for `public/admin-build/` and `admin-ui/node_modules/`. The JSON-endpoint convention: `/admin/api/<module>/…`, a CSRF header token, errors as `{"errors": {"field": ["message"]}}` with 422.
+- **Lighthouse logged in:** `make lighthouse URL=/admin/... ADMIN=1` uses a test-only login helper (dev env, `ADMIN_DEV_AUTOLOGIN` token) so the admin cycles can measure Accessibility.
+- **Done when:**
+  - login, 2FA enrolment, 2FA check, throttling, logout, idle timeout, role checks and the users screen are application-tested;
+  - the public no-session test still passes;
+  - a fixture module's extension points render;
+  - an `AuditableCommand` writes one audit row with the actor;
+  - `make admin-build`, `make admin-test`, `make admin-lint` run locally and in CI;
+  - the shell matches the design reference at 1440 px and works at 390 px;
+  - ADM-8's shared-JS budget is met.
+
+### 23. `admin-ui-kit`
+
+W5. Depends on #22.
+
+- **Components** from the design reference, each as a Twig component in `templates/admin/components/` and, where an island needs it, a Vue component in `admin-ui/src/components/` that renders the **same markup and classes**: button (primary, secondary, ghost, danger, icon), badge/status pill, tier badge, avatar/initials, card, data table (sortable headers as links, row actions, selection, empty state, pagination), filter bar (search + selects as a GET form, active filter chips), tabs (record tabs), field group / property list (label + value, inline-edit affordance), modal (`<dialog>`), drawer, dropdown menu, toast, combobox (async options, keyboard), date input, money input (CHF), Markdown textarea with preview, file drop zone, sortable list (drag + move up/down buttons), kanban column + card, timeline item, empty state, skeleton.
+- **Form theme** `templates/admin/form/theme.html.twig` for Symfony Forms: labels, help, errors linked by `aria-describedby`, required markers, a character counter for limited fields, the locale tabs of S12.
+- **Global search** (`SearchProvider`, ⌘K / Ctrl+K command palette island) with a JSON endpoint `/admin/api/search?q=` that merges providers; #24 and #27 add providers.
+- **Styleguide** at `/admin/_styleguide` (dev and test only, logged in), one section per component with every variant, like #1's.
+- **Done when:**
+  - the styleguide matches the design reference at 1440 px;
+  - Twig and Vue variants of the same component render identical markup (a Vitest snapshot vs. the Twig output fixture for button, badge, table row and modal);
+  - axe/Lighthouse Accessibility ≥ 95 on the styleguide;
+  - keyboard walkthrough of combobox, modal, sortable list and command palette;
+  - ADM-8 CSS budget.
+
+### 24. `cms-venues`
+
+W6. Depends on #8 (preview and links), #9 (Venues write side), #23. Runs in parallel with #25.
+
+- **Screens:** the venue list (CMS-1) and the venue editor (CMS-2) at `/admin/locations/{number}`, built from #23's components. The editor has one form per section (Stammdaten, Texte, Adresse & Lage, Merkmale, Kontakt, Häufige Fragen, Bewertung), each saving on its own (POST → redirect → GET), plus `RecordTab` and `RecordPanel` slots. #25 fills the Fotos, Räume, Dokumente and Bewertungen tabs, and #27 the CRM panel.
+- **Write side:** fine-grained `Venues` commands that implement `AuditableCommand`, e.g. `CreateVenue`, `RenameVenue` (slug + history, CMS-4), `ChangeVenueTexts`, `RelocateVenue`, `ChangeVenueTerms`, `ChangeVenueContact`, `AnswerVenueFaq`, `RateVenue`, `ChangeVenueTier`, `PublishVenue`/`UnpublishVenue` (publishing rules of CMS-3), `DeleteVenue`. Reuse #9's handler logic; do not duplicate it. Every handler sets `venues.cms_edited_at` (new column, this cycle's migration) when the actor is a staff user, and purges (CMS-10).
+- **Import guard** (CMS-11, S8): #9's import skips and reports venues with `cms_edited_at` > their last import, unless `--overwrite-cms-edits`. This changes #9's handler, which is done by then.
+- **Preview** (CMS-9): a `Cms` controller at `/admin/locations/{number}/vorschau` renders #8's detail template from #8's `VenueDetailQuery` with an "include unpublished" option, plus a banner. The public detail route stays untouched, because the admin session is invisible outside `^/admin`.
+- **Global search:** a `SearchProvider` for venues (name, number, town).
+- **Dashboard widgets:** "Unvollständige Locations" and "Zuletzt bearbeitet".
+- **Done when:**
+  - application tests cover the list filters, each editor section's success and error paths (one per #4 CHECK, in the form layer), stale-edit rejection, create → publish (with and without the publishing preconditions), tier change, slug change with a working 301, delete rules per role, the preview of an unpublished venue (staff only; the public URL still answers 410/404) and the purge calls;
+  - an integration test proves the import guard;
+  - the screenshot comparison with the design reference passes;
+  - keyboard walkthrough of the editor.
+
+### 25. `cms-venue-media`
+
+W6. Depends on #9 (photo pipeline) and #23. Runs in parallel with #24 through the `RecordTab` extension point; its tests create venues with factories and open its own routes (`/admin/locations/{number}/fotos`, `/raeume`, `/dokumente`, `/bewertungen`).
+
+- **Photos** (CMS-6): the photo-manager island: a drop zone with sequential uploads and progress, a grid in position order with the first photo marked, drag-and-drop reorder plus keyboard buttons, alt text per locale, room assignment and delete, all through `/admin/api/cms/venues/{number}/photos…`. Commands `AddVenuePhoto` (stage → generate → `VenuePhoto` → `copyVariants()`, as #9), `ReorderVenuePhotos`, `DescribeVenuePhoto`, `MoveVenuePhotoToRoom`, `RemoveVenuePhoto` (deletes its files). Errors from Media (`UnreadableImage`, a too-large file) become 422s with a German message.
+- **Rooms** (CMS-5): the room-editor island (list + edit drawer, reorder, delete) with `AddRoom`, `ChangeRoom`, `ReorderRooms`, `RemoveRoom`. Each recomputes the venue's room facts.
+- **Documents** (CMS-7): a server page (upload form, title per locale, reorder, delete) with `AddVenueDocument` (`publishDocument()`), `RetitleVenueDocument`, `ReorderVenueDocuments`, `RemoveVenueDocument`.
+- **Reviews and rating highlights** (CMS-8): a server page with `AddVenueReview`, `ChangeVenueReview`, `RemoveVenueReview`.
+- Every command is auditable, sets `cms_edited_at` (the column #24 adds; whichever of #24/#25 lands second rebases onto it, so #25 writes it through the `Venue` method #24 adds, or adds that method itself if it lands first, recorded in the Outcome) and purges.
+- **Done when:**
+  - integration tests cover each command (files created and removed, positions contiguous, room facts recomputed, a replaced photo gets a new id);
+  - application tests cover the JSON endpoints (success, 422, CSRF, role) and the server pages;
+  - Vitest covers upload queueing, reorder by keyboard and error display;
+  - a manual browser check uploads five photos, reorders them, and sees the new first photo on the listing card after the purge (recorded in the review);
+  - ADM-8 island budget.
+
+### 26. `cms-pages`
+
+W7. Depends on #17 (landing pages) and #23. Runs in parallel with #19.
+
+- **Landing pages** (CMS-12): a list of #17's landing pages (canton, town, building type, with venue counts and whether they pass #17's threshold) and an editor for the intro text, SEO title and meta description per locale, with live length counters (#16's ≤ 60 / ≤ 155) and a search-result preview. Stored in #17's `landing_pages` (new columns) or in `content_blocks` keyed by landing page, whichever #17 left; the public page falls back to #17's catalogue template when nothing is set.
+- **Text blocks:** `content_blocks` (`key`, `locale`, `body_markdown`, `updated_at`, unique `(key, locale)`). A module declares a block (key, label, where it appears, max length, default from a catalogue) through a `ContentBlockDefinition` extension, and renders it with `{{ content_block('key') }}`, Markdown rendered safely (`league/commonmark` with HTML disabled and safe links; research confirms). Initial blocks: the listing intro under the h1 (#7) and a footer note. Saving purges the pages that show the block.
+- **Done when:**
+  - application tests cover the editors, the fallback, safe Markdown (a `<script>` and a `javascript:` link are neutralised), the purge, and that public pages read blocks without starting a session;
+  - the screenshot comparison passes.
+
+## Back office: CRM (W9–W10, after launch)
+
+The CRM starts after #20 (Q8). Read S12 and S13 first. Its cycles deploy through #20's workflow, and every migration must be safe on production data (additive, no table rewrites).
+
+### 27. `crm-foundation`
+
+W9. Depends on #20 (live), #24 (the venue editor's panel slot and the venue `SearchProvider` pattern).
+
+- **Schema** (S13): `crm_companies`, `crm_contacts`, `crm_company_venues` (`company_id`, `venue_id` unique, so a venue belongs to at most one company), `crm_activity_types` (seeded rows), `crm_activities`, `crm_activity_companies`, `crm_activity_contacts`, `crm_tasks`. Vocabularies per S13. Entities in `Crm\Entity`, read models in `Crm\ReadModel`.
+- **Screens:** company and contact lists (CRM-6), record pages (CRM-3) with inline property editing (one small JSON write per field, through commands), the timeline composer island (CRM-4), and tasks (CRM-5) with the task list, record task panels and dashboard widgets ("Meine Aufgaben", "Überfällig"). The timeline renderer registry `admin-ui/src/timeline/types.js` (hotspot, one line per type) and the `TimelineActivityType` extension point. The audit-log events of a company's venues are shown read-only.
+- **Bootstrap** (CRM-1): `app:crm:bootstrap` + the button on the company list.
+- **Venue panel:** a `RecordPanel` on the CMS venue editor shows the company, its contacts and its open tasks, and offers "Firma anlegen" when there is none.
+- **Global search:** `SearchProvider`s for companies and contacts.
+- **Privacy** (CRM-11): contact export and erasure (`admin`).
+- **Done when:**
+  - application tests cover the lists (search, filters, sort, CSV export per role), the record pages, inline edits (success, 422, stale edit), timeline entries (each type; edit and delete only your own), tasks, bootstrap idempotence, the venue panel, export and erasure;
+  - Vitest covers the composer and the inline editor;
+  - the screenshot comparison with the design reference passes;
+  - on production, `app:crm:bootstrap` runs once and its counts are recorded in the Outcome.
+
+### 28. `crm-deals`
+
+W10. Depends on #27. Parallel with #29 and #30.
+
+- **Schema:** `crm_deal_stages` (seeded: Neu, Kontaktiert, Angebot, Verhandlung, Gewonnen, Verloren; `position`, `probability`, `is_won`, `is_lost`), `crm_deals` (S13 fields; `tier` from `Venues\ValueObject\Tier`), `crm_deal_contacts`, `crm_activity_deals`, and the `deal_stage_changed` activity type.
+- **Screens:** the pipeline board island (CRM-7, sums per column, filter by owner and close month) with a list view alternative, the deal record page, and deals on company and venue records (a `RecordTab` on the company and a line in #27's venue panel).
+- **Won and renewals** (CRM-8): "Tier auf Location anwenden", the "Verlängerungen" widget, `app:crm:renewal-tasks` (cron, added to #20's crontab), "Verlängern". The company `stage` is now derived (S13).
+- **Done when:**
+  - application tests cover the deal CRUD, stage moves (JSON, CSRF, keyboard menu path), applying the tier (venue tier changed, audited, purged), renewal-task idempotence and the derived company stage;
+  - Vitest covers the board's drag and the keyboard move;
+  - the screenshot comparison passes.
+
+### 29. `crm-inquiries`
+
+W10. Depends on #14 and #27. Parallel with #28 and #30.
+
+- **Ingestion** (CRM-9): a subscriber to #14's `InquirySubmitted` event creates or updates the `couple` contact and writes `crm_inquiry_links` (`inquiry_id` FK → `inquiries` ON DELETE CASCADE, `contact_id`, `activity_id`, `status`), plus the `inquiry` activity type and timeline entries on the contact and on the venue's company. A failure is logged and reported to Sentry, and never surfaces to the guest.
+- **Inbox:** `/admin/crm/anfragen` with status, venue, guests, date and mail outcome; "Neue Anfragen" on the dashboard and as a sidebar badge.
+- **Backfill:** `app:crm:backfill-inquiries` (idempotent), run once on production.
+- **Retention** (CRM-11): `app:crm:purge` (cron) and its interplay with `app:inquiries:purge`.
+- **Datenschutz:** add the CRM paragraph to #18's Datenschutz template (internal processing of inquiry data for customer care; retention) and list it in the Outcome for the owner's review.
+- **Done when:**
+  - integration tests cover ingestion (new contact, existing contact by case-insensitive e-mail, a venue without a company), that a failing CRM never fails the inquiry, the backfill idempotence and the retention;
+  - application tests cover the inbox;
+  - the backfill's counts on production are recorded in the Outcome.
+
+### 30. `crm-email`
+
+W10. Depends on #27 (and #20's mail setup for the production check). Parallel with #28 and #29.
+
+- **Schema:** `crm_email_templates` (name, subject, Markdown body, merge fields), `crm_emails` (activity, to, cc, subject, body, Mailer message id, status `queued|sent|failed`, error), the `email_sent` activity type.
+- **Composer island** (CRM-10) on contact and company records: template picker, merge-field preview, Markdown body, send. The handler renders HTML + text like #14's mails, sends synchronously (S1: no workers), records the status, and honours `CRM_MAIL_OVERRIDE` outside production. Templates are managed on a settings screen (`admin` only).
+- **Done when:**
+  - integration tests cover rendering with merge fields (missing values render empty, no Twig injection: templates are not Twig, merge fields are a fixed list), sending through the Mailer test transport, the override and a failed send;
+  - application tests cover the endpoints and the template screen;
+  - on production, a test e-mail to the owner arrives and passes SPF/DKIM/DMARC (recorded in the review).
+
 ## Out of scope / proposals (not scheduled)
 
-- **CMS / back office** for the owner to manage listings, tiers and photos (explicitly out of scope; #9's files replace it for now).
+- **Venue self-service portal:** venue operators edit their own listing, with an approval step (Q9 said staff only for now).
+- **CRM extensions:** custom properties on companies, contacts and deals; inbox sync (IMAP/BCC address) to log replies; e-mail open/click tracking; reports beyond the dashboard widgets; invoicing and payment status; automatic tier downgrade when a contract ends (#28 only reminds).
+- **Back office dark theme** and a mobile-first back office (S12 only requires that it stays usable at 390 px).
 - **Map view ("Karte")** of the result list.
 - **Bulk inquiry from the Merkliste** (eventlokale has it).
 - **Home page** with hero search.
