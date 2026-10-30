@@ -1,8 +1,5 @@
 # Strings of the Search module. Keys: <context>.<description>.
 listing:
-    meta_title: Hochzeitslocations in der Schweiz | Hochzeitslocation
-    # Static until #16's SEO-1 patterns replace it (plan P2).
-    meta_description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
     heading: Hochzeitslocations in der Schweiz
     # formatted = count|swiss_number
     count: '{count, plural, one {# Resultat} other {{formatted} Resultate}}'

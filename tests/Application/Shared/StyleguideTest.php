@@ -41,7 +41,7 @@ final class StyleguideTest extends WebTestCase
 
         self::assertCount(0, $crawler->filter('[style]'), 'No style attributes.');
         self::assertCount(0, $crawler->filter('style'), 'No <style> elements.');
-        self::assertCount(0, $crawler->filter('script:not([src])'), 'No inline scripts.');
+        self::assertCount(0, $crawler->filter('script:not([src]):not([type="application/ld+json"])'), 'No inline scripts.');
         self::assertCount(0, $crawler->filter('script[type="importmap"]'), 'No importmap.');
         self::assertStringNotContainsString('jspm', $html);
         self::assertStringNotContainsString('es-module-shims', $html);
@@ -51,7 +51,7 @@ final class StyleguideTest extends WebTestCase
     {
         $crawler = $this->styleguide();
 
-        $scripts = $crawler->filter('script');
+        $scripts = $crawler->filter('script:not([type="application/ld+json"])');
         self::assertGreaterThan(0, $scripts->count());
         foreach ($scripts as $script) {
             \assert($script instanceof \DOMElement);

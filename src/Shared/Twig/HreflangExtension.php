@@ -11,7 +11,8 @@ use Twig\Attribute\AsTwigFunction;
 
 /**
  * `hreflang_alternates(query = {})` for templates/shared/_hreflang.html.twig. Uses the main
- * request, so the page URL is used inside sub-requests too.
+ * request, so the page URL is used inside sub-requests too. A request that is not safe gets
+ * none: a POST re-render (#14's 422, 429 and 503) must not advertise its POST URL.
  */
 final readonly class HreflangExtension
 {
@@ -30,7 +31,7 @@ final readonly class HreflangExtension
     public function alternates(array $query = []): array
     {
         $request = $this->requestStack->getMainRequest();
-        if (null === $request) {
+        if (null === $request || !$request->isMethodSafe()) {
             return [];
         }
 

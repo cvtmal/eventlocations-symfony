@@ -35,6 +35,25 @@ final class ImageVariantsTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{list<int>, int}>
+     */
+    public static function shareWidths(): iterable
+    {
+        yield 'a full photo' => [[360, 640, 960, 1280, 1920], 1280];
+        yield 'a photo below the wanted width' => [[360, 640, 960], 960];
+        yield 'exactly the wanted width' => [[1200], 1200];
+    }
+
+    /**
+     * @param list<int> $widths
+     */
+    #[DataProvider('shareWidths')]
+    public function test_share_width_is_the_smallest_big_enough_else_the_largest(array $widths, int $expected): void
+    {
+        self::assertSame($expected, new ImageVariants($widths, [ImageFormat::Jpeg])->shareWidth());
+    }
+
+    /**
      * @return iterable<string, array{list<int>, list<ImageFormat>}>
      */
     public static function invalid(): iterable

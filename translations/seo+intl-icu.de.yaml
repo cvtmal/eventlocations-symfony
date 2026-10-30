@@ -1,1 +1,30 @@
 # Strings of the Seo module. Keys: <context>.<description>.
+# {site} is supplied by Seo\TitleChain and ListingMeta; titles stay ≤ 60 characters, descriptions ≤ 155.
+listing:
+    title: 'Hochzeitslocations in der Schweiz | {site}'
+    title_page: 'Hochzeitslocations Schweiz – Seite {page} | {site}'
+    description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
+    description_page: 'Hochzeitslocations in der Schweiz, Seite {page}: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
+# First fit wins (TitleChain): title_town_long, title_town, title_name.
+venue:
+    title_town_long: '{name} in {town} mieten | {site}'
+    title_town: '{name} in {town} | {site}'
+    title_canton: '{name} im Kanton {canton} | {site}'
+    title_name: '{name} | {site}'
+    canton_area: 'Kanton {canton}'
+breadcrumb:
+    listing: Hochzeitslocations
+error:
+    not_found:
+        title: Seite nicht gefunden
+        heading: Diese Seite gibt es nicht
+        text: Der Link stimmt nicht mehr oder die Seite ist umgezogen. In der Übersicht findest du alle Hochzeitslocations.
+    gone:
+        title: Location nicht mehr verfügbar
+        heading: Diese Location ist nicht mehr dabei
+        text: Sie ist bei uns nicht mehr aufgeführt. In der Übersicht findest du alle anderen Hochzeitslocations.
+    server:
+        title: Fehler
+        heading: Da ist etwas schiefgelaufen
+        text: Die Seite lässt sich gerade nicht anzeigen. Bitte versuche es in ein paar Minuten noch einmal.
+    to_listing: Alle Hochzeitslocations

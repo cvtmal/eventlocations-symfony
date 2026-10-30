@@ -11,7 +11,7 @@
         <link rel="stylesheet" href="{{ asset('styles/app.scss') }}">
         {% block stylesheets %}{% endblock %}
         <link rel="icon" href="{{ asset('icons/favicon.svg') }}" type="image/svg+xml">
-        {% block jsonld %}{% endblock %}
+        {% block jsonld %}{{ site_jsonld() }}{% endblock %}
     </head>
     <body class="{% block body_class %}{% endblock %}">
         <a class="skip-link" href="#main">{{ 'layout.skip_to_content'|trans }}</a>

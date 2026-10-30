@@ -8,17 +8,15 @@
 #}
 {% extends 'base.html.twig' %}
 
-{% block title %}
-    {%- if venue.place.townName -%}
-        {{ 'detail.title'|trans({name: venue.name, town: venue.place.townName}, 'venues') }}
-    {%- elseif venue.place.canton -%}
-        {{ 'detail.title_canton'|trans({name: venue.name, canton: venue.place.canton|trans}, 'venues') }}
-    {%- else -%}
-        {{ 'detail.title_no_place'|trans({name: venue.name}, 'venues') }}
-    {%- endif %} | {{ 'layout.site_name'|trans }}
-{%- endblock %}
+{% set seo = venue_seo(venue) %}
 
-{% block meta %}<meta name="description" content="{{ venue.metaDescription ?? venue.summary }}">{% endblock %}
+{% block title %}{{ seo.title }}{% endblock %}
+
+{% block meta %}{{ include('seo/_meta.html.twig', {seo: seo, picture: venue.photos[0] ?? null}, with_context = false) }}{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endblock %}
+
+{% block jsonld %}{{ parent() }}{{ venue_jsonld(venue) }}{{ breadcrumb_jsonld([{name: 'breadcrumb.listing'|trans({}, 'seo'), url: url('listing')}, {name: venue.name}]) }}{% endblock %}
 
 {# A class name, not text: set as a variable so the raw-text scanner does not read it as copy. #}
 {# The page's headings use the 600 weight above the fold; preloading it keeps the swap from shifting the description (CLS). #}

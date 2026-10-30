@@ -41,4 +41,14 @@ final readonly class Picture
     {
         return \sprintf('%s/%d/%s-%d.%s', MediaPaths::URL_PREFIX, $this->venueNumber, $this->photoId, $width, $format->value);
     }
+
+    /**
+     * The photo for `og:image`, JSON-LD and the sitemap: JPEG, which every photo has.
+     */
+    public function shareImage(): ShareImage
+    {
+        $width = $this->variants->shareWidth();
+
+        return new ShareImage($this->url($width, ImageFormat::Jpeg), $width, (int) round($this->height * $width / $this->width));
+    }
 }

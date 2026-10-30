@@ -100,7 +100,7 @@ final class BaseLayoutTest extends WebTestCase
 
         self::assertCount(0, $crawler->filter('[style]'), 'No style attributes.');
         self::assertCount(0, $crawler->filter('style'), 'No <style> elements.');
-        self::assertCount(0, $crawler->filter('script:not([src])'), 'No inline scripts.');
+        self::assertCount(0, $crawler->filter('script:not([src]):not([type="application/ld+json"])'), 'No inline scripts.');
         self::assertCount(0, $crawler->filter('script[type="importmap"]'), 'No importmap.');
         self::assertStringNotContainsString('jspm', $html);
         self::assertStringNotContainsString('es-module-shims', $html);

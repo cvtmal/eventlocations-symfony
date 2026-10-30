@@ -1,13 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ 'listing.meta_title'|trans({}, 'search') }}{% endblock %}
+{% set seo = listing_seo(criteria, page) %}
+{% set share_photo = page.cards[0].photos[0] ?? null %}
+{% set share_picture = share_photo ? card_picture(share_photo, page.cards[0].name) : null %}
 
-{# Static until #16's SEO-1 patterns replace the block and the key. #}
-{% block meta %}<meta name="description" content="{{ 'listing.meta_description'|trans({}, 'search') }}">{% endblock %}
+{% block title %}{{ seo.title }}{% endblock %}
 
-{% block canonical %}<link rel="canonical" href="{{ url('listing', page.page > 1 ? {page: page.page} : {}) }}">{% endblock %}
+{% block meta %}{{ include('seo/_meta.html.twig', {seo: seo, picture: share_picture}, with_context = false) }}{% endblock %}
 
-{% block hreflang %}{{ include('shared/_hreflang.html.twig', {query: page.page > 1 ? {page: page.page} : {}}, with_context = false) }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endblock %}
+
+{% block hreflang %}{% if not seo.noindex %}{{ include('shared/_hreflang.html.twig', {query: page.page > 1 ? {page: page.page} : {}}, with_context = false) }}{% endif %}{% endblock %}
+
+{% block jsonld %}{{ parent() }}{% if not seo.noindex %}{{ listing_jsonld(page) }}{% endif %}{% endblock %}
 
 {% block hero %}
     {{ include('search/_hero.html.twig', {heading: 'listing.heading'|trans({}, 'search'), total: page.total, criteria: criteria}, with_context = false) }}

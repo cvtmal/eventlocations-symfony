@@ -1,0 +1,193 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Application\Seo;
+
+use App\Factory\VenueFactory;
+use App\Factory\VenueTranslationFactory;
+use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\ValueObject\VenueStatus;
+use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Zenstruck\Foundry\Test\Factories;
+
+/**
+ * SEO-3. The schemas are local copies, so the test needs no network. Paging past 1,000 venues is
+ * proven at query level (VenueSitemapQueryTest).
+ */
+final class SitemapTest extends WebTestCase
+{
+    use Factories;
+    use ImportsTownDataset;
+
+    private const string SITEMAP_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9';
+    private const string IMAGE_NS = 'http://www.google.com/schemas/sitemap-image/1.1';
+    private const string SCHEMAS = __DIR__.'/../../Fixtures/Seo/';
+
+    private KernelBrowser $client;
+    private Connection $connection;
+    private EntityManagerInterface $em;
+
+    protected function setUp(): void
+    {
+        $this->client = self::createClient();
+        $this->client->disableReboot();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+        $this->em = $em;
+        $this->connection = $em->getConnection();
+        $this->connection->beginTransaction();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->em->clear();
+        $this->connection->rollBack();
+        parent::tearDown();
+    }
+
+    public function test_the_index_lists_the_pages_and_every_venue_file(): void
+    {
+        DetailVenues::minimal();
+
+        $xml = $this->fetch('/sitemap.xml');
+
+        self::assertSame(['http://localhost/sitemap-pages.xml', 'http://localhost/sitemap-venues-1.xml'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertCount(2, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
+        $this->assertValid($xml, 'siteindex.xsd');
+    }
+
+    public function test_without_venues_the_index_still_lists_the_pages(): void
+    {
+        $xml = $this->fetch('/sitemap.xml');
+
+        self::assertSame(['http://localhost/sitemap-pages.xml'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        $this->assertValid($xml, 'siteindex.xsd');
+    }
+
+    public function test_every_published_venue_is_listed_and_no_unpublished_one(): void
+    {
+        DetailVenues::full($this->em);
+        DetailVenues::minimal();
+        VenueTranslationFactory::createOne([
+            'venue' => VenueFactory::createOne(['status' => VenueStatus::Unpublished, 'town' => DetailVenues::town('Bern')]),
+            'slug' => 'nicht-oeffentlich',
+        ]);
+
+        $xml = $this->fetch('/sitemap-venues-1.xml');
+
+        $locs = $this->values($xml, 'loc', self::SITEMAP_NS);
+        self::assertCount(2, $locs);
+        self::assertContains('http://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG, $locs);
+        self::assertContains('http://localhost/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG, $locs);
+        $images = $this->values($xml, 'loc', self::IMAGE_NS);
+        self::assertCount(5, $images);
+        self::assertStringStartsWith('http://localhost/media/', $images[0]);
+        $this->assertValid($xml, 'sitemap-with-images.xsd');
+    }
+
+    public function test_the_pages_file_lists_the_listing_with_its_newest_change(): void
+    {
+        DetailVenues::minimal();
+
+        $xml = $this->fetch('/sitemap-pages.xml');
+
+        self::assertSame(['http://localhost/hochzeitslocations'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertCount(1, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
+        $this->assertValid($xml, 'sitemap-with-images.xsd');
+    }
+
+    public function test_without_venues_the_listing_has_no_lastmod(): void
+    {
+        $xml = $this->fetch('/sitemap-pages.xml');
+
+        self::assertCount(0, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
+        $this->assertValid($xml, 'sitemap-with-images.xsd');
+    }
+
+    public function test_it_is_cacheable_xml_without_priority_or_changefreq(): void
+    {
+        DetailVenues::minimal();
+
+        foreach (['/sitemap.xml', '/sitemap-pages.xml', '/sitemap-venues-1.xml'] as $path) {
+            $this->client->request('GET', $path);
+
+            $response = $this->client->getResponse();
+            self::assertSame('application/xml; charset=UTF-8', $response->headers->get('Content-Type'), $path);
+            self::assertStringContainsString('s-maxage=600', (string) $response->headers->get('Cache-Control'), $path);
+            self::assertStringContainsString('public', (string) $response->headers->get('Cache-Control'), $path);
+            self::assertStringStartsWith('<?xml', (string) $response->getContent(), $path);
+            self::assertStringNotContainsString('priority', (string) $response->getContent(), $path);
+            self::assertStringNotContainsString('changefreq', (string) $response->getContent(), $path);
+        }
+    }
+
+    public function test_a_file_past_the_end_is_a_404(): void
+    {
+        DetailVenues::minimal();
+
+        foreach (['/sitemap-venues-2.xml', '/sitemap-venues-0.xml', '/sitemap-venues-99999999999999999999.xml'] as $path) {
+            $this->client->request('GET', $path);
+
+            self::assertResponseStatusCodeSame(404, $path);
+        }
+    }
+
+    public function test_the_schema_can_fail(): void
+    {
+        DetailVenues::minimal();
+        $xml = $this->fetch('/sitemap-venues-1.xml');
+        $lastmod = $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod')->item(0);
+        self::assertNotNull($lastmod);
+        $lastmod->textContent = 'gestern';
+
+        self::assertFalse($this->isValid($xml, 'sitemap-with-images.xsd'));
+    }
+
+    private function fetch(string $path): \DOMDocument
+    {
+        $this->client->request('GET', $path);
+        self::assertResponseIsSuccessful($path);
+
+        $xml = new \DOMDocument();
+        self::assertTrue($xml->loadXML((string) $this->client->getResponse()->getContent()), $path);
+
+        return $xml;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function values(\DOMDocument $xml, string $name, string $namespace): array
+    {
+        $values = [];
+        foreach ($xml->getElementsByTagNameNS($namespace, $name) as $element) {
+            $values[] = $element->textContent;
+        }
+
+        return $values;
+    }
+
+    private function assertValid(\DOMDocument $xml, string $schema): void
+    {
+        self::assertTrue($this->isValid($xml, $schema), implode("\n", array_map(
+            static fn (\LibXMLError $error): string => $error->message,
+            libxml_get_errors(),
+        )));
+    }
+
+    private function isValid(\DOMDocument $xml, string $schema): bool
+    {
+        $previous = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+        try {
+            return $xml->schemaValidate(self::SCHEMAS.$schema);
+        } finally {
+            libxml_use_internal_errors($previous);
+        }
+    }
+}
