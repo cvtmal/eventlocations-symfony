@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation and #3 geo-reference-data done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
+_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data and #4 venue-schema done; owner answered Q1, Q2, Q4–Q7) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award, no back office.
 
@@ -66,7 +66,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 1 | `design-system` | W1 | GEN-3, A11Y-1, PERF-1 (CSS, fonts) | 0 | — | — | ✅ Done |
 | 2 | `i18n-foundation` | W1 | GEN-1, SEO-6 | 0 | — | — | ✅ Done |
 | 3 | `geo-reference-data` | W1 | FI-1 (data), FI-2 (data) | 0 | `cantons`, `towns` | — | ✅ Done |
-| 4 | `venue-schema` | W2 | DATA-2, DP-5–DP-15 (data), LP-2 (data) | 2, 3 | `venues`, `venue_*`, `rooms`, `room_*`, `taxonomy_terms` | — | Research |
+| 4 | `venue-schema` | W2 | DATA-2, DP-5–DP-15 (data), LP-2 (data) | 2, 3 | `venues`, `venue_*`, `rooms`, `room_*`, `taxonomy_terms` | — | ✅ Done |
 | 5 | `venue-media` | W3 | PERF-2, LP-3 (images), DP-2 (images) | 4 | `venue_photos` (columns for variants) | — | Research |
 | 6 | `search-query` | W3 | LP-4, FI-5, FI-6, PERF-3 (query) | 4 | indexes only | — | Research |
 | 7 | `listing-page` | W4 | LP-1–LP-3, LP-5, LP-6 | 1, 5, 6 | — | — | Research |
@@ -619,6 +619,81 @@ IDs are referenced by the overview and the cycles.
   - integration tests prove every CHECK and unique constraint;
   - `DemoStory` loads in under 10 s;
   - this file's Outcome lists every vocabulary code.
+
+**Outcome (2026-10-30).** Done in commit `venue-schema`. No Composer changes, no routes, no Twig functions, no new Makefile targets or console commands. Read `CLAUDE.md` `### Venues` and `.claude/rules/database.md` (the last bullets) before touching the schema.
+
+- **Migration `Version20261030114442`** (hand-written, full `down()`) creates 13 tables and seeds the 90 `taxonomy_terms` rows. Every table has `created_at`/`updated_at`; every FK column has its own `idx_<table>_<col>`, even inside a PK. CASCADE runs from `venues` to every child table, and from `rooms` to its photos and names.
+  - **`venues`:** `id` UUID PK; `number INTEGER GENERATED ALWAYS AS IDENTITY` (`uk_venues_number`; the Merkliste id of S7, never the PK); `name` (150); `tier` (`chk_venues_tier`) and `tier_rank SMALLINT GENERATED ALWAYS … STORED` (beliebte_location 1 … basic 5; listings order by it); `status` (`published`/`unpublished`).
+    - Capacity: `capacity_min`/`capacity_max` (`chk_venues_capacity`: max 1–50,000, min NULL or 1..max).
+    - Address: `street`, `zip` (4 digits), `town_id` → `towns` RESTRICT, `canton_code` → `cantons` RESTRICT, `lat`/`lng` (CHECK: Swiss bounding box).
+    - Distances: `distance_{station,highway,airport}_km NUMERIC(4,1)` 0–500, each with an optional `{station,highway,airport}_name` (a name only with its distance).
+    - Contact: `phone` (E.164), `inquiry_email`, `website` (`^https?://`), `contact_person`.
+    - FAQ: `own_catering` (`allowed`/`fixed_caterer`/NULL), `daylight` bool/NULL. `parking_text` is translated (see `venue_translations`).
+    - Rating: `rating_score NUMERIC(3,1)` 0–10 and `rating_count` ≥ 0, both NULL together.
+    - Room facts: `room_count`, `largest_room_m2`, `max_room_height_m NUMERIC(4,2)`. `max_room_height_m` is the height of the venue's **tallest** room. FI-4's "Min. Raumhöhe" filter (#6) compares `max_room_height_m >= :height`, just as "Grösster Raum" compares against `largest_room_m2`.
+  - **`venue_translations`:** `venue_id`, `locale`, `slug` (CHECK `^[a-z0-9]+(-[a-z0-9]+)*$`, `uk_venue_translations_locale_slug`), `summary VARCHAR(200) NOT NULL`, `description TEXT`, `meta_description VARCHAR(160)`, `parking_text VARCHAR(250)`; `uk_venue_translations_venue_id_locale`.
+  - **`venue_slug_history`:** `venue_id`, `locale`, `slug`; `uk_venue_slug_history_locale_slug`.
+  - **`taxonomy_terms`:** PK `(term_group, code)`, `position` (unique per group), `primary_position` (unique per group, NULL allowed).
+  - **`venue_terms`:** PK `(venue_id, term_group, term_code)`, `is_main` bool; `fk_venue_terms_term (term_group, term_code) → taxonomy_terms` RESTRICT; partial unique index `uk_venue_terms_venue_id_term_group_main … WHERE is_main` (at most one main term per venue and group); index `idx_venue_terms_term_group_term_code`.
+  - **`venue_rating_highlights`:** PK `(venue_id, position)`, position 1–3, `code` (CHECK: the 9 codes), `uk_venue_rating_highlights_venue_id_code`.
+  - **`venue_reviews`:** `venue_id`, `locale` (the language of the text), `first_name` (50), `role` (4 codes), `reviewed_month DATE` (CHECK: day 1), `text` (1000).
+  - **`rooms`:** `venue_id`, `position` (unique per venue), `capacity_min/max`, `area_m2`, `height_m NUMERIC(4,2)`, `floor_material`, and `capacity_{seminar,banquet,apero,concert}_{min,max}` as columns. Each capacity is 1–50,000 and `min <= max` per pair. The room name and description are in **`room_translations`** (`room_id`, `locale`, unique per room and locale).
+  - **`venue_documents`:** `venue_id`, `position` (unique per venue), `path` (CHECK `\.pdf$`, relative to `MEDIA_ROOT`), `size_bytes > 0`. The title is in **`venue_document_translations`**.
+  - **`venue_photos`:** `venue_id`, `room_id` NULL → `rooms` CASCADE, `position`, `original_path`; `uk_venue_photos_venue_id_room_id_position UNIQUE NULLS NOT DISTINCT`. The alt text is in **`venue_photo_translations`** (`alt VARCHAR(700)`; a row only when there is a text). **#5 adds the variant columns.**
+- **Vocabulary codes** (`App\Venues\ValueObject`, German labels in the `venues` catalogue `translations/venues+intl-icu.de.yaml`):
+  - `TermGroup` (`term_group.<code>`): setting, building, suitable_for, infrastructure, furniture, technology, surroundings.
+  - Terms (rows in `taxonomy_terms`, labels `term.<group>.<code>`, read with `App\Venues\ValueObject\Term`), in position order, with the eventlokale id for #21:
+    - **setting** (Lage, 5): river 324, lake 323, countryside 325, mountains 326, city 327.
+    - **building** (Gebäudeart, 39). The 11 primary buildings, shown before "Alle Gebäudearten", in chip order (`primary_position` 1–11): bar_club, event_venue, wedding_venue, hotel, party_room, restaurant, castle, congress_centre, forest_hut, farm_barn, mountain_hut. All 39 in position order (P*n* = `primary_position`):
+      bar_club 328 (P1), farm_barn 337 (P10), mountain_hut 338 (P11), brewery_winery 340, medieval_castle 341, cafe 342, casino 343, digital_venue 1002, experience_creative 344, event_hall 345, event_venue 329 (P2), factory_hall 346, mobile_venue 347, leisure_facility 349, gallery_studio 350, garden_greenhouse 351, hangar_shipyard 352, historic_site 505, wedding_venue 330 (P3), cave_fortress 339, hotel 331 (P4), cinema 353, congress_centre 335 (P8), cultural_centre 354, exhibition_hall 348, museum 355, open_air 356, party_room 332 (P5), restaurant 333 (P6), ship 357, castle 334 (P7), seminar_room 1000, meeting_room 506, theatre 358, tram_train_bus 359, villa 360, forest_hut 336 (P9), tent 361, guild_hall 362.
+    - **suitable_for** (Geeignet für, 21, wedding first): wedding 370, family_celebration 371, birthday 369, club_event 363, party_celebration 375, class_reunion 1015, private_event 372, meeting 367, conference 368, congress 364, corporate_event 365, general_assembly 366, apero 374, team_event 373, christmas_party 999, concert 376, theatre 377, party 1016, sports_event 1017, trade_fair 378, public_event 1018.
+    - **infrastructure** (9): wifi 379, air_conditioning 380, stage 381, shower 382, cloakroom 383, heating_ventilation 384, kitchen 386, backstage_rooms 388, lectern 390.
+    - **furniture** (Mobiliar, 5): flipchart 395, magnetic_board 397, moderation_kit 398, chairs 399, tables 401.
+    - **technology** (Technik, 5): sound_system 402, projector_screen 403, interpreting_system 405, lighting_system 407, tv_screens 408.
+    - **surroundings** (Umgebung, 6): garden 409, spa_wellness 410, terrace 411, playground 412, barbecue 413, golf 414.
+  - The 10 enums:
+    - `RatingHighlight` (`rating_highlight.<code>`, spec order; eventlokale `sla_rating` id → code; `icon()` returns the #1 sprite icon): food 1009 Feines Essen (`utensils`), atmosphere 1005 Stilvolle Atmosphäre (`sparkles`), architecture 1004 Einzigartige Architektur (`landmark`), location 1007 Einmalige Lage (`binoculars`), hospitality 1011 Freundliche Gastgeber (`smile`), reachability 1008 Perfekte Erreichbarkeit (`route`), equipment 1006 Moderne Ausstattung (`sofa`), programme 1010 Attraktives Programm (`music`), value 1012 Top Preis/Leistung (`coins`).
+    - `Tier` (`tier.<code>`, `rank()`): beliebte_location 1, empfehlung 2, top_premium 3, premium 4, basic 5 ("Standard", no badge).
+    - `RatingLabel` (`rating_label.<code>`, `fromScore()`): recommended 7.7–7.9, excellent 8.0–8.9, outstanding ≥ 9.0; below 7.7 gives no label.
+    - `Access` (`access.<code>`, Erreichbarkeit; derived from the distances, not stored; #6 sets the thresholds): station, highway, airport.
+    - `OwnCatering` (`own_catering.<code>`): allowed, fixed_caterer.
+    - `FloorMaterial` (`floor_material.<code>`): various, parquet, carpet, stone, wood.
+    - `Seating` (`seating.<code>`): seminar, banquet, apero, concert.
+    - `ReviewerRole` (`reviewer_role.<code>`): visitor_f, visitor_m, organiser_f, organiser_m (eventlokale `owner_*` → `organiser_*`).
+    - `VenueStatus` (not translated): published, unpublished.
+    - `TermGroup` (above).
+  - Setting icons for #8 (#1's sprite): river `waves`, lake `sailboat`, countryside `trees`, mountains `mountain-snow`, city `building-2`. They are not in code, because settings are rows.
+- **Entities and repositories:**
+  - `App\Venues\Entity\{Venue, VenueTranslation, VenueSlugHistory, TaxonomyTerm, VenueTerm, VenueRatingHighlight, VenueReview, Room, RoomTranslation, VenueDocument, VenueDocumentTranslation, VenuePhoto, VenuePhotoTranslation}` (Doctrine mapping `Venues` in `config/packages/doctrine.yaml`).
+  - `App\Venues\Repository\VenueRepository`, `App\Venues\Repository\TaxonomyTermRepository` (`byGroup()`).
+  - `App\Venues\Exception\RoomOfAnotherVenue` (a photo's room must belong to the same venue; checked in the `VenuePhoto` constructor only).
+  - The `Venue` write API has no setters (see `CLAUDE.md` `### Venues`).
+- **Mapping resolutions** (recorded in `.claude/rules/database.md`):
+  - R1: the identity `number` is mapped `insertable: false, updatable: false, generated: 'INSERT'`. No extra option and no listener was needed.
+  - R2: Doctrine refuses a composite-key association inside a primary key. `VenueTerm` therefore has read-only scalar `#[ORM\Id]` fields `termGroup`/`termCode` (getters `termGroup()`/`termCode()`) plus a non-id, writing `ManyToOne term` with two JoinColumns on the same columns, which keeps `fk_venue_terms_term`. The `term` association is set once in the constructor and must never be reassigned: to change a venue's term, delete the row and insert a new one.
+  - R3: the partial unique index is mapped with `where: 'is_main'`.
+  - `App\Tests\Integration\Migrations\SchemaInSyncTest` runs `doctrine:schema:validate` inside `make test`; `VocabularyChecksTest` pins each enum to its CHECK list.
+- **Demo data:**
+  - 12 Foundry factories in `src/Factory/` (`App\Factory\{Venue, VenueTranslation, VenueSlugHistory, VenueTerm, VenueRatingHighlight, VenueReview, Room, RoomTranslation, VenueDocument, VenueDocumentTranslation, VenuePhoto, VenuePhotoTranslation}Factory`). There is no `TaxonomyTerm` factory, because the migration seeds the terms. The faker locale is `de_CH` (`zenstruck_foundry.yaml`); faker texts get ß → ss.
+  - `App\Story\DemoStory` (`DemoStory::VENUES` = 60): 60 fictional, all published venues in all 26 cantons; tiers beliebte_location 3, empfehlung 6, top_premium 9, premium 12, basic 30; 1–5 rooms, 0–3 reviews, 0–2 documents, 20 without a rating, no photos; one main building and one main setting per venue. It is deterministic (faker seed `20261030`, index-based distribution) and idempotent (does nothing when venues exist), and needs the towns.
+  - `make seed` runs `app:geo:import-towns`, then `foundry:load-fixtures main --append`; `App\Story\AppStory` loads `DemoStory`. The story loads in about 2.2–2.5 s (budget 10 s).
+- **Deviations from the spec:**
+  - no `venues.slug`: the slug lives in `venue_translations` (one per locale, S4);
+  - `venue_terms.is_main` instead of `venues.main_building_type`;
+  - `taxonomy_terms.primary_position` instead of `is_primary_filter` (it also gives the chip order);
+  - `max_room_height_m` instead of `min_room_height_m` (see the `venues` bullet for its meaning);
+  - column `term_group`, not `group` (a reserved word);
+  - `venue_document_translations` / `venue_photo_translations` instead of `document_translations`;
+  - eventlokale's `accesses` vocabulary is not copied: Erreichbarkeit is derived from the distances;
+  - an unknown tier is rejected first by `tier_rank`'s NOT NULL (the CHECK stays);
+  - the R2 mapping variant above.
+- **Carried forward:**
+  - #9: a content-key column on `venues` (e.g. `content_key`) in its own migration. The write side validates locales with `EnabledLocale::isEnabled()`, keeps history slugs distinct from current slugs, and computes `room_count`/`largest_room_m2`/`max_room_height_m`.
+  - #21: works out what the thumbs-up count means (the `rating_count` source: `likes` vs. comments) and the tier mapping, and cleans the data: 240 venues with capacity 0, 8 with 0/0 coordinates, summaries over 200 characters, outlier heights and areas. Use the id → code tables above.
+  - #6: search indexes beyond the FK indexes; the Erreichbarkeit thresholds (`Access`).
+  - #5: the `venue_photos` variant columns and demo photos.
+  - `canton_code` is derived from the town in the `Venue` entity; the DB does not enforce that it matches the town's canton.
+  - `.claude/rules/i18n.md` still says `document_translations`; the real name is `venue_document_translations` (docs-only fix for whoever next touches that file).
 
 ## W3 Media and search (parallel)
 

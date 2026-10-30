@@ -71,4 +71,10 @@ The DDL is hand-written, so the mapping has to describe it exactly or `doctrine:
 - `CHECK` constraints and `NULLS NOT DISTINCT` are invisible to Doctrine and need no mapping.
 - Map generated columns with `insertable: false, updatable: false, generated: 'ALWAYS'` and the same nullability as the DDL.
 - Mirror every DB `DEFAULT` in `options: ['default' => …]`.
-- Fixed vocabularies follow S4 (PHP enums or code-keyed rows, labels from catalogues); #4 records how they are mapped.
+- Fixed vocabularies follow S4 (PHP enums or code-keyed rows, labels from catalogues). As built in #4:
+  - A closed vocabulary is a backed enum on a CHECK-constrained `VARCHAR(n)` (`CHECK (tier IN (…))`), mapped `#[ORM\Column(type: Types::STRING, length: n, enumType: Tier::class)]`. A test pins the CHECK's `IN` list to the enum's cases (`tests/Integration/Venues/VocabularyChecksTest.php`); add each new enum column there.
+  - An open-ended term list is code-keyed rows (`taxonomy_terms`, natural PK `(term_group, code)`, the group a BackedEnum id), seeded by the migration. Doctrine cannot put an association to a composite-key entity into another primary key, so a row that references it (`venue_terms`) maps its key columns as read-only scalar `#[ORM\Id]` fields (`insertable: false, updatable: false`) **and** a non-id `ManyToOne` with two `#[ORM\JoinColumn]`s on the same columns. The association writes the columns and keeps the composite FK in the mapping; the constructor sets both from the same object. See `App\Venues\Entity\VenueTerm`.
+- An identity column that is not the primary key (`number INTEGER GENERATED ALWAYS AS IDENTITY`) is mapped `#[ORM\Column(type: Types::INTEGER, insertable: false, updatable: false, generated: 'INSERT')]`, with no `autoincrement` option; Doctrine reads the value back after the insert.
+- A boolean partial unique index (`… WHERE is_main`) is mapped with `options: ['where' => 'is_main']`, PostgreSQL's normalised text for a bare boolean column.
+- `NUMERIC(p, s)` maps to `Types::DECIMAL` with `precision`/`scale`; the property is a PHP `string` ('8.4'), and the getter may return a float.
+- `schema:validate` also runs in `make test` (`tests/Integration/Migrations/SchemaInSyncTest.php`), so a mapping that drifts from the migrations fails the suite.

@@ -1,6 +1,10 @@
 when@dev: &dev
     # See full configuration: https://symfony.com/bundles/ZenstruckFoundryBundle/current/index.html#full-default-bundle-configuration
     zenstruck_foundry:
+        # Swiss German fake data (names, streets, realText) for the factories and DemoStory.
+        # No faker.seed here (deprecated since Foundry 2.4); DemoStory seeds faker itself.
+        faker:
+            locale: de_CH
         persistence:
             # Flush only once per call of `PersistentObjectFactory::create()`
             flush_once: true
