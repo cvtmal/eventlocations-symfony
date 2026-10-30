@@ -1,0 +1,27 @@
+{% extends 'admin/security/_layout.html.twig' %}
+
+{% block title %}{{ 'totp.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block form %}
+    <div class="auth__form">
+        <form class="auth__form" method="post" action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}">
+            <h1>{{ 'totp.title'|trans({}, 'admin') }}</h1>
+            <p class="auth__intro">{{ 'totp.intro'|trans({}, 'admin') }}</p>
+            <div class="field">
+                <label class="field__label" for="totp-code">{{ 'totp.code'|trans({}, 'admin') }}</label>
+                <input class="field__input field__input--code" id="totp-code" type="text" name="{{ authCodeParameterName }}" inputmode="numeric" autocomplete="one-time-code" required autofocus{% if authenticationError %} aria-invalid="true" aria-describedby="totp-error"{% endif %}>
+                {% if authenticationError %}
+                    <span class="field__error" id="totp-error">{{ 'totp.error.invalid'|trans({}, 'admin') }}</span>
+                {% endif %}
+            </div>
+            {% if isCsrfProtectionEnabled %}
+                <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+            {% endif %}
+            <button class="btn btn--primary btn--lg" type="submit">{{ 'totp.submit'|trans({}, 'admin') }}</button>
+        </form>
+        <form method="post" action="{{ path('_logout_admin') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+            <button class="auth__cancel" type="submit">{{ 'totp.cancel'|trans({}, 'admin') }}</button>
+        </form>
+    </div>
+{% endblock %}

@@ -75,7 +75,7 @@ final class IconSpriteTest extends TestCase
             if (!str_ends_with($file->getFilename(), '.twig')) {
                 continue;
             }
-            preg_match_all("/icon\\(\\s*'([a-z0-9-]+)'/", (string) file_get_contents($file->getPathname()), $matches);
+            preg_match_all("/\\bicon\\(\\s*'([a-z0-9-]+)'/", (string) file_get_contents($file->getPathname()), $matches);
             foreach ($matches[1] as $name) {
                 self::assertContains($name, $ids, \sprintf('%s uses icon "%s", which is not in the sprite.', $file->getPathname(), $name));
                 ++$checked;

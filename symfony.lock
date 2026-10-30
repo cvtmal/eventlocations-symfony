@@ -74,6 +74,19 @@
             "bin/phpunit"
         ]
     },
+    "scheb/2fa-bundle": {
+        "version": "8.6",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.0",
+            "ref": "1e6f68089146853a790b5da9946fc5974f6fcd49"
+        },
+        "files": [
+            "config/packages/scheb_2fa.yaml",
+            "config/routes/scheb_2fa.yaml"
+        ]
+    },
     "symfony/asset-mapper": {
         "version": "7.4",
         "recipe": {
@@ -205,6 +218,19 @@
         "files": [
             "config/packages/routing.yaml",
             "config/routes.yaml"
+        ]
+    },
+    "symfony/security-bundle": {
+        "version": "7.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "7.4",
+            "ref": "02d47835088cd548c827e5d53b3c4b361bca3390"
+        },
+        "files": [
+            "config/packages/security.yaml",
+            "config/routes/security.yaml"
         ]
     },
     "symfony/translation": {

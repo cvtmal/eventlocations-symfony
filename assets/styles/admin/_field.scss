@@ -1,0 +1,58 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 480px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field__label,
+.field label {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.field__input,
+.field input:not([type='hidden']),
+.field select {
+    width: 100%;
+    height: 38px;
+    padding: 0 var(--a-space-3);
+    border: 1px solid var(--a-field);
+    border-radius: var(--a-r-md);
+    background: var(--a-surface);
+    color: var(--a-ink);
+    font: 400 15px var(--a-font);
+
+    &:focus-visible {
+        outline-offset: 1px;
+    }
+
+    // A date input focuses an inner segment, so :focus-visible never matches the input itself (ADM-7).
+    &[type='date']:focus-within {
+        outline: 2px solid var(--a-ink);
+        outline-offset: 1px;
+    }
+
+    &[aria-invalid='true'] {
+        border-color: var(--a-danger);
+        box-shadow: 0 0 0 1px var(--a-danger);
+    }
+}
+
+.field__help {
+    color: var(--a-muted);
+    font-size: 12px;
+}
+
+.field__error,
+.form-error {
+    color: var(--a-danger);
+    font-size: 13px;
+    font-weight: 600;
+}

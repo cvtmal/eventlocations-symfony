@@ -1,0 +1,45 @@
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: var(--a-r-pill);
+    font: 600 12px/1 var(--a-font);
+    white-space: nowrap;
+}
+
+.pill--green {
+    background: var(--a-green-bg);
+    color: var(--a-green);
+}
+
+.pill--amber {
+    background: var(--a-amber-bg);
+    color: var(--a-amber);
+}
+
+.pill--blue {
+    background: var(--a-blue-bg);
+    color: var(--a-blue);
+}
+
+.pill--grey {
+    background: var(--a-grey-bg);
+    color: var(--a-grey);
+}
+
+.pill--pink {
+    background: var(--a-pink-bg);
+    color: var(--a-pink);
+}
+
+.pill--red {
+    background: var(--a-red-bg);
+    color: var(--a-danger);
+}
+
+.pill--dark {
+    background: var(--a-ink);
+    color: var(--a-on-ink);
+}

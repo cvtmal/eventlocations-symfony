@@ -153,6 +153,33 @@ final class ClassModifiersTest extends ArchitectureRules
             ->because('Doctrine hydrates entities by writing their properties.');
     }
 
+    public function test_extensions_are_final(): Rule
+    {
+        return PHPat::rule()
+            ->classes(self::layer('Extension'))
+            ->excluding(Selector::isInterface(), Selector::isEnum(), Selector::isAbstract())
+            ->should()->beFinal()
+            ->because('Extension-point implementations are wired by tag, not inherited.');
+    }
+
+    public function test_security_classes_are_final(): Rule
+    {
+        return PHPat::rule()
+            ->classes(self::layer('Security'))
+            ->excluding(Selector::isInterface())
+            ->should()->beFinal()
+            ->because('Security classes are services, composed not inherited.');
+    }
+
+    public function test_messenger_classes_are_final(): Rule
+    {
+        return PHPat::rule()
+            ->classes(self::layer('Messenger'))
+            ->excluding(Selector::isInterface())
+            ->should()->beFinal()
+            ->because('Middleware and message helpers are composed not inherited.');
+    }
+
     public function test_command_handler_marker_is_an_interface(): Rule
     {
         return PHPat::rule()

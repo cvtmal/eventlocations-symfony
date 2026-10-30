@@ -1,0 +1,22 @@
+.dashboard__greeting {
+    font-size: 30px;
+    line-height: 36px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.dashboard__date {
+    color: var(--a-muted);
+    font-size: 15px;
+}
+
+.dashboard__widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr));
+    gap: var(--a-space-4);
+    align-items: start;
+}
+
+.widget--wide {
+    grid-column: 1 / -1;
+}

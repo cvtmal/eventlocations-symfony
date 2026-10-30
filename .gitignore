@@ -35,6 +35,8 @@ phpstan.neon
 /bin/dart-sass/
 /public/media/
 /content/
+/public/admin-build/
+/admin-ui/node_modules/
 ###< hochzeitslocation ###
 
 ###> symfonycasts/sass-bundle ###

@@ -1,0 +1,61 @@
+// The back office's tokens (docs/reference/admin/README.md, Tokens.dc.html). The only hex values of admin.css.
+:root {
+    --a-bg: #f6f5f2;
+    --a-surface: #fff;
+    --a-surface-muted: #fbfaf8;
+    --a-ink: #1b1b1b;
+    --a-ink-hover: #3a3a3a;
+    --a-muted: #66645f;
+    --a-line: #e7e4df;
+    --a-line-soft: #f0ede8;
+    --a-field: #d6d2cb;
+    --a-accent: #ff5a75;
+    --a-on-accent: #121212;
+    --a-link: #b03a50;
+    --a-link-hover: #8a2c3e;
+    --a-danger: #a3261d;
+    --a-danger-line: #e9c3bf;
+    --a-hover: #f1efeb;
+
+    --a-nav-text: #d6d3ce;
+    --a-nav-muted: #a9a6a0;
+    --a-nav-active: #2f2f2f;
+    --a-nav-soft: #c9c6c0;
+    --a-nav-surface: #262626;
+    --a-nav-surface-2: #2c2c2c;
+    --a-nav-border: #383838;
+    --a-nav-line: #333;
+    --a-nav-kbd: #444;
+    --a-on-ink: #fff;
+    --a-toast-check: #7bd3a2;
+
+    --a-green-bg: #e3f3ea;
+    --a-green: #17603d;
+    --a-amber-bg: #fbefd5;
+    --a-amber: #7a4e00;
+    --a-blue-bg: #e6edfa;
+    --a-blue: #1f4c99;
+    --a-grey-bg: #eeece8;
+    --a-grey: #4a4945;
+    --a-pink-bg: #ffe4e9;
+    --a-pink: #9e2f44;
+    --a-red-bg: #fbe3e1;
+
+    --a-space-1: 4px;
+    --a-space-2: 8px;
+    --a-space-3: 12px;
+    --a-space-4: 16px;
+    --a-space-5: 20px;
+    --a-space-6: 24px;
+    --a-space-7: 32px;
+
+    --a-r-sm: 6px;
+    --a-r-md: 8px;
+    --a-r-tile: 10px;
+    --a-r-lg: 12px;
+    --a-r-pill: 999px;
+
+    --a-sh-toast: 0 8px 24px rgb(0 0 0 / 18%);
+
+    --a-font: 'Sofia Sans', system-ui, sans-serif;
+}

@@ -1,0 +1,18 @@
+.user-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-5);
+}
+
+.user-action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--a-space-3);
+}
+
+.user-action__hint {
+    flex: 1 1 240px;
+    color: var(--a-muted);
+}

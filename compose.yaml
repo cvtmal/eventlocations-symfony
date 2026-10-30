@@ -47,6 +47,15 @@ services:
     volumes:
       - ./var/lighthouse:/reports
 
+  # Builds and tests the back office's Vue islands (admin-ui/). Runs as root so `npm ci` can write in a
+  # CI checkout owned by another uid; nothing reads admin-ui/node_modules from the php container.
+  node:
+    image: node:26-alpine
+    profiles: [tools]
+    working_dir: /app/admin-ui
+    volumes:
+      - .:/app
+
   # Pinned by digest: `latest` of 2026-10-12, multi-arch (native arm64). The newest dated tag, 24.10.17,
   # is amd64-only and predates `commandfor`/`command`.
   vnu:

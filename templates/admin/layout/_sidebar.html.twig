@@ -1,0 +1,36 @@
+<nav class="sidebar" aria-label="{{ 'shell.main_nav'|trans({}, 'admin') }}">
+    <div class="sidebar__brand">
+        <span class="sidebar__wordmark">{{ 'shell.wordmark'|trans({}, 'admin') }}</span>
+        <span class="sidebar__subtitle">{{ 'shell.backoffice'|trans({}, 'admin') }}</span>
+    </div>
+    {{ include('admin/layout/_search_trigger.html.twig', ignore_missing = true) }}
+    {% for section in admin_navigation() %}
+        <div class="sidebar__section">
+            {% if section.section.hasHeading %}
+                <span class="sidebar__heading">{{ section.section.label|trans }}</span>
+            {% endif %}
+            {% for item in section.items %}
+                <a class="sidebar__item{{ item.active ? ' sidebar__item--active' }}" href="{{ path(item.route, item.routeParameters) }}"{% if item.active %} aria-current="page"{% endif %}>
+                    {{ admin_icon(item.icon) }}
+                    <span class="sidebar__label">{{ item.label|trans }}</span>
+                    {% if item.badge is not null %}
+                        <span class="sidebar__badge">{{ item.badge|swiss_number }}</span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    {% if app.user %}
+        <div class="sidebar__user">
+            <span class="sidebar__avatar" aria-hidden="true">{{ app.user.initials }}</span>
+            <span class="sidebar__person">
+                <span class="sidebar__name">{{ app.user.displayName }}</span>
+                <span class="sidebar__role">{{ app.user.role.label|trans }}</span>
+            </span>
+            <form class="sidebar__logout-form" method="post" action="{{ path('_logout_admin') }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                <button class="sidebar__logout" type="submit" aria-label="{{ 'shell.logout'|trans({}, 'admin') }}" title="{{ 'shell.logout'|trans({}, 'admin') }}">{{ admin_icon('log-out') }}</button>
+            </form>
+        </div>
+    {% endif %}
+</nav>

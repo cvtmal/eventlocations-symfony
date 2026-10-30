@@ -1,0 +1,87 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'audit.title'|trans({}, 'admin') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section.settings'|trans({}, 'admin') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'audit.title'|trans({}, 'admin') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ 'audit.title'|trans({}, 'admin') }}</h1></div>
+{% endblock %}
+
+{% block main %}
+    <div class="card card__body">
+        {{ form_start(form, {attr: {class: 'audit-filter'}}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.actor}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.subject_type}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.subject_id}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.from}) }}
+            {{ include('admin/form/_field.html.twig', {field: form.to}) }}
+            <div class="audit-filter__actions">
+                <button class="btn btn--primary" type="submit">{{ 'audit.filter.submit'|trans({}, 'admin') }}</button>
+                <a class="btn" href="{{ path('admin_audit_log') }}">{{ 'audit.filter.reset'|trans({}, 'admin') }}</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+
+    {% if log.rows is empty %}
+        <div class="card empty">
+            {{ admin_icon('history') }}
+            <strong class="empty__title">{{ 'audit.empty.title'|trans({}, 'admin') }}</strong>
+            <span class="empty__text">{{ 'audit.empty.text'|trans({}, 'admin') }}</span>
+        </div>
+    {% else %}
+        {# Rows stack on narrow screens, where data-label replaces the column headers (assets/styles/admin/_audit.scss). #}
+        <div class="card table-wrap audit-log">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ 'audit.table.time'|trans({}, 'admin') }}</th>
+                        <th scope="col">{{ 'audit.table.actor'|trans({}, 'admin') }}</th>
+                        <th scope="col">{{ 'audit.table.command'|trans({}, 'admin') }}</th>
+                        <th scope="col">{{ 'audit.table.subject'|trans({}, 'admin') }}</th>
+                        <th scope="col">{{ 'audit.table.changes'|trans({}, 'admin') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in log.rows %}
+                        <tr>
+                            <td data-label="{{ 'audit.table.time'|trans({}, 'admin') }}">{{ row.createdAt|swiss_date }} {{ row.timeInZurich }}</td>
+                            <td data-label="{{ 'audit.table.actor'|trans({}, 'admin') }}">
+                                {% if row.actorName %}
+                                    {{ row.actorName }}
+                                {% else %}
+                                    {{ ('audit.actor.' ~ row.actorType.value)|trans({}, 'admin') }}
+                                {% endif %}
+                            </td>
+                            <td data-label="{{ 'audit.table.command'|trans({}, 'admin') }}">{{ row.commandName }}</td>
+                            <td class="audit-log__wide" data-label="{{ 'audit.table.subject'|trans({}, 'admin') }}">{{ row.subjectType }}<br><span class="muted">{{ row.subjectId }}</span></td>
+                            <td class="audit-log__wide" data-label="{{ 'audit.table.changes'|trans({}, 'admin') }}">
+                                <dl class="audit-changes">
+                                    {% for key, value in row.changes %}
+                                        <dt>{{ key }}</dt>
+                                        <dd>{{ value is iterable ? value|join(', ') : value is same as(true) ? 'true' : value is same as(false) ? 'false' : value }}</dd>
+                                    {% endfor %}
+                                </dl>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if log.lastPage > 1 %}
+            <nav class="pagination" aria-label="{{ 'audit.pagination.label'|trans({}, 'admin') }}">
+                {% if log.page > 1 %}
+                    <a class="btn btn--sm" rel="prev" href="{{ path('admin_audit_log', app.request.query.all|merge({page: log.page - 1})) }}">{{ 'audit.pagination.previous'|trans({}, 'admin') }}</a>
+                {% endif %}
+                <span class="muted">{{ 'audit.pagination.status'|trans({page: log.page|swiss_number, last: log.lastPage|swiss_number}, 'admin') }}</span>
+                {% if log.page < log.lastPage %}
+                    <a class="btn btn--sm" rel="next" href="{{ path('admin_audit_log', app.request.query.all|merge({page: log.page + 1})) }}">{{ 'audit.pagination.next'|trans({}, 'admin') }}</a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+# Two-factor authentication for /admin (#22, S12): TOTP only. Form login's token alone is challenged,
+# so the dev auto-login (DevAutoLoginAuthenticator) and the test client's loginUser() are not.
+scheb_two_factor:
+    security_tokens:
+        - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
+    # Replay protection: a code that was accepted once is refused for the rest of its window.
+    code_reuse_cache: cache.app
+    code_reuse_cache_duration: 60
+    totp:
+        enabled: true
+        issuer: 'Hochzeitslocation Backoffice'
+        server_name: null
+        leeway: 15
+        template: admin/security/totp.html.twig
+
+# scheb has no limiter of its own. `admin_totp` counts wrong codes per user (TotpThrottleListener, TotpFailureHandler).
+# It lives here, not in rate_limiter.yaml, because it belongs to the 2FA setup.
+framework:
+    rate_limiter:
+        admin_totp:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'

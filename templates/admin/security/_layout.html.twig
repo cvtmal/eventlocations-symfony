@@ -1,0 +1,21 @@
+{% extends 'admin/base_auth.html.twig' %}
+
+{% block body %}
+    <div class="auth">
+        <div class="auth__panel">
+            <svg class="auth__circles" aria-hidden="true" viewBox="0 0 640 640"><circle class="auth__circle" cx="320" cy="320" r="320"/><circle class="auth__circle auth__circle--inner" cx="320" cy="320" r="200"/></svg>
+            <div class="auth__brand">
+                <span class="auth__wordmark">{{ 'shell.wordmark'|trans({}, 'admin') }}</span>
+                <span class="auth__subtitle">{{ 'shell.backoffice'|trans({}, 'admin') }}</span>
+            </div>
+            <div class="auth__claim">
+                <span class="auth__bar"></span>
+                <p class="auth__tagline">{{ 'login.tagline'|trans({}, 'admin') }}</p>
+                <p class="auth__team">{{ 'login.team_only'|trans({}, 'admin') }}</p>
+            </div>
+        </div>
+        <main class="auth__main">
+            {% block form %}{% endblock %}
+        </main>
+    </div>
+{% endblock %}

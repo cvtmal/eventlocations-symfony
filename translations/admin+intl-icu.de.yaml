@@ -1,0 +1,173 @@
+# Strings of the back office (#22). Keys: <context>.<description>. Tone: "du", as in the design.
+shell:
+    wordmark: Hochzeitslocation
+    backoffice: Backoffice
+    skip_to_content: Zum Inhalt springen
+    main_nav: Hauptnavigation
+    breadcrumbs: Seitenpfad
+    logout: Abmelden
+    dismiss: Meldung schliessen
+nav:
+    overview: Übersicht
+    users: Benutzer
+    audit_log: Audit-Log
+    section:
+        overview: Übersicht
+        cms: CMS
+        crm: CRM
+        settings: Einstellungen
+role:
+    admin: Admin
+    editor: Redaktion
+login:
+    title: Anmelden
+    tagline: Locations pflegen, Kunden betreuen.
+    team_only: Nur für das Team von Hochzeitslocation.
+    email: E-Mail
+    password: Passwort
+    submit: Weiter
+    forgot: Passwort vergessen? Ein Admin setzt es zurück.
+    error:
+        invalid: E-Mail oder Passwort ist falsch.
+        disabled: Dieses Konto ist deaktiviert. Wende dich an einen Admin.
+        throttled: Zu viele Versuche. Versuche es in 15 Minuten wieder.
+totp:
+    title: Bestätigungscode
+    intro: Gib den 6-stelligen Code aus deiner Authenticator-App ein.
+    code: Code
+    submit: Bestätigen
+    cancel: Abbrechen
+    error:
+        invalid: Der Code ist ungültig oder abgelaufen.
+    enrol:
+        title: Zwei-Faktor-Anmeldung einrichten
+        intro: Scanne den QR-Code mit deiner Authenticator-App und gib danach den Code ein, den sie anzeigt.
+        qr_label: QR-Code für deine Authenticator-App
+        key_label: Oder gib diesen Schlüssel von Hand ein
+        submit: Einrichten
+flash:
+    session_expired: Du warst zwei Stunden inaktiv. Melde dich neu an.
+    totp_enrolled: Die Zwei-Faktor-Anmeldung ist eingerichtet.
+    user_created: Der Benutzer ist erfasst.
+    role_changed: Die Rolle ist geändert.
+    password_changed: Das Passwort ist geändert.
+    user_deactivated: Der Benutzer ist deaktiviert.
+    user_reactivated: Der Benutzer ist wieder aktiv.
+    totp_reset: Die Zwei-Faktor-Anmeldung ist zurückgesetzt.
+    action_failed: Das hat nicht geklappt. Lade die Seite neu und versuche es noch einmal.
+dashboard:
+    title: Übersicht
+    greeting: 'Guten Tag, {name}'
+    date: '{date, date, ::EEEEdMMMMy}'
+    empty:
+        title: Noch keine Inhalte
+        text: Hier erscheinen Anfragen, Aufgaben und Verlängerungen, sobald die Module bereitstehen.
+users:
+    title: Benutzer
+    new: Benutzer erfassen
+    edit_link: Bearbeiten
+    edit_label: '{name} bearbeiten'
+    back: Zur Liste
+    empty: Noch keine Benutzer.
+    table:
+        name: Name
+        email: E-Mail
+        role: Rolle
+        totp: 2FA
+        status: Status
+        last_login: Letzte Anmeldung
+        actions: Aktionen
+    totp:
+        enrolled: Eingerichtet
+        pending: Ausstehend
+    status:
+        active: Aktiv
+        inactive: Deaktiviert
+    last_login_never: Noch nie
+    form:
+        email: E-Mail
+        display_name: Name
+        role: Rolle
+        password: Passwort
+        password_help: Mindestens 12 Zeichen.
+        password_repeat: Passwort wiederholen
+        new_password: Neues Passwort
+        save: Speichern
+        create: Erfassen
+    section:
+        role: Rolle
+        password: Passwort setzen
+        access: Zugang
+    action:
+        deactivate: Deaktivieren
+        deactivate_hint: Der Benutzer wird sofort abgemeldet und kann sich nicht mehr anmelden.
+        reactivate: Reaktivieren
+        reactivate_hint: Der Benutzer kann sich wieder anmelden.
+        reset_totp: 2FA zurücksetzen
+        reset_totp_hint: Der Benutzer wird abgemeldet und richtet die Zwei-Faktor-Anmeldung bei der nächsten Anmeldung neu ein.
+    error:
+        email_taken: Diese E-Mail-Adresse wird schon verwendet.
+        own_account: Das eigene Konto kannst du hier nicht ändern.
+        last_admin: Der letzte aktive Admin muss Admin bleiben.
+        password_too_short: Das Passwort braucht mindestens 12 Zeichen.
+        password_mismatch: Die beiden Passwörter stimmen nicht überein.
+        not_found: Diesen Benutzer gibt es nicht.
+audit:
+    title: Audit-Log
+    empty:
+        title: Keine Einträge
+        text: Für diese Filter gibt es keine Einträge.
+    actor:
+        console: Konsole
+        system: System
+        all: Alle
+    filter:
+        actor: Benutzer
+        subject_type: Typ
+        subject_id: ID
+        from: Von
+        to: Bis
+        submit: Filtern
+        reset: Zurücksetzen
+    table:
+        time: Zeit
+        actor: Benutzer
+        command: Aktion
+        subject: Datensatz
+        changes: Änderungen
+    pagination:
+        label: Seiten
+        previous: Zurück
+        next: Weiter
+        status: 'Seite {page} von {last}'
+styleguide:
+    title: Styleguide
+    colours: Farben
+    type: Schrift
+    components: Komponenten
+    h1_sample: Überschrift 1
+    text_sample: Tabellen, Listen, Timeline
+    field_sample: Feld
+    help_sample: Hilfetext
+    error_sample: Fehlertext
+    button_primary: Speichern
+    button_secondary: Sekundär
+    button_ghost: Ghost
+    button_danger: Entfernen
+    button_small: Klein
+    pill_green: Publiziert
+    pill_grey: Unpubliziert
+    pill_pink: Neu
+    pill_blue: Heute
+    pill_amber: Überfällig
+    pill_red: Fehlgeschlagen
+    pill_dark: Titelbild
+    island: Vue-Insel
+    hello:
+        greeting: Hallo aus der Vue-Insel
+        count_label: Klicks
+        button_label: Zählen
+error:
+    unauthenticated: Du bist nicht angemeldet.
+    forbidden: Dafür fehlt dir die Berechtigung.
+    totp_required: Richte zuerst die Zwei-Faktor-Anmeldung ein.

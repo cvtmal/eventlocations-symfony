@@ -1,0 +1,56 @@
+// The design's flex wrap: the sidebar stacks above the content below 808 px, without a media query.
+.shell {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 100vh;
+    background: var(--a-bg);
+}
+
+.shell__sidebar {
+    flex: 1 1 248px;
+    max-width: 100%;
+    background: var(--a-ink);
+}
+
+.shell__content {
+    flex: 999 1 560px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.shell__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-6);
+    width: 100%;
+    max-width: 1280px;
+    padding: clamp(16px, 4vw, 32px);
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.shell__body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--a-space-6);
+}
+
+.shell__primary {
+    flex: 999 1 560px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-6);
+    min-width: 0;
+}
+
+.shell__aside {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+    min-width: 0;
+}

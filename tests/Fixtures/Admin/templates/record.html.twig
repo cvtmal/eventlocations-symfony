@@ -1,0 +1,18 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block main %}
+    <nav class="fake-tabs">
+        {% for tab in admin_record_tabs('venue', id) %}
+            <a href="{{ path(tab.route, tab.routeParameters) }}">{{ tab.label|trans }}</a>
+        {% endfor %}
+    </nav>
+    {% for tab in admin_record_tabs('deal', id) %}
+        <span class="fake-wrong-type"></span>
+    {% endfor %}
+{% endblock %}
+
+{% block aside %}
+    {% for panel in admin_record_panels('venue', id) %}
+        {{ include(panel.template, panel.context) }}
+    {% endfor %}
+{% endblock %}

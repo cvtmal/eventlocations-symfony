@@ -18,6 +18,11 @@ use PHPat\Test\PHPat;
  *   Favorites → Search, Venues
  *   Inquiries → Venues
  *   Seo       → Search, Venues, Geo
+ *   Admin     → (nothing)
+ *   Cms       → Admin, Venues, Geo, Media
+ *   Crm       → Admin, Venues, Geo, Inquiries
+ *
+ * No public module depends on Admin, Cms or Crm.
  */
 final class ModuleBoundariesTest extends ArchitectureRules
 {
@@ -34,6 +39,9 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Favorites'),
                 Selector::inNamespace('App\Inquiries'),
                 Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Shared holds building blocks only; every module may use it.');
     }
@@ -50,6 +58,9 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Favorites'),
                 Selector::inNamespace('App\Inquiries'),
                 Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Geo may only use Shared.');
     }
@@ -66,6 +77,9 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Favorites'),
                 Selector::inNamespace('App\Inquiries'),
                 Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Media may only use Shared.');
     }
@@ -80,6 +94,9 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Favorites'),
                 Selector::inNamespace('App\Inquiries'),
                 Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Venues may only use Geo and Media.');
     }
@@ -93,6 +110,9 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Favorites'),
                 Selector::inNamespace('App\Inquiries'),
                 Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Search may only use Venues, Geo and Media.');
     }
@@ -107,6 +127,9 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Media'),
                 Selector::inNamespace('App\Inquiries'),
                 Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Favorites may only use Search and Venues.');
     }
@@ -122,6 +145,9 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Search'),
                 Selector::inNamespace('App\Favorites'),
                 Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Inquiries may only use Venues.');
     }
@@ -135,7 +161,59 @@ final class ModuleBoundariesTest extends ArchitectureRules
                 Selector::inNamespace('App\Media'),
                 Selector::inNamespace('App\Favorites'),
                 Selector::inNamespace('App\Inquiries'),
+                Selector::inNamespace('App\Admin'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
             )
             ->because('Seo may only use Search, Venues and Geo.');
+    }
+
+    public function test_admin_depends_only_on_shared(): Rule
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Admin'))
+            ->shouldNot()->dependOn()
+            ->classes(
+                Selector::inNamespace('App\Geo'),
+                Selector::inNamespace('App\Media'),
+                Selector::inNamespace('App\Venues'),
+                Selector::inNamespace('App\Search'),
+                Selector::inNamespace('App\Favorites'),
+                Selector::inNamespace('App\Inquiries'),
+                Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Cms'),
+                Selector::inNamespace('App\Crm'),
+            )
+            ->because('Admin may only use Shared.');
+    }
+
+    public function test_cms_depends_only_on_admin_venues_geo_media(): Rule
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Cms'))
+            ->shouldNot()->dependOn()
+            ->classes(
+                Selector::inNamespace('App\Search'),
+                Selector::inNamespace('App\Favorites'),
+                Selector::inNamespace('App\Inquiries'),
+                Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Crm'),
+            )
+            ->because('Cms may only use Admin, Venues, Geo and Media.');
+    }
+
+    public function test_crm_depends_only_on_admin_venues_geo_inquiries(): Rule
+    {
+        return PHPat::rule()
+            ->classes(Selector::inNamespace('App\Crm'))
+            ->shouldNot()->dependOn()
+            ->classes(
+                Selector::inNamespace('App\Media'),
+                Selector::inNamespace('App\Search'),
+                Selector::inNamespace('App\Favorites'),
+                Selector::inNamespace('App\Seo'),
+                Selector::inNamespace('App\Cms'),
+            )
+            ->because('Crm may only use Admin, Venues, Geo and Inquiries.');
     }
 }

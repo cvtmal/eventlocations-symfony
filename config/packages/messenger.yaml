@@ -12,3 +12,5 @@ framework:
                     # only for messages consumed by a worker.
                     - App\Shared\Messenger\ResetClosedEntityManagerMiddleware
                     - doctrine_transaction
+                    # Audit runs inside the transaction (#22): the row commits or rolls back with the change.
+                    - App\Admin\Messenger\AuditLogMiddleware

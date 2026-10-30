@@ -1,0 +1,84 @@
+.audit-filter {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--a-space-4);
+    align-items: end;
+}
+
+// A row of its own: at some widths a 160 px column is narrower than the two buttons.
+.audit-filter__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-2);
+}
+
+.audit-log {
+    container-type: inline-size;
+}
+
+.audit-changes {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px var(--a-space-3);
+    margin: 0;
+
+    dt {
+        color: var(--a-muted);
+    }
+
+    dd {
+        margin: 0;
+        overflow-wrap: break-word;
+    }
+}
+
+// Five columns do not fit next to the sidebar: below this width each row is a block of labelled values.
+@container (max-width: 960px) {
+    .audit-log {
+        .table,
+        tbody {
+            display: block;
+        }
+
+        // Each cell labels itself below, so no reader needs them; hidden visually they would be read as stray text.
+        thead {
+            display: none;
+        }
+
+        tr {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: var(--a-space-3) var(--a-space-4);
+            padding: var(--a-space-4) var(--a-space-5);
+            border-bottom: 1px solid var(--a-line-soft);
+        }
+
+        tbody tr:last-child {
+            border-bottom: 0;
+        }
+
+        td {
+            min-width: 0;
+            padding: 0;
+            border-bottom: 0;
+
+            &::before {
+                content: attr(data-label);
+                display: block;
+                color: var(--a-muted);
+                font-size: 12px;
+                font-weight: 600;
+            }
+        }
+
+        .audit-log__wide {
+            grid-column: 1 / -1;
+            overflow-wrap: anywhere;
+        }
+
+        .audit-changes {
+            grid-template-columns: auto minmax(0, 1fr);
+        }
+    }
+}

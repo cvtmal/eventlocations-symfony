@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues;
 
+use App\Admin\ValueObject\AdminRole;
+use App\Admin\ValueObject\AuditActorType;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
@@ -37,6 +39,8 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'term group' => ['chk_taxonomy_terms_term_group', TermGroup::class];
         yield 'price level' => ['chk_venues_price_level', PriceLevel::class];
         yield 'party' => ['chk_venues_party', PartyAllowed::class];
+        yield 'admin role' => ['chk_admin_users_role', AdminRole::class];
+        yield 'audit actor type' => ['chk_admin_audit_log_actor_type', AuditActorType::class];
     }
 
     /**
