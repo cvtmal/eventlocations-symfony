@@ -1,0 +1,13 @@
+{#
+    Modal dialog shell. Use with `{% embed 'components/_dialog.html.twig' with {…} only %}`:
+      id, title (translated), close_label (default 'layout.close'|trans). Blocks: dialog_body, dialog_footer.
+      Open it with <button type="button" commandfor="{{ id }}" command="show-modal">. JS: js/dialog.js (fallback + backdrop close).
+#}
+<dialog id="{{ id }}" class="dialog" aria-labelledby="{{ id }}-title" data-dialog>
+    <div class="dialog__header">
+        <h2 id="{{ id }}-title" class="dialog__title">{{ title }}</h2>
+        <form method="dialog"><button class="btn btn--close" aria-label="{{ close_label|default('layout.close'|trans) }}">{{ icon('x') }}</button></form>
+    </div>
+    {% block dialog_body %}{% endblock %}
+    <div class="dialog__footer">{% block dialog_footer %}{% endblock %}</div>
+</dialog>

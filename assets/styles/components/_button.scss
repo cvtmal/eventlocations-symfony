@@ -1,0 +1,100 @@
+// Buttons (`components/_button.html.twig`). Text on pink is dark (D4: #121212 on #ff5a75 = 6.22:1).
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    min-height: 2.75rem;
+    padding: .875rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: var(--r-button);
+    background: transparent;
+    color: var(--c-ink);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-body);
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+
+    &[disabled] {
+        opacity: .5;
+        cursor: default;
+    }
+}
+
+.btn--primary {
+    background: var(--c-accent);
+    color: var(--c-ink-inverse);
+
+    &:hover {
+        background: var(--c-accent-hover);
+    }
+}
+
+.btn--black {
+    background: var(--c-black);
+    color: var(--c-ink);
+}
+
+.btn--outline {
+    border-color: var(--c-line-muted);
+    color: var(--c-ink);
+
+    &:hover {
+        border-color: var(--c-ink);
+    }
+}
+
+// Round icon button with a label below ("Karte", "Merkliste"; E11 4.5rem, #535353, 13 px label).
+.btn--round {
+    flex-direction: column;
+    gap: .125rem;
+    width: 4.5rem;
+    height: 4.5rem;
+    padding: 0;
+    border-radius: var(--r-round);
+    background: var(--c-surface-3);
+    font-size: .8125rem;
+    font-weight: var(--fw-regular);
+    line-height: 1.1;
+}
+
+// Large round Lage button (E11: 50% radius, 5px 5px shadow).
+.btn--round-lg {
+    flex-direction: column;
+    gap: var(--space-xs);
+    width: 8.5rem;
+    height: 8.5rem;
+    padding: 0;
+    border-radius: var(--r-round);
+    background: rgb(0 0 0 / .25);
+    box-shadow: var(--sh-round);
+    font-size: .9375rem;
+    font-weight: var(--fw-regular);
+    line-height: 1.2;
+
+    .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+}
+
+.btn--icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+}
+
+.btn--close {
+    width: 2rem;
+    height: 2rem;
+    min-height: 0;
+    padding: 0;
+    border-color: var(--c-ink);
+    border-radius: var(--r-round);
+
+    .icon {
+        width: 1rem;
+        height: 1rem;
+    }
+}

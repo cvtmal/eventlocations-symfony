@@ -1,0 +1,48 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0;
+    font-weight: var(--fw-semibold);
+}
+
+.text-hero {
+    font-size: var(--fs-hero);
+    line-height: var(--lh-hero);
+}
+
+.text-count {
+    font-size: var(--fs-count);
+    line-height: var(--lh-count);
+}
+
+.text-overlay-title {
+    font-size: var(--fs-overlay-title);
+    line-height: var(--lh-overlay-title);
+}
+
+// Long venue names are cut with an ellipsis (research §Underspecification).
+.text-card-title {
+    font-size: var(--fs-card-title);
+    line-height: var(--lh-card-title);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.text-excerpt {
+    font-size: var(--fs-excerpt);
+    line-height: var(--lh-excerpt);
+}
+
+.text-small {
+    font-size: var(--fs-small);
+    line-height: 1.5;
+}
+
+.text-tag {
+    font-size: var(--fs-tag);
+    line-height: var(--lh-tag);
+}

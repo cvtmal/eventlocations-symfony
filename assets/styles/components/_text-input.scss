@@ -1,0 +1,30 @@
+// Large underlined input as in the overlays (E11: 24 px / 40 px ≥ 1440, weight 600, line-height 2, caret #121212).
+// Inactive states use weight, never reduced opacity (D4).
+.text-input {
+    max-width: 25rem;
+}
+
+.text-input__field {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid var(--c-line);
+    border-radius: 0;
+    background: transparent;
+    color: var(--c-ink);
+    caret-color: var(--c-ink-inverse);
+    font: var(--fw-semibold) var(--fs-input-lg) / var(--lh-input-lg) var(--font-sans);
+
+    &::placeholder {
+        color: var(--c-ink);
+        opacity: 1;
+        font-weight: var(--fw-regular);
+    }
+}
+
+.text-input__label {
+    display: block;
+    margin-bottom: var(--space-xs);
+    font-weight: var(--fw-semibold);
+}

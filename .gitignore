@@ -32,4 +32,9 @@ phpstan.neon
 /.idea/
 /.rpi-tracking/
 /compose.override.yaml
+/bin/dart-sass/
 ###< hochzeitslocation ###
+
+###> symfonycasts/sass-bundle ###
+/public/assets/
+###< symfonycasts/sass-bundle ###

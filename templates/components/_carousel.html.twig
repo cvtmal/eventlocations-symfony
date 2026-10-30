@@ -1,0 +1,14 @@
+{#
+    Horizontal scroll-snap carousel shell. Use with `{% embed 'components/_carousel.html.twig' with {…} only %}`:
+      id, label (aria-label, translated), previous_label / next_label (default layout.carousel.*),
+      counter_format (default 'layout.carousel.counter'|trans; JS replaces {current} and {total}).
+      Block: slides, holding <li class="carousel__slide"> items. JS: js/carousel.js adds arrows and counter.
+#}
+<section class="carousel" aria-label="{{ label }}" data-carousel data-counter-format="{{ counter_format|default('layout.carousel.counter'|trans) }}">
+    <ul class="carousel__track" id="{{ id }}-track" tabindex="0">{% block slides %}{% endblock %}</ul>
+    <div class="carousel__controls" data-carousel-controls hidden>
+        <button type="button" class="btn btn--icon" data-carousel-prev aria-controls="{{ id }}-track" aria-label="{{ previous_label|default('layout.carousel.previous'|trans) }}">{{ icon('chevron-left') }}</button>
+        <span class="carousel__counter" data-carousel-counter></span>
+        <button type="button" class="btn btn--icon" data-carousel-next aria-controls="{{ id }}-track" aria-label="{{ next_label|default('layout.carousel.next'|trans) }}">{{ icon('chevron-right') }}</button>
+    </div>
+</section>

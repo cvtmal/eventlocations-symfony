@@ -1,0 +1,9 @@
+# Dev/test-only component gallery (docs/rpi-cycles.md #1). Not a public route: `_`-prefixed name and path, never localized.
+when@dev: &styleguide
+    _styleguide:
+        path: /_styleguide
+        controller: Symfony\Bundle\FrameworkBundle\Controller\TemplateController
+        # `_locale: de` until #2 sets default_locale: the layout links to the localized `home` route.
+        defaults: { template: styleguide/index.html.twig, _locale: de }
+
+when@test: *styleguide

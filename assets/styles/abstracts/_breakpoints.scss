@@ -1,0 +1,22 @@
+// Breakpoints measured from eventlokale's CSS (research E11). Emits no CSS.
+// Usage: `@use '../abstracts/breakpoints' as bp;` then `@include bp.up(md) { … }`.
+@use 'sass:map';
+
+$breakpoints: (
+    sm: 568px,
+    md: 768px,
+    lg: 1024px,
+    xl: 1440px,
+);
+
+@mixin up($name) {
+    @media (min-width: map.get($breakpoints, $name)) {
+        @content;
+    }
+}
+
+@mixin down($name) {
+    @media (max-width: calc(#{map.get($breakpoints, $name)} - 0.02px)) {
+        @content;
+    }
+}

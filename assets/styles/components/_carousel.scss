@@ -1,0 +1,66 @@
+// Scroll-snap carousel shell (`components/_carousel.html.twig`). Works by touch and keyboard without JS;
+// carousel.js adds the arrows and the counter and marks the carousel [data-enhanced].
+.carousel {
+    position: relative;
+}
+
+.carousel__track {
+    display: flex;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+
+    [data-enhanced] > & {
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+}
+
+.carousel__slide {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+}
+
+.carousel__controls {
+    position: absolute;
+    inset: auto var(--space-m) var(--space-m) var(--space-m);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+
+    &[hidden] {
+        display: none;
+    }
+
+    .btn--icon {
+        background: rgb(0 0 0 / .4);
+        border-radius: var(--r-round);
+        pointer-events: auto;
+    }
+}
+
+.carousel__counter {
+    order: 1;
+    padding: .125rem var(--space-s);
+    border-radius: var(--r-pill);
+    background: rgb(0 0 0 / .6);
+    font-size: var(--fs-small);
+    pointer-events: auto;
+}
+
+.carousel__controls [data-carousel-prev] {
+    order: 0;
+}
+
+.carousel__controls [data-carousel-next] {
+    order: 2;
+}

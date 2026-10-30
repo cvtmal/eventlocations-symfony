@@ -4,6 +4,12 @@ framework:
         paths:
             - assets/
         missing_import_mode: strict
+        # No es-module-shims polyfill from a CDN: every module is a plain <script type="module"> (#1, D8).
+        importmap_polyfill: false
+        # Sass partials are compiled into app.css; they are never served on their own.
+        excluded_patterns:
+            - '*/assets/styles/_*.scss'
+            - '*/assets/styles/**/_*.scss'
 
 when@prod:
     framework:

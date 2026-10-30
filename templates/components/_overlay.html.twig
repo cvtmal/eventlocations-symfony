@@ -1,0 +1,13 @@
+{#
+    Full-screen filter overlay shell (popover, works without JS). Use with `{% embed 'components/_overlay.html.twig' with {…} only %}`:
+      id, tone: region|guests|more, title (translated), close_label (default 'layout.close'|trans).
+      Blocks: overlay_body, overlay_footer. Open it with <button type="button" popovertarget="{{ id }}">. JS: js/overlay.js.
+#}
+<div id="{{ id }}" class="overlay overlay--{{ tone }}" popover role="dialog" aria-labelledby="{{ id }}-title" data-overlay>
+    <button type="button" class="btn btn--close overlay__close" popovertarget="{{ id }}" popovertargetaction="hide" aria-label="{{ close_label|default('layout.close'|trans) }}">{{ icon('x') }}</button>
+    <div class="overlay__body container">
+        <h2 id="{{ id }}-title" class="overlay__title">{{ title }}</h2>
+        {% block overlay_body %}{% endblock %}
+    </div>
+    <div class="overlay__footer"><div class="overlay__footer-inner container">{% block overlay_footer %}{% endblock %}</div></div>
+</div>

@@ -1,0 +1,27 @@
+// Sprite icons: `{{ icon('name') }}` renders <svg class="icon"><use href="sprite.svg#name">. Lucide line style.
+.icon {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: none;
+    vertical-align: middle;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.icon--sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+.icon--lg {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.icon--filled {
+    fill: currentColor;
+}

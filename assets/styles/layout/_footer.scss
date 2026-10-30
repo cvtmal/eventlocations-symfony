@@ -1,0 +1,27 @@
+@use '../abstracts/breakpoints' as bp;
+
+// Slim footer (E11: #2c2c2c, padding 2.5rem / 3.75rem ≥ 768). Slots: canton list (#17), legal links (#18).
+.site-footer {
+    background: var(--c-surface-footer);
+    padding-block: var(--space-xl);
+
+    @include bp.up(md) {
+        padding-block: var(--space-2xl);
+    }
+}
+
+.site-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-l);
+    margin: 0 0 var(--space-l);
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+}
+
+.site-footer__copy {
+    margin: 0;
+    color: var(--c-muted);
+    font-size: var(--fs-small);
+}

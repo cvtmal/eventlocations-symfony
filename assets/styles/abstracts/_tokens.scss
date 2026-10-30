@@ -1,0 +1,132 @@
+// Design tokens (#1, research D1–D4, E11, E12). The only `:root` in app.css; `@use`d once, from app.scss.
+// Every partial reads these through var(--…). Colour deviations from the original are listed per token.
+@use 'breakpoints' as bp;
+
+:root {
+    // —— Colour: surfaces
+    --c-bg: #121212;
+    --c-ink: #fff;
+    --c-ink-inverse: #121212;
+    --c-surface: #272727; // header, hero ≥ 768
+    --c-surface-2: #444; // card, detail action card
+    --c-surface-3: #535353; // filter bar, tier badge, round button, hero < 768
+    --c-surface-footer: #2c2c2c; // footer, detail anchor nav
+    --c-hero-circle: #313131;
+
+    // —— Colour: lines and muted text
+    --c-line: #fff;
+    --c-line-muted: #5f5f5f;
+    --c-muted: #c5c5c5;
+
+    // —— Colour: accent
+    --c-accent: #ff5a75;
+    --c-accent-hover: #ec536c;
+    --c-accent-strong: #c4455a; // selected or hover canton
+    --c-accent-soft: #ffc1cb; // bubble hover
+
+    // —— Colour: black button
+    --c-black: #1b1b1b;
+
+    // —— Colour: overlays (darkened for AA white text, D4)
+    --c-overlay-region: #577b77; // original #6a9691
+    --c-overlay-guests: #756a96;
+    --c-overlay-more: #76746e; // original #9e9a93
+    --c-overlay-more-bar: #6a6863; // original #8e8b85
+    --c-overlay-circle: rgb(0 0 0 / .05);
+
+    // —— Colour: map
+    --c-lake: #6a8396;
+    --c-map-land: #ff5a75;
+
+    // —— Colour: tooltip and focus
+    --c-tooltip-bg: #fff;
+    --c-focus: #fff;
+
+    // —— Font
+    --font-sans: 'Sofia Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --fw-regular: 400;
+    --fw-semibold: 600;
+
+    // —— Type scale (mobile first; size / line-height)
+    --fs-body: 1rem;
+    --lh-body: 1.5;
+    --fs-small: .875rem;
+    --fs-tag: .75rem;
+    --lh-tag: 1.25rem;
+    --lh-pill: 1.375rem;
+    --fs-hero: 1.25rem;
+    --lh-hero: 1.5rem;
+    --fs-count: 1rem;
+    --lh-count: 1.25rem;
+    --fs-overlay-title: 1.5625rem;
+    --lh-overlay-title: 2.1875rem;
+    --fs-card-title: 1.5rem;
+    --lh-card-title: 1.3;
+    --fs-excerpt: .875rem;
+    --lh-excerpt: 1.375rem;
+    --fs-input-lg: 1.5rem;
+    --lh-input-lg: 2;
+    --fs-tooltip: .9375rem;
+    --lh-tooltip: 1.5rem;
+
+    // —— Spacing (PD-6; the four largest are the original's paddings)
+    --space-2xs: .25rem;
+    --space-xs: .5rem;
+    --space-s: .75rem;
+    --space-m: 1rem;
+    --space-l: 1.6875rem;
+    --space-xl: 2.5rem;
+    --space-2xl: 3.75rem;
+    --space-3xl: 5.3125rem;
+
+    // —— Radii
+    --r-badge: 3px;
+    --r-button: 3px; // PD-7
+    --r-tooltip: 4px;
+    --r-bar: 6px;
+    --r-pill: 20px;
+    --r-round: 50%;
+
+    // —— Shadows
+    --sh-map: drop-shadow(8px 13px 0 rgb(0 0 0 / .15)); // a `filter` value
+    --sh-bubble: -10px 10px 0 -1px rgb(0 0 0 / .1);
+    --sh-round: 5px 5px 0 -1px rgb(0 0 0 / .1);
+    --sh-tooltip: 0 0 20px rgb(0 0 0 / .15);
+    --sh-dropdown: 0 15px 30px rgb(0 0 0 / .1);
+
+    // —— Layout
+    --header-h: 4.375rem;
+    --focus-ring: 2px solid var(--c-focus);
+
+    @include bp.up(md) {
+        --fs-hero: 2.25rem;
+        --lh-hero: 2.875rem;
+        --fs-count: 1.5rem;
+        --lh-count: 1.875rem;
+        --fs-overlay-title: 2.5rem;
+        --lh-overlay-title: 3.125rem;
+        --fs-card-title: 1.3125rem;
+        --fs-excerpt: .9375rem;
+    }
+
+    @include bp.up(lg) {
+        --fs-hero: 4.0625rem;
+        --lh-hero: 4.6875rem;
+        --fs-count: 1.875rem;
+        --lh-count: 2.5rem;
+        --fs-overlay-title: 4.0625rem;
+        --lh-overlay-title: 4.6875rem;
+
+        @media (max-height: 800px) {
+            --fs-overlay-title: 2.5rem;
+            --lh-overlay-title: 3.125rem;
+        }
+    }
+
+    @include bp.up(xl) {
+        --fs-card-title: 1.875rem;
+        --fs-excerpt: 1rem;
+        --lh-excerpt: 1.5625rem;
+        --fs-input-lg: 2.5rem;
+    }
+}

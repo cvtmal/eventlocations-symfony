@@ -39,5 +39,24 @@ services:
     ports:
       - "${MAILPIT_HOST_PORT:-8025}:8025"
 
+  # —— Tooling only (`docker compose --profile tools …`; never started by `make up`) ——
+  lighthouse:
+    build: ./docker/lighthouse
+    profiles: [tools]
+    network_mode: "service:nginx"
+    volumes:
+      - ./var/lighthouse:/reports
+
+  # Pinned by digest: `latest` of 2026-10-12, multi-arch (native arm64). The newest dated tag, 24.10.17,
+  # is amd64-only and predates `commandfor`/`command`.
+  vnu:
+    image: ghcr.io/validator/validator:latest@sha256:8f21030474e68e06905cfa801b37376e99c0e37867c653c5b6cd7e2dcaf3f503
+    profiles: [tools]
+    network_mode: "service:nginx"
+    entrypoint: ["/usr/local/bin/vnu"]
+    # vnu refuses to fetch localhost ("Forbidden host"), so `make validate-html` saves the page here first.
+    volumes:
+      - ./var/validate:/work:ro
+
 volumes:
   database_data:
