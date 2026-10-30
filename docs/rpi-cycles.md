@@ -153,7 +153,7 @@ Each gate has a default, so no cycle is blocked as a whole. The owner answers he
 | ~~Q8~~ | Are the CMS and the CRM live at launch? | **The CMS before launch, the CRM after.** | #22–#26 come before #20, which deploys them. From then on the database is the content master (S8). #27–#30 form W9–W10 after #20 and deploy themselves through #20's workflow. The CRM backfills the inquiries stored since launch (IQ-1). |
 | ~~Q9~~ | Who logs in to the back office? | **Only our staff.** | No venue self-service (it is a proposal). Accounts are created by a console command, there are two roles (`admin`, `editor`), and 2FA is required (S12). |
 | ~~Q10~~ | Which HubSpot concepts go into the CRM? | **Companies, contacts, timeline with notes, calls and tasks; deals pipeline; inquiries → contacts; sending e-mails.** | #27 (base), #28 (deals), #29 (inquiries), #30 (e-mail). Custom properties, inbox sync and reporting are proposals. |
-| ~~Q11~~ | Visual design of the back office? | **A design reference made with Claude's design tool in the planning session, reviewed by the owner.** | Lives in `docs/reference/admin/` (S12). #22 and #23 build the tokens, the shell and the components from it, and every back-office cycle compares against it. |
+| ~~Q11~~ | Visual design of the back office? | **A design reference made with Claude's design tool in the planning session; approved by the owner on 2026-10-30.** | Lives in `docs/reference/admin/` (S12). #22 and #23 build the tokens, the shell and the components from it, and every back-office cycle compares against it. |
 
 ## Settled decisions
 
