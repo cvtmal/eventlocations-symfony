@@ -1,0 +1,63 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// Standort map (#15, DP-10): the facade and the iframe share one box, so loading the map shifts nothing.
+.venue-map {
+    margin-block-start: var(--space-m);
+}
+
+.venue-map__facade,
+.venue-map__frame {
+    inline-size: 100%;
+    block-size: 18.75rem;
+    border: 0;
+    border-radius: var(--r-bar);
+
+    @include bp.up(md) {
+        block-size: 28rem;
+    }
+}
+
+.venue-map__frame {
+    display: block;
+}
+
+.venue-map__facade {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--space-s);
+    padding: var(--space-m);
+    text-align: center;
+    background: var(--c-surface-2);
+    color: var(--c-ink);
+}
+
+.venue-map__place {
+    display: grid;
+    margin: 0;
+}
+
+.venue-map__loader {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-s);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.venue-map__notice {
+    margin: 0;
+    color: var(--c-muted);
+    font-size: var(--fs-small);
+}
+
+.venue-map__link {
+    color: var(--c-ink);
+    text-decoration: underline;
+
+    &:focus-visible {
+        outline: var(--focus-ring);
+    }
+}

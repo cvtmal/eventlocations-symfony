@@ -329,6 +329,12 @@ detail:
         highway_unnamed: '{km} km bis Autobahn'
         airport: '{km} km bis Flughafen {name}'
         airport_unnamed: '{km} km bis Flughafen'
+        map:
+            load: Karte laden
+            open: Auf Google Maps öffnen
+            new_tab: ' (öffnet in neuem Tab)'
+            notice: Beim Laden der Karte werden Daten an Google übertragen.
+            frame_title: 'Karte mit dem Standort von {name}'
     contact:
         heading: Kontakt
         phone_reveal: Telefonnummer anzeigen

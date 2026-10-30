@@ -202,6 +202,13 @@ Venue aggregate (translations, terms, rooms, photos, documents, reviews), detail
 
 **Built in #16.** `VenueDetail::imageUrls(int $limit): list<string>` gives Seo share-image paths as plain strings, because Seo may not name a Media type. `Venues\ReadModel\VenueSitemapQuery` (`PER_FILE` 1000; `files()`, `page($file)`, `newestChange()`; `SitemapFile`, `SitemapVenue`): published venues in the default locale, `lastmod` = newest of `venues.updated_at`, the translation's and the photos', never a join on `towns`. The detail title is now `Seo\TitleChain`'s (`venue_seo()`); `detail.title`, `detail.title_canton` and `detail.title_no_place` are deleted, and the share text stays #21's.
 
+**Built in #15 (`venue-map`).** No migration, no package, no CSP change (#16's `frame-src https://www.google.com` covers the embed).
+
+- **Twig:** `{{ venue_map(venue) }}` (`Venues\Twig\VenueMapExtension`) fills #8's `{% block map %}`. It returns `''` without both coordinates, so no pin is ever guessed from a town or canton; the one rule is the private `location()`. When #24 lands, its `coordinatesFromTown` joins that condition (town-centre coordinates are not the venue's position). No query, no session, the same HTML for every visitor (S10). Template `templates/venues/detail/_map.html.twig`, styles `assets/styles/venues/detail/_map.scss`, strings `detail.location.map.*`.
+- **`Venues\ValueObject\MapLocation`** (`plusCode()`, `searchUrl()`, `embedUrl(key, language)`): the embed is `place` mode with `q` = the 10-digit Plus Code and `zoom` 15, because `q` takes no bare coordinates and `view` mode has no marker. The link is `https://www.google.com/maps/search/?api=1&query=<lat>%2C<lng>`.
+- **`GOOGLE_MAPS_EMBED_KEY`** (`.env` empty): keyless shows the facade with "Auf Google Maps öffnen" only. With a key, "Karte laden" and its notice (hidden until `assets/js/venue-map.js` runs) and the iframe inert in `<template data-venue-map-frame>`, which the click clones over the facade (same box, no CLS) and focuses. Nothing reaches Google before the click. Production sets the key in the host env only (Q3, #20), restricted to the Maps Embed API and the site's referrer.
+- **Tests:** `tests/Unit/Venues/MapLocationTest.php` (reference vectors of `encoding.csv`), `tests/Application/Venues/VenueMapTest.php` (both modes; set the key in `$_SERVER`/`$_ENV` before `createClient()`).
+
 ### Search
 
 `SearchCriteria`, listing read model, counts, ordering, similar venues, autocomplete endpoints, listing page.
