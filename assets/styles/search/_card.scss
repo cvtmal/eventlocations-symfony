@@ -213,6 +213,22 @@
     }
 }
 
+// The owner's price level and ambience (#33, LP-7). From xl, column 1 auto-places them in a row under the summary,
+// so the grid areas stay as they are; a long ambience wraps instead of overflowing the card.
+.card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin: var(--space-xs) 0 0;
+    padding: 0;
+    list-style: none;
+    grid-column: 1;
+}
+
+.card__tags .badge {
+    white-space: normal;
+}
+
 .card__rating {
     margin-top: var(--space-m);
 

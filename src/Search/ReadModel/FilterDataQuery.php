@@ -6,6 +6,7 @@ namespace App\Search\ReadModel;
 
 use App\Shared\Translation\EnabledLocale;
 use App\Venues\ValueObject\Access;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -22,12 +23,13 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 final class FilterDataQuery implements ResetInterface
 {
-    /** The `access.*` keys are built from Access::cases(), because their predicates need the threshold. */
+    /** The `access.*` and `price.*` keys are built from their enums' cases, because each case needs a bound value. */
     private const FILTERS = [
         'place' => 'v.town_id IS NOT NULL',
         'rooms' => 'v.room_count >= 1',
         'area' => 'v.largest_room_m2 IS NOT NULL',
         'height' => 'v.max_room_height_m IS NOT NULL',
+        'curfew' => 'v.has_curfew = FALSE',
     ];
 
     /** @var array<string, bool>|null */
@@ -81,6 +83,9 @@ final class FilterDataQuery implements ResetInterface
         foreach (Access::cases() as $access) {
             $params['km_'.$access->value] = $access->maxDistanceKm();
         }
+        foreach (PriceLevel::cases() as $price) {
+            $params['price_'.$price->value] = $price->value;
+        }
 
         $columns = array_map(
             static fn (string $predicate): string => "EXISTS (SELECT 1 FROM {$published->from} WHERE {$published->where} AND {$predicate})",
@@ -124,6 +129,9 @@ final class FilterDataQuery implements ResetInterface
         foreach (Access::cases() as $access) {
             $predicates['access.'.$access->value] = \sprintf('v.%s <= :km_%s', ListingSql::accessColumn($access), $access->value);
         }
+        foreach (PriceLevel::cases() as $price) {
+            $predicates['price.'.$price->value] = 'v.price_level = :price_'.$price->value;
+        }
 
         return $predicates + self::FILTERS;
     }
@@ -150,7 +158,9 @@ final class FilterDataQuery implements ResetInterface
         $terms = [];
         foreach ($this->connection->fetchAllAssociative($statement->sql, $statement->params, $statement->types) as $row) {
             \assert(\is_string($row['term_group']) && \is_string($row['code']));
-            $terms[$row['term_group']][$row['code']] = true === $row['has_data'];
+            if (SearchCriteria::offers(TermGroup::from($row['term_group']), $row['code'])) {
+                $terms[$row['term_group']][$row['code']] = true === $row['has_data'];
+            }
         }
 
         return $terms;

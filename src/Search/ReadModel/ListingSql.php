@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Search\ReadModel;
 
 use App\Venues\ValueObject\Access;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\ParameterType;
@@ -15,8 +16,9 @@ use Doctrine\DBAL\ParameterType;
  *
  * - Published means status published and a translation in the default locale (the card
  *   needs a slug and a summary).
- * - Groups combine with AND; inside a group setting and building are OR, the other term
- *   groups and access AND. Guests fall inside [capacity_min, capacity_max].
+ * - Groups combine with AND; inside a group setting, building and price are OR, the other
+ *   term groups and access AND. Guests fall inside [capacity_min, capacity_max]. No curfew
+ *   means the venue stated it: has_curfew NULL is unknown and never matches.
  * - The radius centre is a joined MATERIALIZED CTE (`centre c`): only that shape lets the
  *   planner use idx_venues_earth. An unknown town or ZIP leaves the CTE empty, so 0 rows.
  *
@@ -97,6 +99,15 @@ final readonly class ListingSql
                 $params['n_'.$g] = \count($codes);
                 $types['n_'.$g] = ParameterType::INTEGER;
             }
+        }
+
+        if ([] !== $criteria->prices) {
+            $where[] = 'v.price_level IN (:prices)';
+            $params['prices'] = array_map(static fn (PriceLevel $price): string => $price->value, $criteria->prices);
+            $types['prices'] = ArrayParameterType::STRING;
+        }
+        if ($criteria->noCurfew) {
+            $where[] = 'v.has_curfew = FALSE';
         }
 
         foreach ($criteria->access as $access) {

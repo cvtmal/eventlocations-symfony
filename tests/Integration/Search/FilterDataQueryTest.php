@@ -8,9 +8,11 @@ use App\Factory\VenueFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Search\ReadModel\FilterDataQuery;
+use App\Search\ReadModel\SearchCriteria;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -29,7 +31,7 @@ final class FilterDataQueryTest extends KernelTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const KEYS = ['place', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height'];
+    private const KEYS = ['place', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height', 'price.moderate', 'price.medium', 'price.exclusive', 'curfew'];
 
     private EntityManagerInterface $em;
     private Connection $connection;
@@ -111,6 +113,61 @@ final class FilterDataQueryTest extends KernelTestCase
 
         self::assertTrue($this->query->has('area'));
         self::assertTrue($this->query->has('height'));
+    }
+
+    public function test_price_levels_answer_separately(): void
+    {
+        $this->venue(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
+
+        self::assertTrue($this->query->has('price.medium'));
+        self::assertFalse($this->query->has('price.moderate'));
+        self::assertFalse($this->query->has('price.exclusive'));
+    }
+
+    public function test_curfew_needs_a_venue_that_stated_it_has_none(): void
+    {
+        $this->venue();
+        $this->venue(static fn (Venue $venue) => $venue->describePartyRules(null, true, null));
+        self::assertFalse($this->query->has('curfew'), 'NULL and TRUE are no data.');
+
+        $this->venue(static fn (Venue $venue) => $venue->describePartyRules(null, false, null));
+        $this->query->reset();
+
+        self::assertTrue($this->query->has('curfew'));
+    }
+
+    public function test_a_code_outside_filter_codes_never_shows(): void
+    {
+        $venue = $this->venue();
+        foreach (['tent', 'overnight', 'wheelchair_access'] as $code) {
+            VenueTermFactory::new()->term(TermGroup::Amenity, $code)->create(['venue' => $venue]);
+        }
+        VenueTermFactory::new()->term(TermGroup::Usage, 'multiple_weddings')->create(['venue' => $venue]);
+
+        self::assertSame(['overnight', 'wheelchair_access'], $this->query->terms(TermGroup::Amenity));
+        self::assertSame([], $this->query->terms(TermGroup::Usage));
+    }
+
+    public function test_an_active_listed_code_without_data_is_kept(): void
+    {
+        self::assertSame(['lake_view'], $this->query->terms(TermGroup::Amenity, ['lake_view']));
+        self::assertSame(['exclusive'], $this->query->terms(TermGroup::Usage, ['exclusive']));
+    }
+
+    public function test_usage_offers_only_exclusive(): void
+    {
+        VenueTermFactory::new()->term(TermGroup::Usage, 'exclusive')->create(['venue' => $this->venue()]);
+
+        self::assertSame(['exclusive'], $this->query->terms(TermGroup::Usage));
+    }
+
+    public function test_filter_codes_exist_in_the_vocabulary(): void
+    {
+        foreach (SearchCriteria::FILTER_CODES as $group => $codes) {
+            $known = $this->connection->fetchFirstColumn('SELECT code FROM taxonomy_terms WHERE term_group = ?', [$group]);
+
+            self::assertSame([], array_values(array_diff($codes, $known)), $group);
+        }
     }
 
     public function test_an_unpublished_venue_counts_for_nothing(): void
