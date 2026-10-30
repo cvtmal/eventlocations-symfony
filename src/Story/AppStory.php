@@ -12,6 +12,6 @@ final class AppStory extends Story
 {
     public function build(): void
     {
-        // #4 adds the demo venues (DemoStory, S8).
+        DemoStory::load();
     }
 }

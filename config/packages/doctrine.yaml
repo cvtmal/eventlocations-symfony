@@ -23,6 +23,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Geo/Entity'
                 prefix: 'App\Geo\Entity'
                 alias: Geo
+            Venues:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Venues/Entity'
+                prefix: 'App\Venues\Entity'
+                alias: Venues
 
 when@test:
     doctrine:

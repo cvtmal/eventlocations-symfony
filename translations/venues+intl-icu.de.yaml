@@ -1,1 +1,162 @@
 # Strings of the Venues module. Keys: <context>.<description>.
+# Vocabulary keys are <context>.<case value> (App\Venues\ValueObject\*) and
+# term.<group>.<code> (rows of taxonomy_terms). Term labels are eventlokale's, copied 1:1 (FI-4).
+
+term_group:
+    setting: Lage
+    building: Gebäudeart
+    suitable_for: Geeignet für
+    infrastructure: Infrastruktur
+    furniture: Mobiliar
+    technology: Technik
+    surroundings: Umgebung
+
+term:
+    setting:
+        river: Am Fluss
+        lake: Am See
+        countryside: Auf dem Land
+        mountains: In den Bergen
+        city: In der Stadt
+    building:
+        bar_club: 'Bar, Club'
+        farm_barn: 'Bauernhof, Scheune'
+        mountain_hut: 'Berghütte, Alphütte'
+        brewery_winery: 'Brauerei, Weingut'
+        medieval_castle: Burg
+        cafe: Café
+        casino: Casino
+        digital_venue: Digitale Location
+        experience_creative: 'Erlebnis, Kreatives'
+        event_hall: Eventhalle
+        event_venue: Eventlocation
+        factory_hall: Fabrikhalle
+        mobile_venue: Fahrbare Location
+        leisure_facility: Freizeitanlage
+        gallery_studio: 'Galerie, Atelier'
+        garden_greenhouse: 'Garten, Treibhaus'
+        hangar_shipyard: 'Hangar, Werft'
+        historic_site: Historische Stätte
+        wedding_venue: Hochzeitslocation
+        cave_fortress: 'Höhle, Festung'
+        hotel: 'Hotel, Seminarhotel'
+        cinema: Kino
+        congress_centre: Kongresszentrum
+        cultural_centre: Kulturzentrum
+        exhibition_hall: Messehalle
+        museum: Museum
+        open_air: 'Openair, Outdoor'
+        party_room: Partyraum
+        restaurant: Restaurant
+        ship: Schiff
+        castle: Schloss
+        seminar_room: Seminarraum
+        meeting_room: Sitzungszimmer
+        theatre: Theater
+        tram_train_bus: 'Tram, Bahn, Bus'
+        villa: Villa
+        forest_hut: Waldhütte
+        tent: 'Zelt, Zirkuszelt'
+        guild_hall: Zunfthaus
+    suitable_for:
+        wedding: Hochzeit
+        family_celebration: Familienfeier
+        birthday: Geburtstag
+        club_event: Vereinsanlass
+        party_celebration: 'Party, Feier'
+        class_reunion: Klassentreffen
+        private_event: Privatanlass
+        meeting: Meeting
+        conference: Tagung
+        congress: Kongress
+        corporate_event: Firmenanlass
+        general_assembly: 'Versammlung, GV'
+        apero: Apéro
+        team_event: Teamevent
+        christmas_party: Weihnachtsfeier
+        concert: Konzert
+        theatre: Theater
+        party: Party
+        sports_event: Sportanlass
+        trade_fair: Messe
+        public_event: Öffentlicher Anlass
+    infrastructure:
+        wifi: 'WLAN / Internet'
+        air_conditioning: Klimaanlage
+        stage: Bühne
+        shower: Dusche
+        cloakroom: Garderobe
+        heating_ventilation: 'Heizung & Lüftung'
+        kitchen: Küche zur Nutzung
+        backstage_rooms: Backstage Räume
+        lectern: Rednerpult
+    furniture:
+        flipchart: Flipchart
+        magnetic_board: Magnetwand
+        moderation_kit: Moderatorenkoffer
+        chairs: Stühle
+        tables: Tische
+    technology:
+        sound_system: Tontechnik
+        projector_screen: 'Beamer / Leinwand'
+        interpreting_system: Dolmetscheranlage
+        lighting_system: Lichtanlage
+        tv_screens: 'TV / Screens'
+    surroundings:
+        garden: Garten
+        spa_wellness: 'Spa & Wellness'
+        terrace: Terrasse
+        playground: Spielplatz
+        barbecue: Grill
+        golf: Golf
+
+access:
+    station: Nähe Bahnhof
+    highway: Nähe Autobahn
+    airport: Nähe Flughafen
+
+tier:
+    beliebte_location: Beliebte Location
+    empfehlung: Empfehlung
+    top_premium: Top Premium
+    premium: Premium
+    basic: Standard
+
+rating_label:
+    recommended: Empfohlen
+    excellent: Ausgezeichnet
+    outstanding: Herausragend
+
+rating_highlight:
+    food: Feines Essen
+    atmosphere: Stilvolle Atmosphäre
+    architecture: Einzigartige Architektur
+    location: Einmalige Lage
+    hospitality: Freundliche Gastgeber
+    reachability: Perfekte Erreichbarkeit
+    equipment: Moderne Ausstattung
+    programme: Attraktives Programm
+    value: 'Top Preis/Leistung'
+
+own_catering:
+    allowed: Eigenes Catering möglich
+    fixed_caterer: Caterer fix
+
+floor_material:
+    various: Diverses
+    parquet: Parkett
+    carpet: Teppich
+    stone: Stein
+    wood: Holz
+
+seating:
+    seminar: Seminar
+    banquet: Bankett
+    apero: Apéro
+    concert: Konzert
+
+reviewer_role:
+    visitor_f: Besucherin
+    visitor_m: Besucher
+    organiser_f: Veranstalterin
+    organiser_m: Veranstalter
