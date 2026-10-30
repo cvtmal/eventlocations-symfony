@@ -1,0 +1,2 @@
+notice:
+    guests: '{count, plural, one {# Gast} other {# Gäste}}'

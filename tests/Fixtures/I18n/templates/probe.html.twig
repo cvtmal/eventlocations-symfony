@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+    <head>
+        <meta charset="UTF-8">
+        <title>{{ 'page.title'|trans({}, 'probe') }}</title>
+        {{ include('shared/_hreflang.html.twig') }}
+    </head>
+    <body>
+        <h1>{{ 'page.heading'|trans({}, 'probe') }}</h1>
+        <p class="extra">{{ 'notice.guests'|trans({count: 3}, 'probe_extra') }}</p>
+        <p class="capacity">{{ swiss_range(50, 450) }}</p>
+        <p class="number">{{ 1234567.5|swiss_number }}</p>
+    </body>
+</html>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Controller;
 
+use App\Shared\Translation\LocalizedRoutes;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,7 +20,7 @@ final class HealthController extends AbstractController
     ) {
     }
 
-    #[Route('/health', name: 'health', methods: ['GET'])]
+    #[Route('/health', name: 'health', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(): JsonResponse
     {
         try {

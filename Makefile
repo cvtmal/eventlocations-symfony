@@ -83,7 +83,11 @@ cs-fix: ## Fix coding standards
 phpstan: ## Run PHPStan (level 8 + architecture rules)
 	$(EXEC) php vendor/bin/phpstan analyse --memory-limit=1G --no-progress
 
-lint: cs-check phpstan ## Run all static checks (the CI gate)
+.PHONY: lint-translations
+lint-translations: ## Check ICU syntax of every catalogue
+	$(CONSOLE) lint:translations
+
+lint: cs-check phpstan lint-translations ## Run all static checks (the CI gate)
 
 audit: ## Check dependencies for security advisories
 	$(EXEC) composer audit
