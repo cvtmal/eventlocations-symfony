@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    env:
+      CI: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start php and database
+        run: docker compose up -d --build --wait php database
+
+      - name: Install dependencies
+        run: make vendor
+
+      - name: Lint (coding standards, PHPStan + architecture rules)
+        run: make lint
+
+      - name: Tests (prepares the test database first)
+        run: make test

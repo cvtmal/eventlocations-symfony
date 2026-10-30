@@ -1,0 +1,43 @@
+services:
+  php:
+    build: ./docker/php
+    volumes:
+      - .:/var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      database:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "${NGINX_HOST_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/var/www/html/public:ro
+    depends_on:
+      - php
+
+  database:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "app", "-d", "app"]
+      interval: 5s
+      retries: 10
+    ports:
+      - "${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - database_data:/var/lib/postgresql
+
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    ports:
+      - "${MAILPIT_HOST_PORT:-8025}:8025"
+
+volumes:
+  database_data:
