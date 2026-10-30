@@ -4,8 +4,8 @@
         <a class="site-header__wordmark" href="{{ path('home') }}">{{ 'layout.site_name'|trans }}</a>
         <nav class="site-header__actions" aria-label="{{ 'layout.header.actions_label'|trans }}">
             <a class="btn btn--icon" href="{{ path('listing') }}" aria-label="{{ 'layout.header.search'|trans }}">{{ icon('search') }}</a>
-            {# #13 changes path('home') to its Merkliste route; merkliste.js fills and unhides the badge #}
-            <a class="btn btn--icon site-header__favorites" href="{{ path('home') }}" aria-label="{{ 'layout.header.favorites'|trans }}">{{ icon('heart') }}<span class="count-badge" data-merkliste-count hidden></span></a>
+            {# merkliste.js fills and unhides the badge; these strings stand in for 48 repeated attributes on the cards. data-sync-token is the constant of the stateless check, so cached HTML stays identical #}
+            <a class="btn btn--icon site-header__favorites" href="{{ path('merkliste') }}" aria-label="{{ 'layout.header.favorites'|trans }}" data-merkliste-link data-sync-token="{{ csrf_token('submit') }}" data-count-label="{{ 'header.count_label'|trans({count: '__count__'}, 'favorites') }}" data-toast-added="{{ 'toast.added'|trans({name: '__name__'}, 'favorites') }}" data-toast-removed="{{ 'toast.removed'|trans({name: '__name__'}, 'favorites') }}" data-toast-full="{{ 'toast.full'|trans({}, 'favorites') }}" data-toast-link="{{ 'toast.link'|trans({}, 'favorites') }}">{{ icon('heart') }}<span class="count-badge" data-merkliste-count hidden></span></a>
         </nav>
     </div>
     <div id="main-menu" class="main-menu" popover data-overlay>

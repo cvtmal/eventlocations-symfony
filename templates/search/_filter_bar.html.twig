@@ -10,7 +10,6 @@
         {%- for slot in ['region', 'guests', 'more'] %}{{ include('search/filter/_' ~ slot ~ '.html.twig', {criteria: criteria, part: 'trigger'}, with_context = false) }}{% endfor -%}
     </ul>
     <div class="filter-bar__aside">
-        {#- #13 changes path('home') to its Merkliste route -#}
-        {{ include('components/_button.html.twig', {variant: 'round', icon: 'heart', label: 'filter.merkliste'|trans({}, 'search'), href: path('home')}, with_context = false) }}
+        {{ include('components/_button.html.twig', {variant: 'round', icon: 'heart', label: 'filter.merkliste'|trans({}, 'search'), href: path('merkliste')}, with_context = false) }}
     </div>
 </nav>

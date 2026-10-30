@@ -3,7 +3,7 @@
       card (a ListingCard, or anything with its public properties: number, slug, name, tier, capacityMin, capacityMax,
       place, summary, ratingScore, ratingCount, highlights, photos),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
-      action: merken|none (default merken).
+      action: merken|remove|none (default merken).
     The title link stretches over the card (.card__link::after) and is the card's one accessible link. The photo column
     sits above that overlay so the carousel can be swiped and its arrows clicked; each slide therefore carries its own
     link to the detail page (tabindex="-1", aria-hidden="true": no extra tab stop or screen-reader link), the placeholder
@@ -33,6 +33,8 @@
             {{ include('search/_card_facts.html.twig', {capacity_min: card.capacityMin, capacity_max: card.capacityMax, place: card.place}, with_context = false) }}
             {%- if action == 'merken' %}
             {{ include('favorites/_merken_button.html.twig', {number: card.number, name: card.name, variant: 'card'}, with_context = false) }}
+            {%- elseif action == 'remove' %}
+            {{ include('favorites/_remove_button.html.twig', {number: card.number, name: card.name}, with_context = false) }}
             {%- endif %}
         </div>
         <h2 class="card__title">

@@ -1,0 +1,6 @@
+{#
+    "Entfernen" on a /merkliste card. Include with `only`: number (venue number), name (venue name).
+    The same route as the Merken button, but intent=remove makes it idempotent: without JS a double-click or a stale tab
+    cannot add the entry back. merkliste.js removes the card in place and never re-adds.
+#}
+<form class="merkliste-remove" method="post" action="{{ path('merkliste_toggle', {number: number}) }}"><input type="hidden" name="_token" value="{{ csrf_token('submit') }}"><input type="hidden" name="intent" value="remove"><button type="submit" class="merkliste-remove__button" aria-label="{{ 'remove.label_for'|trans({name: name}, 'favorites') }}" data-merkliste-remove="{{ number }}" data-merken-name="{{ name }}">{{ icon('x', {class: 'icon--sm'}) }}<span>{{ 'remove.label'|trans({}, 'favorites') }}</span></button></form>

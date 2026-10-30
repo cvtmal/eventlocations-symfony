@@ -6,3 +6,30 @@ merken:
     label_detail: Location merken
     # The accessible name, so the 48 buttons of a listing are distinguishable.
     label_for: '{name} merken'
+
+# The remove button on /merkliste. label_for is the accessible name and contains the visible word.
+remove:
+    label: Entfernen
+    label_for: '{name} entfernen'
+
+merkliste:
+    title: Deine Merkliste
+    meta_description: Alle Hochzeitslocations, die du dir gemerkt hast, auf einen Blick.
+    # formatted = count|swiss_number
+    count: '{count, plural, one {# Location} other {{formatted} Locations}}'
+    results_label: Gemerkte Locations
+    empty:
+        title: Deine Merkliste ist noch leer.
+        cta: Locations entdecken
+    full: 'Deine Merkliste ist voll: Es passen {max} Locations hinein. Entferne eine, um eine neue zu merken.'
+
+# Toasts built by merkliste.js. The name reaches them as the placeholder __name__.
+toast:
+    added: '{name} wurde deiner Merkliste hinzugefügt.'
+    removed: '{name} wurde von deiner Merkliste entfernt.'
+    full: Deine Merkliste ist voll.
+    link: Zur Merkliste
+
+header:
+    # The heart's accessible name once the list has entries; its aria-label hides the badge.
+    count_label: 'Merkliste ({count})'

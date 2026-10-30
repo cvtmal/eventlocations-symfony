@@ -463,6 +463,66 @@ final class ListingQueryTest extends KernelTestCase
         self::assertCount(2, $holder->getData()['default'] ?? []);
     }
 
+    public function test_cards_by_numbers_keep_the_given_order(): void
+    {
+        $first = $this->venue('Erste');
+        $second = $this->venue('Zweite');
+        $third = $this->venue('Dritte');
+
+        $cards = $this->query()->cardsByNumbers([$third->number(), 2147483647, $first->number(), $second->number()], 'de');
+
+        self::assertSame(['Dritte', 'Erste', 'Zweite'], array_map(static fn (ListingCard $card): string => $card->name, $cards));
+    }
+
+    public function test_cards_by_numbers_drop_unpublished_and_untranslated(): void
+    {
+        $published = $this->venue('Publiziert');
+        $draft = $this->venue('Entwurf', ['status' => VenueStatus::Unpublished]);
+        $untranslated = VenueFactory::createOne(['name' => 'Ohne Deutsch']);
+        VenueTranslationFactory::createOne(['venue' => $untranslated, 'locale' => 'fr']);
+        $withoutAny = VenueFactory::createOne(['name' => 'Ohne Übersetzung']);
+
+        $cards = $this->query()->cardsByNumbers([$draft->number(), $untranslated->number(), $withoutAny->number(), $published->number()], 'de');
+
+        self::assertSame([$published->number()], array_map(static fn (ListingCard $card): int => $card->number, $cards));
+    }
+
+    public function test_cards_by_numbers_of_nothing_runs_no_query(): void
+    {
+        $query = $this->query();
+        $holder = self::getContainer()->get('doctrine.debug_data_holder');
+        self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
+
+        $holder->reset();
+        self::assertSame([], $query->cardsByNumbers([], 'de'));
+        self::assertCount(0, $holder->getData()['default'] ?? []);
+    }
+
+    public function test_cards_by_numbers_take_two_queries(): void
+    {
+        $first = $this->venue('Eins');
+        $second = $this->venue('Zwei');
+        $query = $this->query();
+        $holder = self::getContainer()->get('doctrine.debug_data_holder');
+        self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
+
+        $holder->reset();
+        self::assertCount(2, $query->cardsByNumbers([$first->number(), $second->number()], 'de'));
+        self::assertCount(2, $holder->getData()['default'] ?? []);
+    }
+
+    public function test_cards_by_numbers_carry_their_photos(): void
+    {
+        $venue = $this->venue('Mit Bildern');
+        foreach ([1, 2] as $position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
+
+        $cards = $this->query()->cardsByNumbers([$venue->number()], 'de');
+
+        self::assertCount(2, $cards[0]->photos);
+    }
+
     /**
      * @param list<string> $expectedNames
      */

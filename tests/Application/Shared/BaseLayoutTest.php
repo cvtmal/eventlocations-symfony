@@ -56,6 +56,27 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSelectorExists('[data-merkliste-count][hidden]');
     }
 
+    public function test_header_heart_links_to_the_merkliste_and_carries_its_strings(): void
+    {
+        $crawler = $this->home();
+
+        $heart = $crawler->filter('.site-header__favorites[data-merkliste-link]');
+        self::assertSame('/merkliste', $heart->attr('href'));
+        self::assertStringContainsString('__count__', (string) $heart->attr('data-count-label'));
+        self::assertStringContainsString('__name__', (string) $heart->attr('data-toast-added'));
+        self::assertStringContainsString('__name__', (string) $heart->attr('data-toast-removed'));
+        self::assertNotSame('', (string) $heart->attr('data-toast-full'));
+        self::assertNotSame('', (string) $heart->attr('data-toast-link'));
+        self::assertSame('csrf-token', $heart->attr('data-sync-token'));
+    }
+
+    public function test_the_merkliste_module_loads_once(): void
+    {
+        $crawler = $this->home();
+
+        self::assertCount(1, $crawler->filter('script[type="module"][src*="merkliste"]'));
+    }
+
     public function test_footer_and_toast_region_are_present(): void
     {
         $this->home();

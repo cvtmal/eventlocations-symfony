@@ -18,7 +18,7 @@ Reference: `/_styleguide` (dev and test only) renders every component; compare y
   - `_overlay` (shell): `id`, `tone` (region|guests|more), `title`, `close_label`; blocks `overlay_body`, `overlay_footer`.
   - `_dialog` (shell): `id`, `title`, `close_label`; blocks `dialog_body`, `dialog_footer`.
   - `_carousel` (shell): `id`, `label`, `previous_label`, `next_label`, `counter_format`; block `slides` (`<li class="carousel__slide">`).
-  - Search partials (#7, include with `only`): `search/_card` (`card`, `index`, `action` merken|none), `search/_card_facts` (`capacity_min`, `capacity_max`, `town_name`), `search/_card_rating` (`score`, `count`, `highlights`), `search/_related_searches` (`links` list<{label, href}>, `title`).
+  - Search partials (#7, include with `only`): `search/_card` (`card`, `index`, `action` merken|remove|none), `search/_card_facts` (`capacity_min`, `capacity_max`, `town_name`), `search/_card_rating` (`score`, `count`, `highlights`), `search/_related_searches` (`links` list<{label, href}>, `title`).
 - **Images:** venue photos only through `{{ venue_picture(picture, sizes=…, loading=…, priority=…, widths=…, class=…) }}` (Media); cards pass `widths=[360, 640, 960]`; one LCP image per page gets `priority=true`; never a raw `<img>` for a venue photo and never a `style` background (the placeholder is an SVG `fill`).
 - **Icons:** `{{ icon('name', {label: '…', class: 'icon--sm'}) }}`; without `label` the icon is decorative. A new icon is a `<symbol id viewBox="0 0 24 24">` added to `assets/icons/sprite.svg` (sorted by id, no `stroke`/`fill` attributes) plus a line in `assets/icons/LICENSES.md`. `IconSpriteTest` fails on an unknown name.
 - **JS:** one self-contained module per behaviour in `assets/js/` (no `import`/`export`, no globals, no `console`), loaded with `<script type="module" src="{{ asset('js/x.js') }}"></script>` in `{% block scripts %}`. No `importmap()`, no inline `<script>`, no `style` attribute or `<style>` (CSP, #16). User-visible strings reach JS through `data-*` attributes. ≤ 15 KB gzip JS per page.
@@ -29,9 +29,9 @@ Reference: `/_styleguide` (dev and test only) renders every component; compare y
 - **Contrast:** text on pink is `--c-ink-inverse`. Inactive states use weight or underline, never opacity. A new colour pair gets a row in `tests/Unit/Shared/ContrastTokensTest.php`.
 - **Slots** (fill them, do not restructure `templates/base.html.twig` or `templates/layout/*`):
   - `base.html.twig` blocks: `title`, `meta`, `canonical`, `hreflang`, `stylesheets`, `jsonld`, `body_class`, `hero`, `main`, `scripts`;
-  - header link targets in `layout/_header.html.twig`: the search link is `path('listing')` (#7); #13 changes the heart `path('home')`;
+  - header link targets in `layout/_header.html.twig`: the search link is `path('listing')` (#7), the heart `path('merkliste')` (#13);
   - listing filter bar: `templates/search/filter/_{region,guests,more}.html.twig` (#10, #11, #12; variables `criteria` + `part` `chips|trigger`, render `<li class="filter-bar__item">`s), never `search/_filter_bar.html.twig` itself; `search/filter/_hidden_state.html.twig` (`criteria`, `except`) for their GET forms;
-  - `favorites/_merken_button.html.twig` (`number`, `name`, `label`, `variant` card|detail; #13 owns it, wires route and JS);
+  - `favorites/_merken_button.html.twig` (`number`, `name`, `label`, `variant` card|detail) and `favorites/_remove_button.html.twig` (`number`, `name`), both owned by #13: POST forms to `merkliste_toggle` with the constant `_token`, taken over by `js/merkliste.js`; `_remove_button` also posts `intent=remove`, so it only ever removes;
   - `layout/_main_menu.html.twig`: append one `<li>` per menu item;
   - footer includes `seo/_footer_cantons.html.twig` (#17) and `site/legal/_footer_links.html.twig` (#18), both `ignore_missing`;
   - the toast live region `[data-toast-region]` in `base.html.twig` (#13);

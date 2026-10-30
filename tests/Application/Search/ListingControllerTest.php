@@ -144,7 +144,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertCount(0, $placeholder->filter('[data-carousel]'));
     }
 
-    public function test_merken_form_posts_to_the_literal_path(): void
+    public function test_merken_form_posts_to_the_toggle_route(): void
     {
         $venue = $this->venue(['name' => 'Schloss Seeburg']);
         $number = $venue->number();
@@ -159,6 +159,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertCount(1, $button);
         self::assertSame('Schloss Seeburg merken', $button->attr('aria-label'));
         self::assertSame('Merken', $button->filter('.merken__text')->text());
+        self::assertCount(1, $crawler->filter(\sprintf('form[action="/merkliste/%d"] input[type="hidden"][name="_token"][value="csrf-token"]', $number)));
     }
 
     public function test_pagination_over_49_venues(): void
@@ -228,7 +229,7 @@ final class ListingControllerTest extends WebTestCase
         }
         self::assertCount(0, $crawler->filter('.filter-bar .chip'));
         self::assertStringNotContainsString('Karte', $crawler->filter('.filter-bar')->text());
-        self::assertSame('/', $crawler->filter('.filter-bar__aside a.btn--round')->attr('href'));
+        self::assertSame('/merkliste', $crawler->filter('.filter-bar__aside a.btn--round')->attr('href'));
         self::assertSame('Merkliste', $crawler->filter('.filter-bar__aside a.btn--round')->text());
     }
 
