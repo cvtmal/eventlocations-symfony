@@ -1,8 +1,8 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-31 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #26 cms-pages, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
+_Last updated: 2026-10-31 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #26 cms-pages, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
 
-We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
+We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It started from the layout and content structure of eventlokale.ch's wedding search, and takes its look from the brand design (S15). It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
 Behind it sits a small **back office** for our own staff at `/admin` (S12): a **CMS** to manage venues, photos, rooms, documents and landing-page texts, and a HubSpot-style **CRM** for the venue operators we sell tiers to and the couples who send inquiries. Both are lightweight and minimalist, and open for extensions. The CMS goes live with the site; the CRM follows after launch (Q8).
 
@@ -25,7 +25,7 @@ Artifacts land in `.rpi-tracking/{research,plans,changes,reviews}/<date>/<slug>-
 - In `/rpi` cycles, never ask the owner to make a decision. Apply your own recommendation and record it in the research; the owner will follow your recommendation. The only exceptions are the **Owner gates** below.
 - Every full cycle ends with exactly one commit, created when the owner says "commit". The commit message is the cycle slug, and the commit is pushed to `main` (see **Running cycles in parallel** for the rebase step). If a cycle needs rework, the rework goes in a new commit on top.
 - Never copy eventlokale's texts, photos, logos, icons or font files into this repository, the demo data or the tests. We copy layout, structure, interaction and colour values. Reference screenshots stay in `docs/reference/` as documentation only. The one exception is the venue content from the owner's Wix CSV (#21, Q12). It lives in `CONTENT_ROOT` / `MEDIA_ROOT` outside the repository and is never committed. The owner data (S14, #32) stays outside the repository in the same way.
-- Every UI cycle compares its result with the matching screenshot in `docs/reference/` at 390 px and 1440 px width, using Claude in Chrome against the local app. The live eventlokale page may be visited for behaviour questions: slowly, at most about 20 requests per session (Cloudflare rate-limits at ~35 rapid requests), never with forms submitted.
+- From #34 on, every UI cycle compares its result with `docs/reference/public/` at 390 px and 1440 px, using Claude in Chrome against the local app. Before #34 it was the matching screenshot in `docs/reference/`. The live eventlokale page may be visited for behaviour questions: slowly, at most about 20 requests per session (Cloudflare rate-limits at ~35 rapid requests), never with forms submitted.
 - Every back-office cycle (#22–#30) compares its screens with the design reference in `docs/reference/admin/` (S12) at 1440 px, and checks that they stay usable at 390 px. The reference is the target; eventlokale is not.
 - The app must stay reachable locally at `http://localhost:${NGINX_HOST_PORT}` after every cycle, with demo data loaded (`make db-fresh && make seed`).
 
@@ -65,6 +65,10 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
    | `admin-ui/src/islands.js` (island registry), `admin-ui/src/timeline/types.js` (timeline renderers) | #22 / #27 | append one line per island or activity type |
    | `admin-ui/package.json`, `package-lock.json` | #22 | add a dependency only with a one-line reason in the Outcome; on a rebase conflict, take `main`'s lock file and run `make admin-install` again |
    | `translations/admin+intl-icu.de.yaml` (shell strings) | #22 | nothing; CMS strings go to `cms`, CRM strings to `crm` |
+   | `assets/styles/abstracts/_tokens.scss`, `templates/base.html.twig`, `templates/layout/*`, `templates/components/*` | #35 takes them over from #1 | R2 lanes fill the blocks; a missing token goes to the lane's report, and the first lane that needs it adds it, append only |
+   | `templates/search/_card.html.twig`, `search/_filter_bar.html.twig` | #37 | nothing during R2; #36 includes the card unchanged |
+   | `templates/search/filter/*`, `components/_overlay.html.twig` | #38 | nothing during R2 |
+   | `translations/*` tone of address | #40 | R2 lanes add keys in "Sie" and leave existing lines alone |
 
 6. **Concurrency.** Three to four sessions at a time is the sweet spot. More than that and the rebase step and the owner's reviews become the bottleneck.
 
@@ -92,7 +96,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 17 | `seo-landing-pages` | W6 | SEO-4, LP-5 | 10, 16 | `landing_pages` (if needed) | — | ✅ Done |
 | 18 | `legal-pages` | W6 | LEG-1, LEG-2 | 1, 13, 14 | — | ~~Q5~~ | ✅ Done |
 | 19 | `performance-caching` | W7 | PERF-1–PERF-3, ADM-6 | 10–17, 24, 25, 33 | — | — | Research |
-| 20 | `prod-deploy` | W8 | OP-2, OP-3, OP-4 | 19, 21, 26, 32 | — | ~~Q1~~, ~~Q2~~ (Hostpoint + Neon), Q14 (redirects only) | Research |
+| 20 | `prod-deploy` | W8 | OP-2, OP-3, OP-4 | 19, 21, 26, 32, 41 | — | ~~Q1~~, ~~Q2~~ (Hostpoint + Neon), Q14 (redirects only) | Research |
 | 21 | `legacy-data-import` | W5 | DATA-3 | 3, 9 | `venues`: address, town, canton and coordinates become optional; `venue_translations.region` | ~~Q4~~, ~~Q12~~ | ✅ Done |
 | 22 | `admin-foundation` | W4 | ADM-1–ADM-6, ADM-8 | 1, 2 | `admin_users`, `admin_audit_log` | ~~Q9~~ | ✅ Done |
 | 23 | `admin-ui-kit` | W5 | ADM-4, ADM-7 | 22 | — | ~~Q11~~ | ✅ Done |
@@ -106,6 +110,14 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 31 | `venue-wedding-facts` | W5 | DATA-4, DP-17 | 8, 9 | new columns on `venues` and `venue_translations`; new `taxonomy_terms` groups and rows | — | ✅ Done |
 | 32 | `owner-content-import` | W6 | DATA-5 | 9, 21, 31 | — | ~~Q12~~, Q13, Q14 (tier only) | ✅ Done |
 | 33 | `filter-wedding` | W6 | FI-7, LP-7 | 12, 31 | indexes only, if needed | — | ✅ Done |
+| 34 | `design-reference` | R0 | BRD-1 | — | — | Q15 (sign-off), Q16, Q17 | Plan |
+| 35 | `brand-foundation` | R1 | BRD-1–BRD-3, A11Y-1, PERF-1 (CSS, fonts) | 19, 25, 34 | — | Q15, Q16 (default), Q17 (default) | Research |
+| 36 | `home-page` | R2 | HP-1–HP-6 | 35 | — | Q18 (default), Q19 (default) | Research |
+| 37 | `listing-redesign` | R2 | BRD-1, LP-1–LP-3, LP-5–LP-7, MK-3, MK-4, DP-15 | 35 | — | — | Plan |
+| 38 | `filter-overlays-redesign` | R2 | BRD-1, FI-1–FI-4, FI-7 | 35 | — | — | Plan |
+| 39 | `detail-redesign` | R2 | BRD-1, DP-2–DP-17, IQ-2 (form look) | 35 | — | — | Plan |
+| 40 | `brand-voice` | R3 | BRD-4, IQ-2 (mails), LEG-1 (look) | 36, 37, 38, 39 | — | — | Plan |
+| 41 | `redesign-verification` | R3 | PERF-1, A11Y-1, SEO-1, SEO-3 | 40 | — | Q15 (final look) | Plan |
 
 ### Waves at a glance
 
@@ -120,6 +132,10 @@ W6  #16 seo-foundation  ‖  #18 legal-pages   →   #17 seo-landing-pages (need
     #24 cms-venues  ‖  #25 cms-venue-media                (back office, parallel to the SEO lanes)
     #32 owner-content-import  ‖  #33 filter-wedding       (owner data, parallel to both)
 W7  #19 performance-caching  ‖  #26 cms-pages
+R0  #34 design-reference                                  (no code, no lane; runs now, beside #25 and #19)
+R1  #35 brand-foundation                                  (alone, after #19 Part 2 and Q15)
+R2  #36 home-page ‖ #37 listing-redesign ‖ #38 filter-overlays-redesign ‖ #39 detail-redesign
+R3  #40 brand-voice → #41 redesign-verification
 W8  #20 prod-deploy                                       (launch: site + CMS)
 W9  #27 crm-foundation                                    (after launch)
 W10 #28 crm-deals  ‖  #29 crm-inquiries  ‖  #30 crm-email
@@ -127,7 +143,7 @@ W10 #28 crm-deals  ‖  #29 crm-inquiries  ‖  #30 crm-email
 
 W5 holds nine cycles; with three to four lanes it runs in two or three rounds. Start #14, #21 and #31 early in W5, because #29, #20, #24, #32 and #33 wait for them.
 
-**Critical path:** #0 → #2/#3 → #4 → #6 → #7 → #10 → #17 → #19 → #20. #1 runs alongside W1–W3 and must be done before W4. #9, #21, #31 and #32 are off the critical path until #20, which needs the real content; demo data from #4/#5 carries every UI cycle. The back-office path #22 → #23 → #24/#25 → #26 runs beside it and joins at #20; #26 waits for #17, so it is as long as the SEO path.
+**Critical path:** #0 → #2/#3 → #4 → #6 → #7 → #10 → #17 → #19 → #20. #1 runs alongside W1–W3 and must be done before W4. #9, #21, #31 and #32 are off the critical path until #20, which needs the real content; demo data from #4/#5 carries every UI cycle. The back-office path #22 → #23 → #24/#25 → #26 runs beside it and joins at #20; #26 waits for #17, so it is as long as the SEO path. Redesign: #19 → #35 → #36–#39 → #40 → #41 → #20. The CRM path does not change: #27–#30 land after #20 as before, and they only touch the back office.
 
 **Milestones.**
 - After #8: you can browse the listing and detail pages locally with demo data. This is the first owner review of look and feel.
@@ -136,15 +152,22 @@ W5 holds nine cycles; with three to four lanes it runs in two or three rounds. S
 - After #15: the MVP is feature-complete (all filters, Merkliste, inquiry, map).
 - After #25: the owner can edit every venue field, photo, room and document in the CMS locally. This is the owner review of the back office.
 - After #19 and #26: launch-ready (SEO, legal pages, performance budgets met, CMS complete).
+- After #34: the owner signs off the look of every public page, as drawn.
+- After #35: every page runs on the new palette, font, shapes and header, with the old page layouts.
+- After #41: launch-ready again, on the final look.
 - After #20: live on hochzeitslocation.ch, and the database is the content master (S8).
 - After #27: the CRM is live, with companies built from the venues.
 - After #28–#30: the CRM is complete (pipeline, inquiries, e-mail).
 
 **What can move.** #9 can run any time after #5. #21 can run any time after #9, and the earlier the better, because #17's landing-page thresholds and #19's measurements should use the real data. #15 and #18 have nothing depending on them except #19 and can slip. #11 is small and can be folded into #12 if a lane is short of work. #22 needs only W1, so it can start before the other W4 cycles. #23 can start as soon as #22 is done, without waiting for W4. #27's research and plan may run during W8, but it is merged only after #20 is `Complete` (Q8). #30 needs #20's mail setup (SPF/DKIM) only for its production check; it can be built before that. #31 can start as soon as #9 lands. #32 is re-runnable, so it can run early on the snapshot and again on a fresh export before #20. #33 can slip until after #32, when its filters have data worth testing.
 
+- #34 can run now, because it writes no code.
+- #36–#39 run in any order and in parallel. If only two lanes are free, run #36 and #37 first: the first page a visitor sees and the most-used one.
+- **Cut line.** If the owner needs a launch date, #34, #35, #36 and #41 are the minimum. #37–#40 can then land after go-live, because #35 already leaves every page legible and AA-compliant, at the cost of old page layouts and a mix of "du" and "Sie" until #40.
+
 ## Owner gates
 
-Each gate has a default, so no cycle is blocked as a whole. The owner answers here and the answer is recorded in this file. Q3, Q13 and Q14 are still open.
+Each gate except Q15 has a default, so no other cycle is blocked as a whole. The owner answers here and the answer is recorded in this file. Q3 and Q13–Q19 are still open. Q15 is the one gate without a default: it stops #35 as a whole.
 
 | ID | Question | Answer (owner, 2026-10-30) | Consequences |
 |---|---|---|---|
@@ -162,6 +185,11 @@ Each gate has a default, so no cycle is blocked as a whole. The owner answers he
 | ~~Q12~~ | Can the owner export the Wix form submissions? They should hold the address, contact person and Instagram that the CSV lacks (S14). | **No (2026-10-30). `Locations+Startseite.csv` is the only production source, and venues without an address are accepted.** There is no form export. The external SSD is lost, and the eventlokale crawl cache and the Laravel project are out for everything. | Address, town, canton and coordinates become optional (#21). See the source change at the top of #21. |
 | Q13 | Do the 4 Liechtenstein venues go on the site? | **Open.** | Default: no. `cantons` and `towns` are Swiss (#3), and the canton map and landing pages assume 26 cantons. #32 skips them and lists them in its report. A yes needs a small cycle of its own (proposal). |
 | Q14 | What happens to deine-hochzeitslocation.ch at launch, and does any venue pay there (its home page mentions a "Premium-Eintrag")? | **Open.** | Default: the old site keeps running, no redirects are built, and a venue only in the CSV starts as `basic`. If the site is retired, #20 adds 301s from its `/hochzeitslocations/<slug>` and region URLs to the new pages, and `/listing` needs a replacement (proposal). A list of paying venues sets `tier` in #32. |
+| Q15 | Does the owner approve the public look as drawn in #34? | **Open.** | A gate, not a default: #35 starts only after it. The owner sees every page type at 1440 and 390 px on the canvas. #41 repeats the sign-off on the running app. |
+| Q16 | Is Figtree agreed with the graphic designer (studiolido.ch)? It replaces Wix's Madefor, which may not be used outside Wix. | **Open.** | Default: Figtree. A later change of typeface swaps one font file and its metrics. |
+| Q17 | Can the graphic designer deliver the logo as a vector file? | **Open.** | Default: `logo-hzl.png` is a 190 KB raster of 2043 × 454 px, so #35 ships a small export at twice the display height, with `width` and `height` set. An SVG later replaces one file. The favicon follows the same answer. |
+| Q18 | Which photo is the home hero, and may we use it? | **Open.** | Default: a venue photo from the owner's content that the owner names, served through #5's pipeline. Until then, the top Spotlight venue's first photo. The lake photo in the Wix draft is not used until the owner confirms its source. |
+| Q19 | Where does "Location eintragen" go until the public lead form exists (proposal, Q14)? | **Open.** | Default: `mailto:` to `site.contact_email`, which adds no data flow and no Datenschutz text. #20 proves that mailbox before go-live. |
 
 ## Settled decisions
 
@@ -212,8 +240,8 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 - **JS:** vanilla ES modules, one per behaviour (`carousel.js`, `overlay.js`, `live-count.js`, `autocomplete.js`, `merkliste.js`, `share.js`). Each loads only on the pages that need it. There is no importmap of third-party packages.
 - **Progressive enhancement:** filter overlays are HTML `popover` elements opened by `popovertarget`, so they work without JS. Filters are plain GET forms. Carousels are CSS scroll-snap containers that JS only adds arrows and counters to. Without JS, the only thing lost is the live "N Resultate anzeigen" count.
 - **Icons:** an inline SVG sprite built from Lucide (ISC licence). The five Lage icons and the nine rating-highlight icons are drawn in the same line style; we do not copy eventlokale's SVGs.
-- **Font:** Sofia Pro is a commercial font licensed to eventlokale, so we do not copy it. We use **Sofia Sans** (OFL, its free sibling), self-hosted as latin-subset woff2 in weights 400 and 600 (700 only if #1 proves it is needed), with `font-display: swap` and the 400 weight preloaded.
-- **Colour tokens,** taken from eventlokale's CSS on 2026-10-30 (#1 samples the overlay colours exactly from `docs/reference/`):
+- **Font:** See S15. Sofia Sans until #35.
+- **Colour tokens,** taken from eventlokale's CSS on 2026-10-30 (#1 samples the overlay colours exactly from `docs/reference/`): Superseded by S15 from #35. Kept as the record of the first look.
 
   | Token | Value | Used for |
   |---|---|---|
@@ -228,7 +256,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
   | `--c-overlay-more` | warm grey (sample from `filter-more.jpg`, CSS candidate `#a4937d`) | weitere Filter overlay |
   | `--c-ink` | `#ffffff` | text on dark |
 
-- **Contrast:** white on `#ff5a75` is 3.01:1, which fails WCAG AA for normal text, and white on the warm-grey overlay is about 2.98:1. #1 keeps the look but meets AA. Text-bearing pink buttons use `#121212` text (6.22:1) or a darker accent for the background (`#c8364f` gives 5.13:1). Body text on the overlays gets a darker overlay tone or a scrim. #1 records every deviation from the original.
+- **Contrast:** Superseded by S15 from #35. Kept as the record of the first look. white on `#ff5a75` is 3.01:1, which fails WCAG AA for normal text, and white on the warm-grey overlay is about 2.98:1. #1 keeps the look but meets AA. Text-bearing pink buttons use `#121212` text (6.22:1) or a darker accent for the background (`#c8364f` gives 5.13:1). Body text on the overlays gets a darker overlay tone or a scrim. #1 records every deviation from the original.
 
 ### S4. Internationalisation (German now; FR, IT and EN later without rework)
 
@@ -242,7 +270,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 
 ### S5. URLs
 
-- `/` → 302 to `/hochzeitslocations` (until a home page exists; it is a 302 so it can change).
+- `/` is the home page from #36 (HP-1). The route keeps the name `home`. Until #36, a 302 to `/hochzeitslocations`.
 - `/hochzeitslocations` is the listing; `?page=2` paginates. There are **no seeds in URLs and no redirects** on listing requests.
 - `/hochzeitslocations/{canton-slug}` (e.g. `/hochzeitslocations/zuerich`) are canton landing pages. #17 decides on town and building-type pages under the same prefix.
 - `/hochzeitslocation/{venue-slug}` is the detail page. Slugs are ASCII-transliterated German (`ü` → `ue`). An old slug redirects with a 301 through `venue_slug_history`.
@@ -299,7 +327,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
   - uncached server time p95 ≤ 200 ms for the listing and ≤ 120 ms for the detail page, with the demo data ×10.
 - **Every cycle:** `make cs-fix` → `make lint` → `make test`.
 - **Every UI cycle also:**
-  - the screenshot comparison from **Important**;
+  - the screenshot comparison from **Important**, from #34 on with `docs/reference/public/`, at 390 and 1440 px, and with real data as well as demo data on any page that shows venues;
   - `make lighthouse URL=…` (added in #1) on the pages it touched;
   - a keyboard-only walkthrough;
   - the W3C validator on the rendered HTML.
@@ -384,6 +412,52 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 - **Nothing is inferred.** A fact is set only when the owner stated it in its own field. No keyword search in the description: a false "Zivile Trauung möglich" is a booking-ruining error nobody would catch in review. Unknown stays NULL or absent, and the page shows nothing for it. Spelling is kept verbatim (no rewriting of texts).
 - **Coverage.** After #32, 243 of 243 venues have a price level and an ambience; the other facts only where the venue stated them, so a ceremony filter (#33) shows only those. This is accepted: an honest short list beats invented facts, and the CMS (#24) or a later questionnaire (proposal) fills the rest. Empty facts are hidden on every page.
 
+### S15. Brand design
+
+**The move.** The site stops copying eventlokale's look (dark, Sofia Sans, `#ff5a75`, near-square corners) and takes the brand design: warm and light, cream and white, soft round shapes, one strong pink, and the venue photos carrying the emotion. The structure and behaviour built in #7–#18 stay. Filters, URLs, Merkliste, inquiry, SEO and caching do not change unless a cycle below says so.
+
+**When: before go-live, after #25 and #19 Part 2 land.** The site is not live, so nobody sees a second launch. #20's Step 9.3 and #19's baseline must measure the final look, or both run twice. CRM cycles are unaffected. #20's Phases 1–6 carry on, and only Phases 7–9 wait for #41. #34 starts at once because it needs no lane. No code cycle starts before #19 Part 2, because #35 changes what #19's finisher rebases over and measures.
+
+**Source of truth.** The Design canvas and the design system (links in **Reference material**), exported by #34 to `docs/reference/public/`. The drawn boards are the target for look. `docs/reference/*.jpg` stays only as the record of behaviour. The back office keeps `docs/reference/admin/` for layout.
+
+**Tokens.** The design system's names become the token names (`--c-surface`, `--c-surface-raised`, `--c-surface-alt`, `--c-ink`, `--c-ink-strong`, `--c-accent`, `--c-accent-strong`, `--c-on-accent`, `--c-line`), so canvas and code read the same. Today's `--c-surface` means the dark header band, so re-valuing it in place would silently change its role: #35 renames every use in one sweep, before any lane forks. That sweep is cheap: public partials hold 166 colour, 37 radius and 16 shadow uses and no hard-coded colour in a rule, so one token file turns most of the site.
+
+**Contrast, measured.**
+
+| Pair | Ratio | Use |
+|---|---|---|
+| `ink` #484848 on surface / raised / alt | 8.45 / 9.15 / 8.05 | all text |
+| `on-accent` #F8F6EE on `accent-strong` #D1007A | 4.86 | every button with small text |
+| white on `accent-strong` | 5.26 | as the board draws it; #34 picks one |
+| `accent-strong` on surface / raised / alt | 4.86 / 5.26 / 4.63 | text links |
+| `accent` #FF0096 on surface / raised / alt | 3.41 / 3.69 / 3.25 | icons and text from 24 px only |
+| cream on `accent` | 3.41 | never small text; the Wix draft's button fails AA here, so the design system moved buttons to `accent-strong` |
+
+**Font.** Figtree, self-hosted as `.woff2` under `assets/fonts/`, never through Google Fonts as the board does: the CSP is `font-src 'self'; style-src 'self'`, and a Google request would add a processor to the Datenschutz text. One variable file covers the 400, 600 and 700 weights the design uses, which keeps S11's "≤ 2 font files" and removes the conditional 600 preload in `search/listing.html.twig` and `venues/detail/show.html.twig`. #35 measures it against a static 400 + 700 pair and takes the smaller that holds CLS.
+
+**Boards are not code.** Their markup uses inline styles and `/_blob/` images, which the CSP forbids and the frontend rules exclude. Build from Sass partials and the sprite. The 14 design icons are Lucide at stroke 1.5, which is what `components/_icon.scss` already uses, so new ones are sprite symbols from our Lucide version, recoloured through `currentColor`.
+
+**What the design asks for that the product does not have.** These are decided here, so that no cycle re-opens them:
+
+| In the design | Decision | Why |
+|---|---|---|
+| Search field "Ort" (free text) | A canton `<select>` | Most real venues have only a canton (#21); the Ort tab stays hidden for that reason (#12) |
+| Search field "Datum" | Replaced by "Anzahl Gäste" | No availability data exists anywhere, so the field would filter nothing |
+| "Karte durchsuchen" | Dropped; a link "Alle Locations" instead | The Wix map is a stock placeholder. Opening the region overlay from a link needs JS in the 6 KB group, which has 12 B left. Map view stays a proposal |
+| "Was unsere Paare sagen" | Dropped until real quotes exist | Bracket placeholders only; the CSV has no reviews, and invented testimonials are not an option. See proposals |
+| Nav "Magazin", "Partner" | Dropped | Out of scope since the start. The Wix Partner page shows template logos |
+| Region chips "Romandie", "Liechtenstein" | Chips are the live canton pages | Neither is a canton with a page; Q13 stands |
+| Category "Gasthof" | Tile "Restaurant & Gasthof"; "Eventhalle" becomes "Eventhalle & Saal" | #32 maps both pairs to one code (`restaurant`, `event_hall`), so the honest label names both |
+| Category "Berg" | No tile | The form's `Typ` has no such value, so no venue would carry it reliably |
+| Copy "nach … Postleitzahl", "Datum", "nebeneinanderlegen" | Reworded | The filters and a comparison view do not exist in that form |
+| No heart in the board's header | Heart and count stay | MK-1; `merkliste.js` needs `[data-merkliste-link]` on every page |
+
+**Tone of address.** The design system's rule replaces today's "du": platform texts use "Sie", with Swiss "ss" (#40).
+
+**Back office.** It is not redesigned. #35 changes its accent tokens and font, because removing Sofia Sans from the public site would otherwise break it (`admin/base.html.twig` preloads the shared file). Layout, dark sidebar and `docs/reference/admin/` stay (Q11).
+
+**What stays the same.** S9 images, S10 caching, S11 budgets (no budget is raised for the redesign), GEN-2 no JS framework, no new Composer or npm package, no migration in #34–#41.
+
 ## Requirements
 
 IDs are referenced by the overview and the cycles.
@@ -391,10 +465,24 @@ IDs are referenced by the overview and the cycles.
 **General**
 - **GEN-1** German UI only for now, with every string in translation catalogues (S4).
 - **GEN-2** Server-rendered Symfony + Twig. No TypeScript or JS framework or library; every public page is usable without JS (S3). The back office is the one exception: Vue islands, no TypeScript (S12).
-- **GEN-3** Layout, style and colours copy eventlokale's wedding search (`docs/reference/`); brand design comes later.
+- **GEN-3** The look follows the brand design (S15, `docs/reference/public/`). The original eventlokale layout remains only as the record of behaviour.
+
+**Brand (BRD)**
+- **BRD-1** Every public page matches its board in `docs/reference/public/` at 390 and 1440 px.
+- **BRD-2** Figtree self-hosted, no request to a third party for type, at most two font files on first view (S11).
+- **BRD-3** The logo in header and footer on a light ground, with `width` and `height` set, and no logo on photos or on pink. A matching favicon.
+- **BRD-4** Platform copy uses "Sie" and Swiss spelling throughout, in catalogues, mails, validation messages and meta texts.
+
+**Home page (HP)**
+- **HP-1** `/` is a real, cached, indexable page, in the order of the board: hero with search, categories, four steps, Spotlight, call to action, text, regions.
+- **HP-2** The hero search is a plain GET form to `listing` with Kanton, Location-Art and Anzahl Gäste. It works without JS and adds no script.
+- **HP-3** Five category tiles (S15's labels) link to the listing with their building code, through `listing_path()`, so a live landing page is used when one exists.
+- **HP-4** Spotlight shows three published venues in the order of LP-4, so a paid tier and the daily seed decide, with the Merken button.
+- **HP-5** Region links are the live canton landing pages, never a fixed list.
+- **HP-6** The long text section is a `ContentBlockDefinition` (#26), so staff can edit it, with catalogue text as the fallback.
 
 **Listing page (LP)**
-- **LP-1** `/hochzeitslocations` has a dark hero band with the h1 "Hochzeitslocations in der Schweiz" (canton pages: "… im Kanton Zürich"), "N Resultate", the filter bar, the result list, and pagination "1 - 48 von N Resultaten" with page links. eventlokale shows 48 per page; #7 keeps 48 unless PERF-1 fails, then 24. Unlike the original, the filter bar has no "Locations" and no event-type chip.
+- **LP-1** `/hochzeitslocations` has a hero band with the h1 "Hochzeitslocations in der Schweiz" (canton pages: "… im Kanton Zürich"), "N Resultate", the filter bar, the result list, and pagination "1 - 48 von N Resultaten" with page links. eventlokale shows 48 per page; #7 keeps 48 unless PERF-1 fails, then 24. Unlike the original, the filter bar has no "Locations" and no event-type chip.
 - **LP-2** Card as in `docs/reference/listing-card.png`:
   - photo on the left;
   - top row: capacity "50 - 450" (person icon), town "Ittigen" (pin icon), and "Merken ♡" on the right;
@@ -411,16 +499,16 @@ IDs are referenced by the overview and the cycles.
 
 **Filters (FI)**
 - **FI-1 Region** (`filter-region.jpg`, `filter-region-selected.png`):
-  - full-screen teal-grey overlay with large decorative circles;
+  - full-screen overlay with large decorative circles;
   - h2 "Wo soll eure Hochzeit stattfinden?" (#10 settles the wording; the original says "Wo soll dein Event stattfinden?");
   - tabs **Kanton** | **Ort/PLZ** and a large underlined input ("Kanton eingeben") with autocomplete;
-  - on the right, an interactive SVG map of the 26 cantons with lakes, a pink fill and a drop shadow. Hover darkens a canton and shows a white tooltip with its name; click selects it, and it stays dark.
-  - black "N Resultate anzeigen" button (live count), "Filter löschen" link, round "×" close.
+  - on the right, an interactive SVG map of the 26 cantons with lakes. Hover darkens a canton and shows a white tooltip with its name; click selects it, and it stays dark.
+  - "N Resultate anzeigen" button (live count), "Filter löschen" link, round "×" close.
   
-  It must look and behave exactly like the original.
+  It behaves like the original and looks as drawn in #34.
 - **FI-2 Ort/PLZ:** autocomplete over towns and postcodes. Selecting one filters venues in that town or within a radius around it; #6 settles the radius, after checking eventlokale's `standort=` behaviour.
-- **FI-3 Guests** (`filter-guests.jpg`): purple overlay with the h2 "Wieviele Gäste erwartest du?", an "Anzahl Gäste" number input, and pink bubbles 20/30/50/80/100/150/200/350/500 sized by value, which fill the input. It has the same footer buttons. #6 settles the capacity semantics.
-- **FI-4 Weitere Filter** (`filter-more.jpg`): warm-grey overlay "Wähle weitere Filter & Möglichkeiten" with a sticky footer ("N Resultate anzeigen", "Filter löschen"). Its sections, in eventlokale's order:
+- **FI-3 Guests** (`filter-guests.jpg`): overlay with the h2 "Wieviele Gäste erwartest du?", an "Anzahl Gäste" number input, and bubbles 20/30/50/80/100/150/200/350/500 sized by value, which fill the input. It has the same footer buttons. #6 settles the capacity semantics.
+- **FI-4 Weitere Filter** (`filter-more.jpg`): overlay "Wähle weitere Filter & Möglichkeiten" with a sticky footer ("N Resultate anzeigen", "Filter löschen"). Its sections, in eventlokale's order:
   1. **Suche eine konkrete Location:** "Name eingeben".
   2. **Lage:** round icon buttons Am Fluss, Am See, Auf dem Land, In den Bergen, In der Stadt.
   3. **Erreichbarkeit:** Nähe Bahnhof, Nähe Autobahn, Nähe Flughafen.
@@ -440,7 +528,7 @@ IDs are referenced by the overview and the cycles.
 - **MK-1** "Merken ♡" on cards and "Location merken" on the detail page toggle the entry. The header heart shows the count.
 - **MK-2** No login: a cookie (S7) that persists for 400 days.
 - **MK-3** `/merkliste` lists saved venues as cards in saved order, each with a remove button, plus an empty state.
-- **MK-4** A toast "{Name} wurde deiner Merkliste hinzugefügt." with a link to the Merkliste.
+- **MK-4** A toast "{Name} wurde Ihrer Merkliste hinzugefügt." ("deiner" until #40) with a link to the Merkliste.
 
 **Detail page (DP)**, as in `detail-page-top.jpg` and the live Stufenbau page:
 - **DP-1** URL per S5; title "{Name} in {Ort} für die Hochzeit mieten | Hochzeitslocation" (#16 settles the wording).
@@ -560,6 +648,7 @@ IDs are referenced by the overview and the cycles.
   - `listing-page-top.jpg`, `listing-card.png`;
   - `filter-region.jpg`, `filter-region-selected.png`, `filter-guests.jpg`, `filter-more.jpg`;
   - `detail-page-top.jpg`.
+- **Brand design:** canvas https://claude.ai/artifact/5mAkCeDjP2zympXDYqzyrT, design system https://claude.ai/artifact/7KTZibKEpKkofJg6Xjwsb2, the graphic designer's Wix draft https://hallo7105.wixstudio.com/hochzeitslocation. Export from #34 in `docs/reference/public/`.
 - **Site audit:** https://claude.ai/artifact/PzKBEaWRr9m6ZKVAUL4fto, 2026-09-08. Mostly out of scope; useful for its SEO, performance and security findings, i.e. what *not* to copy.
 - **Owner data:** the current site https://www.deine-hochzeitslocation.ch, its form "Location eintragen" at `/listing`, and the CSV export (S14, outside the repository).
 - **Earlier Laravel attempt** in `../hochzeitslocation`:
@@ -1584,6 +1673,103 @@ IDs are referenced by the overview and the cycles.
 - **Pending human:** owner approval of both texts (T7); the S11 pass at 390/1440 in a real browser (only the headless Chromium fallback ran, Claude in Chrome would not resize).
 - **Later:** Open Graph tags on the legal pages (needs a Seo helper; Shared may not use Seo).
 
+## Redesign (R0–R3, before go-live)
+
+S15 holds the decisions. Order: #34 now, #35 alone after #19 Part 2 and Q15, then #36–#39 in parallel, then #40 and #41, then #20's Phases 7–9.
+
+Every cycle: no migration, no new package, no budget raised. `make cs-fix`, `make lint`, `make test`, plus S11's UI checks. Pages keep working for `/health`, `/hochzeitslocations`, `/sitemap.xml`, `/robots.txt` and `/admin/login`, because #20's smoke and `bin/warm-cache` use them.
+
+**Real data.** Production cards have a canton but rarely a town, and have a price tag and an ambience but no rating, review or room (S14, Q12). Demo data shows the opposite, so a page that only looks right on demo data is not done. Load the real set with #32's recipe in the lane, and never commit or quote it.
+
+### 34. `design-reference`
+
+The canvas holds one board. The Wix draft holds no listing, detail or filter page. Nothing can be built against a board that does not exist, so this cycle draws them. The designer session runs it, on the canvas, with no lane.
+
+- **Boards at 1440 and 390 px:** header and menu; home (from `Main.dc.html`, with S15's decisions applied); listing and canton page, with the card in the real-data and the rich shape; filter bar and chips; the three overlays and the canton map; detail page, with the gallery, room dialogs, action card and mobile bar; inquiry form and confirmation; Merkliste, with empty state and toast; legal page; 404; the mail.
+- **Design system, missing tokens:** hover and active of `accent-strong`, focus ring, muted text, error, success, disabled, tier badge, map land, lake and selection, overlay ground, card elevation (the README says no shadows, so decide what replaces today's), and the phone/desktop type scale.
+- **Conflicts to settle in the design system:**
+  - `tokens.json` says display 36/44 and h1 26/34; the board's hero is 52/58, and its h2s use the `h1` size.
+  - The README's hero is weight 600; the board's is 700.
+  - `on-accent` is cream; the board's buttons use white.
+  - `accent`'s usage note still lists "Primär-Buttons", which the README's contrast note withdraws.
+- **Rules a board must respect:**
+  - "Keine pinken Flächen hinter Text" collides with pink guest bubbles (FI-3), the active chip and the pink canton map, so each needs a drawn answer.
+  - The overlays lose their three tones or keep them, decided once.
+  - `radius-card` 40 px on a card holding a carousel needs a drawn answer at 390 px.
+  - Tap targets ≥ 44 px, text per S15's table.
+  - Placeholder images only; no real venue photo or text leaves `content/`.
+- **Export:** `docs/reference/public/` with `canvas.json`, the `.dc.html` sources, `tokens.json`, a `README.md` with the board list and token table, and one PNG per board and width. `docs/reference/admin/` is the precedent.
+- **Done when:** every page type has both widths, every token has a value that passes its contrast row, no open point in the design system's README blocks a build (Q16 and Q17 run on their defaults), and the owner has answered Q15.
+
+### 35. `brand-foundation`
+
+Runs alone, because it renames the tokens every later lane uses. It starts after #19 Part 2 is on main, #25 has landed, and Q15 is answered.
+
+- **Tokens:** rewrite `_tokens.scss` to S15's names and #34's values, and rename all uses in `assets/styles/` in one sweep. Retire `--c-black`, `--c-hero-circle`, `--c-surface-2`, `--c-surface-3`, `--c-surface-footer`.
+- **Font:** Figtree per S15, `assets/fonts/` with the OFL, `@font-face`, one preload, a fallback with size metrics so the swap holds CLS. Remove the conditional 600 preloads and the Sofia Sans files. `BaseLayoutTest` follows the new preload.
+- **Base components:** `_button`, `_chip`, `_badge`, `_text_input`, `_dialog`, `_toast`, `_carousel`, `_breadcrumb`, and the `_overlay` shell to the point that all three overlays read well. Page-level overlay work is #38's.
+- **Header and footer:** logo left, nav (Locations, Regionen, the heart with its count, "Location eintragen" per Q19), menu popover on phones, and the Plattform and Kontakt columns of the board around the existing slots. Keep `[data-merkliste-link]` and its attributes intact. The footer stays query-free (`ErrorPagesQueryFreeTest`), and `seo/_footer_cantons`, `_footer_links` and `_footer_note` keep their slots.
+- **Dark-only leftovers:** `color-scheme: dark` in `inquiries/_form.scss:84`; `--c-focus` (white today, so a dark ring on light grounds); `_preview-banner.scss`, which inverts by construction; print rules that read `--c-ink-inverse`; `_tokens.scss` shadow values made for dark grounds.
+- **Back office:** `--a-accent`, `--a-on-accent`, `--a-link`, `--a-link-hover`, `--a-pink`, `--a-pink-bg` to the brand values, and Figtree in `admin/_fonts.scss`, both base templates and the auth pages. Everything else stays. The CRM adds no `--a-*` and no colours as of #27a (checked by the reviewer of #27a); recheck after #27b. `AdminInputContrastTest` stays green.
+- **Tests and docs:** rewrite `ContrastTokensTest`'s pairs from S15's table and #34's tokens, update the styleguide, `.claude/rules/frontend.md`, and `CLAUDE.md` `### Shared`, and record the transfer of the hotspot files.
+- **Done when:**
+  - `/_styleguide` matches `docs/reference/public/` at both widths;
+  - every public page reads correctly on the new look, even where its layout is still old;
+  - Lighthouse ≥ 95 on the styleguide and one listing, CSS ≤ 25 KB gzip, at most 2 font files;
+  - no `Sofia` left outside `docs/reference/admin/`, and no third-party font request.
+
+### 36. `home-page`
+
+- **Route:** the YAML 302 in `config/routes.yaml` goes; `Search\Controller\HomeController` takes `GET /` with the route name `home`, localized like the others. It sits in Search because categories, Spotlight and regions are Search's, and no phpat rule or module changes. `HomeRedirectTest` becomes `HomePageTest`.
+- **Read:** `ListingQuery` gains a method for the first N cards in LP-4's order, on the existing card SQL, with no second ordering. Regions and links come from `LandingPages`. Pin the query count like `MoreFilterTest` does.
+- **Form (HP-2):** no script. Native selects and a number input, `canton`, `building[]`, `guests`. JS has 818 B left of 15,360 and `AssetBudgetTest` counts every file in `assets/js/`, so this page adds 0 B.
+- **Hero image (Q18):** through `venue_picture(priority=true)`; it is the page's LCP element, with `width` and `height` from the stored image.
+- **Text:** home strings in `search`, in "Sie". `HomeTextBlock` as a `ContentBlockDefinition` with a limit, which puts it in the back office's text-block list automatically (#26).
+- **SEO:** a `Seo` home meta beside `ListingMeta`, canonical `/`, `og:type website`, one h1, `site_jsonld()`. The home URL goes first in `Seo\PagesSitemap::urls()`. **`/` is not `listing`:** #19's TTLs, purge list and `bin/warm-cache` must learn it, so a CMS save and the midnight seed change refresh Spotlight. Check `lastmod` and `PublicPagesStartNoSessionTest`.
+- **Tests:** page, query count, HTML budget for the page, no session, no cookie, no `Vary: Cookie`, the form's submitted URL parsed through `SearchCriteria`, a venue with no town in Spotlight, a page with no live canton.
+- **Done when:** S11's UI checks pass on `/`, LCP ≤ 2.0 s and CLS ≤ 0.05 on mobile Lighthouse, and `/` answers from the cache on a second request.
+
+### 37. `listing-redesign`
+
+- **Scope:** `search/listing.html.twig`, `_hero` (with `.listing-hero__intro` and the staff-text mixin), `_filter_bar` and its chips, `_card`, `_card_facts`, `_card_rating`, the tags of LP-7, empty state, pagination, `_related_searches`, `_similar_venues`, the Merken and remove buttons, the Merkliste page and toast. Canton and building landing pages come with it, through the same templates.
+- **Card:** draw the real shape first. A card with no rating has no right column (LP-2 already allows this). Keep every hook: `[data-merken]`, `[data-merkliste-item]`, the stretched title link, the carousel contract, and `venue_picture`'s `sizes` and `widths`, which change only if the column changes.
+- **Budget:** `ListingHtmlBudgetTest` is at about 52,000 of 61,440 B gzip with 48 cards × 8 photos and every block at its maximum. New wrappers multiply by 48.
+- **Keep:** `.filter-bar` text must not contain "Karte" (`ListingControllerTest`); the query counts of `MoreFilterTest` are unchanged.
+- **Done when:** S11's UI checks pass on listing, a canton page, three filters, and `/merkliste`, on demo and real data.
+
+### 38. `filter-overlays-redesign`
+
+- **Scope:** `search/filter/_region*`, `_guests*`, `_more*`, `_more_wedding`, `_more_tiles`, `_more_terms`, `_more_select`, their Sass, `components/_overlay`, and the map colours in `_filter-region.scss`. The main menu popover follows the same look.
+- **CSS and Twig only.** `overlay.js + live-count.js + region-filter.js` is at 6,132 of 6,144 B. Keep every class and data attribute the scripts read, the two-form structure of #11, and `listing_form()`. If a drawn change needs a script byte in that group, the board changes.
+- **Guests:** the Sass map stays; bubble colour and the selected state come from #34's answer, with both rows in `ContrastTokensTest`.
+- **Map:** the tooltip stays positioned through `el.style`; hover, selected and lake colours come from #34, at 3:1 against each other and the ground (WCAG 1.4.11).
+- **Done when:** S11's UI checks pass with all three overlays open, keyboard only, with focus visible on the new ground, in Chromium, Safari and Firefox.
+
+### 39. `detail-redesign`
+
+- **Scope:** `venues/detail/*` and `assets/styles/venues/detail/*`: hero, gallery dialog, sticky nav, action card and mobile bar, head, rating, facts, wedding, rooms and room dialogs, FAQ, location and map facade, contact, documents, reviews; the inquiry form and confirmation (`inquiries/_form`, `_confirmation`); `venues/phone.html.twig`; the print sheet; the preview banner.
+- **Sections appear only with data.** On real data most venues show head, facts, wedding, contact, inquiry. The page must hold together with no rating, rooms, reviews, or location, so review that shape first (`DetailVenues::minimal()`, `withoutPlace()`, `inCantonOnly()`).
+- **Keep:** the phone number stays out of the HTML, `#anfrage`, `#standort`, `#kontakt` as anchors, the room dialogs' markup for print, and the single detail query set. The preview route renders the same templates without `app.request` checks.
+- **Budgets:** the 1 LCP image; no second font preload.
+- **Done when:** S11's UI checks pass on a rich venue, a minimal real one, the inquiry form with errors, the confirmation, and print preview.
+
+### 40. `brand-voice`
+
+- **Copy:** every public catalogue from "du" to "Sie": `favorites`, `inquiries`, `search`, `seo`, `shared`, `validators`. A word search finds 25 lines; search `eure`, `euch`, `euer` too (FI-1's heading uses them). The `admin` catalogue stays informal staff copy. Check spelling against the design system's rules.
+- **`legal.*`:** a change of address only, no change of meaning, still a draft for the owner's review. #27a's and #20's uncommitted `legal.privacy.*` lines rebase over this and must arrive in "Sie": the lead carries that note to both.
+- **Mail:** `templates/emails/layout.html.twig` and `_blocks.html.twig` (dark header, `#ff5a75` rule, dark-mode overrides, 12 px corners) to the brand, inline, with the logo as an image only if #34 draws it so. #30 inherits it.
+- **Look:** legal pages and the error pages, which #35 leaves legible but not drawn.
+- **Done when:** a grep for the "du" forms is clean in those catalogues, `make lint-translations` passes, the mails render in Mailpit in light and dark mode, and the `seo` title lengths still pass.
+
+### 41. `redesign-verification`
+
+- **Measure PERF-1 again** with #19's method on home, listing, three filters, a canton page and a rich detail page, on real data, and update `docs/performance-baseline.md`. #19 found no fix needed and added no critical CSS, so the hero and the font change are what can move these numbers. Fix what misses.
+- **Accessibility:** Lighthouse ≥ 95 on all of them, a keyboard pass through every page type, and the zoom check at 200 %.
+- **Browsers:** Chromium, Safari, Firefox, iOS Safari for popover, `commandfor`, scroll-snap and the font.
+- **Sweep:** no reference to old tokens, `docs/reference/` target wording, `/_styleguide` complete, `CLAUDE.md` module sections, `.claude/rules/frontend.md`.
+- **Owner:** the sign-off of Q15 on the running app.
+- **Done when:** every PERF-1 number is recorded and met, the owner has signed off, and the lead has released #20's parked Steps and Phases 7–9.
+
 ## W7–W8 Launch
 
 #19 runs in W7 beside #26; #20 is W8 alone.
@@ -2139,7 +2325,10 @@ W10. Depends on #27 (and #20's mail setup for the production check). Parallel wi
 - **Facts for the other ≈640 venues:** a questionnaire mail to venues without owner data, sent through #30 and answered into the CMS (S14, **Coverage**).
 - **Liechtenstein** as a region: a `li` row, its towns and the map (Q13).
 - **A curated Ambiente vocabulary:** ~8 style codes (romantisch, modern, rustikal, …) as a filter, built from S14's 176 free texts.
-- **Home page** with hero search.
+- **Testimonials on the home page:** "Was unsere Paare sagen", once real, consented quotes exist; a content block, no new table.
+- **Canton map on the home page:** the inline `{{ canton_map() }}` as links to the canton pages, if the HTML budget allows it.
+- **Magazin and Partner pages:** both are in the graphic designer's navigation and remain out of scope.
+- **Own category icons** from the graphic designer, replacing the Lucide stand-ins.
 - **French, Italian and English** (one cycle per language: catalogues, localized route paths, venue translations, hreflang). S4 makes these additive.
 - **A TypeScript/JS framework layer** (only if a real need appears).
 - **Analytics** (the owner decided on no consent banner, so any analytics must be cookieless).
