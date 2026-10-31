@@ -8,6 +8,7 @@ use App\Geo\ReadModel\PlaceLookup;
 use App\Geo\ReadModel\PlaceSuggestion;
 use App\Geo\ValueObject\Canton;
 use App\Geo\ValueObject\PlaceType;
+use App\Shared\Http\PublicCache;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,7 +31,7 @@ final class PlacesController extends AbstractController
     }
 
     #[Route('/_search/places', name: '_search_places', methods: ['GET'])]
-    #[Cache(maxage: 3600, smaxage: 86400, public: true)]
+    #[Cache(maxage: PublicCache::PLACES_BROWSER_TTL, smaxage: PublicCache::PAGE_TTL, public: true)]
     public function __invoke(Request $request): JsonResponse
     {
         // all() never throws; get('q') would answer ?q[]=x with a 400.

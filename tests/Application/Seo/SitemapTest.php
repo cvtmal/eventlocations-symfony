@@ -166,7 +166,7 @@ final class SitemapTest extends WebTestCase
 
             $response = $this->client->getResponse();
             self::assertSame('application/xml; charset=UTF-8', $response->headers->get('Content-Type'), $path);
-            self::assertStringContainsString('s-maxage=600', (string) $response->headers->get('Cache-Control'), $path);
+            self::assertStringContainsString('s-maxage=86400', (string) $response->headers->get('Cache-Control'), $path);
             self::assertStringContainsString('public', (string) $response->headers->get('Cache-Control'), $path);
             self::assertStringStartsWith('<?xml', (string) $response->getContent(), $path);
             self::assertStringNotContainsString('priority', (string) $response->getContent(), $path);

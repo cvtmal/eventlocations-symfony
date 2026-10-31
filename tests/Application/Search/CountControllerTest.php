@@ -76,7 +76,7 @@ final class CountControllerTest extends WebTestCase
         $cacheControl = (string) $response->headers->get('Cache-Control');
         self::assertStringContainsString('public', $cacheControl);
         self::assertStringContainsString('max-age=60', $cacheControl);
-        self::assertStringContainsString('s-maxage=600', $cacheControl);
+        self::assertStringContainsString('s-maxage=86400', $cacheControl);
         self::assertStringContainsString('stale-while-revalidate=86400', $cacheControl);
         self::assertFalse($response->headers->has('Set-Cookie'));
         self::assertSame([], $response->headers->getCookies());

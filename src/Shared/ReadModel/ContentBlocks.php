@@ -29,7 +29,9 @@ use Symfony\Contracts\Service\ResetInterface;
  * The item never expires, because a page that only peeks must keep its note and a cached listing
  * may be all that would warm an empty pool. Instead text() rebuilds a snapshot older than
  * MAX_AGE_SECONDS while peek() keeps serving it, which caps what no lock covers: a refresh that
- * failed or died after the commit, a restore, a direct SQL change.
+ * failed or died after the commit, a restore, a direct SQL change. text() runs only on a PHP render,
+ * and #19 caches listings until Zurich midnight, so a snapshot built just after midnight can serve
+ * another cached day: the cap is about two days.
  *
  * A locale without a row gives null, never another locale's text: the page shows its own
  * catalogue text instead.

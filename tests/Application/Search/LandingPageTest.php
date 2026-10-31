@@ -238,13 +238,21 @@ final class LandingPageTest extends WebTestCase
         return $crawler;
     }
 
+    /**
+     * A page until the next Zurich midnight (exact values: PublicCacheHeadersTest), a 404 for an hour.
+     */
     private function assertPublicAndCookieFree(): void
     {
         $response = $this->client->getResponse();
         $cacheControl = (string) $response->headers->get('Cache-Control');
         self::assertStringContainsString('public', $cacheControl);
-        self::assertStringContainsString('s-maxage=600', $cacheControl);
-        self::assertStringContainsString('stale-while-revalidate=86400', $cacheControl);
+        if (404 === $response->getStatusCode()) {
+            self::assertStringContainsString('s-maxage=3600', $cacheControl);
+        } else {
+            self::assertMatchesRegularExpression('/\bs-maxage=\d+\b/', $cacheControl);
+            self::assertStringContainsString('stale-while-revalidate=86400', $cacheControl);
+            self::assertStringContainsString('stale-if-error=86400', $cacheControl);
+        }
         self::assertFalse($response->headers->has('Set-Cookie'));
         self::assertSame([], $this->client->getCookieJar()->all());
         self::assertFalse($this->client->getRequest()->hasPreviousSession());

@@ -19,8 +19,9 @@ namespace App\Venues;
  * An implementation never throws (it logs and returns): purges run after the commit, and
  * an exception would report a committed change as failed.
  *
- * The default is NullHttpCachePurger (there is no cache yet); #19 replaces the alias in
- * config/services.yaml with its proxy's purge.
+ * The implementation (StoreClearingHttpCachePurger, #19) invalidates the whole store, so either
+ * method invalidates every public page; callers keep choosing the narrower one for a future
+ * precise purger.
  */
 interface HttpCachePurger
 {

@@ -23,6 +23,7 @@ use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -42,6 +43,7 @@ use function Zenstruck\Foundry\Persistence\repository;
  * canton's 60-character title and 155-character description, and a 300-character footer note.
  * SEARCH_PERF_REPORT=1 prints both sizes.
  */
+#[Group('budget')]
 final class ListingHtmlBudgetTest extends WebTestCase
 {
     use Factories;

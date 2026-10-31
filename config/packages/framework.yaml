@@ -43,3 +43,18 @@ when@test:
                         delay: 0
         session:
             storage_factory_id: session.storage.factory.mock_file
+
+# S10 (#19): Symfony's HttpCache in front of the app, in prod only; dev and test stay uncached,
+# and public/index.php is unchanged (the kernel hands the main request to the http_cache service).
+# The store is %kernel.share_dir%/http_cache; every purge invalidates it (Shared\Http\HttpCacheClearer).
+# HttpCache passes the visitor's IP on itself (SubRequestHandler), so the limiters need no
+# trusted_proxies; a proxy that terminates TLS in front of PHP needs SYMFONY_TRUSTED_PROXIES (#20).
+when@prod:
+    framework:
+        http_cache:
+            enabled: true
+            trace_level: short
+            trace_header: X-Symfony-Cache
+            default_ttl: 0
+            allow_reload: false
+            allow_revalidate: false

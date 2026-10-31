@@ -86,7 +86,7 @@ final class LegalPagesTest extends WebTestCase
             $response = $this->client->getResponse();
 
             $cacheControl = (string) $response->headers->get('Cache-Control');
-            foreach (['public', 's-maxage=600', 'stale-while-revalidate=86400'] as $directive) {
+            foreach (['public', 's-maxage=86400', 'stale-while-revalidate=86400', 'stale-if-error=86400'] as $directive) {
                 self::assertStringContainsString($directive, $cacheControl, $path);
             }
             self::assertFalse($response->headers->has('Set-Cookie'), $path);

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Venues\Controller;
 
+use App\Shared\Http\PublicCache;
 use App\Venues\ReadModel\VenueDetailQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\Cache;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * The venue detail page (#8, DP-1 to DP-16): current slug 200, a `venue_slug_history` slug 301
  * to the current one (S5), an unpublished venue 410, anything else 404. No session, publicly
- * cacheable (S10). "Ähnliche Locations" is a Search fragment embedded by the template.
+ * cacheable (S10): a day for the 200 and 301, an hour for the thrown 404 and 410. "Ähnliche Locations" is a Search fragment embedded by the template.
  */
 final class VenueDetailController extends AbstractController
 {
@@ -27,6 +29,7 @@ final class VenueDetailController extends AbstractController
     }
 
     #[Route(path: ['de' => '/hochzeitslocation/{slug}'], name: 'venue_show', requirements: ['slug' => self::SLUG_REQUIREMENT], methods: ['GET'])]
+    #[Cache(public: true, smaxage: PublicCache::MISSING_TTL)]
     public function __invoke(Request $request, string $slug): Response
     {
         $locale = $request->getLocale();
@@ -47,11 +50,12 @@ final class VenueDetailController extends AbstractController
     }
 
     /**
-     * S10, set here rather than with #[Cache] so the 301 gets the same headers as the 200.
+     * S10: the 200 and the 301 set every directive here, so the attribute, which never
+     * overwrites a directive the response already has, covers only the thrown 404 and 410.
      */
     private static function cached(Response $response): Response
     {
-        $response->setCache(['public' => true, 's_maxage' => 600, 'stale_while_revalidate' => 86400]);
+        $response->setCache(PublicCache::page());
 
         return $response;
     }
