@@ -52,6 +52,13 @@ class RoomTranslation
         $this->updatedAt = $this->createdAt;
     }
 
+    public function revise(string $name, ?string $description): void
+    {
+        $this->name = $name;
+        $this->description = $description;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);

@@ -5,17 +5,33 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Venues;
 
 use App\Shared\Messenger\AuditableCommand;
+use App\Venues\Command\AddRoom;
+use App\Venues\Command\AddVenueDocument;
+use App\Venues\Command\AddVenuePhoto;
+use App\Venues\Command\AddVenueReview;
 use App\Venues\Command\AnswerVenueFaq;
+use App\Venues\Command\ChangeRoom;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Command\ChangeVenueContact;
+use App\Venues\Command\ChangeVenueReview;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\DeleteVenue;
+use App\Venues\Command\DescribeVenuePhoto;
+use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RateVenue;
 use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Command\RelocateVenue;
+use App\Venues\Command\RemoveRoom;
+use App\Venues\Command\RemoveVenueDocument;
+use App\Venues\Command\RemoveVenuePhoto;
+use App\Venues\Command\RemoveVenueReview;
+use App\Venues\Command\ReorderRooms;
+use App\Venues\Command\ReorderVenueDocuments;
+use App\Venues\Command\ReorderVenuePhotos;
+use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
@@ -26,7 +42,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every auditable venue command of #24 (D9, D11, S12): the subject is the venue's number,
+ * Every auditable venue command of #24 and #25 (D9, D11, S12): the subject is the venue's number,
  * and the summary stored in the append-only audit log holds field names and short
  * vocabulary values only, never free text, contact data or a coordinate.
  */
@@ -67,6 +83,22 @@ final class VenueCommandAuditTest extends TestCase
         yield 'publish' => [new PublishVenue(self::NUMBER)];
         yield 'unpublish' => [new UnpublishVenue(self::NUMBER)];
         yield 'delete' => [new DeleteVenue(self::NUMBER, 'Schloss Muster', 'schloss-muster')];
+        yield 'add photo' => [new AddVenuePhoto(self::NUMBER, null, '/tmp/php/GEHEIMTEXT.jpg', 'jpg')];
+        yield 'reorder photos' => [new ReorderVenuePhotos(self::NUMBER, null, ['0199a1b2-0000-7000-8000-000000000001'])];
+        yield 'describe photo' => [new DescribeVenuePhoto(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', ['de' => $text])];
+        yield 'move photo' => [new MoveVenuePhotoToRoom(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', null)];
+        yield 'remove photo' => [new RemoveVenuePhoto(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
+        yield 'add room' => [new AddRoom(self::NUMBER, ['de' => $text], ['de' => $text], 10, 100, 120, '4.20', 'parquet', ['banquet' => ['min' => 10, 'max' => 80]])];
+        yield 'change room' => [new ChangeRoom(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', ['de' => $text], ['de' => $text], 10, 100, 120, '4.20', 'parquet', [])];
+        yield 'reorder rooms' => [new ReorderRooms(self::NUMBER, ['0199a1b2-0000-7000-8000-000000000001'])];
+        yield 'remove room' => [new RemoveRoom(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
+        yield 'add document' => [new AddVenueDocument(self::NUMBER, '/tmp/php/GEHEIMTEXT.pdf', ['de' => $text])];
+        yield 'retitle document' => [new RetitleVenueDocument(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', ['de' => $text])];
+        yield 'reorder documents' => [new ReorderVenueDocuments(self::NUMBER, ['0199a1b2-0000-7000-8000-000000000001'])];
+        yield 'remove document' => [new RemoveVenueDocument(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
+        yield 'add review' => [new AddVenueReview(self::NUMBER, 'de', 'Geheime Person', 'visitor_f', '2026-09', $text)];
+        yield 'change review' => [new ChangeVenueReview(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', 'Geheime Person', 'visitor_f', '2026-09', $text)];
+        yield 'remove review' => [new RemoveVenueReview(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
     }
 
     #[DataProvider('commands')]

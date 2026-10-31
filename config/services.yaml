@@ -10,6 +10,10 @@ parameters:
     # Originals (S9): MEDIA_ROOT; generated variants and published PDFs: public/media/<venue-number>/.
     app.media_root: '%env(resolve:MEDIA_ROOT)%'
     app.media_public_dir: '%kernel.project_dir%/public/media'
+    # Limits of a CMS photo upload (#25): the pixel cap (Assert\Image maxPixels) and the portrait limit
+    # (Cms\ValueObject\PhotoUploadLimits). Reasons: the comments in .env.
+    app.media_max_pixels: '%env(int:MEDIA_MAX_PIXELS)%'
+    app.media_max_portrait_ratio: '%env(float:MEDIA_MAX_PORTRAIT_RATIO)%'
     # Venue content folders (S8, #9) and the import's variant staging directory.
     app.content_root: '%env(resolve:CONTENT_ROOT)%'
     app.import_staging_dir: '%kernel.project_dir%/var/import-staging'
@@ -66,6 +70,14 @@ when@test:
         App\Tests\Support\Http\RecordingHttpCachePurger:
             public: true
         App\Venues\HttpCachePurger: '@App\Tests\Support\Http\RecordingHttpCachePurger'
+        # A second handler of the after-commit messages, for AfterCommitTest (#25).
+        App\Tests\Support\Messenger\AfterCommitSpy:
+            public: true
+            arguments: ['@doctrine.dbal.default_connection']
+            tags:
+                - { name: messenger.message_handler, bus: command.bus, handles: App\Venues\Command\RemoveVenueFiles }
+                - { name: messenger.message_handler, bus: command.bus, handles: App\Venues\Command\PurgeVenueCache }
+                - { name: messenger.message_handler, bus: command.bus, handles: App\Venues\Command\PurgeListingsCache }
         # The transport of every HTTP client in tests (framework.yaml, when@test, #32 PD10).
         App\Tests\Support\Http\WixImageResponses:
             public: true

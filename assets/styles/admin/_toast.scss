@@ -1,7 +1,9 @@
+// At the top, because at the bottom a toast covers the button just pressed (the photo panel's Speichern)
+// for its 6 s.
 .toast-region {
     position: fixed;
-    right: var(--a-space-6);
-    bottom: var(--a-space-6);
+    top: var(--a-space-4);
+    right: var(--a-space-4);
     left: var(--a-space-4);
     z-index: 30;
     display: flex;

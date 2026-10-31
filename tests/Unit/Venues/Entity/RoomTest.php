@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Venues\Entity;
 
 use App\Venues\Entity\Room;
+use App\Venues\Entity\RoomTranslation;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\Seating;
 use PHPUnit\Framework\TestCase;
@@ -50,5 +51,17 @@ final class RoomTest extends TestCase
 
         $room->reshape(null, null, null, null, null);
         self::assertSame([null, null, null, null, null], [$room->capacityMin(), $room->capacityMax(), $room->areaM2(), $room->heightM(), $room->floorMaterial()]);
+    }
+
+    public function test_translation_revise_replaces_name_and_description(): void
+    {
+        $translation = new RoomTranslation(new Room(VenueObjects::venue(), 1), 'de', 'Rittersaal', 'Alt.');
+        $before = $translation->updatedAt();
+        usleep(1);
+
+        $translation->revise('Grosser Saal', null);
+
+        self::assertSame(['Grosser Saal', null, 'de'], [$translation->name(), $translation->description(), $translation->locale()]);
+        self::assertGreaterThan($before, $translation->updatedAt());
     }
 }

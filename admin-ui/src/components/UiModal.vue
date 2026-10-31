@@ -9,11 +9,13 @@ const props = defineProps({
     open: { type: Boolean, default: false },
     danger: { type: Boolean, default: false },
     variant: { type: String, default: undefined },
+    busy: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close']);
 
 const dialog = ref(null);
+let focusBeforeBusy = null;
 
 function sync(open) {
     if (open && !dialog.value.open) {
@@ -23,15 +25,38 @@ function sync(open) {
     }
 }
 
-// The native close event also covers Esc and js/dialog.js's backdrop click.
+function onCancel(event) {
+    if (props.busy) {
+        event.preventDefault();
+    }
+}
+
+// The native close event also covers Esc and js/dialog.js's backdrop click. While busy the dialog comes straight
+// back: a second Esc skips a prevented cancel (the browser's close watcher), and the backdrop click has no cancel.
 function onClose() {
-    if (props.open) {
+    if (props.busy) {
+        if (!dialog.value.open) {
+            dialog.value.showModal();
+        }
+    } else if (props.open) {
         emit('close');
     }
 }
 
 onMounted(() => sync(props.open));
 watch(() => props.open, sync, { flush: 'post' });
+
+// inert drops focus to <body>, so it goes back where it was unless the owner has moved it since (a field error).
+watch(() => props.busy, (busy) => {
+    if (busy) {
+        focusBeforeBusy = document.activeElement;
+    }
+}, { flush: 'pre' });
+watch(() => props.busy, (busy) => {
+    if (!busy && dialog.value.open && !dialog.value.contains(document.activeElement)) {
+        focusBeforeBusy?.focus();
+    }
+}, { flush: 'post' });
 </script>
 
 <template>
@@ -40,7 +65,9 @@ watch(() => props.open, sync, { flush: 'post' });
     ref="dialog"
     :class="['modal', variant, danger ? 'modal--danger' : null]"
     :aria-labelledby="`${id}-title`"
+    :aria-busy="busy ? 'true' : undefined"
     data-dialog
+    @cancel="onCancel"
     @close="onClose"
   >
     <div class="modal__header">
@@ -52,6 +79,7 @@ watch(() => props.open, sync, { flush: 'post' });
       </h2>
       <form
         method="dialog"
+        :inert="busy || undefined"
         @submit.prevent="onClose"
       >
         <button
@@ -62,12 +90,16 @@ watch(() => props.open, sync, { flush: 'post' });
         </button>
       </form>
     </div>
-    <div class="modal__body">
+    <div
+      class="modal__body"
+      :inert="busy || undefined"
+    >
       <slot />
     </div>
     <div
       v-if="$slots.footer"
       class="modal__footer"
+      :inert="busy || undefined"
     >
       <slot name="footer" />
     </div>

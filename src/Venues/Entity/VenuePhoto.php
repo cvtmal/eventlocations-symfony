@@ -105,6 +105,31 @@ class VenuePhoto
         $this->updatedAt = new \DateTimeImmutable();
     }
 
+    /**
+     * Moves the photo into the gallery (room null) or a room of its venue, at $position of
+     * that scope (#25). The caller renumbers the scope it left.
+     *
+     * @throws RoomOfAnotherVenue when the room belongs to another venue
+     */
+    public function assignTo(?Room $room, int $position): void
+    {
+        if (null !== $room && $room->venue() !== $this->venue) {
+            throw RoomOfAnotherVenue::forPhoto($room->id(), $this->venue->id());
+        }
+
+        $this->room = $room;
+        $this->position = $position;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    /**
+     * A child row changed (an alt text, #25): moves updated_at, the photo's stale token.
+     */
+    public function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);

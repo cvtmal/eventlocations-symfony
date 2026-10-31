@@ -73,10 +73,11 @@ final class ImageVariantGenerator
      * 1G or -1 stays), and tells whether the limit now suffices; false where ini_set() is
      * disabled, so the caller can warn.
      *
-     * Web requests keep php-fpm's limit, behind the 40 MP cap of the upload form (#25,
-     * MEDIA_MAX_PIXELS). Neither limit belongs in this class or in PhotoPipeline: a pixel
-     * check here would fail the imported photos above 40 MP (#32 PD4). Never call this from
-     * a request.
+     * Web requests keep php-fpm's limit, behind the limits of the upload route (#25): 20 MP
+     * (MEDIA_MAX_PIXELS) and at most 2:1 portrait for every type (MEDIA_MAX_PORTRAIT_RATIO,
+     * Cms\ValueObject\PhotoUploadLimits). None of these limits belongs
+     * in this class or in PhotoPipeline: a pixel check here would fail the imported photos above
+     * 40 MP (#32 PD4). Never call this from a request.
      */
     public static function raiseBatchMemoryLimit(): bool
     {
@@ -87,6 +88,17 @@ final class ImageVariantGenerator
         @ini_set('memory_limit', self::BATCH_MEMORY_LIMIT);
 
         return self::memoryLimitReaches($wanted);
+    }
+
+    /**
+     * Whether generate() turns this file by a quarter, so that its width and height trade places. A
+     * reading of the orientation, not a limit: the upload route uses it to see the shape as oriented.
+     */
+    public static function swapsAxes(string $file): bool
+    {
+        $head = is_file($file) ? @file_get_contents($file, false, null, 0, 3) : false;
+
+        return \is_string($head) && self::isJpeg($head) && self::turns(self::orientation($file));
     }
 
     /**
@@ -142,7 +154,7 @@ final class ImageVariantGenerator
         if (false === $bytes) {
             throw MissingOriginal::forPath($sourceFile);
         }
-        $isJpeg = str_starts_with($bytes, "\xFF\xD8\xFF");
+        $isJpeg = self::isJpeg($bytes);
         // gd warns on undecodable input; the exception is the answer.
         $source = '' === $bytes ? false : @imagecreatefromstring($bytes);
         unset($bytes);
@@ -156,7 +168,7 @@ final class ImageVariantGenerator
         $orientation = $isJpeg ? self::orientation($sourceFile) : 1;
         $rawWidth = imagesx($source);
         $rawHeight = imagesy($source);
-        $turned = $orientation >= 5;
+        $turned = self::turns($orientation);
         $width = $turned ? $rawHeight : $rawWidth;
         $height = $turned ? $rawWidth : $rawHeight;
 
@@ -226,10 +238,23 @@ final class ImageVariantGenerator
     private static function hasMagic(ImageFormat $format, string $head): bool
     {
         return match ($format) {
-            ImageFormat::Jpeg => str_starts_with($head, "\xFF\xD8\xFF"),
+            ImageFormat::Jpeg => self::isJpeg($head),
             ImageFormat::Webp => str_starts_with($head, 'RIFF') && 'WEBP' === substr($head, 8, 4),
             ImageFormat::Avif => 'ftyp' === substr($head, 4, 4) && (str_contains($head, 'avif') || str_contains($head, 'avis')),
         };
+    }
+
+    private static function isJpeg(string $head): bool
+    {
+        return str_starts_with($head, "\xFF\xD8\xFF");
+    }
+
+    /**
+     * EXIF orientations 5–8 turn by a quarter; 1–4 keep the axes.
+     */
+    private static function turns(int $orientation): bool
+    {
+        return $orientation >= 5;
     }
 
     /**

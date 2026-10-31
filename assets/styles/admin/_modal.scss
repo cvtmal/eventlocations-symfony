@@ -38,6 +38,14 @@
     padding: var(--a-space-5);
 }
 
+.modal[aria-busy='true'] {
+    cursor: progress;
+
+    .modal__body {
+        opacity: .6;
+    }
+}
+
 .modal__footer {
     display: flex;
     flex-wrap: wrap;

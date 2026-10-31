@@ -48,6 +48,15 @@ class VenuePhotoTranslation
         $this->updatedAt = $this->createdAt;
     }
 
+    /**
+     * A new alt text (#25). An empty one is not rewritten: the row is removed instead.
+     */
+    public function rewrite(string $alt): void
+    {
+        $this->alt = $alt;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);

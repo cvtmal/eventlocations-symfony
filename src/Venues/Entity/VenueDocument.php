@@ -58,6 +58,14 @@ class VenueDocument
         $this->updatedAt = new \DateTimeImmutable();
     }
 
+    /**
+     * A child row changed (a title, #25): moves updated_at, the document's stale token.
+     */
+    public function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);

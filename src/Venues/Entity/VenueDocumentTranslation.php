@@ -47,6 +47,12 @@ class VenueDocumentTranslation
         $this->updatedAt = $this->createdAt;
     }
 
+    public function retitle(string $title): void
+    {
+        $this->title = $title;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);

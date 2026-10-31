@@ -96,6 +96,65 @@ final class TestImages
     }
 
     /**
+     * A PNG of signature, IHDR and IEND, without IDAT. getimagesize() reads the size and gd stops before
+     * it allocates anything. With pngHeader() gd allocates the whole bitmap first, which a test at
+     * 20 MP cannot afford: it would be a memory fatal late in a full PHPUnit run.
+     *
+     * @param int<1, max> $width
+     * @param int<1, max> $height
+     * @param 2|3|6       $colourType 2 RGB, 3 palette, 6 RGBA
+     */
+    public static function pngHeaderOnly(int $width, int $height, int $colourType = 2): string
+    {
+        $chunk = static fn (string $type, string $data): string => pack('N', \strlen($data)).$type.$data.pack('N', crc32($type.$data));
+
+        return "\x89PNG\r\n\x1a\n".$chunk('IHDR', pack('NNCCCCC', $width, $height, 8, $colourType, 0, 0, 0)).$chunk('IEND', '');
+    }
+
+    /**
+     * A JPEG whose SOF0 declares $width × $height and which ends there, so getimagesize() reads the
+     * size and gd refuses it before it allocates a bitmap.
+     *
+     * @param int<1, 65535> $width
+     * @param int<1, 65535> $height
+     */
+    public static function jpegHeader(int $width, int $height): string
+    {
+        return "\xFF\xD8\xFF\xE0".pack('n', 16)."JFIF\0\x01\x01\0\0\x01\0\x01\0\0"
+            ."\xFF\xC0".pack('n', 11)."\x08".pack('nn', $height, $width)."\x01\x01\x11\0"
+            ."\xFF\xD9";
+    }
+
+    /**
+     * jpegHeader() plus a minimal SOS, which withOrientation() needs: without it exif_read_data() calls the
+     * file corrupted and finds no Orientation. gd allocates the whole bitmap for it (165 MB at 8944×4472),
+     * so use it only for a file that is refused before gd.
+     *
+     * @param int<1, 65535> $width
+     * @param int<1, 65535> $height
+     */
+    public static function jpegHeaderWithScan(int $width, int $height): string
+    {
+        return substr(self::jpegHeader($width, $height), 0, -2)."\xFF\xDA".pack('n', 8)."\x01\x01\x00\x00\x3F\x00\xFF\xD9";
+    }
+
+    /**
+     * A WebP of RIFF header and VP8X chunk, without image data. getimagesize() and finfo read it as a WebP,
+     * but gd allocates about 139 MB at 6000×6000 before it fails, so use it only for a file that is refused
+     * before gd.
+     *
+     * @param int<1, 16777216> $width
+     * @param int<1, 16777216> $height
+     */
+    public static function webpHeader(int $width, int $height): string
+    {
+        $chunk = "\0\0\0\0".substr(pack('V', $width - 1), 0, 3).substr(pack('V', $height - 1), 0, 3);
+        $body = 'WEBPVP8X'.pack('V', \strlen($chunk)).$chunk;
+
+        return 'RIFF'.pack('V', \strlen($body)).$body;
+    }
+
+    /**
      * A small real AVIF, for checks that must refuse it whatever its name says.
      *
      * @param int<1, max> $width

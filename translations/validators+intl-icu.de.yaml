@@ -65,6 +65,59 @@ cms:
         too_long: Bitte höchstens {limit} Zeichen eingeben.
         version:
             invalid: Das Formular ist veraltet. Bitte die Seite neu laden.
+    room:
+        name:
+            required: Bitte einen Namen eingeben.
+        capacity:
+            range: Bitte eine Zahl zwischen {min} und {max} eingeben.
+            max_below_min: Das Maximum ist kleiner als das Minimum.
+        area:
+            range: Bitte eine Fläche zwischen {min} und {max} m² eingeben.
+        height:
+            format: Bitte die Höhe in Metern eingeben, zum Beispiel «3.5».
+            range: Die Höhe muss grösser als 0 und höchstens 30 m sein.
+        number:
+            invalid: Bitte eine ganze Zahl eingeben.
+        floor:
+            invalid: Bitte einen Boden aus der Liste wählen.
+        order:
+            invalid: Die Reihenfolge konnte nicht gelesen werden. Bitte die Seite neu laden.
+    photo:
+        missing: Bitte ein Foto wählen.
+        empty: Die Datei ist leer.
+        too_large: Das Foto ist zu gross, höchstens 10 MB.
+        type: Bitte ein Foto als JPEG, PNG oder WebP hochladen.
+        too_many_pixels: Das Foto hat zu viele Pixel, höchstens {megapixels} Megapixel. Bitte verkleinern und noch einmal hochladen.
+        too_tall: 'Das Foto ist zu hoch: höchstens {ratio, number}-mal so hoch wie breit. Bitte zuschneiden und noch einmal hochladen.'
+        unreadable: Das Foto lässt sich nicht lesen. Bitte als JPEG, PNG oder WebP neu speichern.
+        failed: Die Datei kam nicht vollständig an. Bitte noch einmal versuchen.
+        room:
+            invalid: Der Raum ist ungültig. Bitte die Seite neu laden.
+        order:
+            invalid: Die Reihenfolge konnte nicht gelesen werden. Bitte die Seite neu laden.
+        alts:
+            invalid: Die Alt-Texte konnten nicht gelesen werden. Bitte die Seite neu laden.
+    document:
+        file:
+            missing: Bitte ein PDF wählen.
+            empty: Die Datei ist leer.
+            too_large: Das PDF ist zu gross, höchstens 15 MB.
+            type: Bitte ein PDF hochladen.
+            failed: Die Datei kam nicht vollständig an. Bitte noch einmal versuchen.
+        title:
+            required: Bitte einen Titel eingeben.
+    review:
+        locale:
+            invalid: Das Formular ist veraltet. Bitte die Seite neu laden.
+        first_name:
+            required: Bitte einen Vornamen eingeben.
+        role:
+            required: Bitte eine Rolle wählen.
+        month:
+            required: Bitte den Monat eingeben.
+            format: Bitte einen Monat wie «2026-06» eingeben.
+        text:
+            required: Bitte den Text der Bewertung eingeben.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.

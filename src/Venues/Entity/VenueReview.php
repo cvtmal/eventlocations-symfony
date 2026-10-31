@@ -62,10 +62,22 @@ class VenueReview
         $this->locale = $locale;
         $this->firstName = $firstName;
         $this->role = $role;
-        $this->reviewedMonth = $reviewedMonth->setDate((int) $reviewedMonth->format('Y'), (int) $reviewedMonth->format('n'), 1)->setTime(0, 0);
+        $this->reviewedMonth = self::firstOfMonth($reviewedMonth);
         $this->text = $text;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
+    }
+
+    /**
+     * Staff corrected the review (#25). The language stays: a review is not translated.
+     */
+    public function revise(string $firstName, ReviewerRole $role, \DateTimeImmutable $reviewedMonth, string $text): void
+    {
+        $this->firstName = $firstName;
+        $this->role = $role;
+        $this->reviewedMonth = self::firstOfMonth($reviewedMonth);
+        $this->text = $text;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function id(): string
@@ -113,5 +125,10 @@ class VenueReview
     public function updatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    private static function firstOfMonth(\DateTimeImmutable $date): \DateTimeImmutable
+    {
+        return $date->setDate((int) $date->format('Y'), (int) $date->format('n'), 1)->setTime(0, 0);
     }
 }

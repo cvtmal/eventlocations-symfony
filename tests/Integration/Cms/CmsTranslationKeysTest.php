@@ -10,16 +10,32 @@ use App\Cms\ReadModel\VenueListRow;
 use App\Cms\ValueObject\TriState;
 use App\Cms\ValueObject\VenueCard;
 use App\Shared\Translation\EnabledLocale;
+use App\Venues\Command\AddRoom;
+use App\Venues\Command\AddVenueDocument;
+use App\Venues\Command\AddVenuePhoto;
+use App\Venues\Command\AddVenueReview;
 use App\Venues\Command\AnswerVenueFaq;
+use App\Venues\Command\ChangeRoom;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Command\ChangeVenueContact;
+use App\Venues\Command\ChangeVenueReview;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueWeddingFacts;
+use App\Venues\Command\DescribeVenuePhoto;
+use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RateVenue;
 use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Command\RelocateVenue;
+use App\Venues\Command\RemoveRoom;
+use App\Venues\Command\RemoveVenueDocument;
+use App\Venues\Command\RemoveVenuePhoto;
+use App\Venues\Command\RemoveVenueReview;
+use App\Venues\Command\ReorderRooms;
+use App\Venues\Command\ReorderVenueDocuments;
+use App\Venues\Command\ReorderVenuePhotos;
+use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\VenueStatus;
@@ -72,6 +88,10 @@ final class CmsTranslationKeysTest extends KernelTestCase
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
             ChangeVenueTerms::class, ChangeVenueWeddingFacts::class, ChangeVenueContact::class, AnswerVenueFaq::class,
             RateVenue::class, PublishVenue::class, UnpublishVenue::class,
+            AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class,
+            AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,
+            AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,
+            AddVenueReview::class, ChangeVenueReview::class, RemoveVenueReview::class,
         ];
         foreach ($commands as $command) {
             $keys[] = 'history.command.'.substr($command, strrpos($command, '\\') + 1);
