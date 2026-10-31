@@ -111,7 +111,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 31 | `venue-wedding-facts` | W5 | DATA-4, DP-17 | 8, 9 | new columns on `venues` and `venue_translations`; new `taxonomy_terms` groups and rows | — | ✅ Done |
 | 32 | `owner-content-import` | W6 | DATA-5 | 9, 21, 31 | — | ~~Q12~~, Q13, Q14 (tier only) | ✅ Done |
 | 33 | `filter-wedding` | W6 | FI-7, LP-7 | 12, 31 | indexes only, if needed | — | ✅ Done |
-| 34 | `design-reference` | R0 | BRD-1 | — | — | Q15 (sign-off), Q16, Q17 | Plan |
+| 34 | `design-reference` | R0 | BRD-1 | — | — | Q15 (sign-off), Q16, Q17 | ✅ Done |
 | 35 | `brand-foundation` | R1 | BRD-1–BRD-3, A11Y-1, PERF-1 (CSS, fonts) | 19, 25, 34 | — | Q15, Q16 (default), Q17 (default) | ✅ Done |
 | 36 | `home-page` | R2 | HP-1–HP-6 | 35 | — | Q18 (default), Q19 (default) | Research |
 | 37 | `listing-redesign` | R2 | BRD-1, LP-1–LP-3, LP-5–LP-7, MK-3, MK-4, DP-15 | 35 | — | — | Plan |
@@ -1701,6 +1701,8 @@ The canvas holds one board. The Wix draft holds no listing, detail or filter pag
 - **Export:** `docs/reference/public/` with `canvas.json`, the `.dc.html` sources, `tokens.json`, a `README.md` with the board list and token table, and one PNG per board and width. `docs/reference/admin/` is the precedent.
 - **Done when:** every page type has both widths, every token has a value that passes its contrast row, no open point in the design system's README blocks a build (Q16 and Q17 run on their defaults), and the owner has answered Q15.
 
+**Outcome (2026-10-31).** Done in commit `design-reference`: the export is in `docs/reference/public/`, and the owner answered Q15-Q19 (see Owner gates). No application code.
+
 ### 35. `brand-foundation`
 
 Runs alone, because it renames the tokens every later lane uses. It starts after #19 Part 2 is on main, #25 has landed, and Q15 is answered.
@@ -2261,7 +2263,7 @@ W6. Depends on #9 (photo pipeline) and #23. Runs in parallel with #24 through th
 - **Rework outcomes:** `stage()` renders before it stores the original, so a failed render leaves none. A reorder during an upload waits for that upload's answer instead of failing, and `resume()` was dropped for an honest banner. `planPhotos()` in the import handler gives a photo in a room without a content key its own identity (a deviation). The client refuses a file above the limit before sending it. The room drawer stays open and inert until its save answers, for 200, 422 and 409. Toasts sit at the top at every width, because at the bottom they took the click on the photo panel's Speichern.
 - **Deviations:** no-op saves dispatch nothing, the move and remove forms check CSRF in the controller, and the tabs have no count pills, because `RecordTab` has no count.
 - **For #19:** `client_max_body_size 26m` stays at `server` level, `php.ini` keeps `upload_max_filesize` 25M, `post_max_size` 26M and `max_execution_time` 60 above the app's limits, and D19's `purgeListings: false` invalidates the whole store anyway. **For #20:** set `MEDIA_MAX_PIXELS` and `MEDIA_MAX_PORTRAIT_RATIO` in production; a limit is raised only with `memory_limit`.
-- **Owner's manual checks:** drag in Firefox and Safari, 390 px in a real browser, an iPhone HEIC upload.
+- **Owner's manual checks:** skipped by the owner, 2026-10-31 (drag in Firefox and Safari, 390 px on a real phone, an iPhone HEIC upload).
 
 ### 26. `cms-pages`
 
