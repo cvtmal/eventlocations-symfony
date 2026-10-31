@@ -167,7 +167,7 @@ W5 holds nine cycles; with three to four lanes it runs in two or three rounds. S
 
 ## Owner gates
 
-Each gate except Q15 has a default, so no other cycle is blocked as a whole. The owner answers here and the answer is recorded in this file. Q3 and Q13–Q19 are still open. Q15 is the one gate without a default: it stops #35 as a whole.
+Each gate except Q15 has a default, so no other cycle is blocked as a whole. The owner answers here and the answer is recorded in this file. Q3, Q13 and Q14 are still open. Q15 was the one gate without a default; it is answered, and #35 starts on the owner's go.
 
 | ID | Question | Answer (owner, 2026-10-30) | Consequences |
 |---|---|---|---|
@@ -185,11 +185,11 @@ Each gate except Q15 has a default, so no other cycle is blocked as a whole. The
 | ~~Q12~~ | Can the owner export the Wix form submissions? They should hold the address, contact person and Instagram that the CSV lacks (S14). | **No (2026-10-30). `Locations+Startseite.csv` is the only production source, and venues without an address are accepted.** There is no form export. The external SSD is lost, and the eventlokale crawl cache and the Laravel project are out for everything. | Address, town, canton and coordinates become optional (#21). See the source change at the top of #21. |
 | Q13 | Do the 4 Liechtenstein venues go on the site? | **Open.** | Default: no. `cantons` and `towns` are Swiss (#3), and the canton map and landing pages assume 26 cantons. #32 skips them and lists them in its report. A yes needs a small cycle of its own (proposal). |
 | Q14 | What happens to deine-hochzeitslocation.ch at launch, and does any venue pay there (its home page mentions a "Premium-Eintrag")? | **Open.** | Default: the old site keeps running, no redirects are built, and a venue only in the CSV starts as `basic`. If the site is retired, #20 adds 301s from its `/hochzeitslocations/<slug>` and region URLs to the new pages, and `/listing` needs a replacement (proposal). A list of paying venues sets `tier` in #32. |
-| Q15 | Does the owner approve the public look as drawn in #34? | **Open.** | A gate, not a default: #35 starts only after it. The owner sees every page type at 1440 and 390 px on the canvas. #41 repeats the sign-off on the running app. |
-| Q16 | Is Figtree agreed with the graphic designer (studiolido.ch)? It replaces Wix's Madefor, which may not be used outside Wix. | **Open.** | Default: Figtree. A later change of typeface swaps one font file and its metrics. |
-| Q17 | Can the graphic designer deliver the logo as a vector file? | **Open.** | Default: `logo-hzl.png` is a 190 KB raster of 2043 × 454 px, so #35 ships a small export at twice the display height, with `width` and `height` set. An SVG later replaces one file. The favicon follows the same answer. |
-| Q18 | Which photo is the home hero, and may we use it? | **Open.** | Default: a venue photo from the owner's content that the owner names, served through #5's pipeline. Until then, the top Spotlight venue's first photo. The lake photo in the Wix draft is not used until the owner confirms its source. |
-| Q19 | Where does "Location eintragen" go until the public lead form exists (proposal, Q14)? | **Open.** | Default: `mailto:` to `site.contact_email`, which adds no data flow and no Datenschutz text. #20 proves that mailbox before go-live. |
+| Q15 | Does the owner approve the public look as drawn in #34? | **Approved, 2026-10-31:** "looks great, i approve." | A gate, not a default: #35 starts only after it. The owner sees every page type at 1440 and 390 px on the canvas. #41 repeats the sign-off on the running app. |
+| Q16 | Is Figtree agreed with the graphic designer (studiolido.ch)? It replaces Wix's Madefor, which may not be used outside Wix. | **Figtree, 2026-10-31.** | Default: Figtree. A later change of typeface swaps one font file and its metrics. |
+| Q17 | Can the graphic designer deliver the logo as a vector file? | **Not yet, 2026-10-31:** a placeholder PNG for now, so `logo-hzl.png` stays. | Default: `logo-hzl.png` is a 190 KB raster of 2043 × 454 px, so #35 ships a small export at twice the display height, with `width` and `height` set. An SVG later replaces one file. The favicon follows the same answer. |
+| Q18 | Which photo is the home hero, and may we use it? | **2026-10-31:** the Wix photos, downloaded once and served from our own site through #5's pipeline, with no live link to Wix, so no CSP or Datenschutz change. | Default: a venue photo from the owner's content that the owner names, served through #5's pipeline. Until then, the top Spotlight venue's first photo. The lake photo in the Wix draft is not used until the owner confirms its source. |
+| Q19 | Where does "Location eintragen" go until the public lead form exists (proposal, Q14)? | **2026-10-31:** visual only, no action yet, which replaces the `mailto:` default. #35 decides the control's form. | Default: `mailto:` to `site.contact_email`, which adds no data flow and no Datenschutz text. #20 proves that mailbox before go-live. |
 
 ## Settled decisions
 

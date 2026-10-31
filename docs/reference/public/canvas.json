@@ -1,0 +1,375 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-31T11:00:00Z"
+  },
+  "title": "hochzeitslocation.ch – Öffentliche Seiten",
+  "launch": {
+    "view": "canvas",
+    "page": "start"
+  },
+  "pages": [
+    {
+      "id": "grundlagen",
+      "name": "Grundlagen"
+    },
+    {
+      "id": "start",
+      "name": "Startseite"
+    },
+    {
+      "id": "listing",
+      "name": "Listing und Merkliste"
+    },
+    {
+      "id": "filter",
+      "name": "Filter"
+    },
+    {
+      "id": "detail",
+      "name": "Detail und Anfrage"
+    },
+    {
+      "id": "rest",
+      "name": "Recht, Fehler, Mail"
+    }
+  ],
+  "boards": {
+    "Tokens.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 7235,
+      "title": "Tokens und Komponenten · 1440",
+      "page": "grundlagen",
+      "expand": "fill"
+    },
+    "Tokens-390.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 11975,
+      "title": "Tokens und Komponenten · 390",
+      "page": "grundlagen"
+    },
+    "Header.dc.html": {
+      "x": 2150,
+      "y": 0,
+      "w": 1440,
+      "h": 2211,
+      "title": "Header und Menü · 1440",
+      "page": "grundlagen",
+      "expand": "fill"
+    },
+    "Header-390.dc.html": {
+      "x": 3670,
+      "y": 0,
+      "w": 390,
+      "h": 2405,
+      "title": "Header und Menü · 390",
+      "page": "grundlagen"
+    },
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 3403,
+      "title": "Startseite · 1440",
+      "page": "start",
+      "expand": "fill"
+    },
+    "Home-390.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 6583,
+      "title": "Startseite · 390",
+      "page": "start"
+    },
+    "Listing.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 3655,
+      "title": "Listing · 1440",
+      "page": "listing",
+      "expand": "fill"
+    },
+    "Listing-390.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 5725,
+      "title": "Listing · 390",
+      "page": "listing"
+    },
+    "Canton.dc.html": {
+      "x": 2150,
+      "y": 0,
+      "w": 1440,
+      "h": 2183,
+      "title": "Kantonsseite · 1440",
+      "page": "listing",
+      "expand": "fill"
+    },
+    "Canton-390.dc.html": {
+      "x": 3670,
+      "y": 0,
+      "w": 390,
+      "h": 3458,
+      "title": "Kantonsseite · 390",
+      "page": "listing"
+    },
+    "Filterbar.dc.html": {
+      "x": 4300,
+      "y": 0,
+      "w": 1440,
+      "h": 1328,
+      "title": "Filterleiste · 1440",
+      "page": "listing",
+      "expand": "fill"
+    },
+    "Filterbar-390.dc.html": {
+      "x": 5820,
+      "y": 0,
+      "w": 390,
+      "h": 1040,
+      "title": "Filterleiste · 390",
+      "page": "listing"
+    },
+    "Merkliste.dc.html": {
+      "x": 6450,
+      "y": 0,
+      "w": 1440,
+      "h": 3209,
+      "title": "Merkliste · 1440",
+      "page": "listing",
+      "expand": "fill"
+    },
+    "Merkliste-390.dc.html": {
+      "x": 7970,
+      "y": 0,
+      "w": 390,
+      "h": 4390,
+      "title": "Merkliste · 390",
+      "page": "listing"
+    },
+    "Region.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 5142,
+      "title": "Filter Region · 1440",
+      "page": "filter",
+      "expand": "fill"
+    },
+    "Region-390.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 4978,
+      "title": "Filter Region · 390",
+      "page": "filter"
+    },
+    "Guests.dc.html": {
+      "x": 2150,
+      "y": 0,
+      "w": 1440,
+      "h": 2118,
+      "title": "Filter Gäste · 1440",
+      "page": "filter",
+      "expand": "fill"
+    },
+    "Guests-390.dc.html": {
+      "x": 3670,
+      "y": 0,
+      "w": 390,
+      "h": 2034,
+      "title": "Filter Gäste · 390",
+      "page": "filter"
+    },
+    "More.dc.html": {
+      "x": 4300,
+      "y": 0,
+      "w": 1440,
+      "h": 4664,
+      "title": "Weitere Filter · 1440",
+      "page": "filter",
+      "expand": "fill"
+    },
+    "More-390.dc.html": {
+      "x": 5820,
+      "y": 0,
+      "w": 390,
+      "h": 8008,
+      "title": "Weitere Filter · 390",
+      "page": "filter"
+    },
+    "DetailReal.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 4117,
+      "title": "Detail, echte Daten · 1440",
+      "page": "detail",
+      "expand": "fill"
+    },
+    "DetailReal-390.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 5564,
+      "title": "Detail, echte Daten · 390",
+      "page": "detail"
+    },
+    "Detail.dc.html": {
+      "x": 2150,
+      "y": 0,
+      "w": 1440,
+      "h": 6643,
+      "title": "Detail, volle Daten · 1440",
+      "page": "detail",
+      "expand": "fill"
+    },
+    "Detail-390.dc.html": {
+      "x": 3670,
+      "y": 0,
+      "w": 390,
+      "h": 8545,
+      "title": "Detail, volle Daten · 390",
+      "page": "detail"
+    },
+    "DetailDialogs.dc.html": {
+      "x": 4300,
+      "y": 0,
+      "w": 1440,
+      "h": 2262,
+      "title": "Detail, Dialoge · 1440",
+      "page": "detail",
+      "expand": "fill"
+    },
+    "DetailDialogs-390.dc.html": {
+      "x": 5820,
+      "y": 0,
+      "w": 390,
+      "h": 2482,
+      "title": "Detail, Dialoge · 390",
+      "page": "detail"
+    },
+    "Inquiry.dc.html": {
+      "x": 6450,
+      "y": 0,
+      "w": 1440,
+      "h": 3131,
+      "title": "Anfrage · 1440",
+      "page": "detail",
+      "expand": "fill"
+    },
+    "Inquiry-390.dc.html": {
+      "x": 7970,
+      "y": 0,
+      "w": 390,
+      "h": 4669,
+      "title": "Anfrage · 390",
+      "page": "detail"
+    },
+    "Legal.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 3017,
+      "title": "Rechtliches · 1440",
+      "page": "rest",
+      "expand": "fill"
+    },
+    "Legal-390.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 4413,
+      "title": "Rechtliches · 390",
+      "page": "rest"
+    },
+    "Error404.dc.html": {
+      "x": 2150,
+      "y": 0,
+      "w": 1440,
+      "h": 1363,
+      "title": "Fehlerseite · 1440",
+      "page": "rest",
+      "expand": "fill"
+    },
+    "Error404-390.dc.html": {
+      "x": 3670,
+      "y": 0,
+      "w": 390,
+      "h": 2057,
+      "title": "Fehlerseite · 390",
+      "page": "rest"
+    },
+    "Mail.dc.html": {
+      "x": 4300,
+      "y": 0,
+      "w": 1440,
+      "h": 2077,
+      "title": "E-Mail · 1440",
+      "page": "rest",
+      "expand": "fill"
+    },
+    "Mail-390.dc.html": {
+      "x": 5820,
+      "y": 0,
+      "w": 390,
+      "h": 3041,
+      "title": "E-Mail · 390",
+      "page": "rest"
+    }
+  },
+  "order": [
+    "Tokens.dc.html",
+    "Tokens-390.dc.html",
+    "Header.dc.html",
+    "Header-390.dc.html",
+    "Main.dc.html",
+    "Home-390.dc.html",
+    "Listing.dc.html",
+    "Listing-390.dc.html",
+    "Canton.dc.html",
+    "Canton-390.dc.html",
+    "Filterbar.dc.html",
+    "Filterbar-390.dc.html",
+    "Merkliste.dc.html",
+    "Merkliste-390.dc.html",
+    "Region.dc.html",
+    "Region-390.dc.html",
+    "Guests.dc.html",
+    "Guests-390.dc.html",
+    "More.dc.html",
+    "More-390.dc.html",
+    "DetailReal.dc.html",
+    "DetailReal-390.dc.html",
+    "Detail.dc.html",
+    "Detail-390.dc.html",
+    "DetailDialogs.dc.html",
+    "DetailDialogs-390.dc.html",
+    "Inquiry.dc.html",
+    "Inquiry-390.dc.html",
+    "Legal.dc.html",
+    "Legal-390.dc.html",
+    "Error404.dc.html",
+    "Error404-390.dc.html",
+    "Mail.dc.html",
+    "Mail-390.dc.html"
+  ],
+  "notes": {},
+  "designSystems": [
+    {
+      "title": "hochzeitslocation.ch",
+      "namespace": "hochzeitslocation",
+      "artifact": "https://claude.ai/artifact/7KTZibKEpKkofJg6Xjwsb2",
+      "version": null,
+      "copiedAt": "2026-10-31T11:00:00Z"
+    }
+  ]
+}
