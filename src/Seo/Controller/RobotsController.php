@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Seo\Controller;
 
+use App\Shared\Http\PublicCache;
 use App\Shared\Translation\LocalizedRoutes;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,7 +27,7 @@ final class RobotsController extends AbstractController
     ];
 
     #[Route('/robots.txt', name: 'robots', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    #[Cache(public: true, smaxage: 600, staleWhileRevalidate: 86400)]
+    #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function __invoke(): Response
     {
         $lines = ['User-agent: *'];

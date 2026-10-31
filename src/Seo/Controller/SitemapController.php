@@ -6,6 +6,7 @@ namespace App\Seo\Controller;
 
 use App\Seo\PagesSitemap;
 use App\Seo\ValueObject\SitemapUrl;
+use App\Shared\Http\PublicCache;
 use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\ReadModel\SitemapVenue;
 use App\Venues\ReadModel\VenueSitemapQuery;
@@ -33,7 +34,7 @@ final class SitemapController extends AbstractController
     }
 
     #[Route('/sitemap.xml', name: 'sitemap', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    #[Cache(public: true, smaxage: 600, staleWhileRevalidate: 86400)]
+    #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function index(): Response
     {
         return $this->render('seo/sitemap_index.xml.twig', [
@@ -43,14 +44,14 @@ final class SitemapController extends AbstractController
     }
 
     #[Route('/sitemap-pages.xml', name: 'sitemap_pages', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    #[Cache(public: true, smaxage: 600, staleWhileRevalidate: 86400)]
+    #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function pages(): Response
     {
         return $this->render('seo/sitemap_urlset.xml.twig', ['urls' => $this->pages->urls()], new Response(headers: self::XML));
     }
 
     #[Route('/sitemap-venues-{n}.xml', name: 'sitemap_venues', requirements: ['n' => '[1-9][0-9]{0,5}'], methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    #[Cache(public: true, smaxage: 600, staleWhileRevalidate: 86400)]
+    #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function venues(int $n): Response
     {
         $venues = $this->venues->page($n);

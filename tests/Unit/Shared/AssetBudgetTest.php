@@ -4,24 +4,27 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Shared;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * S11 budgets for the shipped assets (#1): CSS ≤ 25 KB gzip, JS ≤ 15 KB gzip per page, carousel.js ≤ 2 KB gzip,
  * the Region overlay's JS ≤ 6 KB gzip (#10), at most two font files, and self-contained JS modules. Reads the CSS `make sass` builds (a prerequisite of `make test`).
  */
+#[Group('budget')]
 final class AssetBudgetTest extends TestCase
 {
     public function test_compiled_css_is_within_25_kb_gzip(): void
     {
-        $built = glob(self::root().'/var/sass/app-*.output.css') ?: [];
-        if (1 !== \count($built)) {
-            self::fail('Run make sass first (expected exactly one var/sass/app-*.output.css).');
-        }
+        self::assertLessThanOrEqual(25 * 1024, self::gzipSize(self::compiledCss()));
+    }
 
-        $css = (string) preg_replace('~/\*# sourceMappingURL=.*?\*/~s', '', (string) file_get_contents($built[0]));
+    public function test_first_view_loads_at_most_two_font_files(): void
+    {
+        self::assertLessThanOrEqual(2, substr_count(self::compiledCss(), '@font-face'));
 
-        self::assertLessThanOrEqual(25 * 1024, self::gzipSize($css));
+        $layout = (string) file_get_contents(self::root().'/templates/base.html.twig');
+        self::assertLessThanOrEqual(2, preg_match_all('~<link\b[^>]*rel="preload"[^>]*as="font"~', $layout));
     }
 
     public function test_carousel_js_is_within_2_kb_gzip(): void
@@ -74,6 +77,16 @@ final class AssetBudgetTest extends TestCase
         self::assertNotEmpty($files);
 
         return $files;
+    }
+
+    private static function compiledCss(): string
+    {
+        $built = glob(self::root().'/var/sass/app-*.output.css') ?: [];
+        if (1 !== \count($built)) {
+            self::fail('Run make sass first (expected exactly one var/sass/app-*.output.css).');
+        }
+
+        return (string) preg_replace('~/\*# sourceMappingURL=.*?\*/~s', '', (string) file_get_contents($built[0]));
     }
 
     private static function gzipSize(string $content): int

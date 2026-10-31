@@ -18,6 +18,7 @@ final class HealthControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('{"status":"ok"}', $response->getContent());
+        self::assertSame('no-store, private', $response->headers->get('Cache-Control'));
     }
 
     public function test_returns_503_when_database_query_fails(): void
@@ -29,5 +30,6 @@ final class HealthControllerTest extends TestCase
 
         self::assertSame(503, $response->getStatusCode());
         self::assertSame('{"status":"error"}', $response->getContent());
+        self::assertSame('no-store, private', $response->headers->get('Cache-Control'));
     }
 }

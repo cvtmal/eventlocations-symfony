@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Controller;
 
+use App\Shared\Http\PublicCache;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,7 +42,7 @@ final class LegalController extends AbstractController
     }
 
     #[Route(path: ['de' => '/impressum'], name: 'impressum', methods: ['GET'])]
-    #[Cache(public: true, smaxage: 600, staleWhileRevalidate: 86400)]
+    #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function impressum(): Response
     {
         return $this->render('site/legal/impressum.html.twig', [
@@ -50,7 +51,7 @@ final class LegalController extends AbstractController
     }
 
     #[Route(path: ['de' => '/datenschutz'], name: 'datenschutz', methods: ['GET'])]
-    #[Cache(public: true, smaxage: 600, staleWhileRevalidate: 86400)]
+    #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function datenschutz(): Response
     {
         return $this->render('site/legal/datenschutz.html.twig', [

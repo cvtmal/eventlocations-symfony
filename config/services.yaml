@@ -49,8 +49,8 @@ services:
         exclude:
             - '../src/*/Entity/'
 
-    # S10: no HTTP cache yet; #19 points this alias at its proxy's purge (#9 P24).
-    App\Venues\HttpCachePurger: '@App\Venues\NullHttpCachePurger'
+    # S10 (#19): every purge empties the whole HttpCache store.
+    App\Venues\HttpCachePurger: '@App\Venues\StoreClearingHttpCachePurger'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
@@ -66,8 +66,10 @@ when@test:
         app.media_public_dir: '%kernel.project_dir%/var/test-media/public'
 
     services:
-        # Tests assert the Venues handlers' purges (S10, #9 P24) through the real container.
+        # Tests assert the Venues handlers' purges (S10, #9 P24) through the real container;
+        # the recorder then delegates to the real purger (#19), so the test env runs the real invalidation.
         App\Tests\Support\Http\RecordingHttpCachePurger:
+            autowire: true
             public: true
         App\Venues\HttpCachePurger: '@App\Tests\Support\Http\RecordingHttpCachePurger'
         # A second handler of the after-commit messages, for AfterCommitTest (#25).

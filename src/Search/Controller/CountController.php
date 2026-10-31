@@ -7,6 +7,7 @@ namespace App\Search\Controller;
 use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
+use App\Shared\Http\PublicCache;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,7 +28,7 @@ final class CountController extends AbstractController
     }
 
     #[Route('/_search/count', name: '_search_count', methods: ['GET'])]
-    #[Cache(maxage: 60, smaxage: 600, public: true, staleWhileRevalidate: 86400)]
+    #[Cache(maxage: PublicCache::COUNT_BROWSER_TTL, smaxage: PublicCache::PAGE_TTL, public: true, staleWhileRevalidate: PublicCache::STALE_TTL)]
     public function __invoke(Request $request): JsonResponse
     {
         $criteria = SearchCriteria::fromQuery($request->query, $this->knownTerms->all());

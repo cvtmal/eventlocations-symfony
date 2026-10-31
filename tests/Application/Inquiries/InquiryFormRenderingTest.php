@@ -95,7 +95,7 @@ final class InquiryFormRenderingTest extends WebTestCase
         $response = $this->client->getResponse();
         $cacheControl = (string) $response->headers->get('Cache-Control');
         self::assertStringContainsString('public', $cacheControl);
-        self::assertStringContainsString('s-maxage=600', $cacheControl);
+        self::assertStringContainsString('s-maxage=86400', $cacheControl);
         self::assertStringNotContainsString('private', $cacheControl);
         self::assertFalse($response->headers->has('Set-Cookie'));
         self::assertSame([], $response->headers->getCookies());

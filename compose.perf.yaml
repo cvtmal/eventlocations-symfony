@@ -1,0 +1,67 @@
+# Prod-mode perf stack for PERF-1 (S11, #19; docs/performance-baseline.md). Always its own Compose
+# project next to the lane stack, without the lane's compose.override.yaml:
+#   docker compose -p hochzeitslocation-perf -f compose.yaml -f compose.perf.yaml …
+# The `make perf-*` targets are the entry point; they also set the host ports (8096, 5446), which sit
+# outside the lane table of docs/rpi-cycles.md.
+#
+# nginx, php and Postgres share cores 0 and 1, like the three processes on a 2 vCPU host; memory
+# limits add up to under 4 GB. vendor/, var/ and public/assets/ are named volumes, so the perf
+# install (no dev packages, classmap-authoritative) never touches the lane's files. public/media
+# stays bind-mounted: the perf database is a dump of the lane's, so the photo ids match its files.
+services:
+  php:
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      APP_SECRET: perf-only-not-a-secret
+      GOOGLE_MAPS_EMBED_KEY: ""
+    volumes:
+      - perf_vendor:/var/www/html/vendor
+      - perf_var:/var/www/html/var
+      - perf_assets:/var/www/html/public/assets
+      - ./docker/perf/xdebug-off.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini:ro
+      - ./docker/perf/php.ini:/usr/local/etc/php/conf.d/zz-perf.ini:ro
+      - ./docker/perf/fpm.conf:/usr/local/etc/php-fpm.d/zz-perf.conf:ro
+    cpuset: "0,1"
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+
+  nginx:
+    volumes:
+      - perf_assets:/var/www/html/public/assets:ro
+    cpuset: "0,1"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  database:
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=top
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=1536MB
+    cpuset: "0,1"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+# Docker's default address pools are used up on this machine; the lanes use 172.16.81–83.0/24.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.16.96.0/24
+
+volumes:
+  perf_vendor:
+  perf_var:
+  perf_assets:

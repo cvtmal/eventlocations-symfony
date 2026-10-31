@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Admin;
 
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
  * ADM-8 on the real build (a prerequisite of `make test`): shared admin JS ≤ 60 KB gzip, each island with
  * its imports ≤ 30 KB gzip, admin CSS ≤ 30 KB gzip.
  */
+#[Group('budget')]
 final class AdminAssetBudgetTest extends TestCase
 {
     private const string ENTRY = 'src/main.js';

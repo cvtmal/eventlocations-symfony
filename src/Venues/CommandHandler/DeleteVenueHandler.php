@@ -53,6 +53,7 @@ final class DeleteVenueHandler implements CommandHandlerInterface
             new RemoveVenueFiles($command->venueNumber, [], [], $originals, wholeVenue: true),
             [new DispatchAfterCurrentBusStamp()],
         );
+        // PurgeListingsCache alone also clears the deleted venue's detail page (a full clear, #19).
         $this->commandBus->dispatch(new PurgeListingsCache(), [new DispatchAfterCurrentBusStamp()]);
     }
 }

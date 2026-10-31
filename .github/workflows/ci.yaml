@@ -27,3 +27,6 @@ jobs:
 
       - name: Tests (prepares the test database first)
         run: make test
+
+      - name: Byte budgets (S11)
+        run: make perf-check

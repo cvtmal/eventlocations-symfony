@@ -26,9 +26,20 @@ final class HealthController extends AbstractController
         try {
             $this->connection->executeQuery('SELECT 1');
         } catch (\Throwable) {
-            return new JsonResponse(['status' => 'error'], JsonResponse::HTTP_SERVICE_UNAVAILABLE);
+            return self::uncached(new JsonResponse(['status' => 'error'], JsonResponse::HTTP_SERVICE_UNAVAILABLE));
         }
 
-        return new JsonResponse(['status' => 'ok']);
+        return self::uncached(new JsonResponse(['status' => 'ok']));
+    }
+
+    /**
+     * No proxy or monitor may answer the check from a cache (#19).
+     */
+    private static function uncached(JsonResponse $response): JsonResponse
+    {
+        $response->setPrivate();
+        $response->headers->addCacheControlDirective('no-store');
+
+        return $response;
     }
 }
