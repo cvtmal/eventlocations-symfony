@@ -107,7 +107,7 @@ final class ContactListTest extends WebTestCase
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         ContactFactory::createMany(3, ['company' => CompanyFactory::createOne(), 'owner' => $owner]);
 
-        // The owners, COUNT, the rows; with the user's refresh 4 in production (P12 ceiling 5).
+        // The owners, which carry the sidebar's badge (`TaskBadge`), COUNT, the rows; with the user's refresh 4 in production.
         self::assertSame(3, $this->queriesOf('/admin/crm/kontakte?kind=other&sort=company'));
     }
 

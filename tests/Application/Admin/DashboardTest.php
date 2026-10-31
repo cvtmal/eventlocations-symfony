@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Application\Admin;
 
 use App\Admin\Extension\DashboardWidgetRegistry;
+use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
+use App\Tests\Application\Crm\CountsQueries;
 use App\Tests\Support\Admin\AdminSession;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
@@ -19,6 +21,7 @@ final class DashboardTest extends WebTestCase
 {
     use AdminSession;
     use ClockSensitiveTrait;
+    use CountsQueries;
     use Factories;
 
     public function test_it_greets_by_first_name_with_the_long_german_date(): void
@@ -56,19 +59,34 @@ final class DashboardTest extends WebTestCase
         $new = $crawler->filter('.topbar__actions a.btn--primary');
         self::assertSame('Neu', $new->text());
         self::assertSame('/admin/locations', $new->attr('href'));
-        self::assertSame(['Unvollständige Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
+        self::assertSame(['Meine Aufgaben', 'Überfällig', 'Unvollständige Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
 
-        $incomplete = $crawler->filter('.widget')->eq(0);
+        $incomplete = $crawler->filter('.widget')->eq(2);
         self::assertSame('/admin/locations/'.$hut->number(), $incomplete->filter('.venue-widget__name')->attr('href'));
         self::assertSame(['Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Haupt-Gebäudeart fehlt'], $incomplete->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
         $all = $incomplete->filter('.venue-widget__foot a');
         self::assertSame('1 unvollständige ansehen', $all->text());
         self::assertSame('/admin/locations?status=incomplete', $all->attr('href'));
 
-        $recent = $crawler->filter('.widget')->eq(1);
+        $recent = $crawler->filter('.widget')->eq(3);
         self::assertSame('Waldhütte Eichholz', $recent->filter('.venue-widget__name')->text());
         self::assertSame('Nr. '.$hut->number(), $recent->filter('.venue-widget__main .muted')->text());
         self::assertSame('28.10.2026', $recent->filter('.venue-widget__meta')->text());
+    }
+
+    public function test_the_page_stays_within_its_statements(): void
+    {
+        ['user' => $me] = $this->logInAs();
+        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('yesterday')]);
+        VenueFactory::new()->withoutLocation(null)->create(['status' => VenueStatus::Unpublished]);
+
+        // The badge, which has no owners statement to ride on here, "Meine Aufgaben", "Überfällig", the incomplete venues
+        // and their total, the recently edited venues; with the user's refresh 7 in production (P12 ceiling 7, D20).
+        self::assertSame(6, $this->queriesOf('/admin'));
+
+        // An empty identity map is production's: the refresh then reads the user.
+        $this->entityManager()->clear();
+        self::assertSame(7, $this->queriesOf('/admin'));
     }
 
     public function test_each_widget_has_its_own_empty_text(): void
@@ -77,7 +95,7 @@ final class DashboardTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Alle Locations sind vollständig.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
+        self::assertSame(['Keine offenen Aufgaben.', 'Nichts ist überfällig.', 'Alle Locations sind vollständig.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
     }
 
     public function test_without_widgets_it_shows_the_empty_state(): void

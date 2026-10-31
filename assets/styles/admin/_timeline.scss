@@ -58,6 +58,16 @@
     color: var(--a-green);
 }
 
+.timeline-item__icon--amber {
+    background: var(--a-amber-bg);
+    color: var(--a-amber);
+}
+
+.timeline-item__icon--grey {
+    background: var(--a-grey-bg);
+    color: var(--a-grey);
+}
+
 .timeline-item--system .timeline-item__icon {
     height: 20px;
     background: transparent;

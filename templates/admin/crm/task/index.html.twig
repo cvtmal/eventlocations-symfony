@@ -1,0 +1,92 @@
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'task.list.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'task.list.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'task.list.title'|trans({}, 'crm') }} <span class="muted">{{ list.total|swiss_number }}</span></h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% set tabs = [] %}
+    {% for tab in views %}
+        {% set tabs = tabs|merge([{label: ('task.list.tab.' ~ tab.value)|trans({}, 'crm'), href: path('admin_crm_tasks', {view: tab.value}), active: tab == view}]) %}
+    {% endfor %}
+    {{ include('admin/components/_tabs.html.twig', {label: 'task.list.tabs_label'|trans({}, 'crm'), items: tabs}, with_context = false) }}
+
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'task.list.table_label'|trans({}, 'crm'),
+        id: 'task-list',
+        columns: [
+            {label: 'task.list.column.task'|trans({}, 'crm')},
+            {label: 'task.list.column.due'|trans({}, 'crm')},
+            {label: 'task.list.column.assignee'|trans({}, 'crm')},
+        ],
+        list: list,
+        view: view,
+        return_to: app.request.method == 'GET' ? app.request.requestUri : path('admin_crm_tasks', {view: view.value}),
+    } only %}
+        {% block rows %}
+            {% for row in list.rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {row: row, return_to: return_to} only %}
+                    {% block cells %}
+                        <td>
+                            <div class="crm-task crm-task--row{{ row.done ? ' crm-task--done' }}">
+                                {{ include('admin/crm/task/_toggle.html.twig', {task: row, return_to: return_to}, with_context = false) }}
+                                <span class="crm-task__text">
+                                    <span class="crm-task__title">{{ row.title }}</span>
+                                    {% if row.companyId or row.contactId %}
+                                        <span class="crm-list__detail">{{ include('admin/crm/task/_object.html.twig', {task: row}, with_context = false) }}</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td>{{ include('admin/crm/task/_due.html.twig', {due: crm_task_due(row.dueOn, row.done)}, with_context = false) }}</td>
+                        <td class="crm-task-assignee">{{ row.assigneeName }}</td>
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'square-check-big', title: ('task.list.empty.' ~ view.value ~ '.title')|trans({}, 'crm'), text: ('task.list.empty.' ~ view.value ~ '.text')|trans({}, 'crm')}, with_context = false) }}
+        {% endblock %}
+        {% block foot %}
+            {{ include('admin/components/_pagination.html.twig', {
+                page: list.page,
+                last_page: list.lastPage,
+                total: list.total,
+                per_page: list.perPage,
+                label: 'list.pagination.label'|trans({}, 'crm'),
+                previous_label: 'list.pagination.previous'|trans({}, 'crm'),
+                next_label: 'list.pagination.next'|trans({}, 'crm'),
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+
+    {{ form_start(form, {attr: {class: 'form crm-task-new', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {title: 'task.form.heading'|trans({}, 'crm'), id: 'task-new-title', task_form: form} only %}
+            {% block body %}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_errors(task_form) }}
+                <div class="crm-task-new__fields">
+                    {{ form_row(task_form.title) }}
+                    {{ form_row(task_form.dueOn) }}
+                    {{ form_row(task_form.assignee) }}
+                </div>
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'task.form.submit'|trans({}, 'crm'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}

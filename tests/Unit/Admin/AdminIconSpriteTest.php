@@ -17,9 +17,9 @@ use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 final class AdminIconSpriteTest extends TestCase
 {
     private const array REQUIRED = [
-        'arrow-down', 'arrow-up', 'bell', 'building-2', 'check', 'chevron-down', 'chevron-left', 'chevron-right', 'chevrons-up-down', 'download',
-        'ellipsis', 'external-link', 'eye', 'file-text', 'grip-vertical', 'history', 'inbox', 'landmark', 'layout-dashboard', 'log-out', 'mail', 'plus', 'search', 'shield',
-        'square-check-big', 'square-kanban', 'type', 'upload', 'users', 'x',
+        'arrow-down', 'arrow-up', 'bell', 'building-2', 'calendar', 'check', 'chevron-down', 'chevron-left', 'chevron-right', 'chevrons-up-down', 'download',
+        'ellipsis', 'external-link', 'eye', 'file-text', 'grip-vertical', 'history', 'inbox', 'landmark', 'layout-dashboard', 'log-out', 'mail', 'phone', 'plus', 'search', 'shield',
+        'square-check-big', 'square-kanban', 'sticky-note', 'type', 'upload', 'users', 'x',
     ];
 
     public function test_ids_are_unique_and_sorted(): void

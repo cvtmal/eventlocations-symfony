@@ -21,7 +21,14 @@ final class VenueCompanyQuery
                                    ORDER BY lower(p.last_name), lower(coalesce(p.first_name, '')), p.id)
                    FROM crm_contacts p
                    WHERE p.company_id = c.id
-               ), '[]') AS contacts
+               ), '[]') AS contacts,
+               COALESCE((
+                   SELECT json_agg(json_build_object('title', t.title, 'due_on', t.due_on)
+                                   ORDER BY t.due_on, lower(t.title), t.id)
+                   FROM crm_tasks t
+                   LEFT JOIN crm_contacts tp ON tp.id = t.contact_id
+                   WHERE t.done_at IS NULL AND (t.company_id = c.id OR tp.company_id = c.id)
+               ), '[]') AS tasks
         FROM venues v
         LEFT JOIN crm_company_venues l ON l.venue_id = v.id
         LEFT JOIN crm_companies c ON c.id = l.company_id
@@ -54,7 +61,7 @@ final class VenueCompanyQuery
             return null;
         }
         if (null === $row['company_id']) {
-            return new VenueCompany((string) $row['venue_id'], null, null, null, null, []);
+            return new VenueCompany((string) $row['venue_id'], null, null, null, null, [], []);
         }
 
         return new VenueCompany(
@@ -68,19 +75,23 @@ final class VenueCompanyQuery
                 null === $contact['first_name'] ? null : (string) $contact['first_name'],
                 (string) $contact['last_name'],
                 null === $contact['position'] ? null : (string) $contact['position'],
-            ), self::contacts($row['contacts'])),
+            ), self::list($row['contacts'])),
+            array_map(static fn (array $task): VenueCompanyTask => new VenueCompanyTask(
+                (string) $task['title'],
+                (string) $task['due_on'],
+            ), self::list($row['tasks'])),
         );
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    private static function contacts(mixed $json): array
+    private static function list(mixed $json): array
     {
-        $contacts = json_decode((string) $json, true, flags: \JSON_THROW_ON_ERROR);
-        \assert(\is_array($contacts) && array_is_list($contacts));
+        $items = json_decode((string) $json, true, flags: \JSON_THROW_ON_ERROR);
+        \assert(\is_array($items) && array_is_list($items));
 
-        /* @var list<array<string, mixed>> $contacts */
-        return $contacts;
+        /* @var list<array<string, mixed>> $items */
+        return $items;
     }
 }

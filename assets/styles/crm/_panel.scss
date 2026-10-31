@@ -48,6 +48,41 @@
     }
 }
 
+.crm-panel__heading {
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--a-line-soft);
+    color: var(--a-muted);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.crm-panel__tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 6px 0 0;
+    padding: 0;
+    font-size: 13px;
+    list-style: none;
+}
+
+.crm-panel__task {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--a-space-2);
+
+    > span:first-child {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .pill {
+        flex: none;
+    }
+}
+
 .crm-panel__create {
     margin-top: 12px;
 }

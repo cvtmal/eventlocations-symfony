@@ -72,6 +72,8 @@
     {% endif %}
 {% endblock %}
 
+{% block record_center %}{{ include('admin/crm/_timeline.html.twig', {props: timeline}, with_context = false) }}{% endblock %}
+
 {% block record_aside %}
     <section class="card crm-side" id="locations" aria-labelledby="crm-venues-title">
         <div class="card__head">
@@ -144,4 +146,6 @@
             {% endif %}
         </div>
     </section>
+
+    {{ include('admin/crm/task/_card.html.twig', {tasks: tasks, return_to: path('admin_crm_companies_show', {id: company.id})}, with_context = false) }}
 {% endblock %}

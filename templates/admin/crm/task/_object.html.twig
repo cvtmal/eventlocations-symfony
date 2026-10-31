@@ -1,0 +1,9 @@
+{#
+    What a task is on, with a link: `Firma · Schloss Seeblick`; nothing for a task on no object. Include with
+    `with_context = false`: task (TaskRow).
+#}
+{%- if task.companyId -%}
+    {{- 'task.object.company'|trans({}, 'crm') }} · <a href="{{ path('admin_crm_companies_show', {id: task.companyId}) }}">{{ task.companyName }}</a>
+{%- elseif task.contactId -%}
+    {{- 'task.object.contact'|trans({}, 'crm') }} · <a href="{{ path('admin_crm_contacts_show', {id: task.contactId}) }}">{{ task.contactName }}</a>
+{%- endif -%}

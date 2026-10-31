@@ -40,6 +40,8 @@ api:
     email_taken: Ein anderer Kontakt hat bereits diese E-Mail-Adresse.
     required: Bitte einen Wert eingeben.
     unknown_choice: Bitte einen Eintrag aus der Liste wählen.
+    not_yours: Nur der Verfasser kann diesen Eintrag ändern.
+    read_only: Dieser Eintrag lässt sich nicht ändern.
 
 properties:
     edit: Bearbeiten
@@ -59,6 +61,7 @@ nav:
     section: CRM
     companies: Firmen
     contacts: Kontakte
+    tasks: Aufgaben
 
 search:
     companies: Firmen
@@ -210,6 +213,7 @@ bootstrap:
         failures: "Nicht angelegt: {failures}"
 
 panel:
+    tasks: Offene Aufgaben
     title: CRM
     open: Firma öffnen
     stage_since: "{stage} · seit {year}"
@@ -228,7 +232,124 @@ activity:
         email_logged: E-Mail
         call: Anruf
         meeting: Meeting
+    tab:
+        note: Notizen
+        email_logged: E-Mails
+        call: Anrufe
+        meeting: Meetings
+    compose:
+        note:
+            placeholder: Notiz schreiben …
+            submit: Notiz speichern
+        email_logged:
+            placeholder: Was stand in der E-Mail?
+            submit: E-Mail erfassen
+        call:
+            placeholder: Worum ging es im Anruf?
+            submit: Anruf erfassen
+        meeting:
+            placeholder: Worum ging es im Meeting?
+            submit: Meeting erfassen
 
+timeline:
+    section: Aktivitäten
+    filters: Aktivitätstypen
+    all: Aktivitäten
+    empty: Noch keine Aktivitäten.
+    empty_filtered: Keine Einträge dieser Art.
+    more: Mehr laden
+    by: '{type} von {actor}'
+    anonymised: Inhalt entfernt
+    system:
+        published: '«{venue}» publiziert'
+        unpublished: '«{venue}» unpubliziert'
+        tier_changed: '«{venue}»: neu {tier}'
+    composer:
+        title: Neue Aktivität
+        tabs: Art
+        date: Datum
+        saved: Eintrag gespeichert.
+    task:
+        label: Aufgabe
+        placeholder: Was ist zu tun?
+        submit: Aufgabe erstellen
+        due_on: Fällig am
+        assignee: Zuständig
+    entry:
+        edit: Bearbeiten
+        edit_body: Text des Eintrags
+        save: Speichern
+        cancel: Abbrechen
+        delete: Löschen
+        delete_title: Eintrag löschen?
+        delete_text: Der Eintrag wird endgültig gelöscht.
+        delete_confirm: Löschen
+        deleted: Eintrag gelöscht.
+    close: Schliessen
+    reload: Seite neu laden
+    session_gone: Sitzung abgelaufen. Bitte die Seite neu laden.
+    page_outdated: Diese Seite ist nicht mehr aktuell.
+    error: Das hat nicht geklappt. Bitte nochmals versuchen.
+
+task:
+    due:
+        overdue: Überfällig
+        today: Heute
+    card:
+        title: Aufgaben
+        empty: Keine offenen Aufgaben.
+    toggle:
+        done: '«{title}» als erledigt markieren'
+        reopen: '«{title}» wieder öffnen'
+    object:
+        company: Firma
+        contact: Kontakt
+    list:
+        title: Aufgaben
+        tabs_label: Aufgaben eingrenzen
+        table_label: Aufgaben
+        column:
+            task: Aufgabe
+            due: Fällig
+            assignee: Zuständig
+        tab:
+            meine: Meine
+            heute: Heute
+            ueberfaellig: Überfällig
+            alle: Alle
+        empty:
+            meine:
+                title: Keine offenen Aufgaben
+                text: Was dir zugewiesen wird, erscheint hier.
+            heute:
+                title: Heute ist nichts fällig
+                text: Offene Aufgaben mit dem heutigen Datum erscheinen hier.
+            ueberfaellig:
+                title: Nichts ist überfällig
+                text: Offene Aufgaben mit einem vergangenen Datum erscheinen hier.
+            alle:
+                title: Noch keine Aufgaben
+                text: Erfasse hier oder auf einer Firma oder einem Kontakt die erste Aufgabe.
+    form:
+        heading: Aufgabe erfassen
+        title: Aufgabe
+        due_on: Fällig am
+        assignee: Zuständig
+        submit: Aufgabe erstellen
+    widget:
+        all: Alle Aufgaben
+        all_count: 'Alle {count} Aufgaben'
+        mine:
+            title: Meine Aufgaben
+            empty: Keine offenen Aufgaben.
+        overdue:
+            title: Überfällig
+            empty: Nichts ist überfällig.
+    flash:
+        created: Aufgabe erstellt.
+        done: Aufgabe erledigt.
+        reopened: Aufgabe wieder geöffnet.
+        gone: Diese Aufgabe gibt es nicht mehr.
 lookup:
     venue_number: 'Nr. {number}'
     venue_company: 'bei {company}'

@@ -1,0 +1,126 @@
+// Tasks (CRM-5): the toggle and row of the Aufgaben card, the task list and #27b's widgets (`Company.dc.html`, `Main.dc.html`).
+.crm-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: var(--a-space-2) 0;
+    font-size: 14px;
+}
+
+.crm-task--row {
+    padding: 0;
+    // `.table--list` keeps a cell on one line; the task list's three columns then cut Zuständig at 390 px.
+    white-space: normal;
+}
+
+.table--list td.crm-task-assignee {
+    white-space: normal;
+}
+
+.crm-task--done .crm-task__title {
+    color: var(--a-muted);
+    text-decoration: line-through;
+}
+
+.crm-task__form {
+    display: contents;
+}
+
+// 24px target around the design's 18px box.
+.crm-task__toggle {
+    display: grid;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: transparent;
+    cursor: pointer;
+    place-items: center;
+
+    .icon {
+        width: 18px;
+        height: 18px;
+        padding: 1px;
+        border: 1.5px solid var(--a-field-strong);
+        border-radius: var(--a-r-sm);
+        background: var(--a-surface);
+    }
+
+    &:hover {
+        color: var(--a-muted);
+    }
+}
+
+.crm-task__toggle--done {
+    color: var(--a-surface);
+
+    .icon {
+        border-color: var(--a-ink);
+        background: var(--a-ink);
+    }
+
+    &:hover {
+        color: var(--a-surface);
+    }
+}
+
+.crm-task__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.crm-task__title {
+    overflow-wrap: anywhere;
+}
+
+// "Meine Aufgaben" and "Überfällig" on the dashboard (`Main.dc.html`).
+.task-widget {
+    margin: 0;
+    padding: 6px 0;
+    list-style: none;
+}
+
+.task-widget__row {
+    gap: 12px;
+    padding: 10px var(--a-space-5);
+
+    .pill {
+        flex: none;
+    }
+}
+
+// A narrow row breaks before the name, not inside it. The dot sits in the gap, so a name on its own line pushes
+// it past the left edge, where it is clipped instead of ending the line above.
+.task-widget__detail {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.75em;
+    overflow-x: clip;
+}
+
+.task-widget__assignee {
+    position: relative;
+}
+
+.task-widget__dot {
+    position: absolute;
+    inset-inline-start: -0.5em;
+}
+
+.crm-task-new {
+    margin-top: var(--a-space-5);
+}
+
+.crm-task-new__fields {
+    display: grid;
+    margin-top: var(--a-space-3);
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    align-items: start;
+}

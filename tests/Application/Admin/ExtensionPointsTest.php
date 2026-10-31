@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Admin;
 
+use App\Admin\Extension\TimelineActivityType;
+use App\Admin\Extension\TimelineActivityTypeRegistry;
 use App\Admin\ValueObject\AdminRole;
 use App\Tests\Fixtures\Admin\AdminExtensionProbeKernel;
 use App\Tests\Support\Admin\AdminSession;
@@ -11,6 +13,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\User\InMemoryUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -45,7 +50,7 @@ final class ExtensionPointsTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin');
 
         self::assertSame(
-            ['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Fake Nur Admin', 'Benutzer', 'Audit-Log'],
+            ['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Aufgaben', 'Fake Nur Admin', 'Benutzer', 'Audit-Log'],
             $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()),
         );
         self::assertSame(['CMS', 'CRM', 'Einstellungen'], $crawler->filter('.sidebar__heading')->each(static fn (Crawler $heading): string => $heading->text()));
@@ -58,7 +63,7 @@ final class ExtensionPointsTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
+        self::assertSame(['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Aufgaben'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
     }
 
     public function test_a_widget_renders_in_its_card(): void
@@ -85,6 +90,38 @@ final class ExtensionPointsTest extends WebTestCase
         self::assertSame(self::RECORD, $crawler->filter('.fake-tabs a')->last()->attr('href'));
         self::assertSelectorNotExists('.fake-wrong-type');
         self::assertSame('Panel 0199f0d0-0000-7000-8000-000000000001', $crawler->filter('aside .fake-panel')->text());
+    }
+
+    public function test_a_timeline_type_is_collected_and_filtered_by_role(): void
+    {
+        self::bootKernel();
+        $registry = self::getContainer()->get(TimelineActivityTypeRegistry::class);
+        self::assertInstanceOf(TimelineActivityTypeRegistry::class, $registry);
+        $tokens = self::getContainer()->get('security.token_storage');
+        self::assertInstanceOf(TokenStorageInterface::class, $tokens);
+
+        // The fake type outranks the CRM ones, needs ROLE_ADMIN and cannot be written by hand.
+        $tokens->setToken(self::tokenFor('ROLE_ADMIN'));
+        self::assertSame(['fake_activity', 'note', 'email_logged', 'call', 'meeting'], self::codes($registry->visible()));
+        self::assertSame(['note', 'email_logged', 'call', 'meeting'], self::codes($registry->composable()));
+
+        $tokens->setToken(self::tokenFor('ROLE_EDITOR'));
+        self::assertSame(['note', 'email_logged', 'call', 'meeting'], self::codes($registry->visible()));
+    }
+
+    /**
+     * @param list<TimelineActivityType> $types
+     *
+     * @return list<string>
+     */
+    private static function codes(array $types): array
+    {
+        return array_map(static fn (TimelineActivityType $type): string => $type->code(), $types);
+    }
+
+    private static function tokenFor(string $role): UsernamePasswordToken
+    {
+        return new UsernamePasswordToken(new InMemoryUser('probe', null, [$role]), 'admin', [$role]);
     }
 
     public function test_the_active_item_follows_the_route(): void

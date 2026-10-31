@@ -31,8 +31,38 @@ final readonly class PropertyConstraints
 
     public const int NOTES_MAX = 20000;
 
+    public const int TASK_TITLE_MAX = 200;
+
     private function __construct()
     {
+    }
+
+    /**
+     * The text of a timeline entry, as canonical as a property (CRM-4): an entry says something.
+     *
+     * @return list<Constraint>
+     */
+    public static function activityBody(): array
+    {
+        return self::text(self::NOTES_MAX, required: true);
+    }
+
+    /**
+     * @return list<Constraint>
+     */
+    public static function taskTitle(): array
+    {
+        return self::text(self::TASK_TITLE_MAX, required: true);
+    }
+
+    /**
+     * An account a new task can go to; the handler checks that it is an active one.
+     *
+     * @return list<Constraint>
+     */
+    public static function taskAssignee(): array
+    {
+        return [new Assert\NotNull(message: 'crm.task.assignee'), ...self::reference()];
     }
 
     /**

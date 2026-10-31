@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Crm\Controller;
 
 use App\Admin\Form\ConfirmActionType;
+use App\Admin\Security\AdminIdentity;
 use App\Crm\Command\DeleteCompany;
 use App\Crm\Command\LinkVenue;
 use App\Crm\Command\UnlinkVenue;
@@ -15,8 +16,11 @@ use App\Crm\Form\LinkVenueData;
 use App\Crm\Form\LinkVenueType;
 use App\Crm\ReadModel\CompanyRecordQuery;
 use App\Crm\ReadModel\OwnerOptionsQuery;
+use App\Crm\ReadModel\TaskListQuery;
 use App\Crm\ReadModel\VenueCompanyQuery;
+use App\Crm\TimelineProps;
 use App\Crm\ValueObject\CrmFlash;
+use App\Crm\ValueObject\RecordKind;
 use App\Shared\Translation\LocalizedRoutes;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -27,6 +31,7 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
@@ -52,13 +57,16 @@ final class CompanyRecordController extends AbstractController
     }
 
     #[Route('', name: 'admin_crm_companies_show', methods: ['GET'])]
-    public function show(string $id, OwnerOptionsQuery $owners): Response
+    public function show(string $id, OwnerOptionsQuery $owners, TimelineProps $timeline, TaskListQuery $tasks, #[CurrentUser] AdminIdentity $user): Response
     {
         $company = $this->companies->find($id) ?? throw $this->createNotFoundException();
+        $staff = $owners->all();
 
         return $this->render('admin/crm/company/show.html.twig', [
             'company' => $company,
-            'owners' => OwnerOptionsQuery::selectable($owners->all(), $company->ownerId),
+            'owners' => OwnerOptionsQuery::selectable($staff, $company->ownerId),
+            'timeline' => $timeline->of(RecordKind::Company, $id, $user->id(), OwnerOptionsQuery::selectable($staff)),
+            'tasks' => $tasks->openOf(RecordKind::Company, $id),
             'link_form' => $this->linkForm($id)->createView(),
             'delete_form' => $this->isGranted('ROLE_ADMIN') ? $this->deleteForm($id)->createView() : null,
             'unlink_token' => self::UNLINK_TOKEN,

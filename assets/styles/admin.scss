@@ -47,3 +47,5 @@
 @use 'crm/record';
 @use 'crm/lists';
 @use 'crm/panel';
+@use 'crm/timeline' as crm-timeline;
+@use 'crm/tasks';

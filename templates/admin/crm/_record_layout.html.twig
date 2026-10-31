@@ -4,8 +4,9 @@
     and `list_label` (translated). Blocks:
       record_crumb       the breadcrumb's last item, `record_title` by default; spans with `data-crm-follow` keep it current
       record_identity    the head of the left card: avatar, h1, link, pill (P15: no page header beside the breadcrumb)
+      record_quick_actions  under the head: buttons `[data-composer-tab]` that open a tab of the timeline's composer
       record_properties  the `record-properties` island with its read-only fallback
-      record_center      the middle column; empty in #27a and then hidden (`.crm-record__center:empty`), #27b's timeline
+      record_center      the middle column, the timeline (`admin/crm/_timeline.html.twig`); hidden while empty (`.crm-record__center:empty`)
       record_aside       the right column's cards, before the registry's panels (`admin_record_panels(type, id)`)
       record_aside_end   after the panels
       record_actions     the `Aktionen` dropdown's items (`<li>`s); the button is left out while it is empty
@@ -52,6 +53,7 @@
     <div class="crm-record">
         <section class="card crm-record__card" aria-labelledby="record-title">
             <div class="crm-record__identity">{% block record_identity %}{% endblock %}</div>
+            {% block record_quick_actions %}{{ include('admin/crm/_quick_actions.html.twig', with_context = false) }}{% endblock %}
             <div class="crm-record__properties">{% block record_properties %}{% endblock %}</div>
         </section>
         <div class="crm-record__center">{%- block record_center -%}{%- endblock -%}</div>
