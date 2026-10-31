@@ -47,6 +47,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Cms/Entity'
                 prefix: 'App\Cms\Entity'
                 alias: Cms
+            Crm:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Crm/Entity'
+                prefix: 'App\Crm\Entity'
+                alias: Crm
 
 when@test:
     doctrine:

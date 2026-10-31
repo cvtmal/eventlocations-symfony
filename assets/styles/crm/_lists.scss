@@ -1,0 +1,31 @@
+// The company and contact lists (CRM-6): #24's venue list cell, with an avatar in place of the thumbnail.
+.crm-list__name {
+    display: flex;
+    align-items: center;
+    gap: var(--a-space-3);
+    min-width: 200px;
+}
+
+.crm-list__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.crm-list__link {
+    color: var(--a-ink);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        color: var(--a-link-hover);
+        text-decoration: underline;
+    }
+}
+
+.crm-list__detail {
+    color: var(--a-muted);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}

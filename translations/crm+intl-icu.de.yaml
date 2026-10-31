@@ -1,1 +1,234 @@
 # Strings of the Crm module (#27–#30). Keys: <context>.<description>.
+
+company:
+    stage:
+        prospect: Interessent
+        customer: Kunde
+        former_customer: Ehemaliger Kunde
+    origin:
+        manual: Manuell erfasst
+        venue: Aus Location
+    property:
+        name: Name
+        legal_name: Firmenname
+        website: Website
+        phone: Telefon
+        email: E-Mail
+        address: Adresse
+        stage: Phase
+        owner: Zuständig
+        notes: Notizen
+
+contact:
+    kind:
+        venue_contact: Location-Kontakt
+        couple: Brautpaar
+        other: Andere
+    property:
+        first_name: Vorname
+        last_name: Nachname
+        email: E-Mail
+        phone: Telefon
+        position: Position
+        kind: Art
+        company: Firma
+        owner: Zuständig
+
+api:
+    stale: Dieses Feld wurde inzwischen geändert. Bitte die Seite neu laden.
+    not_found: Dieser Eintrag existiert nicht mehr.
+    email_taken: Ein anderer Kontakt hat bereits diese E-Mail-Adresse.
+    required: Bitte einen Wert eingeben.
+    unknown_choice: Bitte einen Eintrag aus der Liste wählen.
+
+properties:
+    edit: Bearbeiten
+    save: Speichern
+    cancel: Abbrechen
+    empty: —
+    none: Keine Angabe
+    stale: Dieses Feld wurde inzwischen geändert.
+    not_found: Dieser Eintrag existiert nicht mehr.
+    reload: Seite neu laden
+    session_gone: Die Sitzung ist abgelaufen.
+    error: Speichern war nicht möglich. Bitte erneut versuchen.
+    no_results: Keine Treffer.
+    choose: Bitte einen Eintrag aus der Liste wählen oder das Feld leeren.
+
+nav:
+    section: CRM
+    companies: Firmen
+    contacts: Kontakte
+
+search:
+    companies: Firmen
+    contacts: Kontakte
+
+flash:
+    action_failed: Das hat nicht geklappt. Bitte die Seite neu laden und erneut versuchen.
+
+list:
+    export: CSV exportieren
+    companies:
+        title: Firmen
+        new: Firma erfassen
+        table_label: Firmen
+        empty:
+            title: Keine Firmen
+            text: Keine Firma passt zu diesen Filtern.
+        column:
+            company: Firma
+            stage: Phase
+            owner: Zuständig
+            venues: Locations
+            created: Erstellt
+    contacts:
+        title: Kontakte
+        new: Kontakt erfassen
+        table_label: Kontakte
+        empty:
+            title: Keine Kontakte
+            text: Kein Kontakt passt zu diesen Filtern.
+        column:
+            name: Name
+            kind: Art
+            company: Firma
+            email: E-Mail
+            owner: Zuständig
+    filter:
+        search: Suchen
+        search_companies: Firmenname suchen …
+        search_contacts: Name oder E-Mail suchen …
+        submit: Filtern
+        reset: Filter zurücksetzen
+        invalid: Diese Filter sind ungültig. Gezeigt wird die ungefilterte Liste.
+        stage: Phase
+        all_stages: Alle Phasen
+        kind: Art
+        all_kinds: Alle Arten
+        owner: Zuständig
+        all_owners: Alle Zuständigen
+        owner_none: Ohne Zuständige
+        venues: Locations
+        all_venues: Mit und ohne Location
+        venues_with: Mit Location
+        venues_without: Ohne Location
+    chip:
+        search: 'Suche: {q}'
+        stage: 'Phase: {label}'
+        kind: 'Art: {label}'
+        owner: 'Zuständig: {label}'
+        remove: '{label} entfernen'
+    pagination:
+        label: Seiten
+        previous: Zurück
+        next: Weiter
+    row:
+        actions: 'Aktionen für {name}'
+        open: Öffnen
+
+export:
+    origin: Herkunft
+    failed: Export abgebrochen, diese Datei ist unvollständig.
+
+create:
+    company:
+        title: Firma erfassen
+        card: Neue Firma
+        intro: Name genügt. Alles Weitere lässt sich danach auf der Firmenseite ergänzen.
+    contact:
+        title: Kontakt erfassen
+        card: Neuer Kontakt
+        intro: Nachname genügt. Alles Weitere lässt sich danach auf der Kontaktseite ergänzen.
+    submit: Erfassen
+    cancel: Abbrechen
+    owner_none: Niemand
+    help:
+        website: Mit «https://», zum Beispiel https://www.example.ch
+    flash:
+        company: 'Firma «{name}» erfasst.'
+        contact: 'Kontakt «{name}» erfasst.'
+
+record:
+    actions: Aktionen
+    properties: Eigenschaften
+    tabs_label: Bereiche
+    created: Erstellt
+    created_on: "{date} · {origin, select, venue {aus Location} other {manuell erfasst}}"
+    stage_label: 'Phase: {stage}'
+    venues:
+        title: Locations
+        link: Verknüpfen
+        link_label: Location verknüpfen
+        link_title: Location verknüpfen
+        link_field: Location
+        link_help: Name oder Nummer der Location eingeben. Eine Location gehört zu höchstens einer Firma.
+        link_submit: Verknüpfen
+        cancel: Abbrechen
+        close: Schliessen
+        empty: Noch keine Location verknüpft.
+        unlink: '{name} von dieser Firma lösen'
+        flash:
+            linked: Location verknüpft.
+            unlinked: Location gelöst.
+            not_linked: Diese Location gehört nicht mehr zu dieser Firma.
+            invalid: Bitte eine Location aus der Liste wählen.
+            already_linked: Diese Location gehört schon zu einer anderen Firma. Dort zuerst lösen.
+            venue_not_found: Diese Location existiert nicht mehr.
+    contacts:
+        title: Kontakte
+        add: Hinzufügen
+        add_label: Kontakt bei dieser Firma erfassen
+        empty: Noch keine Kontakte.
+    company:
+        title: Firma
+        empty: Keiner Firma zugeordnet.
+    delete:
+        action: Firma löschen
+        title: Firma löschen
+        text: '«{name}» wird gelöscht. Kontakte bleiben ohne Firma erhalten, Verknüpfungen zu Locations und Aufgaben werden entfernt.'
+        confirm: Löschen
+        cancel: Abbrechen
+        close: Schliessen
+        flash: 'Firma «{name}» gelöscht.'
+    export:
+        action: Exportieren
+    erase:
+        action: Kontakt löschen
+        title: Kontakt löschen
+        text: '«{name}» wird endgültig gelöscht, samt Aufgaben und Einträgen im Verlauf. Einträge, die auch bei der Firma stehen, bleiben dort ohne Inhalt bestehen.'
+        copies: Steht dieselbe E-Mail-Adresse bei der Firma, wird sie dort ebenfalls entfernt. Eine Kopie bei einer verknüpften Location (Kontaktperson, Anfrage-E-Mail) bleibt bestehen und muss von Hand im CMS entfernt werden.
+        confirm: Löschen
+        cancel: Abbrechen
+        close: Schliessen
+        flash: Kontakt gelöscht.
+
+bootstrap:
+    action: "{count, plural, one {Firma aus # Location anlegen} other {Firmen aus # Locations anlegen}}"
+    flash:
+        done: "{companies, plural, one {# Firma} other {# Firmen}} und {contacts, plural, one {# Kontakt} other {# Kontakte}} angelegt. Ohne Kontaktperson: {without}. E-Mail bereits vergeben: {taken}. Locations mit gleicher Anfrage-E-Mail: {shared}. Übersprungen: {skipped}. Fehlgeschlagen: {failed}. Noch offen: {remaining}."
+        failures: "Nicht angelegt: {failures}"
+
+panel:
+    title: CRM
+    open: Firma öffnen
+    stage_since: "{stage} · seit {year}"
+    contact: Kontakt
+    no_contact: Noch kein Kontakt
+    empty: Diese Location gehört noch zu keiner Firma.
+    create: Firma anlegen
+    flash:
+        created: Firma angelegt.
+        already: Diese Location hat bereits eine Firma.
+        email_taken: Firma nicht angelegt, die E-Mail-Adresse wurde eben einem anderen Kontakt zugewiesen. Bitte nochmals versuchen.
+
+activity:
+    type:
+        note: Notiz
+        email_logged: E-Mail
+        call: Anruf
+        meeting: Meeting
+
+lookup:
+    venue_number: 'Nr. {number}'
+    venue_company: 'bei {company}'

@@ -1,0 +1,53 @@
+// The CRM card on a venue (LocationEdit.dc.html:244-256), in `.shell__aside` of the venue editor.
+.crm-panel__open {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.crm-panel__company {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.crm-panel__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.crm-panel__name {
+    font-size: 14px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.crm-panel__stage {
+    color: var(--a-muted);
+    font-size: 13px;
+}
+
+.crm-panel__facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px var(--a-space-4);
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--a-line-soft);
+    font-size: 13px;
+
+    dt {
+        color: var(--a-muted);
+    }
+
+    dd {
+        grid-column: 2;
+        margin: 0;
+        overflow-wrap: anywhere;
+        text-align: right;
+    }
+}
+
+.crm-panel__create {
+    margin-top: 12px;
+}

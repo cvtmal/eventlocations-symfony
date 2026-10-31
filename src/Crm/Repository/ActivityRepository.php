@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Crm\Repository;
+
+use App\Crm\Entity\Activity;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Activity>
+ */
+class ActivityRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Activity::class);
+    }
+
+    /**
+     * Ids of the activities on the company's timeline.
+     *
+     * @return list<string>
+     */
+    public function idsLinkedToCompany(string $companyId): array
+    {
+        /* @var list<string> */
+        return $this->getEntityManager()->getConnection()->fetchFirstColumn(
+            'SELECT activity_id FROM crm_activity_companies WHERE company_id = ?',
+            [$companyId],
+        );
+    }
+
+    /**
+     * Ids of the activities on the contact's timeline.
+     *
+     * @return list<string>
+     */
+    public function idsLinkedToContact(string $contactId): array
+    {
+        /* @var list<string> */
+        return $this->getEntityManager()->getConnection()->fetchFirstColumn(
+            'SELECT activity_id FROM crm_activity_contacts WHERE contact_id = ?',
+            [$contactId],
+        );
+    }
+
+    /**
+     * Blanks title, body and payload of the activities and marks them anonymised (D16).
+     *
+     * @param list<string> $ids
+     */
+    public function anonymise(array $ids, \DateTimeImmutable $at): void
+    {
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->getEntityManager()->getConnection()->executeStatement(
+            "UPDATE crm_activities SET title = NULL, body = NULL, payload = '{}', anonymised_at = :at, updated_at = :at WHERE id IN (:ids)",
+            ['at' => $at->format('Y-m-d H:i:sO'), 'ids' => $ids],
+            ['ids' => ArrayParameterType::STRING],
+        );
+    }
+
+    /**
+     * Deletes those of the activities that no object links any more (D16): an entry that is on no
+     * timeline would be unreachable. The one place that knows every link table; #28 adds
+     * crm_activity_deals here.
+     *
+     * @param list<string> $ids
+     *
+     * @return int the number deleted
+     */
+    public function deleteUnlinked(array $ids): int
+    {
+        if ([] === $ids) {
+            return 0;
+        }
+
+        return (int) $this->getEntityManager()->getConnection()->executeStatement(
+            <<<'SQL'
+                DELETE FROM crm_activities a
+                WHERE a.id IN (:ids)
+                  AND NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id)
+                  AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id)
+                SQL,
+            ['ids' => $ids],
+            ['ids' => ArrayParameterType::STRING],
+        );
+    }
+}

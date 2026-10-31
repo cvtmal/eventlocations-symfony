@@ -68,6 +68,7 @@ final class LegalPagesTest extends WebTestCase
         self::assertSame([
             'Verantwortliche Stelle',
             'Anfragen an eine Location',
+            'Kontakte von Locations',
             'Merkliste und Cookie',
             'Schutz vor Missbrauch',
             'Hosting und Datenbank',
@@ -107,6 +108,15 @@ final class LegalPagesTest extends WebTestCase
             $links = $crawler->filter('footer nav.footer-legal a')->each(static fn (Crawler $a): string => $a->text().' '.$a->attr('href'));
             self::assertSame(['Impressum /impressum', 'Datenschutz /datenschutz'], $links, $path);
         }
+    }
+
+    public function test_the_datenschutz_page_covers_the_contacts_of_locations(): void
+    {
+        $text = $this->page('/datenschutz')->filter('main')->text();
+
+        self::assertStringContainsString('Wenn du für eine Location arbeitest, bearbeiten wir deine geschäftlichen Kontaktdaten', $text);
+        self::assertStringContainsString('um die Zusammenarbeit mit den Locations zu pflegen', $text);
+        self::assertStringContainsString('Verlangst du die Löschung, löschen wir sie früher', $text);
     }
 
     public function test_the_retention_follows_the_purge_parameter(): void

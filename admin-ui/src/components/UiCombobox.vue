@@ -21,6 +21,7 @@ const props = defineProps({
     describedBy: { type: String, default: undefined },
     invalid: { type: Boolean, default: false },
     required: { type: Boolean, default: false },
+    autofocus: { type: Boolean, default: false }, // a dialog's first focus (dialog focusing steps)
     placeholder: { type: String, default: undefined },
     noResultsLabel: { type: String, required: true },
     sessionGoneLabel: { type: String, required: true },
@@ -120,6 +121,10 @@ function onKeydown(event) {
 
         return;
     }
+    // Esc closes the list and nothing else: not a row around it, not its dialog.
+    if (event.key === 'Escape' && expanded.value) {
+        event.preventDefault();
+    }
 
     listbox.onKeydown(event);
 }
@@ -156,6 +161,7 @@ onBeforeUnmount(cancelPending);
       :aria-describedby="describedBy"
       :aria-invalid="invalid ? 'true' : undefined"
       :required="required"
+      :autofocus="autofocus"
       :placeholder="placeholder"
       @input="onInput"
       @keydown="onKeydown"
