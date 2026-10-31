@@ -4,6 +4,8 @@
         {{ include('seo/_footer_cantons.html.twig', ignore_missing = true) }}
         {# Slot for #18: Impressum / Datenschutz links #}
         {{ include('site/legal/_footer_links.html.twig', ignore_missing = true) }}
+        {# Slot for #26: the staff note (content block footer.note), from the snapshot only #}
+        {{ include('shared/_footer_note.html.twig', ignore_missing = true) }}
         <p class="site-footer__copy">{{ 'layout.footer.copyright'|trans }}</p>
     </div>
 </footer>

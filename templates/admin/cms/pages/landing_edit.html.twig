@@ -1,0 +1,82 @@
+{#
+    Texts of one landing page (#26). Context from `LandingPageEditController`: entry (LandingPageEntry), form, stale
+    (a 409 re-render), locales list<{code, label}>, last_edit (?AuditLogRow).
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'landing.editor.title'|trans({name: entry.name}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_landing_pages') }}">{{ 'landing.list.title'|trans({}, 'cms') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ entry.name }}</li>
+{% endblock %}
+
+{% block page_header %}
+    {%- set parts = ['landing.editor.venues'|trans({count: entry.venueCount}, 'cms')] -%}
+    {%- if last_edit -%}
+        {%- set when = last_edit.createdAt|swiss_date ~ ', ' ~ last_edit.createdAt|date('H:i', 'Europe/Zurich') -%}
+        {%- set parts = parts|merge([last_edit.actorName
+            ? 'editor.meta.edited_by'|trans({name: last_edit.actorName, date: when}, 'cms')
+            : 'editor.meta.edited_at'|trans({date: when}, 'cms')]) -%}
+    {%- endif -%}
+    {% embed 'admin/components/_record_header.html.twig' with {title: entry.name, subtitle: parts|join(' · '), entry: entry} only %}
+        {% block meta %}
+            {{ include('admin/components/_pill.html.twig', {label: ('landing.type.' ~ entry.type)|trans({}, 'cms')}, with_context = false) }}
+            {{ include('admin/components/_pill.html.twig', {
+                label: (entry.passesThreshold ? 'landing.threshold.online' : 'landing.threshold.below')|trans({}, 'cms'),
+                tone: entry.passesThreshold ? 'green' : 'grey',
+                dot: true,
+            }, with_context = false) }}
+        {% endblock %}
+        {% block actions %}
+            {% if entry.url %}
+                {{ include('admin/components/_button.html.twig', {
+                    label: 'landing.editor.view'|trans({}, 'cms'),
+                    icon: 'external-link',
+                    href: entry.url,
+                    attributes: {target: '_blank', rel: 'noopener'},
+                }, with_context = false) }}
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
+
+{% block main %}
+    {{ form_start(form, {attr: {id: 'landing-texts-form', class: 'content-editor', novalidate: 'novalidate', 'aria-labelledby': 'landing-texts', 'data-unsaved-guard': ''}}) }}
+        {% embed 'admin/components/_card.html.twig' with {title: 'landing.editor.card'|trans({}, 'cms'), id: 'landing-texts', editor_form: form, stale: stale, locales: locales, entry: entry} only %}
+            {% block body %}
+                {{ form_errors(editor_form) }}
+                {% if stale %}
+                    <p class="content-editor__stale"><a href="{{ path('admin_landing_pages_edit', {landing: entry.keyPrefix}) }}">{{ 'text.error.stale_reload'|trans({}, 'cms') }}</a></p>
+                {% endif %}
+                {% set panels = {} %}
+                {% for locale in locales %}
+                    {% set fields = editor_form.locales[locale.code] %}
+                    {% set panel %}
+                        {{ form_row(fields.intro) }}
+                        {{ form_row(fields.title) }}
+                        {{ form_row(fields.description) }}
+                    {% endset %}
+                    {% set panels = panels|merge({(locale.code): panel}) %}
+                {% endfor %}
+                {{ include('admin/components/_locale_tabs.html.twig', {
+                    id: 'landing-texts-locales',
+                    label: 'editor.locales_label'|trans({}, 'cms'),
+                    locales: locales,
+                    panels: panels,
+                    active: locales|filter(locale => not editor_form.locales[locale.code].vars.valid)|map(locale => locale.code)|first|default(null),
+                }, with_context = false) }}
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'editor.save'|trans({}, 'cms'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block aside %}
+    {{ include('admin/cms/pages/_serp_preview.html.twig', {form: form, entry: entry, locales: locales}, with_context = false) }}
+{% endblock %}

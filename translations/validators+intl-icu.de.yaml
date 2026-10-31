@@ -57,6 +57,14 @@ cms:
             both: Note und Anzahl Bewertungen gehören zusammen.
             highlights_max: Bitte höchstens {limit} Highlights wählen.
             highlights_need_rating: Highlights gibt es nur mit einer Bewertung.
+    landing:
+        too_long: Bitte höchstens {limit} Zeichen eingeben.
+        version:
+            invalid: Das Formular ist veraltet. Bitte die Seite neu laden.
+    block:
+        too_long: Bitte höchstens {limit} Zeichen eingeben.
+        version:
+            invalid: Das Formular ist veraltet. Bitte die Seite neu laden.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.

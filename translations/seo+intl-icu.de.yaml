@@ -10,7 +10,7 @@ listing:
 # building title_count, title, numbered title_page, title_page_bare. A bare title drops {site}, so a numbered page keeps its number. {heading} is the building page's h1 (search catalogue).
 landing:
     canton:
-        title_count: '{count} Hochzeitslocations im Kanton {canton} | {site}'
+        title_count: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} im Kanton {canton} | {site}'
         title: 'Hochzeitslocations im Kanton {canton} | {site}'
         title_short: 'Hochzeitslocations Kanton {canton} | {site}'
         title_name: 'Hochzeitslocations {canton} | {site}'
@@ -19,7 +19,7 @@ landing:
         title_page_bare: 'Hochzeitslocations {canton} – Seite {page}'
         description: 'Hochzeitslocations im Kanton {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
     town:
-        title_count: '{count} Hochzeitslocations in {town} | {site}'
+        title_count: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} in {town} | {site}'
         title: 'Hochzeitslocations in {town} | {site}'
         title_short: 'Hochzeitslocations {town} | {site}'
         title_name: 'Hochzeit {town} | {site}'
@@ -28,7 +28,7 @@ landing:
         title_page_bare: 'Hochzeit {town} – Seite {page}'
         description: 'Hochzeitslocations in {town}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
     building:
-        title_count: '{heading}: {count} Locations | {site}'
+        title_count: '{heading}: {count, plural, one {# Location} other {# Locations}} | {site}'
         title: '{heading} | {site}'
         title_page: '{heading} – Seite {page} | {site}'
         title_page_bare: '{heading} – Seite {page}'

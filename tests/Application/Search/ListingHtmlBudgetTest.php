@@ -10,9 +10,13 @@ use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
+use App\Search\Extension\ListingIntroBlock;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
+use App\Shared\Extension\FooterNoteBlock;
+use App\Shared\ReadModel\ContentBlocks;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\PriceLevel;
@@ -33,15 +37,26 @@ use function Zenstruck\Foundry\Persistence\repository;
  * and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 90
  * checkboxes (83 terms, 3 access, 3 price, 1 curfew) and 21 options render. All 48 venues sit in
  * different towns of one canton, so the same page also renders as that canton's landing page
- * (#17: breadcrumb, intro, canton chip, its JSON-LD), which must fit the same budget.
+ * (#17: breadcrumb, intro, canton chip, its JSON-LD), which must fit the same budget. Staff
+ * texts (#26) are at their maximum: a 600-character listing intro and canton intro, the
+ * canton's 60-character title and 155-character description, and a 300-character footer note.
  * SEARCH_PERF_REPORT=1 prints both sizes.
  */
 final class ListingHtmlBudgetTest extends WebTestCase
 {
     use Factories;
     use ImportsTownDataset;
+    use ResetsContentBlocks;
 
     private const BUDGET_BYTES = 60 * 1024;
+
+    /** Words for staff texts that do not compress better than real copy would. */
+    private const WORDS = [
+        'Hochzeit', 'Apéro', 'Seeufer', 'Garten', 'Scheune', 'Festsaal', 'Trauung', 'Bankett', 'Weinkeller', 'Terrasse',
+        'Brautpaar', 'Gäste', 'Tanzfläche', 'Kerzenlicht', 'Alpenblick', 'Schlosspark', 'Menü', 'Dessertbuffet', 'Fotograf', 'Blumen',
+        'ländlich', 'elegant', 'festlich', 'romantisch', 'grosszügig', 'ruhig', 'historisch', 'modern', 'sonnig', 'gemütlich',
+        'feiern', 'staunen', 'geniessen', 'tanzen', 'anstossen', 'übernachten', 'planen', 'vergleichen', 'entdecken', 'buchen',
+    ];
 
     public function test_a_full_page_stays_within_the_gzip_budget(): void
     {
@@ -50,6 +65,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
         $connection = self::getContainer()->get(Connection::class);
         self::assertInstanceOf(Connection::class, $connection);
         $connection->beginTransaction();
+        $this->resetContentBlocks();
 
         try {
             $towns = $connection->fetchFirstColumn('SELECT id FROM towns WHERE canton_code = ? ORDER BY name LIMIT ?', ['zh', ListingQuery::PER_PAGE]);
@@ -87,13 +103,18 @@ final class ListingHtmlBudgetTest extends WebTestCase
                 }
             }
 
-            $this->assertWithinBudget($client, '/hochzeitslocations', 'Listing');
+            $this->storeMaximalBlocks($connection);
+
+            $crawler = $this->assertWithinBudget($client, '/hochzeitslocations', 'Listing');
+            self::assertCount(1, $crawler->filter('.listing-hero__intro strong'), 'The listing intro renders.');
 
             $crawler = $this->assertWithinBudget($client, '/hochzeitslocations/zuerich', 'Canton page');
             self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
             self::assertCount(1, $crawler->filter('nav.breadcrumb'));
+            self::assertCount(1, $crawler->filter('.listing-hero__intro strong'), 'The canton intro renders.');
         } finally {
             $connection->rollBack();
+            $this->resetContentBlocks();
         }
     }
 
@@ -116,6 +137,45 @@ final class ListingHtmlBudgetTest extends WebTestCase
         self::assertLessThanOrEqual(self::BUDGET_BYTES, $gzip, \sprintf('%s HTML is %d bytes gzip (%d raw), budget %d.', $what, $gzip, \strlen($html), self::BUDGET_BYTES));
 
         return $crawler;
+    }
+
+    private function storeMaximalBlocks(Connection $connection): void
+    {
+        $bodies = [
+            ListingIntroBlock::KEY => $this->markdown(600, 1),
+            'landing.canton.zh.intro' => $this->markdown(600, 2),
+            'landing.canton.zh.title' => $this->text(60, 3),
+            'landing.canton.zh.description' => $this->text(155, 4),
+            FooterNoteBlock::KEY => $this->markdown(300, 5),
+        ];
+        foreach ($bodies as $key => $body) {
+            $connection->insert('content_blocks', ['key' => $key, 'locale' => 'de', 'body_markdown' => $body, 'updated_at' => '2026-10-31 08:00:00+00']);
+        }
+
+        $blocks = self::getContainer()->get(ContentBlocks::class);
+        self::assertInstanceOf(ContentBlocks::class, $blocks);
+        $blocks->refresh();
+    }
+
+    /** Two paragraphs with bold text and a link, at most $length code points. */
+    private function markdown(int $length, int $seed): string
+    {
+        $head = '**'.$this->text(30, $seed).'** [Mehr](/hochzeitslocations) ';
+        $tail = "\n\n".$this->text(40, $seed + 10);
+
+        return $head.$this->text($length - mb_strlen($head) - mb_strlen($tail), $seed + 20).$tail;
+    }
+
+    /** Seeded words, cut to at most $length code points, ending in a full stop. */
+    private function text(int $length, int $seed): string
+    {
+        mt_srand($seed);
+        $text = '';
+        while (mb_strlen($text) < $length) {
+            $text .= self::WORDS[mt_rand(0, \count(self::WORDS) - 1)].' ';
+        }
+
+        return rtrim(mb_substr($text, 0, $length - 1)).'.';
     }
 
     private function giveEveryTerm(Connection $connection, Venue $venue): void

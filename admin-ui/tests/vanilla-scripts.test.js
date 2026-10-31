@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import lengthCount from './fixtures/length-count.json';
 
 let shortcutOnLoad;
 
@@ -88,6 +89,17 @@ describe('char-counter.js', () => {
     it('marks the limit passed', () => {
         expect(field('abc', 2).classList.contains('field__counter--over')).toBe(true);
         expect(field('ab', 2).classList.contains('field__counter--over')).toBe(false);
+    });
+
+    // The texts LengthCountTest puts through the form and the handler; a field's value holds LF only.
+    it('agrees with the server on the limit', () => {
+        const fits = field(lengthCount.fits.replace(/\r\n/g, '\n'), lengthCount.limit);
+        expect(fits.textContent).toBe('60 / 60');
+        expect(fits.classList.contains('field__counter--over')).toBe(false);
+
+        const over = field(lengthCount.over.replace(/\r\n/g, '\n'), lengthCount.limit);
+        expect(over.textContent).toBe('61 / 60');
+        expect(over.classList.contains('field__counter--over')).toBe(true);
     });
 });
 

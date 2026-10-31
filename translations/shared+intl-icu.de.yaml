@@ -63,3 +63,8 @@ legal:
         rights:
             title: Deine Rechte
             text: Du kannst Auskunft über deine Daten verlangen und sie berichtigen oder löschen lassen. Schreib uns dafür an die oben genannte E-Mail-Adresse. Du kannst dich auch an den Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten (EDÖB) wenden.
+# #26: labels of the Shared module's text blocks in the back office's text-block list.
+blocks:
+    footer_note:
+        label: Hinweis in der Fusszeile
+        placement: Fusszeile jeder öffentlichen Seite, unter den Links

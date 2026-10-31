@@ -44,7 +44,7 @@ final class LandingPages implements ResetInterface
     public function all(): array
     {
         if (null === $this->pages) {
-            $this->pages = $this->load();
+            $this->pages = $this->load($this->statement());
             $this->footer->store($this->cantons());
         }
 
@@ -107,7 +107,29 @@ final class LandingPages implements ResetInterface
         return $this->first(static fn (LandingPage $page): bool => LandingType::Town === $page->type && $page->cantonSlug === $cantonSlug && $page->slug === $townSlug);
     }
 
+    /**
+     * Every canton, town and building type with at least one published venue, with its count,
+     * for the back office's landing-page list (#26): the same statement as `all()` with the
+     * threshold at 1, so there is one counting SQL. Not memoized and never touches the footer.
+     *
+     * @return list<LandingPage>
+     */
+    public function candidates(): array
+    {
+        return $this->load($this->statementFor(1));
+    }
+
     public function statement(): SqlStatement
+    {
+        return $this->statementFor($this->minVenues);
+    }
+
+    public function reset(): void
+    {
+        $this->pages = null;
+    }
+
+    private function statementFor(int $min): SqlStatement
     {
         $published = new ListingSql(SearchCriteria::none(), $this->enabledLocale->default());
 
@@ -133,14 +155,9 @@ final class LandingPages implements ResetInterface
                 HAVING count(*) >= :min
                 ORDER BY venues DESC, town_name, code
                 SQL,
-            $published->params + ['min' => $this->minVenues],
+            $published->params + ['min' => $min],
             $published->types + ['min' => ParameterType::INTEGER],
         );
-    }
-
-    public function reset(): void
-    {
-        $this->pages = null;
     }
 
     /**
@@ -168,10 +185,8 @@ final class LandingPages implements ResetInterface
     /**
      * @return list<LandingPage>
      */
-    private function load(): array
+    private function load(SqlStatement $statement): array
     {
-        $statement = $this->statement();
-
         return array_map(function (array $row): LandingPage {
             \assert(\is_string($row['type']) && \is_string($row['code']) && \is_int($row['venues']));
             $type = LandingType::from($row['type']);

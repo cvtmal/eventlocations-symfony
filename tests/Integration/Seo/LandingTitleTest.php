@@ -17,10 +17,13 @@ use App\Search\ReadModel\SearchCriteria;
 use App\Seo\ListingMeta;
 use App\Seo\TitleChain;
 use App\Seo\ValueObject\PageMeta;
+use App\Shared\Markdown\MarkdownRenderer;
+use App\Shared\ReadModel\ContentBlocks;
 use App\Tests\Integration\Search\ListingQueryTest;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -191,7 +194,12 @@ final class LandingTitleTest extends KernelTestCase
         $connection->method('fetchAllAssociative')->willReturn($rows);
         $pages = new LandingPages($connection, ListingQueryTest::enabledLocale(), $this->translator, new LandingFooter(new ArrayAdapter()), 5);
 
-        return [$pages, new ListingMeta($this->translator, new LandingPaths($pages, $this->urls), $this->titles, $this->site)];
+        // An empty, warm content-block snapshot (#26): no staff text, and no read of the stub.
+        $clock = new MockClock();
+        $blocks = new ArrayAdapter();
+        $blocks->save($blocks->getItem(ContentBlocks::ITEM)->set(['built_at' => $clock->now()->getTimestamp(), 'blocks' => []]));
+
+        return [$pages, new ListingMeta($this->translator, new LandingPaths($pages, $this->urls), $this->titles, new ContentBlocks($connection, $blocks, new MarkdownRenderer(), $clock), $this->site)];
     }
 
     /**

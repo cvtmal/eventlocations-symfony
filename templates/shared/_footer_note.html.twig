@@ -1,0 +1,3 @@
+{# The staff note under the footer links (#26, block footer.note). Pool only, never a query: the error pages render it (ErrorPagesQueryFreeTest). A captured set keeps the safe HTML as Markup (a plain set would escape it), and is '' when empty. #}
+{% set note %}{{ content_block_peek('footer.note') }}{% endset %}
+{% if note %}<div class="site-footer__note">{{ note }}</div>{% endif %}

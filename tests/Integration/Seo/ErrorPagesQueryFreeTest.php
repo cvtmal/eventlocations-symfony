@@ -8,6 +8,9 @@ use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\LandingFooter;
 use App\Search\ReadModel\LandingPage;
 use App\Search\ValueObject\LandingType;
+use App\Shared\Extension\FooterNoteBlock;
+use App\Shared\ReadModel\ContentBlocks;
+use App\Tests\Support\Cms\ResetsContentBlocks;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Cache\CacheItemPoolInterface;
@@ -20,10 +23,21 @@ use Twig\Environment;
 /**
  * The 500 page has to render during a database outage, so no error template may run a query.
  * It renders the full layout, footer included: #17's `seo/_footer_cantons.html.twig` fails this
- * test the moment it queries. Its links come from the `cache.landing_pages` item, warm or cold.
+ * test the moment it queries. Its links come from the `cache.landing_pages` item, warm or cold,
+ * and #26's footer note from the `cache.content_blocks` snapshot (peek only).
  */
 final class ErrorPagesQueryFreeTest extends KernelTestCase
 {
+    use ResetsContentBlocks;
+
+    protected function tearDown(): void
+    {
+        if (self::$booted) {
+            $this->resetContentBlocks();
+        }
+        parent::tearDown();
+    }
+
     /**
      * @return iterable<string, array{string, int, string}>
      */
@@ -39,12 +53,29 @@ final class ErrorPagesQueryFreeTest extends KernelTestCase
     {
         self::bootKernel();
         $this->pool()->clear();
+        $this->resetContentBlocks();
 
         $html = $this->renderWithoutQuery($template, $status);
 
         self::assertStringContainsString($heading, $html);
         self::assertStringContainsString('site-footer', $html);
         self::assertStringNotContainsString('footer-cantons', $html);
+        self::assertStringNotContainsString('site-footer__note', $html, 'A cold snapshot shows no note and runs no query.');
+    }
+
+    #[DataProvider('templates')]
+    public function test_a_warm_pool_renders_the_footer_note_without_a_query(string $template, int $status, string $heading): void
+    {
+        self::bootKernel();
+        $this->resetContentBlocks();
+        $pool = self::getContainer()->get('cache.content_blocks');
+        self::assertInstanceOf(CacheItemPoolInterface::class, $pool);
+        $pool->save($pool->getItem(ContentBlocks::ITEM)->set(['built_at' => time(), 'blocks' => ['de' => [FooterNoteBlock::KEY => 'Alle Angaben **ohne Gewähr**.']]]));
+
+        $html = $this->renderWithoutQuery($template, $status);
+
+        self::assertStringContainsString($heading, $html);
+        self::assertStringContainsString('<div class="site-footer__note"><p>Alle Angaben <strong>ohne Gewähr</strong>.</p>', $html);
     }
 
     #[DataProvider('templates')]
@@ -71,7 +102,9 @@ final class ErrorPagesQueryFreeTest extends KernelTestCase
     {
         $stack = self::getContainer()->get('request_stack');
         self::assertInstanceOf(RequestStack::class, $stack);
-        $stack->push(Request::create('/gibt-es-nicht'));
+        $request = Request::create('/gibt-es-nicht');
+        $request->setLocale('de'); // as the LocaleListener sets it on a real request
+        $stack->push($request);
         $holder = self::getContainer()->get('doctrine.debug_data_holder');
         self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
         $holder->reset();

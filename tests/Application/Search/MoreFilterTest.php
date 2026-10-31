@@ -9,7 +9,9 @@ use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\ListingQuery;
+use App\Shared\ReadModel\ContentBlocks;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\TermGroup;
@@ -31,6 +33,7 @@ final class MoreFilterTest extends WebTestCase
     use Factories;
     use ImportsTownDataset;
     use LandingFixtures;
+    use ResetsContentBlocks;
 
     /** FI-4's 11 building chips, in order. */
     private const PRIMARY_BUILDINGS = [
@@ -49,11 +52,13 @@ final class MoreFilterTest extends WebTestCase
         self::assertInstanceOf(Connection::class, $connection);
         $this->connection = $connection;
         $this->connection->beginTransaction();
+        $this->resetContentBlocks();
     }
 
     protected function tearDown(): void
     {
         $this->connection->rollBack();
+        $this->resetContentBlocks();
         parent::tearDown();
     }
 
@@ -309,14 +314,25 @@ final class MoreFilterTest extends WebTestCase
     public function test_the_listing_page_runs_seven_queries(): void
     {
         $this->venue();
+
+        // Cards, photos, count, known terms, landing pages, filter flags, filter terms.
+        self::assertSame(7, $this->queriesOf('/hochzeitslocations'));
+    }
+
+    public function test_a_cold_content_block_snapshot_adds_its_fill(): void
+    {
+        $this->venue();
         $holder = self::getContainer()->get('doctrine.debug_data_holder');
         self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
 
+        // #26: on an empty pool the first listing or landing hit adds four statements to the seven: begin, try-lock, the SELECT, commit.
         $holder->reset();
         $this->get('/hochzeitslocations');
+        self::assertCount(11, $holder->getData()['default'] ?? []);
 
-        // Cards, photos, count, known terms, landing pages, filter flags, filter terms.
-        self::assertCount(7, $holder->getData()['default'] ?? []);
+        $holder->reset();
+        $this->get('/hochzeitslocations');
+        self::assertCount(7, $holder->getData()['default'] ?? [], 'The next hit reads the stored snapshot.');
     }
 
     public function test_a_canton_page_runs_seven_queries(): void
@@ -353,10 +369,17 @@ final class MoreFilterTest extends WebTestCase
         self::assertCount(1, $crawler->filter('#filter-more a[data-overlay-clear]'));
     }
 
+    /**
+     * The queries of one request with a warm content-block snapshot (#26), as in production
+     * after the first hit; test_a_cold_content_block_snapshot_adds_its_fill pins a cold pool's cost.
+     */
     private function queriesOf(string $uri): int
     {
         $holder = self::getContainer()->get('doctrine.debug_data_holder');
         self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
+        $blocks = self::getContainer()->get(ContentBlocks::class);
+        self::assertInstanceOf(ContentBlocks::class, $blocks);
+        $blocks->refresh();
 
         $holder->reset();
         $this->get($uri);

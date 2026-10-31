@@ -223,6 +223,35 @@ final class LandingPagesTest extends KernelTestCase
         self::assertCount(3, $footer->cantons());
     }
 
+    public function test_candidates_list_pages_under_the_threshold_with_their_counts(): void
+    {
+        $this->inCanton(Canton::BE, 2);
+        $this->withBuilding($this->inCanton(Canton::ZH, 6), 'castle');
+        $this->inTown('Stäfa', 1);
+
+        $candidates = $this->pages->candidates();
+        $bern = array_values(array_filter($candidates, static fn (LandingPage $page): bool => Canton::BE === $page->canton && LandingType::Canton === $page->type));
+        self::assertCount(1, $bern, 'A canton with 2 venues is a candidate.');
+        self::assertSame(2, $bern[0]->venues);
+        self::assertNull($this->pages->canton(Canton::BE), 'It is not a live page.');
+        $towns = array_values(array_filter($candidates, static fn (LandingPage $page): bool => LandingType::Town === $page->type));
+        self::assertSame([[$this->town('Stäfa')->id(), 1]], array_map(static fn (LandingPage $page): array => [$page->townId, $page->venues], $towns));
+
+        $slugs = static fn (array $pages): array => array_map(static fn (LandingPage $page): string => $page->type->value.':'.$page->slug, $pages);
+        $live = array_values(array_filter($candidates, static fn (LandingPage $page): bool => $page->venues >= 5));
+        self::assertSame($slugs($this->pages->all()), $slugs($live));
+    }
+
+    public function test_candidates_neither_memoize_nor_store_the_footer(): void
+    {
+        $this->inCanton(Canton::ZH, 5);
+        $this->pages->candidates();
+        self::assertSame([], $this->footer->cantons());
+
+        $this->inCanton(Canton::BE, 1);
+        self::assertCount(2, $this->pages->candidates());
+    }
+
     public function test_no_published_venue_gives_no_page(): void
     {
         self::assertSame([], $this->pages->all());

@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-30 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
+_Last updated: 2026-10-31 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #26 cms-pages, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It copies the layout, style and content structure of eventlokale.ch's wedding search. It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -98,7 +98,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 23 | `admin-ui-kit` | W5 | ADM-4, ADM-7 | 22 | — | ~~Q11~~ | ✅ Done |
 | 24 | `cms-venues` | W6 | CMS-1–CMS-4, CMS-9–CMS-11 | 8, 9, 21, 23, 31 | `venues.cms_edited_at` | — | ✅ Done |
 | 25 | `cms-venue-media` | W6 | CMS-5–CMS-8 | 9, 23 | — | — | Research |
-| 26 | `cms-pages` | W7 | CMS-12 | 17, 23 | `content_blocks` (+ columns on #17's `landing_pages`, if it exists) | — | Research |
+| 26 | `cms-pages` | W7 | CMS-12 | 17, 23 | `content_blocks` (+ columns on #17's `landing_pages`, if it exists) | — | ✅ Done |
 | 27 | `crm-foundation` | W9 | CRM-1–CRM-6, CRM-11 | 20, 24 | `crm_companies`, `crm_contacts`, `crm_company_venues`, `crm_activity_*`, `crm_activities`, `crm_tasks` | ~~Q8~~, ~~Q10~~ | Research |
 | 28 | `crm-deals` | W10 | CRM-7, CRM-8 | 27 | `crm_deal_stages`, `crm_deals`, `crm_deal_contacts`, `crm_activity_deals` | — | Research |
 | 29 | `crm-inquiries` | W10 | CRM-9, CRM-11 (couples) | 14, 27 | `crm_inquiry_links` | — | Research |
@@ -1537,7 +1537,7 @@ IDs are referenced by the overview and the cycles.
   - The intro shows the unfiltered landing count while the results are filtered (`/hochzeitslocations/zuerich?guests=100`; the page is `noindex` then). Owner's UX call.
   - **#18:** add `/impressum` and `/datenschutz` to `PagesSitemap::urls()` beside the landing pages.
   - **#19:** `purgeListings()` must purge every landing path (canton, town, building) plus #16's sitemap paths; the footer item needs no purge (rewritten on change).
-  - **#26:** no `landing_pages` table: `content_blocks` keyed by landing page, threshold `%landing.min_venues%`, URLs by route name `listing_landing`/`listing_town`, its own counting SQL (Cms may not use Search), falling back to the catalogue keys above.
+  - **#26:** no `landing_pages` table: `content_blocks` keyed by landing page, threshold `%landing.min_venues%`, URLs by route name `listing_landing`/`listing_town`, falling back to the catalogue keys above. Built with no counting SQL of its own: `LandingPages::candidates()` is the one statement, and Cms reads it through `Shared\Extension\LandingPageSource`, implemented by Seo, because Cms may not use Search.
   - **#32:** building pages switch on with its import. Every overlay form added later takes `listing_form()`; the region group (`overlay.js + live-count.js + region-filter.js`) has 12 B of its 6 KB left.
   - Later: per-locale canton slugs (hreflang copies route params), setting and canton × building pages, threshold hysteresis, a detail-page breadcrumb to the canton page.
 
@@ -2040,6 +2040,36 @@ W7. Depends on #17 (landing pages) and #23. Runs in parallel with #19.
 - **Done when:**
   - application tests cover the editors, the fallback, safe Markdown (a `<script>` and a `javascript:` link are neutralised), the purge, and that public pages read blocks without starting a session;
   - the screenshot comparison passes.
+
+**Outcome (2026-10-31).** Done in commit `cms-pages` (review: Complete after one rework round; first pass 0 critical, 9 major, 10 minor; re-review 0 critical, 0 major). Migration `Version20261031070024`, no new Composer or npm package. Staff can now write a landing page's intro, SEO title and meta description, the listing intro and a footer note in the back office; without a staff text every page is #17's, byte for byte. Read `CLAUDE.md` `### Shared`, `### Search`, `### Seo` and `### Cms` ("Built in #26") before touching blocks or their pages.
+
+- **Table:** `content_blocks` (PK `(key, locale)`, a natural key like `cantons`; `body_markdown` never blank, so clearing a field deletes the row; `updated_at` `TIMESTAMP(0)`). Keys go by identity, never by slug: `listing.intro`, `footer.note`, `landing.<canton|town|building>.<code|towns.id>.<intro|title|description>`, so a renamed slug keeps its texts. A migration that renames a building code must also update these keys.
+- **Reader (`Shared\ReadModel\ContentBlocks`):** the whole table as one item `snapshot` in `cache.content_blocks` (`cache.app`, `default_lifetime: 0`). `text()`/`html()` fill a cold pool and rebuild a snapshot a day old (the soft age, measured with the clock); `peek()`/`peekHtml()` read the pool only and never query, for the footer and the error pages. `rebuild()` takes the transaction-level advisory lock inside itself, before its SELECT: `refresh()` waits for it, a cold read only tries it and, when it is taken, serves what it read and stores nothing. So a public GET never queues, and whoever saves last has read every commit before it. Any other item shape is a miss, and a cache error never fails a page.
+- **Twig:** `content_block(key, fallback = null)`, `content_block_peek(key)`, `content_text(key)` (no template uses it yet). Declaring a block: `Shared\Extension\ContentBlockDefinition`; the first two are `Search\Extension\ListingIntroBlock` (600) and `Shared\Extension\FooterNoteBlock` (300). A Definition's `fallback()` renders when the caller passes none.
+- **Public side:** intro under the h1 (a landing page, or the unfiltered listing on page 1), footer note after #18's links, staff title and description through `ListingMeta`, inside #16's limits; page ≥ 2 keeps #17's numbered chain. `Seo\Extension\LandingPageCatalogue` feeds the back office through `Shared\Extension\LandingPageSource`, so Cms names neither Search nor Seo.
+- **Screens (`Cms`):** `admin_landing_pages` `/admin/landingpages` (type tabs, name search, 50 per page, count, threshold state, last change) and `admin_text_blocks` `/admin/textbausteine`, each with an `_edit` route, all `ROLE_EDITOR`; nav priorities 200 and 100, below Locations (300). Commands `SaveLandingTexts`, `SaveTextBlock` (audited, names only) through `Cms\ContentBlockWriter`, then `RefreshContentBlockSnapshot`, then `PurgeListingsCache`. Live counters, Markdown preview, and the search-result preview `assets/js/admin/serp-preview.js` (400 B gzip); a stale save is a 409 with the input kept.
+- **Rework:**
+  - A failed refresh logs, the save stays a 303 and the purge still runs. The save stands; saving the same text again changes nothing, so the snapshot's age heals it.
+  - The listing preloads the 600 weight only when the intro holds `<strong` or a heading (`<hr />` also triggers it, harmless, because the page's h1 needs that face anyway).
+  - `render()` maps `<h1>` to `<h2>`, so a page keeps one h1. A body with no visible text counts as no block.
+  - The cold query pin moved from 8 to 11 (begin, try-lock, SELECT, commit), then 7; the warm pins stay 7/7/7/8.
+  - Lighthouse mobile on `/hochzeitslocations/zuerich`, Performance / CLS: no row 100 / 0.024; plain paragraph 99 / 0.024; three bold runs 97 / 0 (was 83 / 0.338); bold, link, `##` and list 100 / 0 (was 93 / 0.154). The re-review ran these while phpunit ran in the same lane, so Performance may read low; CLS was not repeated on an idle lane. `/merkliste` with a bold note stays in budget at 0.0439.
+  - Staff text cannot scroll the page sideways, and a list's marker stays beside its text (mixin `abstracts/_staff-text.scss`).
+- **Deviations:**
+  - The version token hashes `key|locale|updated_at as seconds|sha256(body)`, not `key@updated_at`, because Doctrine writes whole seconds and a same-second revision must still be a 409.
+  - The writer refreshes before it purges, so a page rendered after the purge reads the new text, and skips both when nothing changed.
+  - The writer's lock uses `hashtextextended`, #14's 64-bit form. Bodies are stored trimmed.
+  - A custom landing title also applies on the noindex `?canton=zh` form; it stays noindex and canonicalises to the clean path.
+  - A footer-note save purges listings only, so detail and legal pages lag up to their `s-maxage`. This meets `### 26`'s "saving purges" only in part, and that is the decided state until #19.
+  - #17's intro moved from `<p class="listing-hero__intro">` to `<div …><p>`, text unchanged.
+  - **`var/share/<env>/pools/app`:** `cache.app` lives there, so `cache:clear` does not empty this pool. A direct SQL change needs `make sf c="cache:pool:clear cache.content_blocks"`; otherwise it heals within a day, and in about two days once #19 lands (read from #19's TTLs, not run), because listings then stay cached until Zurich midnight and `text()` runs only on a PHP render.
+- **Accepted limit:** a connection lost before the bus's COMMIT of the refresh message can still answer 500. The row is committed, and the purge runs after a reconnect, the same exposure as every post-commit purge since #9.
+- **Tests:** `make test` after the rebase: PHPUnit OK, 3075 tests, 36794 assertions, peak 223 MB (under the 240 MB gate, so no `memory_limit` change); Vitest 15 files, 150 tests. Assertion counts differed between earlier runs with the same 3073 tests (36793, 36631, 36769), cause not found; the tests are identical in number, and the finisher's run is the clean gate.
+- **Carry-forward:**
+  - #23's `char-counter.js` counts a line break as 2 and the server counts 1. It overstates and never under-reports, so it stays a kit fix.
+  - #19: `content_blocks` under its long TTLs (the two-day figure above; reword `CLAUDE.md` when it lands), and a footer-note save then empties the whole store, which ends the detail-page lag.
+  - #20: `var/share` decides whether the pool survives a deploy. A cold pool caches a peek-only page without the note, so keep `var/share/prod/pools` or hit a listing before the first clear.
+  - Owner's manual checks: Google rich-result test of a canton page with a custom title and description; Firefox and Safari for `serp-preview.js`; screenshot sign-off (no artboard exists for these screens, so Implement and Review judged them against the nearest patterns; the images stayed in the removed worktree, so look at `/admin/landingpages` and `/admin/textbausteine` directly).
 
 ## Back office: CRM (W9–W10, after launch)
 
