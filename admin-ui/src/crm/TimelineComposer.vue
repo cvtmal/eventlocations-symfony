@@ -1,0 +1,284 @@
+<script setup>
+import { computed, nextTick, ref } from 'vue';
+import { adminFetch } from '../api.js';
+import UiButton from '../components/UiButton.vue';
+import { useToast } from '../composables/useToast.js';
+import { nowInZurich } from './entries.js';
+import { formFailure } from './failure.js';
+
+// "Neue Aktivität" (Company.dc.html): one tab per composable type, plus Aufgabe. An entry is added by the island; a
+// task reloads the page, because the Aufgaben card is server-rendered and islands share no store (D20). The E-Mail tab
+// logs by hand and is #30's seam: it sends nothing. What is typed stays through a tab change.
+const TASK = 'task';
+const ACTIVITY_INPUTS = ['body', 'occurredAt'];
+const TASK_INPUTS = ['title', 'dueOn', 'assigneeId'];
+
+const props = defineProps({
+    kind: { type: String, required: true },
+    recordId: { type: String, required: true },
+    tabs: { type: Array, required: true },
+    assignees: { type: Array, required: true },
+    viewerId: { type: String, required: true },
+    urls: { type: Object, required: true },
+    labels: { type: Object, required: true },
+});
+
+const emit = defineEmits(['logged']);
+
+const toast = useToast({ dismissLabel: props.labels.close });
+
+const selected = ref(props.tabs[0].code);
+const text = ref('');
+const occurredAt = ref(nowInZurich());
+// The field shows now until someone changes it, and a page open for hours still logs the moment of the save.
+const dateChanged = ref(false);
+const dueOn = ref(nowInZurich().slice(0, 10));
+const assigneeId = ref(props.viewerId);
+const saving = ref(false);
+// From a saved entry until the form is touched: the second press of a double click finds an empty field, which is
+// nothing to save, not a mistake to mark in red beside the toast.
+const justSaved = ref(false);
+const failure = ref(null);
+const textField = ref(null);
+const root = ref(null);
+
+const reloadHref = window.location.href.split('#')[0];
+
+const current = computed(() => props.tabs.find((tab) => tab.code === selected.value));
+const isTask = computed(() => selected.value === TASK);
+const textError = computed(() => failure.value?.fields[isTask.value ? 'title' : 'body']);
+
+const tabId = (code) => `composer-tab-${code}`;
+
+function select(code) {
+    selected.value = code;
+    failure.value = null;
+    justSaved.value = false;
+}
+
+async function open(code) {
+    if (!props.tabs.some((tab) => tab.code === code)) {
+        return;
+    }
+
+    select(code);
+    await nextTick();
+    root.value?.scrollIntoView?.({ block: 'nearest' });
+    textField.value?.focus();
+}
+
+defineExpose({ open });
+
+function reset() {
+    text.value = '';
+    occurredAt.value = nowInZurich();
+    dateChanged.value = false;
+}
+
+async function logActivity() {
+    const answer = await adminFetch(props.urls.activities, {
+        method: 'POST',
+        body: {
+            kind: props.kind,
+            recordId: props.recordId,
+            type: selected.value,
+            body: text.value,
+            occurredAt: dateChanged.value ? occurredAt.value : nowInZurich(),
+        },
+    });
+
+    reset();
+    justSaved.value = true;
+    emit('logged', answer.entry);
+    toast.show(props.labels.saved);
+}
+
+async function createTask() {
+    await adminFetch(props.urls.tasks, {
+        method: 'POST',
+        body: { kind: props.kind, recordId: props.recordId, title: text.value, dueOn: dueOn.value, assigneeId: assigneeId.value },
+    });
+
+    window.location.reload();
+}
+
+async function submit() {
+    if (saving.value || justSaved.value) {
+        return;
+    }
+
+    saving.value = true;
+    failure.value = null;
+
+    try {
+        if (isTask.value) {
+            await createTask();
+
+            // `reload()` returns at once and this page stays live until the new one arrives, so `saving` stays set:
+            // a second press in that gap would create the task again.
+            return;
+        }
+
+        await logActivity();
+    } catch (error) {
+        failure.value = formFailure(error, props.labels, isTask.value ? TASK_INPUTS : ACTIVITY_INPUTS);
+    }
+
+    saving.value = false;
+}
+</script>
+
+<template>
+  <form
+    ref="root"
+    class="card crm-composer"
+    :aria-label="labels.composer"
+    novalidate
+    @input="justSaved = false"
+    @submit.prevent="submit"
+  >
+    <div
+      class="seg"
+      role="tablist"
+      :aria-label="labels.composerTabs"
+    >
+      <button
+        v-for="tab in tabs"
+        :id="tabId(tab.code)"
+        :key="tab.code"
+        type="button"
+        class="seg__item"
+        role="tab"
+        :aria-selected="tab.code === selected ? 'true' : 'false'"
+        :tabindex="tab.code === selected ? 0 : -1"
+        @click="select(tab.code)"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+    <div
+      class="crm-composer__panel"
+      role="tabpanel"
+      :aria-labelledby="tabId(selected)"
+    >
+      <input
+        v-if="isTask"
+        ref="textField"
+        v-model="text"
+        class="field__input"
+        type="text"
+        :aria-label="current.label"
+        :placeholder="current.placeholder"
+        :aria-invalid="textError ? 'true' : undefined"
+        :aria-describedby="textError ? 'composer-text-error' : undefined"
+      >
+      <textarea
+        v-else
+        ref="textField"
+        v-model="text"
+        class="field__input"
+        rows="3"
+        :aria-label="current.label"
+        :placeholder="current.placeholder"
+        :aria-invalid="textError ? 'true' : undefined"
+        :aria-describedby="textError ? 'composer-text-error' : undefined"
+      />
+      <p
+        v-if="textError"
+        id="composer-text-error"
+        class="field__error"
+      >
+        {{ textError }}
+      </p>
+      <div class="crm-composer__foot">
+        <div class="crm-composer__fields">
+          <template v-if="isTask">
+            <div class="crm-composer__field">
+              <label for="composer-due-on">{{ labels.dueOn }}</label>
+              <input
+                id="composer-due-on"
+                v-model="dueOn"
+                class="field__input"
+                type="date"
+                :aria-invalid="failure?.fields.dueOn ? 'true' : undefined"
+                :aria-describedby="failure?.fields.dueOn ? 'composer-due-on-error' : undefined"
+              >
+            </div>
+            <div class="crm-composer__field">
+              <label for="composer-assignee">{{ labels.assignee }}</label>
+              <select
+                id="composer-assignee"
+                v-model="assigneeId"
+                class="field__input"
+                :aria-invalid="failure?.fields.assigneeId ? 'true' : undefined"
+                :aria-describedby="failure?.fields.assigneeId ? 'composer-assignee-error' : undefined"
+              >
+                <option
+                  v-for="person in assignees"
+                  :key="person.id"
+                  :value="person.id"
+                >
+                  {{ person.name }}
+                </option>
+              </select>
+            </div>
+          </template>
+          <div
+            v-else
+            class="crm-composer__field"
+          >
+            <label for="composer-date">{{ labels.date }}</label>
+            <input
+              id="composer-date"
+              v-model="occurredAt"
+              class="field__input"
+              type="datetime-local"
+              :aria-invalid="failure?.fields.occurredAt ? 'true' : undefined"
+              :aria-describedby="failure?.fields.occurredAt ? 'composer-date-error' : undefined"
+              @input="dateChanged = true"
+            >
+          </div>
+        </div>
+        <UiButton
+          :label="current.submit"
+          variant="primary"
+          size="sm"
+          type="submit"
+          :aria-busy="saving ? 'true' : undefined"
+        />
+      </div>
+      <p
+        v-if="failure?.fields.occurredAt"
+        id="composer-date-error"
+        class="field__error"
+      >
+        {{ failure.fields.occurredAt }}
+      </p>
+      <p
+        v-if="failure?.fields.dueOn"
+        id="composer-due-on-error"
+        class="field__error"
+      >
+        {{ failure.fields.dueOn }}
+      </p>
+      <p
+        v-if="failure?.fields.assigneeId"
+        id="composer-assignee-error"
+        class="field__error"
+      >
+        {{ failure.fields.assigneeId }}
+      </p>
+      <p
+        v-if="failure?.message"
+        class="field__error"
+        role="alert"
+      >
+        {{ failure.message }}
+        <a
+          v-if="failure.reload"
+          :href="reloadHref"
+        >{{ labels.reload }}</a>
+      </p>
+    </div>
+  </form>
+</template>

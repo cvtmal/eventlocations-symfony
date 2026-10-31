@@ -1,0 +1,163 @@
+// A record's middle column (CRM-3, Company.dc.html): filter tabs, composer, entries by month, and the left card's
+// quick actions that open the composer.
+.crm-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+    min-width: 0;
+
+    // The kit's body is an excerpt; here it is the whole text someone wrote, with its line breaks (D13).
+    .timeline-item .muted {
+        color: var(--a-ink);
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+}
+
+// `.field__input` is one line high; here it holds the `rows` of a text, as `textarea.input` in the design.
+.crm-composer textarea,
+.crm-timeline__edit textarea {
+    height: auto;
+    padding: 10px var(--a-space-3);
+    line-height: 22px;
+    resize: vertical;
+}
+
+// Five tabs fit at 390 px at this gap, the design's 24 px from text to text; more scroll, as the record tabs do.
+.crm-timeline__filters {
+    flex-wrap: nowrap;
+    gap: var(--a-space-5);
+    overflow-x: auto;
+}
+
+.crm-timeline__filter {
+    border-width: 0 0 2px;
+    border-radius: 0;
+    background: none;
+    font-family: var(--a-font);
+    cursor: pointer;
+
+    // The scrolling row would clip a ring outside the tab.
+    &:focus-visible {
+        outline-offset: -2px;
+    }
+}
+
+.crm-timeline__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-3);
+    outline: 0;
+}
+
+.crm-timeline__month {
+    margin: var(--a-space-1) 0 0;
+    color: var(--a-muted);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.crm-timeline__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-1);
+}
+
+.crm-timeline__edit {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-2);
+}
+
+.crm-timeline__more {
+    align-self: center;
+}
+
+.crm-composer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-3);
+    padding: 14px var(--a-space-4);
+}
+
+// Five tabs on one line at 390 px, where the kit's padding leaves them 7 px short.
+.crm-composer .seg__item {
+    padding: 0 10px;
+}
+
+.crm-composer__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-3);
+}
+
+.crm-composer__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--a-space-2);
+}
+
+.crm-composer__fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-2) var(--a-space-4);
+    min-width: 0;
+}
+
+.crm-composer__field {
+    display: flex;
+    align-items: center;
+    gap: var(--a-space-2);
+    color: var(--a-muted);
+    font-size: 13px;
+
+    .field__input {
+        width: auto;
+        min-width: 0;
+        height: 32px;
+    }
+}
+
+.crm-quick-actions {
+    display: flex;
+    justify-content: center;
+    gap: var(--a-space-1);
+}
+
+.crm-quick-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 56px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--a-ink);
+    font: 600 12px var(--a-font);
+    cursor: pointer;
+
+    &:hover .crm-quick-action__icon {
+        background: var(--a-hover);
+    }
+}
+
+.crm-quick-action__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--a-field);
+    border-radius: 50%;
+    background: var(--a-surface);
+
+    .icon {
+        width: 18px;
+        height: 18px;
+    }
+}

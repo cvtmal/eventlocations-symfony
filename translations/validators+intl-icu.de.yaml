@@ -129,6 +129,14 @@ crm:
         choice: Bitte einen Eintrag aus der Liste wählen.
     link_venue:
         required: Bitte eine Location aus der Liste wählen.
+    activity:
+        kind: Dieser Eintrag gehört zu einer Firma oder einem Kontakt.
+        record: Dieser Eintrag gehört zu einer Firma oder einem Kontakt.
+        type: Bitte eine Art aus der Liste wählen.
+        occurred_at: Bitte ein gültiges Datum mit Uhrzeit eingeben.
+    task:
+        due_on: Bitte ein gültiges Datum eingeben.
+        assignee: Bitte jemanden aus der Liste wählen.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.

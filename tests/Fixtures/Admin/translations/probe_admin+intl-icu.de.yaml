@@ -11,3 +11,5 @@ panel:
     body: 'Panel {id}'
 search:
     label: Fake Treffer
+timeline:
+    label: Fake Eintrag

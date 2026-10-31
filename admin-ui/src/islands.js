@@ -8,4 +8,5 @@ export default {
     'photo-manager': () => import('./islands/PhotoManagerIsland.vue'),
     'room-editor': () => import('./islands/RoomEditorIsland.vue'),
     'record-properties': () => import('./islands/RecordPropertiesIsland.vue'),
+    timeline: () => import('./islands/TimelineIsland.vue'),
 };

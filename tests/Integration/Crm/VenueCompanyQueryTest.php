@@ -6,9 +6,11 @@ namespace App\Tests\Integration\Crm;
 
 use App\Crm\ReadModel\CompanyRecordContact;
 use App\Crm\ReadModel\VenueCompanyQuery;
+use App\Crm\ReadModel\VenueCompanyTask;
 use App\Crm\ValueObject\CompanyStage;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -45,6 +47,27 @@ final class VenueCompanyQueryTest extends KernelTestCase
         self::assertSame(CompanyStage::Customer, $found->stage);
         self::assertNotNull($found->since);
         self::assertSame(['Aebi', 'Laura Meier'], array_map(static fn (CompanyRecordContact $contact): string => $contact->fullName(), $found->contacts));
+    }
+
+    public function test_the_open_tasks_come_in_the_one_statement_by_date(): void
+    {
+        $venue = VenueFactory::new()->withoutLocation(null)->create();
+        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $contact = ContactFactory::createOne(['company' => $company]);
+        TaskFactory::createOne(['title' => 'Später', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-11-05')]);
+        TaskFactory::createOne(['title' => 'Früher', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
+        TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'company' => $company]);
+        TaskFactory::createOne(['title' => 'Fremd', 'company' => CompanyFactory::createOne()]);
+
+        $holder = self::getContainer()->get('doctrine.debug_data_holder');
+        self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
+        $holder->reset();
+
+        $found = $this->query()->forVenue($venue->number());
+
+        self::assertCount(1, $holder->getData()['default'] ?? []);
+        self::assertNotNull($found);
+        self::assertSame([['Früher', '2026-11-01'], ['Später', '2026-11-05']], array_map(static fn (VenueCompanyTask $task): array => [$task->title, $task->dueOn], $found->tasks));
     }
 
     public function test_a_venue_without_a_company_gives_only_its_id(): void

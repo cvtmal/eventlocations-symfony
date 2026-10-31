@@ -15,10 +15,12 @@ use App\Crm\ReadModel\VenueCompanyQuery;
 use App\Crm\ValueObject\CompanyStage;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Venues\DetailVenues;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Zenstruck\Foundry\Test\Factories;
@@ -30,6 +32,7 @@ use Zenstruck\Foundry\Test\Factories;
 final class VenueCrmPanelTest extends WebTestCase
 {
     use AdminSession;
+    use ClockSensitiveTrait;
     use CountsQueries;
     use Factories;
     use FailsCommands;
@@ -55,6 +58,38 @@ final class VenueCrmPanelTest extends WebTestCase
         self::assertSame('Laura Meier', $panel->filter('dd a')->text());
         self::assertSame('/admin/crm/kontakte/'.$contact->id(), $panel->filter('dd a')->attr('href'));
         self::assertCount(0, $panel->filter('form'));
+    }
+
+    public function test_the_panel_lists_the_open_tasks_of_the_company_and_its_contacts(): void
+    {
+        self::mockTime('2026-10-31 10:00:00 UTC');
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::withoutPlace();
+        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $contact = ContactFactory::createOne(['company' => $company]);
+        TaskFactory::createOne(['title' => 'Vertrag senden', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
+        TaskFactory::createOne(['title' => 'Rückruf', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
+        TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'company' => $company]);
+        TaskFactory::createOne(['title' => 'Fremd', 'company' => CompanyFactory::createOne()]);
+
+        $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
+
+        $panel = $crawler->filter('aside section[aria-labelledby="crm"]');
+        self::assertSame('Offene Aufgaben', $panel->filter('.crm-panel__heading')->text());
+        self::assertSame(['Vertrag senden Überfällig', 'Rückruf Heute'], $panel->filter('.crm-panel__task')->each(static fn (Crawler $task): string => $task->text()));
+        self::assertCount(0, $panel->filter('form'), 'Read-only here: the toggles are on the company page.');
+    }
+
+    public function test_a_company_without_open_tasks_shows_no_heading(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::withoutPlace();
+        CompanyFactory::new()->withVenues($venue)->create();
+
+        $this->client->request('GET', '/admin/locations/'.$venue->number());
+
+        self::assertSelectorExists('.crm-panel__name');
+        self::assertSelectorNotExists('.crm-panel__heading');
     }
 
     public function test_a_company_without_contacts_says_so(): void

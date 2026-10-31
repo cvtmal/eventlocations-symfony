@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace App\Tests\Application\Crm;
 
 use App\Admin\ValueObject\AdminRole;
+use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
+use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
+use App\Venues\Command\PublishVenue;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -63,8 +68,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame('/admin/crm/kontakte/'.$laura->id(), $crawler->filter('#kontakte .crm-side__link')->attr('href'));
         self::assertCount(1, $crawler->filter('#kontakte a[href="/admin/crm/kontakte/neu?company='.$company->id().'"]'));
 
-        // No middle column content and no tabs in #27a; an editor gets no Aktionen.
-        self::assertSame('', $crawler->filter('.crm-record__center')->html());
+        // No tabs yet; an editor gets no Aktionen.
         self::assertSelectorNotExists('.tabs--record');
         self::assertSelectorNotExists('#record-actions');
         self::assertSelectorNotExists('#company-delete');
@@ -300,15 +304,117 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
     }
 
-    public function test_the_page_runs_two_queries(): void
+    public function test_the_page_mounts_the_timeline_with_its_first_page(): void
+    {
+        ['user' => $author] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
+        $company = CompanyFactory::createOne();
+        for ($day = 1; $day <= TimelineQuery::PER_PAGE + 1; ++$day) {
+            ActivityFactory::new()->onCompany($company)->create(['actor' => $author, 'body' => 'Eintrag '.$day, 'occurredAt' => new \DateTimeImmutable(\sprintf('2026-08-%02dT10:00:00+02:00', $day))]);
+        }
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertResponseIsSuccessful();
+        $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        self::assertSame('company', $props['kind']);
+        self::assertSame($company->id(), $props['recordId']);
+        self::assertSame($author->id(), $props['viewerId']);
+        self::assertSame('/admin/api/crm/companies/'.$company->id().'/timeline', $props['urls']['timeline']);
+        self::assertSame('/admin/api/crm/activities', $props['urls']['activities']);
+        self::assertSame(['note', 'email_logged', 'call', 'meeting'], array_column($props['types'], 'code'));
+        self::assertSame(['Notizen', 'E-Mails', 'Anrufe', 'Meetings'], array_column($props['types'], 'tab'));
+        self::assertSame(['Notiz', 'E-Mail', 'Anruf', 'Meeting', 'Aufgabe'], array_column($props['composer'], 'label'));
+        self::assertSame(['Andrea Keller'], array_column($props['assignees'], 'name'));
+        self::assertSame('__type__ von __actor__', $props['labels']['by']);
+        self::assertSame('«__venue__» publiziert', $props['labels']['system']['published']);
+
+        // P6: 20 entries in the props, and the same 20 read-only without JS.
+        self::assertCount(TimelineQuery::PER_PAGE, $props['page']['entries']);
+        self::assertNotNull($props['page']['next']);
+        self::assertSame('Eintrag 21', $props['page']['entries'][0]['body']);
+        self::assertTrue($props['page']['entries'][0]['canEdit']);
+
+        $fallback = $crawler->filter('[data-island="timeline"] .timeline-item');
+        self::assertCount(TimelineQuery::PER_PAGE, $fallback);
+        self::assertSame('Notiz von Andrea Keller', $fallback->first()->filter('.timeline-item__title')->text());
+        self::assertSame('21.08.2026, 10:00', $fallback->first()->filter('.timeline-item__meta')->text());
+        self::assertSame('Eintrag 21', $fallback->first()->filter('.muted')->text());
+
+        self::assertSame(['note', 'email_logged', 'call', 'task'], $crawler->filter('.crm-record__card [data-composer-tab]')->each(static fn (Crawler $button): ?string => $button->attr('data-composer-tab')));
+        self::assertSame(['Notiz', 'E-Mail', 'Anruf', 'Aufgabe'], $crawler->filter('.crm-record__card [data-composer-tab]')->each(static fn (Crawler $button): string => $button->text()));
+    }
+
+    public function test_a_body_reaches_the_page_only_as_text(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        ActivityFactory::new()->onCompany($company)->create(['body' => '<script>alert(1)</script><b>fett</b>']);
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertResponseIsSuccessful();
+        $html = (string) $this->client->getResponse()->getContent();
+        self::assertStringNotContainsString('<script>alert(1)', $html);
+        self::assertStringNotContainsString('<b>fett', $html);
+        self::assertSame('<script>alert(1)</script><b>fett</b>', $crawler->filter('[data-island="timeline"] .timeline-item .muted')->text());
+        self::assertCount(0, $crawler->filter('[data-island="timeline"] b'));
+    }
+
+    public function test_the_fallback_shows_a_venue_event_and_an_erased_entry(): void
+    {
+        ['user' => $viewer] = $this->logInAs(AdminRole::Editor);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $erased = ActivityFactory::new()->onCompany($company)->create(['body' => 'Geheim']);
+        $erased->anonymise(new \DateTimeImmutable('2026-10-01T10:00:00+02:00'));
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+        $entityManager->flush();
+        $entityManager->getConnection()->insert('admin_audit_log', [
+            'id' => EntityId::generate(),
+            'actor_type' => 'admin_user',
+            'actor_id' => $viewer->id(),
+            'command' => PublishVenue::class,
+            'subject_type' => 'venue',
+            'subject_id' => (string) $venue->number(),
+            'changes' => '{}',
+            'created_at' => '2026-10-29 11:48:00+01',
+        ]);
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertResponseIsSuccessful();
+        $system = $crawler->filter('[data-island="timeline"] .timeline-item--system');
+        self::assertCount(1, $system);
+        self::assertStringContainsString('«Schloss Seeblick» publiziert · Andrea Keller · 29.10.2026, 11:48', $system->text());
+        self::assertSame('Inhalt entfernt', $crawler->filter('[data-island="timeline"] .timeline-item--card .muted')->text());
+        self::assertStringNotContainsString('Geheim', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function test_a_company_with_no_entries_says_so(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertSame('Noch keine Aktivitäten.', $crawler->filter('[data-island="timeline"] .crm-timeline')->text());
+    }
+
+    public function test_the_page_runs_six_queries(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
         $company = CompanyFactory::new()->withVenues(...$venues)->create(['owner' => $owner]);
-        ContactFactory::createMany(3, ['company' => $company]);
+        $contacts = ContactFactory::createMany(3, ['company' => $company]);
+        TaskFactory::createOne(['company' => $company]);
+        TaskFactory::createOne(['contact' => $contacts[0]]);
 
-        // The company with its venues and contacts, the owners; with the user's refresh 3 in production (P12 ceiling 5).
-        self::assertSame(2, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
+        // The company with its venues and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
+        // timeline's activities, venue names and audit rows, the Aufgaben card; with the user's refresh 7 in production
+        // (P12 ceiling 9).
+        self::assertSame(6, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
     }
 
     private function auditRows(string $companyId): int

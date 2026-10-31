@@ -17,6 +17,22 @@
     align-items: start;
 }
 
+.widget {
+    position: relative;
+}
+
 .widget--wide {
     grid-column: 1 / -1;
+}
+
+// The link in a widget's head (`Main.dc.html`). The dashboard draws the head; a widget's template comes after it.
+.widget__head-link {
+    position: absolute;
+    top: var(--a-space-4);
+    right: var(--a-space-5);
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    // The head's title line, so the two share a centre.
+    line-height: 24px;
 }

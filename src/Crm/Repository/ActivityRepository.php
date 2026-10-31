@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Crm\Repository;
 
 use App\Crm\Entity\Activity;
+use App\Crm\Exception\ActivityNotFound;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @extends ServiceEntityRepository<Activity>
@@ -17,6 +20,19 @@ class ActivityRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Activity::class);
+    }
+
+    /**
+     * Loads the entry under `SELECT … FOR UPDATE` (inside the bus transaction), so an erasure cannot blank it
+     * between the check and the write.
+     *
+     * @throws ActivityNotFound
+     */
+    public function lock(string $id): Activity
+    {
+        $entity = Uuid::isValid($id) ? $this->find($id, LockMode::PESSIMISTIC_WRITE) : null;
+
+        return $entity ?? throw ActivityNotFound::forId($id);
     }
 
     /**

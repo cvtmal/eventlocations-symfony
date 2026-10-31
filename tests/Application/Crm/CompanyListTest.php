@@ -137,7 +137,8 @@ final class CompanyListTest extends WebTestCase
         CompanyFactory::new()->withVenues(VenueFactory::new()->withoutLocation(null)->create())->create(['owner' => $owner]);
         CompanyFactory::createMany(2);
 
-        // The owners, COUNT, the rows, the venues left for the bootstrap; with the user's refresh 5 in production (P12 ceiling 5).
+        // The owners, which carry the sidebar's badge (`TaskBadge`), COUNT, the rows, the venues left for the bootstrap;
+        // with the user's refresh 5 in production (P12 ceiling 5, the lead's addition 3: the badge may not make it 6).
         self::assertSame(4, $this->queriesOf('/admin/crm/firmen?stage=prospect&sort=venues'));
     }
 

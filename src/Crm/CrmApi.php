@@ -5,12 +5,23 @@ declare(strict_types=1);
 namespace App\Crm;
 
 use App\Admin\ValueObject\ValidationErrors;
+use App\Crm\Exception\ActivityNotFound;
+use App\Crm\Exception\ActivityNotYours;
+use App\Crm\Exception\ActivityReadOnly;
 use App\Crm\Exception\CompanyNotFound;
 use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\ContactNotFound;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\StaleProperty;
+use App\Crm\Form\ActivityEdit;
+use App\Crm\Form\NewActivity;
+use App\Crm\Form\NewTask;
+use App\Crm\Form\PropertyConstraints;
 use App\Crm\Form\PropertyEdit;
+use App\Crm\ValueObject\ActivityDate;
+use App\Crm\ValueObject\PropertyValue;
+use App\Crm\ValueObject\RecordKind;
+use App\Crm\ValueObject\TaskDueDate;
 use App\Shared\Validator\CleanText;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,17 +29,22 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Validator\Validator\ContextualValidatorInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The answers of the CRM's JSON endpoints (D11), the sibling of #25's `Cms\VenueMediaApi`, which
  * Crm may not import. Every error is `{"errors": {"<field>": ["message"]}}`: invalid input and the
- * handler's input rules 422 on their field, a stale field 409 on `""`, a missing record 404 on `""`.
+ * handler's input rules 422 on their field, a stale field 409 on `""`, a missing record 404 on `""`,
+ * somebody else's or a read-only timeline entry 403 on `""`.
  * `adminFetch` drops the body of a 409 and a 404, so the island shows its own labels for them.
  */
 final class CrmApi
 {
+    /** `InvalidPropertyValue::$field` of `CreateTask` to the composer's input. */
+    private const array TASK_FIELDS = ['title' => 'title', 'owner' => 'assigneeId'];
+
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly ValidatorInterface $validator,
@@ -44,8 +60,7 @@ final class CrmApi
      */
     public function propertyEdit(Request $request, array $fields): PropertyEdit|JsonResponse
     {
-        $payload = json_decode($request->getContent(), true);
-        $payload = \is_array($payload) ? $payload : [];
+        $payload = self::payload($request);
         $field = $payload['field'] ?? null;
         $value = $payload['value'] ?? null;
         $expected = $payload['expected'] ?? null;
@@ -68,6 +83,81 @@ final class CrmApi
         \assert(\is_string($field) && (null === $value || \is_string($value)) && (null === $expected || \is_string($expected)));
 
         return new PropertyEdit($field, $value, $expected);
+    }
+
+    /**
+     * Reads `{"kind", "recordId", "type", "body", "occurredAt"}`. A record id that names nothing is the handler's
+     * to refuse, with a 404 like every other missing record.
+     *
+     * @param list<string> $types the kinds this user may write
+     */
+    public function newActivity(Request $request, array $types): NewActivity|JsonResponse
+    {
+        $payload = self::payload($request);
+        $kind = $payload['kind'] ?? null;
+        $recordId = $payload['recordId'] ?? null;
+        $type = $payload['type'] ?? null;
+        $body = self::canonicalText($payload, 'body');
+        $occurredAt = ActivityDate::parse($payload['occurredAt'] ?? null);
+
+        $violations = $this->recordFields($this->activityFields($body, $occurredAt), $kind, $recordId)
+            ->atPath('type')->validate($type, self::choice($types, 'crm.activity.type'))
+            ->getViolations();
+
+        if (\count($violations) > 0) {
+            return $this->invalid($violations);
+        }
+
+        \assert(\is_string($kind) && \is_string($recordId) && \is_string($type) && \is_string($body) && null !== $occurredAt);
+
+        return new NewActivity(RecordKind::from($kind), $recordId, $type, $body, $occurredAt);
+    }
+
+    /**
+     * Reads `{"body", "occurredAt"}`, what the composer's edit mode can change.
+     */
+    public function activityEdit(Request $request): ActivityEdit|JsonResponse
+    {
+        $payload = self::payload($request);
+        $body = self::canonicalText($payload, 'body');
+        $occurredAt = ActivityDate::parse($payload['occurredAt'] ?? null);
+
+        $violations = $this->activityFields($body, $occurredAt)->getViolations();
+        if (\count($violations) > 0) {
+            return $this->invalid($violations);
+        }
+
+        \assert(\is_string($body) && null !== $occurredAt);
+
+        return new ActivityEdit($body, $occurredAt);
+    }
+
+    /**
+     * Reads `{"kind", "recordId", "title", "dueOn", "assigneeId"}`, the composer's Aufgabe tab. Errors are keyed
+     * `title|dueOn|assigneeId` under the inputs; a missing record is the handler's 404, as for an activity.
+     */
+    public function newTask(Request $request): NewTask|JsonResponse
+    {
+        $payload = self::payload($request);
+        $kind = $payload['kind'] ?? null;
+        $recordId = $payload['recordId'] ?? null;
+        $title = self::canonicalText($payload, 'title');
+        $dueOn = TaskDueDate::parse($payload['dueOn'] ?? null);
+        $assigneeId = $payload['assigneeId'] ?? null;
+
+        $violations = $this->recordFields($this->validator->startContext(), $kind, $recordId)
+            ->atPath('title')->validate($title, new Assert\Sequentially(PropertyConstraints::taskTitle()))
+            ->atPath('dueOn')->validate($dueOn, new Assert\NotNull(message: 'crm.task.due_on'))
+            ->atPath('assigneeId')->validate($assigneeId, new Assert\Sequentially(PropertyConstraints::taskAssignee()))
+            ->getViolations();
+
+        if (\count($violations) > 0) {
+            return $this->invalid($violations);
+        }
+
+        \assert(\is_string($kind) && \is_string($recordId) && \is_string($title) && null !== $dueOn && \is_string($assigneeId));
+
+        return new NewTask(RecordKind::from($kind), $recordId, $title, $dueOn, $assigneeId);
     }
 
     public function invalid(ConstraintViolationListInterface $violations): JsonResponse
@@ -93,12 +183,80 @@ final class CrmApi
                 $exception instanceof StaleProperty => $this->error('', 'api.stale', Response::HTTP_CONFLICT),
                 $exception instanceof ContactEmailTaken => $this->error('value', 'api.email_taken', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof InvalidPropertyValue => $this->error('value', $exception->isRequired() ? 'api.required' : 'api.unknown_choice', Response::HTTP_UNPROCESSABLE_ENTITY),
-                $exception instanceof CompanyNotFound, $exception instanceof ContactNotFound => $this->notFound(),
+                $exception instanceof ActivityNotYours => $this->error('', 'api.not_yours', Response::HTTP_FORBIDDEN),
+                $exception instanceof ActivityReadOnly => $this->error('', 'api.read_only', Response::HTTP_FORBIDDEN),
+                $exception instanceof CompanyNotFound, $exception instanceof ContactNotFound, $exception instanceof ActivityNotFound => $this->notFound(),
                 default => throw $failure,
             };
         }
 
         throw $failure;
+    }
+
+    /**
+     * `failure()` for `CreateTask`: the handler's refusals land on the composer's inputs, not on `value`.
+     *
+     * @throws HandlerFailedException when the handler failed for another reason
+     */
+    public function taskFailure(HandlerFailedException $failure): JsonResponse
+    {
+        $invalid = array_values($failure->getWrappedExceptions(InvalidPropertyValue::class))[0] ?? null;
+        if (null === $invalid) {
+            return $this->failure($failure);
+        }
+
+        return $this->error(self::TASK_FIELDS[$invalid->field] ?? throw $failure, $invalid->isRequired() ? 'api.required' : 'api.unknown_choice', Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private static function payload(Request $request): array
+    {
+        $payload = json_decode($request->getContent(), true);
+
+        return \is_array($payload) ? $payload : [];
+    }
+
+    /**
+     * @param array<mixed> $payload
+     */
+    private static function canonicalText(array $payload, string $key): mixed
+    {
+        $text = $payload[$key] ?? null;
+
+        return \is_string($text) ? PropertyValue::canonical($text) : $text;
+    }
+
+    /**
+     * @param list<string> $choices
+     */
+    private static function choice(array $choices, string $message): Assert\Sequentially
+    {
+        return new Assert\Sequentially([
+            new Assert\NotNull(message: $message),
+            new Assert\Type('string'),
+            new CleanText(),
+            new Assert\Choice(choices: $choices, message: $message),
+        ]);
+    }
+
+    private function recordFields(ContextualValidatorInterface $fields, mixed $kind, mixed $recordId): ContextualValidatorInterface
+    {
+        return $fields
+            ->atPath('kind')->validate($kind, self::choice(array_column(RecordKind::cases(), 'value'), 'crm.activity.kind'))
+            ->atPath('recordId')->validate($recordId, new Assert\Sequentially([
+                new Assert\NotNull(message: 'crm.activity.record'),
+                new Assert\Type('string'),
+                new CleanText(),
+            ]));
+    }
+
+    private function activityFields(mixed $body, ?\DateTimeImmutable $occurredAt): ContextualValidatorInterface
+    {
+        return $this->validator->startContext()
+            ->atPath('body')->validate($body, new Assert\Sequentially(PropertyConstraints::activityBody()))
+            ->atPath('occurredAt')->validate($occurredAt, new Assert\NotNull(message: 'crm.activity.occurred_at'));
     }
 
     private function error(string $field, string $key, int $status): JsonResponse

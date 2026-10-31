@@ -52,6 +52,8 @@
     {{ include('admin/components/_property.html.twig', {label: 'record.created'|trans({}, 'crm'), value: contact.createdAt|swiss_date}, with_context = false) }}
 {% endblock %}
 
+{% block record_center %}{{ include('admin/crm/_timeline.html.twig', {props: timeline}, with_context = false) }}{% endblock %}
+
 {% block record_aside %}
     <section class="card crm-side" aria-labelledby="crm-company-title" data-crm-refresh="company">
         <div class="card__head">
@@ -73,4 +75,6 @@
             {% endif %}
         </div>
     </section>
+
+    {{ include('admin/crm/task/_card.html.twig', {tasks: tasks, return_to: path('admin_crm_contacts_show', {id: contact.id})}, with_context = false) }}
 {% endblock %}

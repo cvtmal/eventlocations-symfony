@@ -8,6 +8,7 @@ use App\Admin\Form\ConfirmActionType;
 use App\Crm\Form\CompanyType;
 use App\Crm\Form\ContactType;
 use App\Crm\Form\LinkVenueType;
+use App\Crm\Form\TaskType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Form\FormError;
@@ -31,6 +32,7 @@ final class CrmFormsCsrfTest extends KernelTestCase
         yield 'company' => [CompanyType::class, ['owners' => []]];
         yield 'contact' => [ContactType::class, ['owners' => [], 'company_url' => '/admin/api/crm/companies']];
         yield 'link venue' => [LinkVenueType::class, ['venue_url' => '/admin/api/crm/venues']];
+        yield 'task' => [TaskType::class, ['owners' => []]];
         yield 'confirmation' => [ConfirmActionType::class, []];
     }
 

@@ -118,22 +118,88 @@ final class AuditLogQueryTest extends KernelTestCase
         self::assertSame('11:00', $rows[0]->timeInZurich());
     }
 
+    public function test_for_subjects_merges_ids_and_commands_newest_first(): void
+    {
+        $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue', subjectId: '1', command: 'A');
+        $this->entry('2026-10-30 10:00:00+00', subjectType: 'venue', subjectId: '2', command: 'A');
+        $this->entry('2026-10-30 11:00:00+00', subjectType: 'venue', subjectId: '3', command: 'A');
+        $this->entry('2026-10-30 12:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Other');
+        $this->entry('2026-10-30 13:00:00+00', subjectType: 'deal', subjectId: '1', command: 'A');
+
+        $rows = $this->query()->forSubjects('venue', ['1', '2'], ['A'], 10);
+
+        // Zurich is an hour ahead of UTC from 25 October.
+        self::assertSame(['11:00' => '2', '10:00' => '1'], self::byTime($rows));
+    }
+
+    public function test_for_subjects_pages_by_keyset_across_equal_timestamps(): void
+    {
+        $ids = [];
+        for ($i = 0; $i < 5; ++$i) {
+            $ids[] = $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue', subjectId: '1', command: 'A');
+        }
+        rsort($ids);
+
+        $first = $this->query()->forSubjects('venue', ['1'], ['A'], 2);
+        $second = $this->query()->forSubjects('venue', ['1'], ['A'], 2, [$first[1]->createdAt, $first[1]->id]);
+        $third = $this->query()->forSubjects('venue', ['1'], ['A'], 2, [$second[1]->createdAt, $second[1]->id]);
+
+        self::assertSame($ids, array_map(static fn ($row): string => $row->id, [...$first, ...$second, ...$third]));
+    }
+
+    public function test_for_subjects_cuts_a_command_that_must_name_a_field(): void
+    {
+        $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Basics', changes: '{"changed": ["name"], "tier": "basic"}');
+        $kept = $this->entry('2026-10-30 10:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Basics', changes: '{"changed": ["name", "tier"], "tier": "premium"}');
+        $other = $this->entry('2026-10-30 11:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Published', changes: '{"status": "published"}');
+
+        $rows = $this->query()->forSubjects('venue', ['1'], ['Basics', 'Published'], 10, null, ['Basics' => 'tier']);
+
+        self::assertSame([$other, $kept], array_map(static fn ($row): string => $row->id, $rows));
+    }
+
+    public function test_for_subjects_without_ids_or_commands_runs_no_statement(): void
+    {
+        $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue', subjectId: '1', command: 'A');
+
+        self::assertSame([], $this->query()->forSubjects('venue', [], ['A'], 10));
+        self::assertSame([], $this->query()->forSubjects('venue', ['1'], [], 10));
+    }
+
+    /**
+     * @param list<\App\Admin\ReadModel\AuditLogRow> $rows
+     *
+     * @return array<string, string>
+     */
+    private static function byTime(array $rows): array
+    {
+        $byTime = [];
+        foreach ($rows as $row) {
+            $byTime[$row->timeInZurich()] = $row->subjectId;
+        }
+
+        return $byTime;
+    }
+
     private function query(): AuditLogQuery
     {
         return new AuditLogQuery($this->connection);
     }
 
-    private function entry(string $at, ?string $actorId = null, string $subjectType = 'admin_user', string $subjectId = 'x'): void
+    private function entry(string $at, ?string $actorId = null, string $subjectType = 'admin_user', string $subjectId = 'x', string $command = 'App\Admin\Command\CreateAdminUser', string $changes = '{"role": "editor"}'): string
     {
+        $id = EntityId::generate();
         $this->connection->insert('admin_audit_log', [
-            'id' => EntityId::generate(),
+            'id' => $id,
             'actor_type' => null === $actorId ? 'console' : 'admin_user',
             'actor_id' => $actorId,
-            'command' => 'App\Admin\Command\CreateAdminUser',
+            'command' => $command,
             'subject_type' => $subjectType,
             'subject_id' => $subjectId,
-            'changes' => '{"role": "editor"}',
+            'changes' => $changes,
             'created_at' => $at,
         ]);
+
+        return $id;
     }
 }

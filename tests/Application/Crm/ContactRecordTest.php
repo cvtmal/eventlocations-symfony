@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Application\Crm;
 
 use App\Admin\ValueObject\AdminRole;
+use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Contact;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
+use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -85,12 +88,46 @@ final class ContactRecordTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
-    public function test_the_page_runs_two_queries(): void
+    public function test_the_page_mounts_the_timeline_with_its_first_page(): void
+    {
+        ['user' => $author] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
+        $company = CompanyFactory::createOne();
+        $contact = ContactFactory::createOne(['company' => $company]);
+        ActivityFactory::new()->ofType(ActivityType::CALL)->onContact($contact)->create([
+            'actor' => $author,
+            'body' => '<b>Rückruf</b>',
+            'occurredAt' => new \DateTimeImmutable('2026-10-29T14:02:00+01:00'),
+        ]);
+        ActivityFactory::new()->onCompany($company)->create(['body' => 'Nur auf der Firma']);
+
+        $crawler = $this->client->request('GET', '/admin/crm/kontakte/'.$contact->id());
+
+        self::assertResponseIsSuccessful();
+        $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        self::assertSame('contact', $props['kind']);
+        self::assertSame($contact->id(), $props['recordId']);
+        self::assertSame('/admin/api/crm/contacts/'.$contact->id().'/timeline', $props['urls']['timeline']);
+        self::assertSame(['<b>Rückruf</b>'], array_column($props['page']['entries'], 'body'));
+
+        $fallback = $crawler->filter('[data-island="timeline"] .timeline-item');
+        self::assertCount(1, $fallback);
+        self::assertSame('Anruf von Andrea Keller', $fallback->filter('.timeline-item__title')->text());
+        self::assertSame('<b>Rückruf</b>', $fallback->filter('.muted')->text());
+        self::assertCount(0, $fallback->filter('b'));
+        self::assertStringNotContainsString('<b>Rückruf', (string) $this->client->getResponse()->getContent());
+
+        self::assertCount(4, $crawler->filter('.crm-record__card [data-composer-tab]'));
+    }
+
+    public function test_the_page_runs_four_queries(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         $contact = ContactFactory::createOne(['company' => CompanyFactory::createOne(), 'owner' => $owner]);
+        TaskFactory::createOne(['contact' => $contact]);
 
-        // The contact with its company and owner, the owners; with the user's refresh 3 in production (P12 ceiling 4).
-        self::assertSame(2, $this->queriesOf('/admin/crm/kontakte/'.$contact->id()));
+        // The contact with its company and owner, the owners, which carry the sidebar's badge (`TaskBadge`), the
+        // timeline's activities, the Aufgaben card; with the user's refresh 5 in production (P12 ceiling 8).
+        self::assertSame(4, $this->queriesOf('/admin/crm/kontakte/'.$contact->id()));
     }
 }

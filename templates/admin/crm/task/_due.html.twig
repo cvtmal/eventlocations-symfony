@@ -1,0 +1,4 @@
+{#
+    A task's due pill. Include with `with_context = false`: due from `crm_task_due(dueOn, done)`.
+#}
+{{ include('admin/components/_pill.html.twig', {label: due.label, tone: due.tone}, with_context = false) }}

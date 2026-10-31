@@ -30,6 +30,7 @@ defineProps({
         v-if="body"
         class="muted"
       >{{ body }}</span>
+      <slot />
     </div>
   </li>
 </template>

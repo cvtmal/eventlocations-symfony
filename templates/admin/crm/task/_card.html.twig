@@ -1,0 +1,26 @@
+{#
+    The Aufgaben card of a record (`Company.dc.html`, CRM-5). Include with `with_context = false`: tasks (list<TaskRow>,
+    open ones), return_to (the record's path; a toggle comes back to this card).
+#}
+<section class="card crm-side" id="aufgaben" aria-labelledby="crm-tasks-title">
+    <div class="card__head">
+        <h2 id="crm-tasks-title">{{ 'task.card.title'|trans({}, 'crm') }} <span class="crm-side__count">({{ tasks|length }})</span></h2>
+    </div>
+    <div class="card__body">
+        {% if tasks is empty %}
+            <p class="crm-side__empty">{{ 'task.card.empty'|trans({}, 'crm') }}</p>
+        {% else %}
+            <ul class="crm-side__list">
+                {% for task in tasks %}
+                    <li class="crm-task">
+                        {{ include('admin/crm/task/_toggle.html.twig', {task: task, return_to: return_to ~ '#aufgaben'}, with_context = false) }}
+                        <span class="crm-task__text">
+                            <span class="crm-task__title">{{ task.title }}</span>
+                            <span class="crm-task__due">{{ include('admin/crm/task/_due.html.twig', {due: crm_task_due(task.dueOn)}, with_context = false) }}</span>
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</section>

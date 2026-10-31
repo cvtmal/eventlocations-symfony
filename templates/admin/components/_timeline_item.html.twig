@@ -1,6 +1,6 @@
 {#
     One entry of a timeline; wrap the entries in <ol class="timeline">. Include with `with_context = false`:
-      variant card|system (default card), icon, tone blue|pink|green, title, meta, body (all translated).
+      variant card|system (default card), icon, tone blue|pink|green|amber|grey, title, meta, body (all translated).
 #}
 {%- set variant = variant|default('card') -%}
 <li class="timeline-item timeline-item--{{ variant }}">

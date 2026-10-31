@@ -14,6 +14,7 @@ final readonly class VenueCompany
 {
     /**
      * @param list<CompanyRecordContact> $contacts
+     * @param list<VenueCompanyTask>     $tasks    the company's open tasks, those on its contacts included
      */
     public function __construct(
         public string $venueId,
@@ -22,6 +23,7 @@ final readonly class VenueCompany
         public ?CompanyStage $stage,
         public ?\DateTimeImmutable $since,
         public array $contacts,
+        public array $tasks,
     ) {
     }
 

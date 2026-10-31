@@ -1,0 +1,10 @@
+{#
+    Done or undone, a POST form so it works without JS and leaves the page by PRG (`TaskToggleController`). The form
+    states the wanted state. Include with `with_context = false`: task (TaskRow), return_to (a path under `/admin/`).
+#}
+<form class="crm-task__form" method="post" action="{{ path('admin_crm_tasks_toggle', {id: task.id}) }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+    <input type="hidden" name="done" value="{{ task.done ? '0' : '1' }}">
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+    <button class="crm-task__toggle{{ task.done ? ' crm-task__toggle--done' }}" type="submit" aria-label="{{ (task.done ? 'task.toggle.reopen' : 'task.toggle.done')|trans({title: task.title}, 'crm') }}">{{ admin_icon('check') }}</button>
+</form>

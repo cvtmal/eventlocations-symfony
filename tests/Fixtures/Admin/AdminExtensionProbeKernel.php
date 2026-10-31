@@ -16,6 +16,7 @@ use App\Tests\Fixtures\Admin\FakeModule\FakeRecordPanel;
 use App\Tests\Fixtures\Admin\FakeModule\FakeRecordTab;
 use App\Tests\Fixtures\Admin\FakeModule\FakeSearchProvider;
 use App\Tests\Fixtures\Admin\FakeModule\FakeSecondNavigationItem;
+use App\Tests\Fixtures\Admin\FakeModule\FakeTimelineActivityType;
 use App\Tests\Fixtures\I18n\I18nProbeKernel;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
@@ -40,6 +41,7 @@ class AdminExtensionProbeKernel extends I18nProbeKernel
         FakeJsonController::class,
         FakeAdminOnlyJsonController::class,
         FakeSearchProvider::class,
+        FakeTimelineActivityType::class,
     ];
 
     protected function configureProbe(ContainerConfigurator $container): void

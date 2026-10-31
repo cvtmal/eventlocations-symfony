@@ -1,6 +1,6 @@
 // A CRM record page (CRM-3, Company.dc.html): the left properties card and the middle column inside
-// `.shell__primary`, the association cards in `.shell__aside` (P3). The middle column is empty in #27a and
-// then hidden, so the card takes the row (P2).
+// `.shell__primary`, the association cards in `.shell__aside` (P3). A record without a timeline has an empty
+// middle column, which is hidden, so the card takes the row (P2).
 .crm-record {
     display: flex;
     flex-wrap: wrap;

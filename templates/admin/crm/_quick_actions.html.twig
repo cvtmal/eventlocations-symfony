@@ -1,0 +1,14 @@
+{#-
+    The left card's quick actions (Company.dc.html): each opens a tab of the timeline's composer, which listens for
+    `[data-composer-tab]` on the document. A value is a tab's code: an activity type, or `task`.
+-#}
+<div class="crm-quick-actions">
+    {%- for action in [
+        {tab: 'note', icon: 'sticky-note', label: 'activity.type.note'},
+        {tab: 'email_logged', icon: 'mail', label: 'activity.type.email_logged'},
+        {tab: 'call', icon: 'phone', label: 'activity.type.call'},
+        {tab: 'task', icon: 'square-check-big', label: 'timeline.task.label'},
+    ] -%}
+        <button class="crm-quick-action" type="button" data-composer-tab="{{ action.tab }}"><span class="crm-quick-action__icon">{{ admin_icon(action.icon) }}</span>{{ action.label|trans({}, 'crm') }}</button>
+    {%- endfor -%}
+</div>

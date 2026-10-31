@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Admin\ReadModel;
 
 use App\Admin\ValueObject\AuditActorType;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 /**
- * Reads admin_audit_log, newest first. The screen uses search(); "Zuletzt bearbeitet von" (CMS-11) and the
- * CRM timeline (#27) use forSubject().
+ * Reads admin_audit_log, newest first. The screen uses search(), "Zuletzt bearbeitet von" (CMS-11) uses forSubject()
+ * and the CRM timeline (#27) uses forSubjects().
  */
 final class AuditLogQuery
 {
@@ -52,6 +53,53 @@ final class AuditLogQuery
         $rows = $this->connection->fetchAllAssociative(
             self::COLUMNS.' WHERE l.subject_type = :type AND l.subject_id = :id ORDER BY l.created_at DESC, l.id DESC LIMIT :limit',
             ['type' => $type, 'id' => $id, 'limit' => $limit],
+        );
+
+        return array_map(self::row(...), $rows);
+    }
+
+    /**
+     * The rows of several subjects of one type, newest first, for a timeline that merges them with its own entries.
+     * `$before` is the keyset: only rows strictly older than the `(created_at, id)` pair. `$changedMustInclude` maps a
+     * command to a field its `changes.changed` list must name, so a command that rarely matters (a venue's basics
+     * edit, which counts only when the tier moved) is cut in SQL and cannot starve the page. Empty `$ids` or
+     * `$commands` give `[]` without a statement.
+     *
+     * @param list<string>                                 $ids
+     * @param list<string>                                 $commands           fully qualified command class names
+     * @param array{0: \DateTimeImmutable, 1: string}|null $before
+     * @param array<string, string>                        $changedMustInclude
+     *
+     * @return list<AuditLogRow>
+     */
+    public function forSubjects(string $type, array $ids, array $commands, int $limit, ?array $before = null, array $changedMustInclude = []): array
+    {
+        if ([] === $ids || [] === $commands) {
+            return [];
+        }
+
+        $where = ' WHERE l.subject_type = :type AND l.subject_id IN (:ids) AND l.command IN (:commands)';
+        $parameters = ['type' => $type, 'ids' => $ids, 'commands' => $commands, 'limit' => $limit];
+        $types = ['ids' => ArrayParameterType::STRING, 'commands' => ArrayParameterType::STRING];
+
+        $n = 0;
+        foreach ($changedMustInclude as $command => $field) {
+            $where .= \sprintf(' AND (l.command <> :cmd%1$d OR jsonb_exists(l.changes -> \'changed\', :field%1$d))', $n);
+            $parameters['cmd'.$n] = $command;
+            $parameters['field'.$n] = $field;
+            ++$n;
+        }
+
+        if (null !== $before) {
+            $where .= ' AND (l.created_at, l.id) < (:before_at, CAST(:before_id AS uuid))';
+            $parameters['before_at'] = $before[0]->format(\DATE_ATOM);
+            $parameters['before_id'] = $before[1];
+        }
+
+        $rows = $this->connection->fetchAllAssociative(
+            self::COLUMNS.$where.' ORDER BY l.created_at DESC, l.id DESC LIMIT :limit',
+            $parameters,
+            $types,
         );
 
         return array_map(self::row(...), $rows);

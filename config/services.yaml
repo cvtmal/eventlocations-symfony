@@ -80,6 +80,13 @@ when@test:
                 - { name: messenger.message_handler, bus: command.bus, handles: App\Venues\Command\RemoveVenueFiles }
                 - { name: messenger.message_handler, bus: command.bus, handles: App\Venues\Command\PurgeVenueCache }
                 - { name: messenger.message_handler, bus: command.bus, handles: App\Venues\Command\PurgeListingsCache }
+        # TimelineTypesPinTest and ExtensionPointsTest read the registry from the container (#27b).
+        App\Admin\Extension\TimelineActivityTypeRegistry:
+            autowire: true
+            public: true
+        App\Crm\ReadModel\TimelineQuery:
+            autowire: true
+            public: true
         # The transport of every HTTP client in tests (framework.yaml, when@test, #32 PD10).
         App\Tests\Support\Http\WixImageResponses:
             public: true

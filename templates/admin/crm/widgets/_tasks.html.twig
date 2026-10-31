@@ -1,0 +1,41 @@
+{#
+    The dashboard widgets "Meine Aufgaben" and "Überfällig" (`Crm\Extension\{MyTasksWidget, OverdueTasksWidget}`,
+    `Main.dc.html`). preview: TaskPreview, view: the task list's tab behind the link, empty: the text without tasks,
+    show_assignee: name who holds a task. A toggle returns to `/admin/`, because `ReturnPath::safe()` refuses `/admin`;
+    the router answers it with a 301 to the dashboard.
+#}
+<p class="widget__head-link">
+    <a href="{{ path('admin_crm_tasks', {view: view.value}) }}">
+        {{- preview.total > preview.rows|length ? 'task.widget.all_count'|trans({count: preview.total|swiss_number}, 'crm') : 'task.widget.all'|trans({}, 'crm') -}}
+    </a>
+</p>
+{% if preview.rows is empty %}
+    <p class="card__body muted">{{ empty|trans }}</p>
+{% else %}
+    <ul class="task-widget">
+        {% for task in preview.rows %}
+            <li class="crm-task task-widget__row">
+                {{ include('admin/crm/task/_toggle.html.twig', {task: task, return_to: path('admin_dashboard') ~ '/'}, with_context = false) }}
+                <span class="crm-task__text">
+                    <span class="crm-task__title">{{ task.title }}</span>
+                    {% if task.companyId or task.contactId or show_assignee %}
+                        <span class="crm-list__detail task-widget__detail">
+                            {%- if task.companyId or task.contactId -%}
+                                <span>{{ include('admin/crm/task/_object.html.twig', {task: task}, with_context = false) }}</span>
+                            {%- endif -%}
+                            {%- if show_assignee -%}
+                                <span class="task-widget__assignee">
+                                    {%- if task.companyId or task.contactId -%}
+                                        <span class="task-widget__dot"> · </span>
+                                    {%- endif -%}
+                                    {{- task.assigneeName -}}
+                                </span>
+                            {%- endif -%}
+                        </span>
+                    {% endif %}
+                </span>
+                {{ include('admin/crm/task/_due.html.twig', {due: crm_task_due(task.dueOn)}, with_context = false) }}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
