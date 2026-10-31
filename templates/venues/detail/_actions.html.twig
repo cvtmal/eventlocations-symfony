@@ -21,13 +21,13 @@
     <div class="venue-actions__row">
         {{ include('components/_button.html.twig', {
             label: 'detail.actions.share'|trans({}, 'venues'),
-            variant: 'outline',
+            variant: 'secondary',
             icon: 'share-2',
             attributes: {popovertarget: 'venue-share', 'data-share-url': share_url, 'data-share-title': share_text},
         }, with_context = false) }}
         {{ include('components/_button.html.twig', {
             label: 'detail.actions.print'|trans({}, 'venues'),
-            variant: 'outline',
+            variant: 'secondary',
             icon: 'printer',
             attributes: {hidden: 'hidden', 'data-print': ''},
         }, with_context = false) }}

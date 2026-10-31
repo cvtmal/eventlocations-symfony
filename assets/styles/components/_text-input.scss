@@ -1,30 +1,94 @@
-// Large underlined input as in the overlays (E11: 24 px / 40 px ≥ 1440, weight 600, line-height 2, caret #121212).
-// Inactive states use weight, never reduced opacity (D4).
+// Underlined field (Tokens board). `.text-input__field` also styles a <select> or <textarea>, and the inquiry form's
+// controls share it. An invalid field has an error text and a thicker edge, never colour alone. Inactive states use the
+// disabled tokens, never opacity.
 .text-input {
     max-width: 25rem;
 }
 
-.text-input__field {
+.text-input__control {
+    position: relative;
+}
+
+.text-input__field,
+.inquiry-form__control {
     display: block;
     width: 100%;
-    padding: 0;
+    min-height: 2.75rem;
+    padding: var(--space-8) 0;
     border: 0;
     border-bottom: 1px solid var(--c-line);
     border-radius: 0;
     background: transparent;
     color: var(--c-ink);
-    caret-color: var(--c-ink-inverse);
-    font: var(--fw-semibold) var(--fs-input-lg) / var(--lh-input-lg) var(--font-sans);
+    caret-color: var(--c-ink);
+    font: var(--fw-regular) var(--fs-body) / var(--lh-body) var(--font-sans);
 
     &::placeholder {
         color: var(--c-ink);
         opacity: 1;
         font-weight: var(--fw-regular);
     }
+
+    // The second pixel is a shadow, so nothing below the field moves.
+    &:focus-visible {
+        outline: none;
+        border-bottom-color: var(--c-accent-strong);
+        box-shadow: 0 1px 0 var(--c-accent-strong);
+    }
+
+    &[aria-invalid='true'] {
+        border-bottom-color: var(--c-error);
+        box-shadow: 0 1px 0 var(--c-error);
+    }
+
+    &:disabled {
+        padding-inline: var(--space-8);
+        border-bottom-color: var(--c-disabled-ink);
+        background: var(--c-disabled-ground);
+        color: var(--c-disabled-ink);
+    }
+}
+
+textarea.text-input__field {
+    resize: vertical;
+}
+
+.text-input--icon .text-input__field {
+    padding-left: 1.75rem;
+}
+
+.text-input__icon {
+    position: absolute;
+    top: .75rem;
+    left: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--c-accent-strong);
+    pointer-events: none;
 }
 
 .text-input__label {
     display: block;
-    margin-bottom: var(--space-xs);
+    margin-bottom: var(--space-8);
+    font-size: var(--fs-small);
     font-weight: var(--fw-semibold);
+    line-height: var(--lh-small);
+}
+
+.text-input__help,
+.text-input__error {
+    margin: var(--space-8) 0 0;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+}
+
+.text-input__help {
+    color: var(--c-ink-muted);
+}
+
+.text-input__error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    color: var(--c-error);
 }

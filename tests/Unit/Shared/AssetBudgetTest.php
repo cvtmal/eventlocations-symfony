@@ -54,7 +54,10 @@ final class AssetBudgetTest extends TestCase
 
     public function test_at_most_two_font_files_ship(): void
     {
-        self::assertCount(2, glob(self::root().'/assets/fonts/*.woff2') ?: []);
+        $files = glob(self::root().'/assets/fonts/*.woff2') ?: [];
+
+        self::assertNotEmpty($files);
+        self::assertLessThanOrEqual(2, \count($files));
     }
 
     public function test_javascript_modules_are_self_contained(): void

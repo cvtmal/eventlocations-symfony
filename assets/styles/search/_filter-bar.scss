@@ -6,11 +6,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-m);
-    padding-bottom: var(--space-m);
+    gap: var(--space-16);
+    padding-bottom: var(--space-16);
 
     @include bp.up(md) {
-        gap: var(--space-l);
+        gap: var(--space-24);
         padding-bottom: 0;
     }
 }
@@ -24,7 +24,7 @@
     overflow-x: auto;
     list-style: none;
     white-space: nowrap;
-    background: var(--c-surface-3);
+    background: var(--c-surface-raised);
     scrollbar-width: thin;
 
     @include bp.up(md) {
@@ -37,14 +37,14 @@
     display: flex;
     flex: none;
     align-items: center;
-    padding: 0 var(--space-s);
+    padding: 0 var(--space-12);
 
     @include bp.up(md) {
-        padding: 0 var(--space-m);
+        padding: 0 var(--space-16);
     }
 
     & + & {
-        border-left: 1px solid var(--c-line-muted);
+        border-left: 1px solid var(--c-line-soft);
     }
 
     // The overlays live inside the bar but render in the top layer; undo the bar's text settings.
@@ -55,14 +55,19 @@
 }
 
 // The triggers read as plain text items separated by lines, as on the original.
-.filter-bar .btn--outline {
+.filter-bar .btn--secondary {
     min-height: 2.75rem;
-    padding: 0 var(--space-2xs);
-    border: 0;
+    padding: 0 var(--space-4);
+    box-shadow: none;
+    color: var(--c-ink);
     font-size: .9375rem;
     font-weight: var(--fw-regular);
 
-    &:hover {
+    &:not([disabled]):hover,
+    &:not([disabled]):active {
+        background: transparent;
+        box-shadow: none;
+        color: var(--c-ink);
         text-decoration: underline;
     }
 }

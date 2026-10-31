@@ -5,25 +5,25 @@
 .inquiry-form__promises {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs) var(--space-m);
-    margin: 0 0 var(--space-m);
+    gap: var(--space-8) var(--space-16);
+    margin: 0 0 var(--space-16);
     padding: 0;
     list-style: none;
 
     li {
         display: inline-flex;
         align-items: center;
-        gap: var(--space-2xs);
+        gap: var(--space-4);
         font-weight: var(--fw-semibold);
     }
 }
 
 .inquiry-form__summary {
-    margin-bottom: var(--space-m);
-    padding: var(--space-s) var(--space-m);
-    border: 2px solid var(--c-accent);
-    border-radius: var(--r-bar);
-    background: var(--c-surface);
+    margin-bottom: var(--space-16);
+    padding: var(--space-16) var(--space-24);
+    border-radius: var(--radius-image);
+    background: var(--c-error-soft);
+    color: var(--c-error);
 
     p,
     ul {
@@ -31,19 +31,19 @@
     }
 
     ul {
-        margin-top: var(--space-2xs);
-        padding-left: var(--space-m);
+        margin-top: var(--space-4);
+        padding-left: var(--space-16);
     }
 }
 
 .inquiry-form__form {
     display: grid;
-    gap: var(--space-m);
+    gap: var(--space-16);
 }
 
 .inquiry-form__row {
     display: grid;
-    gap: var(--space-m);
+    gap: var(--space-16);
 
     @include bp.up(sm) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -63,41 +63,31 @@
 
 .inquiry-form__label {
     display: block;
-    margin-bottom: var(--space-2xs);
+    margin-bottom: var(--space-8);
+    font-size: var(--fs-small);
     font-weight: var(--fw-semibold);
+    line-height: var(--lh-small);
 }
 
 .inquiry-form__hint {
-    color: var(--c-muted);
+    color: var(--c-ink-muted);
     font-weight: var(--fw-regular);
 }
 
-.inquiry-form__control {
-    display: block;
-    width: 100%;
-    min-height: 2.75rem;
-    padding: var(--space-xs) var(--space-s);
-    border: 1px solid var(--c-muted);
-    border-radius: var(--r-button);
-    background: var(--c-surface);
-    color: var(--c-ink);
-    color-scheme: dark;
-    font: inherit;
-
-    &[aria-invalid='true'] {
-        border: 2px solid var(--c-accent);
-    }
-}
-
+// The field itself is `components/_text-input.scss`.
 textarea.inquiry-form__control {
     min-height: 10rem;
     resize: vertical;
 }
 
 .inquiry-form__error {
-    margin: var(--space-2xs) 0 0;
-    color: var(--c-accent-soft);
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin: var(--space-8) 0 0;
+    color: var(--c-error);
     font-size: var(--fs-small);
+    line-height: var(--lh-small);
 }
 
 // Off-screen, not display: none: a bot that skips hidden fields would miss the trap.
@@ -108,13 +98,13 @@ textarea.inquiry-form__control {
 
 .inquiry-form__actions {
     display: grid;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     justify-items: start;
 }
 
 .inquiry-form__privacy {
     margin: 0;
-    color: var(--c-muted);
+    color: var(--c-ink-muted);
     font-size: var(--fs-small);
 }
 

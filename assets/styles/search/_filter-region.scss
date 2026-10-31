@@ -17,7 +17,7 @@
         grid-template-columns: minmax(0, 21.875rem) minmax(0, 1fr);
         // The outer flexible rows centre the left column; the map spans them, so it never stretches the rows between.
         grid-template-rows: 1fr repeat(5, auto) 1fr;
-        column-gap: var(--space-xl);
+        column-gap: var(--space-40);
         padding: 3rem 4.5rem 0;
 
         .overlay__body,
@@ -73,8 +73,8 @@
 
 .region-filter__tabs {
     display: flex;
-    gap: var(--space-m);
-    margin-block: var(--space-m) var(--space-l);
+    gap: var(--space-16);
+    margin-block: var(--space-16) var(--space-24);
 
     &[hidden] {
         display: none;
@@ -108,7 +108,7 @@
 }
 
 .region-filter__panel {
-    margin-bottom: var(--space-l);
+    margin-bottom: var(--space-24);
 
     @include bp.up(lg) {
         margin-bottom: 2.1rem;
@@ -128,7 +128,7 @@
 
 // Without JS the tabs stay hidden and both panels show, one under the other.
 .region-filter__tabs[hidden] ~ .region-filter__panel {
-    margin-block: var(--space-l);
+    margin-block: var(--space-24);
 }
 
 // #21: no published venue has a town yet. `display: none` and not `[hidden]`, because region-filter.js unhides the
@@ -140,7 +140,7 @@
     }
 
     [data-panel='canton'] {
-        margin-top: var(--space-l);
+        margin-top: var(--space-24);
     }
 }
 
@@ -149,20 +149,14 @@
     max-width: none;
 }
 
-// The input carries the caret, as on the original; focus doubles its underline instead of boxing it.
-.region-filter .text-input__field:focus-visible {
-    outline: none;
-    box-shadow: 0 1px 0 var(--c-focus);
-}
-
 .region-filter__select {
     width: 100%;
     max-width: 25rem;
     min-height: 2.75rem;
-    margin-bottom: var(--space-m);
-    padding-inline: var(--space-xs);
-    background: var(--c-tooltip-bg);
-    color: var(--c-ink-inverse);
+    margin-bottom: var(--space-16);
+    padding-inline: var(--space-8);
+    background: var(--c-surface-raised);
+    color: var(--c-ink);
     font-size: var(--fs-body);
 }
 
@@ -174,18 +168,18 @@
     right: 0;
     margin: 0;
     padding: 0;
-    background: var(--c-dropdown);
-    box-shadow: var(--sh-dropdown);
+    background: var(--c-surface-raised);
+    box-shadow: var(--shadow-float);
     list-style: none;
 
     [role='option'] {
-        padding-inline: var(--space-m);
+        padding-inline: var(--space-16);
         font-size: 1.125rem;
         line-height: 2.8125rem;
         cursor: pointer;
 
         &[aria-selected='true'] {
-            background: var(--c-surface-footer);
+            background: var(--c-accent-soft);
         }
 
         &[aria-disabled='true'] {
@@ -197,8 +191,8 @@
 .region-filter__radius {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: var(--space-xs) var(--space-xs);
-    margin-top: var(--space-l);
+    gap: var(--space-8) var(--space-8);
+    margin-top: var(--space-24);
     font-size: .9375rem;
 
     label {
@@ -221,18 +215,22 @@
         width: 100%;
         height: auto;
         max-width: 56.25rem;
-        filter: var(--sh-map);
     }
 
     #cantons path {
         outline: none; // keyboard focus is the stroke below; an outline would sit under the neighbouring cantons
         fill: var(--c-map-land);
+        stroke: var(--c-map-line); // the file's own white stroke would vanish on white land
         cursor: pointer;
 
-        &:hover,
+        &:hover {
+            fill: var(--c-map-hover);
+        }
+
+        // After :hover, so a chosen canton stays dark under the pointer.
         &:focus-visible,
         &[aria-pressed='true'] {
-            fill: var(--c-accent-strong);
+            fill: var(--c-map-selected);
         }
 
         &:focus-visible {
@@ -243,7 +241,7 @@
 
     // After the cantons in the file: a click on a lake must reach the canton below it.
     #lakes {
-        fill: var(--c-lake);
+        fill: var(--c-map-lake);
         pointer-events: none;
     }
 }
@@ -271,14 +269,14 @@
 .region-filter__tooltip {
     position: absolute;
     z-index: 1;
-    padding: var(--space-2xs) .4375rem;
-    border-radius: var(--r-tooltip);
-    background: var(--c-tooltip-bg);
-    box-shadow: var(--sh-tooltip);
-    color: var(--c-ink-inverse);
-    font-size: var(--fs-tooltip);
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-small);
+    background: var(--c-surface-raised);
+    box-shadow: var(--shadow-float);
+    color: var(--c-ink);
+    font-size: var(--fs-small);
     font-weight: var(--fw-semibold);
-    line-height: var(--lh-tooltip);
+    line-height: var(--lh-small);
     white-space: nowrap;
     pointer-events: none;
 
@@ -287,22 +285,22 @@
         position: absolute;
         top: 0;
         border: 5px solid transparent;
-        border-top-color: var(--c-tooltip-bg);
+        border-top-color: var(--c-surface-raised);
     }
 
     &--right-top::after {
         right: -5px;
-        border-left-color: var(--c-tooltip-bg);
+        border-left-color: var(--c-surface-raised);
     }
 
     &--left-top::after {
         left: -5px;
-        border-right-color: var(--c-tooltip-bg);
+        border-right-color: var(--c-surface-raised);
     }
 }
 
 .region-filter__credit {
-    margin-top: var(--space-s);
+    margin-top: var(--space-12);
     font-size: var(--fs-tag);
     line-height: var(--lh-tag);
     text-align: end;
@@ -331,7 +329,7 @@
 
     .overlay--region .overlay__footer-inner {
         flex-direction: column;
-        gap: var(--space-s);
+        gap: var(--space-12);
 
         .btn {
             width: 100%;

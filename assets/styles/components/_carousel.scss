@@ -1,3 +1,5 @@
+@use '../abstracts/breakpoints' as bp;
+
 // Scroll-snap carousel shell (`components/_carousel.html.twig`). Works by touch and keyboard without JS;
 // carousel.js adds the arrows and the counter and marks the carousel [data-enhanced].
 .carousel {
@@ -31,7 +33,7 @@
 
 .carousel__controls {
     position: absolute;
-    inset: auto var(--space-m) var(--space-m) var(--space-m);
+    inset: 0 var(--space-12);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -42,18 +44,37 @@
     }
 
     .btn--icon {
-        background: rgb(0 0 0 / .4);
-        border-radius: var(--r-round);
+        // A white disc has no outline of its own on a bright photo, a sky most of all (real data, #35).
+        box-shadow: 0 0 0 1px var(--c-line-soft);
         pointer-events: auto;
+
+        // Arrows only from md: the phone swipes (README).
+        @include bp.down(md) {
+            display: none;
+        }
+
+        // On a photo the black ring needs a white halo: 2 px offset, 2 px ring, 2 px halo (README).
+        &:focus-visible {
+            box-shadow: 0 0 0 6px var(--c-surface-raised);
+        }
     }
 }
 
+// Bottom right of the photo. A page that moves the controls into a row of their own sets this back to static.
 .carousel__counter {
+    position: absolute;
+    right: 0;
+    bottom: var(--space-12);
     order: 1;
-    padding: .125rem var(--space-s);
-    border-radius: var(--r-pill);
-    background: rgb(0 0 0 / .6);
-    font-size: var(--fs-small);
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.625rem;
+    padding: 0 .625rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-raised);
+    box-shadow: 0 0 0 1px var(--c-line-soft);
+    color: var(--c-ink);
+    font: var(--fw-semibold) var(--fs-tag) / var(--lh-tag) var(--font-sans);
     pointer-events: auto;
 }
 

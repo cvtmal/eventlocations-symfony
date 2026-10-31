@@ -167,6 +167,16 @@ final class LandingPageTest extends WebTestCase
         $this->assertPublicAndCookieFree();
     }
 
+    public function test_locations_is_the_current_page_on_a_canton_and_a_town_page(): void
+    {
+        $this->inTown('Stäfa', 5);
+
+        foreach (['/hochzeitslocations/zuerich', '/hochzeitslocations/zuerich/staefa'] as $uri) {
+            $crawler = $this->get($uri);
+            self::assertSame('/hochzeitslocations', $crawler->filter('.site-header__link[aria-current="page"]')->attr('href'), $uri);
+        }
+    }
+
     public function test_a_town_under_another_cantons_slug_is_404(): void
     {
         $this->inTown('Stäfa', 5);

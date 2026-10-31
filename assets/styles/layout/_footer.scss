@@ -1,32 +1,98 @@
 @use '../abstracts/breakpoints' as bp;
 @use '../abstracts/staff-text';
 
-// Slim footer (E11: #2c2c2c, padding 2.5rem / 3.75rem ≥ 768). Slots: canton list (#17), legal links (#18), staff note (#26).
+// Footer (Header board): brand and two columns, then the slots for the canton list (#17), the staff note (#26) and,
+// under a rule, the copyright with the legal links (#18).
 .site-footer {
-    background: var(--c-surface-footer);
-    padding-block: var(--space-xl);
+    background: var(--c-surface-raised);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+}
+
+.site-footer__inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-40);
+    max-width: 75rem;
+    margin-inline: auto;
+    padding: var(--space-40) var(--space-24) var(--space-24);
 
     @include bp.up(md) {
-        padding-block: var(--space-2xl);
+        padding-top: var(--space-64);
     }
+}
+
+.site-footer__columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-40);
+
+    @include bp.up(md) {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+.site-footer__brand {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+}
+
+.site-footer__tagline {
+    margin: 0;
+}
+
+.site-footer__column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+}
+
+.site-footer__heading {
+    font-weight: var(--fw-bold);
 }
 
 .site-footer__links {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs) var(--space-l);
-    margin: 0 0 var(--space-l);
+    gap: 0 var(--space-16);
+    margin: 0;
     padding: 0;
     list-style: none;
-    font-size: var(--fs-small);
 }
 
-// #26's footer note: staff Markdown (paragraphs, links), muted like the copyright line.
+// 44 px tap targets on a phone, the board's 32 px from md.
+.site-footer__link,
+.site-footer__links a,
+.site-footer__add-location {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+
+    @include bp.up(md) {
+        min-height: 2rem;
+    }
+}
+
+.site-footer__link,
+.site-footer__links a {
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.site-footer__add-location {
+    color: var(--c-accent-strong);
+    text-decoration: underline;
+}
+
+// #26's footer note: staff Markdown (paragraphs, links), muted.
 .site-footer__note {
     max-width: 40rem;
-    margin: 0 0 var(--space-l);
-    color: var(--c-muted);
-    font-size: var(--fs-small);
+    color: var(--c-ink-muted);
 
     @include staff-text.flow;
 
@@ -41,8 +107,15 @@
     }
 }
 
+.site-footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4) var(--space-16);
+    padding-top: var(--space-16);
+    border-top: 1px solid var(--c-line-soft);
+}
+
 .site-footer__copy {
     margin: 0;
-    color: var(--c-muted);
-    font-size: var(--fs-small);
 }

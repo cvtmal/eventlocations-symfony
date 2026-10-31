@@ -27,9 +27,6 @@
 {% set share_photo = page.cards[0].photos[0] ?? null %}
 {% set share_picture = share_photo ? card_picture(share_photo, page.cards[0].name) : null %}
 
-{# #26: bold text and headings in a staff intro use the 600 weight above the fold; preloading it keeps the swap from shifting the page (CLS). Only tags from Markdown can match: text in a block is escaped. #}
-{% block stylesheets %}{% if '<strong' in intro_html or '<h' in intro_html %}<link rel="preload" href="{{ asset('fonts/sofia-sans-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>{% endif %}{% endblock %}
-
 {% block title %}{{ seo.title }}{% endblock %}
 
 {% block meta %}{{ include('seo/_meta.html.twig', {seo: seo, picture: share_picture}, with_context = false) }}{% endblock %}

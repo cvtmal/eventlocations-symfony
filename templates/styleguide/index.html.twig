@@ -1,6 +1,11 @@
 {% extends 'base.html.twig' %}
 
-{# Dev/test-only gallery of every #1 component (config/routes/styleguide.yaml). Every |trans names its domain (PD-5). #}
+{#
+    Dev/test-only gallery of every #1 component (config/routes/styleguide.yaml). Every |trans names its domain (PD-5).
+    The composition follows docs/reference/public/Tokens.png and Tokens-390.png, section by section. The board draws the
+    dialog and two overlays open, so those are static drawings under `inert`, with no popover, data-dialog or data-overlay.
+    The real shells sit in the last section, with everything else the board does not draw.
+#}
 
 {% block title %}{{ 'styleguide.page_title'|trans({}, 'styleguide') }}{% endblock %}
 
@@ -15,126 +20,459 @@
 {% endblock %}
 
 {% block main %}
-{% set colors = [
-    ['bg', '#121212'], ['ink', '#fff'], ['ink-inverse', '#121212'], ['surface', '#272727'], ['surface-2', '#444'],
-    ['surface-3', '#535353'], ['surface-footer', '#2c2c2c'], ['hero-circle', '#313131'], ['line', '#fff'],
-    ['line-muted', '#5f5f5f'], ['muted', '#c5c5c5'], ['accent', '#ff5a75'], ['accent-hover', '#ec536c'],
-    ['accent-strong', '#c4455a'], ['accent-soft', '#ffc1cb'], ['black', '#1b1b1b'], ['overlay-region', '#577b77'],
-    ['overlay-guests', '#756a96'], ['overlay-more', '#76746e'], ['overlay-more-bar', '#6a6863'],
-    ['overlay-circle', 'rgb(0 0 0 / .05)'], ['lake', '#6a8396'], ['map-land', '#ff5a75'], ['tooltip-bg', '#fff'], ['focus', '#fff'],
+{# [label on the board, token, hex]. The notes are `styleguide.colors.notes.<label>`. #}
+{% set color_groups = [
+    {key: 'surfaces', colors: [['surface', 'surface', '#F8F6EE'], ['surface-raised', 'surface-raised', '#FFFFFF'], ['surface-alt', 'surface-alt', '#F0F1EB'], ['placeholder', 'placeholder-ground', '#E3E1D6']]},
+    {key: 'text', colors: [['ink', 'ink', '#484848'], ['ink-strong', 'ink-strong', '#000000'], ['muted', 'ink-muted', '#6B6B66'], ['line', 'line', '#484848'], ['line-soft', 'line-soft', '#DEDFD6']]},
+    {key: 'accent', colors: [['accent', 'accent', '#FF0096'], ['accent-strong', 'accent-strong', '#D1007A'], ['accent-strong-hover', 'accent-strong-hover', '#B4006A'], ['accent-strong-active', 'accent-strong-active', '#96005A'], ['accent-soft', 'accent-soft', '#FFE3F2'], ['on-accent', 'on-accent', '#FFFFFF']]},
+    {key: 'states', colors: [['focus', 'focus', '#000000'], ['error', 'error', '#B3261E'], ['error-soft', 'error-soft', '#FBE9E7'], ['success', 'success', '#1B6E45'], ['success-soft', 'success-soft', '#E2F1E8'], ['disabled', 'disabled-ground', '#E6E6E0'], ['disabled-ink', 'disabled-ink', '#66665F']]},
+    {key: 'overlay', colors: [['overlay', 'overlay-ground', '#F0F1EB'], ['overlay-circle', 'overlay-circle', '#E6E8DF']]},
+] %}
+{# [role, desktop, phone] #}
+{% set type_roles = [
+    ['display', '52/58 · 700', '36/44 · 700'], ['h1', '40/48 · 700', '30/38 · 700'], ['h2', '26/34 · 700', '24/32 · 700'], ['h3', '18/26 · 700', '18/26 · 700'],
+    ['body', '16/26 · 400', '16/26 · 400'], ['small', '14/22 · 400', '14/22 · 400'], ['button', '14/20 · 700', '14/20 · 700'], ['tag', '13/18 · 600', '13/18 · 600'],
 ] %}
 {% set icons = [
-    'binoculars', 'building-2', 'calendar', 'car', 'chevron-down', 'chevron-left', 'chevron-right', 'coins', 'file-text',
-    'globe', 'heart', 'info', 'landmark', 'mail', 'map-pin', 'maximize', 'menu', 'mountain-snow', 'music', 'phone',
+    'binoculars', 'building-2', 'calendar', 'camera', 'car', 'check', 'chevron-down', 'chevron-left', 'chevron-right', 'coins', 'file-text',
+    'globe', 'heart', 'house', 'info', 'landmark', 'mail', 'map-pin', 'maximize', 'menu', 'mountain-snow', 'music', 'phone',
     'plane', 'printer', 'route', 'sailboat', 'search', 'share-2', 'smile', 'sofa', 'sparkles', 'thumbs-up', 'train-front',
     'trees', 'user', 'utensils', 'waves', 'x',
 ] %}
 {% set lage = [
     ['am_fluss', 'waves'], ['am_see', 'sailboat'], ['auf_dem_land', 'trees'], ['in_den_bergen', 'mountain-snow'], ['in_der_stadt', 'building-2'],
 ] %}
-<div class="container sg-page">
+{# The board's two placeholder photos, redrawn in tokens through classes: `use` is reserved for the sprite, and no colour here may skip a token. #}
+{% set castle %}<svg class="sg-photo" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect class="sg-photo__sky" width="1200" height="800"/><circle class="sg-photo__sun" cx="240" cy="170" r="64"/><path class="sg-photo__hill" d="M0 620 Q400 500 800 590 T1200 560 V800 H0Z"/><g class="sg-photo__wall"><rect x="520" y="300" width="300" height="300"/><rect x="470" y="220" width="90" height="380"/><rect x="790" y="240" width="90" height="360"/><path d="M460 220 L515 130 L570 220Z"/><path d="M780 240 L835 150 L890 240Z"/></g><g class="sg-photo__door"><rect x="640" y="470" width="70" height="130" rx="35"/><rect x="590" y="360" width="40" height="60" rx="20"/><rect x="720" y="360" width="40" height="60" rx="20"/></g><path class="sg-photo__ground" d="M0 680 Q500 620 1200 700 V800 H0Z"/></svg>{% endset %}
+{% set mountain %}<svg class="sg-photo" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect class="sg-photo__sky" width="1200" height="800"/><circle class="sg-photo__sun" cx="300" cy="160" r="64"/><path class="sg-photo__hill" d="M0 560 L340 200 L560 450 L800 150 L1200 560 V800 H0Z"/><path class="sg-photo__sun" d="M270 275 L340 200 L415 285 L370 265 L340 300 L300 265Z"/><path class="sg-photo__sun" d="M720 245 L800 150 L880 233 L830 225 L800 262 L770 230Z"/><path class="sg-photo__ground" d="M0 610 Q400 520 800 600 T1200 590 V800 H0Z"/><rect class="sg-photo__door" x="880" y="540" width="170" height="90"/><path class="sg-photo__door" d="M860 545 L965 480 L1070 545Z"/></svg>{% endset %}
+<div class="sg-page">
     <h1>{{ 'styleguide.title'|trans({}, 'styleguide') }}</h1>
-    <p class="sg-intro">{{ 'styleguide.intro'|trans({}, 'styleguide') }}</p>
 
     <section class="sg" id="sg-colors" data-component="colors" aria-labelledby="sg-colors-h">
         <h2 id="sg-colors-h">{{ 'styleguide.colors.heading'|trans({}, 'styleguide') }}</h2>
-        <ul class="sg-grid sg-grid--top">
-            {% for color in colors %}
-                <li class="sg-swatch-item"><span class="sg-swatch sg-swatch--{{ color[0] }}"></span><code>{{ '--c-' ~ color[0] }}</code><code>{{ color[1] }}</code></li>
+        <div class="sg-groups">
+            {% for group in color_groups %}
+                <div class="sg-color-group">
+                    <h3 class="sg-state__label">{{ ('styleguide.colors.groups.' ~ group.key)|trans({}, 'styleguide') }}</h3>
+                    <ul class="sg-colors">
+                        {% for color in group.colors %}
+                            <li class="sg-color">
+                                <span class="sg-swatch sg-swatch--{{ color[1] }}"></span>
+                                <span class="sg-color__text"><strong>{{ color[0] }}</strong>{{ color[2] }}<span class="sg-color__note">{{ ('styleguide.colors.notes.' ~ color[0])|trans({}, 'styleguide') }}</span></span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     </section>
 
     <section class="sg" id="sg-typography" data-component="typography" aria-labelledby="sg-typography-h">
         <h2 id="sg-typography-h">{{ 'styleguide.typography.heading'|trans({}, 'styleguide') }}</h2>
-        {% for class in ['text-hero', 'text-count', 'text-overlay-title', 'text-card-title', 'text-excerpt', 'text-small', 'text-tag'] %}
-            <p class="sg-type-sample"><code>.{{ class }}</code><span class="{{ class }}">{{ 'styleguide.typography.sample'|trans({}, 'styleguide') }}</span></p>
-        {% endfor %}
+        <div class="sg-type">
+            <div class="sg-type__head">
+                <span class="sg-state__label">{{ 'styleguide.typography.role'|trans({}, 'styleguide') }}</span>
+                <span class="sg-state__label">{{ 'styleguide.typography.desktop'|trans({}, 'styleguide') }}</span>
+                <span class="sg-state__label">{{ 'styleguide.typography.phone'|trans({}, 'styleguide') }}</span>
+            </div>
+            {% for role in type_roles %}
+                {% set note = ('styleguide.typography.roles.' ~ role[0])|trans({}, 'styleguide') %}
+                <div class="sg-type__row">
+                    <div class="sg-type__role">
+                        <strong>{{ role[0] }}</strong>
+                        <span class="sg-state__label sg-from-md">{{ note }}</span>
+                        <span class="sg-state__label sg-below-md">{{ 'styleguide.typography.phone_line'|trans({phone: role[2], desktop: role[1], note: note}, 'styleguide') }}</span>
+                    </div>
+                    <div class="sg-from-md">
+                        <span class="sg-type__sample sg-type__sample--{{ role[0] }}">{{ 'styleguide.typography.sample'|trans({}, 'styleguide') }}</span>
+                        <span class="sg-state__label">{{ role[1] }}</span>
+                    </div>
+                    <div>
+                        <span class="sg-type__sample sg-type__sample--{{ role[0] }} sg-type__sample--phone">{{ 'styleguide.typography.sample'|trans({}, 'styleguide') }}</span>
+                        <span class="sg-state__label sg-from-md">{{ role[2] }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     </section>
 
-    <section class="sg" id="sg-spacing" data-component="spacing" aria-labelledby="sg-spacing-h">
-        <h2 id="sg-spacing-h">{{ 'styleguide.spacing.heading'|trans({}, 'styleguide') }}</h2>
-        <ul class="sg-grid sg-grid--top">
-            {% for step in ['2xs', 'xs', 's', 'm', 'l', 'xl', '2xl', '3xl'] %}
-                <li class="sg-swatch-item"><span class="sg-space sg-space--{{ step }}"></span><code>{{ '--space-' ~ step }}</code></li>
-            {% endfor %}
-        </ul>
+    <div class="sg-pair">
+        <section class="sg" id="sg-spacing" data-component="spacing" aria-labelledby="sg-spacing-h">
+            <h2 id="sg-spacing-h">{{ 'styleguide.spacing.heading'|trans({}, 'styleguide') }}</h2>
+            <ul class="sg-spaces">
+                {% for step in ['4', '8', '12', '16', '24', '32', '40', '64'] %}
+                    <li><span>{{ step }}</span><span class="sg-space sg-space--{{ step }}"></span></li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="sg" id="sg-radii-shadows" data-component="radii-shadows" aria-labelledby="sg-radii-shadows-h">
+            <h2 id="sg-radii-shadows-h">{{ 'styleguide.radii_shadows.heading'|trans({}, 'styleguide') }}</h2>
+            <ul class="sg-radii">
+                {% for radius in [['small', '12'], ['image', '24'], ['card', '40'], ['pill', '999']] %}
+                    <li><span class="sg-box sg-box--radius-{{ radius[0] }}"></span><span><strong>{{ 'radius-' ~ radius[0] }}</strong> {{ radius[1] }}</span></li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+
+    <section class="sg" id="sg-shadow" data-component="shadow" aria-labelledby="sg-shadow-h">
+        <h2 id="sg-shadow-h">{{ 'styleguide.shadow.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-surface sg-shadows">
+            <div class="sg-shadow sg-shadow--card"><strong>{{ 'styleguide.shadow.card'|trans({}, 'styleguide') }}</strong><p>{{ 'styleguide.shadow.card_note'|trans({}, 'styleguide') }}</p></div>
+            <div class="sg-shadow sg-shadow--float"><strong>{{ 'styleguide.shadow.float'|trans({}, 'styleguide') }}</strong><p>{{ 'styleguide.shadow.float_note'|trans({}, 'styleguide') }}</p></div>
+        </div>
     </section>
 
-    <section class="sg" id="sg-radii-shadows" data-component="radii-shadows" aria-labelledby="sg-radii-shadows-h">
-        <h2 id="sg-radii-shadows-h">{{ 'styleguide.radii_shadows.heading'|trans({}, 'styleguide') }}</h2>
-        <ul class="sg-grid">
-            {% for name in ['r-badge', 'r-tooltip', 'r-bar', 'r-pill', 'r-round', 'sh-bubble', 'sh-round', 'sh-tooltip', 'sh-dropdown', 'sh-map'] %}
-                <li><span class="sg-box sg-box--{{ name }}"><code>--{{ name }}</code></span></li>
+    <section class="sg" id="sg-buttons" data-component="buttons" aria-labelledby="sg-buttons-h">
+        <h2 id="sg-buttons-h">{{ 'styleguide.buttons.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-groups" data-component="button-states">
+            {% for variant in ['primary', 'secondary', 'ghost'] %}
+                <div class="sg-group">
+                    <h3 class="sg-subheading">{{ ('styleguide.button_states.' ~ variant)|trans({}, 'styleguide') }}</h3>
+                    <div class="sg-row">
+                        {% for state in ['normal', 'hover', 'active', 'focus'] %}
+                            <div class="sg-state">
+                                <span class="sg-state__label">{{ ('styleguide.states.' ~ state)|trans({}, 'styleguide') }}</span>
+                                <button type="button" class="btn btn--{{ variant }} sg-force-{{ state }}">{{ 'styleguide.button_states.sample'|trans({}, 'styleguide') }}</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             {% endfor %}
-        </ul>
+            <div class="sg-group">
+                <h3 class="sg-subheading">{{ 'styleguide.states.disabled'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row">
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ 'styleguide.states.normal'|trans({}, 'styleguide') }}</span>
+                        {{ include('components/_button.html.twig', {label: 'styleguide.button_states.sample'|trans({}, 'styleguide'), attributes: {disabled: 'disabled'}}, with_context = false) }}
+                    </div>
+                </div>
+            </div>
+            <div class="sg-group">
+                <h3 class="sg-subheading">{{ 'styleguide.button_states.sizes'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row">
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ 'styleguide.button_states.md'|trans({}, 'styleguide') }}</span>
+                        {{ include('components/_button.html.twig', {label: 'styleguide.buttons.check_availability'|trans({}, 'styleguide'), icon: 'calendar'}, with_context = false) }}
+                    </div>
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ 'styleguide.button_states.lg'|trans({}, 'styleguide') }}</span>
+                        {{ include('components/_button.html.twig', {label: 'styleguide.button_states.search'|trans({}, 'styleguide'), size: 'lg'}, with_context = false) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="sg-pair">
+        <section class="sg" id="sg-round-buttons" data-component="round-buttons" aria-labelledby="sg-round-buttons-h">
+            <h2 id="sg-round-buttons-h">{{ 'styleguide.round_buttons.heading'|trans({}, 'styleguide') }}</h2>
+            <div class="sg-row sg-surface">
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.round_buttons.close'|trans({}, 'styleguide') }}</span>
+                    {{ include('components/_button.html.twig', {label: 'layout.close'|trans, variant: 'close', icon: 'x', label_hidden: true}, with_context = false) }}
+                </div>
+                {% for state in [{key: 'normal', pressed: 'false', class: ''}, {key: 'pressed', pressed: 'true', class: ''}, {key: 'hover', pressed: 'false', class: ' sg-force-hover'}, {key: 'focus', pressed: 'false', class: ' sg-force-focus'}] %}
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ ('styleguide.states.' ~ state.key)|trans({}, 'styleguide') }}</span>
+                        <button type="button" class="merken__button sg-disc{{ state.class }}" aria-pressed="{{ state.pressed }}" aria-label="{{ 'styleguide.merken.label'|trans({}, 'styleguide') }}">{{ icon('heart') }}</button>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="sg" id="sg-merken" data-component="merken" aria-labelledby="sg-merken-h">
+            <h2 id="sg-merken-h">{{ 'styleguide.merken.heading'|trans({}, 'styleguide') }}</h2>
+            <div class="sg-row sg-card sg-merken">
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.states.normal'|trans({}, 'styleguide') }}</span>
+                    {{ include('favorites/_merken_button.html.twig', {number: 1, name: 'styleguide.merken.venue'|trans({}, 'styleguide'), variant: 'detail'}, with_context = false) }}
+                </div>
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.merken.saved'|trans({}, 'styleguide') }}</span>
+                    <button type="button" class="merken__button" aria-pressed="true" aria-label="{{ 'styleguide.merken.label'|trans({}, 'styleguide') }}">{{ icon('heart') }}<span class="merken__text">{{ 'styleguide.merken.label'|trans({}, 'styleguide') }}</span></button>
+                </div>
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.merken.on_list'|trans({}, 'styleguide') }}</span>
+                    {{ include('favorites/_remove_button.html.twig', {number: 1, name: 'styleguide.merken.venue'|trans({}, 'styleguide')}, with_context = false) }}
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="sg" id="sg-chips" data-component="chips" aria-labelledby="sg-chips-h">
+        <h2 id="sg-chips-h">{{ 'styleguide.chips.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-stack">
+            <div class="sg-row">
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.states.normal'|trans({}, 'styleguide') }}</span>
+                    <button type="button" class="chip chip--neutral" aria-pressed="false">{{ 'styleguide.chips.castle'|trans({}, 'styleguide') }}</button>
+                </div>
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.chips.selected'|trans({}, 'styleguide') }}</span>
+                    <button type="button" class="chip chip--selected" aria-pressed="true">{{ 'styleguide.chips.castle'|trans({}, 'styleguide') }}{{ icon('check') }}</button>
+                </div>
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.chips.active'|trans({}, 'styleguide') }}</span>
+                    {{ include('components/_chip.html.twig', {label: 'styleguide.chips.zurich'|trans({}, 'styleguide'), href: path('_styleguide'), remove_label: 'styleguide.chips.remove_zurich'|trans({}, 'styleguide')}, with_context = false) }}
+                </div>
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.chips.with_icon'|trans({}, 'styleguide') }}</span>
+                    <button type="button" class="chip chip--neutral" aria-pressed="false">{{ icon('waves') }}{{ 'styleguide.lage.am_see'|trans({}, 'styleguide') }}</button>
+                </div>
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.chips.canton_link'|trans({}, 'styleguide') }}</span>
+                    {{ include('components/_chip.html.twig', {label: 'styleguide.chips.zurich'|trans({}, 'styleguide'), href: path('_styleguide'), variant: 'neutral'}, with_context = false) }}
+                </div>
+            </div>
+            <div class="sg-row" data-component="tiles">
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.chips.tile'|trans({}, 'styleguide') }}</span>
+                    <button type="button" class="tile" aria-pressed="false"><span class="tile__disc">{{ icon('waves') }}</span><span>{{ 'styleguide.lage.am_fluss'|trans({}, 'styleguide') }}</span></button>
+                </div>
+                <div class="sg-state">
+                    <span class="sg-state__label">{{ 'styleguide.chips.tile_selected'|trans({}, 'styleguide') }}</span>
+                    <button type="button" class="tile" aria-pressed="true"><span class="tile__disc">{{ icon('sailboat') }}<span class="tile__check">{{ icon('check') }}</span></span><span>{{ 'styleguide.lage.am_see'|trans({}, 'styleguide') }}</span></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="sg" id="sg-badge" data-component="badge" aria-labelledby="sg-badge-h">
+        <h2 id="sg-badge-h">{{ 'styleguide.badge.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-row">
+            <div class="sg-state">
+                <span class="sg-state__label">{{ 'styleguide.badge.tier'|trans({}, 'styleguide') }}</span>
+                <div class="sg-row sg-row--tight">
+                    {% for tier in ['popular', 'top_premium', 'recommended', 'premium'] %}
+                        {{ include('components/_badge.html.twig', {label: ('styleguide.badge.' ~ tier)|trans({}, 'styleguide')}, with_context = false) }}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="sg-state" data-component="tag">
+                <span class="sg-state__label">{{ 'styleguide.badge.tag'|trans({}, 'styleguide') }}</span>
+                <div class="sg-row sg-row--tight">
+                    <span class="tag">{{ 'styleguide.badge.tag_price'|trans({}, 'styleguide') }}</span>
+                    <span class="tag">{{ 'styleguide.badge.tag_sample'|trans({}, 'styleguide') }}</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="sg" id="sg-text-input" data-component="text-input" aria-labelledby="sg-text-input-h">
+        <h2 id="sg-text-input-h">{{ 'styleguide.text_input.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-fields" data-component="field-states">
+            {{ include('components/_text_input.html.twig', {id: 'sg-first-name', name: 'first_name', label: 'styleguide.text_input.first_name'|trans({}, 'styleguide'), label_hidden: false, placeholder: 'styleguide.text_input.first_name_placeholder'|trans({}, 'styleguide'), help: 'styleguide.text_input.help'|trans({}, 'styleguide')}, with_context = false) }}
+            <div class="text-input">
+                <label class="text-input__label" for="sg-email-focus">{{ 'styleguide.text_input.email'|trans({}, 'styleguide') }}</label>
+                <input class="text-input__field sg-force-focus" id="sg-email-focus" name="email_focus" type="text" value="{{ 'styleguide.text_input.email_value'|trans({}, 'styleguide') }}" autocomplete="off">
+                <p class="text-input__help">{{ 'styleguide.text_input.focus_help'|trans({}, 'styleguide') }}</p>
+            </div>
+            {{ include('components/_text_input.html.twig', {id: 'sg-email-error', name: 'email_error', label: 'styleguide.text_input.email'|trans({}, 'styleguide'), label_hidden: false, value: 'styleguide.text_input.email_invalid'|trans({}, 'styleguide'), error: 'styleguide.text_input.error'|trans({}, 'styleguide')}, with_context = false) }}
+            {{ include('components/_text_input.html.twig', {id: 'sg-guests', name: 'guests', type: 'number', label: 'styleguide.overlays.guests_label'|trans({}, 'styleguide'), label_hidden: false, placeholder: 'styleguide.text_input.guests_placeholder'|trans({}, 'styleguide'), icon: 'user'}, with_context = false) }}
+            <div class="text-input">
+                <label class="text-input__label" for="sg-occasion">{{ 'styleguide.text_input.occasion'|trans({}, 'styleguide') }}</label>
+                <select class="text-input__field" id="sg-occasion" name="occasion">
+                    {% for option in ['wedding', 'civil', 'apero', 'engagement', 'other'] %}
+                        <option>{{ ('styleguide.text_input.occasion_' ~ option)|trans({}, 'styleguide') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="text-input">
+                <label class="text-input__label" for="sg-message">{{ 'styleguide.text_input.message'|trans({}, 'styleguide') }}</label>
+                <textarea class="text-input__field" id="sg-message" name="message" rows="3">{{ 'styleguide.text_input.message_value'|trans({}, 'styleguide') }}</textarea>
+            </div>
+        </div>
+    </section>
+
+    <div class="sg-pair">
+        <section class="sg sg-breadcrumb" id="sg-breadcrumb" data-component="breadcrumb" aria-labelledby="sg-breadcrumb-h">
+            <h2 id="sg-breadcrumb-h">{{ 'styleguide.breadcrumb.heading'|trans({}, 'styleguide') }}</h2>
+            {{ include('components/_breadcrumb.html.twig', {label: 'styleguide.breadcrumb.label'|trans({}, 'styleguide'), items: [{name: 'styleguide.breadcrumb.listing'|trans({}, 'styleguide'), url: path('_styleguide')}, {name: 'styleguide.breadcrumb.canton'|trans({}, 'styleguide'), url: path('_styleguide')}, {name: 'styleguide.breadcrumb.town'|trans({}, 'styleguide')}]}, with_context = false) }}
+        </section>
+
+        <section class="sg sg-toast-demo" id="sg-toast" data-component="toast" aria-labelledby="sg-toast-h">
+            <h2 id="sg-toast-h">{{ 'styleguide.toast.heading'|trans({}, 'styleguide') }}</h2>
+            {{ include('components/_toast.html.twig', {message: 'styleguide.toast.message'|trans({}, 'styleguide'), link_href: path('_styleguide'), link_label: 'styleguide.toast.link'|trans({}, 'styleguide')}, with_context = false) }}
+        </section>
+    </div>
+
+    <div class="sg-pair">
+        <section class="sg" id="sg-carousel" data-component="carousel" aria-labelledby="sg-carousel-h">
+            <h2 id="sg-carousel-h">{{ 'styleguide.carousel.heading'|trans({}, 'styleguide') }}</h2>
+            <div class="sg-carousel">
+                {% embed 'components/_carousel.html.twig' with {id: 'sg-carousel-demo', label: 'styleguide.carousel.label'|trans({}, 'styleguide'), photo: castle, photo_label: 'styleguide.carousel.photo'|trans({}, 'styleguide')} only %}
+                    {% block slides %}
+                        {% for number in 1..8 %}
+                            <li class="carousel__slide"><div class="sg-slide" role="img" aria-label="{{ photo_label }}">{{ photo }}</div></li>
+                        {% endfor %}
+                    {% endblock %}
+                {% endembed %}
+                <p class="sg-note sg-below-md">{{ 'styleguide.carousel.phone_note'|trans({}, 'styleguide') }}</p>
+            </div>
+        </section>
+
+        <section class="sg" id="sg-dialog" data-component="dialog" aria-labelledby="sg-dialog-h">
+            <h2 id="sg-dialog-h">{{ 'styleguide.dialog.heading'|trans({}, 'styleguide') }}</h2>
+            <div class="sg-backdrop" inert>
+                <div class="dialog" role="group" aria-label="{{ 'styleguide.dialog.heading'|trans({}, 'styleguide') }}">
+                    <div class="dialog__header">
+                        <h3 class="dialog__title">{{ 'styleguide.dialog.drawn_title'|trans({}, 'styleguide') }}</h3>
+                        <button type="button" class="btn btn--close" aria-label="{{ 'layout.close'|trans }}">{{ icon('x') }}</button>
+                    </div>
+                    <p>{{ 'styleguide.dialog.drawn_body'|trans({}, 'styleguide') }}</p>
+                    <div class="dialog__footer">{{ include('components/_button.html.twig', {label: 'layout.close'|trans, variant: 'secondary'}, with_context = false) }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="sg" id="sg-overlays" data-component="overlays" aria-labelledby="sg-overlays-h">
+        <h2 id="sg-overlays-h">{{ 'styleguide.overlays.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-stack" inert>
+            {% for drawing in [{id: 'a', title: 'styleguide.overlays.drawn_region_title', bar: false}, {id: 'b', title: 'styleguide.overlays.drawn_more_title', bar: true}] %}
+                <div class="sg-overlay">
+                    {{ include('components/_button.html.twig', {label: 'layout.close'|trans, variant: 'close', icon: 'x', label_hidden: true}, with_context = false) }}
+                    <h3 class="sg-overlay__title">{{ drawing.title|trans({}, 'styleguide') }}</h3>
+                    <div class="sg-overlay__card text-input">
+                        <label class="text-input__label" for="sg-drawn-canton-{{ drawing.id }}">{{ 'styleguide.overlays.canton_label'|trans({}, 'styleguide') }}</label>
+                        <select class="text-input__field" id="sg-drawn-canton-{{ drawing.id }}">
+                            {% for option in ['all_cantons', 'zurich', 'bern', 'lucerne'] %}
+                                <option>{{ ('styleguide.overlays.option_' ~ option)|trans({}, 'styleguide') }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="sg-overlay__actions{{ drawing.bar ? ' sg-overlay__actions--bar' }}">
+                        {{ include('components/_button.html.twig', {label: 'styleguide.overlays.drawn_results'|trans({}, 'styleguide'), size: 'lg'}, with_context = false) }}
+                        <a class="overlay__clear" href="{{ path('_styleguide') }}">{{ 'styleguide.overlays.clear'|trans({}, 'styleguide') }}</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="sg" id="sg-focus-ring" data-component="focus-ring" aria-labelledby="sg-focus-ring-h">
+        <h2 id="sg-focus-ring-h">{{ 'styleguide.focus_ring.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-focus">
+            <div class="sg-focus-card">
+                <p class="sg-subheading">{{ 'styleguide.focus_ring.light'|trans({}, 'styleguide') }}</p>
+                <div class="sg-row sg-row--wide">
+                    <button type="button" class="btn btn--primary sg-force-focus">{{ 'styleguide.button_states.sample'|trans({}, 'styleguide') }}</button>
+                    <a class="sg-link sg-force-focus" href="{{ path('_styleguide') }}">{{ 'styleguide.focus_ring.link'|trans({}, 'styleguide') }}</a>
+                    <button type="button" class="btn btn--close sg-force-focus sg-close-on-white" aria-label="{{ 'layout.close'|trans }}">{{ icon('x') }}</button>
+                </div>
+            </div>
+            <div class="sg-focus-photo">
+                {{ mountain }}
+                <span class="tag sg-focus-photo__label">{{ 'styleguide.focus_ring.photo'|trans({}, 'styleguide') }}</span>
+                <button type="button" class="btn btn--icon sg-force-focus sg-force-halo" aria-label="{{ 'layout.carousel.next'|trans }}">{{ icon('chevron-right') }}</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="sg" id="sg-map" data-component="map" aria-labelledby="sg-map-h">
+        <h2 id="sg-map-h">{{ 'styleguide.map.heading'|trans({}, 'styleguide') }}</h2>
+        <div class="sg-map-row">
+            {{ include('styleguide/_canton_map.html.twig', ignore_missing = true) }}
+            <div class="sg-map-side">
+                <ul class="sg-legend">
+                    {% for item in [['map-land', '#FFFFFF'], ['map-line', '#8A8A82'], ['map-hover', '#FF0096'], ['map-selected', '#700044'], ['map-lake', '#6B8AA0']] %}
+                        <li><span class="sg-legend__dot sg-swatch--{{ item[0] }}"></span><span><strong>{{ item[0] }}</strong> {{ [item[1], ('styleguide.map.legend.' ~ item[0])|trans({}, 'styleguide')]|join(', ') }}</span></li>
+                    {% endfor %}
+                </ul>
+                <div class="sg-state" data-component="tooltip">
+                    <span class="sg-state__label">{{ 'styleguide.map.tooltip'|trans({}, 'styleguide') }}</span>
+                    <span class="region-filter__tooltip sg-tooltip">{{ 'styleguide.chips.zurich'|trans({}, 'styleguide') }}</span>
+                </div>
+            </div>
+        </div>
     </section>
 
     <section class="sg" id="sg-icons" data-component="icons" aria-labelledby="sg-icons-h">
         <h2 id="sg-icons-h">{{ 'styleguide.icons.heading'|trans({}, 'styleguide') }}</h2>
         <ul class="sg-icon-grid">
             {% for name in icons %}
-                <li>{{ icon(name) }}<code>{{ name }}</code></li>
+                <li>{{ icon(name) }}<span>{{ name }}</span></li>
             {% endfor %}
-            <li>{{ icon('heart', {class: 'icon--filled'}) }}<code>{{ 'heart' ~ ' .icon--filled' }}</code></li>
         </ul>
     </section>
 
-    <section class="sg" id="sg-buttons" data-component="buttons" aria-labelledby="sg-buttons-h">
-        <h2 id="sg-buttons-h">{{ 'styleguide.buttons.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="sg-grid">
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.check_availability'|trans({}, 'styleguide'), icon: 'calendar'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.show_results'|trans({}, 'styleguide'), variant: 'black'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.save_location'|trans({}, 'styleguide'), variant: 'outline', icon: 'heart'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.share'|trans({}, 'styleguide'), variant: 'outline', icon: 'share-2'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.print'|trans({}, 'styleguide'), variant: 'outline', icon: 'printer'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.disabled'|trans({}, 'styleguide'), attributes: {disabled: 'disabled'}}, with_context = false) }}
+    {# Below this line nothing is on the board: the shells that open for real, and what the board has no sample for. #}
+    <section class="sg" id="sg-extras" data-component="extras" aria-labelledby="sg-extras-h">
+        <h2 id="sg-extras-h">{{ 'styleguide.extras.heading'|trans({}, 'styleguide') }}</h2>
+        <p class="sg-note">{{ 'styleguide.extras.intro'|trans({}, 'styleguide') }}</p>
+        <div class="sg-groups">
+            <div class="sg-group">
+                <h3 class="sg-subheading">{{ 'styleguide.extras.live'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row">
+                    <button type="button" class="btn btn--secondary" commandfor="sg-dialog-demo" command="show-modal">{{ 'styleguide.dialog.open'|trans({}, 'styleguide') }}</button>
+                    <button type="button" class="btn btn--secondary" popovertarget="sg-overlay-region">{{ 'styleguide.overlays.open_region'|trans({}, 'styleguide') }}</button>
+                    <button type="button" class="btn btn--secondary" popovertarget="sg-overlay-guests">{{ 'styleguide.overlays.open_guests'|trans({}, 'styleguide') }}</button>
+                    <button type="button" class="btn btn--secondary" popovertarget="sg-overlay-more">{{ 'styleguide.overlays.open_more'|trans({}, 'styleguide') }}</button>
+                </div>
+            </div>
+            <div class="sg-group" data-component="count-badge">
+                <h3 class="sg-subheading">{{ 'styleguide.count_badge.heading'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row"><span class="btn btn--icon site-header__favorites">{{ icon('heart') }}<span class="count-badge">3</span></span></div>
+            </div>
+            <div class="sg-group">
+                <h3 class="sg-subheading">{{ 'styleguide.extras.variants'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row">
+                    {{ include('components/_button.html.twig', {label: 'styleguide.buttons.map'|trans({}, 'styleguide'), variant: 'round', icon: 'map-pin'}, with_context = false) }}
+                    {{ include('components/_button.html.twig', {label: 'styleguide.buttons.favorites'|trans({}, 'styleguide'), variant: 'round', icon: 'heart'}, with_context = false) }}
+                    {{ include('components/_button.html.twig', {label: 'styleguide.lage.am_fluss'|trans({}, 'styleguide'), variant: 'round-lg', icon: 'waves'}, with_context = false) }}
+                    {{ include('components/_button.html.twig', {label: 'styleguide.buttons.save_location'|trans({}, 'styleguide'), variant: 'secondary', icon: 'heart'}, with_context = false) }}
+                    {{ include('components/_button.html.twig', {label: 'styleguide.buttons.share'|trans({}, 'styleguide'), variant: 'secondary', icon: 'share-2'}, with_context = false) }}
+                    {{ include('components/_button.html.twig', {label: 'styleguide.buttons.print'|trans({}, 'styleguide'), variant: 'secondary', icon: 'printer'}, with_context = false) }}
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ 'styleguide.button_states.static'|trans({}, 'styleguide') }}</span>
+                        {{ include('components/_button.html.twig', {label: 'styleguide.button_states.static_sample'|trans({}, 'styleguide'), static: true}, with_context = false) }}
+                    </div>
+                </div>
+            </div>
+            <div class="sg-group">
+                <h3 class="sg-subheading">{{ 'styleguide.extras.states'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row">
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ 'styleguide.states.hover'|trans({}, 'styleguide') }}</span>
+                        <button type="button" class="chip chip--neutral sg-force-hover" aria-pressed="false">{{ 'styleguide.chips.castle'|trans({}, 'styleguide') }}</button>
+                    </div>
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ 'styleguide.states.disabled'|trans({}, 'styleguide') }}</span>
+                        <span class="chip chip--neutral" aria-disabled="true">{{ 'styleguide.chips.castle'|trans({}, 'styleguide') }}</span>
+                    </div>
+                    {{ include('components/_text_input.html.twig', {id: 'sg-disabled', name: 'disabled_field', label: 'styleguide.states.disabled'|trans({}, 'styleguide'), label_hidden: false, value: 'styleguide.buttons.disabled'|trans({}, 'styleguide'), disabled: true}, with_context = false) }}
+                </div>
+            </div>
+            <div class="sg-group">
+                <h3 class="sg-subheading">{{ 'styleguide.extras.grounds'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row">
+                    <div class="sg-row sg-row--tight sg-card">
+                        {{ include('components/_badge.html.twig', {label: 'styleguide.badge.popular'|trans({}, 'styleguide')}, with_context = false) }}
+                        <span class="tag">{{ 'styleguide.badge.tag_sample'|trans({}, 'styleguide') }}</span>
+                    </div>
+                    <div class="sg-row sg-row--tight sg-surface">
+                        {{ include('components/_badge.html.twig', {label: 'styleguide.badge.popular'|trans({}, 'styleguide')}, with_context = false) }}
+                    </div>
+                </div>
+            </div>
+            <div class="sg-group">
+                <h3 class="sg-subheading">{{ 'styleguide.extras.single_image'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-carousel">
+                    {% embed 'components/_carousel.html.twig' with {id: 'sg-carousel-single', label: 'styleguide.carousel.single_label'|trans({}, 'styleguide'), photo: castle, photo_label: 'styleguide.carousel.photo'|trans({}, 'styleguide')} only %}
+                        {% block slides %}
+                            <li class="carousel__slide"><div class="sg-slide" role="img" aria-label="{{ photo_label }}">{{ photo }}</div></li>
+                        {% endblock %}
+                    {% endembed %}
+                </div>
+            </div>
         </div>
-        <div class="sg-grid sg-lage">
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.map'|trans({}, 'styleguide'), variant: 'round', icon: 'map-pin'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'styleguide.buttons.favorites'|trans({}, 'styleguide'), variant: 'round', icon: 'heart'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'styleguide.lage.am_fluss'|trans({}, 'styleguide'), variant: 'round-lg', icon: 'waves'}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'layout.header.search'|trans, variant: 'icon', icon: 'search', label_hidden: true}, with_context = false) }}
-            {{ include('components/_button.html.twig', {label: 'layout.close'|trans, variant: 'close', icon: 'x', label_hidden: true}, with_context = false) }}
-        </div>
-    </section>
 
-    <section class="sg" id="sg-chips" data-component="chips" aria-labelledby="sg-chips-h">
-        <h2 id="sg-chips-h">{{ 'styleguide.chips.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="sg-grid sg-surface">
-            {{ include('components/_chip.html.twig', {label: 'styleguide.chips.zurich'|trans({}, 'styleguide'), href: path('_styleguide'), remove_label: 'styleguide.chips.remove_zurich'|trans({}, 'styleguide')}, with_context = false) }}
-            {{ include('components/_chip.html.twig', {label: 'styleguide.chips.region'|trans({}, 'styleguide'), href: path('_styleguide'), variant: 'neutral'}, with_context = false) }}
-        </div>
-    </section>
-
-    <section class="sg" id="sg-badge" data-component="badge" aria-labelledby="sg-badge-h">
-        <h2 id="sg-badge-h">{{ 'styleguide.badge.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="sg-card">
-            {{ include('components/_badge.html.twig', {label: 'styleguide.badge.popular'|trans({}, 'styleguide')}, with_context = false) }}
-        </div>
-    </section>
-
-    <section class="sg" id="sg-breadcrumb" data-component="breadcrumb" aria-labelledby="sg-breadcrumb-h">
-        <h2 id="sg-breadcrumb-h">{{ 'styleguide.breadcrumb.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="sg-card">
-            {{ include('components/_breadcrumb.html.twig', {label: 'styleguide.breadcrumb.label'|trans({}, 'styleguide'), items: [{name: 'styleguide.breadcrumb.listing'|trans({}, 'styleguide'), url: path('_styleguide')}, {name: 'styleguide.breadcrumb.canton'|trans({}, 'styleguide'), url: path('_styleguide')}, {name: 'styleguide.breadcrumb.town'|trans({}, 'styleguide')}]}, with_context = false) }}
-        </div>
-    </section>
-
-    <section class="sg" id="sg-text-input" data-component="text-input" aria-labelledby="sg-text-input-h">
-        <h2 id="sg-text-input-h">{{ 'styleguide.text_input.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="overlay--region sg-tone">
-            {{ include('components/_text_input.html.twig', {id: 'sg-name', name: 'name', label: 'styleguide.text_input.label'|trans({}, 'styleguide'), placeholder: 'styleguide.text_input.placeholder'|trans({}, 'styleguide')}, with_context = false) }}
-        </div>
-    </section>
-
-    <section class="sg" id="sg-overlays" data-component="overlays" aria-labelledby="sg-overlays-h">
-        <h2 id="sg-overlays-h">{{ 'styleguide.overlays.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="sg-grid">
-            <button type="button" class="btn btn--outline" popovertarget="sg-overlay-region">{{ 'styleguide.overlays.open_region'|trans({}, 'styleguide') }}</button>
-            <button type="button" class="btn btn--outline" popovertarget="sg-overlay-guests">{{ 'styleguide.overlays.open_guests'|trans({}, 'styleguide') }}</button>
-            <button type="button" class="btn btn--outline" popovertarget="sg-overlay-more">{{ 'styleguide.overlays.open_more'|trans({}, 'styleguide') }}</button>
-        </div>
+        {% embed 'components/_dialog.html.twig' with {id: 'sg-dialog-demo', title: 'styleguide.dialog.title'|trans({}, 'styleguide')} only %}
+            {% block dialog_body %}<p>{{ 'styleguide.dialog.body'|trans({}, 'styleguide') }}</p>{% endblock %}
+            {% block dialog_footer %}<button type="button" class="btn btn--primary" commandfor="{{ id }}" command="close">{{ 'styleguide.dialog.confirm'|trans({}, 'styleguide') }}</button>{% endblock %}
+        {% endembed %}
 
         {% for overlay in [
             {tone: 'region', title: 'styleguide.overlays.region_title', label: 'styleguide.overlays.canton_label', placeholder: 'styleguide.overlays.canton_placeholder'},
@@ -164,52 +502,11 @@
                     {% endif %}
                 {% endblock %}
                 {% block overlay_footer %}
-                    {{ include('components/_button.html.twig', {label: 'styleguide.buttons.show_results'|trans({}, 'styleguide'), variant: 'black', type: 'submit'}, with_context = false) }}
+                    {{ include('components/_button.html.twig', {label: 'styleguide.buttons.show_results'|trans({}, 'styleguide'), variant: 'primary', size: 'lg', type: 'submit'}, with_context = false) }}
                     <a class="overlay__clear" href="{{ back_href }}">{{ 'styleguide.overlays.clear'|trans({}, 'styleguide') }}</a>
                 {% endblock %}
             {% endembed %}
         {% endfor %}
-    </section>
-
-    <section class="sg" id="sg-dialog" data-component="dialog" aria-labelledby="sg-dialog-h">
-        <h2 id="sg-dialog-h">{{ 'styleguide.dialog.heading'|trans({}, 'styleguide') }}</h2>
-        <button type="button" class="btn btn--outline" commandfor="sg-dialog-demo" command="show-modal">{{ 'styleguide.dialog.open'|trans({}, 'styleguide') }}</button>
-        {% embed 'components/_dialog.html.twig' with {id: 'sg-dialog-demo', title: 'styleguide.dialog.title'|trans({}, 'styleguide')} only %}
-            {% block dialog_body %}<p>{{ 'styleguide.dialog.body'|trans({}, 'styleguide') }}</p>{% endblock %}
-            {% block dialog_footer %}<button type="button" class="btn btn--primary" commandfor="{{ id }}" command="close">{{ 'styleguide.dialog.confirm'|trans({}, 'styleguide') }}</button>{% endblock %}
-        {% endembed %}
-    </section>
-
-    <section class="sg" id="sg-carousel" data-component="carousel" aria-labelledby="sg-carousel-h">
-        <h2 id="sg-carousel-h">{{ 'styleguide.carousel.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="sg-carousel">
-            {% embed 'components/_carousel.html.twig' with {id: 'sg-carousel-demo', label: 'styleguide.carousel.label'|trans({}, 'styleguide')} only %}
-                {% block slides %}
-                    {% for number in 1..5 %}
-                        <li class="carousel__slide"><div class="sg-slide">{{ 'styleguide.carousel.slide'|trans({number: number}, 'styleguide') }}</div></li>
-                    {% endfor %}
-                {% endblock %}
-            {% endembed %}
-        </div>
-        <div class="sg-carousel">
-            {% embed 'components/_carousel.html.twig' with {id: 'sg-carousel-single', label: 'styleguide.carousel.single_label'|trans({}, 'styleguide')} only %}
-                {% block slides %}
-                    <li class="carousel__slide"><div class="sg-slide">{{ 'styleguide.carousel.slide'|trans({number: 1}, 'styleguide') }}</div></li>
-                {% endblock %}
-            {% endembed %}
-        </div>
-    </section>
-
-    <section class="sg" id="sg-toast" data-component="toast" aria-labelledby="sg-toast-h">
-        <h2 id="sg-toast-h">{{ 'styleguide.toast.heading'|trans({}, 'styleguide') }}</h2>
-        <div class="sg-toast-demo">
-            {{ include('components/_toast.html.twig', {message: 'styleguide.toast.message'|trans({}, 'styleguide'), link_href: path('_styleguide'), link_label: 'styleguide.toast.link'|trans({}, 'styleguide')}, with_context = false) }}
-        </div>
-    </section>
-
-    <section class="sg" id="sg-map" data-component="map" aria-labelledby="sg-map-h">
-        <h2 id="sg-map-h">{{ 'styleguide.map.heading'|trans({}, 'styleguide') }}</h2>
-        {{ include('styleguide/_canton_map.html.twig', ignore_missing = true) }}
     </section>
 </div>
 {% endblock %}

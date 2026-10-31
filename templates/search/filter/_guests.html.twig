@@ -11,11 +11,11 @@
     {%- endif -%}
 {%- elseif part == 'trigger' -%}
     <li class="filter-bar__item">
-        {{- include('components/_button.html.twig', {label: 'filter.guests'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-guests'}}, with_context = false) -}}
+        {{- include('components/_button.html.twig', {label: 'filter.guests'|trans({}, 'search'), variant: 'secondary', attributes: {popovertarget: 'filter-guests'}}, with_context = false) -}}
         {% embed 'components/_overlay.html.twig' with {id: 'filter-guests', tone: 'guests', title: 'filter.guests_title'|trans({}, 'search'), criteria: criteria} only %}
             {% block overlay_body %}{{ include('search/filter/_guests_form.html.twig', {criteria: criteria}, with_context = false) }}{% endblock %}
             {% block overlay_footer %}
-                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'black', type: 'submit', attributes: {
+                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'primary', size: 'lg', type: 'submit', attributes: {
                     form: 'filter-guests-form',
                     'data-live-count-label': '',
                     'data-count-zero': 'filter.show_results'|trans({count: 0, formatted: '0'}, 'search'),

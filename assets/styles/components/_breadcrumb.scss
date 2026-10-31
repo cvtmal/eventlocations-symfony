@@ -1,29 +1,42 @@
-// Breadcrumb (#17): one line of small links, "›" between steps, the current page unlinked.
+@use '../abstracts/breakpoints' as bp;
+
+// Breadcrumb (#17, Tokens board): one line of small links, a chevron between steps, the current page unlinked.
 .breadcrumb__list {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    gap: var(--space-2xs);
-    margin: 0 0 var(--space-xs);
+    gap: var(--space-8);
+    margin: 0 0 var(--space-8);
     padding: 0;
     list-style: none;
     font-size: var(--fs-small);
+    line-height: var(--lh-small);
 }
 
 .breadcrumb__item {
     display: inline-flex;
-    gap: var(--space-2xs);
+    align-items: center;
+    gap: var(--space-8);
+}
 
-    & + &::before {
-        content: '›';
-        color: var(--c-muted);
-    }
+.breadcrumb__separator {
+    width: .875rem;
+    height: .875rem;
+    color: var(--c-ink-muted);
 }
 
 .breadcrumb__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     color: inherit;
     text-decoration: underline;
     text-underline-offset: .15em;
+
+    @include bp.up(md) {
+        min-height: 1.5rem;
+    }
 
     &:hover {
         text-decoration: none;

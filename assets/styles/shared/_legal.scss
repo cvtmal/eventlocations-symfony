@@ -1,46 +1,36 @@
 // Impressum and Datenschutz (#18): long running text at a readable measure.
 .legal {
-    padding-block: var(--space-xl) var(--space-2xl);
+    padding-block: var(--space-40) var(--space-64);
 
     > * {
         max-width: 65ch;
     }
 
     p {
-        margin: 0 0 var(--space-m);
+        margin: 0 0 var(--space-16);
     }
 
     address {
-        margin: 0 0 var(--space-m);
+        margin: 0 0 var(--space-16);
         font-style: normal;
     }
 }
 
 .legal__title {
-    margin: 0 0 var(--space-m);
+    margin: 0 0 var(--space-16);
     font-size: 1.75rem;
 }
 
 .legal__updated {
-    color: var(--c-muted);
+    color: var(--c-ink-muted);
     font-size: var(--fs-small);
 }
 
 .legal__section {
-    margin-top: var(--space-xl);
+    margin-top: var(--space-40);
 
     h2 {
-        margin: 0 0 var(--space-s);
+        margin: 0 0 var(--space-12);
         font-size: 1.25rem;
-    }
-}
-
-// The footer links match #17's canton links: muted, white on hover and focus.
-.footer-legal a {
-    color: var(--c-muted);
-
-    &:hover,
-    &:focus-visible {
-        color: var(--c-ink);
     }
 }

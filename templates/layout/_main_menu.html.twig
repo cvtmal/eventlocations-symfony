@@ -1,2 +1,5 @@
-{# Hamburger menu items. Later cycles append one <li> line each (PD-1). #}
+{# Hamburger menu items. Later cycles append one <li> line each (PD-1). Only the header's heart carries data-merkliste-link: merkliste.js reads one link. #}
 <li><a href="{{ path('home') }}">{{ 'layout.header.home'|trans }}</a></li>
+<li><a href="{{ path('listing') }}"{% if on_listing %} aria-current="page"{% endif %}>{{ 'layout.header.locations'|trans }}</a></li>
+<li><a href="{{ path('listing') }}">{{ 'layout.header.regions'|trans }}</a></li>
+<li><a href="{{ path('merkliste') }}">{{ 'layout.header.favorites'|trans }}<span class="count-badge count-badge--menu" data-merkliste-count hidden></span></a></li>

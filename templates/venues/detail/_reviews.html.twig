@@ -13,7 +13,7 @@
     {% for review in venue.reviews|slice(0, 3) %}{{ _self.review(review) }}{% endfor %}
     {% if venue.reviews|length > 3 %}
         <details class="venue-reviews__more">
-            <summary class="btn btn--outline">{{ 'detail.reviews.all'|trans({}, 'venues') }}</summary>
+            <summary class="btn btn--secondary">{{ 'detail.reviews.all'|trans({}, 'venues') }}</summary>
             {% for review in venue.reviews|slice(3) %}{{ _self.review(review) }}{% endfor %}
         </details>
     {% endif %}

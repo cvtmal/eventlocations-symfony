@@ -1,17 +1,24 @@
+{# An error page can have no route at all, so the name may be null. #}
+{% set current_route = app.request.attributes.get('_canonical_route', app.request.attributes.get('_route')) %}
+{% set on_listing = current_route in ['listing', 'listing_landing', 'listing_town'] %}
 <header class="site-header">
     <div class="site-header__inner">
-        <button type="button" class="btn btn--icon site-header__menu" popovertarget="main-menu" aria-label="{{ 'layout.header.menu_open'|trans }}">{{ icon('menu') }}</button>
-        <a class="site-header__wordmark" href="{{ path('home') }}">{{ 'layout.site_name'|trans }}</a>
-        <nav class="site-header__actions" aria-label="{{ 'layout.header.actions_label'|trans }}">
-            <a class="btn btn--icon" href="{{ path('listing') }}" aria-label="{{ 'layout.header.search'|trans }}">{{ icon('search') }}</a>
+        <a class="site-header__wordmark" href="{{ path('home') }}"><img src="{{ asset('images/logo-hzl.png') }}" alt="{{ 'layout.site_name'|trans }}" width="135" height="30"></a>
+        <nav class="site-header__actions" aria-label="{{ 'layout.header.menu_label'|trans }}">
+            <a class="site-header__link" href="{{ path('listing') }}"{% if on_listing %} aria-current="page"{% endif %}>{{ 'layout.header.locations'|trans }}</a>
+            {# Regionen has no page of its own until #36 #}
+            <a class="site-header__link" href="{{ path('listing') }}">{{ 'layout.header.regions'|trans }}</a>
             {# merkliste.js fills and unhides the badge; these strings stand in for 48 repeated attributes on the cards. data-sync-token is the constant of the stateless check, so cached HTML stays identical #}
             <a class="btn btn--icon site-header__favorites" href="{{ path('merkliste') }}" aria-label="{{ 'layout.header.favorites'|trans }}" data-merkliste-link data-sync-token="{{ csrf_token('submit') }}" data-count-label="{{ 'header.count_label'|trans({count: '__count__'}, 'favorites') }}" data-toast-added="{{ 'toast.added'|trans({name: '__name__'}, 'favorites') }}" data-toast-removed="{{ 'toast.removed'|trans({name: '__name__'}, 'favorites') }}" data-toast-full="{{ 'toast.full'|trans({}, 'favorites') }}" data-toast-link="{{ 'toast.link'|trans({}, 'favorites') }}">{{ icon('heart') }}<span class="count-badge" data-merkliste-count hidden></span></a>
+            {% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, static: true} only %}
         </nav>
+        <button type="button" class="btn btn--icon site-header__menu" popovertarget="main-menu" aria-label="{{ 'layout.header.menu_open'|trans }}">{{ icon('menu') }}</button>
     </div>
     <div id="main-menu" class="main-menu" popover data-overlay>
-        <nav aria-label="{{ 'layout.header.menu_label'|trans }}">
-            <button type="button" class="btn btn--close" popovertarget="main-menu" popovertargetaction="hide" aria-label="{{ 'layout.close'|trans }}">{{ icon('x') }}</button>
+        <nav class="main-menu__nav" aria-label="{{ 'layout.header.phone_menu_label'|trans }}">
+            <button type="button" class="btn btn--close main-menu__close" popovertarget="main-menu" popovertargetaction="hide" aria-label="{{ 'layout.close'|trans }}">{{ icon('x') }}</button>
             <ul class="main-menu__list">{{ include('layout/_main_menu.html.twig') }}</ul>
+            <div class="main-menu__add-location">{% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, size: 'lg', static: true} only %}</div>
         </nav>
     </div>
 </header>

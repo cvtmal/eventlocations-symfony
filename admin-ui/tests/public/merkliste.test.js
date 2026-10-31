@@ -46,12 +46,13 @@ async function land(how = 'land') {
 
 const after = (ms) => vi.advanceTimersByTimeAsync(ms);
 
-function page(numbers = [15, 1, 38]) {
+function page(numbers = [15, 1, 38], extra = '') {
     document.body.innerHTML = `
         <a data-merkliste-link href="/merkliste" aria-label="Merkliste" data-sync-token="csrf-token"
             data-count-label="Merkliste (__count__)" data-toast-added="__name__ +" data-toast-removed="__name__ -"
             data-toast-full="voll" data-toast-link="Zur Merkliste"><span data-merkliste-count hidden></span></a>
         ${numbers.map((number) => `<form><button data-merken="${number}" data-merken-name="V${number}"></button></form>`).join('')}
+        ${extra}
         <div data-toast-region></div>`;
     new Function(SCRIPT)();
 }
@@ -363,6 +364,21 @@ describe('merkliste.js', () => {
             expect(press(button, true)).toBe(true);
             expect(press(button, false)).toBe(false);
             expect(press(document.querySelector('[data-merkliste-link]'), true)).toBe(false);
+        });
+    });
+
+    describe('the badges', () => {
+        it('fills and hides the header\'s and the menu\'s badge together', () => {
+            page([15], '<a href="/merkliste"><span data-merkliste-count hidden></span></a>');
+            const badges = [...document.querySelectorAll('[data-merkliste-count]')];
+            expect(badges).toHaveLength(2);
+
+            heart(15);
+            expect(badges.map((badge) => badge.textContent)).toEqual(['1', '1']);
+            expect(badges.map((badge) => badge.hidden)).toEqual([false, false]);
+
+            heart(15);
+            expect(badges.map((badge) => badge.hidden)).toEqual([true, true]);
         });
     });
 

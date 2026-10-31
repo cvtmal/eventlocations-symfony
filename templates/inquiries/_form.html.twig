@@ -10,7 +10,7 @@
     <div class="inquiry-form__field">
         <label class="inquiry-form__label" for="{{ field.vars.id }}">{{ label }}{% if optional %} <span class="inquiry-form__hint">{{ 'form.optional'|trans({}, 'inquiries') }}</span>{% endif %}</label>
         {{ form_widget(field, {attr: attr}) }}
-        {% if errors|length > 0 %}<p class="inquiry-form__error" id="{{ field.vars.id }}_error">{% for error in errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}</p>{% endif %}
+        {% if errors|length > 0 %}<p class="inquiry-form__error" id="{{ field.vars.id }}_error">{{ icon('info', {class: 'icon--sm'}) }}<span>{% for error in errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}</span></p>{% endif %}
     </div>
 {% endmacro %}
 {% import _self as inquiry %}

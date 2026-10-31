@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-31 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #19 performance-caching, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #25 cms-venue-media, #26 cms-pages, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
+_Last updated: 2026-10-31 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #19 performance-caching, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #25 cms-venue-media, #26 cms-pages, #31 venue-wedding-facts, #32 owner-content-import, #33 filter-wedding and #35 brand-foundation done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It started from the layout and content structure of eventlokale.ch's wedding search, and takes its look from the brand design (S15). It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -51,7 +51,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
    | File | Owner | Others may |
    |---|---|---|
    | `tests/Architecture/ArchitectureRules.php` (module table) | #0 declares **all** modules of this file up front | nothing; a needed change goes back to the owner as a design change. S12 is such a change: #22 adds `Admin`, `Cms` and `Crm` (next row) |
-   | `templates/base.html.twig`, `templates/layout/*` | #1 | fill the blocks #1 provides |
+   | `templates/base.html.twig`, `templates/layout/*` | #35 (was #1) | fill the blocks it provides |
    | `assets/styles/app.scss` (list of partial imports) | #1 | append one `@use` line for their own partial |
    | `config/packages/translation.yaml`, `src/Shared/Translation/*` | #2 | nothing |
    | `translations/messages+intl-icu.de.yaml` (layout strings) | #1 | nothing; each module has its own domain file |
@@ -65,7 +65,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
    | `admin-ui/src/islands.js` (island registry), `admin-ui/src/timeline/types.js` (timeline renderers) | #22 / #27 | append one line per island or activity type |
    | `admin-ui/package.json`, `package-lock.json` | #22 | add a dependency only with a one-line reason in the Outcome; on a rebase conflict, take `main`'s lock file and run `make admin-install` again |
    | `translations/admin+intl-icu.de.yaml` (shell strings) | #22 | nothing; CMS strings go to `cms`, CRM strings to `crm` |
-   | `assets/styles/abstracts/_tokens.scss`, `templates/base.html.twig`, `templates/layout/*`, `templates/components/*` | #35 takes them over from #1 | R2 lanes fill the blocks; a missing token goes to the lane's report, and the first lane that needs it adds it, append only |
+   | `assets/styles/abstracts/_tokens.scss`, `templates/base.html.twig`, `templates/layout/*`, `templates/components/*` with `assets/styles/components/*` | #35 takes them over from #1 | R2 lanes fill the blocks; a missing token goes to the lane's report, and the first lane that needs it adds it, append only, and a new colour pair gets a row in `ContrastTokensTest`; a component's parameter or look changes through one owner cycle |
    | `templates/search/_card.html.twig`, `search/_filter_bar.html.twig` | #37 | nothing during R2; #36 includes the card unchanged |
    | `templates/search/filter/*`, `components/_overlay.html.twig` | #38 | nothing during R2 |
    | `translations/*` tone of address | #40 | R2 lanes add keys in "Sie" and leave existing lines alone |
@@ -111,7 +111,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 32 | `owner-content-import` | W6 | DATA-5 | 9, 21, 31 | — | ~~Q12~~, Q13, Q14 (tier only) | ✅ Done |
 | 33 | `filter-wedding` | W6 | FI-7, LP-7 | 12, 31 | indexes only, if needed | — | ✅ Done |
 | 34 | `design-reference` | R0 | BRD-1 | — | — | Q15 (sign-off), Q16, Q17 | Plan |
-| 35 | `brand-foundation` | R1 | BRD-1–BRD-3, A11Y-1, PERF-1 (CSS, fonts) | 19, 25, 34 | — | Q15, Q16 (default), Q17 (default) | Research |
+| 35 | `brand-foundation` | R1 | BRD-1–BRD-3, A11Y-1, PERF-1 (CSS, fonts) | 19, 25, 34 | — | Q15, Q16 (default), Q17 (default) | ✅ Done |
 | 36 | `home-page` | R2 | HP-1–HP-6 | 35 | — | Q18 (default), Q19 (default) | Research |
 | 37 | `listing-redesign` | R2 | BRD-1, LP-1–LP-3, LP-5–LP-7, MK-3, MK-4, DP-15 | 35 | — | — | Plan |
 | 38 | `filter-overlays-redesign` | R2 | BRD-1, FI-1–FI-4, FI-7 | 35 | — | — | Plan |
@@ -427,8 +427,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 | Pair | Ratio | Use |
 |---|---|---|
 | `ink` #484848 on surface / raised / alt | 8.45 / 9.15 / 8.05 | all text |
-| `on-accent` #F8F6EE on `accent-strong` #D1007A | 4.86 | every button with small text |
-| white on `accent-strong` | 5.26 | as the board draws it; #34 picks one |
+| `on-accent` #FFFFFF on `accent-strong` #D1007A | 5.26 | every button with small text; #34 picked white, as the board draws it, over cream #F8F6EE (4.86) |
 | `accent-strong` on surface / raised / alt | 4.86 / 5.26 / 4.63 | text links |
 | `accent` #FF0096 on surface / raised / alt | 3.41 / 3.69 / 3.25 | icons and text from 24 px only |
 | cream on `accent` | 3.41 | never small text; the Wix draft's button fails AA here, so the design system moved buttons to `accent-strong` |
@@ -1318,7 +1317,7 @@ IDs are referenced by the overview and the cycles.
       … the overlay's named controls, inside the form …
   </form>
   …
-  <button type="submit" form="filter-x-form" class="btn btn--black"
+  <button type="submit" form="filter-x-form" class="btn btn--primary"
           data-live-count-label
           data-count-zero="Keine Resultate"
           data-count-one="1 Resultat anzeigen"
@@ -1690,7 +1689,7 @@ The canvas holds one board. The Wix draft holds no listing, detail or filter pag
 - **Conflicts to settle in the design system:**
   - `tokens.json` says display 36/44 and h1 26/34; the board's hero is 52/58, and its h2s use the `h1` size.
   - The README's hero is weight 600; the board's is 700.
-  - `on-accent` is cream; the board's buttons use white.
+  - `on-accent` is cream; the board's buttons use white. Settled by #34: white, #FFFFFF, 5.26:1.
   - `accent`'s usage note still lists "Primär-Buttons", which the README's contrast note withdraws.
 - **Rules a board must respect:**
   - "Keine pinken Flächen hinter Text" collides with pink guest bubbles (FI-3), the active chip and the pink canton map, so each needs a drawn answer.
@@ -1717,6 +1716,21 @@ Runs alone, because it renames the tokens every later lane uses. It starts after
   - every public page reads correctly on the new look, even where its layout is still old;
   - Lighthouse ≥ 95 on the styleguide and one listing, CSS ≤ 25 KB gzip, at most 2 font files;
   - no `Sofia` left outside `docs/reference/admin/`, and no third-party font request.
+
+**Outcome (2026-10-31).** Done in commit `brand-foundation` (review: Complete after one rework round; first pass 0 critical, 2 major, 7 minor; re-review 0 open). No migration, no table, no route, no Composer or npm package, no Makefile target or console command, no catalogue domain, no budget raised, `src/` unchanged. The public site and the back office now carry the look the owner approved in Q15. The full notes are **Built in #35** in `.claude/rules/module-shared.md`, one line in `module-admin.md`; read those and `.claude/rules/frontend.md` before touching a token or a base component.
+
+- **Tokens:** `assets/styles/abstracts/_tokens.scss` holds `tokens.json`'s names and values: `--c-*`, numeric `--space-4…64` plus `--space-32`, `--radius-*`, `--shadow-float`, `--fs-*`/`--lh-*`, `--fw-bold`, `--header-h` (68 px, 92 px from `md`). `--c-on-accent` is white. Retired: `--c-bg`, `--c-ink-inverse`, `--c-surface-2|3|footer`, `--c-hero-circle`, `--c-black`, `--c-muted`, `--c-line-muted`, `--c-tooltip-bg`, `--c-dropdown`, `--c-overlay-region|guests|more*`, `--c-lake`, `--c-accent-hover`, `--r-*`, `--sh-*`, and the T-shirt spacing names. A colour in a contrast pair is literal hex, because `ContrastTokensTest` reads it from this file. `--c-map-radius` is on no board; #38 may correct it.
+- **Guards:** `tests/Unit/Shared/PublicTokensDefinedTest.php` (new) fails on a `var(--x)` in public Sass that nothing declares, and skips `admin/`, `cms/`, `crm/` and `admin.scss`. The `crm` skip was proved against #27b's real partials, so #27b lands without changing the test. `ContrastTokensTest` was rewritten; a new colour pair needs a row there. `tests/Integration/Shared/ComponentPartialsTest.php` (new) renders `_text_input` and `_button` through Twig.
+- **Font:** one variable Figtree file, `assets/fonts/figtree-latin-wght-normal.woff2`, with `Figtree-OFL.txt`, shared by the public site and the back office, one preload in each of the three base templates (`base`, `admin/base`, `admin/base_auth`), no conditional preload. `'Figtree Fallback'` is `local('Arial'), local('Liberation Sans')` with Figtree's metrics. No Roboto fallback, because `AssetBudgetTest` allows two files. The Sofia Sans files are gone; the word stays only in this file, as history, and in `docs/reference/admin/`.
+- **Components:** `_button` has `size` (`md`, `lg`), `static`, and the variants `primary`, `secondary` (was `outline`), `ghost`, `round`, `round-lg`, `icon`, `close`; `--black` is gone. `.chip--selected`, the Rundkachel `.tile` and `.tag` are classes with no Twig partial. The field rule is shared by `.text-input__field` and `.inquiry-form__control`. `--c-focus` is black now, so a control on a photo adds the white halo `box-shadow: 0 0 0 6px var(--c-surface-raised)`: the carousel, `.merken--card .merken__button` below `lg`, `.venue-hero__open`.
+- **Header and footer:** logo `assets/images/logo-hzl.png` (PNG placeholder, Q17). "Location eintragen" stays visual only (Q19): a non-interactive `_button` `static` in the header and menu, a `<span>` in the footer, so the footer's "Ihre Location eintragen" looks like a link and does nothing until a target exists. `[data-merkliste-count]` appears twice, `merkliste.js` fills every one, only the header keeps `data-merkliste-link`. Twig global `site_contact_email`. `html` is white, `body` cream. Header and footer use `75rem`, not `.container`, so they start at another x than page content until #36 to #39.
+- **Phone menu:** its nav reads "Menü" (`layout.header.phone_menu_label`), the header's stays "Hauptnavigation" (`layout.header.menu_label`), so two landmarks never share a name. This differs from `Header.dc.html` and `Header-390.dc.html` on purpose; `BaseLayoutTest` guards it.
+- **Back office:** six `--a-*` values to the brand, plus a seventh, `--a-accent-bright` #FF0096, for icons on dark grounds only.
+- **`/_styleguide`** matches `Tokens.png` and `Tokens-390.png` as a composition; the real dialog and overlays sit in the last section, "Nicht auf dem Board". The seven `.text-*` classes of `base/_typography.scss` were deleted: nothing read them (`.text-hero`, `-count`, `-overlay-title`, `-card-title`, `-excerpt`, `-small`, `-tag`). Use `--fs-*` tokens or the heading scale.
+- **Deviations:** beyond the plan, every public heading is `--fw-bold`, `.btn--icon` is a white disc, and the `.count-badge` is restyled. `/_styleguide` is `noindex` and dev-only, so §35's Lighthouse SEO bar is read on the perf stack's listing, 99/100/100/100. The carousel disc's ring is on no board and stays. S11's uncached p95 is not owed: it is not in §35 or the plan, and `src/` is unchanged. The owner waived all ten manual items on 2026-10-31; their rows in the changes log stay Pending and carry no pass mark.
+- **Figures:** PHPUnit 3,457 tests, Vitest 279, `app` CSS 16,437 B gzip and `admin` 11,436 B of 25,600 B, 1 font file, CLS 0. `make validate-html URL=/` reports 1 error on Symfony's redirect stub until #36 replaces the YAML 302.
+- **Deploy:** nothing beyond `make sass` and the asset compile, but stored pages name the old hashed assets, so run `app:http-cache:clear` as for any CSS change.
+- **Carried forward:** #36 changes the two `listing` links of Regionen. #37, #38, #39: the layout items of the changes log, Phase 7. #38: `::placeholder` colour, `--c-map-radius`. #39: review italic; axe `label-content-name-mismatch` on detail's Merken button (`templates/favorites/_merken_button.html.twig:13`) and `landmark-unique` on `.similar-venues`, both pre-existing. #40: mails still carry the old pink as literal hex (`templates/emails/_blocks.html.twig:12,34`, `templates/emails/layout.html.twig:27`), plus the copy the boards word differently (© line, logo `alt`). #41: the back office's primary buttons stay near-black, as Phase 3's tokens intend.
 
 ### 36. `home-page`
 

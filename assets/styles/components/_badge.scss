@@ -1,10 +1,17 @@
-// Tier badge (E11: #535353, 3 px radius, 12/20 px, weight 400).
-.badge {
-    display: inline-block;
-    padding: .1875rem .625rem;
-    border-radius: var(--r-badge);
-    background: var(--c-surface-3);
+// Tier badge (`components/_badge.html.twig`) and tag (Tokens board). The tag has no Twig component yet: #37 and #39 use it.
+.badge,
+.tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.625rem;
+    padding: 0 var(--space-12);
+    border-radius: var(--radius-pill);
+    background: var(--c-tier-ground);
     color: var(--c-ink);
-    font: var(--fw-regular) var(--fs-tag) / var(--lh-tag) var(--font-sans);
+    font: var(--fw-semibold) var(--fs-tag) / var(--lh-tag) var(--font-sans);
     white-space: nowrap;
+}
+
+.tag {
+    background: var(--c-tag-ground);
 }

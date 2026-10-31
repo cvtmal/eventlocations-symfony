@@ -1,28 +1,42 @@
+@use '../abstracts/breakpoints' as bp;
+
 // Toast (`components/_toast.html.twig`); live region `[data-toast-region]` sits in base.html.twig (D7).
 .toast-region {
     position: fixed;
-    inset-inline: var(--space-m);
-    bottom: var(--space-m);
+    inset-inline: var(--space-16);
+    bottom: var(--space-16);
     z-index: 1000;
     display: grid;
     justify-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     pointer-events: none;
 }
 
 .toast {
-    max-width: 30rem;
-    padding: var(--space-s) var(--space-m);
-    border-radius: var(--r-tooltip);
-    background: var(--c-ink);
-    color: var(--c-ink-inverse);
-    box-shadow: var(--sh-tooltip);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8) var(--space-16);
+    max-width: 21.375rem;
+    padding: var(--space-16) var(--space-24);
+    border-radius: var(--radius-image);
+    background: var(--c-surface-raised);
+    color: var(--c-ink);
+    box-shadow: var(--shadow-float);
     font-size: var(--fs-small);
+    line-height: var(--lh-small);
     pointer-events: auto;
+
+    @include bp.up(md) {
+        max-width: 26.25rem;
+    }
 }
 
 .toast__link {
-    margin-left: var(--space-xs);
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--c-accent-strong);
     font-weight: var(--fw-semibold);
     text-decoration: underline;
 }

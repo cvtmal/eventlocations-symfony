@@ -19,7 +19,7 @@
         grid-template-columns: minmax(0, 21.875rem) minmax(0, 1fr);
         // The outer flexible rows centre the left column; the bubbles span them, so they never stretch the rows between.
         grid-template-rows: 1fr auto auto auto 1fr;
-        column-gap: var(--space-xl);
+        column-gap: var(--space-40);
         padding: 3rem 4.5rem 0;
 
         .overlay__body {
@@ -60,7 +60,7 @@
 }
 
 .guests-filter {
-    margin-bottom: var(--space-l);
+    margin-bottom: var(--space-24);
 }
 
 .guests-filter__field {
@@ -79,12 +79,6 @@
     &::-webkit-outer-spin-button {
         margin: 0;
         appearance: none;
-    }
-
-    // As #10's place input: focus doubles the underline instead of boxing it.
-    &:focus-visible {
-        outline: none;
-        box-shadow: 0 1px 0 var(--c-focus);
     }
 }
 
@@ -105,7 +99,7 @@
 
     .overlay--guests .overlay__footer-inner {
         flex-direction: column;
-        gap: var(--space-s);
+        gap: var(--space-12);
 
         .btn {
             width: 100%;
@@ -144,10 +138,10 @@ $bubbles: (
     aspect-ratio: 1;
     padding: 0;
     border: 0;
-    border-radius: var(--r-round);
-    background: var(--c-accent);
-    box-shadow: var(--sh-bubble);
-    color: var(--c-ink-inverse);
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-raised);
+    box-shadow: inset 0 0 0 1px var(--c-line-soft); // separates the overlaps
+    color: var(--c-ink);
     font-weight: var(--fw-semibold);
     line-height: 1;
     cursor: pointer;
@@ -158,7 +152,8 @@ $bubbles: (
 
     &[aria-pressed='true'] {
         z-index: 1;
-        background: var(--c-ink);
+        background: var(--c-accent-soft);
+        box-shadow: inset 0 0 0 2px var(--c-accent-strong);
     }
 
     // A ring is never under a neighbour.
@@ -171,7 +166,7 @@ $bubbles: (
     .guests-bubble--#{$value} {
         top: math.percentage(math.div(list.nth($box, 2), $stage-height));
         left: math.percentage(math.div(list.nth($box, 1), $stage-width));
-        width: math.percentage(math.div(list.nth($box, 3), $stage-width));
+        width: max(2.75rem, #{math.percentage(math.div(list.nth($box, 3), $stage-width))});
         font-size: max(.9375rem, #{math.div(list.nth($box, 4) * 100, $stage-width)}cqi);
     }
 }

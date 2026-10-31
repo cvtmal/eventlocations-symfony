@@ -1,135 +1,110 @@
-// Design tokens (#1, research D1–D4, E11, E12). The only `:root` in app.css; `@use`d once, from app.scss.
-// Every partial reads these through var(--…). Colour deviations from the original are listed per token.
+// Design tokens (#35, S15, `docs/reference/public/tokens.json`). The only `:root` in app.css; `@use`d once, from app.scss.
+// Every partial reads these through var(--…). A colour that takes part in a contrast pair is literal hex, aliases
+// included, because ContrastTokensTest reads the hex from this file; an alias is marked with `= <token>`.
 @use 'breakpoints' as bp;
 
 :root {
     // —— Colour: surfaces
-    --c-bg: #121212;
-    --c-ink: #fff;
-    --c-ink-inverse: #121212;
-    --c-surface: #272727; // header, hero ≥ 768
-    --c-surface-2: #444; // card, detail action card
-    --c-surface-3: #535353; // filter bar, tier badge, round button, hero < 768
-    --c-surface-footer: #2c2c2c; // footer, detail anchor nav
-    --c-hero-circle: #313131;
+    --c-surface: #f8f6ee; // the page ground
+    --c-surface-raised: #fff; // cards, dialogs, footer
+    --c-surface-alt: #f0f1eb; // alternating bands
 
-    // —— Colour: lines and muted text
-    --c-line: #fff;
-    --c-line-muted: #5f5f5f;
-    --c-muted: #c5c5c5;
+    // —— Colour: text
+    --c-ink: #484848;
+    --c-ink-strong: #000;
+    --c-ink-muted: #6b6b66;
 
-    // —— Colour: accent
-    --c-accent: #ff5a75;
-    --c-accent-hover: #ec536c;
-    --c-accent-strong: #c4455a; // selected or hover canton
-    --c-accent-soft: #ffc1cb; // bubble hover
+    // —— Colour: accent. `accent` is never behind text and never text below 24 px.
+    --c-accent: #ff0096;
+    --c-accent-strong: #d1007a; // the only saturated ground behind text
+    --c-accent-strong-hover: #b4006a;
+    --c-accent-strong-active: #96005a;
+    --c-accent-soft: #ffe3f2; // selected; only `--c-ink` on it
+    --c-on-accent: #fff;
 
-    // —— Colour: black button
-    --c-black: #1b1b1b;
+    // —— Colour: lines and focus
+    --c-line: #484848; // = ink; the underline of an input
+    --c-line-soft: #dedfd6; // decorative, carries no information
+    --c-focus: #000; // = ink-strong
 
-    // —— Colour: overlays (darkened for AA white text, D4)
-    --c-overlay-region: #577b77; // original #6a9691
-    --c-overlay-guests: #756a96;
-    --c-overlay-more: #76746e; // original #9e9a93
-    --c-overlay-more-bar: #6a6863; // original #8e8b85
-    --c-overlay-more-tile: #524f4b; // original #726e69 on #9e9a93, darkened like the overlay (D4)
-    --c-overlay-circle: rgb(0 0 0 / .05);
-    --c-dropdown: #425e5b; // original #51736f plus the region scrim
+    // —— Colour: status
+    --c-error: #b3261e;
+    --c-error-soft: #fbe9e7;
+    --c-success: #1b6e45;
+    --c-success-soft: #e2f1e8;
+    --c-disabled-ground: #e6e6e0;
+    --c-disabled-ink: #66665f;
+
+    // —— Colour: badges, overlays, placeholders
+    --c-tier-ground: #ffe3f2; // = accent-soft
+    --c-tag-ground: #f0f1eb; // = surface-alt
+    --c-overlay-ground: #f0f1eb; // = surface-alt
+    --c-overlay-circle: #e6e8df; // no muted or link text on it (4.33, 4.25)
+    --c-placeholder-ground: #e3e1d6;
 
     // —— Colour: map
-    --c-lake: #6a8396;
-    --c-map-land: #ff5a75;
-    --c-map-radius: rgb(255 255 255 / .46);
-
-    // —— Colour: tooltip and focus
-    --c-tooltip-bg: #fff;
-    --c-focus: #fff;
+    --c-map-land: #fff; // = surface-raised
+    --c-map-line: #8a8a82;
+    --c-map-hover: #ff0096; // = accent
+    --c-map-selected: #700044;
+    --c-map-lake: #6b8aa0;
+    --c-map-radius: rgb(209 0 122 / .16); // accent-strong at the float shadow's alpha; no board draws it, #38 may correct it
 
     // —— Font
-    --font-sans: 'Sofia Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-sans: 'Figtree', 'Figtree Fallback', system-ui, sans-serif;
     --fw-regular: 400;
     --fw-semibold: 600;
+    --fw-bold: 700;
 
     // —— Type scale (mobile first; size / line-height)
+    --fs-display: 2.25rem;
+    --lh-display: 2.75rem;
+    --fs-h1: 1.875rem;
+    --lh-h1: 2.375rem;
+    --fs-h2: 1.5rem;
+    --lh-h2: 2rem;
+    --fs-h3: 1.125rem;
+    --lh-h3: 1.625rem;
     --fs-body: 1rem;
-    --lh-body: 1.5;
+    --lh-body: 1.625; // 26 px; unitless, because `body` hands it down to every size that sets no line-height of its own
     --fs-small: .875rem;
-    --fs-tag: .75rem;
-    --lh-tag: 1.25rem;
-    --lh-pill: 1.375rem;
-    --fs-hero: 1.25rem;
-    --lh-hero: 1.5rem;
-    --fs-count: 1rem;
-    --lh-count: 1.25rem;
-    --fs-overlay-title: 1.5625rem;
-    --lh-overlay-title: 2.1875rem;
-    --fs-card-title: 1.5rem;
-    --lh-card-title: 1.3;
-    --fs-excerpt: .875rem;
-    --lh-excerpt: 1.375rem;
-    --fs-input-lg: 1.5rem;
-    --lh-input-lg: 2;
-    --fs-tooltip: .9375rem;
-    --lh-tooltip: 1.5rem;
+    --lh-small: 1.375rem;
+    --fs-button: .875rem;
+    --fs-button-lg: 1rem;
+    --lh-button: 1.25rem;
+    --fs-tag: .8125rem;
+    --lh-tag: 1.125rem;
 
-    // —— Spacing (PD-6; the four largest are the original's paddings)
-    --space-2xs: .25rem;
-    --space-xs: .5rem;
-    --space-s: .75rem;
-    --space-m: 1rem;
-    --space-l: 1.6875rem;
-    --space-xl: 2.5rem;
-    --space-2xl: 3.75rem;
-    --space-3xl: 5.3125rem;
+    // —— Spacing
+    --space-4: .25rem;
+    --space-8: .5rem;
+    --space-12: .75rem;
+    --space-16: 1rem;
+    --space-24: 1.5rem;
+    --space-32: 2rem;
+    --space-40: 2.5rem;
+    --space-64: 4rem;
 
     // —— Radii
-    --r-badge: 3px;
-    --r-button: 3px; // PD-7
-    --r-tooltip: 4px;
-    --r-bar: 6px;
-    --r-pill: 20px;
-    --r-round: 50%;
+    --radius-small: .75rem;
+    --radius-image: 1.5rem;
+    --radius-card: 2.5rem;
+    --radius-pill: 999px;
 
-    // —— Shadows
-    --sh-map: drop-shadow(8px 13px 0 rgb(0 0 0 / .15)); // a `filter` value
-    --sh-bubble: -10px 10px 0 -1px rgb(0 0 0 / .1);
-    --sh-round: 5px 5px 0 -1px rgb(0 0 0 / .1);
-    --sh-tooltip: 0 0 20px rgb(0 0 0 / .15);
-    --sh-dropdown: 0 15px 30px rgb(0 0 0 / .1);
+    // —— Shadow: floating layers only, cards have none
+    --shadow-float: 0 8px 32px rgb(72 72 72 / .16);
 
     // —— Layout
-    --header-h: 4.375rem;
+    --header-h: 4.25rem;
     --focus-ring: 2px solid var(--c-focus);
 
     @include bp.up(md) {
-        --fs-hero: 2.25rem;
-        --lh-hero: 2.875rem;
-        --fs-count: 1.5rem;
-        --lh-count: 1.875rem;
-        --fs-overlay-title: 2.5rem;
-        --lh-overlay-title: 3.125rem;
-        --fs-card-title: 1.3125rem;
-        --fs-excerpt: .9375rem;
-    }
-
-    @include bp.up(lg) {
-        --fs-hero: 4.0625rem;
-        --lh-hero: 4.6875rem;
-        --fs-count: 1.875rem;
-        --lh-count: 2.5rem;
-        --fs-overlay-title: 4.0625rem;
-        --lh-overlay-title: 4.6875rem;
-
-        @media (max-height: 800px) {
-            --fs-overlay-title: 2.5rem;
-            --lh-overlay-title: 3.125rem;
-        }
-    }
-
-    @include bp.up(xl) {
-        --fs-card-title: 1.875rem;
-        --fs-excerpt: 1rem;
-        --lh-excerpt: 1.5625rem;
-        --fs-input-lg: 2.5rem;
+        --fs-display: 3.25rem;
+        --lh-display: 3.625rem;
+        --fs-h1: 2.5rem;
+        --lh-h1: 3rem;
+        --fs-h2: 1.625rem;
+        --lh-h2: 2.125rem;
+        --header-h: 5.75rem;
     }
 }

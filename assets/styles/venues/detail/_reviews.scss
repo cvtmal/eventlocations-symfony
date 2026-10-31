@@ -1,6 +1,6 @@
 // Reviews (DP-14): quotes with a byline, the rest behind "Alle Kommentare".
 .venue-review {
-    margin: 0 0 var(--space-l);
+    margin: 0 0 var(--space-24);
 }
 
 .venue-review__text {
@@ -15,14 +15,14 @@
 }
 
 .venue-review__byline {
-    margin-top: var(--space-xs);
-    color: var(--c-muted);
+    margin-top: var(--space-8);
+    color: var(--c-ink-muted);
     font-size: var(--fs-small);
 }
 
 .venue-reviews__more > summary {
     list-style: none;
-    margin-bottom: var(--space-l);
+    margin-bottom: var(--space-24);
 
     &::-webkit-details-marker {
         display: none;

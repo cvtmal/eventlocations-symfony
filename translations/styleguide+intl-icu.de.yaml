@@ -1,21 +1,77 @@
 # Demo copy for /_styleguide (dev and test only). Venue names are fictional; nothing is copied from eventlokale.
 styleguide:
     page_title: Styleguide
-    title: Styleguide
-    intro: Alle Bausteine der Oberfläche auf einer Seite. Spätere Zyklen vergleichen ihre Seiten mit dieser.
+    title: Tokens und Komponenten
     colors:
         heading: Farben
+        groups:
+            surfaces: Flächen
+            text: Text und Linien
+            accent: Akzent
+            states: Zustände
+            overlay: Overlay
+        notes:
+            surface: Seitengrund
+            surface-raised: Karten, Footer, Panels
+            surface-alt: Abschnittswechsel
+            placeholder: Foto, solange es lädt
+            ink: Aller Text
+            ink-strong: Fokusring, stärkste Betonung
+            muted: Hilfstext
+            line: Unterstrich der Felder
+            line-soft: Chip-Rand, feine Trennung
+            accent: Icons und Text ab 24 px
+            accent-strong: Primär-Button, Zählbadge, Links, Icons
+            accent-strong-hover: Hover
+            accent-strong-active: Aktiv
+            accent-soft: Grund von «ausgewählt»
+            on-accent: Schrift auf accent-strong
+            focus: Fokusring
+            error: Fehlertext mit Icon
+            error-soft: Grund der Fehlerliste
+            success: Erfolgstext
+            success-soft: Grund der Bestätigung
+            disabled: Grund, deaktiviert
+            disabled-ink: Schrift, deaktiviert
+            overlay: Grund aller drei Overlays
+            overlay-circle: Dekorative Kreise
     typography:
         heading: Typografie
-        sample: Die schönsten Hochzeitslocations der Schweiz
+        sample: Hochzeit feiern
+        role: Rolle
+        desktop: Desktop, ab 768 px
+        phone: Phone, unter 768 px
+        phone_line: 'Phone {phone}, Desktop {desktop}. {note}'
+        roles:
+            display: Startseite, Hero
+            h1: Seitentitel, Overlay-Titel
+            h2: Abschnitt, Kartentitel
+            h3: Untertitel
+            body: Fliesstext
+            small: Fakten, Hilfstext
+            button: Buttons
+            tag: Badges, kleinste Schrift
     spacing:
         heading: Abstände
     radii_shadows:
-        heading: Radien und Schatten
+        heading: Radien
+    shadow:
+        heading: Schatten
+        card: Karte
+        card_note: Nie ein Schatten. Abschnitte trennen sich durch Abstand und Flächenwechsel.
+        float: Schwebende Ebene
+        float_note: 0 8px 32px rgba(72, 72, 72, .16). Nur Toast, Dropdown, Tooltip, mobile Leiste und Sticky-Navigation.
     icons:
         heading: Icons
+    states:
+        normal: Normal
+        hover: Hover
+        active: Aktiv
+        focus: Fokus
+        pressed: Gedrückt
+        disabled: Deaktiviert
     buttons:
-        heading: Buttons
+        heading: Button
         check_availability: Verfügbarkeit prüfen
         show_results: 931 Resultate anzeigen
         save_location: Location merken
@@ -24,14 +80,47 @@ styleguide:
         map: Karte
         favorites: Merkliste
         disabled: Nicht verfügbar
+    button_states:
+        primary: Primär
+        secondary: Sekundär
+        ghost: Ghost
+        sample: Anfrage senden
+        sizes: Grössen und Icon
+        md: md, 44 px
+        lg: lg, 48 px
+        search: Suche
+        static: Ohne Funktion
+        static_sample: Location eintragen
+    round_buttons:
+        heading: Runder Button
+        close: Schliessen
+    merken:
+        heading: Merken und Entfernen
+        label: Merken
+        venue: Landgut Amselfeld
+        saved: Gemerkt
+        on_list: Auf der Merkliste
     chips:
-        heading: Chips
+        heading: Chip und Rundkachel
+        castle: Schloss
+        selected: Ausgewählt
+        active: Aktiver Filter, mit ×
+        with_icon: Mit Icon
+        canton_link: Kantonslink
+        tile: Rundkachel, normal
+        tile_selected: Rundkachel, ausgewählt
         zurich: Zürich
         remove_zurich: Filter Zürich entfernen
-        region: Region
     badge:
-        heading: Badge
+        heading: Tier-Badge und Tag
+        tier: Tier-Badge
         popular: Beliebte Location
+        top_premium: Top Premium
+        recommended: Empfehlung
+        premium: Premium
+        tag: Tag
+        tag_price: Mittel
+        tag_sample: Rustikal
     breadcrumb:
         heading: Breadcrumb
         label: Navigationspfad
@@ -39,11 +128,28 @@ styleguide:
         canton: Kanton Zürich
         town: Stäfa
     text_input:
-        heading: Eingabefeld
+        heading: Felder und Select
         label: Name der Location
         placeholder: Name eingeben
+        first_name: Vorname
+        first_name_placeholder: Ihr Vorname
+        help: Normal, mit Hilfstext
+        email: E-Mail-Adresse
+        email_value: lena.muster@example.ch
+        email_invalid: lena.muster@
+        focus_help: 'Fokus: 2 px accent-strong'
+        error: Bitte geben Sie eine gültige E-Mail-Adresse an.
+        guests_placeholder: z.B. 80
+        occasion: Anlass
+        occasion_wedding: Hochzeit
+        occasion_civil: Standesamtliche Trauung
+        occasion_apero: Hochzeitsapéro
+        occasion_engagement: Verlobungsfeier
+        occasion_other: Anderer Anlass
+        message: Nachricht
+        message_value: Wir planen unsere Hochzeit und interessieren uns für Ihre Location.
     overlays:
-        heading: Overlays
+        heading: Overlay
         open_region: Region
         open_guests: Anzahl Gäste
         open_more: weitere Filter
@@ -56,6 +162,13 @@ styleguide:
         guests_placeholder: Anzahl Gäste
         lage: Lage
         clear: Filter löschen
+        drawn_region_title: Wo soll Ihre Hochzeit stattfinden?
+        drawn_more_title: Wählen Sie weitere Filter & Möglichkeiten
+        drawn_results: 24 Resultate anzeigen
+        option_all_cantons: Alle Kantone
+        option_zurich: Zürich
+        option_bern: Bern
+        option_lucerne: Luzern
     lage:
         am_fluss: Am Fluss
         am_see: Am See
@@ -68,14 +181,39 @@ styleguide:
         title: Anfrage gesendet
         body: Vielen Dank. Die Location meldet sich in den nächsten Tagen bei dir.
         confirm: Alles klar
+        drawn_title: Dachstock
+        drawn_body: Saal unter dem alten Dachstuhl, mit Holzboden und direktem Zugang zum Innenhof.
     carousel:
-        heading: Karussell
+        heading: Karussell-Bedienung
         label: Bilder
         single_label: Einzelnes Bild
-        slide: 'Bild {number}'
+        photo: Platzhalter Foto
+        phone_note: Am Telefon wischen, ohne Pfeile.
     toast:
         heading: Toast
-        message: Seehaus Beispiel wurde deiner Merkliste hinzugefügt.
+        message: Landgut Amselfeld wurde Ihrer Merkliste hinzugefügt.
         link: Zur Merkliste
+    focus_ring:
+        heading: Fokusring
+        light: 'Auf hellem Grund: 2 px schwarz, 2 px Abstand'
+        link: Textlink
+        photo: 'Auf einem Foto: schwarz mit weissem Halo'
     map:
         heading: Karte
+        tooltip: Tooltip
+        legend:
+            map-land: Land
+            map-line: Kantonsgrenze
+            map-hover: Kanton unter dem Zeiger
+            map-selected: Gewählter Kanton
+            map-lake: See
+    count_badge:
+        heading: Zähler der Merkliste
+    extras:
+        heading: Nicht auf dem Board
+        intro: Echte Bausteine und Zustände, die das Board nicht zeichnet. Dialog und Overlays hier öffnen sich wirklich.
+        live: Zum Öffnen
+        variants: Weitere Varianten
+        states: Weitere Zustände
+        grounds: Auf anderem Grund
+        single_image: Karussell mit einem Bild

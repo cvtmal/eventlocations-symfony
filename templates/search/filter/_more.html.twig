@@ -14,12 +14,12 @@
         {%- if active > 0 -%}
             <span class="chip chip--more"><button type="button" class="chip__open" popovertarget="filter-more">{{ 'filter.more_active'|trans({count: active}, 'search') }}</button><a class="chip__remove" href="{{ listing_path_without(criteria, params) }}" aria-label="{{ 'filter.more_remove'|trans({}, 'search') }}">{{ icon('x', {class: 'icon--sm'}) }}</a></span>
         {%- else -%}
-            {{- include('components/_button.html.twig', {label: 'filter.more'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-more'}}, with_context = false) -}}
+            {{- include('components/_button.html.twig', {label: 'filter.more'|trans({}, 'search'), variant: 'secondary', attributes: {popovertarget: 'filter-more'}}, with_context = false) -}}
         {%- endif -%}
         {% embed 'components/_overlay.html.twig' with {id: 'filter-more', tone: 'more', title: 'filter.more_title'|trans({}, 'search'), criteria: criteria, params: params} only %}
             {% block overlay_body %}{{ include('search/filter/_more_form.html.twig', {criteria: criteria, params: params}, with_context = false) }}{% endblock %}
             {% block overlay_footer %}
-                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'black', type: 'submit', attributes: {
+                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'primary', size: 'lg', type: 'submit', attributes: {
                     form: 'filter-more-form',
                     'data-live-count-label': '',
                     'data-count-zero': 'filter.show_results'|trans({count: 0, formatted: '0'}, 'search'),

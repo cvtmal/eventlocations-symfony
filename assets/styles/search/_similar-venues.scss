@@ -2,30 +2,34 @@
 
 // "Ähnliche Locations" (DP-15, Search fragment of the detail page): compact cards in a carousel.
 .similar-venues {
-    padding-block: var(--space-2xl) 0;
-    background: var(--c-surface);
+    padding-block: var(--space-64) 0;
+    background: var(--c-surface-alt);
 
     .carousel__track {
-        gap: var(--space-m);
+        gap: var(--space-16);
     }
 
     .carousel__slide {
         flex-basis: 70%;
 
         @include bp.up(md) {
-            flex-basis: calc((100% - 2 * var(--space-m)) / 3);
+            flex-basis: calc((100% - 2 * var(--space-16)) / 3);
         }
 
         @include bp.up(xl) {
-            flex-basis: calc((100% - 3 * var(--space-m)) / 4);
+            flex-basis: calc((100% - 3 * var(--space-16)) / 4);
         }
     }
 
     .carousel__controls {
         position: static;
         justify-content: flex-end;
-        gap: var(--space-xs);
-        margin-top: var(--space-s);
+        gap: var(--space-8);
+        margin-top: var(--space-12);
+    }
+
+    .carousel__counter {
+        position: static;
     }
 }
 
@@ -34,8 +38,8 @@
     flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: var(--space-m);
-    margin-bottom: var(--space-m);
+    gap: var(--space-16);
+    margin-bottom: var(--space-16);
 }
 
 .similar-venues__title {
@@ -51,8 +55,8 @@
 .similar-card__placeholder {
     display: block;
     aspect-ratio: 3 / 2;
-    border-radius: var(--r-bar);
-    background: var(--c-surface-3);
+    border-radius: var(--radius-image);
+    background: var(--c-tag-ground);
     overflow: hidden;
 
     .picture__img {
@@ -62,10 +66,10 @@
 }
 
 .similar-card__body {
-    padding-top: var(--space-s);
+    padding-top: var(--space-12);
 
     .badge {
-        margin-bottom: var(--space-2xs);
+        margin-bottom: var(--space-4);
     }
 }
 
@@ -84,8 +88,8 @@
 
 // #7's search/_card_facts, smaller than on the listing card.
 .similar-card .card-facts {
-    gap: var(--space-2xs) var(--space-m);
-    margin-top: var(--space-2xs);
+    gap: var(--space-4) var(--space-16);
+    margin-top: var(--space-4);
     font-size: var(--fs-small);
     line-height: 1.4;
 

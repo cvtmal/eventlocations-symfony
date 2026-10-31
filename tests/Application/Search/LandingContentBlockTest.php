@@ -146,58 +146,6 @@ final class LandingContentBlockTest extends WebTestCase
         }
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function introsWithAHeavyWeight(): iterable
-    {
-        yield 'bold' => ['Am **Zürichsee** feiern.'];
-        yield 'a heading' => ["## Am Zürichsee\n\nFeiern."];
-    }
-
-    #[DataProvider('introsWithAHeavyWeight')]
-    public function test_a_stored_intro_with_bold_or_a_heading_preloads_the_600_weight(string $body): void
-    {
-        $this->inCanton(Canton::ZH, 5);
-        $this->store(['landing.canton.zh.intro' => $body]);
-
-        self::assertSame(1, $this->heavyPreloads('/hochzeitslocations/zuerich'));
-    }
-
-    public function test_the_plain_listings_own_intro_preloads_the_600_weight_too(): void
-    {
-        $this->inCanton(Canton::BE, 1);
-        $this->store([ListingIntroBlock::KEY => 'Finde die **passende** Location.']);
-
-        self::assertSame(1, $this->heavyPreloads('/hochzeitslocations'));
-    }
-
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function plainIntros(): iterable
-    {
-        yield 'a paragraph' => ['Am Zürichsee feiern.'];
-        yield 'an escaped tag' => ['Ein Text mit <strong>Tags und <h1> aus der Tastatur.'];
-    }
-
-    #[DataProvider('plainIntros')]
-    public function test_a_plain_stored_intro_does_not_preload_the_600_weight(string $body): void
-    {
-        $this->inCanton(Canton::ZH, 5);
-        $this->store(['landing.canton.zh.intro' => $body]);
-
-        self::assertSame(0, $this->heavyPreloads('/hochzeitslocations/zuerich'));
-    }
-
-    public function test_without_a_stored_intro_no_page_preloads_the_600_weight(): void
-    {
-        $this->inCanton(Canton::ZH, 5);
-
-        self::assertSame(0, $this->heavyPreloads('/hochzeitslocations/zuerich'), '#17\'s sentence.');
-        self::assertSame(0, $this->heavyPreloads('/hochzeitslocations'), 'The listing without its block.');
-    }
-
     public function test_a_heading_in_a_stored_intro_leaves_the_page_one_h1(): void
     {
         $this->inCanton(Canton::ZH, 5);
@@ -262,14 +210,6 @@ final class LandingContentBlockTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $this->assertPublicAndSessionFree();
         self::assertFalse($pool->getItem(ContentBlocks::ITEM)->isHit(), 'A page that only peeks stores nothing.');
-    }
-
-    private function heavyPreloads(string $uri): int
-    {
-        $crawler = $this->client->request('GET', $uri);
-        self::assertResponseIsSuccessful($uri);
-
-        return $crawler->filter('link[rel="preload"][as="font"][href*="sofia-sans-latin-600-normal"]')->count();
     }
 
     private function intro(string $uri): Crawler
