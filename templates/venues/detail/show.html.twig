@@ -19,9 +19,6 @@
 {% block jsonld %}{{ parent() }}{{ venue_jsonld(venue) }}{{ breadcrumb_jsonld([{name: 'breadcrumb.listing'|trans({}, 'seo'), url: url('listing')}, {name: venue.name}]) }}{% endblock %}
 
 {# A class name, not text: set as a variable so the raw-text scanner does not read it as copy. #}
-{# The page's headings use the 600 weight above the fold; preloading it keeps the swap from shifting the description (CLS). #}
-{% block stylesheets %}<link rel="preload" href="{{ asset('fonts/sofia-sans-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>{% endblock %}
-
 {% block body_class %}{% set page_class = 'page-venue' %}{{ page_class }}{% endblock %}
 
 {% block hero %}

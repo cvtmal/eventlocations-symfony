@@ -21,7 +21,7 @@
         return;
     }
     const linkLabel = link.getAttribute('aria-label');
-    const badge = document.querySelector('[data-merkliste-count]');
+    const badges = document.querySelectorAll('[data-merkliste-count]');
 
     const value = () => {
         const prefix = NAME + '=';
@@ -140,8 +140,10 @@
         document.querySelectorAll('[data-merken]').forEach((button) => {
             button.setAttribute('aria-pressed', String(numbers.includes(Number(button.dataset.merken))));
         });
-        badge.textContent = String(numbers.length);
-        badge.hidden = numbers.length === 0;
+        badges.forEach((badge) => {
+            badge.textContent = String(numbers.length);
+            badge.hidden = numbers.length === 0;
+        });
         // The link's aria-label hides the badge from screen readers, so the count goes in the label.
         link.setAttribute('aria-label', numbers.length > 0 ? link.dataset.countLabel.replace('__count__', () => String(numbers.length)) : linkLabel);
     };

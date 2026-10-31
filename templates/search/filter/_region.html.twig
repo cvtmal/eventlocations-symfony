@@ -22,11 +22,11 @@
     {%- endif -%}
 {%- elseif part == 'trigger' -%}
     <li class="filter-bar__item">
-        {{- include('components/_button.html.twig', {label: 'filter.region'|trans({}, 'search'), variant: 'outline', attributes: {popovertarget: 'filter-region'}}, with_context = false) -}}
+        {{- include('components/_button.html.twig', {label: 'filter.region'|trans({}, 'search'), variant: 'secondary', attributes: {popovertarget: 'filter-region'}}, with_context = false) -}}
         {% embed 'components/_overlay.html.twig' with {id: 'filter-region', tone: 'region', title: 'filter.region_title'|trans({}, 'search'), criteria: criteria, selected: selected_place(criteria)} only %}
             {% block overlay_body %}{{ include('search/filter/_region_form.html.twig', {criteria: criteria, selected: selected}, with_context = false) }}{% endblock %}
             {% block overlay_footer %}
-                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'black', type: 'submit', attributes: {
+                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'primary', size: 'lg', type: 'submit', attributes: {
                     form: 'filter-region-form',
                     'data-live-count-label': '',
                     'data-count-zero': 'filter.show_results'|trans({count: 0, formatted: '0'}, 'search'),

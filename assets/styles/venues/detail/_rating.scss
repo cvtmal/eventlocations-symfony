@@ -2,19 +2,19 @@
 .venue-rating__summary {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     margin: 0;
     font-size: 1.25rem;
     font-weight: var(--fw-semibold);
 }
 
 .venue-rating__intro {
-    margin: var(--space-m) 0 var(--space-xs);
+    margin: var(--space-16) 0 var(--space-8);
 }
 
 .venue-rating__highlights {
     display: grid;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -22,6 +22,6 @@
     li {
         display: flex;
         align-items: center;
-        gap: var(--space-xs);
+        gap: var(--space-8);
     }
 }

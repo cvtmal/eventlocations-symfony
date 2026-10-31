@@ -21,7 +21,7 @@ final class StyleguideTest extends WebTestCase
      */
     public static function components(): iterable
     {
-        foreach (['colors', 'typography', 'spacing', 'radii-shadows', 'icons', 'buttons', 'chips', 'badge', 'text-input', 'overlays', 'dialog', 'carousel', 'toast', 'map'] as $name) {
+        foreach (['colors', 'typography', 'spacing', 'radii-shadows', 'shadow', 'icons', 'buttons', 'button-states', 'round-buttons', 'merken', 'chips', 'tiles', 'badge', 'tag', 'text-input', 'field-states', 'breadcrumb', 'overlays', 'dialog', 'carousel', 'toast', 'focus-ring', 'map', 'tooltip', 'count-badge', 'extras'] as $name) {
             yield $name => [$name];
         }
     }
@@ -89,6 +89,42 @@ final class StyleguideTest extends WebTestCase
             self::assertSelectorExists(\sprintf('[popovertarget="%s"]:not([popovertargetaction])', $id));
             self::assertSelectorExists(\sprintf('#%s [popovertarget="%s"][popovertargetaction="hide"]', $id, $id));
         }
+    }
+
+    public function test_the_boards_open_panels_are_drawings_without_a_hook(): void
+    {
+        $crawler = $this->styleguide();
+
+        $drawings = $crawler->filter('[inert]');
+        self::assertCount(2, $drawings);
+        self::assertCount(1, $crawler->filter('[data-component="dialog"] [inert]'));
+        self::assertCount(1, $crawler->filter('[data-component="overlays"] [inert]'));
+        self::assertCount(2, $crawler->filter('[data-component="overlays"] .sg-overlay'));
+        self::assertCount(0, $crawler->filter('[inert] :is([data-overlay], [data-dialog], [popover], [popovertarget], [commandfor], dialog)'));
+    }
+
+    public function test_every_id_is_unique(): void
+    {
+        $crawler = $this->styleguide();
+
+        $ids = $crawler->filter('[id]')->each(static fn (Crawler $node): string => (string) $node->attr('id'));
+
+        self::assertSame([], array_values(array_diff_key($ids, array_unique($ids))));
+    }
+
+    public function test_colours_sit_in_the_boards_five_groups(): void
+    {
+        $crawler = $this->styleguide();
+
+        self::assertCount(5, $crawler->filter('[data-component="colors"] .sg-color-group'));
+        self::assertCount(24, $crawler->filter('[data-component="colors"] .sg-color'));
+    }
+
+    public function test_map_has_the_boards_legend(): void
+    {
+        $crawler = $this->styleguide();
+
+        self::assertCount(5, $crawler->filter('.sg-legend li'));
     }
 
     public function test_dialog_is_operable_without_javascript(): void

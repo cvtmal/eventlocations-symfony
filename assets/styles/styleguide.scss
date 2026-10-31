@@ -1,55 +1,193 @@
 // Styleguide-only styles (/_styleguide, dev and test). A separate sass root (PD-2), so nothing here counts
 // against the app.css budget. Uses the breakpoints only; the tokens come from app.css (no second :root).
+// The composition follows docs/reference/public/Tokens.png and Tokens-390.png.
 @use 'abstracts/breakpoints' as bp;
 
-$color-tokens: 'bg', 'ink', 'ink-inverse', 'surface', 'surface-2', 'surface-3', 'surface-footer', 'hero-circle',
-    'line', 'line-muted', 'muted', 'accent', 'accent-hover', 'accent-strong', 'accent-soft', 'black', 'overlay-region',
-    'overlay-guests', 'overlay-more', 'overlay-more-bar', 'overlay-circle', 'lake', 'map-land', 'tooltip-bg', 'focus';
+$color-tokens: 'surface', 'surface-raised', 'surface-alt', 'placeholder-ground', 'ink', 'ink-strong', 'ink-muted', 'line',
+    'line-soft', 'accent', 'accent-strong', 'accent-strong-hover', 'accent-strong-active', 'accent-soft', 'on-accent',
+    'focus', 'error', 'error-soft', 'success', 'success-soft', 'disabled-ground', 'disabled-ink', 'overlay-ground',
+    'overlay-circle', 'map-land', 'map-line', 'map-hover', 'map-selected', 'map-lake';
 
+// Below md the board's page runs with 24 px margins and a 40 px rhythm, from md with 40 and 64.
 .sg-page {
-    padding-block: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-40);
+    max-width: 90rem;
+    margin-inline: auto;
+    padding: var(--space-40) var(--space-24);
+
+    @include bp.up(md) {
+        gap: var(--space-64);
+        padding: var(--space-64) var(--space-40);
+    }
+
+    > h1 {
+        font-size: var(--fs-h1);
+        line-height: var(--lh-h1);
+    }
 }
 
 .sg {
-    padding-block: var(--space-xl);
-    border-top: 1px solid var(--c-line-muted);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    min-width: 0;
 
     > h2 {
-        margin-bottom: var(--space-l);
-        font-size: 1.5rem;
-    }
-
-    @include bp.up(md) {
-        padding-block: var(--space-2xl);
+        font-size: var(--fs-h3);
+        line-height: var(--lh-h3);
     }
 }
 
-.sg-intro {
-    margin: var(--space-s) 0 0;
-    color: var(--c-muted);
+// Two sections side by side from md.
+.sg-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-32);
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-40);
+    }
+}
+
+// The same table holds two readings, so one of two captions shows.
+.sg-from-md {
+    @include bp.down(md) {
+        display: none;
+    }
+}
+
+.sg-below-md {
+    @include bp.up(md) {
+        display: none;
+    }
+}
+
+.sg-note {
+    margin: 0;
+    color: var(--c-ink-muted);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
 }
 
 .sg-grid {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-m) var(--space-l);
+    gap: var(--space-16) var(--space-24);
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.sg-grid--top {
+.sg-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-24);
+}
+
+.sg-row--tight {
+    gap: var(--space-8);
+}
+
+.sg-row--wide {
+    gap: var(--space-32);
+}
+
+.sg-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+}
+
+.sg-groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-32);
+}
+
+.sg-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+}
+
+// One sample with its caption, as on the Tokens board.
+.sg-state {
+    display: flex;
+    flex-direction: column;
     align-items: flex-start;
+    gap: var(--space-8);
+    min-width: 0;
+}
+
+.sg-state__label {
+    color: var(--c-ink-muted);
+    font-size: var(--fs-tag);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-tag);
+}
+
+.sg-subheading {
+    margin: 0;
+    font-size: var(--fs-small);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-small);
+}
+
+.sg-card {
+    padding: var(--space-24);
+    border-radius: var(--radius-image);
+    background: var(--c-surface-raised);
+}
+
+.sg-surface {
+    padding: var(--space-24);
+    border-radius: var(--radius-image);
+    background: var(--c-surface-alt);
+}
+
+// Colours
+.sg-color-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+}
+
+.sg-colors {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-16);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: var(--space-24);
+    }
+
+    @include bp.up(lg) {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+}
+
+.sg-color {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    min-width: 0;
 }
 
 .sg-swatch {
     display: block;
-    width: 4.5rem;
     height: 4.5rem;
-    margin-bottom: var(--space-xs);
-    border: 1px solid var(--c-line-muted);
-    border-radius: var(--r-badge);
+    border-radius: var(--radius-small);
+    box-shadow: inset 0 0 0 1px var(--c-line-soft);
 }
 
 @each $token in $color-tokens {
@@ -58,132 +196,693 @@ $color-tokens: 'bg', 'ink', 'ink-inverse', 'surface', 'surface-2', 'surface-3', 
     }
 }
 
-.sg-swatch-item {
-    width: 8.5rem;
-    font-size: var(--fs-tag);
-    line-height: var(--lh-tag);
+.sg-color__text {
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
 
-    code {
+    strong {
         display: block;
+        font-weight: var(--fw-bold);
         overflow-wrap: anywhere;
     }
 }
 
-.sg-type-sample {
-    margin: 0 0 var(--space-m);
+.sg-color__note {
+    display: block;
+    color: var(--c-ink-muted);
+}
 
-    code {
+// Type: rows of a three-column grid from md, a plain list below it.
+.sg-type {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+
+    @include bp.up(md) {
+        display: grid;
+        grid-template-columns: 12.5rem minmax(0, 1fr) minmax(0, 1fr);
+        align-items: baseline;
+        gap: var(--space-24) var(--space-40);
+    }
+}
+
+.sg-type__head {
+    display: none;
+
+    @include bp.up(md) {
+        display: contents;
+    }
+}
+
+.sg-type__row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+
+    @include bp.up(md) {
+        display: contents;
+    }
+}
+
+.sg-type__role {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+
+    strong {
+        font-size: var(--fs-small);
+        font-weight: var(--fw-bold);
+        line-height: var(--lh-small);
+    }
+
+    // The board's caption sits in the cell's 26 px line, not in a line of its own.
+    @include bp.up(md) {
         display: block;
-        color: var(--c-muted);
-        font-size: var(--fs-tag);
+
+        strong {
+            display: block;
+        }
+    }
+}
+
+.sg-type__sample {
+    display: block;
+}
+
+.sg-type__sample--display {
+    font-size: var(--fs-display);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-display);
+}
+
+.sg-type__sample--h1 {
+    font-size: var(--fs-h1);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-h1);
+}
+
+.sg-type__sample--h2 {
+    font-size: var(--fs-h2);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-h2);
+}
+
+.sg-type__sample--h3 {
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-h3);
+}
+
+.sg-type__sample--body {
+    font-size: var(--fs-body);
+    font-weight: var(--fw-regular);
+    line-height: var(--lh-body);
+}
+
+.sg-type__sample--small {
+    font-size: var(--fs-small);
+    font-weight: var(--fw-regular);
+    line-height: var(--lh-small);
+}
+
+.sg-type__sample--button {
+    font-size: var(--fs-button);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-button);
+}
+
+.sg-type__sample--tag {
+    font-size: var(--fs-tag);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-tag);
+}
+
+// The tokens switch at md, and this column shows the phone's values beside the desktop ones, so the three that differ
+// are written out. They repeat `abstracts/_tokens.scss`.
+.sg-type__sample--phone {
+    &.sg-type__sample--display {
+        font-size: 2.25rem;
+        line-height: 2.75rem;
+    }
+
+    &.sg-type__sample--h1 {
+        font-size: 1.875rem;
+        line-height: 2.375rem;
+    }
+
+    &.sg-type__sample--h2 {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+}
+
+// Spacing and radii
+.sg-spaces {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-16);
+    }
+
+    li > :first-child {
+        flex: 0 0 var(--space-32);
     }
 }
 
 .sg-space {
     display: block;
     height: 1rem;
-    background: var(--c-accent);
+    border-radius: 2px;
+    background: var(--c-accent-strong);
 }
 
-@each $step in 2xs, xs, s, m, l, xl, 2xl, 3xl {
+@each $step in 4, 8, 12, 16, 24, 32, 40, 64 {
     .sg-space--#{$step} {
         width: var(--space-#{$step});
     }
 }
 
-.sg-box {
+.sg-radii {
     display: grid;
-    place-items: center;
-    width: 7rem;
-    height: 4.5rem;
-    background: var(--c-surface-2);
-    font-size: var(--fs-tag);
-    text-align: center;
-}
-
-.sg-box--r-badge { border-radius: var(--r-badge); }
-.sg-box--r-tooltip { border-radius: var(--r-tooltip); }
-.sg-box--r-bar { border-radius: var(--r-bar); }
-.sg-box--r-pill { border-radius: var(--r-pill); }
-.sg-box--r-round { border-radius: var(--r-round); }
-.sg-box--sh-bubble { border-radius: var(--r-round); background: var(--c-accent); color: var(--c-ink-inverse); box-shadow: var(--sh-bubble); }
-.sg-box--sh-round { border-radius: var(--r-round); box-shadow: var(--sh-round); }
-.sg-box--sh-tooltip { background: var(--c-tooltip-bg); color: var(--c-ink-inverse); border-radius: var(--r-tooltip); box-shadow: var(--sh-tooltip); }
-.sg-box--sh-dropdown { box-shadow: var(--sh-dropdown); }
-.sg-box--sh-map { background: var(--c-map-land); color: var(--c-ink-inverse); filter: var(--sh-map); }
-
-.sg-icon-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-    gap: var(--space-m);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-16);
     margin: 0;
     padding: 0;
     list-style: none;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    li {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-8);
+    }
+
+    strong {
+        font-weight: var(--fw-bold);
+    }
+}
+
+.sg-box {
+    display: block;
+    height: 6rem;
+    background: var(--c-surface-raised);
+    box-shadow: inset 0 0 0 1px var(--c-line-soft);
+}
+
+.sg-box--radius-small { border-radius: var(--radius-small); }
+.sg-box--radius-image { border-radius: var(--radius-image); }
+.sg-box--radius-card { border-radius: var(--radius-card); }
+.sg-box--radius-pill { border-radius: var(--radius-pill); }
+
+// Shadow
+.sg-shadows {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-24);
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.sg-shadow {
+    padding: var(--space-24);
+    background: var(--c-surface-raised);
+
+    strong {
+        font-weight: var(--fw-bold);
+    }
+
+    p {
+        margin: var(--space-8) 0 0;
+        font-size: var(--fs-small);
+        line-height: var(--lh-small);
+    }
+}
+
+.sg-shadow--card {
+    border-radius: var(--radius-card);
+}
+
+.sg-shadow--float {
+    border-radius: var(--radius-image);
+    box-shadow: var(--shadow-float);
+}
+
+// The board shows every state at once, a page only one at a time. These pin a state on a sample, with the same values as
+// `components/_button.scss`, `_chip.scss`, `_text-input.scss` and `favorites/_merken.scss`.
+.btn--primary.sg-force-hover {
+    background: var(--c-accent-strong-hover);
+}
+
+.btn--primary.sg-force-active {
+    background: var(--c-accent-strong-active);
+}
+
+.btn--secondary.sg-force-hover {
+    background: var(--c-accent-soft);
+    box-shadow: inset 0 0 0 2px var(--c-accent-strong-hover);
+    color: var(--c-accent-strong-hover);
+}
+
+.btn--secondary.sg-force-active {
+    background: var(--c-accent-soft);
+    box-shadow: inset 0 0 0 2px var(--c-accent-strong-active);
+    color: var(--c-accent-strong-active);
+}
+
+.btn--ghost.sg-force-hover,
+.btn--ghost.sg-force-active,
+.chip--neutral.sg-force-hover,
+.sg-disc.sg-force-hover {
+    background: var(--c-accent-soft);
+}
+
+.sg-force-focus {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.sg-force-halo {
+    box-shadow: 0 0 0 6px var(--c-surface-raised);
+}
+
+.text-input__field.sg-force-focus {
+    outline: none;
+    border-bottom-color: var(--c-accent-strong);
+    box-shadow: 0 1px 0 var(--c-accent-strong);
+}
+
+// The round Merken button: on a card it is a disc only below lg, here at every width.
+.sg-disc {
+    padding: 0;
+    background: var(--c-surface-raised);
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+// The word hides below lg on a real card; the board shows it at both widths.
+.sg-merken .merken__text {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+}
+
+// Fields
+.sg-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-32) var(--space-40);
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .text-input {
+        max-width: none;
+    }
+}
+
+// Its only real use centres it in the hero (`components/_breadcrumb.scss`); the board draws it at the start of the line.
+.sg-breadcrumb .breadcrumb__list {
+    justify-content: flex-start;
+    margin: 0;
+}
+
+// Text and link side by side as on the board, while a real toast wraps at this width. Below md both stack them.
+.sg-toast-demo .toast {
+    @include bp.up(md) {
+        flex-wrap: nowrap;
+    }
+}
+
+.sg-toast-demo .toast__link {
+    flex: none;
+}
+
+// Carousel
+.sg-carousel {
+    max-width: 25rem;
+    width: 100%;
+
+    @include bp.down(md) {
+        max-width: none;
+    }
+
+    .sg-note {
+        margin-top: var(--space-8);
+    }
+}
+
+.sg-slide {
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border-radius: var(--radius-image);
+    background: var(--c-placeholder-ground);
+
+    @include bp.up(md) {
+        aspect-ratio: auto;
+        height: 16.75rem;
+    }
+}
+
+// Opens on the third of eight, as the board draws it, and stays a real carousel. Where the browser lacks this it opens on
+// the first.
+#sg-carousel-demo-track .carousel__slide:nth-child(3) {
+    scroll-initial-target: nearest;
+}
+
+// The board's placeholder photos, in tokens.
+.sg-photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.sg-photo__sky { fill: var(--c-placeholder-ground); }
+.sg-photo__sun { fill: var(--c-surface); }
+.sg-photo__hill { fill: var(--c-map-line); }
+.sg-photo__wall { fill: var(--c-ink-muted); }
+.sg-photo__door { fill: var(--c-ink); }
+.sg-photo__ground { fill: var(--c-disabled-ink); }
+
+// Static drawings of the open dialog and overlays. They reuse the components' classes and none of their hooks.
+.sg-backdrop {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-32) var(--space-16);
+    border-radius: var(--radius-image);
+    background: color-mix(in srgb, var(--c-ink-strong) 60%, transparent); // the same as `.dialog::backdrop`
+
+    @include bp.up(md) {
+        padding: var(--space-40);
+    }
+
+    .dialog {
+        max-width: 36rem;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+.sg-overlay {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    padding: var(--space-24);
+    overflow: hidden;
+    border-radius: var(--radius-image);
+    background:
+        radial-gradient(circle 150px at 100% 0, var(--c-overlay-circle) 149.5px, transparent 150px),
+        radial-gradient(circle 110px at 0 100%, var(--c-overlay-circle) 109.5px, transparent 110px),
+        var(--c-overlay-ground);
+
+    @include bp.up(md) {
+        padding: var(--space-40);
+        background:
+            radial-gradient(circle 260px at 92% 0, var(--c-overlay-circle) 259.5px, transparent 260px),
+            radial-gradient(circle 170px at 4% 100%, var(--c-overlay-circle) 169.5px, transparent 170px),
+            var(--c-overlay-ground);
+    }
+
+    > .btn--close {
+        position: absolute;
+        top: var(--space-12);
+        right: var(--space-12);
+        z-index: 1;
+
+        @include bp.up(md) {
+            top: var(--space-24);
+            right: var(--space-24);
+        }
+    }
+}
+
+.sg-overlay__title {
+    position: relative;
+    padding-right: 3rem;
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+}
+
+.sg-overlay__card {
+    position: relative;
+    max-width: none;
+    padding: var(--space-24);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-raised);
+
+    @include bp.up(md) {
+        padding: var(--space-32);
+    }
+}
+
+.sg-overlay__actions {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-8);
+
+    @include bp.up(md) {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--space-24);
+    }
+
+    .overlay__clear {
+        justify-content: center;
+    }
+}
+
+// More's footer bar: white, from edge to edge, over the content.
+.sg-overlay__actions--bar {
+    margin: 0 calc(var(--space-24) * -1) calc(var(--space-24) * -1);
+    padding: var(--space-16) var(--space-24);
+    background: var(--c-surface-raised);
+    box-shadow: var(--shadow-float);
+
+    @include bp.up(md) {
+        margin: 0 calc(var(--space-40) * -1) calc(var(--space-40) * -1);
+        padding: var(--space-16) var(--space-40);
+    }
+}
+
+// Focus ring
+.sg-focus {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-24);
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.sg-focus-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    padding: var(--space-32) var(--space-24);
+    border-radius: var(--radius-image);
+    background: var(--c-surface-raised);
+}
+
+.sg-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    color: var(--c-accent-strong);
+    font-weight: var(--fw-semibold);
+}
+
+.sg-close-on-white {
+    background: var(--c-surface);
+}
+
+.sg-focus-photo {
+    position: relative;
+    height: 11.25rem;
+
+    @include bp.up(md) {
+        height: 12.5rem;
+    }
+
+    .sg-photo {
+        border-radius: var(--radius-image);
+    }
+
+    .btn--icon {
+        position: absolute;
+        top: calc(50% - 1.375rem);
+        right: var(--space-24);
+    }
+}
+
+.sg-focus-photo__label {
+    position: absolute;
+    top: var(--space-16);
+    left: var(--space-16);
+    max-width: calc(100% - 2rem);
+    background: var(--c-surface-raised);
+    white-space: normal;
+}
+
+// Canton map slot (#3's `canton_map()`, plan Step 7.4). Zürich chosen, Aargau under the pointer, as on the board.
+.sg-map-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+
+    @include bp.up(md) {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: var(--space-40);
+    }
+}
+
+.sg-map {
+    flex: none;
+
+    @include bp.up(md) {
+        width: 30rem;
+    }
+
+    svg {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    #cantons path {
+        fill: var(--c-map-land);
+        stroke: var(--c-map-line);
+        stroke-width: 1.2;
+    }
+
+    #cantons #ch-zh {
+        fill: var(--c-map-selected);
+    }
+
+    #cantons #ch-ag {
+        fill: var(--c-map-hover);
+    }
+
+    #lakes {
+        fill: var(--c-map-lake);
+    }
+}
+
+.sg-map-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+}
+
+.sg-legend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
 
     li {
         display: flex;
         align-items: center;
-        gap: var(--space-xs);
-        font-size: var(--fs-tag);
+        gap: var(--space-12);
+    }
+
+    strong {
+        font-weight: var(--fw-bold);
     }
 }
 
-.sg-tone {
-    padding: var(--space-xl) var(--space-l);
-    background: var(--overlay-bg);
+.sg-legend__dot {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: var(--radius-pill);
+    box-shadow: inset 0 0 0 1px var(--c-map-line);
 }
 
-.sg-card {
-    padding: var(--space-l) var(--space-m);
-    background: var(--c-surface-2);
+// The map's tooltip, standing still. Its pointer arrow needs the JS placement.
+.sg-tooltip {
+    position: relative;
+
+    &::after {
+        content: none;
+    }
 }
 
-.sg-surface {
-    padding: var(--space-l);
-    background: var(--c-surface-3);
-    border-radius: var(--r-bar);
+// Icons
+.sg-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-16) var(--space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+    }
+
+    li {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-8);
+        color: var(--c-ink-muted);
+        font-size: var(--fs-tag);
+        font-weight: var(--fw-semibold);
+        line-height: var(--lh-tag);
+        text-align: center;
+    }
+
+    .icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        color: var(--c-accent-strong);
+        stroke-width: 1.5;
+    }
+
+    span {
+        overflow-wrap: anywhere;
+    }
 }
 
+// The real overlays' demo content
 .sg-lage {
-    margin-top: var(--space-xl);
+    margin-top: var(--space-40);
 }
 
 .sg-lage h3 {
-    margin-bottom: var(--space-m);
-}
-
-.sg-slide {
-    display: grid;
-    place-items: center;
-    aspect-ratio: 16 / 9;
-    max-height: 26rem;
-    width: 100%;
-    background: var(--c-surface-2);
-    font-size: var(--fs-count);
-    font-weight: var(--fw-semibold);
-}
-
-.carousel__slide:nth-child(even) .sg-slide {
-    background: var(--c-surface-3);
-}
-
-.sg-carousel + .sg-carousel {
-    margin-top: var(--space-xl);
-}
-
-.sg-toast-demo {
-    display: flex;
-}
-
-// Canton map slot (#3's `canton_map()`, plan Step 7.4).
-.sg-map svg {
-    display: block;
-    width: 100%;
-    max-width: 56.25rem;
-    height: auto;
-    filter: var(--sh-map);
-}
-
-.sg-map [id^="ch-"]:hover {
-    fill: var(--c-accent-strong);
+    margin-bottom: var(--space-16);
 }

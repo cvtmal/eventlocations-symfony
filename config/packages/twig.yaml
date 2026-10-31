@@ -5,6 +5,9 @@ twig:
         timezone: Europe/Zurich
     mailer:
         html_to_text_converter: App\Shared\Mailer\EmailHtmlToTextConverter
+    # A parameter, so the footer of an error page still runs no query.
+    globals:
+        site_contact_email: '%site.contact_email%'
 
 when@test:
     twig:

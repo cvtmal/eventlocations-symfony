@@ -4,7 +4,9 @@
     box-sizing: border-box;
 }
 
+// White on html, cream on body: a short page ends above the fold, and what shows below it continues the white footer.
 html {
+    background: var(--c-surface-raised);
     font-size: 100%;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -12,7 +14,7 @@ html {
 
 body {
     margin: 0;
-    background: var(--c-bg);
+    background: var(--c-surface);
     color: var(--c-ink);
     font: var(--fw-regular) var(--fs-body) / var(--lh-body) var(--font-sans);
 }
@@ -69,11 +71,11 @@ main:focus {
 
     &:focus {
         position: fixed;
-        left: var(--space-m);
-        top: var(--space-m);
+        left: var(--space-16);
+        top: var(--space-16);
         z-index: 2000;
-        padding: var(--space-xs) var(--space-m);
-        background: var(--c-bg);
+        padding: var(--space-8) var(--space-16);
+        background: var(--c-surface);
         color: var(--c-ink);
         font-weight: var(--fw-semibold);
     }

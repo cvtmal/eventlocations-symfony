@@ -46,14 +46,92 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSame('a', $crawler->filter('.site-header__wordmark')->nodeName());
     }
 
-    public function test_header_has_menu_search_and_favorites_with_hidden_count_badge(): void
+    public function test_header_has_menu_nav_and_favorites_with_hidden_count_badge(): void
     {
         $crawler = $this->home();
 
         self::assertSelectorExists('[popovertarget="main-menu"]');
         self::assertSelectorExists('#main-menu[popover]');
-        self::assertCount(2, $crawler->filter('.site-header__actions a'));
-        self::assertSelectorExists('[data-merkliste-count][hidden]');
+        self::assertSame(
+            ['/hochzeitslocations', '/hochzeitslocations', '/merkliste'],
+            $crawler->filter('.site-header__actions a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
+        );
+        self::assertCount(0, $crawler->filter('.site-header use[href$="#search"]'));
+        self::assertSelectorExists('.site-header__favorites [data-merkliste-count][hidden]');
+    }
+
+    public function test_the_menu_has_its_four_links_and_a_second_badge_but_no_second_merkliste_link(): void
+    {
+        $crawler = $this->home();
+
+        self::assertSame(
+            ['/', '/hochzeitslocations', '/hochzeitslocations', '/merkliste'],
+            $crawler->filter('.main-menu__list a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
+        );
+        self::assertSelectorExists('.main-menu__list [data-merkliste-count][hidden]');
+        self::assertCount(1, $crawler->filter('[data-merkliste-link]'));
+    }
+
+    public function test_the_open_menu_does_not_repeat_the_headers_landmark_name(): void
+    {
+        $crawler = $this->home();
+
+        $header = $crawler->filter('.site-header__actions')->attr('aria-label');
+        $menu = $crawler->filter('.main-menu__nav')->attr('aria-label');
+
+        self::assertNotEmpty($header);
+        self::assertNotEmpty($menu);
+        self::assertNotSame($header, $menu);
+    }
+
+    public function test_the_logos_state_their_size_so_nothing_shifts_when_they_load(): void
+    {
+        $crawler = $this->home();
+
+        foreach (['.site-header__wordmark img' => ['135', '30'], '.site-footer__brand img' => ['126', '28']] as $selector => [$width, $height]) {
+            $logo = $crawler->filter($selector);
+            self::assertStringStartsWith('/assets/images/logo-hzl-', (string) $logo->attr('src'));
+            self::assertNotSame('', (string) $logo->attr('alt'));
+            self::assertSame($width, $logo->attr('width'));
+            self::assertSame($height, $logo->attr('height'));
+        }
+    }
+
+    public function test_locations_is_the_current_page_on_the_listing_only(): void
+    {
+        $crawler = $this->home();
+
+        self::assertSame('/hochzeitslocations', $crawler->filter('.site-header__link[aria-current="page"]')->attr('href'));
+        self::assertSame('/hochzeitslocations', $crawler->filter('.main-menu__list a[aria-current="page"]')->attr('href'));
+
+        foreach (['/merkliste', '/impressum'] as $uri) {
+            $crawler = $this->client()->request('GET', $uri);
+            self::assertResponseIsSuccessful();
+            self::assertCount(0, $crawler->filter('.site-header [aria-current]'), $uri);
+        }
+    }
+
+    public function test_location_eintragen_is_visual_only_in_all_three_places(): void
+    {
+        $crawler = $this->home();
+
+        foreach (['.site-header__actions .btn--static', '.main-menu .btn--static', '.site-footer__add-location'] as $selector) {
+            $entry = $crawler->filter($selector);
+            self::assertCount(1, $entry, $selector);
+            self::assertSame('span', $entry->nodeName(), $selector);
+            self::assertNull($entry->attr('href'), $selector);
+            self::assertNull($entry->attr('role'), $selector);
+            self::assertNull($entry->attr('tabindex'), $selector);
+        }
+    }
+
+    public function test_the_footer_has_no_link_on_a_heading_and_mails_the_contact_address(): void
+    {
+        $crawler = $this->home();
+
+        self::assertCount(2, $crawler->filter('.site-footer__column span.site-footer__heading'));
+        self::assertCount(0, $crawler->filter('.site-footer__heading a'));
+        self::assertSame('mailto:hallo@hochzeitslocation.ch', $crawler->filter('.site-footer__column a[href^="mailto:"]')->attr('href'));
     }
 
     public function test_header_heart_links_to_the_merkliste_and_carries_its_strings(): void
@@ -90,7 +168,7 @@ final class BaseLayoutTest extends WebTestCase
         $this->home();
 
         self::assertSelectorExists('link[rel="stylesheet"][href^="/assets/styles/app-"][href$=".css"]');
-        self::assertSelectorExists('link[rel="preload"][as="font"][type="font/woff2"][crossorigin][href^="/assets/fonts/sofia-sans-latin-400-normal-"]');
+        self::assertSelectorExists('link[rel="preload"][as="font"][type="font/woff2"][crossorigin][href^="/assets/fonts/figtree-latin-wght-normal-"]');
     }
 
     public function test_page_has_no_inline_styles_or_scripts(): void

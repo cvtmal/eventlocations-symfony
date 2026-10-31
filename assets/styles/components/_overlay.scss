@@ -1,12 +1,8 @@
 @use '../abstracts/breakpoints' as bp;
 
 // Full-screen filter overlay shell (`components/_overlay.html.twig`): a `popover` opened by `popovertarget`,
-// so it works without JS (D5). Tones darkened for AA white text (D4). Two decorative 5 % black circles (E11).
-.overlay {
-    --overlay-bg: var(--c-overlay-region);
-    --overlay-bar: var(--overlay-bg);
-}
-
+// so it works without JS (D5). One ground with two decorative circles. `.overlay--region|guests|more` place the circles
+// and scope each overlay's layout; they carry no colour.
 .overlay[popover] {
     position: fixed;
     inset: 0;
@@ -19,7 +15,7 @@
     border: 0;
     overflow: auto;
     color: var(--c-ink);
-    background: var(--overlay-bg);
+    background: var(--c-overlay-ground);
     isolation: isolate;
 
     &::before,
@@ -28,7 +24,7 @@
         position: fixed;
         z-index: -1;
         aspect-ratio: 1;
-        border-radius: var(--r-round);
+        border-radius: var(--radius-pill);
         background: var(--c-overlay-circle);
         pointer-events: none;
     }
@@ -39,8 +35,6 @@
 }
 
 .overlay--region {
-    --overlay-bg: var(--c-overlay-region);
-
     &::before {
         width: 115vw;
         left: -41vw;
@@ -55,8 +49,6 @@
 }
 
 .overlay--guests {
-    --overlay-bg: var(--c-overlay-guests);
-
     &::before {
         width: 80vw;
         left: 4vw;
@@ -71,9 +63,6 @@
 }
 
 .overlay--more {
-    --overlay-bg: var(--c-overlay-more);
-    --overlay-bar: var(--c-overlay-more-bar);
-
     &::before {
         width: 65vw;
         left: 35vw;
@@ -89,19 +78,19 @@
 
 .overlay__close {
     position: absolute;
-    top: var(--space-l);
-    right: var(--space-l);
+    top: var(--space-24);
+    right: var(--space-24);
     z-index: 1;
 
     @include bp.up(lg) {
-        top: 3.125rem;
-        right: 5.3125rem;
+        top: var(--space-40);
+        right: var(--space-40);
     }
 }
 
 .overlay__body {
-    padding-top: var(--space-xl);
-    padding-bottom: var(--space-xl);
+    padding-top: var(--space-40);
+    padding-bottom: var(--space-40);
 
     @include bp.up(lg) {
         padding-top: 7.5rem;
@@ -110,23 +99,22 @@
 
 .overlay__title {
     max-width: 18ch;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-40);
     padding-right: 3rem; // keeps clear of the close button
     overflow-wrap: break-word;
-    font-size: var(--fs-overlay-title);
-    line-height: var(--lh-overlay-title);
-    font-weight: var(--fw-semibold);
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
 }
 
 .overlay__footer {
     position: sticky;
     bottom: 0;
-    padding-block: var(--space-m);
-    background: var(--overlay-bar);
+    padding-block: var(--space-16);
+    background: var(--c-overlay-ground);
 }
 
-// Region and guests: the bar has the overlay colour, so on wide screens (where the content fits) it is
-// transparent and the circles show through, as in the original. Below md it stays solid to cover scrolled content.
+// Region and guests: on wide screens, where the content fits, the bar is transparent and the circles show through.
+// Below md it stays solid to cover scrolled content.
 .overlay--region .overlay__footer,
 .overlay--guests .overlay__footer {
     @include bp.up(md) {
@@ -138,17 +126,19 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-l);
+    gap: var(--space-24);
 }
 
 .overlay__clear {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     padding: 0;
     border: 0;
-    border-bottom: 1px solid var(--c-line);
     background: none;
     color: var(--c-ink);
-    font-size: .9375rem;
-    line-height: 1.25rem;
-    text-decoration: none;
+    font-weight: var(--fw-semibold);
+    text-decoration: underline;
+    text-underline-offset: 3px;
     cursor: pointer;
 }

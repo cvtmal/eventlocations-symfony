@@ -2,11 +2,11 @@
 
 // "Andere suchten auch nach" (#7, LP-5): neutral tag links (the original's .internal-links).
 .related {
-    margin: var(--space-2xl) 0 var(--space-xl);
+    margin: var(--space-64) 0 var(--space-40);
 }
 
 .related__title {
-    margin-bottom: var(--space-m);
+    margin-bottom: var(--space-16);
     font-size: var(--fs-body);
 }
 

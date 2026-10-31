@@ -1,9 +1,21 @@
 {#
-    Large underlined text input (overlays). Include with `only`:
+    Underlined text input. Include with `only`:
       id, name, label (translated), type (default text), value (default ''), placeholder (default ''),
-      autocomplete (default off), label_hidden (default true).
+      autocomplete (default off), label_hidden (default true), help (translated), error (translated: replaces help and
+      sets aria-invalid), icon (sprite id), disabled (default false).
 #}
-<div class="text-input">
+{%- set error = error|default(null) -%}
+{%- set help = help|default(null) -%}
+{%- set icon_name = icon|default(null) -%}
+<div class="text-input{% if icon_name %} text-input--icon{% endif %}">
     <label class="text-input__label{% if label_hidden ?? true %} visually-hidden{% endif %}" for="{{ id }}">{{ label }}</label>
-    <input class="text-input__field" id="{{ id }}" name="{{ name }}" type="{{ type|default('text') }}" value="{{ value|default('') }}" placeholder="{{ placeholder|default('') }}" autocomplete="{{ autocomplete|default('off') }}">
+    <div class="text-input__control">
+        {%- if icon_name %}{{ icon(icon_name, {class: 'text-input__icon'}) }}{% endif -%}
+        <input class="text-input__field" id="{{ id }}" name="{{ name }}" type="{{ type|default('text') }}" value="{{ value|default('') }}" placeholder="{{ placeholder|default('') }}" autocomplete="{{ autocomplete|default('off') }}"{% if error %} aria-invalid="true"{% endif %}{% if error or help %} aria-describedby="{{ id }}-note"{% endif %}{% if disabled|default(false) %} disabled{% endif %}>
+    </div>
+    {%- if error %}
+    <p class="text-input__error" id="{{ id }}-note">{{ icon('info', {class: 'icon--sm'}) }}<span>{{ error }}</span></p>
+    {%- elseif help %}
+    <p class="text-input__help" id="{{ id }}-note">{{ help }}</p>
+    {%- endif %}
 </div>

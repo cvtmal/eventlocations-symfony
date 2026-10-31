@@ -8,7 +8,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    background: var(--c-surface);
+    background: var(--c-surface-raised);
 
     &:has(.card__link:focus-visible) {
         outline: var(--focus-ring);
@@ -18,8 +18,8 @@
     @include bp.up(md) {
         flex-direction: row;
         align-items: flex-start;
-        padding: var(--space-l) var(--space-m) var(--space-m);
-        background: var(--c-surface-2);
+        padding: var(--space-24) var(--space-16) var(--space-16);
+        background: var(--c-surface-raised);
     }
 
     @include bp.up(lg) {
@@ -27,7 +27,7 @@
     }
 
     @include bp.up(xl) {
-        padding: var(--space-xl) 1.5rem 1.5rem;
+        padding: var(--space-40) 1.5rem 1.5rem;
     }
 }
 
@@ -103,13 +103,13 @@
 
 .card__placeholder {
     height: 100%;
-    background: var(--c-surface-3);
+    background: var(--c-tag-ground);
 }
 
 .card__body {
     flex: 1;
     min-width: 0;
-    padding: var(--space-xs) var(--space-s) var(--space-m);
+    padding: var(--space-8) var(--space-12) var(--space-16);
 
     @include bp.up(md) {
         padding: 0 0 0 1.5rem;
@@ -134,8 +134,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-m);
-    padding: var(--space-m) 0 var(--space-xs);
+    gap: var(--space-16);
+    padding: var(--space-16) 0 var(--space-8);
 
     @include bp.up(md) {
         margin-bottom: 1.125rem;
@@ -148,25 +148,26 @@
 }
 
 .card__title {
-    margin: 0 0 var(--space-xs);
+    margin: 0 0 var(--space-8);
     overflow: hidden;
-    font-size: var(--fs-card-title);
-    line-height: var(--lh-card-title);
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
     white-space: nowrap;
     text-overflow: ellipsis;
 
     .badge {
         display: none;
-        margin-right: var(--space-s);
+        margin-right: var(--space-12);
         vertical-align: middle;
 
+        // inline-flex, as `.badge` is: inline-block would drop its centring and pin the text to the pill's top.
         @include bp.up(lg) {
-            display: inline-block;
+            display: inline-flex;
         }
     }
 
     @include bp.up(md) {
-        margin-bottom: var(--space-s);
+        margin-bottom: var(--space-12);
     }
 
     @include bp.up(xl) {
@@ -197,8 +198,8 @@
     max-width: 38.125rem;
     margin: 0;
     overflow: hidden;
-    font-size: var(--fs-excerpt);
-    line-height: var(--lh-excerpt);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -218,8 +219,8 @@
 .card__tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs);
-    margin: var(--space-xs) 0 0;
+    gap: var(--space-8);
+    margin: var(--space-8) 0 0;
     padding: 0;
     list-style: none;
     grid-column: 1;
@@ -230,31 +231,31 @@
 }
 
 .card__rating {
-    margin-top: var(--space-m);
+    margin-top: var(--space-16);
 
     @include bp.up(xl) {
         grid-area: rating;
         margin: 0 0 0 1.875rem;
-        padding: var(--space-xs) 0 0 1.875rem;
-        border-left: 1px solid var(--c-line);
+        padding: var(--space-8) 0 0 1.875rem;
+        border-left: 1px solid var(--c-line-soft);
     }
 }
 
 .card-facts {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs) var(--space-l);
+    gap: var(--space-8) var(--space-24);
     margin: 0;
     padding: 0;
     list-style: none;
-    font-size: var(--fs-excerpt);
+    font-size: var(--fs-small);
     line-height: 1.5rem;
 }
 
 .card-facts__item {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-8);
 
     .icon {
         width: 1.25rem;
@@ -265,8 +266,8 @@
 .rating-summary__line {
     display: flex;
     align-items: center;
-    gap: var(--space-2xs);
-    margin: 0 0 var(--space-xs);
+    gap: var(--space-4);
+    margin: 0 0 var(--space-8);
     font-size: var(--fs-body);
     line-height: 1.5rem;
 
@@ -291,8 +292,8 @@
     li {
         display: flex;
         align-items: center;
-        gap: var(--space-s);
-        margin-top: var(--space-2xs);
+        gap: var(--space-12);
+        margin-top: var(--space-4);
     }
 
     .icon {

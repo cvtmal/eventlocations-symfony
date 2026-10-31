@@ -8,8 +8,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every text/background and focus/background pair of the design tokens meets WCAG 2.x AA (#1, D4).
- * A new colour pair gets a row here.
+ * Every text/background, focus/background and line/background pair of the design tokens meets WCAG 2.x AA (S15, #35).
+ * A new colour pair gets a row here. Two pairs stay out on purpose, as `docs/reference/public/README.md` records:
+ * map-land on overlay-ground (the cantons are told apart by map-line) and map-hover on map-lake (by hue and the tooltip).
  */
 final class ContrastTokensTest extends TestCase
 {
@@ -19,29 +20,38 @@ final class ContrastTokensTest extends TestCase
     public static function pairs(): iterable
     {
         $text = [
-            ['ink-inverse', 'accent'], ['ink-inverse', 'accent-hover'],
-            ['ink', 'overlay-region'], ['ink', 'overlay-guests'], ['ink', 'overlay-more'], ['ink', 'overlay-more-bar'], ['ink', 'overlay-more-tile'],
-            ['ink', 'surface'], ['ink', 'surface-2'], ['ink', 'surface-3'], ['ink', 'surface-footer'], ['ink', 'bg'],
-            ['muted', 'surface-2'], ['ink', 'black'], ['ink-inverse', 'tooltip-bg'],
-            ['ink', 'dropdown'],
-            ['muted', 'surface'], ['accent-soft', 'surface'],
-            ['ink-inverse', 'ink'], ['ink-inverse', 'accent-soft'],
+            ['ink', 'surface'], ['ink', 'surface-raised'], ['ink', 'surface-alt'], ['ink', 'accent-soft'],
+            ['ink', 'overlay-ground'], ['ink', 'overlay-circle'], ['ink', 'tier-ground'], ['ink', 'tag-ground'],
+            ['ink-muted', 'surface'], ['ink-muted', 'surface-raised'], ['ink-muted', 'surface-alt'],
+            ['accent-strong', 'surface'], ['accent-strong', 'surface-raised'], ['accent-strong', 'surface-alt'],
+            ['on-accent', 'accent-strong'], ['on-accent', 'accent-strong-hover'], ['on-accent', 'accent-strong-active'],
+            ['accent-strong-hover', 'accent-soft'], ['accent-strong-active', 'accent-soft'],
+            ['error', 'surface'], ['error', 'surface-raised'], ['error', 'error-soft'],
+            ['success', 'surface'], ['success', 'surface-raised'], ['success', 'success-soft'],
+            ['disabled-ink', 'disabled-ground'],
+            ['surface-raised', 'ink'], // the preview banner
         ];
         foreach ($text as [$fg, $bg]) {
             yield "text {$fg} on {$bg}" => [$fg, $bg, 4.5];
         }
 
-        // WCAG 1.4.11: the white focus ring against every surface it can sit on.
-        foreach (['surface', 'surface-2', 'surface-3', 'bg', 'overlay-region', 'overlay-guests', 'overlay-more', 'overlay-more-tile'] as $bg) {
-            yield "focus on {$bg}" => ['focus', $bg, 3.0];
+        // WCAG 1.4.11: the logo and icon pink, the focus ring and the input underline on the three page grounds.
+        foreach (['accent', 'focus', 'line'] as $fg) {
+            foreach (['surface', 'surface-raised', 'surface-alt'] as $bg) {
+                yield "{$fg} on {$bg}" => [$fg, $bg, 3.0];
+            }
         }
 
-        // WCAG 1.4.11: the borders of the inquiry form's controls on the detail page's surface.
-        yield 'control border muted on surface' => ['muted', 'surface', 3.0];
-        yield 'control border accent on surface' => ['accent', 'surface', 3.0];
-
-        // WCAG 1.4.11: the filled heart of a saved venue on the card and on the detail action card.
-        yield 'heart accent on surface-2' => ['accent', 'surface-2', 3.0];
+        // WCAG 1.4.11: the canton map on its land and on the overlay's ground.
+        $map = [
+            ['map-line', 'map-land'], ['map-line', 'overlay-ground'],
+            ['map-hover', 'map-land'], ['map-hover', 'overlay-ground'], ['map-hover', 'map-selected'],
+            ['map-selected', 'map-land'], ['map-selected', 'overlay-ground'],
+            ['map-lake', 'map-land'], ['map-lake', 'overlay-ground'], ['map-lake', 'map-selected'],
+        ];
+        foreach ($map as [$fg, $bg]) {
+            yield "{$fg} on {$bg}" => [$fg, $bg, 3.0];
+        }
     }
 
     #[DataProvider('pairs')]
@@ -52,11 +62,11 @@ final class ContrastTokensTest extends TestCase
         self::assertGreaterThanOrEqual($minimum, $ratio, \sprintf('--c-%s on --c-%s is %.2f:1, needs %.1f:1.', $foreground, $background, $ratio, $minimum));
     }
 
-    public function test_recorded_deviation_ratios_are_reproduced(): void
+    public function test_recorded_ratios_are_reproduced(): void
     {
-        self::assertEqualsWithDelta(6.22, self::ratio('ink-inverse', 'accent'), 0.01);
-        self::assertEqualsWithDelta(4.66, self::ratio('ink', 'overlay-region'), 0.01);
-        self::assertEqualsWithDelta(4.67, self::ratio('ink', 'overlay-more'), 0.01);
+        self::assertEqualsWithDelta(5.26, self::ratio('on-accent', 'accent-strong'), 0.01);
+        self::assertEqualsWithDelta(7.63, self::ratio('ink', 'accent-soft'), 0.01);
+        self::assertEqualsWithDelta(4.63, self::ratio('accent-strong', 'surface-alt'), 0.01);
     }
 
     private static function ratio(string $foreground, string $background): float

@@ -2,17 +2,17 @@
 // the public stylesheet (P18), so only `--c-*` tokens.
 .preview-banner {
     background: var(--c-ink);
-    color: var(--c-ink-inverse);
+    color: var(--c-surface-raised);
     font-size: var(--fs-small);
 }
 
 .preview-banner__inner {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs) var(--space-m);
+    gap: var(--space-8) var(--space-16);
     align-items: center;
     justify-content: space-between;
-    padding-block: var(--space-s);
+    padding-block: var(--space-12);
 }
 
 .preview-banner__text {
@@ -25,10 +25,11 @@
     text-decoration: underline;
 }
 
+// Stands in `#anfrage` on the page ground, not in the banner, so it takes the page's colours. The rule is decorative.
 .preview-banner__note {
     margin: 0;
-    padding: var(--space-m);
-    border: 1px solid var(--c-line);
-    border-radius: var(--r-bar);
-    color: var(--c-muted);
+    padding: var(--space-16);
+    border: 1px solid var(--c-line-soft);
+    border-radius: var(--radius-card);
+    color: var(--c-ink-muted);
 }

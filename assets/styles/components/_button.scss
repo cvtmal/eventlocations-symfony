@@ -1,74 +1,112 @@
-// Buttons (`components/_button.html.twig`). Text on pink is dark (D4: #121212 on #ff5a75 = 6.22:1).
+// Buttons (`components/_button.html.twig`, Tokens board). md is the default size, `.btn--lg` the large one.
+// Hover and active apply only to what can be pressed: not a disabled button, not a `.btn--static` span.
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     min-height: 2.75rem;
-    padding: .875rem 1.25rem;
-    border: 1px solid transparent;
-    border-radius: var(--r-button);
+    padding: 0 var(--space-24);
+    border: 0;
+    border-radius: var(--radius-pill);
     background: transparent;
     color: var(--c-ink);
-    font-weight: var(--fw-semibold);
-    font-size: var(--fs-body);
-    line-height: 1;
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-button);
+    line-height: var(--lh-button);
     text-decoration: none;
     cursor: pointer;
 
-    &[disabled] {
-        opacity: .5;
-        cursor: default;
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
     }
+}
+
+.btn--lg {
+    min-height: 3rem;
+    padding: 0 var(--space-32);
+    font-size: var(--fs-button-lg);
 }
 
 .btn--primary {
-    background: var(--c-accent);
-    color: var(--c-ink-inverse);
+    background: var(--c-accent-strong);
+    color: var(--c-on-accent);
 
-    &:hover {
-        background: var(--c-accent-hover);
+    &:not(.btn--static, [disabled]) {
+        &:hover {
+            background: var(--c-accent-strong-hover);
+        }
+
+        &:active {
+            background: var(--c-accent-strong-active);
+        }
     }
 }
 
-.btn--black {
-    background: var(--c-black);
-    color: var(--c-ink);
-}
+// Hover and active darken the ink only, because accent-strong on accent-soft is 4.39:1 (README). The edge is not text.
+.btn--secondary {
+    box-shadow: inset 0 0 0 2px var(--c-accent-strong);
+    color: var(--c-accent-strong);
 
-.btn--outline {
-    border-color: var(--c-line-muted);
-    color: var(--c-ink);
+    &:not([disabled]) {
+        &:hover {
+            background: var(--c-accent-soft);
+            box-shadow: inset 0 0 0 2px var(--c-accent-strong-hover);
+            color: var(--c-accent-strong-hover);
+        }
 
-    &:hover {
-        border-color: var(--c-ink);
+        &:active {
+            background: var(--c-accent-soft);
+            box-shadow: inset 0 0 0 2px var(--c-accent-strong-active);
+            color: var(--c-accent-strong-active);
+        }
     }
 }
 
-// Round icon button with a label below ("Karte", "Merkliste"; E11 4.5rem, #535353, 13 px label).
+.btn--ghost:not([disabled]) {
+    &:hover,
+    &:active {
+        background: var(--c-accent-soft);
+    }
+}
+
+// "Location eintragen" has no function yet (Q19): it looks like a button and is a plain <span>.
+.btn--static {
+    cursor: default;
+}
+
+// Round icon button with a label below ("Karte", "Merkliste"). #37 reshapes it on the listing.
 .btn--round {
     flex-direction: column;
     gap: .125rem;
     width: 4.5rem;
     height: 4.5rem;
     padding: 0;
-    border-radius: var(--r-round);
-    background: var(--c-surface-3);
-    font-size: .8125rem;
+    background: var(--c-surface-raised);
+    font-size: var(--fs-tag);
     font-weight: var(--fw-regular);
     line-height: 1.1;
+
+    .icon {
+        width: 1.5rem;
+        height: 1.5rem;
+        color: var(--c-accent-strong);
+    }
+
+    &:hover {
+        background: var(--c-accent-soft);
+    }
 }
 
-// Large round Lage button (E11: 50% radius, 5px 5px shadow).
+// Large round Lage button.
 .btn--round-lg {
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     width: 8.5rem;
     height: 8.5rem;
     padding: 0;
-    border-radius: var(--r-round);
-    background: rgb(0 0 0 / .25);
-    box-shadow: var(--sh-round);
+    background: var(--c-surface-raised);
     font-size: .9375rem;
     font-weight: var(--fw-regular);
     line-height: 1.2;
@@ -77,24 +115,34 @@
         width: 2.5rem;
         height: 2.5rem;
     }
+
+    &:hover {
+        background: var(--c-accent-soft);
+    }
 }
 
-.btn--icon {
+// The 44 px white disc: carousel arrows and close buttons.
+.btn--icon,
+.btn--close {
     width: 2.75rem;
     height: 2.75rem;
     padding: 0;
-}
-
-.btn--close {
-    width: 2rem;
-    height: 2rem;
-    min-height: 0;
-    padding: 0;
-    border-color: var(--c-ink);
-    border-radius: var(--r-round);
+    background: var(--c-surface-raised);
 
     .icon {
-        width: 1rem;
-        height: 1rem;
+        width: 1.25rem;
+        height: 1.25rem;
     }
+
+    &:not([disabled]):hover {
+        background: var(--c-accent-soft);
+    }
+}
+
+// Last, so it outranks every variant's ground. Inactive states never use opacity.
+.btn[disabled] {
+    background: var(--c-disabled-ground);
+    box-shadow: none;
+    color: var(--c-disabled-ink);
+    cursor: default;
 }

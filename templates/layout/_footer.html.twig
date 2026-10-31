@@ -1,11 +1,31 @@
 <footer class="site-footer" aria-label="{{ 'layout.footer.label'|trans }}">
-    <div class="container">
+    <div class="site-footer__inner">
+        <div class="site-footer__columns">
+            <div class="site-footer__brand">
+                <img src="{{ asset('images/logo-hzl.png') }}" alt="{{ 'layout.site_name'|trans }}" width="126" height="28">
+                <p class="site-footer__tagline">{{ 'layout.footer.tagline'|trans }}</p>
+            </div>
+            <div class="site-footer__column">
+                <span class="site-footer__heading">{{ 'layout.footer.platform'|trans }}</span>
+                <a class="site-footer__link" href="{{ path('listing') }}">{{ 'layout.header.locations'|trans }}</a>
+                {# Regionen has no page of its own until #36 #}
+                <a class="site-footer__link" href="{{ path('listing') }}">{{ 'layout.header.regions'|trans }}</a>
+            </div>
+            <div class="site-footer__column">
+                <span class="site-footer__heading">{{ 'layout.footer.contact'|trans }}</span>
+                <a class="site-footer__link" href="mailto:{{ site_contact_email }}">{{ site_contact_email }}</a>
+                {# Visual only (Q19), the same as the header's "Location eintragen": no link, no tab stop #}
+                <span class="site-footer__add-location">{{ 'layout.footer.add_location'|trans }}</span>
+            </div>
+        </div>
         {# Slot for #17: "Hochzeitslocations nach Kanton" link list #}
         {{ include('seo/_footer_cantons.html.twig', ignore_missing = true) }}
-        {# Slot for #18: Impressum / Datenschutz links #}
-        {{ include('site/legal/_footer_links.html.twig', ignore_missing = true) }}
         {# Slot for #26: the staff note (content block footer.note), from the snapshot only #}
         {{ include('shared/_footer_note.html.twig', ignore_missing = true) }}
-        <p class="site-footer__copy">{{ 'layout.footer.copyright'|trans }}</p>
+        <div class="site-footer__bottom">
+            <p class="site-footer__copy">{{ 'layout.footer.copyright'|trans }}</p>
+            {# Slot for #18: Impressum / Datenschutz links #}
+            {{ include('site/legal/_footer_links.html.twig', ignore_missing = true) }}
+        </div>
     </div>
 </footer>

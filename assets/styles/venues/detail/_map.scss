@@ -2,7 +2,7 @@
 
 // Standort map (#15, DP-10): the facade and the iframe share one box, so loading the map shifts nothing.
 .venue-map {
-    margin-block-start: var(--space-m);
+    margin-block-start: var(--space-16);
 }
 
 .venue-map__facade,
@@ -10,7 +10,7 @@
     inline-size: 100%;
     block-size: 18.75rem;
     border: 0;
-    border-radius: var(--r-bar);
+    border-radius: var(--radius-image);
 
     @include bp.up(md) {
         block-size: 28rem;
@@ -25,10 +25,10 @@
     display: grid;
     place-content: center;
     justify-items: center;
-    gap: var(--space-s);
-    padding: var(--space-m);
+    gap: var(--space-12);
+    padding: var(--space-16);
     text-align: center;
-    background: var(--c-surface-2);
+    background: var(--c-surface-raised);
     color: var(--c-ink);
 }
 
@@ -40,7 +40,7 @@
 .venue-map__loader {
     display: grid;
     justify-items: center;
-    gap: var(--space-s);
+    gap: var(--space-12);
 
     &[hidden] {
         display: none;
@@ -49,7 +49,7 @@
 
 .venue-map__notice {
     margin: 0;
-    color: var(--c-muted);
+    color: var(--c-ink-muted);
     font-size: var(--fs-small);
 }
 

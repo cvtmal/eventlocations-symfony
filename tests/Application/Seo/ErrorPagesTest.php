@@ -73,6 +73,14 @@ final class ErrorPagesTest extends WebTestCase
         self::assertSelectorTextSame('h1', 'Diese Seite gibt es nicht');
     }
 
+    public function test_a_404_on_a_listing_path_marks_no_header_link_as_current(): void
+    {
+        $crawler = $this->client->request('GET', '/hochzeitslocations/gibt-es-nicht');
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertCount(0, $crawler->filter('.site-header [aria-current]'));
+    }
+
     public function test_a_removed_venue_is_the_gone_page(): void
     {
         VenueTranslationFactory::createOne([

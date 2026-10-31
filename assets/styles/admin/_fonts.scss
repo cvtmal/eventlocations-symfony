@@ -1,12 +1,2 @@
-// Sofia Sans 400/600 from the public site, plus 700, which only the back office uses (kept in a
-// subfolder: the public budget allows two font files, AssetBudgetTest).
+// The back office's 400, 600 and 700 all come from the public site's variable Figtree file.
 @use '../base/fonts';
-
-@font-face {
-    font-family: 'Sofia Sans';
-    font-style: normal;
-    font-weight: 700;
-    font-display: swap;
-    src: url('../fonts/admin/sofia-sans-latin-700-normal.woff2') format('woff2');
-    unicode-range: fonts.$latin-range;
-}

@@ -6,12 +6,18 @@ layout:
     header:
         menu_open: Menü öffnen
         menu_label: Hauptnavigation
-        actions_label: Schnellzugriff
-        search: Suche
+        phone_menu_label: Menü
+        locations: Locations
+        regions: Regionen
         favorites: Merkliste
         home: Startseite
+        add_location: Location eintragen
     footer:
         label: Fusszeile
+        tagline: Hochzeitslocations in der ganzen Schweiz, direkt bei der Location anfragen.
+        platform: Plattform
+        contact: Kontakt
+        add_location: Ihre Location eintragen
         copyright: © Hochzeitslocation
     carousel:
         previous: Vorheriges Bild

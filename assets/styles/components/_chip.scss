@@ -1,32 +1,119 @@
-// Filter chip with × (E11 pill: 20px radius, 12/22 px, padding 0 1.0625rem). Text on pink is dark (D4).
+// Chip (`components/_chip.html.twig`, Tokens board). `.chip` is the selected look with an ×, the active filter, and
+// `.chip--more` the same pill with two controls. `.chip--neutral` is the default look, a link or a toggle.
+// Hover, focus and disabled are not drawn: hover is accent-soft, focus the global ring, disabled the disabled tokens.
 .chip {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
-    min-height: 1.5rem;
-    padding: 0 1.0625rem;
-    border-radius: var(--r-pill);
-    background: var(--c-accent-hover);
-    color: var(--c-ink-inverse);
-    font: var(--fw-semibold) var(--fs-tag) / var(--lh-pill) var(--font-sans);
+    gap: var(--space-8);
+    min-height: 2.75rem;
+    padding: 0 var(--space-12) 0 1.25rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--c-accent-soft);
+    box-shadow: inset 0 0 0 2px var(--c-accent-strong);
+    color: var(--c-ink);
+    font: var(--fw-semibold) var(--fs-button) / var(--lh-button) var(--font-sans);
     text-decoration: none;
+    cursor: pointer;
 
     .icon {
-        width: 1em;
-        height: 1em;
+        width: 1rem;
+        height: 1rem;
+        color: var(--c-accent-strong);
     }
 
+    // The ground is already accent-soft, so only the edge can answer.
     &:hover {
-        background: var(--c-accent);
+        box-shadow: inset 0 0 0 2px var(--c-accent-strong-hover);
     }
 }
 
+// Selected without a filter to remove: a check instead of the ×.
+.chip--selected {
+    padding: 0 1.25rem;
+}
+
 .chip--neutral {
-    background: transparent;
-    color: var(--c-ink);
+    padding: 0 1.25rem;
+    background: var(--c-surface-raised);
+    box-shadow: inset 0 0 0 1px var(--c-line-soft);
+
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
+        color: inherit;
+    }
 
     &:hover {
-        background: transparent;
-        text-decoration: underline;
+        background: var(--c-accent-soft);
+        box-shadow: inset 0 0 0 1px var(--c-line-soft);
+    }
+}
+
+.chip[aria-disabled='true'] {
+    background: var(--c-disabled-ground);
+    box-shadow: none;
+    color: var(--c-disabled-ink);
+    cursor: default;
+}
+
+// Rundkachel (Tokens board). No Twig component: the styleguide shows it, #38 moves the "weitere Filter" tiles onto it.
+.tile {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+    width: 6rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--c-ink);
+    font: var(--fw-semibold) var(--fs-small) / var(--lh-small) var(--font-sans);
+    cursor: pointer;
+
+    &:hover .tile__disc {
+        background: var(--c-accent-soft);
+    }
+
+    &[aria-pressed='true'] .tile__disc {
+        background: var(--c-accent-soft);
+        box-shadow: inset 0 0 0 2px var(--c-accent-strong);
+    }
+}
+
+.tile__disc {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-raised);
+    box-shadow: inset 0 0 0 1px var(--c-line-soft);
+    color: var(--c-accent-strong);
+
+    .icon {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+}
+
+.tile__check {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-raised);
+    box-shadow: inset 0 0 0 2px var(--c-accent-strong);
+
+    .icon {
+        width: .875rem;
+        height: .875rem;
     }
 }

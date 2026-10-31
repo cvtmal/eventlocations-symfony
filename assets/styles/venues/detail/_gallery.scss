@@ -5,9 +5,9 @@
     height: 100%;
     max-height: none;
     margin: 0;
-    padding: var(--space-m);
+    padding: var(--space-16);
     border: 0;
-    background: var(--c-bg);
+    background: var(--c-surface-alt);
     color: var(--c-ink);
 
     &[open] {
@@ -16,7 +16,7 @@
     }
 
     &::backdrop {
-        background: var(--c-bg);
+        background: var(--c-surface-alt);
     }
 }
 
@@ -24,8 +24,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-m);
-    margin-bottom: var(--space-m);
+    gap: var(--space-16);
+    margin-bottom: var(--space-16);
 }
 
 .venue-gallery__title {

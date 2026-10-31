@@ -2,20 +2,20 @@
 
 // The /merkliste page (favorites/merkliste.html.twig) and its remove button. Cards are #7's.
 .merkliste__title {
-    margin: var(--space-l) 0 0;
-    padding-top: var(--space-l);
-    font-size: var(--fs-hero);
-    line-height: var(--lh-hero);
+    margin: var(--space-24) 0 0;
+    padding-top: var(--space-24);
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
 }
 
 .merkliste__count {
-    margin: var(--space-2xs) 0 0;
-    font-size: var(--fs-count);
-    line-height: var(--lh-count);
+    margin: var(--space-4) 0 0;
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
 }
 
 .merkliste__notice {
-    margin: var(--space-m) 0 0;
+    margin: var(--space-16) 0 0;
 }
 
 // Above the title link's stretched ::after, or the whole card would catch the click.
@@ -29,17 +29,24 @@
 .merkliste-remove__button {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2xs);
+    gap: var(--space-8);
     min-height: 2.75rem;
-    padding: 0;
+    padding: 0 var(--space-12);
     border: 0;
-    background: transparent;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface);
     color: var(--c-ink);
-    font-size: var(--fs-body);
+    font: var(--fw-semibold) var(--fs-small) / var(--lh-small) var(--font-sans);
     cursor: pointer;
 
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
+        color: var(--c-accent-strong);
+    }
+
     &:hover {
-        text-decoration: underline;
+        background: var(--c-accent-soft);
     }
 }
 

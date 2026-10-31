@@ -11,24 +11,25 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     min-width: 2.75rem;
     min-height: 2.75rem;
-    padding: 0;
+    padding: 0 var(--space-12);
     border: 0;
-    background: transparent;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface);
     color: var(--c-ink);
-    font-size: var(--fs-body);
+    font-size: var(--fs-small);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-small);
     cursor: pointer;
 
     .icon {
         order: 1;
+        width: 1.125rem;
+        height: 1.125rem;
+        color: var(--c-accent-strong);
     }
-}
-
-// Saved. The white stroke stays: below lg the heart sits on a veil over a photo, where accent alone can fall to 1.1:1.
-.merken__button[aria-pressed='true'] .icon {
-    fill: var(--c-accent);
 }
 
 // The word stays the accessible name's visible part from lg; below that only the heart shows.
@@ -49,16 +50,29 @@
 .merken--card {
     position: absolute;
     z-index: 2;
-    top: var(--space-s);
-    left: var(--space-s);
+    top: var(--space-12);
+    left: var(--space-12);
 
-    .merken__button {
-        border-radius: var(--r-round);
-        background: rgb(0 0 0 / .4);
+    // Below lg the heart is a white disc over the photo.
+    @include bp.down(lg) {
+        .merken__button {
+            padding: 0;
+            background: var(--c-surface-raised);
+
+            // On a photo the black ring needs a white halo (README); the pill from lg sits on the white card.
+            &:focus-visible {
+                box-shadow: 0 0 0 6px var(--c-surface-raised);
+            }
+
+            .icon {
+                width: 1.25rem;
+                height: 1.25rem;
+            }
+        }
     }
 
     @include bp.up(md) {
-        top: var(--space-2xs);
+        top: var(--space-4);
         left: 1.5rem;
     }
 
@@ -66,10 +80,16 @@
         position: relative;
         top: auto;
         left: auto;
-
-        .merken__button {
-            border-radius: 0;
-            background: transparent;
-        }
     }
+}
+
+// After the disc, so hover and the saved state win over its ground.
+.merken__button:hover,
+.merken__button[aria-pressed='true'] {
+    background: var(--c-accent-soft);
+}
+
+// Saved: the heart fills as well, so the state is not colour alone.
+.merken__button[aria-pressed='true'] .icon {
+    fill: var(--c-accent-strong);
 }

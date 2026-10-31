@@ -3,7 +3,7 @@
 // Hero (DP-2): full-width photo band, "Bilder ansehen" bottom left.
 .venue-hero {
     position: relative;
-    background: var(--c-surface-3);
+    background: var(--c-placeholder-ground);
     scroll-margin-top: 4rem;
 
     .carousel__slide {
@@ -17,13 +17,17 @@
     }
 
     .carousel__controls {
-        inset: auto var(--space-m) var(--space-m) auto;
-        gap: var(--space-xs);
+        inset: auto var(--space-16) var(--space-16) auto;
+        gap: var(--space-8);
 
         // From lg the actions card covers the bottom right, so the arrows move to the top right.
         @include bp.up(lg) {
-            inset: var(--space-m) var(--space-m) auto auto;
+            inset: var(--space-16) var(--space-16) auto auto;
         }
+    }
+
+    .carousel__counter {
+        position: static;
     }
 }
 
@@ -46,15 +50,20 @@
 
 .venue-hero__actions {
     position: absolute;
-    inset: auto 0 var(--space-m);
+    inset: auto 0 var(--space-16);
     pointer-events: none;
 
     @include bp.up(md) {
-        bottom: var(--space-xl);
+        bottom: var(--space-40);
     }
 }
 
 .venue-hero__open {
     pointer-events: auto;
     padding-block: .75rem;
+
+    // On a photo the black ring needs a white halo (README).
+    &:focus-visible {
+        box-shadow: 0 0 0 6px var(--c-surface-raised);
+    }
 }

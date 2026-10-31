@@ -10,10 +10,11 @@
     --a-line-soft: #f0ede8;
     --a-field: #d6d2cb;
     --a-field-strong: #8c8880;
-    --a-accent: #ff5a75;
-    --a-on-accent: #121212;
-    --a-link: #b03a50;
-    --a-link-hover: #8a2c3e;
+    --a-accent: #d1007a;
+    --a-accent-bright: #ff0096;
+    --a-on-accent: #fff;
+    --a-link: #d1007a;
+    --a-link-hover: #b4006a;
     --a-danger: #a3261d;
     --a-danger-line: #e9c3bf;
     --a-hover: #f1efeb;
@@ -42,8 +43,8 @@
     --a-blue: #1f4c99;
     --a-grey-bg: #eeece8;
     --a-grey: #4a4945;
-    --a-pink-bg: #ffe4e9;
-    --a-pink: #9e2f44;
+    --a-pink-bg: #ffe3f2;
+    --a-pink: #96005a;
     --a-red-bg: #fbe3e1;
 
     --a-space-1: 4px;
@@ -67,5 +68,5 @@
     --a-sh-modal: 0 16px 48px rgb(0 0 0 / 24%);
     --a-scrim: rgb(0 0 0 / 40%);
 
-    --a-font: 'Sofia Sans', system-ui, sans-serif;
+    --a-font: 'Figtree', 'Figtree Fallback', system-ui, sans-serif;
 }

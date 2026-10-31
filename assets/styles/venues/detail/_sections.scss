@@ -1,13 +1,13 @@
 // Häufige Fragen, Standort, Kontakt, Dokumente (DP-9 to DP-12).
 .venue-faq__list {
     display: grid;
-    gap: var(--space-s);
+    gap: var(--space-12);
     margin: 0;
 
     div {
         display: grid;
         grid-template-columns: minmax(8rem, auto) 1fr;
-        gap: var(--space-m);
+        gap: var(--space-16);
     }
 
     dt {
@@ -22,15 +22,15 @@
 .venue-location__address {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    margin: 0 0 var(--space-s);
+    gap: var(--space-8);
+    margin: 0 0 var(--space-12);
 }
 
 .venue-location__distances,
 .venue-contact__list,
 .venue-documents__list {
     display: grid;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -38,28 +38,29 @@
     li {
         display: flex;
         align-items: center;
-        gap: var(--space-xs);
+        gap: var(--space-8);
     }
 }
 
 .venue-contact__link {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: var(--space-8);
     min-height: 2.75rem;
 }
 
 .venue-phone {
-    padding-block: var(--space-2xl);
+    padding-block: var(--space-64);
 }
 
 .venue-phone__heading {
-    margin-bottom: var(--space-l);
-    font-size: 1.75rem;
+    margin-bottom: var(--space-24);
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
 }
 
 .venue-phone__back {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2xs);
+    gap: var(--space-4);
 }

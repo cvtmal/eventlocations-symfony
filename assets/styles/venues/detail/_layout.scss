@@ -11,12 +11,12 @@ body.page-venue {
 // Page frame: content column plus, from lg, the 360 px actions column on the right (D12).
 .page-venue main {
     background: var(--c-surface);
-    padding-bottom: var(--space-2xl);
+    padding-bottom: var(--space-64);
 }
 
 .venue-layout {
     display: grid;
-    gap: 0 var(--space-xl);
+    gap: 0 var(--space-40);
 
     @include bp.up(lg) {
         grid-template-columns: minmax(0, 1fr) 17rem;
@@ -38,12 +38,12 @@ body.page-venue {
 }
 
 .venue-section {
-    padding-block: var(--space-xl) 0;
+    padding-block: var(--space-40) 0;
     scroll-margin-top: 4rem;
 }
 
 .venue-section__title {
-    margin-bottom: var(--space-m);
+    margin-bottom: var(--space-16);
     font-size: 1.5rem;
     line-height: 1.3;
 }

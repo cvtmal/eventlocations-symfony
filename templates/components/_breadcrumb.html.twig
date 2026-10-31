@@ -6,6 +6,7 @@
     <ol class="breadcrumb__list">
         {%- for item in items %}
         <li class="breadcrumb__item">
+            {%- if not loop.first %}{{ icon('chevron-right', {class: 'breadcrumb__separator'}) }}{% endif -%}
             {%- if item.url is defined and not loop.last -%}
             <a class="breadcrumb__link" href="{{ item.url }}">{{ item.name }}</a>
             {%- else -%}
