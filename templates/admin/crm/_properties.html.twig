@@ -1,0 +1,12 @@
+{#-
+    The property card's island (D10) and its read-only fallback, the same `fields` (`crm_company_fields()`,
+    `crm_contact_fields()`). Include with `with_context = false`: fields, url (the PATCH endpoint), id_prefix.
+-#}
+{%- set fallback -%}
+    <div class="record-properties">
+        {%- for field in fields -%}
+            {{ include('admin/components/_property.html.twig', {label: field.label, value: field.display ?? 'properties.empty'|trans({}, 'crm')}, with_context = false) }}
+        {%- endfor -%}
+    </div>
+{%- endset -%}
+{{ admin_island('record-properties', {url: url, fields: fields, labels: crm_property_labels(), idPrefix: id_prefix}, fallback) }}

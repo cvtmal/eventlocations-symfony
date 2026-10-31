@@ -1,0 +1,61 @@
+// The inline editor of a CRM record (D10, `record-properties` island): the kit's `.property` rows with a
+// button as the edit affordance, and the editing state of Company.dc.html (grey row, Speichern, Abbrechen).
+.record-properties {
+    display: flex;
+    flex-direction: column;
+
+    .property__edit {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--a-link);
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--a-link-hover);
+            text-decoration: underline;
+        }
+    }
+
+    .property__value {
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+
+    .property__value--empty {
+        color: var(--a-muted);
+    }
+
+    .property--editing {
+        background: var(--a-bg);
+    }
+
+    .property__form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--a-space-1);
+    }
+
+    textarea.field__input {
+        height: auto;
+        min-height: 96px;
+        padding: 10px var(--a-space-3);
+        line-height: 22px;
+        resize: vertical;
+    }
+
+    // In the flow, so an open list never lies over Speichern.
+    .combobox__list {
+        position: static;
+        margin-top: var(--a-space-1);
+    }
+
+    .property__actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+    }
+}

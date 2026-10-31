@@ -1,0 +1,40 @@
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'create.company.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_crm_companies') }}">{{ 'list.companies.title'|trans({}, 'crm') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'create.company.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ 'create.company.title'|trans({}, 'crm') }}</h1></div>
+{% endblock %}
+
+{% block main %}
+    {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {title: 'create.company.card'|trans({}, 'crm'), id: 'create-company-title', create_form: form} only %}
+            {% block body %}
+                <p class="muted">{{ 'create.company.intro'|trans({}, 'crm') }}</p>
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_errors(create_form) }}
+                <div class="crm-create__fields">
+                    {{ form_row(create_form.name) }}
+                    {{ form_row(create_form.website) }}
+                    <div class="field-row">
+                        {{ form_row(create_form.phone) }}
+                        {{ form_row(create_form.email) }}
+                    </div>
+                    {{ form_row(create_form.owner) }}
+                </div>
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'create.submit'|trans({}, 'crm'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                {{ include('admin/components/_button.html.twig', {label: 'create.cancel'|trans({}, 'crm'), variant: 'ghost', href: path('admin_crm_companies')}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}

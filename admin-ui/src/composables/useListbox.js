@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 // Keyboard state of a listbox whose focus stays in an input (aria-activedescendant). The combobox and the
 // command palette share it. Enter with no active option and Home or End with none do nothing, so the input
@@ -8,6 +8,13 @@ export function useListbox(items, { id, choose, dismiss }) {
 
     const optionId = (index) => `${id}-option-${index}`;
     const activeId = computed(() => (activeIndex.value < 0 ? undefined : optionId(activeIndex.value)));
+
+    // The active option stays visible, in a list that scrolls and in a dialog body that does.
+    watch(activeIndex, (index) => {
+        if (index >= 0) {
+            document.getElementById(optionId(index))?.scrollIntoView?.({ block: 'nearest' });
+        }
+    }, { flush: 'post' });
 
     function reset() {
         activeIndex.value = -1;

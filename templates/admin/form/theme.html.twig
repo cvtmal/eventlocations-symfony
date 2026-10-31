@@ -151,6 +151,7 @@
         describedBy: attr['aria-describedby'] ?? null,
         invalid: attr['aria-invalid'] is defined,
         required: required,
+        autofocus: attr.autofocus is defined,
         placeholder: placeholder_text,
         noResultsLabel: 'ui.combobox.no_results'|trans({}, 'admin'),
         sessionGoneLabel: 'ui.combobox.session_gone'|trans({}, 'admin'),

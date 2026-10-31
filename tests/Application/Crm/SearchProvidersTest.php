@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Application\Crm;
+
+use App\Admin\ValueObject\AdminRole;
+use App\Crm\ValueObject\CompanyStage;
+use App\Factory\CompanyFactory;
+use App\Factory\ContactFactory;
+use App\Factory\VenueFactory;
+use App\Tests\Support\Admin\AdminSession;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Zenstruck\Foundry\Test\Factories;
+
+/**
+ * The CRM's groups in the global search (CRM-6, D20): below the venues, folded, and with a link to
+ * the record.
+ */
+final class SearchProvidersTest extends WebTestCase
+{
+    use AdminSession;
+    use Factories;
+
+    public function test_an_editor_finds_a_company_by_folded_name(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->create(['name' => 'Zürcher Gastro AG']);
+        CompanyFactory::createOne(['name' => 'Alpenhof AG']);
+
+        self::assertSame([[
+            'label' => 'Firmen',
+            'results' => [['type' => 'company', 'label' => 'Zürcher Gastro AG', 'detail' => 'Kunde', 'url' => '/admin/crm/firmen/'.$company->id()]],
+        ]], $this->searchGroups('zuercher'));
+    }
+
+    public function test_an_editor_finds_a_contact_by_name_or_e_mail(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne(['name' => 'Alpenhof AG']);
+        $laura = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Müller', 'company' => $company, 'email' => 'laura@example.ch']);
+        $pia = ContactFactory::createOne(['firstName' => null, 'lastName' => 'Brunner', 'company' => null, 'email' => 'post@brunner.example.ch']);
+
+        self::assertSame([[
+            'label' => 'Kontakte',
+            'results' => [['type' => 'contact', 'label' => 'Laura Müller', 'detail' => 'Alpenhof AG', 'url' => '/admin/crm/kontakte/'.$laura->id()]],
+        ]], $this->searchGroups('mueller'));
+        self::assertSame([[
+            'label' => 'Kontakte',
+            'results' => [['type' => 'contact', 'label' => 'Brunner', 'detail' => 'post@brunner.example.ch', 'url' => '/admin/crm/kontakte/'.$pia->id()]],
+        ]], $this->searchGroups('post@brunner'));
+    }
+
+    public function test_the_groups_stand_below_the_venues(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        VenueFactory::new()->withoutLocation(null)->create(['name' => 'Seeblick Saal']);
+        CompanyFactory::createOne(['name' => 'Seeblick Events']);
+        ContactFactory::createOne(['firstName' => 'Sara', 'lastName' => 'Seeblick']);
+
+        self::assertSame(['Locations', 'Firmen', 'Kontakte'], array_column($this->searchGroups('seeblick'), 'label'));
+    }
+
+    public function test_each_group_stops_at_five(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        for ($i = 1; $i <= 6; ++$i) {
+            CompanyFactory::createOne(['name' => 'Seeblick '.$i]);
+        }
+
+        self::assertCount(5, $this->searchGroups('seeblick')[0]['results']);
+    }
+
+    public function test_no_match_leaves_no_group(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        CompanyFactory::createOne(['name' => 'Alpenhof AG']);
+
+        self::assertSame([], $this->searchGroups('zuercher'));
+        self::assertSame([], $this->searchGroups('!!!'));
+    }
+
+    /**
+     * @return list<array{label: string, results: list<array{type: string, label: string, detail: ?string, url: string}>}>
+     */
+    private function searchGroups(string $q): array
+    {
+        $this->client->request('GET', '/admin/api/search?'.http_build_query(['q' => $q]));
+        self::assertResponseIsSuccessful();
+
+        $answer = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($answer);
+
+        return $answer['groups'];
+    }
+}

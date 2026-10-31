@@ -1,0 +1,131 @@
+// A CRM record page (CRM-3, Company.dc.html): the left properties card and the middle column inside
+// `.shell__primary`, the association cards in `.shell__aside` (P3). The middle column is empty in #27a and
+// then hidden, so the card takes the row (P2).
+.crm-record {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--a-space-5);
+}
+
+.crm-record__card {
+    display: flex;
+    flex: 1 1 280px;
+    flex-direction: column;
+    gap: var(--a-space-4);
+    min-width: 0;
+    padding: var(--a-space-5) 14px;
+}
+
+.crm-record__center {
+    display: flex;
+    flex: 999 1 460px;
+    flex-direction: column;
+    gap: var(--a-space-4);
+    min-width: 0;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.crm-record__identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--a-space-2);
+    padding: 0 6px;
+    text-align: center;
+
+    h1 {
+        font-size: 22px;
+        line-height: 28px;
+        overflow-wrap: anywhere;
+    }
+
+    [hidden] {
+        display: none;
+    }
+}
+
+.crm-record__properties {
+    padding-top: var(--a-space-2);
+    border-top: 1px solid var(--a-line-soft);
+}
+
+// The right column's cards (Locations, Kontakte, Firma): a head with a count and an add action, then rows.
+.crm-side__count {
+    color: var(--a-muted);
+    font-weight: 400;
+}
+
+.crm-side .card__body {
+    padding: 6px var(--a-space-5) 10px;
+}
+
+.crm-side__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.crm-side__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: var(--a-space-2) 0;
+    font-size: 14px;
+}
+
+.crm-side__thumb {
+    display: grid;
+    flex: none;
+    width: 40px;
+    height: 28px;
+    border-radius: var(--a-r-sm);
+    background: var(--a-line-soft);
+    color: var(--a-muted);
+    place-items: center;
+}
+
+.crm-side__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.crm-side__link {
+    color: var(--a-ink);
+    font-weight: 600;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+
+    &:hover {
+        color: var(--a-link-hover);
+        text-decoration: underline;
+    }
+}
+
+.crm-side__detail {
+    color: var(--a-muted);
+    font-size: 13px;
+}
+
+.crm-side__empty {
+    margin: var(--a-space-2) 0;
+    color: var(--a-muted);
+    font-size: 14px;
+}
+
+.crm-side__form {
+    display: contents;
+}
+
+// The create forms: the card body has no gap of its own, and a form of eight fields needs one (`.form`'s 18px).
+.crm-create__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: var(--a-space-3);
+}

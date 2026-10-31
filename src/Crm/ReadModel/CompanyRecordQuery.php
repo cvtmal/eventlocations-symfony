@@ -1,0 +1,118 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Crm\ReadModel;
+
+use App\Crm\ValueObject\CompanyOrigin;
+use App\Crm\ValueObject\CompanyStage;
+use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenuePlace;
+use Doctrine\DBAL\Connection;
+use Symfony\Component\Uid\Uuid;
+
+/**
+ * A company record page in one statement (D20): the company, its owner's name, and its venues and
+ * contacts as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
+ */
+final class CompanyRecordQuery
+{
+    private const string SQL = <<<'SQL'
+        SELECT c.id, c.name, c.legal_name, c.website, c.phone, c.email, c.address, c.stage, c.owner_id, c.notes,
+               c.origin, c.created_at, u.display_name AS owner_name,
+               COALESCE((
+                   SELECT json_agg(json_build_object('id', v.id, 'number', v.number, 'name', v.name, 'tier', v.tier,
+                                                     'town', tw.name, 'canton', v.canton_code)
+                                   ORDER BY lower(v.name), v.number)
+                   FROM crm_company_venues cv
+                   JOIN venues v ON v.id = cv.venue_id
+                   LEFT JOIN towns tw ON tw.id = v.town_id
+                   WHERE cv.company_id = c.id
+               ), '[]') AS venues,
+               COALESCE((
+                   SELECT json_agg(json_build_object('id', p.id, 'first_name', p.first_name, 'last_name', p.last_name,
+                                                     'position', p.position)
+                                   ORDER BY lower(p.last_name), lower(coalesce(p.first_name, '')), p.id)
+                   FROM crm_contacts p
+                   WHERE p.company_id = c.id
+               ), '[]') AS contacts
+        FROM crm_companies c
+        LEFT JOIN admin_users u ON u.id = c.owner_id
+        WHERE c.id = :id
+        SQL;
+
+    public function __construct(
+        private readonly Connection $connection,
+    ) {
+    }
+
+    public function find(string $id): ?CompanyRecord
+    {
+        if (!Uuid::isValid($id)) {
+            return null;
+        }
+        $row = $this->connection->fetchAssociative(self::SQL, ['id' => $id]);
+        if (false === $row) {
+            return null;
+        }
+
+        return new CompanyRecord(
+            (string) $row['id'],
+            (string) $row['name'],
+            self::text($row['legal_name']),
+            self::text($row['website']),
+            self::text($row['phone']),
+            self::text($row['email']),
+            self::text($row['address']),
+            CompanyStage::from((string) $row['stage']),
+            self::text($row['owner_id']),
+            self::text($row['owner_name']),
+            self::text($row['notes']),
+            CompanyOrigin::from((string) $row['origin']),
+            new \DateTimeImmutable((string) $row['created_at']),
+            array_map(static fn (array $venue): CompanyRecordVenue => new CompanyRecordVenue(
+                (string) $venue['id'],
+                (int) $venue['number'],
+                (string) $venue['name'],
+                Tier::from((string) $venue['tier']),
+                VenuePlace::of(self::text($venue['town']), self::text($venue['canton']), null),
+            ), self::list($row['venues'])),
+            array_map(static fn (array $contact): CompanyRecordContact => new CompanyRecordContact(
+                (string) $contact['id'],
+                self::text($contact['first_name']),
+                (string) $contact['last_name'],
+                self::text($contact['position']),
+            ), self::list($row['contacts'])),
+        );
+    }
+
+    /**
+     * The name alone, for a combobox's label (the contact form's preset company). Null for an unknown id.
+     */
+    public function name(string $id): ?string
+    {
+        if (!Uuid::isValid($id)) {
+            return null;
+        }
+        $name = $this->connection->fetchOne('SELECT name FROM crm_companies WHERE id = :id', ['id' => $id]);
+
+        return false === $name ? null : (string) $name;
+    }
+
+    private static function text(mixed $value): ?string
+    {
+        return null === $value ? null : (string) $value;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function list(mixed $json): array
+    {
+        $decoded = json_decode((string) $json, true, flags: \JSON_THROW_ON_ERROR);
+        \assert(\is_array($decoded) && array_is_list($decoded));
+
+        /* @var list<array<string, mixed>> $decoded */
+        return $decoded;
+    }
+}

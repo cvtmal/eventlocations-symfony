@@ -1,0 +1,68 @@
+{#
+    Layout of a CRM record page (CRM-3, D20, P2, P3, P15): the company and contact pages, and #28–#30's.
+    Contract: extend it and set `record_type` ('company', 'contact', …), `record_id`, `record_title`, `list_route`
+    and `list_label` (translated). Blocks:
+      record_crumb       the breadcrumb's last item, `record_title` by default; spans with `data-crm-follow` keep it current
+      record_identity    the head of the left card: avatar, h1, link, pill (P15: no page header beside the breadcrumb)
+      record_properties  the `record-properties` island with its read-only fallback
+      record_center      the middle column; empty in #27a and then hidden (`.crm-record__center:empty`), #27b's timeline
+      record_aside       the right column's cards, before the registry's panels (`admin_record_panels(type, id)`)
+      record_aside_end   after the panels
+      record_actions     the `Aktionen` dropdown's items (`<li>`s); the button is left out while it is empty
+      record_dialogs     modals the actions open, outside the dropdown's popover
+    Tabs come from `admin_record_tabs(type, id)` and show only when a module registered one.
+    A `[data-crm-follow="<field>"]` element follows an inline save of that field (`js/admin/crm-record.js`, loaded by
+    `admin/components/_scripts.html.twig` as every kit script is); a `[data-crm-refresh="<field>"]` element holds what the
+    save cannot rebuild, so such a save replaces it with a fresh copy from this page's URL.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ record_title }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path(list_route) }}">{{ list_label }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{% block record_crumb %}{{ record_title }}{% endblock %}</li>
+{% endblock %}
+
+{% block page_actions %}
+    {%- set actions_markup %}{% block record_actions %}{% endblock %}{% endset -%}
+    {%- if actions_markup|trim is not empty -%}
+        {% embed 'admin/components/_dropdown.html.twig' with {
+            id: 'record-actions',
+            label: 'record.actions'|trans({}, 'crm'),
+            icon: 'chevron-down',
+            icon_only: false,
+            variant: 'secondary',
+            items_markup: actions_markup,
+        } only %}
+            {% block items %}{{ items_markup }}{% endblock %}
+        {% endembed %}
+    {%- endif -%}
+{% endblock %}
+
+{% block page_header %}
+    {%- set tabs = admin_record_tabs(record_type, record_id) -%}
+    {%- if tabs is not empty -%}
+        {{ include('admin/components/_record_tabs.html.twig', {label: 'record.tabs_label'|trans({}, 'crm'), tabs: tabs, current_route: app.request.attributes.get('_route')}, with_context = false) }}
+    {%- endif -%}
+{% endblock %}
+
+{% block main %}
+    <div class="crm-record">
+        <section class="card crm-record__card" aria-labelledby="record-title">
+            <div class="crm-record__identity">{% block record_identity %}{% endblock %}</div>
+            <div class="crm-record__properties">{% block record_properties %}{% endblock %}</div>
+        </section>
+        <div class="crm-record__center">{%- block record_center -%}{%- endblock -%}</div>
+    </div>
+    {% block record_dialogs %}{% endblock %}
+{% endblock %}
+
+{% block aside %}
+    {%- block record_aside %}{% endblock -%}
+    {%- for panel in admin_record_panels(record_type, record_id) -%}
+        {{ include(panel.template, panel.context) }}
+    {%- endfor -%}
+    {%- block record_aside_end %}{% endblock -%}
+{% endblock %}

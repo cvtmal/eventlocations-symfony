@@ -1,4 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiCombobox from '../src/components/UiCombobox.vue';
 
@@ -272,5 +273,25 @@ describe('UiCombobox', () => {
             expect(visible(combobox).element.value).toBe('8706 Mei');
             expect(combobox.get('[role="status"]').text()).toBe('Fehler beim Laden.');
         });
+    });
+
+    it('carries autofocus to its input, for a dialog that opens on it', () => {
+        expect(visible(box({ autofocus: true })).attributes('autofocus')).toBeDefined();
+        expect(visible(box()).attributes('autofocus')).toBeUndefined();
+    });
+
+    it('prevents the default of Esc only while the list is open', async () => {
+        const combobox = box({ options: freeOptions });
+        await visible(combobox).trigger('keydown', { key: 'ArrowDown' });
+        expect(visible(combobox).attributes('aria-expanded')).toBe('true');
+
+        const open = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true, bubbles: true });
+        visible(combobox).element.dispatchEvent(open);
+        await nextTick();
+        const closed = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true, bubbles: true });
+        visible(combobox).element.dispatchEvent(closed);
+
+        expect(open.defaultPrevented).toBe(true);
+        expect(closed.defaultPrevented).toBe(false);
     });
 });

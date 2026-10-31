@@ -7,4 +7,5 @@ export default {
     'styleguide-sortable': () => import('./islands/StyleguideSortableIsland.vue'),
     'photo-manager': () => import('./islands/PhotoManagerIsland.vue'),
     'room-editor': () => import('./islands/RoomEditorIsland.vue'),
+    'record-properties': () => import('./islands/RecordPropertiesIsland.vue'),
 };

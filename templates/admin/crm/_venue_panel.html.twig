@@ -1,0 +1,38 @@
+{#
+    The CRM card on a venue (LocationEdit.dc.html:244-256). Filled by `VenueCrmPanel`: `crm_venue`
+    (VenueCompany or null); nothing for a record id that is no venue number. Deal, Phase and Wert are #28's.
+#}
+{% if crm_venue|default(null) %}
+    {% embed 'admin/components/_card.html.twig' with {title: 'panel.title'|trans({}, 'crm'), id: 'crm', crm_venue: crm_venue} only %}
+        {% block actions %}
+            {% if crm_venue.companyId %}
+                <a class="crm-panel__open" href="{{ path('admin_crm_companies_show', {id: crm_venue.companyId}) }}">{{ 'panel.open'|trans({}, 'crm') }}</a>
+            {% endif %}
+        {% endblock %}
+        {% block body %}
+            {% if crm_venue.companyId %}
+                <div class="crm-panel__company">
+                    {{ include('admin/components/_avatar.html.twig', {initials: crm_venue.initials, square: true}, with_context = false) }}
+                    <span class="crm-panel__text">
+                        <span class="crm-panel__name">{{ crm_venue.companyName }}</span>
+                        <span class="crm-panel__stage">{{ 'panel.stage_since'|trans({stage: crm_venue.stage|trans, year: crm_venue.since|date('Y', 'Europe/Zurich')}, 'crm') }}</span>
+                    </span>
+                </div>
+                <dl class="crm-panel__facts">
+                    <dt>{{ 'panel.contact'|trans({}, 'crm') }}</dt>
+                    {% for contact in crm_venue.contacts %}
+                        <dd><a href="{{ path('admin_crm_contacts_show', {id: contact.id}) }}">{{ contact.fullName }}</a></dd>
+                    {% else %}
+                        <dd>{{ 'panel.no_contact'|trans({}, 'crm') }}</dd>
+                    {% endfor %}
+                </dl>
+            {% else %}
+                <p class="muted">{{ 'panel.empty'|trans({}, 'crm') }}</p>
+                <form class="crm-panel__create" method="post" action="{{ path('admin_crm_company_from_venue', {venueId: crm_venue.venueId}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                    {{ include('admin/components/_button.html.twig', {label: 'panel.create'|trans({}, 'crm'), variant: 'secondary', icon: 'plus', type: 'submit'}, with_context = false) }}
+                </form>
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+{% endif %}

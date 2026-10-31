@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { useListbox } from '../src/composables/useListbox.js';
 
 function setup(values = ['a', 'b', 'c']) {
@@ -107,5 +107,20 @@ describe('useListbox', () => {
         listbox.reset();
 
         expect(listbox.activeIndex.value).toBe(-1);
+    });
+
+    it('keeps the active option in view', async () => {
+        const option = document.createElement('li');
+        option.id = 'town-option-1';
+        option.scrollIntoView = vi.fn();
+        document.body.append(option);
+        const { listbox } = setup();
+
+        press(listbox, 'ArrowDown');
+        press(listbox, 'ArrowDown');
+        await nextTick();
+
+        expect(option.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+        option.remove();
     });
 });

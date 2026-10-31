@@ -46,6 +46,12 @@
     }
 }
 
+// The body scrolls, so a floating list would be clipped by it: inside a dialog the list takes up room instead.
+.modal__body .combobox__list {
+    position: static;
+    margin-top: var(--a-space-1);
+}
+
 .modal__footer {
     display: flex;
     flex-wrap: wrap;

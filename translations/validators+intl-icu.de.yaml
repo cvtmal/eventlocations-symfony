@@ -118,6 +118,17 @@ cms:
             format: Bitte einen Monat wie «2026-06» eingeben.
         text:
             required: Bitte den Text der Bewertung eingeben.
+crm:
+    property:
+        unknown_field: Dieses Feld lässt sich nicht bearbeiten.
+        required: Bitte einen Wert eingeben.
+        too_long: Bitte höchstens {limit} Zeichen eingeben.
+        website: Die Adresse muss mit «https://» oder «http://» beginnen.
+        phone: Bitte eine Telefonnummer aus Ziffern eingeben, zum Beispiel «+41 44 123 45 67».
+        email: Bitte eine gültige E-Mail-Adresse eingeben.
+        choice: Bitte einen Eintrag aus der Liste wählen.
+    link_venue:
+        required: Bitte eine Location aus der Liste wählen.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.

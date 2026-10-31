@@ -1,0 +1,147 @@
+{% extends 'admin/crm/_record_layout.html.twig' %}
+
+{% form_theme link_form 'admin/form/theme.html.twig' %}
+
+{% set record_type = 'company' %}
+{% set record_id = company.id %}
+{% set record_title = company.name %}
+{% set list_route = 'admin_crm_companies' %}
+{% set list_label = 'list.companies.title'|trans({}, 'crm') %}
+
+{% block record_crumb %}<span data-crm-follow="name">{{ company.name }}</span>{% endblock %}
+
+{% block record_identity %}
+    {{ include('admin/components/_avatar.html.twig', {initials: company.initials, size: 56, square: true}, with_context = false) }}
+    <h1 id="record-title" data-crm-follow="name">{{ company.name }}</h1>
+    <a class="crm-record__website" data-crm-follow="website" href="{{ company.website }}"{% if not company.website %} hidden{% endif %} target="_blank" rel="noopener">{{ company.website }}</a>
+    <span class="pill pill--{{ crm_tone(company.stage) }}" data-crm-follow="stage" data-crm-tones="{{ crm_tones('stage')|json_encode }}">{{ company.stage|trans }}</span>
+{% endblock %}
+
+{% block record_properties %}
+    {{ include('admin/crm/_properties.html.twig', {
+        fields: crm_company_fields(company, owners),
+        url: path('admin_api_crm_company_property', {id: company.id}),
+        id_prefix: 'company',
+    }, with_context = false) }}
+    {{ include('admin/components/_property.html.twig', {
+        label: 'record.created'|trans({}, 'crm'),
+        value: 'record.created_on'|trans({date: company.createdAt|swiss_date, origin: company.origin.value}, 'crm'),
+    }, with_context = false) }}
+{% endblock %}
+
+{% block record_actions %}
+    {%- if delete_form -%}
+        <li><button class="dropdown__item dropdown__item--danger" type="button" commandfor="company-delete" command="show-modal">{{ 'record.delete.action'|trans({}, 'crm') }}</button></li>
+    {%- endif -%}
+{% endblock %}
+
+{% block record_dialogs %}
+    {% embed 'admin/components/_modal.html.twig' with {
+        id: 'link-venue',
+        title: 'record.venues.link_title'|trans({}, 'crm'),
+        close_label: 'record.venues.close'|trans({}, 'crm'),
+        link_form: link_form,
+    } only %}
+        {% block body %}
+            {{ form_start(link_form, {attr: {id: 'link-venue-form', class: 'form', novalidate: 'novalidate'}}) }}
+                {{ form_row(link_form.venue, {help: 'record.venues.link_help'}) }}
+            {{ form_end(link_form) }}
+        {% endblock %}
+        {% block footer %}
+            <form method="dialog"><button class="btn">{{ 'record.venues.cancel'|trans({}, 'crm') }}</button></form>
+            {{ include('admin/components/_button.html.twig', {label: 'record.venues.link_submit'|trans({}, 'crm'), variant: 'primary', type: 'submit', attributes: {form: 'link-venue-form'}}, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+    {% if delete_form %}
+        {% embed 'admin/components/_modal.html.twig' with {
+            id: 'company-delete',
+            title: 'record.delete.title'|trans({}, 'crm'),
+            close_label: 'record.delete.close'|trans({}, 'crm'),
+            danger: true,
+            company: company,
+            delete_form: delete_form,
+        } only %}
+            {% block body %}<p>{{ 'record.delete.text'|trans({name: company.name}, 'crm') }}</p>{% endblock %}
+            {% block footer %}
+                <form method="dialog"><button class="btn" autofocus>{{ 'record.delete.cancel'|trans({}, 'crm') }}</button></form>
+                {{ form_start(delete_form) }}
+                    {{ include('admin/components/_button.html.twig', {label: 'record.delete.confirm'|trans({}, 'crm'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                {{ form_end(delete_form) }}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+{% endblock %}
+
+{% block record_aside %}
+    <section class="card crm-side" id="locations" aria-labelledby="crm-venues-title">
+        <div class="card__head">
+            <h2 id="crm-venues-title">{{ 'record.venues.title'|trans({}, 'crm') }} <span class="crm-side__count">({{ company.venues|length }})</span></h2>
+            {{ include('admin/components/_button.html.twig', {
+                label: 'record.venues.link'|trans({}, 'crm'),
+                icon: 'plus',
+                variant: 'ghost',
+                size: 'sm',
+                type: 'button',
+                attributes: {commandfor: 'link-venue', command: 'show-modal'},
+            }, with_context = false) }}
+        </div>
+        <div class="card__body">
+            {% if company.venues is empty %}
+                <p class="crm-side__empty">{{ 'record.venues.empty'|trans({}, 'crm') }}</p>
+            {% else %}
+                <ul class="crm-side__list">
+                    {% for venue in company.venues %}
+                        <li class="crm-side__item">
+                            <span class="crm-side__thumb">{{ admin_icon('landmark') }}</span>
+                            <span class="crm-side__text">
+                                <a class="crm-side__link" href="{{ path('admin_locations_edit', {number: venue.number}) }}">{{ venue.name }}</a>
+                                <span class="crm-side__detail">{{ venue.tier|trans }}{% if venue.place.isKnown %} · {{ venue.place|trans }}{% endif %}</span>
+                            </span>
+                            <form class="crm-side__form" method="post" action="{{ path('admin_crm_companies_unlink_venue', {id: company.id, venueId: venue.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token(unlink_token) }}">
+                                {{ include('admin/components/_button.html.twig', {
+                                    label: 'record.venues.unlink'|trans({name: venue.name}, 'crm'),
+                                    icon: 'x',
+                                    icon_only: true,
+                                    variant: 'ghost',
+                                    size: 'sm',
+                                    type: 'submit',
+                                }, with_context = false) }}
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="card crm-side" id="kontakte" aria-labelledby="crm-contacts-title">
+        <div class="card__head">
+            <h2 id="crm-contacts-title">{{ 'record.contacts.title'|trans({}, 'crm') }} <span class="crm-side__count">({{ company.contacts|length }})</span></h2>
+            {{ include('admin/components/_button.html.twig', {
+                label: 'record.contacts.add'|trans({}, 'crm'),
+                icon: 'plus',
+                variant: 'ghost',
+                size: 'sm',
+                href: path('admin_crm_contacts_new', {company: company.id}),
+            }, with_context = false) }}
+        </div>
+        <div class="card__body">
+            {% if company.contacts is empty %}
+                <p class="crm-side__empty">{{ 'record.contacts.empty'|trans({}, 'crm') }}</p>
+            {% else %}
+                <ul class="crm-side__list">
+                    {% for contact in company.contacts %}
+                        <li class="crm-side__item">
+                            {{ include('admin/components/_avatar.html.twig', {initials: contact.initials}, with_context = false) }}
+                            <span class="crm-side__text">
+                                <a class="crm-side__link" href="{{ path('admin_crm_contacts_show', {id: contact.id}) }}">{{ contact.fullName }}</a>
+                                {% if contact.position %}<span class="crm-side__detail">{{ contact.position }}</span>{% endif %}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
