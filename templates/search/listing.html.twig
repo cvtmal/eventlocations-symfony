@@ -14,9 +14,21 @@
     {% set heading = ('landing.' ~ landing.type.value ~ '.heading')|trans(place, 'search') %}
     {% set intro = ('landing.' ~ landing.type.value ~ '.intro')|trans(place|merge(count), 'search') %}
 {% endif %}
+{#- #26: staff text replaces the intro (Markdown); without one #17's sentence stays. The plain listing's own block shows on its clean page 1 only (P12). -#}
+{#- A captured set is Markup when it is not empty, so the safe HTML survives the include unescaped; empty it is ''. -#}
+{% set intro_html -%}
+    {%- if landing is not null -%}
+        {{- content_block(landing.blockKey('intro'), intro) -}}
+    {%- elseif not seo.noindex and page.page == 1 -%}
+        {{- content_block('listing.intro') -}}
+    {%- endif -%}
+{%- endset %}
 {% set breadcrumb = landing_breadcrumb(landing) %}
 {% set share_photo = page.cards[0].photos[0] ?? null %}
 {% set share_picture = share_photo ? card_picture(share_photo, page.cards[0].name) : null %}
+
+{# #26: bold text and headings in a staff intro use the 600 weight above the fold; preloading it keeps the swap from shifting the page (CLS). Only tags from Markdown can match: text in a block is escaped. #}
+{% block stylesheets %}{% if '<strong' in intro_html or '<h' in intro_html %}<link rel="preload" href="{{ asset('fonts/sofia-sans-latin-600-normal.woff2') }}" as="font" type="font/woff2" crossorigin>{% endif %}{% endblock %}
 
 {% block title %}{{ seo.title }}{% endblock %}
 
@@ -29,7 +41,7 @@
 {% block jsonld %}{{ parent() }}{% if not seo.noindex %}{{ listing_jsonld(page) }}{% endif %}{% if breadcrumb %}{{ breadcrumb_jsonld(breadcrumb) }}{% endif %}{% endblock %}
 
 {% block hero %}
-    {{ include('search/_hero.html.twig', {heading: heading, intro: intro, breadcrumb: breadcrumb, total: page.total, criteria: criteria}, with_context = false) }}
+    {{ include('search/_hero.html.twig', {heading: heading, intro_html: intro_html, breadcrumb: breadcrumb, total: page.total, criteria: criteria}, with_context = false) }}
 {% endblock %}
 
 {% block main %}

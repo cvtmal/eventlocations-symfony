@@ -1,0 +1,20 @@
+{#
+    Search-result preview of a landing page (#26): title, URL and description, one per locale. Include with
+    `with_context = false`: form (the editor's FormView), entry (LandingPageEntry), locales list<{code, label}>.
+    `assets/js/admin/serp-preview.js` keeps `[data-serp-target]` in step with the fields carrying
+    `data-serp-source`; an empty field shows the page's default.
+#}
+{% embed 'admin/components/_card.html.twig' with {title: 'landing.editor.preview.title'|trans({}, 'cms'), id: 'landing-serp', form: form, entry: entry, locales: locales} only %}
+    {% block body %}
+        <p class="muted">{{ 'landing.editor.preview.text'|trans({}, 'cms') }}</p>
+        {% for locale in locales %}
+            {% set fields = form.locales[locale.code] %}
+            <div class="serp-preview">
+                {% if locales|length > 1 %}<p class="field__label">{{ locale.label }}</p>{% endif %}
+                <p class="serp-preview__url">{{ entry.url ?: 'landing.editor.preview.offline'|trans({}, 'cms') }}</p>
+                <p class="serp-preview__title" data-serp-target="title" data-serp-locale="{{ locale.code }}">{{ fields.title.vars.value|default('')|trim ?: entry.defaultTitle }}</p>
+                <p class="serp-preview__description" data-serp-target="description" data-serp-locale="{{ locale.code }}">{{ fields.description.vars.value|default('')|trim ?: entry.defaultDescription }}</p>
+            </div>
+        {% endfor %}
+    {% endblock %}
+{% endembed %}

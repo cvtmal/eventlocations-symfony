@@ -297,3 +297,102 @@ dashboard:
 error:
     stale: Diese Location wurde inzwischen geändert. Bitte neu laden; die Eingaben in diesem Abschnitt gehen dabei verloren.
     stale_reload: Seite neu laden
+
+# #26 (cms-pages): landing page texts, text blocks, and what both editors share.
+landing:
+    nav: Landingpages
+    list:
+        title: Landingpages
+        table_label: Landingpages
+        tabs:
+            label: Typ
+            all: Alle
+            canton: Kantone
+            town: Orte
+            building: Gebäudearten
+        filter:
+            search: Seite suchen
+            search_placeholder: Name der Seite
+            submit: Suchen
+            reset: Suche zurücksetzen
+        chip:
+            search: 'Suche: «{q}»'
+            remove: '{label} entfernen'
+        column:
+            page: Seite
+            type: Typ
+            venues: Locations
+            threshold: Schwelle
+            texts: Texte
+            edited: Zuletzt geändert
+        pagination:
+            label: Seiten der Landingpages
+            previous: Zurück
+            next: Weiter
+        empty:
+            title: Keine Landingpages
+            text: Eine Seite erscheint hier, sobald eine publizierte Location zu ihr gehört.
+            no_match: Keine Seite passt zu diesem Filter.
+    type:
+        canton: Kanton
+        town: Ort
+        building: Gebäudeart
+    threshold:
+        online: online
+        below: unter Schwelle
+    texts:
+        custom: eigener Text
+        default: Standard
+    editor:
+        title: '{name} bearbeiten'
+        venues: '{count, plural, one {# Location} other {# Locations}}'
+        view: Seite ansehen
+        card: Texte
+        field:
+            intro: Einleitung
+            title: SEO-Titel
+            description: Meta-Beschreibung
+        help:
+            intro: 'Markdown: **fett**, *kursiv*, Links und Listen, keine Bilder. Eine eigene Einleitung ist fester Text, die Anzahl Locations zählt darin nicht mit. Leer lassen für den Standardtext.'
+            title: Der ganze Titel im Browser-Tab und in der Google-Suche. Gilt für die erste Seite; leer lassen für den Standardtitel.
+            description: Der Text unter dem Titel in der Google-Suche. Gilt für die erste Seite; leer lassen für die Standardbeschreibung.
+        preview:
+            title: Vorschau in der Google-Suche
+            text: So erscheint die erste Seite ungefähr in den Suchergebnissen.
+            offline: Die Seite ist noch nicht online.
+    flash:
+        saved: 'Texte von «{name}» gespeichert.'
+        unchanged: 'Keine Änderungen an «{name}».'
+
+blocks:
+    nav: Textbausteine
+    list:
+        title: Textbausteine
+        table_label: Textbausteine
+        column:
+            name: Name
+            placement: Erscheint auf
+            status: Status
+            edited: Zuletzt geändert
+        empty:
+            title: Keine Textbausteine
+    status:
+        custom: eigener Text
+        empty: leer
+    editor:
+        title: '{name} bearbeiten'
+        card: Text
+        field:
+            body: Text
+        help:
+            body: 'Markdown: **fett**, *kursiv*, Links und Listen, keine Bilder. Leer lassen, um den Text zu entfernen.'
+        fallback: 'Ohne eigenen Text erscheint: «{text}»'
+        no_fallback: Ohne eigenen Text erscheint an dieser Stelle nichts.
+    flash:
+        saved: '«{name}» gespeichert.'
+        unchanged: 'Keine Änderungen an «{name}».'
+
+text:
+    error:
+        stale: Diese Texte wurden inzwischen geändert. Bitte neu laden; die Eingaben auf dieser Seite gehen dabei verloren.
+        stale_reload: Seite neu laden

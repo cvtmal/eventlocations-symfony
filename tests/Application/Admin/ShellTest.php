@@ -23,7 +23,7 @@ final class ShellTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(['CMS', 'Einstellungen'], $crawler->filter('.sidebar__heading')->each(static fn (Crawler $heading): string => $heading->text()));
-        self::assertSame(['Übersicht', 'Locations', 'Benutzer', 'Audit-Log'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
+        self::assertSame(['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Benutzer', 'Audit-Log'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
         self::assertSame('Übersicht', $crawler->filter('.sidebar__item[aria-current="page"]')->text());
     }
 
@@ -33,7 +33,7 @@ final class ShellTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Übersicht', 'Locations'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
+        self::assertSame(['Übersicht', 'Locations', 'Landingpages', 'Textbausteine'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
         self::assertSame(['CMS'], $crawler->filter('.sidebar__heading')->each(static fn (Crawler $heading): string => $heading->text()));
     }
 

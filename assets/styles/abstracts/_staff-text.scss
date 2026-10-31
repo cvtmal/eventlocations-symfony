@@ -1,0 +1,27 @@
+// Staff Markdown on a public page (#26). Any word, URL or code block stays inside the column at
+// every width (S11), and headings stay below the page's h1, which is only 1.25rem on a phone.
+@mixin flow {
+    overflow-wrap: anywhere;
+
+    > * {
+        margin: 0;
+    }
+
+    > * + * {
+        margin-top: var(--space-xs);
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-size: 1em;
+    }
+
+    pre {
+        max-width: 100%;
+        overflow-x: auto;
+        text-align: left;
+    }
+}

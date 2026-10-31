@@ -1,0 +1,53 @@
+{#
+    Textbausteine (#26): every declared `ContentBlockDefinition`. Context from `TextBlockListController`:
+    rows list<{definition: ContentBlockDefinition, updated_at: ?DateTimeImmutable}>.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'blocks.list.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'blocks.list.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'blocks.list.title'|trans({}, 'cms') }} <span class="muted">{{ rows|length|swiss_number }}</span></h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'blocks.list.table_label'|trans({}, 'cms'),
+        id: 'block-list',
+        columns: [
+            {label: 'blocks.list.column.name'|trans({}, 'cms')},
+            {label: 'blocks.list.column.placement'|trans({}, 'cms')},
+            {label: 'blocks.list.column.status'|trans({}, 'cms')},
+            {label: 'blocks.list.column.edited'|trans({}, 'cms')},
+        ],
+        rows: rows,
+    } only %}
+        {% block rows %}
+            {% for row in rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {definition: row.definition, updated_at: row.updated_at} only %}
+                    {% block cells %}
+                        <td><a class="landing-list__link" href="{{ path('admin_text_blocks_edit', {key: definition.key}) }}">{{ definition.label|trans }}</a></td>
+                        <td>{{ definition.placement|trans }}</td>
+                        <td>{{ include('admin/components/_pill.html.twig', {
+                            label: (updated_at ? 'blocks.status.custom' : 'blocks.status.empty')|trans({}, 'cms'),
+                            tone: updated_at ? 'blue' : 'grey',
+                        }, with_context = false) }}</td>
+                        <td class="muted">{{ updated_at ? updated_at|swiss_date }}</td>
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'type', title: 'blocks.list.empty.title'|trans({}, 'cms')}, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

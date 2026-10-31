@@ -57,6 +57,27 @@ final readonly class LandingPage
         return array_keys($this->facetQuery());
     }
 
+    /**
+     * The page's identity in `content_blocks` keys (#26): `canton.<code>`, `town.<towns.id>` or
+     * `building.<code>`. Never the slug, so a renamed town or building slug keeps its texts.
+     */
+    public function keyPrefix(): string
+    {
+        return match ($this->type) {
+            LandingType::Canton => 'canton.'.$this->canton()->value,
+            LandingType::Town => 'town.'.$this->townId,
+            LandingType::Building => 'building.'.$this->building,
+        };
+    }
+
+    /**
+     * The `content_blocks` key of one of the page's editable texts (`intro`, `title`, `description`).
+     */
+    public function blockKey(string $field): string
+    {
+        return 'landing.'.$this->keyPrefix().'.'.$field;
+    }
+
     private function canton(): Canton
     {
         return $this->canton ?? throw new \LogicException(\sprintf('A %s landing page has no canton.', $this->type->value));

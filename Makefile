@@ -125,7 +125,7 @@ admin-lint: ## Run ESLint on admin-ui/
 .PHONY: lighthouse validate-html
 # URL is a path on this lane's app, e.g. URL=/_styleguide. _profile=0 keeps the dev toolbar (inline scripts) out.
 TOOL_URL = http://localhost$(URL)$(if $(findstring ?,$(URL)),&,?)_profile=0
-TOOL_NAME = $(shell date +%Y%m%d-%H%M%S)-$(or $(subst /,-,$(patsubst /%,%,$(firstword $(subst ?, ,$(URL))))),home)
+TOOL_NAME = $(shell date +%Y%m%d-%H%M%S)-$(or $(subst .,-,$(subst /,-,$(patsubst /%,%,$(firstword $(subst ?, ,$(URL)))))),home)
 # ADMIN=1 logs in through DevAutoLoginAuthenticator (dev only).
 ADMIN_DEV_TOKEN = $(or $(shell sed -n 's/^ADMIN_DEV_AUTOLOGIN=//p' .env.local 2>/dev/null | tail -n1),$(shell sed -n 's/^ADMIN_DEV_AUTOLOGIN=//p' .env | tail -n1))
 

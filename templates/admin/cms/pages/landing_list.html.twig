@@ -1,0 +1,111 @@
+{#
+    Landingpages (#26): every canton, town and building page with a published venue. Context from
+    `LandingPageListController`: rows list<{entry: LandingPageEntry, updated_at: ?DateTimeImmutable}>, type (null = all),
+    q, counts {all, canton, town, building} (of the search), page, last_page, total, per_page.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'landing.list.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'landing.list.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'landing.list.title'|trans({}, 'cms') }} <span class="muted">{{ counts.all|swiss_number }}</span></h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% set tab_items = [{label: 'landing.list.tabs.all'|trans({}, 'cms'), href: admin_query_path({typ: null}), count: counts.all, active: type is null}] %}
+    {% for tab_type in ['canton', 'town', 'building'] %}
+        {% set tab_items = tab_items|merge([{
+            label: ('landing.list.tabs.' ~ tab_type)|trans({}, 'cms'),
+            href: admin_query_path({typ: tab_type}),
+            count: counts[tab_type],
+            active: type == tab_type,
+        }]) %}
+    {% endfor %}
+    {{ include('admin/components/_tabs.html.twig', {label: 'landing.list.tabs.label'|trans({}, 'cms'), items: tab_items}, with_context = false) }}
+
+    {% set chips = [] %}
+    {% if q %}
+        {% set label = 'landing.list.chip.search'|trans({q: q}, 'cms') %}
+        {% set chips = [{label: label, remove_href: admin_query_path({q: null}), remove_label: 'landing.list.chip.remove'|trans({label: label}, 'cms')}] %}
+    {% endif %}
+    {% embed 'admin/components/_filter_bar.html.twig' with {
+        action: path('admin_landing_pages'),
+        id: 'landing-filter',
+        search_value: q,
+        search_label: 'landing.list.filter.search'|trans({}, 'cms'),
+        search_placeholder: 'landing.list.filter.search_placeholder'|trans({}, 'cms'),
+        submit_label: 'landing.list.filter.submit'|trans({}, 'cms'),
+        reset_href: q ? path('admin_landing_pages', type ? {typ: type} : {}) : null,
+        reset_label: 'landing.list.filter.reset'|trans({}, 'cms'),
+        chips: chips,
+        type: type,
+    } only %}
+        {% block filters %}
+            {% if type %}<input type="hidden" name="typ" value="{{ type }}">{% endif %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'landing.list.table_label'|trans({}, 'cms'),
+        id: 'landing-list',
+        columns: [
+            {label: 'landing.list.column.page'|trans({}, 'cms')},
+            {label: 'landing.list.column.type'|trans({}, 'cms')},
+            {label: 'landing.list.column.venues'|trans({}, 'cms')},
+            {label: 'landing.list.column.threshold'|trans({}, 'cms')},
+            {label: 'landing.list.column.texts'|trans({}, 'cms')},
+            {label: 'landing.list.column.edited'|trans({}, 'cms')},
+        ],
+        rows: rows,
+        page: page,
+        last_page: last_page,
+        total: total,
+        per_page: per_page,
+        filtered: q or type,
+    } only %}
+        {% block rows %}
+            {% for row in rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {entry: row.entry, updated_at: row.updated_at} only %}
+                    {% block cells %}
+                        <td><a class="landing-list__link" href="{{ path('admin_landing_pages_edit', {landing: entry.keyPrefix}) }}">{{ entry.name }}</a></td>
+                        <td>{{ ('landing.type.' ~ entry.type)|trans({}, 'cms') }}</td>
+                        <td>{{ entry.venueCount|swiss_number }}</td>
+                        <td>{{ include('admin/components/_pill.html.twig', {
+                            label: (entry.passesThreshold ? 'landing.threshold.online' : 'landing.threshold.below')|trans({}, 'cms'),
+                            tone: entry.passesThreshold ? 'green' : 'grey',
+                            dot: true,
+                        }, with_context = false) }}</td>
+                        <td>{{ include('admin/components/_pill.html.twig', {
+                            label: (updated_at ? 'landing.texts.custom' : 'landing.texts.default')|trans({}, 'cms'),
+                            tone: updated_at ? 'blue' : 'grey',
+                        }, with_context = false) }}</td>
+                        <td class="muted">{{ updated_at ? updated_at|swiss_date }}</td>
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'file-text', title: 'landing.list.empty.title'|trans({}, 'cms'), text: (filtered ? 'landing.list.empty.no_match' : 'landing.list.empty.text')|trans({}, 'cms')}, with_context = false) }}
+        {% endblock %}
+        {% block foot %}
+            {{ include('admin/components/_pagination.html.twig', {
+                page: page,
+                last_page: last_page,
+                total: total,
+                per_page: per_page,
+                label: 'landing.list.pagination.label'|trans({}, 'cms'),
+                previous_label: 'landing.list.pagination.previous'|trans({}, 'cms'),
+                next_label: 'landing.list.pagination.next'|trans({}, 'cms'),
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

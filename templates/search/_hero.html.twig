@@ -1,7 +1,8 @@
 {#
     The listing's hero band: h1, result count and the filter bar (LP-1). Include with `only`:
       heading (translated h1; #17 passes "… im Kanton Zürich"), total (int), criteria (SearchCriteria);
-      optional (#17 landing pages): intro (translated sentence under the h1), breadcrumb (list<{name, url?}>, above it).
+      optional (#17 landing pages): breadcrumb (list<{name, url?}>, above the h1);
+      optional (#26): intro_html (safe HTML of block content from content_block(), under the h1).
 #}
 <section class="listing-hero">
     <div class="container">
@@ -9,8 +10,8 @@
         {{ include('components/_breadcrumb.html.twig', {items: breadcrumb, label: 'landing.breadcrumb_label'|trans({}, 'search')}, with_context = false) }}
         {%- endif %}
         <h1 class="listing-hero__title">{{ heading }}</h1>
-        {%- if intro ?? null %}
-        <p class="listing-hero__intro">{{ intro }}</p>
+        {%- if intro_html ?? null %}
+        <div class="listing-hero__intro">{{ intro_html }}</div>
         {%- endif %}
         <p class="listing-hero__count">{{ 'listing.count'|trans({count: total, formatted: total|swiss_number}, 'search') }}</p>
         {{ include('search/_filter_bar.html.twig', {criteria: criteria}, with_context = false) }}

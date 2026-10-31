@@ -6,6 +6,8 @@ namespace App\Tests\Application\Admin;
 
 use App\Admin\Entity\AdminUser;
 use App\Admin\ValueObject\AdminRole;
+use App\Cms\ValueObject\LandingKey;
+use App\Cms\ValueObject\TextBlockKey;
 use App\Cms\ValueObject\VenueNumber;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Route;
@@ -247,13 +249,19 @@ trait ChecksAdminRoutes
     }
 
     /**
-     * A value the parameter's requirement accepts: a venue number for `VenueNumber::REQUIREMENT`, a UUID for
-     * everything else. A route with another strict requirement still gets the UUID, its 404 fails the walk,
+     * A value the parameter's requirement accepts, by requirement: a venue number for `VenueNumber::REQUIREMENT`,
+     * a landing page for `LandingKey::REQUIREMENT`, a text block for `TextBlockKey::REQUIREMENT` (#26), a UUID
+     * for everything else. A route with another strict requirement still gets the UUID, its 404 fails the walk,
      * and the parameter has to be taught here.
      */
     private static function routeSample(Route $route, string $parameter): string
     {
-        return VenueNumber::REQUIREMENT === $route->getRequirement($parameter) ? '1' : self::UUID;
+        return match ($route->getRequirement($parameter)) {
+            VenueNumber::REQUIREMENT => '1',
+            LandingKey::REQUIREMENT => 'canton.zh',
+            TextBlockKey::REQUIREMENT => 'listing.intro',
+            default => self::UUID,
+        };
     }
 
     private function isWalked(string $routeName): bool

@@ -23,3 +23,9 @@ framework:
             cache.landing_pages:
                 adapter: cache.app
                 default_lifetime: 0
+            # #26: every content_blocks row as one item `snapshot` (build time, locale → key → Markdown),
+            # read by Shared\ReadModel\ContentBlocks. No expiry, so a page that only peeks keeps the
+            # footer note; the reader itself rebuilds a snapshot older than a day.
+            cache.content_blocks:
+                adapter: cache.app
+                default_lifetime: 0

@@ -251,3 +251,8 @@ landing:
             slug: zunfthaus
             heading: 'Hochzeit im Zunfthaus'
             intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Zunfthaus: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+# #26: labels of the Search module's text blocks in the back office's text-block list.
+blocks:
+    listing_intro:
+        label: Einleitung der Suchseite
+        placement: Unter dem Titel der Suchseite ohne Filter, nur auf Seite 1

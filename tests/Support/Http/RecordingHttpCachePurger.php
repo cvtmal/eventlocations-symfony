@@ -16,6 +16,9 @@ final class RecordingHttpCachePurger implements HttpCachePurger
 
     public int $listings = 0;
 
+    /** Runs at each listings purge, for what must already hold by then. */
+    public ?\Closure $onListings = null;
+
     public function purgeVenue(int $number): void
     {
         $this->venues[] = $number;
@@ -24,5 +27,8 @@ final class RecordingHttpCachePurger implements HttpCachePurger
     public function purgeListings(): void
     {
         ++$this->listings;
+        if (null !== $this->onListings) {
+            ($this->onListings)();
+        }
     }
 }
