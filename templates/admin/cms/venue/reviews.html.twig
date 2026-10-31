@@ -1,0 +1,96 @@
+{#
+    The Bewertungen tab (#25, CMS-8). Context from `VenueReviewsController`: venue (VenueHeader), reviews
+    (list<ManagedReview>, newest month first), rating_url (the editor's Bewertung card: score, count and highlights, D17),
+    csrf_id (the token id of the remove forms).
+#}
+{% extends 'admin/cms/venue/_layout.html.twig' %}
+
+{% set record_crumb = 'reviews.tab'|trans({}, 'cms') %}
+
+{% block record_main %}
+    <div class="venue-media">
+        <div class="venue-media__toolbar">
+            {{ include('admin/components/_button.html.twig', {
+                label: 'reviews.add'|trans({}, 'cms'),
+                variant: 'primary',
+                icon: 'plus',
+                href: path('admin_locations_reviews_new', {number: venue.number}),
+            }, with_context = false) }}
+        </div>
+
+        {% embed 'admin/components/_table.html.twig' with {
+            label: 'reviews.list.title'|trans({}, 'cms'),
+            id: 'venue-reviews',
+            columns: [
+                {label: 'reviews.field.first_name'|trans({}, 'cms')},
+                {label: 'reviews.field.role'|trans({}, 'cms')},
+                {label: 'reviews.field.month'|trans({}, 'cms')},
+                {label: 'reviews.field.text'|trans({}, 'cms')},
+            ],
+            actions_label: 'reviews.list.actions'|trans({}, 'cms'),
+            reviews: reviews,
+            number: venue.number,
+        } only %}
+            {% block rows %}
+                {% for review in reviews %}
+                    {% embed 'admin/components/_table_row.html.twig' with {actions_column: true, review: review, number: number} only %}
+                        {% block cells %}
+                            <td><a href="{{ path('admin_locations_reviews_edit', {number: number, id: review.id}) }}">{{ review.firstName }}</a></td>
+                            <td>{{ review.role|trans }}</td>
+                            <td>{{ 'reviews.month_display'|trans({month: date(review.month ~ '-01')}, 'cms') }}</td>
+                            <td class="venue-media__excerpt">{{ review.text|length > 120 ? review.text|slice(0, 120)|trim ~ '…' : review.text }}</td>
+                        {% endblock %}
+                        {% block actions %}
+                            {{ include('admin/components/_button.html.twig', {
+                                label: 'reviews.edit'|trans({}, 'cms'),
+                                size: 'sm', variant: 'ghost',
+                                href: path('admin_locations_reviews_edit', {number: number, id: review.id}),
+                                attributes: {'aria-label': 'reviews.edit_for'|trans({name: review.firstName}, 'cms')},
+                            }, with_context = false) }}
+                            {{ include('admin/components/_button.html.twig', {
+                                label: 'reviews.remove.action'|trans({}, 'cms'),
+                                size: 'sm', variant: 'ghost',
+                                attributes: {'aria-label': 'reviews.remove.action_for'|trans({name: review.firstName}, 'cms'), commandfor: 'review-remove-' ~ review.id, command: 'show-modal'},
+                            }, with_context = false) }}
+                        {% endblock %}
+                    {% endembed %}
+                {% endfor %}
+            {% endblock %}
+            {% block empty %}
+                {{ include('admin/components/_empty.html.twig', {
+                    icon: 'inbox',
+                    title: 'reviews.empty.title'|trans({}, 'cms'),
+                    text: 'reviews.empty.text'|trans({}, 'cms'),
+                }, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+
+        {% for review in reviews %}
+            {% embed 'admin/components/_modal.html.twig' with {
+                id: 'review-remove-' ~ review.id,
+                title: 'reviews.remove.title'|trans({}, 'cms'),
+                close_label: 'reviews.remove.close'|trans({}, 'cms'),
+                danger: true,
+                name: review.firstName,
+                remove_url: path('admin_locations_reviews_remove', {number: venue.number, id: review.id}),
+                csrf_id: csrf_id,
+            } only %}
+                {% block body %}<p>{{ 'reviews.remove.text'|trans({name: name}, 'cms') }}</p>{% endblock %}
+                {% block footer %}
+                    <form method="dialog"><button class="btn" autofocus>{{ 'reviews.remove.cancel'|trans({}, 'cms') }}</button></form>
+                    <form method="post" action="{{ remove_url }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+                        {{ include('admin/components/_button.html.twig', {label: 'reviews.remove.confirm'|trans({}, 'cms'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                    </form>
+                {% endblock %}
+            {% endembed %}
+        {% endfor %}
+
+        {% embed 'admin/components/_card.html.twig' with {title: 'reviews.rating.title'|trans({}, 'cms'), id: 'venue-reviews-rating', rating_url: rating_url} only %}
+            {% block body %}
+                <p>{{ 'reviews.rating.text'|trans({}, 'cms') }}</p>
+                <p><a href="{{ rating_url }}">{{ 'reviews.rating.link'|trans({}, 'cms') }}</a></p>
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% endblock %}

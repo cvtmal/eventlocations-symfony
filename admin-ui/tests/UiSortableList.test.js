@@ -74,6 +74,39 @@ describe('UiSortableList', () => {
         expect(list.get('[role="status"]').text()).toBe('Eins ist jetzt an Position 2.');
     });
 
+    it('keeps focus on the button and drops the announcement when a move is put back', async () => {
+        const list = mounted();
+        const button = list.get('[data-move="down-a"]');
+
+        button.element.focus();
+        await button.trigger('click');
+        await nextTick();
+        await list.setProps({ items: [...props.items] });
+        await nextTick();
+
+        expect(labels(list)).toEqual(['Eins', 'Zwei', 'Drei']);
+        expect(document.activeElement.dataset.move).toBe('down-a');
+        expect(list.get('[role="status"]').text()).toBe('');
+    });
+
+    it('keeps the announcement when the answer confirms the move and a new item joined', async () => {
+        const list = mounted();
+
+        await list.get('[data-move="down-a"]').trigger('click');
+        await list.setProps({ items: [props.items[1], props.items[0], props.items[2], { id: 'd', label: 'Vier' }] });
+
+        expect(list.get('[role="status"]').text()).toBe('Eins ist jetzt an Position 2.');
+    });
+
+    it('leaves focus alone when it is not on a move button', async () => {
+        const list = mounted();
+
+        await list.setProps({ items: [props.items[1], props.items[0], props.items[2]] });
+        await nextTick();
+
+        expect(document.activeElement).toBe(document.body);
+    });
+
     it('reorders by drag and drop', async () => {
         const list = mounted();
         const [first, , third] = list.findAll('li');
@@ -83,6 +116,21 @@ describe('UiSortableList', () => {
 
         expect(labels(list)).toEqual(['Zwei', 'Drei', 'Eins']);
         expect(list.emitted('reorder')[0][0]).toEqual(['b', 'c', 'a']);
+    });
+
+    it('renders an item through the slot, with its current index', async () => {
+        const list = mount(UiSortableList, {
+            props,
+            slots: { item: '<template #item="{ item, index }"><b class="tile">{{ index + 1 }}: {{ item.label }}</b></template>' },
+            attachTo: document.body,
+        });
+
+        expect(list.findAll('.sortable__label')).toHaveLength(0);
+        expect(list.findAll('.tile').map((tile) => tile.text())).toEqual(['1: Eins', '2: Zwei', '3: Drei']);
+
+        await list.get('[data-move="down-a"]').trigger('click');
+
+        expect(list.findAll('.tile').map((tile) => tile.text())).toEqual(['1: Zwei', '2: Eins', '3: Drei']);
     });
 
     it('follows new items from its parent', async () => {

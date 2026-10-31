@@ -1,0 +1,65 @@
+// #25's Räume tab: the list and the drawer's form.
+.room-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+    min-width: 0;
+}
+
+.room-editor__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--a-space-3);
+}
+
+.room-editor__title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.room-list .sortable__item {
+    flex-wrap: wrap;
+}
+
+.room-list__main {
+    display: flex;
+    flex: 1 1 200px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-1) var(--a-space-3);
+}
+
+.room-list__name {
+    font-weight: 600;
+}
+
+.room-list__summary {
+    color: var(--a-muted);
+    font-size: 13px;
+}
+
+.room-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+}
+
+.room-form__seating {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-3);
+}
+
+.room-form__heading {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.room-form__pair legend {
+    font-size: 13px;
+    font-weight: 600;
+}

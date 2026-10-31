@@ -19,8 +19,20 @@ const dragged = ref(null);
 const announcement = ref('');
 const list = ref(null);
 
-watch(() => props.items, (items) => {
+// A failed move comes back through here: the announced position no longer holds, and the keyed patch takes the
+// focused button out of the document.
+watch(() => props.items, async (items) => {
+    const focused = document.activeElement?.dataset?.move;
+
+    if (order.value.some(({ id }, index) => items[index]?.id !== id)) {
+        announcement.value = '';
+    }
     order.value = [...items];
+
+    await nextTick();
+    if (focused) {
+        list.value?.querySelector(`[data-move="${focused}"]`)?.focus();
+    }
 });
 
 function place(from, to) {
@@ -72,7 +84,13 @@ function onDrop(index) {
         @dragend="dragged = null"
       >
         <span class="sortable__grip"><UiIcon name="grip-vertical" /></span>
-        <span class="sortable__label">{{ item.label }}</span>
+        <slot
+          name="item"
+          :item="item"
+          :index="index"
+        >
+          <span class="sortable__label">{{ item.label }}</span>
+        </slot>
         <div class="sortable__moves">
           <UiButton
             :label="`${upLabel}: ${item.label}`"

@@ -8,7 +8,7 @@ use App\Shared\Exception\DomainException;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 
 /**
- * A venue rule a CMS save broke (#24). The message is a key of the `cms` catalogue, with
+ * A venue rule a CMS save broke (#24, #25). The message is a key of the `cms` catalogue, with
  * `parameters` for it. `field` names the form field the error belongs to (`slug`, `town`,
  * `lat`); null means the whole form.
  */
@@ -71,6 +71,30 @@ final class VenueRuleViolation extends DomainException
     }
 
     /**
+     * The PDF is already one of the venue's documents (#25: same bytes, same path).
+     */
+    public static function documentAlreadyUploaded(): self
+    {
+        return new self('documents.error.already_uploaded', 'file');
+    }
+
+    /**
+     * A document needs a title in the default locale (#25).
+     */
+    public static function documentTitleRequired(string $defaultLocale): self
+    {
+        return new self('documents.error.title_required', 'titles.'.$defaultLocale);
+    }
+
+    /**
+     * A room needs a name in the default locale (#25).
+     */
+    public static function roomNameRequired(string $defaultLocale): self
+    {
+        return new self('rooms.error.name_required', 'names.'.$defaultLocale);
+    }
+
+    /**
      * The bus wraps what a handler throws. Returns the rule violation inside, or rethrows the original.
      */
     public static function unwrap(HandlerFailedException $failure): self
@@ -96,6 +120,9 @@ final class VenueRuleViolation extends DomainException
             self::coordinatesRequired(),
             self::notPublishable(['summary']),
             self::stillPublished(),
+            self::documentAlreadyUploaded(),
+            self::documentTitleRequired('de'),
+            self::roomNameRequired('de'),
         ];
     }
 

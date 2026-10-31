@@ -31,6 +31,27 @@ document.addEventListener('click', (event) => {
     }
 });
 
+// Record tabs are links that scroll sideways on a phone: the current one starts in view, and Tab brings each one in.
+// Through scrollLeft: scrollIntoView() would also move the page, away from the #anchor of a card just saved.
+const reveal = (tab) => {
+    const nav = tab.parentElement.getBoundingClientRect();
+    const box = tab.getBoundingClientRect();
+
+    tab.parentElement.scrollLeft += Math.max(box.right - nav.right, 0) + Math.min(box.left - nav.left, 0);
+};
+
+const currentTab = document.querySelector('.tabs--record .tab--active');
+if (currentTab) {
+    reveal(currentTab);
+}
+
+document.addEventListener('focusin', (event) => {
+    const tab = event.target instanceof Element ? event.target.closest('.tabs--record .tab') : null;
+    if (tab) {
+        reveal(tab);
+    }
+});
+
 document.addEventListener('keydown', (event) => {
     const tab = event.target instanceof Element ? event.target.closest('[role="tab"]') : null;
     if (!tab) {

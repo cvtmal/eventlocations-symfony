@@ -80,9 +80,9 @@ final class ExtensionPointsTest extends WebTestCase
         $crawler = $this->client->request('GET', self::RECORD);
 
         self::assertResponseIsSuccessful();
-        // The CMS's own venue tab (#24) comes first; the fake one follows it.
-        self::assertSame(['Übersicht', 'Fake Tab'], $crawler->filter('.fake-tabs a')->each(static fn (Crawler $tab): string => $tab->text()));
-        self::assertSame(self::RECORD, $crawler->filter('.fake-tabs a')->eq(1)->attr('href'));
+        // The CMS's own venue tabs (#24's Übersicht, #25's Fotos to Bewertungen) come first; the fake one follows them.
+        self::assertSame(['Übersicht', 'Fotos', 'Räume', 'Dokumente', 'Bewertungen', 'Fake Tab'], $crawler->filter('.fake-tabs a')->each(static fn (Crawler $tab): string => $tab->text()));
+        self::assertSame(self::RECORD, $crawler->filter('.fake-tabs a')->last()->attr('href'));
         self::assertSelectorNotExists('.fake-wrong-type');
         self::assertSame('Panel 0199f0d0-0000-7000-8000-000000000001', $crawler->filter('aside .fake-panel')->text());
     }

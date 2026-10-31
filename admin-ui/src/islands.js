@@ -5,4 +5,6 @@ export default {
     'command-palette': () => import('./islands/CommandPaletteIsland.vue'),
     combobox: () => import('./islands/ComboboxIsland.vue'),
     'styleguide-sortable': () => import('./islands/StyleguideSortableIsland.vue'),
+    'photo-manager': () => import('./islands/PhotoManagerIsland.vue'),
+    'room-editor': () => import('./islands/RoomEditorIsland.vue'),
 };

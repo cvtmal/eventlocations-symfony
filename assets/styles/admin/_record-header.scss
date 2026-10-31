@@ -67,6 +67,11 @@
         height: 100%;
         object-fit: cover;
     }
+
+    // Laid out without app.css it would sit above the photo and push it out of the frame.
+    .picture__placeholder {
+        display: none;
+    }
 }
 
 .record-header__placeholder {

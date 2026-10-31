@@ -1,0 +1,50 @@
+// What #25's tabs share: the column of the two server pages, the message a failed write leaves in an island, and the
+// host page's no-JS fallback.
+.venue-media {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-5);
+    min-width: 0;
+}
+
+.venue-media__toolbar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+// The forms of the two server pages stack their rows like the editor's cards.
+.venue-media__form .card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+}
+
+// A list row is one line, but a review's text needs the width the actions would otherwise lose.
+.venue-media .venue-media__excerpt {
+    min-width: 240px;
+    white-space: normal;
+}
+
+.media-alert {
+    position: sticky;
+    top: var(--a-space-2);
+    z-index: 1;
+    margin: 0;
+    padding: var(--a-space-3) var(--a-space-4);
+    border: 1px solid var(--a-danger-line);
+    border-radius: var(--a-r-tile);
+    background: var(--a-surface);
+    color: var(--a-danger);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.island-required {
+    margin: 0;
+    padding: var(--a-space-4);
+    border: 1px dashed var(--a-dropzone);
+    border-radius: var(--a-r-tile);
+    background: var(--a-surface-muted);
+    color: var(--a-muted);
+    font-size: 14px;
+}

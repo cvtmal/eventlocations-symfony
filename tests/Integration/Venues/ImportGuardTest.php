@@ -9,7 +9,10 @@ use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenueReviewFactory;
+use App\Tests\Support\Media\TestImages;
+use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
+use App\Venues\Entity\VenuePhoto;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\VenueEditing;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -115,6 +118,64 @@ final class ImportGuardTest extends KernelTestCase
         self::assertSame(['Gasthaus Schloss beispiel', 200], [$row['name'], $row['capacity_max']]);
         self::assertNull($row['cms_edited_at']);
         self::assertSame(0, $this->handRowCount(), 'hand-made rows are replaced by the folder');
+    }
+
+    /**
+     * #25: a gallery photo assigned to a hand-added room. It has no room key, so it used to match the
+     * folder's gallery photo and stay, and the removal of its room then failed the venue.
+     */
+    public function test_overwrite_replaces_a_folder_photo_moved_into_a_hand_room(): void
+    {
+        $this->content->venue(self::KEY)->photo(self::KEY, 'haus.jpg');
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+        $this->edit(self::KEY);
+        $venue = $this->em->find(Venue::class, $this->venueId(self::KEY));
+        self::assertInstanceOf(Venue::class, $venue);
+        $room = $this->em->find(Room::class, RoomFactory::createOne(['venue' => $venue])->id());
+        self::assertInstanceOf(Room::class, $room);
+        $photo = $this->em->getRepository(VenuePhoto::class)->findOneBy(['venue' => $venue]);
+        self::assertInstanceOf(VenuePhoto::class, $photo);
+        $moved = $photo->id();
+        $original = $photo->originalPath();
+        $photo->assignTo($room, 1);
+        $this->em->flush();
+        $this->em->clear();
+
+        self::assertSame(Command::SUCCESS, $this->import(['--overwrite-cms-edits' => true]), $this->display());
+
+        $rows = $this->connection->fetchAllAssociative('SELECT id, room_id, original_path FROM venue_photos WHERE venue_id = ?', [$this->venueId(self::KEY)]);
+        self::assertCount(1, $rows);
+        self::assertNotSame($moved, $rows[0]['id'], 'the row in the removed room goes, the folder writes a new one');
+        self::assertSame([null, $original], [$rows[0]['room_id'], $rows[0]['original_path']]);
+        self::assertSame(0, $this->rows('rooms WHERE venue_id = ?', [$this->venueId(self::KEY)]));
+        self::assertFileExists($this->paths->original($original), 'the new row uses the same original');
+        self::assertNull($this->row()['cms_edited_at']);
+    }
+
+    /**
+     * #25: a second row of one original in one scope, as RemoveRoom leaves it. Only one of the two could be
+     * matched, so the other kept its position and collided with the folder's order.
+     */
+    public function test_overwrite_removes_a_second_row_of_one_original(): void
+    {
+        $this->content->venue(self::KEY)
+            ->photo(self::KEY, 'eins.jpg', bytes: TestImages::jpeg(800, 400))
+            ->photo(self::KEY, 'zwei.jpg', bytes: TestImages::jpeg(640, 480));
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+        $this->edit(self::KEY);
+        $id = $this->venueId(self::KEY);
+        /** @var list<string> $originals */
+        $originals = $this->connection->fetchFirstColumn('SELECT original_path FROM venue_photos WHERE venue_id = ? ORDER BY position', [$id]);
+        $venue = $this->em->find(Venue::class, $id);
+        self::assertInstanceOf(Venue::class, $venue);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'originalPath' => $originals[0], 'position' => 3]);
+        $this->em->clear();
+
+        self::assertSame(Command::SUCCESS, $this->import(['--overwrite-cms-edits' => true]), $this->display());
+
+        self::assertSame($originals, $this->connection->fetchFirstColumn('SELECT original_path FROM venue_photos WHERE venue_id = ? ORDER BY position', [$id]));
+        self::assertFileExists($this->paths->original($originals[0]), 'the row that stays uses the original');
+        self::assertNull($this->row()['cms_edited_at']);
     }
 
     public function test_overwrite_leaves_an_unedited_unchanged_venue_alone(): void

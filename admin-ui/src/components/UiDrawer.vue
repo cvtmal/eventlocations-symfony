@@ -7,6 +7,7 @@ defineProps({
     closeLabel: { type: String, required: true },
     open: { type: Boolean, default: false },
     danger: { type: Boolean, default: false },
+    busy: { type: Boolean, default: false },
 });
 
 defineEmits(['close']);
@@ -19,6 +20,7 @@ defineEmits(['close']);
     :close-label="closeLabel"
     :open="open"
     :danger="danger"
+    :busy="busy"
     variant="drawer"
     @close="$emit('close')"
   >

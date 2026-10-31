@@ -9,7 +9,9 @@ use App\Media\ValueObject\ImageFormat;
 use App\Media\ValueObject\ImageVariants;
 use App\Venues\Entity\Room;
 use App\Venues\Entity\VenueDocument;
+use App\Venues\Entity\VenueDocumentTranslation;
 use App\Venues\Entity\VenuePhoto;
+use App\Venues\Entity\VenuePhotoTranslation;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\Exception\RoomOfAnotherVenue;
 use PHPUnit\Framework\TestCase;
@@ -74,6 +76,62 @@ final class VenuePhotoTest extends TestCase
             $translation->slug(), $translation->summary(), $translation->description(), $translation->metaDescription(), $translation->parkingText(),
         ]);
         self::assertSame('de', $translation->locale());
+    }
+
+    public function test_assign_to_moves_between_gallery_and_room(): void
+    {
+        $venue = VenueObjects::venue();
+        $room = new Room($venue, 1);
+        $photo = new VenuePhoto($venue, null, 1, 'cms/1/a.jpg', self::image());
+        $before = $photo->updatedAt();
+        usleep(1);
+
+        $photo->assignTo($room, 3);
+        self::assertSame([$room, 3], [$photo->room(), $photo->position()]);
+        self::assertGreaterThan($before, $photo->updatedAt());
+
+        $photo->assignTo(null, 2);
+        self::assertSame([null, 2], [$photo->room(), $photo->position()]);
+    }
+
+    public function test_assign_to_rejects_a_room_of_another_venue(): void
+    {
+        $photo = new VenuePhoto(VenueObjects::venue(), null, 1, 'cms/1/a.jpg', self::image());
+
+        $this->expectException(RoomOfAnotherVenue::class);
+
+        $photo->assignTo(new Room(VenueObjects::venue(), 1), 1);
+    }
+
+    public function test_touch_moves_updated_at_of_photo_and_document(): void
+    {
+        $photo = new VenuePhoto(VenueObjects::venue(), null, 1, 'cms/1/a.jpg', self::image());
+        $document = new VenueDocument(VenueObjects::venue(), 1, 'cms/1/a.pdf', 1000);
+        $photoBefore = $photo->updatedAt();
+        $documentBefore = $document->updatedAt();
+        usleep(1);
+
+        $photo->touch();
+        $document->touch();
+
+        self::assertGreaterThan($photoBefore, $photo->updatedAt());
+        self::assertGreaterThan($documentBefore, $document->updatedAt());
+    }
+
+    public function test_alt_and_title_are_rewritten(): void
+    {
+        $alt = new VenuePhotoTranslation(new VenuePhoto(VenueObjects::venue(), null, 1, 'cms/1/a.jpg', self::image()), 'de', 'Alt.');
+        $title = new VenueDocumentTranslation(new VenueDocument(VenueObjects::venue(), 1, 'cms/1/a.pdf', 1000), 'de', 'Preisliste');
+        $altBefore = $alt->updatedAt();
+        $titleBefore = $title->updatedAt();
+        usleep(1);
+
+        $alt->rewrite('Der Saal am Abend.');
+        $title->retitle('Menüvorschläge');
+
+        self::assertSame(['Der Saal am Abend.', 'Menüvorschläge'], [$alt->alt(), $title->title()]);
+        self::assertGreaterThan($altBefore, $alt->updatedAt());
+        self::assertGreaterThan($titleBefore, $title->updatedAt());
     }
 
     private static function image(): GeneratedImage

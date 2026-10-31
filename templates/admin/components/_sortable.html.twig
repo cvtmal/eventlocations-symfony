@@ -1,13 +1,23 @@
 {#
     Reorder by move buttons, as POST forms for server pages (#25's documents). Vue's UiSortableList adds drag and drop.
     Include with `with_context = false`: label, up_label, down_label (translated), csrf_token,
-      items list<{id, label, move_up_url, move_down_url}>.
+      items list<{id, label, move_up_url, move_down_url, href?, detail?, actions?}>: `href` makes the label a link,
+      `detail` (translated) follows it in muted text, `actions` (captured markup, e.g. a delete button) sits before the
+      move buttons (#25's documents).
     The boundary buttons use aria-disabled, so focus stays on them (research D10).
 #}
 <ol class="sortable" aria-label="{{ label }}">
     {% for item in items %}
         <li class="sortable__item">
-            <span class="sortable__label">{{ item.label }}</span>
+            <span class="sortable__label">
+                {%- if item.href|default(false) -%}
+                    <a href="{{ item.href }}">{{ item.label }}</a>
+                {%- else -%}
+                    {{ item.label }}
+                {%- endif -%}
+                {%- if item.detail|default(false) %} <span class="sortable__detail">{{ item.detail }}</span>{% endif -%}
+            </span>
+            {% if item.actions|default(false) %}<div class="sortable__actions">{{ item.actions }}</div>{% endif %}
             <div class="sortable__moves">
                 <form method="post" action="{{ item.move_up_url }}">
                     <input type="hidden" name="_token" value="{{ csrf_token }}">

@@ -274,6 +274,22 @@ history:
         RateVenue: die Bewertung geändert
         PublishVenue: die Location publiziert
         UnpublishVenue: die Location offline genommen
+        AddVenuePhoto: ein Foto hochgeladen
+        ReorderVenuePhotos: die Fotos neu angeordnet
+        DescribeVenuePhoto: den Alt-Text eines Fotos geändert
+        MoveVenuePhotoToRoom: ein Foto verschoben
+        RemoveVenuePhoto: ein Foto gelöscht
+        AddRoom: einen Raum hinzugefügt
+        ChangeRoom: einen Raum geändert
+        ReorderRooms: die Räume neu angeordnet
+        RemoveRoom: einen Raum gelöscht
+        AddVenueDocument: ein Dokument hochgeladen
+        RetitleVenueDocument: den Titel eines Dokuments geändert
+        ReorderVenueDocuments: die Dokumente neu angeordnet
+        RemoveVenueDocument: ein Dokument gelöscht
+        AddVenueReview: eine Bewertung hinzugefügt
+        ChangeVenueReview: eine Bewertung geändert
+        RemoveVenueReview: eine Bewertung gelöscht
 
 search:
     label: Locations
@@ -294,7 +310,209 @@ dashboard:
         empty: Noch nichts im Backoffice bearbeitet.
         by: '{date} · {name}'
 
+# Labels with %name tokens go to the islands, which fill them in (as UiSortableList's movedLabel).
+photos:
+    tab: Fotos
+    needs_js: Die Fotoverwaltung braucht JavaScript. Bitte JavaScript einschalten und die Seite neu laden.
+    drop:
+        label: Fotos hierher ziehen oder auswählen
+        hint: JPEG, PNG oder WebP, bis 10 MB. Die Fotos werden einzeln hochgeladen und sofort in alle Grössen umgerechnet.
+    queue:
+        label: Uploads
+        waiting: wartet
+        sending: wird hochgeladen
+        processing: Varianten werden erstellt
+        done: hochgeladen
+        duplicate: war schon da
+        failed: Der Upload ist fehlgeschlagen.
+        too_large: Die Datei ist grösser als 10 MB.
+        session_gone: 'Die Sitzung ist nicht mehr gültig. Bitte wenn nötig neu anmelden, die Seite neu laden und diese Fotos nochmals hinzufügen: %files'
+        retry: Nochmals versuchen
+        dismiss: Ausblenden
+        leave: Es laufen noch Uploads, oder es gibt ungespeicherte Änderungen. Seite trotzdem verlassen?
+    gallery: Galerie
+    count_one: 1 Foto
+    count_other: '%count Fotos'
+    sort_hint: Ziehen zum Sortieren, oder ↑ ↓ benutzen. Das erste Foto ist das Titelbild.
+    cover: Titelbild
+    alt_missing: Alt-Text fehlt
+    empty:
+        title: Noch keine Fotos
+        text: Zieh die ersten Fotos in das Feld oben.
+    room_empty: Noch keine Fotos in diesem Raum.
+    list_label: 'Fotos: %scope'
+    item: 'Foto %position'
+    move_up: Nach oben
+    move_down: Nach unten
+    moved: '%label ist jetzt an Position %position.'
+    details:
+        label: Ausgewähltes Foto
+        title: 'Foto %position'
+        none: Wähle ein Foto, um Alt-Text und Zuordnung zu bearbeiten.
+        size: '%width × %height px'
+        variants: '%formats · %min–%max px'
+        alt: 'Alt-Text (%locale)'
+        alt_placeholder: Was ist auf dem Foto zu sehen?
+        alt_fallback: 'Ohne Text: «{fallback}».'
+        room: Zugeordnet
+        gallery_option: Location (Galerie)
+        save: Speichern
+        remove: Entfernen
+    remove:
+        title: Foto entfernen?
+        text: Das Foto wird mit allen Grössen gelöscht.
+        last: Das ist das letzte Foto der Galerie. Ohne Foto in der Galerie lässt sich die Location nicht publizieren.
+        confirm: Entfernen
+        cancel: Abbrechen
+        close: Schliessen
+    flash:
+        saved: Foto gespeichert.
+        removed: Foto entfernt.
+        order_failed: Die Reihenfolge konnte nicht gespeichert werden.
+        failed: Das hat nicht geklappt. Bitte nochmals versuchen.
+        session_gone: Die Sitzung ist nicht mehr gültig. Bitte wenn nötig neu anmelden und die Seite neu laden.
+
+rooms:
+    tab: Räume
+    title: Räume
+    needs_js: Der Raumeditor braucht JavaScript. Bitte JavaScript einschalten und die Seite neu laden.
+    add: Raum hinzufügen
+    edit: Bearbeiten
+    list_label: Räume
+    move_up: Nach oben
+    move_down: Nach unten
+    moved: '%label ist jetzt an Position %position.'
+    empty:
+        title: Noch keine Räume
+        text: Leg den ersten Raum an.
+    summary:
+        capacity_range: '%min–%max Personen'
+        capacity_max: 'bis %max Personen'
+        area: '%area m²'
+        photos_one: 1 Foto
+        photos_other: '%count Fotos'
+        from_content: aus dem Import
+    drawer:
+        add_title: Raum hinzufügen
+        edit_title: '%name bearbeiten'
+        save: Speichern
+        cancel: Abbrechen
+        close: Schliessen
+    field:
+        name: Name
+        description: Beschreibung
+        capacity_min: Personen mindestens
+        capacity_max: Personen höchstens
+        area: Fläche in m²
+        height: Raumhöhe in m
+        floor: Bodenbelag
+        floor_none: Keine Angabe
+        seating: Bestuhlung
+        seating_min: mindestens
+        seating_max: höchstens
+    help:
+        height: Zum Beispiel 4.20
+    remove:
+        action: Löschen
+        title: Raum löschen?
+        text: '%name wird gelöscht.'
+        photos: 'Seine Fotos (%count) kommen ans Ende der Galerie.'
+        confirm: Löschen
+    flash:
+        added: Raum hinzugefügt.
+        saved: Raum gespeichert.
+        removed: Raum gelöscht.
+        order_failed: Die Reihenfolge konnte nicht gespeichert werden.
+        failed: Das hat nicht geklappt. Bitte nochmals versuchen.
+        session_gone: Die Sitzung ist nicht mehr gültig. Bitte wenn nötig neu anmelden und die Seite neu laden.
+    error:
+        name_required: Der Raum braucht einen Namen.
+
+documents:
+    tab: Dokumente
+    list:
+        title: Dokumente
+        hint: Die Reihenfolge hier ist die Reihenfolge auf der Website.
+    empty:
+        title: Noch keine Dokumente
+        text: Lade unten das erste PDF hoch.
+    size: 'PDF, {size} MB'
+    open: 'PDF öffnen: {title}'
+    move_up: Nach oben
+    move_down: Nach unten
+    upload:
+        title: PDF hochladen
+        submit: Hochladen
+    edit:
+        title: '«{title}» bearbeiten'
+        open: PDF öffnen
+        back: Zurück zu den Dokumenten
+    remove:
+        action: Löschen
+        action_for: 'Löschen: {title}'
+        title: Dokument löschen?
+        text: '«{title}» wird gelöscht und verschwindet von der Website.'
+        confirm: Löschen
+        cancel: Abbrechen
+        close: Schliessen
+    flash:
+        added: '«{title}» hochgeladen.'
+        saved: '«{title}» gespeichert.'
+        unchanged: 'Keine Änderungen an «{title}».'
+        moved: '«{title}» ist jetzt an Position {position}.'
+        removed: '«{title}» gelöscht.'
+    field:
+        file: PDF
+        title: Titel
+    help:
+        file: PDF, bis 15 MB
+    error:
+        already_uploaded: Dieses PDF ist bereits bei den Dokumenten.
+        title_required: Das Dokument braucht einen Titel.
+
+reviews:
+    tab: Bewertungen
+    add: Bewertung hinzufügen
+    new_title: Neue Bewertung
+    edit_title: 'Bewertung von {name} bearbeiten'
+    edit: Bearbeiten
+    edit_for: 'Bearbeiten: {name}'
+    back: Zurück zu den Bewertungen
+    month_display: '{month, date, ::yMMMM}'
+    list:
+        title: Bewertungen
+        actions: Aktionen
+    empty:
+        title: Noch keine Bewertungen
+        text: Bewertungen von Gästen und Veranstaltern erscheinen auf der Detailseite.
+    rating:
+        title: Note und Stärken
+        text: Die Note, die Anzahl Bewertungen und die Stärken der Location stehen in der Übersicht.
+        link: Zur Bewertung in der Übersicht
+    remove:
+        action: Löschen
+        action_for: 'Löschen: {name}'
+        title: Bewertung löschen?
+        text: 'Die Bewertung von {name} wird gelöscht.'
+        confirm: Löschen
+        cancel: Abbrechen
+        close: Schliessen
+    flash:
+        added: 'Bewertung von {name} hinzugefügt.'
+        saved: 'Bewertung von {name} gespeichert.'
+        unchanged: 'Keine Änderungen an der Bewertung von {name}.'
+        removed: 'Bewertung von {name} gelöscht.'
+    field:
+        first_name: Vorname
+        role: Rolle
+        role_placeholder: Bitte wählen
+        month: Monat
+        text: Text
+    help:
+        month: Monat der Bewertung, zum Beispiel 2026-06
+
 error:
+    not_found: Diese Location oder dieser Eintrag existiert nicht mehr. Bitte die Seite neu laden.
     stale: Diese Location wurde inzwischen geändert. Bitte neu laden; die Eingaben in diesem Abschnitt gehen dabei verloren.
     stale_reload: Seite neu laden
 

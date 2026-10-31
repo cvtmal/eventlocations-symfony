@@ -468,7 +468,11 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
 
     /**
      * Matches the content's photos against the venue's by "<room key>|<original path>": a
-     * match keeps its row, id and variants; the rest is new or removed.
+     * match keeps its row, id and variants; the rest is new or removed. A room without a key
+     * goes with this import, so a photo in it matches nothing, not even the folder's gallery.
+     * #25 can leave two rows of one original in one scope (RemoveRoom moves a room's photos
+     * to the gallery): the first stays and the rest is removed. The caller keeps an original
+     * that a retained or new row still uses.
      *
      * @param list<VenuePhoto> $photos
      *
@@ -477,8 +481,15 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
     private static function planPhotos(VenueContent $content, array $photos): array
     {
         $current = [];
+        $surplus = [];
         foreach ($photos as $photo) {
-            $current[self::photoIdentity($photo->room()?->contentKey(), $photo->originalPath())] = $photo;
+            $room = $photo->room();
+            $identity = self::photoIdentity(null === $room ? null : ($room->contentKey() ?? '#'.$room->id()), $photo->originalPath());
+            if (isset($current[$identity])) {
+                $surplus[] = $photo;
+            } else {
+                $current[$identity] = $photo;
+            }
         }
         $wanted = [];
         foreach ($content->photos as $photo) {
@@ -492,7 +503,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
 
         return [
             'new' => array_diff_key($wanted, $current),
-            'removed' => array_values(array_diff_key($current, $wanted)),
+            'removed' => [...array_values(array_diff_key($current, $wanted)), ...$surplus],
             'retained' => array_intersect_key($current, $wanted),
         ];
     }

@@ -1,0 +1,157 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Cms\Controller\Api;
+
+use App\Cms\Form\SafeClientName;
+use App\Cms\ReadModel\VenueIdQuery;
+use App\Cms\ReadModel\VenuePhotosQuery;
+use App\Cms\ValueObject\PhotoUploadLimits;
+use App\Cms\ValueObject\VenueNumber;
+use App\Cms\VenueMediaApi;
+use App\Media\ImageVariantGenerator;
+use App\Shared\Translation\EnabledLocale;
+use App\Shared\Translation\LocalizedRoutes;
+use App\Venues\Command\AddVenuePhoto;
+use App\Venues\ValueObject\AddedPhoto;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+
+/**
+ * One photo upload (#25, CMS-6, D1, D2, D5, D7): multipart `file` and optional `roomId` (empty = the
+ * gallery). The limits sit here and only here, in front of gd (D3, PF5): `Assert\Image` and `getimagesize()`
+ * read the size from the header, so an oversized photo never reaches `ImageVariantGenerator`. One pixel cap and
+ * one file size for every type; the portrait limit is `PhotoUploadLimits::isTooTall()`.
+ * The variants are written before the answer (S12: synchronous, one file per request).
+ *
+ * 201 `{"photo": id, "duplicate": false, "photos": [...]}` for a new photo, 200 with `duplicate: true` for
+ * the same file in the same scope (D5); 422 `{"errors": {"file"|"roomId": [...]}}`; 404 for an unknown
+ * venue or another venue's room.
+ */
+#[IsGranted('ROLE_EDITOR')]
+#[IsCsrfTokenValid('admin_api', tokenKey: 'X-CSRF-Token', methods: ['POST', 'PUT', 'PATCH', 'DELETE'], tokenSource: IsCsrfTokenValid::SOURCE_HEADER)]
+final class PhotoUploadController extends AbstractController
+{
+    /** The size in `cms.photo.too_large` too (SI, 10,000,000 bytes, as the island's client check). */
+    public const string MAX_SIZE = '10M';
+
+    /** `MAX_SIZE` in bytes, for the photo manager's client check before a file is sent. */
+    public const int MAX_BYTES = 10_000_000;
+
+    private readonly PhotoUploadLimits $limits;
+
+    public function __construct(
+        private readonly VenueIdQuery $venues,
+        private readonly VenuePhotosQuery $photos,
+        private readonly VenueMediaApi $api,
+        private readonly ValidatorInterface $validator,
+        private readonly MessageBusInterface $commandBus,
+        private readonly EnabledLocale $locales,
+        #[Autowire('%app.media_max_pixels%')]
+        private readonly int $maxPixels,
+        #[Autowire('%app.media_max_portrait_ratio%')]
+        float $maxPortraitRatio,
+    ) {
+        $this->limits = new PhotoUploadLimits($maxPortraitRatio);
+    }
+
+    #[Route('/admin/api/cms/venues/{number}/photos', name: 'admin_api_cms_photos_add', requirements: ['number' => VenueNumber::REQUIREMENT], methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
+    public function __invoke(int $number, Request $request): JsonResponse
+    {
+        if (null === $this->venues->byNumber($number)) {
+            return $this->api->notFound();
+        }
+
+        $file = $request->files->get('file');
+        if (!$file instanceof UploadedFile) {
+            // Above post_max_size PHP drops the whole body: no file, no field, only the length (Probe 5).
+            $dropped = 0 === $request->files->count() && 0 === $request->request->count() && (int) $request->server->get('CONTENT_LENGTH') > 0;
+
+            return $this->api->invalid('file', $dropped ? 'cms.photo.too_large' : 'cms.photo.missing');
+        }
+
+        $roomId = VenueMediaApi::roomId($request->request->all()['roomId'] ?? null);
+        if (false === $roomId) {
+            return $this->api->invalid('roomId', 'cms.photo.room.invalid');
+        }
+
+        $file = SafeClientName::of($file);
+        $violations = $this->validator->validate(['file' => $file], new Assert\Collection(['file' => $this->rule()]));
+        foreach ($violations as $violation) {
+            if (Assert\Image::TOO_MANY_PIXEL_ERROR === $violation->getCode()) {
+                return $this->api->invalid('file', 'cms.photo.too_many_pixels', ['megapixels' => intdiv($this->maxPixels, 1_000_000)]);
+            }
+        }
+        if (\count($violations) > 0) {
+            return $this->api->violations($violations);
+        }
+
+        $mime = (string) $file->getMimeType();
+        $extension = AddVenuePhoto::EXTENSIONS[$mime] ?? null;
+        if (null === $extension) {
+            return $this->api->invalid('file', 'cms.photo.type');
+        }
+
+        $size = @getimagesize($file->getPathname());
+        if (false !== $size && $this->limits->isTooTall($size[0], $size[1], ImageVariantGenerator::swapsAxes($file->getPathname()))) {
+            return $this->api->invalid('file', 'cms.photo.too_tall', ['ratio' => $this->limits->maxPortraitRatio]);
+        }
+
+        try {
+            $added = $this->commandBus->dispatch(new AddVenuePhoto($number, $roomId, $file->getPathname(), $extension))->last(HandledStamp::class)?->getResult();
+        } catch (HandlerFailedException $failure) {
+            return $this->api->failure($failure);
+        }
+        \assert($added instanceof AddedPhoto);
+
+        $view = $this->photos->forVenue($number, $this->locales->default());
+        if (null === $view) {
+            return $this->api->notFound();
+        }
+
+        return new JsonResponse(
+            ['photo' => $added->photoId, 'duplicate' => $added->duplicate, 'photos' => $view->photosArray()],
+            $added->duplicate ? Response::HTTP_OK : Response::HTTP_CREATED,
+        );
+    }
+
+    /**
+     * Built in code, because the pixel cap is a parameter (`MEDIA_MAX_PIXELS`, D2). The portrait limit is not here: `minRatio` rounds the ratio to two decimals,
+     * and it cannot see EXIF. Every message is a `validators` key without the file's name or size (`{{ name }}` is still passed, hence SafeClientName).
+     */
+    private function rule(): Assert\Image
+    {
+        return new Assert\Image(
+            maxSize: self::MAX_SIZE,
+            mimeTypes: array_keys(AddVenuePhoto::EXTENSIONS),
+            maxPixels: $this->maxPixels,
+            notFoundMessage: 'cms.photo.failed',
+            notReadableMessage: 'cms.photo.failed',
+            maxSizeMessage: 'cms.photo.too_large',
+            mimeTypesMessage: 'cms.photo.type',
+            disallowEmptyMessage: 'cms.photo.empty',
+            uploadIniSizeErrorMessage: 'cms.photo.too_large',
+            uploadFormSizeErrorMessage: 'cms.photo.too_large',
+            uploadPartialErrorMessage: 'cms.photo.failed',
+            uploadNoFileErrorMessage: 'cms.photo.missing',
+            uploadNoTmpDirErrorMessage: 'cms.photo.failed',
+            uploadCantWriteErrorMessage: 'cms.photo.failed',
+            uploadExtensionErrorMessage: 'cms.photo.failed',
+            uploadErrorMessage: 'cms.photo.failed',
+            sizeNotDetectedMessage: 'cms.photo.unreadable',
+        );
+    }
+}

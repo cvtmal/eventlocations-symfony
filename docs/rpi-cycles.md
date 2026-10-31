@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-10-31 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #26 cms-pages, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
+_Last updated: 2026-10-31 (#0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #25 cms-venue-media, #26 cms-pages, #31 venue-wedding-facts, #32 owner-content-import and #33 filter-wedding done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It started from the layout and content structure of eventlokale.ch's wedding search, and takes its look from the brand design (S15). It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -101,7 +101,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 22 | `admin-foundation` | W4 | ADM-1–ADM-6, ADM-8 | 1, 2 | `admin_users`, `admin_audit_log` | ~~Q9~~ | ✅ Done |
 | 23 | `admin-ui-kit` | W5 | ADM-4, ADM-7 | 22 | — | ~~Q11~~ | ✅ Done |
 | 24 | `cms-venues` | W6 | CMS-1–CMS-4, CMS-9–CMS-11 | 8, 9, 21, 23, 31 | `venues.cms_edited_at` | — | ✅ Done |
-| 25 | `cms-venue-media` | W6 | CMS-5–CMS-8 | 9, 23 | — | — | Research |
+| 25 | `cms-venue-media` | W6 | CMS-5–CMS-8 | 9, 23 | — | — | ✅ Done |
 | 26 | `cms-pages` | W7 | CMS-12 | 17, 23 | `content_blocks` (+ columns on #17's `landing_pages`, if it exists) | — | ✅ Done |
 | 27 | `crm-foundation` | W9 | CRM-1–CRM-6, CRM-11 | 20, 24 | `crm_companies`, `crm_contacts`, `crm_company_venues`, `crm_activity_*`, `crm_activities`, `crm_tasks` | ~~Q8~~, ~~Q10~~ | Research |
 | 28 | `crm-deals` | W10 | CRM-7, CRM-8 | 27 | `crm_deal_stages`, `crm_deals`, `crm_deal_contacts`, `crm_activity_deals` | — | Research |
@@ -2216,6 +2216,15 @@ W6. Depends on #9 (photo pipeline) and #23. Runs in parallel with #24 through th
   - Vitest covers upload queueing, reorder by keyboard and error display;
   - a manual browser check uploads five photos, reorders them, and sees the new first photo on the listing card after the purge (recorded in the review);
   - ADM-8 island budget.
+
+**Outcome (2026-10-31).** Done in commit `cms-venue-media`, after two rework rounds. The first review found 1 critical and 12 major, the re-review 2 critical and 2 major. No migration, no package. The owner cut round 2 short: "no large image uploads", "keep things simple". The lead finished it and ran the checks itself, so the last changes had no independent re-review.
+
+- **What exists:** four record tabs on a venue, Fotos, Räume, Dokumente and Bewertungen. Fotos and Räume are the islands `PhotoManager` and `RoomEditor` on JSON endpoints under `/admin/api/cms/venues/{number}`; Dokumente and Bewertungen are server pages. Details are in `CLAUDE.md`.
+- **Upload limits:** one `MEDIA_MAX_PIXELS` of 20 MP for JPEG, PNG and WebP, photos up to 10 MB, portrait up to 2:1, each refusal a 422 naming the limit. These replace 40/36/20 MP at 25 MB, where a run of uploads ended in a memory fatal, because a php-fpm worker keeps freed memory. Measured at 256M, 8 files at the limits then one of any type, in every order at 2 and 1 workers: 324 uploads, all 201, no fatal, peak 81.8 %. There is no memory guard and no 503. The import and `app:media:regenerate` keep their own limit.
+- **Rework outcomes:** `stage()` renders before it stores the original, so a failed render leaves none. A reorder during an upload waits for that upload's answer instead of failing, and `resume()` was dropped for an honest banner. `planPhotos()` in the import handler gives a photo in a room without a content key its own identity (a deviation). The client refuses a file above the limit before sending it. The room drawer stays open and inert until its save answers, for 200, 422 and 409. Toasts sit at the top at every width, because at the bottom they took the click on the photo panel's Speichern.
+- **Deviations:** no-op saves dispatch nothing, the move and remove forms check CSRF in the controller, and the tabs have no count pills, because `RecordTab` has no count.
+- **For #19:** `client_max_body_size 26m` stays at `server` level, `php.ini` keeps `upload_max_filesize` 25M, `post_max_size` 26M and `max_execution_time` 60 above the app's limits, and D19's `purgeListings: false` invalidates the whole store anyway. **For #20:** set `MEDIA_MAX_PIXELS` and `MEDIA_MAX_PORTRAIT_RATIO` in production; a limit is raised only with `memory_limit`.
+- **Owner's manual checks:** drag in Firefox and Safari, 390 px in a real browser, an iPhone HEIC upload.
 
 ### 26. `cms-pages`
 

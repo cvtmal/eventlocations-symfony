@@ -3,7 +3,8 @@
     Contract: extend it, pass `venue` (`Cms\ReadModel\VenueHeader`, from `VenueHeaderQuery::find()`), fill `record_main`.
     Optional: `record_aside_start` (before the registry's panels), `record_aside_end` (after them), `record_route` (the
     route whose tab is marked; default the current route, the editor sets `admin_locations_edit` so a re-rendered card
-    POST keeps "Übersicht" marked).
+    POST keeps "Übersicht" marked), `record_crumb` (translated name of a tab page, #25: the last breadcrumb and the
+    start of the title; the venue's name then links to the editor).
     The header holds the cover, name, tier, status, the line "Nr. … · address · zuletzt bearbeitet …", Vorschau, Auf der
     Website (published only), Publizieren or Unpublizieren, and for admins on an unpublished venue Löschen with its modal;
     the forms come from `cms_venue_action_form()`, so a controller passes nothing else (P20).
@@ -11,12 +12,17 @@
 #}
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ venue.name }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+{% block title %}{{ record_crumb is defined ? record_crumb ~ ' – ' }}{{ venue.name }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
 
 {% block breadcrumbs %}
     <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
     <li class="breadcrumbs__item"><a href="{{ path('admin_locations') }}">{{ 'list.title'|trans({}, 'cms') }}</a></li>
-    <li class="breadcrumbs__item" aria-current="page">{{ venue.name }}</li>
+    {% if record_crumb is defined %}
+        <li class="breadcrumbs__item"><a href="{{ path('admin_locations_edit', {number: venue.number}) }}">{{ venue.name }}</a></li>
+        <li class="breadcrumbs__item" aria-current="page">{{ record_crumb }}</li>
+    {% else %}
+        <li class="breadcrumbs__item" aria-current="page">{{ venue.name }}</li>
+    {% endif %}
 {% endblock %}
 
 {% block page_header %}
