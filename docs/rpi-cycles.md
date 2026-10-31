@@ -57,7 +57,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
    | `translations/messages+intl-icu.de.yaml` (layout strings) | #1 | nothing; each module has its own domain file |
    | `src/Search/ReadModel/SearchCriteria.php` and its URL codec | #6 | nothing; filter UIs (#10–#12) only render it. #33 adds the S14 parameters once (a design change, like S12's) |
    | `templates/search/_filter_bar.html.twig` | #7 | fill their own `{% include %}` slot |
-   | `CLAUDE.md` | #0 | append to their module's section |
+   | `CLAUDE.md`, `.claude/rules/module-<name>.md` | #0 | append to their module's file; `CLAUDE.md` keeps only a pointer per module |
    | `tests/Architecture/ArchitectureRules.php` `MODULES` and `ModuleBoundariesTest` | #22 adds `Admin`, `Cms` and `Crm` once (the design change of S12) | nothing |
    | `config/packages/security.yaml` | #22 | nothing; guard routes with `#[IsGranted]` |
    | `templates/admin/base.html.twig`, `templates/admin/layout/*`, `assets/styles/admin.scss` (list of partial imports) | #22 | fill the blocks; append one `@use` line for their own partial |
