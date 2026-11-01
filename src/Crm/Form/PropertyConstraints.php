@@ -38,6 +38,12 @@ final readonly class PropertyConstraints
 
     public const int TASK_TITLE_MAX = 200;
 
+    /** `crm_activities.title`, where a sent mail keeps its subject. */
+    public const int EMAIL_SUBJECT_MAX = 200;
+
+    /** `crm_email_templates.name`. */
+    public const int EMAIL_TEMPLATE_NAME_MAX = 100;
+
     private function __construct()
     {
     }
@@ -68,6 +74,46 @@ final readonly class PropertyConstraints
     public static function taskAssignee(): array
     {
         return [new Assert\NotNull(message: 'crm.task.assignee'), ...self::reference()];
+    }
+
+    /**
+     * One line, because it becomes a mail header.
+     *
+     * @return list<Constraint>
+     */
+    public static function emailSubject(): array
+    {
+        return [
+            ...self::text(self::EMAIL_SUBJECT_MAX, required: true),
+            new Assert\Regex(pattern: '/\A[^\r\n]*\z/D', message: 'crm.email.subject_line', normalizer: 'mb_scrub'),
+        ];
+    }
+
+    /**
+     * @return list<Constraint>
+     */
+    public static function emailTemplateName(): array
+    {
+        return [new Assert\NotBlank(message: 'crm.property.required'), ...self::text(self::EMAIL_TEMPLATE_NAME_MAX)];
+    }
+
+    /**
+     * @return list<Constraint>
+     */
+    public static function emailCc(): array
+    {
+        return self::email();
+    }
+
+    /**
+     * The contact a company's mail goes to, none for the company's own address; the handler checks that it is one of
+     * the company's.
+     *
+     * @return list<Constraint>
+     */
+    public static function emailContact(): array
+    {
+        return self::reference();
     }
 
     /**

@@ -19,6 +19,7 @@ use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
+use App\Factory\EmailTemplateFactory;
 use App\Factory\InquiryFactory;
 use App\Factory\TaskFactory;
 use App\Inquiries\Entity\Inquiry;
@@ -35,9 +36,9 @@ use function Zenstruck\Foundry\faker;
  * Fictional CRM data for the dev back office (#27): 12 companies, 8 of them made from the first
  * demo venues (so the bootstrap button still has venues to work on), their contacts, timeline
  * entries and tasks of the dev admin, due today, overdue and later, 14 deals over every stage of
- * the pipeline, and six inquiries on the linked venues for the inbox (#29). Seeded, so every
- * `make seed` on an empty CRM writes the same data; it skips when a company exists, because
- * `make seed` appends.
+ * the pipeline, six inquiries on the linked venues for the inbox (#29), and two mail templates
+ * (#30). Seeded, so every `make seed` on an empty CRM writes the same data; it skips when a
+ * company exists, because `make seed` appends.
  */
 final class CrmStory extends Story
 {
@@ -51,6 +52,30 @@ final class CrmStory extends Story
     /** The venue mail's outcome and the age in days, newest first. The last two end up `seen` and `done`, the others stay `new`. */
     private const INQUIRIES = [
         [MailStatus::Pending, 1], [MailStatus::Failed, 2], [MailStatus::Sent, 3], [MailStatus::Failed, 6], [MailStatus::Sent, 10], [MailStatus::Sent, 17],
+    ];
+    /** Name, subject and Markdown, each template using all three merge fields. */
+    private const EMAIL_TEMPLATES = [
+        [
+            'Verlängerung Tier',
+            'Verlängerung des Eintrags von {venue.name}',
+            "Guten Tag {contact.first_name}\n\n"
+            ."Der Eintrag von {venue.name} läuft bald aus. Damit {company.name} ohne Unterbruch sichtbar bleibt, verlängern wir ihn gerne:\n\n"
+            ."- gleiche Stufe, gleiche Leistungen\n"
+            ."- neue Laufzeit von zwölf Monaten\n"
+            ."- Rechnung nach Ihrer Zusage\n\n"
+            ."Die Stufen im Überblick: [hochzeitslocation.ch](https://hochzeitslocation.ch)\n\n"
+            .'Freundliche Grüsse',
+        ],
+        [
+            'Fotos anfordern',
+            'Neue Fotos für {venue.name}',
+            "Guten Tag {contact.first_name}\n\n"
+            ."Für den Eintrag von {venue.name} hätten wir gerne neue Bilder. Könnte {company.name} uns bis Ende Monat Folgendes senden?\n\n"
+            ."- fünf bis zehn Fotos im Querformat\n"
+            ."- ein Foto des Festsaals, gedeckt für ein Hochzeitsessen\n"
+            ."- ein Foto der Aussenansicht\n\n"
+            .'Herzlichen Dank und freundliche Grüsse',
+        ],
     ];
 
     public function __construct(
@@ -126,6 +151,9 @@ final class CrmStory extends Story
 
         $this->deals($companies, $venues, $today);
         $this->inquiries($venues, $today);
+        foreach (self::EMAIL_TEMPLATES as [$name, $subject, $body]) {
+            EmailTemplateFactory::createOne(['name' => $name, 'subject' => $subject, 'bodyMarkdown' => $body]);
+        }
         $this->stageSync->syncAll();
     }
 

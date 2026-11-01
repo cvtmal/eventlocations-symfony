@@ -1,0 +1,17 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'email_template.new'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section.settings'|trans({}, 'admin') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_crm_email_templates') }}">{{ 'email_template.list.title'|trans({}, 'crm') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'email_template.new'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ 'email_template.new'|trans({}, 'crm') }}</h1></div>
+{% endblock %}
+
+{% block main %}
+    {{ include('admin/crm/email_template/_form.html.twig', {form: form}, with_context = false) }}
+{% endblock %}

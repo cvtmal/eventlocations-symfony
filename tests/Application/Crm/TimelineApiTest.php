@@ -75,6 +75,7 @@ final class TimelineApiTest extends WebTestCase
             'stage' => null,
             'inquiryId' => null,
             'inquiryCouple' => null,
+            'email' => null,
         ], $entry);
         self::assertSame($staff['user']->id(), $this->connection->fetchOne('SELECT actor_id FROM crm_activities LIMIT 1'));
         self::assertSame('2026-10-31 14:05:00', $this->connection->fetchOne("SELECT to_char(occurred_at AT TIME ZONE 'Europe/Zurich', 'YYYY-MM-DD HH24:MI:SS') FROM crm_activities LIMIT 1"));

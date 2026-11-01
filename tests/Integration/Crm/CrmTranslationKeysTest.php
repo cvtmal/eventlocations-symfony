@@ -38,7 +38,7 @@ final class CrmTranslationKeysTest extends KernelTestCase
             // CrmApi: StaleProperty, CompanyNotFound|ContactNotFound|ActivityNotFound, ContactEmailTaken, InvalidPropertyValue,
             // ActivityNotYours, ActivityReadOnly, CompanyStageDerived.
             'api.stale', 'api.not_found', 'api.email_taken', 'api.required', 'api.unknown_choice', 'api.not_yours', 'api.read_only',
-            'api.stage_derived', 'api.contract_ends_before_start', 'api.venue_not_linked', 'api.contact_of_another_company', 'api.lost_reason_required',
+            'api.stage_derived', 'api.contract_ends_before_start', 'api.venue_not_linked', 'api.contact_of_another_company', 'api.lost_reason_required', 'api.no_email_address',
             // CompanyRecordController: VenueAlreadyLinked, VenueNotFound, CompanyHasDeals, a refused form.
             'record.venues.flash.already_linked', 'record.venues.flash.venue_not_found', 'record.venues.flash.invalid',
             'record.delete.has_deals',
@@ -54,6 +54,11 @@ final class CrmTranslationKeysTest extends KernelTestCase
             'timeline.close', 'timeline.reload', 'timeline.session_gone', 'timeline.page_outdated', 'timeline.error', 'timeline.by',
             'timeline.system.published', 'timeline.system.unpublished', 'timeline.system.tier_changed',
             'timeline.inquiry.entry', 'timeline.inquiry.open',
+            'timeline.email.to', 'timeline.email.cc', 'timeline.email.template', 'timeline.email.no_template', 'timeline.email.subject',
+            'timeline.email.body', 'timeline.email.send', 'timeline.email.sent', 'timeline.email.status_sent', 'timeline.email.status_failed',
+            'timeline.email.send_failed', 'timeline.email.hint', 'timeline.email.no_address',
+            // EmailTemplatesController: the flashes, and EmailTemplateNameTaken on the form.
+            'email_template.flash.saved', 'email_template.flash.deleted', 'email_template.name_taken', 'nav.email_templates',
         ];
         foreach (CompanyStage::cases() as $case) {
             $keys[] = 'company.stage.'.$case->value;

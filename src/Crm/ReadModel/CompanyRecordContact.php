@@ -7,7 +7,8 @@ namespace App\Crm\ReadModel;
 use App\Crm\ValueObject\Initials;
 
 /**
- * A contact in the Kontakte card of a company (CRM-2).
+ * A contact in the Kontakte card of a company (CRM-2). Only the company record reads `email`, for the mail's recipients:
+ * `DealRecordQuery` and `VenueCompanyQuery` build this too and need no address.
  */
 final readonly class CompanyRecordContact
 {
@@ -16,6 +17,7 @@ final readonly class CompanyRecordContact
         public ?string $firstName,
         public string $lastName,
         public ?string $position,
+        public ?string $email = null,
     ) {
     }
 

@@ -4,6 +4,7 @@ import { adminFetch } from '../api.js';
 import UiButton from '../components/UiButton.vue';
 import UiEmpty from '../components/UiEmpty.vue';
 import UiModal from '../components/UiModal.vue';
+import UiPill from '../components/UiPill.vue';
 import UiTimelineItem from '../components/UiTimelineItem.vue';
 import { useToast } from '../composables/useToast.js';
 import timelineTypes, { fallbackType } from '../timeline/types.js';
@@ -19,6 +20,13 @@ const renderers = {
     text: (entry) => [entry.title, entry.body].filter(Boolean).join('\n'),
     // `title` is the venue's name. The couple's name goes with the purge, and then the venue is all that is left (N11).
     inquiry: (entry) => (entry.inquiryCouple ? fill(props.labels.inquiryEntry, { couple: entry.inquiryCouple, venue: entry.title }) : entry.title),
+    // `title` is the subject. An anonymised entry has no `email` and never gets here (`bodyOf`).
+    email: (entry) => [
+        `${props.labels.emailTo}: ${entry.email.to}`,
+        entry.email.cc ? `${props.labels.emailCc}: ${entry.email.cc}` : null,
+        entry.title,
+        entry.body ? `\n${entry.body}` : null,
+    ].filter(Boolean).join('\n'),
 };
 
 const props = defineProps({
@@ -62,7 +70,9 @@ const months = computed(() => {
 const typeOf = (entry) => timelineTypes[entry.type] ?? fallbackType;
 
 function titleOf(entry) {
-    const type = props.types.find((known) => known.code === entry.type)?.label ?? entry.type;
+    const type = entry.email?.status === 'failed'
+        ? props.labels.emailTitleFailed
+        : props.types.find((known) => known.code === entry.type)?.label ?? entry.type;
 
     return entry.actorName ? fill(props.labels.by, { type, actor: entry.actorName }) : type;
 }
@@ -297,6 +307,12 @@ watch(() => props.hasMore, (hasMore) => {
               class="crm-timeline__link"
               :href="`${inquiriesUrl}/${entry.inquiryId}`"
             >{{ labels.inquiryOpen }}</a>
+            <UiPill
+              v-if="entry.email"
+              class="crm-timeline__pill"
+              :label="entry.email.status === 'sent' ? labels.emailStatusSent : labels.emailStatusFailed"
+              :tone="entry.email.status === 'sent' ? 'green' : 'red'"
+            />
           </UiTimelineItem>
         </template>
       </ol>

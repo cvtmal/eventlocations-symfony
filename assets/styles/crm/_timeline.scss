@@ -23,11 +23,18 @@
     resize: vertical;
 }
 
-// Five tabs fit at 390 px at this gap, the design's 24 px from text to text; more scroll, as the record tabs do.
+// The design's 24 px from text to text. Eight tabs scroll on a phone, as the record tabs do; from 1024 px they wrap,
+// because the cut can fall cleanly between two tabs and then nothing shows there are more.
 .crm-timeline__filters {
     flex-wrap: nowrap;
     gap: var(--a-space-5);
     overflow-x: auto;
+
+    @media (min-width: 1024px) {
+        flex-wrap: wrap;
+        row-gap: 0;
+        overflow-x: visible;
+    }
 }
 
 .crm-timeline__filter {
@@ -72,6 +79,10 @@
     font-weight: 600;
 }
 
+.crm-timeline__pill {
+    align-self: flex-start;
+}
+
 .crm-timeline__edit {
     display: flex;
     flex-direction: column;
@@ -100,6 +111,19 @@
     gap: var(--a-space-3);
 }
 
+.crm-composer__email {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: var(--a-space-2);
+    align-items: center;
+    color: var(--a-muted);
+    font-size: 14px;
+
+    output {
+        color: var(--a-ink);
+    }
+}
+
 .crm-composer__foot {
     display: flex;
     flex-wrap: wrap;
@@ -113,6 +137,13 @@
     flex-wrap: wrap;
     gap: var(--a-space-2) var(--a-space-4);
     min-width: 0;
+}
+
+// The send layout's two buttons: the design's foot keeps its button on the right, also when the row wraps.
+.crm-composer__actions {
+    display: flex;
+    gap: var(--a-space-2);
+    margin-left: auto;
 }
 
 .crm-composer__field {

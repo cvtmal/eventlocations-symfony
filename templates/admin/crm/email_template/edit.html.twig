@@ -1,0 +1,42 @@
+{#
+    One mail template. Context from `EmailTemplatesController`: email_template (EmailTemplateRow), form, delete_form.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ email_template.name }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section.settings'|trans({}, 'admin') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_crm_email_templates') }}">{{ 'email_template.list.title'|trans({}, 'crm') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ email_template.name }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>{{ email_template.name }}</h1>
+        <div class="page-header__actions">
+            {{ include('admin/components/_button.html.twig', {label: 'email_template.delete.action'|trans({}, 'crm'), variant: 'danger', attributes: {commandfor: 'email-template-delete', command: 'show-modal'}}, with_context = false) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {{ include('admin/crm/email_template/_form.html.twig', {form: form}, with_context = false) }}
+
+    {% embed 'admin/components/_modal.html.twig' with {
+        id: 'email-template-delete',
+        title: 'email_template.delete.title'|trans({}, 'crm'),
+        close_label: 'email_template.delete.close'|trans({}, 'crm'),
+        danger: true,
+        email_template: email_template,
+        delete_form: delete_form,
+    } only %}
+        {% block body %}<p>{{ 'email_template.delete.text'|trans({name: email_template.name}, 'crm') }}</p>{% endblock %}
+        {% block footer %}
+            <form method="dialog"><button class="btn" autofocus>{{ 'email_template.delete.cancel'|trans({}, 'crm') }}</button></form>
+            {{ form_start(delete_form) }}
+                {{ include('admin/components/_button.html.twig', {label: 'email_template.delete.confirm'|trans({}, 'crm'), variant: 'danger', type: 'submit'}, with_context = false) }}
+            {{ form_end(delete_form) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

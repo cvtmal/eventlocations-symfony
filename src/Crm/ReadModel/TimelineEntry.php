@@ -20,15 +20,17 @@ final readonly class TimelineEntry
     public const string EVENT_UNPUBLISHED = 'unpublished';
     public const string EVENT_TIER_CHANGED = 'tier_changed';
     public const string EVENT_DEAL_STAGE_CHANGED = 'deal_stage_changed';
+    public const string EMAIL_SENT = 'email_sent';
 
     /**
-     * @param string      $typeCode      the activity type, or the event for a system entry
-     * @param string|null $actorId       the admin user who wrote an activity
-     * @param string|null $venueName     the venue of a system entry
-     * @param string|null $tier          the new tier of a `tier_changed` event
-     * @param string|null $stage         the new stage's code of a `deal_stage_changed` event, whose `title` is the deal's name
-     * @param string|null $inquiryId     the inquiry of an `inquiry` entry, whose `title` is the venue's name; null once purged or anonymised
-     * @param string|null $inquiryCouple the couple's name, read live from that inquiry
+     * @param string                                              $typeCode      the activity type, or the event for a system entry
+     * @param string|null                                         $actorId       the admin user who wrote an activity
+     * @param string|null                                         $venueName     the venue of a system entry
+     * @param string|null                                         $tier          the new tier of a `tier_changed` event
+     * @param string|null                                         $stage         the new stage's code of a `deal_stage_changed` event, whose `title` is the deal's name
+     * @param string|null                                         $inquiryId     the inquiry of an `inquiry` entry, whose `title` is the venue's name; null once purged or anonymised
+     * @param string|null                                         $inquiryCouple the couple's name, read live from that inquiry
+     * @param array{to: string, cc: ?string, status: string}|null $email         the send of an `email_sent` entry, whose `title` is the subject; null once anonymised
      */
     public function __construct(
         public string $kind,
@@ -46,6 +48,7 @@ final readonly class TimelineEntry
         public ?string $stage = null,
         public ?string $inquiryId = null,
         public ?string $inquiryCouple = null,
+        public ?array $email = null,
     ) {
     }
 
@@ -83,7 +86,7 @@ final readonly class TimelineEntry
      *
      * @param list<string> $composableTypes
      *
-     * @return array{kind: string, id: string, type: string, occurredAt: string, actorName: ?string, title: ?string, body: ?string, anonymised: bool, canEdit: bool, venueNumber: ?int, venueName: ?string, tier: ?string, stage: ?string, inquiryId: ?string, inquiryCouple: ?string}
+     * @return array{kind: string, id: string, type: string, occurredAt: string, actorName: ?string, title: ?string, body: ?string, anonymised: bool, canEdit: bool, venueNumber: ?int, venueName: ?string, tier: ?string, stage: ?string, inquiryId: ?string, inquiryCouple: ?string, email: array{to: string, cc: ?string, status: string}|null}
      */
     public function toArray(?string $viewerId, array $composableTypes): array
     {
@@ -103,6 +106,7 @@ final readonly class TimelineEntry
             'stage' => $this->stage,
             'inquiryId' => $this->inquiryId,
             'inquiryCouple' => $this->inquiryCouple,
+            'email' => $this->email,
         ];
     }
 }
