@@ -1,6 +1,7 @@
 @use 'sass:list';
 @use 'sass:math';
 @use '../abstracts/breakpoints' as bp;
+@use '../abstracts/check';
 
 // The guests overlay (#11): `search/filter/_guests_form.html.twig` inside #1's overlay shell, which stays unedited.
 // Below lg a column; from lg a two-column grid in which `display: contents` dissolves the shell's body, so title, input
@@ -12,6 +13,10 @@
 
     .overlay__body {
         flex: 1 0 auto;
+    }
+
+    .overlay__title {
+        margin-bottom: var(--space-16);
     }
 
     @include bp.up(lg) {
@@ -28,6 +33,7 @@
 
         .overlay__title {
             grid-area: 2 / 1;
+            margin-bottom: var(--space-32);
             padding-right: 0;
         }
 
@@ -43,7 +49,6 @@
 
         .overlay__footer {
             grid-area: 4 / 1;
-            position: static;
             padding-block: 0;
         }
 
@@ -54,13 +59,18 @@
     }
 
     @include bp.up(xl) {
-        grid-template-columns: min(37.5rem, 45%) minmax(0, 1fr);
-        padding: 0 8.25rem;
+        grid-template-columns: 27.5rem minmax(0, 1fr);
+        column-gap: var(--space-64);
+        padding: 0 7rem;
     }
 }
 
 .guests-filter {
     margin-bottom: var(--space-24);
+
+    @include bp.up(lg) {
+        margin-bottom: var(--space-32);
+    }
 }
 
 .guests-filter__field {
@@ -85,7 +95,7 @@
 @include bp.down(md) {
     .overlay--guests .overlay__title {
         max-width: none;
-        padding-inline: 3rem;
+        padding-inline: var(--space-8);
         text-align: center;
     }
 
@@ -99,7 +109,8 @@
 
     .overlay--guests .overlay__footer-inner {
         flex-direction: column;
-        gap: var(--space-12);
+        gap: var(--space-4);
+        padding-inline: var(--space-24);
 
         .btn {
             width: 100%;
@@ -135,6 +146,11 @@ $bubbles: (
 // DOM order is ascending, so a larger bubble lies over a smaller one, as on the original.
 .guests-bubble {
     position: absolute;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
     aspect-ratio: 1;
     padding: 0;
     border: 0;
@@ -154,6 +170,15 @@ $bubbles: (
         z-index: 1;
         background: var(--c-accent-soft);
         box-shadow: inset 0 0 0 2px var(--c-accent-strong);
+
+        &::after {
+            @include check.mark;
+
+            @include bp.up(lg) {
+                width: .5rem;
+                height: 1rem;
+            }
+        }
     }
 
     // A ring is never under a neighbour.

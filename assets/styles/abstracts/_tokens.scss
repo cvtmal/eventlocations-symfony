@@ -39,7 +39,7 @@
     --c-tier-ground: #ffe3f2; // = accent-soft
     --c-tag-ground: #f0f1eb; // = surface-alt
     --c-overlay-ground: #f0f1eb; // = surface-alt
-    --c-overlay-circle: #e6e8df; // no muted or link text on it (4.33, 4.25)
+    --c-overlay-circle: #e6e8df; // muted text only from 24 px (4.33), links in accent-strong-hover (5.39), not accent-strong (4.25)
     --c-placeholder-ground: #e3e1d6;
 
     // —— Colour: map
@@ -48,7 +48,7 @@
     --c-map-hover: #ff0096; // = accent
     --c-map-selected: #700044;
     --c-map-lake: #6b8aa0;
-    --c-map-radius: rgb(209 0 122 / .16); // accent-strong at the float shadow's alpha; no board draws it, #38 may correct it
+    --c-map-radius: rgb(209 0 122 / .2); // accent-strong at the Region board's opacity
 
     // —— Font
     --font-sans: 'Figtree', 'Figtree Fallback', system-ui, sans-serif;
