@@ -22,12 +22,16 @@
 
         const update = () => {
             frame = 0;
-            const index = Math.min(total - 1, Math.max(0, Math.round(track.scrollLeft / (track.clientWidth || 1))));
+            const {scrollLeft, clientWidth} = track;
+            // A closed gallery has no layout yet.
+            const atEnd = clientWidth > 0 && scrollLeft + clientWidth >= track.scrollWidth - 1;
+            const step = slides[1].offsetLeft - slides[0].offsetLeft || 1;
+            const index = atEnd ? total - 1 : Math.max(0, Math.round(scrollLeft / step));
             if (counter) {
                 counter.textContent = format.replace('{current}', String(index + 1)).replace('{total}', String(total));
             }
-            prev.disabled = index === 0;
-            next.disabled = index === total - 1;
+            prev.disabled = scrollLeft < 1;
+            next.disabled = atEnd;
         };
 
         prev.addEventListener('click', () => page(-1));

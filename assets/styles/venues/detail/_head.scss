@@ -1,56 +1,52 @@
-@use '../../abstracts/breakpoints' as bp;
-
 // Head block (DP-5): name + badge, place, icon row, description.
 .venue-head {
-    scroll-margin-top: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
 }
 
 .venue-head__name {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
-    gap: var(--space-8);
-    font-size: 1.75rem;
-    line-height: 1.2;
-
-    .badge {
-        margin-top: .25rem;
-    }
-
-    @include bp.up(md) {
-        font-size: 2.25rem;
-    }
+    align-items: center;
+    gap: var(--space-8) var(--space-16);
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
 }
 
 .venue-head__place {
-    margin: var(--space-8) 0 0;
-    font-size: 1.25rem;
+    margin: 0;
+    font-weight: var(--fw-semibold);
 }
 
 .venue-head__facts {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-24);
-    margin: var(--space-24) 0;
+    gap: var(--space-8) var(--space-24);
+    margin: 0;
     padding: 0;
     list-style: none;
-    font-size: var(--fs-tag);
 
     li {
-        display: flex;
-        flex-direction: column;
+        display: inline-flex;
         align-items: center;
-        gap: var(--space-4);
-        text-align: center;
+        gap: var(--space-8);
+    }
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--c-accent-strong);
     }
 }
 
-.venue-head__description p {
-    margin: 0 0 var(--space-16);
-    font-size: var(--fs-small);
-    line-height: 1.6;
+.venue-head__description {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    margin-top: var(--space-8);
 
-    @include bp.up(md) {
-        font-size: var(--fs-body);
+    p {
+        margin: 0;
     }
 }

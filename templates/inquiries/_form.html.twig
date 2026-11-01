@@ -23,10 +23,13 @@
     </ul>
     {% if not form.vars.valid %}
         <div class="inquiry-form__summary" role="alert">
-            <p>{{ 'form.error.summary'|trans({}, 'inquiries') }}</p>
-            {% if form.vars.errors|length > 0 %}
-                <ul>{% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
-            {% endif %}
+            {{ icon('info') }}
+            <div>
+                <p>{{ 'form.error.summary'|trans({}, 'inquiries') }}</p>
+                {% if form.vars.errors|length > 0 %}
+                    <ul>{% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
         </div>
     {% endif %}
     {{ form_start(form, {attr: {class: 'inquiry-form__form'}}) }}
@@ -50,7 +53,7 @@
         </div>
         {{ form_rest(form) }}
         <div class="inquiry-form__actions">
-            {{ include('components/_button.html.twig', {label: 'form.submit'|trans({}, 'inquiries'), type: 'submit'}, with_context = false) }}
+            {{ include('components/_button.html.twig', {label: 'form.submit'|trans({}, 'inquiries'), type: 'submit', size: 'lg'}, with_context = false) }}
             <p class="inquiry-form__privacy">{{ 'form.privacy'|trans({name: venue.name}, 'inquiries') }} <a href="{{ path('datenschutz') }}">{{ 'form.privacy_link'|trans({}, 'inquiries') }}</a></p>
         </div>
     {{ form_end(form) }}

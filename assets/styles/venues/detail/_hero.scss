@@ -1,33 +1,40 @@
 @use '../../abstracts/breakpoints' as bp;
+@use 'shared';
 
-// Hero (DP-2): full-width photo band, "Bilder ansehen" bottom left.
+// Hero (DP-2): inset photo, the white pill bottom left, "Bilder ansehen" bottom right.
 .venue-hero {
     position: relative;
-    background: var(--c-placeholder-ground);
-    scroll-margin-top: 4rem;
+    padding-inline: var(--space-16);
+
+    @include shared.carousel-pill;
+
+    @include bp.up(md) {
+        padding-inline: var(--space-24);
+    }
+
+    .carousel__track {
+        border-radius: var(--radius-image);
+
+        @include bp.up(md) {
+            border-radius: var(--radius-card);
+        }
+    }
 
     .carousel__slide {
-        aspect-ratio: 16 / 10;
+        height: 16.5rem;
         overflow: hidden;
 
         @include bp.up(md) {
-            aspect-ratio: auto;
-            height: min(60vh, 32rem);
+            height: min(60vh, 32.5rem);
         }
     }
 
     .carousel__controls {
-        inset: auto var(--space-16) var(--space-16) auto;
-        gap: var(--space-8);
+        inset: auto auto var(--space-12) var(--space-12);
 
-        // From lg the actions card covers the bottom right, so the arrows move to the top right.
-        @include bp.up(lg) {
-            inset: var(--space-16) var(--space-16) auto auto;
+        @include bp.up(md) {
+            inset: auto auto var(--space-24) var(--space-24);
         }
-    }
-
-    .carousel__counter {
-        position: static;
     }
 }
 
@@ -40,27 +47,27 @@
     }
 }
 
-.venue-hero--empty {
-    height: 6rem;
-
-    @include bp.up(lg) {
-        height: 10rem;
-    }
-}
-
+// Mirrors the controls: the hero's padding plus their inset, from the right edge. `--space-28` is not a token.
 .venue-hero__actions {
     position: absolute;
-    inset: auto 0 var(--space-16);
+    inset: auto calc(var(--space-16) + var(--space-12)) var(--space-12) auto;
+    display: flex;
+    justify-content: flex-end;
     pointer-events: none;
 
     @include bp.up(md) {
-        bottom: var(--space-40);
+        inset: auto calc(var(--space-24) * 2) var(--space-24) auto;
     }
 }
 
 .venue-hero__open {
+    background: var(--c-surface-raised);
     pointer-events: auto;
     padding-block: .75rem;
+
+    @include bp.down(md) {
+        padding-inline: var(--space-16);
+    }
 
     // On a photo the black ring needs a white halo (README).
     &:focus-visible {

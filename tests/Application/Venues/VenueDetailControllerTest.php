@@ -76,6 +76,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         // Hero and gallery.
         self::assertCount(1, $crawler->filter('[fetchpriority="high"]'));
+        self::assertCount(1, $crawler->filter('link[rel="preload"][as="font"]'));
         self::assertCount(3, $crawler->filter('#bilder .carousel__slide'));
         self::assertSelectorExists('button[commandfor="venue-gallery"][command="show-modal"]');
         self::assertSelectorExists('dialog#venue-gallery[data-dialog]');
@@ -99,12 +100,13 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertSelectorTextContains('#bewertung .venue-rating__summary', 'Herausragend (9.2) | 474');
         self::assertSame(['Feines Essen', 'Stilvolle Atmosphäre', 'Einmalige Lage'], $crawler->filter('.venue-rating__highlights li')->each(static fn (Crawler $li): string => $li->text()));
 
-        // Fact lists: groups in DP-7 order, a rule between the halves.
+        // Fact lists: groups in DP-7 order, two lists and no rule between them (no board draws one).
         self::assertSame(
             ['Gebäudeart', 'Lage', 'Geeignet für', 'Infrastruktur', 'Umgebung'],
             $crawler->filter('.venue-facts dt')->each(static fn (Crawler $dt): string => $dt->text()),
         );
-        self::assertCount(1, $crawler->filter('.venue-facts hr'));
+        self::assertCount(2, $crawler->filter('.venue-facts dl'));
+        self::assertCount(0, $crawler->filter('.venue-facts hr'));
 
         // Räume with both dialogs on the first room and none on the second.
         self::assertSame(['Rittersaal', 'Gewölbekeller'], $crawler->filter('.venue-room__name')->each(static fn (Crawler $h): string => $h->text()));
@@ -135,9 +137,9 @@ final class VenueDetailControllerTest extends WebTestCase
 
         // Kontakt: the reveal link, never the number.
         self::assertSelectorExists('#kontakt a[data-phone-reveal][rel="nofollow"][href="/hochzeitslocation/schloss-seeblick/telefon"]');
-        self::assertSelectorExists('#kontakt a[href="mailto:info@seeblick.example"]');
+        self::assertSelectorExists('#kontakt a[href="mailto:info@seeblick.example"][data-address="info@seeblick.example"]');
         self::assertSelectorExists('#kontakt a[href="https://seeblick.example"][rel="nofollow noopener"]');
-        self::assertSelectorTextContains('#kontakt', 'Anna Muster');
+        self::assertSelectorTextContains('#kontakt p.venue-contact__person', 'Anna Muster');
         $html = (string) $this->client->getResponse()->getContent();
         self::assertStringNotContainsString(DetailVenues::FULL_PHONE, $html);
         self::assertStringNotContainsString(PhoneNumber::fromE164(DetailVenues::FULL_PHONE)->display(), $html);
@@ -187,6 +189,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         self::assertSame(['#beschreibung', '#standort'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
         self::assertSelectorNotExists('#bilder');
+        self::assertSelectorNotExists('.venue-hero');
         self::assertSelectorNotExists('button[commandfor="venue-gallery"]');
         self::assertSelectorNotExists('#venue-gallery');
         self::assertSelectorNotExists('[fetchpriority="high"]');
