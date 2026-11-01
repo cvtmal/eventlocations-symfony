@@ -6,6 +6,8 @@ namespace App\Crm;
 
 use App\Admin\Extension\TimelineActivityType;
 use App\Admin\Extension\TimelineActivityTypeRegistry;
+use App\Crm\ReadModel\EmailRecipient;
+use App\Crm\ReadModel\EmailTemplateQuery;
 use App\Crm\ReadModel\OwnerOption;
 use App\Crm\ReadModel\TimelineEntry;
 use App\Crm\ReadModel\TimelineQuery;
@@ -15,9 +17,10 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The props of the `timeline` island (D12): the first page of the record's timeline (P6, no statement beyond
- * `TimelineQuery::page()`), the tabs from the registry and the strings, translated once here so a company and a
- * contact pass the same set. `_timeline.html.twig` renders the first page from the same array as its fallback.
+ * The props of the `timeline` island (D12): the first page of the record's timeline (P6), the tabs from the registry and
+ * the strings, translated once here so a company and a contact pass the same set. They cost one statement beyond
+ * `TimelineQuery::page()`, `EmailTemplateQuery::options()`, and only on a record with an address, the one that can send.
+ * `_timeline.html.twig` renders the first page from the same array as its fallback.
  */
 final readonly class TimelineProps
 {
@@ -25,8 +28,8 @@ final readonly class TimelineProps
     public const string TASK_TAB = 'task';
 
     /**
-     * The codes behind `deal.stage.<code>`, for the sentence of a stage change. A const, because the props cost no
-     * statement beyond `page()`; `CrmTranslationKeysTest` holds it equal to the rows.
+     * The codes behind `deal.stage.<code>`, for the sentence of a stage change. A const, so the stages cost the props
+     * no statement; `CrmTranslationKeysTest` holds it equal to the rows.
      *
      * @var list<string>
      */
@@ -64,6 +67,20 @@ final readonly class TimelineProps
         'forbidden' => 'timeline.page_outdated',
         'stale' => 'timeline.error',
         'inquiryOpen' => 'timeline.inquiry.open',
+        'emailTo' => 'timeline.email.to',
+        'emailCc' => 'timeline.email.cc',
+        'emailTemplate' => 'timeline.email.template',
+        'emailNoTemplate' => 'timeline.email.no_template',
+        'emailSubject' => 'timeline.email.subject',
+        'emailBody' => 'timeline.email.body',
+        'emailSend' => 'timeline.email.send',
+        'emailSent' => 'timeline.email.sent',
+        'emailStatusSent' => 'timeline.email.status_sent',
+        'emailStatusFailed' => 'timeline.email.status_failed',
+        'emailTitleFailed' => 'timeline.email.title_failed',
+        'emailSendFailed' => 'timeline.email.send_failed',
+        'emailHint' => 'timeline.email.hint',
+        'emailNoAddress' => 'timeline.email.no_address',
     ];
 
     public function __construct(
@@ -71,15 +88,17 @@ final readonly class TimelineProps
         private TimelineActivityTypeRegistry $types,
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urls,
+        private EmailTemplateQuery $templates,
     ) {
     }
 
     /**
-     * @param list<OwnerOption> $assignees who a new task can go to
+     * @param list<OwnerOption>    $assignees  who a new task can go to
+     * @param list<EmailRecipient> $recipients who a mail from this record can go to
      *
      * @return array<string, mixed>
      */
-    public function of(RecordKind $kind, string $id, string $viewerId, array $assignees): array
+    public function of(RecordKind $kind, string $id, string $viewerId, array $assignees, array $recipients = []): array
     {
         return [
             'kind' => $kind->value,
@@ -93,6 +112,7 @@ final readonly class TimelineProps
             ], $this->types->visible()),
             'composer' => $this->composerTabs(),
             'assignees' => array_map(static fn (OwnerOption $owner): array => ['id' => $owner->id, 'name' => $owner->name], $assignees),
+            'email' => RecordKind::Deal === $kind ? null : $this->email($recipients),
             'viewerId' => $viewerId,
             'urls' => [
                 'activities' => $this->urls->generate('admin_api_crm_activity_log'),
@@ -102,6 +122,27 @@ final readonly class TimelineProps
             ],
             'labels' => $this->labels(),
             'locale' => $this->translator->getLocale(),
+        ];
+    }
+
+    /**
+     * @param list<EmailRecipient> $recipients
+     *
+     * @return array<string, mixed>
+     */
+    private function email(array $recipients): array
+    {
+        return [
+            'recipients' => array_map(static fn (EmailRecipient $recipient): array => [
+                'contactId' => $recipient->contactId,
+                'name' => $recipient->name,
+                'email' => $recipient->email,
+            ], $recipients),
+            'templates' => [] === $recipients ? [] : $this->templates->options(),
+            'urls' => [
+                'send' => $this->urls->generate('admin_api_crm_email_send'),
+                'draft' => $this->urls->generate('admin_api_crm_email_draft'),
+            ],
         ];
     }
 

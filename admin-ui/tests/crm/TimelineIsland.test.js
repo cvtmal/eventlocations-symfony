@@ -35,6 +35,20 @@ const labels = {
     stale: 'Das hat nicht geklappt.',
     inquiryOpen: 'Anfrage öffnen',
     inquiryEntry: 'von __couple__ für __venue__',
+    emailTo: 'An',
+    emailCc: 'Cc',
+    emailTemplate: 'Vorlage',
+    emailNoTemplate: 'Leer',
+    emailSubject: 'Betreff',
+    emailBody: 'Nachricht',
+    emailSend: 'Senden',
+    emailSent: 'E-Mail gesendet.',
+    emailStatusSent: 'Gesendet',
+    emailStatusFailed: 'Nicht gesendet',
+    emailTitleFailed: 'Nicht gesendete E-Mail',
+    emailSendFailed: 'Die E-Mail wurde nicht gesendet.',
+    emailHint: 'Geht in deinem Namen raus.',
+    emailNoAddress: 'Für diesen Eintrag ist keine Adresse hinterlegt.',
     by: '__type__ von __actor__',
     system: {
         published: '«__venue__» publiziert',
@@ -49,7 +63,8 @@ const labels = {
 
 const types = [
     { code: 'note', label: 'Notiz', tab: 'Notizen' },
-    { code: 'email_logged', label: 'E-Mail', tab: 'E-Mails' },
+    { code: 'email_logged', label: 'E-Mail', tab: 'Erfasste E-Mails' },
+    { code: 'email_sent', label: 'E-Mail gesendet', tab: 'Gesendete E-Mails' },
     { code: 'call', label: 'Anruf', tab: 'Anrufe' },
     { code: 'meeting', label: 'Meeting', tab: 'Meetings' },
     { code: 'inquiry', label: 'Anfrage', tab: 'Anfragen' },
@@ -91,7 +106,27 @@ function json(body, status = 200) {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
-function island(page = { entries: [], next: null }) {
+const mail = {
+    recipients: [
+        { contactId: null, name: 'Schloss Seeblick AG', email: 'info@seeblick.example' },
+        { contactId: 'p1', name: 'Anna Meier', email: 'anna@seeblick.example' },
+        { contactId: 'p2', name: 'Beat Frei', email: 'beat@seeblick.example' },
+    ],
+    templates: [{ id: 't1', name: 'Verlängerung Tier' }, { id: 't2', name: 'Fotos anfordern' }],
+    urls: { send: '/admin/api/crm/emails', draft: '/admin/api/crm/email-draft' },
+};
+
+function sentMail(status, overrides = {}) {
+    return entry('e9', '2026-10-30T09:00', {
+        type: 'email_sent',
+        title: 'Ihr Eintrag',
+        body: 'Guten Tag',
+        email: { to: 'anna@seeblick.example', cc: null, status },
+        ...overrides,
+    });
+}
+
+function island(page = { entries: [], next: null }, email = null) {
     return mount(TimelineIsland, {
         props: {
             kind: 'company',
@@ -104,18 +139,47 @@ function island(page = { entries: [], next: null }) {
             urls,
             labels,
             locale: 'de',
+            email,
         },
         attachTo: document.body,
     });
 }
 
-const tab = (wrapper, name) => wrapper.findAll('[role="tab"]').find((button) => button.text() === name);
+const tab =(wrapper, name) => wrapper.findAll('[role="tab"]').find((button) => button.text() === name);
 const filter = (wrapper, name) => wrapper.findAll('.crm-timeline__filter').find((button) => button.text() === name);
 const button = (wrapper, name) => wrapper.findAll('button').find((candidate) => candidate.text() === name);
 const titles = (wrapper) => wrapper.findAll('.timeline-item__title').map((title) => title.text());
 const bodies = (wrapper) => wrapper.findAll('.timeline-item__content .muted').map((body) => body.text());
 const sent = (fetch, method) => fetch.mock.calls.filter(([, init]) => init.method === method);
 const sentBody = (fetch, method) => JSON.parse(sent(fetch, method).at(-1)[1].body);
+const mailField = (wrapper, name) => wrapper.get(`#composer-email-${name}`);
+const mailValues = (wrapper) => ['template', 'subject', 'cc'].map((name) => mailField(wrapper, name).element.value).concat(wrapper.get('.crm-composer textarea').element.value);
+
+async function mailTab(email = mail, page = undefined) {
+    const mounted = island(page, email);
+    await tab(mounted, 'E-Mail').trigger('click');
+
+    return mounted;
+}
+
+async function pick(field, value) {
+    await field.setValue(value);
+    await flushPromises();
+}
+
+async function pickRecipient(wrapper, index) {
+    await mailField(wrapper, 'contactId').findAll('option')[index].setSelected();
+    await flushPromises();
+}
+
+function deferred() {
+    let resolve;
+    const promise = new Promise((done) => {
+        resolve = done;
+    });
+
+    return { promise, resolve };
+}
 
 describe('TimelineIsland', () => {
     let wrapper;
@@ -650,6 +714,350 @@ describe('TimelineIsland', () => {
         const alert = wrapper.get('.crm-composer [role="alert"]');
         expect(alert.text()).toContain('Sitzung abgelaufen.');
         expect(alert.find('a').exists()).toBe(true);
+    });
+
+    describe('the E-Mail tab', () => {
+        beforeEach(() => {
+            document.body.insertAdjacentHTML('beforeend', '<div class="toast-region"></div>');
+        });
+
+        it('shows the fields on a record with recipients', async () => {
+            wrapper = await mailTab();
+
+            expect(wrapper.findAll('.crm-composer__email label').map((label) => label.text())).toEqual(['An', 'Vorlage', 'Betreff', 'Cc']);
+            expect(mailField(wrapper, 'contactId').findAll('option').map((option) => option.text())).toEqual([
+                'Schloss Seeblick AG <info@seeblick.example>',
+                'Anna Meier <anna@seeblick.example>',
+                'Beat Frei <beat@seeblick.example>',
+            ]);
+            expect(mailField(wrapper, 'template').findAll('option').map((option) => option.text())).toEqual(['Leer', 'Verlängerung Tier', 'Fotos anfordern']);
+            expect(wrapper.get('.crm-composer textarea').attributes('rows')).toBe('5');
+            expect(wrapper.get('.crm-composer').text()).toContain('Geht in deinem Namen raus.');
+            expect(button(wrapper, 'E-Mail erfassen').attributes('type')).toBe('button');
+            expect(button(wrapper, 'Senden').attributes('type')).toBe('button');
+        });
+
+        it('shows a single recipient as text', async () => {
+            wrapper = await mailTab({ ...mail, recipients: [mail.recipients[1]] });
+
+            expect(mailField(wrapper, 'contactId').element.tagName).toBe('OUTPUT');
+            expect(mailField(wrapper, 'contactId').text()).toBe('Anna Meier <anna@seeblick.example>');
+        });
+
+        it.each([
+            ['a deal, with no email', null, false],
+            ['a record with no recipients', { ...mail, recipients: [] }, true],
+        ])('only logs on %s', async (_, email, says) => {
+            wrapper = await mailTab(email);
+            fetch.mockResolvedValueOnce(json({ entry: entry('e9', '2026-10-30T09:00', { type: 'email_logged', body: 'Text' }) }));
+
+            expect(wrapper.find('.crm-composer__email').exists()).toBe(false);
+            expect(button(wrapper, 'Senden')).toBeUndefined();
+            expect(wrapper.get('.crm-composer').text().includes('Für diesen Eintrag ist keine Adresse hinterlegt.')).toBe(says);
+            expect(wrapper.get('.crm-composer textarea').attributes('rows')).toBe('3');
+            expect(button(wrapper, 'E-Mail erfassen').attributes('type')).toBe('submit');
+
+            await wrapper.get('.crm-composer textarea').setValue('Text');
+            await wrapper.get('.crm-composer').trigger('submit');
+            await flushPromises();
+
+            expect(fetch.mock.calls[0][0]).toBe('/admin/api/crm/activities');
+            expect(sentBody(fetch, 'POST')).toMatchObject({ type: 'email_logged', body: 'Text' });
+        });
+
+        it('fills subject and body from a template, for the address in the An field', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+
+            await pick(mailField(wrapper, 'template'), 't1');
+
+            const url = new URL(fetch.mock.calls[0][0], 'https://example.test');
+            expect(url.pathname).toBe('/admin/api/crm/email-draft');
+            expect(Object.fromEntries(url.searchParams)).toEqual({ kind: 'company', recordId: 'c1', template: 't1', contact: '' });
+            expect(mailValues(wrapper)).toEqual(['t1', 'Ihr Eintrag', '', 'Guten Tag']);
+        });
+
+        it('fetches nothing for "Leer" and leaves the text alone', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await pick(mailField(wrapper, 'template'), 't1');
+
+            await pick(mailField(wrapper, 'template'), '');
+
+            expect(fetch).toHaveBeenCalledTimes(1);
+            expect(mailValues(wrapper)).toEqual(['', 'Ihr Eintrag', '', 'Guten Tag']);
+        });
+
+        it('merges again for a new recipient while the text is untouched', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await pick(mailField(wrapper, 'template'), 't1');
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag Anna' }));
+
+            await pickRecipient(wrapper, 1);
+
+            expect(new URL(fetch.mock.calls[1][0], 'https://example.test').searchParams.get('contact')).toBe('p1');
+            expect(mailValues(wrapper)).toEqual(['t1', 'Ihr Eintrag', '', 'Guten Tag Anna']);
+        });
+
+        it('merges again for a new recipient after a tab change, while the text is untouched', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await pick(mailField(wrapper, 'template'), 't1');
+            await tab(wrapper, 'Anruf').trigger('click');
+            await tab(wrapper, 'E-Mail').trigger('click');
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag Anna' }));
+
+            await pickRecipient(wrapper, 1);
+
+            expect(new URL(fetch.mock.calls[1][0], 'https://example.test').searchParams.get('contact')).toBe('p1');
+            expect(mailValues(wrapper)).toEqual(['t1', 'Ihr Eintrag', '', 'Guten Tag Anna']);
+        });
+
+        it('keeps edited text when the recipient changes', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await pick(mailField(wrapper, 'template'), 't1');
+            await wrapper.get('.crm-composer textarea').setValue('Guten Tag, bearbeitet');
+
+            await pickRecipient(wrapper, 1);
+
+            expect(fetch).toHaveBeenCalledTimes(1);
+            expect(mailValues(wrapper)).toEqual(['t1', 'Ihr Eintrag', '', 'Guten Tag, bearbeitet']);
+        });
+
+        it('drops a late draft answer for a template no longer selected', async () => {
+            wrapper = await mailTab();
+            const first = deferred();
+            const second = deferred();
+            fetch.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+
+            await pick(mailField(wrapper, 'template'), 't1');
+            await pick(mailField(wrapper, 'template'), 't2');
+            second.resolve(json({ subject: 'Fotos', body: 'Bitte Fotos senden' }));
+            await flushPromises();
+            first.resolve(json({ subject: 'Verlängerung', body: 'Bitte verlängern' }));
+            await flushPromises();
+
+            expect(mailValues(wrapper)).toEqual(['t2', 'Fotos', '', 'Bitte Fotos senden']);
+        });
+
+        it('drops a draft answer when the recipient changed while it was in flight', async () => {
+            wrapper = await mailTab();
+            const first = deferred();
+            const second = deferred();
+            fetch.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+
+            await pick(mailField(wrapper, 'template'), 't1');
+            await pickRecipient(wrapper, 1);
+            second.resolve(json({ subject: 'Ihr Eintrag', body: 'Guten Tag Anna' }));
+            await flushPromises();
+            first.resolve(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await flushPromises();
+
+            expect(mailValues(wrapper)).toEqual(['t1', 'Ihr Eintrag', '', 'Guten Tag Anna']);
+        });
+
+        it('shows a failed draft and leaves the fields alone', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(new Response(null, { status: 500 }));
+
+            await pick(mailField(wrapper, 'template'), 't1');
+
+            expect(wrapper.get('.crm-composer [role="alert"]').text()).toBe('Das hat nicht geklappt.');
+            expect(mailValues(wrapper)).toEqual(['t1', '', '', '']);
+        });
+
+        it('drops a failed draft for a template no longer selected', async () => {
+            wrapper = await mailTab();
+            const first = deferred();
+            fetch.mockReturnValueOnce(first.promise).mockResolvedValueOnce(json({ subject: 'Fotos', body: 'Bitte Fotos senden' }));
+
+            await pick(mailField(wrapper, 'template'), 't1');
+            await pick(mailField(wrapper, 'template'), 't2');
+            first.resolve(new Response(null, { status: 500 }));
+            await flushPromises();
+
+            expect(wrapper.find('.crm-composer [role="alert"]').exists()).toBe(false);
+            expect(mailValues(wrapper)).toEqual(['t2', 'Fotos', '', 'Bitte Fotos senden']);
+        });
+
+        it('posts the payload once on a double press', async () => {
+            wrapper = await mailTab();
+            const answer = deferred();
+            fetch.mockReturnValueOnce(answer.promise);
+            await pickRecipient(wrapper, 2);
+            await mailField(wrapper, 'subject').setValue('Ihr Eintrag');
+            await mailField(wrapper, 'cc').setValue('kopie@seeblick.example');
+            await wrapper.get('.crm-composer textarea').setValue('Guten Tag');
+
+            await button(wrapper, 'Senden').trigger('click');
+            await button(wrapper, 'Senden').trigger('click');
+            expect(button(wrapper, 'Senden').attributes('aria-busy')).toBe('true');
+            answer.resolve(json({ entry: sentMail('sent') }));
+            await flushPromises();
+            expect(button(wrapper, 'Senden').attributes('aria-busy')).toBeUndefined();
+            await button(wrapper, 'Senden').trigger('click');
+            await flushPromises();
+
+            expect(fetch).toHaveBeenCalledTimes(1);
+            expect(fetch.mock.calls[0][0]).toBe('/admin/api/crm/emails');
+            expect(sentBody(fetch, 'POST')).toEqual({ kind: 'company', recordId: 'c1', contactId: 'p2', cc: 'kopie@seeblick.example', subject: 'Ihr Eintrag', body: 'Guten Tag' });
+        });
+
+        it('posts nothing on Enter in Betreff', async () => {
+            wrapper = await mailTab();
+            await mailField(wrapper, 'subject').setValue('Ihr Eintrag');
+            await wrapper.get('.crm-composer textarea').setValue('Guten Tag');
+
+            await mailField(wrapper, 'subject').trigger('keydown.enter');
+            await wrapper.get('.crm-composer').trigger('submit');
+            await flushPromises();
+
+            expect(wrapper.find('.crm-composer button[type="submit"]').exists()).toBe(false);
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        it('clears the form and places the entry when the mail went out', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await pick(mailField(wrapper, 'template'), 't1');
+            await mailField(wrapper, 'cc').setValue('kopie@seeblick.example');
+            fetch.mockResolvedValueOnce(json({ entry: sentMail('sent') }));
+
+            await button(wrapper, 'Senden').trigger('click');
+            await flushPromises();
+
+            expect(mailValues(wrapper)).toEqual(['', '', '', '']);
+            expect(titles(wrapper)).toEqual(['E-Mail gesendet von Andrea Keller']);
+            expect(document.querySelector('.toast__message').textContent).toBe('E-Mail gesendet.');
+            expect(wrapper.find('.crm-composer [role="alert"]').exists()).toBe(false);
+        });
+
+        it('keeps the text, shows the error and places the entry when the mail failed', async () => {
+            wrapper = await mailTab();
+            await mailField(wrapper, 'subject').setValue('Ihr Eintrag');
+            await wrapper.get('.crm-composer textarea').setValue('Guten Tag');
+            fetch.mockResolvedValueOnce(json({ entry: sentMail('failed') }));
+
+            await button(wrapper, 'Senden').trigger('click');
+            await flushPromises();
+
+            expect(mailValues(wrapper)).toEqual(['', 'Ihr Eintrag', '', 'Guten Tag']);
+            expect(wrapper.get('.crm-composer [role="alert"]').text()).toBe('Die E-Mail wurde nicht gesendet.');
+            expect(wrapper.get('.crm-timeline__pill').text()).toBe('Nicht gesendet');
+            expect(titles(wrapper)).toEqual(['Nicht gesendete E-Mail von Andrea Keller']);
+        });
+
+        it('merges again for a new recipient after a failed send, while the text is untouched', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await pick(mailField(wrapper, 'template'), 't1');
+            fetch.mockResolvedValueOnce(json({ entry: sentMail('failed') }));
+            await button(wrapper, 'Senden').trigger('click');
+            await flushPromises();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag Anna' }));
+
+            await pickRecipient(wrapper, 1);
+
+            expect(new URL(fetch.mock.calls[2][0], 'https://example.test').searchParams.get('contact')).toBe('p1');
+            expect(mailValues(wrapper)).toEqual(['t1', 'Ihr Eintrag', '', 'Guten Tag Anna']);
+        });
+
+        it('shows a 422 under its field', async () => {
+            wrapper = await mailTab();
+            await mailField(wrapper, 'subject').setValue('x');
+            await wrapper.get('.crm-composer textarea').setValue('y');
+            fetch.mockResolvedValueOnce(json({ errors: {
+                contactId: ['Bitte eine Adresse wählen.'],
+                subject: ['Bitte einen Betreff eingeben.'],
+                cc: ['Bitte eine gültige Adresse eingeben.'],
+                body: ['Bitte einen Text eingeben.'],
+            } }, 422));
+
+            await button(wrapper, 'Senden').trigger('click');
+            await flushPromises();
+
+            expect(wrapper.get('#composer-email-contactId-error').text()).toBe('Bitte eine Adresse wählen.');
+            expect(mailField(wrapper, 'contactId').attributes('aria-describedby')).toBe('composer-email-contactId-error');
+            expect(wrapper.get('#composer-email-subject-error').text()).toBe('Bitte einen Betreff eingeben.');
+            expect(mailField(wrapper, 'subject').attributes('aria-invalid')).toBe('true');
+            expect(wrapper.get('#composer-email-cc-error').text()).toBe('Bitte eine gültige Adresse eingeben.');
+            expect(wrapper.get('#composer-text-error').text()).toBe('Bitte einen Text eingeben.');
+            expect(wrapper.find('.crm-composer [role="alert"]').exists()).toBe(false);
+            expect(mailValues(wrapper)).toEqual(['', 'x', '', 'y']);
+        });
+
+        it('shows a 422 on `value` in the form\'s message, not under a field', async () => {
+            wrapper = await mailTab();
+            await pickRecipient(wrapper, 1);
+            fetch.mockResolvedValueOnce(json({ errors: { value: ['Dieser Kontakt gehört nicht zu dieser Firma.'] } }, 422));
+
+            await button(wrapper, 'Senden').trigger('click');
+            await flushPromises();
+
+            expect(wrapper.get('.crm-composer [role="alert"]').text()).toBe('Dieser Kontakt gehört nicht zu dieser Firma.');
+            expect(wrapper.find('#composer-email-contactId-error').exists()).toBe(false);
+            expect(wrapper.find('.crm-composer__email .field__error').exists()).toBe(false);
+        });
+
+        it('still logs by hand, and clears subject, cc and template', async () => {
+            wrapper = await mailTab();
+            fetch.mockResolvedValueOnce(json({ subject: 'Ihr Eintrag', body: 'Guten Tag' }));
+            await pick(mailField(wrapper, 'template'), 't1');
+            await mailField(wrapper, 'cc').setValue('kopie@seeblick.example');
+            fetch.mockResolvedValueOnce(json({ entry: entry('e9', '2026-10-30T09:00', { type: 'email_logged', body: 'Guten Tag' }) }));
+
+            await button(wrapper, 'E-Mail erfassen').trigger('click');
+            await flushPromises();
+
+            expect(fetch.mock.calls[1][0]).toBe('/admin/api/crm/activities');
+            expect(sentBody(fetch, 'POST')).toMatchObject({ kind: 'company', recordId: 'c1', type: 'email_logged', body: 'Guten Tag' });
+            expect(mailValues(wrapper)).toEqual(['', '', '', '']);
+            expect(document.querySelector('.toast__message').textContent).toBe('Eintrag gespeichert.');
+        });
+
+        it('keeps a logged mail\'s 422 on `occurredAt` under the date', async () => {
+            wrapper = await mailTab();
+            await wrapper.get('.crm-composer textarea').setValue('Guten Tag');
+            fetch.mockResolvedValueOnce(json({ errors: { occurredAt: ['Bitte ein gültiges Datum eingeben.'] } }, 422));
+
+            await button(wrapper, 'E-Mail erfassen').trigger('click');
+            await flushPromises();
+
+            expect(wrapper.get('#composer-date-error').text()).toBe('Bitte ein gültiges Datum eingeben.');
+            expect(wrapper.get('#composer-date').attributes('aria-invalid')).toBe('true');
+            expect(wrapper.find('.crm-composer [role="alert"]').exists()).toBe(false);
+        });
+    });
+
+    describe('a sent mail in the list', () => {
+        it.each([
+            ['sent', 'Gesendet', 'green'],
+            ['failed', 'Nicht gesendet', 'red'],
+        ])('shows To, Cc, title, body and the pill of a %s mail', (status, pill, tone) => {
+            wrapper = island({
+                entries: [sentMail(status, { email: { to: 'anna@seeblick.example', cc: 'kopie@seeblick.example', status } })],
+                next: null,
+            });
+
+            expect(wrapper.get('.timeline-item__content .muted').element.textContent).toBe('An: anna@seeblick.example\nCc: kopie@seeblick.example\nIhr Eintrag\n\nGuten Tag');
+            expect(wrapper.get('.crm-timeline__pill').text()).toBe(pill);
+            expect(wrapper.get('.crm-timeline__pill').classes()).toContain(`pill--${tone}`);
+        });
+
+        it('leaves out a missing Cc', () => {
+            wrapper = island({ entries: [sentMail('sent')], next: null });
+
+            expect(bodies(wrapper)).toEqual(['An: anna@seeblick.example\nIhr Eintrag\n\nGuten Tag']);
+        });
+
+        it('shows the anonymised label and no pill', () => {
+            wrapper = island({ entries: [sentMail('sent', { title: null, body: null, anonymised: true, email: null })], next: null });
+
+            expect(bodies(wrapper)).toEqual(['Inhalt entfernt']);
+            expect(wrapper.find('.crm-timeline__pill').exists()).toBe(false);
+        });
     });
 });
 

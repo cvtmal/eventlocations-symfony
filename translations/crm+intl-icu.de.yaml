@@ -48,6 +48,7 @@ api:
     venue_not_linked: Diese Location gehört nicht zu dieser Firma.
     contact_of_another_company: Dieser Kontakt gehört zu einer anderen Firma.
     lost_reason_required: Bitte einen Grund für den Verlust wählen.
+    no_email_address: Für diesen Empfänger ist keine E-Mail-Adresse hinterlegt.
 
 properties:
     edit: Bearbeiten
@@ -71,6 +72,7 @@ nav:
     deals: Deals
     inquiries: Anfragen
     tasks: Aufgaben
+    email_templates: E-Mail-Vorlagen
 
 search:
     companies: Firmen
@@ -418,13 +420,15 @@ activity:
         meeting: Meeting
         deal_stage_changed: Deal-Phase
         inquiry: Anfrage
+        email_sent: E-Mail gesendet
     tab:
         note: Notizen
-        email_logged: E-Mails
+        email_logged: Erfasste E-Mails
         call: Anrufe
         meeting: Meetings
         deal_stage_changed: Deal-Phasen
         inquiry: Anfragen
+        email_sent: Gesendete E-Mails
     compose:
         note:
             placeholder: Notiz schreiben …
@@ -478,6 +482,21 @@ timeline:
     inquiry:
         entry: 'von {couple} für {venue}'
         open: Anfrage öffnen
+    email:
+        to: An
+        cc: Cc
+        template: Vorlage
+        no_template: Leer
+        subject: Betreff
+        body: Nachricht
+        send: Senden
+        sent: E-Mail gesendet.
+        status_sent: Gesendet
+        status_failed: Nicht gesendet
+        title_failed: Nicht gesendete E-Mail
+        send_failed: Die E-Mail wurde nicht gesendet. Der Text bleibt erhalten.
+        hint: Wird in deinem Namen gesendet, Antworten gehen ins Postfach.
+        no_address: Keine E-Mail-Adresse hinterlegt. Die E-Mail lässt sich nur erfassen.
     close: Schliessen
     reload: Seite neu laden
     session_gone: Sitzung abgelaufen. Bitte die Seite neu laden.
@@ -609,6 +628,36 @@ renewal:
         window_count: '{shown} von {total}, nächste 60 Tage'
         ends: 'endet {date}'
         empty: In den nächsten 60 Tagen endet kein Vertrag.
+email_template:
+    new: Neue Vorlage
+    name_taken: Es gibt bereits eine Vorlage mit diesem Namen.
+    list:
+        title: E-Mail-Vorlagen
+        table_label: Liste der E-Mail-Vorlagen
+        column:
+            name: Name
+            subject: Betreff
+            edited: Bearbeitet
+        empty:
+            title: Keine Vorlagen
+            text: Mit einer Vorlage sind Betreff und Nachricht beim Schreiben einer E-Mail schon ausgefüllt.
+    form:
+        name: Name
+        subject: Betreff
+        body: Nachricht
+        fields_help: 'Platzhalter: {fields}. Sie werden beim Auswählen der Vorlage ausgefüllt.'
+        save: Speichern
+        cancel: Abbrechen
+    delete:
+        action: Löschen
+        title: Vorlage löschen
+        text: '«{name}» wird endgültig gelöscht. Bereits gesendete E-Mails bleiben im Verlauf bestehen.'
+        confirm: Löschen
+        cancel: Abbrechen
+        close: Schliessen
+    flash:
+        saved: Vorlage gespeichert.
+        deleted: Vorlage gelöscht.
 lookup:
     venue_number: 'Nr. {number}'
     venue_company: 'bei {company}'

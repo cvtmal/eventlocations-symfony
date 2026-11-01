@@ -50,7 +50,7 @@ final class ExtensionPointsTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin');
 
         self::assertSame(
-            ['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben', 'Fake Nur Admin', 'Benutzer', 'Audit-Log'],
+            ['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben', 'Fake Nur Admin', 'Benutzer', 'Audit-Log', 'E-Mail-Vorlagen'],
             $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()),
         );
         self::assertSame(['CMS', 'CRM', 'Einstellungen'], $crawler->filter('.sidebar__heading')->each(static fn (Crawler $heading): string => $heading->text()));
@@ -102,11 +102,11 @@ final class ExtensionPointsTest extends WebTestCase
 
         // The fake type outranks the CRM ones, needs ROLE_ADMIN and cannot be written by hand.
         $tokens->setToken(self::tokenFor('ROLE_ADMIN'));
-        self::assertSame(['fake_activity', 'note', 'email_logged', 'call', 'meeting', 'inquiry', 'deal_stage_changed'], self::codes($registry->visible()));
+        self::assertSame(['fake_activity', 'note', 'email_logged', 'email_sent', 'call', 'meeting', 'inquiry', 'deal_stage_changed'], self::codes($registry->visible()));
         self::assertSame(['note', 'email_logged', 'call', 'meeting'], self::codes($registry->composable()));
 
         $tokens->setToken(self::tokenFor('ROLE_EDITOR'));
-        self::assertSame(['note', 'email_logged', 'call', 'meeting', 'inquiry', 'deal_stage_changed'], self::codes($registry->visible()));
+        self::assertSame(['note', 'email_logged', 'email_sent', 'call', 'meeting', 'inquiry', 'deal_stage_changed'], self::codes($registry->visible()));
     }
 
     /**

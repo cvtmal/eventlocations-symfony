@@ -143,6 +143,8 @@ crm:
     task:
         due_on: Bitte ein gültiges Datum eingeben.
         assignee: Bitte jemanden aus der Liste wählen.
+    email:
+        subject_line: Der Betreff darf nur eine Zeile haben.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.

@@ -74,6 +74,29 @@ final class EraseContactTest extends KernelTestCase
         }
     }
 
+    public function test_a_mail_entry_shared_with_the_company_keeps_nothing_of_the_contact(): void
+    {
+        $company = CompanyFactory::createOne();
+        $contact = ContactFactory::createOne(['company' => $company, 'email' => 'zelda@example.test']);
+        $mail = ActivityFactory::new()->ofType(ActivityType::EMAIL_SENT)->onCompany($company)->onContact($contact)->create([
+            'title' => 'Ihre Offerte, Zelda',
+            'body' => 'Guten Tag Zelda',
+            'payload' => ['to' => 'zelda@example.test', 'cc' => 'zelda.copy@example.test', 'status' => 'sent'],
+        ]);
+        $this->em->clear();
+
+        $this->dispatch(new EraseContact($contact->id()));
+
+        self::assertSame(
+            ['title' => null, 'body' => null, 'payload' => '{}', 'anonymised' => true, 'on_company' => 1],
+            $this->connection->fetchAssociative(
+                'SELECT title, body, payload::text AS payload, anonymised_at IS NOT NULL AS anonymised,'
+                .' (SELECT count(*) FROM crm_activity_companies l WHERE l.activity_id = a.id) AS on_company FROM crm_activities a WHERE id = ?',
+                [$mail->id()],
+            ),
+        );
+    }
+
     public function test_the_company_loses_the_address_it_shares_with_the_contact(): void
     {
         $company = CompanyFactory::createOne(['name' => 'Seeblick']);

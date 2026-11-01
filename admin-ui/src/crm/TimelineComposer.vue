@@ -5,13 +5,18 @@ import UiButton from '../components/UiButton.vue';
 import { useToast } from '../composables/useToast.js';
 import { nowInZurich } from './entries.js';
 import { formFailure } from './failure.js';
+import TimelineEmailFields from './TimelineEmailFields.vue';
 
 // "Neue Aktivität" (Company.dc.html): one tab per composable type, plus Aufgabe. An entry is added by the island; a
-// task reloads the page, because the Aufgaben card is server-rendered and islands share no store (D20). The E-Mail tab
-// logs by hand and is #30's seam: it sends nothing. What is typed stays through a tab change.
+// task reloads the page, because the Aufgaben card is server-rendered and islands share no store (D20). On a record
+// with an address the E-Mail tab sends (CRM-10) and can still log by hand; without one it only logs. Enter never
+// sends: that tab's buttons are `type="button"` and `submit()` returns (D5). What is typed stays through a tab change.
 const TASK = 'task';
+const EMAIL = 'email_logged';
 const ACTIVITY_INPUTS = ['body', 'occurredAt'];
 const TASK_INPUTS = ['title', 'dueOn', 'assigneeId'];
+// `value` stays out: another company's contact is answered there, and `formFailure` shows it as the form's message.
+const EMAIL_INPUTS = ['contactId', 'cc', 'subject', 'body'];
 
 const props = defineProps({
     kind: { type: String, required: true },
@@ -21,6 +26,7 @@ const props = defineProps({
     viewerId: { type: String, required: true },
     urls: { type: Object, required: true },
     labels: { type: Object, required: true },
+    email: { type: Object, default: null },
 });
 
 const emit = defineEmits(['logged']);
@@ -34,6 +40,11 @@ const occurredAt = ref(nowInZurich());
 const dateChanged = ref(false);
 const dueOn = ref(nowInZurich().slice(0, 10));
 const assigneeId = ref(props.viewerId);
+const contactId = ref(props.email?.recipients[0]?.contactId ?? null);
+const template = ref('');
+const subject = ref('');
+const cc = ref('');
+const lastDraft = ref(null);
 const saving = ref(false);
 // From a saved entry until the form is touched: the second press of a double click finds an empty field, which is
 // nothing to save, not a mistake to mark in red beside the toast.
@@ -46,6 +57,8 @@ const reloadHref = window.location.href.split('#')[0];
 
 const current = computed(() => props.tabs.find((tab) => tab.code === selected.value));
 const isTask = computed(() => selected.value === TASK);
+const isEmail = computed(() => selected.value === EMAIL && props.email?.recipients.length > 0);
+const noAddress = computed(() => selected.value === EMAIL && props.email !== null && props.email.recipients.length === 0);
 const textError = computed(() => failure.value?.fields[isTask.value ? 'title' : 'body']);
 
 const tabId = (code) => `composer-tab-${code}`;
@@ -71,6 +84,10 @@ defineExpose({ open });
 
 function reset() {
     text.value = '';
+    subject.value = '';
+    cc.value = '';
+    template.value = '';
+    lastDraft.value = null;
     occurredAt.value = nowInZurich();
     dateChanged.value = false;
 }
@@ -100,9 +117,41 @@ async function createTask() {
     });
 
     window.location.reload();
+
+    // `reload()` returns at once and this page stays live until the new one arrives, so `saving` stays set: a second
+    // press in that gap would create the task again.
+    return true;
 }
 
-async function submit() {
+async function sendEmail() {
+    const answer = await adminFetch(props.email.urls.send, {
+        method: 'POST',
+        body: {
+            kind: props.kind,
+            recordId: props.recordId,
+            contactId: contactId.value,
+            cc: cc.value,
+            subject: subject.value,
+            body: text.value,
+        },
+    });
+
+    // A failed mail is an entry too: it lands on the timeline, and the text stays for another try.
+    emit('logged', answer.entry);
+
+    if (answer.entry.email.status === 'failed') {
+        failure.value = { fields: {}, message: props.labels.emailSendFailed, reload: false };
+
+        return;
+    }
+
+    reset();
+    justSaved.value = true;
+    toast.show(props.labels.emailSent);
+}
+
+// `action` answers true when `saving` has to stay set.
+async function run(action, inputs) {
     if (saving.value || justSaved.value) {
         return;
     }
@@ -111,20 +160,32 @@ async function submit() {
     failure.value = null;
 
     try {
-        if (isTask.value) {
-            await createTask();
-
-            // `reload()` returns at once and this page stays live until the new one arrives, so `saving` stays set:
-            // a second press in that gap would create the task again.
+        if (await action()) {
             return;
         }
-
-        await logActivity();
     } catch (error) {
-        failure.value = formFailure(error, props.labels, isTask.value ? TASK_INPUTS : ACTIVITY_INPUTS);
+        failure.value = formFailure(error, props.labels, inputs);
     }
 
     saving.value = false;
+}
+
+async function submit() {
+    if (isEmail.value) {
+        return;
+    }
+
+    if (isTask.value) {
+        await run(createTask, TASK_INPUTS);
+
+        return;
+    }
+
+    await run(logActivity, ACTIVITY_INPUTS);
+}
+
+function draftFailed(error) {
+    failure.value = formFailure(error, props.labels, EMAIL_INPUTS);
 }
 </script>
 
@@ -161,6 +222,21 @@ async function submit() {
       role="tabpanel"
       :aria-labelledby="tabId(selected)"
     >
+      <TimelineEmailFields
+        v-if="isEmail"
+        v-model:contact-id="contactId"
+        v-model:template="template"
+        v-model:subject="subject"
+        v-model:cc="cc"
+        v-model:body="text"
+        v-model:last-draft="lastDraft"
+        :kind="kind"
+        :record-id="recordId"
+        :email="email"
+        :failure="failure"
+        :labels="labels"
+        @error="draftFailed"
+      />
       <input
         v-if="isTask"
         ref="textField"
@@ -177,9 +253,9 @@ async function submit() {
         ref="textField"
         v-model="text"
         class="field__input"
-        rows="3"
-        :aria-label="current.label"
-        :placeholder="current.placeholder"
+        :rows="isEmail ? 5 : 3"
+        :aria-label="isEmail ? labels.emailBody : current.label"
+        :placeholder="isEmail ? undefined : current.placeholder"
         :aria-invalid="textError ? 'true' : undefined"
         :aria-describedby="textError ? 'composer-text-error' : undefined"
       />
@@ -189,6 +265,18 @@ async function submit() {
         class="field__error"
       >
         {{ textError }}
+      </p>
+      <p
+        v-if="isEmail"
+        class="field__help"
+      >
+        {{ labels.emailHint }}
+      </p>
+      <p
+        v-if="noAddress"
+        class="field__help"
+      >
+        {{ labels.emailNoAddress }}
       </p>
       <div class="crm-composer__foot">
         <div class="crm-composer__fields">
@@ -239,7 +327,26 @@ async function submit() {
             >
           </div>
         </div>
+        <div
+          v-if="isEmail"
+          class="crm-composer__actions"
+        >
+          <UiButton
+            :label="current.submit"
+            size="sm"
+            :aria-busy="saving ? 'true' : undefined"
+            @click="run(logActivity, ACTIVITY_INPUTS)"
+          />
+          <UiButton
+            :label="labels.emailSend"
+            variant="primary"
+            size="sm"
+            :aria-busy="saving ? 'true' : undefined"
+            @click="run(sendEmail, EMAIL_INPUTS)"
+          />
+        </div>
         <UiButton
+          v-else
           :label="current.submit"
           variant="primary"
           size="sm"

@@ -9,6 +9,7 @@ export default {
     meeting: { icon: 'calendar', tone: 'amber', renderer: 'text' },
     deal_stage_changed: { icon: 'square-kanban', tone: 'grey', renderer: 'text' },
     inquiry: { icon: 'inbox', tone: 'pink', renderer: 'inquiry' },
+    email_sent: { icon: 'mail', tone: 'blue', renderer: 'email' },
 };
 
 // The fallback for a code this file does not know yet (a type added by a newer deploy than the cached bundle).

@@ -97,6 +97,9 @@ final class PropertyConstraintsTest extends TestCase
             ...array_map(static fn (CompanyProperty $p): array => PropertyConstraints::company($p), [CompanyProperty::Name, CompanyProperty::LegalName, CompanyProperty::Website, CompanyProperty::Phone, CompanyProperty::Email, CompanyProperty::Address, CompanyProperty::Notes]),
             ...array_map(static fn (ContactProperty $p): array => PropertyConstraints::contact($p), [ContactProperty::FirstName, ContactProperty::LastName, ContactProperty::Email, ContactProperty::Phone, ContactProperty::Position]),
             ...array_map(static fn (DealProperty $p): array => PropertyConstraints::deal($p), [DealProperty::Name, DealProperty::Amount, DealProperty::ContractStart]),
+            PropertyConstraints::emailSubject(),
+            PropertyConstraints::emailCc(),
+            PropertyConstraints::emailTemplateName(),
         ];
 
         foreach ($fields as $index => $constraints) {
@@ -116,6 +119,51 @@ final class PropertyConstraintsTest extends TestCase
         foreach (DealProperty::cases() as $property) {
             self::assertSame($property->isNullable(), 0 === $this->violations(PropertyConstraints::deal($property), null), $property->value);
         }
+    }
+
+    public function test_an_email_subject_is_required_and_one_line_within_the_title_column(): void
+    {
+        $subject = PropertyConstraints::emailSubject();
+
+        self::assertSame(0, $this->violations($subject, 'Ihre Anfrage für den Juni'));
+        self::assertSame(0, $this->violations($subject, str_repeat('ä', PropertyConstraints::EMAIL_SUBJECT_MAX)));
+
+        self::assertGreaterThan(0, $this->violations($subject, null));
+        self::assertGreaterThan(0, $this->violations($subject, str_repeat('x', 201)));
+        self::assertGreaterThan(0, $this->violations($subject, "Betreff\nBcc: jemand@example.ch"));
+        self::assertGreaterThan(0, $this->violations($subject, "Betreff\rBcc: jemand@example.ch"));
+    }
+
+    public function test_an_email_template_name_is_required_within_its_column(): void
+    {
+        $name = PropertyConstraints::emailTemplateName();
+
+        self::assertSame(0, $this->violations($name, str_repeat('ä', PropertyConstraints::EMAIL_TEMPLATE_NAME_MAX)));
+
+        self::assertGreaterThan(0, $this->violations($name, null));
+        self::assertGreaterThan(0, $this->violations($name, ''));
+        self::assertGreaterThan(0, $this->violations($name, str_repeat('x', 101)));
+    }
+
+    public function test_an_email_cc_is_optional_and_a_real_address(): void
+    {
+        $cc = PropertyConstraints::emailCc();
+
+        self::assertSame(0, $this->violations($cc, null));
+        self::assertSame(0, $this->violations($cc, 'anna@example.ch'));
+
+        self::assertGreaterThan(0, $this->violations($cc, 'anna@example'));
+        self::assertGreaterThan(0, $this->violations($cc, 'anna müller@example.ch'));
+    }
+
+    public function test_an_email_contact_is_optional_and_an_id(): void
+    {
+        $contact = PropertyConstraints::emailContact();
+
+        self::assertSame(0, $this->violations($contact, null));
+        self::assertSame(0, $this->violations($contact, self::UUID));
+
+        self::assertGreaterThan(0, $this->violations($contact, 'anna'));
     }
 
     /**

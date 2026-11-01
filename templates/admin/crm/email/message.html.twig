@@ -1,0 +1,8 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{% endblock %}
+
+{% block content %}
+{{ blocks.rich(body_html) }}
+{% endblock %}

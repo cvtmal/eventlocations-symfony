@@ -263,7 +263,7 @@ nothing while the file fails `app:prod:check-env`. The command prints variable n
 | `PGCHANNELBINDING` | `require`, unless the probe shows it cannot connect |
 | `MAILER_DSN` | A real transport, never `null://` or Mailpit |
 | `MAILER_FROM` | `Hochzeitslocation <hallo@hochzeitslocation.ch>` |
-| `INQUIRY_RECIPIENT_OVERRIDE` | **Must stay empty.** Any value sends every venue's inquiries to that one address. |
+| `INQUIRY_RECIPIENT_OVERRIDE` | **Must stay empty.** Any value sends every venue's inquiries and every CRM mail to that one address. |
 | `ADMIN_TOTP_KEY` | Base64 of 32 bytes, different from the dev key in `.env` |
 | `ADMIN_DEV_AUTOLOGIN` | Must stay empty |
 | `MEDIA_ROOT` | `/home/djweddin/www/hochzeitslocation.ch/var/media`, absolute, inside `var/` so it survives a deploy |
