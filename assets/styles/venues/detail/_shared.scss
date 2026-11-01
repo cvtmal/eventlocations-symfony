@@ -1,0 +1,82 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// Mixins of the detail page and the inquiry form (#39). No output of its own.
+
+// The boards' frame, 1200 px with 24 px gutters. Local to these pages: `.container` serves every other page.
+@mixin frame {
+    max-width: 75rem;
+    margin-inline: auto;
+    padding-inline: var(--space-24);
+}
+
+// A section as a white card: no wrapper element, the section itself takes the look.
+@mixin card {
+    padding: var(--space-24);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-raised);
+
+    @include bp.up(md) {
+        padding: var(--space-40);
+    }
+}
+
+// The white pill of prev, count and next. The caller places `.carousel__controls`.
+@mixin carousel-pill($arrows-on-phone: false) {
+    .carousel__controls {
+        width: fit-content;
+        gap: var(--space-4);
+        border-radius: var(--radius-pill);
+        background: var(--c-surface-raised);
+        pointer-events: auto;
+
+        @if $arrows-on-phone {
+            min-height: 2.75rem;
+            padding: 0 var(--space-4);
+        } @else {
+            min-height: 2rem;
+            padding: 0 var(--space-12);
+
+            @include bp.up(md) {
+                min-height: 2.75rem;
+                padding: 0 var(--space-4);
+            }
+        }
+
+        .btn--icon {
+            background: transparent;
+            box-shadow: none;
+
+            @if $arrows-on-phone {
+                @include bp.down(md) {
+                    display: inline-flex;
+                }
+            }
+
+            .icon {
+                width: 1.125rem;
+                height: 1.125rem;
+            }
+
+            &:not([disabled]):hover {
+                background: var(--c-accent-soft);
+            }
+
+            &[disabled] {
+                background: transparent;
+                color: var(--c-disabled-ink);
+            }
+
+            &:focus-visible {
+                box-shadow: 0 0 0 6px var(--c-surface-raised);
+            }
+        }
+    }
+
+    .carousel__counter {
+        position: static;
+        min-height: 0;
+        padding: 0;
+        background: none;
+        box-shadow: none;
+    }
+}

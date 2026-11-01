@@ -1,20 +1,16 @@
 @use '../../abstracts/breakpoints' as bp;
 
-// Standort map (#15, DP-10): the facade and the iframe share one box, so loading the map shifts nothing.
+// Standort map (#15, DP-10): the facade and the iframe share one box, so loading the map shifts nothing (D10).
 .venue-map {
-    margin-block-start: var(--space-16);
+    margin-block-start: var(--space-24);
 }
 
 .venue-map__facade,
 .venue-map__frame {
     inline-size: 100%;
-    block-size: 18.75rem;
+    block-size: 17.5rem;
     border: 0;
-    border-radius: var(--radius-image);
-
-    @include bp.up(md) {
-        block-size: 28rem;
-    }
+    border-radius: var(--radius-card);
 }
 
 .venue-map__frame {
@@ -22,14 +18,69 @@
 }
 
 .venue-map__facade {
+    position: relative;
+    isolation: isolate;
     display: grid;
     place-content: center;
     justify-items: center;
-    gap: var(--space-12);
-    padding: var(--space-16);
+    gap: var(--space-16);
+    overflow: hidden;
+    padding: var(--space-16) var(--space-24);
     text-align: center;
-    background: var(--c-surface-raised);
+    background: var(--c-surface-alt);
     color: var(--c-ink);
+
+    @include bp.up(md) {
+        padding-inline: var(--space-40);
+    }
+
+    // `z-index`, because `::after` comes after the content in paint order.
+    > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        border-radius: var(--radius-pill);
+        background: var(--c-overlay-circle);
+    }
+
+    &::before {
+        inset-block-start: -7.5rem;
+        inset-inline-start: -5rem;
+        inline-size: 12.5rem;
+        block-size: 12.5rem;
+
+        @include bp.up(md) {
+            inline-size: 20rem;
+            block-size: 20rem;
+        }
+    }
+
+    &::after {
+        inset-block-end: -6.25rem;
+        inset-inline-end: -1.5rem;
+        inline-size: 10rem;
+        block-size: 10rem;
+
+        @include bp.up(md) {
+            inset-inline-end: -3.75rem;
+            inline-size: 15rem;
+            block-size: 15rem;
+        }
+    }
+}
+
+.venue-map__icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0.875rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-raised);
+    color: var(--c-accent-strong);
 }
 
 .venue-map__place {
@@ -47,17 +98,18 @@
     }
 }
 
+// With a key the loader adds about 100 px, more than a phone's 17.5 rem box holds. Its button carries the pin, so the disc goes.
+.venue-map__facade:has(.venue-map__loader:not([hidden])) .venue-map__icon {
+    display: none;
+}
+
 .venue-map__notice {
     margin: 0;
-    color: var(--c-ink-muted);
+    color: var(--c-ink);
     font-size: var(--fs-small);
+    line-height: var(--lh-small);
 }
 
 .venue-map__link {
-    color: var(--c-ink);
-    text-decoration: underline;
-
-    &:focus-visible {
-        outline: var(--focus-ring);
-    }
+    background: var(--c-surface-raised);
 }

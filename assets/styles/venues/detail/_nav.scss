@@ -1,28 +1,47 @@
-// Sticky anchor nav (DP-3), a white band on the page ground; scrolls horizontally on narrow screens.
-.page-venue {
-    --venue-nav-h: 3rem;
-}
+@use '../../abstracts/breakpoints' as bp;
+@use 'shared';
 
+// Sticky anchor nav (DP-3): a full-width white band on the phone, a floating pill in the frame from md.
+// Scrolls horizontally on narrow screens.
 .venue-nav {
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--c-surface-raised);
+    margin-top: var(--space-16);
+
+    @include bp.up(md) {
+        @include shared.frame;
+
+        top: var(--space-8);
+    }
 }
 
 .venue-nav__list {
     display: flex;
-    gap: var(--space-24);
-    margin: 0 auto;
-    padding-block: 0;
+    align-items: center;
+    gap: var(--space-16);
+    min-height: 3.25rem;
+    margin: 0;
+    padding: 0 var(--space-16);
+    background: var(--c-surface-raised);
+    box-shadow: var(--shadow-float);
     list-style: none;
     overflow-x: auto;
     scrollbar-width: none;
 
+    @include bp.up(md) {
+        gap: var(--space-32);
+        min-height: 3.75rem;
+        padding-inline: var(--space-32);
+        border-radius: var(--radius-pill);
+    }
+
     a {
-        display: block;
-        padding-block: var(--space-12);
-        line-height: 1.5rem; // with the padding: --venue-nav-h
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+        font-size: var(--fs-small);
+        line-height: var(--lh-small);
         font-weight: var(--fw-semibold);
         text-decoration: none;
         white-space: nowrap;

@@ -31,7 +31,7 @@ final class ContrastTokensTest extends TestCase
             ['accent-strong-hover', 'overlay-ground'], ['accent-strong-hover', 'overlay-circle'], // "Filter löschen", 14 px (#38)
             ['error', 'surface'], ['error', 'surface-raised'], ['error', 'error-soft'],
             ['success', 'surface'], ['success', 'surface-raised'], ['success', 'success-soft'],
-            ['disabled-ink', 'disabled-ground'],
+            ['disabled-ink', 'disabled-ground'], ['disabled-ink', 'surface-raised'],
             ['surface-raised', 'ink'], // the preview banner
         ];
         foreach ($text as [$fg, $bg]) {

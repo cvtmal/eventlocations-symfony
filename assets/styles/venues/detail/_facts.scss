@@ -1,22 +1,35 @@
 @use '../../abstracts/breakpoints' as bp;
+@use 'shared';
 
-// Fact lists (DP-7): label column + values in three columns; one column on small screens.
+// Fact lists (DP-7): a label column beside values that wrap; stacked below md. `_wedding` reuses the rows.
+.venue-facts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-32);
+}
+
 .venue-facts__list {
-    display: grid;
-    gap: var(--space-16);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
     margin: 0;
+
+    @include bp.up(md) {
+        gap: var(--space-16);
+    }
 }
 
 .venue-facts__row {
     display: grid;
-    gap: var(--space-8);
+    gap: var(--space-4);
 
     @include bp.up(md) {
-        grid-template-columns: 9rem minmax(0, 1fr);
+        grid-template-columns: 12.5rem minmax(0, 1fr);
+        gap: 0 var(--space-24);
     }
 
     dt {
-        font-weight: var(--fw-semibold);
+        font-weight: var(--fw-bold);
     }
 
     dd {
@@ -25,30 +38,27 @@
 }
 
 .venue-facts__values {
-    display: grid;
-    gap: var(--space-8) var(--space-16);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4) var(--space-24);
     margin: 0;
     padding: 0;
     list-style: none;
-    font-size: var(--fs-small);
-
-    @include bp.up(sm) {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    @include bp.up(md) {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
 
     li {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: var(--space-8);
+    }
+
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
+        margin-top: .25rem;
+        color: var(--c-accent-strong);
     }
 }
 
-.venue-facts__rule {
-    margin: var(--space-24) 0;
-    border: 0;
-    border-top: 1px solid var(--c-line-soft);
+.venue-wedding {
+    @include shared.card;
 }

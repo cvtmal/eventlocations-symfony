@@ -1,6 +1,6 @@
 {#
-    Fact lists (DP-7): one row per non-empty taxonomy group, a rule between the first three (building, setting,
-    suitable for) and the last four groups. Rendered only when hasFacts(). Params: venue.
+    Fact lists (DP-7): one row per non-empty taxonomy group, the first three (building, setting, suitable for) and
+    the last four groups in a list each. Rendered only when hasFacts(). Params: venue.
 #}
 {% set setting_icons = {river: 'waves', lake: 'sailboat', countryside: 'trees', mountains: 'mountain-snow', city: 'building-2'} %}
 {% set first_half = venue.factGroups|filter(g => g.group.value in ['building', 'setting', 'suitable_for']) %}
@@ -9,7 +9,6 @@
     <h2 id="venue-facts-title" class="visually-hidden">{{ 'detail.facts.heading'|trans({}, 'venues') }}</h2>
     {% for half in [first_half, second_half] %}
         {% if half is not empty %}
-            {% if not loop.first and first_half is not empty %}<hr class="venue-facts__rule">{% endif %}
             <dl class="venue-facts__list">
                 {% for group in half %}
                     <div class="venue-facts__row">

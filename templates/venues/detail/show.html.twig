@@ -22,13 +22,15 @@
 {% block body_class %}{% set page_class = 'page-venue' %}{{ page_class }}{% endblock %}
 
 {% block hero %}
-    {{ include('venues/detail/_hero.html.twig', {venue: venue}, with_context = false) }}
-    {% if venue.photos is not empty %}{{ include('venues/detail/_gallery.html.twig', {venue: venue}, with_context = false) }}{% endif %}
+    {% if venue.photos is not empty %}
+        {{ include('venues/detail/_hero.html.twig', {venue: venue}, with_context = false) }}
+        {{ include('venues/detail/_gallery.html.twig', {venue: venue}, with_context = false) }}
+    {% endif %}
 {% endblock %}
 
 {% block main %}
     {{ include('venues/detail/_nav.html.twig', {venue: venue}, with_context = false) }}
-    <div class="venue-layout container">
+    <div class="venue-layout">
         {{ include('venues/detail/_actions.html.twig', {venue: venue}, with_context = false) }}
         <div class="venue-content">
             {{ include('venues/detail/_head.html.twig', {venue: venue}, with_context = false) }}

@@ -16,18 +16,18 @@
 {% set primary_target = venue.inquiryEmail ? '#anfrage' : (venue.hasContact() ? '#kontakt' : null) %}
 <aside class="venue-actions" aria-labelledby="venue-actions-title">
     <h2 id="venue-actions-title" class="venue-actions__title">{{ 'detail.actions.label'|trans({}, 'venues') }}</h2>
-    {% if primary_target %}<a class="btn btn--primary venue-actions__primary" href="{{ primary_target }}">{{ icon('calendar') }}<span>{{ 'detail.actions.check_availability'|trans({}, 'venues') }}</span></a>{% endif %}
+    {% if primary_target %}<a class="btn btn--primary btn--lg venue-actions__primary" href="{{ primary_target }}">{{ icon('calendar') }}<span>{{ 'detail.actions.check_availability'|trans({}, 'venues') }}</span></a>{% endif %}
     {{ include('favorites/_merken_button.html.twig', {number: venue.number, name: venue.name, label: 'detail.actions.merken'|trans({}, 'venues'), variant: 'detail'}, with_context = false) }}
     <div class="venue-actions__row">
         {{ include('components/_button.html.twig', {
             label: 'detail.actions.share'|trans({}, 'venues'),
-            variant: 'secondary',
+            variant: 'ghost',
             icon: 'share-2',
             attributes: {popovertarget: 'venue-share', 'data-share-url': share_url, 'data-share-title': share_text},
         }, with_context = false) }}
         {{ include('components/_button.html.twig', {
             label: 'detail.actions.print'|trans({}, 'venues'),
-            variant: 'secondary',
+            variant: 'ghost',
             icon: 'printer',
             attributes: {hidden: 'hidden', 'data-print': ''},
         }, with_context = false) }}

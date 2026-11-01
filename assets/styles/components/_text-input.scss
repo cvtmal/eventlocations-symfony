@@ -39,6 +39,12 @@
     &[aria-invalid='true'] {
         border-bottom-color: var(--c-error);
         box-shadow: 0 1px 0 var(--c-error);
+
+        // The error line already looks like the focus line, so an invalid field takes the full ring.
+        &:focus-visible {
+            outline: var(--focus-ring);
+            outline-offset: 2px;
+        }
     }
 
     &:disabled {
