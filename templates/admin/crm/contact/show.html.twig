@@ -76,5 +76,7 @@
         </div>
     </section>
 
+    {{ include('admin/crm/deal/_card.html.twig', {deals: deals}, with_context = false) }}
+
     {{ include('admin/crm/task/_card.html.twig', {tasks: tasks, return_to: path('admin_crm_contacts_show', {id: contact.id})}, with_context = false) }}
 {% endblock %}

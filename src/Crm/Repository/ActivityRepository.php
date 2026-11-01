@@ -64,6 +64,20 @@ class ActivityRepository extends ServiceEntityRepository
     }
 
     /**
+     * Ids of the activities on the deal's timeline.
+     *
+     * @return list<string>
+     */
+    public function idsLinkedToDeal(string $dealId): array
+    {
+        /* @var list<string> */
+        return $this->getEntityManager()->getConnection()->fetchFirstColumn(
+            'SELECT activity_id FROM crm_activity_deals WHERE deal_id = ?',
+            [$dealId],
+        );
+    }
+
+    /**
      * Blanks title, body and payload of the activities and marks them anonymised (D16).
      *
      * @param list<string> $ids
@@ -83,8 +97,7 @@ class ActivityRepository extends ServiceEntityRepository
 
     /**
      * Deletes those of the activities that no object links any more (D16): an entry that is on no
-     * timeline would be unreachable. The one place that knows every link table; #28 adds
-     * crm_activity_deals here.
+     * timeline would be unreachable. The one place that knows every link table.
      *
      * @param list<string> $ids
      *
@@ -102,6 +115,7 @@ class ActivityRepository extends ServiceEntityRepository
                 WHERE a.id IN (:ids)
                   AND NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id)
                   AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id)
+                  AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id)
                 SQL,
             ['ids' => $ids],
             ['ids' => ArrayParameterType::STRING],

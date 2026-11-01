@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Crm\ReadModel;
+
+use App\Crm\ValueObject\LostReason;
+use App\Venues\ValueObject\Tier;
+
+/**
+ * A deal record page: the deal with its names, the contacts on it, and what its forms offer.
+ */
+final readonly class DealRecord
+{
+    /**
+     * @param string                     $stage         the code of its stage
+     * @param list<CompanyRecordContact> $contacts      the contacts on the deal
+     * @param list<DealFormOption>       $linkable      the company's other contacts
+     * @param list<DealFormOption>       $companyVenues the venues a deal of this company can name
+     * @param bool                       $renewable     won, with a contract end, and not renewed yet (D21)
+     */
+    public function __construct(
+        public string $id,
+        public string $name,
+        public string $companyId,
+        public string $companyName,
+        public ?CompanyRecordVenue $venue,
+        public ?Tier $tier,
+        public ?int $amountRappen,
+        public ?string $contractStartOn,
+        public ?string $contractEndOn,
+        public ?string $expectedCloseOn,
+        public string $stage,
+        public ?string $ownerId,
+        public ?string $ownerName,
+        public ?LostReason $lostReason,
+        public ?\DateTimeImmutable $closedAt,
+        public \DateTimeImmutable $createdAt,
+        public array $contacts,
+        public array $linkable,
+        public array $companyVenues,
+        public bool $renewable,
+    ) {
+    }
+
+    public function hasContact(string $contactId): bool
+    {
+        return array_any($this->contacts, static fn (CompanyRecordContact $contact): bool => $contactId === $contact->id);
+    }
+}

@@ -16,6 +16,7 @@ use App\Venues\Command\ChangeVenueContact;
 use App\Venues\Command\ChangeVenueReview;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
+use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\DescribeVenuePhoto;
@@ -42,7 +43,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every auditable venue command of #24 and #25 (D9, D11, S12): the subject is the venue's number,
+ * Every auditable venue command of #24, #25 and #28 (D9, D11, S12): the subject is the venue's number,
  * and the summary stored in the append-only audit log holds field names and short
  * vocabulary values only, never free text, contact data or a coordinate.
  */
@@ -80,6 +81,7 @@ final class VenueCommandAuditTest extends TestCase
         yield 'faq' => [new AnswerVenueFaq(self::NUMBER, '1', $changed, OwnCatering::Allowed, true)];
         yield 'rate' => [new RateVenue(self::NUMBER, '1', $changed, '8.4', 12, [RatingHighlight::Food])];
         yield 'created' => [new RecordVenueCreated(self::NUMBER, 'Schloss Muster')];
+        yield 'tier' => [new ChangeVenueTier(self::NUMBER, Tier::Premium)];
         yield 'publish' => [new PublishVenue(self::NUMBER)];
         yield 'unpublish' => [new UnpublishVenue(self::NUMBER)];
         yield 'delete' => [new DeleteVenue(self::NUMBER, 'Schloss Muster', 'schloss-muster')];

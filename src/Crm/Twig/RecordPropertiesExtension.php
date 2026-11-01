@@ -27,6 +27,7 @@ final readonly class RecordPropertiesExtension
         'error' => 'properties.error',
         'noResults' => 'properties.no_results',
         'choose' => 'properties.choose',
+        'badDate' => 'properties.bad_date',
     ];
 
     public function __construct(

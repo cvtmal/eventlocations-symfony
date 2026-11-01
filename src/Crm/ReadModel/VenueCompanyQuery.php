@@ -27,11 +27,21 @@ final class VenueCompanyQuery
                                    ORDER BY t.due_on, lower(t.title), t.id)
                    FROM crm_tasks t
                    LEFT JOIN crm_contacts tp ON tp.id = t.contact_id
-                   WHERE t.done_at IS NULL AND (t.company_id = c.id OR tp.company_id = c.id)
-               ), '[]') AS tasks
+                   LEFT JOIN crm_deals td ON td.id = t.deal_id
+                   WHERE t.done_at IS NULL AND (t.company_id = c.id OR tp.company_id = c.id OR td.company_id = c.id)
+               ), '[]') AS tasks,
+               od.id AS deal_id, od.name AS deal_name, od.stage_code AS deal_stage, od.amount_rappen AS deal_amount
         FROM venues v
         LEFT JOIN crm_company_venues l ON l.venue_id = v.id
         LEFT JOIN crm_companies c ON c.id = l.company_id
+        LEFT JOIN LATERAL (
+            SELECT d.id, d.name, d.stage_code, d.amount_rappen
+            FROM crm_deals d
+            JOIN crm_deal_stages s ON s.code = d.stage_code
+            WHERE d.venue_id = v.id AND NOT s.is_won AND NOT s.is_lost
+            ORDER BY d.expected_close_on ASC NULLS LAST, lower(d.name), d.id
+            LIMIT 1
+        ) od ON TRUE
         WHERE v.number = :number
         SQL;
 
@@ -61,7 +71,7 @@ final class VenueCompanyQuery
             return null;
         }
         if (null === $row['company_id']) {
-            return new VenueCompany((string) $row['venue_id'], null, null, null, null, [], []);
+            return new VenueCompany((string) $row['venue_id'], null, null, null, null, [], [], null);
         }
 
         return new VenueCompany(
@@ -80,6 +90,12 @@ final class VenueCompanyQuery
                 (string) $task['title'],
                 (string) $task['due_on'],
             ), self::list($row['tasks'])),
+            null === $row['deal_id'] ? null : new VenueOpenDeal(
+                (string) $row['deal_id'],
+                (string) $row['deal_name'],
+                (string) $row['deal_stage'],
+                null === $row['deal_amount'] ? null : (int) $row['deal_amount'],
+            ),
         );
     }
 

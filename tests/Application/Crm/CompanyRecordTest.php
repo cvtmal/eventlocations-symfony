@@ -11,11 +11,13 @@ use App\Crm\ValueObject\CompanyStage;
 use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use App\Venues\Command\PublishVenue;
+use App\Venues\ValueObject\Tier;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -68,8 +70,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame('/admin/crm/kontakte/'.$laura->id(), $crawler->filter('#kontakte .crm-side__link')->attr('href'));
         self::assertCount(1, $crawler->filter('#kontakte a[href="/admin/crm/kontakte/neu?company='.$company->id().'"]'));
 
-        // No tabs yet; an editor gets no Aktionen.
-        self::assertSelectorNotExists('.tabs--record');
+        // An editor gets no Aktionen.
         self::assertSelectorNotExists('#record-actions');
         self::assertSelectorNotExists('#company-delete');
     }
@@ -293,6 +294,52 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSelectorExists('.toast--error');
     }
 
+    public function test_a_company_with_a_deal_stays_with_a_flash(): void
+    {
+        $this->logInAs(AdminRole::Admin);
+        $company = CompanyFactory::createOne();
+        DealFactory::createOne(['company' => $company]);
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        $this->client->submit($crawler->filter('#company-delete form[action$="/loeschen"]')->form());
+
+        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id(), 303);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.toast', 'Diese Firma hat Deals und lässt sich nicht löschen.');
+    }
+
+    public function test_a_derived_stage_is_read_only_and_says_where_it_comes_from(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->create();
+        DealFactory::new()->inStage('won')->create(['company' => $company]);
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        $props = json_decode((string) $crawler->filter('[data-island="record-properties"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        $stage = array_values(array_filter($props['fields'], static fn (array $field): bool => 'stage' === $field['name']))[0];
+        self::assertTrue($stage['readonly']);
+        self::assertSame('customer', $stage['value']);
+        self::assertSame('Kunde (aus Deals)', $stage['display']);
+    }
+
+    public function test_a_hand_set_stage_stays_editable_with_an_open_deal(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->create();
+        DealFactory::new()->inStage('offer')->create(['company' => $company]);
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        $props = json_decode((string) $crawler->filter('[data-island="record-properties"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        $stage = array_values(array_filter($props['fields'], static fn (array $field): bool => 'stage' === $field['name']))[0];
+        self::assertArrayNotHasKey('readonly', $stage);
+        self::assertSame('Kunde', $stage['display']);
+    }
+
     public function test_an_editor_may_not_delete(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -322,8 +369,8 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame($author->id(), $props['viewerId']);
         self::assertSame('/admin/api/crm/companies/'.$company->id().'/timeline', $props['urls']['timeline']);
         self::assertSame('/admin/api/crm/activities', $props['urls']['activities']);
-        self::assertSame(['note', 'email_logged', 'call', 'meeting'], array_column($props['types'], 'code'));
-        self::assertSame(['Notizen', 'E-Mails', 'Anrufe', 'Meetings'], array_column($props['types'], 'tab'));
+        self::assertSame(['note', 'email_logged', 'call', 'meeting', 'deal_stage_changed'], array_column($props['types'], 'code'));
+        self::assertSame(['Notizen', 'E-Mails', 'Anrufe', 'Meetings', 'Deal-Phasen'], array_column($props['types'], 'tab'));
         self::assertSame(['Notiz', 'E-Mail', 'Anruf', 'Meeting', 'Aufgabe'], array_column($props['composer'], 'label'));
         self::assertSame(['Andrea Keller'], array_column($props['assignees'], 'name'));
         self::assertSame('__type__ von __actor__', $props['labels']['by']);
@@ -402,7 +449,91 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame('Noch keine Aktivitäten.', $crawler->filter('[data-island="timeline"] .crm-timeline')->text());
     }
 
-    public function test_the_page_runs_six_queries(): void
+    public function test_the_deals_card_shows_five_with_the_total_and_a_link_to_all(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        DealFactory::new()->inStage('offer')->create(['name' => 'Verlängerung 2027', 'company' => $company, 'tier' => Tier::Premium, 'amountRappen' => 480000, 'contractEndOn' => new \DateTimeImmutable('2027-12-31')]);
+        DealFactory::new()->inStage('won')->many(5)->create(['company' => $company]);
+        DealFactory::createOne();
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        $card = $crawler->filter('#deals');
+        self::assertSame('Deals (6)', $card->filter('h2')->text());
+        self::assertSame('/admin/crm/deals/neu?company='.$company->id(), $card->filter('.card__head a')->attr('href'));
+        self::assertCount(5, $card->filter('.crm-side__item'));
+        $first = $card->filter('.crm-side__item')->first();
+        self::assertSame('Verlängerung 2027', $first->filter('.crm-side__link')->text());
+        self::assertSame('Premium · bis 31.12.2027', $first->filter('.crm-side__detail')->text());
+        self::assertSame('Angebot', $first->filter('.pill')->text());
+        self::assertSame("CHF 4'800", $first->filter('.deal-side__amount')->text());
+        self::assertSame('/admin/crm/firmen/'.$company->id().'/deals', $card->filter('.deal-side__all a')->attr('href'));
+    }
+
+    public function test_a_company_without_deals_says_so(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertSame('Noch keine Deals.', $crawler->filter('#deals .crm-side__empty')->text());
+        self::assertCount(0, $crawler->filter('.deal-side__all'));
+    }
+
+    public function test_the_tabs_lead_to_the_overview_and_all_deals(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        $url = '/admin/crm/firmen/'.$company->id();
+        $deals = DealFactory::createMany(6, ['company' => $company]);
+        DealFactory::createOne(['name' => 'Fremd']);
+
+        $crawler = $this->client->request('GET', $url);
+        self::assertSame(['Übersicht', 'Deals'], $crawler->filter('.tabs--record .tab')->each(static fn (Crawler $tab): string => $tab->text()));
+        self::assertSame('Übersicht', $crawler->filter('.tabs--record .tab--active')->text());
+
+        $crawler = $this->client->request('GET', $url.'/deals');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Deals', $crawler->filter('.tabs--record .tab--active')->text());
+        self::assertSame($url, $crawler->filter('.tabs--record .tab')->first()->attr('href'));
+        self::assertSame($company->name(), $crawler->filter('h1')->text());
+        self::assertCount(6, $crawler->filter('.table tbody .crm-list__link'));
+        self::assertCount(0, $crawler->filter('[data-composer-tab]'));
+        self::assertSame(1, $crawler->filter('a[href="/admin/crm/deals/'.$deals[0]->id().'"]')->count());
+    }
+
+    public function test_the_deals_tab_of_a_company_without_deals_says_so(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id().'/deals');
+
+        self::assertSame('Noch keine Deals.', $crawler->filter('.empty__title')->text());
+    }
+
+    public function test_the_deals_tab_of_an_unknown_company_is_a_404(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+
+        $this->client->request('GET', '/admin/crm/firmen/019a0000-0000-7000-8000-000000000000/deals');
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function test_the_deals_tab_runs_three_queries(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        DealFactory::createMany(3, ['company' => $company]);
+
+        // The company, the owners, the deals; with the user's refresh 4 in production (N14's ceiling 5).
+        self::assertSame(3, $this->queriesOf('/admin/crm/firmen/'.$company->id().'/deals'));
+    }
+
+    public function test_the_page_runs_seven_queries(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
@@ -412,9 +543,9 @@ final class CompanyRecordTest extends WebTestCase
         TaskFactory::createOne(['contact' => $contacts[0]]);
 
         // The company with its venues and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
-        // timeline's activities, venue names and audit rows, the Aufgaben card; with the user's refresh 7 in production
-        // (P12 ceiling 9).
-        self::assertSame(6, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
+        // timeline's activities, venue names and audit rows, the Aufgaben card, the Deals card; with the user's refresh 8
+        // in production (N14's ceiling 10).
+        self::assertSame(7, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
     }
 
     private function auditRows(string $companyId): int

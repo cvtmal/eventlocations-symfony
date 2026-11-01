@@ -9,16 +9,25 @@ use App\Crm\Exception\ActivityNotFound;
 use App\Crm\Exception\ActivityNotYours;
 use App\Crm\Exception\ActivityReadOnly;
 use App\Crm\Exception\CompanyNotFound;
+use App\Crm\Exception\CompanyStageDerived;
 use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\ContactNotFound;
+use App\Crm\Exception\ContactOfAnotherCompany;
+use App\Crm\Exception\ContractEndsBeforeStart;
+use App\Crm\Exception\DealNotFound;
 use App\Crm\Exception\InvalidPropertyValue;
+use App\Crm\Exception\LostReasonRequired;
 use App\Crm\Exception\StaleProperty;
+use App\Crm\Exception\UnknownDealStage;
+use App\Crm\Exception\VenueNotLinked;
 use App\Crm\Form\ActivityEdit;
 use App\Crm\Form\NewActivity;
 use App\Crm\Form\NewTask;
 use App\Crm\Form\PropertyConstraints;
 use App\Crm\Form\PropertyEdit;
+use App\Crm\Form\StageMove;
 use App\Crm\ValueObject\ActivityDate;
+use App\Crm\ValueObject\LostReason;
 use App\Crm\ValueObject\PropertyValue;
 use App\Crm\ValueObject\RecordKind;
 use App\Crm\ValueObject\TaskDueDate;
@@ -160,6 +169,38 @@ final class CrmApi
         return new NewTask(RecordKind::from($kind), $recordId, $title, $dueOn, $assigneeId);
     }
 
+    /**
+     * Reads `{"stage", "expected", "lostReason"}`. `expected` is the stage the card showed (D17-b), a stage that exists
+     * like the target; whether a lost deal has its reason is the handler's rule.
+     *
+     * @param list<string> $stages the codes of `crm_deal_stages`
+     */
+    public function stageMove(Request $request, array $stages): StageMove|JsonResponse
+    {
+        $payload = self::payload($request);
+        $stage = $payload['stage'] ?? null;
+        $expected = $payload['expected'] ?? null;
+        $lostReason = $payload['lostReason'] ?? null;
+
+        $violations = $this->validator->startContext()
+            ->atPath('stage')->validate($stage, self::choice($stages, 'crm.deal.stage'))
+            ->atPath('expected')->validate($expected, self::choice($stages, 'crm.deal.stage'))
+            ->atPath('lostReason')->validate($lostReason, new Assert\Sequentially([
+                new Assert\Type('string'),
+                new CleanText(),
+                new Assert\Choice(choices: array_column(LostReason::cases(), 'value'), message: 'crm.deal.lost_reason'),
+            ]))
+            ->getViolations();
+
+        if (\count($violations) > 0) {
+            return $this->invalid($violations);
+        }
+
+        \assert(\is_string($stage) && \is_string($expected) && (null === $lostReason || \is_string($lostReason)));
+
+        return new StageMove($stage, $expected, null === $lostReason ? null : LostReason::from($lostReason));
+    }
+
     public function invalid(ConstraintViolationListInterface $violations): JsonResponse
     {
         return new JsonResponse(ValidationErrors::fromViolations($violations)->toArray(), Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -182,10 +223,16 @@ final class CrmApi
             return match (true) {
                 $exception instanceof StaleProperty => $this->error('', 'api.stale', Response::HTTP_CONFLICT),
                 $exception instanceof ContactEmailTaken => $this->error('value', 'api.email_taken', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof CompanyStageDerived => $this->error('value', 'api.stage_derived', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof InvalidPropertyValue => $this->error('value', $exception->isRequired() ? 'api.required' : 'api.unknown_choice', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof ContractEndsBeforeStart => $this->error('value', 'api.contract_ends_before_start', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof VenueNotLinked => $this->error('value', 'api.venue_not_linked', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof ContactOfAnotherCompany => $this->error('value', 'api.contact_of_another_company', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof UnknownDealStage => $this->error('stage', 'api.unknown_choice', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof LostReasonRequired => $this->error('lostReason', 'api.lost_reason_required', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof ActivityNotYours => $this->error('', 'api.not_yours', Response::HTTP_FORBIDDEN),
                 $exception instanceof ActivityReadOnly => $this->error('', 'api.read_only', Response::HTTP_FORBIDDEN),
-                $exception instanceof CompanyNotFound, $exception instanceof ContactNotFound, $exception instanceof ActivityNotFound => $this->notFound(),
+                $exception instanceof CompanyNotFound, $exception instanceof ContactNotFound, $exception instanceof ActivityNotFound, $exception instanceof DealNotFound => $this->notFound(),
                 default => throw $failure,
             };
         }

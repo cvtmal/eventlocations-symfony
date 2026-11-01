@@ -6,11 +6,14 @@ namespace App\Tests\Integration\Crm;
 
 use App\Crm\Entity\ActivityType;
 use App\Crm\ReadModel\TaskView;
+use App\Crm\TimelineProps;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
+use App\Crm\ValueObject\DealProperty;
+use App\Crm\ValueObject\LostReason;
 use App\Crm\ValueObject\TaskDue;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -31,10 +34,12 @@ final class CrmTranslationKeysTest extends KernelTestCase
 
         $keys = [
             // CrmApi: StaleProperty, CompanyNotFound|ContactNotFound|ActivityNotFound, ContactEmailTaken, InvalidPropertyValue,
-            // ActivityNotYours, ActivityReadOnly.
+            // ActivityNotYours, ActivityReadOnly, CompanyStageDerived.
             'api.stale', 'api.not_found', 'api.email_taken', 'api.required', 'api.unknown_choice', 'api.not_yours', 'api.read_only',
-            // CompanyRecordController: VenueAlreadyLinked, VenueNotFound, a refused form.
+            'api.stage_derived', 'api.contract_ends_before_start', 'api.venue_not_linked', 'api.contact_of_another_company', 'api.lost_reason_required',
+            // CompanyRecordController: VenueAlreadyLinked, VenueNotFound, CompanyHasDeals, a refused form.
             'record.venues.flash.already_linked', 'record.venues.flash.venue_not_found', 'record.venues.flash.invalid',
+            'record.delete.has_deals',
             'flash.action_failed',
             // The bootstrap and the panel: BootstrapOutcome's two branches.
             'bootstrap.flash.done', 'bootstrap.flash.failures', 'panel.flash.created', 'panel.flash.already',
@@ -62,6 +67,12 @@ final class CrmTranslationKeysTest extends KernelTestCase
         foreach (ContactProperty::cases() as $case) {
             $keys[] = 'contact.property.'.$case->value;
         }
+        foreach (DealProperty::cases() as $case) {
+            $keys[] = 'deal.property.'.$case->value;
+        }
+        foreach (LostReason::cases() as $case) {
+            $keys[] = 'deal.lost_reason.'.$case->value;
+        }
         foreach ([TaskDue::Overdue, TaskDue::Today] as $case) {
             $keys[] = 'task.due.'.$case->value;
         }
@@ -80,6 +91,21 @@ final class CrmTranslationKeysTest extends KernelTestCase
         foreach ($keys as $key) {
             self::assertTrue($catalogue->defines($key, 'crm+intl-icu') || $catalogue->defines($key, 'crm'), $key);
         }
+    }
+
+    public function test_the_catalogue_has_a_label_for_every_seeded_deal_stage(): void
+    {
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
+        self::assertInstanceOf(Connection::class, $connection);
+        $translator = self::getContainer()->get('translator');
+        self::assertInstanceOf(TranslatorBagInterface::class, $translator);
+        $catalogue = $translator->getCatalogue('de');
+
+        $codes = $connection->fetchFirstColumn('SELECT code FROM crm_deal_stages ORDER BY position');
+        foreach ($codes as $code) {
+            self::assertTrue($catalogue->defines('deal.stage.'.$code, 'crm+intl-icu'), (string) $code);
+        }
+        self::assertSame($codes, TimelineProps::DEAL_STAGES);
     }
 
     public function test_the_catalogue_has_a_label_for_every_seeded_activity_type(): void

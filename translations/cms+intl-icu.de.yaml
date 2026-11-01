@@ -272,6 +272,7 @@ history:
         ChangeVenueContact: den Kontakt geändert
         AnswerVenueFaq: die häufigen Fragen beantwortet
         RateVenue: die Bewertung geändert
+        ChangeVenueTier: den Tier geändert
         PublishVenue: die Location publiziert
         UnpublishVenue: die Location offline genommen
         AddVenuePhoto: ein Foto hochgeladen

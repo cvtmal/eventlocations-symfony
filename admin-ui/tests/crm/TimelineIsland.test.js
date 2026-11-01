@@ -34,7 +34,14 @@ const labels = {
     forbidden: 'Diese Seite ist nicht mehr aktuell.',
     stale: 'Das hat nicht geklappt.',
     by: '__type__ von __actor__',
-    system: { published: '«__venue__» publiziert', unpublished: '«__venue__» unpubliziert', tier_changed: '«__venue__»: neu __tier__' },
+    system: {
+        published: '«__venue__» publiziert',
+        unpublished: '«__venue__» unpubliziert',
+        tier_changed: '«__venue__»: neu __tier__',
+        deal_stage_changed: '__actor__ hat den Deal «__deal__» auf __stage__ verschoben',
+    },
+    dealStageChangedAnonymous: 'Deal «__deal__» auf __stage__ verschoben',
+    stages: { negotiation: 'Verhandlung' },
     tiers: { premium: 'Premium' },
 };
 
@@ -138,6 +145,21 @@ describe('TimelineIsland', () => {
             '«Schloss Seeblick»: neu Premium · 30.09.2026, 09:00',
         ]);
         expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('writes a stage change as the design\'s sentence, with or without an actor', () => {
+        wrapper = island({
+            entries: [
+                entry('e2', '2026-10-27T10:30', { kind: 'system', type: 'deal_stage_changed', title: 'Verlängerung 2027', stage: 'negotiation', body: null }),
+                entry('e1', '2026-10-26T09:00', { kind: 'system', type: 'deal_stage_changed', title: 'Premium', stage: 'negotiation', actorName: null, body: null }),
+            ],
+            next: null,
+        });
+
+        expect(wrapper.findAll('.timeline-item--system').map((item) => item.text())).toEqual([
+            'Andrea Keller hat den Deal «Verlängerung 2027» auf Verhandlung verschoben · 27.10.2026, 10:30',
+            'Deal «Premium» auf Verhandlung verschoben · 26.10.2026, 09:00',
+        ]);
     });
 
     it('draws a body as text, line breaks included', () => {

@@ -10,12 +10,12 @@ use App\Crm\ValueObject\TimelineCursor;
 use Doctrine\DBAL\Connection;
 
 /**
- * The timeline of a company or a contact (CRM-4): its activities by keyset on `(occurred_at, id)`, and on a
+ * The timeline of a company, a contact or a deal (CRM-4): its activities by keyset on `(occurred_at, id)`, and on a
  * company also the audit-log events of its linked venues, merged in PHP (D15). Two sources, so a page costs the
- * activities, the venue lookup and the audit rows: three statements for a company, one for a contact.
+ * activities, the venue lookup and the audit rows: three statements for a company, one for a contact or a deal.
  *
- * The audit commands are plain class names. `ChangeVenueTier` is #28's and does not exist yet; the others are
- * pinned to their classes by a test. Photos, rooms, texts and every other venue edit never reach a timeline.
+ * The audit commands are plain class names, pinned to their classes by a test. Photos, rooms, texts and every other
+ * venue edit never reach a timeline.
  */
 final class TimelineQuery
 {
@@ -26,7 +26,7 @@ final class TimelineQuery
     private const string BASICS = 'App\Venues\Command\ChangeVenueBasics';
     private const string TIER = 'App\Venues\Command\ChangeVenueTier';
 
-    private const string ACTIVITY_COLUMNS = 'a.id, a.type_code, a.occurred_at, a.actor_id, u.display_name AS actor_name, a.title, a.body, a.anonymised_at';
+    private const string ACTIVITY_COLUMNS = "a.id, a.type_code, a.occurred_at, a.actor_id, u.display_name AS actor_name, a.title, a.body, a.payload->>'to' AS stage_to, a.anonymised_at";
 
     /**
      * @var list<string>
@@ -114,8 +114,10 @@ final class TimelineQuery
      */
     private static function activityEntry(array $row): TimelineEntry
     {
+        $isStageChange = TimelineEntry::EVENT_DEAL_STAGE_CHANGED === $row['type_code'];
+
         return new TimelineEntry(
-            TimelineEntry::ACTIVITY,
+            $isStageChange ? TimelineEntry::SYSTEM : TimelineEntry::ACTIVITY,
             (string) $row['id'],
             (string) $row['type_code'],
             new \DateTimeImmutable((string) $row['occurred_at']),
@@ -124,6 +126,7 @@ final class TimelineQuery
             null === $row['title'] ? null : (string) $row['title'],
             null === $row['body'] ? null : (string) $row['body'],
             null !== $row['anonymised_at'],
+            stage: $isStageChange ? (string) $row['stage_to'] : null,
         );
     }
 

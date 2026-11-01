@@ -1,0 +1,38 @@
+{#
+    The Deals card of a record (`Company.dc.html`, D27, N13). Include with `with_context = false`: deals (DealCard), and
+    optionally add_href ("+ Deal", a company's) and all_href (shown when the card holds fewer rows than there are).
+#}
+<section class="card crm-side" id="deals" aria-labelledby="crm-deals-title">
+    <div class="card__head">
+        <h2 id="crm-deals-title">{{ 'deal.card.title'|trans({}, 'crm') }} <span class="crm-side__count">({{ deals.total }})</span></h2>
+        {% if add_href|default(false) %}
+            {{ include('admin/components/_button.html.twig', {label: 'deal.card.add'|trans({}, 'crm'), icon: 'plus', variant: 'ghost', size: 'sm', href: add_href}, with_context = false) }}
+        {% endif %}
+    </div>
+    <div class="card__body">
+        {% if deals.rows is empty %}
+            <p class="crm-side__empty">{{ 'deal.card.empty'|trans({}, 'crm') }}</p>
+        {% else %}
+            <ul class="crm-side__list">
+                {% for deal in deals.rows %}
+                    <li class="crm-side__item">
+                        <span class="crm-side__text">
+                            <a class="crm-side__link" href="{{ path('admin_crm_deals_show', {id: deal.id}) }}">{{ deal.name }}</a>
+                            {%- set facts = [] -%}
+                            {%- if deal.tier -%}{%- set facts = facts|merge([deal.tier|trans]) -%}{%- endif -%}
+                            {%- if deal.contractEndOn -%}{%- set facts = facts|merge(['deal.card.until'|trans({date: deal.contractEndOn|swiss_date}, 'crm')]) -%}{%- endif -%}
+                            {%- if facts is not empty %}<span class="crm-side__detail">{{ facts|join(' · ') }}</span>{% endif -%}
+                        </span>
+                        <span class="deal-side__facts">
+                            {{ include('admin/components/_pill.html.twig', {label: ('deal.stage.' ~ deal.stage)|trans({}, 'crm'), tone: crm_deal_tone(deal.stage)}, with_context = false) }}
+                            {% if deal.amountRappen is not null %}<span class="deal-side__amount">{{ deal.amountRappen|chf }}</span>{% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if all_href|default(false) and deals.total > deals.rows|length %}
+                <p class="deal-side__all"><a href="{{ all_href }}">{{ 'deal.card.all'|trans({}, 'crm') }}</a></p>
+            {% endif %}
+        {% endif %}
+    </div>
+</section>

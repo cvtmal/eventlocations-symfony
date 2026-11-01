@@ -45,7 +45,7 @@
                                 {{ include('admin/crm/task/_toggle.html.twig', {task: row, return_to: return_to}, with_context = false) }}
                                 <span class="crm-task__text">
                                     <span class="crm-task__title">{{ row.title }}</span>
-                                    {% if row.companyId or row.contactId %}
+                                    {% if row.hasObject %}
                                         <span class="crm-list__detail">{{ include('admin/crm/task/_object.html.twig', {task: row}, with_context = false) }}</span>
                                     {% endif %}
                                 </span>

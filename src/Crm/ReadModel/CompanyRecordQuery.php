@@ -35,7 +35,11 @@ final class CompanyRecordQuery
                                    ORDER BY lower(p.last_name), lower(coalesce(p.first_name, '')), p.id)
                    FROM crm_contacts p
                    WHERE p.company_id = c.id
-               ), '[]') AS contacts
+               ), '[]') AS contacts,
+               EXISTS (
+                   SELECT 1 FROM crm_deals d JOIN crm_deal_stages s ON s.code = d.stage_code
+                   WHERE d.company_id = c.id AND s.is_won
+               ) AS stage_derived
         FROM crm_companies c
         LEFT JOIN admin_users u ON u.id = c.owner_id
         WHERE c.id = :id
@@ -83,6 +87,7 @@ final class CompanyRecordQuery
                 (string) $contact['last_name'],
                 self::text($contact['position']),
             ), self::list($row['contacts'])),
+            (bool) $row['stage_derived'],
         );
     }
 

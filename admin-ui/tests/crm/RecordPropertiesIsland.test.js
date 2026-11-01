@@ -15,6 +15,7 @@ const labels = {
     error: 'Speichern nicht möglich.',
     noResults: 'Keine Treffer.',
     choose: 'Bitte einen Eintrag aus der Liste wählen.',
+    badDate: 'Bitte ein vollständiges Datum eingeben oder das Feld leeren.',
 };
 
 const fields = [
@@ -403,5 +404,150 @@ describe('RecordPropertiesIsland', () => {
 
         expect(row(wrapper, 'phone').find('form').exists()).toBe(false);
         expect(document.activeElement).toBe(notes);
+    });
+
+    describe('a deal record\'s fields', () => {
+        const amount = { name: 'amount', label: 'Wert', type: 'amount', value: '125050', display: "CHF 1'250.50", draft: "1'250.50" };
+        const close = { name: 'expected_close', label: 'Erwarteter Abschluss', type: 'date', value: '2027-03-01', display: '01.03.2027' };
+
+        function dealIsland(dealFields) {
+            return mount(RecordPropertiesIsland, { props: { url: '/admin/api/crm/deals/d1', fields: dealFields, labels }, attachTo: document.body });
+        }
+
+        function sentBody(fetchMock) {
+            return JSON.parse(fetchMock.mock.calls[0][1].body);
+        }
+
+        it('edits an amount as francs and sends the Rappen as the version', async () => {
+            const fetchMock = vi.fn().mockResolvedValue(json({ value: '125050', display: "CHF 1'250.50", draft: "1'250.50" }));
+            vi.stubGlobal('fetch', fetchMock);
+            const wrapper = dealIsland([amount]);
+
+            await row(wrapper, 'amount').find('.property__edit').trigger('click');
+            await flushPromises();
+            const input = row(wrapper, 'amount').find('input');
+            expect(input.element.value).toBe("1'250.50");
+            expect(input.attributes('type')).toBe('text');
+            expect(input.attributes('inputmode')).toBe('decimal');
+
+            // An idle save: what is sent is what the row showed, never the stored 125050.
+            await row(wrapper, 'amount').find('form').trigger('submit');
+            await flushPromises();
+
+            expect(sentBody(fetchMock)).toEqual({ field: 'amount', value: "1'250.50", expected: '125050' });
+            wrapper.unmount();
+        });
+
+        it('takes the shown value and the next edit text from the answer', async () => {
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ value: '200000', display: "CHF 2'000", draft: "2'000" })));
+            const wrapper = dealIsland([amount]);
+
+            await row(wrapper, 'amount').find('.property__edit').trigger('click');
+            await flushPromises();
+            await row(wrapper, 'amount').find('input').setValue('2000');
+            await row(wrapper, 'amount').find('form').trigger('submit');
+            await flushPromises();
+
+            expect(row(wrapper, 'amount').find('.property__value').text()).toBe("CHF 2'000");
+
+            await row(wrapper, 'amount').find('.property__edit').trigger('click');
+            await flushPromises();
+            expect(row(wrapper, 'amount').find('input').element.value).toBe("2'000");
+            wrapper.unmount();
+        });
+
+        it('edits a date in its stored form and shows the answer\'s text', async () => {
+            const fetchMock = vi.fn().mockResolvedValue(json({ value: '2027-04-02', display: '02.04.2027', draft: null }));
+            vi.stubGlobal('fetch', fetchMock);
+            const wrapper = dealIsland([close]);
+
+            await row(wrapper, 'expected_close').find('.property__edit').trigger('click');
+            await flushPromises();
+            const input = row(wrapper, 'expected_close').find('input');
+            expect(input.attributes('type')).toBe('date');
+            expect(input.element.value).toBe('2027-03-01');
+
+            await input.setValue('2027-04-02');
+            await row(wrapper, 'expected_close').find('form').trigger('submit');
+            await flushPromises();
+
+            expect(sentBody(fetchMock)).toEqual({ field: 'expected_close', value: '2027-04-02', expected: '2027-03-01' });
+            expect(row(wrapper, 'expected_close').find('.property__value').text()).toBe('02.04.2027');
+            wrapper.unmount();
+        });
+
+        it('refuses a half-typed date, which reads as empty, and keeps the stored one', async () => {
+            const fetchMock = vi.fn().mockResolvedValue(json({ value: '2027-04-02', display: '02.04.2027', draft: null }));
+            vi.stubGlobal('fetch', fetchMock);
+            const wrapper = dealIsland([close]);
+
+            await row(wrapper, 'expected_close').find('.property__edit').trigger('click');
+            await flushPromises();
+            const input = row(wrapper, 'expected_close').find('input');
+            await input.setValue('');
+            // jsdom keeps no half-typed date, so this is what Chromium reports for a date with one segment cleared.
+            Object.defineProperty(input.element, 'validity', { configurable: true, value: { badInput: true } });
+            await row(wrapper, 'expected_close').find('form').trigger('submit');
+            await flushPromises();
+
+            expect(fetchMock).not.toHaveBeenCalled();
+            expect(row(wrapper, 'expected_close').find('.field__error').text()).toBe(labels.badDate);
+            expect(input.attributes('aria-invalid')).toBe('true');
+
+            delete input.element.validity;
+            await input.setValue('2027-04-02');
+            await row(wrapper, 'expected_close').find('form').trigger('submit');
+            await flushPromises();
+
+            expect(sentBody(fetchMock)).toEqual({ field: 'expected_close', value: '2027-04-02', expected: '2027-03-01' });
+            expect(row(wrapper, 'expected_close').find('.field__error').exists()).toBe(false);
+            wrapper.unmount();
+        });
+
+        it('still empties a date on purpose', async () => {
+            const fetchMock = vi.fn().mockResolvedValue(json({ value: null, display: null, draft: null }));
+            vi.stubGlobal('fetch', fetchMock);
+            const wrapper = dealIsland([close]);
+
+            await row(wrapper, 'expected_close').find('.property__edit').trigger('click');
+            await flushPromises();
+            await row(wrapper, 'expected_close').find('input').setValue('');
+            await row(wrapper, 'expected_close').find('form').trigger('submit');
+            await flushPromises();
+
+            expect(sentBody(fetchMock)).toEqual({ field: 'expected_close', value: '', expected: '2027-03-01' });
+            expect(row(wrapper, 'expected_close').find('.property__value').text()).toBe(labels.empty);
+            wrapper.unmount();
+        });
+
+        it('empties an amount without a stale edit text', async () => {
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ value: null, display: null, draft: null })));
+            const wrapper = dealIsland([amount]);
+
+            await row(wrapper, 'amount').find('.property__edit').trigger('click');
+            await flushPromises();
+            await row(wrapper, 'amount').find('input').setValue('');
+            await row(wrapper, 'amount').find('form').trigger('submit');
+            await flushPromises();
+
+            expect(row(wrapper, 'amount').find('.property__value').text()).toBe(labels.empty);
+            await row(wrapper, 'amount').find('.property__edit').trigger('click');
+            await flushPromises();
+            expect(row(wrapper, 'amount').find('input').element.value).toBe('');
+            wrapper.unmount();
+        });
+    });
+
+    it('shows a read-only field without an edit button', () => {
+        const wrapper = mount(RecordPropertiesIsland, {
+            props: {
+                url: '/admin/api/crm/companies/c1',
+                fields: [{ name: 'stage', label: 'Phase', type: 'select', value: 'customer', display: 'Kunde (aus Deals)', readonly: true, options: [] }],
+                labels,
+            },
+        });
+
+        expect(row(wrapper, 'stage').find('.property__edit').exists()).toBe(false);
+        expect(row(wrapper, 'stage').find('.property__value').text()).toBe('Kunde (aus Deals)');
     });
 });

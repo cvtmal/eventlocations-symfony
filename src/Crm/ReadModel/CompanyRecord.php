@@ -10,7 +10,8 @@ use App\Crm\ValueObject\Initials;
 
 /**
  * A company record page (CRM-1, CRM-3): the properties in canonical form (ids for the owner, codes for
- * the stage), the owner's name for display, and the Locations and Kontakte cards.
+ * the stage), the owner's name for display, and the Locations and Kontakte cards. `stageDerived` says the
+ * company has a won deal, so its stage comes from the deals (#28's D9).
  */
 final readonly class CompanyRecord
 {
@@ -34,6 +35,7 @@ final readonly class CompanyRecord
         public \DateTimeImmutable $createdAt,
         public array $venues,
         public array $contacts,
+        public bool $stageDerived,
     ) {
     }
 

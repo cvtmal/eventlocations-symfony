@@ -1,0 +1,5 @@
+{#- The head of a company's left card, on the record and on its tabs. Include with `with_context = false`: company. -#}
+{{ include('admin/components/_avatar.html.twig', {initials: company.initials, size: 56, square: true}, with_context = false) }}
+<h1 id="record-title" data-crm-follow="name">{{ company.name }}</h1>
+<a class="crm-record__website" data-crm-follow="website" href="{{ company.website }}"{% if not company.website %} hidden{% endif %} target="_blank" rel="noopener">{{ company.website }}</a>
+<span class="pill pill--{{ crm_tone(company.stage) }}" data-crm-follow="stage" data-crm-tones="{{ crm_tones('stage')|json_encode }}">{{ company.stage|trans }}</span>

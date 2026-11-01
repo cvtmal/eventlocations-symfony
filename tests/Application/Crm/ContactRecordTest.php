@@ -12,9 +12,11 @@ use App\Crm\ValueObject\ContactKind;
 use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
@@ -120,14 +122,32 @@ final class ContactRecordTest extends WebTestCase
         self::assertCount(4, $crawler->filter('.crm-record__card [data-composer-tab]'));
     }
 
-    public function test_the_page_runs_four_queries(): void
+    public function test_the_deals_card_shows_the_deals_the_contact_is_on(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        $contact = ContactFactory::createOne(['company' => $company]);
+        $deal = DealFactory::createOne(['name' => 'Premium 2027', 'company' => $company]);
+        DealFactory::createOne(['name' => 'Anderer Deal', 'company' => $company]);
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
+        self::assertInstanceOf(Connection::class, $connection);
+        $connection->insert('crm_deal_contacts', ['deal_id' => $deal->id(), 'contact_id' => $contact->id()]);
+
+        $crawler = $this->client->request('GET', '/admin/crm/kontakte/'.$contact->id());
+
+        self::assertSame('Deals (1)', $crawler->filter('#deals h2')->text());
+        self::assertSame('Premium 2027', $crawler->filter('#deals .crm-side__link')->text());
+        self::assertCount(0, $crawler->filter('#deals .card__head a'));
+    }
+
+    public function test_the_page_runs_five_queries(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         $contact = ContactFactory::createOne(['company' => CompanyFactory::createOne(), 'owner' => $owner]);
         TaskFactory::createOne(['contact' => $contact]);
 
         // The contact with its company and owner, the owners, which carry the sidebar's badge (`TaskBadge`), the
-        // timeline's activities, the Aufgaben card; with the user's refresh 5 in production (P12 ceiling 8).
-        self::assertSame(4, $this->queriesOf('/admin/crm/kontakte/'.$contact->id()));
+        // timeline's activities, the Aufgaben card, the Deals card; with the user's refresh 6 in production (N14's ceiling 9).
+        self::assertSame(5, $this->queriesOf('/admin/crm/kontakte/'.$contact->id()));
     }
 }

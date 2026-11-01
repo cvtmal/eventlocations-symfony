@@ -6,10 +6,12 @@ namespace App\Crm\CommandHandler;
 
 use App\Crm\Command\ChangeCompanyProperty;
 use App\Crm\Entity\Company;
+use App\Crm\Exception\CompanyStageDerived;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\StaleProperty;
 use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
+use App\Crm\Repository\DealRepository;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\PropertyValue;
@@ -19,13 +21,15 @@ use App\Shared\Messenger\CommandHandlerInterface;
  * One inline edit (D10, D11), under the row lock: the new value equal to the stored one is a
  * no-op, an `expected` that differs from the stored one is StaleProperty, else the entity applies
  * it. Returns the canonical stored value, the next `expected` of the island. The API compares
- * first (P1), so a no-op normally never reaches this handler and leaves no audit row.
+ * first (P1), so a no-op normally never reaches this handler and leaves no audit row. A company
+ * with a won deal takes its stage from the deals (#28's D9), so that field is refused here.
  */
 final class ChangeCompanyPropertyHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly CompanyRepository $companies,
         private readonly OwnerResolver $owners,
+        private readonly DealRepository $deals,
     ) {
     }
 
@@ -39,6 +43,9 @@ final class ChangeCompanyPropertyHandler implements CommandHandlerInterface
 
         if ($value === $current) {
             return $current;
+        }
+        if (CompanyProperty::Stage === $property && $this->deals->hasWonDeal($company->id())) {
+            throw CompanyStageDerived::forCompany($company->id());
         }
         if (PropertyValue::canonical($command->expected, $isEmail) !== $current) {
             throw StaleProperty::forField($property->value);

@@ -13,6 +13,7 @@ use App\Crm\Exception\TaskNotFound;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
@@ -140,6 +141,8 @@ final class TaskListTest extends WebTestCase
         $contact = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier']);
         TaskFactory::createOne(['title' => 'A', 'assignee' => $me, 'company' => $company]);
         TaskFactory::createOne(['title' => 'B', 'assignee' => $me, 'contact' => $contact]);
+        $deal = DealFactory::createOne(['company' => CompanyFactory::createOne(['name' => 'Seehotel Bellerive'])]);
+        TaskFactory::createOne(['title' => 'C', 'assignee' => $me, 'deal' => $deal]);
 
         $details = $this->client->request('GET', self::LIST)->filter('#task-list .crm-list__detail');
 
@@ -147,6 +150,8 @@ final class TaskListTest extends WebTestCase
         self::assertSame('/admin/crm/firmen/'.$company->id(), $details->eq(0)->filter('a')->attr('href'));
         self::assertSame('Kontakt · Laura Meier', $details->eq(1)->text());
         self::assertSame('/admin/crm/kontakte/'.$contact->id(), $details->eq(1)->filter('a')->attr('href'));
+        self::assertSame('Deal · Seehotel Bellerive', $details->eq(2)->text());
+        self::assertSame('/admin/crm/deals/'.$deal->id(), $details->eq(2)->filter('a')->attr('href'));
     }
 
     /**

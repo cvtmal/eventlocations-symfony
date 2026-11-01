@@ -10,6 +10,7 @@ use App\Crm\ReadModel\VenueCompanyTask;
 use App\Crm\ValueObject\CompanyStage;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\RollsBackDatabase;
@@ -56,6 +57,8 @@ final class VenueCompanyQueryTest extends KernelTestCase
         $contact = ContactFactory::createOne(['company' => $company]);
         TaskFactory::createOne(['title' => 'Später', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-11-05')]);
         TaskFactory::createOne(['title' => 'Früher', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
+        TaskFactory::createOne(['title' => 'Verlängerung', 'deal' => DealFactory::createOne(['company' => $company]), 'dueOn' => new \DateTimeImmutable('2026-11-03')]);
+        TaskFactory::createOne(['title' => 'Fremder Deal', 'deal' => DealFactory::createOne()]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'company' => $company]);
         TaskFactory::createOne(['title' => 'Fremd', 'company' => CompanyFactory::createOne()]);
 
@@ -67,7 +70,7 @@ final class VenueCompanyQueryTest extends KernelTestCase
 
         self::assertCount(1, $holder->getData()['default'] ?? []);
         self::assertNotNull($found);
-        self::assertSame([['Früher', '2026-11-01'], ['Später', '2026-11-05']], array_map(static fn (VenueCompanyTask $task): array => [$task->title, $task->dueOn], $found->tasks));
+        self::assertSame([['Früher', '2026-11-01'], ['Verlängerung', '2026-11-03'], ['Später', '2026-11-05']], array_map(static fn (VenueCompanyTask $task): array => [$task->title, $task->dueOn], $found->tasks));
     }
 
     public function test_a_venue_without_a_company_gives_only_its_id(): void

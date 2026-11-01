@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Crm;
 use App\Crm\Form\PropertyConstraints;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\ContactProperty;
+use App\Crm\ValueObject\DealProperty;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Constraints\Sequentially;
@@ -51,6 +52,31 @@ final class PropertyConstraintsTest extends TestCase
         yield 'owner' => [ContactProperty::Owner, null, 'not-a-uuid'];
     }
 
+    /**
+     * @return iterable<string, array{DealProperty, ?string, ?string}>
+     */
+    public static function dealCases(): iterable
+    {
+        yield 'name' => [DealProperty::Name, 'Premium 2027', null];
+        yield 'venue' => [DealProperty::Venue, self::UUID, '42'];
+        yield 'tier' => [DealProperty::Tier, 'premium', 'gold'];
+        yield 'no tier' => [DealProperty::Tier, null, ''];
+        yield 'amount' => [DealProperty::Amount, "1'250.50", '12.345'];
+        yield 'no amount' => [DealProperty::Amount, null, 'viel'];
+        yield 'top amount' => [DealProperty::Amount, "99'999'999.99", '100000000'];
+        yield 'contract_start' => [DealProperty::ContractStart, '2027-01-01', '2027-02-30'];
+        yield 'contract_end' => [DealProperty::ContractEnd, null, '1.3.2027'];
+        yield 'expected_close' => [DealProperty::ExpectedClose, '2027-03-01', '20270301'];
+        yield 'owner' => [DealProperty::Owner, null, 'andrea'];
+    }
+
+    #[DataProvider('dealCases')]
+    public function test_a_deal_field_accepts_and_refuses(DealProperty $property, ?string $valid, ?string $invalid): void
+    {
+        self::assertSame(0, $this->violations(PropertyConstraints::deal($property), $valid), $property->value.' accepts');
+        self::assertGreaterThan(0, $this->violations(PropertyConstraints::deal($property), $invalid), $property->value.' refuses');
+    }
+
     #[DataProvider('companyCases')]
     public function test_a_company_field_accepts_and_refuses(CompanyProperty $property, ?string $valid, ?string $invalid): void
     {
@@ -70,6 +96,7 @@ final class PropertyConstraintsTest extends TestCase
         $fields = [
             ...array_map(static fn (CompanyProperty $p): array => PropertyConstraints::company($p), [CompanyProperty::Name, CompanyProperty::LegalName, CompanyProperty::Website, CompanyProperty::Phone, CompanyProperty::Email, CompanyProperty::Address, CompanyProperty::Notes]),
             ...array_map(static fn (ContactProperty $p): array => PropertyConstraints::contact($p), [ContactProperty::FirstName, ContactProperty::LastName, ContactProperty::Email, ContactProperty::Phone, ContactProperty::Position]),
+            ...array_map(static fn (DealProperty $p): array => PropertyConstraints::deal($p), [DealProperty::Name, DealProperty::Amount, DealProperty::ContractStart]),
         ];
 
         foreach ($fields as $index => $constraints) {
@@ -85,6 +112,9 @@ final class PropertyConstraintsTest extends TestCase
         }
         foreach (ContactProperty::cases() as $property) {
             self::assertSame($property->isNullable(), 0 === $this->violations(PropertyConstraints::contact($property), null), $property->value);
+        }
+        foreach (DealProperty::cases() as $property) {
+            self::assertSame($property->isNullable(), 0 === $this->violations(PropertyConstraints::deal($property), null), $property->value);
         }
     }
 

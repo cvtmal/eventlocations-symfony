@@ -9,12 +9,14 @@ use App\Admin\Security\AdminIdentity;
 use App\Crm\Command\DeleteCompany;
 use App\Crm\Command\LinkVenue;
 use App\Crm\Command\UnlinkVenue;
+use App\Crm\Exception\CompanyHasDeals;
 use App\Crm\Exception\CompanyNotFound;
 use App\Crm\Exception\VenueAlreadyLinked;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\Form\LinkVenueData;
 use App\Crm\Form\LinkVenueType;
 use App\Crm\ReadModel\CompanyRecordQuery;
+use App\Crm\ReadModel\DealCardQuery;
 use App\Crm\ReadModel\OwnerOptionsQuery;
 use App\Crm\ReadModel\TaskListQuery;
 use App\Crm\ReadModel\VenueCompanyQuery;
@@ -57,7 +59,7 @@ final class CompanyRecordController extends AbstractController
     }
 
     #[Route('', name: 'admin_crm_companies_show', methods: ['GET'])]
-    public function show(string $id, OwnerOptionsQuery $owners, TimelineProps $timeline, TaskListQuery $tasks, #[CurrentUser] AdminIdentity $user): Response
+    public function show(string $id, OwnerOptionsQuery $owners, TimelineProps $timeline, TaskListQuery $tasks, DealCardQuery $deals, #[CurrentUser] AdminIdentity $user): Response
     {
         $company = $this->companies->find($id) ?? throw $this->createNotFoundException();
         $staff = $owners->all();
@@ -67,6 +69,7 @@ final class CompanyRecordController extends AbstractController
             'owners' => OwnerOptionsQuery::selectable($staff, $company->ownerId),
             'timeline' => $timeline->of(RecordKind::Company, $id, $user->id(), OwnerOptionsQuery::selectable($staff)),
             'tasks' => $tasks->openOf(RecordKind::Company, $id),
+            'deals' => $deals->forCompany($id),
             'link_form' => $this->linkForm($id)->createView(),
             'delete_form' => $this->isGranted('ROLE_ADMIN') ? $this->deleteForm($id)->createView() : null,
             'unlink_token' => self::UNLINK_TOKEN,
@@ -130,6 +133,12 @@ final class CompanyRecordController extends AbstractController
         try {
             $this->commandBus->dispatch(new DeleteCompany($id));
         } catch (HandlerFailedException $failure) {
+            if ([] !== $failure->getWrappedExceptions(CompanyHasDeals::class)) {
+                $this->addFlash('error', CrmFlash::message('record.delete.has_deals'));
+
+                return $this->redirectToRoute('admin_crm_companies_show', ['id' => $id], status: Response::HTTP_SEE_OTHER);
+            }
+
             throw [] !== $failure->getWrappedExceptions(CompanyNotFound::class) ? $this->createNotFoundException() : $failure;
         }
         $this->addFlash('success', CrmFlash::message('record.delete.flash', ['name' => $name]));

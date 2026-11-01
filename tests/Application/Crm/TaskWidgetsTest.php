@@ -8,6 +8,7 @@ use App\Admin\ValueObject\AdminRole;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Tests\Support\Admin\AdminSession;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -49,6 +50,19 @@ final class TaskWidgetsTest extends WebTestCase
             $widget->filter('.crm-list__detail a')->each(static fn (Crawler $link): ?string => $link->attr('href')),
         );
         self::assertCount(1, $widget->filter('.task-widget__row')->last()->filter('.crm-task__text > *'), 'A task on no object has no second line.');
+    }
+
+    public function test_a_task_on_a_deal_names_the_deal_and_its_company(): void
+    {
+        self::mockTime('2026-10-31 10:00:00 UTC');
+        ['user' => $me] = $this->logInAs(AdminRole::Editor);
+        $deal = DealFactory::createOne(['company' => CompanyFactory::createOne(['name' => 'Seehotel Bellerive'])]);
+        TaskFactory::createOne(['title' => 'Verlängerung besprechen', 'assignee' => $me, 'deal' => $deal, 'dueOn' => new \DateTimeImmutable('2026-11-03')]);
+
+        $detail = $this->widget(self::MINE)->filter('.crm-list__detail');
+
+        self::assertSame('Deal · Seehotel Bellerive', $detail->text());
+        self::assertSame('/admin/crm/deals/'.$deal->id(), $detail->filter('a')->attr('href'));
     }
 
     public function test_the_overdue_widget_holds_anyones_tasks_and_names_who_has_them(): void

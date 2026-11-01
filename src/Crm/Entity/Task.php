@@ -11,8 +11,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A to-do of a staff member (S13, CRM-5): a due date, an assignee, done or not, and at most one
- * object (chk_crm_tasks_one_object; none when created from the task list). #28 adds a deal link
- * and replaces that CHECK. A task goes with its company or contact (CASCADE).
+ * object (chk_crm_tasks_one_object; none when created from the task list). A task goes with its
+ * company, contact or deal (CASCADE). `isRenewal` marks the one task `app:crm:renewal-tasks` writes
+ * for a deal (uk_crm_tasks_renewal, which survives completion, so a done task is not created again).
  */
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: 'crm_tasks')]
@@ -20,7 +21,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_crm_tasks_created_by_id', columns: ['created_by_id'])]
 #[ORM\Index(name: 'idx_crm_tasks_company_id', columns: ['company_id'])]
 #[ORM\Index(name: 'idx_crm_tasks_contact_id', columns: ['contact_id'])]
+#[ORM\Index(name: 'idx_crm_tasks_deal_id', columns: ['deal_id'])]
 #[ORM\Index(name: 'idx_crm_tasks_due_on', columns: ['due_on'])]
+#[ORM\UniqueConstraint(name: 'uk_crm_tasks_renewal', columns: ['deal_id'], options: ['where' => 'is_renewal'])]
 class Task
 {
     #[ORM\Id]
@@ -52,6 +55,13 @@ class Task
     #[ORM\JoinColumn(name: 'contact_id', nullable: true, onDelete: 'CASCADE')]
     private ?Contact $contact;
 
+    #[ORM\ManyToOne(targetEntity: Deal::class)]
+    #[ORM\JoinColumn(name: 'deal_id', nullable: true, onDelete: 'CASCADE')]
+    private ?Deal $deal;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isRenewal;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -59,7 +69,7 @@ class Task
     private \DateTimeImmutable $updatedAt;
 
     /**
-     * @throws \LogicException when both a company and a contact are given (the handler decides first)
+     * @throws \LogicException when more than one object is given or a renewal has no deal (the handler decides first)
      */
     public function __construct(
         string $id,
@@ -69,9 +79,14 @@ class Task
         ?AdminUser $createdBy,
         ?Company $company = null,
         ?Contact $contact = null,
+        ?Deal $deal = null,
+        bool $isRenewal = false,
     ) {
-        if (null !== $company && null !== $contact) {
+        if (\count(array_filter([$company, $contact, $deal])) > 1) {
             throw new \LogicException('A task is linked to one object at most.');
+        }
+        if ($isRenewal && null === $deal) {
+            throw new \LogicException('A renewal task is linked to its deal.');
         }
 
         $this->id = $id;
@@ -81,6 +96,8 @@ class Task
         $this->createdBy = $createdBy;
         $this->company = $company;
         $this->contact = $contact;
+        $this->deal = $deal;
+        $this->isRenewal = $isRenewal;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
@@ -140,6 +157,16 @@ class Task
     public function contact(): ?Contact
     {
         return $this->contact;
+    }
+
+    public function deal(): ?Deal
+    {
+        return $this->deal;
+    }
+
+    public function isRenewal(): bool
+    {
+        return $this->isRenewal;
     }
 
     public function updatedAt(): \DateTimeImmutable

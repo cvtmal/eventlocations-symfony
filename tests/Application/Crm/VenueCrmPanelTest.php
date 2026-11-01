@@ -15,6 +15,7 @@ use App\Crm\ReadModel\VenueCompanyQuery;
 use App\Crm\ValueObject\CompanyStage;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
@@ -60,7 +61,7 @@ final class VenueCrmPanelTest extends WebTestCase
         self::assertCount(0, $panel->filter('form'));
     }
 
-    public function test_the_panel_lists_the_open_tasks_of_the_company_and_its_contacts(): void
+    public function test_the_panel_lists_the_open_tasks_of_the_company_its_contacts_and_its_deals(): void
     {
         self::mockTime('2026-10-31 10:00:00 UTC');
         $this->logInAs(AdminRole::Editor);
@@ -69,6 +70,7 @@ final class VenueCrmPanelTest extends WebTestCase
         $contact = ContactFactory::createOne(['company' => $company]);
         TaskFactory::createOne(['title' => 'Vertrag senden', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
         TaskFactory::createOne(['title' => 'Rückruf', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
+        TaskFactory::createOne(['title' => 'Verlängerung', 'deal' => DealFactory::createOne(['company' => $company]), 'dueOn' => new \DateTimeImmutable('2026-11-02')]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'company' => $company]);
         TaskFactory::createOne(['title' => 'Fremd', 'company' => CompanyFactory::createOne()]);
 
@@ -76,8 +78,40 @@ final class VenueCrmPanelTest extends WebTestCase
 
         $panel = $crawler->filter('aside section[aria-labelledby="crm"]');
         self::assertSame('Offene Aufgaben', $panel->filter('.crm-panel__heading')->text());
-        self::assertSame(['Vertrag senden Überfällig', 'Rückruf Heute'], $panel->filter('.crm-panel__task')->each(static fn (Crawler $task): string => $task->text()));
+        self::assertSame(['Vertrag senden Überfällig', 'Rückruf Heute', 'Verlängerung Mo, 2.11.'], $panel->filter('.crm-panel__task')->each(static fn (Crawler $task): string => $task->text()));
         self::assertCount(0, $panel->filter('form'), 'Read-only here: the toggles are on the company page.');
+    }
+
+    public function test_the_panel_shows_the_open_deal_that_closes_soonest(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::withoutPlace();
+        $company = CompanyFactory::new()->withVenues($venue)->create();
+        DealFactory::new()->inStage('offer')->create(['name' => 'Später', 'company' => $company, 'venue' => $venue, 'expectedCloseOn' => new \DateTimeImmutable('2027-06-01')]);
+        $soonest = DealFactory::new()->inStage('negotiation')->create(['name' => 'Verlängerung 2027', 'company' => $company, 'venue' => $venue, 'amountRappen' => 480000, 'expectedCloseOn' => new \DateTimeImmutable('2027-01-15')]);
+        DealFactory::new()->inStage('won')->create(['name' => 'Gewonnen', 'company' => $company, 'venue' => $venue, 'expectedCloseOn' => new \DateTimeImmutable('2026-01-01')]);
+        DealFactory::createOne(['name' => 'Ohne Location', 'company' => $company, 'expectedCloseOn' => new \DateTimeImmutable('2026-01-01')]);
+
+        $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
+
+        $panel = $crawler->filter('aside section[aria-labelledby="crm"]');
+        self::assertSame(['Kontakt', 'Offener Deal', 'Phase', 'Wert'], $panel->filter('dt')->each(static fn (Crawler $term): string => $term->text()));
+        self::assertSame('Verlängerung 2027', $panel->filter('dd a')->text());
+        self::assertSame('/admin/crm/deals/'.$soonest->id(), $panel->filter('dd a')->attr('href'));
+        self::assertSame('Verhandlung', $panel->filter('dd .pill')->text());
+        self::assertSame("CHF 4'800", $panel->filter('dd.crm-panel__amount')->text());
+    }
+
+    public function test_a_venue_without_an_open_deal_shows_no_deal_lines(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::withoutPlace();
+        $company = CompanyFactory::new()->withVenues($venue)->create();
+        DealFactory::new()->inStage('lost')->create(['company' => $company, 'venue' => $venue]);
+
+        $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
+
+        self::assertSame(['Kontakt'], $crawler->filter('aside section[aria-labelledby="crm"] dt')->each(static fn (Crawler $term): string => $term->text()));
     }
 
     public function test_a_company_without_open_tasks_shows_no_heading(): void

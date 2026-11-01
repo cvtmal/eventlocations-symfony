@@ -31,7 +31,7 @@ paths:
 | Flags | `BOOLEAN` |
 | Structured blobs | `JSONB` |
 | Text with a known limit | `VARCHAR(n)` |
-| Money | `INTEGER` in the smallest unit (Rappen/cents) plus a `CHAR(3)` currency |
+| Money | `INTEGER` in the smallest unit (Rappen/cents) plus a `CHAR(3)` currency; the CRM's amounts are the exception (S13): CHF only, so `BIGINT` Rappen with no currency column (`crm_deals.amount_rappen`) |
 
 ## Naming
 

@@ -11,10 +11,12 @@ use App\Crm\ValueObject\ContactKind;
 use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -62,7 +64,7 @@ final class ContactDataExportTest extends WebTestCase
         self::assertStringContainsString('Müller', $content);
         $export = json_decode($content, true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($export);
-        self::assertSame(['contact', 'company', 'activities', 'tasks'], array_keys($export));
+        self::assertSame(['contact', 'company', 'activities', 'tasks', 'deals'], array_keys($export));
         $createdAt = $export['contact']['created_at'];
         self::assertIsString($createdAt);
         self::assertSame([
@@ -103,9 +105,38 @@ final class ContactDataExportTest extends WebTestCase
         self::assertNull($export['company']);
         self::assertSame([], $export['activities']);
         self::assertSame([], $export['tasks']);
+        self::assertSame([], $export['deals']);
     }
 
-    public function test_it_runs_three_statements_and_never_reads_inquiries(): void
+    public function test_it_lists_the_contact_s_deals(): void
+    {
+        $this->logInAs();
+        $company = CompanyFactory::createOne(['name' => 'Seeblick Events']);
+        $contact = ContactFactory::createOne(['company' => $company]);
+        $deal = DealFactory::new()->inStage('offer')->create([
+            'name' => 'Premium 2027',
+            'company' => $company,
+            'contractStartOn' => new \DateTimeImmutable('2027-01-01'),
+            'contractEndOn' => new \DateTimeImmutable('2027-12-31'),
+            'amountRappen' => 125050,
+        ]);
+        DealFactory::createOne(['company' => $company]);
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
+        self::assertInstanceOf(Connection::class, $connection);
+        $connection->insert('crm_deal_contacts', ['deal_id' => $deal->id(), 'contact_id' => $contact->id()]);
+
+        $this->client->request('GET', '/admin/crm/kontakte/'.$contact->id().'/export');
+
+        $export = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($export);
+        self::assertIsArray($export['deals']);
+        self::assertCount(1, $export['deals']);
+        self::assertIsArray($export['deals'][0]);
+        unset($export['deals'][0]['created_at']);
+        self::assertSame(['name' => 'Premium 2027', 'company' => 'Seeblick Events', 'stage' => 'offer', 'contract_start_on' => '2027-01-01', 'contract_end_on' => '2027-12-31'], $export['deals'][0]);
+    }
+
+    public function test_it_runs_four_statements_and_never_reads_inquiries(): void
     {
         $this->logInAs();
         $contact = ContactFactory::createOne();
@@ -117,7 +148,7 @@ final class ContactDataExportTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         $statements = array_column($holder->getData()['default'] ?? [], 'sql');
-        self::assertCount(3, $statements);
+        self::assertCount(4, $statements);
         foreach ($statements as $sql) {
             self::assertStringNotContainsString('inquir', (string) $sql);
         }

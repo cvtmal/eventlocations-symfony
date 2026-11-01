@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Crm\ValueObject;
 
 /**
- * What a timeline entry or a task hangs on: a company or a contact. One enum case per kind of record, so a
- * `match` over it is exhaustive and #28's `deal` case shows up as a PHPStan error at every place that has to
- * learn it: `recordTable()`, `linkTable()`, `linkColumn()`, `taskColumn()`, `LogActivityHandler`, the routes and the island's `kind` prop.
+ * What a timeline entry or a task hangs on: a company, a contact or a deal. One enum case per kind of record, so
+ * a `match` over it is exhaustive and a new case shows up as a PHPStan error at every place that has to learn it:
+ * `recordTable()`, `linkTable()`, `linkColumn()`, `taskColumn()`, the handlers, the routes and the island's `kind` prop.
  */
 enum RecordKind: string
 {
     case Company = 'company';
     case Contact = 'contact';
+    case Deal = 'deal';
 
     /**
      * The table of the record itself.
@@ -22,6 +23,7 @@ enum RecordKind: string
         return match ($this) {
             self::Company => 'crm_companies',
             self::Contact => 'crm_contacts',
+            self::Deal => 'crm_deals',
         };
     }
 
@@ -33,6 +35,7 @@ enum RecordKind: string
         return match ($this) {
             self::Company => 'crm_activity_companies',
             self::Contact => 'crm_activity_contacts',
+            self::Deal => 'crm_activity_deals',
         };
     }
 
@@ -44,6 +47,7 @@ enum RecordKind: string
         return match ($this) {
             self::Company => 'company_id',
             self::Contact => 'contact_id',
+            self::Deal => 'deal_id',
         };
     }
 
@@ -55,6 +59,7 @@ enum RecordKind: string
         return match ($this) {
             self::Company => 'company_id',
             self::Contact => 'contact_id',
+            self::Deal => 'deal_id',
         };
     }
 }

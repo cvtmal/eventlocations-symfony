@@ -8,6 +8,7 @@ use App\Admin\ValueObject\AdminRole;
 use App\Crm\ValueObject\CompanyStage;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -193,6 +194,32 @@ final class PropertyApiTest extends WebTestCase
         $this->patch($this->companyUrl($company->id()), ['field' => 'owner', 'value' => EntityId::generate(), 'expected' => null]);
         self::assertResponseStatusCodeSame(422);
         self::assertSame(['value'], array_keys($this->errors()));
+    }
+
+    public function test_a_won_deal_makes_the_stage_derived(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->create();
+        DealFactory::new()->inStage('won')->create(['company' => $company]);
+
+        $this->patch($this->companyUrl($company->id()), ['field' => 'stage', 'value' => 'prospect', 'expected' => 'customer']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(['value' => ['Die Phase dieser Firma ergibt sich aus ihren gewonnenen Deals.']], $this->errors());
+        self::assertSame('customer', $this->connection->fetchOne('SELECT stage FROM crm_companies WHERE id = ?', [$company->id()]));
+        self::assertSame(0, $this->auditRows('company', $company->id()));
+    }
+
+    public function test_an_open_deal_leaves_the_stage_editable(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Prospect)->create();
+        DealFactory::new()->inStage('offer')->create(['company' => $company]);
+
+        $this->patch($this->companyUrl($company->id()), ['field' => 'stage', 'value' => 'customer', 'expected' => 'prospect']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('customer', $this->connection->fetchOne('SELECT stage FROM crm_companies WHERE id = ?', [$company->id()]));
     }
 
     public function test_an_unknown_field_is_a_422_on_the_field(): void

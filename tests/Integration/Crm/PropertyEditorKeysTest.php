@@ -25,8 +25,12 @@ final class PropertyEditorKeysTest extends KernelTestCase
             self::assertTrue($catalogue->has($key, 'crm'), 'crm: '.$key);
         }
 
-        foreach (['unknown_field', 'required', 'too_long', 'website', 'phone', 'email', 'choice'] as $rule) {
+        foreach (['unknown_field', 'required', 'too_long', 'website', 'phone', 'email', 'choice', 'amount', 'date'] as $rule) {
             self::assertTrue($catalogue->has('crm.property.'.$rule, 'validators'), 'validators: crm.property.'.$rule);
+        }
+
+        foreach (['company', 'stage', 'lost_reason'] as $rule) {
+            self::assertTrue($catalogue->has('crm.deal.'.$rule, 'validators'), 'validators: crm.deal.'.$rule);
         }
     }
 }
