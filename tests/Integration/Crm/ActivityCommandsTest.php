@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Crm;
 use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\DeleteActivity;
 use App\Crm\Command\EditActivity;
+use App\Crm\Command\IngestInquiry;
 use App\Crm\Command\LogActivity;
 use App\Crm\Entity\Activity;
 use App\Crm\Entity\ActivityType;
@@ -22,6 +23,7 @@ use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\InquiryFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -105,7 +107,6 @@ final class ActivityCommandsTest extends KernelTestCase
 
     public function test_a_type_only_the_system_writes_is_refused(): void
     {
-        $this->connection->executeStatement("INSERT INTO crm_activity_types (code, position) VALUES ('".self::INQUIRY."', 99)");
         $author = AdminUserFactory::createOne();
         $company = CompanyFactory::createOne();
         $id = EntityId::generate();
@@ -226,11 +227,22 @@ final class ActivityCommandsTest extends KernelTestCase
 
     public function test_an_entry_of_a_kind_only_the_system_writes_is_read_only_for_its_actor(): void
     {
-        $this->connection->executeStatement("INSERT INTO crm_activity_types (code, position) VALUES ('".self::INQUIRY."', 99)");
         $author = AdminUserFactory::createOne();
         $activity = ActivityFactory::new()->ofType(self::INQUIRY)->create(['actor' => $author]);
 
         $this->failure(new EditActivity($activity->id(), 'Text', new \DateTimeImmutable(self::WHEN), $author->id()), ActivityReadOnly::class);
+    }
+
+    public function test_an_ingested_inquiry_entry_can_be_neither_edited_nor_deleted(): void
+    {
+        $admin = AdminUserFactory::createOne(['role' => AdminRole::Admin]);
+        $this->dispatch(new IngestInquiry(InquiryFactory::createOne()->id()));
+        $id = (string) $this->connection->fetchOne('SELECT activity_id FROM crm_inquiry_links');
+
+        $this->failure(new EditActivity($id, 'Text', new \DateTimeImmutable(self::WHEN), $admin->id()), ActivityReadOnly::class);
+        $this->failure(new DeleteActivity($id, $admin->id()), ActivityReadOnly::class);
+
+        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activities WHERE id = ?', $id));
     }
 
     public function test_a_missing_entry_is_refused(): void
@@ -247,7 +259,6 @@ final class ActivityCommandsTest extends KernelTestCase
      */
     public function test_what_the_timeline_offers_is_what_the_handlers_accept(): void
     {
-        $this->connection->executeStatement("INSERT INTO crm_activity_types (code, position) VALUES ('".self::INQUIRY."', 99)");
         $author = AdminUserFactory::createOne();
         $other = AdminUserFactory::createOne(['role' => AdminRole::Admin]);
         $anonymised = ActivityFactory::createOne(['actor' => $author]);

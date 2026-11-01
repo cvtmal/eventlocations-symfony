@@ -33,6 +33,15 @@
                             title: labels.system[entry.type]|replace({'__venue__': entry.venueName, '__tier__': labels.tiers[entry.tier] ?? ''}),
                             meta: entry.actorName ? entry.actorName ~ ' · ' ~ when : when,
                         }, with_context = false) }}
+                    {%- elseif entry.type == 'inquiry' -%}
+                        {#- `title` is the venue's name. Without JS the timeline is read-only, so no link. -#}
+                        {%- set sentence = entry.inquiryCouple ? labels.inquiryEntry|replace({'__couple__': entry.inquiryCouple, '__venue__': entry.title}) : entry.title -%}
+                        {{ include('admin/components/_timeline_item.html.twig', {
+                            icon: 'history',
+                            title: type_labels[entry.type] ?? entry.type,
+                            meta: when,
+                            body: entry.anonymised ? labels.anonymised : sentence,
+                        }, with_context = false) }}
                     {%- else -%}
                         {%- set type = type_labels[entry.type] ?? entry.type -%}
                         {{ include('admin/components/_timeline_item.html.twig', {

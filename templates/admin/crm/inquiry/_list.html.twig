@@ -1,0 +1,46 @@
+{#
+    The inbox's list. Include with `with_context = false`: tab, list (InquiryInboxPage), detail (?InquiryDetail, the open
+    row). A row links to its page and to the pane, so 390 px lands on what it opened. The pill shows only what needs a
+    look: a venue mail that is not `sent` (N4); the detail shows both mails.
+#}
+<section class="card crm-inbox__list" aria-label="{{ 'inquiry.inbox.list_label'|trans({}, 'crm') }}">
+    {% if list.rows is empty %}
+        {{ include('admin/components/_empty.html.twig', {icon: 'inbox', title: 'inquiry.inbox.empty.title'|trans({}, 'crm'), text: 'inquiry.inbox.empty.text'|trans({}, 'crm')}, with_context = false) }}
+    {% else %}
+        <ul class="crm-inbox__rows">
+            {% for row in list.rows %}
+                {% set new = row.status.value == 'new' %}
+                <li>
+                    <a class="crm-inbox__row" href="{{ path('admin_crm_inquiries_show', {id: row.id, status: tab, page: list.page > 1 ? list.page : null}) }}#anfrage-detail"{% if detail and detail.id == row.id %} aria-current="true"{% endif %}>
+                        <span class="crm-inbox__dot{{ new ? ' crm-inbox__dot--new' }}"{% if new %} role="img" aria-label="{{ row.status|trans }}"{% else %} aria-hidden="true"{% endif %}></span>
+                        <span class="crm-inbox__text">
+                            <span class="crm-inbox__line">
+                                <strong class="crm-inbox__name">{{ row.coupleName }}</strong>
+                                <span class="crm-inbox__date muted">{{ row.receivedAt|swiss_date }}</span>
+                            </span>
+                            <span>{{ row.venueName }}</span>
+                            <span class="crm-inbox__facts-line muted">
+                                {{- 'inquiry.inbox.guests'|trans({count: row.guestCount|swiss_number}, 'crm') -}}
+                                {%- if row.eventDate %} · {{ row.eventDate|swiss_date }}{% endif -%}
+                            </span>
+                            {% if row.venueMail.value != 'sent' %}
+                                <span>{{ include('admin/components/_pill.html.twig', {label: ('inquiry.mail.venue.' ~ row.venueMail.value)|trans({}, 'crm'), tone: crm_tones('mail')[row.venueMail.value]}, with_context = false) }}</span>
+                            {% endif %}
+                        </span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="crm-inbox__foot">
+            {{ include('admin/components/_pagination.html.twig', {
+                page: list.page,
+                last_page: list.lastPage,
+                total: list.total,
+                per_page: list.perPage,
+                label: 'list.pagination.label'|trans({}, 'crm'),
+                previous_label: 'list.pagination.previous'|trans({}, 'crm'),
+                next_label: 'list.pagination.next'|trans({}, 'crm'),
+            }, with_context = false) }}
+        </div>
+    {% endif %}
+</section>

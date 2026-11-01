@@ -23,7 +23,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
     private const TABLES = [
         'crm_companies', 'crm_contacts', 'crm_company_venues', 'crm_activity_types', 'crm_activities',
         'crm_activity_companies', 'crm_activity_contacts', 'crm_tasks', 'crm_deal_stages', 'crm_deals',
-        'crm_deal_contacts', 'crm_activity_deals',
+        'crm_deal_contacts', 'crm_activity_deals', 'crm_inquiry_links',
     ];
 
     private const IDS = [
@@ -37,6 +37,8 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         '{task}' => '019a0000-0000-7000-8000-00000000c501',
         '{deal}' => '019a0000-0000-7000-8000-00000000c601',
         '{deal2}' => '019a0000-0000-7000-8000-00000000c602',
+        '{inquiry}' => '019a0000-0000-7000-8000-00000000c701',
+        '{inquiry2}' => '019a0000-0000-7000-8000-00000000c702',
         '{missing}' => '019a0000-0000-7000-8000-00000000c999',
     ];
 
@@ -54,6 +56,8 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         "INSERT INTO crm_deals (id, name, company_id, stage_code) VALUES ('{deal2}', 'Basic 2027', '{company2}', 'offer')",
         "INSERT INTO crm_deal_contacts (deal_id, contact_id) VALUES ('{deal}', '{contact}')",
         "INSERT INTO crm_activity_deals (activity_id, deal_id) VALUES ('{activity}', '{deal}')",
+        "INSERT INTO inquiries (id, venue_id, venue_number, venue_name, venue_slug, recipient_email, locale, occasion, guest_count, message, first_name, last_name, email, fingerprint) SELECT id, '{venue}'::uuid, 1, 'Crm Testhaus', 'crm-testhaus', 'haus@example.test', 'de', 'wedding', 80, 'Grüezi', 'Anna', 'Muster', 'anna@example.test', repeat('a', 64) FROM (VALUES ('{inquiry}'::uuid), ('{inquiry2}'::uuid)) AS seed (id)",
+        "INSERT INTO crm_inquiry_links (inquiry_id, contact_id, activity_id) VALUES ('{inquiry}', '{contact}', '{activity}')",
     ];
 
     private Connection $connection;
@@ -172,6 +176,12 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'deal link to unknown contact' => ['fk_crm_deal_contacts_contact_id', ["INSERT INTO crm_deal_contacts (deal_id, contact_id) VALUES ('{deal2}', '{missing}')"]];
         yield 'deal link to unknown activity' => ['fk_crm_activity_deals_activity_id', ["INSERT INTO crm_activity_deals (activity_id, deal_id) VALUES ('{missing}', '{deal2}')"]];
         yield 'activity link to unknown deal' => ['fk_crm_activity_deals_deal_id', ["INSERT INTO crm_activity_deals (activity_id, deal_id) VALUES ('{activity}', '{missing}')"]];
+
+        // crm_inquiry_links
+        yield 'unknown inquiry status' => ['chk_crm_inquiry_links_status', ["UPDATE crm_inquiry_links SET status = 'open' WHERE inquiry_id = '{inquiry}'"]];
+        yield 'link to unknown inquiry' => ['fk_crm_inquiry_links_inquiry_id', ["INSERT INTO crm_inquiry_links (inquiry_id) VALUES ('{missing}')"]];
+        yield 'inquiry link to unknown contact' => ['fk_crm_inquiry_links_contact_id', ["INSERT INTO crm_inquiry_links (inquiry_id, contact_id) VALUES ('{inquiry2}', '{missing}')"]];
+        yield 'inquiry link to unknown activity' => ['fk_crm_inquiry_links_activity_id', ["INSERT INTO crm_inquiry_links (inquiry_id, activity_id) VALUES ('{inquiry2}', '{missing}')"]];
     }
 
     /**
@@ -264,7 +274,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         );
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
-        self::assertCount(12, $primaryKeys);
+        self::assertCount(13, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
@@ -276,7 +286,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
     public function test_the_activity_types_are_seeded_in_design_order(): void
     {
         self::assertSame(
-            ['note', 'email_logged', 'call', 'meeting', 'deal_stage_changed'],
+            ['note', 'email_logged', 'call', 'meeting', 'deal_stage_changed', 'inquiry'],
             $this->connection->fetchFirstColumn('SELECT code FROM crm_activity_types ORDER BY position'),
         );
     }

@@ -1,0 +1,34 @@
+{#
+    The dashboard widget "Neue Anfragen" (`Crm\Extension\NewInquiriesWidget`, `Main.dc.html`). rows: list<InquiryInboxRow>.
+    Dates are absolute, as in the inbox.
+#}
+<p class="widget__head-link"><a href="{{ path('admin_crm_inquiries') }}">{{ 'inquiry.widget.all'|trans({}, 'crm') }}</a></p>
+{% if rows is empty %}
+    <p class="card__body muted">{{ 'inquiry.widget.empty'|trans({}, 'crm') }}</p>
+{% else %}
+    <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'inquiry.widget.table_label'|trans({}, 'crm') }}">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'inquiry.widget.couple'|trans({}, 'crm') }}</th>
+                    <th scope="col">{{ 'inquiry.widget.venue'|trans({}, 'crm') }}</th>
+                    <th scope="col">{{ 'inquiry.widget.guests'|trans({}, 'crm') }}</th>
+                    <th scope="col">{{ 'inquiry.widget.status'|trans({}, 'crm') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>
+                            <strong>{{ row.coupleName }}</strong><br>
+                            <span class="crm-list__detail">{{ row.receivedAt|swiss_date }}</span>
+                        </td>
+                        <td>{{ row.venueName }}</td>
+                        <td>{{ row.guestCount|swiss_number }}</td>
+                        <td>{{ include('admin/components/_pill.html.twig', {label: row.status|trans, tone: crm_tones('inquiry')[row.status.value]}, with_context = false) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}

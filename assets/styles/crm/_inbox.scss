@@ -1,0 +1,200 @@
+// The inbox (CRM-9, `Inbox.dc.html`): a list beside a detail pane, stacked by the flex wrap on a phone.
+.crm-inbox {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--a-space-5);
+}
+
+// The kit stacks a subline under the h1; here it stands beside it.
+.crm-inbox__page-title {
+    flex-flow: row wrap;
+    align-items: baseline;
+    gap: var(--a-space-3);
+    font-size: 15px;
+}
+
+.crm-inbox__list {
+    flex: 1 1 340px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.crm-inbox__rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.crm-inbox__row {
+    display: flex;
+    gap: var(--a-space-3);
+    padding: 14px var(--a-space-4);
+    border-bottom: 1px solid var(--a-line-soft);
+    color: var(--a-ink);
+    font-size: 14px;
+    text-decoration: none;
+
+    &:hover {
+        background: var(--a-row-hover);
+        color: var(--a-ink);
+    }
+
+    &[aria-current='true'] {
+        background: var(--a-bg);
+    }
+
+    // The card clips what lies outside it.
+    &:focus-visible {
+        outline-offset: -2px;
+    }
+}
+
+.crm-inbox__dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
+    border-radius: 50%;
+}
+
+.crm-inbox__dot--new {
+    background: var(--a-accent);
+}
+
+.crm-inbox__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.crm-inbox__line {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--a-space-2);
+}
+
+.crm-inbox__name {
+    min-width: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.crm-inbox__date {
+    flex: none;
+    font-size: 12px;
+}
+
+.crm-inbox__facts-line {
+    font-size: 13px;
+}
+
+.crm-inbox__foot {
+    padding: var(--a-space-3) var(--a-space-4);
+    font-size: 13px;
+}
+
+.crm-inbox__detail {
+    display: flex;
+    flex: 999 1 460px;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+    padding: 22px var(--a-space-6);
+}
+
+.crm-inbox__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--a-space-3);
+}
+
+.crm-inbox__title {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-1);
+    min-width: 0;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+
+    h2 {
+        font-size: 22px;
+        line-height: 28px;
+    }
+}
+
+.crm-inbox__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-2);
+}
+
+.crm-inbox__facts {
+    display: grid;
+    margin: 0;
+    font-size: 14px;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 10px var(--a-space-4);
+
+    dt {
+        color: var(--a-muted);
+    }
+
+    dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+}
+
+.crm-inbox__block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-2);
+
+    h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+    }
+}
+
+.crm-inbox__message {
+    margin: 0;
+    padding: 14px var(--a-space-4);
+    border-radius: var(--a-r-tile);
+    background: var(--a-bg);
+    font-size: 15px;
+    line-height: 23px;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+.crm-inbox__mails {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-2);
+}
+
+.crm-inbox__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding-top: var(--a-space-4);
+    border-top: 1px solid var(--a-line-soft);
+    font-size: 14px;
+}
+
+.crm-inbox__select {
+    width: auto;
+}
+
+.crm-inbox__retention {
+    flex: 1 1 200px;
+    font-size: 13px;
+}

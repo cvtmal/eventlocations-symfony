@@ -9,7 +9,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * The data of a contact export (CRM-11, D17), four statements: the contact with its company's name,
- * its timeline, its tasks, its deals. Only CRM tables: #14's inquiries are #29's to add. Null for an unknown id.
+ * its timeline, its tasks, its deals. Only CRM tables: inquiries stay out (owner's rule, #29). Null for an unknown id.
  */
 final class ContactExportQuery
 {

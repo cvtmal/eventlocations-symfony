@@ -69,6 +69,7 @@ nav:
     companies: Firmen
     contacts: Kontakte
     deals: Deals
+    inquiries: Anfragen
     tasks: Aufgaben
 
 search:
@@ -416,12 +417,14 @@ activity:
         call: Anruf
         meeting: Meeting
         deal_stage_changed: Deal-Phase
+        inquiry: Anfrage
     tab:
         note: Notizen
         email_logged: E-Mails
         call: Anrufe
         meeting: Meetings
         deal_stage_changed: Deal-Phasen
+        inquiry: Anfragen
     compose:
         note:
             placeholder: Notiz schreiben …
@@ -472,6 +475,9 @@ timeline:
         delete_text: Der Eintrag wird endgültig gelöscht.
         delete_confirm: Löschen
         deleted: Eintrag gelöscht.
+    inquiry:
+        entry: 'von {couple} für {venue}'
+        open: Anfrage öffnen
     close: Schliessen
     reload: Seite neu laden
     session_gone: Sitzung abgelaufen. Bitte die Seite neu laden.
@@ -539,6 +545,63 @@ task:
         done: Aufgabe erledigt.
         reopened: Aufgabe wieder geöffnet.
         gone: Diese Aufgabe gibt es nicht mehr.
+inquiry:
+    status:
+        new: Neu
+        seen: Gesehen
+        done: Erledigt
+    widget:
+        title: Neue Anfragen
+        table_label: Neue Anfragen, Tabelle
+        all: Alle ansehen
+        couple: Paar
+        venue: Location
+        guests: Gäste
+        status: Status
+        empty: Noch keine Anfragen.
+    inbox:
+        title: Anfragen
+        subline: Die Paare schreiben direkt an die Location; hier ist die Kopie fürs CRM.
+        tabs_label: Status
+        tab_all: Alle
+        list_label: Liste
+        guests: '{count} Gäste'
+        empty:
+            title: Keine Anfragen
+            text: Bei diesem Status liegt keine Anfrage.
+    detail:
+        label: Anfrage
+        for: Anfrage für
+        open_contact: Kontakt öffnen
+        mark_done: Als erledigt markieren
+        occasion: Anlass
+        guests: Anzahl Gäste
+        event_date: Wunschtermin
+        email: E-Mail
+        phone: Telefon
+        message: Nachricht
+        delivery: Zustellung
+        resend: Erneut senden
+        status: Status
+        save: Speichern
+        retention: Wird nach 12 Monaten ohne Aktivität gelöscht (Datenschutz).
+    mail:
+        venue:
+            pending: Zustellung an die Location ausstehend
+            sent: An die Location zugestellt
+            failed: Zustellung an die Location fehlgeschlagen
+            skipped: Nicht an die Location gesendet
+        guest:
+            pending: Bestätigung ans Paar ausstehend
+            sent: Bestätigung ans Paar zugestellt
+            failed: Bestätigung ans Paar fehlgeschlagen
+            skipped: Bestätigung ans Paar nicht gesendet
+    flash:
+        status_changed: Status gespeichert.
+        gone: Diese Anfrage gibt es nicht mehr.
+        resent: Die Anfrage ist an die Location gesendet.
+        resend_failed: Die Anfrage konnte nicht gesendet werden. Bitte später nochmals versuchen.
+        already_sent: Die Anfrage ist bereits an die Location zugestellt.
 renewal:
     widget:
         title: Verlängerungen

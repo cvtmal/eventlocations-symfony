@@ -9,14 +9,15 @@ use Doctrine\DBAL\Connection;
 /**
  * The staff accounts for the owner selects (one statement). Deactivated accounts are listed too: a
  * filter must find what they still own, and an inline select must show a deactivated current owner;
- * `selectable()` keeps only what a new choice may be. The statement also carries the sidebar's `TaskBadge`, because
- * every page with an owner select renders the sidebar right after it.
+ * `selectable()` keeps only what a new choice may be. The statement also carries the sidebar's `TaskBadge` and
+ * `InquiryBadge`, because every page with an owner select renders the sidebar right after it.
  */
 final class OwnerOptionsQuery
 {
     public function __construct(
         private readonly Connection $connection,
         private readonly TaskBadge $badge,
+        private readonly InquiryBadge $inquiryBadge,
     ) {
     }
 
@@ -27,12 +28,16 @@ final class OwnerOptionsQuery
     {
         [$dueTasks, $parameters] = $this->badge->column();
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT id, display_name, is_active, '.$dueTasks.' AS due_tasks FROM admin_users ORDER BY lower(display_name), id',
+            'SELECT id, display_name, is_active, '.$dueTasks.' AS due_tasks, '.$this->inquiryBadge->column().' AS new_inquiries'
+            .' FROM admin_users ORDER BY lower(display_name), id',
             $parameters,
         );
 
         $dueCount = $rows[0]['due_tasks'] ?? null;
         $this->badge->remember(null === $dueCount ? null : (int) $dueCount);
+        if ([] !== $rows) {
+            $this->inquiryBadge->remember((int) $rows[0]['new_inquiries']);
+        }
 
         return array_map(
             static fn (array $row): OwnerOption => new OwnerOption((string) $row['id'], (string) $row['display_name'], (bool) $row['is_active']),

@@ -357,7 +357,7 @@ Enter the three lines of `deploy/crontab.txt` in the panel's Cronjob Manager. Al
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, stuck-inquiry report, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, couple purge, inquiry backfill, stuck-inquiry report, cache pool prune, staging, session and limiter-lock sweeps |
 
 The two cache jobs share a lock, `var/cache-clear.lock`. The midnight clear waits up to 60 s for it,
 and the guard skips a tick when it is held.
@@ -372,14 +372,11 @@ prints nothing, so every mail is worth reading.
 |---|---|---|
 | `cron-daily: inquiries-purge failed`, or `pool-prune` | The retention promise in the privacy text is at risk. Often Neon was unreachable. | Run `sh bin/cron-daily` in the app directory. If it fails again, read the error in the mail. |
 | `cron-daily: staging-sweep failed`, `sessions-sweep`, or `lock-sweep` | The sweep could not delete. `bin/cron-daily` creates its three directories itself, so a missing directory is not the cause. | Read the step's own output in the mail, fix that, and run `sh bin/cron-daily` in the app directory |
+| `cron-daily: crm-purge failed`, or `crm-backfill`, with lines `<id>: <class>` | One couple could not be erased, or one inquiry could not be ingested. The line names the class only. | Nothing at first: the next night retries it. If the same id comes back, read the class and check that row. A `crm-backfill` line with a count only (`1 inquiries ingested, 0 failed.`) and no "failed" line is a repaired inquiry, not an error. |
 | `<id> venue <n> since <time> UTC` | An inquiry stayed `pending`: its process died, and the venue may have no mail | See below |
 | `cron-midnight: the cache lock stayed busy for 60 s` | A guard run held the lock | If the next night is clean, nothing. A lock older than 10 minutes is taken over by itself. |
 
-**A stuck inquiry.** The mail's hint names a back-office resend and `DeliverInquiry`, but neither
-is available yet: the resend button belongs to #29, and no console command dispatches that message.
-Until then, find the row by its id in Neon's SQL editor, check with the venue, and forward the
-inquiry by hand from `hallo@hochzeitslocation.ch`. The row stays `pending`, so the report repeats it
-every night.
+**A stuck inquiry.** Open `/admin/crm/anfragen/<id>` and press Erneut senden.
 
 ## Mail
 

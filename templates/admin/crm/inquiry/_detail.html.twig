@@ -1,0 +1,75 @@
+{#
+    One inquiry in full. Include with `with_context = false`: detail (InquiryDetail), return_to (a path under `/admin/`).
+    A venue that is gone stays as a name, an erased couple's contact has no link. The forms post to
+    `InquiryStatusController`, the resend form under the pills to `InquiryResendController`.
+#}
+<article class="card crm-inbox__detail" id="anfrage-detail" aria-label="{{ 'inquiry.detail.label'|trans({}, 'crm') }}">
+    <div class="crm-inbox__head">
+        <div class="crm-inbox__title">
+            <h2>{{ detail.coupleName }}</h2>
+            <span class="muted">
+                {{- 'inquiry.detail.for'|trans({}, 'crm') }}
+                {% if detail.venueId %}<a href="{{ path('admin_locations_edit', {number: detail.venueNumber}) }}">{{ detail.venueName }}</a>{% else %}{{ detail.venueName }}{% endif %} · {{ detail.receivedAt|swiss_date -}}
+            </span>
+        </div>
+        <div class="crm-inbox__actions">
+            {% if detail.contactId %}
+                {{ include('admin/components/_button.html.twig', {label: 'inquiry.detail.open_contact'|trans({}, 'crm'), href: path('admin_crm_contacts_show', {id: detail.contactId})}, with_context = false) }}
+            {% endif %}
+            {% if detail.status.value != 'done' %}
+                <form method="post" action="{{ path('admin_crm_inquiries_status', {id: detail.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                    <input type="hidden" name="status" value="done">
+                    <input type="hidden" name="return_to" value="{{ return_to }}">
+                    {{ include('admin/components/_button.html.twig', {label: 'inquiry.detail.mark_done'|trans({}, 'crm'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <dl class="crm-inbox__facts">
+        <dt>{{ 'inquiry.detail.occasion'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.occasion|trans }}</dd>
+        <dt>{{ 'inquiry.detail.guests'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.guestCount|swiss_number }}</dd>
+        <dt>{{ 'inquiry.detail.event_date'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.eventDate ? detail.eventDate|swiss_date : '–' }}</dd>
+        <dt>{{ 'inquiry.detail.email'|trans({}, 'crm') }}</dt>
+        <dd><a href="mailto:{{ detail.email }}">{{ detail.email }}</a></dd>
+        <dt>{{ 'inquiry.detail.phone'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.phone ?? '–' }}</dd>
+    </dl>
+
+    <div class="crm-inbox__block">
+        <h3>{{ 'inquiry.detail.message'|trans({}, 'crm') }}</h3>
+        <p class="crm-inbox__message">{{ detail.message }}</p>
+    </div>
+
+    <div class="crm-inbox__block">
+        <h3>{{ 'inquiry.detail.delivery'|trans({}, 'crm') }}</h3>
+        <div class="crm-inbox__mails">
+            {{ include('admin/components/_pill.html.twig', {label: ('inquiry.mail.venue.' ~ detail.venueMail.value)|trans({}, 'crm'), tone: crm_tones('mail')[detail.venueMail.value]}, with_context = false) }}
+            {{ include('admin/components/_pill.html.twig', {label: ('inquiry.mail.guest.' ~ detail.guestMail.value)|trans({}, 'crm'), tone: crm_tones('mail')[detail.guestMail.value]}, with_context = false) }}
+        </div>
+        {% if detail.venueMail.value in ['failed', 'pending'] %}
+            <form method="post" action="{{ path('admin_crm_inquiries_resend', {id: detail.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                <input type="hidden" name="return_to" value="{{ return_to }}">
+                {{ include('admin/components/_button.html.twig', {label: 'inquiry.detail.resend'|trans({}, 'crm'), type: 'submit'}, with_context = false) }}
+            </form>
+        {% endif %}
+    </div>
+
+    <form class="crm-inbox__status" method="post" action="{{ path('admin_crm_inquiries_status', {id: detail.id}) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+        <input type="hidden" name="return_to" value="{{ return_to }}">
+        <label class="muted" for="inquiry-status">{{ 'inquiry.detail.status'|trans({}, 'crm') }}</label>
+        <select class="field__input crm-inbox__select" id="inquiry-status" name="status">
+            {% for value in crm_tones('inquiry')|keys %}
+                <option value="{{ value }}"{% if value == detail.status.value %} selected{% endif %}>{{ ('inquiry.status.' ~ value)|trans({}, 'crm') }}</option>
+            {% endfor %}
+        </select>
+        {{ include('admin/components/_button.html.twig', {label: 'inquiry.detail.save'|trans({}, 'crm'), type: 'submit'}, with_context = false) }}
+        <span class="crm-inbox__retention muted">{{ 'inquiry.detail.retention'|trans({}, 'crm') }}</span>
+    </form>
+</article>

@@ -19,6 +19,8 @@ final readonly class PillToneExtension
         'stage' => ['prospect' => 'blue', 'customer' => 'green', 'former_customer' => 'grey'],
         'kind' => ['venue_contact' => 'blue', 'couple' => 'pink', 'other' => 'grey'],
         'deal' => ['contacted' => 'blue', 'offer' => 'amber', 'negotiation' => 'pink', 'won' => 'green', 'lost' => 'red'],
+        'inquiry' => ['new' => 'pink', 'seen' => 'blue', 'done' => 'green'],
+        'mail' => ['sent' => 'green', 'failed' => 'red', 'pending' => 'amber', 'skipped' => 'grey'],
     ];
 
     #[AsTwigFunction('crm_tone')]
