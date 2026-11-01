@@ -1,0 +1,67 @@
+#!/bin/sh
+# Warms the public pages after a deploy or an import (#20): reads the sitemaps and requests the
+# listing, then every page once, one at a time, so a cold Neon and the host see a gentle crawl.
+#
+#   sh bin/warm-cache
+#   DEPLOY_SITE_URL=https://staging.example sh bin/warm-cache
+#
+# By hand only, never from cron: the 00:05 clear plus the wake-ups would cost more than they save.
+# Prints counts only and exits 1 if any page failed.
+set -eu
+
+SITE="${DEPLOY_SITE_URL:-https://hochzeitslocation.ch}"
+MAX_TIME="${WARM_MAX_TIME:-20}"
+PAUSE="${WARM_PAUSE:-0.2}"
+
+say() { printf '%s\n' "warm-cache: $*"; }
+die() { printf '%s\n' "warm-cache: $*" >&2; exit 1; }
+
+# Every <loc> of a sitemap on stdin. No XML tools on the host. Splitting at "<" keeps a single-line
+# file working, and image:loc does not match, because only the pages are worth warming.
+locs() {
+    tr '<' '\n' | sed -n 's/^loc>[[:space:]]*//p' | sed 's/[[:space:]]*$//; s/&amp;/\&/g'
+}
+
+fetch() { # fetch <url> <file>
+    curl -fsS --max-time "$MAX_TIME" -o "$2" "$1"
+}
+
+collect() { # collect <work dir>: writes <work dir>/urls, listing first, each URL once
+    fetch "$SITE/sitemap.xml" "$1/index.xml" || die "cannot read the sitemap index"
+    locs < "$1/index.xml" > "$1/children"
+    [ -s "$1/children" ] || die "the sitemap index lists no sitemap"
+
+    : > "$1/pages"
+    while IFS= read -r child; do
+        fetch "$child" "$1/child.xml" || die "cannot read a child sitemap"
+        locs < "$1/child.xml" >> "$1/pages"
+    done < "$1/children"
+
+    listing="$SITE/hochzeitslocations"
+    printf '%s\n' "$listing" > "$1/urls"
+    awk -v listing="$listing" '$0 != listing && !seen[$0]++' "$1/pages" >> "$1/urls"
+}
+
+warm() { # warm <file of urls>
+    warmed=0
+    failed=0
+    while IFS= read -r url; do
+        if curl -fsS -o /dev/null --max-time "$MAX_TIME" "$url" 2>/dev/null; then
+            warmed=$((warmed + 1))
+        else
+            failed=$((failed + 1))
+        fi
+        sleep "$PAUSE" # FreeBSD's and GNU's sleep both take a fraction.
+    done < "$1"
+    say "$warmed warmed, $failed failed"
+    [ "$failed" -eq 0 ]
+}
+
+main() {
+    work="$(mktemp -d)"
+    trap 'rm -rf "$work"' EXIT
+    collect "$work"
+    warm "$work/urls"
+}
+
+main "$@"

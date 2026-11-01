@@ -124,6 +124,21 @@ admin-test: ## Run the Vitest suite
 admin-lint: ## Run ESLint on admin-ui/
 	$(NODE) npm run lint
 
+## —— Release and deploy ——
+.PHONY: release-check deploy-test workflow-lint
+ACTIONLINT_IMAGE := rhysd/actionlint:1.7.12
+
+release-check: ## Build the release tarball and boot it with APP_ENV=prod (CI job "release")
+	sh bin/build-release
+	sh tests/Deploy/release-check.sh
+
+deploy-test: ## Run the deploy, cron and import scripts against a throwaway tree, and the .htaccess against Apache
+	docker compose exec -T php sh tests/Deploy/run.sh
+	sh tests/Deploy/htaccess-check.sh
+
+workflow-lint: ## actionlint on .github/workflows
+	docker run --rm -v "$(CURDIR):/repo" -w /repo $(ACTIONLINT_IMAGE)
+
 ## —— Quality tooling (UI) ——
 .PHONY: lighthouse validate-html
 # URL is a path on this lane's app, e.g. URL=/_styleguide. _profile=0 keeps the dev toolbar (inline scripts) out.

@@ -9,7 +9,7 @@
 parameters:
     # Originals (S9): MEDIA_ROOT; generated variants and published PDFs: public/media/<venue-number>/.
     app.media_root: '%env(resolve:MEDIA_ROOT)%'
-    app.media_public_dir: '%kernel.project_dir%/public/media'
+    app.media_public_dir: '%env(resolve:MEDIA_PUBLIC_DIR)%'
     # Limits of a CMS photo upload (#25): the pixel cap (Assert\Image maxPixels) and the portrait limit
     # (Cms\ValueObject\PhotoUploadLimits). Reasons: the comments in .env.
     app.media_max_pixels: '%env(int:MEDIA_MAX_PIXELS)%'

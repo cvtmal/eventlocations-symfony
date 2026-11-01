@@ -1,0 +1,24 @@
+#!/bin/sh
+# 00:05 Europe/Zurich: listings and landing pages expire at midnight, so empty the HTTP cache (#20).
+# No database (#19: the command touches only the store). Waits up to a minute for the guard's lock,
+# because this clear must happen; a guard run takes seconds.
+set -eu
+
+PHP="${DEPLOY_PHP:-/usr/local/php85/bin/php}"
+cd "$(dirname "$0")/.." || exit 1
+. bin/cron-lock.sh
+
+main() {
+    mkdir -p var
+    cache_lock_acquire 60 || { echo "cron-midnight: the cache lock stayed busy for 60 s" >&2; exit 1; }
+    trap cache_lock_release EXIT
+    # The command prints a line after every clear and cron mails output, so it shows only on a failure.
+    # Not --quiet and not >/dev/null: its error goes to stdout and cron would see nothing but the exit code.
+    out="$("$PHP" bin/console --no-interaction app:http-cache:clear 2>&1)" || {
+        printf 'cron-midnight: the clear failed\n'
+        [ -z "$out" ] || printf '%s\n' "$out"
+        exit 1
+    }
+}
+
+main "$@"

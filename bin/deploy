@@ -1,0 +1,170 @@
+#!/bin/sh
+# Production deploy for Hostpoint (#20), simple layout: the app lives in ONE directory,
+# ~/www/hochzeitslocation.ch, and a deploy updates it in place. No releases/, no shared/, no
+# `current` symlink, no rollback. To go back: revert on main, then deploy (the workflow has no ref input).
+#
+#   bin/deploy install <40-hex sha>   run from the unpacked tarball (stage), by bin/deploy-gate
+#   bin/deploy purge                  run from the app: empty the HTTP cache
+#   bin/deploy check                  run from the app: env guard, sha, PHP version, free disk
+#
+# What lives in the app directory and survives a deploy (rsync excludes, see PROTECTED below):
+#   .env.local            secrets, written by the owner once, chmod 600
+#   var/                  sessions, cache.app pools, the HTTP cache store, media originals, import staging
+#   public/media/         generated image variants and PDFs
+#   public/.well-known/   whatever Let's Encrypt left there
+# Everything else is replaced by the tarball and anything that is not in it is deleted.
+#
+# Order of an install, and why:
+#   1. check the unpacked files, rsync    a half-built tarball or a missing tool changes nothing
+#   2. app:prod:check-env  (from stage)   a bad .env.local never touches the live tree
+#   3. migrations          (from stage)   migrations are additive, so the old code keeps working
+#                                         until the sync a few seconds later
+#   4. rsync stage -> app                 the only moment the live tree is mixed (seconds)
+#   5. drop var/cache/prod, cache:warmup  the old container must not boot the new code (see below)
+#   6. geo import, HTTP cache clear       the store lives in var/share and outlives the sync
+#
+# Never echoes a secret: it prints names, shas and counts.
+set -eu
+
+APP="${DEPLOY_APP:-$HOME/www/hochzeitslocation.ch}"
+PHP="${DEPLOY_PHP:-/usr/local/php85/bin/php}"
+
+say() { printf '%s\n' "deploy: $*"; }
+die() { printf '%s\n' "deploy: $*" >&2; exit 1; }
+
+# Paths that exist only on the server. Anchored, so a same-named file in the tarball is not hit.
+# rsync excludes also shield these from --delete.
+PROTECTED="/.env.local /var/ /public/media/ /public/.well-known/"
+
+console() { # console <dir> <args...>
+    dir="$1"
+    shift
+    (cd "$dir" && "$PHP" bin/console --no-interaction "$@")
+}
+
+# Exit 0: listed. 1: this build does not have it. 2: the console did not boot, so nothing is known.
+# Its stderr stays unread: a FormatException quotes .env.local, and that excerpt can hold part of a secret.
+has_command() { # has_command <dir> <name>
+    listing="$(console "$1" list --raw 2>/dev/null)" || return 2
+    printf '%s\n' "$listing" | grep -q "^$2 "
+}
+
+verify_stage() {
+    for f in bin/console vendor/autoload_runtime.php public/index.php \
+        public/assets/manifest.json public/admin-build/.vite/manifest.json; do
+        [ -e "$1/$f" ] || die "the tarball lacks $f, nothing was changed"
+    done
+}
+
+require_app() {
+    [ -d "$APP" ] || die "$APP does not exist, nothing was changed"
+    [ -f "$APP/.env.local" ] || die "$APP/.env.local is missing (secrets live there, see deploy/env.local.example), nothing was changed"
+}
+
+no_boot() { # no_boot <dir>
+    printf '%s\n' "deploy: the console in $1 does not boot, often a malformed .env.local; its output is withheld because it can quote a secret, read it over SSH with: cd $APP && $PHP bin/console about" >&2
+}
+
+guard_env() { # runs the release's own guard against the server's real .env.local
+    found=0
+    has_command "$1" app:prod:check-env || found=$?
+    case "$found" in
+        0) ;;
+        1) die "app:prod:check-env is missing in this release, nothing was changed" ;;
+        *)
+            no_boot "$1"
+            die "the env guard could not run, nothing was changed"
+            ;;
+    esac
+    console "$1" app:prod:check-env || die "the env guard refused, nothing was changed"
+}
+
+sync_tree() {
+    from="$1"
+    set --
+    for p in $PROTECTED; do
+        set -- "$@" --exclude="$p"
+    done
+    # -t keeps mtimes so unchanged files are skipped; no -o/-p/-g: the owner is already the deploy user.
+    rsync -rlt --delete "$@" "$from/" "$APP/"
+}
+
+# var/ survives the sync and debug is off, so the kernel would boot the new code on the old compiled
+# container. If that names a class this release dropped, every console command dies, cache:clear
+# itself included, so this has to happen in the shell. Renamed first: a request that finds no
+# container compiles a new one, and a file appearing while rm walks the directory would fail the rm.
+drop_compiled_cache() {
+    rm -rf "$APP/var/cache/prod.old" || return 1
+    [ ! -e "$APP/var/cache/prod" ] || mv "$APP/var/cache/prod" "$APP/var/cache/prod.old" || return 1
+    rm -rf "$APP/var/cache/prod.old"
+}
+
+install_release() {
+    sha="$1"
+    case "$sha" in
+        *[!0-9a-f]* | "") die "install needs a lowercase hex sha" ;;
+    esac
+    [ "${#sha}" -eq 40 ] || die "install needs a 40-character sha"
+
+    stage="$(cd "$(dirname "$0")/.." && pwd)"
+    [ "$stage" != "$APP" ] || die "install must run from the unpacked tarball, not from the app"
+
+    verify_stage "$stage"
+    require_app
+    # Before the migration: after it the database has moved, so this could no longer say "nothing".
+    command -v rsync >/dev/null 2>&1 || die "rsync is not installed, nothing was changed"
+
+    # The stage reads the server's real secrets through a link; the sync excludes it again.
+    ln -sf "$APP/.env.local" "$stage/.env.local"
+    # Read at runtime by the Sentry options (#20); one file per deploy, never in .env.local.
+    printf 'SENTRY_RELEASE=%s\n' "$sha" > "$stage/.env.prod.local"
+
+    guard_env "$stage"
+    console "$stage" doctrine:migrations:migrate --allow-no-migration \
+        || die "the migration failed, the app is unchanged"
+
+    sync_tree "$stage" || die "the sync failed, the live tree may be a mix of old and new files; fix what rsync names above (often the disk quota), then deploy again"
+    say "files synced"
+
+    # From here the new code is live. A failure below leaves it live; the message says so.
+    recover="cd $APP && rm -rf var/cache/prod var/cache/prod.old && $PHP bin/console cache:warmup"
+    drop_compiled_cache || die "files are live but var/cache/prod could not be emptied, run: $recover"
+    console "$APP" cache:warmup || die "files are live but cache:warmup failed, run: $recover"
+    console "$APP" app:geo:import-towns || die "files are live but the towns import failed"
+    purge_cache "$APP" || die "files are live but the HTTP cache could not be cleared, run bin/deploy purge"
+
+    say "DEPLOYED_SHA=$sha"
+}
+
+purge_cache() { # the store is #19's; a build without it has nothing to clear
+    found=0
+    has_command "$1" app:http-cache:clear || found=$?
+    case "$found" in
+        0) console "$1" app:http-cache:clear ;;
+        1) say "no app:http-cache:clear in this build (#19 not included), skipped" ;;
+        *)
+            no_boot "$1"
+            return 1
+            ;;
+    esac
+}
+
+check_app() {
+    require_app
+    guard_env "$APP"
+    say "sha=$(sed -n 's/^SENTRY_RELEASE=//p' "$APP/.env.prod.local" 2>/dev/null || true)"
+    say "php=$("$PHP" -r 'echo PHP_VERSION;')"
+    say "disk=$(df -h "$APP" | awk 'NR==2 {print $4 " free"}')"
+}
+
+main() {
+    cmd="${1:-}"
+    case "$cmd" in
+        install) install_release "${2:-}" ;;
+        purge) require_app && purge_cache "$APP" ;;
+        check) check_app ;;
+        *) die "usage: bin/deploy install <sha> | purge | check" ;;
+    esac
+}
+
+main "$@"

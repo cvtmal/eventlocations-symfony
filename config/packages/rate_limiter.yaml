@@ -1,8 +1,11 @@
 # Rate limiters (#8 venue-detail-page). `phone_reveal` guards GET /hochzeitslocation/{slug}/telefon
-# (DP-11): 20 reveals per 10 minutes per client IP. No lock (symfony/lock is not installed, so the
-# `lock_factory: auto` default resolves to none); the state lives in its own cache pool.
+# (DP-11): 20 reveals per 10 minutes per client IP. The `lock_factory: auto` default picks up
+# lock.factory (lock.yaml, #20), so consumption is serialised per key and parallel requests cannot
+# all read the same count; the state lives in its own cache pool.
 # `inquiry_submit` (#14, IQ-3) guards POST /hochzeitslocation/{slug}/anfrage: 5 inquiries per hour
 # per client IP, consumed only after the form is valid and the fill time has passed.
+# Both are keyed by Shared\Security\ClientIpKey, never the raw IP: the key lands in a lock file's name
+# and in the cached state.
 framework:
     rate_limiter:
         phone_reveal:

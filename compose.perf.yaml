@@ -22,6 +22,7 @@ services:
       - ./docker/perf/xdebug-off.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini:ro
       - ./docker/perf/php.ini:/usr/local/etc/php/conf.d/zz-perf.ini:ro
       - ./docker/perf/fpm.conf:/usr/local/etc/php-fpm.d/zz-perf.conf:ro
+      - ./docker/perf/config:/var/www/html/config/packages/prod:ro
     cpuset: "0,1"
     deploy:
       resources:

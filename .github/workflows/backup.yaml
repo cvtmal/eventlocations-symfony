@@ -1,0 +1,100 @@
+name: Backup
+
+# Nightly pg_dump of Neon production, test-restored, kept 7 days as an artifact, reported
+# to the Sentry cron monitor. It runs here because the host's pg_dump 16 cannot dump Neon 18 (C7).
+#
+# Secrets: NEON_BACKUP_URL (the direct string), SENTRY_CRON_URL (optional).
+on:
+  schedule:
+    - cron: '17 4 * * *' # UTC
+  workflow_dispatch:
+    inputs:
+      allow_empty:
+        description: Accept a database without venues (only before the first content import)
+        type: boolean
+        default: false
+
+concurrency:
+  group: backup-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SENTRY_CRON_URL: ${{ secrets.SENTRY_CRON_URL }}
+      # The dump, the restore and the service below must be the same major as Neon.
+      PG_IMAGE: postgres:18.4-alpine
+    services:
+      restore:
+        image: postgres:18.4-alpine
+        env:
+          POSTGRES_PASSWORD: restore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      # A Sentry hiccup must not fail a good backup, here and in the two reports at the end.
+      - name: Report the start to Sentry
+        if: env.SENTRY_CRON_URL != ''
+        continue-on-error: true
+        run: curl -fsS --retry 3 --retry-delay 5 -o /dev/null "${SENTRY_CRON_URL}?status=in_progress"
+
+      # The runner's own pg_dump is 16 and refuses a newer server. -e with a bare name keeps the URL off
+      # the process list; never echo it, derived strings are not masked in the log.
+      - name: Dump production with pg_dump 18
+        env:
+          NEON_BACKUP_URL: ${{ secrets.NEON_BACKUP_URL }}
+        run: |
+          file="hochzeitslocation-$(date -u +%Y%m%dT%H%M%SZ).dump"
+          docker run --rm -e NEON_BACKUP_URL "$PG_IMAGE" sh -c 'pg_dump -Fc -d "$NEON_BACKUP_URL"' > "$file"
+          test -s "$file"
+          echo "BACKUP_FILE=$file" >> "$GITHUB_ENV"
+          ls -l "$file"
+
+      # --no-owner --no-acl: Neon's roles do not exist here. Only counts are printed, never rows.
+      - name: Test-restore into a fresh Postgres 18
+        env:
+          ALLOW_EMPTY: ${{ inputs.allow_empty }}
+        run: |
+          restore() { docker run --rm -i --network host "$PG_IMAGE" "$@"; }
+          count() { restore psql "$url" -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM $1"; }
+          url=postgresql://postgres:restore@localhost:5432/postgres
+          restore pg_restore --exit-on-error --no-owner --no-acl --no-publications --no-subscriptions \
+            -d "$url" < "$BACKUP_FILE"
+          migrations=$(count doctrine_migration_versions)
+          venues=$(count venues)
+          photos=$(count venue_photos)
+          echo "migrations=$migrations venues=$venues venue_photos=$photos"
+          test "$migrations" -gt 0
+          if [ "$ALLOW_EMPTY" != true ]; then
+            test "$venues" -gt 0
+            test "$photos" -gt 0
+          fi
+
+      - name: Keep the dump as an artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 7
+          if-no-files-found: error
+          compression-level: 0 # -Fc is already compressed.
+
+      - name: Report success to Sentry
+        if: success() && env.SENTRY_CRON_URL != ''
+        continue-on-error: true
+        run: curl -fsS --retry 3 --retry-delay 5 -o /dev/null "${SENTRY_CRON_URL}?status=ok"
+
+      - name: Report failure to Sentry
+        if: failure() && env.SENTRY_CRON_URL != ''
+        continue-on-error: true
+        run: curl -fsS --retry 3 --retry-delay 5 -o /dev/null "${SENTRY_CRON_URL}?status=error"

@@ -63,6 +63,13 @@ when@test:
 
 when@prod:
     doctrine:
+        dbal:
+            # DBAL drops connect_timeout from the URL; pdo_pgsql turns this attribute into libpq's
+            # connect_timeout (30 s without it), and 10 s leaves room for a Neon wake from suspend.
+            # channel_binding is dropped too, so production sets PGCHANNELBINDING in .env.local and
+            # Shared\Doctrine\Middleware\ChannelBindingMiddleware hands that one variable to libpq (#20).
+            options:
+                !php/const PDO::ATTR_TIMEOUT: 10
         orm:
             query_cache_driver:
                 type: pool

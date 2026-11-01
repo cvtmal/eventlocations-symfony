@@ -1,0 +1,61 @@
+# Production front door on Hostpoint (#20): Apache in front of php-fpm. Dev runs nginx and never
+# reads this file. tests/Deploy/htaccess-check.sh runs it in a real httpd.
+
+# No directory listings, no content negotiation; FollowSymLinks or its owner-match form is what
+# mod_rewrite needs in a .htaccess.
+Options -Indexes -MultiViews +SymLinksIfOwnerMatch
+
+DirectoryIndex index.php
+
+# public/.user.ini sets PHP's limits and this file the server's; neither is for visitors.
+<FilesMatch "^\.(user\.ini|ht)">
+    Require all denied
+</FilesMatch>
+
+RewriteEngine On
+
+# Host first, and straight to https, so http://www. needs one hop and not two.
+RewriteCond %{HTTP_HOST} ^www\.hochzeitslocation\.ch$ [NC]
+RewriteRule ^ https://hochzeitslocation.ch%{REQUEST_URI} [R=301,L]
+
+# Then the scheme. A proxy that terminates TLS says so in X-Forwarded-Proto; without that check a
+# request it passed on as plain HTTP would redirect for ever.
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# php-fpm does not receive the Authorization header unless Apache hands it over.
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Anything that is no file goes to Symfony, /sitemap.xml and /robots.txt included.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
+
+# PHP's responses and the text assets; images and fonts are compressed already. mod_filter provides
+# the directive, so without it the line would be a 500 on every page.
+<IfModule mod_deflate.c>
+    <IfModule mod_filter.c>
+        AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml application/xml text/xml text/plain
+    </IfModule>
+</IfModule>
+
+<IfModule mod_headers.c>
+    # expose_php cannot be set from .user.ini, and php-fpm's headers sit in the "always" table.
+    Header always unset X-Powered-By
+
+    # AssetMapper's file names carry a content hash, so a changed file is a new URL.
+    <If "%{REQUEST_URI} =~ m#^/assets/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header set X-Content-Type-Options "nosniff"
+    </If>
+    # Vite's file names carry a content hash too.
+    <If "%{REQUEST_URI} =~ m#^/admin-build/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header set X-Content-Type-Options "nosniff"
+    </If>
+    # Never immutable: app:media:regenerate rewrites these files under the same URLs.
+    <If "%{REQUEST_URI} =~ m#^/media/#">
+        Header set Cache-Control "public, max-age=86400"
+        Header set X-Content-Type-Options "nosniff"
+    </If>
+</IfModule>

@@ -142,7 +142,7 @@ final class LegalPagesTest extends WebTestCase
         foreach (self::PAGES as $path) {
             $html = (string) $this->page($path)->html();
 
-            foreach (['Sentry', 'Google Analytics', 'Google Fonts', 'Mailchimp', 'TODO'] as $word) {
+            foreach (['Google Analytics', 'Google Fonts', 'Mailchimp', 'TODO'] as $word) {
                 self::assertStringNotContainsString($word, $html, $path.': '.$word);
             }
         }

@@ -17,6 +17,7 @@ use App\Inquiries\Twig\InquiryFormExtension;
 use App\Inquiries\ValueObject\DeliveryOutcome;
 use App\Inquiries\ValueObject\SubmittedInquiry;
 use App\Shared\Exception\DomainException;
+use App\Shared\Security\ClientIpKey;
 use App\Venues\Controller\VenueDetailController;
 use App\Venues\ReadModel\VenueDetail;
 use App\Venues\ReadModel\VenueDetailQuery;
@@ -63,6 +64,7 @@ final class SubmitInquiryController extends AbstractController
         private readonly InquiryFormFactory $forms,
         private readonly MessageBusInterface $commandBus,
         private readonly RateLimiterFactoryInterface $inquirySubmitLimiter,
+        private readonly ClientIpKey $clientIpKey,
         private readonly FillTimeToken $fillTime,
         private readonly InquiryEvents $events,
         private readonly UriSigner $signer,
@@ -102,7 +104,7 @@ final class SubmitInquiryController extends AbstractController
             return $this->page($venue, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $limit = $this->inquirySubmitLimiter->create($request->getClientIp() ?? 'unknown')->consume();
+        $limit = $this->inquirySubmitLimiter->create($this->clientIpKey->of($request))->consume();
         if (!$limit->isAccepted()) {
             $form->addError($this->error('form.error.rate_limited'));
             $response = $this->page($venue, $form, Response::HTTP_TOO_MANY_REQUESTS);

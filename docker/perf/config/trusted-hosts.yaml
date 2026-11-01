@@ -1,0 +1,5 @@
+# Perf stack only (compose.perf.yaml mounts this folder as config/packages/prod/): it runs
+# APP_ENV=prod, where #20's trusted_hosts answers every other Host with a 400, and its clients
+# reach nginx as http://nginx (k6) and http://localhost (Lighthouse, curl on :8096).
+framework:
+    trusted_hosts: ['^nginx$', '^localhost$']
