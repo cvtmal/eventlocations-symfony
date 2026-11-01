@@ -31,11 +31,17 @@ fail() {
 
 # Only Apache's own defaults plus what .htaccess needs. deflate and rewrite are off in the image,
 # and mod_filter must stay on: without it the deflate block is skipped and the gzip case proves nothing.
+# php-fpm is Hostpoint's macro. This stub only lets the .htaccess load: it proves that stock Apache
+# takes Use in a .htaccess, not that Hostpoint's macro picks that PHP.
 apache_conf() {
     cat <<'CONF'
 LoadModule rewrite_module modules/mod_rewrite.so
 LoadModule deflate_module modules/mod_deflate.so
 LoadModule cgid_module modules/mod_cgid.so
+LoadModule macro_module modules/mod_macro.so
+<Macro php-fpm $version>
+    SetEnv FIXTURE_PHP $version
+</Macro>
 ServerName localhost
 ScriptSock /tmp/cgid.sock
 <Directory "/usr/local/apache2/htdocs">

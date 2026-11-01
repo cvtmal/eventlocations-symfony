@@ -40,7 +40,8 @@ Two caches live under `var/share/prod/`, not under `var/cache/prod/`, because `.
 
 `cache:clear` empties neither. Both survive a deploy because `var/` is protected. A deploy empties
 the HTTP cache store with `app:http-cache:clear`. If `var/share/prod` stops being writable, every
-URL answers 500, `/health` included.
+URL answers 500, `/health` included. A 500 on `/assets/` too points at `public/.htaccess` instead,
+see [When a deploy fails](#when-a-deploy-fails).
 
 `.user.ini` and `.htaccess` in `public/` are versioned. Never use the panel's "PHP settings": it
 writes the same `.user.ini`, and the next deploy replaces it. A change to `.user.ini` takes effect
@@ -230,6 +231,7 @@ Hostpoint's preview host cannot stand in for this: production answers 400 to eve
 | `files are live but the HTTP cache could not be cleared` | New version live, old pages cached | Run the `purge` action |
 | `purge` ends with `the console in … does not boot` | Nothing was cleared, old pages stay cached | Same check over SSH as in the row on the env guard, then run the `purge` action again |
 | `another deploy is running` | A deploy is running, or one died | If none is running, `rm -r ~/deploy/hochzeitslocation/.lock` |
+| The `/health` smoke check is red and every URL answers 500, assets included | New files live, nothing serves: Apache refuses `public/.htaccess` | Check the `Use php-fpm php85` line first: Hostpoint may not take it. Revert the `php-pin` commit on `main`, not only the line, because a test pins it and Deploy needs green CI. Deploy again: it runs over SSH, so it needs no working site |
 | Nothing: the deploy was green, but a page answers 500 (a 500 reaches Sentry) | That page is broken, the rest serves | Run the warmup row's command, in full: `cd ~/www/hochzeitslocation.ch && rm -rf var/cache/prod var/cache/prod.old && /usr/local/php85/bin/php bin/console cache:warmup`. Or deploy again |
 
 To see what is deployed, run this in the app directory, which prints `OK`, the sha, the PHP version
