@@ -440,4 +440,46 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(303);
         self::assertCount(1, $this->rows());
     }
+
+    public function test_a_stored_inquiry_reaches_the_crm(): void
+    {
+        DetailVenues::full($this->em);
+
+        $this->post(self::SLUG, InquiryFormFields::valid());
+
+        self::assertResponseStatusCodeSame(303);
+        $link = $this->connection->fetchAssociative('SELECT inquiry_id, status FROM crm_inquiry_links');
+        self::assertSame(['inquiry_id' => $this->rows()[0]['id'], 'status' => 'new'], $link);
+        self::assertSame(['couple'], $this->connection->fetchFirstColumn('SELECT kind FROM crm_contacts WHERE email = ?', ['anna@example.ch']));
+    }
+
+    public function test_the_honeypot_writes_nothing_to_the_crm(): void
+    {
+        DetailVenues::full($this->em);
+
+        $this->post(self::SLUG, InquiryFormFields::valid(['website' => 'https://spam.example']));
+
+        self::assertResponseStatusCodeSame(303);
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_contacts'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_inquiry_links'));
+    }
+
+    /**
+     * Without its type row the flush fails on a foreign key, which closes the EntityManager, as a duplicate e-mail
+     * does. The guest sees none of it, and no link row is what lets the nightly backfill pick the inquiry up.
+     */
+    public function test_a_failing_ingestion_does_not_reach_the_guest_and_leaves_the_inquiry(): void
+    {
+        DetailVenues::full($this->em);
+        $this->connection->executeStatement("DELETE FROM crm_activity_types WHERE code = 'inquiry'");
+
+        $this->post(self::SLUG, InquiryFormFields::valid());
+
+        self::assertResponseStatusCodeSame(303);
+        self::assertStringContainsString('anfrage=gesendet', (string) $this->client->getResponse()->headers->get('Location'));
+        self::assertCount(1, $this->rows());
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_inquiry_links'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_contacts'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_activities'));
+    }
 }

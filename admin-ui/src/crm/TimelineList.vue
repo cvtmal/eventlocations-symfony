@@ -17,6 +17,8 @@ const EDIT_INPUTS = ['body', 'occurredAt'];
 
 const renderers = {
     text: (entry) => [entry.title, entry.body].filter(Boolean).join('\n'),
+    // `title` is the venue's name. The couple's name goes with the purge, and then the venue is all that is left (N11).
+    inquiry: (entry) => (entry.inquiryCouple ? fill(props.labels.inquiryEntry, { couple: entry.inquiryCouple, venue: entry.title }) : entry.title),
 };
 
 const props = defineProps({
@@ -26,6 +28,7 @@ const props = defineProps({
     filtered: { type: Boolean, required: true },
     types: { type: Array, required: true },
     activitiesUrl: { type: String, required: true },
+    inquiriesUrl: { type: String, required: true },
     labels: { type: Object, required: true },
     locale: { type: String, required: true },
 });
@@ -289,6 +292,11 @@ watch(() => props.hasMore, (hasMore) => {
                 @click="askDelete(entry)"
               />
             </div>
+            <a
+              v-if="entry.inquiryId && !entry.anonymised"
+              class="crm-timeline__link"
+              :href="`${inquiriesUrl}/${entry.inquiryId}`"
+            >{{ labels.inquiryOpen }}</a>
           </UiTimelineItem>
         </template>
       </ol>

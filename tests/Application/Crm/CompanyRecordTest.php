@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Crm;
 
 use App\Admin\ValueObject\AdminRole;
+use App\Crm\Command\IngestInquiry;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
@@ -12,6 +13,7 @@ use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
+use App\Factory\InquiryFactory;
 use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
@@ -22,6 +24,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -369,8 +372,8 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame($author->id(), $props['viewerId']);
         self::assertSame('/admin/api/crm/companies/'.$company->id().'/timeline', $props['urls']['timeline']);
         self::assertSame('/admin/api/crm/activities', $props['urls']['activities']);
-        self::assertSame(['note', 'email_logged', 'call', 'meeting', 'deal_stage_changed'], array_column($props['types'], 'code'));
-        self::assertSame(['Notizen', 'E-Mails', 'Anrufe', 'Meetings', 'Deal-Phasen'], array_column($props['types'], 'tab'));
+        self::assertSame(['note', 'email_logged', 'call', 'meeting', 'inquiry', 'deal_stage_changed'], array_column($props['types'], 'code'));
+        self::assertSame(['Notizen', 'E-Mails', 'Anrufe', 'Meetings', 'Anfragen', 'Deal-Phasen'], array_column($props['types'], 'tab'));
         self::assertSame(['Notiz', 'E-Mail', 'Anruf', 'Meeting', 'Aufgabe'], array_column($props['composer'], 'label'));
         self::assertSame(['Andrea Keller'], array_column($props['assignees'], 'name'));
         self::assertSame('__type__ von __actor__', $props['labels']['by']);
@@ -436,6 +439,56 @@ final class CompanyRecordTest extends WebTestCase
         self::assertCount(1, $system);
         self::assertStringContainsString('«Schloss Seeblick» publiziert · Andrea Keller · 29.10.2026, 11:48', $system->text());
         self::assertSame('Inhalt entfernt', $crawler->filter('[data-island="timeline"] .timeline-item--card .muted')->text());
+        self::assertStringNotContainsString('Geheim', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function test_an_inquiry_entry_reaches_the_island_and_the_fallback(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = VenueFactory::new()->withContact()->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $inquiry = InquiryFactory::createOne(['venue' => $venue, 'firstName' => 'Sina', 'lastName' => 'Huber']);
+        $bus = self::getContainer()->get(MessageBusInterface::class);
+        self::assertInstanceOf(MessageBusInterface::class, $bus);
+        $bus->dispatch(new IngestInquiry($inquiry->id()));
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertResponseIsSuccessful();
+        $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        self::assertSame('/admin/crm/anfragen', $props['urls']['inquiries']);
+        self::assertSame('von __couple__ für __venue__', $props['labels']['inquiryEntry']);
+        self::assertSame('Anfrage öffnen', $props['labels']['inquiryOpen']);
+        self::assertSame($inquiry->id(), $props['page']['entries'][0]['inquiryId']);
+        self::assertSame('Sina Huber', $props['page']['entries'][0]['inquiryCouple']);
+
+        $fallback = $crawler->filter('[data-island="timeline"] .timeline-item--card');
+        self::assertCount(1, $fallback);
+        self::assertSame('Anfrage', $fallback->filter('.timeline-item__title')->text());
+        self::assertSame('von Sina Huber für '.$inquiry->venueName(), $fallback->filter('.muted')->text());
+        self::assertCount(0, $fallback->filter('a'), 'Without JS the timeline is read-only.');
+    }
+
+    public function test_the_fallback_shows_a_purged_and_an_erased_inquiry_entry(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        ActivityFactory::new()->ofType('inquiry')->onCompany($company)->create([
+            'actor' => null, 'title' => 'Schloss Seeblick', 'body' => null, 'occurredAt' => new \DateTimeImmutable('2026-10-02T10:00:00+02:00'),
+        ]);
+        $erased = ActivityFactory::new()->ofType('inquiry')->onCompany($company)->create([
+            'actor' => null, 'title' => 'Geheim', 'body' => null, 'occurredAt' => new \DateTimeImmutable('2026-10-01T10:00:00+02:00'),
+        ]);
+        $erased->anonymise(new \DateTimeImmutable('2026-10-03T10:00:00+02:00'));
+        $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
+        self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
+        $entityManager->flush();
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['Schloss Seeblick', 'Inhalt entfernt'], $crawler->filter('[data-island="timeline"] .timeline-item--card .muted')->each(static fn (Crawler $body): string => $body->text()));
         self::assertStringNotContainsString('Geheim', (string) $this->client->getResponse()->getContent());
     }
 

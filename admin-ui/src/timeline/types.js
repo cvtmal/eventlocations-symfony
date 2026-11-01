@@ -8,6 +8,7 @@ export default {
     call: { icon: 'phone', tone: 'green', renderer: 'text' },
     meeting: { icon: 'calendar', tone: 'amber', renderer: 'text' },
     deal_stage_changed: { icon: 'square-kanban', tone: 'grey', renderer: 'text' },
+    inquiry: { icon: 'inbox', tone: 'pink', renderer: 'inquiry' },
 };
 
 // The fallback for a code this file does not know yet (a type added by a newer deploy than the cached bundle).

@@ -63,6 +63,7 @@ final readonly class TimelineProps
         'notFound' => 'api.not_found',
         'forbidden' => 'timeline.page_outdated',
         'stale' => 'timeline.error',
+        'inquiryOpen' => 'timeline.inquiry.open',
     ];
 
     public function __construct(
@@ -97,6 +98,7 @@ final readonly class TimelineProps
                 'activities' => $this->urls->generate('admin_api_crm_activity_log'),
                 'timeline' => $this->urls->generate('admin_api_crm_'.$kind->value.'_timeline', ['id' => $id]),
                 'tasks' => $this->urls->generate('admin_api_crm_tasks'),
+                'inquiries' => $this->urls->generate('admin_crm_inquiries'),
             ],
             'labels' => $this->labels(),
             'locale' => $this->translator->getLocale(),
@@ -149,6 +151,7 @@ final readonly class TimelineProps
                 TimelineEntry::EVENT_DEAL_STAGE_CHANGED => $this->crm('timeline.system.deal_stage_changed', ['actor' => '__actor__', 'deal' => '__deal__', 'stage' => '__stage__']),
             ],
             'dealStageChangedAnonymous' => $this->crm('timeline.system.deal_stage_changed_anonymous', ['deal' => '__deal__', 'stage' => '__stage__']),
+            'inquiryEntry' => $this->crm('timeline.inquiry.entry', ['couple' => '__couple__', 'venue' => '__venue__']),
             'tiers' => $tiers,
             'stages' => $stages,
         ];

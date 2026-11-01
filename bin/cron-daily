@@ -30,6 +30,10 @@ main() {
     # verbosity, a failure line prints under --quiet.
     step crm-refresh-stages "$PHP" bin/console --no-interaction --quiet app:crm:refresh-stages
     step crm-renewal-tasks "$PHP" bin/console --no-interaction --quiet app:crm:renewal-tasks
+    # #29: couples past the inquiry retention. The count stays at normal verbosity, a failure line prints under --quiet.
+    step crm-purge "$PHP" bin/console --no-interaction --quiet app:crm:purge
+    # No --quiet: a repaired inquiry is worth the mail, and a good night prints nothing anyway.
+    step crm-backfill "$PHP" bin/console --no-interaction app:crm:backfill-inquiries
     # No --quiet: its output (the stuck rows) is the point of this step.
     step inquiries-stuck "$PHP" bin/console --no-interaction app:inquiries:report-stuck
     step pool-prune "$PHP" bin/console --no-interaction --quiet cache:pool:prune

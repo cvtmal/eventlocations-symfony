@@ -26,7 +26,10 @@ final class TimelineQuery
     private const string BASICS = 'App\Venues\Command\ChangeVenueBasics';
     private const string TIER = 'App\Venues\Command\ChangeVenueTier';
 
-    private const string ACTIVITY_COLUMNS = "a.id, a.type_code, a.occurred_at, a.actor_id, u.display_name AS actor_name, a.title, a.body, a.payload->>'to' AS stage_to, a.anonymised_at";
+    private const string ACTIVITY_COLUMNS = "a.id, a.type_code, a.occurred_at, a.actor_id, u.display_name AS actor_name, a.title, a.body, a.payload->>'to' AS stage_to, a.anonymised_at, il.inquiry_id, i.first_name AS inquiry_first_name, i.last_name AS inquiry_last_name";
+
+    /** An inquiry entry reads its inquiry live, so the link and the couple's name go with the 12-month purge. */
+    private const string ACTIVITY_JOINS = ' LEFT JOIN admin_users u ON u.id = a.actor_id LEFT JOIN crm_inquiry_links il ON il.activity_id = a.id LEFT JOIN inquiries i ON i.id = il.inquiry_id';
 
     /**
      * @var list<string>
@@ -67,7 +70,7 @@ final class TimelineQuery
     public function entry(string $id): ?TimelineEntry
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT '.self::ACTIVITY_COLUMNS.' FROM crm_activities a LEFT JOIN admin_users u ON u.id = a.actor_id WHERE a.id = :id',
+            'SELECT '.self::ACTIVITY_COLUMNS.' FROM crm_activities a'.self::ACTIVITY_JOINS.' WHERE a.id = :id',
             ['id' => $id],
         );
 
@@ -100,7 +103,7 @@ final class TimelineQuery
             'SELECT '.self::ACTIVITY_COLUMNS
             .' FROM crm_activities a'
             .' JOIN '.$kind->linkTable().' l ON l.activity_id = a.id'
-            .' LEFT JOIN admin_users u ON u.id = a.actor_id'
+            .self::ACTIVITY_JOINS
             .$where
             .' ORDER BY a.occurred_at DESC, a.id DESC LIMIT :limit',
             $parameters,
@@ -115,6 +118,8 @@ final class TimelineQuery
     private static function activityEntry(array $row): TimelineEntry
     {
         $isStageChange = TimelineEntry::EVENT_DEAL_STAGE_CHANGED === $row['type_code'];
+        // The inquiry can outlive an erased contact: its entry stays on the company, anonymised, and must not name it.
+        $inquiryId = null === $row['anonymised_at'] && null !== $row['inquiry_id'] ? (string) $row['inquiry_id'] : null;
 
         return new TimelineEntry(
             $isStageChange ? TimelineEntry::SYSTEM : TimelineEntry::ACTIVITY,
@@ -127,6 +132,8 @@ final class TimelineQuery
             null === $row['body'] ? null : (string) $row['body'],
             null !== $row['anonymised_at'],
             stage: $isStageChange ? (string) $row['stage_to'] : null,
+            inquiryId: $inquiryId,
+            inquiryCouple: null === $inquiryId ? null : trim((string) $row['inquiry_first_name'].' '.(string) $row['inquiry_last_name']),
         );
     }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Story;
 
 use App\Admin\Repository\AdminUserRepository;
+use App\Crm\Command\ChangeInquiryStatus;
+use App\Crm\Command\IngestInquiry;
 use App\Crm\CompanyStageSync;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
@@ -12,14 +14,19 @@ use App\Crm\Repository\CompanyRepository;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
+use App\Crm\ValueObject\InquiryStatus;
 use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
+use App\Factory\InquiryFactory;
 use App\Factory\TaskFactory;
+use App\Inquiries\Entity\Inquiry;
+use App\Inquiries\ValueObject\MailStatus;
 use App\Venues\Entity\Venue;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\Tier;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Zenstruck\Foundry\Story;
 
 use function Zenstruck\Foundry\faker;
@@ -27,9 +34,10 @@ use function Zenstruck\Foundry\faker;
 /**
  * Fictional CRM data for the dev back office (#27): 12 companies, 8 of them made from the first
  * demo venues (so the bootstrap button still has venues to work on), their contacts, timeline
- * entries and tasks of the dev admin, due today, overdue and later, and 14 deals over every stage
- * of the pipeline. Seeded, so every `make seed` on an empty CRM writes the same data; it skips when
- * a company exists, because `make seed` appends.
+ * entries and tasks of the dev admin, due today, overdue and later, 14 deals over every stage of
+ * the pipeline, and six inquiries on the linked venues for the inbox (#29). Seeded, so every
+ * `make seed` on an empty CRM writes the same data; it skips when a company exists, because
+ * `make seed` appends.
  */
 final class CrmStory extends Story
 {
@@ -40,12 +48,17 @@ final class CrmStory extends Story
         ['new', null], ['contacted', null], ['offer', null], ['negotiation', null], ['won', -30], ['lost', null], ['new', null],
         ['offer', null], ['won', 45], ['negotiation', null], ['contacted', null], ['won', 240], ['lost', null], ['offer', null],
     ];
+    /** The venue mail's outcome and the age in days, newest first. The last two end up `seen` and `done`, the others stay `new`. */
+    private const INQUIRIES = [
+        [MailStatus::Pending, 1], [MailStatus::Failed, 2], [MailStatus::Sent, 3], [MailStatus::Failed, 6], [MailStatus::Sent, 10], [MailStatus::Sent, 17],
+    ];
 
     public function __construct(
         private readonly CompanyRepository $companies,
         private readonly VenueRepository $venues,
         private readonly AdminUserRepository $users,
         private readonly CompanyStageSync $stageSync,
+        private readonly MessageBusInterface $commandBus,
     ) {
     }
 
@@ -112,6 +125,7 @@ final class CrmStory extends Story
         TaskFactory::createOne(['assignee' => $admin, 'createdBy' => $admin, 'dueOn' => $today, 'contact' => ContactFactory::createOne(['kind' => ContactKind::Other])]);
 
         $this->deals($companies, $venues, $today);
+        $this->inquiries($venues, $today);
         $this->stageSync->syncAll();
     }
 
@@ -143,5 +157,39 @@ final class CrmStory extends Story
 
             DealFactory::new()->inStage($stage, $today->modify(\sprintf('-%d days', $index + 1))->setTime(10, 0))->create($attributes);
         }
+    }
+
+    /**
+     * Each goes through `IngestInquiry`, as a real one does, so the inbox, the timeline and the couple contacts stay in
+     * step. A demo venue without an inquiry address can take no inquiry.
+     *
+     * @param list<Venue> $venues
+     */
+    private function inquiries(array $venues, \DateTimeImmutable $today): void
+    {
+        $addressed = array_values(array_filter($venues, static fn (Venue $venue): bool => null !== $venue->inquiryEmail()));
+
+        $ids = [];
+        foreach (self::INQUIRIES as $index => [$mail, $age]) {
+            $at = $today->modify(\sprintf('-%d days', $age))->setTime(9 + $index, 0);
+            $inquiry = InquiryFactory::new()
+                ->afterInstantiate(static function (Inquiry $inquiry) use ($mail, $at): void {
+                    if (MailStatus::Sent === $mail) {
+                        $inquiry->recordVenueMailSent($inquiry->recipientEmail(), $at);
+                        $inquiry->recordGuestMail(MailStatus::Sent, $at);
+                    }
+                    if (MailStatus::Failed === $mail) {
+                        $inquiry->recordVenueMailFailed($at);
+                        $inquiry->recordGuestMail(MailStatus::Skipped, $at);
+                    }
+                })
+                ->create(['venue' => $addressed[$index % \count($addressed)], 'createdAt' => $at]);
+
+            $this->commandBus->dispatch(new IngestInquiry($inquiry->id()));
+            $ids[] = $inquiry->id();
+        }
+
+        $this->commandBus->dispatch(new ChangeInquiryStatus($ids[4], InquiryStatus::Seen));
+        $this->commandBus->dispatch(new ChangeInquiryStatus($ids[5], InquiryStatus::Done));
     }
 }

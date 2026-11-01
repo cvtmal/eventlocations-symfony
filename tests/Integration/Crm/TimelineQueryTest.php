@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Crm;
 
+use App\Crm\Command\EraseContact;
+use App\Crm\Command\IngestInquiry;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
 use App\Crm\Entity\CompanyVenue;
@@ -15,7 +17,9 @@ use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
+use App\Inquiries\Entity\Inquiry;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Command\ChangeVenueBasics;
@@ -32,6 +36,7 @@ use Zenstruck\Foundry\Test\Factories;
  */
 final class TimelineQueryTest extends KernelTestCase
 {
+    use DispatchesCrmCommands;
     use Factories;
     use RollsBackDatabase;
 
@@ -176,6 +181,77 @@ final class TimelineQueryTest extends KernelTestCase
         self::assertFalse($entries[$gone->id()]->canBeEditedBy($author->id(), $composable));
     }
 
+    public function test_an_inquiry_entry_reads_its_inquiry_on_the_contact_and_the_company(): void
+    {
+        $company = CompanyFactory::createOne();
+        $inquiry = $this->ingestedInquiry($company);
+        ['contact_id' => $contactId, 'activity_id' => $activityId] = $this->link($inquiry);
+
+        $onContact = $this->query()->page(RecordKind::Contact, (string) $contactId, null, null)->entries;
+        $onCompany = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;
+        $single = $this->query()->entry((string) $activityId);
+
+        self::assertNotNull($single);
+        self::assertCount(1, $onContact);
+        self::assertCount(1, $onCompany);
+        foreach ([$onContact[0], $onCompany[0], $single] as $entry) {
+            self::assertSame($activityId, $entry->id);
+            self::assertSame(ActivityType::INQUIRY, $entry->typeCode);
+            self::assertSame($inquiry->venueName(), $entry->title);
+            self::assertSame($inquiry->id(), $entry->inquiryId);
+            self::assertSame('Sina Huber', $entry->inquiryCouple);
+            self::assertFalse($entry->anonymised);
+        }
+    }
+
+    public function test_an_entry_erased_off_a_contact_stays_on_the_company_and_no_longer_names_the_inquiry(): void
+    {
+        $company = CompanyFactory::createOne();
+        $inquiry = $this->ingestedInquiry($company);
+        ['contact_id' => $contactId, 'activity_id' => $activityId] = $this->link($inquiry);
+
+        $this->dispatch(new EraseContact((string) $contactId));
+        $this->em->clear();
+
+        self::assertSame(['contact_id' => null, 'activity_id' => $activityId], $this->link($inquiry), 'The inquiry outlives the contact, and the entry survives on the company.');
+
+        $entries = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;
+        self::assertCount(1, $entries);
+        self::assertTrue($entries[0]->anonymised);
+        self::assertNull($entries[0]->title);
+        self::assertNull($entries[0]->inquiryId);
+        self::assertNull($entries[0]->inquiryCouple);
+    }
+
+    public function test_an_entry_erased_with_no_company_leaves_the_link_with_no_entry(): void
+    {
+        $inquiry = $this->ingestedInquiry(null);
+        ['contact_id' => $contactId, 'activity_id' => $activityId] = $this->link($inquiry);
+
+        $this->dispatch(new EraseContact((string) $contactId));
+        $this->em->clear();
+
+        self::assertSame(['contact_id' => null, 'activity_id' => null], $this->link($inquiry));
+        self::assertNull($this->query()->entry((string) $activityId));
+    }
+
+    public function test_an_inquiry_entry_keeps_its_title_after_the_inquiry_is_purged(): void
+    {
+        $company = CompanyFactory::createOne();
+        $inquiry = $this->ingestedInquiry($company);
+        $title = $inquiry->venueName();
+        $this->connection->executeStatement('DELETE FROM inquiries WHERE id = ?', [$inquiry->id()]);
+        $this->em->clear();
+
+        $entries = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;
+
+        self::assertCount(1, $entries);
+        self::assertSame($title, $entries[0]->title);
+        self::assertFalse($entries[0]->anonymised);
+        self::assertNull($entries[0]->inquiryId);
+        self::assertNull($entries[0]->inquiryCouple);
+    }
+
     public function test_a_cursor_round_trips_and_garbage_is_no_cursor(): void
     {
         $cursor = new TimelineCursor(new \DateTimeImmutable('2026-10-20 10:00:00+00'), EntityId::generate());
@@ -192,6 +268,30 @@ final class TimelineQueryTest extends KernelTestCase
         self::assertInstanceOf(TimelineQuery::class, $query);
 
         return $query;
+    }
+
+    private function ingestedInquiry(?Company $company): Inquiry
+    {
+        $venue = VenueFactory::new()->withContact()->create();
+        if (null !== $company) {
+            $this->em->persist(new CompanyVenue($company, $venue));
+            $this->em->flush();
+        }
+        $inquiry = InquiryFactory::createOne(['firstName' => 'Sina', 'lastName' => 'Huber', 'email' => 'sina@example.ch', 'venue' => $venue]);
+        self::assertTrue($this->dispatch(new IngestInquiry($inquiry->id())));
+
+        return $inquiry;
+    }
+
+    /**
+     * @return array{contact_id: mixed, activity_id: mixed}
+     */
+    private function link(Inquiry $inquiry): array
+    {
+        $link = $this->connection->fetchAssociative('SELECT contact_id, activity_id FROM crm_inquiry_links WHERE inquiry_id = ?', [$inquiry->id()]);
+        self::assertIsArray($link);
+
+        return ['contact_id' => $link['contact_id'], 'activity_id' => $link['activity_id']];
     }
 
     private function linkedVenue(Company $company): Venue

@@ -33,6 +33,8 @@ const labels = {
     notFound: 'Dieser Eintrag existiert nicht mehr.',
     forbidden: 'Diese Seite ist nicht mehr aktuell.',
     stale: 'Das hat nicht geklappt.',
+    inquiryOpen: 'Anfrage öffnen',
+    inquiryEntry: 'von __couple__ für __venue__',
     by: '__type__ von __actor__',
     system: {
         published: '«__venue__» publiziert',
@@ -50,6 +52,7 @@ const types = [
     { code: 'email_logged', label: 'E-Mail', tab: 'E-Mails' },
     { code: 'call', label: 'Anruf', tab: 'Anrufe' },
     { code: 'meeting', label: 'Meeting', tab: 'Meetings' },
+    { code: 'inquiry', label: 'Anfrage', tab: 'Anfragen' },
 ];
 
 const composer = [
@@ -60,7 +63,7 @@ const composer = [
     { code: 'task', label: 'Aufgabe', placeholder: 'Was ist zu tun?', submit: 'Aufgabe erstellen' },
 ];
 
-const urls = { activities: '/admin/api/crm/activities', timeline: '/admin/api/crm/companies/c1/timeline', tasks: '/admin/api/crm/tasks' };
+const urls = { activities: '/admin/api/crm/activities', timeline: '/admin/api/crm/companies/c1/timeline', tasks: '/admin/api/crm/tasks', inquiries: '/admin/crm/anfragen' };
 
 function entry(id, occurredAt, overrides = {}) {
     return {
@@ -78,6 +81,10 @@ function entry(id, occurredAt, overrides = {}) {
         tier: null,
         ...overrides,
     };
+}
+
+function inquiry(overrides = {}) {
+    return entry('e1', '2026-10-29T11:48', { type: 'inquiry', actorName: null, title: 'Schloss Seeblick', body: null, inquiryId: 'i1', inquiryCouple: 'Sina Huber', ...overrides });
 }
 
 function json(body, status = 200) {
@@ -175,6 +182,36 @@ describe('TimelineIsland', () => {
 
         expect(bodies(wrapper)).toEqual(['Inhalt entfernt']);
         expect(button(wrapper, 'Bearbeiten')).toBeUndefined();
+    });
+
+    it('writes an inquiry as the design\'s sentence, with a link to the inbox', () => {
+        wrapper = island({ entries: [inquiry()], next: null });
+
+        expect(titles(wrapper)).toEqual(['Anfrage']);
+        expect(bodies(wrapper)).toEqual(['von Sina Huber für Schloss Seeblick']);
+        expect(wrapper.get('.timeline-item__icon').classes()).toContain('timeline-item__icon--pink');
+        const link = wrapper.get('.timeline-item a');
+        expect(link.text()).toBe('Anfrage öffnen');
+        expect(link.attributes('href')).toBe('/admin/crm/anfragen/i1');
+        expect(button(wrapper, 'Bearbeiten')).toBeUndefined();
+    });
+
+    it('shows the venue alone and no link once the inquiry is purged', () => {
+        wrapper = island({ entries: [inquiry({ inquiryId: null, inquiryCouple: null })], next: null });
+
+        expect(bodies(wrapper)).toEqual(['Schloss Seeblick']);
+        expect(wrapper.find('.timeline-item a').exists()).toBe(false);
+    });
+
+    it.each([
+        ['as the server sends it', { title: null, inquiryId: null, inquiryCouple: null }],
+        ['with its inquiry still attached', { title: null }],
+    ])('shows an anonymised inquiry with the label alone, %s', (_, overrides) => {
+        wrapper = island({ entries: [inquiry({ anonymised: true, ...overrides })], next: null });
+
+        expect(bodies(wrapper)).toEqual(['Inhalt entfernt']);
+        expect(wrapper.find('.timeline-item a').exists()).toBe(false);
+        expect(wrapper.text()).not.toContain('Sina Huber');
     });
 
     it('offers edit and delete only on own entries', () => {

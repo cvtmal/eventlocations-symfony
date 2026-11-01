@@ -1,0 +1,43 @@
+{% extends 'admin/base.html.twig' %}
+
+{#
+    The inbox (`InquiryInboxController`, `Inbox.dc.html`). tab: new|seen|done|all, counts: InquiryInboxCounts,
+    list: InquiryInboxPage, detail: ?InquiryDetail.
+#}
+
+{% block title %}{{ 'inquiry.inbox.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'inquiry.inbox.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title crm-inbox__page-title">
+            <h1>{{ 'inquiry.inbox.title'|trans({}, 'crm') }}</h1>
+            <span class="muted">{{ 'inquiry.inbox.subline'|trans({}, 'crm') }}</span>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% set tabs = [] %}
+    {% for value, count in {new: counts.new, seen: counts.seen, done: counts.done, all: counts.all} %}
+        {% set tabs = tabs|merge([{
+            label: (value == 'all' ? 'inquiry.inbox.tab_all' : 'inquiry.status.' ~ value)|trans({}, 'crm'),
+            href: path('admin_crm_inquiries', {status: value}),
+            count: count,
+            tone: value == 'new' ? crm_tones('inquiry').new : 'grey',
+            active: value == tab,
+        }]) %}
+    {% endfor %}
+    {{ include('admin/components/_tabs.html.twig', {label: 'inquiry.inbox.tabs_label'|trans({}, 'crm'), items: tabs}, with_context = false) }}
+
+    <div class="crm-inbox">
+        {{ include('admin/crm/inquiry/_list.html.twig', {tab: tab, list: list, detail: detail}, with_context = false) }}
+        {% if detail %}
+            {{ include('admin/crm/inquiry/_detail.html.twig', {detail: detail, return_to: app.request.requestUri}, with_context = false) }}
+        {% endif %}
+    </div>
+{% endblock %}

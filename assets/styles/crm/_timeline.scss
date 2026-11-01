@@ -65,6 +65,13 @@
     gap: var(--a-space-1);
 }
 
+// A flex column would stretch the link across the card.
+.crm-timeline__link {
+    align-self: flex-start;
+    font-size: 13px;
+    font-weight: 600;
+}
+
 .crm-timeline__edit {
     display: flex;
     flex-direction: column;

@@ -164,6 +164,7 @@ onBeforeUnmount(() => {
       :filtered="filter !== null"
       :types="types"
       :activities-url="urls.activities"
+      :inquiries-url="urls.inquiries"
       :labels="labels"
       :locale="locale"
       @changed="place"

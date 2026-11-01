@@ -13,8 +13,10 @@ use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\DealProperty;
+use App\Crm\ValueObject\InquiryStatus;
 use App\Crm\ValueObject\LostReason;
 use App\Crm\ValueObject\TaskDue;
+use App\Inquiries\ValueObject\MailStatus;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Translation\TranslatorBagInterface;
@@ -51,9 +53,14 @@ final class CrmTranslationKeysTest extends KernelTestCase
             'timeline.entry.delete_title', 'timeline.entry.delete_text', 'timeline.entry.delete_confirm', 'timeline.entry.deleted',
             'timeline.close', 'timeline.reload', 'timeline.session_gone', 'timeline.page_outdated', 'timeline.error', 'timeline.by',
             'timeline.system.published', 'timeline.system.unpublished', 'timeline.system.tier_changed',
+            'timeline.inquiry.entry', 'timeline.inquiry.open',
         ];
         foreach (CompanyStage::cases() as $case) {
             $keys[] = 'company.stage.'.$case->value;
+        }
+        foreach (MailStatus::cases() as $case) {
+            $keys[] = 'inquiry.mail.venue.'.$case->value;
+            $keys[] = 'inquiry.mail.guest.'.$case->value;
         }
         foreach (CompanyOrigin::cases() as $case) {
             $keys[] = 'company.origin.'.$case->value;
@@ -72,6 +79,9 @@ final class CrmTranslationKeysTest extends KernelTestCase
         }
         foreach (LostReason::cases() as $case) {
             $keys[] = 'deal.lost_reason.'.$case->value;
+        }
+        foreach (InquiryStatus::cases() as $case) {
+            $keys[] = 'inquiry.status.'.$case->value;
         }
         foreach ([TaskDue::Overdue, TaskDue::Today] as $case) {
             $keys[] = 'task.due.'.$case->value;

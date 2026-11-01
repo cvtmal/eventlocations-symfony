@@ -103,6 +103,7 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
         $this->assertStatusCodes([303, 303], $posts);
         self::assertSame([['sent', 'sent']], $this->statuses());
         self::assertSame([[self::VENUE_MAIL_RECIPIENT], [self::GUEST]], $this->sink->delivered());
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_inquiry_links'), 'One row, one ingestion.');
     }
 
     /**
@@ -243,6 +244,13 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
 
     private function removeFixtures(): void
     {
+        // The children commit, so what `IngestInquiryListener` wrote stays too. This goes first: the inquiry's delete
+        // cascades to its link, the only way back to the entry.
+        $this->connection->executeStatement(
+            'DELETE FROM crm_activities WHERE id IN (SELECT l.activity_id FROM crm_inquiry_links l JOIN inquiries i ON i.id = l.inquiry_id WHERE i.venue_name = ?)',
+            [self::NAME],
+        );
+        $this->connection->executeStatement('DELETE FROM crm_contacts WHERE email = ?', [self::GUEST]);
         $this->connection->executeStatement('DELETE FROM inquiries WHERE venue_name = ?', [self::NAME]);
         $this->connection->executeStatement('DELETE FROM venues WHERE name = ?', [self::NAME]);
     }
