@@ -253,8 +253,85 @@ landing:
             slug: zunfthaus
             heading: 'Hochzeit im Zunfthaus'
             intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Zunfthaus: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+# #36: the home page, in "Sie". The category tiles' labels are HomeCategory's, keyed by its case value.
+home:
+    hero:
+        heading: 'Hochzeit feiern in den schönsten Locations der Schweiz'
+    search:
+        label: 'Location suchen'
+        canton: Kanton
+        canton_all: 'Alle Kantone'
+        type: Location-Art
+        type_all: 'Alle Arten'
+        guests: 'Anzahl Gäste'
+        guests_placeholder: 'z.B. 80'
+        submit: Suche
+    category:
+        castle: 'Burg & Schloss'
+        event_hall: 'Eventhalle & Saal'
+        restaurant: 'Restaurant & Gasthof'
+        brewery_winery: Weingut
+        hotel: Hotel
+    categories:
+        heading: 'Kategorien durchsuchen'
+        all: 'Alle Locations'
+    steps:
+        heading: 'In vier Schritten zur Traumlocation'
+        filter:
+            number: '01'
+            title: Filtern
+            text: 'Nach Region, Location-Art und Gästezahl eingrenzen.'
+        compare:
+            number: '02'
+            title: Vergleichen
+            text: 'Fotos, Kapazitäten und Angebote ansehen und auf die Merkliste setzen.'
+        inquire:
+            number: '03'
+            title: Anfragen
+            text: 'Direkt bei der Location anfragen, ohne Umweg.'
+        celebrate:
+            number: '04'
+            title: Feiern
+            text: 'Den grossen Tag geniessen.'
+    spotlight:
+        heading: 'Locations im Spotlight'
+    cta:
+        heading: 'Planen Sie Ihre Hochzeit'
+        text: 'Starten Sie noch heute mit der Suche nach Ihrer Hochzeitslocation in der Schweiz und stellen Sie Ihre Anfragen direkt bei der Location.'
+        button: 'Jetzt starten'
+    about:
+        heading: 'Die passende Hochzeitslocation für Ihren Tag'
+        lead: 'Jede Hochzeit ist einzigartig, genau wie ihr Ort. In der Schweiz gibt es zahlreiche aussergewöhnliche Locations für eine stilvolle Feier: eine romantische Hochzeit im Märchenschloss, eine freie Trauung auf der Alp mit Feier in der Berghütte oder ein Bankett in einem exklusiven Hotel.'
+        filters: 'Mit unseren Filtern grenzen Sie die Auswahl nach Region, Kategorie, Preisniveau und Gästezahl ein.'
+        kinds:
+            hotels:
+                term: Hotels
+                text: 'Luxushotels und komfortable Gasthäuser.'
+            restaurants:
+                term: Restaurants
+                text: 'Vom Bergrestaurant mit Alpenpanorama bis zum Lokal an der Seepromenade.'
+            castles:
+                term: 'Burgen & Schlösser'
+                text: 'Historischer Charme in denkmalgeschützten Mauern.'
+            halls:
+                term: Säle
+                text: 'Für grössere Gesellschaften, unabhängig von Jahreszeit und Wetter.'
+            event_halls:
+                term: Eventhallen
+                text: 'Nachtlokale, Messehallen und stillgelegte Industriehallen.'
+            estates:
+                term: 'Gutshöfe & Weingüter'
+                text: 'Feiern zwischen den Reben, im Einklang mit der Natur.'
+            originals:
+                term: 'Originelle Locations'
+                text: 'Scheunen, Lofts, Wintergärten, Berghütten und Chalets.'
+    regions:
+        heading: 'Hochzeitslocations nach Region'
 # #26: labels of the Search module's text blocks in the back office's text-block list.
 blocks:
+    home_text:
+        label: Text der Startseite
+        placement: 'Auf der Startseite, über den Regionen'
     listing_intro:
         label: Einleitung der Suchseite
         placement: Unter dem Titel der Suchseite ohne Filter, nur auf Seite 1

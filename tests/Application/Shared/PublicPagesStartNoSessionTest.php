@@ -42,7 +42,7 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
     private const COOKIE_ROUTES = ['merkliste', 'merkliste_toggle', 'merkliste_sync'];
 
     /** The routes outside the shared cache. Every other 2xx/3xx GET is `public` with an `s-maxage`. */
-    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'health', 'home'];
+    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'health'];
 
     public function test_no_public_page_starts_a_session_or_sets_a_cookie(): void
     {

@@ -6,8 +6,7 @@
         <a class="site-header__wordmark" href="{{ path('home') }}"><img src="{{ asset('images/logo-hzl.png') }}" alt="{{ 'layout.site_name'|trans }}" width="135" height="30"></a>
         <nav class="site-header__actions" aria-label="{{ 'layout.header.menu_label'|trans }}">
             <a class="site-header__link" href="{{ path('listing') }}"{% if on_listing %} aria-current="page"{% endif %}>{{ 'layout.header.locations'|trans }}</a>
-            {# Regionen has no page of its own until #36 #}
-            <a class="site-header__link" href="{{ path('listing') }}">{{ 'layout.header.regions'|trans }}</a>
+            <a class="site-header__link" href="{{ path('home') ~ '#regionen' }}">{{ 'layout.header.regions'|trans }}</a>
             {# merkliste.js fills and unhides the badge; these strings stand in for 48 repeated attributes on the cards. data-sync-token is the constant of the stateless check, so cached HTML stays identical #}
             <a class="btn btn--icon site-header__favorites" href="{{ path('merkliste') }}" aria-label="{{ 'layout.header.favorites'|trans }}" data-merkliste-link data-sync-token="{{ csrf_token('submit') }}" data-count-label="{{ 'header.count_label'|trans({count: '__count__'}, 'favorites') }}" data-toast-added="{{ 'toast.added'|trans({name: '__name__'}, 'favorites') }}" data-toast-removed="{{ 'toast.removed'|trans({name: '__name__'}, 'favorites') }}" data-toast-full="{{ 'toast.full'|trans({}, 'favorites') }}" data-toast-link="{{ 'toast.link'|trans({}, 'favorites') }}">{{ icon('heart') }}<span class="count-badge" data-merkliste-count hidden></span></a>
             {% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, static: true} only %}

@@ -15,6 +15,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Every URL of the sitemap that is not a venue. The one place #17 and #18 add their pages to.
+ * The home page (#36) comes first, so `bin/warm-cache` reaches it right after the listing; it
+ * shows venues, so it shares the listing's `lastmod`.
  * Landing pages (#17) follow the listing: every live one, page 1, unfiltered, with the newest
  * change among its venues. The legal pages (#18) come last, without `lastmod`: their text changes
  * only with a deploy, and no date of it is stored.
@@ -36,8 +38,10 @@ final class PagesSitemap
      */
     public function urls(): array
     {
+        $newest = $this->venues->newestChange();
         $urls = [
-            new SitemapUrl($this->urls->generate('listing', [], UrlGeneratorInterface::ABSOLUTE_URL), $this->venues->newestChange()),
+            new SitemapUrl($this->urls->generate('home', [], UrlGeneratorInterface::ABSOLUTE_URL), $newest),
+            new SitemapUrl($this->urls->generate('listing', [], UrlGeneratorInterface::ABSOLUTE_URL), $newest),
         ];
 
         $landings = $this->landingPages->all();

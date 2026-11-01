@@ -55,6 +55,20 @@ final class ListingQuery
     }
 
     /**
+     * The first venues of the unfiltered listing: results()'s order, there is no second one
+     * (HP-4, the home page's Spotlight). Two queries, one when no venue is published.
+     *
+     * @return list<ListingCard>
+     */
+    public function first(int $limit, int $photosPerCard, string $locale): array
+    {
+        $statement = $this->statementFor(SearchCriteria::none(), $locale, $limit);
+        $rows = $this->connection->fetchAllAssociative($statement->sql, $statement->params, $statement->types);
+
+        return $this->cards($rows, $locale, $photosPerCard);
+    }
+
+    /**
      * The published venues among the given numbers, in the given order (the Merkliste's saved
      * order). Unknown and unpublished numbers are left out, so the caller can see what is stale.
      * Two queries, none for an empty list.
@@ -107,6 +121,11 @@ final class ListingQuery
 
     public function cardStatement(SearchCriteria $criteria, string $locale): SqlStatement
     {
+        return $this->statementFor($criteria, $locale, self::PER_PAGE);
+    }
+
+    private function statementFor(SearchCriteria $criteria, string $locale, int $limit): SqlStatement
+    {
         $filter = new ListingSql($criteria, $this->enabledLocale->default());
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
         $columns = self::CARD_COLUMNS;
@@ -127,7 +146,7 @@ final class ListingQuery
             $sql,
             $filter->params + $this->translationJoin->parameters($locale) + [
                 'seed' => $this->seed(),
-                'limit' => self::PER_PAGE,
+                'limit' => $limit,
                 'offset' => ($criteria->page - 1) * self::PER_PAGE,
             ],
             $filter->types,
@@ -159,7 +178,7 @@ final class ListingQuery
      *
      * @return list<ListingCard>
      */
-    private function cards(array $rows, string $locale): array
+    private function cards(array $rows, string $locale, int $photosPerCard = self::PHOTOS_PER_CARD): array
     {
         $numbers = [];
         foreach ($rows as $row) {
@@ -167,22 +186,21 @@ final class ListingQuery
             \assert(\is_int($row['number']));
             $numbers[$row['id']] = $row['number'];
         }
-        $photos = [] === $numbers ? [] : $this->photos($numbers, $locale);
+        $photos = [] === $numbers ? [] : $this->photos($numbers, $locale, $photosPerCard);
 
         return array_map(fn (array $row): ListingCard => $this->card($row, $photos), $rows);
     }
 
     /**
-     * The first eight venue-level photos (room photos belong to the room cards) per venue.
+     * The first venue-level photos (room photos belong to the room cards) per venue.
      *
      * @param array<string, int> $numbers venue id → venue number
      *
      * @return array<string, list<CardPhoto>> venue id → photos in position order
      */
-    private function photos(array $numbers, string $locale): array
+    private function photos(array $numbers, string $locale, int $limit): array
     {
         $translation = $this->translationJoin->localized('venue_photo_translations', 'venue_photo_id', 'p.id', 'pt');
-        $limit = self::PHOTOS_PER_CARD;
 
         $rows = $this->connection->fetchAllAssociative(
             <<<SQL

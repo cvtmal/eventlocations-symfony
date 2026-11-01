@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{#-
+    The home page (#36), boards Main (1440) and Home-390. It adds no script: no `scripts` block here, and one photo per
+    Spotlight card keeps the carousel's controls hidden, so carousel.js is not needed. `index` is never passed to
+    search/_card: its default keeps the cards lazy, and the hero is the page's one LCP image.
+-#}
+{% set seo = home_seo() %}
+{% set hero_picture = hero ? card_picture(hero.photo, hero.venueName) : null %}
+
+{% block title %}{{ seo.title }}{% endblock %}
+
+{% block meta %}{{ include('seo/_meta.html.twig', {seo: seo, picture: hero_picture}, with_context = false) }}{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endblock %}
+
+{% block main %}
+    <section class="home-hero">
+        <div class="home-hero__intro">
+            <h1 class="home-hero__title">{{ 'home.hero.heading'|trans({}, 'search') }}</h1>
+            {{ include('search/_home_search.html.twig', {regions: regions, categories: categories}, with_context = false) }}
+        </div>
+        <div class="home-hero__media">
+            {%- if hero_picture %}
+            {{ venue_picture(hero_picture, sizes='(min-width: 1024px) 840px, calc(100vw - 48px)', priority=true, widths=[640, 960, 1280], class='home-hero__picture') }}
+            {%- endif %}
+        </div>
+    </section>
+
+    <section class="home-section home-section--flush">
+        <div class="home-section__head">
+            <h2 class="home-section__title">{{ 'home.categories.heading'|trans({}, 'search') }}</h2>
+            <a class="home-section__link" href="{{ path('listing') }}">{{ 'home.categories.all'|trans({}, 'search') }}{{ icon('chevron-right') }}</a>
+        </div>
+        <ul class="home-categories">
+            {%- for c in categories %}
+            <li><a class="home-category" href="{{ c.href }}">{{ icon(c.category.icon) }}<span>{{ c.category|trans }}</span></a></li>
+            {%- endfor %}
+        </ul>
+    </section>
+
+    <section class="home-band">
+        <div class="home-section">
+            <h2 class="home-section__title">{{ 'home.steps.heading'|trans({}, 'search') }}</h2>
+            <ol class="home-steps">
+                {#- The numbers are the board's look, so aria-hidden: the <ol> already numbers. -#}
+                {%- for step in [
+                    {number: 'home.steps.filter.number'|trans({}, 'search'), title: 'home.steps.filter.title'|trans({}, 'search'), text: 'home.steps.filter.text'|trans({}, 'search')},
+                    {number: 'home.steps.compare.number'|trans({}, 'search'), title: 'home.steps.compare.title'|trans({}, 'search'), text: 'home.steps.compare.text'|trans({}, 'search')},
+                    {number: 'home.steps.inquire.number'|trans({}, 'search'), title: 'home.steps.inquire.title'|trans({}, 'search'), text: 'home.steps.inquire.text'|trans({}, 'search')},
+                    {number: 'home.steps.celebrate.number'|trans({}, 'search'), title: 'home.steps.celebrate.title'|trans({}, 'search'), text: 'home.steps.celebrate.text'|trans({}, 'search')},
+                ] %}
+                <li class="home-steps__item">
+                    <span class="home-steps__number" aria-hidden="true">{{ step.number }}</span>
+                    <h3 class="home-steps__title">{{ step.title }}</h3>
+                    <p class="home-steps__text">{{ step.text }}</p>
+                </li>
+                {%- endfor %}
+            </ol>
+        </div>
+    </section>
+
+    {%- if cards is not empty %}
+    <section class="home-section home-spotlight">
+        <h2 class="home-section__title">{{ 'home.spotlight.heading'|trans({}, 'search') }}</h2>
+        <ul class="home-spotlight__list">
+            {%- for card in cards %}
+            <li>{{ include('search/_card.html.twig', {card: card, heading: 'h3'}, with_context = false) }}</li>
+            {%- endfor %}
+        </ul>
+    </section>
+    {%- endif %}
+
+    <section class="home-section home-section--flush">
+        <div class="home-cta">
+            <div class="home-cta__text">
+                <h2 class="home-section__title">{{ 'home.cta.heading'|trans({}, 'search') }}</h2>
+                <p>{{ 'home.cta.text'|trans({}, 'search') }}</p>
+            </div>
+            {% include 'components/_button.html.twig' with {label: 'home.cta.button'|trans({}, 'search'), href: path('listing'), size: 'lg'} only %}
+        </div>
+    </section>
+
+    <section class="home-band">
+        <div class="home-section home-about">
+            <div class="home-about__text">
+                <h2 class="home-section__title">{{ 'home.about.heading'|trans({}, 'search') }}</h2>
+                {#- Staff text is safe HTML from content_block(), and a captured set stays Markup: no |raw. -#}
+                {%- set text -%}{{- content_block('home.text') -}}{%- endset -%}
+                {%- if text %}
+                <div class="home-about__staff">{{ text }}</div>
+                {%- else %}
+                <p>{{ 'home.about.lead'|trans({}, 'search') }}</p>
+                <p>{{ 'home.about.filters'|trans({}, 'search') }}</p>
+                {%- endif %}
+            </div>
+            <dl class="home-about__kinds">
+                {%- for kind in [
+                    {term: 'home.about.kinds.hotels.term'|trans({}, 'search'), text: 'home.about.kinds.hotels.text'|trans({}, 'search')},
+                    {term: 'home.about.kinds.restaurants.term'|trans({}, 'search'), text: 'home.about.kinds.restaurants.text'|trans({}, 'search')},
+                    {term: 'home.about.kinds.castles.term'|trans({}, 'search'), text: 'home.about.kinds.castles.text'|trans({}, 'search')},
+                    {term: 'home.about.kinds.halls.term'|trans({}, 'search'), text: 'home.about.kinds.halls.text'|trans({}, 'search')},
+                    {term: 'home.about.kinds.event_halls.term'|trans({}, 'search'), text: 'home.about.kinds.event_halls.text'|trans({}, 'search')},
+                    {term: 'home.about.kinds.estates.term'|trans({}, 'search'), text: 'home.about.kinds.estates.text'|trans({}, 'search')},
+                    {term: 'home.about.kinds.originals.term'|trans({}, 'search'), text: 'home.about.kinds.originals.text'|trans({}, 'search')},
+                ] %}
+                <div>
+                    <dt>{{ kind.term }}</dt>
+                    <dd>{{ kind.text }}</dd>
+                </div>
+                {%- endfor %}
+            </dl>
+        </div>
+    </section>
+
+    {%- if regions is not empty %}
+    <section class="home-section" id="regionen">
+        <h2 class="home-section__title">{{ 'home.regions.heading'|trans({}, 'search') }}</h2>
+        <ul class="home-regions">
+            {%- for region in regions %}
+            <li>{% include 'components/_chip.html.twig' with {label: region.label, href: region.href, variant: 'neutral'} only %}</li>
+            {%- endfor %}
+        </ul>
+    </section>
+    {%- endif %}
+{% endblock %}
