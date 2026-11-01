@@ -1,0 +1,169 @@
+#!/bin/sh
+# Loads the owner's content into production from the owner's Mac (#20): the local php container
+# does the work against Neon, and the media goes up with rsync. The server has 256M and a slow
+# AVIF encoder, so it never imports.
+#
+# Run bin/prod-import help for the commands and the run order.
+#
+# PROD_DATABASE_URL and PROD_SSH live in the shell, never in a file. The connection string stays
+# off every process list too: it reaches the container by name only (see prod_console).
+set -eu
+
+MEDIA_DIR="${PROD_MEDIA_DIR:-var/prod-media}"
+CSV="${PROD_CSV:-content/owner/Locations+Startseite.csv}"
+# compose.yaml mounts the checkout here.
+CONTAINER_ROOT="${PROD_CONTAINER_ROOT:-/var/www/html}"
+REMOTE_APP="${PROD_REMOTE_APP:-www/hochzeitslocation.ch}"
+REMOTE_PHP="${PROD_REMOTE_PHP:-/usr/local/php85/bin/php}"
+
+say() { printf '%s\n' "prod-import: $*"; }
+die() { printf '%s\n' "prod-import: $*" >&2; exit 1; }
+
+usage() {
+    cat <<'USAGE'
+Usage: bin/prod-import <command>
+
+  export                   write the content folders from the owner's CSV (local dev DB, no Neon)
+  import                   app:venues:import against Neon, media into PROD_MEDIA_DIR
+  regenerate [--venue=N]   app:media:regenerate against Neon, then sync, then purge
+  sync                     rsync the media to the server, additive: nothing is deleted there
+  purge                    empty the HTTP cache on the server
+  all                      import, then sync, then purge
+  help                     this text
+
+Run order: first deploy (migrations and towns), then export, then all, and only then may staff
+edit. --prune is refused: an empty or unmounted venues/ would unpublish every unedited venue.
+
+Environment, never in a file:
+  PROD_DATABASE_URL   Neon's direct string
+  PROD_SSH            the owner's unrestricted login, user@host (not the forced-command deploy key)
+  PROD_MEDIA_DIR      inside the checkout, default var/prod-media
+USAGE
+}
+
+require_env() {
+    [ -n "${PROD_DATABASE_URL:-}" ] || die "PROD_DATABASE_URL is not set"
+    [ -n "${PROD_SSH:-}" ] || die "PROD_SSH is not set"
+    case "$PROD_SSH" in
+        -*) die "PROD_SSH must be user@host" ;;
+    esac
+    # Mounted into the php container, so it has to stay inside the checkout.
+    case "$MEDIA_DIR" in
+        "" | /* | ..* | */..*) die "PROD_MEDIA_DIR must be a path inside the checkout" ;;
+    esac
+}
+
+prod_console() { # prod_console <console args...>
+    # debug is off, so a kernel left over from an older checkout would never notice new code.
+    docker compose exec -T php rm -rf var/cache/prod
+
+    if docker compose exec -T php test -x /usr/bin/time; then
+        set -- /usr/bin/time -f 'prod-import: peak memory %M KB' php bin/console --no-debug --no-interaction "$@"
+    else
+        set -- php bin/console --no-debug --no-interaction "$@"
+    fi
+
+    # -e with a bare name: compose reads the value from its own environment, so it is on no argv.
+    # The prefix is what sets it: without one, compose would fall back to DATABASE_URL in .env.
+    DATABASE_URL="$PROD_DATABASE_URL" docker compose exec -T \
+        -e APP_ENV=prod \
+        -e DATABASE_URL \
+        -e MEDIA_ROOT="$CONTAINER_ROOT/$MEDIA_DIR/originals" \
+        -e MEDIA_PUBLIC_DIR="$CONTAINER_ROOT/$MEDIA_DIR/public" \
+        php "$@"
+}
+
+export_content() {
+    [ -f "$CSV" ] || die "$CSV is missing, the owner exports it fresh from Wix"
+    docker compose exec -T php php bin/console --no-interaction app:legacy:export-content "$CSV"
+    docker compose exec -T php php bin/console --no-interaction app:owner:export-content "$CSV"
+}
+
+import_content() {
+    prod_console app:venues:import
+}
+
+regenerate_media() { # regenerate_media [--venue=N]
+    prod_console app:media:regenerate "$@"
+}
+
+sync_media() {
+    originals="$MEDIA_DIR/originals/content"
+    public="$MEDIA_DIR/public"
+    [ -d "$originals" ] || die "$originals is missing, run import first"
+    [ -d "$public" ] || die "$public is missing, run import first"
+
+    # rsync creates only the last level, and var/ starts empty on the server.
+    # shellcheck disable=SC2029 # REMOTE_APP is meant to expand here.
+    ssh "$PROD_SSH" "mkdir -p $REMOTE_APP/var/media/content $REMOTE_APP/public/media"
+    # No --delete: the server's files outlive a smaller export. No -o -p -g: the login owns them.
+    rsync -rltz "$originals/" "$PROD_SSH:$REMOTE_APP/var/media/content/"
+    rsync -rltz "$public/" "$PROD_SSH:$REMOTE_APP/public/media/"
+    say "media synced"
+}
+
+purge_cache() {
+    # shellcheck disable=SC2029 # Both paths are meant to expand here.
+    ssh "$PROD_SSH" "cd $REMOTE_APP && $REMOTE_PHP bin/console app:http-cache:clear"
+}
+
+refuse_arguments() { # refuse_arguments <command> <args...>
+    cmd="$1"
+    shift
+    for arg in "$@"; do
+        case "$arg" in
+            --prune*) die "--prune is refused: run bin/prod-import help" ;;
+            --venue=*)
+                venue="${arg#--venue=}"
+                [ "$cmd" = regenerate ] || die "$cmd takes no arguments"
+                case "$venue" in
+                    "" | *[!0-9]*) die "--venue needs a venue number" ;;
+                esac
+                ;;
+            *) die "refused: $arg (this script runs fixed console commands only)" ;;
+        esac
+    done
+    [ "$cmd" = regenerate ] || [ "$#" -eq 0 ] || die "$cmd takes no arguments"
+    [ "$#" -le 1 ] || die "$cmd takes one --venue at most"
+}
+
+main() {
+    cd "$(dirname "$0")/.." || exit 1
+
+    cmd="${1:-}"
+    [ "$#" -eq 0 ] || shift
+    case "$cmd" in
+        help | -h | --help)
+            usage
+            return 0
+            ;;
+        export | import | regenerate | sync | purge | all) ;;
+        *)
+            usage >&2
+            die "unknown command: $cmd"
+            ;;
+    esac
+
+    refuse_arguments "$cmd" "$@"
+    require_env
+
+    case "$cmd" in
+        export) export_content ;;
+        import) import_content ;;
+        regenerate)
+            # New variants change nothing for a visitor until they are on the server.
+            regenerate_media "$@"
+            sync_media
+            purge_cache
+            ;;
+        sync) sync_media ;;
+        purge) purge_cache ;;
+        all)
+            import_content
+            sync_media
+            purge_cache
+            ;;
+    esac
+}
+
+main "$@"

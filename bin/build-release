@@ -1,0 +1,118 @@
+#!/bin/sh
+# Builds the production tarball var/release/release.tgz from the committed tree (#20).
+#
+# Runs on the host (CI or a Mac) and drives the php container for every PHP step, because the
+# host has a different PHP. The server has no Node and no Sass, so everything compiled is
+# compiled here: Composer's no-dev vendor, the Sass entries, the AssetMapper manifest and the
+# Vue islands.
+#
+#   sh bin/build-release            # uses HEAD
+#   RELEASE_REF=<sha> sh bin/build-release
+#
+# Output: var/release/release.tgz, its size and SHA-256 on stdout.
+set -eu
+
+COMPOSE_EXEC="docker compose exec -T php"
+REF="${RELEASE_REF:-HEAD}"
+OUT="var/release"
+SRC="$OUT/src"
+# The php container mounts the checkout at /var/www/html.
+CSRC="/var/www/html/$SRC"
+
+say() { printf '%s\n' "build-release: $*"; }
+
+# The php container runs as root and the checkout belongs to whoever cloned it: uid 1001 on a GitHub
+# runner. Docker Desktop's file sharing hides the difference, a Linux bind mount does not, so
+# everything root wrote under var/ has to go back to that owner before a host step can delete it.
+# var/ itself too: a container step can create it first, and the host then cannot create var/release.
+# -h: chown a link, never what it points at.
+hand_back() {
+    # shellcheck disable=SC2016 # Expanded by the container's shell, where the owner is known.
+    $COMPOSE_EXEC sh -c 'o=$(stat -c %u:%g /var/www/html) && mkdir -p "$1" && chown "$o" /var/www/html/var && chown -hR "$o" "$1"' \
+        sh "/var/www/html/$OUT"
+}
+
+prepare() {
+    hand_back
+    rm -rf "$OUT"
+    mkdir -p "$SRC"
+    if [ "$REF" = "WORKTREE" ]; then
+        # Local proof only: tracked and untracked-but-not-ignored files, so uncommitted work can be
+        # tried. CI and every real release use a commit.
+        git ls-files -co --exclude-standard | tar -T - -cf - | tar -x -C "$SRC"
+    else
+        # Only committed files, so a stray local file can never ship.
+        git archive --format=tar "$REF" | tar -x -C "$SRC"
+    fi
+}
+
+php_deps() {
+    $COMPOSE_EXEC composer install --no-dev --optimize-autoloader --classmap-authoritative \
+        --no-scripts --no-interaction --working-dir="$CSRC"
+}
+
+# APP_SECRET is a throwaway: the build boots the prod kernel but never serves a request.
+console() {
+    $COMPOSE_EXEC env APP_ENV=prod APP_DEBUG=0 APP_SECRET=build-only-not-a-secret \
+        php "$CSRC/bin/console" --no-interaction "$@"
+}
+
+compile_assets() {
+    console importmap:install
+    console sass:build
+    console asset-map:compile
+}
+
+# The islands build into public/admin-build of the checkout (git-ignored), so build there and
+# copy the result into the release tree.
+admin_islands() {
+    make admin-install admin-build
+    mkdir -p "$SRC/public"
+    rm -rf "$SRC/public/admin-build"
+    cp -R public/admin-build "$SRC/public/admin-build"
+}
+
+slim() {
+    # Not needed at runtime. assets/ stays (sprites, the canton map), data/ stays (towns.csv).
+    (cd "$SRC" && rm -rf .git .github .claude tests docker admin-ui node_modules var content docs deploy \
+        compose.yaml Makefile phpunit.dist.xml phpstan.neon.dist .php-cs-fixer.dist.php \
+        .pre-commit-config.yaml .gitignore .gitattributes .editorconfig .env.dev .env.test \
+        CLAUDE.md README.md)
+    # A release never ships a local override or a dev cache.
+    rm -f "$SRC/.env.local" "$SRC/.env.local.php"
+}
+
+verify() {
+    for f in bin/console vendor/autoload_runtime.php public/index.php \
+        public/assets/manifest.json public/admin-build/.vite/manifest.json \
+        assets/icons/sprite.svg data/geo/towns.csv bin/deploy; do
+        [ -e "$SRC/$f" ] || { say "missing $f"; exit 1; }
+    done
+    for f in .env.local tests content var; do
+        [ ! -e "$SRC/$f" ] || { say "must not ship: $f"; exit 1; }
+    done
+}
+
+pack() {
+    tar -C "$SRC" -czf "$OUT/release.tgz" .
+    size="$(wc -c < "$OUT/release.tgz" | tr -d ' ')"
+    if command -v sha256sum >/dev/null 2>&1; then
+        sum="$(sha256sum "$OUT/release.tgz" | cut -d' ' -f1)"
+    else
+        sum="$(shasum -a 256 "$OUT/release.tgz" | cut -d' ' -f1)"
+    fi
+    say "$OUT/release.tgz $size bytes sha256=$sum"
+}
+
+main() {
+    prepare
+    php_deps
+    compile_assets
+    admin_islands
+    hand_back
+    slim
+    verify
+    pack
+}
+
+main "$@"

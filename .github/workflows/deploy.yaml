@@ -1,0 +1,175 @@
+name: Deploy
+
+# Manual only: Actions → Deploy → Run workflow, on main. deploy builds the release from this commit
+# and ships it over the forced-command key; purge empties the HTTP cache on the server.
+#
+# There is no rollback (one app directory, no old release to go back to). To go back, revert on main
+# and deploy that commit: a run deploys the head of main, and only after CI passed on it.
+#
+# Secrets (GitHub environment "production"): HOSTPOINT_SSH_KEY, HOSTPOINT_KNOWN_HOSTS,
+# HOSTPOINT_SSH_USER, HOSTPOINT_SSH_HOST.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: What to run
+        type: choice
+        options: [deploy, purge]
+        default: deploy
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SITE: https://hochzeitslocation.ch
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main' && inputs.action == 'deploy'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://hochzeitslocation.ch
+    env:
+      CI: true
+      SSH_TARGET: ${{ secrets.HOSTPOINT_SSH_USER }}@${{ secrets.HOSTPOINT_SSH_HOST }}
+    steps:
+      - name: Require a green CI run for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          conclusion=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yaml --commit "$GITHUB_SHA" \
+            --json conclusion --jq '.[0].conclusion // "none"')
+          echo "CI for $GITHUB_SHA: $conclusion"
+          test "$conclusion" = success
+
+      - uses: actions/checkout@v7
+
+      - name: Start php and database
+        run: docker compose up -d --build --wait php database
+
+      - name: Build the release tarball
+        run: sh bin/build-release
+
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.HOSTPOINT_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOSTPOINT_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          install -m 600 /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # The gate on the server reads the command from SSH_ORIGINAL_COMMAND and the tarball from stdin.
+      - name: Ship and install
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$SSH_TARGET" "deploy $GITHUB_SHA" < var/release/release.tgz | tee deploy.log
+          grep -q "DEPLOYED_SHA=$GITHUB_SHA" deploy.log
+
+      - name: "Smoke: /health"
+        run: curl -fsS --retry 3 --retry-delay 5 -o /dev/null "$SITE/health"
+
+      - name: "Smoke: security headers and gzip on the listing"
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 -H 'Accept-Encoding: gzip' -D listing.headers -o /dev/null \
+            "$SITE/hochzeitslocations"
+          for header in '^strict-transport-security:' '^content-security-policy:' \
+            '^x-content-type-options: *nosniff' '^content-encoding: *gzip'; do
+            grep -qi "$header" listing.headers || { echo "missing: $header"; exit 1; }
+          done
+
+      # The deploy emptied the store, so the listing above was the miss that filled it (#19).
+      - name: "Smoke: the HTTP cache answers the listing"
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 -D cache.headers -o /dev/null "$SITE/hochzeitslocations"
+          grep -qi '^x-symfony-cache:.*fresh' cache.headers || { cat cache.headers; exit 1; }
+
+      - name: "Smoke: sitemap index and robots.txt"
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 -o sitemap.xml "$SITE/sitemap.xml"
+          grep -q '<sitemapindex' sitemap.xml
+          curl -fsS --retry 3 --retry-delay 5 -o robots.txt "$SITE/robots.txt"
+          grep -qi '^sitemap:' robots.txt
+
+      - name: "Smoke: www and http redirect to the canonical host"
+        run: |
+          www=$(curl -sS --retry 3 --retry-delay 5 -o /dev/null -w '%{http_code} %{redirect_url}' \
+            https://www.hochzeitslocation.ch/x)
+          test "$www" = '301 https://hochzeitslocation.ch/x'
+          plain=$(curl -sS --retry 3 --retry-delay 5 -o /dev/null -w '%{http_code} %{redirect_url}' \
+            http://hochzeitslocation.ch/)
+          test "$plain" = '301 https://hochzeitslocation.ch/'
+
+      - name: "Smoke: the admin login is not cached"
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 -D admin.headers -o /dev/null "$SITE/admin/login"
+          grep -qi '^cache-control:.*no-store' admin.headers
+
+      # app:media:regenerate keeps its URLs, so /media must never be immutable. Before the first import
+      # there is no venue, so the file answers 404, or no photo, so it lists no image, and the check has
+      # nothing to look at. Every other status is a broken sitemap. tests/Deploy/run.sh runs this step.
+      - name: "Smoke: a media file is not immutable"
+        run: |
+          status=$(curl -sS --retry 3 --retry-delay 5 -o venues.xml -w '%{http_code}' "$SITE/sitemap-venues-1.xml")
+          if [ "$status" = 404 ]; then
+            echo "no venue in the sitemap yet"
+            exit 0
+          fi
+          if [ "$status" != 200 ]; then
+            echo "/sitemap-venues-1.xml answered $status"
+            exit 1
+          fi
+          image=$(tr '<' '\n' < venues.xml | sed -n 's/^image:loc>//p' | sed -n 1p)
+          if [ -z "$image" ]; then
+            echo "no image in the sitemap yet"
+            exit 0
+          fi
+          curl -fsS --retry 3 --retry-delay 5 -D media.headers -o /dev/null "$image"
+          if grep -qi '^cache-control:.*immutable' media.headers; then
+            echo "/media is immutable"
+            exit 1
+          fi
+
+      # The .env.local smoke check: the gate runs app:prod:check-env, then prints the deployed sha.
+      - name: "Smoke: env guard on the server"
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$SSH_TARGET" check | tee check.log
+          grep -q "sha=$GITHUB_SHA" check.log
+
+  purge:
+    if: github.ref == 'refs/heads/main' && inputs.action == 'purge'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment:
+      name: production
+      url: https://hochzeitslocation.ch
+    env:
+      SSH_TARGET: ${{ secrets.HOSTPOINT_SSH_USER }}@${{ secrets.HOSTPOINT_SSH_HOST }}
+    steps:
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.HOSTPOINT_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOSTPOINT_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          install -m 600 /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Empty the HTTP cache
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$SSH_TARGET" purge

@@ -49,6 +49,11 @@ when@test:
 # The store is %kernel.share_dir%/http_cache; every purge invalidates it (Shared\Http\HttpCacheClearer).
 # HttpCache passes the visitor's IP on itself (SubRequestHandler), so the limiters need no
 # trusted_proxies; a proxy that terminates TLS in front of PHP needs SYMFONY_TRUSTED_PROXIES (#20).
+#
+# #20, PD3: production answers only for its own hosts (a test pins this). trusted_proxies stays
+# Symfony's default, %env(default::SYMFONY_TRUSTED_PROXIES)%: the host sets that variable only if
+# Phase 0's probe shows a proxy in front of PHP, and these headers then take effect by themselves.
+# HttpCache swallows the kernel's host check, so Shared\Http\TrustedHostGuard runs it in front of the cache.
 when@prod:
     framework:
         http_cache:
@@ -58,3 +63,5 @@ when@prod:
             default_ttl: 0
             allow_reload: false
             allow_revalidate: false
+        trusted_hosts: ['^hochzeitslocation\.ch$', '^www\.hochzeitslocation\.ch$']
+        trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']

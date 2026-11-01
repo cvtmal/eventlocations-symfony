@@ -1,0 +1,73 @@
+#!/bin/sh
+# Pulls the media from the server to the owner's Mac (#20). The database has its nightly dump in
+# Actions; the originals and variants exist only on the server once staff upload there.
+#
+#   PROD_SSH=user@host BACKUP_DIR=/Volumes/Backup/hochzeitslocation sh bin/pull-media-backup
+#   PROD_SSH=user@host BACKUP_DIR=… sh bin/pull-media-backup --verify
+#
+# --verify compares checksums without copying and exits 1 if a server file is missing or differs
+# here. Nothing is ever deleted on either side, so the backup keeps what the server has dropped.
+set -eu
+
+REMOTE_APP="${PROD_REMOTE_APP:-www/hochzeitslocation.ch}"
+
+say() { printf '%s\n' "pull-media-backup: $*"; }
+die() { printf '%s\n' "pull-media-backup: $*" >&2; exit 1; }
+
+require_env() {
+    [ -n "${BACKUP_DIR:-}" ] || die "BACKUP_DIR is not set"
+    [ -n "${PROD_SSH:-}" ] || die "PROD_SSH is not set"
+    case "$PROD_SSH" in
+        -*) die "PROD_SSH must be user@host" ;;
+    esac
+}
+
+pull_tree() { # pull_tree <remote dir below the app> <local dir below BACKUP_DIR>
+    mkdir -p "$BACKUP_DIR/$2"
+    rsync -rltz "$PROD_SSH:$REMOTE_APP/$1/" "$BACKUP_DIR/$2/"
+}
+
+pull() {
+    pull_tree var/media var-media
+    pull_tree public/media public-media
+    say "pulled into BACKUP_DIR"
+}
+
+differences() { # differences <remote dir below the app> <local dir below BACKUP_DIR>
+    [ -d "$BACKUP_DIR/$2" ] || die "$BACKUP_DIR/$2 is missing, pull first"
+    # Not a pipe into grep: a lost connection must fail here, not read as "no differences".
+    rsync -rlnc --itemize-changes "$PROD_SSH:$REMOTE_APP/$1/" "$BACKUP_DIR/$2/" > "$work/items" \
+        || die "rsync failed, nothing was compared"
+    # A leading dot is an item that needs no transfer, which some rsync versions still list.
+    grep -v '^\.' "$work/items" >> "$work/differences" || true
+}
+
+verify() {
+    work="$(mktemp -d)"
+    trap 'rm -rf "$work"' EXIT
+    : > "$work/differences"
+    differences var/media var-media
+    differences public/media public-media
+    if [ -s "$work/differences" ]; then
+        cat "$work/differences"
+        say "the backup differs from the server"
+        exit 1
+    fi
+    say "the backup matches the server"
+}
+
+main() {
+    case "${1:-}" in
+        "")
+            require_env
+            pull
+            ;;
+        --verify)
+            require_env
+            verify
+            ;;
+        *) die "usage: bin/pull-media-backup [--verify]" ;;
+    esac
+}
+
+main "$@"

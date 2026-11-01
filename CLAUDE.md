@@ -35,6 +35,9 @@ Never run `composer` or `bin/console` on the host. The host has a different PHP 
 | `make lighthouse URL=/path ADMIN=1` / `make validate-html URL=/path ADMIN=1` | The same tools logged in as the dev admin (dev only) |
 | `make perf-check` | Byte budgets of S11 through `phpunit --group budget` (CSS, JS, HTML, fonts, admin); needs no perf stack, runs in CI |
 | `make perf-up` / `make perf-seed [TIMES=10]` / `make perf-run MODE=uncached\|all` / `make perf-lighthouse URL=/path` / `make perf-down` | Prod-mode perf stack on :8096: start and prepare it (rerun after a code change), copy the lane's seeded database (`TIMES=10` for k6, ×1 for Lighthouse), k6 into `var/perf/`, Lighthouse 3×, stop and delete its volumes. Method and figures: `docs/performance-baseline.md` |
+| `make release-check` | Build the release tarball and boot it with `APP_ENV=prod` (CI job `release`) |
+| `make deploy-test` | Run the deploy, cron and import scripts against a throwaway tree, and `public/.htaccess` against Apache |
+| `make workflow-lint` | actionlint on `.github/workflows` |
 
 App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http://localhost:8025.
 
@@ -109,7 +112,7 @@ Each module's notes live in `.claude/rules/module-<name>.md`, which load by them
 
 | Module | Notes | Holds | Also read it for |
 |---|---|---|---|
-| Shared | `.claude/rules/module-shared.md` | EntityId, translation, design system, security headers, content blocks, HTTP cache | any new public route or cache header |
+| Shared | `.claude/rules/module-shared.md` | EntityId, translation, design system, security headers, content blocks, HTTP cache, deploy, cron, production settings | any new public route, cache header or nightly job |
 | Geo | `.claude/rules/module-geo.md` | Cantons, towns, place lookup, distances, canton map |  |
 | Media | `.claude/rules/module-media.md` | Image variants, `<picture>`, regeneration |  |
 | Venues | `.claude/rules/module-venues.md` | Venue aggregate, detail page, imports, CMS write side | any venue write from Cms or Crm |

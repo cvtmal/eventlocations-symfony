@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues\Controller;
 
+use App\Shared\Security\ClientIpKey;
 use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ValueObject\PhoneNumber;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,13 +31,14 @@ final class VenuePhoneController extends AbstractController
     public function __construct(
         private readonly VenueDetailQuery $venues,
         private readonly RateLimiterFactoryInterface $phoneRevealLimiter,
+        private readonly ClientIpKey $clientIpKey,
     ) {
     }
 
     #[Route(path: ['de' => '/hochzeitslocation/{slug}/telefon'], name: 'venue_phone', requirements: ['slug' => VenueDetailController::SLUG_REQUIREMENT], methods: ['GET'])]
     public function __invoke(Request $request, string $slug): Response
     {
-        $limit = $this->phoneRevealLimiter->create($request->getClientIp() ?? 'unknown')->consume();
+        $limit = $this->phoneRevealLimiter->create($this->clientIpKey->of($request))->consume();
         if (!$limit->isAccepted()) {
             $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());
 

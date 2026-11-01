@@ -1,0 +1,30 @@
+# OP-3: the bundle loads in prod only (config/bundles.php), and an empty DSN is a no-op.
+when@prod:
+    sentry:
+        dsn: '%env(SENTRY_DSN)%'
+        # Errors only: no spans around DBAL, Twig, cache or HTTP calls.
+        tracing: false
+        options:
+            # No IPs, user data or cookies from the request, and sensitive headers go out as
+            # [Filtered] (#13's ask; the lines are in the #20 changes log). Never set
+            # data_collection: it overrides this.
+            send_default_pii: false
+            # Bodies hold the inquiry form's names, addresses and messages.
+            max_request_body_size: 'none'
+            # bin/deploy writes the deployed commit to .env.prod.local.
+            release: '%env(default::SENTRY_RELEASE)%'
+            environment: production
+            # Matched with is_a(), so subclasses count. Expected client errors would use up the
+            # quota. Plain HttpException is not listed, because that would also drop 5xx.
+            ignore_exceptions:
+                # The SDK's own fatal handler reports these.
+                - 'Symfony\Component\ErrorHandler\Error\FatalError'
+                - 'Symfony\Component\HttpKernel\Exception\NotFoundHttpException'
+                - 'Symfony\Component\HttpKernel\Exception\GoneHttpException'
+                - 'Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException'
+                - 'Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException'
+                - 'Symfony\Component\HttpKernel\Exception\BadRequestHttpException'
+                - 'Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException'
+                - 'Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface'
+                - 'Symfony\Component\Security\Core\Exception\AccessDeniedException'
+                - 'Symfony\Component\Security\Core\Exception\AuthenticationException'

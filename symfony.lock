@@ -87,6 +87,18 @@
             "config/routes/scheb_2fa.yaml"
         ]
     },
+    "sentry/sentry-symfony": {
+        "version": "5.15",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "5.0",
+            "ref": "aac2bc5220e9ab5b9e3838a7a4da90e7f74e6148"
+        },
+        "files": [
+            "config/packages/sentry.yaml"
+        ]
+    },
     "symfony/asset-mapper": {
         "version": "7.4",
         "recipe": {
@@ -169,6 +181,18 @@
             "src/Controller/.gitignore",
             "src/Kernel.php",
             ".editorconfig"
+        ]
+    },
+    "symfony/lock": {
+        "version": "7.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "5.2",
+            "ref": "8e937ff2b4735d110af1770f242c1107fdab4c8e"
+        },
+        "files": [
+            "config/packages/lock.yaml"
         ]
     },
     "symfony/mailer": {

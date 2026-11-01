@@ -1,0 +1,4 @@
+# Serialises the rate limiters' read-count-write per key (#20). The directory is one per app and
+# var/ survives a deploy, and flock releases by itself when a process dies.
+framework:
+    lock: 'flock://%kernel.project_dir%/var/lock'

@@ -30,3 +30,50 @@ jobs:
 
       - name: Byte budgets (S11)
         run: make perf-check
+
+  # #20: the production tarball is built here, because the server has no Node, no Sass and a different
+  # PHP. deploy.yaml builds the same way and ships the file over SSH. bin/build-release installs the
+  # admin UI's packages itself, so this job has no step for them.
+  release:
+    runs-on: ubuntu-24.04
+    env:
+      CI: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start php and database
+        run: docker compose up -d --build --wait php database
+
+      - name: Build the release tarball and boot it with APP_ENV=prod
+        run: make release-check
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ github.sha }}
+          path: var/release/release.tgz
+          retention-days: 7
+          if-no-files-found: error
+
+  ops-lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      # shellcheck is preinstalled on ubuntu-24.04, and sh is dash there. --shell=sh: the Hostpoint scripts
+      # run under FreeBSD /bin/sh.
+      - name: ShellCheck and a dash syntax check of the deploy, cron and import scripts
+        run: |
+          set -- bin/build-release bin/deploy bin/deploy-gate bin/warm-cache bin/cron-lock.sh \
+            bin/cron-midnight bin/cron-cache-guard bin/cron-daily bin/prod-import bin/pull-media-backup \
+            deploy/probe.sh tests/Deploy/*.sh
+          shellcheck --shell=sh -x "$@"
+          for script in "$@"; do dash -n "$script"; done
+
+      - name: Lint the workflows
+        run: make workflow-lint
+
+      - name: Start php
+        run: docker compose up -d --build --wait php
+
+      - name: Run the scripts against a throwaway tree, and the .htaccess against Apache
+        run: make deploy-test
