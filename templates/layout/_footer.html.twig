@@ -2,7 +2,7 @@
     <div class="site-footer__inner">
         <div class="site-footer__columns">
             <div class="site-footer__brand">
-                <img src="{{ asset('images/logo-hzl.png') }}" alt="{{ 'layout.site_name'|trans }}" width="126" height="28">
+                <img src="{{ asset('images/logo-hzl.png') }}" alt="{{ 'layout.logo_alt'|trans }}" width="126" height="28">
                 <p class="site-footer__tagline">{{ 'layout.footer.tagline'|trans }}</p>
             </div>
             <div class="site-footer__column">
@@ -22,7 +22,7 @@
         {# Slot for #26: the staff note (content block footer.note), from the snapshot only #}
         {{ include('shared/_footer_note.html.twig', ignore_missing = true) }}
         <div class="site-footer__bottom">
-            <p class="site-footer__copy">{{ 'layout.footer.copyright'|trans }}</p>
+            <p class="site-footer__copy">{{ 'layout.footer.copyright'|trans({year: 'now'|date('Y')}) }}</p>
             {# Slot for #18: Impressum / Datenschutz links #}
             {{ include('site/legal/_footer_links.html.twig', ignore_missing = true) }}
         </div>

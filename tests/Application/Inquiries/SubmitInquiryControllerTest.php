@@ -141,7 +141,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
         $crawler = $this->post(self::SLUG, InquiryFormFields::valid(['email' => $email]));
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame('Bitte gib eine gültige E-Mail-Adresse an.', trim($crawler->filter('#inquiry_email_error')->text()));
+        self::assertSame('Bitte geben Sie eine gültige E-Mail-Adresse an.', trim($crawler->filter('#inquiry_email_error')->text()));
     }
 
     public function test_an_invalid_form_keeps_the_values_and_links_the_errors(): void
@@ -156,8 +156,8 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertSelectorExists('#anfrage [role="alert"]');
         self::assertSame('true', $crawler->filter('#inquiry_firstName')->attr('aria-invalid'));
         self::assertSame('inquiry_firstName_error', $crawler->filter('#inquiry_firstName')->attr('aria-describedby'));
-        self::assertSelectorTextContains('#inquiry_firstName_error', 'Bitte gib deinen Vornamen an.');
-        self::assertSelectorTextContains('#inquiry_email_error', 'Bitte gib eine gültige E-Mail-Adresse an.');
+        self::assertSelectorTextContains('#inquiry_firstName_error', 'Bitte geben Sie Ihren Vornamen an.');
+        self::assertSelectorTextContains('#inquiry_email_error', 'Bitte geben Sie eine gültige E-Mail-Adresse an.');
         self::assertSame('keine-adresse', $crawler->filter('#inquiry_email')->attr('value'));
         self::assertSame('Muster', $crawler->filter('#inquiry_lastName')->attr('value'));
         self::assertSame('120', $crawler->filter('#inquiry_guests')->attr('value'));
@@ -265,7 +265,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
         ]));
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('#inquiry_email_error', 'Bitte gib eine gültige E-Mail-Adresse an.');
+        self::assertSelectorTextContains('#inquiry_email_error', 'Bitte geben Sie eine gültige E-Mail-Adresse an.');
         self::assertSame("mar\u{2003}ker@example.ch", $crawler->filter('#inquiry_email')->attr('value'));
         self::assertSame([], $this->rows());
         self::assertEmailCount(0);

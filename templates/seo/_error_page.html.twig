@@ -10,10 +10,13 @@
 
 {% block jsonld %}{% endblock %}
 
+{% block body_class %}{% set page_class = 'page-error' %}{{ page_class }}{% endblock %}
+
 {% block main %}
     <div class="error-page container">
+        <span class="error-page__icon">{% block error_icon %}{{ icon('map-pin') }}{% endblock %}</span>
         <h1 class="error-page__heading">{% block error_heading %}{% endblock %}</h1>
         <p class="error-page__text">{% block error_text %}{% endblock %}</p>
-        {% include 'components/_button.html.twig' with {label: 'error.to_listing'|trans({}, 'seo'), variant: 'primary', href: path('listing')} only %}
+        {% include 'components/_button.html.twig' with {label: 'error.to_listing'|trans({}, 'seo'), variant: 'primary', size: 'lg', href: path('listing')} only %}
     </div>
 {% endblock %}

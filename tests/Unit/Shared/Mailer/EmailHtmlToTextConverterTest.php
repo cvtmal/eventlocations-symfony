@@ -88,6 +88,17 @@ final class EmailHtmlToTextConverterTest extends TestCase
         self::assertSame("Before\n\nAfter", $text);
     }
 
+    public function test_a_cell_holding_only_an_image_yields_no_block(): void
+    {
+        $text = $this->convert($this->card(
+            '<tr><td class="hl-plate"><a href="http://localhost/"><img src="cid:logo" alt="hochzeitslocation.ch" width="126" height="28"></a></td></tr>'
+            .'<tr><td><img src="cid:logo" alt="hochzeitslocation.ch"></td></tr>'
+            .'<tr><td class="hl-p">Body</td></tr>',
+        ));
+
+        self::assertSame('Body', $text);
+    }
+
     public function test_html_without_tables_falls_back_to_body_text(): void
     {
         $text = $this->convert("<html><body><p>Hello\u{00A0}  there</p>\n\n<p>Bye</p></body></html>");

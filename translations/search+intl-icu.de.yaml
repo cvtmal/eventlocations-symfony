@@ -5,19 +5,19 @@ listing:
     count: '{count, plural, one {# Resultat} other {{formatted} Resultate}}'
     results_label: Suchresultate
     empty:
-        title: Keine Location passt zu deinen Filtern
+        title: Keine Location passt zu Ihren Filtern
         reset: Filter löschen
 filter:
     bar_label: Filter
     region: Region
     guests: Anzahl Gäste
-    guests_title: Wieviele Gäste erwartest du?
+    guests_title: Wie viele Gäste erwarten Sie?
     guests_picks: Gästezahl wählen
     more: weitere Filter +
-    more_title: Wähle weitere Filter & Möglichkeiten
+    more_title: Wählen Sie weitere Filter und Möglichkeiten
     more_active: 'weitere Filter ({count})'
     more_remove: Weitere Filter entfernen
-    more_name_title: Suche eine konkrete Location
+    more_name_title: Suchen Sie eine konkrete Location
     more_name_placeholder: Name eingeben
     more_access: Erreichbarkeit
     more_price: Preisniveau
@@ -37,7 +37,7 @@ filter:
     more_height_max: '≥ {height} m'
     reset: Filter löschen
     merkliste: Merkliste
-    region_title: Wo soll eure Hochzeit stattfinden?
+    region_title: Wo soll Ihre Hochzeit stattfinden?
     region_tab_canton: Kanton
     region_tab_place: Ort/PLZ
     canton_placeholder: Kanton eingeben
@@ -92,167 +92,167 @@ landing:
     breadcrumb_label: Navigationspfad
     canton:
         heading: 'Hochzeitslocations im Kanton {canton}'
-        intro: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} im Kanton {canton}: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt bei der Location an.'
+        intro: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} im Kanton {canton}: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt bei der Location an.'
     town:
         heading: 'Hochzeitslocations in {town}'
-        intro: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} in {town}: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt bei der Location an.'
+        intro: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} in {town}: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt bei der Location an.'
     building:
         bar_club:
             slug: bar-club
             heading: 'Hochzeit in Bar oder Club'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in Bar oder Club: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in Bar oder Club: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         farm_barn:
             slug: bauernhof-scheune
             heading: 'Hochzeit auf dem Bauernhof'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit auf dem Bauernhof: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit auf dem Bauernhof: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         mountain_hut:
             slug: berghuette-alphuette
             heading: 'Hochzeit in der Berghütte'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in der Berghütte: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in der Berghütte: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         brewery_winery:
             slug: brauerei-weingut
             heading: 'Hochzeit in Brauerei oder Weingut'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in Brauerei oder Weingut: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in Brauerei oder Weingut: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         medieval_castle:
             slug: burg
             heading: 'Hochzeit auf der Burg'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit auf der Burg: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit auf der Burg: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         cafe:
             slug: cafe
             heading: 'Hochzeit im Café'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Café: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Café: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         casino:
             slug: casino
             heading: 'Hochzeit im Casino'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Casino: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Casino: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         digital_venue:
             slug: digitale-location
             heading: 'Digitale Hochzeitslocations'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure digitale oder hybride Hochzeitsfeier: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre digitale oder hybride Hochzeitsfeier: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         experience_creative:
             slug: erlebnis-kreativ
             heading: 'Hochzeitslocations mit Erlebnis'
-            intro: '{count, plural, one {# Location} other {# Locations}} mit Erlebnis- und Kreativprogramm für eure Hochzeit: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} mit Erlebnis- und Kreativprogramm für Ihre Hochzeit: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         event_hall:
             slug: eventhalle
             heading: 'Hochzeit in der Eventhalle'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in der Eventhalle: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in der Eventhalle: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         event_venue:
             slug: eventlocation
             heading: 'Eventlocations für die Hochzeit'
-            intro: '{count, plural, one {# Eventlocation} other {# Eventlocations}} für eure Hochzeit: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Eventlocation} other {# Eventlocations}} für Ihre Hochzeit: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         factory_hall:
             slug: fabrikhalle
             heading: 'Hochzeit in der Fabrikhalle'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in der Fabrikhalle: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in der Fabrikhalle: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         mobile_venue:
             slug: fahrbare-location
             heading: 'Fahrbare Hochzeitslocations'
-            intro: '{count, plural, one {# fahrbare Location} other {# fahrbare Locations}} für eure Hochzeit: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# fahrbare Location} other {# fahrbare Locations}} für Ihre Hochzeit: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         leisure_facility:
             slug: freizeitanlage
             heading: 'Hochzeit in der Freizeitanlage'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in der Freizeitanlage: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in der Freizeitanlage: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         gallery_studio:
             slug: galerie-atelier
             heading: 'Hochzeit in Galerie oder Atelier'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in Galerie oder Atelier: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in Galerie oder Atelier: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         garden_greenhouse:
             slug: garten-treibhaus
             heading: 'Hochzeit im Garten oder Treibhaus'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Garten oder Treibhaus: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Garten oder Treibhaus: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         hangar_shipyard:
             slug: hangar-werft
             heading: 'Hochzeit im Hangar oder in der Werft'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Hangar oder in der Werft: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Hangar oder in der Werft: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         historic_site:
             slug: historische-staette
             heading: 'Hochzeit an historischen Stätten'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit an historischen Stätten: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit an historischen Stätten: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         wedding_venue:
             slug: hochzeitslocation
             heading: 'Reine Hochzeitslocations'
-            intro: '{count, plural, one {# reine Hochzeitslocation} other {# reine Hochzeitslocations}} für euren grossen Tag: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# reine Hochzeitslocation} other {# reine Hochzeitslocations}} für Ihren grossen Tag: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         cave_fortress:
             slug: hoehle-festung
             heading: 'Hochzeit in Höhle oder Festung'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in Höhle oder Festung: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in Höhle oder Festung: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         hotel:
             slug: hotel
             heading: 'Hochzeit im Hotel'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Hotel: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Hotel: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         cinema:
             slug: kino
             heading: 'Hochzeit im Kino'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Kino: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Kino: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         congress_centre:
             slug: kongresszentrum
             heading: 'Hochzeit im Kongresszentrum'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Kongresszentrum: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Kongresszentrum: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         cultural_centre:
             slug: kulturzentrum
             heading: 'Hochzeit im Kulturzentrum'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Kulturzentrum: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Kulturzentrum: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         exhibition_hall:
             slug: messehalle
             heading: 'Hochzeit in der Messehalle'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in der Messehalle: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in der Messehalle: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         museum:
             slug: museum
             heading: 'Hochzeit im Museum'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Museum: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Museum: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         open_air:
             slug: openair-outdoor
             heading: 'Hochzeit unter freiem Himmel'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit unter freiem Himmel: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit unter freiem Himmel: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         party_room:
             slug: partyraum
             heading: 'Hochzeit im Partyraum'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Partyraum: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Partyraum: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         restaurant:
             slug: restaurant
             heading: 'Hochzeit im Restaurant'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Restaurant: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Restaurant: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         ship:
             slug: schiff
             heading: 'Hochzeit auf dem Schiff'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit auf dem Schiff: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit auf dem Schiff: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         castle:
             slug: schloss
             heading: 'Hochzeit im Schloss'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Schloss: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Schloss: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         seminar_room:
             slug: seminarraum
             heading: 'Hochzeit im Seminarraum'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Seminarraum: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Seminarraum: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         meeting_room:
             slug: sitzungszimmer
             heading: 'Hochzeit im Sitzungszimmer'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Sitzungszimmer: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Sitzungszimmer: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         theatre:
             slug: theater
             heading: 'Hochzeit im Theater'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Theater: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Theater: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         tram_train_bus:
             slug: tram-bahn-bus
             heading: 'Hochzeit in Tram, Bahn oder Bus'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in Tram, Bahn oder Bus: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in Tram, Bahn oder Bus: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         villa:
             slug: villa
             heading: 'Hochzeit in der Villa'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in der Villa: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in der Villa: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         forest_hut:
             slug: waldhuette
             heading: 'Hochzeit in der Waldhütte'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit in der Waldhütte: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit in der Waldhütte: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         tent:
             slug: zelt-zirkuszelt
             heading: 'Hochzeit im Zelt'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Zelt: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Zelt: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
         guild_hall:
             slug: zunfthaus
             heading: 'Hochzeit im Zunfthaus'
-            intro: '{count, plural, one {# Location} other {# Locations}} für eure Hochzeit im Zunfthaus: vergleiche Fotos, Platz für Gäste und Bewertungen und frag direkt an.'
+            intro: '{count, plural, one {# Location} other {# Locations}} für Ihre Hochzeit im Zunfthaus: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.'
 # #36: the home page, in "Sie". The category tiles' labels are HomeCategory's, keyed by its case value.
 home:
     hero:
