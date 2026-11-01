@@ -18,6 +18,7 @@ use App\Crm\Exception\StaleProperty;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\Repository\DealStageRepository;
+use App\Crm\Repository\TaskRepository;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Uid\EntityId;
 use Doctrine\ORM\EntityManagerInterface;
@@ -27,7 +28,8 @@ use Psr\Clock\ClockInterface;
  * Under the locks, company then deal (D11): the same target is a no-op, another stage than the expected one is stale
  * (D17-b), lost needs a reason (N9). Going back from won or lost clears `closedAt` and the reason. The stage change
  * goes on the deal's and the company's timeline, never a contact's, so an erasure has nothing to do with it (D28).
- * Its title and payload are a snapshot: the company's timeline outlives a deleted deal (D17-d).
+ * Its title and payload are a snapshot: the company's timeline outlives a deleted deal (D17-d). A deal that leaves won
+ * has no contract to renew, so its open renewal task is done with it.
  */
 final class MoveDealStageHandler implements CommandHandlerInterface
 {
@@ -35,6 +37,7 @@ final class MoveDealStageHandler implements CommandHandlerInterface
         private readonly CompanyRepository $companies,
         private readonly DealRepository $deals,
         private readonly DealStageRepository $stages,
+        private readonly TaskRepository $tasks,
         private readonly CompanyStageSync $stageSync,
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
@@ -66,6 +69,11 @@ final class MoveDealStageHandler implements CommandHandlerInterface
         $this->em->persist($activity);
         $this->em->persist(new ActivityDeal($activity, $deal));
         $this->em->persist(new ActivityCompany($activity, $company));
+
+        $task = $from->isWon() ? $this->tasks->renewalOf($deal->id()) : null;
+        if (null !== $task && !$task->isDone()) {
+            $task->complete($now);
+        }
 
         $this->em->flush();
         $this->stageSync->afterDealChange($companyId, $from->isWon());

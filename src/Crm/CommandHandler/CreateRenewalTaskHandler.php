@@ -13,7 +13,6 @@ use App\Crm\Exception\NoRenewalAssignee;
 use App\Crm\Repository\DealRepository;
 use App\Crm\Repository\TaskRepository;
 use App\Crm\ValueObject\RenewalWindow;
-use App\Crm\ValueObject\TaskDueDate;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Translation\EnabledLocale;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,13 +23,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Under the deal's lock the scope holds or the deal is skipped: `app:crm:renewal-tasks` read its ids without one.
  * `uk_crm_tasks_renewal` is the backstop. A done task counts, so it is not written again (D24). The assignee is the
  * deal's owner, else the company's, else the oldest admin, each only while active; a deactivated owner is a real
- * case. The task is due 30 days before the end, a default, or today when that has passed. Nobody wrote it, so it has
- * no `createdBy`. The answer says whether a task was written.
+ * case. `RenewalWindow::taskDueOn` sets the due date. Nobody wrote it, so it has no `createdBy`. The answer says
+ * whether a task was written.
  */
 final class CreateRenewalTaskHandler implements CommandHandlerInterface
 {
-    private const int LEAD_DAYS = 30;
-
     public function __construct(
         private readonly DealRepository $deals,
         private readonly TaskRepository $tasks,
@@ -57,7 +54,7 @@ final class CreateRenewalTaskHandler implements CommandHandlerInterface
         $this->em->persist(new Task(
             $command->id,
             $this->translator->trans('task.renewal_title', ['name' => $deal->name()], 'crm', $this->locales->default()),
-            $this->dueOn($end, $now),
+            RenewalWindow::taskDueOn($end, $now),
             $this->assignee($deal),
             null,
             deal: $deal,
@@ -65,13 +62,6 @@ final class CreateRenewalTaskHandler implements CommandHandlerInterface
         ));
 
         return true;
-    }
-
-    private function dueOn(\DateTimeImmutable $end, \DateTimeImmutable $now): \DateTimeImmutable
-    {
-        $lead = $end->modify(\sprintf('-%d days', self::LEAD_DAYS));
-
-        return new \DateTimeImmutable(max($lead->format('Y-m-d'), TaskDueDate::today($now)));
     }
 
     /**

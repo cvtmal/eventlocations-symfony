@@ -13,7 +13,8 @@ use Doctrine\ORM\Mapping as ORM;
  * A to-do of a staff member (S13, CRM-5): a due date, an assignee, done or not, and at most one
  * object (chk_crm_tasks_one_object; none when created from the task list). A task goes with its
  * company, contact or deal (CASCADE). `isRenewal` marks the one task `app:crm:renewal-tasks` writes
- * for a deal (uk_crm_tasks_renewal, which survives completion, so a done task is not created again).
+ * for a deal (uk_crm_tasks_renewal, which survives completion, so a done task is not created again);
+ * while open it follows the deal's `contract_end` and its leaving won.
  */
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\Table(name: 'crm_tasks')]
@@ -105,6 +106,12 @@ class Task
     public function complete(\DateTimeImmutable $at): void
     {
         $this->doneAt = $at;
+        $this->updatedAt = $at;
+    }
+
+    public function moveDueTo(\DateTimeImmutable $dueOn, \DateTimeImmutable $at): void
+    {
+        $this->dueOn = $dueOn;
         $this->updatedAt = $at;
     }
 

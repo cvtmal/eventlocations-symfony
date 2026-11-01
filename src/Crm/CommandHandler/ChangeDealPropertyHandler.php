@@ -14,18 +14,22 @@ use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\CompanyVenueRepository;
 use App\Crm\Repository\DealRepository;
+use App\Crm\Repository\TaskRepository;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\PropertyValue;
+use App\Crm\ValueObject\RenewalWindow;
 use App\Crm\ValueObject\TaskDueDate;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\ValueObject\Tier;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 
 /**
  * One inline edit under the row locks, company then deal (D11), the shape of ChangeCompanyPropertyHandler: the same
  * value is a no-op, an `expected` that differs from the stored one is StaleProperty, else the entity applies it.
  * Returns the stored value, the next `expected` of the island. A won deal's dates decide the company's stage, so its
- * edits flush and sync (N11).
+ * edits flush and sync (N11). Its open renewal task follows `contract_end`: a new end moves the due date, no end
+ * completes the task.
  */
 final class ChangeDealPropertyHandler implements CommandHandlerInterface
 {
@@ -33,9 +37,11 @@ final class ChangeDealPropertyHandler implements CommandHandlerInterface
         private readonly CompanyRepository $companies,
         private readonly CompanyVenueRepository $companyVenues,
         private readonly DealRepository $deals,
+        private readonly TaskRepository $tasks,
         private readonly OwnerResolver $owners,
         private readonly CompanyStageSync $stageSync,
         private readonly EntityManagerInterface $em,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -77,11 +83,29 @@ final class ChangeDealPropertyHandler implements CommandHandlerInterface
         };
 
         if ($deal->stage()->isWon()) {
+            if (DealProperty::ContractEnd === $property) {
+                $this->followContractEnd($deal, $end);
+            }
             $this->em->flush();
             $this->stageSync->syncCompany($companyId);
         }
 
         return self::current($deal, $property);
+    }
+
+    private function followContractEnd(Deal $deal, ?\DateTimeImmutable $end): void
+    {
+        $task = $this->tasks->renewalOf($deal->id());
+        if (null === $task || $task->isDone()) {
+            return;
+        }
+
+        $now = $this->clock->now();
+        if (null === $end) {
+            $task->complete($now);
+        } else {
+            $task->moveDueTo(RenewalWindow::taskDueOn($end, $now), $now);
+        }
     }
 
     /**
