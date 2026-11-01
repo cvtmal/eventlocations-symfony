@@ -513,6 +513,37 @@ final class ListingQueryTest extends KernelTestCase
         }
     }
 
+    public function test_first_is_the_head_of_the_listing_with_its_own_photo_limit(): void
+    {
+        for ($i = 0; $i < 6; ++$i) {
+            $venue = $this->venue('Venue '.$i, ['tier' => Tier::Basic]);
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
+        }
+        $paid = $this->venue('Bezahlt', ['tier' => Tier::BeliebteLocation]);
+        for ($position = 1; $position <= 9; ++$position) {
+            VenuePhotoFactory::createOne(['venue' => $paid, 'position' => $position]);
+        }
+
+        $query = $this->query();
+        $listing = $query->results(SearchCriteria::none(), 'de')->cards;
+        $first = $query->first(3, 1, 'de');
+
+        $numbers = static fn (array $cards): array => array_map(static fn (ListingCard $card): int => $card->number, $cards);
+        self::assertSame($numbers(\array_slice($listing, 0, 3)), $numbers($first));
+        self::assertSame($paid->number(), $first[0]->number);
+        foreach ($first as $card) {
+            self::assertCount(1, $card->photos);
+            self::assertSame(1, $card->photos[0]->position);
+        }
+        self::assertCount(8, $listing[0]->photos);
+    }
+
+    public function test_first_of_nothing_is_an_empty_list(): void
+    {
+        self::assertSame([], $this->query()->first(3, 1, 'de'));
+    }
+
     public function test_results_take_three_queries_and_two_for_an_empty_page(): void
     {
         $this->venue('Eins');

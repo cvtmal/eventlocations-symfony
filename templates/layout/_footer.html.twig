@@ -8,8 +8,7 @@
             <div class="site-footer__column">
                 <span class="site-footer__heading">{{ 'layout.footer.platform'|trans }}</span>
                 <a class="site-footer__link" href="{{ path('listing') }}">{{ 'layout.header.locations'|trans }}</a>
-                {# Regionen has no page of its own until #36 #}
-                <a class="site-footer__link" href="{{ path('listing') }}">{{ 'layout.header.regions'|trans }}</a>
+                <a class="site-footer__link" href="{{ path('home') ~ '#regionen' }}">{{ 'layout.header.regions'|trans }}</a>
             </div>
             <div class="site-footer__column">
                 <span class="site-footer__heading">{{ 'layout.footer.contact'|trans }}</span>

@@ -10,6 +10,7 @@ use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\ListingPage;
 use App\Search\ReadModel\SearchCriteria;
 use App\Seo\BreadcrumbJsonLd;
+use App\Seo\HomeMeta;
 use App\Seo\JsonLdScript;
 use App\Seo\ListingJsonLd;
 use App\Seo\ListingMeta;
@@ -30,6 +31,7 @@ use Twig\Attribute\AsTwigFunction;
  *
  * - `listing_seo(criteria, page, landing = null)`, `venue_seo(venue)`: the PageMeta for
  *   `seo/_meta.html.twig`; `landing` is the LandingPage the route matched (#17).
+ * - `home_seo()`: the same for the home page (#36).
  * - `site_jsonld()`, `venue_jsonld(venue)`, `breadcrumb_jsonld(items)`, `listing_jsonld(page)`:
  *   a ready script block; `listing_jsonld` is empty for a page without cards.
  * - `footer_landing_cantons()`: the live canton pages for the footer (#17), by name, from the
@@ -41,6 +43,7 @@ final class SeoExtension
 
     public function __construct(
         private readonly ListingMeta $listingMeta,
+        private readonly HomeMeta $homeMeta,
         private readonly VenueMeta $venueMeta,
         private readonly SiteJsonLd $siteJsonLd,
         private readonly VenueJsonLd $venueJsonLd,
@@ -72,6 +75,12 @@ final class SeoExtension
     public function listingSeo(SearchCriteria $criteria, ListingPage $page, ?LandingPage $landing = null): PageMeta
     {
         return $this->listingMeta->for($criteria, $page, $landing);
+    }
+
+    #[AsTwigFunction('home_seo')]
+    public function homeSeo(): PageMeta
+    {
+        return $this->homeMeta->for();
     }
 
     #[AsTwigFunction('venue_seo')]

@@ -78,7 +78,7 @@ final class SecurityHeadersTest extends WebTestCase
             ['/_search/count', 200, false, null],
             ['/_search/places?q=zu', 200, false, null],
             ['/health', 200, false, null],
-            ['/', 302, true, null],
+            ['/', 200, true, null],
             ['/hochzeitslocation/alter-name', 301, true, null],
             ['/robots.txt', 200, false, null],
             ['/sitemap.xml', 200, false, null],

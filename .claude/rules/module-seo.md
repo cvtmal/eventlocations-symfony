@@ -35,3 +35,5 @@ Sitemap, robots, JSON-LD builders, landing page definitions.
 - **Tests:** `tests/Integration/Seo/LandingPageCatalogueTest.php`, `tests/Application/Seo/LandingOverrideSeoTest.php`, `LandingTitleTest` (builds `ListingMeta` with an empty warm `ContentBlocks`), `ErrorPagesQueryFreeTest` (footer note warm and cold; the pushed request's locale is `de`).
 
 **Built in #19.** Sitemaps (the past-the-last-file 404 too) and `robots.txt` stay a day, `stale-if-error` a day, and are invalidated with every purge.
+
+**Built in #36.** `Seo\HomeMeta::for()` through `home_seo()`: the `PageMeta` of `/`, `og:type` `website`, always the bare canonical, so `/?canton=zh` stays on `/`. `PagesSitemap::urls()` lists `/` first, with the listing's `lastmod`.

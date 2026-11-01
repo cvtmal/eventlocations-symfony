@@ -53,7 +53,7 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSelectorExists('[popovertarget="main-menu"]');
         self::assertSelectorExists('#main-menu[popover]');
         self::assertSame(
-            ['/hochzeitslocations', '/hochzeitslocations', '/merkliste'],
+            ['/hochzeitslocations', '/#regionen', '/merkliste'],
             $crawler->filter('.site-header__actions a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
         );
         self::assertCount(0, $crawler->filter('.site-header use[href$="#search"]'));
@@ -65,7 +65,7 @@ final class BaseLayoutTest extends WebTestCase
         $crawler = $this->home();
 
         self::assertSame(
-            ['/', '/hochzeitslocations', '/hochzeitslocations', '/merkliste'],
+            ['/', '/hochzeitslocations', '/#regionen', '/merkliste'],
             $crawler->filter('.main-menu__list a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
         );
         self::assertSelectorExists('.main-menu__list [data-merkliste-count][hidden]');
@@ -132,6 +132,7 @@ final class BaseLayoutTest extends WebTestCase
         self::assertCount(2, $crawler->filter('.site-footer__column span.site-footer__heading'));
         self::assertCount(0, $crawler->filter('.site-footer__heading a'));
         self::assertSame('mailto:hallo@hochzeitslocation.ch', $crawler->filter('.site-footer__column a[href^="mailto:"]')->attr('href'));
+        self::assertSame('/#regionen', $crawler->filter('.site-footer__column a')->eq(1)->attr('href'));
     }
 
     public function test_header_heart_links_to_the_merkliste_and_carries_its_strings(): void

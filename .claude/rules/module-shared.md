@@ -33,7 +33,7 @@ paths:
 
 `EntityId`, `DomainException`, translation helpers, Swiss formatting Twig extension, HTTP cache helpers, legal pages, health.
 
-Built in #0: the building blocks above, the placeholder `HomeController` (`home`, `/`), and the first migration with the Postgres extensions.
+Built in #0: the building blocks above, the placeholder `HomeController` (`home`, `/`; #7 deleted it, and #36 takes the name again in `Search\Controller`), and the first migration with the Postgres extensions.
 
 Built in #2: `Shared\Translation\{EnabledLocale, LocalizedRoutes, HreflangAlternates, TranslationJoin}`, `Shared\Twig\{SwissFormatExtension, HreflangExtension}` (`swiss_number`, `swiss_date`, `swiss_range`, `hreflang_alternates`), `templates/shared/_hreflang.html.twig`, catalogue stubs, and `make lint-translations`, which `make lint` now also runs. Rules: `.claude/rules/i18n.md`.
 
