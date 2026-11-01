@@ -1,10 +1,10 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-11-01 (#20 prod-deploy Phases 1-6 landed, Phases 7-9 open; #0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #19 performance-caching, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #25 cms-venue-media, #26 cms-pages, #27 crm-foundation (#27a, #27b crm-timeline), #28 crm-deals, #29 crm-inquiries (Production backfill count: open, after launch), #31 venue-wedding-facts, #32 owner-content-import, #33 filter-wedding, #35 brand-foundation and #37 listing-redesign done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
+_Last updated: 2026-11-01 (Location-Konten added: S16, POR, Q20, #42–#45; #20 prod-deploy Phases 1-6 landed, Phases 7-9 open; #0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #19 performance-caching, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #25 cms-venue-media, #26 cms-pages, #27 crm-foundation (#27a, #27b crm-timeline), #28 crm-deals, #29 crm-inquiries (Production backfill count: open, after launch), #31 venue-wedding-facts, #32 owner-content-import, #33 filter-wedding, #35 brand-foundation and #37 listing-redesign done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added, Q13 and Q14 open; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It started from the layout and content structure of eventlokale.ch's wedding search, and takes its look from the brand design (S15). It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
-Behind it sits a small **back office** for our own staff at `/admin` (S12): a **CMS** to manage venues, photos, rooms, documents and landing-page texts, and a HubSpot-style **CRM** for the venue operators we sell tiers to and the couples who send inquiries. Both are lightweight and minimalist, and open for extensions. The CMS goes live with the site; the CRM follows after launch (Q8).
+Behind it sits a small **back office** for our own staff at `/admin` (S12): a **CMS** to manage venues, photos, rooms, documents and landing-page texts, and a HubSpot-style **CRM** for the venue operators we sell tiers to and the couples who send inquiries. Both are lightweight and minimalist, and open for extensions. The CMS goes live with the site; the CRM follows after launch (Q8). Location managers get their own area at `/konto` (S16, #42–#45) to take over, create and maintain their location, with the owner accepting each first publication.
 
 This file turns that scope into `/rpi` cycles and sets the order to run them in. One cycle = one slug = one pass through Research → Plan → Implement → Review. A cycle ends with `make lint` and `make test` green and exactly one commit. The cycles are grouped in **waves**: cycles in the same wave depend only on earlier waves, so they can run in parallel sessions.
 
@@ -58,8 +58,8 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
    | `src/Search/ReadModel/SearchCriteria.php` and its URL codec | #6 | nothing; filter UIs (#10–#12) only render it. #33 adds the S14 parameters once (a design change, like S12's) |
    | `templates/search/_filter_bar.html.twig` | #7 | fill their own `{% include %}` slot |
    | `CLAUDE.md`, `.claude/rules/module-<name>.md` | #0 | append to their module's file; `CLAUDE.md` keeps only a pointer per module |
-   | `tests/Architecture/ArchitectureRules.php` `MODULES` and `ModuleBoundariesTest` | #22 adds `Admin`, `Cms` and `Crm` once (the design change of S12) | nothing |
-   | `config/packages/security.yaml` | #22 | nothing; guard routes with `#[IsGranted]` |
+   | `tests/Architecture/ArchitectureRules.php` `MODULES` and `ModuleBoundariesTest` | #22 adds `Admin`, `Cms` and `Crm` once (the design change of S12); #42 adds `Portal` once (the design change of S16) | nothing |
+   | `config/packages/security.yaml` | #22 | nothing; guard routes with `#[IsGranted]`. #42 adds the `portal` firewall once (the design change of S16) |
    | `templates/admin/base.html.twig`, `templates/admin/layout/*`, `assets/styles/admin.scss` (list of partial imports) | #22 | fill the blocks; append one `@use` line for their own partial |
    | `templates/admin/components/*`, `admin-ui/src/components/*`, `templates/admin/form/theme.html.twig` | #23 | use them; a missing variant goes into their own module folder first |
    | `admin-ui/src/islands.js` (island registry), `admin-ui/src/timeline/types.js` (timeline renderers) | #22 / #27 | append one line per island or activity type |
@@ -119,6 +119,10 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 39 | `detail-redesign` | R2 | BRD-1, DP-2–DP-17, IQ-2 (form look) | 35 | — | — | Plan |
 | 40 | `brand-voice` | R3 | BRD-4, IQ-2 (mails), LEG-1 (look) | 36, 37, 38, 39 | — | — | Plan |
 | 41 | `redesign-verification` | R3 | PERF-1, A11Y-1, SEO-1, SEO-3 | 40 | — | Q15 (final look) | Plan |
+| 42 | `portal-accounts` | W11 | POR-1–POR-4, POR-6 (data) | 23 | `portal_users`, `portal_venue_access`; `admin_audit_log`: `portal_user_id`, replaced CHECK | — | Research |
+| 43 | `portal-claims` | W12 | POR-5–POR-7 | 27b, 42 | — | — | Research |
+| 44 | `portal-editor` | W12 | POR-8–POR-10 | 25, 42 | — | — | Research |
+| 45 | `portal-onboarding` | W13 | POR-11–POR-14 | 43, 44 | `portal_submissions` | Q20 (invoice reminder only) | Research |
 
 ### Waves at a glance
 
@@ -140,6 +144,9 @@ R3  #40 brand-voice → #41 redesign-verification
 W8  #20 prod-deploy                                       (launch: site + CMS)
 W9  #27a crm-foundation → #27b crm-timeline               (on main before #20's Phases 7-9, owner's go; live with #20)
 W10 #28 crm-deals  ‖  #29 crm-inquiries  ‖  #30 crm-email
+W11 #42 portal-accounts                                   (Location-Konten, S16)
+W12 #43 portal-claims  ‖  #44 portal-editor
+W13 #45 portal-onboarding
 ```
 
 W5 holds nine cycles; with three to four lanes it runs in two or three rounds. Start #14, #21 and #31 early in W5, because #29, #20, #24, #32 and #33 wait for them.
@@ -159,16 +166,19 @@ W5 holds nine cycles; with three to four lanes it runs in two or three rounds. S
 - After #20: live on hochzeitslocation.ch, and the database is the content master (S8).
 - After #27 and #20: the CRM is live, with companies built from the venues once `app:crm:bootstrap` has run on production.
 - After #28–#30: the CRM is complete (pipeline, inquiries, e-mail).
+- After #44: managers keep their existing locations up to date themselves.
+- After #45: anyone can submit a new location, and the owner only accepts or rejects it.
 
 **What can move.** #9 can run any time after #5. #21 can run any time after #9, and the earlier the better, because #17's landing-page thresholds and #19's measurements should use the real data. #15 and #18 have nothing depending on them except #19 and can slip. #11 is small and can be folded into #12 if a lane is short of work. #22 needs only W1, so it can start before the other W4 cycles. #23 can start as soon as #22 is done, without waiting for W4. #27's research and plan may run during W8, but it is merged only after #20 is `Complete` (Q8). #30 needs #20's mail setup (SPF/DKIM) only for its production check; it can be built before that. #31 can start as soon as #9 lands. #32 is re-runnable, so it can run early on the snapshot and again on a fresh export before #20. #33 can slip until after #32, when its filters have data worth testing.
 
 - #34 can run now, because it writes no code.
+- #42–#45 hold nothing else back and do not block #20. They can land before or after go-live; production mail (DKIM) has to work before managers can register there.
 - #36–#39 run in any order and in parallel. If only two lanes are free, run #36 and #37 first: the first page a visitor sees and the most-used one.
 - **Cut line.** If the owner needs a launch date, #34, #35, #36 and #41 are the minimum. #37–#40 can then land after go-live, because #35 already leaves every page legible and AA-compliant, at the cost of old page layouts and a mix of "du" and "Sie" until #40.
 
 ## Owner gates
 
-Each gate except Q15 has a default, so no other cycle is blocked as a whole. The owner answers here and the answer is recorded in this file. Q3, Q13 and Q14 are still open. Q15 was the one gate without a default; it is answered, and #35 starts on the owner's go.
+Each gate except Q15 has a default, so no other cycle is blocked as a whole. The owner answers here and the answer is recorded in this file. Q3, Q13, Q14 and Q20 are still open. Q15 was the one gate without a default; it is answered, and #35 starts on the owner's go.
 
 | ID | Question | Answer (owner, 2026-10-30) | Consequences |
 |---|---|---|---|
@@ -180,7 +190,7 @@ Each gate except Q15 has a default, so no other cycle is blocked as a whole. The
 | ~~Q6~~ | Where do inquiries go in production? | **Directly to the venue by email.** Later they also go to our own CMS/CRM, built later. | IQ-2 sends to the venue's inquiry address in production. `INQUIRY_RECIPIENT_OVERRIDE` is for dev and staging only (Mailpit). Every inquiry is stored in `inquiries` with its full payload and mail status, so the future CRM can read the history. |
 | ~~Q7~~ | Order of the paid tiers? | **As observed on eventlokale.** | Beliebte Location → Empfehlung → Top Premium → Premium → no badge (S6). |
 | ~~Q8~~ | Are the CMS and the CRM live at launch? | **The CMS before launch, the CRM after.** | #22–#26 come before #20, which deploys them. From then on the database is the content master (S8). #27–#30 form W9–W10 after #20 and deploy themselves through #20's workflow. #27 reached main before #20's Phases 7-9 on the owner's go, and goes live with #20. The CRM backfills the inquiries stored since launch (IQ-1). |
-| ~~Q9~~ | Who logs in to the back office? | **Only our staff.** | No venue self-service (it is a proposal). Accounts are created by a console command, there are two roles (`admin`, `editor`), and 2FA is required (S12). |
+| ~~Q9~~ | Who logs in to the back office? | **Only our staff.** Extended 2026-11-01: location managers get their own area at `/konto` (S16); `/admin` stays staff-only. | Accounts are created by a console command, there are two roles (`admin`, `editor`), and 2FA is required (S12). Venue self-service is no longer a proposal: #42–#45. |
 | ~~Q10~~ | Which HubSpot concepts go into the CRM? | **Companies, contacts, timeline with notes, calls and tasks; deals pipeline; inquiries → contacts; sending e-mails.** | #27 (base), #28 (deals), #29 (inquiries), #30 (e-mail). Custom properties, inbox sync and reporting are proposals. |
 | ~~Q11~~ | Visual design of the back office? | **A design reference made with Claude's design tool in the planning session; approved by the owner on 2026-10-30.** | Lives in `docs/reference/admin/` (S12). #22 and #23 build the tokens, the shell and the components from it, and every back-office cycle compares against it. |
 | ~~Q12~~ | Can the owner export the Wix form submissions? They should hold the address, contact person and Instagram that the CSV lacks (S14). | **No (2026-10-30). `Locations+Startseite.csv` is the only production source, and venues without an address are accepted.** There is no form export. The external SSD is lost, and the eventlokale crawl cache and the Laravel project are out for everything. | Address, town, canton and coordinates become optional (#21). See the source change at the top of #21. |
@@ -190,7 +200,8 @@ Each gate except Q15 has a default, so no other cycle is blocked as a whole. The
 | Q16 | Is Figtree agreed with the graphic designer (studiolido.ch)? It replaces Wix's Madefor, which may not be used outside Wix. | **Figtree, 2026-10-31.** | Default: Figtree. A later change of typeface swaps one font file and its metrics. |
 | Q17 | Can the graphic designer deliver the logo as a vector file? | **Not yet, 2026-10-31:** a placeholder PNG for now, so `logo-hzl.png` stays. | Default: `logo-hzl.png` is a 190 KB raster of 2043 × 454 px, so #35 ships a small export at twice the display height, with `width` and `height` set. An SVG later replaces one file. The favicon follows the same answer. |
 | Q18 | Which photo is the home hero, and may we use it? | **2026-10-31:** the Wix photos, downloaded once and served from our own site through #5's pipeline, with no live link to Wix, so no CSP or Datenschutz change. | Default: a venue photo from the owner's content that the owner names, served through #5's pipeline. Until then, the top Spotlight venue's first photo. The lake photo in the Wix draft is not used until the owner confirms its source. |
-| Q19 | Where does "Location eintragen" go until the public lead form exists (proposal, Q14)? | **2026-10-31:** visual only, no action yet, which replaces the `mailto:` default. #35 decides the control's form. | Default: `mailto:` to `site.contact_email`, which adds no data flow and no Datenschutz text. #20 proves that mailbox before go-live. |
+| Q19 | Where does "Location eintragen" go until the public lead form exists (proposal, Q14)? | **2026-10-31:** visual only, no action yet, which replaces the `mailto:` default. #35 decides the control's form. | Default: `mailto:` to `site.contact_email`, which adds no data flow and no Datenschutz text. #20 proves that mailbox before go-live. #42 ends this state: the button links to `/konto/registrieren`. |
+| Q20 | Do locations pay for an entry they create themselves? | **Open, 2026-11-01:** not decided. If they pay: register, create, click "Veröffentlichen", the contact is created, the owner accepts or rejects, and the owner sends the invoice separately 30 days after the accept. | Default: free, with no invoice reminder. Whatever the answer, the app holds no invoice or payment code (POR-14). A "paid" adds one CRM task, "Rechnung stellen", due 30 days after the accept (#45). |
 
 ## Settled decisions
 
@@ -227,9 +238,10 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 | `Seo` | sitemap, robots, JSON-LD builders, landing page definitions | Search, Venues, Geo |
 | `Admin` | back-office shell: staff users, login + 2FA, layout, dashboard, extension points, audit log, Vue island loader (S12) | — |
 | `Cms` | back-office screens and read models for venues, rooms, photos, documents, landing-page texts, content blocks | Admin, Venues, Geo, Media |
-| `Crm` | companies, contacts, timeline, tasks, deals, inquiry inbox, e-mail (S13) | Admin, Venues, Geo, Inquiries |
+| `Crm` | companies, contacts, timeline, tasks, deals, inquiry inbox, e-mail (S13) | Admin, Venues, Geo, Inquiries, Portal |
+| `Portal` | location managers: accounts, access to venues, claims, onboarding, submissions and their staff screens (S16) | Admin, Cms, Venues, Geo, Media |
 
-- No public module depends on `Admin`, `Cms` or `Crm`. `Cms` and `Crm` do not depend on each other: a CRM panel on a CMS page goes through an `Admin` extension point (S12).
+- No public module depends on `Admin`, `Cms`, `Crm` or `Portal`. `Crm` uses `Portal` only for its published events, as it does with `Inquiries`, so `Portal` never names a CRM class. `Cms` and `Crm` do not depend on each other: a CRM panel on a CMS page goes through an `Admin` extension point (S12).
 - **Layers:** `Controller`, `Command`, `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console`, `Twig`, `Mailer`, `EventListener`, and from #22 `Extension` (a module's implementations of the `Admin` extension points).
 - **Reads:** public pages go controller → `ReadModel` with hand-written SQL, and never hydrate entities for rendering. **Writes:** controller or console command → command → `command.bus` → handler. There is no query bus.
 - **Enforcement:** phpat inside PHPStan **level 8** (greenfield), PHP-CS-Fixer `@Symfony` + `@Symfony:risky`. Test suites are `Unit`, `Integration`, `Application` and `Architecture`, with Foundry fixtures. The validation strategy is songrequest's three layers (form → handler → DB constraint). Migrations are hand-written SQL only, each with a `down()`.
@@ -357,7 +369,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
   - `TimelineActivityType` (from #27): a kind of timeline entry with its renderer.
 - **Design reference:** `docs/reference/admin/` holds the design from the planning session (Q11): the canvas source (`*.dc.html`, `canvas.json`), a `README.md` with the screen list, the `--a-*` token table and the link to the live, clickable design (https://claude.ai/artifact/LDRuCKBiQoQkUXNAG7vEtY). At its start, #22 adds a 1440 px screenshot per screen. Its look: calm, light work surfaces (a dark theme is a proposal) with the brand pink as the one accent; Sofia Sans; a HubSpot-like structure of a left sidebar, list views with filters in the query string, and record pages with properties on the left, the timeline or content in the middle and associations on the right. #22 and #23 turn it into tokens and components. Deviations are recorded in their Outcomes.
 - **Uploads:** one file per request, so a slow host never times out on a batch. The photo manager uploads sequentially with progress. Photos are processed synchronously with #5's generator at upload time (S9: at import time, never on request). The limits are 25 MB per photo and 15 MB per PDF, and #20 sets PHP's `upload_max_filesize`/`post_max_size` to match.
-- **Not in the back office:** venue self-service, public accounts, a WYSIWYG page builder, custom fields, a separate admin domain (all proposals).
+- **Not in the back office:** a WYSIWYG page builder, custom fields, a separate admin domain (all proposals). Location managers get their own area outside it (S16).
 
 ### S13. CRM model (HubSpot, minimal)
 
@@ -457,6 +469,27 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 **Back office.** It is not redesigned. #35 changes its accent tokens and font, because removing Sofia Sans from the public site would otherwise break it (`admin/base.html.twig` preloads the shared file). Layout, dark sidebar and `docs/reference/admin/` stay (Q11).
 
 **What stays the same.** S9 images, S10 caching, S11 budgets (no budget is raised for the redesign), GEN-2 no JS framework, no new Composer or npm package, no migration in #34–#41.
+
+### S16. Location-Konten (`/konto`)
+
+Owner, 2026-11-01. Location managers register, take over or create their location and keep it up to date. The aim is both less data entry for the owner and a way for locations that want to do it themselves. This extends Q9: the back office stays staff-only, and managers get a separate area.
+
+**Golden rules.** They decide every open question in #42–#45.
+1. Super simple, as simple as possible.
+2. Reuse wherever possible. The account looks like a copy of the back office.
+3. No 2FA: e-mail and password.
+4. A super short onboarding: log in, then a simple multi-step form.
+
+- **Separate from staff:** own module `Portal`, own table `portal_users`, own firewall on `^/konto(/|$)`, own session cookie. A manager has no path into `/admin`, and public pages stay free of a session (S10).
+- **One write path:** the account dispatches the existing `Venues` commands, so the import guard, the cache purge, the stale check and the audit log come along (S8, S12). `Portal` reuses `Cms\Form` and may depend on it. The staff side (review queue, account list, panels) lives in `Portal` and plugs into the back office through S12's extension points.
+- **States:** `venues.status` keeps its two values. A location being written or under review is `unpublished`, and its review state lives in `portal_submissions`. Public queries do not change.
+- **Review:** "Veröffentlichen" never publishes by itself. Only the first publication and every return from offline go through the owner. After that a manager's edits go live at once, and staff see them afterwards, so a queue stays small for two people.
+- **Claims:** 243 locations already exist, and a manager who cannot find theirs would create a duplicate. A manager presses "Zugriff anfragen" on an existing location, the request lands in the back office, and we decide. Nothing is automatic. The order of work is access, then edit, then new locations.
+- **What stays with staff:** name, slug, tier, ratings, reviews, rooms, documents, deletion. Tiers are what the site sells, and a rename moves a URL.
+- **New locations start as `basic`.** A tier is sold through a deal (S13), as before.
+- **Money:** nothing in the app. If entries are paid: register, create, click "Veröffentlichen", the contact is created, the owner accepts or rejects, and the owner sends an invoice separately 30 days after the accept (Q20).
+- **Rights:** the last wizard step has one checkbox: the manager may represent the location and holds the rights to its texts and photos. The time is stored, and that is all the legal machinery.
+- **Not built:** magic links, a claim link to the location's mailbox, a claim link on the public detail page, a wizard table, a token table, a Vue wizard, an external password check, new packages.
 
 ## Requirements
 
@@ -640,6 +673,22 @@ IDs are referenced by the overview and the cycles.
 - **CRM-9** Inquiries: every inquiry from #14 creates or updates a `couple` contact (by e-mail) and adds an `inquiry` entry to that contact's timeline and to the timeline of the venue's company. An inbox `/admin/crm/anfragen` lists them with a status (neu, gesehen, erledigt) and the mail outcome. `app:crm:backfill-inquiries` imports the history. Ingestion runs after the inquiry is stored and never makes the guest wait or fail.
 - **CRM-10** E-mail: compose from a contact or company record (to the contact's e-mail, optional CC), from a template with merge fields (`{contact.first_name}`, `{company.name}`, `{venue.name}`; single braces, so a template is never Twig), sent through Symfony Mailer from the `hochzeitslocation.ch` sender with the staff member's name and `Reply-To: hallo@hochzeitslocation.ch`, logged as an `email_sent` activity with its delivery status. Replies arrive in the mailbox and are not tracked (inbox sync is a proposal). `INQUIRY_RECIPIENT_OVERRIDE`'s rule holds here too: outside production every CRM mail goes to Mailpit (`CRM_MAIL_OVERRIDE`).
 - **CRM-11** Personal data: export and erasure per S13; couples whose last activity is older than the inquiry retention (LEG-2, 12 months) and who have no deal are deleted by `app:crm:purge` (cron), together with their inquiry links.
+
+**Location-Konten (POR)**, per S16
+- **POR-1** A location manager registers with name, e-mail and password and confirms the address by a link. Login is e-mail and password, with no 2FA. A forgotten password is reset by mail.
+- **POR-2** The account lives at `/konto`, in German, looks like the back office, and stays usable at 390 px. It never opens a door into `/admin`.
+- **POR-3** Staff see all accounts and can deactivate one.
+- **POR-4** Every write by a manager lands in the audit log under that manager's name.
+- **POR-5** A registered manager finds an existing location and asks for access with one button. The request shows up in the back office, and staff approve or reject it. Nothing is automatic.
+- **POR-6** A manager can hold several locations, and a location can have several managers. Staff can add and remove managers.
+- **POR-7** A confirmed manager becomes a CRM contact on the location's company, which is created if missing. A CRM failure never reaches the manager.
+- **POR-8** A manager edits texts, address, facts, FAQ, contact details, maximum guests and photos of their own locations. Name, slug, tier, ratings, reviews, rooms and documents stay with staff.
+- **POR-9** Edits on a published location go live at once. Staff see them on the dashboard and in the audit log.
+- **POR-10** A manager can take a location offline. Only staff delete one.
+- **POR-11** A new location is created through a short multi-step form that saves every step and resumes where the manager left off. Possible duplicates are offered as a claim.
+- **POR-12** "Veröffentlichen" sends the location to review. The CRM contact is created at this moment; the location stays off the site.
+- **POR-13** Staff accept or reject. Accept publishes the location, reject sends a reason and lets the manager try again. Both mail the manager. Going back online after being offline takes the same path.
+- **POR-14** The app holds no invoice or payment logic. The owner invoices separately, 30 days after the accept, if entries are paid (Q20).
 
 ## Reference material
 
@@ -2464,14 +2513,100 @@ W10. Depends on #27b (and #20's mail setup for the production check). Parallel w
   - application tests cover the endpoints and the template screen;
   - on production, a test e-mail to the owner arrives and passes SPF/DKIM/DMARC (recorded in the review).
 
+## Location-Konten (W11–W13)
+
+Location managers register, claim or create their location and keep it up to date themselves (S16, POR-1–POR-14). Read S16 first; its golden rules decide every open question in these cycles. #42 comes first, #43 and #44 run in parallel, and #45 comes last. Each deploys through #20's workflow, and every migration must be safe on production data. A cycle that wants a new Composer or npm package, a new wizard table or a new island needs a one-line reason in its research.
+
+### 42. `portal-accounts`
+
+W11. Depends on #23. No location screens yet: after this cycle a manager can register, log in and see an empty account. It also lays the access table and the voter, so #43 and #44 can run in parallel.
+
+- **Module:** `Portal` in `ArchitectureRules::MODULES`, `ModuleBoundariesTest` and its probe; `.claude/rules/module-portal.md`; a row in `CLAUDE.md`'s module tables. `Crm` may depend on `Portal`; nothing else does (S2).
+- **Schema:** `portal_users` (`id`, `email` lower-case and unique, `password_hash`, `first_name`, `last_name`, `phone`, `email_verified_at`, `is_active`, `last_login_at`, `created_at`, `updated_at`). `admin_audit_log` gains `portal_user_id` (FK, `ON DELETE SET NULL`), and `chk_admin_audit_log_actor_type` gains `portal_user`. `portal_venue_access` (`portal_user_id`, `venue_id`, `status` pending|active, `requested_at`, `confirmed_at`; primary key on both ids, both FKs `CASCADE`), so a user may hold many locations and a location may have many managers (POR-6), with its entity and a Foundry factory.
+- **Access check:** `PortalVenueVoter` is the one place that decides whether a manager may touch a venue. Only `active` counts. Every later route with `{number}` uses it.
+- **Firewall:** `portal` on `^/konto(/|$)`, one design-change edit of `security.yaml` (hotspot table), with form login, `login_throttling` (5 per 15 minutes), logout, CSRF and no 2FA. `PortalIdentity`, `PortalUserProvider`, `PortalArea` (asks the firewall map, like `AdminArea`, for the same reason). The hasher is `auto`.
+- **Session cookie, the one trap:** `framework.session.cookie_path` is `/admin` for the whole app, so a browser would never send a session cookie to `/konto`. Decorate the session storage factory so that a request in the `portal` firewall gets path `/konto` and its own cookie name, and every other request stays exactly as it is. Do not widen the path to `/`: public pages must stay structurally free of a session (S10).
+- **Pages** (all unlocalized, names `portal_*`, in `templates/portal/`): `/konto/registrieren`, `/konto/anmelden`, `/konto/passwort-vergessen`, `/konto/passwort-neu/{token}`, `/konto/bestaetigen/{token}`, `/konto` (overview with an empty state) and `/konto/profil` (name, phone, password; a change of e-mail goes through staff).
+- **Mails and tokens:** confirmation and password reset on `templates/emails/layout.html.twig`. Links are signed and expiring, with no token table: a reset signature includes the password hash, so a used link dies by itself.
+- **Abuse, cheaply:** #14's `website` honeypot, limiter `portal_register` per IP, and the same answer for a known and an unknown e-mail on registration and on the reset form. Login stays refused until the address is confirmed, with a "send again" link. No external password check.
+- **Look (S16):** `templates/portal/base.html.twig` and `base_auth.html.twig` copy the back office's shell and load `admin.css`, the `--a-*` tokens, `templates/admin/components/*` and the form theme. The sidebar holds "Meine Locations", "Profil" and "Abmelden", with no search, no extension points and no Admin Twig function that reads staff data.
+- **Guards `AdminArea` gives the back office and `/konto` needs too:** `Cache-Control: no-store, private` and `X-Robots-Tag: noindex, nofollow` on every response; `CleanText` on every text field (today `AdminTextConstraintExtension` covers the back office only, so a NUL byte in a `/konto` form would be a 500); `/konto` in `RobotsController::DISALLOW`.
+- **Audit:** `AuditLogMiddleware` knows only `AdminIdentity`, so a manager's write would be logged as `system`. Add a `Shared` interface that `PortalIdentity` implements, the case `AuditActorType::PortalUser`, and show the manager's name in the audit log and the CRM timeline.
+- **Staff:** `/admin/konten` (names `admin_portal_accounts*`, `NavigationItem` beside "Benutzer"): list and search, deactivate and reactivate (`ROLE_ADMIN`, audited). A deactivated account ends its sessions.
+- **Public site:** "Location eintragen" in the header and the footer becomes a link to `/konto/registrieren`, which ends Q19's visual-only state. `templates/layout/*` belong to the redesign lanes, so this is the cycle's last step, a one-line change on top of what `main` then holds. `legal.privacy` says "Nur dort gibt es eine Anmeldung", which stops being true: narrow that sentence, nothing more (see the owner's rule on privacy work).
+- **Done when:**
+  - application tests cover register, confirm, resend, login, wrong password, throttling, unconfirmed and deactivated accounts, reset (a used and an expired link), identical answers for known and unknown e-mails, and the honeypot;
+  - a route walker like `ChecksAdminRoutes` proves every `/konto` route is closed to anonymous users, canonical and percent-encoded;
+  - tests prove a manager cannot reach `/admin`, staff cannot reach `/konto`, both sessions live side by side in one browser, and a public page sets no cookie;
+  - an integration test proves a manager's command is audited as `portal_user`, and the voter is tested for no row, `pending` and `active`;
+  - S11's checks pass, and the screens match the back office at 1440 and 390 px.
+
+### 43. `portal-claims`
+
+W12. Depends on #27b and #42. Parallel with #44. After this cycle a manager can ask for access to a location that already exists, and staff decide. This is the simplest possible claim (owner, 2026-11-01): one button, one queue, nothing automatic.
+
+- **Ask:** `/konto/locations/suchen` finds a location by name and town. "Zugriff anfragen" writes a `pending` row in `portal_venue_access`, and the screen says the request is with us. Asking twice changes nothing. A location that already has a manager follows the same path.
+- **Staff decide:** `/admin/pruefung` (names `admin_portal_review*`) with the tab "Zugriffsanfragen", a `NavigationItem` with a badge and a `DashboardWidget`, showing the account's name, e-mail and phone and the location. Approve sets `active`. Reject deletes the row, so the manager may ask again. Both mail the manager and are audited.
+- **Managers on a location:** a `RecordPanel` on the CMS venue page lists them, removes one, and adds an existing account by e-mail.
+- **CRM (POR-7):** on approve, `Portal\Event\LocationManagerConfirmed`, and a `Crm\EventListener` built like #29's `IngestInquiryListener`: it finds or creates the `venue_contact` by e-mail, creates the venue's company through `CreateCompanyForVenue` when there is none, and writes a timeline entry. A known e-mail keeps staff's values. A failure is logged and never reaches the manager or the approving staff member.
+- **Done when:**
+  - application tests cover the search, asking, asking twice, approve, reject, asking again, the queue's badge and widget, and the panel;
+  - integration tests cover the listener: new contact, known contact, a venue with and without a company, and a failing CRM that does not fail the approve;
+  - the dashboard's query ceiling is raised on purpose, with the reason in the Outcome;
+  - S11's checks pass at 1440 and 390 px.
+
+### 44. `portal-editor`
+
+W12. Depends on #25 and #42. Parallel with #43. After this cycle a manager maintains an existing location without staff. This is the first point where the owner saves data entry.
+
+- **Overview:** "Meine Locations" lists the manager's locations with status and missing items (`VenueListRow::$missing`'s rules), and leads to `/konto/locations/{number}`.
+- **Cards:** the Cms card forms and data classes as they are (`texts`, `address`, `terms`, `wedding`, `contact`, `faq`), each dispatching its existing `Venues` command through `VenueEditing`, with the existing stale check. `Portal` gets its own town lookup route, because the forms take `town_lookup_url` as an option and `/admin/api/cms/towns` is staff-only.
+- **Not reachable (POR-8):** name, slug, tier, rating, reviews, rooms, documents, delete. The `basics` card carries tier and slug, so it is not reused: a small `ChangeVenueCapacity` command serves the one field a manager needs from it.
+- **Photos:** the existing photo-manager island, which takes its URLs as props, on thin `/konto/api/locations/{number}/photos…` controllers that dispatch the same commands and answer the same JSON. The `room` action is left out with rooms. A location holds at most 30 photos, a limit that refuses rather than handles. Reread the limits written for trusted staff (`MEDIA_MAX_PIXELS`, `MEDIA_MAX_PORTRAIT_RATIO`, 25 MB, `SafeClientName`) with strangers in mind, and lower one only where it is cheap.
+- **Preview:** `/konto/locations/{number}/vorschau` through `VenueDetailQuery::detail(includeUnpublished: true)`, like CMS-9.
+- **Offline:** "Offline nehmen" dispatches `UnpublishVenue`. Going back online goes through the review, every time (#45), so a location staff took offline cannot switch itself back on, and no flag is needed.
+- **Staff see changes (POR-9):** edits on a published location go live at once. The widget "Änderungen von Locations" reads `admin_audit_log` for `actor_type = 'portal_user'`, and the audit log gets that filter. No mail per edit.
+- **Done when:**
+  - a walker proves every `{number}` route and method answers 403 for another manager's location, and pending access counts as no access;
+  - a test proves a crafted POST cannot change name, slug or tier;
+  - a test per card proves the import guard holds (`cms_edited_at` is set) and the public page is purged;
+  - tests cover the stale edit, the photo limit, a bad file, CSRF on every JSON write, and the unpublish;
+  - `make admin-build` needs no island change beyond its props; a change there gets a Vitest case;
+  - S11's checks pass at 1440 and 390 px.
+
+### 45. `portal-onboarding`
+
+W13. Depends on #43 and #44. After this cycle anyone can put a new location on the site, and the owner only checks it. Q20 gates the invoice reminder alone.
+
+- **Schema:** `portal_submissions` (`venue_id` as primary key, `CASCADE`; `status` draft|submitted|rejected|accepted; `submitted_by`, `submitted_at`, `reviewed_by`, `reviewed_at`, `reject_reason`, `rights_confirmed_at`). `venues.status` is unchanged: a location under review is `unpublished`, so no public query changes.
+- **Way in:** a manager with no location lands in the wizard straight after the first login. The wizard opens with the name, shows possible matches and offers "Zugriff anfragen" (#43), which is what prevents duplicates.
+- **Wizard (POR-11):** short server pages at `/konto/locations/{number}/einrichten/{step}`, POST → redirect → GET, one progress bar:
+  1. Name, maximum guests, PLZ / Ort: `CreateVenue` with `Tier::Basic`, then `RelocateVenue`.
+  2. Texte: `ChangeVenueTexts`.
+  3. Ausstattung: `ChangeVenueTerms`, `ChangeVenueWeddingFacts`.
+  4. Fotos: the #44 island; a form fallback is enough for the first upload.
+  5. Kontakt: `ChangeVenueContact`.
+  6. Prüfen: what is still missing, the preview, the rights checkbox, "Veröffentlichen".
+
+  There is no wizard table: the current step is derived from what the location lacks, so a manager who leaves resumes in the right place, and every step reuses #44's forms.
+- **"Veröffentlichen" (POR-12):** checks the same rule as `PublishVenue` (a shared query, not a copy), stores the rights confirmation, and sets `submitted`. It fires `Portal\Event\LocationSubmitted`, on which #43's listener creates the contact and the company, mails the manager and notifies `site.contact_email`. The page then says "Wird geprüft". Editing stays open during the review.
+- **Review (POR-13):** the tab "Neue Locations" in #43's queue, with the preview. Accept dispatches `PublishVenue` and mails the manager. Reject takes a reason, mails it, and returns the location to the wizard's last step for another try. The queue reads only unpublished locations, so a publish straight from the CMS empties it with no extra code. Spam goes through the existing `DeleteVenue`.
+- **Back online:** "Wieder veröffentlichen" (#44's rule) takes this same path.
+- **Invoice (POR-14):** no invoice, payment or tier code. Q20 answered "paid": accept also writes one CRM task, "Rechnung stellen", due 30 days later. Q20 open or "free": nothing.
+- **Done when:**
+  - application tests walk a new location from registration to a live public page, with the page absent (410) until the accept;
+  - tests cover resuming at the derived step, the duplicate hint, a publish with something missing, reject and resubmit, going back online, and that a manager without access cannot touch a draft;
+  - integration tests cover `LocationSubmitted` in the CRM, also when the CRM fails;
+  - a new location appears in the listing, the sitemap and its canton page after the accept, purged like any CMS publish;
+  - S11's checks pass at 1440 and 390 px, and the wizard is usable without JS except for the photo step's island.
+
 ## Out of scope / proposals (not scheduled)
 
-- **Venue self-service portal:** venue operators edit their own listing, with an approval step (Q9 said staff only for now).
+- **Location-Konten extensions:** rooms and documents in the account (the same thin-controller recipe as #44's photos), inquiries in the account, 2FA for managers, a change of e-mail by the manager, online payment and a tier upgrade by the manager (Q20 and the deal flow stay the way to sell tiers).
 - **CRM extensions:** custom properties on companies, contacts and deals; inbox sync (IMAP/BCC address) to log replies; e-mail open/click tracking; reports beyond the dashboard widgets; invoicing and payment status; automatic tier downgrade when a contract ends (#28 only reminds).
 - **Back office dark theme** and a mobile-first back office (S12 only requires that it stays usable at 390 px).
 - **Map view ("Karte")** of the result list.
 - **Bulk inquiry from the Merkliste** (eventlokale has it).
-- **"Location eintragen" on the new site:** a public form that replaces the Wix form at `/listing`, with the lead landing in the CRM. It is a lead form, not self-service, so Q9 stands (Q14 decides when it is needed).
 - **Facts for the other ≈640 venues:** a questionnaire mail to venues without owner data, sent through #30 and answered into the CMS (S14, **Coverage**).
 - **Liechtenstein** as a region: a `li` row, its towns and the map (Q13).
 - **A curated Ambiente vocabulary:** ~8 style codes (romantisch, modern, rustikal, …) as a filter, built from S14's 176 free texts.
