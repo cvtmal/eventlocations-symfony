@@ -103,6 +103,12 @@ final class HostingFilesTest extends TestCase
         self::assertStringContainsString('Header always unset X-Powered-By', self::htaccess());
     }
 
+    public function test_the_web_php_is_pinned_to_the_version_of_deploy_cron_and_ci(): void
+    {
+        // Anchored, because a commented-out line would unpin the web and still contain the words.
+        self::assertMatchesRegularExpression('/^Use php-fpm php85$/m', self::htaccess());
+    }
+
     public function test_the_crontab_has_exactly_the_three_jobs(): void
     {
         self::assertSame([

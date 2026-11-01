@@ -1,6 +1,11 @@
 # Production front door on Hostpoint (#20): Apache in front of php-fpm. Dev runs nginx and never
 # reads this file. tests/Deploy/htaccess-check.sh runs it in a real httpd.
 
+# Deploy, cron and CI are fixed on PHP 8.5, while the panel's "Neuste Version" can move the web
+# alone, and composer.json's >=8.5 would let a newer PHP boot untested. The macro is Hostpoint's:
+# only deploy/probe.php on the web proves it took. A 500 on every URL points at this line first.
+Use php-fpm php85
+
 # No directory listings, no content negotiation; FollowSymLinks or its owner-match form is what
 # mod_rewrite needs in a .htaccess.
 Options -Indexes -MultiViews +SymLinksIfOwnerMatch
