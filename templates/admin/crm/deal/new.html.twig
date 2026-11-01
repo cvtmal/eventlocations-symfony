@@ -1,0 +1,50 @@
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'create.deal.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_crm_deals') }}">{{ 'list.deals.title'|trans({}, 'crm') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'create.deal.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ 'create.deal.title'|trans({}, 'crm') }}</h1></div>
+{% endblock %}
+
+{% block main %}
+    {{ form_start(form, {action: path('admin_crm_deals_new', {company: company.id}), attr: {class: 'form', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {title: 'create.deal.card'|trans({}, 'crm'), id: 'create-deal-title', create_form: form, company: company} only %}
+            {% block body %}
+                <p class="muted">{{ 'create.deal.company_of'|trans({name: company.name}, 'crm') }}</p>
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_errors(create_form) }}
+                <div class="crm-create__fields">
+                    {{ form_row(create_form.name) }}
+                    <div class="field-row">
+                        {{ form_row(create_form.venue) }}
+                        {{ form_row(create_form.tier) }}
+                    </div>
+                    <div class="field-row">
+                        {{ form_row(create_form.amount) }}
+                        {{ form_row(create_form.expectedClose) }}
+                    </div>
+                    <div class="field-row">
+                        {{ form_row(create_form.contractStart) }}
+                        {{ form_row(create_form.contractEnd) }}
+                    </div>
+                    {{ form_row(create_form.owner) }}
+                    {% if create_form.contacts is defined %}
+                        {{ form_row(create_form.contacts) }}
+                    {% endif %}
+                </div>
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'create.submit'|trans({}, 'crm'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                {{ include('admin/components/_button.html.twig', {label: 'create.cancel'|trans({}, 'crm'), variant: 'ghost', href: path('admin_crm_deals')}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}

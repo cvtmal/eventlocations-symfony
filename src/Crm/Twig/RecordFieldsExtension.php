@@ -6,21 +6,26 @@ namespace App\Crm\Twig;
 
 use App\Crm\ReadModel\CompanyRecord;
 use App\Crm\ReadModel\ContactRecord;
+use App\Crm\ReadModel\DealFormOption;
+use App\Crm\ReadModel\DealRecord;
 use App\Crm\ReadModel\OwnerOption;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
+use App\Crm\ValueObject\DealProperty;
+use App\Venues\ValueObject\Tier;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Attribute\AsTwigFunction;
 
 /**
- * The `fields` prop of the `record-properties` island (D10) for a company or contact page, in the
+ * The `fields` prop of the `record-properties` island (D10) for a company, contact or deal page, in the
  * order of Company.dc.html. `value` is canonical (ids, codes), `display` what the read-only fallback
- * and the island show. The page renders the fallback from the same list, so both say the same.
+ * and the island show, `draft` the text to edit where that is not `value`. The page renders the fallback
+ * from the same list, so both say the same.
  *
- * @phpstan-type Field array{name: string, label: string, type: string, value: ?string, display: ?string, required?: bool, options?: list<array{value: string, label: string}>, lookupUrl?: string}
+ * @phpstan-type Field array{name: string, label: string, type: string, value: ?string, display: ?string, draft?: ?string, required?: bool, readonly?: bool, options?: list<array{value: string, label: string}>, lookupUrl?: string}
  */
 final readonly class RecordFieldsExtension
 {
@@ -47,7 +52,7 @@ final readonly class RecordFieldsExtension
             $this->field(CompanyProperty::Phone, 'tel', $company->phone),
             $this->field(CompanyProperty::Email, 'email', $company->email),
             $this->field(CompanyProperty::Address, 'text', $company->address),
-            $this->field(CompanyProperty::Stage, 'select', $company->stage->value, $company->stage->trans($this->translator), required: true, options: $stages),
+            $this->stageField($company, $stages),
             $this->field(CompanyProperty::Owner, 'select', $company->ownerId, $company->ownerName, options: self::ownerOptions($owners)),
             $this->field(CompanyProperty::Notes, 'textarea', $company->notes),
         ];
@@ -76,12 +81,69 @@ final readonly class RecordFieldsExtension
     }
 
     /**
+     * A deal's stored amount is Rappen and its dates `Y-m-d`, so `DealProperty` gives the text of each, as the API does.
+     * A company's venue can have been unlinked since, and a select has to offer what the deal holds.
+     *
+     * @param list<OwnerOption> $owners the selectable owners (`OwnerOptionsQuery::selectable()`)
+     *
+     * @return list<Field>
+     */
+    #[AsTwigFunction('crm_deal_fields')]
+    public function deal(DealRecord $deal, array $owners): array
+    {
+        $tiers = array_map(fn (Tier $tier): array => ['value' => $tier->value, 'label' => $tier->trans($this->translator)], Tier::cases());
+        $venues = array_map(static fn (DealFormOption $venue): array => ['value' => $venue->id, 'label' => $venue->label], $deal->companyVenues);
+        if (null !== $deal->venue && !\in_array($deal->venue->id, array_column($venues, 'value'), true)) {
+            $venues[] = ['value' => $deal->venue->id, 'label' => $deal->venue->name];
+        }
+        $amount = null === $deal->amountRappen ? null : (string) $deal->amountRappen;
+
+        return [
+            $this->field(DealProperty::Name, 'text', $deal->name, required: true),
+            ['draft' => DealProperty::Amount->draft($amount)] + $this->field(DealProperty::Amount, 'amount', $amount, DealProperty::Amount->display($amount)),
+            $this->field(DealProperty::Tier, 'select', $deal->tier?->value, $deal->tier?->trans($this->translator), options: $tiers),
+            $this->field(DealProperty::Venue, 'select', $deal->venue?->id, $deal->venue?->name, options: $venues),
+            $this->dateField(DealProperty::ContractStart, $deal->contractStartOn),
+            $this->dateField(DealProperty::ContractEnd, $deal->contractEndOn),
+            $this->dateField(DealProperty::ExpectedClose, $deal->expectedCloseOn),
+            $this->field(DealProperty::Owner, 'select', $deal->ownerId, $deal->ownerName, options: self::ownerOptions($owners)),
+        ];
+    }
+
+    /**
+     * @return Field
+     */
+    private function dateField(DealProperty $property, ?string $stored): array
+    {
+        return $this->field($property, 'date', $stored, $property->display($stored));
+    }
+
+    /**
+     * A company with a won deal shows its stage as "Kunde (aus Deals)" and cannot set it (#28's D9, D10).
+     *
+     * @param list<array{value: string, label: string}> $stages
+     *
+     * @return Field
+     */
+    private function stageField(CompanyRecord $company, array $stages): array
+    {
+        $label = $company->stage->trans($this->translator);
+        if (!$company->stageDerived) {
+            return $this->field(CompanyProperty::Stage, 'select', $company->stage->value, $label, required: true, options: $stages);
+        }
+
+        $display = $this->translator->trans('company.stage_derived', ['stage' => $label], 'crm');
+
+        return ['readonly' => true] + $this->field(CompanyProperty::Stage, 'select', $company->stage->value, $display, required: true, options: $stages);
+    }
+
+    /**
      * @param list<array{value: string, label: string}>|null $options
      *
      * @return Field
      */
     private function field(
-        CompanyProperty|ContactProperty $property,
+        CompanyProperty|ContactProperty|DealProperty $property,
         string $type,
         ?string $value,
         ?string $display = null,

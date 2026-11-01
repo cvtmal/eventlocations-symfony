@@ -1,0 +1,176 @@
+// The deal pages (S13, Pipeline.dc.html). The kit has no drag, sums or amounts on a column (D13), so they live here.
+.deal-header {
+    align-items: center;
+}
+
+.deal-header__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--a-space-3);
+
+    h1 {
+        margin: 0;
+    }
+}
+
+.deal-header__actions {
+    align-items: center;
+}
+
+.deal-header__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-2);
+
+    .filter-bar__control {
+        height: 36px;
+    }
+}
+
+.deal-board {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-3);
+    min-width: 0;
+}
+
+// Pipeline.dc.html's 268 px is its content box, so a column is 292 px wide there. The kit's `.kanban-column` counts the
+// padding in, and the card's move menu needs what is left.
+.deal-board .kanban-column {
+    flex-basis: 292px;
+}
+
+.deal-board__hint {
+    margin: var(--a-space-3) 0 0;
+    font-size: 13px;
+}
+
+.deal-column--over {
+    outline: 2px dashed var(--a-card-hover);
+    outline-offset: -2px;
+}
+
+.deal-column__sum {
+    margin-top: -8px;
+    padding: 0 var(--a-space-1) var(--a-space-1);
+    color: var(--a-muted);
+    font-size: 13px;
+}
+
+.deal-column__more {
+    padding: 0 var(--a-space-1);
+    font-size: 13px;
+}
+
+.deal-card {
+    cursor: grab;
+}
+
+.deal-card--moving {
+    opacity: 0.6;
+}
+
+.deal-card__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.deal-card__amount {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.deal-card__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding-top: var(--a-space-2);
+    border-top: 1px solid var(--a-line);
+}
+
+.deal-card__date {
+    color: var(--a-muted);
+    font-size: 12px;
+}
+
+.deal-card__moves {
+    display: flex;
+    flex: none;
+    margin-left: auto;
+
+    .btn {
+        padding-inline: 6px;
+    }
+}
+
+// The record's stage form sits above the inline properties, in the same left card.
+.deal-stage-form {
+    display: grid;
+    gap: var(--a-space-2);
+    justify-items: start;
+    padding-bottom: var(--a-space-3);
+    margin-bottom: var(--a-space-3);
+    border-bottom: 1px solid var(--a-line-soft);
+
+    .field {
+        width: 100%;
+    }
+}
+
+// A row of the Deals card (Company.dc.html): the pill and the value at its right edge.
+.deal-side__facts {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--a-space-1);
+}
+
+.deal-side__amount,
+.crm-panel__amount {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.deal-side__all {
+    margin: var(--a-space-2) 0 0;
+    font-size: 13px;
+}
+
+.deal-tab__head {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--a-space-3);
+}
+
+// "Verlängerungen" on the dashboard (`Main.dc.html`). The rows are `.task-widget`'s.
+.renewal-widget__window {
+    font-weight: 400;
+}
+
+.renewal-widget__row {
+    display: flex;
+    align-items: center;
+}
+
+.renewal-widget__company {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.renewal-widget__amount {
+    flex: none;
+    font-weight: 600;
+}

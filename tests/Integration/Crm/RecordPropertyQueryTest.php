@@ -9,11 +9,14 @@ use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
+use App\Crm\ValueObject\DealProperty;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
+use App\Venues\ValueObject\Tier;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -56,6 +59,21 @@ final class RecordPropertyQueryTest extends KernelTestCase
         foreach (ContactProperty::cases() as $property) {
             self::assertNotNull($query->contact($contact->id(), $property), $property->value);
         }
+    }
+
+    public function test_it_reads_a_deal_field_in_its_stored_form(): void
+    {
+        $deal = DealFactory::createOne(['name' => 'Premium 2027', 'amountRappen' => 125050, 'tier' => Tier::Premium, 'expectedCloseOn' => new \DateTimeImmutable('2027-03-01')]);
+        $query = $this->query();
+
+        self::assertSame('Premium 2027', $query->deal($deal->id(), DealProperty::Name)?->value);
+        self::assertSame('125050', $query->deal($deal->id(), DealProperty::Amount)?->value);
+        self::assertSame('premium', $query->deal($deal->id(), DealProperty::Tier)?->value);
+        self::assertSame('2027-03-01', $query->deal($deal->id(), DealProperty::ExpectedClose)?->value);
+        foreach (DealProperty::cases() as $property) {
+            self::assertNotNull($query->deal($deal->id(), $property), $property->value);
+        }
+        self::assertNull($query->deal(EntityId::generate(), DealProperty::Name));
     }
 
     public function test_an_unknown_or_malformed_id_is_no_record(): void

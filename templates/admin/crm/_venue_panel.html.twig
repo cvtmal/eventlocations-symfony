@@ -1,6 +1,6 @@
 {#
     The CRM card on a venue (LocationEdit.dc.html:244-256). Filled by `VenueCrmPanel`: `crm_venue`
-    (VenueCompany or null); nothing for a record id that is no venue number. Deal, Phase and Wert are #28's. The open
+    (VenueCompany or null); nothing for a record id that is no venue number. The open
     tasks are read-only here: this card sits on every venue tab, and the company page is one link away.
 #}
 {% if crm_venue|default(null) %}
@@ -26,6 +26,17 @@
                     {% else %}
                         <dd>{{ 'panel.no_contact'|trans({}, 'crm') }}</dd>
                     {% endfor %}
+                    {% if crm_venue.openDeal %}
+                        {% set deal = crm_venue.openDeal %}
+                        <dt>{{ 'panel.open_deal'|trans({}, 'crm') }}</dt>
+                        <dd><a href="{{ path('admin_crm_deals_show', {id: deal.id}) }}">{{ deal.name }}</a></dd>
+                        <dt>{{ 'panel.deal_stage'|trans({}, 'crm') }}</dt>
+                        <dd>{{ include('admin/components/_pill.html.twig', {label: ('deal.stage.' ~ deal.stage)|trans({}, 'crm'), tone: crm_deal_tone(deal.stage)}, with_context = false) }}</dd>
+                        {% if deal.amountRappen is not null %}
+                            <dt>{{ 'panel.deal_value'|trans({}, 'crm') }}</dt>
+                            <dd class="crm-panel__amount">{{ deal.amountRappen|chf }}</dd>
+                        {% endif %}
+                    {% endif %}
                 </dl>
                 {% if crm_venue.tasks is not empty %}
                     <h3 class="crm-panel__heading">{{ 'panel.tasks'|trans({}, 'crm') }}</h3>

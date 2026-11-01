@@ -127,6 +127,12 @@ crm:
         phone: Bitte eine Telefonnummer aus Ziffern eingeben, zum Beispiel «+41 44 123 45 67».
         email: Bitte eine gültige E-Mail-Adresse eingeben.
         choice: Bitte einen Eintrag aus der Liste wählen.
+        amount: Bitte einen Betrag in Franken bis 99'999'999.99 eingeben, zum Beispiel «1'250.50».
+        date: Bitte ein gültiges Datum eingeben.
+    deal:
+        company: Bitte eine Firma aus der Liste wählen.
+        stage: Bitte eine Phase aus der Liste wählen.
+        lost_reason: Bitte einen Grund aus der Liste wählen.
     link_venue:
         required: Bitte eine Location aus der Liste wählen.
     activity:

@@ -1,0 +1,36 @@
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'list.deals.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'list.deals.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    {% do form.q.setRendered() %}
+    {% do form.stage.setRendered() %}
+    {% set filter_markup %}
+        <form class="deal-header__filters" method="get" action="{{ path('admin_crm_deals') }}">
+            {% for field in ['owner', 'abschluss'] %}
+                <label class="visually-hidden" for="{{ form[field].vars.id }}">{{ form[field].vars.label|trans({}, 'crm') }}</label>
+                {{ form_widget(form[field], {attr: {class: 'filter-bar__control'}}) }}
+            {% endfor %}
+            {{ include('admin/components/_button.html.twig', {label: 'deal.board.filter'|trans({}, 'crm'), type: 'submit'}, with_context = false) }}
+        </form>
+    {% endset %}
+    {{ include('admin/crm/deal/_header.html.twig', {figure: open_figure, view: 'board', query: query, actions: filter_markup}, with_context = false) }}
+{% endblock %}
+
+{% block main %}
+    {% if form.vars.submitted and not form.vars.valid %}
+        <p class="form-error" role="alert">{{ 'list.filter.invalid'|trans({}, 'crm') }}</p>
+    {% endif %}
+    {% set fallback %}
+        <p><a href="{{ path('admin_crm_deals', query|merge({ansicht: 'liste'})) }}">{{ 'deal.board.to_list'|trans({}, 'crm') }}</a></p>
+    {% endset %}
+    {{ admin_island('deal-board', props, fallback) }}
+    <p class="muted deal-board__hint">{{ 'deal.board.hint'|trans({}, 'crm') }}</p>
+{% endblock %}

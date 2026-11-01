@@ -1,0 +1,21 @@
+{#-
+    The head of the deal pages. Include with `with_context = false`: view (`board` or `liste`), query (what a view switch
+    keeps), and optionally count, figure (translated) and actions (captured markup).
+-#}
+<div class="page-header deal-header">
+    <div class="deal-header__title">
+        <h1>{{ 'list.deals.title'|trans({}, 'crm') }}{% if count is defined %} <span class="muted">{{ count|swiss_number }}</span>{% endif %}</h1>
+        {%- if figure is defined %}<span class="muted" data-deal-open>{{ figure }}</span>{% endif -%}
+    </div>
+    <div class="page-header__actions deal-header__actions">
+        {{ include('admin/components/_seg.html.twig', {
+            label: 'list.deals.views'|trans({}, 'crm'),
+            items: [
+                {label: 'list.deals.view_board'|trans({}, 'crm'), href: path('admin_crm_deals', query), active: view == 'board'},
+                {label: 'list.deals.view_list'|trans({}, 'crm'), href: path('admin_crm_deals', query|merge({ansicht: 'liste'})), active: view == 'liste'},
+            ],
+        }, with_context = false) }}
+        {{ actions|default('') }}
+        {{ include('admin/components/_button.html.twig', {label: 'list.deals.new'|trans({}, 'crm'), variant: 'primary', icon: 'plus', href: path('admin_crm_deals_new')}, with_context = false) }}
+    </div>
+</div>

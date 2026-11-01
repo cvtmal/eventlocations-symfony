@@ -7,6 +7,7 @@ namespace App\Tests\Application\Crm;
 use App\Admin\Entity\AdminUser;
 use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\LogActivity;
+use App\Crm\Command\MoveDealStage;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\CompanyVenue;
 use App\Crm\ReadModel\TimelineQuery;
@@ -14,12 +15,14 @@ use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use App\Venues\Command\PublishVenue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -69,10 +72,60 @@ final class TimelineApiTest extends WebTestCase
             'venueNumber' => null,
             'venueName' => null,
             'tier' => null,
+            'stage' => null,
         ], $entry);
         self::assertSame($staff['user']->id(), $this->connection->fetchOne('SELECT actor_id FROM crm_activities LIMIT 1'));
         self::assertSame('2026-10-31 14:05:00', $this->connection->fetchOne("SELECT to_char(occurred_at AT TIME ZONE 'Europe/Zurich', 'YYYY-MM-DD HH24:MI:SS') FROM crm_activities LIMIT 1"));
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM admin_audit_log WHERE command = ?', [LogActivity::class]));
+    }
+
+    public function test_an_entry_on_a_deal_shows_on_the_deal_and_its_company(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $deal = DealFactory::createOne();
+        $contact = ContactFactory::createOne(['company' => $deal->company()]);
+
+        $this->send('POST', self::ACTIVITIES, ['kind' => 'deal', 'recordId' => $deal->id(), 'type' => ActivityType::NOTE, 'body' => 'Offerte folgt', 'occurredAt' => '2026-10-31T14:05']);
+
+        self::assertResponseStatusCodeSame(201);
+        $id = $this->entry()['id'];
+        self::assertSame([$id], $this->timelineIds('deals', $deal->id()));
+        self::assertSame([$id], $this->timelineIds('companies', $deal->company()->id()));
+        self::assertSame([], $this->timelineIds('contacts', $contact->id()));
+    }
+
+    public function test_a_stage_change_reads_as_a_system_line_on_deal_and_company_and_never_on_a_contact(): void
+    {
+        ['user' => $me] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
+        $deal = DealFactory::createOne(['name' => 'Verlängerung 2027']);
+        $contact = ContactFactory::createOne(['company' => $deal->company()]);
+        $this->connection->insert('crm_deal_contacts', ['deal_id' => $deal->id(), 'contact_id' => $contact->id()]);
+        $commandBus = self::getContainer()->get('command.bus');
+        self::assertInstanceOf(MessageBusInterface::class, $commandBus);
+        $commandBus->dispatch(new MoveDealStage($deal->id(), 'negotiation', 'new', $me->id()));
+
+        foreach ([$this->timelineUrl('deals', $deal->id()), $this->timelineUrl('companies', $deal->company()->id())] as $url) {
+            $this->send('GET', $url);
+            self::assertResponseIsSuccessful();
+            $entries = $this->answer()['entries'];
+            self::assertIsArray($entries);
+            self::assertCount(1, $entries);
+            self::assertIsArray($entries[0]);
+            self::assertSame(['system', 'deal_stage_changed', 'Andrea Keller', 'Verlängerung 2027', null, 'negotiation', false], [
+                $entries[0]['kind'], $entries[0]['type'], $entries[0]['actorName'], $entries[0]['title'], $entries[0]['body'], $entries[0]['stage'], $entries[0]['canEdit'],
+            ]);
+        }
+        self::assertSame([], $this->timelineIds('contacts', $contact->id()));
+    }
+
+    public function test_the_deal_timeline_of_an_unknown_deal_is_a_json_404(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+
+        $this->send('GET', $this->timelineUrl('deals', '019a0000-0000-7000-8000-000000000000'));
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertResponseHeaderSame('Content-Type', 'application/json');
     }
 
     public function test_an_entry_on_a_contact_shows_on_both_timelines(): void
@@ -105,7 +158,7 @@ final class TimelineApiTest extends WebTestCase
         yield 'no type' => [['type' => null], 'type'];
         yield 'an unknown type' => [['type' => 'fax'], 'type'];
         yield 'a type that is not a string' => [['type' => ['note']], 'type'];
-        yield 'an unknown kind' => [['kind' => 'deal'], 'kind'];
+        yield 'an unknown kind' => [['kind' => 'venue'], 'kind'];
         yield 'no record' => [['recordId' => null], 'recordId'];
         yield 'a record that is not a string' => [['recordId' => 12], 'recordId'];
     }
@@ -425,6 +478,19 @@ final class TimelineApiTest extends WebTestCase
     private function entryBy(AdminUser $author, string $body, string $occurredAt = '2026-10-20 12:00:00+02'): string
     {
         return ActivityFactory::createOne(['actor' => $author, 'body' => $body, 'occurredAt' => new \DateTimeImmutable($occurredAt)])->id();
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private function timelineIds(string $segment, string $id): array
+    {
+        $this->send('GET', $this->timelineUrl($segment, $id));
+        self::assertResponseIsSuccessful();
+        $entries = $this->answer()['entries'];
+        self::assertIsArray($entries);
+
+        return array_column($entries, 'id');
     }
 
     private function timelineUrl(string $segment, string $id): string

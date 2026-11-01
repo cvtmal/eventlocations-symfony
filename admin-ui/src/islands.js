@@ -9,4 +9,5 @@ export default {
     'room-editor': () => import('./islands/RoomEditorIsland.vue'),
     'record-properties': () => import('./islands/RecordPropertiesIsland.vue'),
     timeline: () => import('./islands/TimelineIsland.vue'),
+    'deal-board': () => import('./islands/DealBoardIsland.vue'),
 };

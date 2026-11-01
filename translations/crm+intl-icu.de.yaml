@@ -1,6 +1,7 @@
 # Strings of the Crm module (#27–#30). Keys: <context>.<description>.
 
 company:
+    stage_derived: '{stage} (aus Deals)'
     stage:
         prospect: Interessent
         customer: Kunde
@@ -42,6 +43,11 @@ api:
     unknown_choice: Bitte einen Eintrag aus der Liste wählen.
     not_yours: Nur der Verfasser kann diesen Eintrag ändern.
     read_only: Dieser Eintrag lässt sich nicht ändern.
+    stage_derived: Die Phase dieser Firma ergibt sich aus ihren gewonnenen Deals.
+    contract_ends_before_start: Das Vertragsende liegt vor dem Vertragsbeginn.
+    venue_not_linked: Diese Location gehört nicht zu dieser Firma.
+    contact_of_another_company: Dieser Kontakt gehört zu einer anderen Firma.
+    lost_reason_required: Bitte einen Grund für den Verlust wählen.
 
 properties:
     edit: Bearbeiten
@@ -56,16 +62,19 @@ properties:
     error: Speichern war nicht möglich. Bitte erneut versuchen.
     no_results: Keine Treffer.
     choose: Bitte einen Eintrag aus der Liste wählen oder das Feld leeren.
+    bad_date: Bitte ein vollständiges Datum eingeben oder das Feld leeren.
 
 nav:
     section: CRM
     companies: Firmen
     contacts: Kontakte
+    deals: Deals
     tasks: Aufgaben
 
 search:
     companies: Firmen
     contacts: Kontakte
+    deals: Deals
 
 flash:
     action_failed: Das hat nicht geklappt. Bitte die Seite neu laden und erneut versuchen.
@@ -98,10 +107,28 @@ list:
             company: Firma
             email: E-Mail
             owner: Zuständig
+    deals:
+        title: Deals
+        new: Deal
+        table_label: Deals
+        views: Ansicht
+        view_board: Board
+        view_list: Liste
+        empty:
+            title: Keine Deals
+            text: Kein Deal passt zu diesen Filtern.
+        column:
+            deal: Deal
+            stage: Phase
+            tier: Tier
+            amount: Wert
+            close: Abschluss
+            owner: Zuständig
     filter:
         search: Suchen
         search_companies: Firmenname suchen …
         search_contacts: Name oder E-Mail suchen …
+        search_deals: Deal oder Firma suchen …
         submit: Filtern
         reset: Filter zurücksetzen
         invalid: Diese Filter sind ungültig. Gezeigt wird die ungefilterte Liste.
@@ -112,11 +139,14 @@ list:
         owner: Zuständig
         all_owners: Alle Zuständigen
         owner_none: Ohne Zuständige
+        close: Abschluss
+        all_close: 'Abschluss: alle'
         venues: Locations
         all_venues: Mit und ohne Location
         venues_with: Mit Location
         venues_without: Ohne Location
     chip:
+        close: 'Abschluss: {label}'
         search: 'Suche: {q}'
         stage: 'Phase: {label}'
         kind: 'Art: {label}'
@@ -143,6 +173,18 @@ create:
         title: Kontakt erfassen
         card: Neuer Kontakt
         intro: Nachname genügt. Alles Weitere lässt sich danach auf der Kontaktseite ergänzen.
+    deal:
+        title: Deal erfassen
+        card: Neuer Deal
+        company_card: Firma wählen
+        intro: Ein Deal gehört zu einer Firma. Wähle sie zuerst, ihre Locations und Kontakte stehen dann zur Auswahl.
+        company: Firma
+        company_of: 'Firma: {name}'
+        next: Weiter
+        tier_none: Kein Tier
+        venue_none: Keine Location
+        contacts: Kontakte
+        name_help: Zum Beispiel «Premium 2027». Bitte keine Personennamen, denn der Deal bleibt bestehen, wenn ein Kontakt gelöscht wird.
     submit: Erfassen
     cancel: Abbrechen
     owner_none: Niemand
@@ -151,11 +193,15 @@ create:
     flash:
         company: 'Firma «{name}» erfasst.'
         contact: 'Kontakt «{name}» erfasst.'
+        deal: 'Deal «{name}» erfasst.'
 
 record:
     actions: Aktionen
     properties: Eigenschaften
     tabs_label: Bereiche
+    tab:
+        overview: Übersicht
+        deals: Deals
     created: Erstellt
     created_on: "{date} · {origin, select, venue {aus Location} other {manuell erfasst}}"
     stage_label: 'Phase: {stage}'
@@ -194,6 +240,7 @@ record:
         cancel: Abbrechen
         close: Schliessen
         flash: 'Firma «{name}» gelöscht.'
+        has_deals: Diese Firma hat Deals und lässt sich nicht löschen. Bitte zuerst die Deals löschen.
     export:
         action: Exportieren
     erase:
@@ -219,6 +266,9 @@ panel:
     stage_since: "{stage} · seit {year}"
     contact: Kontakt
     no_contact: Noch kein Kontakt
+    open_deal: Offener Deal
+    deal_stage: Phase
+    deal_value: Wert
     empty: Diese Location gehört noch zu keiner Firma.
     create: Firma anlegen
     flash:
@@ -226,17 +276,152 @@ panel:
         already: Diese Location hat bereits eine Firma.
         email_taken: Firma nicht angelegt, die E-Mail-Adresse wurde eben einem anderen Kontakt zugewiesen. Bitte nochmals versuchen.
 
+deal:
+    stage:
+        new: Neu
+        contacted: Kontaktiert
+        offer: Angebot
+        negotiation: Verhandlung
+        won: Gewonnen
+        lost: Verloren
+    lost_reason:
+        budget: Budget
+        competitor: Mitbewerber
+        no_need: Kein Bedarf
+        no_response: Keine Rückmeldung
+        other: Anderer Grund
+    board:
+        open: 'Offen: CHF {sum} · {count, plural, one {# Deal} other {{n} Deals}}'
+        hint: Karten ziehen oder «Weiter →» bzw. das Menü «Verschieben nach» benutzen. Bei «Gewonnen» fragt das CRM, ob der Tier auf die Location angewendet werden soll.
+        to_list: Deals als Liste anzeigen
+        filter: Filtern
+        column_sum: CHF {sum}
+        more: '+ {n} weitere'
+        next: Weiter →
+        next_to: 'Weiter: {deal} nach {stage} verschieben'
+        move_of: '{deal} verschieben nach'
+        moved: '{deal} ist jetzt in {stage}.'
+        moved_back: '{deal} bleibt in {stage}.'
+        closes_on: 'Abschluss {date}'
+        won_on: 'Gewonnen {date}'
+        lost_because: 'Verloren: {reason}'
+        owner: 'Zuständig: {name}'
+        lost:
+            title: Deal verloren
+            text: '{deal} wandert nach Verloren. Warum?'
+            reason: Grund
+            choose: Bitte wählen
+            required: Bitte einen Grund wählen.
+            confirm: Verschieben
+            cancel: Abbrechen
+            close: Schliessen
+        stale: Dieser Deal wurde inzwischen verschoben.
+        not_found: Dieser Deal existiert nicht mehr.
+        reload: Seite neu laden
+        session_gone: Sitzung abgelaufen. Bitte die Seite neu laden.
+        forbidden: Sitzung abgelaufen. Bitte die Seite neu laden.
+        error: Verschieben nicht möglich. Bitte erneut versuchen.
+    tier:
+        action: Tier anwenden
+        title: Tier auf Location anwenden
+        text: '«{venue}» hat heute den Tier {current}. Der Deal verkauft {offered}.'
+        confirm: Tier anwenden
+        cancel: Nicht jetzt
+        close: Schliessen
+        flash:
+            applied: Der Tier gilt jetzt auf der Location.
+            stale: Der Tier dieser Location wurde inzwischen geändert. Bitte noch einmal prüfen.
+            gone: Für diesen Deal gibt es keinen Tier mehr anzuwenden.
+    renew:
+        action: Verlängern
+        title: Deal verlängern
+        text: Ein neuer Deal für die nächste Vertragsperiode entsteht in der Phase «Neu». Firma, Location, Tier, Wert, Zuständige und Kontakte werden übernommen.
+        confirm: Verlängern
+        cancel: Abbrechen
+        close: Schliessen
+        name: 'Verlängerung {year}'
+        flash:
+            created: Verlängerung angelegt.
+            refused: Dieser Deal lässt sich nicht verlängern. Er ist schon verlängert oder hat keinen laufenden Vertrag.
+    export:
+        company: Firma
+        stage: Phase
+        lost_reason: Verlustgrund
+        amount: Wert (CHF)
+    record:
+        stage: Phase
+        stage_submit: Phase speichern
+        lost_reason: Verlustgrund
+        lost_reason_help: Nur für «Verloren» nötig.
+        closed_on: Abgeschlossen
+        stage_flash:
+            moved: Phase gespeichert.
+            reason: Verlustgrund gespeichert.
+            stale: Dieser Deal wurde inzwischen verschoben. Die Seite zeigt den aktuellen Stand.
+            lost_reason: Für «Verloren» bitte einen Grund wählen.
+        company:
+            title: Firma
+        venue:
+            title: Location
+            empty: Keine Location gewählt.
+        contacts:
+            title: Kontakte
+            add: Hinzufügen
+            add_title: Kontakt hinzufügen
+            field: Kontakt
+            submit: Hinzufügen
+            cancel: Abbrechen
+            close: Schliessen
+            empty: Noch keine Kontakte auf diesem Deal.
+            unlink: '{name} von diesem Deal lösen'
+            flash:
+                linked: Kontakt hinzugefügt.
+                unlinked: Kontakt gelöst.
+                invalid: Bitte einen Kontakt aus der Liste wählen.
+                another_company: Dieser Kontakt gehört inzwischen zu einer anderen Firma.
+        delete:
+            action: Deal löschen
+            title: Deal löschen
+            text: '«{name}» wird gelöscht, samt Aufgaben und Einträgen, die nur auf diesem Deal stehen. Der Verlauf der Firma behält die Phasenwechsel.'
+            confirm: Löschen
+            cancel: Abbrechen
+            close: Schliessen
+            flash: 'Deal «{name}» gelöscht.'
+    card:
+        title: Deals
+        add: Deal
+        empty: Noch keine Deals.
+        all: Alle anzeigen
+        until: 'bis {date}'
+        table:
+            name: Deal
+            stage: Phase
+            venue: Location
+            amount: Wert
+            contract_end: Vertragsende
+    property:
+        name: Name
+        venue: Location
+        tier: Tier
+        amount: Wert
+        contract_start: Vertragsbeginn
+        contract_end: Vertragsende
+        expected_close: Erwarteter Abschluss
+        owner: Zuständig
+
 activity:
     type:
         note: Notiz
         email_logged: E-Mail
         call: Anruf
         meeting: Meeting
+        deal_stage_changed: Deal-Phase
     tab:
         note: Notizen
         email_logged: E-Mails
         call: Anrufe
         meeting: Meetings
+        deal_stage_changed: Deal-Phasen
     compose:
         note:
             placeholder: Notiz schreiben …
@@ -264,6 +449,8 @@ timeline:
         published: '«{venue}» publiziert'
         unpublished: '«{venue}» unpubliziert'
         tier_changed: '«{venue}»: neu {tier}'
+        deal_stage_changed: '{actor} hat den Deal «{deal}» auf {stage} verschoben'
+        deal_stage_changed_anonymous: 'Deal «{deal}» auf {stage} verschoben'
     composer:
         title: Neue Aktivität
         tabs: Art
@@ -301,9 +488,11 @@ task:
     toggle:
         done: '«{title}» als erledigt markieren'
         reopen: '«{title}» wieder öffnen'
+    renewal_title: 'Verlängerung: {name}'
     object:
         company: Firma
         contact: Kontakt
+        deal: Deal
     list:
         title: Aufgaben
         tabs_label: Aufgaben eingrenzen
@@ -350,6 +539,13 @@ task:
         done: Aufgabe erledigt.
         reopened: Aufgabe wieder geöffnet.
         gone: Diese Aufgabe gibt es nicht mehr.
+renewal:
+    widget:
+        title: Verlängerungen
+        window: nächste 60 Tage
+        window_count: '{shown} von {total}, nächste 60 Tage'
+        ends: 'endet {date}'
+        empty: In den nächsten 60 Tagen endet kein Vertrag.
 lookup:
     venue_number: 'Nr. {number}'
     venue_company: 'bei {company}'

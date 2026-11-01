@@ -1,0 +1,24 @@
+{#
+    The dashboard widget "Verlängerungen" (`Crm\Extension\RenewalsWidget`, `Main.dc.html`). preview: RenewalPreview.
+#}
+<p class="widget__head-link renewal-widget__window muted">
+    {{- preview.total > preview.rows|length ? 'renewal.widget.window_count'|trans({shown: preview.rows|length, total: preview.total|swiss_number}, 'crm') : 'renewal.widget.window'|trans({}, 'crm') -}}
+</p>
+{% if preview.rows is empty %}
+    <p class="card__body muted">{{ 'renewal.widget.empty'|trans({}, 'crm') }}</p>
+{% else %}
+    <ul class="task-widget">
+        {% for row in preview.rows %}
+            <li class="task-widget__row renewal-widget__row">
+                <span class="crm-task__text">
+                    <a class="renewal-widget__company" href="{{ path('admin_crm_deals_show', {id: row.dealId}) }}">{{ row.companyName }}</a>
+                    <span class="crm-list__detail">
+                        {%- if row.tier %}{{ row.tier|trans }} · {% endif -%}
+                        {{- 'renewal.widget.ends'|trans({date: row.contractEndOn|swiss_date}, 'crm') -}}
+                    </span>
+                </span>
+                {% if row.amountRappen is not null %}<span class="renewal-widget__amount">{{ row.amountRappen|chf }}</span>{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

@@ -8,6 +8,7 @@ use App\Admin\ValueObject\AdminRole;
 use App\Crm\ValueObject\CompanyStage;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\AdminSession;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -32,6 +33,19 @@ final class SearchProvidersTest extends WebTestCase
             'label' => 'Firmen',
             'results' => [['type' => 'company', 'label' => 'Zürcher Gastro AG', 'detail' => 'Kunde', 'url' => '/admin/crm/firmen/'.$company->id()]],
         ]], $this->searchGroups('zuercher'));
+    }
+
+    public function test_an_editor_finds_a_deal_by_folded_name_below_the_contacts(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne(['name' => 'Alpenhof AG']);
+        $deal = DealFactory::createOne(['name' => 'Verlängerung 2027', 'company' => $company]);
+        DealFactory::createOne(['name' => 'Premium 2027', 'company' => CompanyFactory::createOne(['name' => 'Seeblick'])]);
+
+        self::assertSame([[
+            'label' => 'Deals',
+            'results' => [['type' => 'deal', 'label' => 'Verlängerung 2027', 'detail' => 'Alpenhof AG', 'url' => '/admin/crm/deals/'.$deal->id()]],
+        ]], $this->searchGroups('verlaengerung'));
     }
 
     public function test_an_editor_finds_a_contact_by_name_or_e_mail(): void

@@ -8,8 +8,8 @@ use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * The data of a contact export (CRM-11, D17), three statements: the contact with its company's name,
- * its timeline, its tasks. Only CRM tables: #14's inquiries are #29's to add. Null for an unknown id.
+ * The data of a contact export (CRM-11, D17), four statements: the contact with its company's name,
+ * its timeline, its tasks, its deals. Only CRM tables: #14's inquiries are #29's to add. Null for an unknown id.
  */
 final class ContactExportQuery
 {
@@ -35,6 +35,15 @@ final class ContactExportQuery
         FROM crm_tasks
         WHERE contact_id = :id
         ORDER BY due_on ASC, id ASC
+        SQL;
+
+    private const string DEALS = <<<'SQL'
+        SELECT d.name, c.name AS company_name, d.stage_code, d.contract_start_on, d.contract_end_on, d.created_at
+        FROM crm_deal_contacts l
+        JOIN crm_deals d ON d.id = l.deal_id
+        JOIN crm_companies c ON c.id = d.company_id
+        WHERE l.contact_id = :id
+        ORDER BY d.created_at DESC, d.id DESC
         SQL;
 
     private const string ZONE = 'Europe/Zurich';
@@ -81,6 +90,14 @@ final class ContactExportQuery
                 'due_on' => (string) $row['due_on'],
                 'done_at' => self::time($row['done_at']),
             ], $this->connection->fetchAllAssociative(self::TASKS, ['id' => $id])),
+            array_map(static fn (array $row): array => [
+                'name' => (string) $row['name'],
+                'company' => (string) $row['company_name'],
+                'stage' => (string) $row['stage_code'],
+                'contract_start_on' => self::text($row['contract_start_on']),
+                'contract_end_on' => self::text($row['contract_end_on']),
+                'created_at' => (string) self::time($row['created_at']),
+            ], $this->connection->fetchAllAssociative(self::DEALS, ['id' => $id])),
         );
     }
 

@@ -18,7 +18,15 @@
                     {#- occurredAt is Zurich's wall clock without a zone; swiss_date wants a moment. -#}
                     {%- set at = date(entry.occurredAt ~ ' Europe/Zurich') -%}
                     {%- set when = at|swiss_date ~ ', ' ~ at|date('H:i', 'Europe/Zurich') -%}
-                    {%- if entry.kind == 'system' -%}
+                    {%- if entry.stage -%}
+                        {%- set sentence = entry.actorName ? labels.system[entry.type] : labels.dealStageChangedAnonymous -%}
+                        {{ include('admin/components/_timeline_item.html.twig', {
+                            variant: 'system',
+                            icon: 'history',
+                            title: sentence|replace({'__actor__': entry.actorName, '__deal__': entry.title, '__stage__': labels.stages[entry.stage] ?? entry.stage}),
+                            meta: when,
+                        }, with_context = false) }}
+                    {%- elseif entry.kind == 'system' -%}
                         {{ include('admin/components/_timeline_item.html.twig', {
                             variant: 'system',
                             icon: 'history',

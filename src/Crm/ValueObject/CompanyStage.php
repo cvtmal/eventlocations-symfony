@@ -9,7 +9,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * A company's lifecycle (S13), stored in `crm_companies.stage` (chk_crm_companies_stage). Set by
- * hand in #27; #28 derives it from the deals and writes the same column, so no reader changes.
+ * hand until the company has a won deal; from then on `CompanyStageSync` writes the same column,
+ * so no reader changes.
  */
 enum CompanyStage: string implements TranslatableInterface
 {

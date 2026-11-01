@@ -17,7 +17,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
 
 /**
- * The one way a CMS command handler (#24, #25) opens and closes a venue it writes.
+ * The one way a back-office command handler (#24, #25, #28) opens and closes a venue it writes.
  *
  * - lock() takes the venue row with SELECT … FOR UPDATE until the command's transaction
  *   ends, so two saves, or a save and an import (which locks the same row before reading its
@@ -31,9 +31,10 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  *   to a child row alone still stales other open forms) and purges the venue's pages, and the
  *   listings when asked, after the commit.
  *
- * Only commands dispatched by the Cms module call it; the import never does. close() is what
- * protects staff work and hand-made rows from an import (S8: the import skips a venue with
- * cms_edited_at set). A handler that changed nothing returns before close().
+ * Only back-office commands call it, the Cms module's and `ChangeVenueTier`, which the Crm
+ * dispatches for a won deal (#28); the import never does. close() is what protects staff work
+ * and hand-made rows from an import (S8: the import skips a venue with cms_edited_at set). A
+ * handler that changed nothing returns before close().
  */
 final class VenueEditing
 {

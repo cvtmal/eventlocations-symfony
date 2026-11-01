@@ -7,10 +7,12 @@ import { failureOf } from './failure.js';
 
 // One inline-edited field (D10): the value, an edit button, and while editing a small form with Speichern
 // and Abbrechen. One PATCH per save; `expected` is the value of the last answer, the field's version (D11).
-// The form is read through FormData, so a combobox in select mode sends its hidden id.
+// The form is read through FormData, so a combobox in select mode sends its hidden id. `readonly` shows the value with
+// no edit button. `draft` is the text to edit where the stored value is another thing: an amount is stored in Rappen,
+// and the API reads what is sent as francs, so editing `value` would multiply it by a hundred on an idle save.
 const props = defineProps({
     url: { type: String, required: true },
-    field: { type: Object, required: true }, // {name, label, type, value, display, options, lookupUrl, required}
+    field: { type: Object, required: true }, // {name, label, type, value, display, draft, readonly, options, lookupUrl, required}
     labels: { type: Object, required: true },
     idPrefix: { type: String, default: 'property' },
 });
@@ -23,6 +25,7 @@ const editing = ref(false);
 const saving = ref(false);
 const failure = ref(null);
 const draft = ref('');
+const editText = ref(props.field.draft ?? null);
 const form = ref(null);
 const editButton = ref(null);
 
@@ -35,8 +38,8 @@ const options = computed(() => props.field.options ?? []);
 const describedBy = computed(() => (failure.value ? errorId : undefined));
 const invalid = computed(() => (failure.value ? 'true' : undefined));
 // The browser turns a Unicode domain into punycode in `type="email"`, as the create form's plain input does not.
-const inputType = computed(() => (props.field.type === 'email' ? 'text' : props.field.type));
-const inputMode = computed(() => (props.field.type === 'email' ? 'email' : undefined));
+const inputType = computed(() => (['email', 'amount'].includes(props.field.type) ? 'text' : props.field.type));
+const inputMode = computed(() => ({ email: 'email', amount: 'decimal' })[props.field.type]);
 
 function optionLabel(code) {
     return options.value.find((option) => option.value === code)?.label ?? code;
@@ -63,7 +66,7 @@ function focusFirstControl() {
 }
 
 async function edit() {
-    draft.value = value.value ?? '';
+    draft.value = editText.value ?? value.value ?? '';
     failure.value = null;
     editing.value = true;
     await nextTick();
@@ -103,6 +106,13 @@ async function save() {
         return;
     }
 
+    // A half-typed date reads as empty, and `novalidate` lets it through, so it would erase the stored date.
+    if (form.value.elements.namedItem(props.field.name)?.validity?.badInput) {
+        failure.value = { message: props.labels.badDate, reload: false };
+
+        return;
+    }
+
     const sent = new FormData(form.value).get(props.field.name);
     const typed = form.value.querySelector('[role="combobox"]')?.value ?? '';
     // Text with no option chosen is a search, not a value: only an emptied combobox clears the field.
@@ -122,7 +132,8 @@ async function save() {
         });
         const changed = answer.value !== value.value;
         value.value = answer.value;
-        display.value = displayOf(answer.value, typed);
+        display.value = answer.display ?? displayOf(answer.value, typed);
+        editText.value = answer.draft ?? null;
         if (changed) {
             emit('saved', { name: props.field.name, value: value.value, display: display.value });
         }
@@ -151,6 +162,7 @@ async function save() {
           class="property__label"
         >{{ field.label }}</span>
         <button
+          v-if="!field.readonly"
           ref="editButton"
           type="button"
           class="property__edit"

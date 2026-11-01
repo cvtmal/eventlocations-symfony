@@ -1,0 +1,10 @@
+{#- The properties of a company's left card, on the record and on its tabs. Include with `with_context = false`: company, owners. -#}
+{{ include('admin/crm/_properties.html.twig', {
+    fields: crm_company_fields(company, owners),
+    url: path('admin_api_crm_company_property', {id: company.id}),
+    id_prefix: 'company',
+}, with_context = false) }}
+{{ include('admin/components/_property.html.twig', {
+    label: 'record.created'|trans({}, 'crm'),
+    value: 'record.created_on'|trans({date: company.createdAt|swiss_date, origin: company.origin.value}, 'crm'),
+}, with_context = false) }}

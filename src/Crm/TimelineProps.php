@@ -24,6 +24,14 @@ final readonly class TimelineProps
     /** The composer's tab that is not an activity type: it creates a task. */
     public const string TASK_TAB = 'task';
 
+    /**
+     * The codes behind `deal.stage.<code>`, for the sentence of a stage change. A const, because the props cost no
+     * statement beyond `page()`; `CrmTranslationKeysTest` holds it equal to the rows.
+     *
+     * @var list<string>
+     */
+    public const array DEAL_STAGES = ['new', 'contacted', 'offer', 'negotiation', 'won', 'lost'];
+
     /** Island prop => key in `crm`. */
     private const array LABELS = [
         'section' => 'timeline.section',
@@ -127,14 +135,22 @@ final readonly class TimelineProps
             $tiers[$tier->value] = $tier->trans($this->translator);
         }
 
+        $stages = [];
+        foreach (self::DEAL_STAGES as $code) {
+            $stages[$code] = $this->crm('deal.stage.'.$code);
+        }
+
         return array_map($this->crm(...), self::LABELS) + [
             'by' => $this->crm('timeline.by', ['type' => '__type__', 'actor' => '__actor__']),
             'system' => [
                 TimelineEntry::EVENT_PUBLISHED => $this->crm('timeline.system.published', ['venue' => '__venue__']),
                 TimelineEntry::EVENT_UNPUBLISHED => $this->crm('timeline.system.unpublished', ['venue' => '__venue__']),
                 TimelineEntry::EVENT_TIER_CHANGED => $this->crm('timeline.system.tier_changed', ['venue' => '__venue__', 'tier' => '__tier__']),
+                TimelineEntry::EVENT_DEAL_STAGE_CHANGED => $this->crm('timeline.system.deal_stage_changed', ['actor' => '__actor__', 'deal' => '__deal__', 'stage' => '__stage__']),
             ],
+            'dealStageChangedAnonymous' => $this->crm('timeline.system.deal_stage_changed_anonymous', ['deal' => '__deal__', 'stage' => '__stage__']),
             'tiers' => $tiers,
+            'stages' => $stages,
         ];
     }
 

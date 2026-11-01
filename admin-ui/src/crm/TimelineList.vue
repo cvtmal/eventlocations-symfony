@@ -69,11 +69,18 @@ function bodyOf(entry) {
 }
 
 function systemTitle(entry) {
+    if (entry.stage) {
+        const label = entry.actorName ? props.labels.system[entry.type] : props.labels.dealStageChangedAnonymous;
+
+        return fill(label, { actor: entry.actorName, deal: entry.title, stage: props.labels.stages[entry.stage] ?? entry.stage });
+    }
+
     return fill(props.labels.system[entry.type], { venue: entry.venueName ?? '', tier: props.labels.tiers[entry.tier] ?? '' });
 }
 
+// A stage change names its actor in the sentence (Company.dc.html).
 function systemMeta(entry) {
-    return [entry.actorName, displayDate(entry.occurredAt)].filter(Boolean).join(' · ');
+    return [entry.stage ? null : entry.actorName, displayDate(entry.occurredAt)].filter(Boolean).join(' · ');
 }
 
 const editButtonId = (id) => `timeline-edit-${id}`;

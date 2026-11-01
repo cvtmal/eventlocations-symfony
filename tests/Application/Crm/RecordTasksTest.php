@@ -9,6 +9,7 @@ use App\Crm\Command\CreateTask;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
@@ -37,6 +38,7 @@ final class RecordTasksTest extends WebTestCase
     {
         yield 'a company' => ['company', 'company_id'];
         yield 'a contact' => ['contact', 'contact_id'];
+        yield 'a deal' => ['deal', 'deal_id'];
     }
 
     #[DataProvider('kinds')]
@@ -44,7 +46,11 @@ final class RecordTasksTest extends WebTestCase
     {
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
         $assignee = AdminUserFactory::createOne();
-        $record = 'company' === $kind ? CompanyFactory::createOne() : ContactFactory::createOne();
+        $record = match ($kind) {
+            'company' => CompanyFactory::createOne(),
+            'contact' => ContactFactory::createOne(),
+            default => DealFactory::createOne(),
+        };
 
         $this->send(['kind' => $kind, 'recordId' => $record->id(), 'title' => ' Rückruf ', 'dueOn' => self::DUE, 'assigneeId' => $assignee->id()]);
 
@@ -52,7 +58,7 @@ final class RecordTasksTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Type', 'application/json');
         $id = $this->answer()['id'] ?? null;
         self::assertIsString($id);
-        $row = $this->connection->fetchAssociative('SELECT title, due_on, assignee_id, created_by_id, company_id, contact_id FROM crm_tasks WHERE id = ?', [$id]);
+        $row = $this->connection->fetchAssociative('SELECT title, due_on, assignee_id, created_by_id, company_id, contact_id, deal_id FROM crm_tasks WHERE id = ?', [$id]);
         self::assertIsArray($row);
         self::assertSame('Rückruf', $row['title']);
         self::assertSame(self::DUE, $row['due_on']);
@@ -78,7 +84,7 @@ final class RecordTasksTest extends WebTestCase
         yield 'no assignee' => [['assigneeId' => null], 'assigneeId'];
         yield 'no id' => [['assigneeId' => 'nobody'], 'assigneeId'];
         yield 'an array as assignee' => [['assigneeId' => ['x']], 'assigneeId'];
-        yield 'an unknown kind' => [['kind' => 'deal'], 'kind'];
+        yield 'an unknown kind' => [['kind' => 'venue'], 'kind'];
         yield 'no record' => [['recordId' => null], 'recordId'];
     }
 
@@ -173,6 +179,19 @@ final class RecordTasksTest extends WebTestCase
         self::assertSame('/admin/crm/firmen/'.$company->id().'#aufgaben', $card->filter('input[name="return_to"]')->first()->attr('value'));
     }
 
+    public function test_the_card_on_a_company_shows_a_renewal_task_on_its_deal(): void
+    {
+        self::mockTime('2026-10-31 10:00:00 UTC');
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        TaskFactory::createOne(['title' => 'Verlängerung: Premium 2026', 'deal' => DealFactory::createOne(['company' => $company]), 'isRenewal' => true]);
+
+        $card = $this->client->request('GET', '/admin/crm/firmen/'.$company->id())->filter('#aufgaben');
+
+        self::assertSame('Aufgaben (1)', $card->filter('h2')->text());
+        self::assertSame('Verlängerung: Premium 2026', $card->filter('.crm-task__title')->text());
+    }
+
     public function test_the_card_on_a_contact_shows_its_tasks(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -184,6 +203,19 @@ final class RecordTasksTest extends WebTestCase
         self::assertSame('Aufgaben (1)', $crawler->filter('#aufgaben h2')->text());
         self::assertSame('Rückruf', $crawler->filter('#aufgaben .crm-task__title')->text());
         self::assertSame('/admin/crm/aufgaben/'.$task->id().'/status', $crawler->filter('#aufgaben form')->attr('action'));
+    }
+
+    public function test_the_card_on_a_deal_shows_its_tasks_and_only_those(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $deal = DealFactory::createOne();
+        TaskFactory::createOne(['deal' => $deal, 'title' => 'Offerte senden']);
+        TaskFactory::createOne(['company' => $deal->company(), 'title' => 'Fotos anfragen']);
+
+        $crawler = $this->client->request('GET', '/admin/crm/deals/'.$deal->id());
+
+        self::assertSame(['Offerte senden'], $crawler->filter('#aufgaben .crm-task__title')->each(static fn (Crawler $title): string => $title->text()));
+        self::assertSame('/admin/crm/deals/'.$deal->id().'#aufgaben', $crawler->filter('#aufgaben input[name="return_to"]')->attr('value'));
     }
 
     public function test_a_card_without_tasks_says_so(): void

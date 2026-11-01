@@ -11,6 +11,7 @@ use App\Crm\ValueObject\RecordKind;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -154,6 +155,31 @@ final class TaskListQueryTest extends KernelTestCase
         TaskFactory::createOne(['title' => 'Ohne Bezug']);
 
         self::assertSame(['Auf dem Kontakt', 'Auf der Firma'], array_map(static fn (TaskRow $row): string => $row->title, $this->query()->openOf(RecordKind::Company, $company->id())));
+    }
+
+    public function test_a_company_card_also_collects_the_tasks_on_its_deals(): void
+    {
+        $company = CompanyFactory::createOne();
+        $deal = DealFactory::createOne(['company' => $company]);
+        TaskFactory::createOne(['title' => 'Auf dem Deal', 'deal' => $deal]);
+        TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'deal' => $deal]);
+        TaskFactory::createOne(['title' => 'Fremder Deal', 'deal' => DealFactory::createOne()]);
+
+        self::assertSame(['Auf dem Deal'], array_map(static fn (TaskRow $row): string => $row->title, $this->query()->openOf(RecordKind::Company, $company->id())));
+    }
+
+    public function test_a_row_on_a_deal_names_the_deal_and_its_company(): void
+    {
+        $me = AdminUserFactory::createOne();
+        $deal = DealFactory::createOne(['company' => CompanyFactory::createOne(['name' => 'Seehotel Bellerive'])]);
+        TaskFactory::createOne(['assignee' => $me, 'deal' => $deal]);
+
+        $row = $this->query()->mine($me->id(), 5)->rows[0];
+
+        self::assertSame($deal->id(), $row->dealId);
+        self::assertSame('Seehotel Bellerive', $row->dealCompanyName);
+        self::assertNull($row->companyId);
+        self::assertTrue($row->hasObject());
     }
 
     public function test_is_done_tells_open_done_and_gone_apart(): void

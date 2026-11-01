@@ -27,4 +27,12 @@ class TaskRepository extends ServiceEntityRepository
     {
         return Uuid::isValid($id) ? $this->find($id, LockMode::PESSIMISTIC_WRITE) : null;
     }
+
+    /**
+     * The one renewal task of a deal, done or not (`uk_crm_tasks_renewal`).
+     */
+    public function renewalOf(string $dealId): ?Task
+    {
+        return $this->findOneBy(['deal' => $dealId, 'isRenewal' => true]);
+    }
 }

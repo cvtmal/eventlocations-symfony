@@ -1,0 +1,126 @@
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'list.deals.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'list.deals.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    {% set export_markup %}
+        {% if is_granted('ROLE_ADMIN') %}
+            {{ include('admin/components/_button.html.twig', {label: 'list.export'|trans({}, 'crm'), variant: 'secondary', icon: 'download', href: path('admin_crm_deals_export', app.request.query.all|filter((value, key) => key != 'page' and key != 'ansicht'))}, with_context = false) }}
+        {% endif %}
+    {% endset %}
+    {{ include('admin/crm/deal/_header.html.twig', {count: list.total, view: 'liste', query: query, actions: export_markup}, with_context = false) }}
+{% endblock %}
+
+{% block main %}
+    {% set chips = [] %}
+    {% if filter.q %}
+        {% set label = 'list.chip.search'|trans({q: filter.q}, 'crm') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({q: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'crm')}]) %}
+    {% endif %}
+    {% if filter.stage %}
+        {% set label = 'list.chip.stage'|trans({label: ('deal.stage.' ~ filter.stage)|trans({}, 'crm')}, 'crm') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({stage: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'crm')}]) %}
+    {% endif %}
+    {% if filter.owner %}
+        {% set owner_choice = form.owner.vars.choices|filter(choice => choice.value == filter.owner)|first %}
+        {% set label = 'list.chip.owner'|trans({label: owner_choice ? owner_choice.label|trans : filter.owner}, 'crm') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({owner: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'crm')}]) %}
+    {% endif %}
+    {% if filter.month %}
+        {% set month_choice = form.abschluss.vars.choices|filter(choice => choice.value == filter.month)|first %}
+        {% set label = 'list.chip.close'|trans({label: month_choice ? month_choice.label|trans : filter.month}, 'crm') %}
+        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({abschluss: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'crm')}]) %}
+    {% endif %}
+
+    {% do form.q.setRendered() %}
+    {% embed 'admin/components/_filter_bar.html.twig' with {
+        action: path('admin_crm_deals'),
+        id: 'deal-filter',
+        search_value: filter.q,
+        search_label: 'list.filter.search'|trans({}, 'crm'),
+        search_placeholder: 'list.filter.search_deals'|trans({}, 'crm'),
+        submit_label: 'list.filter.submit'|trans({}, 'crm'),
+        reset_href: chips is empty ? null : path('admin_crm_deals', {ansicht: 'liste'}),
+        reset_label: 'list.filter.reset'|trans({}, 'crm'),
+        chips: chips,
+        filter_form: form,
+        sort: sort,
+        dir: dir,
+    } only %}
+        {% block filters %}
+            {% for field in ['stage', 'owner', 'abschluss'] %}
+                <label class="visually-hidden" for="{{ filter_form[field].vars.id }}">{{ filter_form[field].vars.label|trans({}, 'crm') }}</label>
+                {{ form_widget(filter_form[field], {attr: {class: 'filter-bar__control'}}) }}
+            {% endfor %}
+            <input type="hidden" name="ansicht" value="liste">
+            <input type="hidden" name="sort" value="{{ sort }}">
+            <input type="hidden" name="dir" value="{{ dir }}">
+        {% endblock %}
+    {% endembed %}
+    {% if form.vars.submitted and not form.vars.valid %}
+        <p class="form-error" role="alert">{{ 'list.filter.invalid'|trans({}, 'crm') }}</p>
+    {% endif %}
+
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'list.deals.table_label'|trans({}, 'crm'),
+        id: 'deal-list',
+        columns: [
+            {label: 'list.deals.column.deal'|trans({}, 'crm'), sort_key: 'name'},
+            {label: 'list.deals.column.stage'|trans({}, 'crm'), sort_key: 'stage'},
+            {label: 'list.deals.column.tier'|trans({}, 'crm')},
+            {label: 'list.deals.column.amount'|trans({}, 'crm'), sort_key: 'amount'},
+            {label: 'list.deals.column.close'|trans({}, 'crm'), sort_key: 'close'},
+            {label: 'list.deals.column.owner'|trans({}, 'crm')},
+        ],
+        sort: sort,
+        dir: dir,
+        list: list,
+    } only %}
+        {% block rows %}
+            {% for row in list.rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {row: row} only %}
+                    {% block cells %}
+                        <td>
+                            <span class="crm-list__text">
+                                <a class="crm-list__link" href="{{ path('admin_crm_deals_show', {id: row.id}) }}">{{ row.name }}</a>
+                                <a class="crm-list__detail" href="{{ path('admin_crm_companies_show', {id: row.companyId}) }}">{{ row.companyName }}</a>
+                            </span>
+                        </td>
+                        <td>{{ include('admin/components/_pill.html.twig', {label: ('deal.stage.' ~ row.stage)|trans({}, 'crm'), tone: crm_deal_tone(row.stage)}, with_context = false) }}</td>
+                        <td>
+                            {%- if row.tier -%}
+                                {{- include('admin/components/_tier_badge.html.twig', {tier: row.tier.value, label: row.tier|trans}, with_context = false) -}}
+                            {%- else -%}
+                                —
+                            {%- endif -%}
+                        </td>
+                        <td>{{ row.amountRappen is null ? '—' : row.amountRappen|chf }}</td>
+                        <td class="muted">{{ row.expectedCloseOn ? row.expectedCloseOn|swiss_date : '—' }}</td>
+                        <td>{{ row.ownerName ?? '—' }}</td>
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'square-kanban', title: 'list.deals.empty.title'|trans({}, 'crm'), text: 'list.deals.empty.text'|trans({}, 'crm')}, with_context = false) }}
+        {% endblock %}
+        {% block foot %}
+            {{ include('admin/components/_pagination.html.twig', {
+                page: list.page,
+                last_page: list.lastPage,
+                total: list.total,
+                per_page: list.perPage,
+                label: 'list.pagination.label'|trans({}, 'crm'),
+                previous_label: 'list.pagination.previous'|trans({}, 'crm'),
+                next_label: 'list.pagination.next'|trans({}, 'crm'),
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

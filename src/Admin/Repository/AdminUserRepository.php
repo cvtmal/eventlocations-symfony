@@ -33,6 +33,11 @@ class AdminUserRepository extends ServiceEntityRepository
         return $this->find($id) ?? throw AdminUserRuleViolation::notFound();
     }
 
+    public function oldestActiveAdmin(): ?AdminUser
+    {
+        return $this->findOneBy(['role' => AdminRole::Admin, 'isActive' => true], ['createdAt' => 'ASC', 'id' => 'ASC']);
+    }
+
     public function countActiveAdmins(): int
     {
         return $this->count(['role' => AdminRole::Admin, 'isActive' => true]);

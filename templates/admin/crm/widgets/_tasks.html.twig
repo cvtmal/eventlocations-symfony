@@ -18,14 +18,14 @@
                 {{ include('admin/crm/task/_toggle.html.twig', {task: task, return_to: path('admin_dashboard') ~ '/'}, with_context = false) }}
                 <span class="crm-task__text">
                     <span class="crm-task__title">{{ task.title }}</span>
-                    {% if task.companyId or task.contactId or show_assignee %}
+                    {% if task.hasObject or show_assignee %}
                         <span class="crm-list__detail task-widget__detail">
-                            {%- if task.companyId or task.contactId -%}
+                            {%- if task.hasObject -%}
                                 <span>{{ include('admin/crm/task/_object.html.twig', {task: task}, with_context = false) }}</span>
                             {%- endif -%}
                             {%- if show_assignee -%}
                                 <span class="task-widget__assignee">
-                                    {%- if task.companyId or task.contactId -%}
+                                    {%- if task.hasObject -%}
                                         <span class="task-widget__dot"> · </span>
                                     {%- endif -%}
                                     {{- task.assigneeName -}}

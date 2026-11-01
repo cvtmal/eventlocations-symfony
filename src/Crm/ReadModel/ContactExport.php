@@ -14,6 +14,7 @@ final readonly class ContactExport
      * @param array{first_name: ?string, last_name: string, email: ?string, phone: ?string, position: ?string, kind: string, owner: ?string, created_at: string} $properties
      * @param list<array{type: string, occurred_at: string, title: ?string, body: ?string, payload: mixed, anonymised_at: ?string}>                              $activities
      * @param list<array{title: string, due_on: string, done_at: ?string}>                                                                                       $tasks
+     * @param list<array{name: string, company: string, stage: string, contract_start_on: ?string, contract_end_on: ?string, created_at: string}>                $deals
      */
     public function __construct(
         public string $id,
@@ -21,6 +22,7 @@ final readonly class ContactExport
         public ?string $companyName,
         public array $activities,
         public array $tasks,
+        public array $deals,
     ) {
     }
 
@@ -34,6 +36,7 @@ final readonly class ContactExport
             'company' => $this->companyName,
             'activities' => $this->activities,
             'tasks' => $this->tasks,
+            'deals' => $this->deals,
         ];
     }
 }

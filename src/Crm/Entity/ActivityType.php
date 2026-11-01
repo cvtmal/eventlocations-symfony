@@ -9,7 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A timeline entry type (S13, D7): a code-keyed row seeded by migrations (`note`, `email_logged`,
- * `call`, `meeting` in #27). A later cycle adds a type by inserting a row, never by a CHECK change.
+ * `call`, `meeting` in #27, `deal_stage_changed` in #28). A later cycle adds a type by inserting a row, never by a CHECK change.
  * Labels are `activity_type.<code>` in the `crm` catalogue. Read-only for the application.
  */
 #[ORM\Entity(readOnly: true)]
@@ -21,6 +21,7 @@ class ActivityType
     public const EMAIL_LOGGED = 'email_logged';
     public const CALL = 'call';
     public const MEETING = 'meeting';
+    public const DEAL_STAGE_CHANGED = 'deal_stage_changed';
 
     #[ORM\Id]
     #[ORM\Column(type: Types::STRING, length: 30)]

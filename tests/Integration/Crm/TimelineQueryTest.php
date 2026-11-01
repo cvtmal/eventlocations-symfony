@@ -19,6 +19,7 @@ use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Command\ChangeVenueBasics;
+use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\Entity\Venue;
@@ -36,12 +37,8 @@ final class TimelineQueryTest extends KernelTestCase
 
     public function test_system_commands_are_the_classes_they_name(): void
     {
-        foreach ([PublishVenue::class, UnpublishVenue::class, ChangeVenueBasics::class] as $class) {
-            self::assertContains($class, TimelineQuery::SYSTEM_COMMANDS);
-        }
-        // #28 adds the class; until then the name is a plain string and nothing else is on the list.
         self::assertSame(
-            [PublishVenue::class, UnpublishVenue::class, ChangeVenueBasics::class, 'App\Venues\Command\ChangeVenueTier'],
+            [PublishVenue::class, UnpublishVenue::class, ChangeVenueBasics::class, ChangeVenueTier::class],
             TimelineQuery::SYSTEM_COMMANDS,
         );
     }
@@ -72,7 +69,7 @@ final class TimelineQueryTest extends KernelTestCase
         $venue = $this->linkedVenue($company);
         $this->audit($venue->number(), ChangeVenueBasics::class, '2026-10-21 09:00:00+00', ['changed' => ['name'], 'tier' => 'basic']);
         $tier = $this->audit($venue->number(), ChangeVenueBasics::class, '2026-10-22 09:00:00+00', ['changed' => ['name', 'tier'], 'tier' => 'premium']);
-        $later = $this->audit($venue->number(), 'App\Venues\Command\ChangeVenueTier', '2026-10-23 09:00:00+00', ['tier' => 'exklusiv']);
+        $later = $this->audit($venue->number(), ChangeVenueTier::class, '2026-10-23 09:00:00+00', ['tier' => 'exklusiv']);
         $this->em->clear();
 
         $entries = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;

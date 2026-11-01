@@ -14,6 +14,8 @@ use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
 use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
+use App\Factory\ContactFactory;
+use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
@@ -130,6 +132,19 @@ final class EraseContactTest extends KernelTestCase
             ['contact_person' => 'Laura Meier', 'inquiry_email' => 'laura@seeblick.example.ch'],
             $this->connection->fetchAssociative('SELECT contact_person, inquiry_email FROM venues WHERE id = ?', [$venue->id()]),
         );
+    }
+
+    public function test_the_link_to_a_deal_goes_and_the_deal_stays(): void
+    {
+        $company = CompanyFactory::createOne();
+        $contact = ContactFactory::createOne(['company' => $company]);
+        $deal = DealFactory::createOne(['company' => $company]);
+        $this->connection->insert('crm_deal_contacts', ['deal_id' => $deal->id(), 'contact_id' => $contact->id()]);
+
+        $this->dispatch(new EraseContact($contact->id()));
+
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_deal_contacts WHERE deal_id = ?', $deal->id()));
+        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_deals WHERE id = ?', $deal->id()));
     }
 
     public function test_an_unknown_contact_is_not_found(): void

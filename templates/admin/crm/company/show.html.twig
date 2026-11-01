@@ -10,24 +10,9 @@
 
 {% block record_crumb %}<span data-crm-follow="name">{{ company.name }}</span>{% endblock %}
 
-{% block record_identity %}
-    {{ include('admin/components/_avatar.html.twig', {initials: company.initials, size: 56, square: true}, with_context = false) }}
-    <h1 id="record-title" data-crm-follow="name">{{ company.name }}</h1>
-    <a class="crm-record__website" data-crm-follow="website" href="{{ company.website }}"{% if not company.website %} hidden{% endif %} target="_blank" rel="noopener">{{ company.website }}</a>
-    <span class="pill pill--{{ crm_tone(company.stage) }}" data-crm-follow="stage" data-crm-tones="{{ crm_tones('stage')|json_encode }}">{{ company.stage|trans }}</span>
-{% endblock %}
+{% block record_identity %}{{ include('admin/crm/company/_identity.html.twig', {company: company}, with_context = false) }}{% endblock %}
 
-{% block record_properties %}
-    {{ include('admin/crm/_properties.html.twig', {
-        fields: crm_company_fields(company, owners),
-        url: path('admin_api_crm_company_property', {id: company.id}),
-        id_prefix: 'company',
-    }, with_context = false) }}
-    {{ include('admin/components/_property.html.twig', {
-        label: 'record.created'|trans({}, 'crm'),
-        value: 'record.created_on'|trans({date: company.createdAt|swiss_date, origin: company.origin.value}, 'crm'),
-    }, with_context = false) }}
-{% endblock %}
+{% block record_properties %}{{ include('admin/crm/company/_properties.html.twig', {company: company, owners: owners}, with_context = false) }}{% endblock %}
 
 {% block record_actions %}
     {%- if delete_form -%}
@@ -146,6 +131,8 @@
             {% endif %}
         </div>
     </section>
+
+    {{ include('admin/crm/deal/_card.html.twig', {deals: deals, add_href: path('admin_crm_deals_new', {company: company.id}), all_href: path('admin_crm_companies_deals', {id: company.id})}, with_context = false) }}
 
     {{ include('admin/crm/task/_card.html.twig', {tasks: tasks, return_to: path('admin_crm_companies_show', {id: company.id})}, with_context = false) }}
 {% endblock %}

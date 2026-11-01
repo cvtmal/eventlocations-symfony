@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Crm\Form;
 
+use App\Crm\ValueObject\Chf;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
+use App\Crm\ValueObject\DealProperty;
+use App\Crm\ValueObject\TaskDueDate;
 use App\Shared\Validator\CleanText;
+use App\Venues\ValueObject\Tier;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * The input rules of one inline-edited field (D10, P1), applied to the canonical value
@@ -100,6 +105,68 @@ final readonly class PropertyConstraints
     }
 
     /**
+     * The rules of a deal field. Unlike a company's or contact's, an amount and a date are applied to what was typed,
+     * because `DealProperty::canonical()` can only read what passed them.
+     *
+     * @return list<Constraint>
+     */
+    public static function deal(DealProperty $property): array
+    {
+        return match ($property) {
+            DealProperty::Name => self::dealName(),
+            DealProperty::Venue, DealProperty::Owner => self::reference(),
+            DealProperty::Tier => self::choice(array_map(static fn (Tier $tier): string => $tier->value, Tier::cases()), required: false),
+            DealProperty::Amount => self::amount(),
+            DealProperty::ContractStart, DealProperty::ContractEnd, DealProperty::ExpectedClose => self::date(),
+        };
+    }
+
+    /**
+     * @return list<Constraint>
+     */
+    public static function dealName(): array
+    {
+        return self::text(150, required: true);
+    }
+
+    /**
+     * Francs as typed, within `Chf`'s limit (N10). Empty is allowed: the field is optional.
+     *
+     * @return list<Constraint>
+     */
+    public static function amount(): array
+    {
+        return [
+            ...self::text(30),
+            new Assert\Callback(static function (mixed $value, ExecutionContextInterface $context): void {
+                if (null === $value || '' === $value) {
+                    return;
+                }
+                try {
+                    Chf::parse((string) $value);
+                } catch (\InvalidArgumentException) {
+                    $context->buildViolation('crm.property.amount')->addViolation();
+                }
+            }),
+        ];
+    }
+
+    /**
+     * @return list<Constraint>
+     */
+    private static function date(): array
+    {
+        return [
+            ...self::text(10),
+            new Assert\Callback(static function (mixed $value, ExecutionContextInterface $context): void {
+                if (null !== $value && null === TaskDueDate::parse($value)) {
+                    $context->buildViolation('crm.property.date')->addViolation();
+                }
+            }),
+        ];
+    }
+
+    /**
      * @param positive-int $max
      *
      * @return list<Constraint>
@@ -155,10 +222,10 @@ final readonly class PropertyConstraints
      *
      * @return list<Constraint>
      */
-    private static function choice(array $codes): array
+    private static function choice(array $codes, bool $required = true): array
     {
         return [
-            new Assert\NotNull(message: 'crm.property.required'),
+            ...($required ? [new Assert\NotNull(message: 'crm.property.required')] : []),
             new Assert\Type('string'),
             new Assert\Choice(choices: $codes, message: 'crm.property.choice'),
         ];
