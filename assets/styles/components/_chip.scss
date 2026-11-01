@@ -57,7 +57,7 @@
     cursor: default;
 }
 
-// Rundkachel (Tokens board). No Twig component: the styleguide shows it, #38 moves the "weitere Filter" tiles onto it.
+// Rundkachel (Tokens board). No Twig component: the styleguide shows it. `More` draws its own 80 px tile, `.filter-more__tile` in `_filter-more.scss`.
 .tile {
     display: inline-flex;
     flex-direction: column;

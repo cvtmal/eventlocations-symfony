@@ -1,4 +1,5 @@
 @use '../abstracts/breakpoints' as bp;
+@use '../abstracts/check';
 
 // The "weitere Filter" overlay (#12, FI-4): `search/filter/_more_form.html.twig` inside #1's overlay shell, which stays
 // unedited, and the pill that replaces the trigger. Native checkboxes are visually hidden; their labels are the tiles and
@@ -8,6 +9,14 @@
 .overlay--more:popover-open {
     display: flex;
     flex-direction: column;
+
+    // Tab scrolls to the hidden input, not its tile, so this clears the sticky band and the rest of a tile. Behind
+    // `:focus-visible` because, set for a pointer too, it recentres the page under a tap on a chip just above the band.
+    // Tiles and chips hold still. Chromium matches it on a select by pointer, so a tap on one of the three selects moves
+    // up to 164 px; accepted, Tab to a select needs the padding.
+    &:has(:focus-visible) {
+        scroll-padding-bottom: 10rem;
+    }
 
     .overlay__body {
         flex: 1 0 auto;
@@ -20,25 +29,45 @@
 }
 
 .overlay--more .overlay__body {
+    max-width: 72rem;
+
+    @include bp.up(md) {
+        padding-inline: var(--space-24);
+    }
+
     @include bp.up(lg) {
-        padding-top: 2.75rem;
+        padding-top: var(--space-64);
     }
 }
 
-// With no max-width the line runs up to the padding, so the padding alone has to clear the close disc at 390 px.
+// On a phone the close disc ends above the title; from md it sits beside the line, and the padding clears it.
 .overlay--more .overlay__title {
     max-width: none;
-    padding-right: 4rem;
+    margin-bottom: var(--space-16);
+    padding-right: 0;
+
+    @include bp.up(md) {
+        margin-bottom: var(--space-24);
+        padding-right: 4rem;
+    }
 }
 
-// The form is long and scrolls under this bar, so it is the white variant with the float shadow, not the overlay's ground.
+// The form is long and scrolls under this bar, so it sticks here alone (FI-4), white with the float shadow, not the
+// overlay's ground.
 .overlay--more .overlay__footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
     padding-block: .75rem;
     background: var(--c-surface-raised);
     box-shadow: var(--shadow-float);
 
-    @include bp.up(md) {
-        padding-block: var(--space-16);
+    .btn--lg {
+        @include bp.down(md) {
+            min-height: 2.75rem;
+            padding-inline: var(--space-24);
+            font-size: var(--fs-button);
+        }
     }
 }
 
@@ -56,6 +85,11 @@
     }
 }
 
+// The band is white, so the shell's darker pink for the circle is not needed; `:not` leaves the shell's hover standing.
+.overlay--more .overlay__clear:not(:hover) {
+    color: var(--c-accent-strong);
+}
+
 // Each group is a white card on the overlay's ground (README).
 .filter-more__group {
     padding: var(--space-24);
@@ -63,11 +97,15 @@
     background: var(--c-surface-raised);
 
     @include bp.up(md) {
-        padding: var(--space-32);
+        padding: var(--space-40);
     }
 
     & + & {
-        margin-top: var(--space-24);
+        margin-top: var(--space-16);
+
+        @include bp.up(md) {
+            margin-top: var(--space-24);
+        }
     }
 }
 
@@ -78,52 +116,74 @@
     border: 0;
 
     & + & {
-        margin-top: var(--space-40);
-
-        @include bp.up(lg) {
-            margin-top: var(--space-64);
-        }
+        margin-top: var(--space-32);
     }
 }
 
 .filter-more__title,
 .filter-more .text-input__label {
-    display: block;
-    width: 100%;
-    margin-bottom: var(--space-16);
-    padding: 0;
-    font-size: 1.125rem;
-    line-height: 2.0625rem;
-    font-weight: var(--fw-semibold);
-
-    @include bp.up(lg) {
-        margin-bottom: var(--space-24);
-        font-size: 1.875rem;
-        line-height: 2.5rem;
-    }
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    font-weight: var(--fw-bold);
 }
 
 .filter-more__title {
-    border-bottom: 1px solid var(--c-line-soft);
+    margin-bottom: var(--space-16);
+    padding: 0;
+}
 
-    @include bp.up(md) {
-        border-bottom: 0;
+.filter-more .text-input {
+    max-width: none;
+}
+
+// Lage beside Erreichbarkeit from lg; a lone section, the launch shape, takes the width.
+.filter-more__group--location {
+    @include bp.up(lg) {
+        display: grid;
+        grid-template-columns: 5fr 3fr;
+        gap: var(--space-32) var(--space-40);
+
+        .filter-more__section {
+            margin-top: 0;
+        }
+
+        .filter-more__section:only-child {
+            grid-column: 1 / -1;
+        }
     }
 }
 
-// —— Round tiles: below md a circle with the text under it, from md the label is the circle.
+// Three sections are the launch shape: no Mobiliar yet.
+.filter-more__group--properties {
+    @include bp.up(md) {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-32) var(--space-40);
+
+        &:has(> :nth-child(3):last-child) {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .filter-more__section {
+            margin-top: 0;
+        }
+    }
+}
+
+// —— Round tiles: a disc with the text under it. The checked badge is the label's two pseudo-elements, set on the disc's
+// corner: the disc is 80 wide and centred, so the badge starts 18 right of the middle.
 .filter-more__tiles {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
-    gap: var(--space-16) var(--space-12);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-16) var(--space-8);
     margin: 0;
     padding: 0;
     list-style: none;
+}
 
+.filter-more__section:first-child .filter-more__tiles {
     @include bp.up(md) {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-24);
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 }
 
@@ -131,24 +191,24 @@
     position: relative;
 
     label {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: var(--space-8);
-        font-size: .8125rem;
-        line-height: 1.125rem;
+        font-size: var(--fs-small);
+        line-height: var(--lh-small);
         font-weight: var(--fw-semibold);
         text-align: center;
         cursor: pointer;
     }
 
     .icon {
-        width: 4.5rem;
-        height: 4.5rem;
-        padding: 1.25rem;
+        width: 5rem;
+        height: 5rem;
+        padding: var(--space-24);
         border-radius: var(--radius-pill);
-        background: var(--c-surface-raised);
-        box-shadow: inset 0 0 0 1px var(--c-line-soft); // the disc is white on a white card
+        background: var(--c-surface);
         color: var(--c-accent-strong);
     }
 
@@ -161,85 +221,40 @@
         box-shadow: inset 0 0 0 2px var(--c-accent-strong);
     }
 
+    input:checked + label::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: calc(50% + 1.125rem);
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: var(--radius-pill);
+        background: var(--c-surface-raised);
+        box-shadow: inset 0 0 0 2px var(--c-accent-strong);
+    }
+
+    input:checked + label::after {
+        @include check.mark(.5rem);
+
+        position: absolute;
+        top: .3125rem;
+        left: calc(50% + 1.75rem);
+    }
+
     input:focus-visible + label .icon {
         outline: var(--focus-ring);
         outline-offset: 2px;
     }
-
-    @include bp.up(md) {
-        label {
-            justify-content: center;
-            gap: var(--space-4);
-            width: 10rem;
-            height: 10rem;
-            padding: var(--space-16);
-            border-radius: var(--radius-pill);
-            background: var(--c-surface-raised);
-            box-shadow: inset 0 0 0 1px var(--c-line-soft);
-            font-size: 1rem;
-            line-height: 1.25rem;
-        }
-
-        .icon,
-        label:hover .icon,
-        input:checked + label .icon {
-            width: 3.5rem;
-            height: 3.5rem;
-            padding: 0;
-            background: transparent;
-            box-shadow: none;
-        }
-
-        label:hover {
-            background: var(--c-accent-soft);
-        }
-
-        input:checked + label {
-            background: var(--c-accent-soft);
-            box-shadow: inset 0 0 0 2px var(--c-accent-strong);
-            color: var(--c-ink);
-        }
-
-        input:focus-visible + label {
-            outline: var(--focus-ring);
-            outline-offset: 2px;
-        }
-
-        input:focus-visible + label .icon {
-            outline: 0;
-        }
-    }
-
-    @include bp.up(lg) {
-        label {
-            width: 12.5rem;
-            height: 12.5rem;
-        }
-
-        .icon,
-        label:hover .icon,
-        input:checked + label .icon {
-            width: 5.5rem;
-            height: 5.5rem;
-        }
-    }
 }
 
-// —— Chips: below lg list rows with a check mark, from lg a grid of tiles.
+// —— Chips: the same pill at every width.
 .filter-more__chips {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
     margin: 0;
     padding: 0;
     list-style: none;
-
-    @include bp.up(lg) {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 2rem 1.1875rem;
-    }
-
-    @include bp.up(xl) {
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
 }
 
 .filter-more__chip {
@@ -248,74 +263,42 @@
     label {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        min-height: 3rem;
-        padding: .625rem 1.25rem .625rem 0;
-        border-bottom: 1px solid var(--c-line-soft);
-        font-size: .9375rem;
-        line-height: 1.25rem;
+        gap: var(--space-8);
+        min-height: 2.75rem;
+        padding: 0 1.25rem;
+        border-radius: var(--radius-pill);
+        box-shadow: inset 0 0 0 1px var(--c-line-soft);
+        font-size: var(--fs-small);
+        line-height: var(--lh-small);
         font-weight: var(--fw-semibold);
         cursor: pointer;
     }
 
+    label:hover {
+        background: var(--c-accent-soft);
+    }
+
+    input:checked + label {
+        background: var(--c-accent-soft);
+        box-shadow: inset 0 0 0 2px var(--c-accent-strong);
+    }
+
     input:checked + label::after {
-        content: '';
-        flex: none;
-        width: .5rem;
-        height: 1rem;
-        margin-right: .375rem;
-        border: solid currentcolor;
-        border-width: 0 2px 2px 0;
-        rotate: 45deg;
+        @include check.mark-in-row;
     }
 
     input:focus-visible + label {
         outline: var(--focus-ring);
         outline-offset: 2px;
     }
-
-    @include bp.up(lg) {
-        label {
-            justify-content: center;
-            min-height: 2.4375rem;
-            padding: .25rem .5rem;
-            border-bottom: 0;
-            border-radius: var(--radius-image);
-            background: var(--c-surface-raised);
-            box-shadow: inset 0 0 0 1px var(--c-line-soft);
-            text-align: center;
-        }
-
-        label:hover {
-            background: var(--c-accent-soft);
-        }
-
-        input:checked + label {
-            background: var(--c-accent-soft);
-            box-shadow: inset 0 0 0 2px var(--c-accent-strong);
-            color: var(--c-ink);
-        }
-
-        input:checked + label::after {
-            content: none;
-        }
-    }
 }
 
 // "Alle Gebäudearten": no JS, so the summary sits under the chips (deviation 5) and swaps its text on [open].
 .filter-more__all {
-    margin-top: var(--space-16);
-
-    @include bp.up(lg) {
-        margin-top: 2rem;
-    }
+    margin-top: var(--space-8);
 
     &[open] > .filter-more__chips {
-        margin-top: var(--space-16);
-
-        @include bp.up(lg) {
-            margin-top: 2rem;
-        }
+        margin-top: var(--space-8);
     }
 
     summary::-webkit-details-marker {
@@ -324,15 +307,20 @@
 }
 
 .filter-more__all-toggle {
-    display: inline-block;
-    padding: .5625rem 1.5rem;
-    border: 1px solid var(--c-line);
-    border-radius: var(--radius-image);
-    font-size: .9375rem;
-    line-height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--c-accent-strong);
+    font-size: var(--fs-small);
     font-weight: var(--fw-semibold);
     list-style: none;
     cursor: pointer;
+
+    span {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-8);
+    }
 
     span + span,
     .filter-more__all[open] & span:first-child {
@@ -340,44 +328,43 @@
     }
 
     .filter-more__all[open] & span + span {
-        display: inline;
+        display: inline-flex;
+    }
+
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
     }
 }
 
 // —— Raumangebot: the label is the empty first option.
 .filter-more__selects {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-16) 4%;
+    flex-direction: column;
+    gap: var(--space-16);
 
-    @include bp.up(lg) {
-        flex-wrap: nowrap;
+    @include bp.up(md) {
+        flex-direction: row;
+        gap: var(--space-40);
     }
 }
 
 .filter-more__select {
     position: relative;
-    flex: 1 1 100%;
-
-    @include bp.up(md) {
-        flex: 0 1 48%;
-    }
-
-    @include bp.up(lg) {
-        flex: 1 1 0;
-    }
+    flex: 1 1 0;
+    min-width: 0;
 
     select {
         width: 100%;
+        min-height: 2.75rem;
         padding: .5rem 2rem .5rem 0;
         border: 0;
-        border-bottom: 1px solid var(--c-line-soft);
+        border-bottom: 1px solid var(--c-line);
         border-radius: 0;
         background: transparent;
         color: var(--c-ink);
-        font-size: 1.125rem;
-        line-height: 1.75rem;
-        font-weight: var(--fw-semibold);
+        font-size: var(--fs-body);
+        font-weight: var(--fw-regular);
         appearance: none;
         cursor: pointer;
     }
@@ -392,7 +379,10 @@
         position: absolute;
         top: 50%;
         right: 0;
+        width: 1.25rem;
+        height: 1.25rem;
         translate: 0 -50%;
+        color: var(--c-accent-strong);
         pointer-events: none;
     }
 }
