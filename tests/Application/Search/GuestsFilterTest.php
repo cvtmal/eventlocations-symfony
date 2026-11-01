@@ -129,7 +129,7 @@ final class GuestsFilterTest extends WebTestCase
         $crawler = $this->get('/hochzeitslocations?canton=zh&guests=120');
 
         $overlay = $crawler->filter('#filter-guests');
-        self::assertSame('Wieviele Gäste erwartest du?', $overlay->filter('h2')->text());
+        self::assertSame('Wie viele Gäste erwarten Sie?', $overlay->filter('h2')->text());
 
         $form = $crawler->filter('#filter-guests-form');
         self::assertSame('get', $form->attr('method'));

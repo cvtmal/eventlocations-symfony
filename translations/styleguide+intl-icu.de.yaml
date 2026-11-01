@@ -153,9 +153,9 @@ styleguide:
         open_region: Region
         open_guests: Anzahl Gäste
         open_more: weitere Filter
-        region_title: Wähle deine Region
-        guests_title: Wie viele Gäste erwartest du?
-        more_title: Wähle weitere Filter & Möglichkeiten
+        region_title: Wählen Sie Ihre Region
+        guests_title: Wie viele Gäste erwarten Sie?
+        more_title: Wählen Sie weitere Filter und Möglichkeiten
         canton_label: Kanton
         canton_placeholder: Kanton eingeben
         guests_label: Anzahl Gäste
@@ -163,7 +163,7 @@ styleguide:
         lage: Lage
         clear: Filter löschen
         drawn_region_title: Wo soll Ihre Hochzeit stattfinden?
-        drawn_more_title: Wählen Sie weitere Filter & Möglichkeiten
+        drawn_more_title: Wählen Sie weitere Filter und Möglichkeiten
         drawn_results: 24 Resultate anzeigen
         option_all_cantons: Alle Kantone
         option_zurich: Zürich
@@ -179,7 +179,7 @@ styleguide:
         heading: Dialog
         open: Dialog öffnen
         title: Anfrage gesendet
-        body: Vielen Dank. Die Location meldet sich in den nächsten Tagen bei dir.
+        body: Vielen Dank. Die Location meldet sich in den nächsten Tagen bei Ihnen.
         confirm: Alles klar
         drawn_title: Dachstock
         drawn_body: Saal unter dem alten Dachstuhl, mit Holzboden und direktem Zugang zum Innenhof.

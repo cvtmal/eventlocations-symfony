@@ -52,13 +52,13 @@ error:
     not_found:
         title: Seite nicht gefunden
         heading: Diese Seite gibt es nicht
-        text: Der Link stimmt nicht mehr oder die Seite ist umgezogen. In der Übersicht findest du alle Hochzeitslocations.
+        text: Der Link stimmt nicht mehr oder die Seite ist umgezogen. In der Übersicht finden Sie alle Hochzeitslocations.
     gone:
         title: Location nicht mehr verfügbar
         heading: Diese Location ist nicht mehr dabei
-        text: Sie ist bei uns nicht mehr aufgeführt. In der Übersicht findest du alle anderen Hochzeitslocations.
+        text: Sie ist bei uns nicht mehr aufgeführt. In der Übersicht finden Sie alle anderen Hochzeitslocations.
     server:
         title: Fehler
         heading: Da ist etwas schiefgelaufen
-        text: Die Seite lässt sich gerade nicht anzeigen. Bitte versuche es in ein paar Minuten noch einmal.
+        text: Die Seite lässt sich gerade nicht anzeigen. Bitte versuchen Sie es in ein paar Minuten noch einmal.
     to_listing: Alle Hochzeitslocations

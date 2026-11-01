@@ -8,32 +8,32 @@
 <meta name="supported-color-schemes" content="light dark">
 <title>{{ email.subject }}</title>
 <style>
-@media (max-width:620px){ .hl-pad{padding-left:24px!important;padding-right:24px!important} .hl-h{font-size:22px!important;line-height:30px!important} }
+@media (max-width:620px){ .hl-outer{padding-left:0!important;padding-right:0!important} .hl-card{border-radius:0!important} .hl-pad{padding-left:24px!important;padding-right:24px!important} .hl-h{font-size:22px!important;line-height:30px!important} }
 @media (prefers-color-scheme:dark){
  .hl-bg{background:#121212!important} .hl-card{background:#272727!important}
  .hl-h{color:#ffffff!important} .hl-p{color:#ececec!important} .hl-muted{color:#c5c5c5!important}
- .hl-link{color:#ffc1cb!important} .hl-rule{background:#5f5f5f!important}
+ .hl-link{color:#ffe3f2!important} .hl-rule{background:#5f5f5f!important} .hl-plate{padding:8px 12px!important}
 }
-[data-ogsc] .hl-h{color:#ffffff!important} [data-ogsc] .hl-p{color:#ececec!important} [data-ogsc] .hl-muted{color:#c5c5c5!important} [data-ogsc] .hl-link{color:#ffc1cb!important}
+[data-ogsc] .hl-h{color:#ffffff!important} [data-ogsc] .hl-p{color:#ececec!important} [data-ogsc] .hl-muted{color:#c5c5c5!important} [data-ogsc] .hl-link{color:#ffe3f2!important} [data-ogsc] .hl-plate{padding:8px 12px!important}
 </style>
 </head>
-<body class="hl-bg" style="margin:0;padding:0;width:100%;background:#f1f1f1;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-<div class="hl-preheader" style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f1f1f1;opacity:0;">{% block preheader %}{% endblock %}</div>
-<table role="presentation" class="hl-bg" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f1f1" style="width:100%;background:#f1f1f1;">
-<tr><td align="center" style="padding:32px 12px 40px;">
+<body class="hl-bg" style="margin:0;padding:0;width:100%;background:#f0f1eb;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<div class="hl-preheader" style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f0f1eb;opacity:0;">{% block preheader %}{% endblock %}</div>
+<table role="presentation" class="hl-bg" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f0f1eb" style="width:100%;background:#f0f1eb;">
+<tr><td class="hl-outer" align="center" style="padding:32px 12px 40px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
-<tr><td class="hl-pad" bgcolor="#121212" style="padding-left:40px;padding-right:40px;padding-top:26px;padding-bottom:24px;background:#121212;border-radius:12px 12px 0 0;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:20px;line-height:26px;mso-line-height-rule:exactly;font-weight:600;color:#ffffff;"><a href="{{ url('home') }}" style="color:#ffffff;text-decoration:none;">{{ 'layout.site_name'|trans }}</a></td></tr></table>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;"><tr><td width="32" height="2" bgcolor="#ff5a75" style="width:32px;height:2px;line-height:2px;font-size:0;background:#ff5a75;">&#160;</td></tr></table>
+<tr><td class="hl-pad hl-card" bgcolor="#ffffff" style="padding-left:40px;padding-right:40px;padding-top:26px;padding-bottom:0;background:#ffffff;border-radius:24px 24px 0 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="hl-plate" bgcolor="#ffffff" style="background:#ffffff;border-radius:8px;"><a href="{{ url('home') }}" style="display:block;text-decoration:none;"><img src="{{ email.image('@images/logo-hzl.png', 'image/png') }}" alt="{{ 'layout.logo_alt'|trans }}" width="126" height="28" style="display:block;border:0;width:126px;height:28px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:16px;font-weight:700;color:#484848;"></a></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:23px;"><tr><td width="32" height="2" bgcolor="#d1007a" style="width:32px;height:2px;line-height:2px;font-size:0;background:#d1007a;">&#160;</td></tr></table>
 </td></tr>
-<tr><td class="hl-card" bgcolor="#ffffff" style="background:#ffffff;border-radius:0 0 12px 12px;padding-bottom:28px;">
+<tr><td class="hl-card" bgcolor="#ffffff" style="background:#ffffff;border-radius:0 0 24px 24px;padding-bottom:28px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
 {% block content %}{% endblock %}
 </table>
 </td></tr>
 <tr><td class="hl-pad" style="padding-left:40px;padding-right:40px;padding-top:24px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
-<tr><td class="hl-muted" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:12px;line-height:18px;mso-line-height-rule:exactly;color:#5f5f5f;">{% block footer %}{{ 'email.footer'|trans({}, 'shared') }}{% endblock %}</td></tr>
+<tr><td class="hl-muted" style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:13px;line-height:18px;mso-line-height-rule:exactly;color:#6b6b66;">{% block footer %}{{ 'email.footer'|trans({}, 'shared') }}{% endblock %}</td></tr>
 </table>
 </td></tr>
 </table>

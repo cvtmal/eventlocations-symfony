@@ -124,7 +124,7 @@ final class InquiryMailerTest extends KernelTestCase
         self::assertSame(['anna@example.ch'], $this->addresses($mail->getTo()));
         self::assertSame(['hallo@hochzeitslocation.ch'], $this->addresses($mail->getReplyTo()));
         self::assertSame(['hallo@hochzeitslocation.ch'], $this->addresses($mail->getFrom()));
-        self::assertSame('Deine Anfrage an Schloss Seeblick', $mail->getSubject());
+        self::assertSame('Ihre Anfrage an Schloss Seeblick', $mail->getSubject());
         self::assertFalse($mail->getHeaders()->has(InquiryMailer::ORIGINAL_RECIPIENT_HEADER));
         self::assertStringContainsString('Danke, Anna!', (string) $mail->getTextBody());
         self::assertStringContainsString('Ist der Termin frei?', (string) $mail->getTextBody());
@@ -144,6 +144,20 @@ final class InquiryMailerTest extends KernelTestCase
             self::assertSame([$inquiry->recipientEmail()], $this->addresses($recorder->messages[0]->getTo()));
             self::assertFalse($recorder->messages[0]->getHeaders()->has(InquiryMailer::ORIGINAL_RECIPIENT_HEADER));
         }
+    }
+
+    public function test_venue_mail_embeds_the_logo(): void
+    {
+        $this->mailer()->sendToVenue($this->inquiry());
+
+        $this->assertLogoIsEmbedded($this->sentMail());
+    }
+
+    public function test_guest_copy_embeds_the_logo(): void
+    {
+        $this->mailer()->sendToGuest($this->inquiry());
+
+        $this->assertLogoIsEmbedded($this->sentMail());
     }
 
     public function test_a_header_in_the_name_stays_out_of_the_headers(): void
@@ -208,6 +222,22 @@ final class InquiryMailerTest extends KernelTestCase
         self::assertInstanceOf(Email::class, $message);
 
         return $message;
+    }
+
+    private function assertLogoIsEmbedded(Email $mail): void
+    {
+        $parts = $mail->getAttachments();
+        self::assertCount(1, $parts);
+        $logo = array_values($parts)[0];
+        self::assertSame('inline', $logo->getDisposition());
+        self::assertSame('image/png', $logo->getContentType());
+
+        $pattern = '/<img src="cid:'.preg_quote($logo->getContentId(), '/').'"[^>]*>/';
+        $found = preg_match($pattern, (string) $mail->getHtmlBody(), $image);
+        self::assertSame(1, $found);
+        self::assertStringContainsString('alt="hochzeitslocation.ch"', $image[0]);
+        self::assertStringContainsString('width="126"', $image[0]);
+        self::assertStringContainsString('height="28"', $image[0]);
     }
 
     /**

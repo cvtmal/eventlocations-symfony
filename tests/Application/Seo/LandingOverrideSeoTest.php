@@ -30,7 +30,7 @@ final class LandingOverrideSeoTest extends WebTestCase
     use ResetsContentBlocks;
 
     private const string TITLE = 'Hochzeit am Zürichsee: unsere Lieblingsorte';
-    private const string DESCRIPTION = 'Schlösser, Seeufer und Scheunen im Kanton Zürich: unsere Auswahl für eure Hochzeit.';
+    private const string DESCRIPTION = 'Schlösser, Seeufer und Scheunen im Kanton Zürich: unsere Auswahl für Ihre Hochzeit.';
 
     private KernelBrowser $client;
     private Connection $connection;

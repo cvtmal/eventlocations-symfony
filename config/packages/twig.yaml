@@ -1,5 +1,6 @@
 twig:
     file_name_pattern: '*.twig'
+    paths: {'%kernel.project_dir%/assets/images': images}
     # Display only: storage and PHP stay UTC.
     date:
         timezone: Europe/Zurich

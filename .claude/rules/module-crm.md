@@ -66,3 +66,5 @@ Back-office companies, contacts, deals, tasks, activities and inquiries.
 - **Composer:** the E-Mail tab has two buttons on a record with an address: Senden, and the logging button it keeps; without an address it only logs. Enter never sends: its buttons are `type="button"` and `submit()` returns. Templates load only with a recipient (`templates: []`, no statement, `ContactRecordTest`).
 - **Two tabs:** `activity.tab.email_logged` is "Erfasste E-Mails" and `activity.tab.email_sent` "Gesendete E-Mails", so the filter bar tells them apart.
 - **Demo data:** `CrmStory` writes the templates «Verlängerung Tier» and «Fotos anfordern» through `EmailTemplateFactory`.
+
+**Built in #40.** `admin/crm/email/message.html.twig` extends the mail layout, so every CRM mail carries the logo as an inline `image/png` part. A link in a `rich` mail has no `.hl-link`, so in dark it takes the client's link colour: Chromium gives `#9e9eff`, 6.25:1, legible.

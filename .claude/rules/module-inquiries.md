@@ -31,3 +31,5 @@ Inquiry form, entity, mails.
 **Built in #20.** `app:inquiries:report-stuck [--minutes=15]` (`Inquiries\ReadModel\StuckInquiries`, run by `bin/cron-daily`) prints `pending` rows older than that as id, venue number and time, never guest data, and nothing when there are none; always exit 0, because cron mails its output.
 
 **Built in #39.** `assets/styles/inquiries/_form.scss`: the form is a card (`shared.card`, `venues/detail/_shared.scss`), `_form.html.twig` has the `info` icon in `.inquiry-form__summary` and an `lg` submit, `_confirmation.html.twig` the 56 px success disc `.inquiry-form__sent-icon` on `--c-success-soft`. The textarea's `min-height` is 17.25 rem below md and 12.375 rem from md, the boards' heights; `InquiryType`'s `rows: 7` stays.
+
+**Built in #40.** Both mails embed the logo through the layout as one inline `image/png` part with a `cid:` in the HTML. `RecordingMailer` renders nothing, so `InquiryMailerTest` asserts this on the container's service.

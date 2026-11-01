@@ -97,6 +97,18 @@ final class BaseLayoutTest extends WebTestCase
         }
     }
 
+    public function test_the_logos_and_the_copyright_line_name_the_domain_with_the_current_year(): void
+    {
+        $crawler = $this->home();
+
+        foreach (['.site-header__wordmark img', '.site-footer__brand img'] as $selector) {
+            self::assertSame('hochzeitslocation.ch', $crawler->filter($selector)->attr('alt'));
+        }
+
+        $year = (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Zurich')))->format('Y');
+        self::assertSame("© {$year} hochzeitslocation.ch", $crawler->filter('.site-footer__copy')->text());
+    }
+
     public function test_locations_is_the_current_page_on_the_listing_only(): void
     {
         $crawler = $this->home();
