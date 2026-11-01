@@ -17,6 +17,8 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-8) var(--space-16);
+    // Fills the region up to max-width, as the boards' toasts do: shrunk to fit, a short message's link falls to a second row.
+    width: 100%;
     max-width: 21.375rem;
     padding: var(--space-16) var(--space-24);
     border-radius: var(--radius-image);
@@ -30,6 +32,17 @@
     @include bp.up(md) {
         max-width: 26.25rem;
     }
+
+    .icon {
+        flex: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--c-accent-strong);
+    }
+}
+
+.toast__text {
+    flex: 1 1 12.5rem;
 }
 
 .toast__link {

@@ -1,28 +1,32 @@
 {#
     "Ähnliche Locations" (DP-15), rendered by App\Search\Controller\SimilarVenuesController and embedded by the
-    Venues detail page. Params: venues (list<SimilarVenue>). Photos via #7's card_picture(), facts via
-    search/_card_facts, the tier via components/_badge (D19).
+    Venues detail page. Params: venues (list<SimilarVenue>). Photos via #7's card_picture(), the facts as one line
+    of text (DetailReal), the tier via components/_badge (D19). The carousel's section is the band's one named
+    region: a name on the outer section too would make two landmarks of the same name (axe landmark-unique).
 #}
-<section class="similar-venues" aria-labelledby="similar-venues-title">
+<section class="similar-venues">
     <div class="container">
         <div class="similar-venues__header">
-            <h2 id="similar-venues-title" class="similar-venues__title">{{ 'similar.heading'|trans({}, 'search') }}</h2>
-            <a class="similar-venues__all" href="{{ path('listing') }}">{{ 'similar.all'|trans({}, 'search') }}</a>
+            <h2 class="similar-venues__title">{{ 'similar.heading'|trans({}, 'search') }}</h2>
+            <a class="similar-venues__all" href="{{ path('listing') }}">{{ 'similar.all'|trans({}, 'search') }}{{ icon('chevron-right') }}</a>
         </div>
         {% embed 'components/_carousel.html.twig' with {id: 'similar-venues', label: 'similar.label'|trans({}, 'search'), venues: venues} only %}
             {% block slides %}
                 {% for venue in venues %}
                     {% set picture = venue.photo ? card_picture(venue.photo, venue.name) : null %}
+                    {% set capacity = swiss_range(venue.capacityMin ?? venue.capacityMax, venue.capacityMax) %}
                     <li class="carousel__slide similar-card">
                         {% if picture %}
-                            {{ venue_picture(picture, sizes='(min-width: 1024px) 280px, 70vw', widths=[360, 640], class='similar-card__picture') }}
+                            {{ venue_picture(picture, sizes='(min-width: 1024px) 336px, 258px', widths=[360, 640], class='similar-card__picture') }}
                         {% else %}
                             <span class="similar-card__placeholder"></span>
                         {% endif %}
                         <div class="similar-card__body">
                             {% if venue.tier.value != 'basic' %}{{ include('components/_badge.html.twig', {label: venue.tier|trans}, with_context = false) }}{% endif %}
                             <h3 class="similar-card__name"><a href="{{ path('venue_show', {slug: venue.slug}) }}">{{ venue.name }}</a></h3>
-                            {{ include('search/_card_facts.html.twig', {capacity_min: venue.capacityMin, capacity_max: venue.capacityMax, place: venue.place}, with_context = false) }}
+                            <p class="card-facts similar-card__facts">{{ venue.place.isKnown()
+                                ? 'similar.facts'|trans({place: venue.place|trans, capacity: capacity}, 'search')
+                                : 'similar.facts_no_place'|trans({capacity: capacity}, 'search') }}</p>
                         </div>
                     </li>
                 {% endfor %}

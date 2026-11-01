@@ -1,35 +1,40 @@
 @use '../abstracts/breakpoints' as bp;
 
-// The listing's filter bar (#7, LP-6): active-filter chips, then the three triggers, in one horizontally
-// scrollable bar (the original's .search-page__sticky-filter__list), and the round Merkliste button beside it.
+// The listing's filter bar (#7, LP-6; drawn by #37 from the `Filterbar` boards): active-filter chips, then the three
+// triggers, in one white pill that scrolls sideways, and the round Merkliste button beside it.
 .filter-bar {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-16);
-    padding-bottom: var(--space-16);
+    gap: var(--space-8);
 
     @include bp.up(md) {
-        gap: var(--space-24);
-        padding-bottom: 0;
+        gap: var(--space-16);
     }
 }
 
 .filter-bar__list {
     display: flex;
+    flex: 1 1 0;
     align-items: center;
+    gap: var(--space-4);
     min-width: 0;
     margin: 0;
-    padding: .625rem 2px;
+    padding: var(--space-4);
     overflow-x: auto;
+    // Chromium leaves a Tab stop where it is while any of it shows, so its ring is cut at the pill's end. With the
+    // scrollport's optimal region down to its middle, such a stop counts as hidden and is centred.
+    scroll-padding-inline: 50%;
     list-style: none;
     white-space: nowrap;
+    border-radius: var(--radius-pill);
     background: var(--c-surface-raised);
-    scrollbar-width: thin;
+    scrollbar-width: none;
 
     @include bp.up(md) {
-        padding: 1rem 2px;
-        border-radius: .375rem;
+        flex: 0 1 auto;
+        gap: var(--space-8);
+        padding: var(--space-8);
     }
 }
 
@@ -37,15 +42,6 @@
     display: flex;
     flex: none;
     align-items: center;
-    padding: 0 var(--space-12);
-
-    @include bp.up(md) {
-        padding: 0 var(--space-16);
-    }
-
-    & + & {
-        border-left: 1px solid var(--c-line-soft);
-    }
 
     // The overlays live inside the bar but render in the top layer; undo the bar's text settings.
     .overlay {
@@ -54,24 +50,68 @@
     }
 }
 
-// The triggers read as plain text items separated by lines, as on the original.
+// A scroller clips at its padding box. The base 2px offset puts a stop's ring on the pill's edge, this keeps it inside.
+.filter-bar__item > .btn--secondary:focus-visible,
+.filter-bar__item > .chip:focus-visible {
+    outline-offset: 0;
+}
+
+// The triggers read as plain text inside the pill: no edge, and ink in every state, on accent-soft too.
 .filter-bar .btn--secondary {
     min-height: 2.75rem;
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-8);
     box-shadow: none;
     color: var(--c-ink);
-    font-size: .9375rem;
-    font-weight: var(--fw-regular);
+    font-size: var(--fs-small);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-small);
+
+    @include bp.up(md) {
+        padding: 0 var(--space-16);
+    }
 
     &:not([disabled]):hover,
     &:not([disabled]):active {
-        background: transparent;
+        background: var(--c-accent-soft);
         box-shadow: none;
         color: var(--c-ink);
-        text-decoration: underline;
     }
 }
 
 .filter-bar__aside {
     flex: none;
+}
+
+// `_button.scss` keeps the styleguide's base variant; this is the bar's 13/15 look.
+.filter-bar__aside .btn--round {
+    font-weight: var(--fw-semibold);
+    line-height: .9375rem;
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    // Only the heart below md. Its word stays the link's accessible name, so it is hidden as .visually-hidden does.
+    @include bp.down(md) {
+        width: 3.25rem;
+        height: 3.25rem;
+
+        .icon {
+            width: 1.375rem;
+            height: 1.375rem;
+        }
+
+        span {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+            border: 0;
+        }
+    }
 }

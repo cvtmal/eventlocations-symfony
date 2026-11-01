@@ -13,6 +13,7 @@ use App\Geo\Entity\Town;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
@@ -91,6 +92,20 @@ final class ListingControllerTest extends WebTestCase
         self::assertSelectorTextSame('.listing-hero__count', '1 Resultat');
     }
 
+    public function test_a_cards_tags_are_tags_and_its_tier_stays_a_badge(): void
+    {
+        $venue = VenueFactory::new()
+            ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium))
+            ->create(['name' => 'Schloss Seeburg', 'tier' => Tier::Premium]);
+        VenueTranslationFactory::createOne(['venue' => $venue]);
+
+        $card = $this->card($this->get('/hochzeitslocations'), 'Schloss Seeburg');
+
+        self::assertCount(1, $card->filter('.card__tags .tag'));
+        self::assertCount(0, $card->filter('.card__tags .badge'));
+        self::assertCount(1, $card->filter('.card__title .badge'));
+    }
+
     public function test_carousel_and_image_loading(): void
     {
         foreach (['Schloss Seeburg', 'Gasthof Linde', 'Remise Au'] as $name) {
@@ -123,6 +138,11 @@ final class ListingControllerTest extends WebTestCase
             $widths = [...$widths, ...$matches[1]];
         }
         self::assertSame(['360', '640', '960'], array_values(array_unique($widths)));
+        self::assertSame(
+            '(min-width: 1024px) 400px, (min-width: 768px) 320px, calc(100vw - 80px)',
+            $items->eq(0)->filter('source')->first()->attr('sizes'),
+            'The photo column of _card.scss.',
+        );
 
         // LP-2 + LP-3: every photo links to the detail page, without an extra tab stop or screen-reader link.
         foreach (['Schloss Seeburg', 'Gasthof Linde', 'Remise Au'] as $name) {

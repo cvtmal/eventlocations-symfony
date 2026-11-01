@@ -139,6 +139,7 @@ final class BaseLayoutTest extends WebTestCase
         $crawler = $this->home();
 
         $heart = $crawler->filter('.site-header__favorites[data-merkliste-link]');
+        self::assertCount(1, $heart->filter('.icon'));
         self::assertSame('/merkliste', $heart->attr('href'));
         self::assertStringContainsString('__count__', (string) $heart->attr('data-count-label'));
         self::assertStringContainsString('__name__', (string) $heart->attr('data-toast-added'));

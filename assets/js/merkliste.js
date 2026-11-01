@@ -153,7 +153,11 @@
         const node = document.createElement('div');
         node.className = 'toast';
         node.dataset.toast = '';
-        node.textContent = message;
+        const text = document.createElement('span');
+        text.className = 'toast__text';
+        text.textContent = message;
+        // Cloned, because the CSP forbids a data URI and the header's heart is on every page.
+        node.append(link.querySelector('.icon').cloneNode(true), text);
         if (withLink) {
             const anchor = document.createElement('a');
             anchor.className = 'toast__link';
@@ -185,7 +189,7 @@
         if (numbers.includes(number)) {
             change(numbers.filter((saved) => saved !== number), number, false);
             render();
-            toast(withName(link.dataset.toastRemoved, name), false);
+            toast(withName(link.dataset.toastRemoved, name), true);
         } else if (numbers.length >= MAX_ENTRIES) {
             // Refused, not evicted: the oldest entry is the one a couple saved first.
             toast(link.dataset.toastFull, true);

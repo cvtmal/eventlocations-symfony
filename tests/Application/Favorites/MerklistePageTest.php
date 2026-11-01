@@ -51,10 +51,11 @@ final class MerklistePageTest extends WebTestCase
 
         $crawler = $this->get();
 
-        self::assertSelectorTextSame('h1', 'Deine Merkliste');
+        self::assertSelectorTextSame('.merkliste__head h1[data-merkliste-title]', 'Deine Merkliste');
         self::assertSelectorNotExists('[data-merkliste-empty][hidden]');
         self::assertSelectorTextContains('[data-merkliste-empty]', 'Deine Merkliste ist noch leer.');
         self::assertSame('/hochzeitslocations', $crawler->filter('[data-merkliste-empty] a')->attr('href'));
+        self::assertSelectorExists('[data-merkliste-empty] .listing-empty__disc');
         self::assertSelectorExists('[data-merkliste-total][hidden]');
         self::assertCount(0, $crawler->filter('.card'));
         self::assertNoCookieSent($this->client);
@@ -201,6 +202,7 @@ final class MerklistePageTest extends WebTestCase
         $this->seed(implode(',', $numbers));
         $this->get();
         self::assertSelectorNotExists('[data-merkliste-full][hidden]');
+        self::assertSelectorExists('[data-merkliste-full] .icon');
         self::assertSelectorTextContains('[data-merkliste-full]', 'Es passen 100 Locations hinein.');
         self::assertSelectorTextSame('[data-merkliste-total]', '100 Locations');
     }

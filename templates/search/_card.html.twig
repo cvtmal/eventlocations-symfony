@@ -3,26 +3,31 @@
       card (a ListingCard, or anything with its public properties: number, slug, name, tier, capacityMin, capacityMax,
       place, summary, priceLevel, ambience, ratingScore, ratingCount, highlights, photos),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
-      action: merken|remove|none (default merken).
+      action: merken|remove|none (default merken),
+      heading: the title's element, h1 to h6 (default h2; a page with its own h2 above the cards passes h3).
     The title link stretches over the card (.card__link::after) and is the card's one accessible link. The photo column
     sits above that overlay so the carousel can be swiped and its arrows clicked; each slide therefore carries its own
     link to the detail page (tabindex="-1", aria-hidden="true": no extra tab stop or screen-reader link), the placeholder
     of a venue without photos is the same link (#21: without one the whole column would be dead), and the
-    Merken form sits above both. No interactive content is nested in the title link.
-    The owner's price level and ambience are tags under the summary (#33, LP-7), price first; a card without either has
-    no .card__tags, so it stays exactly LP-2.
+    Merken form sits above both. No interactive content is nested in the title link. A card with one photo sets
+    scrollable false: its track would be a tab stop that scrolls nothing and has no name.
+    The owner's price level and ambience are .tag pills under the summary (#33, LP-7), price first; a card without either
+    has no .card__tags, so it stays exactly LP-2.
+    `sizes` follows the photo column of _card.scss: 400 px from lg, 320 px from md, the page less 80 px of padding below.
+    The title prints `h` and the level apart because RawTextScanner reads a tag that starts with an expression as text.
 #}
 {%- set index = index|default(99) -%}
 {%- set action = action|default('merken') -%}
+{%- set level = heading|default('h2')|slice(1) -%}
 {%- set pictures = card.photos|map(p => card_picture(p, card.name))|filter(p => p is not null) -%}
 {%- set href = venue_path(card.slug) -%}
 <article class="card">
     <div class="card__media">
         {%- if pictures is not empty %}
-        {% embed 'components/_carousel.html.twig' with {id: 'card-' ~ card.number ~ '-photos', label: 'card.photos_label'|trans({name: card.name}, 'search'), pictures: pictures, index: index, href: href} only %}
+        {% embed 'components/_carousel.html.twig' with {id: 'card-' ~ card.number ~ '-photos', label: 'card.photos_label'|trans({name: card.name}, 'search'), pictures: pictures, index: index, href: href, scrollable: pictures|length > 1} only %}
             {% block slides %}
                 {%- for pic in pictures -%}
-                <li class="carousel__slide"><a class="card__photo-link" href="{{ href }}" tabindex="-1" aria-hidden="true">{{ venue_picture(pic, sizes='(min-width: 1440px) 448px, (min-width: 768px) 348px, 100vw', loading=(index == 1 and loop.first ? 'eager' : 'lazy'), priority=(index == 0 and loop.first), widths=[360, 640, 960], class='card__picture') }}</a></li>
+                <li class="carousel__slide"><a class="card__photo-link" href="{{ href }}" tabindex="-1" aria-hidden="true">{{ venue_picture(pic, sizes='(min-width: 1024px) 400px, (min-width: 768px) 320px, calc(100vw - 80px)', loading=(index == 1 and loop.first ? 'eager' : 'lazy'), priority=(index == 0 and loop.first), widths=[360, 640, 960], class='card__picture') }}</a></li>
                 {%- endfor -%}
             {% endblock %}
         {% endembed %}
@@ -39,20 +44,20 @@
             {{ include('favorites/_remove_button.html.twig', {number: card.number, name: card.name}, with_context = false) }}
             {%- endif %}
         </div>
-        <h2 class="card__title">
+        <h{{ level }} class="card__title">
             {%- if card.tier != enum('App\\Venues\\ValueObject\\Tier').Basic -%}
                 {{ include('components/_badge.html.twig', {label: card.tier|trans}, with_context = false) }}
             {%- endif -%}
             <a class="card__link" href="{{ href }}">{{ card.name }}</a>
-        </h2>
+        </h{{ level }}>
         <p class="card__summary">{{ card.summary }}</p>
         {%- if card.priceLevel is not null or card.ambience is not null %}
         <ul class="card__tags">
             {%- if card.priceLevel is not null %}
-            <li><span class="visually-hidden">{{ 'card.price_level'|trans({}, 'search') }} </span>{{ include('components/_badge.html.twig', {label: card.priceLevel|trans}, with_context = false) }}</li>
+            <li><span class="visually-hidden">{{ 'card.price_level'|trans({}, 'search') }} </span><span class="tag">{{ card.priceLevel|trans }}</span></li>
             {%- endif %}
             {%- if card.ambience is not null %}
-            <li>{{ include('components/_badge.html.twig', {label: card.ambience}, with_context = false) }}</li>
+            <li><span class="tag">{{ card.ambience }}</span></li>
             {%- endif %}
         </ul>
         {%- endif %}

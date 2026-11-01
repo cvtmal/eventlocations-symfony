@@ -126,7 +126,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
         self::assertResponseIsSuccessful($path);
         self::assertCount(ListingQuery::PER_PAGE, $crawler->filter('.card'));
         self::assertCount(ListingQuery::PER_PAGE * 8, $crawler->filter('.listing__results img'));
-        self::assertCount(ListingQuery::PER_PAGE * 2, $crawler->filter('.card__tags .badge'));
+        self::assertCount(ListingQuery::PER_PAGE * 2, $crawler->filter('.card__tags .tag'));
         self::assertCount(90, $crawler->filter('#filter-more input[type="checkbox"]'));
         self::assertCount(21, $crawler->filter('#filter-more option'));
 

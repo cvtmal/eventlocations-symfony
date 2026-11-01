@@ -7,7 +7,8 @@
 {#
     Works without JS: the form posts to merkliste_toggle, and merkliste.js takes over when it runs.
     The token is the constant of the stateless same-origin check, so cached HTML stays the same for every visitor (S10).
+    Cards need the name to tell 48 buttons apart. A detail page has one button, and an aria-label there would drop the visible words (axe label-content-name-mismatch), so the text names it.
 #}
 {%- set label = label|default('merken.label'|trans({}, 'favorites')) -%}
 {%- set variant = variant|default('card') -%}
-<form class="merken merken--{{ variant }}" method="post" action="{{ path('merkliste_toggle', {number: number}) }}"><input type="hidden" name="_token" value="{{ csrf_token('submit') }}"><button type="submit" class="merken__button" aria-pressed="false" aria-label="{{ 'merken.label_for'|trans({name: name}, 'favorites') }}" data-merken="{{ number }}" data-merken-name="{{ name }}">{{ icon('heart') }}<span class="merken__text">{{ label }}</span></button></form>
+<form class="merken merken--{{ variant }}" method="post" action="{{ path('merkliste_toggle', {number: number}) }}"><input type="hidden" name="_token" value="{{ csrf_token('submit') }}"><button type="submit" class="merken__button" aria-pressed="false"{% if variant != 'detail' %} aria-label="{{ 'merken.label_for'|trans({name: name}, 'favorites') }}"{% endif %} data-merken="{{ number }}" data-merken-name="{{ name }}">{{ icon('heart') }}<span class="merken__text">{{ label }}</span></button></form>
