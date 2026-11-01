@@ -83,6 +83,8 @@ similar:
     heading: Ähnliche Locations
     all: Alle Locations
     label: Ähnliche Locations
+    facts: '{place} · {capacity} Personen'
+    facts_no_place: '{capacity} Personen'
 # Landing pages (#17): headings and intros of /hochzeitslocations/{canton}, …/{canton}/{town}
 # and …/{building}. Building slugs are path segments: unique, disjoint from cantons.slug, pinned
 # with the headings (≤ 36 characters) by LandingCatalogueTest for every taxonomy building code.

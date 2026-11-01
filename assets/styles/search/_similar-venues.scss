@@ -1,81 +1,147 @@
 @use '../abstracts/breakpoints' as bp;
 
-// "Ähnliche Locations" (DP-15, Search fragment of the detail page): compact cards in a carousel.
+// "Ähnliche Locations" (DP-15, Search fragment of the detail page): white cards in a carousel, three to the
+// column from lg, 290 px with a peek of the next below. The band carries its own bottom padding (D22).
 .similar-venues {
-    padding-block: var(--space-64) 0;
+    padding-block: var(--space-40);
     background: var(--c-surface-alt);
+
+    @include bp.up(md) {
+        padding-block: var(--space-64);
+    }
+
+    // .container stops at eventlokale's widths and is shared with every page, so the board's column is set here.
+    > .container {
+        max-width: 75rem;
+        padding-inline: var(--space-24);
+    }
 
     .carousel__track {
         gap: var(--space-16);
+
+        // The peek runs to the screen's edge, over the column's own padding.
+        @include bp.down(lg) {
+            margin-right: -1.5rem;
+        }
+
+        @include bp.up(lg) {
+            gap: var(--space-24);
+        }
     }
 
     .carousel__slide {
-        flex-basis: 70%;
+        flex-basis: 18.125rem;
 
-        @include bp.up(md) {
-            flex-basis: calc((100% - 2 * var(--space-16)) / 3);
-        }
-
-        @include bp.up(xl) {
-            flex-basis: calc((100% - 3 * var(--space-16)) / 4);
+        @include bp.up(lg) {
+            flex-basis: calc((100% - 2 * var(--space-24)) / 3);
         }
     }
 
+    // No `display` here: this rule follows the component's `&[hidden]` at equal specificity, so one would show
+    // the empty pill without JS.
     .carousel__controls {
         position: static;
-        justify-content: flex-end;
-        gap: var(--space-8);
-        margin-top: var(--space-12);
+        gap: var(--space-4);
+        width: fit-content;
+        min-height: 2rem;
+        margin: var(--space-24) auto 0;
+        padding: 0 var(--space-12);
+        border-radius: var(--radius-pill);
+        background: var(--c-surface-raised);
+
+        @include bp.up(md) {
+            min-height: 2.75rem;
+            padding: 0 var(--space-4);
+        }
+    }
+
+    // Two classes only, so the hover of .btn--icon and the carousel's focus halo still win.
+    .btn--icon {
+        background: transparent;
+        box-shadow: none;
     }
 
     .carousel__counter {
         position: static;
+        padding: 0;
+        background: none;
+        box-shadow: none;
     }
 }
 
 .similar-venues__header {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: var(--space-16);
-    margin-bottom: var(--space-16);
+    gap: var(--space-8) var(--space-16);
+    margin-bottom: var(--space-24);
 }
 
 .similar-venues__title {
-    font-size: 1.5rem;
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+}
+
+.similar-venues__all {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-height: 2.75rem;
+    color: var(--c-accent-strong);
+    font-weight: var(--fw-semibold);
+
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
+    }
 }
 
 .similar-card {
     display: flex;
     flex-direction: column;
+    gap: var(--space-16);
+    box-sizing: border-box;
+    padding: var(--space-16) var(--space-16) var(--space-24);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-raised);
 }
 
 .similar-card__picture,
 .similar-card__placeholder {
     display: block;
-    aspect-ratio: 3 / 2;
+    height: 12.5rem;
     border-radius: var(--radius-image);
-    background: var(--c-tag-ground);
+    background: var(--c-placeholder-ground);
     overflow: hidden;
 
+    @include bp.up(lg) {
+        height: 15rem;
+    }
+
+    picture {
+        display: block;
+        height: 100%;
+    }
+
     .picture__img {
+        width: 100%;
         height: 100%;
         object-fit: cover;
     }
 }
 
 .similar-card__body {
-    padding-top: var(--space-12);
+    padding: 0 var(--space-8);
 
     .badge {
-        margin-bottom: var(--space-4);
+        margin-bottom: var(--space-8);
     }
 }
 
 .similar-card__name {
-    font-size: 1.125rem;
-    line-height: 1.3;
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
 
     a {
         text-decoration: none;
@@ -86,15 +152,10 @@
     }
 }
 
-// #7's search/_card_facts, smaller than on the listing card.
+// One line of text here, not the listing card's icon row.
 .similar-card .card-facts {
-    gap: var(--space-4) var(--space-16);
-    margin-top: var(--space-4);
+    display: block;
+    margin: 0;
     font-size: var(--fs-small);
-    line-height: 1.4;
-
-    .icon {
-        width: 1rem;
-        height: 1rem;
-    }
+    line-height: var(--lh-small);
 }

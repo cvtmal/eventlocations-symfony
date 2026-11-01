@@ -1,2 +1,2 @@
 {# Toast. Include with `only`: message (translated), link_href and link_label (optional). JS (#13) builds the same markup inside [data-toast-region]. #}
-<div class="toast" data-toast>{{ message }}{% if link_href|default(null) %}<a class="toast__link" href="{{ link_href }}">{{ link_label|default('') }}</a>{% endif %}</div>
+<div class="toast" data-toast>{{ icon('heart') }}<span class="toast__text">{{ message }}</span>{% if link_href|default(null) %}<a class="toast__link" href="{{ link_href }}">{{ link_label|default('') }}</a>{% endif %}</div>

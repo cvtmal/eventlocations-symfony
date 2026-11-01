@@ -10,9 +10,11 @@
 
 {% block main %}
     <div class="listing container merkliste" data-merkliste-page>
-        <h1 class="merkliste__title" tabindex="-1" data-merkliste-title>{{ 'merkliste.title'|trans({}, 'favorites') }}</h1>
-        <p class="merkliste__count" data-merkliste-total data-count-one="{{ 'merkliste.count'|trans({count: 1, formatted: '1'}, 'favorites') }}" data-count-other="{{ 'merkliste.count'|trans({count: 2, formatted: '__count__'}, 'favorites') }}"{% if cards is empty %} hidden{% endif %}>{{ 'merkliste.count'|trans({count: cards|length, formatted: cards|length|swiss_number}, 'favorites') }}</p>
-        <p class="merkliste__notice" data-merkliste-full{% if not full %} hidden{% endif %}>{{ 'merkliste.full'|trans({max: max|swiss_number}, 'favorites') }}</p>
+        <div class="merkliste__head">
+            <h1 class="merkliste__title" tabindex="-1" data-merkliste-title>{{ 'merkliste.title'|trans({}, 'favorites') }}</h1>
+            <p class="merkliste__count" data-merkliste-total data-count-one="{{ 'merkliste.count'|trans({count: 1, formatted: '1'}, 'favorites') }}" data-count-other="{{ 'merkliste.count'|trans({count: 2, formatted: '__count__'}, 'favorites') }}"{% if cards is empty %} hidden{% endif %}>{{ 'merkliste.count'|trans({count: cards|length, formatted: cards|length|swiss_number}, 'favorites') }}</p>
+        </div>
+        <p class="merkliste__notice" data-merkliste-full{% if not full %} hidden{% endif %}>{{ icon('info') }}<span>{{ 'merkliste.full'|trans({max: max|swiss_number}, 'favorites') }}</span></p>
         {%- if cards is not empty %}
         <ol class="listing__results" aria-label="{{ 'merkliste.results_label'|trans({}, 'favorites') }}">
             {%- for card in cards %}
@@ -21,8 +23,9 @@
         </ol>
         {%- endif %}
         <div class="listing-empty" data-merkliste-empty{% if cards is not empty %} hidden{% endif %}>
+            <span class="listing-empty__disc" aria-hidden="true">{{ icon('heart') }}</span>
             <p class="listing-empty__title">{{ 'merkliste.empty.title'|trans({}, 'favorites') }}</p>
-            {{ include('components/_button.html.twig', {href: path('listing'), label: 'merkliste.empty.cta'|trans({}, 'favorites')}, with_context = false) }}
+            {{ include('components/_button.html.twig', {href: path('listing'), label: 'merkliste.empty.cta'|trans({}, 'favorites'), size: 'lg'}, with_context = false) }}
         </div>
     </div>
 {% endblock %}

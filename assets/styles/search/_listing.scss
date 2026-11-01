@@ -5,39 +5,53 @@
 @use 'pagination';
 @use 'related';
 
-// The listing page (#7, LP-1): hero band with h1, count and filter bar, then the result cards.
-// Values from eventlokale's .search-page__header / __article (research subagents/listing-page-eventlokale.md).
+// The listing page (#7, LP-1; drawn by #37 from the `Listing` and `Canton` boards): hero band with h1, count and
+// filter bar, then the result cards. `.listing` also frames /merkliste.
 .listing-hero {
-    padding-top: var(--space-24);
-    background: var(--c-surface-alt);
+    padding: var(--space-24) 0 var(--space-16);
+    background-color: var(--c-surface-alt);
+    background-image: radial-gradient(circle at 92% 8%, var(--c-overlay-circle) 0 6.875rem, transparent 6.9375rem);
+    background-repeat: no-repeat;
     text-align: center;
 
-    // From md the band carries the original's large decorative circle, and the filter bar
-    // straddles its lower edge (the last 2.25rem of the band show the page background).
+    // From md the filter bar straddles the band's lower edge: its last 2.25rem show the page ground (README:79).
     @include bp.up(md) {
-        padding-top: var(--space-40);
-        background:
+        padding: var(--space-40) 0 0;
+        background-image:
             linear-gradient(to bottom, transparent calc(100% - 2.25rem), var(--c-surface) 0),
-            radial-gradient(circle at 72% 62%, var(--c-overlay-circle) 0 24rem, transparent 24rem),
-            var(--c-surface-alt);
-    }
-
-    @include bp.up(lg) {
-        padding-top: var(--space-64);
+            radial-gradient(circle at 76% 44%, var(--c-overlay-circle) 0 15rem, transparent 15.0625rem),
+            radial-gradient(circle at 12% 6%, var(--c-overlay-circle) 0 7.5rem, transparent 7.5625rem);
     }
 }
 
+// .container stops at eventlokale's widths and is shared with every page, so the board's column is set here.
+.listing-hero > .container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    max-width: 75rem;
+    padding-inline: var(--space-16);
+
+    @include bp.up(md) {
+        padding-inline: var(--space-24);
+    }
+}
+
+// The column's gap is the only distance above the h1.
+.listing-hero .breadcrumb__list {
+    margin-bottom: 0;
+}
+
 .listing-hero__title {
-    max-width: 59.8125rem;
-    margin-inline: auto;
+    margin: 0;
     font-size: var(--fs-h1);
     line-height: var(--lh-h1);
 }
 
 .listing-hero__intro {
     max-width: 40rem;
-    margin: var(--space-8) auto 0;
-    font-size: var(--fs-small);
+    margin: 0 auto;
+    font-size: var(--fs-body);
 
     // #26: a staff intro is block content inside a div; the fallback is one <p>.
     @include staff-text.flow;
@@ -55,45 +69,83 @@
 }
 
 .listing-hero__count {
-    margin: var(--space-4) 0 var(--space-16);
+    margin: 0 0 var(--space-8);
     font-size: var(--fs-h3);
+    font-weight: var(--fw-bold);
     line-height: var(--lh-h3);
+}
+
+.listing.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-32);
+    max-width: 75rem;
+    padding: var(--space-24) var(--space-24) var(--space-64);
 
     @include bp.up(md) {
-        margin: var(--space-12) 0 var(--space-24);
-    }
-
-    @include bp.up(lg) {
-        margin: var(--space-24) 0 var(--space-24);
+        gap: var(--space-40);
+        padding-top: var(--space-40);
     }
 }
 
 .listing__results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
     margin: 0;
-    padding: var(--space-24) 0 0;
+    padding: 0;
     list-style: none;
 
-    // Room for the straddling filter bar and the photo that sticks out above each card.
     @include bp.up(md) {
-        padding-top: 4.5rem;
+        gap: var(--space-24);
     }
 }
 
-.listing__item {
-    margin-bottom: 1.5rem;
-
-    @include bp.up(md) {
-        margin-bottom: 4.125rem;
-    }
-}
-
+// Also the empty /merkliste, which merkliste.js shows and hides; `display` here would beat `hidden`.
 .listing-empty {
-    padding: var(--space-64) 0 var(--space-40);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-24);
+    padding: var(--space-40) var(--space-24);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-raised);
     text-align: center;
+
+    &[hidden] {
+        display: none;
+    }
+
+    @include bp.up(md) {
+        padding: var(--space-64) var(--space-40);
+    }
+
+    > .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        color: var(--c-accent-strong);
+    }
 }
 
 .listing-empty__title {
-    margin: 0 0 var(--space-24);
-    font-size: var(--fs-h3);
-    line-height: var(--lh-h3);
+    margin: 0;
+    font-size: var(--fs-h2);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-h2);
+}
+
+.listing-empty__disc {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface);
+    color: var(--c-accent-strong);
+
+    .icon {
+        width: 2rem;
+        height: 2rem;
+    }
 }

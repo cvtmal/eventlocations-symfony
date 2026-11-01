@@ -1,13 +1,16 @@
 @use '../abstracts/breakpoints' as bp;
 
-// The listing card (#7, LP-2): stacked below md, a row from md with the photo sticking out above the card,
-// the rating as a bordered column from xl. The title link stretches over the card; the photo column sits
-// above that link so the carousel can be swiped and its arrows clicked, and each slide links to the detail
-// page itself (.card__photo-link), so a tap on a photo still opens the venue.
+// The listing card (#7, LP-2): a white card, stacked below md, a row from md, the rating as a bordered column
+// from xl. The title link stretches over the card; the photo column sits above that link so the carousel can be
+// swiped and its arrows clicked, and each slide links to the detail page itself (.card__photo-link), so a tap on a
+// photo still opens the venue.
 .card {
     position: relative;
     display: flex;
     flex-direction: column;
+    gap: var(--space-16) var(--space-24);
+    padding: var(--space-16);
+    border-radius: var(--radius-card);
     background: var(--c-surface-raised);
 
     &:has(.card__link:focus-visible) {
@@ -17,65 +20,45 @@
 
     @include bp.up(md) {
         flex-direction: row;
-        align-items: flex-start;
-        padding: var(--space-24) var(--space-16) var(--space-16);
-        background: var(--c-surface-raised);
-    }
-
-    @include bp.up(lg) {
-        padding-top: 2.0625rem;
-    }
-
-    @include bp.up(xl) {
-        padding: var(--space-40) 1.5rem 1.5rem;
     }
 }
 
+// The ratio holds the frame's height before a photo loads, so the varying photo ratios cause no layout shift. The
+// corners sit on the track, not on overflow here: clipping the frame would cut the track's focus ring.
 .card__media {
     position: relative;
     z-index: 1;
-    height: 20rem;
+    aspect-ratio: 3 / 2;
+    border-radius: var(--radius-image);
+    background: var(--c-placeholder-ground);
 
     @include bp.up(md) {
-        flex: 0 0 21.75rem;
-        top: -2.4375rem;
-        height: 14.875rem;
-        margin-bottom: -2.4375rem;
+        flex: 0 0 20rem;
+        align-self: flex-start;
     }
 
     @include bp.up(lg) {
-        top: -2.8125rem;
-        margin-bottom: -2.8125rem;
-    }
-
-    @include bp.up(xl) {
-        flex-basis: 28rem;
-        top: -3.75rem;
-        height: 16.4375rem;
-        margin-bottom: -3.75rem;
+        flex-basis: 25rem;
     }
 
     .carousel,
+    .card__placeholder {
+        position: absolute;
+        inset: 0;
+    }
+
     .carousel__track,
     .carousel__slide {
         height: 100%;
     }
 
-    // Below md the next photo peeks in (93 % slides, as the original).
     .carousel__track {
-        gap: .5rem;
-
-        @include bp.up(md) {
-            gap: 0;
-        }
+        border-radius: var(--radius-image);
     }
 
-    .carousel__slide {
-        flex-basis: 93%;
-
-        @include bp.up(md) {
-            flex-basis: 100%;
-        }
+    // Hidden, not removed: `display: none` would pull the next arrow left through `space-between`.
+    [data-carousel-prev][disabled] {
+        visibility: hidden;
     }
 }
 
@@ -85,7 +68,6 @@
     height: 100%;
 }
 
-// The frame has a fixed height, so the varying photo ratios cause no layout shift.
 .card__picture {
     height: 100%;
 
@@ -102,30 +84,35 @@
 }
 
 .card__placeholder {
-    height: 100%;
-    background: var(--c-tag-ground);
+    border-radius: inherit;
+    background: var(--c-placeholder-ground);
 }
 
 .card__body {
+    display: flex;
     flex: 1;
+    flex-direction: column;
+    gap: var(--space-8);
     min-width: 0;
-    padding: var(--space-8) var(--space-12) var(--space-16);
+    padding: 0 var(--space-8) var(--space-8);
 
     @include bp.up(md) {
-        padding: 0 0 0 1.5rem;
+        padding: var(--space-8) var(--space-8) var(--space-8) 0;
     }
 
+    // Scoped to the listing's row: a rated venue in a card of another width keeps its stacked body. The last row takes
+    // the slack, so the rating's rule runs the height of the body.
     @include bp.up(xl) {
-        padding-left: 2rem;
-
-        &:has(.card__rating) {
+        .listing__item &:has(.card__rating) {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) 39%;
+            grid-template-columns: minmax(0, 1fr) 13.75rem;
+            grid-template-rows: auto auto auto 1fr;
             grid-template-areas:
-                'top top'
+                'top rating'
                 'title rating'
-                'summary rating';
-            align-content: start;
+                'summary rating'
+                'tags rating';
+            gap: var(--space-8) var(--space-24);
         }
     }
 }
@@ -134,40 +121,24 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-16);
-    padding: var(--space-16) 0 var(--space-8);
-
-    @include bp.up(md) {
-        margin-bottom: 1.125rem;
-        padding: 0;
-    }
+    gap: var(--space-8);
 
     @include bp.up(xl) {
         grid-area: top;
     }
 }
 
+// Wraps instead of an ellipsis: real names run to 48 characters. The tier badge is a block above the link (LP-2).
 .card__title {
-    margin: 0 0 var(--space-8);
-    overflow: hidden;
+    margin: 0;
     font-size: var(--fs-h2);
     line-height: var(--lh-h2);
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
 
     .badge {
-        display: none;
-        margin-right: var(--space-12);
-        vertical-align: middle;
-
-        // inline-flex, as `.badge` is: inline-block would drop its centring and pin the text to the pill's top.
-        @include bp.up(lg) {
-            display: inline-flex;
-        }
-    }
-
-    @include bp.up(md) {
-        margin-bottom: var(--space-12);
+        display: flex;
+        width: fit-content;
+        margin-bottom: var(--space-8);
     }
 
     @include bp.up(xl) {
@@ -195,27 +166,20 @@
 
 .card__summary {
     display: -webkit-box;
-    max-width: 38.125rem;
     margin: 0;
     overflow: hidden;
     font-size: var(--fs-small);
     line-height: var(--lh-small);
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-
-    @include bp.up(md) {
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-    }
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
 
     @include bp.up(xl) {
         grid-area: summary;
     }
 }
 
-// The owner's price level and ambience (#33, LP-7). From xl, column 1 auto-places them in a row under the summary,
-// so the grid areas stay as they are; a long ambience wraps instead of overflowing the card.
+// The owner's price level and ambience (#33, LP-7); a long ambience wraps instead of overflowing the card.
 .card__tags {
     display: flex;
     flex-wrap: wrap;
@@ -223,20 +187,23 @@
     margin: var(--space-8) 0 0;
     padding: 0;
     list-style: none;
-    grid-column: 1;
+    grid-area: tags;
 }
 
-.card__tags .badge {
+.card__tags .tag {
     white-space: normal;
 }
 
 .card__rating {
-    margin-top: var(--space-16);
+    margin-top: var(--space-8);
+    padding-top: var(--space-16);
+    border-top: 1px solid var(--c-line-soft);
 
     @include bp.up(xl) {
         grid-area: rating;
-        margin: 0 0 0 1.875rem;
-        padding: var(--space-8) 0 0 1.875rem;
+        margin-top: 0;
+        padding: 0 0 0 var(--space-24);
+        border-top: 0;
         border-left: 1px solid var(--c-line-soft);
     }
 }
@@ -244,12 +211,12 @@
 .card-facts {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-8) var(--space-24);
+    gap: var(--space-4) var(--space-16);
     margin: 0;
     padding: 0;
     list-style: none;
     font-size: var(--fs-small);
-    line-height: 1.5rem;
+    line-height: var(--lh-small);
 }
 
 .card-facts__item {
@@ -258,46 +225,47 @@
     gap: var(--space-8);
 
     .icon {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: 1.125rem;
+        height: 1.125rem;
+        color: var(--c-accent-strong);
     }
 }
 
 .rating-summary__line {
     display: flex;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-8);
     margin: 0 0 var(--space-8);
-    font-size: var(--fs-body);
-    line-height: 1.5rem;
+    font-size: var(--fs-small);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-small);
 
     .icon {
         width: 1rem;
         height: 1rem;
-        fill: currentColor;
-    }
-
-    @include bp.up(xl) {
-        font-size: var(--fs-small);
+        color: var(--c-accent-strong);
     }
 }
 
 .rating-summary__highlights {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
     margin: 0;
     padding: 0;
     list-style: none;
     font-size: var(--fs-small);
-    line-height: 1.5rem;
+    line-height: var(--lh-small);
 
     li {
         display: flex;
         align-items: center;
-        gap: var(--space-12);
-        margin-top: var(--space-4);
+        gap: var(--space-8);
     }
 
     .icon {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: 1.125rem;
+        height: 1.125rem;
+        color: var(--c-accent-strong);
     }
 }

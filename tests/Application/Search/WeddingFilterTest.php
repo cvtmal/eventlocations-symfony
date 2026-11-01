@@ -279,7 +279,7 @@ final class WeddingFilterTest extends WebTestCase
      */
     private function tags(Crawler $card): array
     {
-        return $card->filter('.card__tags .badge')->each(static fn (Crawler $badge): string => $badge->text());
+        return $card->filter('.card__tags .tag')->each(static fn (Crawler $tag): string => $tag->text());
     }
 
     /**

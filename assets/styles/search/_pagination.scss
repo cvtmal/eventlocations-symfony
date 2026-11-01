@@ -1,21 +1,33 @@
+@use '../abstracts/breakpoints' as bp;
+
 // Pagination (#7, LP-1): "1 - 48 von N Resultaten" and the page circles. The current page is pale pink with
-// a pink edge and `--c-ink` text, the only ink that reads on `--c-accent-soft`.
+// a pink edge and `--c-ink` text, the only ink that reads on `--c-accent-soft`. PageLinks::around() can give nine
+// items, 404 px at 2.75rem, wider than the 342 px column at 390, so the list wraps.
 .pagination {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: var(--space-40) 0;
+    gap: var(--space-16);
+    margin: 0;
+
+    @include bp.up(md) {
+        flex-direction: row;
+        justify-content: space-between;
+    }
 }
 
 .pagination__count {
-    margin: 0 0 1.5rem;
-    font-size: var(--fs-body);
+    margin: 0;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
 }
 
 .pagination__list {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-8);
+    justify-content: center;
+    gap: var(--space-4);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -27,13 +39,17 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+}
+
+.pagination__gap {
     width: 2rem;
-    height: 2rem;
 }
 
 .pagination__page {
     border-radius: var(--radius-pill);
-    font-size: var(--fs-small);
+    font-weight: var(--fw-semibold);
     text-decoration: none;
 
     &:hover {
@@ -44,8 +60,14 @@
         background: var(--c-accent-soft);
         box-shadow: inset 0 0 0 2px var(--c-accent-strong);
         color: var(--c-ink);
-        font-weight: var(--fw-semibold);
+        font-weight: var(--fw-bold);
     }
+}
+
+a.pagination__arrow {
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-raised);
+    color: var(--c-accent-strong);
 }
 
 span.pagination__arrow {

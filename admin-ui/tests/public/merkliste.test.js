@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const SCRIPT = readFileSync(`${import.meta.dirname}/../../../assets/js/merkliste.js`, 'utf8');
 const NAME = 'merkliste';
 const SYNC_DELAY_MS = 3000;
+const MAX_ENTRIES = 100;
 const ONE_YEAR_S = 34560000;
 
 let listeners;
@@ -50,7 +51,7 @@ function page(numbers = [15, 1, 38], extra = '') {
     document.body.innerHTML = `
         <a data-merkliste-link href="/merkliste" aria-label="Merkliste" data-sync-token="csrf-token"
             data-count-label="Merkliste (__count__)" data-toast-added="__name__ +" data-toast-removed="__name__ -"
-            data-toast-full="voll" data-toast-link="Zur Merkliste"><span data-merkliste-count hidden></span></a>
+            data-toast-full="voll" data-toast-link="Zur Merkliste"><svg class="icon"></svg><span data-merkliste-count hidden></span></a>
         ${numbers.map((number) => `<form><button data-merken="${number}" data-merken-name="V${number}"></button></form>`).join('')}
         ${extra}
         <div data-toast-region></div>`;
@@ -60,7 +61,7 @@ function page(numbers = [15, 1, 38], extra = '') {
 function merklistePage(numbers) {
     document.body.innerHTML = `
         <a data-merkliste-link href="/merkliste" aria-label="Merkliste" data-sync-token="csrf-token"
-            data-count-label="Merkliste (__count__)" data-toast-removed="__name__ -" data-toast-link="Zur Merkliste"><span data-merkliste-count hidden></span></a>
+            data-count-label="Merkliste (__count__)" data-toast-removed="__name__ -" data-toast-link="Zur Merkliste"><svg class="icon"></svg><span data-merkliste-count hidden></span></a>
         <div data-merkliste-page>
             <h1 tabindex="-1" data-merkliste-title></h1>
             <p data-merkliste-total data-count-one="1 Location" data-count-other="__count__ Locations"></p>
@@ -379,6 +380,51 @@ describe('merkliste.js', () => {
 
             heart(15);
             expect(badges.map((badge) => badge.hidden)).toEqual([true, true]);
+        });
+    });
+
+    describe('the toast', () => {
+        const parts = () => [...document.querySelector('[data-toast-region] .toast').children].map((part) => part.getAttribute('class'));
+
+        it('holds the header\'s heart, the text and the link for an added venue', () => {
+            page([15]);
+
+            heart(15);
+
+            expect(parts()).toEqual(['icon', 'toast__text', 'toast__link']);
+            expect(document.querySelector('.toast__text').textContent).toBe('V15 +');
+            expect(document.querySelector('.toast__link').textContent).toBe('Zur Merkliste');
+            expect(document.querySelector('.toast__link').pathname).toBe('/merkliste');
+        });
+
+        it('keeps the link when a venue is removed off /merkliste', () => {
+            setCookie('15');
+            page([15]);
+
+            heart(15);
+
+            expect(parts()).toEqual(['icon', 'toast__text', 'toast__link']);
+            expect(document.querySelector('.toast__text').textContent).toBe('V15 -');
+        });
+
+        it('has no link when a venue is removed on /merkliste, which it would point at', () => {
+            setCookie('1%2C2');
+            merklistePage([1, 2]);
+
+            submitAt(document.querySelector('[data-merkliste-item] form'), 1000);
+
+            expect(parts()).toEqual(['icon', 'toast__text']);
+            expect(document.querySelector('.toast__text').textContent).toBe('V1 -');
+        });
+
+        it('holds the heart, the text and the link when the list is full', () => {
+            setCookie(encodeURIComponent(Array.from({ length: MAX_ENTRIES }, (_, index) => index + 1).join()));
+            page([500]);
+
+            heart(500);
+
+            expect(parts()).toEqual(['icon', 'toast__text', 'toast__link']);
+            expect(document.querySelector('.toast__text').textContent).toBe('voll');
         });
     });
 

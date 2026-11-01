@@ -1,11 +1,13 @@
 {#
     Horizontal scroll-snap carousel shell. Use with `{% embed 'components/_carousel.html.twig' with {…} only %}`:
       id, label (aria-label, translated), previous_label / next_label (default layout.carousel.*),
-      counter_format (default 'layout.carousel.counter'|trans; JS replaces {current} and {total}).
+      counter_format (default 'layout.carousel.counter'|trans; JS replaces {current} and {total}),
+      scrollable (default true: the track is a tab stop; false for a track with nothing to scroll, tested with ??
+      because |default turns an explicit false into the default).
       Block: slides, holding <li class="carousel__slide"> items. JS: js/carousel.js adds arrows and counter.
 #}
 <section class="carousel" aria-label="{{ label }}" data-carousel data-counter-format="{{ counter_format|default('layout.carousel.counter'|trans) }}">
-    <ul class="carousel__track" id="{{ id }}-track" tabindex="0">{% block slides %}{% endblock %}</ul>
+    <ul class="carousel__track" id="{{ id }}-track"{% if scrollable ?? true %} tabindex="0"{% endif %}>{% block slides %}{% endblock %}</ul>
     <div class="carousel__controls" data-carousel-controls hidden>
         <button type="button" class="btn btn--icon" data-carousel-prev aria-controls="{{ id }}-track" aria-label="{{ previous_label|default('layout.carousel.previous'|trans) }}">{{ icon('chevron-left') }}</button>
         <span class="carousel__counter" data-carousel-counter></span>
