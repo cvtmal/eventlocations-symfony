@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Dotenv\Dotenv;
 
 /**
- * IQ-4: production never redirects venue mail. The committed files production loads (`.env`,
+ * IQ-4: production never redirects venue mail or CRM mail. The committed files production loads (`.env`,
  * `.env.prod` if it exists) leave INQUIRY_RECIPIENT_OVERRIDE empty. `.env.local` on the host is
  * #20's to keep clean.
  */

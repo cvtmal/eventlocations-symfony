@@ -102,8 +102,8 @@ Details: `.claude/rules/validation.md`.
 - `Exception\DomainException`: abstract base for business errors.
 - `Messenger\CommandHandlerInterface`: marker that registers a handler on `command.bus`.
 - `Controller\HealthController`: `GET /health`, checks the database.
-- `/` is the YAML route `home` in `config/routes.yaml` (302 → `listing`, see `### Search`); no controller.
-- `Mailer\EmailHtmlToTextConverter`: derives every mail's text part (`twig.mailer.html_to_text_converter`). `templates/emails/layout.html.twig` + `_blocks.html.twig` (macros `greeting`, `p`, `button`, `note`, `rule`, `facts`, `quote`): the inline-styled mail layout, free of module wording, class prefix `hl-`. Built in #14, reused by #30.
+- `/` is `Search\Controller\HomeController` (`home`), see `### Search`.
+- `Mailer\EmailHtmlToTextConverter`: derives every mail's text part (`twig.mailer.html_to_text_converter`). `templates/emails/layout.html.twig` + `_blocks.html.twig` (macros `greeting`, `p`, `button`, `note`, `rule`, `facts`, `quote`, `rich`): the inline-styled mail layout, free of module wording, class prefix `hl-`. Built in #14, reused by #30.
 - `Validator\CleanText` (#24): refuses a NUL and invalid UTF-8 (PDO truncates at a NUL, Postgres answers SQLSTATE 22021) without naming the value, because the `+intl-icu` formatter throws on invalid UTF-8 in a message parameter. `Admin\Form\AdminTextConstraintExtension` adds it to every back-office text field; a JSON DTO puts `#[CleanText]` on its string properties.
 
 Languages, catalogues and routes: `.claude/rules/i18n.md`.

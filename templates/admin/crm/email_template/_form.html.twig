@@ -1,0 +1,17 @@
+{#
+    The form of the new and edit pages. Context: form.
+#}
+{% form_theme form 'admin/form/theme.html.twig' %}
+<div class="card card__body">
+    {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+        {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.name) }}
+        {{ form_row(form.subject) }}
+        {{ form_row(form.bodyMarkdown) }}
+        <div>
+            {{ include('admin/components/_button.html.twig', {label: 'email_template.form.save'|trans({}, 'crm'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: 'email_template.form.cancel'|trans({}, 'crm'), variant: 'ghost', href: path('admin_crm_email_templates')}, with_context = false) }}
+        </div>
+    {{ form_end(form) }}
+</div>

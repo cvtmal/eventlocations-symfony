@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Inquiries;
 
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Support\Inquiries\InquiryFormFields;
 use App\Tests\Support\Venues\DetailVenues;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Doctrine\DBAL\Connection;
@@ -155,10 +156,21 @@ final class InquiryFormRenderingTest extends WebTestCase
         $crawler = $this->page($this->signed(self::PAGE.'?anfrage=gesendet'));
 
         self::assertSelectorNotExists('#anfrage form');
+        self::assertSelectorExists('.inquiry-form--sent .inquiry-form__sent-icon');
         self::assertSelectorTextContains('#anfrage h2', 'Danke');
         self::assertSelectorTextContains('#anfrage', 'Schloss Seeblick');
         self::assertSame(self::PAGE.'#anfrage', $crawler->filter('#anfrage a')->attr('href'));
         self::assertFalse($this->client->getResponse()->headers->has('Set-Cookie'));
+    }
+
+    public function test_an_invalid_post_shows_the_summary_with_its_icon(): void
+    {
+        DetailVenues::full($this->em);
+
+        $this->client->request('POST', self::PAGE.'/anfrage', InquiryFormFields::valid(['firstName' => '']), [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('.inquiry-form__summary svg');
     }
 
     public function test_an_unsigned_flag_shows_the_form(): void

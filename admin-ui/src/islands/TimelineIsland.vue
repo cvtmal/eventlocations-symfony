@@ -21,6 +21,7 @@ const props = defineProps({
     urls: { type: Object, required: true }, // {activities, timeline, tasks}
     labels: { type: Object, required: true },
     locale: { type: String, required: true },
+    email: { type: Object, default: null }, // {recipients, templates, urls}; null on a deal
 });
 
 const entries = ref(props.page.entries);
@@ -142,6 +143,7 @@ onBeforeUnmount(() => {
       :viewer-id="viewerId"
       :urls="urls"
       :labels="labels"
+      :email="email"
       @logged="place"
     />
 

@@ -9,8 +9,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Every text/background, focus/background and line/background pair of the design tokens meets WCAG 2.x AA (S15, #35).
- * A new colour pair gets a row here. Two pairs stay out on purpose, as `docs/reference/public/README.md` records:
+ * A new colour pair gets a row here. Five pairs stay out on purpose. Two as `docs/reference/public/README.md` records:
  * map-land on overlay-ground (the cantons are told apart by map-line) and map-hover on map-lake (by hue and the tooltip).
+ * Three from #38: map-hover, map-lake and map-line on overlay-circle (2.98, 2.94, 2.81), where the Region overlay's small
+ * circle reaches the map's north-east rim. Each canton's interior is on map-land, and the tooltip names it.
  */
 final class ContrastTokensTest extends TestCase
 {
@@ -22,13 +24,14 @@ final class ContrastTokensTest extends TestCase
         $text = [
             ['ink', 'surface'], ['ink', 'surface-raised'], ['ink', 'surface-alt'], ['ink', 'accent-soft'],
             ['ink', 'overlay-ground'], ['ink', 'overlay-circle'], ['ink', 'tier-ground'], ['ink', 'tag-ground'],
-            ['ink-muted', 'surface'], ['ink-muted', 'surface-raised'], ['ink-muted', 'surface-alt'],
+            ['ink-muted', 'surface'], ['ink-muted', 'surface-raised'], ['ink-muted', 'surface-alt'], ['ink-muted', 'overlay-ground'],
             ['accent-strong', 'surface'], ['accent-strong', 'surface-raised'], ['accent-strong', 'surface-alt'],
             ['on-accent', 'accent-strong'], ['on-accent', 'accent-strong-hover'], ['on-accent', 'accent-strong-active'],
             ['accent-strong-hover', 'accent-soft'], ['accent-strong-active', 'accent-soft'],
+            ['accent-strong-hover', 'overlay-ground'], ['accent-strong-hover', 'overlay-circle'], // "Filter löschen", 14 px (#38)
             ['error', 'surface'], ['error', 'surface-raised'], ['error', 'error-soft'],
             ['success', 'surface'], ['success', 'surface-raised'], ['success', 'success-soft'],
-            ['disabled-ink', 'disabled-ground'],
+            ['disabled-ink', 'disabled-ground'], ['disabled-ink', 'surface-raised'],
             ['surface-raised', 'ink'], // the preview banner
         ];
         foreach ($text as [$fg, $bg]) {
@@ -50,6 +53,19 @@ final class ContrastTokensTest extends TestCase
             ['map-lake', 'map-land'], ['map-lake', 'overlay-ground'], ['map-lake', 'map-selected'],
         ];
         foreach ($map as [$fg, $bg]) {
+            yield "{$fg} on {$bg}" => [$fg, $bg, 3.0];
+        }
+
+        // The filter overlays' states (#38).
+        $overlay = [
+            ['ink-muted', 'overlay-circle'], // the placeholder, only at 24 px and up: large text
+            ['accent-strong', 'overlay-circle'], // WCAG 1.4.11: the pressed edge, the tab line, the field line
+            ['accent-strong', 'accent-soft'], // WCAG 1.4.11: the tile icon and the check mark
+            ['focus', 'overlay-ground'], ['focus', 'overlay-circle'], ['focus', 'accent-soft'], // the focus ring
+            ['focus', 'map-hover'], // a focused canton's stroke
+            ['surface-raised', 'map-selected'], // a focused selected canton's stroke, since focus on it is 1.77:1
+        ];
+        foreach ($overlay as [$fg, $bg]) {
             yield "{$fg} on {$bg}" => [$fg, $bg, 3.0];
         }
     }

@@ -17,11 +17,14 @@ use App\Crm\Exception\ContractEndsBeforeStart;
 use App\Crm\Exception\DealNotFound;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\LostReasonRequired;
+use App\Crm\Exception\NoEmailAddress;
 use App\Crm\Exception\StaleProperty;
 use App\Crm\Exception\UnknownDealStage;
 use App\Crm\Exception\VenueNotLinked;
 use App\Crm\Form\ActivityEdit;
+use App\Crm\Form\EmailDraftRequest;
 use App\Crm\Form\NewActivity;
+use App\Crm\Form\NewEmail;
 use App\Crm\Form\NewTask;
 use App\Crm\Form\PropertyConstraints;
 use App\Crm\Form\PropertyEdit;
@@ -109,7 +112,7 @@ final class CrmApi
         $body = self::canonicalText($payload, 'body');
         $occurredAt = ActivityDate::parse($payload['occurredAt'] ?? null);
 
-        $violations = $this->recordFields($this->activityFields($body, $occurredAt), $kind, $recordId)
+        $violations = $this->recordFields($this->activityFields($body, $occurredAt), $kind, $recordId, RecordKind::cases())
             ->atPath('type')->validate($type, self::choice($types, 'crm.activity.type'))
             ->getViolations();
 
@@ -142,6 +145,66 @@ final class CrmApi
     }
 
     /**
+     * Reads `{"kind", "recordId", "contactId", "cc", "subject", "body"}`, the composer's send form. A deal has no mail
+     * step, so its `kind` is refused here; a missing record, and a contact that does not fit, are the handler's.
+     */
+    public function newEmail(Request $request): NewEmail|JsonResponse
+    {
+        $payload = self::payload($request);
+        $kind = $payload['kind'] ?? null;
+        $recordId = $payload['recordId'] ?? null;
+        $contactId = self::canonicalText($payload, 'contactId');
+        $cc = $payload['cc'] ?? null;
+        $cc = \is_string($cc) ? PropertyValue::canonical($cc, email: true) : $cc;
+        $subject = self::canonicalText($payload, 'subject');
+        $body = self::canonicalText($payload, 'body');
+
+        $violations = $this->recordFields($this->validator->startContext(), $kind, $recordId, [RecordKind::Company, RecordKind::Contact])
+            ->atPath('contactId')->validate($contactId, new Assert\Sequentially(PropertyConstraints::emailContact()))
+            ->atPath('cc')->validate($cc, new Assert\Sequentially(PropertyConstraints::emailCc()))
+            ->atPath('subject')->validate($subject, new Assert\Sequentially(PropertyConstraints::emailSubject()))
+            ->atPath('body')->validate($body, new Assert\Sequentially(PropertyConstraints::activityBody()))
+            ->getViolations();
+
+        if (\count($violations) > 0) {
+            return $this->invalid($violations);
+        }
+
+        \assert(\is_string($kind) && \is_string($recordId) && (null === $contactId || \is_string($contactId)) && (null === $cc || \is_string($cc)) && \is_string($subject) && \is_string($body));
+
+        return new NewEmail(RecordKind::from($kind), $recordId, $contactId, $cc, $subject, $body);
+    }
+
+    /**
+     * Reads `kind`, `recordId`, `template` and `contact` from the query. `EmailMergeQuery` has no guard of its own, so
+     * the ids stop here, a blank one too, or Postgres answers 22P02 and the island a 500. An empty `contact` is none.
+     */
+    public function emailDraft(Request $request): EmailDraftRequest|JsonResponse
+    {
+        // `all()`, because `get()` answers an array with a 400.
+        $query = $request->query->all();
+        $kind = $query['kind'] ?? null;
+        $recordId = $query['recordId'] ?? null;
+        $templateId = $query['template'] ?? null;
+        $contactId = '' === ($query['contact'] ?? null) ? null : $query['contact'] ?? null;
+
+        $violations = $this->validator->startContext()
+            ->atPath('kind')->validate($kind, self::choice([RecordKind::Company->value, RecordKind::Contact->value], 'crm.activity.kind'))
+            ->atPath('recordId')->validate($recordId, new Assert\Sequentially([new Assert\NotBlank(message: 'crm.activity.record'), ...PropertyConstraints::emailContact()]))
+            ->atPath('template')->validate($templateId, new Assert\Sequentially([new Assert\NotBlank(message: 'crm.property.choice'), ...PropertyConstraints::emailContact()]))
+            ->atPath('contact')->validate($contactId, new Assert\Sequentially(PropertyConstraints::emailContact()))
+            ->getViolations();
+
+        if (\count($violations) > 0) {
+            return $this->invalid($violations);
+        }
+
+        \assert(\is_string($kind) && \is_string($recordId) && \is_string($templateId) && (null === $contactId || \is_string($contactId)));
+
+        return new EmailDraftRequest(RecordKind::from($kind), $recordId, $templateId, $contactId);
+    }
+
+    /**
      * Reads `{"kind", "recordId", "title", "dueOn", "assigneeId"}`, the composer's Aufgabe tab. Errors are keyed
      * `title|dueOn|assigneeId` under the inputs; a missing record is the handler's 404, as for an activity.
      */
@@ -154,7 +217,7 @@ final class CrmApi
         $dueOn = TaskDueDate::parse($payload['dueOn'] ?? null);
         $assigneeId = $payload['assigneeId'] ?? null;
 
-        $violations = $this->recordFields($this->validator->startContext(), $kind, $recordId)
+        $violations = $this->recordFields($this->validator->startContext(), $kind, $recordId, RecordKind::cases())
             ->atPath('title')->validate($title, new Assert\Sequentially(PropertyConstraints::taskTitle()))
             ->atPath('dueOn')->validate($dueOn, new Assert\NotNull(message: 'crm.task.due_on'))
             ->atPath('assigneeId')->validate($assigneeId, new Assert\Sequentially(PropertyConstraints::taskAssignee()))
@@ -230,6 +293,7 @@ final class CrmApi
                 $exception instanceof ContactOfAnotherCompany => $this->error('value', 'api.contact_of_another_company', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof UnknownDealStage => $this->error('stage', 'api.unknown_choice', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof LostReasonRequired => $this->error('lostReason', 'api.lost_reason_required', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof NoEmailAddress => $this->error('contactId', 'api.no_email_address', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof ActivityNotYours => $this->error('', 'api.not_yours', Response::HTTP_FORBIDDEN),
                 $exception instanceof ActivityReadOnly => $this->error('', 'api.read_only', Response::HTTP_FORBIDDEN),
                 $exception instanceof CompanyNotFound, $exception instanceof ContactNotFound, $exception instanceof ActivityNotFound, $exception instanceof DealNotFound => $this->notFound(),
@@ -288,10 +352,13 @@ final class CrmApi
         ]);
     }
 
-    private function recordFields(ContextualValidatorInterface $fields, mixed $kind, mixed $recordId): ContextualValidatorInterface
+    /**
+     * @param list<RecordKind> $kinds the kinds this write can hang on
+     */
+    private function recordFields(ContextualValidatorInterface $fields, mixed $kind, mixed $recordId, array $kinds): ContextualValidatorInterface
     {
         return $fields
-            ->atPath('kind')->validate($kind, self::choice(array_column(RecordKind::cases(), 'value'), 'crm.activity.kind'))
+            ->atPath('kind')->validate($kind, self::choice(array_column($kinds, 'value'), 'crm.activity.kind'))
             ->atPath('recordId')->validate($recordId, new Assert\Sequentially([
                 new Assert\NotNull(message: 'crm.activity.record'),
                 new Assert\Type('string'),

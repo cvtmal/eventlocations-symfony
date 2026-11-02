@@ -1,49 +1,76 @@
 @use '../abstracts/breakpoints' as bp;
+@use '../venues/detail/shared';
 
-// "{Name} kontaktieren" (#14, DP-13). No JS. An invalid field has an error text and a thicker
-// border, never colour alone.
+// "{Name} kontaktieren" (#14, DP-13), drawn on the `Inquiry` board (#39). No JS. An invalid field has an error
+// text and a thicker border, never colour alone.
+.inquiry-form {
+    @include shared.card;
+}
+
 .inquiry-form__promises {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-8) var(--space-16);
-    margin: 0 0 var(--space-16);
+    gap: var(--space-4) var(--space-24);
+    margin: 0 0 var(--space-24);
     padding: 0;
+    font-size: var(--fs-small);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-small);
     list-style: none;
 
     li {
         display: inline-flex;
         align-items: center;
-        gap: var(--space-4);
-        font-weight: var(--fw-semibold);
+        gap: var(--space-8);
+    }
+
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
+        color: var(--c-accent-strong);
     }
 }
 
 .inquiry-form__summary {
-    margin-bottom: var(--space-16);
+    display: flex;
+    gap: var(--space-12);
+    margin-bottom: var(--space-24);
     padding: var(--space-16) var(--space-24);
     border-radius: var(--radius-image);
     background: var(--c-error-soft);
     color: var(--c-error);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
 
     p,
     ul {
         margin: 0;
     }
 
+    p {
+        font-weight: var(--fw-bold);
+    }
+
     ul {
         margin-top: var(--space-4);
-        padding-left: var(--space-16);
+        padding: 0;
+        list-style: none;
     }
 }
 
 .inquiry-form__form {
     display: grid;
-    gap: var(--space-16);
+    gap: var(--space-24);
 }
 
 .inquiry-form__row {
     display: grid;
-    gap: var(--space-16);
+    gap: var(--space-24);
 
     @include bp.up(sm) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -76,8 +103,12 @@
 
 // The field itself is `components/_text-input.scss`.
 textarea.inquiry-form__control {
-    min-height: 10rem;
+    min-height: 17.25rem;
     resize: vertical;
+
+    @include bp.up(md) {
+        min-height: 12.375rem;
+    }
 }
 
 .inquiry-form__error {
@@ -98,16 +129,84 @@ textarea.inquiry-form__control {
 
 .inquiry-form__actions {
     display: grid;
-    gap: var(--space-8);
-    justify-items: start;
+    gap: var(--space-16);
+
+    .btn {
+        width: 100%;
+    }
+
+    @include bp.up(md) {
+        display: flex;
+        align-items: center;
+        gap: var(--space-24);
+
+        .btn {
+            width: auto;
+            flex: none;
+        }
+    }
 }
 
 .inquiry-form__privacy {
     margin: 0;
-    color: var(--c-ink-muted);
+    color: var(--c-ink);
     font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    a {
+        display: flex;
+        width: fit-content;
+        align-items: center;
+        min-height: 2.75rem;
+        color: var(--c-accent-strong);
+        font-weight: var(--fw-semibold);
+
+        @include bp.up(md) {
+            display: inline-flex;
+            min-height: 1.5rem;
+        }
+    }
 }
 
-.inquiry-form--sent p:last-child {
-    margin-bottom: 0;
+.inquiry-form__sent-icon {
+    display: flex;
+    width: 3.5rem;
+    height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-24);
+    border-radius: var(--radius-pill);
+    background: var(--c-success-soft);
+    color: var(--c-success);
+
+    .icon {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+}
+
+.inquiry-form--sent {
+    .venue-section__title {
+        margin-bottom: var(--space-8);
+    }
+
+    p {
+        margin: 0 0 var(--space-24);
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+
+    p a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+        color: var(--c-accent-strong);
+        font-weight: var(--fw-semibold);
+
+        @include bp.up(md) {
+            min-height: 1.5rem;
+        }
+    }
 }

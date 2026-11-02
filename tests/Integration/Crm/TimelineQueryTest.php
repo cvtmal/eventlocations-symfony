@@ -181,6 +181,49 @@ final class TimelineQueryTest extends KernelTestCase
         self::assertFalse($entries[$gone->id()]->canBeEditedBy($author->id(), $composable));
     }
 
+    public function test_a_mail_entry_carries_its_send_until_it_is_anonymised(): void
+    {
+        $company = CompanyFactory::createOne();
+        $mail = ActivityFactory::new()->ofType(ActivityType::EMAIL_SENT)->onCompany($company);
+        $sent = $mail->create(['title' => 'Gesendet', 'payload' => ['to' => 'mia@example.ch', 'cc' => 'tom@example.ch', 'status' => 'sent']]);
+        $failed = $mail->create(['title' => 'Fehlgeschlagen', 'payload' => ['to' => 'mia@example.ch', 'status' => 'failed']]);
+        $gone = $mail->create(['title' => 'Entfernt', 'payload' => ['to' => 'mia@example.ch', 'status' => 'sent']]);
+        $gone->anonymise(new \DateTimeImmutable());
+        $this->em->flush();
+        $this->em->clear();
+
+        $entries = [];
+        foreach ($this->query()->page(RecordKind::Company, $company->id(), null, null)->entries as $entry) {
+            $entries[$entry->id] = $entry;
+        }
+
+        self::assertSame(['to' => 'mia@example.ch', 'cc' => 'tom@example.ch', 'status' => 'sent'], $entries[$sent->id()]->email);
+        self::assertSame('Gesendet', $entries[$sent->id()]->title);
+        self::assertSame(['to' => 'mia@example.ch', 'cc' => null, 'status' => 'failed'], $entries[$failed->id()]->email);
+        self::assertSame($entries[$sent->id()]->email, $this->query()->entry($sent->id())?->email);
+        self::assertTrue($entries[$gone->id()]->anonymised);
+        self::assertNull($entries[$gone->id()]->email);
+        self::assertNull($entries[$gone->id()]->title);
+    }
+
+    public function test_a_stage_change_keeps_its_stage_and_only_a_mail_entry_reads_a_send(): void
+    {
+        $company = CompanyFactory::createOne();
+        $stage = ActivityFactory::new()->ofType(TimelineEntry::EVENT_DEAL_STAGE_CHANGED)->onCompany($company)->create(['payload' => ['from' => 'new', 'to' => 'negotiation']]);
+        $note = ActivityFactory::new()->onCompany($company)->create(['payload' => ['to' => 'mia@example.ch', 'status' => 'sent']]);
+        $this->em->clear();
+
+        $changed = $this->query()->entry($stage->id());
+        $plain = $this->query()->entry($note->id());
+
+        self::assertNotNull($changed);
+        self::assertNotNull($plain);
+        self::assertSame('negotiation', $changed->stage);
+        self::assertNull($changed->email);
+        self::assertNull($plain->stage);
+        self::assertNull($plain->email);
+    }
+
     public function test_an_inquiry_entry_reads_its_inquiry_on_the_contact_and_the_company(): void
     {
         $company = CompanyFactory::createOne();

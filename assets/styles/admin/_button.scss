@@ -73,6 +73,12 @@
     font-size: 12px;
 }
 
+// A press is ignored until the answer comes; a click on it would otherwise show nothing.
+.btn[aria-busy='true'] {
+    opacity: .6;
+    cursor: progress;
+}
+
 // Kept focusable, so keyboard users stay where they are at the ends of a list (research D10).
 .btn[aria-disabled='true'] {
     border-color: var(--a-line);

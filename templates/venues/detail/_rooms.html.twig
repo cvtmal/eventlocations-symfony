@@ -10,7 +10,7 @@
                 {% set room_id = 'room-' ~ loop.index %}
                 <li class="carousel__slide venue-room">
                     {% if room.photo %}
-                        {{ venue_picture(room.photo, sizes='(min-width: 1024px) 320px, 80vw', widths=[360, 640, 960], class='venue-room__picture') }}
+                        {{ venue_picture(room.photo, sizes='(min-width: 1024px) 332px, (min-width: 768px) 45vw, 258px', widths=[360, 640, 960], class='venue-room__picture') }}
                     {% else %}
                         <span class="venue-room__placeholder"></span>
                     {% endif %}

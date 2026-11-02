@@ -173,7 +173,7 @@ function htaccessFacts(): void
     foreach ($lines as $number => $text) {
         printf("line %d: %s\n", $number + 1, trim($text));
     }
-    echo "A deploy replaces this file: add the line to public/.htaccess first.\n";
+    echo "public/.htaccess carries the pin and a deploy replaces this file: PHP_VERSION above proves it took.\n";
 }
 
 /** @return array{name: string, dir: string}|null */

@@ -1,0 +1,50 @@
+{#
+    E-Mail-Vorlagen (CRM-10). Context from `EmailTemplatesController`: rows list<EmailTemplateRow>.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'email_template.list.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section.settings'|trans({}, 'admin') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'email_template.list.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'email_template.list.title'|trans({}, 'crm') }} <span class="muted">{{ rows|length|swiss_number }}</span></h1>
+        </div>
+        <div class="page-header__actions">
+            {{ include('admin/components/_button.html.twig', {label: 'email_template.new'|trans({}, 'crm'), variant: 'primary', icon: 'plus', href: path('admin_crm_email_templates_new')}, with_context = false) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'email_template.list.table_label'|trans({}, 'crm'),
+        id: 'email-template-list',
+        columns: [
+            {label: 'email_template.list.column.name'|trans({}, 'crm')},
+            {label: 'email_template.list.column.subject'|trans({}, 'crm')},
+            {label: 'email_template.list.column.edited'|trans({}, 'crm')},
+        ],
+        rows: rows,
+    } only %}
+        {% block rows %}
+            {% for row in rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {row: row} only %}
+                    {% block cells %}
+                        <td><a class="crm-list__link" href="{{ path('admin_crm_email_templates_edit', {id: row.id}) }}">{{ row.name }}</a></td>
+                        <td>{{ row.subject }}</td>
+                        <td class="muted">{{ row.updatedAt|swiss_date }}</td>
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'file-text', title: 'email_template.list.empty.title'|trans({}, 'crm'), text: 'email_template.list.empty.text'|trans({}, 'crm')}, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

@@ -87,7 +87,7 @@ final class CheckProductionEnvCommand
         }
 
         if ('' !== $value('INQUIRY_RECIPIENT_OVERRIDE')) {
-            $problems[] = 'INQUIRY_RECIPIENT_OVERRIDE must be empty: otherwise no venue gets its inquiries.';
+            $problems[] = 'INQUIRY_RECIPIENT_OVERRIDE must be empty: otherwise no venue gets its inquiries and no CRM mail reaches its recipient.';
         }
         if ('' !== $value('ADMIN_DEV_AUTOLOGIN')) {
             $problems[] = 'ADMIN_DEV_AUTOLOGIN must be empty.';

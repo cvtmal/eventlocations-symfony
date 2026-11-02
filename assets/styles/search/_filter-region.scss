@@ -1,4 +1,5 @@
 @use '../abstracts/breakpoints' as bp;
+@use '../abstracts/check';
 
 // The Region overlay (#10): `search/filter/_region_form.html.twig` inside #1's overlay shell, which stays unedited.
 // Below lg a column; from lg a two-column grid in which `display: contents` dissolves the shell's body and the form, so
@@ -10,6 +11,24 @@
 
     .overlay__body {
         flex: 1 0 auto;
+    }
+
+    // Tabs and panel sit 8 apart, as `Region-390` draws; the launch form's panel adds the rest of its 16 to the title.
+    @include bp.down(lg) {
+        .overlay__body,
+        .region-filter {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .region-filter {
+            flex: 1;
+        }
+
+        .region-filter__side {
+            margin-block: auto;
+        }
     }
 
     @include bp.up(lg) {
@@ -50,7 +69,6 @@
 
         .overlay__footer {
             grid-area: 6 / 1;
-            position: static;
             padding-block: 0;
         }
 
@@ -61,68 +79,50 @@
     }
 
     @include bp.up(xl) {
-        grid-template-columns: min(37.5rem, 45%) minmax(0, 1fr);
+        grid-template-columns: 27.5rem minmax(0, 1fr);
+        column-gap: var(--space-64);
         padding: 0 7rem;
     }
 }
 
-// Below md the title and input are centred; the title needs padding on both sides to stay centred past the close button.
 .overlay--region .overlay__title {
     margin-bottom: 0;
 }
 
 .region-filter__tabs {
     display: flex;
-    gap: var(--space-16);
-    margin-block: var(--space-16) var(--space-24);
+    gap: var(--space-24);
 
     &[hidden] {
         display: none;
     }
 
     @include bp.up(lg) {
-        margin-block: 2.8125rem 1.25rem;
-    }
-
-    @include bp.up(xl) {
-        margin-block: 3.75rem 2rem;
+        margin-block: var(--space-32) var(--space-16);
     }
 }
 
 .region-filter__tab {
-    min-height: 1.5rem;
-    padding: 0;
+    min-height: 2.75rem;
+    padding: 0 var(--space-4);
     border: 0;
-    border-bottom: 1px solid transparent;
+    border-bottom: 2px solid transparent;
     background: none;
     color: var(--c-ink);
-    font-size: .9375rem;
+    font-size: var(--fs-body);
     font-weight: var(--fw-regular);
-    line-height: 1.25rem;
+    line-height: var(--lh-body);
     cursor: pointer;
 
     &[aria-selected='true'] {
-        border-bottom-color: var(--c-line);
-        font-weight: var(--fw-semibold);
+        border-bottom-color: var(--c-accent-strong);
+        font-weight: var(--fw-bold);
     }
 }
 
 .region-filter__panel {
-    margin-bottom: var(--space-24);
-
     @include bp.up(lg) {
-        margin-bottom: 2.1rem;
-    }
-
-    @include bp.up(xl) {
-        margin-bottom: 7.5rem;
-    }
-}
-
-// The slider fills the margin the Kanton tab leaves, so switching tabs does not move the title.
-[data-panel='place'].region-filter__panel {
-    @include bp.up(xl) {
-        margin-bottom: 2.8125rem;
+        margin-bottom: var(--space-32);
     }
 }
 
@@ -140,7 +140,11 @@
     }
 
     [data-panel='canton'] {
-        margin-top: var(--space-24);
+        margin-top: var(--space-8);
+
+        @include bp.up(lg) {
+            margin-top: var(--space-32);
+        }
     }
 }
 
@@ -166,20 +170,36 @@
     top: 100%;
     left: 0;
     right: 0;
-    margin: 0;
+    margin: var(--space-8) 0 0;
     padding: 0;
+    overflow: hidden;
+    border-radius: var(--radius-small);
     background: var(--c-surface-raised);
     box-shadow: var(--shadow-float);
     list-style: none;
 
     [role='option'] {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-8);
+        min-height: 2.75rem;
         padding-inline: var(--space-16);
-        font-size: 1.125rem;
-        line-height: 2.8125rem;
+        font-size: var(--fs-body);
+        line-height: var(--lh-body);
         cursor: pointer;
+
+        &[hidden] {
+            display: none;
+        }
 
         &[aria-selected='true'] {
             background: var(--c-accent-soft);
+            font-weight: var(--fw-semibold);
+
+            &::after {
+                @include check.mark-in-row;
+            }
         }
 
         &[aria-disabled='true'] {
@@ -191,19 +211,23 @@
 .region-filter__radius {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: var(--space-8) var(--space-8);
-    margin-top: var(--space-24);
-    font-size: .9375rem;
+    align-items: center;
+    column-gap: var(--space-8);
+    margin-top: var(--space-16);
+    font-size: var(--fs-small);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-small);
 
-    label {
-        font-weight: var(--fw-semibold);
+    output {
+        justify-self: end;
     }
 
     input {
         grid-column: 1 / -1;
         width: 100%;
+        height: 2.75rem;
         margin: 0;
-        accent-color: var(--c-ink);
+        accent-color: var(--c-accent-strong);
     }
 }
 
@@ -221,6 +245,7 @@
         outline: none; // keyboard focus is the stroke below; an outline would sit under the neighbouring cantons
         fill: var(--c-map-land);
         stroke: var(--c-map-line); // the file's own white stroke would vanish on white land
+        stroke-width: 1.2;
         cursor: pointer;
 
         &:hover {
@@ -228,14 +253,22 @@
         }
 
         // After :hover, so a chosen canton stays dark under the pointer.
-        &:focus-visible,
         &[aria-pressed='true'] {
             fill: var(--c-map-selected);
         }
 
+        // Focus shows pink with a black edge, so Enter visibly turns it dark; black on the dark fill would fail, hence the
+        // white edge. Later paths paint over the stroke's outer half, so 3 px leaves 1.5 px at any map width.
         &:focus-visible {
+            fill: var(--c-map-hover);
             stroke: var(--c-focus);
-            stroke-width: 2.5;
+            stroke-width: 3px;
+            vector-effect: non-scaling-stroke;
+        }
+
+        &[aria-pressed='true']:focus-visible {
+            fill: var(--c-map-selected);
+            stroke: var(--c-surface-raised);
         }
     }
 
@@ -249,6 +282,9 @@
 // The town pin and radius circle (region-filter.js) exist only on the Ort tab's map, and never catch a pointer.
 .region-filter__area {
     fill: var(--c-map-radius);
+    stroke: var(--c-accent-strong);
+    stroke-width: 2px;
+    vector-effect: non-scaling-stroke;
     pointer-events: none;
 }
 
@@ -257,6 +293,12 @@
     stroke: var(--c-accent-strong);
     stroke-width: 2;
     pointer-events: none;
+
+    // The script sets r="6" in map units, which is about 5 px on a phone; the board draws 12 px at every width.
+    @include bp.down(md) {
+        r: 14px;
+        stroke-width: 4.5;
+    }
 }
 
 .region-filter[data-tab='canton'] {
@@ -269,38 +311,37 @@
 .region-filter__tooltip {
     position: absolute;
     z-index: 1;
-    padding: var(--space-8) var(--space-12);
+    padding: var(--space-4) var(--space-12);
     border-radius: var(--radius-small);
     background: var(--c-surface-raised);
     box-shadow: var(--shadow-float);
     color: var(--c-ink);
-    font-size: var(--fs-small);
+    font-size: var(--fs-tag);
     font-weight: var(--fw-semibold);
-    line-height: var(--lh-small);
+    line-height: var(--lh-tag);
     white-space: nowrap;
     pointer-events: none;
 
     &::after {
         content: '';
         position: absolute;
-        top: 0;
-        border: 5px solid transparent;
-        border-top-color: var(--c-surface-raised);
+        top: var(--space-8);
+        border-block: 5px solid transparent;
     }
 
     &--right-top::after {
-        right: -5px;
-        border-left-color: var(--c-surface-raised);
+        right: -6px;
+        border-left: 6px solid var(--c-surface-raised);
     }
 
     &--left-top::after {
-        left: -5px;
-        border-right-color: var(--c-surface-raised);
+        left: -6px;
+        border-right: 6px solid var(--c-surface-raised);
     }
 }
 
 .region-filter__credit {
-    margin-top: var(--space-12);
+    margin: var(--space-8) 0 0;
     font-size: var(--fs-tag);
     line-height: var(--lh-tag);
     text-align: end;
@@ -309,15 +350,21 @@
 @include bp.down(md) {
     .overlay--region .overlay__title {
         max-width: none;
-        padding-inline: 3rem;
+        padding-inline: var(--space-8);
         text-align: center;
+    }
+
+    .overlay--region .overlay__body {
+        padding-inline: var(--space-24);
+        padding-bottom: var(--space-8);
     }
 
     .region-filter__tabs {
         justify-content: center;
     }
 
-    .region-filter .text-input {
+    .region-filter .text-input,
+    .region-filter__radius {
         width: 100%;
         max-width: 17.5rem;
         margin-inline: auto;
@@ -329,7 +376,8 @@
 
     .overlay--region .overlay__footer-inner {
         flex-direction: column;
-        gap: var(--space-12);
+        gap: var(--space-4);
+        padding-inline: var(--space-24);
 
         .btn {
             width: 100%;

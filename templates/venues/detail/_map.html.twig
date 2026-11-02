@@ -13,7 +13,7 @@
             <p class="venue-map__notice">{{ 'detail.location.map.notice'|trans({}, 'venues') }}</p>
         </div>
         {% endif %}
-        <a class="venue-map__link" href="{{ search_url }}" target="_blank" rel="noopener">{{ 'detail.location.map.open'|trans({}, 'venues') }}<span class="visually-hidden">{{ 'detail.location.map.new_tab'|trans({}, 'venues') }}</span></a>
+        <a class="btn btn--secondary venue-map__link" href="{{ search_url }}" target="_blank" rel="noopener">{{ 'detail.location.map.open'|trans({}, 'venues') }}<span class="visually-hidden">{{ 'detail.location.map.new_tab'|trans({}, 'venues') }}</span></a>
     </div>
     {% if embed_url %}
     <template data-venue-map-frame><iframe class="venue-map__frame" src="{{ embed_url }}" title="{{ 'detail.location.map.frame_title'|trans({name: venue.name}, 'venues') }}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></template>

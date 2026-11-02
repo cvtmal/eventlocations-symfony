@@ -1,19 +1,17 @@
-{# Hero (DP-2): full-width carousel of the venue-level photos; the first is the page's only LCP image. Params: venue. #}
+{# Hero (DP-2): inset carousel of the venue-level photos; the first is the page's only LCP image. Params: venue. #}
 {% if venue.photos is not empty %}
     <div id="bilder" class="venue-hero">
         {% embed 'components/_carousel.html.twig' with {id: 'venue-hero', label: 'detail.hero.label'|trans({name: venue.name}, 'venues'), photos: venue.photos} only %}
             {% block slides %}
                 {% for photo in photos %}
                     <li class="carousel__slide">{{ loop.first
-                        ? venue_picture(photo, sizes='100vw', priority=true, class='venue-hero__picture')
-                        : venue_picture(photo, sizes='100vw', loading='lazy', class='venue-hero__picture') }}</li>
+                        ? venue_picture(photo, sizes='(min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)', priority=true, class='venue-hero__picture')
+                        : venue_picture(photo, sizes='(min-width: 768px) calc(100vw - 48px), calc(100vw - 32px)', loading='lazy', class='venue-hero__picture') }}</li>
                 {% endfor %}
             {% endblock %}
         {% endembed %}
-        <div class="venue-hero__actions container">
-            <button type="button" class="btn btn--primary venue-hero__open" commandfor="venue-gallery" command="show-modal">{{ icon('maximize') }}<span>{{ 'detail.hero.open_gallery'|trans({}, 'venues') }}</span></button>
+        <div class="venue-hero__actions">
+            <button type="button" class="btn btn--ghost venue-hero__open" commandfor="venue-gallery" command="show-modal">{{ icon('maximize') }}<span>{{ 'detail.hero.open_gallery'|trans({}, 'venues') }}</span></button>
         </div>
     </div>
-{% else %}
-    <div class="venue-hero venue-hero--empty"></div>
 {% endif %}

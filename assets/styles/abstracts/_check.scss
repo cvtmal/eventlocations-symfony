@@ -1,0 +1,19 @@
+// The drawn check without markup: two sides of a rotated box, for a pseudo-element on a state the scripts already set, so
+// 90 checkboxes carry no icon.
+@mixin mark($height: .75rem) {
+    content: '';
+    flex: none;
+    width: $height * .5;
+    height: $height;
+    border: solid var(--c-accent-strong);
+    border-width: 0 1.5px 1.5px 0;
+    rotate: 45deg;
+}
+
+// Beside text in a row: the drawn 16 px icon's box, 5 px each side of the 6 px mark, so the ink keeps clear of the text
+// and the row keeps its width. The top margin lifts the ink, which sits below the box's centre, onto the text's.
+@mixin mark-in-row {
+    @include mark;
+
+    margin: -.1875rem .3125rem 0;
+}

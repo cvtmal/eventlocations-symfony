@@ -15,37 +15,37 @@ legal:
         link: Datenschutz
         title: Datenschutz
         page_title: Datenschutz | Hochzeitslocation
-        meta_description: Welche Daten Hochzeitslocation bearbeitet, wofür, wie lange und welche Rechte du hast.
+        meta_description: Welche Daten Hochzeitslocation bearbeitet, wofür, wie lange und welche Rechte Sie haben.
         # TODO owner: review the whole text before go-live (T7). Draft, not legal advice.
         updated: 'Stand: Oktober 2026'
-        intro: Hier steht, welche Personendaten wir bearbeiten, wofür und wie lange. Du kannst die Website ohne Konto nutzen. Wir setzen keine Analyse- oder Werbedienste ein, und die Schriften liefern wir selbst aus.
+        intro: Hier steht, welche Personendaten wir bearbeiten, wofür und wie lange. Sie können die Website ohne Konto nutzen. Wir setzen keine Analyse- oder Werbedienste ein, und die Schriften liefern wir selbst aus.
         controller:
             title: Verantwortliche Stelle
             text: 'Verantwortlich für die Datenbearbeitung ist:'
         inquiry:
             title: Anfragen an eine Location
-            data: 'Wenn du eine Location anfragst, bearbeiten wir deine Angaben: Anlass, Anzahl Gäste, Wunschdatum, Nachricht, Vor- und Nachname, E-Mail-Adresse und Telefonnummer, falls du sie angibst.'
-            purpose: Wir leiten sie per E-Mail an die angefragte Location weiter, damit sie dir antworten kann, und schicken dir eine Kopie an die angegebene E-Mail-Adresse. Die Location bearbeitet deine Anfrage danach in eigener Verantwortung.
+            data: 'Wenn Sie eine Location anfragen, bearbeiten wir Ihre Angaben: Anlass, Anzahl Gäste, Wunschdatum, Nachricht, Vor- und Nachname, E-Mail-Adresse und Telefonnummer, falls Sie sie angeben.'
+            purpose: Wir leiten sie per E-Mail an die angefragte Location weiter, damit sie Ihnen antworten kann, und schicken Ihnen eine Kopie an die angegebene E-Mail-Adresse. Die Location bearbeitet Ihre Anfrage danach in eigener Verantwortung.
             # TODO owner: #20 must schedule app:inquiries:purge daily, or this sentence is false (T6).
             retention: 'Wir speichern Anfragen zusammen mit dem Versandstatus und löschen sie {months, plural, one {# Monat} other {# Monate}} nach dem Eingang. E-Mails, die eine Location erhalten hat, liegen bei der Location und werden davon nicht berührt.'
         crm:
             title: Kontakte von Locations
-            # TODO owner: review this section (#27, D18): the retention is the cycle's default, "until no longer needed, deleted on request". #29 adds couples' data and T9. Limit of "löschen wir sie früher": an erasure also blanks the company's e-mail when it is the person's address, but venues.contact_person and venues.inquiry_email stay, because Crm writes no venue data; staff remove that copy by hand in the CMS, as the erase dialog says.
-            data: 'Wenn du für eine Location arbeitest, bearbeiten wir deine geschäftlichen Kontaktdaten: Name, Position, E-Mail-Adresse, Telefonnummer und deine Firma. Dazu kommen unsere Notizen und Aufgaben zum Austausch mit dir.'
-            purpose: Wir nutzen sie, um die Zusammenarbeit mit den Locations zu pflegen. Sie sind nur in unserem internen Bereich sichtbar und liegen in derselben Datenbank wie die Anfragen.
-            retention: Wir speichern sie, solange wir sie für die Zusammenarbeit brauchen. Verlangst du die Löschung, löschen wir sie früher. Dabei entfernen wir auch den Inhalt der Einträge über dich.
+            # TODO owner: review this section (#27, D18): the retention is the cycle's default, "until no longer needed, deleted on request". Limit of "löschen wir sie früher": an erasure also blanks the company's e-mail when it is the person's address, but venues.contact_person and venues.inquiry_email stay, because Crm writes no venue data; staff remove that copy by hand in the CMS, as the erase dialog says.
+            data: 'Wenn Sie für eine Location arbeiten, bearbeiten wir Ihre geschäftlichen Kontaktdaten: Name, Position, E-Mail-Adresse, Telefonnummer und Ihre Firma. Dazu kommen unsere Notizen und Aufgaben zum Austausch mit Ihnen.'
+            purpose: Wir nutzen sie, um die Zusammenarbeit mit den Locations zu pflegen. Diese Daten sind nur in unserem internen Bereich sichtbar und liegen in derselben Datenbank wie die Anfragen.
+            retention: Wir speichern sie, solange wir sie für die Zusammenarbeit brauchen. Verlangen Sie die Löschung, löschen wir sie früher. Dabei entfernen wir auch den Inhalt der Einträge über Sie.
         merkliste:
             title: Merkliste und Cookie
-            text: 'Die Merkliste funktioniert ohne Konto. Dafür setzen wir ein einziges Cookie mit dem Namen «merkliste». Es merkt sich, welche Locations du gespeichert hast. Es ist für diese Funktion nötig, darum fragen wir nicht nach deiner Einwilligung.'
-            content: Das Cookie enthält nur öffentliche Nummern von Locations, höchstens 100, und nichts, was dich als Person erkennbar macht.
+            text: 'Die Merkliste funktioniert ohne Konto. Dafür setzen wir ein einziges Cookie mit dem Namen «merkliste». Es merkt sich, welche Locations Sie gespeichert haben. Es ist für diese Funktion nötig, darum fragen wir nicht nach Ihrer Einwilligung.'
+            content: Das Cookie enthält nur öffentliche Nummern von Locations, höchstens 100, und nichts, was Sie als Person erkennbar macht.
             # The one place for the lifetime (#13): days come from LegalController::MERKLISTE_DAYS.
-            lifetime: 'Es bleibt bis zu {days} Tage ab der letzten Änderung gespeichert. Leerst du die Merkliste, wird es gelöscht. In Safari und in Browsern auf iOS kann die Liste schon nach 7 Tagen ohne Änderung verschwinden.'
-            processing: Dein Browser schickt das Cookie bei jedem Aufruf der Website mit, gelesen wird es nur für die Merkliste. Wir speichern die Liste nicht auf dem Server und geben sie weder an Locations noch an Dritte weiter.
-            control: Du entfernst Einträge auf der Merkliste selbst oder löschst das Cookie in deinem Browser. Die Liste gilt pro Browser und Gerät.
+            lifetime: 'Es bleibt bis zu {days} Tage ab der letzten Änderung gespeichert. Leeren Sie die Merkliste, wird es gelöscht. In Safari und in Browsern auf iOS kann die Liste schon nach 7 Tagen ohne Änderung verschwinden.'
+            processing: Ihr Browser schickt das Cookie bei jedem Aufruf der Website mit, gelesen wird es nur für die Merkliste. Wir speichern die Liste nicht auf dem Server und geben sie weder an Locations noch an Dritte weiter.
+            control: Sie entfernen Einträge auf der Merkliste selbst oder löschen das Cookie in Ihrem Browser. Die Liste gilt pro Browser und Gerät.
         abuse:
             title: Schutz vor Missbrauch
             # TODO owner: #20 must schedule cache:pool:prune, or expired counters stay on the server (T10).
-            text: 'Damit Formular und Telefonnummern nicht automatisiert abgegriffen werden, zählen wir Anfragen pro IP-Adresse. Dafür legen wir zu deiner IP-Adresse einen Zähler im Zwischenspeicher des Servers ab. Er läuft spätestens zwei Stunden nach deiner letzten Anfrage ab, abgelaufene Zähler löschen wir regelmässig. Mit deiner Anfrage speichern wir die IP-Adresse nicht.'
+            text: 'Damit Formular und Telefonnummern nicht automatisiert abgegriffen werden, zählen wir Anfragen pro IP-Adresse. Dafür legen wir zu Ihrer IP-Adresse einen Zähler im Zwischenspeicher des Servers ab. Er läuft spätestens zwei Stunden nach Ihrer letzten Anfrage ab, abgelaufene Zähler löschen wir regelmässig. Mit Ihrer Anfrage speichern wir die IP-Adresse nicht.'
         hosting:
             title: Hosting und Datenbank
             # TODO owner: confirm Hostpoint's company name, data location and web log retention in #20 (T2).
@@ -59,18 +59,18 @@ legal:
         maps:
             title: Karten von Google Maps
             # TODO owner: check Google's controller and address against policies.google.com/privacy before go-live (T8, #15).
-            text: Auf der Seite einer Location kann eine Karte von Google Maps erscheinen, ein Dienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Wir laden sie erst, wenn du auf «Karte laden» klickst. Vorher wird nichts an Google übertragen. Mit dem Klick ruft dein Browser die Karte direkt bei Google ab; dabei erhält Google deine IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen.
+            text: Auf der Seite einer Location kann eine Karte von Google Maps erscheinen, ein Dienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Wir laden sie erst, wenn Sie auf «Karte laden» klicken. Vorher wird nichts an Google übertragen. Mit dem Klick ruft Ihr Browser die Karte direkt bei Google ab; dabei erhält Google Ihre IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen.
             policy: 'Es gelten die Datenschutzbestimmungen von Google:'
             policy_link: policies.google.com/privacy
         links:
             title: Links zu anderen Anbietern
-            text: 'Die Seiten der Locations verlinken auf deren Websites und Instagram-Profile, das Teilen über WhatsApp führt zu WhatsApp. Der Link «Auf Google Maps öffnen» auf der Seite einer Location führt zu Google Maps. Diese Dienste werden erst geladen, wenn du den Link anklickst; ab dann gelten ihre Datenschutzbestimmungen.'
+            text: 'Die Seiten der Locations verlinken auf deren Websites und Instagram-Profile, das Teilen über WhatsApp führt zu WhatsApp. Der Link «Auf Google Maps öffnen» auf der Seite einer Location führt zu Google Maps. Diese Dienste werden erst geladen, wenn Sie den Link anklicken; ab dann gelten ihre Datenschutzbestimmungen.'
         staff:
             title: Interner Bereich
             text: Unser interner Bereich ist nur für unsere Mitarbeitenden. Nur dort und im Konto für Locations gibt es eine Anmeldung und ein Sitzungs-Cookie.
         rights:
-            title: Deine Rechte
-            text: Du kannst Auskunft über deine Daten verlangen und sie berichtigen oder löschen lassen. Schreib uns dafür an die oben genannte E-Mail-Adresse. Du kannst dich auch an den Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten (EDÖB) wenden.
+            title: Ihre Rechte
+            text: Sie können Auskunft über Ihre Daten verlangen und sie berichtigen oder löschen lassen. Schreiben Sie uns dafür an die oben genannte E-Mail-Adresse. Sie können sich auch an den Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten (EDÖB) wenden.
 # #26: labels of the Shared module's text blocks in the back office's text-block list.
 blocks:
     footer_note:

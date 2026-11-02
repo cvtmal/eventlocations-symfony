@@ -6,6 +6,7 @@ namespace App\Tests\Application\Crm;
 
 use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\IngestInquiry;
+use App\Crm\Entity\Company;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
@@ -372,8 +373,8 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame($author->id(), $props['viewerId']);
         self::assertSame('/admin/api/crm/companies/'.$company->id().'/timeline', $props['urls']['timeline']);
         self::assertSame('/admin/api/crm/activities', $props['urls']['activities']);
-        self::assertSame(['note', 'email_logged', 'call', 'meeting', 'inquiry', 'deal_stage_changed'], array_column($props['types'], 'code'));
-        self::assertSame(['Notizen', 'E-Mails', 'Anrufe', 'Meetings', 'Anfragen', 'Deal-Phasen'], array_column($props['types'], 'tab'));
+        self::assertSame(['note', 'email_logged', 'email_sent', 'call', 'meeting', 'inquiry', 'deal_stage_changed'], array_column($props['types'], 'code'));
+        self::assertSame(['Notizen', 'Erfasste E-Mails', 'Gesendete E-Mails', 'Anrufe', 'Meetings', 'Anfragen', 'Deal-Phasen'], array_column($props['types'], 'tab'));
         self::assertSame(['Notiz', 'E-Mail', 'Anruf', 'Meeting', 'Aufgabe'], array_column($props['composer'], 'label'));
         self::assertSame(['Andrea Keller'], array_column($props['assignees'], 'name'));
         self::assertSame('__type__ von __actor__', $props['labels']['by']);
@@ -445,7 +446,7 @@ final class CompanyRecordTest extends WebTestCase
     public function test_an_inquiry_entry_reaches_the_island_and_the_fallback(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $venue = VenueFactory::new()->withContact()->create(['name' => 'Schloss Seeblick']);
+        $venue = VenueFactory::new()->withoutLocation(null)->withContact()->create(['name' => 'Schloss Seeblick']);
         $company = CompanyFactory::new()->withVenues($venue)->create();
         $inquiry = InquiryFactory::createOne(['venue' => $venue, 'firstName' => 'Sina', 'lastName' => 'Huber']);
         $bus = self::getContainer()->get(MessageBusInterface::class);
@@ -586,19 +587,41 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame(3, $this->queriesOf('/admin/crm/firmen/'.$company->id().'/deals'));
     }
 
-    public function test_the_page_runs_seven_queries(): void
+    public function test_the_composer_can_write_to_the_company_and_its_contacts_with_an_address(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::new()->afterInstantiate(static fn (Company $company) => $company->changeEmail('info@seeblick.example'))->create(['name' => 'Seeblick Events GmbH']);
+        $laura = ContactFactory::createOne(['company' => $company, 'firstName' => 'Laura', 'lastName' => 'Berger', 'email' => 'laura@seeblick.example']);
+        ContactFactory::createOne(['company' => $company, 'lastName' => 'Keller', 'email' => null]);
+        $mia = ContactFactory::createOne(['company' => $company, 'firstName' => 'Mia', 'lastName' => 'Zürcher', 'email' => 'mia@seeblick.example']);
+
+        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+
+        self::assertResponseIsSuccessful();
+        $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        self::assertSame([
+            ['contactId' => null, 'name' => 'Seeblick Events GmbH', 'email' => 'info@seeblick.example'],
+            ['contactId' => $laura->id(), 'name' => 'Laura Berger', 'email' => 'laura@seeblick.example'],
+            ['contactId' => $mia->id(), 'name' => 'Mia Zürcher', 'email' => 'mia@seeblick.example'],
+        ], $props['email']['recipients']);
+        self::assertSame(['send' => '/admin/api/crm/emails', 'draft' => '/admin/api/crm/email-draft'], $props['email']['urls']);
+    }
+
+    public function test_the_page_runs_eight_queries(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
-        $company = CompanyFactory::new()->withVenues(...$venues)->create(['owner' => $owner]);
+        $company = CompanyFactory::new()->withVenues(...$venues)->afterInstantiate(static fn (Company $company) => $company->changeEmail('info@seeblick.example'))->create(['owner' => $owner]);
         $contacts = ContactFactory::createMany(3, ['company' => $company]);
         TaskFactory::createOne(['company' => $company]);
         TaskFactory::createOne(['contact' => $contacts[0]]);
 
         // The company with its venues and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
-        // timeline's activities, venue names and audit rows, the Aufgaben card, the Deals card; with the user's refresh 8
-        // in production (N14's ceiling 10).
-        self::assertSame(7, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
+        // timeline's activities, venue names and audit rows, the composer's mail templates, the Aufgaben card, the Deals
+        // card; with the user's refresh 9 in production (N14's ceiling 10). The address is the worst case: without one the
+        // templates are not read.
+        self::assertSame(8, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
     }
 
     private function auditRows(string $companyId): int

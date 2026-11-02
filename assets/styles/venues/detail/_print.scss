@@ -26,29 +26,86 @@
         .carousel__controls,
         .venue-room__links,
         .venue-reviews__more,
+        .venue-map,
         .dialog__header form,
-        .btn {
+        .dialog__footer,
+        .venue-contact__list li:has([data-phone-reveal]),
+        .venue-contact__list li:has([href^='tel:']) {
             display: none;
         }
 
         .venue-layout {
             display: block;
             max-width: none;
+            padding: 0;
+        }
+
+        .venue-content {
+            display: block;
+        }
+
+        .venue-rating,
+        .venue-wedding,
+        .venue-room,
+        .venue-review {
+            padding: 0;
+            border-radius: 0;
+            background: none;
+        }
+
+        // The pills turn back into text, and a printed "Website" needs its address (D8).
+        .venue-contact__link {
+            justify-content: flex-start;
+            width: auto;
+            min-height: 0;
+            padding: 0;
+            box-shadow: none;
+            background: none;
+            color: inherit;
+        }
+
+        .venue-contact .venue-contact__link::after {
+            content: ' ' attr(href);
+        }
+
+        // A `mailto:` href would print its scheme.
+        .venue-contact .venue-contact__link[data-address]::after {
+            content: ' ' attr(data-address);
         }
 
         .venue-section {
-            padding-top: 1rem;
+            padding-top: var(--space-32);
             break-inside: avoid-page;
         }
 
-        .carousel__track {
+        // Longer than what is left of a sheet on a rich venue: they break between rows, not after half a page of white.
+        .venue-wedding,
+        .venue-rooms,
+        .venue-reviews {
+            break-inside: auto;
+        }
+
+        .venue-facts__row,
+        .venue-review {
+            break-inside: avoid;
+        }
+
+        .venue-section__title {
+            break-after: avoid;
+        }
+
+        .venue-rooms {
+            position: static;
+        }
+
+        .venue-rooms .carousel__track {
             display: block;
+            margin: 0;
             overflow: visible;
         }
 
         .venue-room {
             margin-bottom: 1rem;
-            background: none;
             break-inside: avoid;
         }
 
@@ -65,6 +122,17 @@
             padding: 0 1rem;
             background: none;
             color: inherit;
+        }
+
+        // Below `.venue-room__name`, so a dialog reads as part of its room.
+        .dialog__title {
+            font-size: var(--fs-body);
+            line-height: var(--lh-body);
+        }
+
+        .venue-room-dialog__heading {
+            font-size: var(--fs-small);
+            line-height: var(--lh-small);
         }
 
         a {

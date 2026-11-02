@@ -5,6 +5,9 @@ listing:
     title_page: 'Hochzeitslocations Schweiz – Seite {page} | {site}'
     description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
     description_page: 'Hochzeitslocations in der Schweiz, Seite {page}: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
+home:
+    title: 'Hochzeitslocations in der Schweiz finden | {site}'
+    description: 'Finden Sie die passende Hochzeitslocation in der Schweiz: nach Region, Location-Art und Gästezahl suchen und direkt bei der Location anfragen.'
 # Landing pages (#17), first fit wins (TitleChain), the h1 cut as the last resort:
 # canton and town title_count, title, title_short, title_name, numbered title_page, title_page_short, title_page_bare;
 # building title_count, title, numbered title_page, title_page_bare. A bare title drops {site}, so a numbered page keeps its number. {heading} is the building page's h1 (search catalogue).
@@ -49,13 +52,13 @@ error:
     not_found:
         title: Seite nicht gefunden
         heading: Diese Seite gibt es nicht
-        text: Der Link stimmt nicht mehr oder die Seite ist umgezogen. In der Übersicht findest du alle Hochzeitslocations.
+        text: Der Link stimmt nicht mehr oder die Seite ist umgezogen. In der Übersicht finden Sie alle Hochzeitslocations.
     gone:
         title: Location nicht mehr verfügbar
         heading: Diese Location ist nicht mehr dabei
-        text: Sie ist bei uns nicht mehr aufgeführt. In der Übersicht findest du alle anderen Hochzeitslocations.
+        text: Sie ist bei uns nicht mehr aufgeführt. In der Übersicht finden Sie alle anderen Hochzeitslocations.
     server:
         title: Fehler
         heading: Da ist etwas schiefgelaufen
-        text: Die Seite lässt sich gerade nicht anzeigen. Bitte versuche es in ein paar Minuten noch einmal.
+        text: Die Seite lässt sich gerade nicht anzeigen. Bitte versuchen Sie es in ein paar Minuten noch einmal.
     to_listing: Alle Hochzeitslocations

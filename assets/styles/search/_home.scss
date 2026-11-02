@@ -1,0 +1,388 @@
+@use '../abstracts/breakpoints' as bp;
+@use '../abstracts/staff-text';
+
+// The home page (#36), boards Main (1440) and Home-390. The boards draw two widths: hero, tiles, Spotlight and the long
+// text change shape at lg, the search form and the CTA at md, the steps go 1, 2, 4.
+.home-hero,
+.home-section {
+    max-width: 75rem;
+    margin-inline: auto;
+    padding-inline: var(--space-24);
+}
+
+.home-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    padding-block: var(--space-64);
+}
+
+// The rows that follow one with bottom padding of its own: the board starts them at 0.
+.home-section--flush {
+    padding-top: 0;
+}
+
+.home-section__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-8) var(--space-16);
+}
+
+.home-section__title {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+}
+
+.home-section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-height: 2.75rem;
+    color: var(--c-accent-strong);
+    font-weight: var(--fw-semibold);
+
+    &:hover {
+        color: var(--c-ink);
+    }
+
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
+    }
+}
+
+.home-band {
+    background: var(--c-surface-alt);
+}
+
+.home-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    padding-block: var(--space-8) var(--space-64);
+
+    @include bp.up(lg) {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: center;
+        gap: var(--space-40);
+        padding-top: var(--space-40);
+    }
+}
+
+.home-hero__intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+
+    @include bp.up(lg) {
+        gap: var(--space-32);
+    }
+}
+
+.home-hero__title {
+    font-size: var(--fs-display);
+    line-height: var(--lh-display);
+    letter-spacing: -.01em;
+}
+
+.home-hero__media {
+    height: 16.25rem;
+    overflow: hidden;
+    border-radius: var(--radius-image);
+    background: var(--c-placeholder-ground);
+
+    @include bp.up(lg) {
+        height: 35rem;
+        border-radius: var(--radius-card);
+    }
+}
+
+// The frame has a fixed height, so the varying photo ratios cause no layout shift, as `.card__picture`.
+.home-hero__picture {
+    height: 100%;
+
+    picture {
+        display: block;
+        height: 100%;
+    }
+
+    .picture__img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.home-search {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    padding: var(--space-24);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-raised);
+
+    @include bp.up(md) {
+        padding: var(--space-40);
+    }
+
+    .text-input {
+        max-width: none;
+    }
+
+    .btn {
+        width: 100%;
+
+        @include bp.up(md) {
+            align-self: flex-start;
+            width: auto;
+        }
+    }
+}
+
+.home-search__row {
+    display: grid;
+    gap: var(--space-24);
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.home-categories {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-16);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(lg) {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: var(--space-24);
+    }
+}
+
+.home-category {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-16);
+    height: 100%;
+    padding: var(--space-24) var(--space-16);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-raised);
+    color: var(--c-ink);
+    font-size: var(--fs-h3);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-h3);
+    text-align: center;
+    text-decoration: none;
+
+    @include bp.up(lg) {
+        padding-block: var(--space-40);
+    }
+
+    &:hover {
+        background: var(--c-accent-soft);
+    }
+
+    .icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        color: var(--c-accent);
+    }
+}
+
+// The 16 add to the section's 24: the board's 40 under this heading.
+.home-steps {
+    display: grid;
+    gap: var(--space-24);
+    margin: var(--space-16) 0 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @include bp.up(lg) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.home-steps__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.home-steps__number {
+    color: var(--c-accent-strong);
+    font-size: var(--fs-number);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-number);
+}
+
+.home-steps__title {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+}
+
+.home-steps__text {
+    margin: 0;
+}
+
+.home-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-24);
+    padding: var(--space-40) var(--space-24);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-raised);
+
+    @include bp.up(md) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-64) var(--space-40);
+    }
+
+    .btn {
+        flex: none;
+    }
+}
+
+.home-cta__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    max-width: 40rem;
+
+    p {
+        margin: 0;
+    }
+}
+
+.home-about {
+    display: grid;
+    gap: var(--space-40);
+
+    @include bp.up(lg) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.home-about__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+
+    > p {
+        margin: 0;
+    }
+}
+
+// The board's 16 between paragraphs, so staff text and the catalogue's two paragraphs read alike. `flow` alone gives 8.
+.home-about__staff {
+    @include staff-text.flow;
+
+    > * + * {
+        margin-top: var(--space-16);
+    }
+}
+
+.home-about__kinds {
+    display: grid;
+    align-content: start;
+    gap: var(--space-24);
+    margin: 0;
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    dt {
+        font-weight: var(--fw-bold);
+    }
+
+    dd {
+        margin: 0;
+        font-size: var(--fs-small);
+        line-height: var(--lh-small);
+    }
+}
+
+.home-regions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.home-spotlight__list {
+    display: grid;
+    gap: var(--space-24);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(lg) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+// `search/_card` stacked. This partial comes last in app.scss, so it wins the ties at (0,2,0). D7 keeps the facts above
+// the title, the card's DOM order, so visual and tab order stay one. D8: the heart's name comes from its aria-label.
+.home-spotlight {
+    .card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-16);
+        height: 100%;
+        padding: var(--space-16) var(--space-16) var(--space-24);
+    }
+
+    .card__media {
+        flex: none;
+        width: 100%;
+        height: 15rem;
+        aspect-ratio: auto;
+        overflow: hidden;
+        border-radius: var(--radius-image);
+    }
+
+    .card__body {
+        padding: 0 var(--space-8);
+    }
+
+    .card__title {
+        margin: 0;
+        font-size: var(--fs-h3);
+        line-height: var(--lh-h3);
+    }
+
+    .card__title .badge,
+    .card__summary,
+    .card__tags,
+    .card__rating,
+    .merken__text {
+        display: none;
+    }
+
+    // No background: `--c-surface` is the board's ground, and one here would beat hover and pressed.
+    .merken--card .merken__button {
+        width: 2.75rem;
+        padding: 0;
+    }
+
+    .merken--card .merken__button .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}

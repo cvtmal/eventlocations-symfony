@@ -100,8 +100,8 @@ final class SitemapTest extends WebTestCase
 
         $xml = $this->fetch('/sitemap-pages.xml');
 
-        self::assertSame(['http://localhost/hochzeitslocations', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
-        self::assertCount(1, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
+        self::assertSame(['http://localhost/', 'http://localhost/hochzeitslocations', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertCount(2, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
         $this->assertValid($xml, 'sitemap-with-images.xsd');
     }
 
@@ -129,10 +129,11 @@ final class SitemapTest extends WebTestCase
             self::assertArrayNotHasKey($loc, $lastmods, $loc.' is listed twice');
             $lastmods[$loc] = $url->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod')->item(0)?->textContent;
         }
-        self::assertSame('http://localhost/hochzeitslocations', array_key_first($lastmods));
+        self::assertSame('http://localhost/', array_key_first($lastmods));
         ksort($lastmods);
         // Luzern (4 venues) and the hotels (4) are under the threshold; Luzern still moves the listing.
         self::assertSame([
+            'http://localhost/' => '2026-09-01T10:00:00+00:00',
             'http://localhost/datenschutz' => null,
             'http://localhost/hochzeitslocations' => '2026-09-01T10:00:00+00:00',
             'http://localhost/hochzeitslocations/bern' => '2026-02-01T10:00:00+00:00',

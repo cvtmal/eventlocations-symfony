@@ -17,6 +17,7 @@ use App\Crm\Form\LinkVenueData;
 use App\Crm\Form\LinkVenueType;
 use App\Crm\ReadModel\CompanyRecordQuery;
 use App\Crm\ReadModel\DealCardQuery;
+use App\Crm\ReadModel\EmailRecipient;
 use App\Crm\ReadModel\OwnerOptionsQuery;
 use App\Crm\ReadModel\TaskListQuery;
 use App\Crm\ReadModel\VenueCompanyQuery;
@@ -67,7 +68,7 @@ final class CompanyRecordController extends AbstractController
         return $this->render('admin/crm/company/show.html.twig', [
             'company' => $company,
             'owners' => OwnerOptionsQuery::selectable($staff, $company->ownerId),
-            'timeline' => $timeline->of(RecordKind::Company, $id, $user->id(), OwnerOptionsQuery::selectable($staff)),
+            'timeline' => $timeline->of(RecordKind::Company, $id, $user->id(), OwnerOptionsQuery::selectable($staff), EmailRecipient::ofCompany($company)),
             'tasks' => $tasks->openOf(RecordKind::Company, $id),
             'deals' => $deals->forCompany($id),
             'link_form' => $this->linkForm($id)->createView(),

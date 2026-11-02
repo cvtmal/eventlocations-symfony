@@ -91,6 +91,27 @@ final class ContactDataExportTest extends WebTestCase
         ], $export['tasks']);
     }
 
+    public function test_a_sent_mail_appears_with_its_payload(): void
+    {
+        $this->logInAs(AdminRole::Admin);
+        $contact = ContactFactory::createOne(['email' => 'laura@example.ch']);
+        ActivityFactory::new()->ofType(ActivityType::EMAIL_SENT)->onContact($contact)->create([
+            'occurredAt' => new \DateTimeImmutable('2026-10-01 09:00:00 UTC'),
+            'title' => 'Ihre Offerte',
+            'body' => 'Guten Tag',
+            'payload' => ['to' => 'laura@example.ch', 'cc' => 'tom@example.ch', 'status' => 'failed'],
+        ]);
+
+        $this->client->request('GET', '/admin/crm/kontakte/'.$contact->id().'/export');
+
+        self::assertResponseIsSuccessful();
+        $export = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($export);
+        self::assertEquals([
+            ['type' => 'email_sent', 'occurred_at' => '2026-10-01T11:00:00+02:00', 'title' => 'Ihre Offerte', 'body' => 'Guten Tag', 'payload' => ['to' => 'laura@example.ch', 'cc' => 'tom@example.ch', 'status' => 'failed'], 'anonymised_at' => null],
+        ], $export['activities']);
+    }
+
     public function test_a_bare_contact_exports_with_nulls_and_empty_lists(): void
     {
         $this->logInAs();

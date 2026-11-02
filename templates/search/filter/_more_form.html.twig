@@ -81,9 +81,9 @@
     <div class="filter-more__group">
         {{ include('components/_text_input.html.twig', {id: 'filter-more-q', name: 'q', label: 'filter.more_name_title'|trans({}, 'search'), label_hidden: false, placeholder: 'filter.more_name_placeholder'|trans({}, 'search'), value: criteria.q}, with_context = false) }}
     </div>
-    {%- for group in [wedding, location, buildings, properties, rooms] %}
+    {%- for name, group in {wedding: wedding, location: location, buildings: buildings, properties: properties, rooms: rooms} %}
         {%- if group|trim is not empty %}
-    <div class="filter-more__group">{{ group }}</div>
+    <div class="filter-more__group filter-more__group--{{ name }}">{{ group }}</div>
         {%- endif %}
     {%- endfor %}
 </form>

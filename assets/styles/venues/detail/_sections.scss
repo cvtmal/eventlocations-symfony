@@ -1,17 +1,20 @@
+@use '../../abstracts/breakpoints' as bp;
+@use 'shared';
+
 // Häufige Fragen, Standort, Kontakt, Dokumente (DP-9 to DP-12).
 .venue-faq__list {
     display: grid;
-    gap: var(--space-12);
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-16);
     margin: 0;
 
-    div {
-        display: grid;
-        grid-template-columns: minmax(8rem, auto) 1fr;
-        gap: var(--space-16);
+    @include bp.up(md) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-24);
     }
 
     dt {
-        font-weight: var(--fw-semibold);
+        font-weight: var(--fw-bold);
     }
 
     dd {
@@ -23,14 +26,14 @@
     display: flex;
     align-items: center;
     gap: var(--space-8);
-    margin: 0 0 var(--space-12);
+    margin: 0 0 var(--space-8);
+    font-weight: var(--fw-semibold);
 }
 
-.venue-location__distances,
-.venue-contact__list,
-.venue-documents__list {
-    display: grid;
-    gap: var(--space-8);
+.venue-location__distances {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -42,25 +45,83 @@
     }
 }
 
-.venue-contact__link {
-    display: inline-flex;
+.venue-location__address,
+.venue-location__distances {
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--c-accent-strong);
+    }
+}
+
+// The links are `.btn--secondary` pills: `phone-reveal.js` copies `className`, so the revealed number stays one.
+.venue-contact__list,
+.venue-documents__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8) var(--space-16);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.down(md) {
+        li {
+            flex: 1 0 100%;
+        }
+
+        .venue-contact__link {
+            width: 100%;
+        }
+    }
+}
+
+.venue-contact__person {
+    display: flex;
     align-items: center;
     gap: var(--space-8);
-    min-height: 2.75rem;
+    margin: var(--space-16) 0 0;
+
+    .icon {
+        width: 1.125rem;
+        height: 1.125rem;
+        color: var(--c-accent-strong);
+    }
 }
 
 .venue-phone {
-    padding-block: var(--space-64);
+    @include shared.frame;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    padding-block: var(--space-24) var(--space-64);
+
+    @include bp.up(md) {
+        padding-block-start: var(--space-40);
+    }
+
+    p {
+        margin: 0;
+    }
 }
 
 .venue-phone__heading {
-    margin-bottom: var(--space-24);
-    font-size: var(--fs-h2);
-    line-height: var(--lh-h2);
+    margin: 0;
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+}
+
+.venue-phone__number .btn {
+    @include bp.down(md) {
+        width: 100%;
+    }
 }
 
 .venue-phone__back {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-8);
+    min-height: 2.75rem;
+    color: var(--c-accent-strong);
+    font-weight: var(--fw-semibold);
 }

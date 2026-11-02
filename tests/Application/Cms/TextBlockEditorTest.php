@@ -65,6 +65,7 @@ final class TextBlockEditorTest extends WebTestCase
         self::assertSame(
             [
                 ['Hinweis in der Fusszeile', 'Fusszeile jeder öffentlichen Seite, unter den Links', 'eigener Text'],
+                ['Text der Startseite', 'Auf der Startseite, über den Regionen', 'leer'],
                 ['Einleitung der Suchseite', 'Unter dem Titel der Suchseite ohne Filter, nur auf Seite 1', 'leer'],
             ],
             $crawler->filter('#block-list tbody tr')->each(static fn (Crawler $row): array => \array_slice($row->filter('td')->each(static fn (Crawler $cell): string => $cell->text()), 0, 3)),

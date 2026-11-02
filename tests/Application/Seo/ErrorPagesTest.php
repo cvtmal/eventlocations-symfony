@@ -13,6 +13,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -63,6 +64,7 @@ final class ErrorPagesTest extends WebTestCase
         self::assertCount(0, $crawler->filter('link[hreflang]'));
         self::assertCount(0, $crawler->filter('script[type="application/ld+json"]'));
         self::assertSame(self::POLICY, $this->client->getResponse()->headers->get('Content-Security-Policy'));
+        $this->assertHeroWithIcon($crawler, 'map-pin');
     }
 
     public function test_a_route_that_does_not_exist_is_the_not_found_page(): void
@@ -94,6 +96,7 @@ final class ErrorPagesTest extends WebTestCase
         self::assertSelectorTextSame('h1', 'Diese Location ist nicht mehr dabei');
         self::assertSame('Location nicht mehr verfügbar | Hochzeitslocation', $crawler->filter('title')->text());
         self::assertCount(0, $crawler->filter('link[hreflang]'));
+        $this->assertHeroWithIcon($crawler, 'landmark');
     }
 
     public function test_a_forced_500_is_not_a_404(): void
@@ -108,17 +111,19 @@ final class ErrorPagesTest extends WebTestCase
         self::assertStringNotContainsString('Diese Seite gibt es nicht', (string) $this->client->getResponse()->getContent());
         self::assertStringNotContainsString('forced secret', (string) $this->client->getResponse()->getContent());
         self::assertSame(self::POLICY, $this->client->getResponse()->headers->get('Content-Security-Policy'));
+        $this->assertHeroWithIcon($crawler, 'info');
     }
 
     public function test_a_403_gets_the_generic_page(): void
     {
         $this->failEveryController(new AccessDeniedHttpException('forced secret'));
 
-        $this->client->request('GET', '/hochzeitslocations');
+        $crawler = $this->client->request('GET', '/hochzeitslocations');
 
         self::assertResponseStatusCodeSame(403);
         self::assertSelectorTextSame('h1', 'Da ist etwas schiefgelaufen');
         self::assertStringNotContainsString('forced secret', (string) $this->client->getResponse()->getContent());
+        $this->assertHeroWithIcon($crawler, 'info');
     }
 
     public function test_an_admin_404_is_the_german_page_and_stays_unlisted(): void
@@ -131,6 +136,12 @@ final class ErrorPagesTest extends WebTestCase
         self::assertSame(self::POLICY, $headers->get('Content-Security-Policy'));
         self::assertSame('no-store, private', $headers->get('Cache-Control'));
         self::assertSame('noindex, nofollow', $headers->get('X-Robots-Tag'));
+    }
+
+    private function assertHeroWithIcon(Crawler $crawler, string $icon): void
+    {
+        self::assertSame('page-error', $crawler->filter('body')->attr('class'));
+        self::assertStringEndsWith('#'.$icon, (string) $crawler->filter('.error-page__icon use')->attr('href'));
     }
 
     /**

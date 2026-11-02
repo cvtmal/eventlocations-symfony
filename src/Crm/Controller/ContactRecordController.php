@@ -8,6 +8,7 @@ use App\Admin\Form\ConfirmActionType;
 use App\Admin\Security\AdminIdentity;
 use App\Crm\ReadModel\ContactRecordQuery;
 use App\Crm\ReadModel\DealCardQuery;
+use App\Crm\ReadModel\EmailRecipient;
 use App\Crm\ReadModel\OwnerOptionsQuery;
 use App\Crm\ReadModel\TaskListQuery;
 use App\Crm\TimelineProps;
@@ -37,7 +38,7 @@ final class ContactRecordController extends AbstractController
         return $this->render('admin/crm/contact/show.html.twig', [
             'contact' => $contact,
             'owners' => OwnerOptionsQuery::selectable($staff, $contact->ownerId),
-            'timeline' => $timeline->of(RecordKind::Contact, $id, $user->id(), OwnerOptionsQuery::selectable($staff)),
+            'timeline' => $timeline->of(RecordKind::Contact, $id, $user->id(), OwnerOptionsQuery::selectable($staff), EmailRecipient::ofContact($contact)),
             'tasks' => $tasks->openOf(RecordKind::Contact, $id),
             'deals' => $deals->forContact($id),
             'erase_form' => $this->isGranted('ROLE_ADMIN')

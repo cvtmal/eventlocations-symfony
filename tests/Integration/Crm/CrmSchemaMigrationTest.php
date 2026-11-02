@@ -10,11 +10,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * The CRM migrations' constraints (#27, #28), proven against the real schema with raw SQL, as
+ * The CRM migrations' constraints (#27, #28, #29, #30), proven against the real schema with raw SQL, as
  * VenueSchemaMigrationTest does for the venue tables. Each test seeds an admin user, a venue and
  * one row in every CRM table inside a transaction that is rolled back afterwards.
  *
- * test_every_constraint_has_a_rejection_case() lists every chk_/uk_/fk_ name of the twelve tables,
+ * test_every_constraint_has_a_rejection_case() lists every chk_/uk_/fk_ name of the TABLES,
  * so a new constraint without a case here fails. A partial unique index is no pg_constraint row, so
  * test_a_partial_unique_index_rejects() holds those.
  */
@@ -23,7 +23,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
     private const TABLES = [
         'crm_companies', 'crm_contacts', 'crm_company_venues', 'crm_activity_types', 'crm_activities',
         'crm_activity_companies', 'crm_activity_contacts', 'crm_tasks', 'crm_deal_stages', 'crm_deals',
-        'crm_deal_contacts', 'crm_activity_deals', 'crm_inquiry_links',
+        'crm_deal_contacts', 'crm_activity_deals', 'crm_inquiry_links', 'crm_email_templates',
     ];
 
     private const IDS = [
@@ -182,6 +182,13 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'link to unknown inquiry' => ['fk_crm_inquiry_links_inquiry_id', ["INSERT INTO crm_inquiry_links (inquiry_id) VALUES ('{missing}')"]];
         yield 'inquiry link to unknown contact' => ['fk_crm_inquiry_links_contact_id', ["INSERT INTO crm_inquiry_links (inquiry_id, contact_id) VALUES ('{inquiry2}', '{missing}')"]];
         yield 'inquiry link to unknown activity' => ['fk_crm_inquiry_links_activity_id', ["INSERT INTO crm_inquiry_links (inquiry_id, activity_id) VALUES ('{inquiry2}', '{missing}')"]];
+
+        // crm_email_templates
+        $template = "INSERT INTO crm_email_templates (id, name, subject, body_markdown) VALUES (gen_random_uuid(), '%s', '%s', '%s')";
+        yield 'duplicate template name' => ['uk_crm_email_templates_name', [\sprintf($template, 'Vorlage', 'Betreff', 'Text'), \sprintf($template, 'Vorlage', 'Anders', 'Anders')]];
+        yield 'blank template name' => ['chk_crm_email_templates_content', [\sprintf($template, '  ', 'Betreff', 'Text')]];
+        yield 'blank template subject' => ['chk_crm_email_templates_content', [\sprintf($template, 'Vorlage', '', 'Text')]];
+        yield 'blank template body' => ['chk_crm_email_templates_content', [\sprintf($template, 'Vorlage', 'Betreff', ' ')]];
     }
 
     /**
@@ -250,6 +257,10 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'open-ended contract' => [["UPDATE crm_deals SET contract_start_on = '2027-01-01', contract_end_on = NULL WHERE id = '{deal}'"]];
         yield 'one-day contract' => [["UPDATE crm_deals SET contract_start_on = '2027-01-01', contract_end_on = '2027-01-01' WHERE id = '{deal}'"]];
         yield 'free deal' => [["UPDATE crm_deals SET amount_rappen = 0 WHERE id = '{deal}'"]];
+        yield 'template names differ by case' => [[
+            "INSERT INTO crm_email_templates (id, name, subject, body_markdown) VALUES (gen_random_uuid(), 'Vorlage', 'Betreff', 'Text')",
+            "INSERT INTO crm_email_templates (id, name, subject, body_markdown) VALUES (gen_random_uuid(), 'vorlage', 'Betreff', 'Text')",
+        ]];
     }
 
     /**
@@ -274,7 +285,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         );
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
-        self::assertCount(13, $primaryKeys);
+        self::assertCount(14, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
@@ -286,7 +297,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
     public function test_the_activity_types_are_seeded_in_design_order(): void
     {
         self::assertSame(
-            ['note', 'email_logged', 'call', 'meeting', 'deal_stage_changed', 'inquiry'],
+            ['note', 'email_logged', 'call', 'meeting', 'deal_stage_changed', 'inquiry', 'email_sent'],
             $this->connection->fetchFirstColumn('SELECT code FROM crm_activity_types ORDER BY position'),
         );
     }

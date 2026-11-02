@@ -31,7 +31,7 @@ final class CompanyRecordQuery
                ), '[]') AS venues,
                COALESCE((
                    SELECT json_agg(json_build_object('id', p.id, 'first_name', p.first_name, 'last_name', p.last_name,
-                                                     'position', p.position)
+                                                     'position', p.position, 'email', p.email)
                                    ORDER BY lower(p.last_name), lower(coalesce(p.first_name, '')), p.id)
                    FROM crm_contacts p
                    WHERE p.company_id = c.id
@@ -86,6 +86,7 @@ final class CompanyRecordQuery
                 self::text($contact['first_name']),
                 (string) $contact['last_name'],
                 self::text($contact['position']),
+                self::text($contact['email']),
             ), self::list($row['contacts'])),
             (bool) $row['stage_derived'],
         );

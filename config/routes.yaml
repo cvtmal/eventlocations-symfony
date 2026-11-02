@@ -9,10 +9,3 @@
 
 controllers:
     resource: routing.controllers
-
-# S5: `/` → 302 to the listing until a home page exists. The name `home` stays: the header, main menu and #13 link to it.
-home:
-    path: { de: / }
-    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController
-    defaults: { route: listing, permanent: false, keepQueryParams: true, ignoreAttributes: [_canonical_route] }
-    methods: [GET, HEAD]

@@ -78,6 +78,7 @@ final class DealRecordTest extends WebTestCase
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#location .crm-side__link')->attr('href'));
         self::assertSame('deal', $this->timelineProps($crawler)['kind']);
         self::assertSame('/admin/api/crm/deals/'.$deal->id().'/timeline', $this->timelineProps($crawler)['urls']['timeline'] ?? null);
+        self::assertNull($this->timelineProps($crawler)['email']);
         self::assertSame(1, $crawler->filter('#deal_contact_contact option[value="'.$this->contactId($company->id(), 'Widmer').'"]')->count());
         self::assertSame(0, $crawler->filter('#deal_contact_contact option[value="'.$laura->id().'"]')->count());
     }
