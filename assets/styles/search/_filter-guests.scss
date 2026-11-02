@@ -11,6 +11,13 @@
     display: flex;
     flex-direction: column;
 
+    // A short window scrolls here, and the bubbles sit out of tab order. At 50 % no stop counts as in view, so each comes
+    // to the middle with its ring: Firefox leaves one that shows in part where it is, the others stop flush with the edge.
+    // Only on these stops: the field, which `overlay.js` focuses on opening, must leave the overlay at its top.
+    &:has(.guests-bubble:focus-visible, .overlay__footer :focus-visible) {
+        scroll-padding-block: 50%;
+    }
+
     .overlay__body {
         flex: 1 0 auto;
     }

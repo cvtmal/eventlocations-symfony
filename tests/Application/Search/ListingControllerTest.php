@@ -69,6 +69,7 @@ final class ListingControllerTest extends WebTestCase
         $crawler = $this->get('/hochzeitslocations');
 
         self::assertSelectorTextSame('h1', 'Hochzeitslocations in der Schweiz');
+        self::assertSelectorExists('section.listing-hero[aria-labelledby="listing-title"] h1#listing-title', 'The hero renders before <main>, so its name makes it the landmark that holds the h1 (axe region).');
         self::assertSelectorTextSame('.listing-hero__count', '3 Resultate');
         self::assertCount(3, $crawler->filter('.card'));
 
@@ -127,7 +128,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame($priority->attr('src'), $items->eq(0)->filter('img')->first()->attr('src'));
         $second = $items->eq(1)->filter('img')->first();
         self::assertSame('eager', $second->attr('loading'));
-        self::assertNull($second->attr('fetchpriority'));
+        self::assertSame('low', $second->attr('fetchpriority'));
         self::assertCount(6, $crawler->filter('.listing__results img'));
         self::assertCount(4, $crawler->filter('.listing__results img[loading="lazy"]'));
 

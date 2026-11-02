@@ -49,8 +49,8 @@ const after = (ms) => vi.advanceTimersByTimeAsync(ms);
 
 function page(numbers = [15, 1, 38], extra = '') {
     document.body.innerHTML = `
-        <a data-merkliste-link href="/merkliste" aria-label="Merkliste" data-sync-token="csrf-token"
-            data-count-label="Merkliste (__count__)" data-toast-added="__name__ +" data-toast-removed="__name__ -"
+        <a data-merkliste-link href="/merkliste" data-sync-token="csrf-token"
+            data-toast-added="__name__ +" data-toast-removed="__name__ -"
             data-toast-full="voll" data-toast-link="Zur Merkliste"><svg class="icon"></svg><span data-merkliste-count hidden></span></a>
         ${numbers.map((number) => `<form><button data-merken="${number}" data-merken-name="V${number}"></button></form>`).join('')}
         ${extra}
@@ -60,8 +60,8 @@ function page(numbers = [15, 1, 38], extra = '') {
 
 function merklistePage(numbers) {
     document.body.innerHTML = `
-        <a data-merkliste-link href="/merkliste" aria-label="Merkliste" data-sync-token="csrf-token"
-            data-count-label="Merkliste (__count__)" data-toast-removed="__name__ -" data-toast-link="Zur Merkliste"><svg class="icon"></svg><span data-merkliste-count hidden></span></a>
+        <a data-merkliste-link href="/merkliste" data-sync-token="csrf-token"
+            data-toast-removed="__name__ -" data-toast-link="Zur Merkliste"><svg class="icon"></svg><span data-merkliste-count hidden></span></a>
         <div data-merkliste-page>
             <h1 tabindex="-1" data-merkliste-title></h1>
             <p data-merkliste-total data-count-one="1 Location" data-count-other="__count__ Locations"></p>

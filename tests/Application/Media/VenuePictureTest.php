@@ -67,12 +67,27 @@ final class VenuePictureTest extends WebTestCase
         self::assertSame('100vw', $img->attr('sizes'));
     }
 
-    public function test_eager_without_priority_has_no_fetch_priority(): void
+    public function test_eager_without_priority_yields_to_the_lcp_image(): void
     {
         $img = (new Crawler($this->render("{{ venue_picture(picture, loading='eager') }}", self::picture())))->filter('img');
 
         self::assertSame('eager', $img->attr('loading'));
         self::assertSame('async', $img->attr('decoding'));
+        self::assertSame('low', $img->attr('fetchpriority'));
+    }
+
+    public function test_decorative_prints_an_empty_alt(): void
+    {
+        $img = (new Crawler($this->render('{{ venue_picture(picture, decorative=true) }}', self::picture())))->filter('img');
+
+        self::assertSame('', $img->attr('alt'));
+    }
+
+    public function test_lazy_has_no_fetch_priority(): void
+    {
+        $img = (new Crawler($this->render('{{ venue_picture(picture) }}', self::picture())))->filter('img');
+
+        self::assertSame('lazy', $img->attr('loading'));
         self::assertNull($img->attr('fetchpriority'));
     }
 

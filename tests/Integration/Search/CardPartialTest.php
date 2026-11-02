@@ -58,6 +58,17 @@ final class CardPartialTest extends KernelTestCase
         self::assertSame('0', $crawler->filter('.carousel__track')->attr('tabindex'));
     }
 
+    public function test_only_the_first_slide_keeps_its_alt_text(): void
+    {
+        $alts = (new Crawler($this->render(photos: 3)))->filter('.carousel__slide img')->each(
+            static fn (Crawler $img): ?string => $img->attr('alt'),
+        );
+
+        self::assertNotSame('', $alts[0]);
+        self::assertNotNull($alts[0]);
+        self::assertSame(['', ''], \array_slice($alts, 1));
+    }
+
     /**
      * @param array<string, string> $context
      */

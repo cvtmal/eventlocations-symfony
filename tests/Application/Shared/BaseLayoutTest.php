@@ -151,7 +151,9 @@ final class BaseLayoutTest extends WebTestCase
         $heart = $crawler->filter('.site-header__favorites[data-merkliste-link]');
         self::assertCount(1, $heart->filter('.icon'));
         self::assertSame('/merkliste', $heart->attr('href'));
-        self::assertStringContainsString('__count__', (string) $heart->attr('data-count-label'));
+        // The name comes from the content, so the badge's count is part of it (axe label-content-name-mismatch, #41).
+        self::assertNull($heart->attr('aria-label'));
+        self::assertSame('Merkliste', $heart->filter('.visually-hidden')->text());
         self::assertStringContainsString('__name__', (string) $heart->attr('data-toast-added'));
         self::assertStringContainsString('__name__', (string) $heart->attr('data-toast-removed'));
         self::assertNotSame('', (string) $heart->attr('data-toast-full'));

@@ -29,7 +29,3 @@ toast:
     removed: '{name} wurde von Ihrer Merkliste entfernt.'
     full: Ihre Merkliste ist voll.
     link: Zur Merkliste
-
-header:
-    # The heart's accessible name once the list has entries; its aria-label hides the badge.
-    count_label: 'Merkliste ({count})'

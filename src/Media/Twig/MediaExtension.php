@@ -10,7 +10,7 @@ use App\Media\ValueObject\Picture;
 use Twig\Attribute\AsTwigFunction;
 
 /**
- * `{{ venue_picture(picture, sizes='(min-width: 900px) 520px, 100vw', loading='lazy', priority=false, widths=null, class='') }}`
+ * `{{ venue_picture(picture, sizes='(min-width: 900px) 520px, 100vw', loading='lazy', priority=false, widths=null, class='', decorative=false) }}`
  * renders a venue photo (S9):
  *
  *     <span class="picture"><svg class="picture__placeholder" aria-hidden="true"><rect … fill="#rrggbb"/></svg>
@@ -20,7 +20,9 @@ use Twig\Attribute\AsTwigFunction;
  * - Sources only for the formats the photo has (no AVIF on a host without it).
  * - `widths` restricts the candidates (cards: [360, 640, 960], the listing HTML budget).
  * - `priority: true` is for the one LCP image: eager plus fetchpriority="high". LP-3's second
- *   card passes `loading: 'eager'`. Everything else is lazy.
+ *   card passes `loading: 'eager'`, which adds fetchpriority="low": the browser would fetch it at
+ *   medium beside the LCP image, and it must not hold that image's bandwidth. Everything else is lazy.
+ * - `decorative: true` prints `alt=""`, for a photo no reader reaches (card slides, the listing HTML budget).
  * - The placeholder is an SVG `fill`, not a `style` attribute (CSP). `<img width height>` is
  *   the oriented original's size, so the box has its aspect ratio before the image loads.
  *
@@ -44,6 +46,7 @@ final class MediaExtension
         bool $priority = false,
         ?array $widths = null,
         string $class = '',
+        bool $decorative = false,
     ): string {
         if (!\in_array($loading, ['lazy', 'eager'], true)) {
             throw new \InvalidArgumentException(\sprintf('venue_picture() loading is "lazy" or "eager", got "%s".', $loading));
@@ -72,6 +75,7 @@ final class MediaExtension
         $src = [] === $small ? $candidates[0] : max($small);
         $behaviour = match (true) {
             $priority => 'loading="eager" fetchpriority="high"',
+            'eager' === $loading => 'loading="eager" decoding="async" fetchpriority="low"',
             default => \sprintf('loading="%s" decoding="async"', $loading),
         };
 
@@ -86,7 +90,7 @@ final class MediaExtension
             self::escape($sizes),
             $picture->width,
             $picture->height,
-            self::escape($picture->alt),
+            $decorative ? '' : self::escape($picture->alt),
             $behaviour,
         );
     }

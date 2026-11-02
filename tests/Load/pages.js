@@ -1,15 +1,16 @@
-// k6 server-time test for PERF-1 (S11, #19; docs/performance-baseline.md) on the four measured pages.
+// k6 server-time test for PERF-1 (S11, #19; docs/performance-baseline.md) on the five measured pages.
 //
+//   home      /
 //   listing   /hochzeitslocations
 //   filtered  /hochzeitslocations?<FILTERS>      three filters
 //   canton    /hochzeitslocations/<CANTON>       a canton landing page
 //   detail    /hochzeitslocation/<DETAIL_SLUG>   the richest venue (run.sh picks it)
 //
 // MODE=uncached: per page a 10 s warm-up, then 60 s at 5 requests/s, pages one after the other. Each
-// request carries k6=<run>-<iteration>, a new HttpCache key that SearchCriteria drops, so every
-// request is a backend render. MODE=all adds, after them, 30 s at 20 requests/s per page on the fixed
+// request carries k6=<run>-<iteration>, a new HttpCache key that SearchCriteria drops and the home page
+// never reads, so every request is a backend render. MODE=all adds, after them, 30 s at 20 requests/s per page on the fixed
 // URL (served by HttpCache once #19's Phase 3 is in).
-// Thresholds (S11): uncached p95 < 200 ms for the listing pages and < 120 ms for the detail; cached
+// Thresholds (S11): uncached p95 < 200 ms for home and the listing pages and < 120 ms for the detail; cached
 // p95 < 20 ms with X-Symfony-Cache "fresh"; checks (status 200) > 99 %. server_errors and short_bodies
 // must stay 0: `checks` alone hides a few 500s in thousands of requests (#19's review, F-M3), and a
 // status says nothing about a truncated body.
@@ -36,6 +37,7 @@ if ('uncached' !== MODE && 'all' !== MODE) {
 }
 
 const PAGES = {
+    home: { path: '/', p95: 200 },
     listing: { path: '/hochzeitslocations', p95: 200 },
     filtered: { path: `/hochzeitslocations?${FILTERS}`, p95: 200 },
     canton: { path: `/hochzeitslocations/${CANTON}`, p95: 200 },
