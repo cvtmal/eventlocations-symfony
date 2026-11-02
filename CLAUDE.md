@@ -33,6 +33,7 @@ Never run `composer` or `bin/console` on the host. The host has a different PHP 
 | `make admin-build` / `make admin-watch` | Build the Vue islands into `public/admin-build/` / rebuild on change. Every `/admin` page reads the Vite manifest, so a fresh worktree or a checkout after a pull needs it (with `make admin-install`); `make init` does it |
 | `make admin-test` / `make admin-lint` | Vitest / ESLint on `admin-ui/` |
 | `make lighthouse URL=/path ADMIN=1` / `make validate-html URL=/path ADMIN=1` | The same tools logged in as the dev admin (dev only) |
+| `make lighthouse URL=/konto PORTAL=1` / `make validate-html URL=/konto PORTAL=1` | The same tools logged in as the dev manager (dev only, after `make seed`) |
 | `make perf-check` | Byte budgets of S11 through `phpunit --group budget` (CSS, JS, HTML, fonts, admin); needs no perf stack, runs in CI |
 | `make perf-up` / `make perf-seed [TIMES=10]` / `make perf-run MODE=uncached\|all` / `make perf-lighthouse URL=/path` / `make perf-down` | Prod-mode perf stack on :8096: start and prepare it (rerun after a code change), copy the lane's seeded database (`TIMES=10` for k6, ×1 for Lighthouse), k6 into `var/perf/`, Lighthouse 3×, stop and delete its volumes. Method and figures: `docs/performance-baseline.md` |
 | `make release-check` | Build the release tarball and boot it with `APP_ENV=prod` (CI job `release`) |
@@ -61,7 +62,7 @@ App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http:
 
 Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\<Layer>`.
 
-- Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, the back office's `Admin`, `Cms`, `Crm`, plus `Shared` for building blocks.
+- Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, the back office's `Admin`, `Cms`, `Crm`, the location managers' `Portal`, plus `Shared` for building blocks.
 - Layers inside a module: `Controller`, `Command` (command DTOs), `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console` (console commands), `Twig` (Twig filters and functions), `Mailer` (a module's emails), `EventListener`, `Event` (a module's published events), `Extension` (back-office extension points and their implementations), `Security` (security user, provider, authenticators), `Messenger` (bus middleware).
 - Allowed module dependencies (everything may use `Shared`; `Shared` uses no module):
 
@@ -76,9 +77,10 @@ Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\
   | Seo | Search, Venues, Geo |
   | Admin | — |
   | Cms | Admin, Venues, Geo, Media |
-  | Crm | Admin, Venues, Geo, Inquiries |
+  | Crm | Admin, Venues, Geo, Inquiries, Portal |
+  | Portal | Admin, Cms, Venues, Geo, Media |
 
-  No public module depends on `Admin`, `Cms` or `Crm`.
+  No public module depends on `Admin`, `Cms`, `Crm` or `Portal`.
 
 - Reads: public pages go controller → `ReadModel` (DBAL, `final readonly` view objects), never entities. Writes: controller or console command → command → `command.bus` → handler. There is no query bus.
 - phpat enforces layers, modifiers and module boundaries during `make phpstan` (rules in `tests/Architecture/`). Details: `.claude/rules/php-architecture.md`, `.claude/rules/cqrs.md`, `.claude/rules/read-model.md`.
@@ -123,6 +125,7 @@ Each module's notes live in `.claude/rules/module-<name>.md`, which load by them
 | Admin | `.claude/rules/module-admin.md` | Staff login, shell, extension points, audit, UI kit, Vue islands | any back-office work, Cms and Crm included |
 | Cms | `.claude/rules/module-cms.md` | Back-office screens for venues, media, landing pages, text blocks |  |
 | Crm | `.claude/rules/module-crm.md` | Companies, contacts, deals, tasks, activities |  |
+| Portal | `.claude/rules/module-portal.md` | Manager accounts, `/konto` firewall and session cookie, signed links, venue access, staff account list | any `/konto` route or `security.yaml` edit |
 
 ## Exception conventions
 

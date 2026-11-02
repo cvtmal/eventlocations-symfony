@@ -22,6 +22,7 @@ final class RobotsController extends AbstractController
         '/_search/',
         '/merkliste',
         '/admin',
+        '/konto',
         '/hochzeitslocation/*/telefon',
         '/hochzeitslocation/*/anfrage',
     ];

@@ -11,7 +11,7 @@ use Symfony\Component\Process\Process;
  * Proves the module rules actually fire. A mis-wired rule set (a wrong MODULES regex, a rule class
  * missing from phpstan.neon.dist) would pass `make phpstan` silently. This runs PHPStan with
  * ModuleBoundariesTest against probe modules under Fixtures/ModuleBoundaries: the allowed edge
- * Venues → Geo must stay clean, the forbidden edges Geo → Venues and Cms → Crm must be the only errors.
+ * Venues → Geo must stay clean, the forbidden edges Geo → Venues, Cms → Crm and Portal → Search must be the only errors.
  */
 final class ModuleBoundariesProbeTest extends TestCase
 {
@@ -29,8 +29,8 @@ final class ModuleBoundariesProbeTest extends TestCase
         /** @var array{totals: array{file_errors: int}, files: array<string, array{messages: list<array{message: string}>}>} $result */
         $result = json_decode($output, true, flags: \JSON_THROW_ON_ERROR);
 
-        self::assertSame(2, $result['totals']['file_errors'], 'Expected exactly the Geo → Venues and Cms → Crm errors: '.$output);
-        self::assertCount(2, $result['files'], $output);
+        self::assertSame(3, $result['totals']['file_errors'], 'Expected exactly the Geo → Venues, Cms → Crm and Portal → Search errors: '.$output);
+        self::assertCount(3, $result['files'], $output);
 
         $messageFor = static function (string $suffix) use ($result, $output): string {
             foreach ($result['files'] as $file => $errors) {
@@ -44,5 +44,6 @@ final class ModuleBoundariesProbeTest extends TestCase
 
         self::assertStringContainsString('App\Venues\Probe\VenueCard', $messageFor('Geo/ReachesIntoVenues.php'), $output);
         self::assertStringContainsString('App\Crm\Probe\CompanyCard', $messageFor('Cms/ReachesIntoCrm.php'), $output);
+        self::assertStringContainsString('App\Search\Probe\ResultCard', $messageFor('Portal/ReachesIntoSearch.php'), $output);
     }
 }

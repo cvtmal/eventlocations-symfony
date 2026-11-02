@@ -57,9 +57,10 @@ final class VenueListQuery
             LIMIT 1
         ) thumb ON TRUE
         LEFT JOIN LATERAL (
-            SELECT u.display_name
+            SELECT COALESCE(u.display_name, pu.first_name || ' ' || pu.last_name) AS display_name
             FROM admin_audit_log l
             LEFT JOIN admin_users u ON u.id = l.actor_id
+            LEFT JOIN portal_users pu ON pu.id = l.portal_user_id
             WHERE l.subject_type = 'venue' AND l.subject_id = v.number::text
             ORDER BY l.created_at DESC, l.id DESC
             LIMIT 1

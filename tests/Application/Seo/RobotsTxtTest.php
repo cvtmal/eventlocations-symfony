@@ -20,6 +20,7 @@ final class RobotsTxtTest extends WebTestCase
             Disallow: /_search/
             Disallow: /merkliste
             Disallow: /admin
+            Disallow: /konto
             Disallow: /hochzeitslocation/*/telefon
             Disallow: /hochzeitslocation/*/anfrage
 

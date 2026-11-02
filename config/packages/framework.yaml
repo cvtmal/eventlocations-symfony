@@ -3,9 +3,11 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    # Only the back office ever starts one (S10, S12): the cookie is scoped to /admin, so public
-    # URLs never see it. 7200 s matches the 2-hour idle timeout (Admin\EventListener\IdleTimeoutListener);
-    # PHP's default of 1440 s would end sessions after 24 idle minutes.
+    # Only the back office and /konto ever start one (S10, S12): the cookie is scoped to /admin, and
+    # /konto's name and path are set by Portal\Security\PortalSessionStorageFactory and
+    # PortalResponseHeadersListener, so public URLs never see either. 7200 s matches the 2-hour idle
+    # timeout (Admin\EventListener\IdleTimeoutListener); PHP's default of 1440 s would end sessions
+    # after 24 idle minutes.
     session:
         handler_id: session.handler.native_file
         save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'

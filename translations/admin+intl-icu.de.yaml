@@ -120,6 +120,7 @@ audit:
     actor:
         console: Konsole
         system: System
+        portal_user: Gelöschtes Konto
         all: Alle
     filter:
         actor: Benutzer

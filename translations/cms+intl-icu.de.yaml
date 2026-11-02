@@ -261,6 +261,7 @@ history:
         admin_user: Jemand
         console: Die Konsole
         system: Das System
+        portal_user: Gelöschtes Konto
     command:
         fallback: die Location geändert
         RecordVenueCreated: die Location erfasst

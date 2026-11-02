@@ -1,0 +1,15 @@
+{#
+    A signed link's answer: `title`, `text` and `link` are keys of the `portal` catalogue, `link_route` the
+    next step. No flash reaches this page, see ResetPasswordController.
+#}
+{% extends 'portal/base_auth.html.twig' %}
+
+{% block title %}{{ title|trans({}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block form %}
+    <div class="auth__form">
+        <h1>{{ title|trans({}, 'portal') }}</h1>
+        <p class="auth__intro">{{ text|trans({}, 'portal') }}</p>
+        <a class="btn btn--primary btn--lg" href="{{ path(link_route) }}">{{ link|trans({}, 'portal') }}</a>
+    </div>
+{% endblock %}

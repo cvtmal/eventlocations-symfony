@@ -14,6 +14,7 @@ final class AppStory extends Story
     {
         DemoStory::load();
         AdminStory::load();
+        PortalStory::load();
         CrmStory::load();
     }
 }

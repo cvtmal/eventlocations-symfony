@@ -5,3 +5,9 @@ _logout_admin:
     methods: [POST]
     options:
         unlocalized: true
+
+_logout_portal:
+    path: /konto/abmelden
+    methods: [POST]
+    options:
+        unlocalized: true

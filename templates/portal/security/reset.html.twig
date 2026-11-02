@@ -1,0 +1,18 @@
+{% extends 'portal/base_auth.html.twig' %}
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'reset.title'|trans({}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block form %}
+    {{ form_start(form, {attr: {class: 'auth__form', novalidate: 'novalidate'}}) }}
+        <h1>{{ 'reset.title'|trans({}, 'portal') }}</h1>
+        <p class="auth__intro">{{ 'reset.intro'|trans({}, 'portal') }}</p>
+        {{ form_errors(form) }}
+        {{ include('admin/components/_required_hint.html.twig') }}
+        {{ form_row(form.plainPassword.first) }}
+        {{ form_row(form.plainPassword.second) }}
+        {{ form_rest(form) }}
+        <button class="btn btn--primary btn--lg" type="submit">{{ 'reset.submit'|trans({}, 'portal') }}</button>
+        <a class="auth__help" href="{{ path('portal_login') }}">{{ 'reset.login'|trans({}, 'portal') }}</a>
+    {{ form_end(form) }}
+{% endblock %}

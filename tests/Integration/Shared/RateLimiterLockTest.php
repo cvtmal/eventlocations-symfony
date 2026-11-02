@@ -76,6 +76,7 @@ final class RateLimiterLockTest extends KernelTestCase
     {
         yield 'inquiry_submit' => ['inquiry_submit', 'cache.inquiry_submit'];
         yield 'phone_reveal' => ['phone_reveal', 'cache.phone_reveal'];
+        yield 'portal_register' => ['portal_register', 'cache.portal_register'];
     }
 
     private function consumeInAChild(string $service, string $key): Process

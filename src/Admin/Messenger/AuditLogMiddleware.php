@@ -9,6 +9,7 @@ use App\Admin\Entity\AuditLogEntry;
 use App\Admin\Security\AdminIdentity;
 use App\Admin\ValueObject\AuditActorType;
 use App\Shared\Messenger\AuditableCommand;
+use App\Shared\Security\PortalActor;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -38,11 +39,12 @@ final class AuditLogMiddleware implements MiddlewareInterface
 
         if ($message instanceof AuditableCommand) {
             $subject = $message->auditSubject();
-            [$actorType, $actor] = $this->actor();
+            [$actorType, $actor, $portalActor] = $this->actor();
 
             $this->em->persist(new AuditLogEntry(
                 $actorType,
                 $actor,
+                $portalActor,
                 $message::class,
                 $subject->type,
                 $subject->id,
@@ -57,15 +59,18 @@ final class AuditLogMiddleware implements MiddlewareInterface
     /**
      * A request is the only reliable sign of the web: PHP_SAPI is `cli` inside application tests too.
      *
-     * @return array{AuditActorType, ?AdminUser}
+     * @return array{AuditActorType, ?AdminUser, ?PortalActor}
      */
     private function actor(): array
     {
         $user = $this->security->getUser();
         if ($user instanceof AdminIdentity) {
-            return [AuditActorType::AdminUser, $this->em->getReference(AdminUser::class, $user->id())];
+            return [AuditActorType::AdminUser, $this->em->getReference(AdminUser::class, $user->id()), null];
+        }
+        if ($user instanceof PortalActor) {
+            return [AuditActorType::PortalUser, null, $this->em->getReference(PortalActor::class, $user->id())];
         }
 
-        return [null === $this->requests->getMainRequest() ? AuditActorType::Console : AuditActorType::System, null];
+        return [null === $this->requests->getMainRequest() ? AuditActorType::Console : AuditActorType::System, null, null];
     }
 }

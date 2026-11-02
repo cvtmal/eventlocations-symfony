@@ -4,7 +4,9 @@
 # all read the same count; the state lives in its own cache pool.
 # `inquiry_submit` (#14, IQ-3) guards POST /hochzeitslocation/{slug}/anfrage: 5 inquiries per hour
 # per client IP, consumed only after the form is valid and the fill time has passed.
-# Both are keyed by Shared\Security\ClientIpKey, never the raw IP: the key lands in a lock file's name
+# `portal_register` (#42) guards every /konto form that can send a mail (register, forgot):
+# 5 per hour per client IP, one budget across the three, consumed only after the form is valid.
+# All are keyed by Shared\Security\ClientIpKey, never the raw IP: the key lands in a lock file's name
 # and in the cached state.
 framework:
     rate_limiter:
@@ -18,11 +20,18 @@ framework:
             limit: 5
             interval: '1 hour'
             cache_pool: cache.inquiry_submit
+        portal_register:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+            cache_pool: cache.portal_register
     cache:
         pools:
             cache.phone_reveal:
                 adapter: cache.app
             cache.inquiry_submit:
+                adapter: cache.app
+            cache.portal_register:
                 adapter: cache.app
 
 # Tests clear the pools in setUp(): an array adapter would not work there, because the test client

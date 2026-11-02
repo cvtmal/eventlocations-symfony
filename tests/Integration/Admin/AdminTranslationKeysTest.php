@@ -43,7 +43,7 @@ final class AdminTranslationKeysTest extends KernelTestCase
         foreach (AdminUserRuleViolation::all() as $violation) {
             $keys[] = $violation->translationKey();
         }
-        foreach ([AuditActorType::Console, AuditActorType::System] as $actor) {
+        foreach ([AuditActorType::Console, AuditActorType::System, AuditActorType::PortalUser] as $actor) {
             $keys[] = 'audit.actor.'.$actor->value;
         }
 

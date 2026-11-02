@@ -1,0 +1,13 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'mail.register.preheader'|trans({}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('mail.register.greeting'|trans({}, 'portal')) }}
+{{ blocks.p('mail.register.intro'|trans({}, 'portal')) }}
+{{ blocks.button('mail.register.button'|trans({}, 'portal'), url('portal_reset_password', {token: token})) }}
+{{ blocks.rule() }}
+{{ blocks.note('mail.register.validity'|trans({}, 'portal')) }}
+{{ blocks.note('mail.register.not_you'|trans({}, 'portal')) }}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'admin/base_auth.html.twig' %}
+
+{% block title %}{{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block body %}
+    <div class="auth">
+        <div class="auth__panel">
+            <svg class="auth__circles" aria-hidden="true" viewBox="0 0 640 640"><circle class="auth__circle" cx="320" cy="320" r="320"/><circle class="auth__circle auth__circle--inner" cx="320" cy="320" r="200"/></svg>
+            <div class="auth__brand">
+                <span class="auth__wordmark">{{ 'shell.wordmark'|trans({}, 'portal') }}</span>
+                <span class="auth__subtitle">{{ 'shell.account'|trans({}, 'portal') }}</span>
+            </div>
+            <div class="auth__claim">
+                <span class="auth__bar"></span>
+                <p class="auth__tagline">{{ 'login.tagline'|trans({}, 'portal') }}</p>
+                <p class="auth__team">{{ 'login.audience'|trans({}, 'portal') }}</p>
+            </div>
+        </div>
+        <main class="auth__main">
+            {% block form %}{% endblock %}
+        </main>
+    </div>
+    {{ include('admin/layout/_flash.html.twig') }}
+    <script type="module" src="{{ asset('js/admin/toast.js') }}"></script>
+{% endblock %}

@@ -138,8 +138,8 @@ final class PublicCacheHeadersTest extends WebTestCase
 
         $routes = [];
         foreach ($router->getRouteCollection()->all() as $name => $route) {
-            $isAdmin = '/admin' === $route->getPath() || str_starts_with($route->getPath(), '/admin/');
-            $routes[] = $isAdmin ? null : $route->getDefault('_canonical_route') ?? $name;
+            $hasFirewall = 1 === preg_match('#^/(admin|konto)(/|$)#', $route->getPath());
+            $routes[] = $hasFirewall ? null : $route->getDefault('_canonical_route') ?? $name;
         }
         $routes = array_diff(array_filter($routes), PublicPagesStartNoSessionTest::DEV_ONLY);
         $rows = array_filter(array_column(iterator_to_array(self::headers()), 0));
