@@ -2,6 +2,7 @@
 // Without JS the track still scrolls by touch and keyboard. Self-contained: no imports, no globals.
 (() => {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const wide = matchMedia('(min-width: 768px)');
 
     document.querySelectorAll('[data-carousel]').forEach((carousel) => {
         const track = carousel.querySelector('.carousel__track');
@@ -18,7 +19,11 @@
         const total = slides.length;
         let frame = 0;
 
-        const page = (dir) => track.scrollBy({left: dir * track.clientWidth, behavior: reduced.matches ? 'auto' : 'smooth'});
+        // Below md a slide is narrower than the track (the next one peeks in): a track's width would skip it.
+        const page = (dir) => track.scrollBy({
+            left: dir * (wide.matches ? track.clientWidth : slides[1].offsetLeft - slides[0].offsetLeft || track.clientWidth),
+            behavior: reduced.matches ? 'auto' : 'smooth',
+        });
 
         const update = () => {
             frame = 0;

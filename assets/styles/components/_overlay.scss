@@ -158,6 +158,8 @@
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
+    // Unpadded and last in the overlay: Tab scrolls it flush with the bottom edge, which cut its ring (#41).
+    scroll-margin-block: var(--space-8);
 
     &:hover {
         color: var(--c-ink);
