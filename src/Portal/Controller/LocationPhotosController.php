@@ -11,6 +11,7 @@ use App\Cms\ValueObject\VenueNumber;
 use App\Cms\VenueMediaApi;
 use App\Cms\VenuePhotoUpload;
 use App\Portal\Form\LocationForms;
+use App\Portal\ReadModel\SubmissionQuery;
 use App\Portal\Security\PortalVenueVoter;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
@@ -32,6 +33,7 @@ final class LocationPhotosController extends AbstractController
         private readonly VenuePhotosQuery $photos,
         private readonly EnabledLocale $locales,
         private readonly LocationForms $forms,
+        private readonly SubmissionQuery $submissions,
     ) {
     }
 
@@ -43,6 +45,7 @@ final class LocationPhotosController extends AbstractController
 
         return $this->render('portal/location/photos.html.twig', [
             'venue' => $venue,
+            'submission' => $this->submissions->find($venue->id),
             'photos' => $view->photosArray(),
             'rooms' => [],
             'locale_codes' => $this->locales->all(),

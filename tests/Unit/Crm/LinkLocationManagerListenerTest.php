@@ -37,7 +37,7 @@ final class LinkLocationManagerListenerTest extends TestCase
         (new LinkLocationManagerListener($bus, $this->companies(), new NullLogger()))($this->event());
 
         self::assertEquals(
-            [new LinkLocationManager('venue-1', 'Schloss Seeblick', 'anna@example.ch', 'Anna', 'Meier', '044 123 45 67')],
+            [new LinkLocationManager('venue-1', 'Schloss Seeblick', 'anna@example.ch', 'Anna', 'Meier', '044 123 45 67', 'activity.location_manager')],
             $bus->messages,
         );
     }
@@ -74,7 +74,7 @@ final class LinkLocationManagerListenerTest extends TestCase
     public static function failures(): iterable
     {
         $wrapped = new \DomainException('Duplicate key: anna@example.ch.');
-        $command = new LinkLocationManager('venue-1', 'Schloss Seeblick', 'anna@example.ch', 'Anna', 'Meier', null);
+        $command = new LinkLocationManager('venue-1', 'Schloss Seeblick', 'anna@example.ch', 'Anna', 'Meier', null, 'activity.location_manager');
 
         yield 'an exception' => [new \RuntimeException('The CRM is down, anna@example.ch.'), \RuntimeException::class];
         yield 'an error' => [new \TypeError('anna@example.ch is not a string.'), \TypeError::class];

@@ -143,6 +143,109 @@ accounts:
         label: Seiten
         previous: Zurück
         next: Weiter
+onboarding:
+    new:
+        title: Neue Location eintragen
+        intro: Drei Angaben reichen für den Anfang. Den Rest ergänzen Sie in den nächsten Schritten.
+        submit: Weiter
+        search_link: Ihre Location gibt es schon? Suchen Sie sie.
+        create_anyway: Trotzdem neu anlegen
+        field:
+            name: Name der Location
+            capacity: Maximale Gästezahl
+            town: PLZ und Ort
+        matches:
+            title: Diese Locations gibt es schon
+            ask: Zugriff anfragen
+    progress: Schritt {position} von {total}
+    step:
+        texte: Texte
+        ausstattung: Ausstattung
+        hochzeit: Hochzeit
+        fotos: Fotos
+        kontakt: Kontakt
+        pruefen: Prüfen
+    next: Weiter
+    photos:
+        intro: Laden Sie Fotos Ihrer Location hoch. Das erste Foto ist das Titelbild.
+        fallback_title: Foto hochladen
+        fallback_label: Foto
+        fallback_submit: Hochladen
+        count: '{count, plural, =0 {Noch keine Fotos} one {# Foto} other {# Fotos}}'
+    check:
+        title: Prüfen und veröffentlichen
+        missing: Das fehlt noch
+        hint_inquiry: Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Tragen Sie sie im Kontakt ein.
+        preview: Vorschau
+        edit: Angaben ändern
+        rights: Ich darf diese Location vertreten und habe die Rechte an ihren Texten und Fotos.
+        submit: Veröffentlichen
+        resubmit: Wieder veröffentlichen
+        in_review: Wird geprüft. Sie können die Angaben währenddessen weiter bearbeiten.
+        rejected: Wir konnten die Location noch nicht veröffentlichen
+        refused: "Die Location ist noch nicht vollständig. Es fehlt: {missing}"
+    overview:
+        new: Neue Location
+        resume: Weiter einrichten
+        rejected: Abgelehnt
+        in_review: Wird geprüft
+    location:
+        resume: Weiter einrichten
+        resubmit: Wieder veröffentlichen
+        in_review: Wird geprüft
+    queue:
+        tab: Neue Locations
+        empty: Keine neuen Locations.
+        accept: Annehmen
+        reject: Ablehnen
+        spam: Spam löschen
+        preview: Vorschau
+        reason_title: "{venue} ablehnen"
+        reason_submit: Ablehnen
+        column:
+            location: Location
+            place: Ort
+            manager: Eingereicht von
+            submitted: Eingereicht am
+        field:
+            reason: Grund (geht per E-Mail an den Manager)
+        flash:
+            accepted: Location angenommen. Sie ist jetzt online.
+            accepted_mail_failed: "Achtung: Die Location ist online, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
+            rejected: Location abgelehnt.
+            rejected_mail_failed: "Achtung: Die Location ist abgelehnt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
+            missing: "Die Location ist noch nicht vollständig: {missing}"
+    error:
+        too_many: Sie haben bereits {limit} unfertige Locations. Schliessen Sie eine davon ab oder schreiben Sie uns.
+    mail:
+        submitted:
+            subject: Wir prüfen {venue}
+            preheader: "{venue} ist bei uns eingegangen."
+            greeting: Guten Tag {name}
+            intro: Danke. {venue} ist bei uns eingegangen. Wir prüfen die Angaben und melden uns per E-Mail.
+            button: Zu meinem Konto
+            editing: Sie können die Angaben während der Prüfung weiter bearbeiten.
+        notice:
+            subject: "Neue Location zur Prüfung: {venue}"
+            preheader: "{venue} wartet auf die Prüfung."
+            greeting: Neue Location
+            intro: "{venue} wartet auf die Prüfung."
+            manager: Eingereicht von
+            email: E-Mail
+            button: Zur Prüfung
+        accepted:
+            subject: "{venue} ist online"
+            preheader: Wir haben {venue} geprüft und veröffentlicht.
+            greeting: Guten Tag {name}
+            intro: Wir haben {venue} geprüft und veröffentlicht. Die Location ist jetzt online.
+            button: Zur Location
+        rejected:
+            subject: Ihre Location {venue}
+            preheader: Wir konnten {venue} noch nicht veröffentlichen.
+            greeting: Guten Tag {name}
+            intro: "Wir konnten {venue} noch nicht veröffentlichen. Das ist der Grund:"
+            next: Passen Sie die Angaben an und senden Sie die Location wieder zur Prüfung.
+            button: Angaben anpassen
 claims:
     title: Location suchen
     overview_link: Location suchen

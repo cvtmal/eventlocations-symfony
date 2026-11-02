@@ -13,6 +13,8 @@ use App\Portal\Event\LocationManagerConfirmed;
 use App\Portal\Event\PortalEvents;
 use App\Portal\Mailer\PortalMailer;
 use App\Portal\ReadModel\ManagerAccessQuery;
+use App\Portal\ReadModel\PendingSubmissionQuery;
+use App\Portal\ReadModel\PortalAccessRequestBadge;
 use App\Portal\ReadModel\PortalAccessRequestQuery;
 use App\Portal\ReadModel\PortalProfileQuery;
 use App\Portal\ReadModel\PortalProfileRow;
@@ -47,9 +49,17 @@ final class ReviewController extends AbstractController
     }
 
     #[Route('/admin/pruefung', name: 'admin_portal_review', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    public function index(PortalAccessRequestQuery $requests): Response
+    public function index(Request $request, PortalAccessRequestQuery $requests, PendingSubmissionQuery $submissions, PortalAccessRequestBadge $badge): Response
     {
-        return $this->render('admin/portal/review/index.html.twig', ['rows' => $requests->oldest()]);
+        $tab = 'neu' === $request->query->get('tab') ? 'neu' : 'requests';
+
+        return $this->render('admin/portal/review/index.html.twig', [
+            'tab' => $tab,
+            'rows' => 'requests' === $tab ? $requests->oldest() : [],
+            'submissions' => 'neu' === $tab ? $submissions->oldest() : [],
+            'request_count' => $badge->count(),
+            'submission_count' => $badge->submissions(),
+        ]);
     }
 
     #[Route('/admin/pruefung/anfragen/{userId}/{number}/annehmen', name: 'admin_portal_review_approve', requirements: ['userId' => Requirement::UUID, 'number' => VenueNumber::REQUIREMENT], methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]

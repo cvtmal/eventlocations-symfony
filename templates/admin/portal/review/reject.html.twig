@@ -1,0 +1,40 @@
+{% extends 'admin/base.html.twig' %}
+
+{#
+    Send a location back with a reason (`SubmissionReviewController`). row: PendingSubmissionRow, form: `RejectSubmissionType`.
+#}
+
+{% set page_title = 'onboarding.queue.reason_title'|trans({venue: row.name}, 'portal') %}
+
+{% block title %}{{ page_title }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('admin_portal_review', {tab: 'neu'}) }}">{{ 'review.title'|trans({}, 'portal') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ row.name }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ page_title }}</h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% form_theme form 'admin/form/theme.html.twig' %}
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {reject_form: form} only %}
+            {% block body %}
+                <div class="form">
+                    {{ form_errors(reject_form) }}
+                    {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                    {{ form_rest(reject_form) }}
+                </div>
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'onboarding.queue.reason_submit'|trans({}, 'portal'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}

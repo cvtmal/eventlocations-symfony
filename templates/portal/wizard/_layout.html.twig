@@ -1,0 +1,28 @@
+{#
+    Layout of the location wizard (#45). Contract: extend it, set `position` (1 to 6) and `heading` (translated), pass
+    `form`, fill `wizard_main`. `venue` (`Cms\ReadModel\VenueHeader`) is there once the location exists.
+#}
+{% extends 'portal/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ heading }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('portal_home') }}">{{ 'overview.title'|trans({}, 'portal') }}</a></li>
+    {% if venue is defined %}<li class="breadcrumbs__item">{{ venue.name }}</li>{% endif %}
+    <li class="breadcrumbs__item" aria-current="page">{{ heading }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header"><h1>{{ heading }}</h1></div>
+    {{ include('admin/components/_progress.html.twig', {
+        label: 'onboarding.progress'|trans({position: position, total: 6}, 'portal'),
+        value: position,
+        max: 6,
+    }, with_context = false) }}
+{% endblock %}
+
+{% block main %}
+    {% block wizard_main %}{% endblock %}
+{% endblock %}

@@ -103,7 +103,7 @@ final class PortalAccountsTest extends WebTestCase
     public function test_deactivating_is_audited_and_ends_the_running_session(): void
     {
         $manager = $this->logInAsManager();
-        $this->client->request('GET', '/konto');
+        $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();
 
         $staff = $this->logInAs();
@@ -144,7 +144,7 @@ final class PortalAccountsTest extends WebTestCase
         self::assertTrue($this->isActive($manager));
 
         $this->logInAsManager($manager);
-        $this->client->request('GET', '/konto');
+        $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();
     }
 

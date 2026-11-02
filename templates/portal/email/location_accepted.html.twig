@@ -1,0 +1,10 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'onboarding.mail.accepted.preheader'|trans({venue: venueName}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('onboarding.mail.accepted.greeting'|trans({name: firstName}, 'portal')) }}
+{{ blocks.p('onboarding.mail.accepted.intro'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.button('onboarding.mail.accepted.button'|trans({}, 'portal'), url('portal_location', {number: number})) }}
+{% endblock %}

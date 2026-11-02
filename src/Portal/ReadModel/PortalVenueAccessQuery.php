@@ -45,4 +45,15 @@ final class PortalVenueAccessQuery
             ['id' => $portalUserId],
         ));
     }
+
+    /**
+     * Any row at all, `pending` included: a manager without one has not started and goes to the wizard (#45).
+     */
+    public function hasAnyRow(string $portalUserId): bool
+    {
+        return (bool) $this->connection->fetchOne(
+            'SELECT EXISTS (SELECT 1 FROM portal_venue_access WHERE portal_user_id = :id)',
+            ['id' => $portalUserId],
+        );
+    }
 }

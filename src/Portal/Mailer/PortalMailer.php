@@ -57,15 +57,58 @@ final class PortalMailer
         return $this->sendAccessMail($email, $firstName, $venueName, 'claims.mail.rejected.subject', 'portal/email/access_rejected.html.twig');
     }
 
+    public function sendLocationSubmitted(string $email, string $firstName, string $venueName): bool
+    {
+        return $this->sendLocationMail($email, 'onboarding.mail.submitted.subject', $venueName, 'portal/email/location_submitted.html.twig', [
+            'firstName' => $firstName,
+        ]);
+    }
+
+    public function sendLocationNotice(string $venueName, string $managerName, string $managerEmail): bool
+    {
+        return $this->sendLocationMail($this->contactEmail, 'onboarding.mail.notice.subject', $venueName, 'portal/email/location_notice.html.twig', [
+            'managerName' => $managerName,
+            'managerEmail' => $managerEmail,
+        ]);
+    }
+
+    public function sendLocationAccepted(string $email, string $firstName, string $venueName, int $number): bool
+    {
+        return $this->sendLocationMail($email, 'onboarding.mail.accepted.subject', $venueName, 'portal/email/location_accepted.html.twig', [
+            'firstName' => $firstName,
+            'number' => $number,
+        ]);
+    }
+
+    public function sendLocationRejected(string $email, string $firstName, string $venueName, int $number, string $reason): bool
+    {
+        return $this->sendLocationMail($email, 'onboarding.mail.rejected.subject', $venueName, 'portal/email/location_rejected.html.twig', [
+            'firstName' => $firstName,
+            'number' => $number,
+            'reason' => $reason,
+        ]);
+    }
+
     private function sendAccessMail(string $email, string $firstName, string $venueName, string $subjectKey, string $template): bool
+    {
+        return $this->sendLocationMail($email, $subjectKey, $venueName, $template, ['firstName' => $firstName]);
+    }
+
+    /**
+     * These mails greet by name: creating a location needs a login, so the address is proved. They answer whether the
+     * mail went, so a controller can tell staff when it did not.
+     *
+     * @param array<string, int|string> $context
+     */
+    private function sendLocationMail(string $to, string $subjectKey, string $venueName, string $template, array $context): bool
     {
         try {
             $this->mailer->send((new TemplatedEmail())
-                ->to($email)
+                ->to($to)
                 ->replyTo($this->contactEmail)
                 ->subject($this->translator->trans($subjectKey, ['venue' => $venueName], 'portal'))
                 ->htmlTemplate($template)
-                ->context(['firstName' => $firstName, 'venueName' => $venueName]));
+                ->context(['venueName' => $venueName] + $context));
 
             return true;
         } catch (TransportExceptionInterface|RfcComplianceException|HandlerFailedException $exception) {

@@ -414,6 +414,7 @@ deal:
 
 activity:
     location_manager: 'Location-Zugriff bestätigt: {venue}'
+    location_submitted: 'Neue Location eingereicht: {venue}'
     type:
         note: Notiz
         email_logged: E-Mail

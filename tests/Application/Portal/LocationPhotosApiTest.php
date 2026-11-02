@@ -241,7 +241,7 @@ final class LocationPhotosApiTest extends WebTestCase
      */
     private function csrfToken(): string
     {
-        $crawler = $this->client->request('GET', '/konto');
+        $crawler = $this->client->request('GET', '/konto/profil');
 
         return (string) $crawler->filter('meta[name="csrf-token"]')->attr('content');
     }

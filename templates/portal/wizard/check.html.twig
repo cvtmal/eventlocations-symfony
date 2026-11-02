@@ -1,0 +1,59 @@
+{#
+    Step 6 (#45, POR-12), also the way back online. Context from `WizardController`: form, venue (`VenueHeader`),
+    state (`?SubmissionState`, null for a location that never went through the wizard), gaps list<{code, step}>,
+    hint_inquiry (bool), contact_anchor. Under review there is no form: "Wird geprüft" replaces it.
+#}
+{% extends 'portal/wizard/_layout.html.twig' %}
+
+{% set position = 6 %}
+{% set heading = 'onboarding.check.title'|trans({}, 'portal') %}
+
+{% block wizard_main %}
+    {% set status = state ? state.status.value : null %}
+
+    {% if status == 'rejected' %}
+        {% embed 'admin/components/_card.html.twig' with {title: 'onboarding.check.rejected'|trans({}, 'portal'), id: 'check-rejected', reason: state.rejectReason} only %}
+            {% block body %}<p>{{ reason }}</p>{% endblock %}
+        {% endembed %}
+    {% endif %}
+
+    {% if status == 'submitted' %}
+        <p role="status">{{ 'onboarding.check.in_review'|trans({}, 'portal') }}</p>
+    {% endif %}
+
+    {% if gaps is not empty %}
+        {% embed 'admin/components/_card.html.twig' with {title: 'onboarding.check.missing'|trans({}, 'portal'), id: 'check-missing', gaps: gaps, number: venue.number} only %}
+            {% block body %}
+                <ul>
+                    {% for gap in gaps %}
+                        <li><a href="{{ path('portal_location_setup_step', {number: number, step: gap.step}) }}">{{ ('dashboard.incomplete.missing.' ~ gap.code)|trans({}, 'cms') }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+
+    {% if hint_inquiry %}
+        <p><a href="{{ path('portal_location', {number: venue.number}) }}#{{ contact_anchor }}">{{ 'onboarding.check.hint_inquiry'|trans({}, 'portal') }}</a></p>
+    {% endif %}
+
+    <div class="page-header__actions">
+        {{ include('admin/components/_button.html.twig', {label: 'onboarding.check.preview'|trans({}, 'portal'), href: path('portal_location_preview', {number: venue.number})}, with_context = false) }}
+        {{ include('admin/components/_button.html.twig', {label: 'onboarding.check.edit'|trans({}, 'portal'), href: path('portal_location', {number: venue.number})}, with_context = false) }}
+    </div>
+
+    {% if status != 'submitted' %}
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+            {% set submit_label = (status in ['accepted', null] ? 'onboarding.check.resubmit' : 'onboarding.check.submit')|trans({}, 'portal') %}
+            {% embed 'admin/components/_card.html.twig' with {title: submit_label, id: 'check-submit', submit_form: form, submit_label: submit_label} only %}
+                {% block body %}
+                    {{ form_errors(submit_form) }}
+                    {{ form_row(submit_form.rights) }}
+                {% endblock %}
+                {% block foot %}
+                    {{ include('admin/components/_button.html.twig', {label: submit_label, variant: 'primary', type: 'submit'}, with_context = false) }}
+                {% endblock %}
+            {% endembed %}
+        {{ form_end(form) }}
+    {% endif %}
+{% endblock %}

@@ -290,7 +290,7 @@ final class PasswordResetTest extends WebTestCase
     public function test_a_running_session_ends_after_a_reset(): void
     {
         $manager = $this->logInAsManager();
-        $this->client->request('GET', '/konto');
+        $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();
 
         $this->reset($this->links()->resetToken($manager));

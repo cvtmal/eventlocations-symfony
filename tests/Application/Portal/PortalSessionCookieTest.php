@@ -47,7 +47,7 @@ final class PortalSessionCookieTest extends WebTestCase
     public function test_logout_ends_the_session_and_keeps_the_cookie_on_the_account_path(): void
     {
         $this->logInAsManager();
-        $page = $this->client->followRedirect();
+        $page = $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();
         $oldCookie = $this->client->getCookieJar()->get(PortalArea::SESSION_COOKIE, '/konto');
         self::assertNotNull($oldCookie);

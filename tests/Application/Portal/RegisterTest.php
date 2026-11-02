@@ -108,7 +108,7 @@ final class RegisterTest extends WebTestCase
         $this->submitManagerLogin(self::EMAIL, self::PASSWORD);
         self::assertResponseRedirects('/konto');
 
-        $this->client->request('GET', '/konto');
+        $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();
 
         $this->client->request('GET', $link);

@@ -101,12 +101,11 @@ final class VenuePhotoUpload
             return $this->api->invalid('file', 'cms.photo.type');
         }
 
-        $size = @getimagesize($file->getPathname());
-        if (false !== $size && $this->limits->isTooTall($size[0], $size[1], ImageVariantGenerator::swapsAxes($file->getPathname()))) {
-            return $this->api->invalid('file', 'cms.photo.too_tall', ['ratio' => $this->limits->maxPortraitRatio]);
+        if ($this->isTooTall($file->getPathname())) {
+            return $this->api->invalid('file', 'cms.photo.too_tall', ['ratio' => $this->maxPortraitRatio()]);
         }
 
-        if ('image/jpeg' === $mime && substr_count((string) file_get_contents($file->getPathname()), "\xFF\xDA") > self::MAX_JPEG_SCANS) {
+        if ($this->hasTooManyScans($file->getPathname(), $mime)) {
             return $this->api->invalid('file', 'cms.photo.unreadable');
         }
 
@@ -126,6 +125,29 @@ final class VenuePhotoUpload
             ['photo' => $added->photoId, 'duplicate' => $added->duplicate, 'photos' => $view->photosArray()],
             $added->duplicate ? Response::HTTP_OK : Response::HTTP_CREATED,
         );
+    }
+
+    /**
+     * The portrait limit for a caller with a form of its own: `rule()` cannot hold it.
+     */
+    public function isTooTall(string $path): bool
+    {
+        $size = @getimagesize($path);
+
+        return false !== $size && $this->limits->isTooTall($size[0], $size[1], ImageVariantGenerator::swapsAxes($path));
+    }
+
+    /**
+     * The scan limit for a caller with a form of its own: `rule()` cannot hold it either.
+     */
+    public function hasTooManyScans(string $path, string $mime): bool
+    {
+        return 'image/jpeg' === $mime && substr_count((string) file_get_contents($path), "\xFF\xDA") > self::MAX_JPEG_SCANS;
+    }
+
+    public function maxPortraitRatio(): float
+    {
+        return $this->limits->maxPortraitRatio;
     }
 
     /**

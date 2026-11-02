@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Portal;
 
+use App\Factory\PortalVenueAccessFactory;
+use App\Factory\VenueFactory;
 use App\Portal\Security\PortalArea;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Portal\PortalSession;
@@ -71,6 +73,7 @@ final class PortalAdminSeparationTest extends WebTestCase
     {
         $this->logInStaff();
         $manager = $this->logInAsManager();
+        PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => VenueFactory::new()->withoutLocation()]);
 
         $this->assertOpens('/admin');
         $this->assertOpens('/konto');

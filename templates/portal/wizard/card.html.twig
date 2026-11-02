@@ -1,0 +1,21 @@
+{#
+    A wizard step with a card (#45). Context from `WizardController`: form, step (`WizardStep`), card (`LocationCard`),
+    venue (`VenueHeader`), stale, locales list<{code, label}>. A stale card's reload link goes to `portal_location`.
+#}
+{% extends 'portal/wizard/_layout.html.twig' %}
+
+{% set position = step.position %}
+{% set heading = ('onboarding.step.' ~ step.value)|trans({}, 'portal') %}
+
+{% block wizard_main %}
+    <div class="venue-editor">
+        {{ include(card.template, {
+            form: form,
+            card: card,
+            number: venue.number,
+            stale: stale,
+            locales: locales,
+            submit_label: 'onboarding.next'|trans({}, 'portal'),
+        }, with_context = false) }}
+    </div>
+{% endblock %}

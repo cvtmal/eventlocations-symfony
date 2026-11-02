@@ -52,7 +52,7 @@ final class LinkLocationManagerHandler implements CommandHandlerInterface
             $this->clock->now(),
             null,
             null,
-            $this->translator->trans('activity.location_manager', ['venue' => $command->venueName], 'crm', $this->locales->default()),
+            $this->translator->trans($command->activityKey, ['venue' => $command->venueName], 'crm', $this->locales->default()),
         );
 
         $this->em->persist($activity);

@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Venues\CommandHandler;
 
 use App\Shared\Messenger\CommandHandlerInterface;
-use App\Shared\Translation\EnabledLocale;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\ReadModel\VenuePublishGaps;
 use App\Venues\VenueEditing;
-use Doctrine\DBAL\Connection;
 
 /**
  * CMS-3, D14: a venue goes online only with a summary in the default locale, a main
@@ -20,8 +19,7 @@ final class PublishVenueHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly VenueEditing $editing,
-        private readonly Connection $connection,
-        private readonly EnabledLocale $locales,
+        private readonly VenuePublishGaps $gaps,
     ) {
     }
 
@@ -32,19 +30,9 @@ final class PublishVenueHandler implements CommandHandlerInterface
             return;
         }
 
-        $row = $this->connection->fetchAssociative(
-            <<<'SQL'
-                SELECT
-                    EXISTS (SELECT 1 FROM venue_translations t WHERE t.venue_id = :venue AND t.locale = :locale AND btrim(t.summary) <> '') AS summary,
-                    EXISTS (SELECT 1 FROM venue_terms vt WHERE vt.venue_id = :venue AND vt.term_group = 'building' AND vt.is_main) AS main_building,
-                    EXISTS (SELECT 1 FROM venue_photos p WHERE p.venue_id = :venue AND p.room_id IS NULL) AS photo
-                SQL,
-            ['venue' => $venue->id(), 'locale' => $this->locales->default()],
-        );
-        \assert(false !== $row);
-        $missing = array_keys(array_filter($row, static fn (mixed $present): bool => !$present));
+        $missing = $this->gaps->missing($venue->id());
         if ([] !== $missing) {
-            throw VenueRuleViolation::notPublishable(array_map(strval(...), $missing));
+            throw VenueRuleViolation::notPublishable($missing);
         }
 
         $venue->publish();
