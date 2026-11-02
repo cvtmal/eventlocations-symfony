@@ -119,6 +119,10 @@ final class AuditLogQuery
             $conditions[] = 'l.actor_id = :actor';
             $parameters['actor'] = $filter->actorId;
         }
+        if (null !== $filter->actorType) {
+            $conditions[] = 'l.actor_type = :actor_type';
+            $parameters['actor_type'] = $filter->actorType->value;
+        }
         if (null !== $filter->subjectType) {
             $conditions[] = 'l.subject_type = :subject_type';
             $parameters['subject_type'] = $filter->subjectType;

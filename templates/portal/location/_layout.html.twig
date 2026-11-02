@@ -1,0 +1,60 @@
+{#
+    Layout of a manager's location pages. Contract: extend it, pass `venue` (`Cms\ReadModel\VenueHeader`) and
+    `offline_form` (`LocationForms::offlineForm()`), fill `location_main`.
+#}
+{% extends 'portal/base.html.twig' %}
+
+{% block title %}{{ 'editor.title'|trans({name: venue.name}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('portal_home') }}">{{ 'overview.title'|trans({}, 'portal') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ venue.name }}</li>
+{% endblock %}
+
+{% block page_header %}
+    {% embed 'admin/components/_record_header.html.twig' with {title: venue.name, venue: venue, offline_form: offline_form} only %}
+        {% block meta %}
+            {{ include('admin/components/_pill.html.twig', {
+                label: ('list.status.' ~ venue.status.value)|trans({}, 'cms'),
+                tone: venue.status.value == 'published' ? 'green' : 'grey',
+                dot: true,
+            }, with_context = false) }}
+        {% endblock %}
+        {% block actions %}
+            {{ include('admin/components/_button.html.twig', {label: 'editor.preview'|trans({}, 'portal'), icon: 'eye', href: path('portal_location_preview', {number: venue.number})}, with_context = false) }}
+            {% if venue.status.value == 'published' %}
+                {{ include('admin/components/_button.html.twig', {label: 'editor.offline.action'|trans({}, 'portal'), attributes: {commandfor: 'location-offline', command: 'show-modal'}}, with_context = false) }}
+                {% embed 'admin/components/_modal.html.twig' with {
+                    id: 'location-offline',
+                    title: 'editor.offline.title'|trans({}, 'portal'),
+                    close_label: 'editor.offline.close'|trans({}, 'portal'),
+                    danger: true,
+                    venue: venue,
+                    offline_form: offline_form,
+                } only %}
+                    {% block body %}<p>{{ 'editor.offline.text'|trans({name: venue.name}, 'portal') }}</p>{% endblock %}
+                    {% block footer %}
+                        <form method="dialog"><button class="btn" autofocus>{{ 'editor.offline.cancel'|trans({}, 'portal') }}</button></form>
+                        {{ form_start(offline_form) }}
+                            {{ include('admin/components/_button.html.twig', {label: 'editor.offline.confirm'|trans({}, 'portal'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                        {{ form_end(offline_form) }}
+                    {% endblock %}
+                {% endembed %}
+            {% endif %}
+        {% endblock %}
+        {% block tabs %}
+            {# A card POST re-rendered at 422 runs on its own route and keeps Angaben marked. #}
+            {% set current_route = app.request.attributes.get('_route') == 'portal_location_photos' ? 'portal_location_photos' : 'portal_location' %}
+            {{ include('admin/components/_record_tabs.html.twig', {
+                label: 'editor.tabs.label'|trans({}, 'portal'),
+                tabs: [
+                    {label: t('editor.tabs.details', {}, 'portal'), route: 'portal_location', routeParameters: {number: venue.number}},
+                    {label: t('editor.tabs.photos', {}, 'portal'), route: 'portal_location_photos', routeParameters: {number: venue.number}},
+                ],
+                current_route: current_route,
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}
+
+{% block main %}{% block location_main %}{% endblock %}{% endblock %}

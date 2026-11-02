@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Admin\Form;
 
+use App\Admin\ValueObject\AuditActorType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -26,6 +28,14 @@ final class AuditLogFilterType extends AbstractType
                 'placeholder' => 'audit.actor.all',
                 'choices' => $options['actors'],
                 'choice_translation_domain' => false,
+            ])
+            ->add('actor_type', EnumType::class, [
+                'label' => 'audit.filter.actor_type',
+                'required' => false,
+                'placeholder' => 'audit.actor.all',
+                'class' => AuditActorType::class,
+                'choice_label' => static fn (AuditActorType $type): string => 'audit.actor_type.'.$type->value,
+                'property_path' => 'actorType',
             ])
             ->add('subject_type', TextType::class, ['label' => 'audit.filter.subject_type', 'required' => false, 'property_path' => 'subjectType'])
             ->add('subject_id', TextType::class, ['label' => 'audit.filter.subject_id', 'required' => false, 'property_path' => 'subjectId'])

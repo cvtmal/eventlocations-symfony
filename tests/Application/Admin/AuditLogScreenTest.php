@@ -80,6 +80,42 @@ final class AuditLogScreenTest extends WebTestCase
         self::assertCount(0, $this->rows('/admin/audit-log?to=2020-01-01'));
     }
 
+    public function test_the_origin_filter_narrows_to_manager_rows(): void
+    {
+        $this->logInAs();
+        $this->createUserOnScreen('neu@example.ch');
+        $manager = PortalUserFactory::createOne(['firstName' => 'Nora', 'lastName' => 'Meier']);
+        $this->connection->insert('admin_audit_log', [
+            'id' => EntityId::generate(),
+            'actor_type' => 'portal_user',
+            'portal_user_id' => $manager->id(),
+            'command' => 'App\Venues\Command\ChangeVenueCapacity',
+            'subject_type' => 'venue',
+            'subject_id' => EntityId::generate(),
+            'changes' => '{}',
+        ]);
+
+        $crawler = $this->client->request('GET', '/admin/audit-log?actor_type=portal_user');
+
+        self::assertResponseIsSuccessful();
+        $rows = $crawler->filter('tbody tr');
+        self::assertCount(1, $rows);
+        self::assertStringContainsString('Nora Meier', $rows->text());
+        self::assertSame('Location-Konto', $crawler->filter('select[name="actor_type"] option[selected]')->text());
+        self::assertCount(1, $this->rows('/admin/audit-log?actor_type=admin_user'));
+    }
+
+    public function test_a_bad_origin_does_not_break_the_page(): void
+    {
+        $this->logInAs();
+        $this->createUserOnScreen('neu@example.ch');
+
+        $crawler = $this->client->request('GET', '/admin/audit-log?actor_type=somebody');
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertCount(1, $crawler->filter('tbody tr'));
+    }
+
     public function test_garbage_filters_do_not_break_the_page(): void
     {
         $this->logInAs();

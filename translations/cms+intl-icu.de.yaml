@@ -10,6 +10,7 @@ venue:
         coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
         not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
         still_published: 'Eine veröffentlichte Location kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
+        too_many_photos: 'Eine Location zeigt höchstens 30 Fotos. Entfernen Sie zuerst ein Foto.'
 
 nav:
     section: CMS
@@ -110,6 +111,7 @@ editor:
         contact: Kontakt
         faq: Häufige Fragen
         rating: Bewertung
+        capacity: Maximale Gästezahl
     checklist:
         title: Bereit zum Publizieren
         done: erledigt
@@ -269,6 +271,7 @@ history:
         ChangeVenueTexts: die Texte geändert
         RelocateVenue: Adresse und Lage geändert
         ChangeVenueTerms: die Merkmale geändert
+        ChangeVenueCapacity: die maximale Gästezahl geändert
         ChangeVenueWeddingFacts: die Hochzeitsangaben geändert
         ChangeVenueContact: den Kontakt geändert
         AnswerVenueFaq: die häufigen Fragen beantwortet

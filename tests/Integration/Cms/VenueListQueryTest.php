@@ -341,6 +341,26 @@ final class VenueListQueryTest extends KernelTestCase
         self::assertSame([], $this->query->quickSearch('  ', 5));
     }
 
+    public function test_by_numbers_gives_those_venues_by_name_with_their_gaps(): void
+    {
+        $zebra = $this->complete('Zebrahof', status: VenueStatus::Unpublished);
+        $anker = $this->complete('Ankerhof', email: null);
+        $this->complete('Mittelhof');
+
+        $rows = $this->query->byNumbers([$zebra->number(), $anker->number()]);
+
+        self::assertSame(['Ankerhof', 'Zebrahof'], array_map(static fn (VenueListRow $row): string => $row->name, $rows));
+        self::assertSame([[VenueListRow::MISSING_INQUIRY_EMAIL], []], array_map(static fn (VenueListRow $row): array => $row->missing, $rows));
+    }
+
+    public function test_by_numbers_without_numbers_runs_no_statement(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection->expects(self::never())->method('fetchAllAssociative');
+
+        self::assertSame([], (new VenueListQuery($connection, ListingQueryTest::enabledLocale()))->byNumbers([]));
+    }
+
     public function test_an_unknown_status_is_refused(): void
     {
         $this->expectException(\InvalidArgumentException::class);

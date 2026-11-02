@@ -2,7 +2,7 @@ import { enableAutoUnmount, flushPromises } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RequestFailed, SessionGone, ValidationFailed } from '../../src/api.js';
 import { uploadFile } from '../../src/cms/upload.js';
-import { answering, dropFiles, json, mounted, photo, sent, tile } from './photoManagerFixture.js';
+import { answering, dropFiles, ID, json, mounted, photo, sent, tile } from './photoManagerFixture.js';
 
 vi.mock('../../src/cms/upload.js', () => ({ uploadFile: vi.fn() }));
 
@@ -178,6 +178,33 @@ describe('PhotoManagerIsland', () => {
         expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['/api/photos/a/alt', '/api/photos/a/room']);
         expect(sent(fetchMock, 1)).toEqual({ roomId: 'room-1' });
         expect(island.findAll('.photo-scope__title')[1].text()).toBe('Seesaal · 1 Foto');
+    });
+
+    it('offers no room without a room endpoint and saves the alt text alone', async () => {
+        const island = mounted(undefined, {
+            rooms: [],
+            endpoints: {
+                upload: '/api/photos',
+                order: '/api/photos/order',
+                alt: `/api/photos/${ID}/alt`,
+                remove: `/api/photos/${ID}`,
+            },
+        });
+        const fetchMock = answering(json({ photos: [photo('a', 1, { alts: { de: 'Neu' } }), photo('b', 2), photo('c', 3)] }));
+
+        await tile(island, 0).trigger('click');
+
+        expect(island.find('#photo-room').exists()).toBe(false);
+        expect(island.get('.photo-panel').text()).not.toContain('roomLabel');
+
+        await island.get('#photo-alt-de').setValue('Neu');
+        await island.get('.photo-panel .btn--primary').trigger('click');
+        await flushPromises();
+
+        expect(fetchMock).toHaveBeenCalledOnce();
+        expect(fetchMock.mock.calls[0][0]).toBe('/api/photos/a/alt');
+        expect(fetchMock.mock.calls[0][1].method).toBe('PUT');
+        expect(document.querySelector('.toast--success').textContent).toContain('saved');
     });
 
     it('sends the token a reorder left behind', async () => {

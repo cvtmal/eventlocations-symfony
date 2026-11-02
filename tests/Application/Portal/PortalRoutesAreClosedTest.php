@@ -55,6 +55,8 @@ final class PortalRoutesAreClosedTest extends WebTestCase
 
             if (\in_array($endpoint['name'], self::OPEN_ROUTES, true)) {
                 self::assertLessThan(Response::HTTP_INTERNAL_SERVER_ERROR, $answer['status'], $label);
+            } elseif (self::isJsonEndpoint($endpoint)) {
+                self::assertSame([Response::HTTP_UNAUTHORIZED, null], [$answer['status'], $answer['location']], $label);
             } else {
                 self::assertSame([Response::HTTP_FOUND, self::LOGIN], [$answer['status'], $answer['location']], $label);
             }
@@ -127,6 +129,14 @@ final class PortalRoutesAreClosedTest extends WebTestCase
     private static function routeSample(Route $route, string $parameter): string
     {
         return VenueNumber::REQUIREMENT === $route->getRequirement($parameter) ? '1' : self::UUID;
+    }
+
+    /**
+     * @param Endpoint $endpoint
+     */
+    private static function isJsonEndpoint(array $endpoint): bool
+    {
+        return str_starts_with($endpoint['path'], '/konto/api/');
     }
 
     /**

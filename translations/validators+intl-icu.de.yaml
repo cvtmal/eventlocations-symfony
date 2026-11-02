@@ -172,6 +172,9 @@ inquiry:
         too_long: Die E-Mail-Adresse darf höchstens 254 Zeichen lang sein.
     phone:
         invalid: Bitte geben Sie eine gültige Telefonnummer an.
+portal:
+    photo:
+        rate_limited: Sie haben in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuchen Sie es später noch einmal.
 shared:
     text:
         invalid: Der Text enthält ungültige Zeichen.

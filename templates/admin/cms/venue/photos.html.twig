@@ -1,8 +1,6 @@
 {#
-    The Fotos tab (#25, CMS-6): the `photo-manager` island. Context from `VenuePhotosController`: venue (VenueHeader),
-    photos (`VenuePhotosView::photosArray()`), rooms (`roomsArray()`), locale_codes, default_locale, id_placeholder
-    (`VenueMediaApi::ID_PLACEHOLDER`, the `{id}` in the id endpoints that the island replaces), max_bytes, accept, alt_max.
-    Labels with `%name` tokens are filled in by the island (as UiSortableList's `movedLabel`).
+    The Fotos tab (#25, CMS-6): the `photo-manager` island, with staff's endpoints. Context from `VenuePhotosController`:
+    what `_photo_manager.html.twig` lists, apart from endpoints and reload_url.
 #}
 {% extends 'admin/cms/venue/_layout.html.twig' %}
 
@@ -10,16 +8,7 @@
 
 {% block record_main %}
     {% set id_route = {number: venue.number, id: id_placeholder} %}
-    {{ admin_island('photo-manager', {
-        photos: photos,
-        rooms: rooms,
-        locales: locale_codes|map(code => {code: code, label: ('editor.locale.' ~ code)|trans({}, 'cms')}),
-        defaultLocale: default_locale,
-        venueName: venue.name,
-        maxBytes: max_bytes,
-        accept: accept,
-        altMax: alt_max,
-        idPlaceholder: id_placeholder,
+    {{ include('admin/cms/venue/_photo_manager.html.twig', {
         endpoints: {
             upload: path('admin_api_cms_photos_add', {number: venue.number}),
             order: path('admin_api_cms_photos_order', {number: venue.number}),
@@ -27,62 +16,6 @@
             room: path('admin_api_cms_photos_room', id_route),
             remove: path('admin_api_cms_photos_remove', id_route),
         },
-        reloadUrl: path('admin_locations_photos', {number: venue.number}),
-        labels: {
-            dropLabel: 'photos.drop.label'|trans({}, 'cms'),
-            dropHint: 'photos.drop.hint'|trans({}, 'cms'),
-            queueLabel: 'photos.queue.label'|trans({}, 'cms'),
-            queueWaiting: 'photos.queue.waiting'|trans({}, 'cms'),
-            queueSending: 'photos.queue.sending'|trans({}, 'cms'),
-            queueProcessing: 'photos.queue.processing'|trans({}, 'cms'),
-            queueDone: 'photos.queue.done'|trans({}, 'cms'),
-            queueDuplicate: 'photos.queue.duplicate'|trans({}, 'cms'),
-            queueFailed: 'photos.queue.failed'|trans({}, 'cms'),
-            queueTooLarge: 'photos.queue.too_large'|trans({}, 'cms'),
-            queueSessionGone: 'photos.queue.session_gone'|trans({}, 'cms'),
-            queueRetry: 'photos.queue.retry'|trans({}, 'cms'),
-            queueDismiss: 'photos.queue.dismiss'|trans({}, 'cms'),
-            leaveWarning: 'photos.queue.leave'|trans({}, 'cms'),
-            gallery: 'photos.gallery'|trans({}, 'cms'),
-            countOne: 'photos.count_one'|trans({}, 'cms'),
-            countOther: 'photos.count_other'|trans({}, 'cms'),
-            sortHint: 'photos.sort_hint'|trans({}, 'cms'),
-            cover: 'photos.cover'|trans({}, 'cms'),
-            altMissing: 'photos.alt_missing'|trans({}, 'cms'),
-            emptyTitle: 'photos.empty.title'|trans({}, 'cms'),
-            emptyText: 'photos.empty.text'|trans({}, 'cms'),
-            roomEmpty: 'photos.room_empty'|trans({}, 'cms'),
-            listLabel: 'photos.list_label'|trans({}, 'cms'),
-            item: 'photos.item'|trans({}, 'cms'),
-            moveUp: 'photos.move_up'|trans({}, 'cms'),
-            moveDown: 'photos.move_down'|trans({}, 'cms'),
-            moved: 'photos.moved'|trans({}, 'cms'),
-            detailsLabel: 'photos.details.label'|trans({}, 'cms'),
-            detailsTitle: 'photos.details.title'|trans({}, 'cms'),
-            detailsNone: 'photos.details.none'|trans({}, 'cms'),
-            detailsSize: 'photos.details.size'|trans({}, 'cms'),
-            detailsVariants: 'photos.details.variants'|trans({}, 'cms'),
-            altLabel: 'photos.details.alt'|trans({}, 'cms'),
-            altPlaceholder: 'photos.details.alt_placeholder'|trans({}, 'cms'),
-            altFallback: 'photos.details.alt_fallback'|trans({fallback: 'picture.alt_fallback'|trans({name: venue.name, position: '%position'}, 'media')}, 'cms'),
-            roomLabel: 'photos.details.room'|trans({}, 'cms'),
-            galleryOption: 'photos.details.gallery_option'|trans({}, 'cms'),
-            save: 'photos.details.save'|trans({}, 'cms'),
-            remove: 'photos.details.remove'|trans({}, 'cms'),
-            removeTitle: 'photos.remove.title'|trans({}, 'cms'),
-            removeText: 'photos.remove.text'|trans({}, 'cms'),
-            removeLast: 'photos.remove.last'|trans({}, 'cms'),
-            removeConfirm: 'photos.remove.confirm'|trans({}, 'cms'),
-            cancel: 'photos.remove.cancel'|trans({}, 'cms'),
-            close: 'photos.remove.close'|trans({}, 'cms'),
-            saved: 'photos.flash.saved'|trans({}, 'cms'),
-            removed: 'photos.flash.removed'|trans({}, 'cms'),
-            orderFailed: 'photos.flash.order_failed'|trans({}, 'cms'),
-            failed: 'photos.flash.failed'|trans({}, 'cms'),
-            sessionGone: 'photos.flash.session_gone'|trans({}, 'cms'),
-            stale: 'error.stale'|trans({}, 'cms'),
-            reload: 'error.stale_reload'|trans({}, 'cms'),
-            notFound: 'error.not_found'|trans({}, 'cms'),
-        },
-    }, '<p class="island-required">' ~ ('photos.needs_js'|trans({}, 'cms')|e) ~ '</p>') }}
+        reload_url: path('admin_locations_photos', {number: venue.number}),
+    }) }}
 {% endblock %}

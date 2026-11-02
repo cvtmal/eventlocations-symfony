@@ -14,6 +14,26 @@
 
 {% block main %}
     <div class="card">
-        {{ include('admin/components/_empty.html.twig', {icon: 'building-2', title: 'overview.empty.title'|trans({}, 'portal'), text: 'overview.empty.text'|trans({}, 'portal')}, with_context = false) }}
+        {% if locations is empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'building-2', title: 'overview.empty.title'|trans({}, 'portal'), text: 'overview.empty.text'|trans({}, 'portal')}, with_context = false) }}
+        {% else %}
+            <ul class="venue-widget">
+                {% for location in locations %}
+                    <li class="venue-widget__row">
+                        <a class="venue-widget__name" href="{{ path('portal_location', {number: location.number}) }}">{{ location.name }}</a>
+                        <span class="venue-widget__pills">
+                            {{ include('admin/components/_pill.html.twig', {
+                                label: ('list.status.' ~ location.status.value)|trans({}, 'cms'),
+                                tone: location.isPublished ? 'green' : 'grey',
+                                dot: true,
+                            }, with_context = false) }}
+                            {% for code in location.missing %}
+                                {{ include('admin/components/_pill.html.twig', {label: ('dashboard.incomplete.missing.' ~ code)|trans({}, 'cms'), tone: 'grey'}, with_context = false) }}
+                            {% endfor %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     </div>
 {% endblock %}

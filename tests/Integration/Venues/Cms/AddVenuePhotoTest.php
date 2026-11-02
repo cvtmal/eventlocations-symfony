@@ -12,8 +12,11 @@ use App\Media\ImageVariantGenerator;
 use App\Media\ValueObject\ImageFormat;
 use App\Tests\Support\Media\TestImages;
 use App\Venues\Command\AddVenuePhoto;
+use App\Venues\Entity\Room;
+use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRowNotFound;
+use App\Venues\Exception\VenueRuleViolation;
 use Doctrine\ORM\Events;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
@@ -175,6 +178,61 @@ final class AddVenuePhotoTest extends KernelTestCase
         $venue = VenueFactory::createOne();
 
         self::assertInstanceOf(\InvalidArgumentException::class, $this->failure(new AddVenuePhoto($venue->number(), null, $this->upload(), 'gif')));
+    }
+
+    public function test_a_31st_photo_is_refused_on_the_file_field_and_stores_nothing(): void
+    {
+        $venue = VenueFactory::createOne();
+        $this->fillScope($venue, AddVenuePhoto::MAX_PHOTOS);
+        $source = $this->upload();
+        $stagingBefore = $this->stagingEntries();
+
+        $failure = $this->failure(new AddVenuePhoto($venue->number(), null, $source, 'jpg'));
+
+        self::assertInstanceOf(VenueRuleViolation::class, $failure);
+        self::assertSame('venue.error.too_many_photos', $failure->translationKey());
+        self::assertSame('file', $failure->field);
+        self::assertCount(30, $this->scope($venue->id()));
+        self::assertFileDoesNotExist($this->paths->original('cms/'.$venue->number().'/'.hash_file('sha256', $source).'.jpg'));
+        self::assertSame($stagingBefore, $this->stagingEntries());
+        self::assertFalse($this->cmsEdited($venue->number()));
+    }
+
+    public function test_at_the_limit_the_same_file_stays_a_duplicate(): void
+    {
+        $venue = VenueFactory::createOne();
+        $number = $venue->number();
+        $this->fillScope($venue, AddVenuePhoto::MAX_PHOTOS - 1);
+        $source = $this->upload();
+        $thirtieth = $this->addPhoto($number, $source);
+
+        $again = $this->addPhoto($number, $source);
+
+        self::assertFalse($thirtieth->duplicate);
+        self::assertTrue($again->duplicate);
+        self::assertSame($thirtieth->photoId, $again->photoId);
+    }
+
+    public function test_a_room_at_the_limit_does_not_stop_the_gallery(): void
+    {
+        $venue = VenueFactory::createOne();
+        $room = RoomFactory::createOne(['venue' => $venue]);
+        $roomId = $room->id();
+        $number = $venue->number();
+        $this->fillScope($venue, AddVenuePhoto::MAX_PHOTOS, $room);
+
+        $inGallery = $this->addPhoto($number, $this->upload());
+        $inRoom = $this->failure(new AddVenuePhoto($number, $roomId, $this->upload(), 'jpg'));
+
+        self::assertFalse($inGallery->duplicate);
+        self::assertInstanceOf(VenueRuleViolation::class, $inRoom);
+    }
+
+    private function fillScope(Venue $venue, int $photos, ?Room $room = null): void
+    {
+        for ($position = 1; $position <= $photos; ++$position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $room, 'position' => $position]);
+        }
     }
 
     private static function webp(): string

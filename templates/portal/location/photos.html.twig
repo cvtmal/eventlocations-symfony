@@ -1,0 +1,19 @@
+{#
+    The manager's Fotos tab (POR-8): the `photo-manager` island with four endpoints; without `room` it offers no room.
+    Context from `LocationPhotosController`: what `_photo_manager.html.twig` lists, apart from endpoints and reload_url,
+    plus offline_form.
+#}
+{% extends 'portal/location/_layout.html.twig' %}
+
+{% block location_main %}
+    {% set id_route = {number: venue.number, id: id_placeholder} %}
+    {{ include('admin/cms/venue/_photo_manager.html.twig', {
+        endpoints: {
+            upload: path('portal_api_photos_add', {number: venue.number}),
+            order: path('portal_api_photos_order', {number: venue.number}),
+            alt: path('portal_api_photos_alt', id_route),
+            remove: path('portal_api_photos_remove', id_route),
+        },
+        reload_url: path('portal_location_photos', {number: venue.number}),
+    }) }}
+{% endblock %}

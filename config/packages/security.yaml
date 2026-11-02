@@ -55,6 +55,8 @@ security:
             pattern: ^/konto(/|$)
             lazy: true
             provider: portal_users
+            entry_point: App\Portal\Security\PortalEntryPoint
+            access_denied_handler: App\Portal\Security\PortalAccessDeniedHandler
             form_login:
                 login_path: portal_login
                 check_path: portal_login

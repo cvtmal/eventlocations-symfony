@@ -57,6 +57,19 @@ final class AuditLogQueryTest extends KernelTestCase
         self::assertSame(1, $this->query()->search(new AuditLogFilter(subjectType: 'venue', subjectId: 'b'), 1)->total);
     }
 
+    public function test_it_filters_by_actor_type_and_combines_with_the_subject(): void
+    {
+        $this->entry('2026-10-30 09:00:00+00', actorId: AdminUserFactory::createOne()->id(), subjectType: 'venue');
+        $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue');
+        $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue', actorType: AuditActorType::PortalUser);
+        $this->entry('2026-10-30 09:00:00+00', subjectType: 'portal_user', actorType: AuditActorType::PortalUser);
+
+        self::assertSame(2, $this->query()->search(new AuditLogFilter(actorType: AuditActorType::PortalUser), 1)->total);
+        self::assertSame(1, $this->query()->search(new AuditLogFilter(actorType: AuditActorType::AdminUser), 1)->total);
+        self::assertSame(0, $this->query()->search(new AuditLogFilter(actorType: AuditActorType::System), 1)->total);
+        self::assertSame(1, $this->query()->search(new AuditLogFilter(subjectType: 'venue', actorType: AuditActorType::PortalUser), 1)->total);
+    }
+
     public function test_dates_are_zurich_days_both_inclusive(): void
     {
         $this->entry('2026-10-29 22:59:00+00');
@@ -186,12 +199,12 @@ final class AuditLogQueryTest extends KernelTestCase
         return new AuditLogQuery($this->connection);
     }
 
-    private function entry(string $at, ?string $actorId = null, string $subjectType = 'admin_user', string $subjectId = 'x', string $command = 'App\Admin\Command\CreateAdminUser', string $changes = '{"role": "editor"}'): string
+    private function entry(string $at, ?string $actorId = null, string $subjectType = 'admin_user', string $subjectId = 'x', string $command = 'App\Admin\Command\CreateAdminUser', string $changes = '{"role": "editor"}', ?AuditActorType $actorType = null): string
     {
         $id = EntityId::generate();
         $this->connection->insert('admin_audit_log', [
             'id' => $id,
-            'actor_type' => null === $actorId ? 'console' : 'admin_user',
+            'actor_type' => $actorType->value ?? (null === $actorId ? 'console' : 'admin_user'),
             'actor_id' => $actorId,
             'command' => $command,
             'subject_type' => $subjectType,

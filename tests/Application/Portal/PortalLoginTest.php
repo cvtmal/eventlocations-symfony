@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Portal;
 
+use App\Factory\PortalVenueAccessFactory;
+use App\Factory\VenueFactory;
 use App\Portal\Entity\PortalUser;
+use App\Tests\Application\Crm\CountsQueries;
 use App\Tests\Support\Portal\PortalSession;
+use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -16,6 +22,7 @@ use Zenstruck\Foundry\Test\Factories;
  */
 final class PortalLoginTest extends WebTestCase
 {
+    use CountsQueries;
     use Factories;
     use PortalSession;
 
@@ -40,6 +47,38 @@ final class PortalLoginTest extends WebTestCase
         self::assertSelectorTextContains('.sidebar__avatar', 'MF');
         self::assertSelectorTextContains('.empty__text', 'noch keine Location');
         self::assertSelectorExists('.sidebar__item--active[aria-current="page"]');
+    }
+
+    public function test_the_account_lists_the_manager_s_active_locations_only(): void
+    {
+        $manager = $this->logInAsManager();
+        $published = VenueFactory::createOne(['name' => 'Schloss Aarau', 'tier' => Tier::Premium]);
+        $offline = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished]);
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $published]);
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $offline]);
+        PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => VenueFactory::createOne(['name' => 'Scheune Beantragt'])]);
+        PortalVenueAccessFactory::new()->active()->create(['venue' => VenueFactory::createOne(['name' => 'Fremdes Gut'])]);
+
+        $crawler = $this->client->request('GET', '/konto');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('.empty__text');
+        $links = $crawler->filter('.venue-widget__name');
+        self::assertSame(['Schloss Aarau', 'Waldhütte Eichholz'], $links->each(static fn (Crawler $link): string => $link->text()));
+        self::assertSame('/konto/locations/'.$offline->number(), $links->eq(1)->attr('href'));
+        $row = $crawler->filter('.venue-widget__row')->eq(1);
+        self::assertSame(['Unpubliziert', 'Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Haupt-Gebäudeart fehlt'], $row->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
+        self::assertStringNotContainsString('Premium', $crawler->filter('.venue-widget')->text());
+    }
+
+    public function test_the_list_costs_one_statement_more_than_the_empty_account(): void
+    {
+        $manager = $this->logInAsManager();
+        $empty = $this->queriesOf('/konto');
+
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => VenueFactory::createOne()]);
+
+        self::assertSame($empty + 1, $this->queriesOf('/konto'));
     }
 
     public function test_an_anonymous_visitor_is_sent_to_the_login(): void

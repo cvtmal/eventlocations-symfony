@@ -489,6 +489,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeLeavi
           />
         </CmsField>
         <CmsField
+          v-if="endpoints.room"
           id="photo-room"
           v-slot="{ describedBy, invalid }"
           :label="labels.roomLabel"

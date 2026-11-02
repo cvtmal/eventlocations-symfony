@@ -6,8 +6,10 @@
 # per client IP, consumed only after the form is valid and the fill time has passed.
 # `portal_register` (#42) guards every /konto form that can send a mail (register, forgot):
 # 5 per hour per client IP, one budget across the three, consumed only after the form is valid.
-# All are keyed by Shared\Security\ClientIpKey, never the raw IP: the key lands in a lock file's name
-# and in the cached state.
+# The IP limiters are keyed by Shared\Security\ClientIpKey, never the raw IP: the key lands in a lock
+# file's name and in the cached state.
+# `portal_upload` (#44) guards POST /konto/api/locations/{number}/photos: 60 per hour per manager id,
+# a UUID, so it needs no ClientIpKey. Every attempt counts, a refused file too; staff are not limited.
 framework:
     rate_limiter:
         phone_reveal:
@@ -25,6 +27,11 @@ framework:
             limit: 5
             interval: '1 hour'
             cache_pool: cache.portal_register
+        portal_upload:
+            policy: sliding_window
+            limit: 60
+            interval: '1 hour'
+            cache_pool: cache.portal_upload
     cache:
         pools:
             cache.phone_reveal:
@@ -32,6 +39,8 @@ framework:
             cache.inquiry_submit:
                 adapter: cache.app
             cache.portal_register:
+                adapter: cache.app
+            cache.portal_upload:
                 adapter: cache.app
 
 # Tests clear the pools in setUp(): an array adapter would not work there, because the test client

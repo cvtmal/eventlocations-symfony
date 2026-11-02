@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Tests\Application\Admin;
 
 use App\Admin\Extension\DashboardWidgetRegistry;
+use App\Admin\ValueObject\AdminRole;
+use App\Factory\PortalUserFactory;
 use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
+use App\Shared\Uid\EntityId;
 use App\Tests\Application\Crm\CountsQueries;
 use App\Tests\Support\Admin\AdminSession;
+use App\Venues\Command\ChangeVenueTexts;
+use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -59,7 +64,7 @@ final class DashboardTest extends WebTestCase
         $new = $crawler->filter('.topbar__actions a.btn--primary');
         self::assertSame('Neu', $new->text());
         self::assertSame('/admin/locations', $new->attr('href'));
-        self::assertSame(['Neue Anfragen', 'Meine Aufgaben', 'Überfällig', 'Verlängerungen', 'Unvollständige Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
+        self::assertSame(['Neue Anfragen', 'Meine Aufgaben', 'Überfällig', 'Verlängerungen', 'Unvollständige Locations', 'Änderungen von Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
 
         $incomplete = $crawler->filter('.widget')->eq(4);
         self::assertSame('/admin/locations/'.$hut->number(), $incomplete->filter('.venue-widget__name')->attr('href'));
@@ -68,7 +73,7 @@ final class DashboardTest extends WebTestCase
         self::assertSame('1 unvollständige ansehen', $all->text());
         self::assertSame('/admin/locations?status=incomplete', $all->attr('href'));
 
-        $recent = $crawler->filter('.widget')->eq(5);
+        $recent = $crawler->filter('.widget')->eq(6);
         self::assertSame('Waldhütte Eichholz', $recent->filter('.venue-widget__name')->text());
         self::assertSame('Nr. '.$hut->number(), $recent->filter('.venue-widget__main .muted')->text());
         self::assertSame('28.10.2026', $recent->filter('.venue-widget__meta')->text());
@@ -81,13 +86,13 @@ final class DashboardTest extends WebTestCase
         VenueFactory::new()->withoutLocation(null)->create(['status' => VenueStatus::Unpublished]);
 
         // The two badges, the inquiry one and the task one, which have no owners statement to ride on here, "Neue Anfragen",
-        // "Meine Aufgaben", "Überfällig", "Verlängerungen", the incomplete venues and their total, the recently edited
-        // venues; with the user's refresh 10 in production (#29's ceiling 10).
-        self::assertSame(9, $this->queriesOf('/admin'));
+        // "Meine Aufgaben", "Überfällig", "Verlängerungen", the incomplete venues and their total, the managers' changes,
+        // the recently edited venues; with the user's refresh 11 in production (#29's ceiling 10, plus #44's widget).
+        self::assertSame(10, $this->queriesOf('/admin'));
 
         // An empty identity map is production's: the refresh then reads the user.
         $this->entityManager()->clear();
-        self::assertSame(10, $this->queriesOf('/admin'));
+        self::assertSame(11, $this->queriesOf('/admin'));
     }
 
     public function test_each_widget_has_its_own_empty_text(): void
@@ -96,7 +101,37 @@ final class DashboardTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Noch keine Anfragen.', 'Keine offenen Aufgaben.', 'Nichts ist überfällig.', 'In den nächsten 60 Tagen endet kein Vertrag.', 'Alle Locations sind vollständig.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
+        self::assertSame(['Noch keine Anfragen.', 'Keine offenen Aufgaben.', 'Nichts ist überfällig.', 'In den nächsten 60 Tagen endet kein Vertrag.', 'Alle Locations sind vollständig.', 'Noch keine Änderungen.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
+    }
+
+    public function test_a_manager_s_change_shows_and_an_admin_follows_it_to_the_audit_log(): void
+    {
+        $this->logInAs();
+        $venue = $this->venueChangedByAManager();
+
+        $crawler = $this->client->request('GET', '/admin');
+
+        $changes = $this->changesWidget($crawler);
+        self::assertSame('Waldhütte Eichholz', $changes->filter('.venue-widget__name')->text());
+        self::assertSame('/admin/locations/'.$venue->number(), $changes->filter('.venue-widget__name')->attr('href'));
+        self::assertSame('die Texte geändert', $changes->filter('.venue-widget__main .muted')->text());
+        self::assertSame('28.10.2026 · Mara Frei', $changes->filter('.venue-widget__meta')->text());
+
+        $rows = $this->client->request('GET', (string) $changes->filter('.venue-widget__foot a')->attr('href'))->filter('tbody tr');
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $rows);
+        self::assertStringContainsString('Mara Frei', $rows->text());
+    }
+
+    public function test_an_editor_sees_a_manager_s_change_without_the_audit_link(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $this->venueChangedByAManager();
+
+        $changes = $this->changesWidget($this->client->request('GET', '/admin'));
+
+        self::assertSame('Waldhütte Eichholz', $changes->filter('.venue-widget__name')->text());
+        self::assertCount(0, $changes->filter('.venue-widget__foot'));
     }
 
     public function test_without_widgets_it_shows_the_empty_state(): void
@@ -111,5 +146,29 @@ final class DashboardTest extends WebTestCase
 
         self::assertSelectorTextContains('.empty__title', 'Noch keine Inhalte');
         self::assertSelectorNotExists('.widget');
+    }
+
+    private function venueChangedByAManager(): Venue
+    {
+        $venue = VenueFactory::createOne(['name' => 'Waldhütte Eichholz']);
+        $connection = self::getContainer()->get(Connection::class);
+        self::assertInstanceOf(Connection::class, $connection);
+        $connection->insert('admin_audit_log', [
+            'id' => EntityId::generate(),
+            'actor_type' => 'portal_user',
+            'portal_user_id' => PortalUserFactory::createOne(['firstName' => 'Mara', 'lastName' => 'Frei'])->id(),
+            'command' => ChangeVenueTexts::class,
+            'subject_type' => 'venue',
+            'subject_id' => (string) $venue->number(),
+            'changes' => '{}',
+            'created_at' => '2026-10-28 09:00:00+00',
+        ]);
+
+        return $venue;
+    }
+
+    private function changesWidget(Crawler $dashboard): Crawler
+    {
+        return $dashboard->filter('.widget')->reduce(static fn (Crawler $widget): bool => 'Änderungen von Locations' === $widget->filter('h2')->text());
     }
 }

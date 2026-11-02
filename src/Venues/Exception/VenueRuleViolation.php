@@ -70,6 +70,11 @@ final class VenueRuleViolation extends DomainException
         return new self('venue.error.still_published');
     }
 
+    public static function tooManyPhotos(): self
+    {
+        return new self('venue.error.too_many_photos', 'file');
+    }
+
     /**
      * The PDF is already one of the venue's documents (#25: same bytes, same path).
      */
@@ -120,6 +125,7 @@ final class VenueRuleViolation extends DomainException
             self::coordinatesRequired(),
             self::notPublishable(['summary']),
             self::stillPublished(),
+            self::tooManyPhotos(),
             self::documentAlreadyUploaded(),
             self::documentTitleRequired('de'),
             self::roomNameRequired('de'),
