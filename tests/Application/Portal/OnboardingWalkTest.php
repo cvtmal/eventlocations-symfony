@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Portal;
 
 use App\Admin\ValueObject\AdminRole;
+use App\Factory\AdminUserFactory;
 use App\Geo\ValueObject\Canton;
 use App\Tests\Application\Cms\SendsVenueMediaRequests;
 use App\Tests\Integration\Geo\ImportsTownDataset;
@@ -66,18 +67,21 @@ final class OnboardingWalkTest extends WebTestCase
             [$number],
         ));
 
+        AdminUserFactory::createOne(['role' => AdminRole::Admin]);
         $this->logInAs(AdminRole::Editor);
         $this->accept($number);
 
         $this->assertPublicPage($number, Response::HTTP_OK);
         self::assertSelectorTextContains('h1', self::NAME);
         self::assertSelectorTextContains('main', self::SUMMARY);
+        self::assertSame(1, $this->invoiceTasks($number));
     }
 
     public function test_a_resubmitted_offline_location_goes_back_online(): void
     {
         $number = $this->walkToTheCheck();
         $this->pressPublish($number, 'Veröffentlichen');
+        AdminUserFactory::createOne(['role' => AdminRole::Admin]);
         $this->logInAs(AdminRole::Editor);
         $this->accept($number);
         $this->assertPublicPage($number, Response::HTTP_OK);
@@ -100,6 +104,7 @@ final class OnboardingWalkTest extends WebTestCase
         $this->accept($number);
 
         $this->assertPublicPage($number, Response::HTTP_OK);
+        self::assertSame(1, $this->invoiceTasks($number));
     }
 
     public function test_the_accepted_location_appears_in_listing_sitemap_and_canton_page(): void
@@ -353,6 +358,14 @@ final class OnboardingWalkTest extends WebTestCase
         self::assertIsString($slug);
 
         return $slug;
+    }
+
+    private function invoiceTasks(int $number): int
+    {
+        return (int) $this->connection->fetchOne(
+            "SELECT count(*) FROM crm_tasks t JOIN crm_company_venues l ON l.company_id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
+            [$number],
+        );
     }
 
     private function venueStatus(int $number): mixed

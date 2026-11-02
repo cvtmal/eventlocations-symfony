@@ -34,4 +34,12 @@ final readonly class TaskDueDate
     {
         return $now->setTimezone(new \DateTimeZone(self::ZONE))->format(self::FORMAT);
     }
+
+    /**
+     * Counted on Zurich's calendar, so an accept after midnight there is due from that day.
+     */
+    public static function daysAfter(\DateTimeImmutable $now, int $days): \DateTimeImmutable
+    {
+        return new \DateTimeImmutable(self::today($now))->modify(\sprintf('+%d days', $days));
+    }
 }

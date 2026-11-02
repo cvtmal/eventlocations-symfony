@@ -12,6 +12,7 @@ use App\Venues\ValueObject\VenuePlace;
 final readonly class PendingSubmissionRow
 {
     public function __construct(
+        public string $venueId,
         public int $number,
         public string $name,
         public VenuePlace $place,

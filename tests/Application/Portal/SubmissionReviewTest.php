@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Application\Portal;
 
 use App\Admin\ValueObject\AdminRole;
+use App\Factory\AdminUserFactory;
+use App\Factory\CompanyFactory;
 use App\Factory\PortalUserFactory;
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\SubmissionFactory;
@@ -15,6 +17,7 @@ use App\Factory\VenueTranslationFactory;
 use App\Portal\Command\AcceptSubmission;
 use App\Portal\Command\RejectSubmission;
 use App\Portal\Entity\PortalUser;
+use App\Shared\Uid\EntityId;
 use App\Tests\Application\Crm\ForgedPosts;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Portal\PortalSession;
@@ -23,8 +26,12 @@ use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\Mailer\Envelope;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\RawMessage;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -36,6 +43,7 @@ final class SubmissionReviewTest extends WebTestCase
         AdminSession::setUp insteadof PortalSession;
         AdminSession::tearDown insteadof PortalSession;
     }
+    use ClockSensitiveTrait;
     use Factories;
     use ForgedPosts;
 
@@ -172,6 +180,124 @@ final class SubmissionReviewTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertStringContainsString('Location angenommen.', $crawler->filter('.toast--success')->text());
         self::assertCount(0, $crawler->filter('#review-submissions form'));
+    }
+
+    public function test_the_first_accept_of_a_new_location_writes_the_invoice_task(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->waiting(new: true);
+        $owner = AdminUserFactory::createOne();
+        $company = $this->companyOf($venue, ['owner' => $owner]);
+
+        self::mockTime('2026-11-02 10:00:00 UTC');
+        $this->decide($venue);
+
+        self::assertResponseRedirects(self::QUEUE, 303);
+        self::assertSame([[
+            'title' => 'Rechnung stellen',
+            'due_on' => '2026-12-02',
+            'assignee_id' => $owner->id(),
+            'company_id' => $company,
+        ]], $this->connection->fetchAllAssociative('SELECT title, due_on, assignee_id, company_id FROM crm_tasks'));
+    }
+
+    public function test_a_claimed_location_writes_no_invoice_task(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->waiting();
+        $this->companyOf($venue, ['owner' => AdminUserFactory::createOne()]);
+
+        $this->decide($venue);
+
+        self::assertSame('accepted', $this->submissionStatus($venue));
+        self::assertSame(0, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
+    }
+
+    /**
+     * The submit's CRM link failed, so the location has no company: the reminder creates it, as the link would have.
+     */
+    public function test_a_new_location_with_no_company_gets_one_with_the_task(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $admin = AdminUserFactory::createOne(['role' => AdminRole::Admin]);
+        $venue = $this->waiting(new: true);
+
+        $this->decide($venue);
+
+        self::assertResponseRedirects(self::QUEUE, 303);
+        self::assertSame('accepted', $this->submissionStatus($venue));
+        self::assertSame([['title' => 'Rechnung stellen', 'assignee_id' => $admin->id(), 'name' => 'Seehaus']], $this->connection->fetchAllAssociative(
+            'SELECT t.title, t.assignee_id, c.name FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id JOIN crm_company_venues l ON l.company_id = c.id WHERE l.venue_id = ?',
+            [$venue->id()],
+        ));
+    }
+
+    /**
+     * Only editors are active, so no one can take the task and the real handler fails.
+     */
+    public function test_a_failing_crm_does_not_fail_the_accept(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->waiting('Seehaus', $this->manager('Petra', 'Keller', 'petra@example.ch'), new: true);
+        $this->companyOf($venue);
+
+        $this->decide($venue);
+
+        self::assertResponseRedirects(self::QUEUE, 303);
+        self::assertEmailCount(1);
+        self::assertSame('published', $this->venueStatus($venue));
+        self::assertSame('accepted', $this->submissionStatus($venue));
+        self::assertSame(0, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
+        self::assertStringContainsString('Location angenommen.', $this->client->followRedirect()->filter('.toast--success')->text());
+    }
+
+    /**
+     * Review m2: the event fires in a `finally`, so a mail error PortalMailer does not catch still writes the task. The
+     * request itself ends in a 500, as it did before Q20.
+     */
+    public function test_a_throwing_accept_mail_still_writes_the_invoice_task(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->waiting('Seehaus', $this->manager('Petra', 'Keller', 'petra@example.ch'), new: true);
+        $this->companyOf($venue, ['owner' => AdminUserFactory::createOne()]);
+        self::getContainer()->set('mailer.mailer', new class implements MailerInterface {
+            public function send(RawMessage $message, ?Envelope $envelope = null): void
+            {
+                throw new \LogicException('Not a transport error.');
+            }
+        });
+
+        $this->decide($venue);
+
+        self::assertResponseStatusCodeSame(500);
+        self::assertSame('published', $this->venueStatus($venue));
+        self::assertSame(1, $this->connection->fetchOne("SELECT count(*) FROM crm_tasks WHERE title = 'Rechnung stellen'"));
+    }
+
+    /**
+     * Review m1, and the owner's rule of 2026-11-02: a new location staff published from the CMS got its task there. The
+     * row stays `submitted`, so after "offline" it is back in the queue, and that accept adds none.
+     */
+    public function test_a_new_location_published_from_the_cms_gets_no_second_task_from_a_later_accept(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->waiting(new: true);
+        $this->companyOf($venue, ['owner' => AdminUserFactory::createOne()]);
+
+        $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
+        $this->client->submit($crawler->filter('form[name="publish"]')->form());
+        self::assertSame('published', $this->venueStatus($venue));
+        self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
+
+        $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
+        $this->client->submit($crawler->filter('form[name="unpublish"]')->form());
+        self::assertSame('submitted', $this->submissionStatus($venue));
+        $this->decide($venue);
+
+        self::assertResponseRedirects(self::QUEUE, 303);
+        self::assertSame('published', $this->venueStatus($venue));
+        self::assertSame('accepted', $this->submissionStatus($venue));
+        self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
     }
 
     public function test_accept_with_something_missing_names_it_and_stays_in_the_queue(): void
@@ -412,11 +538,15 @@ final class SubmissionReviewTest extends WebTestCase
 
     /**
      * A location that can go online, waiting for staff. `submitted()` takes an account of its own, so the given manager
-     * is written over it.
+     * is written over it. `$new` is a location the wizard created, not a claimed one.
      */
-    private function waiting(string $name = 'Seehaus', ?PortalUser $manager = null, bool $photo = true): Venue
+    private function waiting(string $name = 'Seehaus', ?PortalUser $manager = null, bool $photo = true, bool $new = false): Venue
     {
         $venue = $this->unpublished($name);
+        if ($new) {
+            // As `CreateVenue` leaves it, which the wizard's `CreateOwnLocation` dispatches (Q20).
+            $this->connection->executeStatement('UPDATE venues SET awaits_first_publish = true WHERE id = ?', [$venue->id()]);
+        }
         VenueTranslationFactory::createOne(['venue' => $venue, 'summary' => 'Ein Haus am See.']);
         VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
         if ($photo) {
@@ -428,6 +558,19 @@ final class SubmissionReviewTest extends WebTestCase
         }
 
         return $venue;
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     *
+     * @return string the company's id
+     */
+    private function companyOf(Venue $venue, array $attributes = []): string
+    {
+        $company = CompanyFactory::createOne($attributes);
+        $this->connection->insert('crm_company_venues', ['id' => EntityId::generate(), 'company_id' => $company->id(), 'venue_id' => $venue->id()]);
+
+        return $company->id();
     }
 
     private function decide(Venue $venue): void

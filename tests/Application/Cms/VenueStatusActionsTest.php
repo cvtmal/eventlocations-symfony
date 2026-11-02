@@ -70,6 +70,51 @@ final class VenueStatusActionsTest extends WebTestCase
         self::assertSame(2, $this->auditRows($number));
         self::assertNotNull($this->connection->fetchOne('SELECT cms_edited_at FROM venues WHERE number = ?', [$number]));
         self::assertCount(1, $crawler->filter('form[name="unpublish"]'));
+        // Only an editor is active, so nobody can take the invoice task (Q20): the CRM fails and the publish stands.
+        self::assertSame(0, $this->invoiceTasks($number));
+    }
+
+    /**
+     * Q20, the owner's rule of 2026-11-02: a venue staff created goes live for the first time, so the owner is reminded
+     * to invoice it, once. It has no CRM company yet, so the reminder creates one.
+     */
+    public function test_the_first_publish_of_a_new_venue_writes_one_invoice_task(): void
+    {
+        $staff = $this->logInAs();
+        $number = $this->createPublishable('Neue Scheune');
+        $crawler = $this->client->request('GET', '/admin/locations/'.$number);
+
+        $this->client->submit($crawler->filter('form[name="publish"]')->form());
+
+        self::assertSame('published', $this->venueStatus($number));
+        self::assertSame([['name' => 'Neue Scheune', 'title' => 'Rechnung stellen', 'assignee_id' => $staff['user']->id()]], $this->connection->fetchAllAssociative(
+            'SELECT c.name, t.title, t.assignee_id FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id JOIN crm_company_venues l ON l.company_id = c.id JOIN venues v ON v.id = l.venue_id WHERE v.number = ?',
+            [$number],
+        ));
+
+        $crawler = $this->client->followRedirect();
+        $this->client->submit($crawler->filter('form[name="unpublish"]')->form());
+        $crawler = $this->client->followRedirect();
+        $this->client->submit($crawler->filter('form[name="publish"]')->form());
+
+        self::assertSame('published', $this->venueStatus($number));
+        self::assertSame(1, $this->invoiceTasks($number), 'offline and back writes none');
+    }
+
+    public function test_publishing_an_imported_or_seeded_venue_writes_no_invoice_task(): void
+    {
+        $this->logInAs();
+        $venue = DetailVenues::minimal();
+        VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished' WHERE id = ?", [$venue->id()]);
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        $this->client->submit($crawler->filter('form[name="publish"]')->form());
+
+        self::assertSame('published', $this->venueStatus($venue->number()));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_companies'));
     }
 
     public function test_unpublish_takes_a_venue_offline(): void
@@ -200,6 +245,30 @@ final class VenueStatusActionsTest extends WebTestCase
         self::assertStringContainsString('cms_edited  gasthaus-status', $import->getDisplay());
         self::assertSame('unpublished', $this->venueStatus($number));
         self::assertSame(120, (int) $this->connection->fetchOne('SELECT capacity_max FROM venues WHERE number = ?', [$number]));
+    }
+
+    /**
+     * A venue made with "Neue Location", given what a publish needs.
+     */
+    private function createPublishable(string $name): int
+    {
+        $this->client->request('GET', '/admin/locations/neu');
+        $this->client->submitForm('Erfassen', ['create_venue[name]' => $name, 'create_venue[capacityMax]' => '140']);
+        $number = (int) $this->connection->fetchOne('SELECT number FROM venues WHERE name = ?', [$name]);
+        $venue = $this->entity($number);
+        $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune am Waldrand.' WHERE venue_id = ? AND locale = 'de'", [$venue->id()]);
+        VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+
+        return $number;
+    }
+
+    private function invoiceTasks(int $number): int
+    {
+        return (int) $this->connection->fetchOne(
+            "SELECT count(*) FROM crm_tasks t JOIN crm_company_venues l ON l.company_id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
+            [$number],
+        );
     }
 
     private function url(Venue $venue): string

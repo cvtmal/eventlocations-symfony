@@ -46,7 +46,7 @@ final class CreateOwnLocationTest extends KernelTestCase
 
         $row = $this->connection->fetchAssociative(
             <<<'SQL'
-                SELECT v.name, v.tier, v.status, v.capacity_max, a.status AS access, a.confirmed_at IS NOT NULL AS confirmed, s.status AS submission
+                SELECT v.name, v.tier, v.status, v.capacity_max, v.awaits_first_publish, a.status AS access, a.confirmed_at IS NOT NULL AS confirmed, s.status AS submission
                 FROM venues v
                 JOIN portal_venue_access a ON a.venue_id = v.id AND a.portal_user_id = ?
                 JOIN portal_submissions s ON s.venue_id = v.id
@@ -59,6 +59,7 @@ final class CreateOwnLocationTest extends KernelTestCase
             'tier' => 'basic',
             'status' => 'unpublished',
             'capacity_max' => 120,
+            'awaits_first_publish' => true,
             'access' => 'active',
             'confirmed' => true,
             'submission' => 'draft',

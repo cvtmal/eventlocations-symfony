@@ -11,7 +11,7 @@ use App\Crm\Command\CreateRenewalTask;
 use App\Crm\Command\MoveDealStage;
 use App\Crm\Entity\Deal;
 use App\Crm\Entity\Task;
-use App\Crm\Exception\NoRenewalAssignee;
+use App\Crm\Exception\NoTaskAssignee;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\LostReason;
 use App\Factory\AdminUserFactory;
@@ -95,7 +95,7 @@ final class CreateRenewalTaskTest extends KernelTestCase
         $this->connection->executeStatement('UPDATE admin_users SET is_active = false');
         $deal = $this->ending('2026-12-31');
 
-        $this->failure(new CreateRenewalTask(EntityId::generate(), $deal->id()), NoRenewalAssignee::class);
+        $this->failure(new CreateRenewalTask(EntityId::generate(), $deal->id()), NoTaskAssignee::class);
 
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_tasks WHERE deal_id = ?', $deal->id()));
     }

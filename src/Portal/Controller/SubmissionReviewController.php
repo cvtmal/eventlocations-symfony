@@ -16,6 +16,7 @@ use App\Portal\ReadModel\PendingSubmissionQuery;
 use App\Portal\ReadModel\PendingSubmissionRow;
 use App\Portal\ValueObject\PortalFlash;
 use App\Shared\Translation\LocalizedRoutes;
+use App\Venues\Event\VenueEvents;
 use App\Venues\Exception\VenueRuleViolation;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
@@ -23,6 +24,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -31,7 +33,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Staff decide on a new location (POR-13), as `ReviewController` does on an access request: a decision reads the open
  * row first, and the mail comes after the dispatch, so it cannot undo the decision. A row that is gone redirects
- * instead of a 404: a double click or a publish in the CMS empties it, and the queue is the answer to both.
+ * instead of a 404: a double click or a publish in the CMS empties it, and the queue is the answer to both. An accept
+ * that was the venue's first publish fires `NewVenuePublished` (Q20); one the CMS already published fired it there.
  */
 #[IsGranted('ROLE_EDITOR')]
 #[Route('/admin/pruefung/neu/{number}', requirements: ['number' => VenueNumber::REQUIREMENT], options: [LocalizedRoutes::UNLOCALIZED => true])]
@@ -43,6 +46,7 @@ final class SubmissionReviewController extends AbstractController
         private readonly MessageBusInterface $commandBus,
         private readonly PendingSubmissionQuery $queue,
         private readonly PortalMailer $mailer,
+        private readonly VenueEvents $events,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -61,7 +65,7 @@ final class SubmissionReviewController extends AbstractController
         }
 
         try {
-            $this->commandBus->dispatch(new AcceptSubmission($number, $staff->id()));
+            $first = $this->commandBus->dispatch(new AcceptSubmission($number, $staff->id()))->last(HandledStamp::class)?->getResult();
         } catch (HandlerFailedException $failure) {
             if ([] !== $failure->getWrappedExceptions(SubmissionNotOpen::class)) {
                 return $this->back('error', 'review.flash.gone');
@@ -70,7 +74,14 @@ final class SubmissionReviewController extends AbstractController
             return $this->back('error', 'onboarding.queue.flash.missing', ['missing' => $this->missing(VenueRuleViolation::unwrap($failure))]);
         }
 
-        $mailed = null === $row->managerEmail || $this->mailer->sendLocationAccepted($row->managerEmail, (string) $row->managerFirstName, $row->name, $number);
+        // In `finally` so that an unexpected mail error cannot lose the event.
+        try {
+            $mailed = null === $row->managerEmail || $this->mailer->sendLocationAccepted($row->managerEmail, (string) $row->managerFirstName, $row->name, $number);
+        } finally {
+            if (true === $first) {
+                $this->events->newVenuePublished($row->venueId);
+            }
+        }
 
         return $mailed ? $this->back('success', 'onboarding.queue.flash.accepted') : $this->back('error', 'onboarding.queue.flash.accepted_mail_failed');
     }
