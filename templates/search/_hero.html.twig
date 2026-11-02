@@ -4,12 +4,12 @@
       optional (#17 landing pages): breadcrumb (list<{name, url?}>, above the h1);
       optional (#26): intro_html (safe HTML of block content from content_block(), under the h1).
 #}
-<section class="listing-hero">
+<section class="listing-hero" aria-labelledby="listing-title">
     <div class="container">
         {%- if breadcrumb ?? [] %}
         {{ include('components/_breadcrumb.html.twig', {items: breadcrumb, label: 'landing.breadcrumb_label'|trans({}, 'search')}, with_context = false) }}
         {%- endif %}
-        <h1 class="listing-hero__title">{{ heading }}</h1>
+        <h1 class="listing-hero__title" id="listing-title">{{ heading }}</h1>
         {%- if intro_html ?? null %}
         <div class="listing-hero__intro">{{ intro_html }}</div>
         {%- endif %}

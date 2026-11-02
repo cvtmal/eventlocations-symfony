@@ -22,6 +22,22 @@
         // The peek runs to the screen's edge, over the column's own padding.
         @include bp.down(lg) {
             margin-right: -1.5rem;
+            // Chromium leaves a half-shown focus target where it is. The snapport must stay a slide wide (18.125rem),
+            // or snapping stops.
+            scroll-padding-right: calc(100% - 18.25rem);
+
+            // The track runs to the viewport edge, which would cut off the right side of an outer ring.
+            &:focus-visible {
+                outline-offset: -2px;
+            }
+        }
+
+        // No arrows below md, so a key on the track is the one way to page, by a width above one slide's. WebKit snaps on
+        // past that target and skips every other slide. Behind `:focus-visible`, so a swipe can still pass several.
+        @include bp.down(md) {
+            &:focus-visible .carousel__slide {
+                scroll-snap-stop: always;
+            }
         }
 
         @include bp.up(lg) {
@@ -148,6 +164,12 @@
 
         &:hover {
             text-decoration: underline;
+        }
+
+        @include bp.down(lg) {
+            &:focus-visible {
+                outline-offset: -2px;
+            }
         }
     }
 }

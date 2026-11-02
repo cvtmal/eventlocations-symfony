@@ -14,6 +14,8 @@
     The owner's price level and ambience are .tag pills under the summary (#33, LP-7), price first; a card without either
     has no .card__tags, so it stays exactly LP-2.
     `sizes` follows the photo column of _card.scss: 400 px from lg, 320 px from md, the page less 80 px of padding below.
+    Only the first slide keeps its alt text: each slide's link is aria-hidden, so no reader meets them, and real alts are
+    long and all different, about 19 KB gzip on a full listing (#41). The detail page shows every photo with its alt.
     The title prints `h` and the level apart because RawTextScanner reads a tag that starts with an expression as text.
 #}
 {%- set index = index|default(99) -%}
@@ -27,7 +29,7 @@
         {% embed 'components/_carousel.html.twig' with {id: 'card-' ~ card.number ~ '-photos', label: 'card.photos_label'|trans({name: card.name}, 'search'), pictures: pictures, index: index, href: href, scrollable: pictures|length > 1} only %}
             {% block slides %}
                 {%- for pic in pictures -%}
-                <li class="carousel__slide"><a class="card__photo-link" href="{{ href }}" tabindex="-1" aria-hidden="true">{{ venue_picture(pic, sizes='(min-width: 1024px) 400px, (min-width: 768px) 320px, calc(100vw - 80px)', loading=(index == 1 and loop.first ? 'eager' : 'lazy'), priority=(index == 0 and loop.first), widths=[360, 640, 960], class='card__picture') }}</a></li>
+                <li class="carousel__slide"><a class="card__photo-link" href="{{ href }}" tabindex="-1" aria-hidden="true">{{ venue_picture(pic, sizes='(min-width: 1024px) 400px, (min-width: 768px) 320px, calc(100vw - 80px)', loading=(index == 1 and loop.first ? 'eager' : 'lazy'), priority=(index == 0 and loop.first), widths=[360, 640, 960], class='card__picture', decorative=not loop.first) }}</a></li>
                 {%- endfor -%}
             {% endblock %}
         {% endembed %}

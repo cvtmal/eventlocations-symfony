@@ -188,9 +188,11 @@
 
         // Under its button where the browser can anchor; elsewhere it stays centred. Centred on the button as well:
         // at 1024 px a menu that starts at the button's left edge would reach the viewport's right edge.
+        // Above the button when there is no room below: WebKit would leave it past the fold, under the scroll lock.
         @supports (position-anchor: --a) {
             position-anchor: --venue-share;
             position-area: block-end;
+            position-try-fallbacks: flip-block;
             margin: var(--space-8) 0 0;
         }
     }

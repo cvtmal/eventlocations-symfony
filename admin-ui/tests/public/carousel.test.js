@@ -98,6 +98,15 @@ describe('carousel position (#39)', () => {
         expect(next().disabled).toBe(true);
     });
 
+    it('reads 12 slides with a peek of the next one as 1, 2, 3', () => {
+        const { track, step } = mount({ total: 12, perView: 1.3 });
+
+        const read = [counter(), scrollTo(track, step), scrollTo(track, 2 * step)];
+
+        expect(read).toEqual(['1 / 12', '2 / 12', '3 / 12']);
+        expect(next().disabled).toBe(false);
+    });
+
     it('keeps "next" enabled on a track with no layout, a closed gallery', () => {
         mount({ total: 3, hidden: true });
 

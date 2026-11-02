@@ -2,7 +2,7 @@
 
 ## Source
 
-- `sprite.svg`: 44 icons from [`lucide-static` 1.57.0](https://cdn.jsdelivr.net/npm/lucide-static@1.57.0/) (`icons/<name>.svg`), the inner elements copied unchanged into `<symbol id="<name>" viewBox="0 0 24 24">`. The presentation attributes (`stroke`, `fill`, `stroke-width`, …) of the Lucide root were dropped; `.icon` in `assets/styles/components/_icon.scss` sets them.
+- `sprite.svg`: 44 icons. 39 from [`lucide-static` 1.57.0](https://cdn.jsdelivr.net/npm/lucide-static@1.57.0/) (`icons/<name>.svg`), the inner elements copied unchanged into `<symbol id="<name>" viewBox="0 0 24 24">`. The presentation attributes (`stroke`, `fill`, `stroke-width`, …) of the Lucide root were dropped; `.icon` in `assets/styles/components/_icon.scss` sets them. The other five (`beer`, `castle`, `grape`, `hotel`, `warehouse`, #36) match the boards' `docs/reference/public/assets/cat-*.svg` path for path, same treatment.
 - `admin-sprite.svg`: 33 icons for the back office (#22, #23, #24, #27b), same source and treatment. A separate file, so public pages never download them.
 - `favicon.svg`: derived from the Lucide `heart` icon (pink stroke).
 - Nothing in this directory is copied from eventlokale.

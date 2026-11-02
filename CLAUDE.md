@@ -1,6 +1,6 @@
 # Hochzeitslocation
 
-Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste without login. It is modelled on eventlokale.ch's wedding search. Scope, settled decisions, requirements and the cycle order live in `docs/rpi-cycles.md`; read it before starting a cycle.
+Swiss wedding-venue listing site: a home page, one listing page with filters, one detail page per venue, and a Merkliste without login. It is modelled on eventlokale.ch's wedding search. Scope, settled decisions, requirements and the cycle order live in `docs/rpi-cycles.md`; read it before starting a cycle.
 
 ## Tech Stack
 
@@ -118,7 +118,7 @@ Each module's notes live in `.claude/rules/module-<name>.md`, which load by them
 | Geo | `.claude/rules/module-geo.md` | Cantons, towns, place lookup, distances, canton map |  |
 | Media | `.claude/rules/module-media.md` | Image variants, `<picture>`, regeneration |  |
 | Venues | `.claude/rules/module-venues.md` | Venue aggregate, detail page, imports, CMS write side | any venue write from Cms or Crm |
-| Search | `.claude/rules/module-search.md` | `SearchCriteria`, listing, filters, landing pages, similar venues | a change to `search/_card` |
+| Search | `.claude/rules/module-search.md` | `SearchCriteria`, home page, listing, filters, landing pages, similar venues | a change to `search/_card` |
 | Favorites | `.claude/rules/module-favorites.md` | Merkliste cookie, toggle, sync, page |  |
 | Inquiries | `.claude/rules/module-inquiries.md` | Inquiry form, mails, retention, events |  |
 | Seo | `.claude/rules/module-seo.md` | Meta, JSON-LD, sitemap, robots, error pages | any page's `title`, `meta` or `canonical` block |
