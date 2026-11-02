@@ -411,7 +411,7 @@ final class DealRecordTest extends WebTestCase
         self::assertSame(0, $this->auditRows(MoveDealStage::class));
     }
 
-    public function test_the_page_runs_six_queries(): void
+    public function test_the_page_stays_within_its_statements(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
@@ -422,8 +422,9 @@ final class DealRecordTest extends WebTestCase
         TaskFactory::createOne(['deal' => $deal]);
 
         // The deal with its company, venue and contacts, the owners with the sidebar's badge, the stages, the timeline's
-        // activities, the Aufgaben card, the tier offer; with the user's refresh 7 in production (N14's ceiling 9).
-        self::assertSame(6, $this->queriesOf($this->url($deal)));
+        // activities, the Aufgaben card, the tier offer, the access-request badge; with the user's refresh 8 in production
+        // (N14's ceiling 9).
+        self::assertSame(7, $this->queriesOf($this->url($deal)));
     }
 
     private function url(Deal $deal): string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Portal\Entity;
 
+use App\Portal\Repository\PortalVenueAccessRepository;
 use App\Portal\ValueObject\PortalVenueAccessStatus;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Types\Types;
@@ -13,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  * A manager's access to a location (S16): pending from the request, active once confirmed. Both sides
  * cascade, so the row goes with the manager or the location.
  */
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: PortalVenueAccessRepository::class)]
 #[ORM\Table(name: 'portal_venue_access')]
 #[ORM\Index(name: 'idx_portal_venue_access_portal_user_id', columns: ['portal_user_id'])]
 #[ORM\Index(name: 'idx_portal_venue_access_venue_id', columns: ['venue_id'])]

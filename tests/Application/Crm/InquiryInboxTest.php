@@ -604,7 +604,7 @@ final class InquiryInboxTest extends WebTestCase
         $this->inquiry();
         $this->inquiry();
 
-        self::assertSame(4, $this->queriesOf(self::LIST));
+        self::assertSame(5, $this->queriesOf(self::LIST));
         self::assertSame('2', $this->client->getCrawler()->filter('.sidebar__badge')->text());
     }
 
@@ -614,7 +614,7 @@ final class InquiryInboxTest extends WebTestCase
         $id = $this->inquiry();
         $this->inquiry();
 
-        self::assertSame(4, $this->queriesOf(self::LIST.'/'.$id));
+        self::assertSame(5, $this->queriesOf(self::LIST.'/'.$id));
         self::assertSame('2', $this->client->getCrawler()->filter('.sidebar__badge')->text());
     }
 

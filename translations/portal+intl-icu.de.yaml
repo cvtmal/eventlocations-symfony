@@ -143,3 +143,89 @@ accounts:
         label: Seiten
         previous: Zurück
         next: Weiter
+claims:
+    title: Location suchen
+    overview_link: Location suchen
+    search:
+        label: Location nach Name oder Ort suchen
+        placeholder: Name oder Ort
+        submit: Suchen
+    table_label: Suchergebnisse
+    column:
+        name: Name
+    action:
+        ask: Zugriff anfragen
+        ask_for: Zugriff auf {name} anfragen
+    state:
+        pending: Anfrage liegt bei uns
+        active: Ihre Location
+    empty:
+        start_title: Suchen Sie Ihre Location
+        start_text: Geben Sie mindestens zwei Zeichen ein.
+        none_title: Keine Location gefunden
+        none_text: Prüfen Sie die Schreibweise oder suchen Sie nach dem Ort.
+    flash:
+        requested: Ihre Anfrage liegt bei uns. Wir melden uns per E-Mail.
+        already: Ihre Anfrage liegt schon bei uns, oder Sie haben bereits Zugriff.
+        not_available: Diese Location ist nicht mehr verfügbar.
+        failed: Das hat nicht geklappt. Bitte noch einmal versuchen.
+    mail:
+        approved:
+            subject: Ihr Zugriff auf {venue} ist bestätigt
+            preheader: Sie können {venue} jetzt verwalten.
+            greeting: Guten Tag {name}
+            intro: Wir haben Ihre Anfrage geprüft. Sie können {venue} jetzt in Ihrem Konto verwalten.
+            button: Zu meinem Konto
+        rejected:
+            subject: Ihre Anfrage für {venue}
+            preheader: Wir konnten Ihre Anfrage nicht bestätigen.
+            greeting: Guten Tag {name}
+            intro: Wir konnten Ihre Anfrage für {venue} nicht bestätigen.
+            again: Sie können den Zugriff jederzeit erneut anfragen.
+review:
+    title: Prüfung
+    nav: Prüfung
+    widget:
+        title: Zugriffsanfragen
+        all: Alle ansehen
+        all_count: 'Alle {count} ansehen'
+        empty: Keine offenen Zugriffsanfragen.
+    tabs_label: Bereiche der Prüfung
+    tab:
+        requests: Zugriffsanfragen
+    table_label: Offene Zugriffsanfragen
+    column:
+        name: Name
+        email: E-Mail
+        phone: Telefon
+        location: Location
+        date: Angefragt am
+        actions: Aktionen
+    action:
+        approve: Annehmen
+        approve_for: Zugriff von {name} auf {venue} annehmen
+        reject: Ablehnen
+        reject_for: Zugriff von {name} auf {venue} ablehnen
+    empty:
+        title: Keine offenen Zugriffsanfragen
+        text: Fragt jemand Zugriff auf eine Location an, erscheint die Anfrage hier.
+    panel:
+        title: Location-Manager
+        empty: Diese Location hat noch keine Manager.
+        remove: Entfernen
+        remove_for: '{name} als Manager entfernen'
+        email: E-Mail eines bestehenden Kontos
+        add: Hinzufügen
+    flash:
+        approved: Zugriff bestätigt. Die E-Mail ist unterwegs.
+        approved_mail_failed: "Achtung: Der Zugriff ist bestätigt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
+        rejected: Anfrage abgelehnt. Die E-Mail ist unterwegs.
+        rejected_mail_failed: "Achtung: Die Anfrage ist abgelehnt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
+        gone: Diese Anfrage ist nicht mehr offen.
+        action_failed: Das hat nicht geklappt. Bitte noch einmal versuchen.
+        manager_added: Manager hinzugefügt.
+        manager_removed: Manager entfernt.
+        manager_known: Diese Person ist bereits Manager dieser Location.
+        manager_unknown: Zu dieser E-Mail-Adresse gibt es kein Konto.
+        manager_invalid: Bitte eine gültige E-Mail-Adresse eingeben.
+        manager_gone: Diese Person ist nicht mehr Manager dieser Location.

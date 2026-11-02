@@ -102,13 +102,14 @@ final class ContactListTest extends WebTestCase
         self::assertSame(['Zett', 'Ohne', 'Ah'], $this->names($this->client->request('GET', '/admin/crm/kontakte?sort=name&dir=desc')));
     }
 
-    public function test_the_list_runs_three_queries(): void
+    public function test_the_list_stays_within_its_statements(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         ContactFactory::createMany(3, ['company' => CompanyFactory::createOne(), 'owner' => $owner]);
 
-        // The owners, which carry the sidebar's badge (`TaskBadge`), COUNT, the rows; with the user's refresh 4 in production.
-        self::assertSame(3, $this->queriesOf('/admin/crm/kontakte?kind=other&sort=company'));
+        // The owners, which carry the sidebar's badge (`TaskBadge`), COUNT, the rows, the access-request badge; with the
+        // user's refresh 5 in production.
+        self::assertSame(4, $this->queriesOf('/admin/crm/kontakte?kind=other&sort=company'));
     }
 
     /**

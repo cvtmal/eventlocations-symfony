@@ -141,16 +141,17 @@ final class ContactRecordTest extends WebTestCase
         self::assertCount(0, $crawler->filter('#deals .card__head a'));
     }
 
-    public function test_the_page_runs_six_queries(): void
+    public function test_the_page_stays_within_its_statements(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         $contact = ContactFactory::createOne(['company' => CompanyFactory::createOne(), 'owner' => $owner, 'email' => 'mia@example.ch']);
         TaskFactory::createOne(['contact' => $contact]);
 
         // The contact with its company and owner, the owners, which carry the sidebar's badge (`TaskBadge`), the
-        // timeline's activities, the composer's mail templates, the Aufgaben card, the Deals card; with the user's refresh
-        // 7 in production (N14's ceiling 9). The address is the worst case: without one the templates are not read.
-        self::assertSame(6, $this->queriesOf('/admin/crm/kontakte/'.$contact->id()));
+        // timeline's activities, the composer's mail templates, the Aufgaben card, the Deals card, the access-request
+        // badge; with the user's refresh 8 in production (N14's ceiling 9). The address is the worst case: without one the
+        // templates are not read.
+        self::assertSame(7, $this->queriesOf('/admin/crm/kontakte/'.$contact->id()));
     }
 
     public function test_a_contact_without_an_address_reads_no_templates(): void
@@ -162,7 +163,7 @@ final class ContactRecordTest extends WebTestCase
         $url = '/admin/crm/kontakte/'.$contact->id();
 
         // The pin above without the composer's mail templates.
-        self::assertSame(5, $this->queriesOf($url));
+        self::assertSame(6, $this->queriesOf($url));
 
         $crawler = $this->client->request('GET', $url);
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);

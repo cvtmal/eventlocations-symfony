@@ -1,0 +1,79 @@
+{% extends 'portal/base.html.twig' %}
+
+{% block title %}{{ 'claims.title'|trans({}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('portal_home') }}">{{ 'overview.title'|trans({}, 'portal') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'claims.title'|trans({}, 'portal') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>{{ 'claims.title'|trans({}, 'portal') }}</h1>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% embed 'admin/components/_filter_bar.html.twig' with {
+        action: path('portal_claims_search'),
+        id: 'claim-search',
+        search_value: q,
+        search_label: 'claims.search.label'|trans({}, 'portal'),
+        search_placeholder: 'claims.search.placeholder'|trans({}, 'portal'),
+        submit_label: 'claims.search.submit'|trans({}, 'portal'),
+    } only %}{% endembed %}
+
+    {# Not `_table`: `.table--list` keeps its cells on one line, which pushes the page's one action out at 390 px. #}
+    <div class="card table-card">
+        <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'claims.table_label'|trans({}, 'portal') }}">
+            <table class="table" id="claim-results">
+                <thead>
+                    <tr><th scope="col">{{ 'claims.column.name'|trans({}, 'portal') }}</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        {% set status = statuses[row.number]|default(null) %}
+                        <tr>
+                            <td>
+                                <div class="page-header__title">
+                                    <strong>{{ row.name }}</strong>
+                                    <span class="muted">{{ row.place.isKnown ? row.place|trans : '—' }}</span>
+                                    {% if status is null %}
+                                        <form method="post" action="{{ path('portal_claims_ask') }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                                            <input type="hidden" name="number" value="{{ row.number }}">
+                                            <input type="hidden" name="q" value="{{ q }}">
+                                            {{ include('admin/components/_button.html.twig', {
+                                                label: 'claims.action.ask'|trans({}, 'portal'),
+                                                size: 'sm', type: 'submit',
+                                                attributes: {'aria-label': 'claims.action.ask_for'|trans({name: row.name}, 'portal')},
+                                            }, with_context = false) }}
+                                        </form>
+                                    {% else %}
+                                        <div>
+                                            {% if status.value == 'pending' %}
+                                                {{ include('admin/components/_pill.html.twig', {label: 'claims.state.pending'|trans({}, 'portal'), tone: 'amber'}, with_context = false) }}
+                                            {% else %}
+                                                {{ include('admin/components/_pill.html.twig', {label: 'claims.state.active'|trans({}, 'portal'), tone: 'green'}, with_context = false) }}
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td class="table__empty">
+                                {{ include('admin/components/_empty.html.twig', {
+                                    icon: 'search',
+                                    title: (q is null ? 'claims.empty.start_title' : 'claims.empty.none_title')|trans({}, 'portal'),
+                                    text: (q is null ? 'claims.empty.start_text' : 'claims.empty.none_text')|trans({}, 'portal'),
+                                }, with_context = false) }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

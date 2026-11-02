@@ -1,0 +1,84 @@
+{% extends 'admin/base.html.twig' %}
+
+{#
+    The review queue (`ReviewController`). rows: list<PortalAccessRequestRow>. One tab now; #45 adds a second entry.
+#}
+
+{% block title %}{{ 'review.title'|trans({}, 'portal') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item" aria-current="page">{{ 'review.title'|trans({}, 'portal') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'review.title'|trans({}, 'portal') }}</h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% set tabs = [{
+        label: 'review.tab.requests'|trans({}, 'portal'),
+        href: path('admin_portal_review'),
+        count: rows|length,
+        active: true,
+    }] %}
+    {{ include('admin/components/_tabs.html.twig', {label: 'review.tabs_label'|trans({}, 'portal'), items: tabs}, with_context = false) }}
+
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'review.table_label'|trans({}, 'portal'),
+        id: 'review-requests',
+        columns: [
+            {label: 'review.column.name'|trans({}, 'portal')},
+            {label: 'review.column.email'|trans({}, 'portal')},
+            {label: 'review.column.phone'|trans({}, 'portal')},
+            {label: 'review.column.location'|trans({}, 'portal')},
+            {label: 'review.column.date'|trans({}, 'portal')},
+        ],
+        actions_label: 'review.column.actions'|trans({}, 'portal'),
+        rows: rows,
+    } only %}
+        {% block rows %}
+            {% for row in rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {actions_column: true, row: row} only %}
+                    {% block cells %}
+                        <td>{{ row.firstName }} {{ row.lastName }}</td>
+                        <td>{{ row.email }}</td>
+                        <td>{{ row.phone ?? '—' }}</td>
+                        <td><a class="table__name" href="{{ path('admin_locations_edit', {number: row.venueNumber}) }}">{{ row.venueName }}</a></td>
+                        <td class="muted">{{ row.requestedAt|swiss_date }}</td>
+                    {% endblock %}
+                    {% block actions %}
+                        {% set name = row.firstName ~ ' ' ~ row.lastName %}
+                        {# One form, so the two buttons sit side by side; two would stack in the cell. #}
+                        <form method="post" action="{{ path('admin_portal_review_approve', {userId: row.userId, number: row.venueNumber}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                            {{ include('admin/components/_button.html.twig', {
+                                label: 'review.action.approve'|trans({}, 'portal'),
+                                size: 'sm', variant: 'primary', type: 'submit',
+                                attributes: {'aria-label': 'review.action.approve_for'|trans({name: name, venue: row.venueName}, 'portal')},
+                            }, with_context = false) }}
+                            {{ include('admin/components/_button.html.twig', {
+                                label: 'review.action.reject'|trans({}, 'portal'),
+                                size: 'sm', variant: 'ghost', type: 'submit',
+                                attributes: {
+                                    'aria-label': 'review.action.reject_for'|trans({name: name, venue: row.venueName}, 'portal'),
+                                    formaction: path('admin_portal_review_reject', {userId: row.userId, number: row.venueNumber}),
+                                },
+                            }, with_context = false) }}
+                        </form>
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {
+                icon: 'shield',
+                title: 'review.empty.title'|trans({}, 'portal'),
+                text: 'review.empty.text'|trans({}, 'portal'),
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

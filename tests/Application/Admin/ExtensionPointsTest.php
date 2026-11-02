@@ -50,7 +50,7 @@ final class ExtensionPointsTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin');
 
         self::assertSame(
-            ['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben', 'Fake Nur Admin', 'Benutzer', 'Konten', 'Audit-Log', 'E-Mail-Vorlagen'],
+            ['Übersicht', 'Locations', 'Prüfung', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben', 'Fake Nur Admin', 'Benutzer', 'Konten', 'Audit-Log', 'E-Mail-Vorlagen'],
             $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()),
         );
         self::assertSame(['CMS', 'CRM', 'Einstellungen'], $crawler->filter('.sidebar__heading')->each(static fn (Crawler $heading): string => $heading->text()));
@@ -63,7 +63,7 @@ final class ExtensionPointsTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Übersicht', 'Locations', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
+        self::assertSame(['Übersicht', 'Locations', 'Prüfung', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
     }
 
     public function test_a_widget_renders_in_its_card(): void
