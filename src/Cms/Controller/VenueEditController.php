@@ -5,28 +5,21 @@ declare(strict_types=1);
 namespace App\Cms\Controller;
 
 use App\Admin\ReadModel\AuditLogQuery;
-use App\Cms\Form\ChangedFields;
-use App\Cms\Form\VenueAddressData;
-use App\Cms\Form\VenueCardData;
+use App\Cms\Form\VenueCardSaver;
 use App\Cms\Form\VenueEditorForms;
 use App\Cms\ReadModel\VenueEdit;
 use App\Cms\ReadModel\VenueEditQuery;
 use App\Cms\ValueObject\CmsFlash;
 use App\Cms\ValueObject\VenueCard;
+use App\Cms\ValueObject\VenueCardSaveOutcome;
 use App\Cms\ValueObject\VenueNumber;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
-use App\Venues\Exception\StaleEdit;
-use App\Venues\Exception\VenueNotFound;
-use App\Venues\Exception\VenueRuleViolation;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\Exception\HandlerFailedException;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Translation\TranslatorBagInterface;
@@ -48,7 +41,7 @@ final class VenueEditController extends AbstractController
         private readonly VenueEditQuery $edits,
         private readonly VenueEditorForms $forms,
         private readonly AuditLogQuery $auditLog,
-        private readonly MessageBusInterface $commandBus,
+        private readonly VenueCardSaver $saver,
         private readonly TranslatorInterface $translator,
         private readonly EnabledLocale $locales,
     ) {
@@ -114,43 +107,12 @@ final class VenueEditController extends AbstractController
         $form = $this->forms->form($card, $edit);
         $form->handleRequest($request);
 
-        if (!$form->isSubmitted() || !$form->isValid()) {
-            return $this->renderEditor($edit, $card, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $data = $form->getData();
-        \assert($data instanceof VenueCardData);
-        $changed = ChangedFields::between($card->dataClass()::from($edit), $data);
-        $cardName = CmsFlash::message('editor.card.'.$card->value);
-
-        if ([] === $changed && !($data instanceof VenueAddressData && $data->useTownCentre)) {
-            $this->addFlash('success', CmsFlash::message('editor.unchanged', ['card' => $cardName]));
-
-            return $this->backTo($card, $number);
-        }
-
-        try {
-            $this->commandBus->dispatch($data->toCommand($number, $edit, $changed));
-        } catch (HandlerFailedException $failure) {
-            if ([] !== $failure->getWrappedExceptions(VenueNotFound::class)) {
-                throw $this->createNotFoundException();
-            }
-            if ([] !== $failure->getWrappedExceptions(StaleEdit::class)) {
-                $form->addError(new FormError($this->translator->trans('error.stale', [], 'cms')));
-
-                return $this->renderEditor($edit, $card, $form, Response::HTTP_CONFLICT, stale: true);
-            }
-
-            $violation = VenueRuleViolation::unwrap($failure);
-            $target = null !== $violation->field && $form->has($violation->field) ? $form->get($violation->field) : $form;
-            $target->addError(new FormError($this->translator->trans($violation->translationKey(), $violation->parameters, 'cms')));
-
-            return $this->renderEditor($edit, $card, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $this->addFlash('success', CmsFlash::message('editor.saved', ['card' => $cardName]));
-
-        return $this->backTo($card, $number);
+        return match ($this->saver->save($form, $number, $edit)) {
+            VenueCardSaveOutcome::Invalid => $this->renderEditor($edit, $card, $form, Response::HTTP_UNPROCESSABLE_ENTITY),
+            VenueCardSaveOutcome::Stale => $this->renderEditor($edit, $card, $form, Response::HTTP_CONFLICT, stale: true),
+            VenueCardSaveOutcome::Unchanged => $this->savedTo($card, $number, 'editor.unchanged'),
+            VenueCardSaveOutcome::Saved => $this->savedTo($card, $number, 'editor.saved'),
+        };
     }
 
     /**
@@ -180,8 +142,10 @@ final class VenueEditController extends AbstractController
         return $this->edits->find($number) ?? throw $this->createNotFoundException();
     }
 
-    private function backTo(VenueCard $card, int $number): RedirectResponse
+    private function savedTo(VenueCard $card, int $number, string $flash): RedirectResponse
     {
+        $this->addFlash('success', CmsFlash::message($flash, ['card' => CmsFlash::message('editor.card.'.$card->value)]));
+
         return $this->redirect($this->generateUrl('admin_locations_edit', ['number' => $number]).'#'.$card->anchor());
     }
 

@@ -64,7 +64,7 @@ final class LookupController extends AbstractController
     }
 
     /**
-     * The usable query, or null (#24's `TownLookupController`): `all()`, because `get()` answers an array
+     * The usable query, or null (#24's `TownOptions::query()`): `all()`, because `get()` answers an array
      * with a 400; invalid UTF-8 or a NUL would fail in Postgres; one character lists too much to help,
      * except a venue number.
      */

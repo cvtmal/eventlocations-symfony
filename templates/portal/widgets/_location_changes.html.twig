@@ -1,0 +1,26 @@
+{#
+    Dashboard widget "Änderungen von Locations" (`Portal\Extension\LocationChangesWidget`).
+      rows: list<LocationChangeRow>, newest manager change first.
+#}
+{% if rows is empty %}
+    <p class="card__body muted">{{ 'editor.changes.empty'|trans({}, 'portal') }}</p>
+{% else %}
+    <ul class="venue-widget">
+        {% for row in rows %}
+            <li class="venue-widget__row">
+                <span class="venue-widget__main">
+                    <a class="venue-widget__name" href="{{ path('admin_locations_edit', {number: row.number}) }}">{{ row.name }}</a>
+                    <span class="muted">{{ ('history.command.' ~ row.commandName)|trans({}, 'cms') }}</span>
+                </span>
+                <span class="venue-widget__meta muted">
+                    {{- 'dashboard.recent.by'|trans({name: row.managerName ?? 'audit.actor.portal_user'|trans({}, 'admin'), date: row.createdAt|swiss_date}, 'cms') -}}
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+    {% if is_granted('ROLE_ADMIN') %}
+        <p class="venue-widget__foot">
+            <a href="{{ path('admin_audit_log', {actor_type: 'portal_user', subject_type: 'venue'}) }}">{{ 'editor.changes.all'|trans({}, 'portal') }}</a>
+        </p>
+    {% endif %}
+{% endif %}

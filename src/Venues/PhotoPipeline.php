@@ -56,8 +56,8 @@ final class PhotoPipeline
      * Renders the variants of $sourceFile into $directory, then stores the original under MEDIA_ROOT (kept when
      * it exists). In that order, because a file can pass the header check and still not decode (#25, D6), and a
      * memory fatal runs no catch: a failed render leaves no original, and $sourceFile is either the upload's temp
-     * file, which PHP removes itself, or the import's own. An original's path is content-addressed, so a kept one
-     * has the bytes of $sourceFile.
+     * file or the import's own. PHP removes the temp file itself, except at the hard timeout, whose `_exit` leaves
+     * it behind. An original's path is content-addressed, so a kept one has the bytes of $sourceFile.
      */
     public function stage(string $sourceFile, string $originalPath, string $directory): StagedPhoto
     {

@@ -46,6 +46,14 @@ enum VenueCard: string
         return 'admin_locations_'.$this->value;
     }
 
+    /**
+     * The page a stale card's reload link goes to.
+     */
+    public function editRoute(): string
+    {
+        return 'admin_locations_edit';
+    }
+
     public function anchor(): string
     {
         return match ($this) {

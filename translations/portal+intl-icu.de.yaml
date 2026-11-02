@@ -53,6 +53,25 @@ overview:
     empty:
         title: Ihr Konto ist bereit
         text: Mit Ihrem Konto ist noch keine Location verknüpft.
+editor:
+    title: '{name} bearbeiten'
+    preview: Vorschau
+    tabs:
+        label: Bereiche der Location
+        details: Angaben
+        photos: Fotos
+    offline:
+        action: Offline nehmen
+        title: Location offline nehmen?
+        text: '«{name}» ist danach für Gäste nicht mehr sichtbar. Sie können die Angaben weiter bearbeiten. Damit die Location wieder online geht, prüft unser Team sie zuerst.'
+        close: Schliessen
+        cancel: Abbrechen
+        confirm: Offline nehmen
+        failed: Das hat nicht geklappt. Bitte laden Sie die Seite neu und versuchen Sie es noch einmal.
+    changes:
+        title: Änderungen von Locations
+        empty: Noch keine Änderungen.
+        all: Alle im Audit-Log ansehen
 profile:
     title: Profil
     section:

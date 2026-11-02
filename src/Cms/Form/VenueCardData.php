@@ -8,7 +8,7 @@ use App\Cms\ReadModel\VenueEdit;
 
 /**
  * The data class of one venue editor card (D11): it starts from what was loaded and becomes that card's
- * `Venues` command. The controller builds it twice, once for the form and once to diff the submission
+ * `Venues` command. It is built twice, once for the form and once to diff the submission
  * against (`ChangedFields`), so `from()` must be deterministic.
  *
  * Invalid UTF-8 and a rule's own message: the `+intl-icu` formatter throws on invalid UTF-8 in any message

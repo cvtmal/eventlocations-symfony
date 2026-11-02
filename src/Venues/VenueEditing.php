@@ -31,7 +31,7 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  *   to a child row alone still stales other open forms) and purges the venue's pages, and the
  *   listings when asked, after the commit.
  *
- * Only back-office commands call it, the Cms module's and `ChangeVenueTier`, which the Crm
+ * Only staff and manager commands call it, Cms's, Portal's and `ChangeVenueTier`, which the Crm
  * dispatches for a won deal (#28); the import never does. close() is what protects staff work
  * and hand-made rows from an import (S8: the import skips a venue with cms_edited_at set). A
  * handler that changed nothing returns before close().

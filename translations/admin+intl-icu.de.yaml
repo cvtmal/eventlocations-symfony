@@ -122,8 +122,14 @@ audit:
         system: System
         portal_user: Gelöschtes Konto
         all: Alle
+    actor_type:
+        admin_user: Team
+        console: Konsole
+        system: System
+        portal_user: Location-Konto
     filter:
         actor: Benutzer
+        actor_type: Herkunft
         subject_type: Typ
         subject_id: ID
         from: Von

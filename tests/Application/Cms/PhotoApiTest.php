@@ -113,6 +113,7 @@ final class PhotoApiTest extends WebTestCase
         yield 'a WebP above the portrait limit' => ['webp-tall', 'hoch.webp', 'image/webp', self::TOO_TALL];
         yield 'a PNG above the portrait limit' => ['png-tall', 'hoch.png', 'image/png', self::TOO_TALL];
         yield 'a body gd cannot decode' => ['corrupt', 'kaputt.png', 'image/png', self::UNREADABLE];
+        yield 'a JPEG that decodes but has 101 scans' => ['jpeg-scans', 'scans.jpg', 'image/jpeg', self::UNREADABLE];
         yield 'a PDF' => ['pdf', 'foto.jpg', 'image/jpeg', 'Bitte ein Foto als JPEG, PNG oder WebP hochladen.'];
         yield 'a file name that is not UTF-8' => ['gif', "bild\xff.gif", 'image/gif', 'Bitte ein Foto als JPEG, PNG oder WebP hochladen.'];
     }
@@ -143,6 +144,7 @@ final class PhotoApiTest extends WebTestCase
             'webp-tall' => TestImages::webpHeader(3000, 6001),
             'png-tall' => TestImages::pngHeaderOnly(2000, 4001),
             'corrupt' => TestImages::pngHeader(400, 300),
+            'jpeg-scans' => TestImages::jpegWithScans(400, 300, 101),
             'pdf' => "%PDF-1.4\n%fiktiv\n",
             default => self::fail($kind),
         };
@@ -156,6 +158,21 @@ final class PhotoApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertSame(['file' => [$message]], $this->errors());
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM venue_photos WHERE venue_id = ?', [$venue->id()]));
+    }
+
+    public function test_a_progressive_jpeg_and_one_at_the_scan_limit_are_stored(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = self::venue();
+        $token = $this->csrfToken();
+        $progressive = TestImages::progressiveJpeg();
+        self::assertGreaterThan(1, substr_count($progressive, "\xFF\xDA"));
+
+        $this->upload(self::url($venue), $this->photoFile($progressive), token: $token);
+        self::assertResponseStatusCodeSame(201);
+
+        $this->upload(self::url($venue), $this->photoFile(TestImages::jpegWithScans(400, 300, 100)), token: $token);
+        self::assertResponseStatusCodeSame(201);
     }
 
     public function test_no_file_is_missing_and_a_dropped_body_is_too_large(): void

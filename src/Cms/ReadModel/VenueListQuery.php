@@ -10,6 +10,7 @@ use App\Shared\Translation\EnabledLocale;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 
@@ -99,6 +100,28 @@ final class VenueListQuery
         return new VenueListPage($rows, $total, $page, self::PER_PAGE, $lastPage, $counts);
     }
 
+    /**
+     * The given venues, by name. Empty input runs no statement.
+     *
+     * @param list<int> $numbers
+     *
+     * @return list<VenueListRow>
+     */
+    public function byNumbers(array $numbers): array
+    {
+        if ([] === $numbers) {
+            return [];
+        }
+
+        return $this->rows(
+            ['v.number IN (:numbers)'],
+            ['numbers' => $numbers, 'default_locale' => $this->locales->default()],
+            ['numbers' => ArrayParameterType::INTEGER],
+            'v.name ASC, v.number ASC',
+            \count($numbers),
+        );
+    }
+
     public function incomplete(int $limit): VenueIncompleteList
     {
         $parameters = ['default_locale' => $this->locales->default()];
@@ -136,9 +159,9 @@ final class VenueListQuery
     }
 
     /**
-     * @param list<string>                 $conditions
-     * @param array<string, mixed>         $parameters
-     * @param array<string, ParameterType> $types
+     * @param list<string>                                    $conditions
+     * @param array<string, mixed>                            $parameters
+     * @param array<string, ParameterType|ArrayParameterType> $types
      *
      * @return list<VenueListRow>
      */

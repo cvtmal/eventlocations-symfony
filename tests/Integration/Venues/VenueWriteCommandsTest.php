@@ -14,6 +14,7 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Command\AnswerVenueFaq;
 use App\Venues\Command\ChangeVenueBasics;
+use App\Venues\Command\ChangeVenueCapacity;
 use App\Venues\Command\ChangeVenueContact;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
@@ -247,6 +248,67 @@ final class VenueWriteCommandsTest extends KernelTestCase
         self::assertNull($cleared->hasCurfew());
         self::assertNull($cleared->curfewAt());
         self::assertSame(['building:castle*'], $this->terms($venue));
+    }
+
+    public function test_a_new_maximum_saves_marks_the_edit_purges_and_audits(): void
+    {
+        $venue = $this->venueWithSlug('alter-name');
+        $this->ageVenue($venue);
+        $token = $this->token($venue);
+
+        $this->dispatch(new ChangeVenueCapacity($venue->number(), $token, ['capacityMax'], 250));
+
+        $saved = $this->reload($venue);
+        self::assertSame(250, $saved->capacityMax());
+        self::assertNotNull($saved->cmsEditedAt());
+        self::assertNotSame($token, $this->token($venue));
+        self::assertSame([$venue->number()], $this->purger()->venues);
+        self::assertSame(1, $this->purger()->listings);
+        self::assertEquals(
+            [['command' => ChangeVenueCapacity::class, 'changes' => ['changed' => ['capacityMax']]]],
+            $this->auditRows($venue->number()),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{int|null, int|null}>
+     */
+    public static function capacityMinimums(): iterable
+    {
+        yield 'above the new maximum, cleared' => [101, null];
+        yield 'at the new maximum, kept' => [100, 100];
+        yield 'below the new maximum, kept' => [40, 40];
+        yield 'none, stays none' => [null, null];
+    }
+
+    #[DataProvider('capacityMinimums')]
+    public function test_a_new_maximum_clears_only_a_minimum_above_it(?int $minimum, ?int $expected): void
+    {
+        $venue = $this->venueWithSlug('alter-name');
+        $venue->changeCapacity(200, $minimum);
+        $this->em->flush();
+
+        $this->dispatch(new ChangeVenueCapacity($venue->number(), $this->token($venue), ['capacityMax'], 100));
+
+        $saved = $this->reload($venue);
+        self::assertSame(100, $saved->capacityMax());
+        self::assertSame($expected, $saved->capacityMin());
+    }
+
+    public function test_a_stale_token_leaves_the_maximum(): void
+    {
+        $venue = $this->venueWithSlug('alter-name');
+        $stale = (string) ((int) $this->token($venue) - 60);
+
+        try {
+            $this->dispatch(new ChangeVenueCapacity($venue->number(), $stale, ['capacityMax'], 250));
+            self::fail('A stale token should fail.');
+        } catch (HandlerFailedException $failure) {
+            self::assertCount(1, $failure->getWrappedExceptions(StaleEdit::class));
+        }
+
+        self::assertSame(120, $this->reload($venue)->capacityMax());
+        self::assertSame([], $this->auditRows($venue->number()));
     }
 
     public function test_contact_values_never_reach_the_audit_log(): void

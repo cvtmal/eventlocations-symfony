@@ -3,7 +3,7 @@
         <span class="sidebar__wordmark">{{ 'shell.wordmark'|trans({}, 'portal') }}</span>
         <span class="sidebar__subtitle">{{ 'shell.account'|trans({}, 'portal') }}</span>
     </div>
-    {% set locations_active = app.current_route == 'portal_home' %}
+    {% set locations_active = app.request.pathInfo == path('portal_home') or app.request.pathInfo starts with '/konto/locations' %}
     {% set profile_active = app.current_route == 'portal_profile' %}
     <div class="sidebar__section">
         <a class="sidebar__item{{ locations_active ? ' sidebar__item--active' }}" href="{{ path('portal_home') }}"{% if locations_active %} aria-current="page"{% endif %}>

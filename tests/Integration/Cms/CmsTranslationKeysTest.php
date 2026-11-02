@@ -17,6 +17,7 @@ use App\Venues\Command\AddVenueReview;
 use App\Venues\Command\AnswerVenueFaq;
 use App\Venues\Command\ChangeRoom;
 use App\Venues\Command\ChangeVenueBasics;
+use App\Venues\Command\ChangeVenueCapacity;
 use App\Venues\Command\ChangeVenueContact;
 use App\Venues\Command\ChangeVenueReview;
 use App\Venues\Command\ChangeVenueTerms;
@@ -60,6 +61,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
             'create.flash', 'delete.flash', 'editor.saved', 'editor.unchanged', 'error.stale', 'history.command.fallback',
             'publish.error.missing', 'publish.flash.published', 'publish.flash.unpublished',
             'publish.flash.already_published', 'publish.flash.already_unpublished', 'list.status.incomplete',
+            'editor.card.capacity',
         ];
         foreach (VenueRuleViolation::all() as $violation) {
             $keys[] = $violation->translationKey();
@@ -87,7 +89,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
         }
         $commands = [
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
-            ChangeVenueTerms::class, ChangeVenueWeddingFacts::class, ChangeVenueContact::class, AnswerVenueFaq::class,
+            ChangeVenueTerms::class, ChangeVenueWeddingFacts::class, ChangeVenueContact::class, ChangeVenueCapacity::class, AnswerVenueFaq::class,
             RateVenue::class, ChangeVenueTier::class, PublishVenue::class, UnpublishVenue::class,
             AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class,
             AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,

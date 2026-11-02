@@ -3,6 +3,7 @@
     hero. Nothing here may reach a search engine or a guest: no canonical, hreflang, JSON-LD or social tags, robots
     `noindex` (the `/admin` response headers say the same), and a note in place of the inquiry form. It loads the
     public `app.css`, so the banner is styled by `venues/_preview-banner.scss` with `--c-*` tokens (P18).
+    Optional context: back_url, the banner link's target (default: the staff editor).
 #}
 {% extends 'venues/detail/show.html.twig' %}
 
@@ -20,7 +21,7 @@
     <div class="preview-banner">
         <div class="preview-banner__inner container">
             <p class="preview-banner__text">{{ 'preview.banner'|trans({}, 'cms') }}</p>
-            <a class="preview-banner__link" href="{{ path('admin_locations_edit', {number: venue.number}) }}">{{ 'preview.back'|trans({}, 'cms') }}</a>
+            <a class="preview-banner__link" href="{{ back_url|default(path('admin_locations_edit', {number: venue.number})) }}">{{ 'preview.back'|trans({}, 'cms') }}</a>
         </div>
     </div>
     {{ parent() }}

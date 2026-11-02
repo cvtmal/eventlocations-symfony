@@ -27,7 +27,7 @@
         {% block body %}
             {{ form_errors(card_form) }}
             {% if stale %}
-                <p class="venue-card__stale"><a href="{{ path('admin_locations_edit', {number: number}) }}#{{ card.anchor }}">{{ 'error.stale_reload'|trans({}, 'cms') }}</a></p>
+                <p class="venue-card__stale"><a href="{{ path(card.editRoute, {number: number}) }}#{{ card.anchor }}">{{ 'error.stale_reload'|trans({}, 'cms') }}</a></p>
             {% endif %}
             {% if required %}{{ include('admin/components/_required_hint.html.twig', with_context = false) }}{% endif %}
             {{ fields_markup }}

@@ -261,6 +261,41 @@ final class TestImages
         };
     }
 
+    /**
+     * A real progressive JPEG: gd writes libjpeg's default scan script.
+     *
+     * @param int<1, max> $width
+     * @param int<1, max> $height
+     */
+    public static function progressiveJpeg(int $width = 800, int $height = 400): string
+    {
+        $image = self::twoTone($width, $height);
+        imageinterlace($image, true);
+
+        return self::encodeJpeg($image);
+    }
+
+    /**
+     * A grey progressive JPEG that decodes and holds $scans scans: one DC scan, then one empty AC scan repeated.
+     * The shape of the upload that pins a worker (#44, F-M1); the cost is per scan, so a small image stays quick here.
+     *
+     * @param int<1, max> $scans
+     */
+    public static function jpegWithScans(int $width, int $height, int $scans): string
+    {
+        $segment = static fn (string $marker, string $data): string => "\xFF".$marker.pack('n', \strlen($data) + 2).$data;
+        $huffmanTable = "\x00\x01".str_repeat("\x00", 14)."\x00";
+
+        return "\xFF\xD8"
+            .$segment("\xDB", "\x00".str_repeat("\x01", 64))
+            .$segment("\xC2", pack('CnnC', 8, $height, $width, 1)."\x01\x11\x00")
+            .$segment("\xC4", "\x00".$huffmanTable)
+            .$segment("\xC4", "\x10".$huffmanTable)
+            .$segment("\xDA", "\x01\x01\x00\x00\x00\x00")
+            .str_repeat($segment("\xDA", "\x01\x01\x00\x01\x3F\x00"), $scans - 1)
+            ."\xFF\xD9";
+    }
+
     private static function encodeJpeg(\GdImage $image): string
     {
         ob_start();

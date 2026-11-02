@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
 import PhotoManagerIsland from '../../src/islands/PhotoManagerIsland.vue';
 
-const ID = '00000000-0000-7000-8000-000000000000';
+export const ID = '00000000-0000-7000-8000-000000000000';
 
 export function photo(id, position, overrides = {}) {
     return {
@@ -35,7 +35,7 @@ const labels = new Proxy({
     queueSessionGone: 'Neu laden, dann nochmals: %files',
 }, { get: (target, key) => target[key] ?? key });
 
-export function mounted(photos = [photo('a', 1), photo('b', 2), photo('c', 3)]) {
+export function mounted(photos = [photo('a', 1), photo('b', 2), photo('c', 3)], overrides = {}) {
     return mount(PhotoManagerIsland, {
         attachTo: document.body,
         props: {
@@ -57,6 +57,7 @@ export function mounted(photos = [photo('a', 1), photo('b', 2), photo('c', 3)]) 
                 remove: `/api/photos/${ID}`,
             },
             labels,
+            ...overrides,
         },
     });
 }

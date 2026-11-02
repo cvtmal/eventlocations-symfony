@@ -17,6 +17,7 @@
     <div class="card card__body">
         {{ form_start(form, {attr: {class: 'audit-filter'}}) }}
             {{ form_row(form.actor) }}
+            {{ form_row(form.actor_type) }}
             {{ form_row(form.subject_type) }}
             {{ form_row(form.subject_id) }}
             {{ form_row(form.from) }}

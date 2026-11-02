@@ -46,6 +46,9 @@ final class AdminTranslationKeysTest extends KernelTestCase
         foreach ([AuditActorType::Console, AuditActorType::System, AuditActorType::PortalUser] as $actor) {
             $keys[] = 'audit.actor.'.$actor->value;
         }
+        foreach (AuditActorType::cases() as $actorType) {
+            $keys[] = 'audit.actor_type.'.$actorType->value;
+        }
 
         foreach ($keys as $key) {
             self::assertTrue($catalogue->defines($key, 'admin+intl-icu') || $catalogue->defines($key, 'admin'), $key);

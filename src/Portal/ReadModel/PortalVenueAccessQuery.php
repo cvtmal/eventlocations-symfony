@@ -29,4 +29,20 @@ final class PortalVenueAccessQuery
             ['user' => $portalUserId, 'number' => $venueNumber],
         );
     }
+
+    /**
+     * @return list<int>
+     */
+    public function activeNumbers(string $portalUserId): array
+    {
+        return array_map(intval(...), $this->connection->fetchFirstColumn(
+            <<<'SQL'
+                SELECT v.number
+                FROM portal_venue_access a
+                JOIN venues v ON v.id = a.venue_id
+                WHERE a.portal_user_id = :id AND a.status = 'active'
+                SQL,
+            ['id' => $portalUserId],
+        ));
+    }
 }
