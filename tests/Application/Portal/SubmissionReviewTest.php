@@ -65,6 +65,54 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertSame('1', trim($tab->filter('.pill')->text()));
     }
 
+    public function test_the_queue_opens_on_the_only_tab_with_items(): void
+    {
+        $this->logInAs();
+        $this->waiting();
+
+        $crawler = $this->client->request('GET', '/admin/pruefung');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Neue Locations', $crawler->filter('.tabs .tab--active')->text());
+        self::assertCount(1, $crawler->filter('#review-submissions tbody tr'));
+    }
+
+    public function test_the_queue_keeps_its_default_tab_when_both_or_neither_have_items(): void
+    {
+        $this->logInAs();
+
+        $crawler = $this->client->request('GET', '/admin/pruefung');
+        self::assertStringContainsString('Zugriffsanfragen', $crawler->filter('.tabs .tab--active')->text());
+
+        $this->waiting();
+        PortalVenueAccessFactory::createOne();
+
+        $crawler = $this->client->request('GET', '/admin/pruefung');
+        self::assertStringContainsString('Zugriffsanfragen', $crawler->filter('.tabs .tab--active')->text());
+        self::assertCount(1, $crawler->filter('#review-requests tbody tr'));
+    }
+
+    public function test_an_explicit_tab_wins_over_the_tab_with_items(): void
+    {
+        $this->logInAs();
+        $this->waiting();
+
+        $crawler = $this->client->request('GET', '/admin/pruefung');
+        $crawler = $this->client->click($crawler->filter('.tabs a')->first()->link());
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Zugriffsanfragen', $crawler->filter('.tabs .tab--active')->text());
+        self::assertCount(0, $crawler->filter('#review-submissions'));
+
+        $this->connection->executeStatement('DELETE FROM portal_submissions');
+        PortalVenueAccessFactory::createOne();
+
+        $crawler = $this->client->request('GET', self::QUEUE);
+
+        self::assertStringContainsString('Neue Locations', $crawler->filter('.tabs .tab--active')->text());
+        self::assertSame('Keine neuen Locations.', $crawler->filter('.empty__title')->text());
+    }
+
     public function test_an_empty_tab_says_so(): void
     {
         $this->logInAs();

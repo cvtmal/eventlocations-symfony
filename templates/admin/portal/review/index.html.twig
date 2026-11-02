@@ -22,7 +22,7 @@
 {% block main %}
     {% set tabs = [{
         label: 'review.tab.requests'|trans({}, 'portal'),
-        href: path('admin_portal_review'),
+        href: path('admin_portal_review', {tab: 'requests'}),
         count: request_count,
         active: 'neu' != tab,
     }, {
