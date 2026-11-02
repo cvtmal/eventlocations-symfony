@@ -1,3 +1,6 @@
+@use '../../abstracts/breakpoints' as bp;
+@use 'shared';
+
 // Full-screen gallery dialog (DP-2, D11).
 .venue-gallery {
     width: 100%;
@@ -9,6 +12,12 @@
     border: 0;
     background: var(--c-surface-alt);
     color: var(--c-ink);
+
+    @include shared.carousel-pill($arrows-on-phone: true);
+
+    @include bp.up(md) {
+        padding: var(--space-24);
+    }
 
     &[open] {
         display: flex;
@@ -29,7 +38,8 @@
 }
 
 .venue-gallery__title {
-    font-size: 1.25rem;
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
 }
 
 .venue-gallery__body {
@@ -45,17 +55,24 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding-bottom: 4rem;
+        padding-bottom: calc(2.75rem + var(--space-16)); // The pill and the board's gap.
+    }
+
+    .carousel__controls {
+        inset: auto 0 0;
+        margin-inline: auto;
     }
 }
 
 .venue-gallery__picture {
     max-height: 100%;
+    border-radius: var(--radius-image); // Also rounds the placeholder under the image.
 
     .picture__img {
-        max-height: calc(100vh - 10rem);
+        max-height: calc(100vh - 10.5rem);
         width: auto;
         margin-inline: auto;
+        border-radius: var(--radius-image);
         object-fit: contain;
     }
 }

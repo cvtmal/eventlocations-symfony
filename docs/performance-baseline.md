@@ -23,7 +23,7 @@ _Last updated: 2026-10-31 · Source: `docs/rpi-cycles.md` #19, S10, S11 (PERF-1)
 | Uncached p95, detail | ≤ 120 ms | 53.3 ms | 80.2 ms | yes |
 | Cached p95, all pages | ≤ 20 ms | no cache | 5.8–7.9 ms | yes |
 | CSS gzip | ≤ 25 KB | 10,109 B | 10,109 B | yes |
-| JS gzip per page | ≤ 15 KB | 14,542 B | 14,542 B | yes |
+| JS gzip per page | ≤ 15 KB | 14,542 B | 14,542 B, 14,634 B after #37 | yes |
 | Listing HTML gzip | ≤ 60 KB | 51,434 B | 51,434 B | yes |
 | Font files on first view | ≤ 2 | 2 | 2 | yes |
 
@@ -148,7 +148,7 @@ Top SQL at ×10: `SimilarVenuesQuery` averages 23.3 ms and is the largest single
 | Listing HTML, 48 cards × 8 photos, full overlay | 51,434 B gzip | 61,440 |
 | Canton page HTML, same test | 51,568 B gzip | 61,440 |
 | `app.css` | 10,109 B gzip | 25,600 |
-| JS, all of `assets/js/*.js` | 14,542 B gzip | 15,360 |
+| JS, all of `assets/js/*.js` | 14,542 B gzip, 14,634 B after #37 | 15,360 |
 | `overlay.js + live-count.js + region-filter.js` | 6,132 B gzip | 6,144 |
 | `carousel.js` | 846 B gzip | 2,048 |
 | Font files | 2 | 2 |

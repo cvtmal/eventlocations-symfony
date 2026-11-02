@@ -42,6 +42,7 @@ final class HttpCachePurgeTest extends WebTestCase
     private const DETAIL = '/hochzeitslocation/'.DetailVenues::FULL_SLUG;
     private const LISTING = '/hochzeitslocations';
     private const CANTON = '/hochzeitslocations/zuerich';
+    private const HOME = '/';
     private const SUMMARY = 'Ein frischer Satz, den noch kein Cache gesehen hat.';
     private const STAFF_TEXT = 'Ein Text aus dem CMS, den noch kein Cache gesehen hat.';
 
@@ -125,6 +126,33 @@ final class HttpCachePurgeTest extends WebTestCase
         $this->assertTrace('miss/store', $response, self::CANTON);
         self::assertStringContainsString(self::STAFF_TEXT, (string) $response->getContent());
         $this->assertTrace('miss/store', $this->get(self::DETAIL), self::DETAIL);
+    }
+
+    /** The first `fresh` is the automated half of "answers from the cache on a second request". */
+    public function test_a_home_text_save_replaces_the_cached_home_page(): void
+    {
+        $this->assertTrace('miss/store', $this->get(self::HOME), self::HOME);
+        $this->assertTrace('fresh', $this->get(self::HOME), self::HOME);
+
+        $this->dispatch(new SaveTextBlock('home.text', ['de' => self::STAFF_TEXT], $this->contentVersion(['home.text']), ['de']));
+
+        $response = $this->get(self::HOME);
+        $this->assertTrace('miss/store', $response, self::HOME);
+        self::assertStringContainsString(self::STAFF_TEXT, (string) $response->getContent());
+    }
+
+    public function test_a_venue_change_replaces_the_cached_home_page(): void
+    {
+        $this->assertTrace('miss/store', $this->get(self::HOME), self::HOME);
+        $this->assertTrace('fresh', $this->get(self::HOME), self::HOME);
+
+        $this->dispatch(new ChangeVenueTexts($this->number, $this->token($this->number), ['summary'], [
+            'de' => ['summary' => self::SUMMARY, 'description' => null, 'metaDescription' => null, 'parkingText' => null],
+        ]));
+
+        $response = $this->get(self::HOME);
+        $this->assertTrace('miss/store', $response, self::HOME);
+        self::assertStringContainsString(self::SUMMARY, (string) $response->getContent());
     }
 
     public function test_a_listings_purge_alone_invalidates_the_store(): void

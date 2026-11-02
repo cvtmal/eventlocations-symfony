@@ -26,7 +26,7 @@ final class TimelineQuery
     private const string BASICS = 'App\Venues\Command\ChangeVenueBasics';
     private const string TIER = 'App\Venues\Command\ChangeVenueTier';
 
-    private const string ACTIVITY_COLUMNS = "a.id, a.type_code, a.occurred_at, a.actor_id, u.display_name AS actor_name, a.title, a.body, a.payload->>'to' AS stage_to, a.anonymised_at, il.inquiry_id, i.first_name AS inquiry_first_name, i.last_name AS inquiry_last_name";
+    private const string ACTIVITY_COLUMNS = "a.id, a.type_code, a.occurred_at, a.actor_id, u.display_name AS actor_name, a.title, a.body, a.payload->>'to' AS payload_to, a.payload->>'cc' AS payload_cc, a.payload->>'status' AS payload_status, a.anonymised_at, il.inquiry_id, i.first_name AS inquiry_first_name, i.last_name AS inquiry_last_name";
 
     /** An inquiry entry reads its inquiry live, so the link and the couple's name go with the 12-month purge. */
     private const string ACTIVITY_JOINS = ' LEFT JOIN admin_users u ON u.id = a.actor_id LEFT JOIN crm_inquiry_links il ON il.activity_id = a.id LEFT JOIN inquiries i ON i.id = il.inquiry_id';
@@ -120,6 +120,10 @@ final class TimelineQuery
         $isStageChange = TimelineEntry::EVENT_DEAL_STAGE_CHANGED === $row['type_code'];
         // The inquiry can outlive an erased contact: its entry stays on the company, anonymised, and must not name it.
         $inquiryId = null === $row['anonymised_at'] && null !== $row['inquiry_id'] ? (string) $row['inquiry_id'] : null;
+        // Anonymising empties the payload, so an erased entry has no status and shows no address.
+        $email = TimelineEntry::EMAIL_SENT === $row['type_code'] && null !== $row['payload_status']
+            ? ['to' => (string) $row['payload_to'], 'cc' => null === $row['payload_cc'] ? null : (string) $row['payload_cc'], 'status' => (string) $row['payload_status']]
+            : null;
 
         return new TimelineEntry(
             $isStageChange ? TimelineEntry::SYSTEM : TimelineEntry::ACTIVITY,
@@ -131,9 +135,10 @@ final class TimelineQuery
             null === $row['title'] ? null : (string) $row['title'],
             null === $row['body'] ? null : (string) $row['body'],
             null !== $row['anonymised_at'],
-            stage: $isStageChange ? (string) $row['stage_to'] : null,
+            stage: $isStageChange ? (string) $row['payload_to'] : null,
             inquiryId: $inquiryId,
             inquiryCouple: null === $inquiryId ? null : trim((string) $row['inquiry_first_name'].' '.(string) $row['inquiry_last_name']),
+            email: $email,
         );
     }
 

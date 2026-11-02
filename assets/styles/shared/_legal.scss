@@ -1,36 +1,82 @@
-// Impressum and Datenschutz (#18): long running text at a readable measure.
-.legal {
-    padding-block: var(--space-40) var(--space-64);
+@use '../abstracts/breakpoints' as bp;
 
-    > * {
-        max-width: 65ch;
+// Impressum and Datenschutz (#18, #40): long running text in a centred column.
+.legal {
+    padding-block: var(--space-16) var(--space-64);
+
+    @include bp.up(md) {
+        padding-top: var(--space-40);
     }
 
     p {
         margin: 0 0 var(--space-16);
     }
 
+    // The first section's margin-top is the whole gap under the intro.
+    > p:last-of-type {
+        margin-bottom: 0;
+    }
+
     address {
-        margin: 0 0 var(--space-16);
+        margin: 0 0 var(--space-12);
         font-style: normal;
     }
+
+    a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+        color: var(--c-accent-strong);
+        font-weight: var(--fw-semibold);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+
+        &:hover {
+            color: var(--c-ink);
+        }
+
+        @include bp.up(md) {
+            min-height: var(--space-24);
+        }
+    }
+}
+
+// Two classes, to beat `.container`'s max-widths. 45.5rem leaves 680 px of text inside the gutters.
+.legal.container {
+    max-width: 45.5rem;
+    padding-inline: var(--space-24);
 }
 
 .legal__title {
     margin: 0 0 var(--space-16);
-    font-size: 1.75rem;
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
 }
 
 .legal__updated {
     color: var(--c-ink-muted);
     font-size: var(--fs-small);
+    line-height: var(--lh-small);
 }
 
 .legal__section {
-    margin-top: var(--space-40);
+    margin-top: var(--space-32);
+
+    @include bp.up(md) {
+        margin-top: var(--space-40);
+    }
 
     h2 {
         margin: 0 0 var(--space-12);
-        font-size: 1.25rem;
+        font-size: var(--fs-h2);
+        line-height: var(--lh-h2);
+    }
+
+    p {
+        margin-bottom: var(--space-12);
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
 }

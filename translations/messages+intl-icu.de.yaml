@@ -1,6 +1,7 @@
 # Layout strings only (#1 owns this file; docs/rpi-cycles.md "Hotspot files"). Each module has its own domain.
 layout:
     site_name: Hochzeitslocation
+    logo_alt: hochzeitslocation.ch
     skip_to_content: Zum Inhalt springen
     close: Schliessen
     header:
@@ -18,7 +19,7 @@ layout:
         platform: Plattform
         contact: Kontakt
         add_location: Ihre Location eintragen
-        copyright: © Hochzeitslocation
+        copyright: © {year} hochzeitslocation.ch
     carousel:
         previous: Vorheriges Bild
         next: Nächstes Bild

@@ -227,6 +227,8 @@ final class MoreFilterTest extends WebTestCase
         self::assertSame(self::PRIMARY_BUILDINGS, $crawler->filter('#filter-more fieldset > .filter-more__chips input[name="building[]"]')->each(static fn (Crawler $input): string => (string) $input->attr('value')));
         self::assertSame(['cafe'], $crawler->filter('#filter-more details input[name="building[]"]')->each(static fn (Crawler $input): string => (string) $input->attr('value')));
         self::assertCount(0, $crawler->filter('#filter-more details[open]'));
+        self::assertCount(2, $crawler->filter('#filter-more summary svg'));
+        self::assertSame(['Alle Gebäudearten', 'Gebäudearten schliessen'], $crawler->filter('#filter-more summary span')->each(static fn (Crawler $text): string => $text->text()));
     }
 
     public function test_an_active_building_opens_the_expander(): void
@@ -236,6 +238,16 @@ final class MoreFilterTest extends WebTestCase
         $crawler = $this->get('/hochzeitslocations?building[]=hotel');
 
         self::assertCount(1, $crawler->filter('#filter-more details[open]'));
+    }
+
+    public function test_groups_name_their_layout(): void
+    {
+        $this->everyFilterVenue('Seehaus');
+
+        $crawler = $this->get('/hochzeitslocations');
+
+        self::assertCount(2, $crawler->filter('.filter-more__group--location .filter-more__tiles'));
+        self::assertCount(4, $crawler->filter('.filter-more__group--properties .filter-more__chips'));
     }
 
     public function test_the_pill_counts_params_and_replaces_the_trigger(): void
@@ -303,7 +315,7 @@ final class MoreFilterTest extends WebTestCase
             ['Lage', 'Erreichbarkeit', 'Gebäudeart', 'Infrastruktur', 'Mobiliar', 'Technik', 'Umgebung', 'Raumangebot'],
             $crawler->filter('#filter-more legend')->each(static fn (Crawler $legend): string => $legend->text()),
         );
-        self::assertSame('Wähle weitere Filter & Möglichkeiten', $crawler->filter('#filter-more-title')->text());
+        self::assertSame('Wählen Sie weitere Filter und Möglichkeiten', $crawler->filter('#filter-more-title')->text());
         self::assertStringNotContainsString('Karte', $crawler->filter('.filter-bar')->text());
         self::assertCount(0, $crawler->filter('[style]'));
         $response = $this->client->getResponse();
@@ -363,7 +375,7 @@ final class MoreFilterTest extends WebTestCase
         self::assertCount(0, $crawler->filter('#filter-more fieldset'));
         self::assertCount(1, $crawler->filter('.filter-more__group'), 'No rule renders.');
         self::assertCount(1, $crawler->filter('#filter-more-q[placeholder="Name eingeben"]'));
-        self::assertSame('Suche eine konkrete Location', $crawler->filter('label[for="filter-more-q"]:not(.visually-hidden)')->text());
+        self::assertSame('Suchen Sie eine konkrete Location', $crawler->filter('label[for="filter-more-q"]:not(.visually-hidden)')->text());
         self::assertSame('weitere Filter +', $crawler->filter('.filter-bar [popovertarget="filter-more"]:not([popovertargetaction])')->text());
         self::assertCount(1, $crawler->filter('#filter-more .overlay__footer button[form="filter-more-form"]'));
         self::assertCount(1, $crawler->filter('#filter-more a[data-overlay-clear]'));

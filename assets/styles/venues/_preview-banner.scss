@@ -1,5 +1,7 @@
 // #24's CMS preview (CMS-9): the banner above a venue's public page, rendered at /admin/locations/{n}/vorschau with
 // the public stylesheet (P18), so only `--c-*` tokens.
+@use 'detail/shared';
+
 .preview-banner {
     background: var(--c-ink);
     color: var(--c-surface-raised);
@@ -12,7 +14,9 @@
     gap: var(--space-8) var(--space-16);
     align-items: center;
     justify-content: space-between;
+    max-width: 75rem; // this file loads last, so these two beat the template's `.container`
     padding-block: var(--space-12);
+    padding-inline: var(--space-24);
 }
 
 .preview-banner__text {
@@ -25,11 +29,10 @@
     text-decoration: underline;
 }
 
-// Stands in `#anfrage` on the page ground, not in the banner, so it takes the page's colours. The rule is decorative.
+// Stands in `#anfrage` in the form's place, so it takes the form's card.
 .preview-banner__note {
+    @include shared.card;
+
     margin: 0;
-    padding: var(--space-16);
-    border: 1px solid var(--c-line-soft);
-    border-radius: var(--radius-card);
-    color: var(--c-ink-muted);
+    color: var(--c-ink);
 }

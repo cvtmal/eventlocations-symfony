@@ -1,3 +1,4 @@
+@use 'sass:math';
 @use '../abstracts/breakpoints' as bp;
 
 // Full-screen filter overlay shell (`components/_overlay.html.twig`): a `popover` opened by `popovertarget`,
@@ -34,92 +35,106 @@
     }
 }
 
+// A board's `radial-gradient(circle at $x $y, … $radius px)`: the centre in percent of the viewport, the radius in vw of
+// the board it is drawn on, so it scales with the width as drawn.
+@mixin circle($x, $y, $radius, $board) {
+    $r: math.div($radius, $board) * 100vw;
+
+    width: $r * 2;
+    left: calc(#{$x} - #{$r});
+    top: calc(#{$y} - #{$r});
+}
+
 .overlay--region {
     &::before {
-        width: 115vw;
-        left: -41vw;
-        top: 0;
+        @include circle(8%, 84%, 220, 390);
+
+        @include bp.up(md) {
+            @include circle(14%, 74%, 430, 1440);
+        }
     }
 
     &::after {
-        width: 45vw;
-        right: 1.5vw;
-        top: 1.5vw;
+        @include circle(96%, 4%, 120, 390);
+
+        @include bp.up(md) {
+            @include circle(91%, 12%, 200, 1440);
+        }
     }
 }
 
 .overlay--guests {
     &::before {
-        width: 80vw;
-        left: 4vw;
-        top: -36vw;
+        @include circle(10%, 12%, 150, 390);
+
+        @include bp.up(md) {
+            @include circle(30%, 12%, 300, 1440);
+        }
     }
 
     &::after {
-        width: 70vw;
-        left: 39vw;
-        top: 12vw;
+        @include circle(92%, 66%, 190, 390);
+
+        @include bp.up(md) {
+            @include circle(86%, 78%, 360, 1440);
+        }
     }
 }
 
+// The boards draw More on the long page; these `y` are the same circles on a viewport.
 .overlay--more {
     &::before {
-        width: 65vw;
-        left: 35vw;
-        top: -4vw;
+        @include circle(92%, 4%, 160, 390);
+
+        @include bp.up(md) {
+            @include circle(84%, 9%, 340, 1440);
+        }
     }
 
     &::after {
-        width: 60vw;
-        left: 4vw;
-        top: 23vw;
+        @include circle(4%, 17%, 140, 390);
+
+        @include bp.up(md) {
+            @include circle(8%, 51%, 300, 1440);
+        }
     }
 }
 
 .overlay__close {
     position: absolute;
-    top: var(--space-24);
-    right: var(--space-24);
+    top: var(--space-16);
+    right: var(--space-16);
     z-index: 1;
 
-    @include bp.up(lg) {
+    @include bp.up(md) {
         top: var(--space-40);
         right: var(--space-40);
     }
 }
 
 .overlay__body {
-    padding-top: var(--space-40);
-    padding-bottom: var(--space-40);
+    padding-top: 4.5rem;
+    padding-bottom: var(--space-24);
 
     @include bp.up(lg) {
         padding-top: 7.5rem;
+        padding-bottom: var(--space-40);
     }
 }
 
 .overlay__title {
     max-width: 18ch;
-    margin-bottom: var(--space-40);
+    margin-bottom: var(--space-32);
     padding-right: 3rem; // keeps clear of the close button
     overflow-wrap: break-word;
     font-size: var(--fs-h1);
     line-height: var(--lh-h1);
 }
 
+// No band and not sticky: the boards run the circle behind the buttons, and a short phone scrolls to them. Only More's long
+// form needs the sticky white band (`_filter-more.scss`).
 .overlay__footer {
-    position: sticky;
-    bottom: 0;
-    padding-block: var(--space-16);
-    background: var(--c-overlay-ground);
-}
-
-// Region and guests: on wide screens, where the content fits, the bar is transparent and the circles show through.
-// Below md it stays solid to cover scrolled content.
-.overlay--region .overlay__footer,
-.overlay--guests .overlay__footer {
-    @include bp.up(md) {
-        background: transparent;
-    }
+    padding-block: 0 var(--space-24);
 }
 
 .overlay__footer-inner {
@@ -136,9 +151,29 @@
     padding: 0;
     border: 0;
     background: none;
-    color: var(--c-ink);
+    color: var(--c-accent-strong-hover); // accent-strong is 4.25:1 on the circle, too little for 14 px
+    font-size: var(--fs-small);
     font-weight: var(--fw-semibold);
+    line-height: var(--lh-button);
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
+
+    &:hover {
+        color: var(--c-ink);
+    }
+}
+
+// The large field of Region and Guests; More's stays at the shared size.
+.overlay--region .text-input__field,
+.guests-filter__input {
+    min-height: 3.25rem;
+    font-size: 1.5rem;
+    line-height: 2rem;
+
+    @include bp.up(md) {
+        min-height: 4rem;
+        font-size: 2rem;
+        line-height: 2.5rem;
+    }
 }

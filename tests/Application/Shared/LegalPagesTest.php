@@ -75,7 +75,7 @@ final class LegalPagesTest extends WebTestCase
             'Karten von Google Maps',
             'Links zu anderen Anbietern',
             'Interner Bereich',
-            'Deine Rechte',
+            'Ihre Rechte',
         ], $crawler->filter('main h2')->each(static fn (Crawler $h2): string => $h2->text()));
         self::assertStringContainsString('Pick n Roll GmbH', $crawler->filter('main address')->text());
     }
@@ -114,9 +114,9 @@ final class LegalPagesTest extends WebTestCase
     {
         $text = $this->page('/datenschutz')->filter('main')->text();
 
-        self::assertStringContainsString('Wenn du für eine Location arbeitest, bearbeiten wir deine geschäftlichen Kontaktdaten', $text);
+        self::assertStringContainsString('Wenn Sie für eine Location arbeiten, bearbeiten wir Ihre geschäftlichen Kontaktdaten', $text);
         self::assertStringContainsString('um die Zusammenarbeit mit den Locations zu pflegen', $text);
-        self::assertStringContainsString('Verlangst du die Löschung, löschen wir sie früher', $text);
+        self::assertStringContainsString('Verlangen Sie die Löschung, löschen wir sie früher', $text);
     }
 
     public function test_the_retention_follows_the_purge_parameter(): void
@@ -158,7 +158,7 @@ final class LegalPagesTest extends WebTestCase
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         $load = $translator->trans('detail.location.map.load', [], 'venues', 'de');
         $open = $translator->trans('detail.location.map.open', [], 'venues', 'de');
-        self::assertStringContainsString('erst, wenn du auf «'.$load.'» klickst', $text);
+        self::assertStringContainsString('erst, wenn Sie auf «'.$load.'» klicken', $text);
         self::assertStringContainsString('«'.$open.'»', $text);
     }
 

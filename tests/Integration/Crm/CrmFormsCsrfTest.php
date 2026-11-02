@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Crm;
 use App\Admin\Form\ConfirmActionType;
 use App\Crm\Form\CompanyType;
 use App\Crm\Form\ContactType;
+use App\Crm\Form\EmailTemplateType;
 use App\Crm\Form\LinkVenueType;
 use App\Crm\Form\TaskType;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -33,6 +34,7 @@ final class CrmFormsCsrfTest extends KernelTestCase
         yield 'contact' => [ContactType::class, ['owners' => [], 'company_url' => '/admin/api/crm/companies']];
         yield 'link venue' => [LinkVenueType::class, ['venue_url' => '/admin/api/crm/venues']];
         yield 'task' => [TaskType::class, ['owners' => []]];
+        yield 'email template' => [EmailTemplateType::class, []];
         yield 'confirmation' => [ConfirmActionType::class, []];
     }
 

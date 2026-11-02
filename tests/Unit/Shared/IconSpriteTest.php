@@ -19,6 +19,8 @@ final class IconSpriteTest extends TestCase
         'building-2', 'mountain-snow', 'sailboat', 'trees', 'waves',
         // Highlights
         'binoculars', 'coins', 'landmark', 'music', 'route', 'smile', 'sofa', 'sparkles', 'utensils',
+        // Home categories
+        'beer', 'castle', 'grape', 'hotel', 'warehouse',
     ];
 
     private const array PRESENTATION_ATTRIBUTES = ['stroke', 'fill', 'stroke-width'];
@@ -38,7 +40,7 @@ final class IconSpriteTest extends TestCase
         $missing = array_diff(self::REQUIRED, self::ids());
 
         self::assertSame([], array_values($missing));
-        self::assertCount(39, self::REQUIRED);
+        self::assertCount(44, self::REQUIRED);
     }
 
     public function test_symbols_carry_no_presentation_attributes(): void

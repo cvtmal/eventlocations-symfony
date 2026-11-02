@@ -42,6 +42,16 @@
                             meta: when,
                             body: entry.anonymised ? labels.anonymised : sentence,
                         }, with_context = false) }}
+                    {%- elseif entry.type == 'email_sent' -%}
+                        {#- `title` is the subject. A failed send says so here too: without JS there is no pill. -#}
+                        {%- set failed = entry.email and entry.email.status == 'failed' -%}
+                        {%- set type = failed ? labels.emailTitleFailed : (type_labels[entry.type] ?? entry.type) -%}
+                        {{ include('admin/components/_timeline_item.html.twig', {
+                            icon: 'history',
+                            title: entry.actorName ? labels.by|replace({'__type__': type, '__actor__': entry.actorName}) : type,
+                            meta: failed ? when ~ ' · ' ~ labels.emailStatusFailed : when,
+                            body: entry.anonymised ? labels.anonymised : [entry.title, entry.body]|filter(v => v)|join("\n"),
+                        }, with_context = false) }}
                     {%- else -%}
                         {%- set type = type_labels[entry.type] ?? entry.type -%}
                         {{ include('admin/components/_timeline_item.html.twig', {

@@ -93,7 +93,7 @@ final class PortalAdminSeparationTest extends WebTestCase
         $this->client->request('GET', '/');
         self::assertSame([], $this->client->getResponse()->headers->getCookies());
 
-        $this->client->followRedirect();
+        $this->client->request('GET', '/hochzeitslocations');
         self::assertResponseIsSuccessful();
         self::assertSame([], $this->client->getResponse()->headers->getCookies());
     }

@@ -25,7 +25,7 @@
     </ul>
     {%- if split %}
     <details class="filter-more__all"{% if active is not empty %} open{% endif %}>
-        <summary class="filter-more__all-toggle"><span>{{ 'filter.more_buildings_all'|trans({}, 'search') }}</span><span>{{ 'filter.more_buildings_close'|trans({}, 'search') }}</span></summary>
+        <summary class="filter-more__all-toggle"><span>{{ 'filter.more_buildings_all'|trans({}, 'search') }}{{ icon('chevron-down') }}</span><span>{{ 'filter.more_buildings_close'|trans({}, 'search') }}{{ icon('x') }}</span></summary>
         <ul class="filter-more__chips">
             {%- for code in terms|slice(11) %}
             {{ more.chip(param, group, code, code in active) }}

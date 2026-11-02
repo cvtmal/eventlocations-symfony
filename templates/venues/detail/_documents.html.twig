@@ -3,7 +3,7 @@
     <h2 id="venue-documents-title" class="venue-section__title">{{ 'detail.documents.heading'|trans({}, 'venues') }}</h2>
     <ul class="venue-documents__list">
         {% for document in venue.documents %}
-            <li><a class="venue-contact__link" href="{{ document_url(venue.number, document.id) }}">{{ icon('file-text') }}<span>{{ document.title }}</span></a></li>
+            <li><a class="btn btn--secondary venue-contact__link" href="{{ document_url(venue.number, document.id) }}">{{ icon('file-text') }}<span>{{ document.title }}</span></a></li>
         {% endfor %}
     </ul>
 </section>

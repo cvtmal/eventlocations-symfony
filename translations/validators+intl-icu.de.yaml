@@ -143,33 +143,35 @@ crm:
     task:
         due_on: Bitte ein gültiges Datum eingeben.
         assignee: Bitte jemanden aus der Liste wählen.
+    email:
+        subject_line: Der Betreff darf nur eine Zeile haben.
 inquiry:
     occasion:
-        required: Bitte wähle einen Anlass.
+        required: Bitte wählen Sie einen Anlass.
     guests:
-        required: Bitte gib die Anzahl Gäste an.
-        invalid: Bitte gib die Anzahl Gäste als ganze Zahl an.
-        range: Bitte gib zwischen 1 und 5000 Gäste an.
+        required: Bitte geben Sie die Anzahl Gäste an.
+        invalid: Bitte geben Sie die Anzahl Gäste als ganze Zahl an.
+        range: Bitte geben Sie zwischen 1 und 5000 Gäste an.
     event_date:
-        invalid: Bitte gib ein gültiges Datum an.
+        invalid: Bitte geben Sie ein gültiges Datum an.
     message:
-        required: Bitte schreib eine Nachricht.
+        required: Bitte schreiben Sie eine Nachricht.
         too_long: Die Nachricht darf höchstens 5000 Zeichen lang sein.
         invalid: Die Nachricht enthält ungültige Zeichen.
     first_name:
-        required: Bitte gib deinen Vornamen an.
+        required: Bitte geben Sie Ihren Vornamen an.
         too_long: Der Vorname darf höchstens 100 Zeichen lang sein.
         invalid: Der Vorname enthält ungültige Zeichen.
     last_name:
-        required: Bitte gib deinen Namen an.
+        required: Bitte geben Sie Ihren Namen an.
         too_long: Der Name darf höchstens 100 Zeichen lang sein.
         invalid: Der Name enthält ungültige Zeichen.
     email:
-        required: Bitte gib deine E-Mail-Adresse an.
-        invalid: Bitte gib eine gültige E-Mail-Adresse an.
+        required: Bitte geben Sie Ihre E-Mail-Adresse an.
+        invalid: Bitte geben Sie eine gültige E-Mail-Adresse an.
         too_long: Die E-Mail-Adresse darf höchstens 254 Zeichen lang sein.
     phone:
-        invalid: Bitte gib eine gültige Telefonnummer an.
+        invalid: Bitte geben Sie eine gültige Telefonnummer an.
 shared:
     text:
         invalid: Der Text enthält ungültige Zeichen.

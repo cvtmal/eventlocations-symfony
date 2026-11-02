@@ -1,0 +1,39 @@
+{#
+    The home page's search (#36, HP-2): a plain GET form to the listing, no script, so it works without JS. The controls
+    are written out: `_text_input` has no select, and #36 adds no parameter to it. Include with `only`:
+      regions (list of {code, label}: the live cantons), categories (list of {category}: the HomeCategory cases).
+#}
+<form class="home-search" method="get" action="{{ path('listing') }}" aria-label="{{ 'home.search.label'|trans({}, 'search') }}">
+    <div class="text-input">
+        <label class="text-input__label" for="home-canton">{{ 'home.search.canton'|trans({}, 'search') }}</label>
+        <div class="text-input__control">
+            <select class="text-input__field" id="home-canton" name="canton">
+                <option value="">{{ 'home.search.canton_all'|trans({}, 'search') }}</option>
+                {%- for region in regions %}
+                <option value="{{ region.code }}">{{ region.label }}</option>
+                {%- endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="home-search__row">
+        <div class="text-input">
+            <label class="text-input__label" for="home-type">{{ 'home.search.type'|trans({}, 'search') }}</label>
+            <div class="text-input__control">
+                <select class="text-input__field" id="home-type" name="building[]">
+                    <option value="">{{ 'home.search.type_all'|trans({}, 'search') }}</option>
+                    {%- for c in categories %}
+                    <option value="{{ c.category.value }}">{{ c.category|trans }}</option>
+                    {%- endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="text-input text-input--icon">
+            <label class="text-input__label" for="home-guests">{{ 'home.search.guests'|trans({}, 'search') }}</label>
+            <div class="text-input__control">
+                {{- icon('user', {class: 'text-input__icon'}) -}}
+                <input class="text-input__field" id="home-guests" name="guests" type="number" min="1" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_GUESTS') }}" inputmode="numeric" placeholder="{{ 'home.search.guests_placeholder'|trans({}, 'search') }}">
+            </div>
+        </div>
+    </div>
+    {% include 'components/_button.html.twig' with {label: 'home.search.submit'|trans({}, 'search'), type: 'submit', size: 'lg'} only %}
+</form>
