@@ -96,7 +96,7 @@ final class TasksNavigationTest extends WebTestCase
         )));
     }
 
-    public function test_the_company_list_stays_at_its_ceiling_with_the_users_refresh(): void
+    public function test_the_company_list_stays_within_its_statements_with_the_users_refresh(): void
     {
         self::mockTime('2026-10-31 10:00:00 UTC');
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
@@ -105,8 +105,9 @@ final class TasksNavigationTest extends WebTestCase
         // An empty identity map is production's: the refresh then reads the user, which `CountsQueries` otherwise leaves out.
         $this->entityManager()->clear();
 
-        // The user's refresh, the owners with the badge, COUNT, the rows, the venues left for the bootstrap (P12 ceiling 5).
-        self::assertSame(5, $this->queriesOf('/admin/crm/firmen'));
+        // The user's refresh, the owners with the badge, COUNT, the rows, the venues left for the bootstrap, the
+        // access-request badge (P12 ceiling 5, passed on purpose by #43).
+        self::assertSame(6, $this->queriesOf('/admin/crm/firmen'));
         self::assertSelectorTextSame('.sidebar__badge', '1');
     }
 
@@ -118,8 +119,8 @@ final class TasksNavigationTest extends WebTestCase
         ContactFactory::createOne();
         $this->entityManager()->clear();
 
-        // The user's refresh, the owners with the badge, COUNT, the rows.
-        self::assertSame(4, $this->queriesOf('/admin/crm/kontakte'));
+        // The user's refresh, the owners with the badge, COUNT, the rows, the access-request badge.
+        self::assertSame(5, $this->queriesOf('/admin/crm/kontakte'));
         self::assertSelectorTextSame('.sidebar__badge', '1');
     }
 

@@ -577,14 +577,14 @@ final class CompanyRecordTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
-    public function test_the_deals_tab_runs_three_queries(): void
+    public function test_the_deals_tab_stays_within_its_statements(): void
     {
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
         DealFactory::createMany(3, ['company' => $company]);
 
-        // The company, the owners, the deals; with the user's refresh 4 in production (N14's ceiling 5).
-        self::assertSame(3, $this->queriesOf('/admin/crm/firmen/'.$company->id().'/deals'));
+        // The company, the owners, the deals, the access-request badge; with the user's refresh 5 in production (N14's ceiling 5).
+        self::assertSame(4, $this->queriesOf('/admin/crm/firmen/'.$company->id().'/deals'));
     }
 
     public function test_the_composer_can_write_to_the_company_and_its_contacts_with_an_address(): void
@@ -608,7 +608,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame(['send' => '/admin/api/crm/emails', 'draft' => '/admin/api/crm/email-draft'], $props['email']['urls']);
     }
 
-    public function test_the_page_runs_eight_queries(): void
+    public function test_the_page_stays_within_its_statements(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
@@ -619,9 +619,9 @@ final class CompanyRecordTest extends WebTestCase
 
         // The company with its venues and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
         // timeline's activities, venue names and audit rows, the composer's mail templates, the Aufgaben card, the Deals
-        // card; with the user's refresh 9 in production (N14's ceiling 10). The address is the worst case: without one the
-        // templates are not read.
-        self::assertSame(8, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
+        // card, the access-request badge; with the user's refresh 10 in production (N14's ceiling 10). The address is the
+        // worst case: without one the templates are not read.
+        self::assertSame(9, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
     }
 
     private function auditRows(string $companyId): int

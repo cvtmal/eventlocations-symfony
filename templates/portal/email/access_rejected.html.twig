@@ -1,0 +1,10 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'claims.mail.rejected.preheader'|trans({venue: venueName}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('claims.mail.rejected.greeting'|trans({name: firstName}, 'portal')) }}
+{{ blocks.p('claims.mail.rejected.intro'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.p('claims.mail.rejected.again'|trans({}, 'portal')) }}
+{% endblock %}

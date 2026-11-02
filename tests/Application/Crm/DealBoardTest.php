@@ -150,8 +150,9 @@ final class DealBoardTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         DealFactory::createMany(3, ['company' => CompanyFactory::createOne()]);
 
-        // Owners with the badge, stages, months, cards, totals; the refresh makes six in production, under D16's 7.
-        self::assertSame(5, $this->queriesOf(self::BOARD));
+        // Owners with the badge, stages, months, cards, totals, the access-request badge; the refresh makes seven in
+        // production, D16's 7.
+        self::assertSame(6, $this->queriesOf(self::BOARD));
     }
 
     /**

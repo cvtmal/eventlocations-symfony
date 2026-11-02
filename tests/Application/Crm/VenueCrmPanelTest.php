@@ -145,7 +145,7 @@ final class VenueCrmPanelTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
 
         self::assertSame(
-            ['venue-checklist', 'crm', 'venue-history'],
+            ['venue-checklist', 'crm', 'portal-managers', 'venue-history'],
             $crawler->filter('aside section[aria-labelledby]')->each(static fn (Crawler $card): ?string => $card->attr('aria-labelledby')),
         );
     }

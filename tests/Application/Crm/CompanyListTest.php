@@ -131,15 +131,16 @@ final class CompanyListTest extends WebTestCase
         self::assertSelectorTextContains('.empty', 'Keine Firmen');
     }
 
-    public function test_the_list_runs_three_queries(): void
+    public function test_the_list_stays_within_its_statements(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         CompanyFactory::new()->withVenues(VenueFactory::new()->withoutLocation(null)->create())->create(['owner' => $owner]);
         CompanyFactory::createMany(2);
 
-        // The owners, which carry the sidebar's badge (`TaskBadge`), COUNT, the rows, the venues left for the bootstrap;
-        // with the user's refresh 5 in production (P12 ceiling 5, the lead's addition 3: the badge may not make it 6).
-        self::assertSame(4, $this->queriesOf('/admin/crm/firmen?stage=prospect&sort=venues'));
+        // The owners, which carry the sidebar's badge (`TaskBadge`), COUNT, the rows, the venues left for the bootstrap,
+        // the access-request badge; with the user's refresh 6 in production (P12 ceiling 5, passed on purpose by #43: that
+        // badge has no statement to ride on).
+        self::assertSame(5, $this->queriesOf('/admin/crm/firmen?stage=prospect&sort=venues'));
     }
 
     /**

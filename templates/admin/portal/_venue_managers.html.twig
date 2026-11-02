@@ -1,0 +1,42 @@
+{#
+    The managers of a location on its venue page. Filled by `VenueManagersPanel`: `portal_number`, `portal_managers`
+    (list<VenueManagerRow>), `portal_add_form`; nothing for a record id that is no venue number. The list borrows the
+    CRM card's row classes, so the panel needs no CSS of its own.
+#}
+{% if portal_number is defined %}
+    {% embed 'admin/components/_card.html.twig' with {
+        title: 'review.panel.title'|trans({}, 'portal'),
+        id: 'portal-managers',
+        portal_number: portal_number,
+        portal_managers: portal_managers,
+        portal_add_form: portal_add_form,
+    } only %}
+        {% block body %}
+            {% form_theme portal_add_form 'admin/form/theme.html.twig' %}
+            {% if portal_managers is empty %}
+                <p class="muted">{{ 'review.panel.empty'|trans({}, 'portal') }}</p>
+            {% else %}
+                <ul class="crm-panel__tasks">
+                    {% for manager in portal_managers %}
+                        {% set name = manager.firstName ~ ' ' ~ manager.lastName %}
+                        <li class="crm-panel__task">
+                            <span>{{ name }}<br><span class="muted">{{ manager.email }}</span></span>
+                            <form method="post" action="{{ path('admin_portal_review_manager_remove', {number: portal_number, userId: manager.userId}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                                {{ include('admin/components/_button.html.twig', {
+                                    label: 'review.panel.remove'|trans({}, 'portal'),
+                                    size: 'sm', type: 'submit',
+                                    attributes: {'aria-label': 'review.panel.remove_for'|trans({name: name}, 'portal')},
+                                }, with_context = false) }}
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {{ form_start(portal_add_form, {action: path('admin_portal_review_manager_add', {number: portal_number}), attr: {class: 'form crm-panel__create', novalidate: 'novalidate'}}) }}
+                {{ form_row(portal_add_form.email, {label: 'review.panel.email', attr: {autocomplete: 'off'}}) }}
+                {{ include('admin/components/_button.html.twig', {label: 'review.panel.add'|trans({}, 'portal'), icon: 'plus', type: 'submit'}, with_context = false) }}
+            {{ form_end(portal_add_form) }}
+        {% endblock %}
+    {% endembed %}
+{% endif %}

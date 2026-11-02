@@ -144,16 +144,17 @@ final class VenueListQuery
     }
 
     /**
-     * The global search's venue group (#23's `SearchProvider`): the list's search, by name.
+     * The global search's venue group (#23's `SearchProvider`) and the manager's location search (#43, with a
+     * `VenueListFilter::STATUS_*`): the list's search, by name.
      *
      * @return list<VenueListRow>
      */
-    public function quickSearch(string $q, int $limit): array
+    public function quickSearch(string $q, int $limit, ?string $status = null): array
     {
         if ('' === trim($q)) {
             return [];
         }
-        [$conditions, $parameters, $types] = $this->conditions(new VenueListFilter(q: $q));
+        [$conditions, $parameters, $types] = $this->conditions(new VenueListFilter(q: $q, status: $status));
 
         return $this->rows($conditions, $parameters, $types, 'v.name ASC, v.number ASC', $limit);
     }

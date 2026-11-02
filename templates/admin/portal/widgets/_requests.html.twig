@@ -1,0 +1,31 @@
+{#
+    The dashboard widget "Zugriffsanfragen" (`Portal\Extension\AccessRequestsWidget`). total: int, rows: the oldest
+    list<PortalAccessRequestRow>. The decision stays in the queue, so there are no buttons here.
+#}
+<p class="widget__head-link"><a href="{{ path('admin_portal_review') }}">
+    {{- total > rows|length ? 'review.widget.all_count'|trans({count: total|swiss_number}, 'portal') : 'review.widget.all'|trans({}, 'portal') -}}
+</a></p>
+{% if rows is empty %}
+    <p class="card__body muted">{{ 'review.widget.empty'|trans({}, 'portal') }}</p>
+{% else %}
+    <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'review.table_label'|trans({}, 'portal') }}">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'review.column.name'|trans({}, 'portal') }}</th>
+                    <th scope="col">{{ 'review.column.location'|trans({}, 'portal') }}</th>
+                    <th scope="col">{{ 'review.column.date'|trans({}, 'portal') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td><strong>{{ row.firstName }} {{ row.lastName }}</strong></td>
+                        <td>{{ row.venueName }}</td>
+                        <td class="muted">{{ row.requestedAt|swiss_date }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}

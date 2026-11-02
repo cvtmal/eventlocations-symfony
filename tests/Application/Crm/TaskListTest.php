@@ -379,14 +379,14 @@ final class TaskListTest extends WebTestCase
         self::assertSame('{"on": null}', $this->connection->fetchOne('SELECT changes FROM admin_audit_log WHERE command = ?', [CreateTask::class]));
     }
 
-    public function test_the_page_runs_three_queries(): void
+    public function test_the_page_stays_within_its_statements(): void
     {
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
         TaskFactory::createMany(3, ['assignee' => $me, 'company' => CompanyFactory::createOne()]);
 
-        // The staff for the form's select, which carries the sidebar's badge (`TaskBadge`), COUNT, the rows; with the
-        // user's refresh 4 in production (P12 ceiling 6).
-        self::assertSame(3, $this->queriesOf(self::LIST));
+        // The staff for the form's select, which carries the sidebar's badge (`TaskBadge`), COUNT, the rows, the
+        // access-request badge; with the user's refresh 5 in production (P12 ceiling 6).
+        self::assertSame(4, $this->queriesOf(self::LIST));
     }
 
     /**

@@ -413,6 +413,7 @@ deal:
         owner: Zuständig
 
 activity:
+    location_manager: 'Location-Zugriff bestätigt: {venue}'
     type:
         note: Notiz
         email_logged: E-Mail

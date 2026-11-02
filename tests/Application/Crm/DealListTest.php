@@ -131,13 +131,14 @@ final class DealListTest extends WebTestCase
         self::assertSelectorTextContains('.form-error', 'Diese Filter sind ungültig');
     }
 
-    public function test_the_list_runs_at_most_six_queries_with_the_user_refresh(): void
+    public function test_the_list_stays_within_its_statements(): void
     {
         $this->logInAs(AdminRole::Editor);
         DealFactory::createMany(3, ['company' => CompanyFactory::createOne()]);
 
-        // Owners with the badge, stages, months, COUNT, rows; the user refresh makes six in production (N14).
-        self::assertSame(5, $this->queriesOf(self::LIST));
+        // Owners with the badge, stages, months, COUNT, rows, the access-request badge; the user refresh makes seven in
+        // production (N14's six, passed on purpose by #43).
+        self::assertSame(6, $this->queriesOf(self::LIST));
     }
 
     public function test_the_view_switch_keeps_the_filter(): void

@@ -6,6 +6,10 @@
     <li class="breadcrumbs__item" aria-current="page">{{ 'overview.title'|trans({}, 'portal') }}</li>
 {% endblock %}
 
+{% block page_actions %}
+    {{ include('admin/components/_button.html.twig', {label: 'claims.overview_link'|trans({}, 'portal'), href: path('portal_claims_search'), variant: 'primary', size: 'sm', icon: 'search'}, with_context = false) }}
+{% endblock %}
+
 {% block page_header %}
     <div class="page-header">
         <h1>{{ 'overview.title'|trans({}, 'portal') }}</h1>
