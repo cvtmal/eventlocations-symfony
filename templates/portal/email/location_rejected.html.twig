@@ -1,0 +1,12 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'onboarding.mail.rejected.preheader'|trans({venue: venueName}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('onboarding.mail.rejected.greeting'|trans({name: firstName}, 'portal')) }}
+{{ blocks.p('onboarding.mail.rejected.intro'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.quote(reason) }}
+{{ blocks.p('onboarding.mail.rejected.next'|trans({}, 'portal')) }}
+{{ blocks.button('onboarding.mail.rejected.button'|trans({}, 'portal'), url('portal_location_setup_step', {number: number, step: 'pruefen'})) }}
+{% endblock %}

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Portal;
 
 use App\Cms\ValueObject\VenueNumber;
+use App\Portal\ValueObject\WizardStep;
 use App\Tests\Support\Portal\PortalSession;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
@@ -123,12 +124,16 @@ final class PortalRoutesAreClosedTest extends WebTestCase
 
     /**
      * A value the parameter's requirement accepts, as in `ChecksAdminRoutes`: a venue number for
-     * `VenueNumber::REQUIREMENT`, a UUID for everything else. Another strict requirement gets the UUID, its 404
-     * fails the walk, and the parameter has to be taught here.
+     * `VenueNumber::REQUIREMENT`, a wizard step for `WizardStep::REQUIREMENT`, a UUID for everything else. Another
+     * strict requirement gets the UUID, its 404 fails the walk, and the parameter has to be taught here.
      */
     private static function routeSample(Route $route, string $parameter): string
     {
-        return VenueNumber::REQUIREMENT === $route->getRequirement($parameter) ? '1' : self::UUID;
+        return match ($route->getRequirement($parameter)) {
+            VenueNumber::REQUIREMENT => '1',
+            WizardStep::REQUIREMENT => 'texte',
+            default => self::UUID,
+        };
     }
 
     /**

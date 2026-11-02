@@ -2,7 +2,7 @@
     Card "Hochzeit" (S14's owner facts). Include with `with_context = false`: form, card, number, stale, locales.
     The texts have a tab per locale with a translation row; after a 422 the first locale with an error is open (L2).
 #}
-{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, locales: locales} only %}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, locales: locales, submit_label: submit_label|default(null)} only %}
     {% block fields %}
         {{ form_row(form.priceLevel) }}
         <div class="field-row">

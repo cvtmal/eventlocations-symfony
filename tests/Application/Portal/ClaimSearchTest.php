@@ -149,7 +149,7 @@ final class ClaimSearchTest extends WebTestCase
 
     public function test_the_overview_links_to_the_search(): void
     {
-        $this->logInAsManager();
+        PortalVenueAccessFactory::createOne(['user' => $this->logInAsManager(), 'venue' => VenueFactory::new()->withoutLocation()]);
 
         $crawler = $this->client->request('GET', '/konto');
 

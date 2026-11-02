@@ -1,0 +1,76 @@
+{#
+    Step 1 (#45). Context from `NewLocationController`: form, matches (`Cms\ReadModel\VenueListRow` list). The matches
+    follow `form_end`, because each has its own POST form and forms do not nest.
+#}
+{% extends 'portal/wizard/_layout.html.twig' %}
+
+{% set position = 1 %}
+{% set heading = 'onboarding.new.title'|trans({}, 'portal') %}
+
+{% block wizard_main %}
+    {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {title: 'onboarding.new.title'|trans({}, 'portal'), id: 'new-location-title', new_form: form, confirmable: matches is not empty} only %}
+            {% block body %}
+                <div class="form">
+                    <p class="muted">{{ 'onboarding.new.intro'|trans({}, 'portal') }}</p>
+                    {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                    {{ form_errors(new_form) }}
+                    {{ form_row(new_form.name) }}
+                    <div class="field-row">
+                        {{ form_row(new_form.capacityMax) }}
+                        {{ form_row(new_form.town) }}
+                    </div>
+                </div>
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'onboarding.new.submit'|trans({}, 'portal'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                {% if confirmable %}
+                    {{ include('admin/components/_button.html.twig', {label: 'onboarding.new.create_anyway'|trans({}, 'portal'), type: 'submit', attributes: {name: 'confirmed', value: '1'}}, with_context = false) }}
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+
+    <p><a href="{{ path('portal_claims_search') }}">{{ 'onboarding.new.search_link'|trans({}, 'portal') }}</a></p>
+
+    {% if matches is not empty %}
+        {# Not `_table`: `.table--list` keeps its cells on one line, which pushes the one action out at 390 px, as on `claims/search`. #}
+        <div class="card table-card">
+            <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'onboarding.new.matches.title'|trans({}, 'portal') }}">
+                <table class="table" id="new-location-matches">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ 'onboarding.new.field.name'|trans({}, 'portal') }}</th>
+                            <th scope="col"><span class="visually-hidden">{{ 'onboarding.new.matches.ask'|trans({}, 'portal') }}</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in matches %}
+                            <tr>
+                                <td>
+                                    <div class="page-header__title">
+                                        <strong>{{ row.name }}</strong>
+                                        <span class="muted">{{ row.place.isKnown ? row.place|trans : '—' }}</span>
+                                    </div>
+                                </td>
+                                <td class="table__actions">
+                                    <form method="post" action="{{ path('portal_claims_ask') }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                                        <input type="hidden" name="number" value="{{ row.number }}">
+                                        <input type="hidden" name="q" value="{{ form.vars.value.name }}">
+                                        {{ include('admin/components/_button.html.twig', {
+                                            label: 'onboarding.new.matches.ask'|trans({}, 'portal'),
+                                            size: 'sm',
+                                            type: 'submit',
+                                            attributes: {'aria-label': 'claims.action.ask_for'|trans({name: row.name}, 'portal')},
+                                        }, with_context = false) }}
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

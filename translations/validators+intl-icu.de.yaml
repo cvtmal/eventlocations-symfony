@@ -173,6 +173,13 @@ inquiry:
     phone:
         invalid: Bitte geben Sie eine gültige Telefonnummer an.
 portal:
+    onboarding:
+        town_required: Bitte geben Sie PLZ und Ort an.
+        inquiry_email_required: Bitte geben Sie eine E-Mail-Adresse für Anfragen an.
+        photo_required: Bitte wählen Sie ein Foto aus.
+        rights_required: Bitte bestätigen Sie, dass Sie die Location vertreten dürfen und die Rechte an ihren Texten und Fotos haben.
+        reason_required: Bitte geben Sie einen Grund an.
+        reason_too_long: Bitte höchstens {limit} Zeichen eingeben.
     photo:
         rate_limited: Sie haben in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuchen Sie es später noch einmal.
 shared:

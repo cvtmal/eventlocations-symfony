@@ -1,6 +1,6 @@
 {#
-    Layout of a manager's location pages. Contract: extend it, pass `venue` (`Cms\ReadModel\VenueHeader`) and
-    `offline_form` (`LocationForms::offlineForm()`), fill `location_main`.
+    Layout of a manager's location pages. Contract: extend it, pass `venue` (`Cms\ReadModel\VenueHeader`),
+    `submission` (`SubmissionQuery::find()`) and `offline_form` (`LocationForms::offlineForm()`), fill `location_main`.
 #}
 {% extends 'portal/base.html.twig' %}
 
@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block page_header %}
-    {% embed 'admin/components/_record_header.html.twig' with {title: venue.name, venue: venue, offline_form: offline_form} only %}
+    {% embed 'admin/components/_record_header.html.twig' with {title: venue.name, venue: venue, submission: submission, offline_form: offline_form} only %}
         {% block meta %}
             {{ include('admin/components/_pill.html.twig', {
                 label: ('list.status.' ~ venue.status.value)|trans({}, 'cms'),
@@ -40,6 +40,12 @@
                         {{ form_end(offline_form) }}
                     {% endblock %}
                 {% endembed %}
+            {% elseif (submission.status.value ?? null) == 'submitted' %}
+                {{ include('admin/components/_pill.html.twig', {label: 'onboarding.location.in_review'|trans({}, 'portal'), tone: 'amber'}, with_context = false) }}
+            {% elseif (submission.status.value ?? null) in ['draft', 'rejected'] %}
+                {{ include('admin/components/_button.html.twig', {label: 'onboarding.location.resume'|trans({}, 'portal'), href: path('portal_location_setup', {number: venue.number}), variant: 'primary'}, with_context = false) }}
+            {% else %}
+                {{ include('admin/components/_button.html.twig', {label: 'onboarding.location.resubmit'|trans({}, 'portal'), href: path('portal_location_setup_step', {number: venue.number, step: 'pruefen'}), variant: 'primary'}, with_context = false) }}
             {% endif %}
         {% endblock %}
         {% block tabs %}

@@ -23,6 +23,7 @@
         stale: stale|default(false),
         required: required|default(false),
         fields_markup: fields_markup,
+        submit_label: submit_label|default(null),
     } only %}
         {% block body %}
             {{ form_errors(card_form) }}
@@ -33,7 +34,7 @@
             {{ fields_markup }}
         {% endblock %}
         {% block foot %}
-            {{ include('admin/components/_button.html.twig', {label: 'editor.save'|trans({}, 'cms'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            {{ include('admin/components/_button.html.twig', {label: submit_label|default('editor.save'|trans({}, 'cms')), variant: 'primary', type: 'submit'}, with_context = false) }}
         {% endblock %}
     {% endembed %}
 {{ form_end(form) }}

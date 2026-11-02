@@ -11,6 +11,7 @@ use App\Cms\ValueObject\CmsFlash;
 use App\Cms\ValueObject\VenueCardSaveOutcome;
 use App\Cms\ValueObject\VenueNumber;
 use App\Portal\Form\LocationForms;
+use App\Portal\ReadModel\SubmissionQuery;
 use App\Portal\Security\PortalVenueVoter;
 use App\Portal\ValueObject\LocationCard;
 use App\Shared\Translation\EnabledLocale;
@@ -39,6 +40,7 @@ final class LocationEditController extends AbstractController
         private readonly VenueCardSaver $saver,
         private readonly TranslatorInterface $translator,
         private readonly EnabledLocale $locales,
+        private readonly SubmissionQuery $submissions,
     ) {
     }
 
@@ -128,6 +130,7 @@ final class LocationEditController extends AbstractController
 
         return $this->render('portal/location/edit.html.twig', [
             'venue' => $edit->header,
+            'submission' => $this->submissions->find($edit->header->id),
             'edit' => $edit,
             'forms' => $this->forms->views($edit, $bound, $boundForm),
             'offline_form' => $this->forms->offlineForm($edit->number())->createView(),

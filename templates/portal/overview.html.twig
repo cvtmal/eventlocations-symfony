@@ -8,6 +8,7 @@
 
 {% block page_actions %}
     {{ include('admin/components/_button.html.twig', {label: 'claims.overview_link'|trans({}, 'portal'), href: path('portal_claims_search'), variant: 'primary', size: 'sm', icon: 'search'}, with_context = false) }}
+    {{ include('admin/components/_button.html.twig', {label: 'onboarding.overview.new'|trans({}, 'portal'), href: path('portal_locations_new'), size: 'sm', icon: 'plus'}, with_context = false) }}
 {% endblock %}
 
 {% block page_header %}
@@ -23,6 +24,7 @@
         {% else %}
             <ul class="venue-widget">
                 {% for location in locations %}
+                    {% set review = location.isPublished ? null : (statuses[location.number].value ?? null) %}
                     <li class="venue-widget__row">
                         <a class="venue-widget__name" href="{{ path('portal_location', {number: location.number}) }}">{{ location.name }}</a>
                         <span class="venue-widget__pills">
@@ -34,7 +36,15 @@
                             {% for code in location.missing %}
                                 {{ include('admin/components/_pill.html.twig', {label: ('dashboard.incomplete.missing.' ~ code)|trans({}, 'cms'), tone: 'grey'}, with_context = false) }}
                             {% endfor %}
+                            {% if review == 'rejected' %}
+                                {{ include('admin/components/_pill.html.twig', {label: 'onboarding.overview.rejected'|trans({}, 'portal'), tone: 'red'}, with_context = false) }}
+                            {% elseif review == 'submitted' %}
+                                {{ include('admin/components/_pill.html.twig', {label: 'onboarding.overview.in_review'|trans({}, 'portal'), tone: 'amber'}, with_context = false) }}
+                            {% endif %}
                         </span>
+                        {% if review in ['draft', 'rejected'] %}
+                            {{ include('admin/components/_button.html.twig', {label: 'onboarding.overview.resume'|trans({}, 'portal'), href: path('portal_location_setup', {number: location.number}), size: 'sm'}, with_context = false) }}
+                        {% endif %}
                     </li>
                 {% endfor %}
             </ul>

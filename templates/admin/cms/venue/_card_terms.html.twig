@@ -3,7 +3,7 @@
     Building shows the listing's primary chips, the rest in a <details>. Main building and main setting are selects under
     their chips (P15).
 #}
-{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale} only %}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, submit_label: submit_label|default(null)} only %}
     {% block fields %}
         {% for group in constant('App\\Cms\\Form\\VenueTermsData::GROUPS')|map(group => group.value) %}
             {% if group == 'building' %}

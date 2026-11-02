@@ -1,0 +1,44 @@
+{#
+    Step 4 (#45): the `photo-manager` island without rooms, and in `<noscript>` a plain form for the first photos.
+    Context from `WizardController`: what `_photo_manager.html.twig` lists, apart from endpoints and reload_url, plus form.
+#}
+{% extends 'portal/wizard/_layout.html.twig' %}
+
+{% set position = 4 %}
+{% set heading = 'onboarding.step.fotos'|trans({}, 'portal') %}
+
+{% block wizard_main %}
+    <p class="muted">{{ 'onboarding.photos.intro'|trans({}, 'portal') }}</p>
+
+    {% set id_route = {number: venue.number, id: id_placeholder} %}
+    {{ include('admin/cms/venue/_photo_manager.html.twig', {
+        endpoints: {
+            upload: path('portal_api_photos_add', {number: venue.number}),
+            order: path('portal_api_photos_order', {number: venue.number}),
+            alt: path('portal_api_photos_alt', id_route),
+            remove: path('portal_api_photos_remove', id_route),
+        },
+        reload_url: path('portal_location_setup_step', {number: venue.number, step: 'fotos'}),
+    }) }}
+
+    <noscript>
+        {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+            {% embed 'admin/components/_card.html.twig' with {title: 'onboarding.photos.fallback_title'|trans({}, 'portal'), id: 'wizard-photo-title', upload_form: form, count: photos|length} only %}
+                {% block body %}
+                    <p class="muted">{{ 'onboarding.photos.count'|trans({count: count}, 'portal') }}</p>
+                    {{ form_errors(upload_form) }}
+                    {{ form_row(upload_form.file) }}
+                {% endblock %}
+                {% block foot %}
+                    {{ include('admin/components/_button.html.twig', {label: 'onboarding.photos.fallback_submit'|trans({}, 'portal'), type: 'submit'}, with_context = false) }}
+                {% endblock %}
+            {% endembed %}
+        {{ form_end(form) }}
+    </noscript>
+
+    <p>{{ include('admin/components/_button.html.twig', {
+        label: 'onboarding.next'|trans({}, 'portal'),
+        variant: 'primary',
+        href: path('portal_location_setup_step', {number: venue.number, step: 'kontakt'}),
+    }, with_context = false) }}</p>
+{% endblock %}

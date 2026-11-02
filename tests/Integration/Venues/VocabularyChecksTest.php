@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Venues;
 use App\Admin\ValueObject\AdminRole;
 use App\Admin\ValueObject\AuditActorType;
 use App\Portal\ValueObject\PortalVenueAccessStatus;
+use App\Portal\ValueObject\SubmissionStatus;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
@@ -43,6 +44,7 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'admin role' => ['chk_admin_users_role', AdminRole::class];
         yield 'audit actor type' => ['chk_admin_audit_log_actor_type', AuditActorType::class];
         yield 'portal venue access status' => ['chk_portal_venue_access_status', PortalVenueAccessStatus::class];
+        yield 'portal submission status' => ['chk_portal_submissions_status', SubmissionStatus::class];
     }
 
     /**

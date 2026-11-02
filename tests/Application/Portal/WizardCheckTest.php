@@ -1,0 +1,320 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Application\Portal;
+
+use App\Factory\PortalVenueAccessFactory;
+use App\Factory\SubmissionFactory;
+use App\Factory\VenueFactory;
+use App\Factory\VenuePhotoFactory;
+use App\Factory\VenueTermFactory;
+use App\Factory\VenueTranslationFactory;
+use App\Portal\Entity\PortalUser;
+use App\Portal\Event\LocationSubmitted;
+use App\Tests\Support\Portal\PortalSession;
+use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\TermGroup;
+use App\Venues\ValueObject\VenueStatus;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\Form;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Event\MessageEvent;
+use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Mime\Email;
+use Zenstruck\Foundry\Test\Factories;
+
+/**
+ * "Prüfen" (#45, POR-12): the page, "Veröffentlichen" and the way back online. A wizard rule sends a draft without an
+ * inquiry address back to `kontakt`; the publish rule itself has no such gap.
+ */
+final class WizardCheckTest extends WebTestCase
+{
+    use Factories;
+    use PortalSession {
+        setUp as private startPortalSession;
+    }
+
+    private const string ADDRESS = 'info@seehaus.example';
+    private const array EVERYTHING = ['summary', 'main_building', 'photo', 'inquiry_email'];
+    private const array NO_ADDRESS = ['summary', 'main_building', 'photo'];
+
+    /** @var list<string> the subjects of every mail a submit tried to send */
+    private array $mails = [];
+
+    /** @var list<LocationSubmitted> */
+    private array $events = [];
+
+    protected function setUp(): void
+    {
+        $this->startPortalSession();
+
+        $this->dispatcher()->addListener(MessageEvent::class, function (MessageEvent $event): void {
+            $message = $event->getMessage();
+            if ($event->isQueued() && $message instanceof Email) {
+                $this->mails[] = (string) $message->getSubject();
+            }
+        }, 100);
+    }
+
+    public function test_a_publish_with_something_missing_names_it_and_writes_nothing(): void
+    {
+        $venue = $this->draft($this->logInAsManager(), ['summary', 'main_building', 'inquiry_email']);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Schritt 6 von 6', $crawler->filter('.progress__label')->text());
+        self::assertSame('Das fehlt noch', $crawler->filter('#check-missing')->text());
+        $gap = $crawler->filter('section[aria-labelledby="check-missing"] li a');
+        self::assertSame('Keine Fotos', $gap->text());
+        self::assertSame($this->url($venue, 'fotos'), $gap->attr('href'));
+
+        $crawler = $this->press($venue);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertStringContainsString('Keine Fotos', $crawler->filter('.form-error')->text());
+        self::assertSame('draft', $this->submissionStatus($venue));
+        self::assertSame([], $this->mails);
+    }
+
+    public function test_the_rights_checkbox_is_required(): void
+    {
+        $venue = $this->draft($this->logInAsManager());
+
+        $crawler = $this->press($venue, rights: false);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertStringContainsString('Bitte bestätigen Sie', $crawler->filter('form[name="submit_location"]')->text());
+        self::assertSame('draft', $this->submissionStatus($venue));
+        self::assertSame([], $this->mails);
+    }
+
+    public function test_a_draft_without_inquiry_address_goes_back_to_kontakt_on_get_and_post(): void
+    {
+        $venue = $this->draft($this->logInAsManager(), self::NO_ADDRESS);
+
+        $this->client->request('GET', $this->url($venue));
+        self::assertResponseRedirects($this->url($venue, 'kontakt'));
+
+        $this->client->request('POST', $this->url($venue), ['submit_location' => ['rights' => '1']]);
+        self::assertResponseRedirects($this->url($venue, 'kontakt'));
+        self::assertSame('draft', $this->submissionStatus($venue));
+    }
+
+    public function test_a_rejected_location_without_inquiry_address_gets_the_hint_and_may_submit(): void
+    {
+        $venue = $this->venue($this->logInAsManager(), self::NO_ADDRESS);
+        SubmissionFactory::new()->rejected()->create(['venue' => $venue]);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('/konto/locations/'.$venue->number().'#kontakt', $crawler->selectLink('Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Tragen Sie sie im Kontakt ein.')->attr('href'));
+
+        $this->press($venue);
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        self::assertSame('submitted', $this->submissionStatus($venue));
+    }
+
+    public function test_a_claimed_location_without_inquiry_address_may_submit(): void
+    {
+        $venue = $this->venue($this->logInAsManager(), self::NO_ADDRESS);
+
+        $this->press($venue);
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        self::assertSame('submitted', $this->submissionStatus($venue));
+    }
+
+    public function test_submit_sets_submitted_stores_rights_and_shows_wird_geprueft(): void
+    {
+        $manager = $this->logInAsManager();
+        $venue = $this->draft($manager);
+
+        $this->press($venue);
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        $row = $this->connection->fetchAssociative('SELECT status, submitted_by, rights_confirmed_at FROM portal_submissions WHERE venue_id = ?', [$venue->id()]);
+        self::assertIsArray($row);
+        self::assertSame('submitted', $row['status']);
+        self::assertSame($manager->id(), $row['submitted_by']);
+        self::assertNotNull($row['rights_confirmed_at']);
+
+        $crawler = $this->client->followRedirect();
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Wird geprüft', $crawler->filter('[role="status"]')->text());
+        self::assertCount(0, $crawler->filter('form[name="submit_location"]'));
+    }
+
+    public function test_submit_sends_two_mails_and_fires_the_event(): void
+    {
+        $manager = $this->logInAsManager();
+        $venue = $this->draft($manager);
+        $this->recordTheEvent();
+
+        $this->press($venue);
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        self::assertSame(['Wir prüfen '.$venue->name(), 'Neue Location zur Prüfung: '.$venue->name()], $this->mails);
+        self::assertEmailCount(2);
+        self::assertCount(1, $this->events);
+        self::assertSame($venue->id(), $this->events[0]->venueId);
+        self::assertSame($venue->name(), $this->events[0]->venueName);
+        self::assertSame($manager->email(), $this->events[0]->email);
+        self::assertSame($manager->firstName(), $this->events[0]->firstName);
+        self::assertSame($manager->lastName(), $this->events[0]->lastName);
+    }
+
+    public function test_a_failing_mail_does_not_stop_the_event(): void
+    {
+        $venue = $this->draft($this->logInAsManager());
+        $this->recordTheEvent();
+        $this->failTheNotice();
+
+        $this->press($venue);
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        self::assertCount(1, $this->events);
+        self::assertSame('submitted', $this->submissionStatus($venue));
+    }
+
+    public function test_a_second_post_sends_nothing(): void
+    {
+        $venue = $this->draft($this->logInAsManager());
+        $form = $this->form($venue);
+
+        $this->client->submit($form, ['submit_location[rights]' => '1']);
+        $this->client->submit($form, ['submit_location[rights]' => '1']);
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        self::assertCount(2, $this->mails);
+        self::assertSame('submitted', $this->submissionStatus($venue));
+    }
+
+    public function test_editing_stays_open_during_the_review(): void
+    {
+        $venue = $this->venue($this->logInAsManager());
+        SubmissionFactory::new()->submitted()->create(['venue' => $venue]);
+
+        $form = $this->client->request('GET', $this->url($venue, 'texte'))->filter('form[name="venue_texts"]')->form();
+        $this->client->submit($form, ['venue_texts[texts][de][summary]' => 'Während der Prüfung geändert.']);
+
+        self::assertResponseRedirects($this->url($venue, 'ausstattung'), Response::HTTP_SEE_OTHER);
+        self::assertSame('Während der Prüfung geändert.', $this->connection->fetchOne("SELECT summary FROM venue_translations WHERE venue_id = ? AND locale = 'de'", [$venue->id()]));
+        self::assertSame('submitted', $this->submissionStatus($venue));
+    }
+
+    public function test_the_rejected_reason_is_shown(): void
+    {
+        $venue = $this->venue($this->logInAsManager());
+        SubmissionFactory::new()->rejected()->create(['venue' => $venue]);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Die Angaben reichen nicht aus.', $crawler->filter('section[aria-labelledby="check-rejected"] .card__body')->text());
+        self::assertSame('Veröffentlichen', $this->button($crawler));
+    }
+
+    public function test_the_button_says_wieder_veroeffentlichen_for_an_offline_location(): void
+    {
+        $manager = $this->logInAsManager();
+        $accepted = $this->venue($manager);
+        SubmissionFactory::new()->accepted()->create(['venue' => $accepted]);
+        $claimed = $this->venue($manager);
+        $draft = $this->draft($manager);
+
+        self::assertSame('Wieder veröffentlichen', $this->button($this->client->request('GET', $this->url($accepted))));
+        self::assertSame('Wieder veröffentlichen', $this->button($this->client->request('GET', $this->url($claimed))));
+        self::assertSame('Veröffentlichen', $this->button($this->client->request('GET', $this->url($draft))));
+    }
+
+    /**
+     * An unpublished location of `$manager` without a submission row, holding only the given gap codes.
+     *
+     * @param list<string> $has
+     */
+    private function venue(PortalUser $manager, array $has = self::EVERYTHING): Venue
+    {
+        $venue = VenueFactory::new()->withoutLocation()->create(['status' => VenueStatus::Unpublished]);
+        VenueTranslationFactory::createOne(['venue' => $venue, 'summary' => \in_array('summary', $has, true) ? 'Ein Haus am See.' : '']);
+        if (\in_array('main_building', $has, true)) {
+            VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
+        }
+        if (\in_array('photo', $has, true)) {
+            VenuePhotoFactory::createOne(['venue' => $venue]);
+        }
+        if (\in_array('inquiry_email', $has, true)) {
+            $this->connection->executeStatement('UPDATE venues SET inquiry_email = ? WHERE id = ?', [self::ADDRESS, $venue->id()]);
+        }
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $venue]);
+
+        return $venue;
+    }
+
+    /**
+     * @param list<string> $has
+     */
+    private function draft(PortalUser $manager, array $has = self::EVERYTHING): Venue
+    {
+        $venue = $this->venue($manager, $has);
+        SubmissionFactory::createOne(['venue' => $venue]);
+
+        return $venue;
+    }
+
+    private function press(Venue $venue, bool $rights = true): Crawler
+    {
+        return $this->client->submit($this->form($venue), $rights ? ['submit_location[rights]' => '1'] : []);
+    }
+
+    private function form(Venue $venue): Form
+    {
+        return $this->client->request('GET', $this->url($venue))->filter('form[name="submit_location"]')->form();
+    }
+
+    private function button(Crawler $crawler): string
+    {
+        return $crawler->filter('form[name="submit_location"] button[type="submit"]')->text();
+    }
+
+    private function recordTheEvent(): void
+    {
+        $this->dispatcher()->addListener(LocationSubmitted::class, function (LocationSubmitted $event): void {
+            $this->events[] = $event;
+        });
+    }
+
+    private function failTheNotice(): void
+    {
+        $this->dispatcher()->addListener(MessageEvent::class, static function (MessageEvent $event): void {
+            $message = $event->getMessage();
+            if ($event->isQueued() && $message instanceof Email && str_starts_with((string) $message->getSubject(), 'Neue Location zur Prüfung')) {
+                throw new TransportException('The mail server is gone.');
+            }
+        }, 50);
+    }
+
+    private function dispatcher(): EventDispatcherInterface
+    {
+        $dispatcher = self::getContainer()->get('event_dispatcher');
+        self::assertInstanceOf(EventDispatcherInterface::class, $dispatcher);
+
+        return $dispatcher;
+    }
+
+    private function submissionStatus(Venue $venue): mixed
+    {
+        return $this->connection->fetchOne('SELECT status FROM portal_submissions WHERE venue_id = ?', [$venue->id()]);
+    }
+
+    private function url(Venue $venue, string $step = 'pruefen'): string
+    {
+        return '/konto/locations/'.$venue->number().'/einrichten/'.$step;
+    }
+}

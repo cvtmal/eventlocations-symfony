@@ -30,9 +30,10 @@ final class PortalLoginTest extends WebTestCase
 
     public function test_a_login_lands_on_the_account(): void
     {
-        $this->logInAsManager();
-
+        $manager = $this->logInAsManager();
         self::assertResponseRedirects('/konto');
+
+        $this->requestAccessFor($manager);
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Meine Locations');
@@ -40,7 +41,7 @@ final class PortalLoginTest extends WebTestCase
 
     public function test_the_account_shows_who_is_logged_in_and_that_nothing_is_linked(): void
     {
-        $this->logInAsManager($this->createManager(attributes: ['firstName' => 'Mara', 'lastName' => 'Frei']));
+        $this->requestAccessFor($this->logInAsManager($this->createManager(attributes: ['firstName' => 'Mara', 'lastName' => 'Frei'])));
         $this->client->followRedirect();
 
         self::assertSelectorTextContains('.sidebar__name', 'Mara Frei');
@@ -74,6 +75,7 @@ final class PortalLoginTest extends WebTestCase
     public function test_the_list_costs_one_statement_more_than_the_empty_account(): void
     {
         $manager = $this->logInAsManager();
+        $this->requestAccessFor($manager);
         $empty = $this->queriesOf('/konto');
 
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => VenueFactory::createOne()]);
@@ -164,7 +166,7 @@ final class PortalLoginTest extends WebTestCase
     public function test_logout_ends_the_session(): void
     {
         $this->logInAsManager();
-        $page = $this->client->followRedirect();
+        $page = $this->client->request('GET', '/konto/profil');
 
         $this->client->submit($page->filter('.sidebar__logout-form')->form());
 
@@ -176,7 +178,7 @@ final class PortalLoginTest extends WebTestCase
     public function test_deactivating_ends_a_running_session(): void
     {
         $manager = $this->logInAsManager();
-        $this->client->request('GET', '/konto');
+        $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();
 
         $em = $this->portalEntityManager();
@@ -214,6 +216,14 @@ final class PortalLoginTest extends WebTestCase
         self::assertResponseRedirects('/konto/anmelden');
         $this->client->followRedirect();
         self::assertSelectorTextContains('#login-error', self::INVALID);
+    }
+
+    /**
+     * A pending row: with no row at all `/konto` sends the manager to the wizard, and the page under test is never drawn.
+     */
+    private function requestAccessFor(PortalUser $manager): void
+    {
+        PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => VenueFactory::new()->withoutLocation()]);
     }
 
     private function lastLoginAt(string $id): mixed

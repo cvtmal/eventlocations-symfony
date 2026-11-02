@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Portal;
 
+use App\Factory\PortalVenueAccessFactory;
+use App\Factory\VenueFactory;
 use App\Tests\Support\Portal\PortalSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -28,7 +30,7 @@ final class PortalResponseHeadersTest extends WebTestCase
 
     public function test_the_account_page(): void
     {
-        $this->logInAsManager();
+        PortalVenueAccessFactory::createOne(['user' => $this->logInAsManager(), 'venue' => VenueFactory::new()->withoutLocation()]);
 
         $this->client->request('GET', '/konto');
 

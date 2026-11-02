@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Portal\ValueObject;
+
+/**
+ * The pages of the location wizard (#45), in order, the case's value being the URL segment. There is no wizard table:
+ * the step a manager lands on is derived from what the location lacks. `hochzeit` is never derived, because no gap
+ * belongs to it, and it shares its progress position with `ausstattung`.
+ */
+enum WizardStep: string
+{
+    case Texts = 'texte';
+    case Terms = 'ausstattung';
+    case Wedding = 'hochzeit';
+    case Photos = 'fotos';
+    case Contact = 'kontakt';
+    case Check = 'pruefen';
+
+    public const string REQUIREMENT = 'texte|ausstattung|hochzeit|fotos|kontakt|pruefen';
+    public const int LAST_POSITION = 6;
+
+    /** The gap codes in the wizard's order: the first one missing decides. */
+    private const array GAPS = [
+        'summary' => self::Texts,
+        'main_building' => self::Terms,
+        'photo' => self::Photos,
+        'inquiry_email' => self::Contact,
+    ];
+
+    /**
+     * @param list<string> $missing gap codes
+     */
+    public static function derive(array $missing): self
+    {
+        foreach (self::GAPS as $code => $step) {
+            if (\in_array($code, $missing, true)) {
+                return $step;
+            }
+        }
+
+        return self::Check;
+    }
+
+    public static function forGap(string $code): self
+    {
+        return self::GAPS[$code] ?? throw new \LogicException(\sprintf('Unknown gap "%s".', $code));
+    }
+
+    public function next(): self
+    {
+        return match ($this) {
+            self::Texts => self::Terms,
+            self::Terms => self::Wedding,
+            self::Wedding => self::Photos,
+            self::Photos => self::Contact,
+            self::Contact, self::Check => self::Check,
+        };
+    }
+
+    public function position(): int
+    {
+        return match ($this) {
+            self::Texts => 2,
+            self::Terms, self::Wedding => 3,
+            self::Photos => 4,
+            self::Contact => 5,
+            self::Check => 6,
+        };
+    }
+
+    public function card(): ?LocationCard
+    {
+        return match ($this) {
+            self::Texts => LocationCard::Texts,
+            self::Terms => LocationCard::Terms,
+            self::Wedding => LocationCard::Wedding,
+            self::Contact => LocationCard::Contact,
+            self::Photos, self::Check => null,
+        };
+    }
+}
