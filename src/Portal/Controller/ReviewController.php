@@ -51,7 +51,12 @@ final class ReviewController extends AbstractController
     #[Route('/admin/pruefung', name: 'admin_portal_review', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function index(Request $request, PortalAccessRequestQuery $requests, PendingSubmissionQuery $submissions, PortalAccessRequestBadge $badge): Response
     {
-        $tab = 'neu' === $request->query->get('tab') ? 'neu' : 'requests';
+        // No choice in the URL: the first tab with items, so the sidebar's badge never lands on an empty tab.
+        $tab = match ($request->query->get('tab')) {
+            'neu' => 'neu',
+            'requests' => 'requests',
+            default => 0 === $badge->count() && $badge->submissions() > 0 ? 'neu' : 'requests',
+        };
 
         return $this->render('admin/portal/review/index.html.twig', [
             'tab' => $tab,

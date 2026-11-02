@@ -4,7 +4,7 @@
       size: md|lg (default md), href (→ <a>, else <button>), type (default button), icon (sprite id), label_hidden
       (default false: label becomes aria-label), attributes (map of extra attributes; keys are developer-controlled,
       values are escaped), static (default false: a plain <span> that only looks like the button, with no href, type,
-      icon or attributes; for "Location eintragen", which has no function yet).
+      icon or attributes).
 #}
 {%- set variant = variant|default('primary') -%}
 {%- set classes = 'btn btn--' ~ variant ~ (size|default('md') == 'lg' ? ' btn--lg' : '') -%}

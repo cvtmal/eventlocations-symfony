@@ -53,7 +53,7 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSelectorExists('[popovertarget="main-menu"]');
         self::assertSelectorExists('#main-menu[popover]');
         self::assertSame(
-            ['/hochzeitslocations', '/#regionen', '/merkliste'],
+            ['/hochzeitslocations', '/#regionen', '/merkliste', '/konto/registrieren'],
             $crawler->filter('.site-header__actions a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
         );
         self::assertCount(0, $crawler->filter('.site-header use[href$="#search"]'));
@@ -123,17 +123,14 @@ final class BaseLayoutTest extends WebTestCase
         }
     }
 
-    public function test_location_eintragen_is_visual_only_in_all_three_places(): void
+    public function test_location_eintragen_links_to_the_registration_in_all_three_places(): void
     {
         $crawler = $this->home();
 
-        foreach (['.site-header__actions .btn--static', '.main-menu .btn--static', '.site-footer__add-location'] as $selector) {
+        foreach (['.site-header__actions a.btn--primary', '.main-menu__add-location a.btn', 'a.site-footer__add-location'] as $selector) {
             $entry = $crawler->filter($selector);
             self::assertCount(1, $entry, $selector);
-            self::assertSame('span', $entry->nodeName(), $selector);
-            self::assertNull($entry->attr('href'), $selector);
-            self::assertNull($entry->attr('role'), $selector);
-            self::assertNull($entry->attr('tabindex'), $selector);
+            self::assertSame('/konto/registrieren', $entry->attr('href'), $selector);
         }
     }
 
