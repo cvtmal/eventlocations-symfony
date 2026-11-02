@@ -78,6 +78,9 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertCount(1, $crawler->filter('[fetchpriority="high"]'));
         self::assertCount(1, $crawler->filter('link[rel="preload"][as="font"]'));
         self::assertCount(3, $crawler->filter('#bilder .carousel__slide'));
+        // Slides 2+ yield to the LCP slide (#41 F-M1, baseline §8 Fix 1's lever).
+        self::assertCount(1, $crawler->filter('#bilder .carousel__slide:first-child img[fetchpriority="high"]'));
+        self::assertCount(2, $crawler->filter('#bilder .carousel__slide img[loading="lazy"][fetchpriority="low"]'));
         self::assertSelectorExists('button[commandfor="venue-gallery"][command="show-modal"]');
         self::assertSelectorExists('dialog#venue-gallery[data-dialog]');
         self::assertCount(3, $crawler->filter('#venue-gallery .carousel__slide'));

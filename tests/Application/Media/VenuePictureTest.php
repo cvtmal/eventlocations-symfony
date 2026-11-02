@@ -91,6 +91,15 @@ final class VenuePictureTest extends WebTestCase
         self::assertNull($img->attr('fetchpriority'));
     }
 
+    public function test_low_priority_keeps_a_lazy_image_lazy_and_lowers_its_fetch_priority(): void
+    {
+        $img = (new Crawler($this->render('{{ venue_picture(picture, lowPriority=true) }}', self::picture())))->filter('img');
+
+        self::assertSame('lazy', $img->attr('loading'));
+        self::assertSame('async', $img->attr('decoding'));
+        self::assertSame('low', $img->attr('fetchpriority'));
+    }
+
     public function test_a_photo_without_avif_gets_no_avif_source(): void
     {
         $picture = self::picture(new ImageVariants([360, 640], [ImageFormat::Webp, ImageFormat::Jpeg]));

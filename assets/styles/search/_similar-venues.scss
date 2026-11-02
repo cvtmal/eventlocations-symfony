@@ -165,12 +165,6 @@
         &:hover {
             text-decoration: underline;
         }
-
-        @include bp.down(lg) {
-            &:focus-visible {
-                outline-offset: -2px;
-            }
-        }
     }
 }
 

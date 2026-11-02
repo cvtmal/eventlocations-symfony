@@ -22,6 +22,8 @@ use Twig\Attribute\AsTwigFunction;
  * - `priority: true` is for the one LCP image: eager plus fetchpriority="high". LP-3's second
  *   card passes `loading: 'eager'`, which adds fetchpriority="low": the browser would fetch it at
  *   medium beside the LCP image, and it must not hold that image's bandwidth. Everything else is lazy.
+ * - `lowPriority: true` adds fetchpriority="low" to a lazy image that sits at the viewport's edge
+ *   (the detail hero's slides 2+): Chrome would fetch it at High beside the LCP image (#41 F-M1).
  * - `decorative: true` prints `alt=""`, for a photo no reader reaches (card slides, the listing HTML budget).
  * - The placeholder is an SVG `fill`, not a `style` attribute (CSP). `<img width height>` is
  *   the oriented original's size, so the box has its aspect ratio before the image loads.
@@ -47,6 +49,7 @@ final class MediaExtension
         ?array $widths = null,
         string $class = '',
         bool $decorative = false,
+        bool $lowPriority = false,
     ): string {
         if (!\in_array($loading, ['lazy', 'eager'], true)) {
             throw new \InvalidArgumentException(\sprintf('venue_picture() loading is "lazy" or "eager", got "%s".', $loading));
@@ -76,7 +79,7 @@ final class MediaExtension
         $behaviour = match (true) {
             $priority => 'loading="eager" fetchpriority="high"',
             'eager' === $loading => 'loading="eager" decoding="async" fetchpriority="low"',
-            default => \sprintf('loading="%s" decoding="async"', $loading),
+            default => \sprintf('loading="%s" decoding="async"%s', $loading, $lowPriority ? ' fetchpriority="low"' : ''),
         };
 
         return \sprintf(

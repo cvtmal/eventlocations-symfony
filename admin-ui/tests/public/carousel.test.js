@@ -114,3 +114,34 @@ describe('carousel position (#39)', () => {
         expect([prev().disabled, next().disabled]).toEqual([true, false]);
     });
 });
+
+describe('carousel paging (#41 F-m1)', () => {
+    const scrolled = (track) => track.scrollBy.mock.calls.map(([options]) => options.left);
+    const key = (track, name) => track.dispatchEvent(new KeyboardEvent('keydown', { key: name }));
+
+    beforeEach(() => {
+        vi.stubGlobal('requestAnimationFrame', () => 0);
+    });
+
+    it('pages a track with a peek by one slide below md, by key and by arrow', () => {
+        window.matchMedia = () => ({ matches: false });
+        const { track, step, clientWidth } = mount({ total: 4, perView: 1.3 });
+
+        key(track, 'ArrowRight');
+        key(track, 'ArrowLeft');
+        next().click();
+
+        expect(clientWidth).toBeGreaterThan(step);
+        expect(scrolled(track)).toEqual([step, -step, step]);
+    });
+
+    it('pages a two-up track by its width from md, as before', () => {
+        window.matchMedia = (query) => ({ matches: query === '(min-width: 768px)' });
+        const { track, clientWidth } = mount({ total: 3, perView: 2 });
+
+        next().click();
+        key(track, 'ArrowLeft');
+
+        expect(scrolled(track)).toEqual([clientWidth, -clientWidth]);
+    });
+});
