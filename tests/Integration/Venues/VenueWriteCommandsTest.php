@@ -481,6 +481,33 @@ final class VenueWriteCommandsTest extends KernelTestCase
         self::assertSame(['count' => 3], $violation->parameters);
     }
 
+    /**
+     * Q20: the answer fires `NewVenuePublished`, so it is true once per venue `CreateVenue` made, and never again.
+     */
+    public function test_publish_answers_true_only_for_the_first_publish_of_a_created_venue(): void
+    {
+        $number = $this->dispatch(new CreateVenue('Neue Scheune', Tier::Basic, 80));
+        self::assertIsInt($number);
+        self::assertTrue($this->reload($number)->awaitsFirstPublish());
+        $venue = $this->reload($number);
+        $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune.' WHERE venue_id = ?", [$venue->id()]);
+        VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
+        VenuePhotoFactory::createOne(['venue' => $venue]);
+
+        self::assertTrue($this->dispatch(new PublishVenue($number)));
+        self::assertFalse($this->dispatch(new PublishVenue($number)), 'already online');
+        $this->dispatch(new UnpublishVenue($number));
+        self::assertFalse($this->dispatch(new PublishVenue($number)), 'back from offline');
+        self::assertFalse($this->reload($number)->awaitsFirstPublish());
+    }
+
+    public function test_publish_answers_false_for_an_imported_or_seeded_venue(): void
+    {
+        $venue = $this->publishable();
+
+        self::assertFalse($this->dispatch(new PublishVenue($venue->number())));
+    }
+
     public function test_publishing_an_online_venue_changes_nothing(): void
     {
         $venue = VenueFactory::createOne(['status' => VenueStatus::Published]);

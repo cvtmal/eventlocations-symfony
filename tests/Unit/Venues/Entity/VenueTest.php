@@ -125,6 +125,21 @@ final class VenueTest extends TestCase
         self::assertTrue($venue->isPublished());
     }
 
+    public function test_only_a_marked_venue_awaits_its_first_publish_and_any_publish_ends_it(): void
+    {
+        $venue = VenueObjects::venue();
+        self::assertFalse($venue->awaitsFirstPublish());
+
+        $venue->unpublish();
+        $venue->markAwaitingFirstPublish();
+        self::assertTrue($venue->awaitsFirstPublish());
+
+        $venue->publish();
+        self::assertFalse($venue->awaitsFirstPublish());
+        $venue->unpublish();
+        self::assertFalse($venue->awaitsFirstPublish());
+    }
+
     public function test_rename_changes_the_name_and_touches(): void
     {
         $venue = VenueObjects::venue();

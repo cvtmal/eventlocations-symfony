@@ -122,6 +122,41 @@ final class SubmissionCommandsTest extends KernelTestCase
         self::assertSame(['portal_submission', 'venue'], $this->auditSubjects());
     }
 
+    /**
+     * Q20: the answer is `PublishVenue`'s, true for the first publish of a venue `CreateVenue` made.
+     */
+    public function test_accept_answers_true_once_for_a_new_location(): void
+    {
+        $venue = $this->complete(new: true);
+        SubmissionFactory::new()->submitted()->create(['venue' => $venue]);
+
+        self::assertTrue($this->answer(new AcceptSubmission($venue->number(), $this->staff()->id())));
+
+        $this->connection->executeStatement('UPDATE venues SET status = ? WHERE id = ?', [VenueStatus::Unpublished->value, $venue->id()]);
+        $this->answer(new SubmitLocation(PortalUserFactory::createOne()->id(), $venue->number()));
+        self::assertFalse($this->answer(new AcceptSubmission($venue->number(), $this->staff()->id())));
+    }
+
+    public function test_a_rejection_before_it_leaves_the_first_publish_open(): void
+    {
+        $venue = $this->complete(new: true);
+        SubmissionFactory::new()->submitted()->create(['venue' => $venue]);
+
+        $this->answer(new RejectSubmission($venue->number(), $this->staff()->id(), 'Die Fotos fehlen.'));
+        $this->answer(new SubmitLocation(PortalUserFactory::createOne()->id(), $venue->number()));
+
+        self::assertTrue($this->answer(new AcceptSubmission($venue->number(), $this->staff()->id())));
+    }
+
+    public function test_accept_answers_false_for_a_claimed_location(): void
+    {
+        $venue = $this->complete();
+
+        $this->answer(new SubmitLocation(PortalUserFactory::createOne()->id(), $venue->number()));
+
+        self::assertFalse($this->answer(new AcceptSubmission($venue->number(), $this->staff()->id())));
+    }
+
     public function test_accept_with_a_removed_photo_stays_in_the_queue(): void
     {
         $venue = $this->complete();
@@ -198,9 +233,15 @@ final class SubmissionCommandsTest extends KernelTestCase
         self::assertSame(['{"status": "rejected"}', '{"status": "submitted"}'], [$rows[0]['changes'], $rows[1]['changes']]);
     }
 
-    private function complete(): Venue
+    /**
+     * @param bool $new as `CreateVenue` makes it, awaiting its first publish (Q20)
+     */
+    private function complete(bool $new = false): Venue
     {
         $venue = VenueFactory::createOne(['status' => VenueStatus::Unpublished]);
+        if ($new) {
+            $this->connection->executeStatement('UPDATE venues SET awaits_first_publish = true WHERE id = ?', [$venue->id()]);
+        }
         VenueTranslationFactory::createOne(['venue' => $venue, 'summary' => 'Ein Ort für die Hochzeit.']);
         VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
         VenuePhotoFactory::createOne(['venue' => $venue]);

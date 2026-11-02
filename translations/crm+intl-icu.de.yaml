@@ -516,6 +516,7 @@ task:
         done: '«{title}» als erledigt markieren'
         reopen: '«{title}» wieder öffnen'
     renewal_title: 'Verlängerung: {name}'
+    invoice_title: Rechnung stellen
     object:
         company: Firma
         contact: Kontakt

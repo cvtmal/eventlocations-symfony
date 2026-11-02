@@ -15,7 +15,7 @@ use Doctrine\DBAL\Connection;
 final readonly class PendingSubmissionQuery
 {
     private const string PENDING = <<<'SQL'
-        SELECT v.number, v.name, v.canton_code, tw.name AS town_name, t.region,
+        SELECT v.id, v.number, v.name, v.canton_code, tw.name AS town_name, t.region,
                u.first_name, u.last_name, u.email, s.submitted_at
         FROM portal_submissions s
         JOIN venues v ON v.id = s.venue_id
@@ -54,6 +54,7 @@ final readonly class PendingSubmissionQuery
     private static function row(array $row): PendingSubmissionRow
     {
         return new PendingSubmissionRow(
+            (string) $row['id'],
             (int) $row['number'],
             (string) $row['name'],
             VenuePlace::of(self::string($row['town_name']), self::string($row['canton_code']), self::string($row['region'])),

@@ -21,8 +21,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 /**
  * Creates an unpublished venue without an address, with a default-locale translation whose
  * slug comes from the name and whose summary is still empty (publishing needs one). It is a
- * CMS venue from the start (markCmsEdited()). No purge: an unpublished venue is on no public
- * page.
+ * CMS venue from the start (markCmsEdited()), and its first publish fires NewVenuePublished
+ * (markAwaitingFirstPublish(), Q20). No purge: an unpublished venue is on no public page.
  *
  * The audit row needs the number, which the database assigns at the insert, so the handler
  * flushes and then dispatches RecordVenueCreated without a stamp: it runs inside this
@@ -54,6 +54,7 @@ final class CreateVenueHandler implements CommandHandlerInterface
         $slug = $this->slugs->assign($venue, $default, $command->name, null, null, false);
         $this->em->persist(new VenueTranslation($venue, $default, $slug, ''));
         $venue->markCmsEdited($this->clock->now());
+        $venue->markAwaitingFirstPublish();
         $this->em->flush();
 
         $this->commandBus->dispatch(new RecordVenueCreated($venue->number(), $venue->name()));

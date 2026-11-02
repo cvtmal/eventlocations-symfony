@@ -45,6 +45,9 @@ use Doctrine\ORM\Mapping as ORM;
  * - `coordinates_from_town` marks coordinates copied from the town centre ("Ortsmitte
  *   übernehmen" in the CMS), not the venue's own point: no map pin or geo data may claim
  *   them. Only with coordinates (chk_venues_coordinates_from_town); the import writes false.
+ * - `awaits_first_publish` (Q20) is set by CreateVenue only, the CMS's and the portal's way to
+ *   a new venue, and cleared by every publish(), an import's included. An imported or seeded
+ *   venue never has it, so only a venue created here can fire NewVenuePublished, and once.
  * - The owner facts (#31, S14) are all nullable, NULL meaning unknown, and the page shows
  *   nothing for them. `capacity_seated` / `capacity_standing` are the owner's numbers and are
  *   not checked against `capacity_max`. Their translated texts live in VenueTranslation.
@@ -186,6 +189,9 @@ class Venue
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $coordinatesFromTown = false;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $awaitsFirstPublish = false;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -267,7 +273,21 @@ class Venue
     public function publish(): void
     {
         $this->status = VenueStatus::Published;
+        $this->awaitsFirstPublish = false;
         $this->touch();
+    }
+
+    /**
+     * Called by CreateVenue only: this venue's first publish is the one that fires NewVenuePublished.
+     */
+    public function markAwaitingFirstPublish(): void
+    {
+        $this->awaitsFirstPublish = true;
+    }
+
+    public function awaitsFirstPublish(): bool
+    {
+        return $this->awaitsFirstPublish;
     }
 
     public function unpublish(): void

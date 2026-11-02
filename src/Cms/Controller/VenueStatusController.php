@@ -14,6 +14,7 @@ use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\UnpublishVenue;
+use App\Venues\Event\VenueEvents;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\VenueStatus;
@@ -21,8 +22,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -31,7 +34,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Publish, unpublish and delete (CMS-3), posted by the record header's forms (`cms_venue_action_form()`), so
  * they come from the editor and from #25's tabs alike, and go back to the editor (delete: to the list). A venue
  * already in the asked state dispatches nothing, so a double click leaves no second audit row. A refusal is a
- * flash: a refused publish names what is missing, in the checklist's words.
+ * flash: a refused publish names what is missing, in the checklist's words. The first publish of a venue made with
+ * "Neue Location" or the portal's wizard fires `NewVenuePublished` after the commit (Q20).
  */
 #[IsGranted('ROLE_EDITOR')]
 #[Route('/admin/locations/{number}', requirements: ['number' => VenueNumber::REQUIREMENT], options: [LocalizedRoutes::UNLOCALIZED => true])]
@@ -41,6 +45,7 @@ final class VenueStatusController extends AbstractController
         private readonly VenueHeaderQuery $headers,
         private readonly FormFactoryInterface $forms,
         private readonly MessageBusInterface $commandBus,
+        private readonly VenueEvents $events,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -52,7 +57,10 @@ final class VenueStatusController extends AbstractController
         if ($this->confirmed('publish', $number, $request)) {
             if (VenueStatus::Published === $venue->status) {
                 $this->addFlash('success', CmsFlash::message('publish.flash.already_published', ['name' => $venue->name]));
-            } elseif ($this->tryDispatch(new PublishVenue($number))) {
+            } elseif (null !== $published = $this->tryDispatch(new PublishVenue($number))) {
+                if (true === $published->last(HandledStamp::class)?->getResult()) {
+                    $this->events->newVenuePublished($venue->id);
+                }
                 $this->addFlash('success', CmsFlash::message('publish.flash.published', ['name' => $venue->name]));
             }
         }
@@ -67,7 +75,7 @@ final class VenueStatusController extends AbstractController
         if ($this->confirmed('unpublish', $number, $request)) {
             if (VenueStatus::Published !== $venue->status) {
                 $this->addFlash('success', CmsFlash::message('publish.flash.already_unpublished', ['name' => $venue->name]));
-            } elseif ($this->tryDispatch(new UnpublishVenue($number))) {
+            } elseif (null !== $this->tryDispatch(new UnpublishVenue($number))) {
                 $this->addFlash('success', CmsFlash::message('publish.flash.unpublished', ['name' => $venue->name]));
             }
         }
@@ -80,7 +88,7 @@ final class VenueStatusController extends AbstractController
     public function delete(int $number, Request $request): Response
     {
         $venue = $this->venue($number);
-        if ($this->confirmed('delete', $number, $request) && $this->tryDispatch(new DeleteVenue($number, $venue->name, $venue->contentKey))) {
+        if ($this->confirmed('delete', $number, $request) && null !== $this->tryDispatch(new DeleteVenue($number, $venue->name, $venue->contentKey))) {
             $this->addFlash('success', CmsFlash::message('delete.flash', ['name' => $venue->name]));
 
             return $this->redirectToRoute('admin_locations');
@@ -112,14 +120,12 @@ final class VenueStatusController extends AbstractController
     }
 
     /**
-     * @return bool false when a business rule refused the command; the reason is then flashed
+     * @return Envelope|null null when a business rule refused the command; the reason is then flashed
      */
-    private function tryDispatch(object $command): bool
+    private function tryDispatch(object $command): ?Envelope
     {
         try {
-            $this->commandBus->dispatch($command);
-
-            return true;
+            return $this->commandBus->dispatch($command);
         } catch (HandlerFailedException $failure) {
             if ([] !== $failure->getWrappedExceptions(VenueNotFound::class)) {
                 throw $this->createNotFoundException();
@@ -132,7 +138,7 @@ final class VenueStatusController extends AbstractController
                 $this->addFlash('error', CmsFlash::message($violation->translationKey(), $violation->parameters));
             }
 
-            return false;
+            return null;
         }
     }
 }
