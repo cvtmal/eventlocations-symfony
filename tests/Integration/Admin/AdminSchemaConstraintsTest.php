@@ -87,6 +87,41 @@ final class AdminSchemaConstraintsTest extends KernelTestCase
         $this->connection->delete('admin_users', ['id' => $id]);
     }
 
+    public function test_a_portal_entry_needs_no_actor_id(): void
+    {
+        $id = $this->manager();
+
+        $this->entry(['actor_type' => 'portal_user', 'portal_user_id' => $id]);
+
+        self::assertSame($id, $this->connection->fetchOne("SELECT portal_user_id FROM admin_audit_log WHERE actor_type = 'portal_user'"));
+    }
+
+    public function test_only_a_portal_entry_names_a_manager(): void
+    {
+        $id = $this->manager();
+
+        $this->expectViolationOf('chk_admin_audit_log_portal_user');
+
+        $this->entry(['actor_type' => 'system', 'portal_user_id' => $id]);
+    }
+
+    public function test_deleting_a_manager_keeps_the_entry(): void
+    {
+        $id = $this->manager();
+        $this->entry(['actor_type' => 'portal_user', 'portal_user_id' => $id]);
+
+        $this->connection->delete('portal_users', ['id' => $id]);
+
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT count(*) FROM admin_audit_log WHERE actor_type = 'portal_user' AND portal_user_id IS NULL"));
+    }
+
+    public function test_a_manager_with_an_upper_case_email_is_refused(): void
+    {
+        $this->expectViolationOf('chk_portal_users_email');
+
+        $this->manager('Anna@example.ch');
+    }
+
     private function expectViolationOf(string $constraint): void
     {
         $this->expectException(DriverException::class);
@@ -105,6 +140,20 @@ final class AdminSchemaConstraintsTest extends KernelTestCase
             'display_name' => 'Anna',
             'password_hash' => '!',
             'role' => 'editor',
+        ]);
+
+        return $id;
+    }
+
+    private function manager(?string $email = null): string
+    {
+        $id = EntityId::generate();
+        $this->connection->insert('portal_users', [
+            'id' => $id,
+            'email' => $email ?? $id.'@example.ch',
+            'password_hash' => '!',
+            'first_name' => 'Anna',
+            'last_name' => 'Muster',
         ]);
 
         return $id;

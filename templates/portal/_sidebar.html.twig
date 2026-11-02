@@ -1,0 +1,30 @@
+<nav class="sidebar" aria-label="{{ 'shell.main_nav'|trans({}, 'portal') }}">
+    <div class="sidebar__brand">
+        <span class="sidebar__wordmark">{{ 'shell.wordmark'|trans({}, 'portal') }}</span>
+        <span class="sidebar__subtitle">{{ 'shell.account'|trans({}, 'portal') }}</span>
+    </div>
+    {% set locations_active = app.current_route == 'portal_home' %}
+    {% set profile_active = app.current_route == 'portal_profile' %}
+    <div class="sidebar__section">
+        <a class="sidebar__item{{ locations_active ? ' sidebar__item--active' }}" href="{{ path('portal_home') }}"{% if locations_active %} aria-current="page"{% endif %}>
+            {{ admin_icon('building-2') }}
+            <span class="sidebar__label">{{ 'shell.my_locations'|trans({}, 'portal') }}</span>
+        </a>
+        <a class="sidebar__item{{ profile_active ? ' sidebar__item--active' }}" href="{{ path('portal_profile') }}"{% if profile_active %} aria-current="page"{% endif %}>
+            {{ admin_icon('users') }}
+            <span class="sidebar__label">{{ 'shell.profile'|trans({}, 'portal') }}</span>
+        </a>
+    </div>
+    {% if app.user %}
+        <div class="sidebar__user">
+            <span class="sidebar__avatar" aria-hidden="true">{{ app.user.initials }}</span>
+            <span class="sidebar__person">
+                <span class="sidebar__name">{{ app.user.displayName }}</span>
+            </span>
+            <form class="sidebar__logout-form" method="post" action="{{ path('_logout_portal') }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                <button class="sidebar__logout" type="submit" aria-label="{{ 'shell.logout'|trans({}, 'portal') }}" title="{{ 'shell.logout'|trans({}, 'portal') }}">{{ admin_icon('log-out') }}</button>
+            </form>
+        </div>
+    {% endif %}
+</nav>

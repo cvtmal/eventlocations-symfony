@@ -67,7 +67,7 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
         foreach ($router->getRouteCollection()->all() as $name => $route) {
             $canonical = $route->getDefault('_canonical_route') ?? $name;
             \assert(\is_string($canonical));
-            if (self::isAdmin($route) || \in_array($canonical, self::DEV_ONLY, true)) {
+            if (self::isBehindAFirewall($route) || \in_array($canonical, self::DEV_ONLY, true)) {
                 continue;
             }
             if (str_starts_with($route->getPath(), '/_') && !\in_array($canonical, self::INTERNAL_ROUTES, true)) {
@@ -123,9 +123,9 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
         }
     }
 
-    private static function isAdmin(Route $route): bool
+    private static function isBehindAFirewall(Route $route): bool
     {
-        return '/admin' === $route->getPath() || str_starts_with($route->getPath(), '/admin/');
+        return 1 === preg_match('#^/(admin|konto)(/|$)#', $route->getPath());
     }
 
     public function test_a_logged_in_staff_member_stays_anonymous_on_public_pages(): void

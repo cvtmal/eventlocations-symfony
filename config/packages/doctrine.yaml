@@ -16,6 +16,8 @@ doctrine:
         identity_generation_preferences:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
+        resolve_target_entities:
+            App\Shared\Security\PortalActor: App\Portal\Entity\PortalUser
         mappings:
             Geo:
                 type: attribute
@@ -53,6 +55,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Crm/Entity'
                 prefix: 'App\Crm\Entity'
                 alias: Crm
+            Portal:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Portal/Entity'
+                prefix: 'App\Portal\Entity'
+                alias: Portal
 
 when@test:
     doctrine:

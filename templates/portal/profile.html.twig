@@ -1,0 +1,50 @@
+{% extends 'portal/base.html.twig' %}
+
+{% form_theme profile_form 'admin/form/theme.html.twig' %}
+{% form_theme password_form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'profile.title'|trans({}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item" aria-current="page">{{ 'profile.title'|trans({}, 'portal') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>{{ 'profile.title'|trans({}, 'portal') }}</h1>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% embed 'admin/components/_card.html.twig' with {title: 'profile.section.details'|trans({}, 'portal'), id: 'section-details', profile_form: profile_form, email: email} only %}
+        {% block body %}
+            {{ form_start(profile_form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+                {{ form_errors(profile_form) }}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(profile_form.firstName) }}
+                {{ form_row(profile_form.lastName) }}
+                {{ form_row(profile_form.phone) }}
+                <div class="field">
+                    <label class="field__label" for="profile_email">{{ 'login.email'|trans({}, 'portal') }}</label>
+                    <input class="field__input" id="profile_email" type="email" value="{{ email }}" readonly aria-describedby="profile_email_help">
+                    <span class="field__help" id="profile_email_help">{{ 'profile.email_hint'|trans({}, 'portal') }}</span>
+                </div>
+                <div><button class="btn btn--primary" type="submit">{{ 'profile.save'|trans({}, 'portal') }}</button></div>
+            {{ form_end(profile_form) }}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'admin/components/_card.html.twig' with {title: 'profile.section.password'|trans({}, 'portal'), id: 'section-password', password_form: password_form} only %}
+        {% block body %}
+            {{ form_start(password_form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+                {{ form_errors(password_form) }}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(password_form.currentPassword) }}
+                {{ form_row(password_form.plainPassword.first) }}
+                {{ form_row(password_form.plainPassword.second) }}
+                <p class="form-hint">{{ 'profile.password_hint'|trans({}, 'portal') }}</p>
+                <div><button class="btn btn--primary" type="submit">{{ 'reset.submit'|trans({}, 'portal') }}</button></div>
+            {{ form_end(password_form) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

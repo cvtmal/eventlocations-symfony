@@ -1,0 +1,126 @@
+shell:
+    account: Konto
+    wordmark: Hochzeitslocation
+    skip_to_content: Zum Inhalt springen
+    main_nav: Hauptnavigation
+    my_locations: Meine Locations
+    profile: Profil
+    logout: Abmelden
+login:
+    title: Anmelden
+    tagline: Ihre Location, von Ihnen gepflegt.
+    audience: Für Betreiberinnen und Betreiber von Locations.
+    email: E-Mail
+    password: Passwort
+    submit: Anmelden
+    forgot: Passwort vergessen?
+    register: Noch kein Konto? Jetzt registrieren
+    error:
+        invalid: E-Mail oder Passwort ist falsch.
+        disabled: Dieses Konto ist deaktiviert. Bitte schreiben Sie uns.
+        throttled: Zu viele Versuche. Bitte versuchen Sie es in 15 Minuten wieder.
+register:
+    title: Konto erstellen
+    intro: Mit einem Konto pflegen Sie Ihre Location selbst. Ihr Passwort wählen Sie danach über den Link in unserer E-Mail.
+    first_name: Vorname
+    last_name: Nachname
+    password_help: 'Mindestens {min} Zeichen.'
+    website: Website (bitte leer lassen)
+    submit: Konto erstellen
+    login: Bereits ein Konto? Anmelden
+    error:
+        rate_limited: Zu viele Versuche. Bitte versuchen Sie es in einer Stunde wieder.
+forgot:
+    title: Passwort vergessen
+    intro: Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Link für ein neues Passwort.
+    submit: Link senden
+    login: Zurück zur Anmeldung
+reset:
+    title: Passwort wählen
+    intro: Wählen Sie ein Passwort für Ihr Konto.
+    new_password: Neues Passwort
+    password_repeat: Passwort wiederholen
+    submit: Passwort speichern
+    login: Zurück zur Anmeldung
+    error:
+        password_mismatch: Die beiden Passwörter stimmen nicht überein.
+    invalid:
+        title: Link nicht mehr gültig
+        text: Dieser Link ist abgelaufen, wurde bereits benutzt oder ist unvollständig. Fordern Sie einfach einen neuen an.
+        link: Neuen Link anfordern
+overview:
+    title: Meine Locations
+    empty:
+        title: Ihr Konto ist bereit
+        text: Mit Ihrem Konto ist noch keine Location verknüpft.
+profile:
+    title: Profil
+    section:
+        details: Ihre Angaben
+        password: Passwort ändern
+    phone: Telefon
+    email_hint: Ihre E-Mail-Adresse ändert unser Team für Sie. Schreiben Sie uns einfach.
+    current_password: Aktuelles Passwort
+    password_hint: Nach dem Ändern melden Sie sich mit dem neuen Passwort wieder an.
+    save: Speichern
+mail:
+    register:
+        subject: Wählen Sie Ihr Passwort
+        preheader: Noch ein Schritt, dann ist Ihr Konto bereit.
+        greeting: Guten Tag
+        intro: Danke für Ihre Registrierung. Wählen Sie über den Link unten Ihr Passwort. Damit ist auch Ihre E-Mail-Adresse bestätigt.
+        button: Passwort wählen
+        validity: Der Link ist 48 Stunden gültig und funktioniert nur einmal.
+        not_you: Falls Sie sich nicht registriert haben, können Sie diese E-Mail ignorieren.
+    reset:
+        subject: Ihr neues Passwort
+        preheader: Mit diesem Link wählen Sie ein neues Passwort.
+        greeting: Guten Tag
+        intro: Sie haben ein neues Passwort angefordert. Über den Link unten wählen Sie es.
+        button: Neues Passwort wählen
+        validity: Der Link ist eine Stunde gültig und funktioniert nur einmal.
+        not_you: Falls Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren. Ihr Passwort bleibt, wie es ist.
+flash:
+    check_inbox: Bitte prüfen Sie Ihr Postfach. Hat die Adresse noch kein Passwort, erhalten Sie gleich eine E-Mail.
+    reset_sent: Bitte prüfen Sie Ihr Postfach. Gehört die Adresse zu einem Konto, erhalten Sie gleich eine E-Mail.
+    password_reset: Ihr Passwort ist gespeichert. Sie können sich jetzt anmelden.
+    profile_saved: Ihre Angaben sind gespeichert.
+    password_changed: Ihr Passwort ist geändert. Bitte melden Sie sich mit dem neuen Passwort an.
+    account_deactivated: Das Konto ist deaktiviert. Laufende Anmeldungen sind beendet.
+    account_reactivated: Das Konto ist wieder aktiv.
+    account_action_failed: Das hat nicht geklappt. Bitte noch einmal versuchen.
+accounts:
+    nav: Konten
+    title: Konten
+    table_label: Konten für Locations
+    last_login_never: Noch nie
+    column:
+        name: Name
+        email: E-Mail
+        phone: Telefon
+        state: Status
+        last_login: Letzte Anmeldung
+        actions: Aktionen
+    state:
+        active: Aktiv
+        unconfirmed: Unbestätigt
+        deactivated: Deaktiviert
+    search:
+        label: Konten suchen
+        placeholder: Name oder E-Mail
+        submit: Suchen
+        reset: Zurücksetzen
+        invalid: Diese Suche geht nicht. Hier stehen alle Konten.
+    empty:
+        title: Noch keine Konten
+        text: Registriert sich jemand für eine Location, erscheint das Konto hier.
+        search_title: Keine Konten gefunden
+    action:
+        deactivate: Deaktivieren
+        deactivate_for: "{name} deaktivieren"
+        reactivate: Reaktivieren
+        reactivate_for: "{name} reaktivieren"
+    pagination:
+        label: Seiten
+        previous: Zurück
+        next: Weiter

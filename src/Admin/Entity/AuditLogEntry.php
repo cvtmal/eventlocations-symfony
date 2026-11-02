@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Admin\Entity;
 
 use App\Admin\ValueObject\AuditActorType;
+use App\Shared\Security\PortalActor;
 use App\Shared\Uid\EntityId;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -16,6 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'admin_audit_log')]
 #[ORM\Index(name: 'idx_admin_audit_log_actor_id', columns: ['actor_id'])]
+#[ORM\Index(name: 'idx_admin_audit_log_portal_user_id', columns: ['portal_user_id'])]
 #[ORM\Index(name: 'idx_admin_audit_log_subject', columns: ['subject_type', 'subject_id', 'created_at'])]
 #[ORM\Index(name: 'idx_admin_audit_log_created_at', columns: ['created_at'])]
 class AuditLogEntry
@@ -30,6 +32,14 @@ class AuditLogEntry
     #[ORM\ManyToOne(targetEntity: AdminUser::class)]
     #[ORM\JoinColumn(name: 'actor_id', nullable: true, onDelete: 'RESTRICT')]
     private ?AdminUser $actor;
+
+    /**
+     * An interface: Admin may not name the Portal module. doctrine.yaml resolves it to PortalUser.
+     * SET NULL because deleting a manager keeps the row, which then shows as a deleted account.
+     */
+    #[ORM\ManyToOne(targetEntity: PortalActor::class)]
+    #[ORM\JoinColumn(name: 'portal_user_id', nullable: true, onDelete: 'SET NULL')]
+    private ?PortalActor $portalActor;
 
     #[ORM\Column(type: Types::STRING, length: 200)]
     private string $command;
@@ -50,11 +60,12 @@ class AuditLogEntry
     /**
      * @param array<string, mixed> $changes
      */
-    public function __construct(AuditActorType $actorType, ?AdminUser $actor, string $command, string $subjectType, string $subjectId, array $changes, \DateTimeImmutable $createdAt)
+    public function __construct(AuditActorType $actorType, ?AdminUser $actor, ?PortalActor $portalActor, string $command, string $subjectType, string $subjectId, array $changes, \DateTimeImmutable $createdAt)
     {
         $this->id = EntityId::generate();
         $this->actorType = $actorType;
         $this->actor = $actor;
+        $this->portalActor = $portalActor;
         $this->command = $command;
         $this->subjectType = $subjectType;
         $this->subjectId = $subjectId;
@@ -75,6 +86,11 @@ class AuditLogEntry
     public function actor(): ?AdminUser
     {
         return $this->actor;
+    }
+
+    public function portalActor(): ?PortalActor
+    {
+        return $this->portalActor;
     }
 
     public function command(): string

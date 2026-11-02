@@ -1,0 +1,40 @@
+{#- The manager area's shell (#42), a copy of admin/base.html.twig with the same blocks. Fill the blocks. -#}
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex, nofollow">
+        <meta name="admin-sprite" content="{{ asset('icons/admin-sprite.svg') }}">
+        <title>{% block title %}{{ 'shell.account'|trans({}, 'portal') }}{% endblock %}</title>
+        <link rel="preload" href="{{ asset('fonts/figtree-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="{{ asset('styles/admin.scss') }}">
+        <link rel="icon" href="{{ asset('icons/favicon.svg') }}" type="image/svg+xml">
+    </head>
+    <body class="{% block body_class %}{% endblock %}">
+        <a class="skip-link" href="#main">{{ 'shell.skip_to_content'|trans({}, 'portal') }}</a>
+        <div class="shell">
+            <div class="shell__sidebar">{{ include('portal/_sidebar.html.twig') }}</div>
+            <div class="shell__content">
+                {% set breadcrumbs_markup %}{% block breadcrumbs %}{% endblock %}{% endset %}
+                {% set page_actions_markup %}{% block page_actions %}{% endblock %}{% endset %}
+                {{ include('admin/layout/_topbar.html.twig', {breadcrumbs: breadcrumbs_markup, actions: page_actions_markup}) }}
+                <main class="shell__main" id="main" tabindex="-1">
+                    {% block page_header %}{% endblock %}
+                    {% set aside_markup %}{% block aside %}{% endblock %}{% endset %}
+                    <div class="shell__body">
+                        <div class="shell__primary">{% block main %}{% endblock %}</div>
+                        {% if aside_markup|trim is not empty %}
+                            <aside class="shell__aside">{{ aside_markup }}</aside>
+                        {% endif %}
+                    </div>
+                </main>
+            </div>
+        </div>
+        {{ include('admin/layout/_flash.html.twig') }}
+        <script type="module" src="{{ asset('js/admin/toast.js') }}"></script>
+        {{ include('admin/components/_scripts.html.twig') }}
+        {% block scripts %}{% endblock %}
+        {{ admin_island_assets(csp_nonce()) }}
+    </body>
+</html>

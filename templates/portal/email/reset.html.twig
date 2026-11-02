@@ -1,0 +1,13 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'mail.reset.preheader'|trans({}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('mail.reset.greeting'|trans({}, 'portal')) }}
+{{ blocks.p('mail.reset.intro'|trans({}, 'portal')) }}
+{{ blocks.button('mail.reset.button'|trans({}, 'portal'), url('portal_reset_password', {token: token})) }}
+{{ blocks.rule() }}
+{{ blocks.note('mail.reset.validity'|trans({}, 'portal')) }}
+{{ blocks.note('mail.reset.not_you'|trans({}, 'portal')) }}
+{% endblock %}

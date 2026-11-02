@@ -1,0 +1,24 @@
+{% extends 'portal/base_auth.html.twig' %}
+
+{% block title %}{{ 'login.title'|trans({}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block form %}
+    <form class="auth__form" method="post" action="{{ path('portal_login') }}">
+        <h1>{{ 'login.title'|trans({}, 'portal') }}</h1>
+        {% if error_key %}
+            <p class="form-error" id="login-error" role="alert">{{ error_key|trans({}, 'portal') }}</p>
+        {% endif %}
+        <div class="field">
+            <label class="field__label" for="login-email">{{ 'login.email'|trans({}, 'portal') }}</label>
+            <input class="field__input" id="login-email" type="email" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus{% if error_key %} aria-invalid="true" aria-describedby="login-error"{% endif %}>
+        </div>
+        <div class="field">
+            <label class="field__label" for="login-password">{{ 'login.password'|trans({}, 'portal') }}</label>
+            <input class="field__input" id="login-password" type="password" name="_password" autocomplete="current-password" required{% if error_key %} aria-invalid="true" aria-describedby="login-error"{% endif %}>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <button class="btn btn--primary btn--lg" type="submit">{{ 'login.submit'|trans({}, 'portal') }}</button>
+        <a class="auth__help" href="{{ path('portal_forgot_password') }}">{{ 'login.forgot'|trans({}, 'portal') }}</a>
+        <a class="auth__help" href="{{ path('portal_register') }}">{{ 'login.register'|trans({}, 'portal') }}</a>
+    </form>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'portal/base.html.twig' %}
+
+{% block title %}{{ 'overview.title'|trans({}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item" aria-current="page">{{ 'overview.title'|trans({}, 'portal') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>{{ 'overview.title'|trans({}, 'portal') }}</h1>
+    </div>
+{% endblock %}
+
+{% block main %}
+    <div class="card">
+        {{ include('admin/components/_empty.html.twig', {icon: 'building-2', title: 'overview.empty.title'|trans({}, 'portal'), text: 'overview.empty.text'|trans({}, 'portal')}, with_context = false) }}
+    </div>
+{% endblock %}

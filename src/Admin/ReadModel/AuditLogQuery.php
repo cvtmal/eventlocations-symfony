@@ -19,9 +19,11 @@ final class AuditLogQuery
     private const string ZONE = 'Europe/Zurich';
 
     private const string COLUMNS = <<<'SQL'
-        SELECT l.id, l.created_at, l.actor_type, u.display_name AS actor_name, l.command, l.subject_type, l.subject_id, l.changes
+        SELECT l.id, l.created_at, l.actor_type, COALESCE(u.display_name, p.first_name || ' ' || p.last_name) AS actor_name,
+               l.command, l.subject_type, l.subject_id, l.changes
         FROM admin_audit_log l
         LEFT JOIN admin_users u ON u.id = l.actor_id
+        LEFT JOIN portal_users p ON p.id = l.portal_user_id
         SQL;
 
     public function __construct(

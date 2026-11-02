@@ -11,6 +11,7 @@ use App\Cms\ReadModel\VenueListQuery;
 use App\Cms\ReadModel\VenueListRow;
 use App\Cms\ReadModel\VenueSort;
 use App\Factory\AdminUserFactory;
+use App\Factory\PortalUserFactory;
 use App\Factory\RoomFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
@@ -252,6 +253,24 @@ final class VenueListQueryTest extends KernelTestCase
         self::assertSame(1, $this->search(page: -5)->page);
         $empty = $this->search(new VenueListFilter(q: 'gibt es nicht'), page: 4);
         self::assertSame([0, 1, 1, []], [$empty->total, $empty->page, $empty->lastPage, $empty->rows]);
+    }
+
+    public function test_a_manager_shows_as_the_editor_by_name(): void
+    {
+        $venue = $this->complete('Bearbeitet');
+        $this->connection->executeStatement('UPDATE venues SET cms_edited_at = now() WHERE id = ?', [$venue->id()]);
+        $this->connection->insert('admin_audit_log', [
+            'id' => EntityId::generate(),
+            'actor_type' => 'portal_user',
+            'portal_user_id' => PortalUserFactory::createOne(['firstName' => 'Nora', 'lastName' => 'Keller'])->id(),
+            'command' => 'App\Venues\Command\ChangeVenueBasics',
+            'subject_type' => 'venue',
+            'subject_id' => (string) $venue->number(),
+            'changes' => '{}',
+            'created_at' => '2026-10-01 10:00:00+02',
+        ]);
+
+        self::assertSame('Nora Keller', $this->only($this->search())->editorName);
     }
 
     public function test_the_editor_is_the_newest_audit_row(): void

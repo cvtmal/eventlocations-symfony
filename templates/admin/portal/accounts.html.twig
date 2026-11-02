@@ -1,0 +1,98 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'accounts.title'|trans({}, 'portal') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item" aria-current="page">{{ 'accounts.title'|trans({}, 'portal') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'accounts.title'|trans({}, 'portal') }} <span class="muted">{{ list.total|swiss_number }}</span></h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% embed 'admin/components/_filter_bar.html.twig' with {
+        action: path('admin_portal_accounts'),
+        id: 'account-filter',
+        search_value: q,
+        search_label: 'accounts.search.label'|trans({}, 'portal'),
+        search_placeholder: 'accounts.search.placeholder'|trans({}, 'portal'),
+        submit_label: 'accounts.search.submit'|trans({}, 'portal'),
+        reset_href: q ? path('admin_portal_accounts') : null,
+        reset_label: 'accounts.search.reset'|trans({}, 'portal'),
+    } only %}{% endembed %}
+    {% if invalid %}
+        <p class="form-error" role="alert">{{ 'accounts.search.invalid'|trans({}, 'portal') }}</p>
+    {% endif %}
+
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'accounts.table_label'|trans({}, 'portal'),
+        id: 'account-list',
+        columns: [
+            {label: 'accounts.column.name'|trans({}, 'portal')},
+            {label: 'accounts.column.email'|trans({}, 'portal')},
+            {label: 'accounts.column.phone'|trans({}, 'portal')},
+            {label: 'accounts.column.state'|trans({}, 'portal')},
+            {label: 'accounts.column.last_login'|trans({}, 'portal')},
+        ],
+        actions_label: 'accounts.column.actions'|trans({}, 'portal'),
+        list: list,
+        q: q,
+    } only %}
+        {% block rows %}
+            {% for row in list.rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {actions_column: true, row: row} only %}
+                    {% block cells %}
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.email }}</td>
+                        <td>{{ row.phone ?? '—' }}</td>
+                        <td>
+                            {% if not row.active %}
+                                {{ include('admin/components/_pill.html.twig', {label: 'accounts.state.deactivated'|trans({}, 'portal')}, with_context = false) }}
+                            {% elseif row.confirmed %}
+                                {{ include('admin/components/_pill.html.twig', {label: 'accounts.state.active'|trans({}, 'portal'), tone: 'green'}, with_context = false) }}
+                            {% else %}
+                                {{ include('admin/components/_pill.html.twig', {label: 'accounts.state.unconfirmed'|trans({}, 'portal'), tone: 'amber'}, with_context = false) }}
+                            {% endif %}
+                        </td>
+                        <td class="muted">{{ row.lastLoginAt ? row.lastLoginAt|swiss_date : 'accounts.last_login_never'|trans({}, 'portal') }}</td>
+                    {% endblock %}
+                    {% block actions %}
+                        {# Written out, not form_start(): a Form view would repeat the id of its _token input in every row. #}
+                        {% set action = row.active ? 'deactivate' : 'reactivate' %}
+                        <form method="post" action="{{ path('admin_portal_accounts_' ~ action, {id: row.id}) }}">
+                            <input type="hidden" name="{{ action }}[_token]" value="{{ csrf_token('submit') }}">
+                            {{ include('admin/components/_button.html.twig', {
+                                label: ('accounts.action.' ~ action)|trans({}, 'portal'),
+                                size: 'sm', variant: 'ghost', type: 'submit',
+                                attributes: {'aria-label': ('accounts.action.' ~ action ~ '_for')|trans({name: row.name}, 'portal')},
+                            }, with_context = false) }}
+                        </form>
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {
+                icon: 'users',
+                title: (q ? 'accounts.empty.search_title' : 'accounts.empty.title')|trans({}, 'portal'),
+                text: q ? null : 'accounts.empty.text'|trans({}, 'portal'),
+            }, with_context = false) }}
+        {% endblock %}
+        {% block foot %}
+            {{ include('admin/components/_pagination.html.twig', {
+                page: list.page,
+                last_page: list.lastPage,
+                total: list.total,
+                per_page: list.perPage,
+                label: 'accounts.pagination.label'|trans({}, 'portal'),
+                previous_label: 'accounts.pagination.previous'|trans({}, 'portal'),
+                next_label: 'accounts.pagination.next'|trans({}, 'portal'),
+            }, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

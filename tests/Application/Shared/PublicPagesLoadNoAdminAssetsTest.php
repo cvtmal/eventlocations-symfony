@@ -71,7 +71,7 @@ final class PublicPagesLoadNoAdminAssetsTest extends WebTestCase
 
         foreach ($files as $file) {
             \assert($file instanceof \SplFileInfo);
-            if (str_starts_with($file->getPathname(), $root.'/admin/')) {
+            if (str_starts_with($file->getPathname(), $root.'/admin/') || str_starts_with($file->getPathname(), $root.'/portal/')) {
                 continue;
             }
 

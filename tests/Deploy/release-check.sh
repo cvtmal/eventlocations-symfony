@@ -175,7 +175,7 @@ expect() { # expect <host> <path> <status>
 }
 
 check_pages() {
-    for path in /health /robots.txt /hochzeitslocations /impressum /admin/login; do
+    for path in /health /robots.txt /hochzeitslocations /impressum /admin/login /konto/anmelden; do
         expect "$SITE" "$path" 200
     done
 

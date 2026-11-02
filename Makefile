@@ -144,19 +144,20 @@ workflow-lint: ## actionlint on .github/workflows
 # URL is a path on this lane's app, e.g. URL=/_styleguide. _profile=0 keeps the dev toolbar (inline scripts) out.
 TOOL_URL = http://localhost$(URL)$(if $(findstring ?,$(URL)),&,?)_profile=0
 TOOL_NAME = $(shell date +%Y%m%d-%H%M%S)-$(or $(subst .,-,$(subst /,-,$(patsubst /%,%,$(firstword $(subst ?, ,$(URL)))))),home)
-# ADMIN=1 logs in through DevAutoLoginAuthenticator (dev only).
+# ADMIN=1 or PORTAL=1 logs in through that firewall's DevAutoLoginAuthenticator (dev only).
 ADMIN_DEV_TOKEN = $(or $(shell sed -n 's/^ADMIN_DEV_AUTOLOGIN=//p' .env.local 2>/dev/null | tail -n1),$(shell sed -n 's/^ADMIN_DEV_AUTOLOGIN=//p' .env | tail -n1))
+DEV_LOGIN_HEADER = $(if $(PORTAL),X-Portal-Dev-Login,$(if $(ADMIN),X-Admin-Dev-Login))
 
-lighthouse: ## Lighthouse (mobile) against URL=/path (ADMIN=1 logs in); reports in var/lighthouse/
-	@test -n "$(URL)" || { echo 'Usage: make lighthouse URL=/_styleguide [ADMIN=1]'; exit 1; }
+lighthouse: ## Lighthouse (mobile) against URL=/path (ADMIN=1 or PORTAL=1 logs in); reports in var/lighthouse/
+	@test -n "$(URL)" || { echo 'Usage: make lighthouse URL=/_styleguide [ADMIN=1|PORTAL=1]'; exit 1; }
 	@mkdir -p var/lighthouse
-	docker compose --profile tools run --rm lighthouse '$(TOOL_URL)' '$(TOOL_NAME)'$(if $(ADMIN), '{"X-Admin-Dev-Login":"$(ADMIN_DEV_TOKEN)"}')
+	docker compose --profile tools run --rm lighthouse '$(TOOL_URL)' '$(TOOL_NAME)'$(if $(DEV_LOGIN_HEADER), '{"$(DEV_LOGIN_HEADER)":"$(ADMIN_DEV_TOKEN)"}')
 
 # vnu refuses to fetch localhost URLs, so the php container saves the page (via nginx) and vnu reads the file.
-validate-html: ## Nu Html Checker on the rendered HTML of URL=/path (ADMIN=1 logs in)
-	@test -n "$(URL)" || { echo 'Usage: make validate-html URL=/_styleguide [ADMIN=1]'; exit 1; }
+validate-html: ## Nu Html Checker on the rendered HTML of URL=/path (ADMIN=1 or PORTAL=1 logs in)
+	@test -n "$(URL)" || { echo 'Usage: make validate-html URL=/_styleguide [ADMIN=1|PORTAL=1]'; exit 1; }
 	@mkdir -p var/validate
-	$(EXEC) curl -fsS $(if $(ADMIN),-H 'X-Admin-Dev-Login: $(ADMIN_DEV_TOKEN)') '$(subst localhost,nginx,$(TOOL_URL))' -o var/validate/page.html
+	$(EXEC) curl -fsS $(if $(DEV_LOGIN_HEADER),-H '$(DEV_LOGIN_HEADER): $(ADMIN_DEV_TOKEN)') '$(subst localhost,nginx,$(TOOL_URL))' -o var/validate/page.html
 	docker compose --profile tools run --rm vnu --format text /work/page.html
 
 ## —— Performance (perf stack, PERF-1, see docs/performance-baseline.md) ——

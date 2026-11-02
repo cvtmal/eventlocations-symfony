@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Application\Admin;
 
 use App\Admin\ValueObject\AdminRole;
+use App\Factory\PortalUserFactory;
+use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -37,6 +39,30 @@ final class AuditLogScreenTest extends WebTestCase
         self::assertStringContainsString('CreateAdminUser', $row);
         self::assertStringContainsString('neu@example.ch', $row);
         self::assertStringContainsString('admin_user', $row);
+    }
+
+    public function test_a_manager_shows_by_name_and_a_deleted_one_as_deleted(): void
+    {
+        $this->logInAs();
+        $manager = PortalUserFactory::createOne(['firstName' => 'Nora', 'lastName' => 'Meier']);
+        foreach ([$manager->id(), null] as $portalUserId) {
+            $this->connection->insert('admin_audit_log', [
+                'id' => EntityId::generate(),
+                'actor_type' => 'portal_user',
+                'portal_user_id' => $portalUserId,
+                'command' => 'App\Portal\Command\UpdatePortalProfile',
+                'subject_type' => 'portal_user',
+                'subject_id' => $manager->id(),
+                'changes' => '{}',
+            ]);
+        }
+
+        $crawler = $this->client->request('GET', '/admin/audit-log');
+
+        self::assertResponseIsSuccessful();
+        $rows = $crawler->filter('tbody')->text();
+        self::assertStringContainsString('Nora Meier', $rows);
+        self::assertStringContainsString('Gelöschtes Konto', $rows);
     }
 
     public function test_filters_narrow_the_list(): void
