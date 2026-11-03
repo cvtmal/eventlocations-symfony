@@ -17,6 +17,7 @@ final readonly class CreateOwnLocation
         public string $name,
         public int $capacityMax,
         public string $town,
+        public ?string $cantonCode = null,
     ) {
     }
 }

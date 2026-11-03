@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Portal\Form;
 
 use App\Admin\Form\ComboboxType;
+use App\Geo\ValueObject\Canton;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -28,6 +30,12 @@ final class NewLocationType extends AbstractType
                 'url' => $this->urls->generate('portal_api_towns'),
                 'free_text' => true,
                 'attr' => ['autocomplete' => 'off'],
+            ])
+            ->add('canton', EnumType::class, [
+                'class' => Canton::class,
+                'label' => 'onboarding.new.field.canton',
+                'required' => false,
+                'placeholder' => 'onboarding.new.placeholder.canton',
             ]);
     }
 
