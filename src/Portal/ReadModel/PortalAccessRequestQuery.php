@@ -14,7 +14,7 @@ use Doctrine\DBAL\ParameterType;
 final class PortalAccessRequestQuery
 {
     private const string PENDING = <<<'SQL'
-        SELECT u.id, u.first_name, u.last_name, u.email, u.phone, v.number, v.name, a.requested_at
+        SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.is_active, v.number, v.name, a.requested_at
         FROM portal_venue_access a
         JOIN portal_users u ON u.id = a.portal_user_id
         JOIN venues v ON v.id = a.venue_id
@@ -45,6 +45,7 @@ final class PortalAccessRequestQuery
             (int) $row['number'],
             (string) $row['name'],
             new \DateTimeImmutable((string) $row['requested_at']),
+            (bool) $row['is_active'],
         ), $rows);
     }
 }

@@ -18,6 +18,7 @@ use App\Tests\Support\Portal\PortalSession;
 use App\Venues\Entity\Venue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Mime\Email;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -63,15 +64,25 @@ final class ReviewQueueTest extends WebTestCase
         self::assertSame('—', $crawler->filter('#review-requests tbody td')->eq(2)->text());
     }
 
-    public function test_a_deactivated_account_stays_in_the_queue(): void
+    public function test_a_deactivated_account_stays_in_the_queue_marked_and_without_annehmen(): void
     {
         $this->logInAs();
         $manager = PortalUserFactory::new()->deactivated()->create(['email' => 'deactivated@example.ch']);
         PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => VenueFactory::createOne()]);
+        $this->pendingRequest();
 
         $crawler = $this->client->request('GET', '/admin/pruefung');
 
-        self::assertStringContainsString('deactivated@example.ch', $crawler->filter('#review-requests tbody')->text());
+        $rows = $crawler->filter('#review-requests tbody tr');
+        $deactivated = $rows->reduce(static fn (Crawler $row): bool => str_contains($row->text(), 'deactivated@example.ch'));
+        $active = $rows->reduce(static fn (Crawler $row): bool => !str_contains($row->text(), 'deactivated@example.ch'));
+        self::assertCount(1, $deactivated);
+        self::assertSame('Konto deaktiviert', $deactivated->filter('.pill')->text());
+        self::assertCount(0, $deactivated->filter('button:not([formaction])'), 'no "Annehmen" the controller would refuse');
+        self::assertSame('Ablehnen', $deactivated->filter('button[formaction]')->text());
+        self::assertCount(1, $active);
+        self::assertCount(0, $active->filter('.pill'));
+        self::assertSame('Annehmen', $active->filter('button:not([formaction])')->text());
     }
 
     public function test_approving_a_deactivated_account_is_refused_and_mails_nobody(): void

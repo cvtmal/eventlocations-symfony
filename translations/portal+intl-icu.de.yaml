@@ -312,6 +312,8 @@ review:
         approve_for: Zugriff von {name} auf {venue} annehmen
         reject: Ablehnen
         reject_for: Zugriff von {name} auf {venue} ablehnen
+    state:
+        deactivated: Konto deaktiviert
     empty:
         title: Keine offenen Zugriffsanfragen
         text: Fragt jemand Zugriff auf eine Location an, erscheint die Anfrage hier.

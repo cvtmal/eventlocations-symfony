@@ -15,6 +15,7 @@ final readonly class PortalAccessRequestRow
         public int $venueNumber,
         public string $venueName,
         public \DateTimeImmutable $requestedAt,
+        public bool $active,
     ) {
     }
 }
