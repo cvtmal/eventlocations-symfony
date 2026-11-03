@@ -560,6 +560,10 @@ cron_daily() {
     echo old > "$APP/var/sessions/prod/sess_old"
     touch -t 202001010000 "$APP/var/sessions/prod/sess_old"
     echo young > "$APP/var/sessions/prod/sess_young"
+    echo month > "$APP/var/sessions/prod/sess_29_days"
+    touch -t "$(date -d "@$(($(date +%s) - 29 * 86400))" +%Y%m%d%H%M)" "$APP/var/sessions/prod/sess_29_days"
+    echo stale > "$APP/var/sessions/prod/sess_31_days"
+    touch -t "$(date -d "@$(($(date +%s) - 31 * 86400))" +%Y%m%d%H%M)" "$APP/var/sessions/prod/sess_31_days"
     mkdir -p "$APP/var/lock"
     touch "$APP/var/lock/sf.young.abc.lock" "$APP/var/lock/sf.old.abc.lock" "$APP/var/lock/sf.170-minutes.abc.lock" \
         "$APP/var/lock/not-a-limiter"
@@ -582,6 +586,8 @@ app cache:pool:prune"
     ok "a young upload stays"
     expect_gone "an old session is swept" "$APP/var/sessions/prod/sess_old"
     expect_file "a young session stays" "$APP/var/sessions/prod/sess_young" young
+    expect_file "a session idle for 29 days stays" "$APP/var/sessions/prod/sess_29_days" month
+    expect_gone "a session idle for 31 days is swept" "$APP/var/sessions/prod/sess_31_days"
     expect_gone "an old limiter lock is swept" "$APP/var/lock/sf.old.abc.lock"
     [ -f "$APP/var/lock/sf.young.abc.lock" ] || fail "a young limiter lock was swept"
     [ -f "$APP/var/lock/sf.170-minutes.abc.lock" ] || fail "a lock under three hours was swept"

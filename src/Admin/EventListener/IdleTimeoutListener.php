@@ -12,13 +12,14 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * The 2-hour idle timeout (S12). It runs after the session listener (128) and before the firewall (8), so
- * the firewall finds an emptied session and the entry point sends the user to the login page.
+ * The 30-day sliding idle timeout (S12, owner 2026-11-03). It runs after the session listener (128) and before
+ * the firewall (8), so the firewall finds an emptied session and the entry point sends the user to the login
+ * page. The cookie that carries the session for those 30 days is AdminSessionCookieListener's.
  */
 #[AsEventListener(event: KernelEvents::REQUEST, priority: 16)]
 final class IdleTimeoutListener
 {
-    public const int IDLE_SECONDS = 7200;
+    public const int IDLE_SECONDS = 30 * 86400;
 
     private const string LAST_SEEN = 'admin.last_seen';
 

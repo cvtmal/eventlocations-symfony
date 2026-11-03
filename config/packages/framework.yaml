@@ -5,9 +5,11 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     # Only the back office and /konto ever start one (S10, S12): the cookie is scoped to /admin, and
     # /konto's name and path are set by Portal\Security\PortalSessionStorageFactory and
-    # PortalResponseHeadersListener, so public URLs never see either. 7200 s matches the 2-hour idle
-    # timeout (Admin\EventListener\IdleTimeoutListener); PHP's default of 1440 s would end sessions
-    # after 24 idle minutes.
+    # PortalResponseHeadersListener, so public URLs never see either. 2592000 s matches the 30-day admin
+    # idle timeout (Admin\EventListener\IdleTimeoutListener). Both areas share this store, so /konto keeps
+    # its 2 hours through Portal\EventListener\PortalIdleTimeoutListener. cookie_lifetime stays 0 because
+    # Admin\EventListener\AdminSessionCookieListener gives only a fully logged-in admin session its sliding
+    # 30-day cookie. bin/cron-daily's sessions-sweep must keep at least the same age.
     session:
         handler_id: session.handler.native_file
         save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
@@ -16,7 +18,7 @@ framework:
         cookie_secure: auto
         cookie_httponly: true
         cookie_lifetime: 0
-        gc_maxlifetime: 7200
+        gc_maxlifetime: 2592000
 
     #esi: true
     #fragments: true
