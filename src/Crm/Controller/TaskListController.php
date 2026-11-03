@@ -29,7 +29,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The task list (CRM-5, D20): the tabs Meine, Heute, Überfällig, Alle, and "Aufgabe erfassen", which starts due today
+ * The task list (CRM-5, D20): the tabs Alle, Meine, Heute, Überfällig, and "Aufgabe erfassen", which starts due today
  * and assigned to the viewer. An unknown `view` is the default tab. Three statements: the staff, COUNT, the rows.
  */
 #[IsGranted('ROLE_EDITOR')]

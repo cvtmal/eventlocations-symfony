@@ -11,7 +11,7 @@ use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
- * "Aufgaben" in the CRM section, with the viewer's tasks due today or overdue as its badge.
+ * "Aufgaben" in the CRM section, with the viewer's open tasks as its badge.
  */
 final readonly class TasksNavigationItem implements NavigationItem
 {
