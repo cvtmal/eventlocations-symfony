@@ -47,4 +47,4 @@ phpstan.neon
 .DS_Store
 
 # /brag launch-video output (local only)
-/brag-output/
+/brag-output*/
