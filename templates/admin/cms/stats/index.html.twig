@@ -1,0 +1,124 @@
+{#
+    Statistik (#47): the site's figures over a period. Context from `Cms\Controller\StatsController::index()`:
+    period (StatsPeriod), periods list<StatsPeriod>, as_of ?DateTimeImmutable (last ingest), summary SiteSummary,
+    daily list<DailyPoint>, page_types list<PageTypeRow>, venues list<VenueRow>, csrf_id.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'stats.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item" aria-current="page">{{ 'stats.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_actions %}
+    {{ include('admin/components/_button.html.twig', {label: 'stats.media_kit.link'|trans({}, 'cms'), icon: 'file-text', href: path('admin_stats_media_kit')}, with_context = false) }}
+    <form class="stats-refresh" method="post" action="{{ path('admin_stats_refresh', {zeitraum: period.value}) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+        {{ include('admin/components/_button.html.twig', {label: 'stats.refresh'|trans({}, 'cms'), variant: 'primary', icon: 'history', type: 'submit'}, with_context = false) }}
+    </form>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'stats.title'|trans({}, 'cms') }}</h1>
+            {{ include('admin/cms/stats/_as_of.html.twig', {as_of: as_of}, with_context = false) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {{ include('admin/components/_tabs.html.twig', {
+        label: 'stats.period.label'|trans({}, 'cms'),
+        items: periods|map(option => {
+            label: 'stats.period.days'|trans({days: option.value}, 'cms'),
+            href: path('admin_stats', {zeitraum: option.value}),
+            active: option == period,
+        }),
+    }, with_context = false) }}
+
+    <div class="stats-kpis">
+        {% for key, value in {
+            visits: summary.visits,
+            page_views: summary.pageViews,
+            detail_views: summary.detailViews,
+            contact_clicks: summary.contactClicks,
+            merkliste_adds: summary.merklisteAdds,
+            inquiries: summary.inquiries,
+        } %}
+            {{ include('admin/components/_kpi.html.twig', {label: ('stats.kpi.' ~ key)|trans({}, 'cms'), value: value|swiss_number}, with_context = false) }}
+        {% endfor %}
+    </div>
+    <p class="stats-note muted">{{ 'stats.visits_note'|trans({}, 'cms') }}</p>
+
+    <section class="card" aria-labelledby="stats-daily">
+        <div class="card__head"><h2 id="stats-daily">{{ 'stats.daily.title'|trans({}, 'cms') }}</h2></div>
+        {{ include('admin/components/_bar_chart.html.twig', {
+            points: daily|map(point => {label: point.day|swiss_date, value: point.value}),
+            label: 'stats.daily.label'|trans({days: period.value}, 'cms'),
+            value_label: 'stats.kpi.page_views'|trans({}, 'cms'),
+        }, with_context = false) }}
+    </section>
+
+    <section class="stats-section" aria-labelledby="stats-page-types">
+        <h2 id="stats-page-types">{{ 'stats.page_types.title'|trans({}, 'cms') }}</h2>
+        {% embed 'admin/components/_table.html.twig' with {
+            label: 'stats.page_types.title'|trans({}, 'cms'),
+            id: 'stats-page-types-table',
+            columns: [
+                {label: 'stats.page_types.column.type'|trans({}, 'cms')},
+                {label: 'stats.kpi.page_views'|trans({}, 'cms')},
+                {label: 'stats.kpi.visits'|trans({}, 'cms')},
+            ],
+            rows: page_types,
+        } only %}
+            {% block rows %}
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ ('stats.page_type.' ~ row.pageType.value)|trans({}, 'cms') }}</td>
+                        <td>{{ row.pageViews|swiss_number }}</td>
+                        <td>{{ row.visitors|swiss_number }}</td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    </section>
+
+    <section class="stats-section" aria-labelledby="stats-venues">
+        <h2 id="stats-venues">{{ 'stats.venues.title'|trans({}, 'cms') }}</h2>
+        {% embed 'admin/components/_table.html.twig' with {
+            label: 'stats.venues.title'|trans({}, 'cms'),
+            id: 'stats-venues-table',
+            columns: [
+                {label: 'stats.venues.column.venue'|trans({}, 'cms')},
+                {label: 'stats.kpi.detail_views'|trans({}, 'cms')},
+                {label: 'stats.venues.column.impressions'|trans({}, 'cms')},
+                {label: 'stats.kpi.contact_clicks'|trans({}, 'cms')},
+                {label: 'stats.kpi.merkliste_adds'|trans({}, 'cms')},
+                {label: 'stats.kpi.inquiries'|trans({}, 'cms')},
+            ],
+            rows: venues,
+            period: period,
+        } only %}
+            {% block rows %}
+                {% for row in rows %}
+                    <tr>
+                        <td>
+                            <a href="{{ path('admin_locations_stats', {number: row.number, zeitraum: period.value}) }}"><strong>{{ row.name }}</strong></a><br>
+                            <span class="muted">{{ 'stats.venues.number'|trans({number: row.number}, 'cms') }}</span>
+                        </td>
+                        <td>{{ row.detailViews|swiss_number }}</td>
+                        <td>{{ row.impressions|swiss_number }}</td>
+                        <td>{{ row.clicks|swiss_number }}</td>
+                        <td>{{ row.merklisteAdds|swiss_number }}</td>
+                        <td>{{ row.inquiries|swiss_number }}</td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+            {% block empty %}
+                {{ include('admin/components/_empty.html.twig', {icon: 'chart-column', title: 'stats.venues.empty'|trans({}, 'cms')}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    </section>
+{% endblock %}

@@ -45,8 +45,8 @@ final class VenueEditorSlotsTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
 
         self::assertResponseIsSuccessful();
-        // "Übersicht" (priority 1000) stays first, then #25's Fotos to Bewertungen (900–600); a module's tab follows them.
-        self::assertSame(['Übersicht', 'Fotos', 'Räume', 'Dokumente', 'Bewertungen', 'Fake Tab'], $crawler->filter('.record-header nav.tabs--record a')->each(static fn (Crawler $tab): string => $tab->text()));
+        // "Übersicht" (priority 1000) stays first, then #25's Fotos to Bewertungen (900–600) and #47's Statistik (500); a module's tab follows them.
+        self::assertSame(['Übersicht', 'Fotos', 'Räume', 'Dokumente', 'Bewertungen', 'Statistik', 'Fake Tab'], $crawler->filter('.record-header nav.tabs--record a')->each(static fn (Crawler $tab): string => $tab->text()));
         $tab = $crawler->filter('.record-header nav.tabs--record a')->last();
         self::assertSame('/admin/_probe/datensatz/'.$venue->number(), $tab->attr('href'));
         self::assertSame('Panel '.$venue->number(), $crawler->filter('aside .fake-panel')->text());

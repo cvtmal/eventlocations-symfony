@@ -1,0 +1,42 @@
+{#
+    Bar chart (#47): one bar per point, an inline SVG for the eye and a visually hidden table with the same
+    figures for assistive technology. Include with `with_context = false`:
+      points list<{label, value}> (label translated or formatted, value an int ≥ 0), label (translated; the
+      caption and the table's name), value_label (translated; the figures' column heading), label_heading
+      (translated; the labels' column heading, default "Tag").
+    No `style` attribute (CSP `style-src 'self'`): the bar heights live in the SVG's own coordinates, and the
+    `viewBox` is stretched to the figure's width by `preserveAspectRatio="none"`.
+    A statistics screen maps `list<Stats\ReadModel\DailyPoint>` inline, so Admin stays free of Stats:
+      points: daily|map(point => {label: point.day|swiss_date, value: point.value})
+#}
+{%- set max = points is empty ? 0 : max(points|map(point => point.value)) -%}
+{%- set count = points|length -%}
+<figure class="bar-chart">
+    <figcaption class="bar-chart__caption">{{ label }}</figcaption>
+    {% if count > 0 %}
+        <svg class="bar-chart__svg" viewBox="0 0 {{ count * 10 }} 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            {%- for point in points -%}
+                {%- set height = max > 0 ? (point.value / max * 100)|round(2) : 0 -%}
+                <rect class="bar-chart__bar" x="{{ (loop.index0 * 10) + 1 }}" y="{{ 100 - height }}" width="8" height="{{ height }}"><title>{{ point.label }}: {{ point.value|swiss_number }}</title></rect>
+            {%- endfor -%}
+        </svg>
+        <div class="bar-chart__axis" aria-hidden="true">
+            <span>{{ (points|first).label }}</span>
+            {% if count > 1 %}<span>{{ (points|last).label }}</span>{% endif %}
+        </div>
+    {% endif %}
+    <table class="visually-hidden">
+        <caption>{{ label }}</caption>
+        <thead>
+            <tr>
+                <th scope="col">{{ label_heading|default('ui.bar_chart.label_heading'|trans({}, 'admin')) }}</th>
+                <th scope="col">{{ value_label }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for point in points %}
+                <tr><th scope="row">{{ point.label }}</th><td>{{ point.value|swiss_number }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</figure>

@@ -128,6 +128,6 @@ final class RenewalsWidgetTest extends WebTestCase
 
     private function widget(): Crawler
     {
-        return $this->client->request('GET', '/admin')->filter('.widget')->eq(4);
+        return $this->client->request('GET', '/admin')->filter('.widget')->eq(5);
     }
 }

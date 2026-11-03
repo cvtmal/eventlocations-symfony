@@ -62,7 +62,7 @@ App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http:
 
 Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\<Layer>`.
 
-- Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, the back office's `Admin`, `Cms`, `Crm`, the location managers' `Portal`, plus `Shared` for building blocks.
+- Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, `Stats`, the back office's `Admin`, `Cms`, `Crm`, the location managers' `Portal`, plus `Shared` for building blocks.
 - Layers inside a module: `Controller`, `Command` (command DTOs), `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console` (console commands), `Twig` (Twig filters and functions), `Mailer` (a module's emails), `EventListener`, `Event` (a module's published events), `Extension` (back-office extension points and their implementations), `Security` (security user, provider, authenticators), `Messenger` (bus middleware).
 - Allowed module dependencies (everything may use `Shared`; `Shared` uses no module):
 
@@ -75,10 +75,11 @@ Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\
   | Favorites | Search, Venues |
   | Inquiries | Venues |
   | Seo | Search, Venues, Geo |
+  | Stats | Venues, Inquiries |
   | Admin | — |
-  | Cms | Admin, Venues, Geo, Media |
+  | Cms | Admin, Venues, Geo, Media, Stats |
   | Crm | Admin, Venues, Geo, Inquiries, Portal |
-  | Portal | Admin, Cms, Venues, Geo, Media |
+  | Portal | Admin, Cms, Venues, Geo, Media, Stats |
 
   No public module depends on `Admin`, `Cms`, `Crm` or `Portal`.
 
@@ -122,6 +123,7 @@ Each module's notes live in `.claude/rules/module-<name>.md`, which load by them
 | Favorites | `.claude/rules/module-favorites.md` | Merkliste cookie, toggle, sync, page |  |
 | Inquiries | `.claude/rules/module-inquiries.md` | Inquiry form, mails, retention, events |  |
 | Seo | `.claude/rules/module-seo.md` | Meta, JSON-LD, sitemap, robots, error pages | any page's `title`, `meta` or `canonical` block |
+| Stats | `.claude/rules/module-stats.md` | Beacon, day-file spool, ingest and rollup, statistics read models | any `data-stats-*` attribute or `stats_page` block |
 | Admin | `.claude/rules/module-admin.md` | Staff login, shell, extension points, audit, UI kit, Vue islands | any back-office work, Cms and Crm included |
 | Cms | `.claude/rules/module-cms.md` | Back-office screens for venues, media, landing pages, text blocks |  |
 | Crm | `.claude/rules/module-crm.md` | Companies, contacts, deals, tasks, activities |  |

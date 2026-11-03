@@ -110,16 +110,17 @@ final class HomePageTest extends WebTestCase
     }
 
     /** Demand 3: the page adds no script, so carousel.js stays off it. */
-    public function test_the_page_loads_only_the_two_scripts_of_the_layout(): void
+    public function test_the_page_loads_only_the_three_scripts_of_the_layout(): void
     {
         $this->inCanton(Canton::ZH, 3);
 
         $crawler = $this->get('/');
 
         $scripts = $crawler->filter('script[src]')->each(static fn (Crawler $script): string => (string) $script->attr('src'));
-        self::assertCount(2, $scripts);
+        self::assertCount(3, $scripts);
         self::assertCount(1, array_filter($scripts, static fn (string $src): bool => str_contains($src, 'overlay')));
         self::assertCount(1, array_filter($scripts, static fn (string $src): bool => str_contains($src, 'merkliste')));
+        self::assertCount(1, array_filter($scripts, static fn (string $src): bool => str_contains($src, 'stats')));
         self::assertCount(0, array_filter($scripts, static fn (string $src): bool => str_contains($src, 'carousel')));
     }
 

@@ -50,7 +50,7 @@ final class ExtensionPointsTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin');
 
         self::assertSame(
-            ['Übersicht', 'Locations', 'Prüfung', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben', 'Fake Nur Admin', 'Benutzer', 'Konten', 'Audit-Log', 'E-Mail-Vorlagen'],
+            ['Übersicht', 'Statistik', 'Locations', 'Prüfung', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben', 'Fake Nur Admin', 'Benutzer', 'Konten', 'Audit-Log', 'E-Mail-Vorlagen'],
             $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()),
         );
         self::assertSame(['CMS', 'CRM', 'Einstellungen'], $crawler->filter('.sidebar__heading')->each(static fn (Crawler $heading): string => $heading->text()));
@@ -63,7 +63,7 @@ final class ExtensionPointsTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Übersicht', 'Locations', 'Prüfung', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
+        self::assertSame(['Übersicht', 'Statistik', 'Locations', 'Prüfung', 'Landingpages', 'Textbausteine', 'Fake Zweiter', 'Fake Erster', 'Firmen', 'Kontakte', 'Deals', 'Anfragen', 'Aufgaben'], $crawler->filter('.sidebar__label')->each(static fn (Crawler $label): string => $label->text()));
     }
 
     public function test_a_widget_renders_in_its_card(): void
@@ -73,9 +73,11 @@ final class ExtensionPointsTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin');
 
         self::assertSelectorNotExists('.empty');
-        self::assertSame('Fake Widget', $crawler->filter('section.widget--wide h2')->text());
-        self::assertSame('Inhalt 42', $crawler->filter('section.widget--wide .fake-widget')->text());
-        self::assertSame($crawler->filter('section.widget--wide h2')->attr('id'), $crawler->filter('section.widget--wide')->attr('aria-labelledby'));
+        // #47's Statistik widget is wide too; the fake one is the wide card holding its markup.
+        $widget = $crawler->filter('section.widget--wide')->reduce(static fn (Crawler $card): bool => $card->filter('.fake-widget')->count() > 0);
+        self::assertSame('Fake Widget', $widget->filter('h2')->text());
+        self::assertSame('Inhalt 42', $widget->filter('.fake-widget')->text());
+        self::assertSame($widget->filter('h2')->attr('id'), $widget->attr('aria-labelledby'));
     }
 
     public function test_record_tabs_and_panels_render_for_their_type(): void
@@ -86,7 +88,7 @@ final class ExtensionPointsTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         // The CMS's own venue tabs (#24's Übersicht, #25's Fotos to Bewertungen) come first; the fake one follows them.
-        self::assertSame(['Übersicht', 'Fotos', 'Räume', 'Dokumente', 'Bewertungen', 'Fake Tab'], $crawler->filter('.fake-tabs a')->each(static fn (Crawler $tab): string => $tab->text()));
+        self::assertSame(['Übersicht', 'Fotos', 'Räume', 'Dokumente', 'Bewertungen', 'Statistik', 'Fake Tab'], $crawler->filter('.fake-tabs a')->each(static fn (Crawler $tab): string => $tab->text()));
         self::assertSame(self::RECORD, $crawler->filter('.fake-tabs a')->last()->attr('href'));
         self::assertSelectorNotExists('.fake-wrong-type');
         self::assertSame('Panel 0199f0d0-0000-7000-8000-000000000001', $crawler->filter('aside .fake-panel')->text());

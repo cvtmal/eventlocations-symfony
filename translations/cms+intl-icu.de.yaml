@@ -619,3 +619,65 @@ text:
     error:
         stale: Diese Texte wurden inzwischen geändert. Bitte neu laden; die Eingaben auf dieser Seite gehen dabei verloren.
         stale_reload: Seite neu laden
+
+# #47: the staff statistics, the media kit and the dashboard widget.
+stats:
+    nav: Statistik
+    title: Statistik
+    tab: Statistik
+    as_of: 'Stand: {when}'
+    no_data: Noch keine Daten
+    refresh: Jetzt aktualisieren
+    visits_note: Besuche zählen die Besucherinnen und Besucher jedes Tages; wer an einem anderen Tag wiederkommt, zählt erneut.
+    flash:
+        # formatted = count, Swiss-formatted; count = the number, for the plural only.
+        refreshed: '{count, plural, =0 {Aktualisiert: keine neuen Ereignisse.} one {Aktualisiert: ein neues Ereignis geladen.} other {Aktualisiert: {formatted} neue Ereignisse geladen.}}'
+    period:
+        label: Zeitraum
+        days: '{days} Tage'
+    kpi:
+        visits: Besuche
+        page_views: Seitenaufrufe
+        detail_views: Detailaufrufe
+        contact_clicks: Kontaktklicks
+        merkliste_adds: Merkliste
+        inquiries: Anfragen
+    daily:
+        title: Seitenaufrufe pro Tag
+        label: 'Seitenaufrufe pro Tag, letzte {days} Tage'
+    page_types:
+        title: Seitentypen
+        column:
+            type: Seitentyp
+    page_type:
+        home: Startseite
+        listing: Suche
+        landing: Landingpages
+        detail: Detailseiten
+        merkliste: Merkliste
+        other: Andere Seiten
+    venues:
+        title: Locations
+        number: 'Nr. {number}'
+        empty: Im Zeitraum noch keine Zahlen zu Locations.
+        column:
+            venue: Location
+            impressions: Einblendungen
+    media_kit:
+        link: Mediakit
+        title: Mediakit
+        csv: CSV herunterladen
+        last_30: Letzte 30 Tage
+        months: Die letzten 12 Monate
+        month: '{month, date, ::yMMMM}'
+        column:
+            month: Monat
+            visits: Besuche
+            page_views: Seitenaufrufe
+            detail_views: Detailaufrufe
+            contact_clicks: Kontaktklicks
+            merkliste_adds: Merkliste
+            inquiries: Anfragen
+    widget:
+        title: Statistik, letzte 7 Tage
+        all: Zur Statistik

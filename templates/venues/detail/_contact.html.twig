@@ -1,15 +1,15 @@
 {#
     Kontakt (DP-11). The phone number is never in this HTML: "Telefonnummer anzeigen" links to venue_phone (an HTML
     page without JS; phone-reveal.js fetches it as JSON and swaps in the tel: link). Rendered only when hasContact().
-    Params: venue.
+    Params: venue. data-stats-click names the kind stats.js (#47) counts per click.
 #}
 <section id="kontakt" class="venue-section venue-contact" aria-labelledby="kontakt-title">
     <h2 id="kontakt-title" class="venue-section__title">{{ 'detail.contact.heading'|trans({}, 'venues') }}</h2>
     <ul class="venue-contact__list">
-        {% if venue.hasPhone %}<li><a class="btn btn--secondary venue-contact__link" href="{{ path('venue_phone', {slug: venue.slug}) }}" rel="nofollow" data-phone-reveal>{{ icon('phone') }}<span>{{ 'detail.contact.phone_reveal'|trans({}, 'venues') }}</span></a></li>{% endif %}
-        {% if venue.inquiryEmail %}<li><a class="btn btn--secondary venue-contact__link" href="mailto:{{ venue.inquiryEmail }}" data-address="{{ venue.inquiryEmail }}">{{ icon('mail') }}<span>{{ 'detail.contact.email'|trans({}, 'venues') }}</span></a></li>{% endif %}
-        {% if venue.website %}<li><a class="btn btn--secondary venue-contact__link" href="{{ venue.website }}" rel="nofollow noopener" target="_blank">{{ icon('globe') }}<span>{{ 'detail.contact.website'|trans({}, 'venues') }}</span></a></li>{% endif %}
-        {% if venue.instagram %}<li><a class="btn btn--secondary venue-contact__link" href="{{ venue.instagram }}" rel="nofollow noopener" target="_blank">{{ icon('camera') }}<span>{{ 'detail.contact.instagram'|trans({}, 'venues') }}</span></a></li>{% endif %}
+        {% if venue.hasPhone %}<li><a class="btn btn--secondary venue-contact__link" href="{{ path('venue_phone', {slug: venue.slug}) }}" rel="nofollow" data-phone-reveal data-stats-click="phone">{{ icon('phone') }}<span>{{ 'detail.contact.phone_reveal'|trans({}, 'venues') }}</span></a></li>{% endif %}
+        {% if venue.inquiryEmail %}<li><a class="btn btn--secondary venue-contact__link" href="mailto:{{ venue.inquiryEmail }}" data-address="{{ venue.inquiryEmail }}" data-stats-click="email">{{ icon('mail') }}<span>{{ 'detail.contact.email'|trans({}, 'venues') }}</span></a></li>{% endif %}
+        {% if venue.website %}<li><a class="btn btn--secondary venue-contact__link" href="{{ venue.website }}" rel="nofollow noopener" target="_blank" data-stats-click="website">{{ icon('globe') }}<span>{{ 'detail.contact.website'|trans({}, 'venues') }}</span></a></li>{% endif %}
+        {% if venue.instagram %}<li><a class="btn btn--secondary venue-contact__link" href="{{ venue.instagram }}" rel="nofollow noopener" target="_blank" data-stats-click="instagram">{{ icon('camera') }}<span>{{ 'detail.contact.instagram'|trans({}, 'venues') }}</span></a></li>{% endif %}
     </ul>
     {% if venue.contactPerson %}<p class="venue-contact__person">{{ icon('user') }}<span>{{ 'detail.contact.person'|trans({name: venue.contactPerson}, 'venues') }}</span></p>{% endif %}
 </section>

@@ -13,7 +13,7 @@ paths:
 
 ## Modules and layers
 
-Code lives in `src/<Module>/<Layer>/`. Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, the back office's `Admin`, `Cms`, `Crm`, the location managers' `Portal`, and `Shared` for cross-cutting building blocks.
+Code lives in `src/<Module>/<Layer>/`. Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, `Stats`, the back office's `Admin`, `Cms`, `Crm`, the location managers' `Portal`, and `Shared` for cross-cutting building blocks.
 
 | Layer | Holds |
 |---|---|
@@ -87,10 +87,11 @@ Anything else (services, value objects, form types) is `final` by default.
 | Favorites | Search, Venues, Shared |
 | Inquiries | Venues, Shared |
 | Seo | Search, Venues, Geo, Shared |
+| Stats | Venues, Inquiries, Shared |
 | Admin | Shared |
-| Cms | Admin, Venues, Geo, Media, Shared |
+| Cms | Admin, Venues, Geo, Media, Stats, Shared |
 | Crm | Admin, Venues, Geo, Inquiries, Portal, Shared |
-| Portal | Admin, Cms, Venues, Geo, Media, Shared |
+| Portal | Admin, Cms, Venues, Geo, Media, Stats, Shared |
 
 If a feature seems to need a forbidden direction, put an interface in the lower module (or `Shared`) and implement it in the higher one. Changing the matrix is a deliberate decision: update the table here, in `CLAUDE.md` and in the test together.
 

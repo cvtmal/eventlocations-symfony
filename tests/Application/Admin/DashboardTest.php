@@ -65,16 +65,16 @@ final class DashboardTest extends WebTestCase
         $new = $crawler->filter('.topbar__actions a.btn--primary');
         self::assertSame('Neu', $new->text());
         self::assertSame('/admin/locations', $new->attr('href'));
-        self::assertSame(['Neue Anfragen', 'Zugriffsanfragen', 'Meine Aufgaben', 'Überfällig', 'Verlängerungen', 'Unvollständige Locations', 'Änderungen von Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
+        self::assertSame(['Statistik, letzte 7 Tage', 'Neue Anfragen', 'Zugriffsanfragen', 'Meine Aufgaben', 'Überfällig', 'Verlängerungen', 'Unvollständige Locations', 'Änderungen von Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
 
-        $incomplete = $crawler->filter('.widget')->eq(5);
+        $incomplete = $crawler->filter('.widget')->eq(6);
         self::assertSame('/admin/locations/'.$hut->number(), $incomplete->filter('.venue-widget__name')->attr('href'));
         self::assertSame(['Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Haupt-Gebäudeart fehlt'], $incomplete->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
         $all = $incomplete->filter('.venue-widget__foot a');
         self::assertSame('1 unvollständige ansehen', $all->text());
         self::assertSame('/admin/locations?status=incomplete', $all->attr('href'));
 
-        $recent = $crawler->filter('.widget')->eq(7);
+        $recent = $crawler->filter('.widget')->eq(8);
         self::assertSame('Waldhütte Eichholz', $recent->filter('.venue-widget__name')->text());
         self::assertSame('Nr. '.$hut->number(), $recent->filter('.venue-widget__main .muted')->text());
         self::assertSame('28.10.2026', $recent->filter('.venue-widget__meta')->text());
@@ -90,13 +90,14 @@ final class DashboardTest extends WebTestCase
 
         // The three badges, inquiries, tasks and access requests, which have no owners statement to ride on here,
         // "Neue Anfragen", "Zugriffsanfragen", "Meine Aufgaben", "Überfällig", "Verlängerungen", the incomplete venues and
-        // their total, the managers' changes, the recently edited venues; with the user's refresh 13 in production (#29's
-        // ceiling 10, raised on purpose by #43's badge and widget and by #44's widget).
-        self::assertSame(12, $this->queriesOf('/admin'));
+        // their total, the managers' changes, the recently edited venues, #47's statistics (the week's figures and the
+        // last ingest); with the user's refresh 15 in production (#29's ceiling 10, raised on purpose by #43's badge and
+        // widget, by #44's widget and by #47's widget).
+        self::assertSame(14, $this->queriesOf('/admin'));
 
         // An empty identity map is production's: the refresh then reads the user.
         $this->entityManager()->clear();
-        self::assertSame(13, $this->queriesOf('/admin'));
+        self::assertSame(15, $this->queriesOf('/admin'));
     }
 
     public function test_each_widget_has_its_own_empty_text(): void
@@ -105,7 +106,7 @@ final class DashboardTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Noch keine Anfragen.', 'Keine offenen Zugriffsanfragen.', 'Keine offenen Aufgaben.', 'Nichts ist überfällig.', 'In den nächsten 60 Tagen endet kein Vertrag.', 'Alle Locations sind vollständig.', 'Noch keine Änderungen.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
+        self::assertSame(['Besuche 0 Seitenaufrufe 0 Kontaktklicks 0 Anfragen 0 Noch keine Daten', 'Noch keine Anfragen.', 'Keine offenen Zugriffsanfragen.', 'Keine offenen Aufgaben.', 'Nichts ist überfällig.', 'In den nächsten 60 Tagen endet kein Vertrag.', 'Alle Locations sind vollständig.', 'Noch keine Änderungen.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
     }
 
     public function test_a_manager_s_change_shows_and_an_admin_follows_it_to_the_audit_log(): void

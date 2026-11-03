@@ -56,3 +56,8 @@ Back-office foundation at `/admin` (S12): staff login, shell, extension points, 
 - **Sidebar badge:** `.sidebar__badge` has one tone, pink, and `NavigationItem::badge(): ?int` has none. The design draws Aufgaben dark grey and Anfragen pink, so a second tone changes this extension point.
 - **Icons:** `calendar`, `phone`, `sticky-note` in `admin-sprite.svg`.
 - **Double submit:** plain forms double-POST on a double click across the back office; only islands guard against it (`saving`).
+
+**Built in #47 (`venue-stats`).** No migration, no route. Admin stays free of Stats.
+
+- **`components/_bar_chart.html.twig`:** `points` (`list<{label, value}>`), `label` (the visible `<figcaption>` and the table's name), `value_label`, optional `label_heading` (default `ui.bar_chart.label_heading` "Tag"). An inline SVG (`aria-hidden`), a first/last-label axis and a visually hidden table with the same figures. No `style` attribute (CSP): bar heights are SVG coordinates, stretched by `preserveAspectRatio="none"`. A caller maps its own points inline, e.g. `daily|map(point => {label: point.day|swiss_date, value: point.value})`. Styles `assets/styles/admin/_bar-chart.scss`; a `<section data-component>` in the styleguide.
+- **Icon:** `chart-column` in `admin-sprite.svg` (the Statistik nav item).

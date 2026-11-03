@@ -185,6 +185,8 @@ ui:
         required_hint: Felder mit * sind Pflichtfelder.
     pagination:
         status: '{from} – {to} von {total} Resultaten'
+    bar_chart:
+        label_heading: Tag
     search:
         trigger: Suchen …
         shortcut_mac: ⌘K
@@ -254,6 +256,9 @@ ui:
             kpi_label: Neue Anfragen (7 Tage)
             kpi_detail: 4 noch ungesehen
             kpi_plain: CHF 14'200 Vertragswert
+            chart_label: Seitenaufrufe pro Tag
+            chart_value: Seitenaufrufe
+            chart_day: '{day}. November'
             progress_file: seesaal-abend.jpg
             progress_status: Varianten … 64 %
             property_label: Telefon
@@ -331,6 +336,7 @@ ui:
             empty: Leerzustand
             skeleton: Skeleton
             kpi: Kennzahl
+            bar_chart: Balkendiagramm
             chips: Chips
             seg: Segmente
             progress: Fortschritt

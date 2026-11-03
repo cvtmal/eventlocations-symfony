@@ -31,6 +31,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Inquiries/Entity'
                 prefix: 'App\Inquiries\Entity'
                 alias: Inquiries
+            Stats:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Stats/Entity'
+                prefix: 'App\Stats\Entity'
+                alias: Stats
             Venues:
                 type: attribute
                 is_bundle: false

@@ -8,6 +8,9 @@
 
 {% block meta %}<meta name="robots" content="noindex, nofollow"><meta name="description" content="{{ 'merkliste.meta_description'|trans({}, 'favorites') }}">{% endblock %}
 
+{#- The page type for stats.js (#47), set as a variable so the raw-text scanner does not read it as copy. -#}
+{% block stats_page %}{% set page_type = 'merkliste' %}{{ page_type }}{% endblock %}
+
 {% block main %}
     <div class="listing container merkliste" data-merkliste-page>
         <div class="merkliste__head">

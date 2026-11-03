@@ -392,6 +392,14 @@
     </div>
 </section>
 
+{{ sg.section_open('bar-chart', 'bar_chart') }}
+    {{ include('admin/components/_bar_chart.html.twig', {
+        label: 'ui.styleguide.sample.chart_label'|trans({}, 'admin'),
+        value_label: 'ui.styleguide.sample.chart_value'|trans({}, 'admin'),
+        points: [3, 7, 4, 0, 9, 12, 6]|map((value, day) => {label: ('ui.styleguide.sample.chart_day'|trans({day: day + 1}, 'admin')), value: value}),
+    }, with_context = false) }}
+</section>
+
 {{ sg.section_open('chips', 'chips') }}
     <div class="card__body styleguide__row">
         {{ include('admin/components/_chip_check.html.twig', {name: 'sg-chip[]', value: 'lake', id: 'sg-chip-lake', label: 'ui.styleguide.sample.chip_lake'|trans({}, 'admin'), checked: true}, with_context = false) }}

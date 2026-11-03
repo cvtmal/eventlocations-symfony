@@ -1,0 +1,18 @@
+{#
+    The dashboard widget "Statistik, letzte 7 Tage" (`Cms\Extension\StatsWidget`, #47). summary: SiteSummary
+    of the last 7 days, as_of: ?DateTimeImmutable (last ingest).
+#}
+<p class="widget__head-link"><a href="{{ path('admin_stats', {zeitraum: 7}) }}">{{ 'stats.widget.all'|trans({}, 'cms') }}</a></p>
+<div class="card__body stats-widget">
+    <div class="stats-kpis">
+        {% for key, value in {
+            visits: summary.visits,
+            page_views: summary.pageViews,
+            contact_clicks: summary.contactClicks,
+            inquiries: summary.inquiries,
+        } %}
+            {{ include('admin/components/_kpi.html.twig', {label: ('stats.kpi.' ~ key)|trans({}, 'cms'), value: value|swiss_number}, with_context = false) }}
+        {% endfor %}
+    </div>
+    {{ include('admin/cms/stats/_as_of.html.twig', {as_of: as_of}, with_context = false) }}
+</div>

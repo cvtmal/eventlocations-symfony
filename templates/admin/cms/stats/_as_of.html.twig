@@ -1,0 +1,11 @@
+{#
+    "Stand: <last ingest>" of the staff statistics (#47), or "Noch keine Daten" before the first ingest.
+    Include with `with_context = false`: as_of (?DateTimeImmutable).
+#}
+<p class="stats-as-of muted">
+    {%- if as_of -%}
+        {{ 'stats.as_of'|trans({when: as_of|swiss_date ~ ', ' ~ as_of|date('H:i', 'Europe/Zurich')}, 'cms') }}
+    {%- else -%}
+        {{ 'stats.no_data'|trans({}, 'cms') }}
+    {%- endif -%}
+</p>

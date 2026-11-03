@@ -192,6 +192,8 @@
             toast(link.dataset.toastFull, true);
         } else {
             change([...numbers, number], number, true);
+            // For stats.js (#47). A DOM event, so Favorites knows nothing of Stats.
+            document.dispatchEvent(new CustomEvent('merkliste:add', { detail: number }));
             render();
             toast(withName(link.dataset.toastAdded, name), true);
         }

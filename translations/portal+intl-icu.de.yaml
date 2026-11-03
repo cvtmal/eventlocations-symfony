@@ -60,6 +60,7 @@ editor:
         label: Bereiche der Location
         details: Angaben
         photos: Fotos
+        stats: Statistik
     offline:
         action: Offline nehmen
         title: Location offline nehmen?

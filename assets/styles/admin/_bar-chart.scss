@@ -1,0 +1,34 @@
+// #47's bar chart (`components/_bar_chart.html.twig`): an inline SVG stretched to the card's width. The bars
+// are drawn in the SVG's own coordinates, so no inline style is needed (CSP `style-src 'self'`).
+.bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-2);
+    margin: 0;
+    padding: var(--a-space-4) var(--a-space-5);
+}
+
+.bar-chart__caption {
+    color: var(--a-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.bar-chart__svg {
+    display: block;
+    width: 100%;
+    height: 160px;
+    border-bottom: 1px solid var(--a-line);
+}
+
+.bar-chart__bar {
+    fill: var(--a-accent);
+}
+
+.bar-chart__axis {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--a-space-2);
+    color: var(--a-muted);
+    font-size: 12px;
+}

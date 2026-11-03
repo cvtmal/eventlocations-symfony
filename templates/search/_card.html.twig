@@ -17,13 +17,14 @@
     Only the first slide keeps its alt text: each slide's link is aria-hidden, so no reader meets them, and real alts are
     long and all different, about 19 KB gzip on a full listing (#41). The detail page shows every photo with its alt.
     The title prints `h` and the level apart because RawTextScanner reads a tag that starts with an expression as text.
+    data-stats-venue lets stats.js (#47) count the card as an impression once half of it was in view.
 #}
 {%- set index = index|default(99) -%}
 {%- set action = action|default('merken') -%}
 {%- set level = heading|default('h2')|slice(1) -%}
 {%- set pictures = card.photos|map(p => card_picture(p, card.name))|filter(p => p is not null) -%}
 {%- set href = venue_path(card.slug) -%}
-<article class="card">
+<article class="card" data-stats-venue="{{ card.number }}">
     <div class="card__media">
         {%- if pictures is not empty %}
         {% embed 'components/_carousel.html.twig' with {id: 'card-' ~ card.number ~ '-photos', label: 'card.photos_label'|trans({name: card.name}, 'search'), pictures: pictures, index: index, href: href, scrollable: pictures|length > 1} only %}

@@ -16,7 +16,7 @@ use PHPat\Selector\Selector;
  */
 abstract class ArchitectureRules
 {
-    protected const MODULES = 'Shared|Geo|Media|Venues|Search|Favorites|Inquiries|Seo|Admin|Cms|Crm|Portal';
+    protected const MODULES = 'Shared|Geo|Media|Venues|Search|Favorites|Inquiries|Seo|Stats|Admin|Cms|Crm|Portal';
 
     /**
      * Every class in the given layer of any module, e.g. layer('Controller').

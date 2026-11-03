@@ -42,6 +42,9 @@ legal:
             lifetime: 'Es bleibt bis zu {days} Tage ab der letzten Änderung gespeichert. Leeren Sie die Merkliste, wird es gelöscht. In Safari und in Browsern auf iOS kann die Liste schon nach 7 Tagen ohne Änderung verschwinden.'
             processing: Ihr Browser schickt das Cookie bei jedem Aufruf der Website mit, gelesen wird es nur für die Merkliste. Wir speichern die Liste nicht auf dem Server und geben sie weder an Locations noch an Dritte weiter.
             control: Sie entfernen Einträge auf der Merkliste selbst oder löschen das Cookie in Ihrem Browser. Die Liste gilt pro Browser und Gerät.
+        stats:
+            title: Statistik
+            body: 'Wir zählen ohne Cookies und ohne Drittanbieter, wie oft Seiten aufgerufen, Locations in Listen angezeigt, Kontaktangaben angeklickt und Locations gemerkt werden. Gespeichert werden Zeitpunkt, Seite, die Domain der Herkunftsseite und die Browserkennung. Ihre IP-Adresse speichern wir nicht: Aus IP-Adresse und Browserkennung bilden wir mit einem täglich neuen Schlüssel, den wir nach einem Tag löschen, eine Kennzahl, mit der wir Besuche pro Tag zählen. Danach lässt sie sich keiner Person mehr zuordnen. Wir zeigen Locations, wie oft ihr Eintrag gesehen wurde, und nennen Werbekunden zusammengefasste Zahlen. Sendet Ihr Browser das Signal Global Privacy Control, zählen wir nichts.'
         abuse:
             title: Schutz vor Missbrauch
             # TODO owner: #20 must schedule cache:pool:prune, or expired counters stay on the server (T10).

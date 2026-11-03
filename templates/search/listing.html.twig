@@ -33,6 +33,8 @@
 
 {% block canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endblock %}
 
+{% block stats_page %}{{ landing ? 'landing' : 'listing' }}{% endblock %}
+
 {% block hreflang %}{% if not seo.noindex %}{{ include('shared/_hreflang.html.twig', {query: page.page > 1 ? {page: page.page} : {}}, with_context = false) }}{% endif %}{% endblock %}
 
 {% block jsonld %}{{ parent() }}{% if not seo.noindex %}{{ listing_jsonld(page) }}{% endif %}{% if breadcrumb %}{{ breadcrumb_jsonld(breadcrumb) }}{% endif %}{% endblock %}
