@@ -36,6 +36,28 @@ landing:
         title_page: '{heading} – Seite {page} | {site}'
         title_page_bare: '{heading} – Seite {page}'
         description: '{heading}: {count, plural, one {# Location} other {# Locations}} in der Schweiz mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
+# /llms.txt and the venues' Markdown views (seo-llms-txt). Numbers arrive pre-formatted ({formatted}, {count} in capacity).
+llms:
+    summary: 'Hochzeitslocations in der ganzen Schweiz: Schlösser, Scheunen, Restaurants und Locations am See mit Platz für Gäste, Lage, Ausstattung und Bewertungen.'
+    about: 'Alle Inhalte sind auf Deutsch. Zu jeder Location gibt es neben ihrer Seite eine Markdown-Fassung; die Links unter «Locations» führen dorthin. Anfragen gehen über das Formular auf der Seite der Location.'
+    filters: 'Die Übersicht lässt sich über Parameter filtern, zum Beispiel nach der Zahl der Gäste:'
+    section:
+        search: Suche
+        cantons: Kantone
+        towns: Orte
+        buildings: Location-Arten
+        venues: Locations
+        optional: Optional
+    home: Startseite
+    home_note: 'Suche nach Region, Location-Art und Gästezahl'
+    listing: Alle Hochzeitslocations
+    listing_note: 'Übersicht aller Locations mit Filtern nach Kanton, Ort, Umkreis, Gästezahl, Lage, Ausstattung und Preis'
+    landing_note: '{count, plural, one {1 Location} other {{formatted} Locations}}'
+    capacity: 'bis {count} Personen'
+    sitemap: Sitemap
+    sitemap_note: Alle Seiten als XML-Sitemap
+    inquiry: Anfrage über das Formular
+    source: 'Seite der Location:'
 # First fit wins (TitleChain): title_town_long, title_town, title_name.
 venue:
     title_town_long: '{name} in {town} mieten | {site}'

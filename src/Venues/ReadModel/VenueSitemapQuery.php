@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues\ReadModel;
 
+use App\Geo\ValueObject\Canton;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
@@ -11,7 +12,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 
 /**
- * The published venues of the sitemap, in the default locale. `lastmod` is the newest of the
+ * The published venues of the sitemap and of `/llms.txt`, in the default locale. `lastmod` is the newest of the
  * venue, its translation and its photos, because a text edit does not touch `venues.updated_at`
  * and Google trusts `lastmod` only when it is accurate. It lives here rather than in Seo so that
  * Picture stays the one owner of the path format. It never joins `towns`, which are optional
@@ -88,6 +89,48 @@ final class VenueSitemapQuery
 
             return new SitemapVenue($row['slug'], new \DateTimeImmutable($row['lastmod']), $this->imageUrls($row['number'], $row['photos']));
         }, $rows);
+    }
+
+    /**
+     * Every published venue for `/llms.txt`, on the sitemap's own definition of published, so the
+     * two lists cannot drift apart. `PUBLISHED` ends in its WHERE, so the venues are a CTE and the
+     * optional town joins it. Sorted by name with the default locale's collation.
+     *
+     * @return list<IndexedVenue>
+     */
+    public function index(): array
+    {
+        $defaultLocale = $this->enabledLocale->default();
+        $rows = $this->connection->fetchAllAssociative(
+            'WITH published AS (SELECT v.name, t.slug, v.zip, v.town_id, v.canton_code, v.capacity_max '.self::PUBLISHED.')
+             SELECT p.name, p.slug, p.zip, tw.name AS town_name, p.canton_code, p.capacity_max
+             FROM published p
+             LEFT JOIN towns tw ON tw.id = p.town_id',
+            ['default_locale' => $defaultLocale],
+        );
+
+        $venues = array_map(static function (array $row): IndexedVenue {
+            \assert(\is_string($row['name']));
+            \assert(\is_string($row['slug']));
+            \assert(null === $row['zip'] || \is_string($row['zip']));
+            \assert(null === $row['town_name'] || \is_string($row['town_name']));
+            \assert(null === $row['canton_code'] || \is_string($row['canton_code']));
+            \assert(\is_int($row['capacity_max']));
+
+            return new IndexedVenue(
+                $row['slug'],
+                $row['name'],
+                $row['zip'],
+                $row['town_name'],
+                null === $row['canton_code'] ? null : Canton::from($row['canton_code']),
+                $row['capacity_max'],
+            );
+        }, $rows);
+
+        $collator = new \Collator($defaultLocale);
+        usort($venues, static fn (IndexedVenue $a, IndexedVenue $b): int => (int) $collator->compare($a->name, $b->name) ?: strcmp($a->slug, $b->slug));
+
+        return $venues;
     }
 
     public function newestChange(): ?\DateTimeImmutable

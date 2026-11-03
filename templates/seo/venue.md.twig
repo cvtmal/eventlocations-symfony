@@ -1,0 +1,188 @@
+{#
+    Markdown version of the venue detail page (`venue_markdown`): the HTML page's facts in its section order, with the
+    same catalogue keys. Never the phone number or the e-mail address (DP-11: the same rule as the JSON-LD); the inquiry
+    is a link to the HTML page's form. Autoescape is off (Markdown, not HTML): every venue text goes through `md`,
+    `md_block` or `md_url`, and URLs come from the router. The controller collapses repeated blank lines.
+    Params: venue (VenueDetail).
+#}
+{% autoescape false %}
+{% set wedding = venue.wedding %}
+# {{ venue.name|md }}
+
+{% if venue.place.townName %}
+{{ 'detail.head.place'|trans({zip: venue.zip ?? '', town: venue.place.townName}, 'venues')|md }}{% if venue.place.canton %}, {{ 'venue.canton_area'|trans({canton: venue.place.canton|trans}, 'seo')|md }}{% endif %}
+
+
+{% elseif venue.place.isKnown() %}
+{{ venue.place|trans|md }}
+
+{% endif %}
+{% if venue.mainBuilding %}
+- {{ venue.mainBuilding|trans|md }}
+{% endif %}
+{% if venue.mainSetting %}
+- {{ venue.mainSetting|trans|md }}
+{% endif %}
+- {{ 'detail.head.capacity'|trans({range: swiss_range(venue.capacityMin ?? venue.capacityMax, venue.capacityMax)}, 'venues')|md }}
+
+{{ venue.descriptionText()|md_block }}
+
+{% if venue.hasRatingSection() %}
+## {{ 'detail.rating.heading'|trans({}, 'venues')|md }}
+
+{% if venue.ratingLabel %}{{ 'detail.rating.summary_labelled'|trans({label: venue.ratingLabel|trans, score: venue.ratingScore|swiss_number(1), count: venue.ratingCount|swiss_number}, 'venues')|md }}{% else %}{{ 'detail.rating.summary'|trans({score: venue.ratingScore|swiss_number(1), count: venue.ratingCount|swiss_number}, 'venues')|md }}{% endif %}
+
+
+{% if venue.highlights is not empty %}
+{{ 'detail.rating.highlights_intro'|trans({}, 'venues')|md }}
+
+{% for highlight in venue.highlights %}
+- {{ highlight|trans|md }}
+{% endfor %}
+
+{% endif %}
+{% endif %}
+{% if venue.hasFacts() %}
+## {{ 'detail.facts.heading'|trans({}, 'venues')|md }}
+
+{% for group in venue.factGroups %}
+- **{{ group.group|trans|md }}:** {{ group.terms|map(term => term|trans)|join(', ')|md }}
+{% endfor %}
+
+{% endif %}
+{% if wedding.hasAny() %}
+## {{ 'detail.wedding.heading'|trans({}, 'venues')|md }}
+
+{% if wedding.priceLevel %}
+- **{{ 'detail.wedding.price_level'|trans({}, 'venues')|md }}:** {{ wedding.priceLevel|trans|md }}
+{% endif %}
+{% if wedding.ambience %}
+- **{{ 'detail.wedding.ambience'|trans({}, 'venues')|md }}:** {{ wedding.ambience|md }}
+{% endif %}
+{% if wedding.capacitySeated or wedding.capacityStanding or wedding.capacityNote %}
+- **{{ 'detail.wedding.capacity'|trans({}, 'venues')|md }}:** {{ [
+    wedding.capacitySeated ? 'detail.wedding.seated'|trans({count: wedding.capacitySeated|swiss_number}, 'venues') : null,
+    wedding.capacityStanding ? 'detail.wedding.standing'|trans({count: wedding.capacityStanding|swiss_number}, 'venues') : null,
+    wedding.capacityNote,
+]|filter(part => part)|join('; ')|md }}
+{% endif %}
+{% if wedding.ceremony is not empty %}
+- **{{ 'term_group.ceremony'|trans({}, 'venues')|md }}:** {{ wedding.ceremony|map(term => term|trans)|join(', ')|md }}
+{% endif %}
+{% if wedding.party or wedding.hasCurfew is not null or wedding.partyNote %}
+- **{{ 'detail.wedding.party'|trans({}, 'venues')|md }}:** {{ [
+    wedding.party ? wedding.party|trans : null,
+    wedding.hasCurfew is same as(false) ? 'detail.wedding.no_curfew'|trans({}, 'venues')
+        : (wedding.hasCurfew is same as(true) ? (wedding.curfewAt ? 'detail.wedding.curfew_at'|trans({time: wedding.curfewAt}, 'venues') : 'detail.wedding.curfew_unknown_time'|trans({}, 'venues')) : null),
+    wedding.partyNote,
+]|filter(part => part)|join('; ')|md }}
+{% endif %}
+{% if wedding.amenities is not empty %}
+- **{{ 'term_group.amenity'|trans({}, 'venues')|md }}:** {{ wedding.amenities|map(term => term|trans)|join(', ')|md }}
+{% endif %}
+{% if wedding.dining is not empty %}
+- **{{ 'term_group.dining'|trans({}, 'venues')|md }}:** {{ wedding.dining|map(term => term|trans)|join(', ')|md }}
+{% endif %}
+{% if wedding.usage is not empty %}
+- **{{ 'term_group.usage'|trans({}, 'venues')|md }}:** {{ wedding.usage|map(term => term|trans)|join(', ')|md }}
+{% endif %}
+{% if wedding.vendors is not empty %}
+- **{{ 'term_group.vendor'|trans({}, 'venues')|md }}:** {{ wedding.vendors|map(term => term|trans)|join(', ')|md }}
+{% endif %}
+{% if wedding.languages is not empty %}
+- **{{ 'term_group.language'|trans({}, 'venues')|md }}:** {{ wedding.languages|map(term => term|trans)|join(', ')|md }}
+{% endif %}
+{% if wedding.openingHours %}
+- **{{ 'detail.wedding.opening_hours'|trans({}, 'venues')|md }}:** {{ wedding.openingHours|md }}
+{% endif %}
+
+{% endif %}
+{% if venue.rooms is not empty %}
+## {{ 'detail.rooms.heading'|trans({}, 'venues')|md }}
+
+{% for room in venue.rooms %}
+### {{ room.name|md }}
+
+{% if room.capacityMax or room.capacityMin %}
+- {{ 'detail.rooms.capacity'|trans({range: swiss_range(room.capacityMin ?? room.capacityMax, room.capacityMax ?? room.capacityMin)}, 'venues')|md }}
+{% endif %}
+{% for seating in room.seatings %}
+- {{ 'detail.rooms.seating_line'|trans({seating: ('detail.rooms.seating.' ~ seating.seating.value)|trans({}, 'venues'), range: swiss_range(seating.min ?? seating.max, seating.max)}, 'venues')|md }}
+{% endfor %}
+{% if room.areaM2 %}
+- {{ 'detail.rooms.area'|trans({area: room.areaM2|swiss_number}, 'venues')|md }}
+{% endif %}
+{% if room.heightM %}
+- {{ 'detail.rooms.height'|trans({height: room.heightM|swiss_number}, 'venues')|md }}
+{% endif %}
+{% if room.floorMaterial %}
+- {{ 'detail.rooms.floor'|trans({floor: room.floorMaterial|trans}, 'venues')|md }}
+{% endif %}
+
+{% if room.description %}
+{{ room.description|md_block }}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if venue.hasFaq() %}
+## {{ 'detail.faq.heading'|trans({}, 'venues')|md }}
+
+{% if venue.ownCatering %}
+- **{{ 'detail.faq.own_catering'|trans({}, 'venues')|md }}** {{ venue.ownCatering|trans|md }}
+{% endif %}
+{% if venue.daylight is not null %}
+- **{{ 'detail.faq.daylight'|trans({}, 'venues')|md }}** {{ (venue.daylight ? 'detail.faq.yes' : 'detail.faq.no')|trans({}, 'venues')|md }}
+{% endif %}
+{% if venue.parkingText %}
+- **{{ 'detail.faq.parking'|trans({}, 'venues')|md }}** {{ venue.parkingText|md }}
+{% endif %}
+
+{% endif %}
+{% if venue.hasLocation() %}
+## {{ 'detail.location.heading'|trans({}, 'venues')|md }}
+
+{% if venue.place.townName %}
+- {% if venue.street %}{{ 'detail.location.address'|trans({street: venue.street, zip: venue.zip ?? '', town: venue.place.townName}, 'venues')|md }}{% else %}{{ 'detail.location.address_no_street'|trans({zip: venue.zip ?? '', town: venue.place.townName}, 'venues')|md }}{% endif %}
+
+{% endif %}
+{% for distance in venue.distances %}
+- {{ ('detail.location.' ~ distance.access.value ~ (distance.name ? '' : '_unnamed'))|trans({km: distance.km|swiss_number(1), name: distance.name}, 'venues')|md }}
+{% endfor %}
+
+{% endif %}
+## {{ 'detail.contact.heading'|trans({}, 'venues')|md }}
+
+{% if venue.website %}
+- [{{ 'detail.contact.website'|trans({}, 'venues')|md }}]({{ venue.website|md_url }})
+{% endif %}
+{% if venue.instagram %}
+- [{{ 'detail.contact.instagram'|trans({}, 'venues')|md }}]({{ venue.instagram|md_url }})
+{% endif %}
+{% if venue.contactPerson %}
+- {{ 'detail.contact.person'|trans({name: venue.contactPerson}, 'venues')|md }}
+{% endif %}
+- [{{ 'llms.inquiry'|trans({}, 'seo')|md }}]({{ url('venue_show', {slug: venue.slug, _fragment: 'anfrage'}) }})
+
+{% if venue.documents is not empty %}
+## {{ 'detail.documents.heading'|trans({}, 'venues')|md }}
+
+{% for document in venue.documents %}
+- [{{ document.title|md }}]({{ absolute_url(document_url(venue.number, document.id)) }})
+{% endfor %}
+
+{% endif %}
+{% if venue.reviews is not empty %}
+## {{ 'detail.reviews.heading'|trans({}, 'venues')|md }}
+
+{% for review in venue.reviews %}
+{{ review.text|md_block|split("\n")|map(line => line == '' ? '>' : '> ' ~ line)|join("\n") }}
+>
+> {{ 'detail.reviews.byline'|trans({name: review.firstName, role: review.role|trans, month: review.month}, 'venues')|md }}
+
+{% endfor %}
+{% endif %}
+---
+
+{{ 'llms.source'|trans({}, 'seo')|md }} {{ url('venue_show', {slug: venue.slug}) }}
+{% endautoescape %}

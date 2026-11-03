@@ -14,7 +14,7 @@
 
 {% block meta %}{{ include('seo/_meta.html.twig', {seo: seo, picture: venue.photos[0] ?? null}, with_context = false) }}{% endblock %}
 
-{% block canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ seo.canonical }}"><link rel="alternate" type="text/markdown" href="{{ url('venue_markdown', {slug: venue.slug}) }}">{% endblock %}
 
 {% block jsonld %}{{ parent() }}{{ venue_jsonld(venue) }}{{ breadcrumb_jsonld([{name: 'breadcrumb.listing'|trans({}, 'seo'), url: url('listing')}, {name: venue.name}]) }}{% endblock %}
 

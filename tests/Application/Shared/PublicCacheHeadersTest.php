@@ -81,6 +81,11 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'venue sitemap' => ['sitemap_venues', 'GET', '/sitemap-venues-1.xml', 200, self::PAGE, null];
         yield 'venue sitemap past the last file' => ['sitemap_venues', 'GET', '/sitemap-venues-99.xml', 404, self::PAGE, null];
         yield 'robots' => ['robots', 'GET', '/robots.txt', 200, self::PAGE, null];
+        yield 'llms.txt' => ['llms_txt', 'GET', '/llms.txt', 200, self::PAGE, null];
+        yield 'venue markdown' => ['venue_markdown', 'GET', self::DETAIL.'.md', 200, self::PAGE, null];
+        yield 'venue markdown, history slug' => ['venue_markdown', 'GET', '/hochzeitslocation/'.self::HISTORY_SLUG.'.md', 301, self::PAGE, null];
+        yield 'venue markdown, unknown' => ['venue_markdown', 'GET', '/hochzeitslocation/unbekannt.md', 404, self::MISSING, null];
+        yield 'venue markdown, unpublished' => ['venue_markdown', 'GET', '/hochzeitslocation/{gone}.md', 410, self::MISSING, null];
         yield 'count' => ['_search_count', 'GET', '/_search/count', 200, self::COUNT, null];
         yield 'places' => ['_search_places', 'GET', '/_search/places?q=Zue', 200, self::PLACES, null];
         yield 'phone' => ['venue_phone', 'GET', self::DETAIL.'/telefon', 200, self::PRIVATE, 'Accept'];
