@@ -26,6 +26,7 @@ Artifacts land in `.rpi-tracking/{research,plans,changes,reviews}/<date>/<slug>-
 - Every full cycle ends with exactly one commit, created when the owner says "commit". The commit message is the cycle slug, and the commit is pushed to `main` (see **Running cycles in parallel** for the rebase step). If a cycle needs rework, the rework goes in a new commit on top.
 - Never copy eventlokale's texts, photos, logos, icons or font files into this repository, the demo data or the tests. We copy layout, structure, interaction and colour values. Reference screenshots stay in `docs/reference/` as documentation only. The one exception is the venue content from the owner's Wix CSV (#21, Q12). It lives in `CONTENT_ROOT` / `MEDIA_ROOT` outside the repository and is never committed. The owner data (S14, #32) stays outside the repository in the same way.
 - From #34 on, every UI cycle compares its result with `docs/reference/public/` at 390 px and 1440 px, using Claude in Chrome against the local app. Before #34 it was the matching screenshot in `docs/reference/`. The live eventlokale page may be visited for behaviour questions: slowly, at most about 20 requests per session (Cloudflare rate-limits at ~35 rapid requests), never with forms submitted.
+- The owner-permitted crawl `app:crm:crawl-eventlokale` (#49) is not a behaviour visit: the owner runs it, it paces itself (1.5 s + jitter, stops after three 429s) and is exempt from the ~20-request cap. Its CSV is a private list in `CONTENT_ROOT/owner/`; it does not reopen Q12, and its data stays out of this repository, the demo data, the tests and the production content.
 - Every back-office cycle (#22–#30) compares its screens with the design reference in `docs/reference/admin/` (S12) at 1440 px, and checks that they stay usable at 390 px. The reference is the target; eventlokale is not.
 - The app must stay reachable locally at `http://localhost:${NGINX_HOST_PORT}` after every cycle, with demo data loaded (`make db-fresh && make seed`).
 
@@ -124,6 +125,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 44 | `portal-editor` | W12 | POR-8–POR-10 | 25, 42 | — | — | ✅ Done |
 | 45 | `portal-onboarding` | W13 | POR-11–POR-14 | 43, 44 | `portal_submissions`; `venues.awaits_first_publish` (Q20 invoice reminder) | ~~Q20~~ | ✅ Done |
 | 46 | `liechtenstein-venues` | W14 | FI-1 (data), FI-2 (data), DATA-3 | 3, 21, 32 | `cantons`: one `li` row (and whatever research finds the 26-row CHECKs or uniques need); `towns`, `town_zips`: Liechtenstein rows | ~~Q13~~ | Not started |
+| 49 | `eventlokale-crawler` | — | — (owner request) | 27a | — | — | ✅ Done |
 
 ### Waves at a glance
 
@@ -2810,6 +2812,19 @@ W14. Depends on #3, #21 and #32. Q13 answered yes on 2026-11-02, so the 4 Liecht
   - the landing page for Liechtenstein exists if #17's threshold allows it, and the sitemap follows;
   - the existing geo, search and SEO tests pass with 27 regions, and tests cover the `li` row, a `+423` phone and the import counts;
   - S11's checks pass on the pages it changes.
+
+### 49. `eventlokale-crawler`
+
+Owner request of 2026-11-03, outside the waves. Depends on #27a (`Crm\CsvStream`). eventlokale permitted the crawl; the owner wants every wedding venue of `https://www.eventlokale.ch/locations/hochzeit/seedId=61496132` as one CSV, for now as a private list.
+
+- **Command:** `app:crm:crawl-eventlokale [path]`, owner-run in the `php` container (`make sf c="app:crm:crawl-eventlokale"`), about 25 minutes. Options `--delay-ms`, `--jitter-ms`, `--limit`, `--refresh`, `--list-only`, `--from-cache`.
+- **Source:** eventlokale's internal JSON API: `POST /api/guest/location/search/draw` (wedding filter `events [370]`, Switzerland `category 1`, fixed seed `61496132`, 200 per page), `GET /api/guest/location/{id}/get` per venue (404/410 = gone) and `GET /api/guest/location/all-taxonomies` for the term names, through the scoped client `eventlokale.client`.
+- **Output:** `CONTENT_ROOT/owner/eventlokale-hochzeit.csv`, `;` + UTF-8 BOM through `CsvStream`, one row per venue, lists joined with ` | `, rooms as one text cell, photos as URLs only. The raw payloads under `CONTENT_ROOT/eventlokale/` are the resume checkpoint.
+- **Pace:** 1.5 s + up to 0.4 s between two requests, the client's two retries at 5 s and 15 s, a stop after three 429s in a row.
+- **Done when:**
+  - the unit tests (client, crawl, CSV) and the command test pass with invented payloads, and no test reaches the network;
+  - `make lint` passes;
+  - the owner's full run is outside the cycle.
 
 ## Out of scope / proposals (not scheduled)
 
