@@ -42,3 +42,6 @@ phpstan.neon
 ###> symfonycasts/sass-bundle ###
 /public/assets/
 ###< symfonycasts/sass-bundle ###
+
+# macOS Finder metadata
+.DS_Store
