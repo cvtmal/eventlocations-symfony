@@ -46,7 +46,7 @@ totp:
         key_label: Oder gib diesen Schlüssel von Hand ein
         submit: Einrichten
 flash:
-    session_expired: Du warst zwei Stunden inaktiv. Melde dich neu an.
+    session_expired: Du warst 30 Tage inaktiv. Melde dich neu an.
     totp_enrolled: Die Zwei-Faktor-Anmeldung ist eingerichtet.
     user_created: Der Benutzer ist erfasst.
     role_changed: Die Rolle ist geändert.

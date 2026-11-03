@@ -39,8 +39,9 @@ main() {
     step pool-prune "$PHP" bin/console --no-interaction --quiet cache:pool:prune
     # #25: abandoned uploads in the import staging directory, older than a day.
     step staging-sweep find var/import-staging -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} +
-    # Admin sessions the garbage collector never reaches on this host.
-    step sessions-sweep find var/sessions -type f -mmin +180 -delete
+    # Sessions the garbage collector never reaches on this host. 43200 minutes is the 30-day admin idle timeout
+    # (IdleTimeoutListener::IDLE_SECONDS); a shorter age would end idle back-office sessions at 03:15.
+    step sessions-sweep find var/sessions -type f -mmin +43200 -delete
     # Limiter locks: FlockStore never unlinks its files, so each client leaves one for ever. The longest
     # limiter window is 60 minutes; deleting a file a process still holds costs at most one count race.
     step lock-sweep find var/lock -maxdepth 1 -type f -name 'sf.*.lock' -mmin +180 -delete

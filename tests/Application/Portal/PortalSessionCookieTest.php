@@ -77,6 +77,24 @@ final class PortalSessionCookieTest extends WebTestCase
         self::assertSame(PortalArea::COOKIE_PATH, $cookies[0]->getPath());
     }
 
+    /**
+     * The back office's 30-day cookie (AdminSessionCookieListener) does not reach the account: a browser restart
+     * still ends a manager's session.
+     */
+    public function test_the_account_cookie_stays_a_browser_session_cookie(): void
+    {
+        $this->logInAsManager();
+        self::assertSame(0, $this->portalCookie()->getExpiresTime());
+
+        $this->client->request('GET', '/konto/profil');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([], array_filter(
+            $this->client->getResponse()->headers->getCookies(),
+            static fn (Cookie $cookie): bool => PortalArea::SESSION_COOKIE === $cookie->getName(),
+        ));
+    }
+
     public function test_an_anonymous_login_page_sets_no_cookie(): void
     {
         $this->client->request('GET', '/konto/anmelden');
