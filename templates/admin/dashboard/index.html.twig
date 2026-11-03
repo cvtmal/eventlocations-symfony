@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block page_actions %}
-    {{ include('admin/components/_button.html.twig', {label: 'dashboard.new'|trans({}, 'cms'), variant: 'primary', icon: 'plus', href: path('admin_locations')}, with_context = false) }}
+    {{ include('admin/components/_button.html.twig', {label: 'dashboard.new'|trans({}, 'cms'), variant: 'primary', icon: 'plus', href: path('admin_locations_new')}, with_context = false) }}
 {% endblock %}
 
 {% block page_header %}
