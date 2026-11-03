@@ -13,6 +13,7 @@ use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ReadModel\IndexedVenue;
 use App\Venues\ReadModel\SitemapFile;
 use App\Venues\ReadModel\SitemapVenue;
 use App\Venues\ReadModel\VenueSitemapQuery;
@@ -217,6 +218,64 @@ final class VenueSitemapQueryTest extends KernelTestCase
 
         $this->setUpdatedAt('venue_translations', 'venue_id', $bern[0]->id(), '2026-06-01 10:00:00+00');
         self::assertSame('2026-06-01T10:00:00+00:00', $this->query->newestChangeByGroup()->buildings['hotel']->format('c'));
+    }
+
+    public function test_the_index_lists_the_sitemaps_venues_only(): void
+    {
+        DetailVenues::minimal('veroeffentlicht', 'Veröffentlicht');
+        VenueTranslationFactory::createOne([
+            'venue' => VenueFactory::createOne(['status' => VenueStatus::Unpublished, 'town' => DetailVenues::town('Bern')]),
+            'slug' => 'entwurf',
+        ]);
+        VenueFactory::createOne(['status' => VenueStatus::Published, 'town' => DetailVenues::town('Bern')]);
+
+        $index = array_map(static fn (IndexedVenue $venue): string => $venue->slug, $this->query->index());
+
+        self::assertSame(['veroeffentlicht'], $index);
+        self::assertSame($this->slugs($this->query->page(1)), $index);
+    }
+
+    public function test_the_index_is_sorted_by_name_with_umlauts_in_place(): void
+    {
+        DetailVenues::minimal('zunfthaus', 'Zunfthaus');
+        DetailVenues::minimal('oekonomie', 'Ökonomiegebäude');
+        DetailVenues::minimal('alte-muehle', 'Alte Mühle');
+        DetailVenues::minimal('orangerie', 'Orangerie');
+
+        self::assertSame(
+            ['Alte Mühle', 'Ökonomiegebäude', 'Orangerie', 'Zunfthaus'],
+            array_map(static fn (IndexedVenue $venue): string => $venue->name, $this->query->index()),
+        );
+    }
+
+    public function test_the_index_carries_the_place_and_the_capacity(): void
+    {
+        $venue = DetailVenues::minimal();
+        $this->em->flush();
+
+        $indexed = $this->query->index()[0];
+
+        self::assertSame(DetailVenues::MINIMAL_SLUG, $indexed->slug);
+        self::assertSame('Gartenhaus Minimal', $indexed->name);
+        self::assertSame($venue->zip(), $indexed->zip);
+        self::assertSame('Bern', $indexed->townName);
+        self::assertSame(Canton::BE, $indexed->canton);
+        self::assertSame(80, $indexed->capacityMax);
+    }
+
+    public function test_the_index_keeps_a_venue_without_a_town_or_canton(): void
+    {
+        DetailVenues::inCantonOnly();
+        DetailVenues::withoutPlace();
+
+        $index = $this->query->index();
+
+        self::assertSame(['scheune-nur-kanton', 'wiesenhof-ohne-ort'], array_map(static fn (IndexedVenue $venue): string => $venue->slug, $index));
+        self::assertNull($index[0]->townName);
+        self::assertNull($index[0]->zip);
+        self::assertSame(Canton::ZH, $index[0]->canton);
+        self::assertNull($index[1]->townName);
+        self::assertNull($index[1]->canton);
     }
 
     /**
