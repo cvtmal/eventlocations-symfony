@@ -97,6 +97,7 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'home' => ['home', 'GET', '/', 200, self::LISTING, null];
         yield 'home, HEAD' => ['home', 'HEAD', '/', 200, self::LISTING, null];
         yield 'health' => ['health', 'GET', '/health', 200, self::PRIVATE, null];
+        yield 'stats' => ['_stats_collect', 'POST', '/_stats', 204, self::PRIVATE, null];
         yield 'no route' => [null, 'GET', '/gibt-es-nicht', 404, self::NEVER_STORED, null];
         yield 'back office' => [null, 'GET', '/admin/login', 200, self::PRIVATE, null];
     }

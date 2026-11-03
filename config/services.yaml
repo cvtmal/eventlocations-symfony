@@ -38,6 +38,8 @@ parameters:
     # crawler (the LLM ones included) keeps the normal rules (Seo\Controller\RobotsController).
     # Set to false at launch and drop the Googlebot group from RobotsTxtTest::test_the_exact_body.
     seo.robots_block_google: true
+    # #47: the beacon's day files and the visitor-hash salts (Stats\StatsPaths). var/ survives a deploy.
+    stats.dir: '%kernel.project_dir%/var/stats'
 
 services:
     # default configuration for services in *this* file
@@ -76,6 +78,8 @@ when@test:
     parameters:
         # Tests never touch the dev demo files.
         app.media_public_dir: '%kernel.project_dir%/var/test-media/public'
+        # tests/bootstrap.php wipes var/cache/test, so every run starts with an empty spool.
+        stats.dir: '%kernel.cache_dir%/stats'
 
     services:
         # Tests assert the Venues handlers' purges (S10, #9 P24) through the real container;

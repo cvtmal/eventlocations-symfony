@@ -95,6 +95,6 @@ final class NewInquiriesWidgetTest extends WebTestCase
 
     private function widget(): Crawler
     {
-        return $this->client->request('GET', '/admin')->filter('.widget')->eq(0);
+        return $this->client->request('GET', '/admin')->filter('.widget')->eq(1);
     }
 }

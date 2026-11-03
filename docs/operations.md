@@ -390,7 +390,7 @@ Enter the three lines of `deploy/crontab.txt` in the panel's Cronjob Manager. Al
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, couple purge, inquiry backfill, stuck-inquiry report, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, couple purge, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
 
 The two cache jobs share a lock, `var/cache-clear.lock`. The midnight clear waits up to 60 s for it,
 and the guard skips a tick when it is held.
@@ -404,12 +404,38 @@ prints nothing, so every mail is worth reading.
 | The mail says | Meaning | What to do |
 |---|---|---|
 | `cron-daily: inquiries-purge failed`, or `pool-prune` | The retention promise in the privacy text is at risk. Often Neon was unreachable. | Run `sh bin/cron-daily` in the app directory. If it fails again, read the error in the mail. |
-| `cron-daily: staging-sweep failed`, `sessions-sweep`, or `lock-sweep` | The sweep could not delete. `bin/cron-daily` creates its three directories itself, so a missing directory is not the cause. | Read the step's own output in the mail, fix that, and run `sh bin/cron-daily` in the app directory |
+| `cron-daily: staging-sweep failed`, `sessions-sweep`, or `lock-sweep` | The sweep could not delete. `bin/cron-daily` creates its directories itself, so a missing directory is not the cause. | Read the step's own output in the mail, fix that, and run `sh bin/cron-daily` in the app directory |
 | `cron-daily: crm-purge failed`, or `crm-backfill`, with lines `<id>: <class>` | One couple could not be erased, or one inquiry could not be ingested. The line names the class only. | Nothing at first: the next night retries it. If the same id comes back, read the class and check that row. A `crm-backfill` line with a count only (`1 inquiries ingested, 0 failed.`) and no "failed" line is a repaired inquiry, not an error. |
+| `cron-daily: stats-ingest failed` | The day files were not loaded. Often Neon was unreachable. Nothing is lost: the files stay in `var/stats/spool`. | Nothing at first: the next night or the Statistik button loads them. If it fails again, see [Statistik](#statistik). |
 | `<id> venue <n> since <time> UTC` | An inquiry stayed `pending`: its process died, and the venue may have no mail | See below |
 | `cron-midnight: the cache lock stayed busy for 60 s` | A guard run held the lock | If the next night is clean, nothing. A lock older than 10 minutes is taken over by itself. |
 
 **A stuck inquiry.** Open `/admin/crm/anfragen/<id>` and press Erneut senden.
+
+## Statistik
+
+Built in #47. The site counts page views, listing impressions, contact clicks, Merkliste adds and
+inquiries itself, with no cookie and no third party. Figures are on `/admin/statistik`, on each
+location's Statistik tab and, for managers, in `/konto`.
+
+- **Files.** The beacon (`POST /_stats`) appends to `var/stats/spool/<Y-m-d>.ndjson`, one line per
+  event, and never touches Neon. The visitor-hash salt of each day is `var/stats/salt/<Y-m-d>`.
+  Both live under `var/`, which a deploy keeps. `bin/cron-daily` creates the two directories.
+- **Ingest.** The `stats-ingest` step of `bin/cron-daily` (03:15) runs `app:stats:ingest`. It
+  renames each day file to `<Y-m-d>.<8 hex>.claimed`, loads it into `stats_events`, logs its name
+  in `stats_ingest_files`, rebuilds `stats_daily` for the days it touched, and after the commit
+  deletes the logged files and the salts of past days.
+- **The button.** "Jetzt aktualisieren" on `/admin/statistik` runs the same job at once, today's
+  file included. The flash names how many events it loaded, and the screens show "Stand" with the
+  time of the last run. It wakes Neon like any `/admin` request.
+- **After a crash.** A run that died leaves a `.claimed` file whose name is not in
+  `stats_ingest_files`. The next run loads it. A run never loads a file twice, and the button and
+  the cron cannot run at the same time (an advisory lock).
+- **Rerun by hand.** In the app directory: `php bin/console app:stats:ingest`. It prints
+  `<files> files, <events> events loaded, <skipped> lines skipped, <days> days rebuilt.` Skipped
+  lines are lines that do not parse; they are not loaded and are deleted with their file.
+- **Size.** Raw `stats_events` are kept forever. At 100k page views a month they grow by about
+  0.5 GB a year, which costs under USD 0.20 a month per year of history on Neon Launch.
 
 ## Mail
 
@@ -554,7 +580,8 @@ CU-hours a month, and running out suspends the compute until the month ends. Wit
 uncached page fail at once.
 
 What wakes Neon: crawlers on filter-chip URLs, every `/admin` request, every inquiry and phone
-reveal, the 03:15 cron job and the nightly backup.
+reveal, the Statistik refresh button, the 03:15 cron job and the nightly backup. The statistics
+beacon does not: it writes a file.
 
 **Review after a month.**
 

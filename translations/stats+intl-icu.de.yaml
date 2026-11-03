@@ -1,0 +1,28 @@
+# Stats (#47): one venue's figures, shown to staff (Cms Statistik tab) and to the location's manager on /konto ("Sie").
+venue:
+    as_of: 'Stand: {when}'
+    no_data: Noch keine Daten
+    period:
+        label: Zeitraum
+        days: '{days} Tage'
+    kpi:
+        detail_views: Detailaufrufe
+        detail_visitors: Besucher der Detailseite
+        impressions: Einblendungen
+        contact_clicks: Kontaktklicks
+        merkliste_adds: Merkliste
+        inquiries: Anfragen
+    visitors_note: Einblendungen zählen, wie oft die Location in einer Liste erschien. Besucher der Detailseite zählen jeden Tag neu.
+    own_traffic_note: Ihre eigenen Aufrufe der Website zählen mit, denn wir setzen keine Cookies und erkennen Sie deshalb nicht.
+    clicks:
+        title: Kontaktklicks nach Art
+        kind:
+            website: Website
+            email: E-Mail
+            phone: Telefon
+            map: Karte
+            instagram: Instagram
+    daily:
+        title: Detailaufrufe pro Tag
+        label: 'Detailaufrufe pro Tag, letzte {days} Tage'
+        day: Tag

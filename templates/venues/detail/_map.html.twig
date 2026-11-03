@@ -9,11 +9,11 @@
         <p class="venue-map__place"><strong>{{ venue.name }}</strong>{% if venue.place.townName %}<span>{% if venue.street %}{{ 'detail.location.address'|trans({street: venue.street, zip: venue.zip, town: venue.place.townName}, 'venues') }}{% else %}{{ 'detail.location.address_no_street'|trans({zip: venue.zip, town: venue.place.townName}, 'venues') }}{% endif %}</span>{% endif %}</p>
         {% if embed_url %}
         <div class="venue-map__loader" data-venue-map-loader hidden>
-            <button type="button" class="btn btn--primary" data-venue-map-load>{{ icon('map-pin') }}<span>{{ 'detail.location.map.load'|trans({}, 'venues') }}</span></button>
+            <button type="button" class="btn btn--primary" data-venue-map-load data-stats-click="map">{{ icon('map-pin') }}<span>{{ 'detail.location.map.load'|trans({}, 'venues') }}</span></button>
             <p class="venue-map__notice">{{ 'detail.location.map.notice'|trans({}, 'venues') }}</p>
         </div>
         {% endif %}
-        <a class="btn btn--secondary venue-map__link" href="{{ search_url }}" target="_blank" rel="noopener">{{ 'detail.location.map.open'|trans({}, 'venues') }}<span class="visually-hidden">{{ 'detail.location.map.new_tab'|trans({}, 'venues') }}</span></a>
+        <a class="btn btn--secondary venue-map__link" href="{{ search_url }}" target="_blank" rel="noopener" data-stats-click="map">{{ 'detail.location.map.open'|trans({}, 'venues') }}<span class="visually-hidden">{{ 'detail.location.map.new_tab'|trans({}, 'venues') }}</span></a>
     </div>
     {% if embed_url %}
     <template data-venue-map-frame><iframe class="venue-map__frame" src="{{ embed_url }}" title="{{ 'detail.location.map.frame_title'|trans({name: venue.name}, 'venues') }}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></template>

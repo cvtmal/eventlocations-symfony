@@ -25,8 +25,8 @@ final class TaskWidgetsTest extends WebTestCase
     use ClockSensitiveTrait;
     use Factories;
 
-    private const int MINE = 2;
-    private const int OVERDUE = 3;
+    private const int MINE = 3;
+    private const int OVERDUE = 4;
 
     public function test_my_widget_lists_my_tasks_with_object_and_pill(): void
     {

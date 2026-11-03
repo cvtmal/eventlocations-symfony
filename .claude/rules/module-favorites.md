@@ -34,3 +34,5 @@ Merkliste cookie codec, toggle endpoint, `/merkliste` page.
 - **`.merkliste` is written `.listing.merkliste`:** `.listing.container` is two classes, so a single class would lose gap and padding.
 
 **Changed in #41 (`redesign-verification`).** The header heart has no `aria-label`: its name is a `.visually-hidden` word plus the badge, "Merkliste 2", so `merkliste.js` only fills the badge. `data-count-label` and `header.count_label` are gone. axe's `label-content-name-mismatch` flagged the old label on every page with an entry.
+
+**Built in #47 (`venue-stats`).** No migration, no cookie change. After a successful add, `merkliste.js` dispatches `document`'s `CustomEvent('merkliste:add', {detail: number})`; `stats.js` counts it. A DOM event, so Favorites knows nothing of Stats. `admin-ui/tests/public/merkliste.test.js` covers it. `merkliste.html.twig` fills `stats_page` with `merkliste`.

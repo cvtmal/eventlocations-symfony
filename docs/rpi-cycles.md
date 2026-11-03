@@ -52,14 +52,14 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
    | File | Owner | Others may |
    |---|---|---|
    | `tests/Architecture/ArchitectureRules.php` (module table) | #0 declares **all** modules of this file up front | nothing; a needed change goes back to the owner as a design change. S12 is such a change: #22 adds `Admin`, `Cms` and `Crm` (next row) |
-   | `templates/base.html.twig`, `templates/layout/*` | #35 (was #1) | fill the blocks it provides |
+   | `templates/base.html.twig`, `templates/layout/*` | #35 (was #1) | fill the blocks it provides. S17: #47 adds the `stats.js` line |
    | `assets/styles/app.scss` (list of partial imports) | #1 | append one `@use` line for their own partial |
    | `config/packages/translation.yaml`, `src/Shared/Translation/*` | #2 | nothing |
    | `translations/messages+intl-icu.de.yaml` (layout strings) | #1 | nothing; each module has its own domain file |
    | `src/Search/ReadModel/SearchCriteria.php` and its URL codec | #6 | nothing; filter UIs (#10–#12) only render it. #33 adds the S14 parameters once (a design change, like S12's) |
    | `templates/search/_filter_bar.html.twig` | #7 | fill their own `{% include %}` slot |
    | `CLAUDE.md`, `.claude/rules/module-<name>.md` | #0 | append to their module's file; `CLAUDE.md` keeps only a pointer per module |
-   | `tests/Architecture/ArchitectureRules.php` `MODULES` and `ModuleBoundariesTest` | #22 adds `Admin`, `Cms` and `Crm` once (the design change of S12); #42 adds `Portal` once (the design change of S16) | nothing |
+   | `tests/Architecture/ArchitectureRules.php` `MODULES` and `ModuleBoundariesTest` | #22 adds `Admin`, `Cms` and `Crm` once (the design change of S12); #42 adds `Portal` once (the design change of S16); #47 adds `Stats` once (the design change of S17) | nothing |
    | `config/packages/security.yaml` | #22 | nothing; guard routes with `#[IsGranted]`. #42 adds the `portal` firewall once (the design change of S16) |
    | `templates/admin/base.html.twig`, `templates/admin/layout/*`, `assets/styles/admin.scss` (list of partial imports) | #22 | fill the blocks; append one `@use` line for their own partial |
    | `templates/admin/components/*`, `admin-ui/src/components/*`, `templates/admin/form/theme.html.twig` | #23 | use them; a missing variant goes into their own module folder first |
@@ -125,6 +125,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 44 | `portal-editor` | W12 | POR-8–POR-10 | 25, 42 | — | — | ✅ Done |
 | 45 | `portal-onboarding` | W13 | POR-11–POR-14 | 43, 44 | `portal_submissions`; `venues.awaits_first_publish` (Q20 invoice reminder) | ~~Q20~~ | ✅ Done |
 | 46 | `liechtenstein-venues` | W14 | FI-1 (data), FI-2 (data), DATA-3 | 3, 21, 32 | `cantons`: one `li` row (and whatever research finds the 26-row CHECKs or uniques need); `towns`, `town_zips`: Liechtenstein rows | ~~Q13~~ | Not started |
+| 47 | `venue-stats` | W15 | S17 (owner, 2026-11-03) | 13, 14, 20, 24, 44 | `stats_events`, `stats_daily`, `stats_ingest_files` | — | ✅ Done |
 | 48 | `crm-customer-import-2` | — | CRM customer sheet | 27, 29 | — | — | ✅ Done |
 | 49 | `eventlokale-crawler` | — | — (owner request) | 27a | — | — | ✅ Done |
 
@@ -152,6 +153,7 @@ W11 #42 portal-accounts                                   (Location-Konten, S16)
 W12 #43 portal-claims  ‖  #44 portal-editor
 W13 #45 portal-onboarding
 W14 #46 liechtenstein-venues                              (Q13 yes; any time, before or after go-live)
+W15 #47 venue-stats                                       (Statistik, S17)
 ```
 
 W5 holds nine cycles; with three to four lanes it runs in two or three rounds. Start #14, #21 and #31 early in W5, because #29, #20, #24, #32 and #33 wait for them.
@@ -241,10 +243,11 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 | `Favorites` | Merkliste cookie codec, toggle endpoint, `/merkliste` page | Search, Venues |
 | `Inquiries` | inquiry form, entity, mails | Venues |
 | `Seo` | sitemap, robots, JSON-LD builders, landing page definitions | Search, Venues, Geo |
+| `Stats` | cookieless statistics: beacon, day-file spool, ingest, daily rollup, statistics read models (S17) | Venues, Inquiries |
 | `Admin` | back-office shell: staff users, login + 2FA, layout, dashboard, extension points, audit log, Vue island loader (S12) | — |
-| `Cms` | back-office screens and read models for venues, rooms, photos, documents, landing-page texts, content blocks | Admin, Venues, Geo, Media |
+| `Cms` | back-office screens and read models for venues, rooms, photos, documents, landing-page texts, content blocks | Admin, Venues, Geo, Media, Stats |
 | `Crm` | companies, contacts, timeline, tasks, deals, inquiry inbox, e-mail (S13) | Admin, Venues, Geo, Inquiries, Portal |
-| `Portal` | location managers: accounts, access to venues, claims, onboarding, submissions and their staff screens (S16) | Admin, Cms, Venues, Geo, Media |
+| `Portal` | location managers: accounts, access to venues, claims, onboarding, submissions and their staff screens (S16) | Admin, Cms, Venues, Geo, Media, Stats |
 
 - No public module depends on `Admin`, `Cms`, `Crm` or `Portal`. `Crm` uses `Portal` only for its published events, as it does with `Inquiries`, so `Portal` never names a CRM class. `Cms` and `Crm` do not depend on each other: a CRM panel on a CMS page goes through an `Admin` extension point (S12).
 - **Layers:** `Controller`, `Command`, `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console`, `Twig`, `Mailer`, `EventListener`, and from #22 `Extension` (a module's implementations of the `Admin` extension points).
@@ -496,6 +499,19 @@ Owner, 2026-11-01. Location managers register, take over or create their locatio
 - **Money:** nothing in the app. Entries a location creates itself are paid (Q20): register, create, click "Veröffentlichen", the contact is created, the owner accepts or rejects, and the owner sends an invoice separately 30 days after the accept. A location staff create and publish in the CMS gets the same reminder.
 - **Rights:** the last wizard step has one checkbox: the manager may represent the location and holds the rights to its texts and photos. The time is stored, and that is all the legal machinery.
 - **Not built:** magic links, a claim link to the location's mailbox, a claim link on the public detail page, a wizard table, a token table, a Vue wizard, an external password check, new packages.
+
+### S17. Statistik
+
+Owner, 2026-11-03. Statistics like Google Analytics, built on our side: no GA, no third party, no cookie, no consent banner. Staff see them in `/admin`, each manager sees their own locations in `/konto`, and prospective clients get the media-kit figures. All ten recommendations of the research (`venue-stats`) are accepted.
+
+- **New module `Stats`:** Stats → Venues, Inquiries. `Cms` and `Portal` may depend on Stats; no other module may. `ArchitectureRules::MODULES` and `ModuleBoundariesTest` gain it once (#47).
+- **Collection never wakes Neon:** the beacon `POST /_stats` appends to a day file in `var/stats/spool` and opens no database connection. This is a deliberate exception to S2's write path: no command, no bus, because the bus's transaction connects to Postgres.
+- **One job, two triggers:** the 03:15 cron step and a "Jetzt aktualisieren" button on `/admin/statistik` run the same ingest (`app:stats:ingest`). It loads the files into raw `stats_events`, kept forever, and rebuilds `stats_daily`. So figures read "Stand: <last ingest>", not "bis gestern".
+- **`templates/base.html.twig`** gains one line: the `stats.js` `<script>` after `merkliste.js`, with the blocks `stats_page` and `stats_venue` that pages fill.
+- **JS budget per page:** S11's 15 KB gzip is measured per page, as it is worded (base's scripts plus the page template's), not over all of `assets/js`. `AssetBudgetTest` measures home, listing, detail and Merkliste, and fails on a public script no page references.
+- **Lighthouse stays at 100** after the beacon lands; the check runs at the end of #47.
+- **Privacy:** `/datenschutz` gains a "Statistik" section. The IP is never stored; the visitor hash uses a salt per day that is deleted after the day. Global Privacy Control turns the beacon off.
+- **Not built:** bot filtering (raw rows keep the data for a later one), a consent banner, a third-party tool, real-time figures.
 
 ## Requirements
 

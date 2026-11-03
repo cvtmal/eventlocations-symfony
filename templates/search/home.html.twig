@@ -14,6 +14,9 @@
 
 {% block canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endblock %}
 
+{#- The page type for stats.js (#47), set as a variable so the raw-text scanner does not read it as copy. -#}
+{% block stats_page %}{% set page_type = 'home' %}{{ page_type }}{% endblock %}
+
 {% block main %}
     <section class="home-hero">
         <div class="home-hero__intro">

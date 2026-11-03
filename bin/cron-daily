@@ -22,7 +22,7 @@ step() { # step <label> <command...>
 
 main() {
     # var/ is outside the deploy's sync, so a fresh server has none of the directories the sweeps below read.
-    mkdir -p var/import-staging var/sessions var/lock
+    mkdir -p var/import-staging var/sessions var/lock var/stats/spool var/stats/salt
     # --quiet: these two print "0 inquiries deleted." and one line per cache pool on a good night. An error
     # still prints (the exception renderer ignores --quiet) and `step` adds its own "failed" line either way.
     step inquiries-purge "$PHP" bin/console --no-interaction --quiet app:inquiries:purge
@@ -36,6 +36,9 @@ main() {
     step crm-backfill "$PHP" bin/console --no-interaction app:crm:backfill-inquiries
     # No --quiet: its output (the stuck rows) is the point of this step.
     step inquiries-stuck "$PHP" bin/console --no-interaction app:inquiries:report-stuck
+    # #47: loads the beacon's day files into Neon and rebuilds stats_daily; the button on /admin/statistik runs
+    # the same job. --quiet: its count line would mail every night; an error still prints.
+    step stats-ingest "$PHP" bin/console --no-interaction --quiet app:stats:ingest
     step pool-prune "$PHP" bin/console --no-interaction --quiet cache:pool:prune
     # #25: abandoned uploads in the import staging directory, older than a day.
     step staging-sweep find var/import-staging -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} +

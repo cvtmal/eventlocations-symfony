@@ -36,13 +36,13 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
     public const DEV_ONLY = ['_styleguide'];
 
     /** The `/_` routes that are public on purpose. */
-    private const INTERNAL_ROUTES = ['_search_count', '_search_places'];
+    private const INTERNAL_ROUTES = ['_search_count', '_search_places', '_stats_collect'];
 
     /** The only routes that may answer with a cookie; each answers `private, no-store`. */
     private const COOKIE_ROUTES = ['merkliste', 'merkliste_toggle', 'merkliste_sync'];
 
     /** The routes outside the shared cache. Every other 2xx/3xx GET is `public` with an `s-maxage`. */
-    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'health'];
+    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'health', '_stats_collect'];
 
     public function test_no_public_page_starts_a_session_or_sets_a_cookie(): void
     {

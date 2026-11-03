@@ -50,12 +50,13 @@
         {% endblock %}
         {% block tabs %}
             {# A card POST re-rendered at 422 runs on its own route and keeps Angaben marked. #}
-            {% set current_route = app.request.attributes.get('_route') == 'portal_location_photos' ? 'portal_location_photos' : 'portal_location' %}
+            {% set current_route = app.request.attributes.get('_route') in ['portal_location_photos', 'portal_location_stats'] ? app.request.attributes.get('_route') : 'portal_location' %}
             {{ include('admin/components/_record_tabs.html.twig', {
                 label: 'editor.tabs.label'|trans({}, 'portal'),
                 tabs: [
                     {label: t('editor.tabs.details', {}, 'portal'), route: 'portal_location', routeParameters: {number: venue.number}},
                     {label: t('editor.tabs.photos', {}, 'portal'), route: 'portal_location_photos', routeParameters: {number: venue.number}},
+                    {label: t('editor.tabs.stats', {}, 'portal'), route: 'portal_location_stats', routeParameters: {number: venue.number}},
                 ],
                 current_route: current_route,
             }, with_context = false) }}

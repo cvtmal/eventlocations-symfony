@@ -70,6 +70,7 @@ final class LegalPagesTest extends WebTestCase
             'Anfragen an eine Location',
             'Kontakte von Locations',
             'Merkliste und Cookie',
+            'Statistik',
             'Schutz vor Missbrauch',
             'Hosting und Datenbank',
             'Karten von Google Maps',
@@ -117,6 +118,16 @@ final class LegalPagesTest extends WebTestCase
         self::assertStringContainsString('Wenn Sie für eine Location arbeiten, bearbeiten wir Ihre geschäftlichen Kontaktdaten', $text);
         self::assertStringContainsString('um die Zusammenarbeit mit den Locations zu pflegen', $text);
         self::assertStringContainsString('Verlangen Sie die Löschung, löschen wir sie früher', $text);
+    }
+
+    public function test_the_datenschutz_page_explains_the_statistics_and_how_to_refuse(): void
+    {
+        $text = $this->page('/datenschutz')->filter('main')->text();
+
+        self::assertStringContainsString('Wir zählen ohne Cookies und ohne Drittanbieter', $text);
+        self::assertStringContainsString('Ihre IP-Adresse speichern wir nicht', $text);
+        // stats.js sends nothing when navigator.globalPrivacyControl is set (#47).
+        self::assertStringContainsString('Global Privacy Control, zählen wir nichts', $text);
     }
 
     public function test_the_retention_follows_the_purge_parameter(): void

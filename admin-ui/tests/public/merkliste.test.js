@@ -428,6 +428,38 @@ describe('merkliste.js', () => {
         });
     });
 
+    describe('the add event', () => {
+        // The spied addEventListener records the listener, so afterEach removes it.
+        function added() {
+            const numbers = [];
+            document.addEventListener('merkliste:add', (event) => numbers.push(event.detail));
+
+            return numbers;
+        }
+
+        it('tells stats.js the number of an added venue', () => {
+            page([15]);
+            const numbers = added();
+
+            heart(15);
+
+            expect(numbers).toEqual([15]);
+        });
+
+        it.each([
+            ['a removal', '15', 15],
+            ['a refused add on a full list', encodeURIComponent(Array.from({ length: MAX_ENTRIES }, (_, index) => index + 1).join()), 500],
+        ])('stays silent for %s', (_, wire, number) => {
+            setCookie(wire);
+            page([number]);
+            const numbers = added();
+
+            heart(number);
+
+            expect(numbers).toEqual([]);
+        });
+    });
+
     describe('a stale window', () => {
         it('shows the current list on focus, without a request', async () => {
             page();

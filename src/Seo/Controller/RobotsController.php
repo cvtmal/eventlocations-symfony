@@ -26,6 +26,8 @@ final class RobotsController extends AbstractController
         '/konto',
         '/hochzeitslocation/*/telefon',
         '/hochzeitslocation/*/anfrage',
+        // #47: a crawler that renders pages must not send the statistics beacon.
+        '/_stats',
     ];
 
     public function __construct(

@@ -66,6 +66,19 @@ All come from a `pg_dump` of the lane. `tests/Load/live-canton.sql` then moves 2
 
 Lighthouse 13.5.0, mobile, simulated slow 4G, median of 3 runs, on the perf stack.
 
+### After #47 (venue-stats), demo ×1
+
+`stats.js` on every public page (986 B gzip; page JS now measured per page, §7). One session on 2026-11-03: before on the unchanged tree `f8aaf05` at 17:57 to 17:59 (load average 15.6 to 7.8), after on #47's tree at 19:53 to 19:56 (5.9 to 4.4), Europe/Zurich. Every after-report lists the beacon's `/_stats` answered 204, so Lighthouse ran the script; `errors-in-console` passes in all 12 runs.
+
+| Page | Before P/A/BP/SEO | Before LCP, TBT | After P/A/BP/SEO | After LCP, TBT |
+|---|---|---|---|---|
+| `/` | 100/100/100/100 | 1,352 ms, 0 ms | 100/100/100/100 | 1,359 ms, 0 ms |
+| `/hochzeitslocations` | 99/100/100/100 | 1,727 ms, 0 ms | 99/100/100/100 | 1,728 ms, 11 ms |
+| `/hochzeitslocations/zuerich` | 100/100/100/100 | 1,652 ms, 0 ms | 100/100/100/100 | 1,653 ms, 0 ms |
+| Detail (venue 46) | 100/100/100/100 | 1,501 ms, 0 ms | 100/100/100/100 | 1,502 ms, 0 ms |
+
+The listing's TBT runs were 13/9/11 ms after and 0/97/0 ms before; its 99 is LCP's, as before.
+
 ### After R1 (#41)
 
 Final tree, one session on 2026-11-02: real 15:17 to 15:21 at load average 3.4 to 6.2, demo 15:26 to 15:30 at 5.0 to 6.1 (Europe/Zurich). Medians of 3; CLS is at most 0.002 everywhere. Detail is the richest venue by `run.sh`'s order: real venue 102 (13 photos), demo venue 46 (9 photos).
@@ -245,7 +258,7 @@ Top SQL at ×10: `SimilarVenuesQuery` averages 23.3 ms and is the largest single
 | Listing HTML, real ×1 (Step 5.1's tree, not re-read) | 54,144 B gzip | 61,440 |
 | Canton page HTML, real ×1 (Step 5.1's tree, not re-read) | 54,401 B gzip | 61,440 |
 | `app.css`, as the test measures it | 13,900 B gzip | 25,600 |
-| JS, all of `assets/js/*.js` | 14,741 B gzip | 15,360 |
+| JS per page, base's scripts plus the page's (#47) | home 5,115 · listing 12,943 · detail 9,017 · Merkliste 6,153 B gzip | 15,360 each |
 | `overlay.js + live-count.js + region-filter.js` | 6,132 B gzip | 6,144 |
 | `carousel.js` | 1,038 B gzip | 2,048 |
 | Font files on first view | 1 | 2 |

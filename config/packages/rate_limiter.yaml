@@ -10,6 +10,8 @@
 # file's name and in the cached state.
 # `portal_upload` (#44) guards POST /konto/api/locations/{number}/photos: 60 per hour per manager id,
 # a UUID, so it needs no ClientIpKey. Every attempt counts, a refused file too; staff are not limited.
+# `stats_collect` (#47) guards POST /_stats, the statistics beacon: 120 sends per 10 minutes per client
+# IP. Over the limit the beacon gets its 204 and nothing is written. Filesystem only, so no Neon.
 framework:
     rate_limiter:
         phone_reveal:
@@ -32,6 +34,11 @@ framework:
             limit: 60
             interval: '1 hour'
             cache_pool: cache.portal_upload
+        stats_collect:
+            policy: sliding_window
+            limit: 120
+            interval: '10 minutes'
+            cache_pool: cache.stats_collect
     cache:
         pools:
             cache.phone_reveal:
@@ -41,6 +48,8 @@ framework:
             cache.portal_register:
                 adapter: cache.app
             cache.portal_upload:
+                adapter: cache.app
+            cache.stats_collect:
                 adapter: cache.app
 
 # Tests clear the pools in setUp(): an array adapter would not work there, because the test client

@@ -1,0 +1,22 @@
+{#
+    The Statistik tab (#47). Context from `VenueStatsController`: venue (VenueHeader), period (StatsPeriod),
+    periods list<StatsPeriod>, as_of ?DateTimeImmutable (last ingest), summary VenueSummary, daily list<DailyPoint>.
+#}
+{% extends 'admin/cms/venue/_layout.html.twig' %}
+
+{% set record_crumb = 'stats.tab'|trans({}, 'cms') %}
+
+{% block record_main %}
+    {{ include('admin/stats/_venue_figures.html.twig', {
+        summary: summary,
+        daily: daily,
+        period: period,
+        period_links: periods|map(option => {
+            days: option.value,
+            href: path('admin_locations_stats', {number: venue.number, zeitraum: option.value}),
+            active: option == period,
+        }),
+        as_of: as_of,
+        own_traffic_note: false,
+    }, with_context = false) }}
+{% endblock %}

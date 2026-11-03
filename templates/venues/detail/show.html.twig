@@ -21,6 +21,10 @@
 {# A class name, not text: set as a variable so the raw-text scanner does not read it as copy. #}
 {% block body_class %}{% set page_class = 'page-venue' %}{{ page_class }}{% endblock %}
 
+{# The page type and venue for stats.js (#47), set the same way. #}
+{% block stats_page %}{% set page_type = 'detail' %}{{ page_type }}{% endblock %}
+{% block stats_venue %}{{ venue.number }}{% endblock %}
+
 {% block hero %}
     {% if venue.photos is not empty %}
         {{ include('venues/detail/_hero.html.twig', {venue: venue}, with_context = false) }}

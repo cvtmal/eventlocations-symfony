@@ -1,0 +1,61 @@
+{#
+    One venue's figures over a period (#47), shared by the CMS tab and the manager's `/konto` tab, so its strings live
+    in the `stats` domain. Include with `with_context = false`:
+      summary (Stats\ReadModel\VenueSummary), daily (list<Stats\ReadModel\DailyPoint>, detail views per day),
+      period (StatsPeriod), period_links (list<{days, href, active}>, one per period), as_of (?DateTimeImmutable,
+      the last ingest), own_traffic_note (bool: say that the manager's own visits count too, true on `/konto`).
+#}
+<div class="stats-figures">
+    <p class="stats-as-of muted">
+        {%- if as_of -%}
+            {{ 'venue.as_of'|trans({when: as_of|swiss_date ~ ', ' ~ as_of|date('H:i', 'Europe/Zurich')}, 'stats') }}
+        {%- else -%}
+            {{ 'venue.no_data'|trans({}, 'stats') }}
+        {%- endif -%}
+    </p>
+
+    {{ include('admin/components/_tabs.html.twig', {
+        label: 'venue.period.label'|trans({}, 'stats'),
+        items: period_links|map(link => {
+            label: 'venue.period.days'|trans({days: link.days}, 'stats'),
+            href: link.href,
+            active: link.active,
+        }),
+    }, with_context = false) }}
+
+    <div class="stats-kpis">
+        {% for key, value in {
+            detail_views: summary.detailViews,
+            detail_visitors: summary.detailVisitors,
+            impressions: summary.impressions,
+            contact_clicks: summary.clickTotal,
+            merkliste_adds: summary.merklisteAdds,
+            inquiries: summary.inquiries,
+        } %}
+            {{ include('admin/components/_kpi.html.twig', {label: ('venue.kpi.' ~ key)|trans({}, 'stats'), value: value|swiss_number}, with_context = false) }}
+        {% endfor %}
+    </div>
+    <p class="stats-note muted">{{ 'venue.visitors_note'|trans({}, 'stats') }}</p>
+    {% if own_traffic_note %}
+        <p class="stats-note muted" id="stats-own-traffic">{{ 'venue.own_traffic_note'|trans({}, 'stats') }}</p>
+    {% endif %}
+
+    <section class="card" aria-labelledby="stats-venue-clicks">
+        <div class="card__head"><h2 id="stats-venue-clicks">{{ 'venue.clicks.title'|trans({}, 'stats') }}</h2></div>
+        <div class="card__body stats-clicks">
+            {% for kind, count in summary.clicks %}
+                {{ include('admin/components/_property.html.twig', {label: ('venue.clicks.kind.' ~ kind)|trans({}, 'stats'), value: count|swiss_number}, with_context = false) }}
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="stats-venue-daily">
+        <div class="card__head"><h2 id="stats-venue-daily">{{ 'venue.daily.title'|trans({}, 'stats') }}</h2></div>
+        {{ include('admin/components/_bar_chart.html.twig', {
+            points: daily|map(point => {label: point.day|swiss_date, value: point.value}),
+            label: 'venue.daily.label'|trans({days: period.value}, 'stats'),
+            value_label: 'venue.kpi.detail_views'|trans({}, 'stats'),
+            label_heading: 'venue.daily.day'|trans({}, 'stats'),
+        }, with_context = false) }}
+    </section>
+</div>

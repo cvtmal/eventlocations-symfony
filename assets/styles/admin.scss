@@ -36,6 +36,7 @@
 @use 'admin/markdown';
 @use 'admin/search-trigger';
 @use 'admin/combobox';
+@use 'admin/bar-chart';
 @use 'cms/venue-list';
 @use 'cms/venue-editor';
 @use 'cms/dashboard-widgets';
@@ -43,6 +44,7 @@
 @use 'cms/photo-manager';
 @use 'cms/room-editor';
 @use 'cms/venue-media';
+@use 'cms/stats';
 @use 'crm/properties';
 @use 'crm/record';
 @use 'crm/lists';

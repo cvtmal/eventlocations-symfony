@@ -1,0 +1,68 @@
+{#
+    Mediakit (#47, Open Decision 9): figures for prospective clients. Context from
+    `Cms\Controller\StatsController::mediaKit()`: as_of ?DateTimeImmutable, summary SiteSummary (last 30 days),
+    months list<MonthRow> (12, oldest first).
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'stats.media_kit.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('admin_stats') }}">{{ 'stats.title'|trans({}, 'cms') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'stats.media_kit.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_actions %}
+    {{ include('admin/components/_button.html.twig', {label: 'stats.media_kit.csv'|trans({}, 'cms'), icon: 'download', href: path('admin_stats_media_kit_csv')}, with_context = false) }}
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'stats.media_kit.title'|trans({}, 'cms') }}</h1>
+            {{ include('admin/cms/stats/_as_of.html.twig', {as_of: as_of}, with_context = false) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    <section class="stats-section" aria-labelledby="media-kit-30">
+        <h2 id="media-kit-30">{{ 'stats.media_kit.last_30'|trans({}, 'cms') }}</h2>
+        <div class="stats-kpis">
+            {% for key, value in {
+                visits: summary.visits,
+                page_views: summary.pageViews,
+                detail_views: summary.detailViews,
+                contact_clicks: summary.contactClicks,
+                inquiries: summary.inquiries,
+            } %}
+                {{ include('admin/components/_kpi.html.twig', {label: ('stats.kpi.' ~ key)|trans({}, 'cms'), value: value|swiss_number}, with_context = false) }}
+            {% endfor %}
+        </div>
+        <p class="stats-note muted">{{ 'stats.visits_note'|trans({}, 'cms') }}</p>
+    </section>
+
+    <section class="stats-section" aria-labelledby="media-kit-months">
+        <h2 id="media-kit-months">{{ 'stats.media_kit.months'|trans({}, 'cms') }}</h2>
+        {% embed 'admin/components/_table.html.twig' with {
+            label: 'stats.media_kit.months'|trans({}, 'cms'),
+            id: 'media-kit-months-table',
+            columns: ['month', 'visits', 'page_views', 'detail_views', 'contact_clicks', 'merkliste_adds', 'inquiries']|map(column => {label: ('stats.media_kit.column.' ~ column)|trans({}, 'cms')}),
+            rows: months,
+        } only %}
+            {% block rows %}
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ 'stats.media_kit.month'|trans({month: date(row.month|date('Y-m-d', 'Europe/Zurich'))}, 'cms') }}</td>
+                        <td>{{ row.visits|swiss_number }}</td>
+                        <td>{{ row.pageViews|swiss_number }}</td>
+                        <td>{{ row.detailViews|swiss_number }}</td>
+                        <td>{{ row.contactClicks|swiss_number }}</td>
+                        <td>{{ row.merklisteAdds|swiss_number }}</td>
+                        <td>{{ row.inquiries|swiss_number }}</td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    </section>
+{% endblock %}

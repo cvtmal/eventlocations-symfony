@@ -1,0 +1,21 @@
+{#
+    The manager's Statistik tab (#47). Context from `LocationStatsController`: venue (VenueHeader), submission,
+    offline_form (for `_layout`), period (StatsPeriod), periods list<StatsPeriod>, as_of ?DateTimeImmutable (last
+    ingest), summary VenueSummary, daily list<DailyPoint>.
+#}
+{% extends 'portal/location/_layout.html.twig' %}
+
+{% block location_main %}
+    {{ include('admin/stats/_venue_figures.html.twig', {
+        summary: summary,
+        daily: daily,
+        period: period,
+        period_links: periods|map(option => {
+            days: option.value,
+            href: path('portal_location_stats', {number: venue.number, zeitraum: option.value}),
+            active: option == period,
+        }),
+        as_of: as_of,
+        own_traffic_note: true,
+    }, with_context = false) }}
+{% endblock %}

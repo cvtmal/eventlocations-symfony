@@ -25,7 +25,7 @@ final class ComponentStyleguideTest extends WebTestCase
         $names = [
             'button', 'pill', 'tier-badge', 'avatar', 'card', 'table', 'pagination', 'filter-bar', 'tabs', 'record-tabs', 'record-header', 'property',
             'modal', 'drawer', 'dropdown', 'toast', 'combobox', 'date-input', 'money-input', 'markdown', 'dropzone', 'sortable', 'kanban', 'timeline',
-            'empty', 'skeleton', 'kpi', 'chips', 'seg', 'progress', 'form', 'form-errors', 'locale-tabs',
+            'empty', 'skeleton', 'kpi', 'bar-chart', 'chips', 'seg', 'progress', 'form', 'form-errors', 'locale-tabs',
         ];
 
         foreach ($names as $name) {
@@ -110,6 +110,23 @@ final class ComponentStyleguideTest extends WebTestCase
         self::assertCount(1, $cell);
         self::assertSame('2', $cell->attr('colspan'));
         self::assertCount(1, $cell->filter('.empty'));
+    }
+
+    public function test_the_bar_chart_scales_its_bars_and_repeats_the_figures_in_a_hidden_table(): void
+    {
+        $this->logInAs();
+
+        $crawler = $this->client->request('GET', '/admin/_styleguide');
+
+        $chart = $crawler->filter('[data-component="bar-chart"] figure.bar-chart');
+        self::assertSame('0 0 70 100', $chart->filter('svg')->attr('viewBox'));
+        self::assertSame('true', $chart->filter('svg')->attr('aria-hidden'));
+        // The tallest bar (12) fills the height, a 0 has none, a 3 is a quarter.
+        self::assertSame(['25', '58.33', '33.33', '0', '75', '100', '50'], $chart->filter('rect')->each(static fn ($bar): string => (string) $bar->attr('height')));
+        self::assertSame('1. November: 3', $chart->filter('rect title')->first()->text());
+        self::assertSame(['1. November', '3'], $chart->filter('table.visually-hidden tbody tr')->first()->filter('th, td')->each(static fn ($cell): string => $cell->text()));
+        self::assertCount(7, $chart->filter('table.visually-hidden tbody tr'));
+        self::assertCount(0, $chart->filter('[style]'));
     }
 
     public function test_a_sort_header_is_a_link_with_its_state_on_the_cell(): void

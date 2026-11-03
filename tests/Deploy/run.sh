@@ -549,11 +549,13 @@ app app:http-cache:clear"
 }
 
 cron_daily() {
-    rm -rf "$APP/var/import-staging" "$APP/var/sessions" "$APP/var/lock"
+    rm -rf "$APP/var/import-staging" "$APP/var/sessions" "$APP/var/lock" "$APP/var/stats"
     clear_log
     run sh "$APP/bin/cron-daily"
     expect_exit "cron-daily exits 0 on a fresh server" 0
     expect_no_output "a fresh server prints nothing"
+    [ -d "$APP/var/stats/spool" ] && [ -d "$APP/var/stats/salt" ] || fail "a fresh server has no stats spool or salt directory"
+    ok "a fresh server gets the stats directories"
 
     mkdir -p "$APP/var/import-staging/abandoned" "$APP/var/import-staging/young" "$APP/var/sessions/prod"
     touch -t 202001010000 "$APP/var/import-staging/abandoned"
@@ -574,12 +576,13 @@ cron_daily() {
     run sh "$APP/bin/cron-daily"
     expect_exit "cron-daily exits 0 on a good night" 0
     expect_no_output "a good night prints nothing"
-    expect_calls "cron-daily runs its seven commands in order" "app app:inquiries:purge
+    expect_calls "cron-daily runs its eight commands in order" "app app:inquiries:purge
 app app:crm:refresh-stages
 app app:crm:renewal-tasks
 app app:crm:purge
 app app:crm:backfill-inquiries
 app app:inquiries:report-stuck
+app app:stats:ingest
 app cache:pool:prune"
     expect_gone "an abandoned upload is swept" "$APP/var/import-staging/abandoned"
     [ -d "$APP/var/import-staging/young" ] || fail "a young upload was swept"
@@ -609,6 +612,7 @@ app app:crm:renewal-tasks
 app app:crm:purge
 app app:crm:backfill-inquiries
 app app:inquiries:report-stuck
+app app:stats:ingest
 app cache:pool:prune"
 
     STUB_PRINT=app:inquiries:report-stuck
