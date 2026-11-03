@@ -64,7 +64,7 @@ final class DashboardTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $new = $crawler->filter('.topbar__actions a.btn--primary');
         self::assertSame('Neu', $new->text());
-        self::assertSame('/admin/locations', $new->attr('href'));
+        self::assertSame('/admin/locations/neu', $new->attr('href'));
         self::assertSame(['Statistik, letzte 7 Tage', 'Neue Anfragen', 'Zugriffsanfragen', 'Meine Aufgaben', 'Überfällig', 'Verlängerungen', 'Unvollständige Locations', 'Änderungen von Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
 
         $incomplete = $crawler->filter('.widget')->eq(6);
