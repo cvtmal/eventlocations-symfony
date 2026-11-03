@@ -55,6 +55,11 @@ services:
     # S10 (#19): every purge empties the whole HttpCache store.
     App\Venues\HttpCachePurger: '@App\Venues\StoreClearingHttpCachePurger'
 
+    # The one-off geocoder (app:venues:geocode); the key is empty unless the shell sets it.
+    App\Venues\VenueGeocoder:
+        arguments:
+            $apiKey: '%env(string:default::GOOGLE_PLACES_API_KEY)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
