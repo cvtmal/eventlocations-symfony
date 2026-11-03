@@ -351,6 +351,37 @@ guard doing its job (see `docs/content-format.md`, "After a CMS edit").
 To warm the cache afterwards, run `sh bin/warm-cache`, which requests every public page once, one
 at a time. It runs by hand only, never from cron.
 
+### Customer sheet (#48)
+
+The owner's customer sheet goes into the CRM once. Put it at `content/owner/kunden-master.csv` in
+the main checkout. It runs like the content import: same checkout, same two variables.
+
+| Command | What it does |
+|---|---|
+| `sh bin/prod-import crm-bootstrap` | `app:crm:bootstrap` against Neon: one company per venue that has none |
+| `sh bin/prod-import customers-dry` | `app:crm:import-customers --dry-run` against Neon. Writes only the report. |
+| `sh bin/prod-import customers` | `app:crm:import-customers` against Neon |
+
+Both customer commands write the report `content/owner/kunden-import-report.md`. It names rows,
+company and venue names and classes, never an email or a phone number.
+
+**Run order:**
+
+1. Make a Neon branch first, so a bad run can be undone.
+2. `sh bin/prod-import crm-bootstrap`. It is safe to run again: a second run creates nothing.
+   Without it, every row that matches a venue is reported as blocked.
+3. `sh bin/prod-import customers-dry`, then read the report. If names need fixing, fix them in the
+   sheet and run it again, until the report is right.
+4. `sh bin/prod-import customers`.
+5. `sh bin/prod-import customers-dry` again. It must show 0 new.
+
+The import only creates. It never changes or deletes a company, so staff edits are safe, before and
+after the run. A company staff create between the dry run and the real run is matched by name and
+skipped. After the run the sheet is retired: staff edit the CRM by hand. Once staff have renamed
+imported companies, don't run the import again, because the old names no longer match.
+
+If the CRM has a task "Google Sheet Kunden importieren", close it by hand.
+
 ## Cron
 
 Enter the three lines of `deploy/crontab.txt` in the panel's Cronjob Manager. All paths are absolute.
