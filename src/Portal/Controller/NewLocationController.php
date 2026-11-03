@@ -70,36 +70,44 @@ final class NewLocationController extends AbstractController
 
             return $this->redirectToRoute('portal_location_setup_step', ['number' => $number, 'step' => WizardStep::Texts->value], Response::HTTP_SEE_OTHER);
         } catch (HandlerFailedException $failure) {
-            $this->addFailure($form, $failure);
+            $ambiguous = $this->addFailure($form, $failure);
 
-            return $this->page($form, status: Response::HTTP_UNPROCESSABLE_ENTITY);
+            return $this->page($form, status: Response::HTTP_UNPROCESSABLE_ENTITY, askCanton: $ambiguous);
         }
     }
 
     /**
      * @param FormInterface<mixed> $form
+     *
+     * @return bool whether the town is one that several cantons share
      */
-    private function addFailure(FormInterface $form, HandlerFailedException $failure): void
+    private function addFailure(FormInterface $form, HandlerFailedException $failure): bool
     {
         $previous = $failure->getPrevious();
         if ($previous instanceof TooManyUnfinishedLocations) {
             $form->addError(new FormError($this->translator->trans('onboarding.error.too_many', ['limit' => $previous->limit], 'portal')));
 
-            return;
+            return false;
         }
 
         $violation = VenueRuleViolation::unwrap($failure);
         $field = 'slug' === $violation->field ? 'name' : $violation->field;
         $target = null !== $field && $form->has($field) ? $form->get($field) : $form;
         $target->addError(new FormError($this->translator->trans($violation->translationKey(), $violation->parameters, 'cms')));
+
+        return VenueRuleViolation::ambiguousTown()->translationKey() === $violation->translationKey();
     }
 
     /**
+     * The canton select shows once a town needs it, and stays while a canton is chosen, so a later error keeps it.
+     *
      * @param FormInterface<mixed> $form
      * @param list<VenueListRow>   $matches
      */
-    private function page(FormInterface $form, array $matches = [], int $status = Response::HTTP_OK): Response
+    private function page(FormInterface $form, array $matches = [], int $status = Response::HTTP_OK, bool $askCanton = false): Response
     {
-        return $this->render('portal/wizard/new.html.twig', ['form' => $form, 'matches' => $matches], new Response(status: $status));
+        $askCanton = $askCanton || null !== $form->get('canton')->getData();
+
+        return $this->render('portal/wizard/new.html.twig', ['form' => $form, 'matches' => $matches, 'ask_canton' => $askCanton], new Response(status: $status));
     }
 }

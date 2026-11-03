@@ -123,6 +123,48 @@ final class NewLocationTest extends WebTestCase
     }
 
     /**
+     * The real dataset has no ZIP and name shared by two cantons, so the second Meilen is planted, as in
+     * `ImportContentFailuresTest`. Step 1 must offer the canton it asks for, not leave the manager stuck.
+     */
+    public function test_an_ambiguous_town_asks_for_the_canton_and_then_creates(): void
+    {
+        $this->logInAsManager();
+        $this->connection->executeStatement("INSERT INTO towns (id, canton_code, zip, name, slug, bfs_number, lat, lng, population) VALUES ('019a0000-0000-7000-8000-00000000a001', 'sz', '8706', 'Meilen', 'meilen-sz', 99001, 47.1, 8.7, 10)");
+        $this->connection->executeStatement("INSERT INTO town_zips (zip, town_id) VALUES ('8706', '019a0000-0000-7000-8000-00000000a001')");
+
+        $crawler = $this->submitForm();
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertStringContainsString('Bitte den Kanton wählen', $crawler->filter('form[name="new_location"]')->text());
+        self::assertCount(1, $crawler->filter('select[name="new_location[canton]"]'), 'the canton the message asks for');
+        self::assertSame(0, $this->venues());
+
+        $form = $crawler->filter('form[name="new_location"]')->form();
+        $this->client->submit($form, ['new_location[canton]' => 'zh']);
+
+        $number = $this->connection->fetchOne('SELECT number FROM venues WHERE name = ?', [self::NAME]);
+        self::assertResponseRedirects('/konto/locations/'.$number.'/einrichten/texte', Response::HTTP_SEE_OTHER);
+        self::assertSame('zh', $this->connection->fetchOne('SELECT canton_code FROM venues WHERE number = ?', [$number]));
+    }
+
+    public function test_an_unambiguous_town_shows_no_canton_and_ignores_one_that_does_not_fit(): void
+    {
+        $this->logInAsManager();
+
+        $crawler = $this->client->request('GET', self::URL);
+        self::assertCount(0, $crawler->filter('[name="new_location[canton]"]'));
+        $crawler = $this->submitForm(['name' => '']);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertCount(0, $crawler->filter('[name="new_location[canton]"]'), 'only a town two cantons share asks for it');
+
+        $this->post(fields: ['canton' => 'be']);
+
+        $number = $this->connection->fetchOne('SELECT number FROM venues WHERE name = ?', [self::NAME]);
+        self::assertResponseRedirects('/konto/locations/'.$number.'/einrichten/texte', Response::HTTP_SEE_OTHER);
+        self::assertSame('zh', $this->connection->fetchOne('SELECT canton_code FROM venues WHERE number = ?', [$number]));
+    }
+
+    /**
      * @return iterable<string, array{array<string, string>, string}>
      */
     public static function refusedInput(): iterable
@@ -187,12 +229,14 @@ final class NewLocationTest extends WebTestCase
     /**
      * Posts without rendering step 1. The profile page gives the POST its same-origin Referer and a form token.
      *
-     * @param array<string, string> $body
+     * @param array<string, string> $body   beside the form, e.g. the `confirmed` button
+     * @param array<string, string> $fields inside the form, over the valid defaults
      */
-    private function post(array $body = []): void
+    private function post(array $body = [], array $fields = []): void
     {
         $token = $this->client->request('GET', '/konto/profil')->filter('input[name$="[_token]"]')->attr('value');
-        $this->client->request('POST', self::URL, ['new_location' => ['name' => self::NAME, 'capacityMax' => '120', 'town' => self::TOWN, '_token' => $token]] + $body);
+        $fields = array_replace(['name' => self::NAME, 'capacityMax' => '120', 'town' => self::TOWN, '_token' => $token], $fields);
+        $this->client->request('POST', self::URL, ['new_location' => $fields] + $body);
     }
 
     private function venues(): int

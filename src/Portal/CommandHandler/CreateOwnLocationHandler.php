@@ -56,7 +56,7 @@ final class CreateOwnLocationHandler implements CommandHandlerInterface
         try {
             $number = (int) $this->commandBus->dispatch(new CreateVenue($command->name, Tier::Basic, $command->capacityMax))->last(HandledStamp::class)?->getResult();
             $edit = $this->edits->find($number) ?? throw VenueNotFound::forNumber($number);
-            $this->commandBus->dispatch(new RelocateVenue($number, $edit->loadedAt, ['town'], $command->town, null, null, null, null, null, null, null, null, null, null, [], useTownCentre: true));
+            $this->commandBus->dispatch(new RelocateVenue($number, $edit->loadedAt, ['town'], $command->town, $command->cantonCode, null, null, null, null, null, null, null, null, null, [], useTownCentre: true));
         } catch (HandlerFailedException $failure) {
             throw VenueRuleViolation::unwrap($failure);
         }

@@ -96,3 +96,8 @@ Location managers: their accounts, their access to venues, and the staff screen 
 - **Removed before accepted:** the account stays and the link still works; with no access row `/konto` opens "Neue Location". Staff deactivate the account to kill the link.
 - **Queue:** "Annehmen" on a deactivated account is refused with `invite.flash.deactivated` (HANDOFF follow-up 3); the row stays in the queue. `PortalProfileRow::$active` carries it.
 - **Tests:** `ManagerInviteTest` (the walk from the panel to `/konto`, absolute link, venue in the subject, session id changes, 410 after use and expiry, existing accounts with and without password, deactivated, resend, removal, names, failed mail), `ReviewQueueTest::test_approving_a_deactivated_account_is_refused_and_mails_nobody`.
+
+**Added by `portal-wizard-canton` (2026-11-03, HANDOFF follow-up 4).** No migration, no package, no new route. Step 1 refused a town that two cantons share ("Bitte den Kanton wählen") but had no canton field.
+
+- `NewLocationData::$canton` (`?Canton`) and `NewLocationType`'s `canton`, an `EnumType` like `VenueAddressType`'s, placeholder `onboarding.new.placeholder.canton` "Bitte wählen". `NewLocationController` renders it only after `VenueRuleViolation::ambiguousTown()` or while a canton is posted (`ask_canton`); otherwise the template marks it rendered, so it posts nothing. `CreateOwnLocation::$cantonCode` goes into `RelocateVenue`'s, which settles the town and ignores a canton that does not fit an unambiguous one.
+- The shipped town data has no ZIP and name shared by two cantons, so the select shows only if a future dataset brings one; `NewLocationTest` plants a second "8706 Meilen" in SZ, as `ImportContentFailuresTest` does.

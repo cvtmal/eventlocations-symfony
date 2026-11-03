@@ -1,6 +1,6 @@
 {#
-    Step 1 (#45). Context from `NewLocationController`: form, matches (`Cms\ReadModel\VenueListRow` list). The matches
-    follow `form_end`, because each has its own POST form and forms do not nest.
+    Step 1 (#45). Context from `NewLocationController`: form, matches (`Cms\ReadModel\VenueListRow` list), ask_canton
+    (the town needs a canton). The matches follow `form_end`, because each has its own POST form and forms do not nest.
 #}
 {% extends 'portal/wizard/_layout.html.twig' %}
 
@@ -9,7 +9,7 @@
 
 {% block wizard_main %}
     {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
-        {% embed 'admin/components/_card.html.twig' with {title: 'onboarding.new.title'|trans({}, 'portal'), id: 'new-location-title', new_form: form, confirmable: matches is not empty} only %}
+        {% embed 'admin/components/_card.html.twig' with {title: 'onboarding.new.title'|trans({}, 'portal'), id: 'new-location-title', new_form: form, confirmable: matches is not empty, ask_canton: ask_canton} only %}
             {% block body %}
                 <div class="form">
                     <p class="muted">{{ 'onboarding.new.intro'|trans({}, 'portal') }}</p>
@@ -20,6 +20,11 @@
                         {{ form_row(new_form.capacityMax) }}
                         {{ form_row(new_form.town) }}
                     </div>
+                    {% if ask_canton %}
+                        {{ form_row(new_form.canton) }}
+                    {% else %}
+                        {% do new_form.canton.setRendered %}
+                    {% endif %}
                 </div>
             {% endblock %}
             {% block foot %}

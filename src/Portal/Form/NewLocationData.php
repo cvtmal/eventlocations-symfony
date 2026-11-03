@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Portal\Form;
 
+use App\Geo\ValueObject\Canton;
 use App\Portal\Command\CreateOwnLocation;
 use App\Venues\ValueObject\TownText;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * Step 1 of the wizard (#45): what a location cannot start without. No tier, canton or street.
+ * Step 1 of the wizard (#45): what a location cannot start without. No tier or street. The canton only settles a
+ * town that two cantons share, so the page shows it after such a town is refused (portal-wizard-canton).
  */
 final class NewLocationData
 {
@@ -25,6 +27,8 @@ final class NewLocationData
     #[Assert\NotBlank(message: 'portal.onboarding.town_required')]
     public ?string $town = null;
 
+    public ?Canton $canton = null;
+
     public function toCommand(string $portalUserId): CreateOwnLocation
     {
         return new CreateOwnLocation(
@@ -32,6 +36,7 @@ final class NewLocationData
             (string) $this->name,
             $this->capacityMax ?? throw new \LogicException('Validate the form before building its command.'),
             (string) $this->town,
+            $this->canton?->value,
         );
     }
 
