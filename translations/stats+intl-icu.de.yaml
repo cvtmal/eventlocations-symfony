@@ -8,11 +8,11 @@ venue:
     kpi:
         detail_views: Detailaufrufe
         detail_visitors: Besucher der Detailseite
-        impressions: Einblendungen
+        impressions: Impressionen
         contact_clicks: Kontaktklicks
         merkliste_adds: Merkliste
         inquiries: Anfragen
-    visitors_note: Einblendungen zählen, wie oft die Location in einer Liste erschien. Besucher der Detailseite zählen jeden Tag neu.
+    visitors_note: Impressionen zählen, wie oft die Location in einer Liste erschien. Besucher der Detailseite zählen jeden Tag neu.
     own_traffic_note: Ihre eigenen Aufrufe der Website zählen mit, denn wir setzen keine Cookies und erkennen Sie deshalb nicht.
     clicks:
         title: Kontaktklicks nach Art

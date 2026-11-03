@@ -68,7 +68,7 @@ final class VenueStatsControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(['12', '7', '40', '3', '3', '1'], $crawler->filter('.stats-kpis .kpi__value')->each(static fn (Crawler $value): string => $value->text()));
         self::assertSame(
-            ['Detailaufrufe', 'Besucher der Detailseite', 'Einblendungen', 'Kontaktklicks', 'Merkliste', 'Anfragen'],
+            ['Detailaufrufe', 'Besucher der Detailseite', 'Impressionen', 'Kontaktklicks', 'Merkliste', 'Anfragen'],
             $crawler->filter('.stats-kpis .kpi__label')->each(static fn (Crawler $label): string => $label->text()),
         );
         self::assertSame(
