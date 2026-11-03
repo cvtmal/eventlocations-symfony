@@ -6,7 +6,7 @@ namespace App\Portal\Extension;
 
 use App\Admin\Extension\RecordPanel;
 use App\Cms\ValueObject\VenueNumber;
-use App\Portal\Form\PortalEmailType;
+use App\Portal\Form\PortalManagerType;
 use App\Portal\ReadModel\VenueManagersQuery;
 use Symfony\Component\Form\FormFactoryInterface;
 
@@ -41,7 +41,7 @@ final readonly class VenueManagersPanel implements RecordPanel
         return [
             'portal_number' => (int) $recordId,
             'portal_managers' => $this->managers->forVenue((int) $recordId),
-            'portal_add_form' => $this->forms->create(PortalEmailType::class)->createView(),
+            'portal_add_form' => $this->forms->create(PortalManagerType::class)->createView(),
         ];
     }
 

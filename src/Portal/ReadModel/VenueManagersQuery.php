@@ -8,8 +8,8 @@ use App\Portal\ValueObject\PortalVenueAccessStatus;
 use Doctrine\DBAL\Connection;
 
 /**
- * The managers panel on a venue (#43): who manages it, and which account an address staff typed belongs to. A
- * pending row is the review queue's, not a manager yet.
+ * The managers panel on a venue (#43): who manages it, whose invitation is still open, and which account an address
+ * staff typed belongs to. A pending row is the review queue's, not a manager yet.
  */
 final class VenueManagersQuery
 {
@@ -25,7 +25,7 @@ final class VenueManagersQuery
     {
         $rows = $this->connection->fetchAllAssociative(
             <<<'SQL'
-                SELECT u.id, u.first_name, u.last_name, u.email
+                SELECT u.id, u.first_name, u.last_name, u.email, u.password_hash IS NULL AS invited
                 FROM portal_venue_access a
                 JOIN venues v ON v.id = a.venue_id
                 JOIN portal_users u ON u.id = a.portal_user_id
@@ -36,18 +36,32 @@ final class VenueManagersQuery
         );
 
         return array_map(
-            static fn (array $row): VenueManagerRow => new VenueManagerRow((string) $row['id'], (string) $row['first_name'], (string) $row['last_name'], (string) $row['email']),
+            static fn (array $row): VenueManagerRow => new VenueManagerRow((string) $row['id'], (string) $row['first_name'], (string) $row['last_name'], (string) $row['email'], (bool) $row['invited']),
             $rows,
         );
     }
 
     /**
-     * Any account counts, unconfirmed and deactivated too: staff name an account that exists.
+     * Any account counts, unconfirmed and deactivated too: the controller decides what each one gets.
      */
-    public function accountIdByEmail(string $email): ?string
+    public function accountByEmail(string $email): ?ManagerAccountRow
     {
-        $id = $this->connection->fetchOne('SELECT id FROM portal_users WHERE email = :email', ['email' => mb_strtolower($email)]);
+        $row = $this->connection->fetchAssociative(
+            'SELECT id, email, first_name, last_name, phone, is_active, password_hash IS NULL AS invited FROM portal_users WHERE email = :email',
+            ['email' => mb_strtolower($email)],
+        );
+        if (false === $row) {
+            return null;
+        }
 
-        return false === $id ? null : (string) $id;
+        return new ManagerAccountRow(
+            (string) $row['id'],
+            (string) $row['email'],
+            (string) $row['first_name'],
+            (string) $row['last_name'],
+            null === $row['phone'] ? null : (string) $row['phone'],
+            (bool) $row['is_active'],
+            (bool) $row['invited'],
+        );
     }
 }

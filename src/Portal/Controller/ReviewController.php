@@ -79,6 +79,10 @@ final class ReviewController extends AbstractController
             return $this->back('error', 'review.flash.gone');
         }
         [$profile, $venue] = $pending;
+        // A deactivated account could not log in to use the access, and the mail would promise it (HANDOFF 3).
+        if (!$profile->active) {
+            return $this->back('error', 'invite.flash.deactivated');
+        }
 
         $this->commandBus->dispatch(new GrantVenueAccess($userId, $venue->id, GrantVenueAccess::VIA_REVIEW));
         $mailed = $this->mailer->sendAccessApproved($profile->email, $profile->firstName, $venue->name);

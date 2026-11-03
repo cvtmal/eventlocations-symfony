@@ -1,0 +1,10 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'invite.mail.added.preheader'|trans({venue: venueName}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('invite.mail.added.greeting'|trans({name: firstName}, 'portal')) }}
+{{ blocks.p('invite.mail.added.intro'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.button('invite.mail.added.button'|trans({}, 'portal'), url('portal_home')) }}
+{% endblock %}

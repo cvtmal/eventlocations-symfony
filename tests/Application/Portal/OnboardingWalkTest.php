@@ -144,7 +144,7 @@ final class OnboardingWalkTest extends WebTestCase
     }
 
     /**
-     * Registration, the mail's link, the login, then steps 1 to 5 of the wizard, ending on the check.
+     * Registration, the mail's link, which logs the manager in, then steps 1 to 5 of the wizard, ending on the check.
      */
     private function walkToTheCheck(): int
     {
@@ -152,9 +152,7 @@ final class OnboardingWalkTest extends WebTestCase
         $this->forgetPortalThrottling();
         $this->registerWithTheMailsLink();
 
-        // A manager with no location lands in the wizard straight after the first login.
-        $this->submitManagerLogin(self::EMAIL, self::PASSWORD);
-        self::assertResponseRedirects('/konto');
+        // Saving the password logged the manager in, and with no location `/konto` opens the wizard.
         $this->client->followRedirect();
         self::assertResponseRedirects('/konto/locations/neu');
         $crawler = $this->client->followRedirect();
@@ -234,7 +232,7 @@ final class OnboardingWalkTest extends WebTestCase
             'portal_password[plainPassword][first]' => self::PASSWORD,
             'portal_password[plainPassword][second]' => self::PASSWORD,
         ]);
-        self::assertResponseRedirects('/konto/anmelden', Response::HTTP_SEE_OTHER);
+        self::assertResponseRedirects('/konto', Response::HTTP_SEE_OTHER);
     }
 
     /**

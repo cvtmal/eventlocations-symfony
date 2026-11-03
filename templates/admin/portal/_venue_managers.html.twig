@@ -1,7 +1,8 @@
 {#
     The managers of a location on its venue page. Filled by `VenueManagersPanel`: `portal_number`, `portal_managers`
     (list<VenueManagerRow>), `portal_add_form`; nothing for a record id that is no venue number. The list borrows the
-    CRM card's row classes, so the panel needs no CSS of its own.
+    CRM card's row classes, so the panel needs no CSS of its own. A manager with no password yet shows "Einladung
+    offen" and a resend button, which posts the address to the add route again.
 #}
 {% if portal_number is defined %}
     {% embed 'admin/components/_card.html.twig' with {
@@ -20,21 +21,39 @@
                     {% for manager in portal_managers %}
                         {% set name = manager.firstName ~ ' ' ~ manager.lastName %}
                         <li class="crm-panel__task">
-                            <span>{{ name }}<br><span class="muted">{{ manager.email }}</span></span>
-                            <form method="post" action="{{ path('admin_portal_review_manager_remove', {number: portal_number, userId: manager.userId}) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
-                                {{ include('admin/components/_button.html.twig', {
-                                    label: 'review.panel.remove'|trans({}, 'portal'),
-                                    size: 'sm', type: 'submit',
-                                    attributes: {'aria-label': 'review.panel.remove_for'|trans({name: name}, 'portal')},
-                                }, with_context = false) }}
-                            </form>
+                            <span>{{ name }}<br><span class="muted">{{ manager.email }}</span>
+                                {%- if manager.invited %}<br>{{ include('admin/components/_pill.html.twig', {label: 'invite.panel.pending'|trans({}, 'portal'), tone: 'amber'}, with_context = false) }}{% endif -%}
+                            </span>
+                            <div>
+                                {% if manager.invited %}
+                                    {# The add route resends an open invitation; a hand-written form, because form_start() in a list repeats an id. #}
+                                    <form method="post" action="{{ path('admin_portal_review_manager_add', {number: portal_number}) }}">
+                                        <input type="hidden" name="portal_manager[email]" value="{{ manager.email }}">
+                                        <input type="hidden" name="portal_manager[_token]" value="{{ csrf_token('submit') }}">
+                                        {{ include('admin/components/_button.html.twig', {
+                                            label: 'invite.panel.resend'|trans({}, 'portal'),
+                                            size: 'sm', type: 'submit',
+                                            attributes: {'aria-label': 'invite.panel.resend_for'|trans({name: name}, 'portal')},
+                                        }, with_context = false) }}
+                                    </form>
+                                {% endif %}
+                                <form method="post" action="{{ path('admin_portal_review_manager_remove', {number: portal_number, userId: manager.userId}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                                    {{ include('admin/components/_button.html.twig', {
+                                        label: 'review.panel.remove'|trans({}, 'portal'),
+                                        size: 'sm', type: 'submit',
+                                        attributes: {'aria-label': 'review.panel.remove_for'|trans({name: name}, 'portal')},
+                                    }, with_context = false) }}
+                                </form>
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>
             {% endif %}
             {{ form_start(portal_add_form, {action: path('admin_portal_review_manager_add', {number: portal_number}), attr: {class: 'form crm-panel__create', novalidate: 'novalidate'}}) }}
-                {{ form_row(portal_add_form.email, {label: 'review.panel.email', attr: {autocomplete: 'off'}}) }}
+                {{ form_row(portal_add_form.email) }}
+                {{ form_row(portal_add_form.firstName) }}
+                {{ form_row(portal_add_form.lastName) }}
                 {{ include('admin/components/_button.html.twig', {label: 'review.panel.add'|trans({}, 'portal'), icon: 'plus', type: 'submit'}, with_context = false) }}
             {{ form_end(portal_add_form) }}
         {% endblock %}

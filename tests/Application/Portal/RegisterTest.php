@@ -98,15 +98,13 @@ final class RegisterTest extends WebTestCase
             'portal_password[plainPassword][first]' => self::PASSWORD,
             'portal_password[plainPassword][second]' => self::PASSWORD,
         ]);
-        self::assertResponseRedirects('/konto/anmelden');
+        // Saving logs the person in: the profile opens without the login form.
+        self::assertResponseRedirects('/konto', 303);
 
         $user = $this->findUser(self::EMAIL);
         self::assertNotNull($user);
         self::assertTrue($user->isConfirmed());
         self::assertNotNull($user->passwordHash());
-
-        $this->submitManagerLogin(self::EMAIL, self::PASSWORD);
-        self::assertResponseRedirects('/konto');
 
         $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();

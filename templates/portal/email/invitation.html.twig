@@ -1,0 +1,14 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'invite.mail.invitation.preheader'|trans({venue: venueName}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('invite.mail.invitation.greeting'|trans({name: firstName}, 'portal')) }}
+{{ blocks.p('invite.mail.invitation.intro'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.p('invite.mail.invitation.next'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.button('invite.mail.invitation.button'|trans({}, 'portal'), url('portal_reset_password', {token: token})) }}
+{{ blocks.rule() }}
+{{ blocks.note('invite.mail.invitation.validity'|trans({}, 'portal')) }}
+{{ blocks.note('invite.mail.invitation.not_you'|trans({}, 'portal')) }}
+{% endblock %}

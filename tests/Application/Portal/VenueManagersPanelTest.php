@@ -65,7 +65,7 @@ final class VenueManagersPanelTest extends WebTestCase
         $venue = DetailVenues::withoutPlace();
         $manager = PortalUserFactory::createOne(['firstName' => 'Petra', 'lastName' => 'Keller', 'email' => 'petra@example.ch']);
 
-        $form = $this->panel($venue)->filter('form[action$="/manager"]')->form(['portal_email[email]' => 'Petra@Example.ch']);
+        $form = $this->panel($venue)->filter('form[action$="/manager"]')->form(['portal_manager[email]' => 'Petra@Example.ch']);
         $this->client->submit($form);
 
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#portal-managers', 303);
@@ -75,7 +75,7 @@ final class VenueManagersPanelTest extends WebTestCase
         self::assertStringContainsString('Petra Keller', $crawler->filter('section[aria-labelledby="portal-managers"] li')->text());
     }
 
-    public function test_adding_is_audited_and_sends_no_mail(): void
+    public function test_adding_is_audited_and_mails_the_manager(): void
     {
         $staff = $this->logInAs();
         $venue = VenueFactory::createOne();
@@ -83,7 +83,7 @@ final class VenueManagersPanelTest extends WebTestCase
 
         $this->add($venue, $manager->email());
 
-        self::assertEmailCount(0);
+        self::assertEmailCount(1);
         $audit = $this->connection->fetchAllAssociative('SELECT actor_id, subject_type, subject_id, changes FROM admin_audit_log WHERE command = ?', [GrantVenueAccess::class]);
         self::assertCount(1, $audit);
         self::assertSame($staff['user']->id(), $audit[0]['actor_id']);
@@ -116,7 +116,7 @@ final class VenueManagersPanelTest extends WebTestCase
         self::assertSame('Keine offenen Zugriffsanfragen', $crawler->filter('.empty__title')->text());
     }
 
-    public function test_adding_an_unknown_address_flashes(): void
+    public function test_an_unknown_address_without_names_asks_for_them(): void
     {
         $this->logInAs();
         $venue = DetailVenues::withoutPlace();
@@ -124,8 +124,9 @@ final class VenueManagersPanelTest extends WebTestCase
         $this->add($venue, 'nobody@example.ch');
 
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#portal-managers', 303);
-        self::assertSame(0, $this->auditCount(GrantVenueAccess::class));
-        self::assertStringContainsString('Zu dieser E-Mail-Adresse gibt es kein Konto.', $this->client->followRedirect()->filter('.toast--error')->text());
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM portal_users'));
+        self::assertEmailCount(0);
+        self::assertStringContainsString('bitte Vor- und Nachnamen angeben', $this->client->followRedirect()->filter('.toast--error')->text());
     }
 
     /**
@@ -219,7 +220,7 @@ final class VenueManagersPanelTest extends WebTestCase
         $account = PortalUserFactory::createOne();
         $path = '/admin/pruefung/locations/'.$venue->number().'/manager';
 
-        $this->client->request('POST', $path, ['portal_email' => ['email' => $account->email()] + $token], server: $server);
+        $this->client->request('POST', $path, ['portal_manager' => ['email' => $account->email()] + $token], server: $server);
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#portal-managers', 303);
 
         $this->client->request('POST', $path.'/'.$manager->id().'/entfernen', $token, server: $server);
@@ -236,7 +237,7 @@ final class VenueManagersPanelTest extends WebTestCase
         $this->logInAs();
         $account = PortalUserFactory::createOne();
 
-        $this->client->request('POST', '/admin/pruefung/locations/999999999/manager', ['portal_email' => ['email' => $account->email(), '_token' => self::SAME_SITE_TOKEN]], server: self::SAME_ORIGIN);
+        $this->client->request('POST', '/admin/pruefung/locations/999999999/manager', ['portal_manager' => ['email' => $account->email(), '_token' => self::SAME_SITE_TOKEN]], server: self::SAME_ORIGIN);
         self::assertResponseStatusCodeSame(404);
 
         $this->client->request('POST', '/admin/pruefung/locations/999999999/manager/'.$account->id().'/entfernen', ['_token' => self::SAME_SITE_TOKEN], server: self::SAME_ORIGIN);
@@ -280,7 +281,7 @@ final class VenueManagersPanelTest extends WebTestCase
      */
     private function add(Venue $venue, string|array $email): void
     {
-        $this->client->request('POST', '/admin/pruefung/locations/'.$venue->number().'/manager', ['portal_email' => ['email' => $email, '_token' => self::SAME_SITE_TOKEN]], server: self::SAME_ORIGIN);
+        $this->client->request('POST', '/admin/pruefung/locations/'.$venue->number().'/manager', ['portal_manager' => ['email' => $email, '_token' => self::SAME_SITE_TOKEN]], server: self::SAME_ORIGIN);
     }
 
     private function remove(Venue $venue, string $userId): void

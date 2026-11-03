@@ -8,12 +8,15 @@ use App\Factory\PortalUserFactory;
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\VenueFactory;
 use App\Portal\Command\GrantVenueAccess;
+use App\Portal\Command\InviteLocationManager;
 use App\Portal\Command\RequestVenueAccess;
 use App\Portal\Command\RevokeVenueAccess;
 use App\Portal\Entity\PortalUser;
+use App\Portal\Exception\PortalEmailTaken;
 use App\Portal\Exception\VenueNotClaimable;
 use App\Portal\Repository\PortalVenueAccessRepository;
 use App\Portal\Security\PortalIdentity;
+use App\Shared\Uid\EntityId;
 use App\Tests\Integration\Crm\DispatchesCrmCommands;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Entity\Venue;
@@ -126,6 +129,27 @@ final class VenueAccessCommandsTest extends KernelTestCase
             ['command' => RevokeVenueAccess::class, 'changes' => ['via' => 'panel', 'venue' => $venue->id()]],
         ], $this->auditRows('portal_user', $manager->id()));
         self::assertSame(0, $this->rows("SELECT count(*) FROM admin_audit_log WHERE subject_type = 'venue'"));
+    }
+
+    public function test_an_invitation_creates_an_account_with_no_password_and_an_active_row(): void
+    {
+        $venue = $this->venue();
+        $id = EntityId::generate();
+
+        $this->dispatch(new InviteLocationManager($id, 'Nina@Example.ch', 'Nina', 'Brunner', $venue->id()));
+
+        self::assertSame(
+            ['email' => 'nina@example.ch', 'first_name' => 'Nina', 'last_name' => 'Brunner', 'password_hash' => null, 'is_active' => true, 'email_verified_at' => null],
+            $this->connection->fetchAssociative('SELECT email, first_name, last_name, password_hash, is_active, email_verified_at FROM portal_users WHERE id = ?', [$id]),
+        );
+        self::assertSame('active', $this->connection->fetchOne('SELECT status FROM portal_venue_access WHERE portal_user_id = ? AND venue_id = ?', [$id, $venue->id()]));
+    }
+
+    public function test_an_invitation_for_a_taken_address_is_a_domain_exception(): void
+    {
+        PortalUserFactory::createOne(['email' => 'taken@example.ch']);
+
+        $this->failure(new InviteLocationManager(EntityId::generate(), 'taken@example.ch', 'Ana', 'Rennt', $this->venue()->id()), PortalEmailTaken::class);
     }
 
     private function venue(): Venue

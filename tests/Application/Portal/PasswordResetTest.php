@@ -75,9 +75,10 @@ final class PasswordResetTest extends WebTestCase
         self::assertInstanceOf(Email::class, $mail);
 
         $this->reset(1 === preg_match('~/konto/passwort-neu/([^"\s]+)~', (string) $mail->getHtmlBody(), $link) ? $link[1] : '');
-        self::assertResponseRedirects('/konto/anmelden');
+        self::assertResponseRedirects('/konto', 303);
         self::assertNotNull($this->connection->fetchOne('SELECT email_verified_at FROM portal_users WHERE id = ?', [$user->id()]));
 
+        $this->client->getCookieJar()->clear();
         $this->submitManagerLogin(self::EMAIL, self::NEW_PASSWORD);
         self::assertResponseRedirects('/konto');
     }
@@ -144,11 +145,15 @@ final class PasswordResetTest extends WebTestCase
 
         $this->reset($this->links()->resetToken($user));
 
-        self::assertResponseStatusCodeSame(303);
-        self::assertResponseRedirects('/konto/anmelden');
+        self::assertResponseRedirects('/konto', 303);
+        // Saving logged the person in: `/konto` opens, and for an account with no location sends on to the wizard.
         $this->client->followRedirect();
+        self::assertResponseRedirects('/konto/locations/neu');
+        $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('.toast__message', 'Ihr Passwort ist gespeichert');
 
+        $this->client->getCookieJar()->clear();
         $this->submitManagerLogin($user->email());
         self::assertResponseRedirects('/konto/anmelden');
 
@@ -293,9 +298,16 @@ final class PasswordResetTest extends WebTestCase
         $this->client->request('GET', '/konto/profil');
         self::assertResponseIsSuccessful();
 
+        // The reset happens in another browser; the session of this one must end with the old hash.
+        $running = $this->client->getCookieJar()->all();
+        $this->client->getCookieJar()->clear();
         $this->reset($this->links()->resetToken($manager));
-        self::assertResponseStatusCodeSame(303);
+        self::assertResponseRedirects('/konto', 303);
 
+        $this->client->getCookieJar()->clear();
+        foreach ($running as $cookie) {
+            $this->client->getCookieJar()->set($cookie);
+        }
         $this->client->request('GET', '/konto');
         self::assertResponseRedirects('/konto/anmelden');
     }

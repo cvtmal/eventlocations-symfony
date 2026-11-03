@@ -54,6 +54,28 @@ final class PortalLinkSignerTest extends KernelTestCase
         self::assertEqualsWithDelta($before + 3600, $reset, 5);
     }
 
+    public function test_an_invitation_lasts_seven_days_and_dies_with_the_first_password(): void
+    {
+        $user = PortalUserFactory::new()->unconfirmed()->create();
+        $before = time();
+
+        $token = $this->signer()->invitationToken($user->id());
+
+        self::assertNotNull($token);
+        self::assertEqualsWithDelta($before + 7 * 24 * 3600, (int) explode('.', $token)[1], 5);
+        self::assertSame($user->id(), $this->signer()->resetUserId($token));
+
+        $user->setPasswordFromMail('a-hash', new \DateTimeImmutable());
+        self::assertNull($this->signer()->resetUserId($token));
+    }
+
+    public function test_there_is_no_invitation_for_an_account_with_a_password_or_a_deactivated_one(): void
+    {
+        self::assertNull($this->signer()->invitationToken(PortalUserFactory::createOne()->id()));
+        self::assertNull($this->signer()->invitationToken(PortalUserFactory::new()->unconfirmed()->deactivated()->create()->id()));
+        self::assertNull($this->signer()->invitationToken('00000000-0000-7000-8000-000000000001'));
+    }
+
     public function test_a_past_expiry_fails(): void
     {
         $user = PortalUserFactory::createOne();
