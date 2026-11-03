@@ -662,7 +662,7 @@ stats:
         empty: Im Zeitraum noch keine Zahlen zu Locations.
         column:
             venue: Location
-            impressions: Einblendungen
+            impressions: Impressionen
     media_kit:
         link: Mediakit
         title: Mediakit
