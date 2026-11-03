@@ -12,6 +12,7 @@ use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
+use App\Crm\ValueObject\CustomerNoteField;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Crm\ValueObject\LostReason;
@@ -59,6 +60,8 @@ final class CrmTranslationKeysTest extends KernelTestCase
             'timeline.email.send_failed', 'timeline.email.hint', 'timeline.email.no_address',
             // EmailTemplatesController: the flashes, and EmailTemplateNameTaken on the form.
             'email_template.flash.saved', 'email_template.flash.deleted', 'email_template.name_taken', 'nav.email_templates',
+            // ImportCustomerHandler: the logged mail's body and the note's heading.
+            'customer_import.mail_body', 'customer_import.note.heading',
         ];
         foreach (CompanyStage::cases() as $case) {
             $keys[] = 'company.stage.'.$case->value;
@@ -78,6 +81,9 @@ final class CrmTranslationKeysTest extends KernelTestCase
         }
         foreach (ContactProperty::cases() as $case) {
             $keys[] = 'contact.property.'.$case->value;
+        }
+        foreach (CustomerNoteField::cases() as $case) {
+            $keys[] = $case->key();
         }
         foreach (DealProperty::cases() as $case) {
             $keys[] = 'deal.property.'.$case->value;

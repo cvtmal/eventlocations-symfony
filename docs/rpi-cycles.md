@@ -125,6 +125,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 44 | `portal-editor` | W12 | POR-8–POR-10 | 25, 42 | — | — | ✅ Done |
 | 45 | `portal-onboarding` | W13 | POR-11–POR-14 | 43, 44 | `portal_submissions`; `venues.awaits_first_publish` (Q20 invoice reminder) | ~~Q20~~ | ✅ Done |
 | 46 | `liechtenstein-venues` | W14 | FI-1 (data), FI-2 (data), DATA-3 | 3, 21, 32 | `cantons`: one `li` row (and whatever research finds the 26-row CHECKs or uniques need); `towns`, `town_zips`: Liechtenstein rows | ~~Q13~~ | Not started |
+| 48 | `crm-customer-import-2` | — | CRM customer sheet | 27, 29 | — | — | ✅ Done |
 | 49 | `eventlokale-crawler` | — | — (owner request) | 27a | — | — | ✅ Done |
 
 ### Waves at a glance
@@ -2539,7 +2540,7 @@ W9. Depends on #24 (the venue editor's panel slot and the venue `SearchProvider`
 - **Deviations from the plan:** a company's card and the venue panel also collect the tasks on its contacts. The venue panel's tasks have no toggles. `TasksNavigationItem` injects `TaskBadge`, not `Security`, and the count rides on the owners statement. `forSubjects()` cuts on `changes->'changed'` in SQL, so tier-less edits cannot starve a page. `ReturnPath::safe()` refuses `/admin`, so a dashboard toggle sends `/admin/`.
 - **Decisions on the review's findings:** B-M1 (a double press created a task twice) was downgraded to a Minor by the owner and fixed: `saving` stays set after a created task, proved by a Vitest test, with no double-press trial. B-m1 stays: plain forms double-POST on a double click across the whole back office, "Aufgabe erstellen" included. Heute and Überfällig show everyone's tasks, and a row names its assignee. The Aufgaben badge stays pink, because `.sidebar__badge` has one tone and `NavigationItem::badge(): ?int` has none, where the design draws it dark grey; #29's Anfragen badge shares that decision. The task list's wrap after `Firma ·` at 375 to 430 px stays. S11's real-browser check was waived by the owner; headless Chromium at 390 and 1440 px, the keyboard walkthrough, the validator and Lighthouse (Accessibility 100) stand in for it.
 - **Carried forward:**
-  - **Owed on production, after #20's Phases 7-9, owner present (plan F.4):** `pg_dump`, `app:crm:bootstrap --no-debug` once, record the counts here, and measure the button's 100 per POST against Neon; above 60 s, lower `BATCH`. Done when's last bullet stays open until then.
+  - **Owed on production, after #20's Phases 7-9, owner present (plan F.4):** `pg_dump`, `app:crm:bootstrap --no-debug` once (since #48 through `sh bin/prod-import crm-bootstrap` from the Mac), record the counts here, and measure the button's 100 per POST against Neon; above 60 s, lower `BATCH`. Done when's last bullet stays open until then.
   - On the real host: download a CSV through `HttpCache`; a delay is acceptable, loss is not.
   - Owner: screenshot sign-off of the screens without a design and comparison of company record, dashboard and venue panel with `docs/reference/admin/`; review of `legal.privacy.crm`.
   - F-m3: a contact search `q` is always a Seq Scan, about 50 ms per statement at 10,000 rows, 2 to 4 ms at 300; the name search alone uses its index. No action at this size.
@@ -2812,6 +2813,39 @@ W14. Depends on #3, #21 and #32. Q13 answered yes on 2026-11-02, so the 4 Liecht
   - the landing page for Liechtenstein exists if #17's threshold allows it, and the sitemap follows;
   - the existing geo, search and SEO tests pass with 27 regions, and tests cover the `li` row, a `+423` phone and the import counts;
   - S11's checks pass on the pages it changes.
+
+### 48. `crm-customer-import-2`
+
+Depends on #27 and #29. Imports the owner's customer sheet ("Hochzeitslocation Liste Kunden - Master", 1,503 rows of outreach to venues) into the CRM. A new customer becomes one company, one contact and its back-dated mails. A known customer is skipped and listed. Research and plan: `.rpi-tracking/research/2026-11-03/crm-customer-import-2-research.md` and `.rpi-tracking/plans/2026-11-03/crm-customer-import-2-plan.md`. Working notes: `.claude/rules/module-crm.md`.
+
+- **Owner's answers:**
+  - A row is the same customer when its company name or venue matches; email and phone are not match keys.
+  - A match is skipped, never filled.
+  - The import writes to the CRM only: no `/konto` account and no mail.
+  - All 1,503 rows are imported, with every column group; `Neue` is ignored.
+  - D1(a): Instagram, region and status go into note lines, with no schema change.
+  - D2(c): every new row gets a contact, last name `unbekannt` when the sheet has none.
+  - D3(a): rows to check are skipped and listed.
+  - D4: same-named places the sheet shows to differ are told apart.
+  - D5: every new company is `prospect`. D6: one `email_logged` activity per mail date. D7: no owner.
+- **Command:** `app:crm:import-customers <csv> [--dry-run]`.
+  - It writes `content/owner/kunden-import-report.md` on every run.
+  - The owner runs `sh bin/prod-import crm-bootstrap`, then `customers-dry` until the report is right, then `customers`, then `customers-dry` again, which must show 0 new (`docs/operations.md` §Customer sheet).
+  - No migration, no Composer or npm package.
+
+**Outcome (2026-11-03, Implement).**
+
+- **Local runs, lane A, against `make seed`:** the demo venues are fictional, so nothing matches a venue there.
+  - First dry run: `Customers: 1503 rows, 1499 new, 0 matched (venue), 0 matched (name), 4 duplicate in sheet, 0 to check, 0 name repeated, 0 ambiguous, 0 blocked, 0 invalid; 1499 companies, 1499 contacts, 1424 activities, 3 warnings, 0 failed.`
+  - The real run took about 5 s and wrote the same counts, plus 1,499 audit rows. 934 contacts have the last name `unbekannt`.
+  - The second dry run: `0 new, 1499 matched (name)`.
+- **Same-named places (R4):** 27 rows were named apart.
+  - Radisson Blu Hotel: Basel, Luzern, St. Gallen.
+  - Gasthof Sternen: Aargau, Zürich, plus one duplicate.
+  - Landgasthof Bären and Restaurant Löwen: by host.
+  - Natur- und Tierpark Goldau: one company plus one duplicate.
+- **Warnings:** 3, one invalid email and two invalid phones. Each cell went into the company note.
+- **Owed:** the owner's prod dry run and its classes (research estimate: about 200–260 matched, about 1,250 new, about 50 to check), and a look at one imported company in `/admin/crm/firmen`.
 
 ### 49. `eventlokale-crawler`
 

@@ -52,4 +52,27 @@ class CompanyRepository extends ServiceEntityRepository
     {
         $this->getEntityManager()->getConnection()->executeStatement('DELETE FROM crm_companies WHERE id = ?', [$id]);
     }
+
+    /**
+     * Serialises the customer imports of one folded name (#48), so the "name exists" check and the
+     * insert cannot interleave. Held until the bus transaction ends.
+     */
+    public function lockFoldedName(string $name): void
+    {
+        $this->getEntityManager()->getConnection()->executeQuery(
+            "SELECT pg_advisory_xact_lock(hashtextextended('crm_customer_import:' || geo_fold_de(?), 0))",
+            [$name],
+        );
+    }
+
+    /**
+     * Whether a company of any origin has this name under `geo_fold_de()`, the key the import matches on.
+     */
+    public function foldedNameExists(string $name): bool
+    {
+        return false !== $this->getEntityManager()->getConnection()->fetchOne(
+            'SELECT 1 FROM crm_companies WHERE geo_fold_de(name) = geo_fold_de(?) LIMIT 1',
+            [$name],
+        );
+    }
 }
