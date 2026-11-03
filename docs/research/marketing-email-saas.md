@@ -10,7 +10,134 @@ price below was read on 2026-11-03 unless a source carries its own date. Prices 
 averages are EUR 0.92841 and USD 0.82854 ([SNB](https://data.snb.ch/api/cube/devkum/data/csv/en)).
 Where a vendor bills in CHF, its own figure is shown, not a conversion.
 
-## TL;DR
+## Redo, 2026-11-03: the list is already opt-in
+
+The owner added three details after the first run:
+
+- **Every contact on the existing list has already opted in.** Unsubscribing must keep working,
+  but nobody needs to be asked for consent again.
+- **The list has about 1,500 contacts**, with about 2 sends a month, so about 3,000 mails a month.
+- **Options, not a single pick.** The owner gets a short German page.
+
+The owner's page: **[Welches Newsletter-Tool?](https://claude.ai/artifact/WzcwvCoY3BGXaZ9ZSKfkaE)**.
+It is private until it is shared from its Share menu.
+
+### TL;DR (supersedes the first run's)
+
+1. **Mailjet Essential, about CHF 17/month** (€18). Contacts are unlimited and 15,000 mails a month
+   are included, so the price stays the same up to 5,000 contacts. It has a German UI and support,
+   EU data (GCP Frankfurt and Belgium), and a `symfony/mailjet-mailer` bridge. Mailjet has no
+   double-opt-in API, which counted against it in the first run. That no longer matters.
+2. **Brevo**: CHF 23 (Starter, logo removed) or CHF 28 (Standard) for up to 1,500 contacts. From
+   1,501 contacts it is CHF 30 or 40, and at 5,000 it is CHF 37 or 54. Brevo has the best API and
+   webhooks, and is the pick if automated mail sequences come later.
+3. **CleverReach Basic, about CHF 23** (€25). It is a German company with German phone support. It
+   bans form sign-ups that sent no confirmation mail (see below).
+
+### What the opt-in detail changes
+
+- **No vendor forces double opt-in on an imported opt-in list.** All seven checked accept a direct
+  import once you confirm consent. What they require differs:
+
+  | Vendor | Requirement or limit |
+  |---|---|
+  | Brevo | Import checkbox. Consent must be at most 2 years old, with verifiable proof. Suspension above 2% hard bounces, 1% unsubscribes or 0.2% complaints. A second suspension is permanent. |
+  | CleverReach | Origin of each list. **Single-opt-in form sign-ups are not allowed.** Every account goes through an activation audit. |
+  | Mailjet | Provable consent. Sending caps per hour on new accounts. Bounces ≤ 5%, complaints ≤ 0.08%. Re-confirmation recommended for lists older than 6 months. |
+  | MailerLite | Contacts not mailed for over 2 years are refused. Evidence on request within 30 days. |
+  | rapidmail | Declare the data's source at import. Demo account until support unlocks it. |
+  | Mailchimp | Point to an opt-in form or other evidence. An import can trigger a review. |
+  | mailXpert | Unverified (no public terms found). |
+
+  Sources, read 2026-11-03:
+  [Brevo](https://help.brevo.com/hc/en-us/articles/213405965),
+  [CleverReach](https://www.cleverreach.com/en/antispam/) and its
+  [AGB](https://www.cleverreach.com/de-de/agb/),
+  [Mailjet](https://www.mailjet.com/legal/sending-policy/),
+  [MailerLite](https://www.mailerlite.com/legal/anti-spam-policy),
+  [rapidmail](https://help.rapidmail.de/de/articles/65-empfangerimport-formatierte-datei-importieren-option-1),
+  [Mailchimp](https://mailchimp.com/legal/acceptable_use/).
+- **The proof stays with the sender.** Swiss practice puts the burden of proof for consent on the
+  sender ([WEKA, 2026-09-30](https://www.weka.ch/themen/datenschutz-und-it-recht/datenschutz-umsetzen/article/datenschutz-newsletter-rechtssicheres-e-mail-marketing-in-der-schweiz/)).
+  No statute or authority text says so explicitly: unverified at primary level. No Swiss rule makes
+  old consent expire, but the vendors' 2-year rules do in practice. UWG Art. 23 makes a breach
+  punishable on complaint.
+- **Every mail** names the sender with a postal address and has a free, easy unsubscribe
+  ([BAKOM](https://www.bakom.admin.ch/de/wann-ist-der-massenversand-erlaubt),
+  [SECO](https://www.seco.admin.ch/de/sicher-surfen)). Every tool adds the unsubscribe link.
+- **Hostpoint direct is now legal** under its AGB Anhang 1 Ziff. 3.2, but it is still advised
+  against:
+  - Its support page says SMTP sending from outside "sollte nur in Ausnahmefällen verwendet werden"
+    ([FAQ](https://support.hostpoint.ch/de/produkte/webhosting/haeufig-gestellte-fragen/e-mail-versand-ueber-die-webseite)).
+  - No current limit is published; the 1,000/24 h figure exists only in the 2016 manual.
+  - Hostpoint offers no newsletter product.
+  - The reputation risk to inquiry mail (§2) stands.
+- **Model (a) needs no development to start.** Export the contacts as CSV from the CRM and import
+  them into the tool. The nightly sync sketched in §6 becomes optional and only needs to push
+  contacts and pull unsubscribes back. The double-opt-in flag and endpoint go away.
+
+### Prices at 1,500 contacts (main tier) and 5,000 (growth)
+
+Monthly billing, excluding VAT, read 2026-11-03 on each vendor's pricing page (or the data it
+embeds). CHF figures are conversions at the ECB rates above, except Brevo's and Mailchimp's
+Swiss-page figures. Yearly billing saves about 10%.
+
+| Vendor | 1,500 | 5,000 | Data | German UI | Note |
+|---|---|---|---|---|---|
+| **Mailjet** Essential | **CHF 17** (€18) | CHF 17 | EU | Yes | 15k mails/month, unlimited contacts |
+| Brevo Starter + logo removal / Standard | CHF 23 / 28 | CHF 37 / 54 | EU | Yes | Tier caps contacts at 1,500 for 10k mails; 1,501–2,500 costs CHF 30 / 40 ([pricing API](https://pricing-backend.brevo.com/public/pricing/api/plans/all)) |
+| CleverReach Basic | CHF 23 (€25) | CHF 60 (€65) | DE | Yes | 2,500 tier €39; Basic stops at 5k. Pro: €45 / €75 |
+| Mailchimp Essentials | CHF 22 ($26.50) | CHF 62 ($75) | US | Partly | 501–1,500 band; unsubscribed contacts are billed |
+| MailerLite Comfort | CHF 27 (€29) | CHF 40 (€44) | EU | No | Bills from the 2,500 tier |
+| rapidmail Essential | CHF 32 (€35) | CHF 51 (€55) | DE | Yes | Bills from the 2,500 tier |
+| Resend Pro marketing | CHF 33 ($40) | CHF 33 | US | No | Free plan stops at 1,000 contacts |
+| mailXpert LITE | about CHF 133 | about CHF 133 | CH | Yes | CHF 1,590/year for 240,000 mails, plus CHF 390 setup |
+
+The 1,500-contact figures in this table correct the first run's estimates further down. CleverReach
+Pro is €75 at 5k and €205 at 20k from its own page, not €72 / €192 as the third-party sources said.
+Mailchimp has no 1k tier.
+
+### The three ways
+
+| | Newsletter tool (recommended) | Build it in the CRM | Hostpoint direct |
+|---|---|---|---|
+| How | The list lives in the tool, staff design and send there | The CRM composes, Amazon SES (Zurich) or Postmark delivers | Symfony Mailer through `asmtp.mail.hostpoint.ch` |
+| Monthly cost | CHF 17–45 | Under CHF 15: Postmark $15 for 10k mails; SES $0.10–0.16 per 1,000 | CHF 0 |
+| Unsubscribe, RFC 8058, bounces | The tool | Postmark broadcast stream and SES list management add the footer link and both headers; the app syncs unsubscribes back | All of it in the app |
+| Effort | None at the start (CSV), one small cycle for a sync | Several cycles: composer, segment, batch send, webhooks | One cycle, plus the risk |
+| Catch | Vendor import rules (above) | No editor, little reporting; Postmark data is US-only | "Exception" per Hostpoint, unknown limit, shared reputation with inquiry mail |
+
+Sources: [Postmark pricing](https://postmarkapp.com/pricing) and
+[unsubscribe handling](https://postmarkapp.com/support/article/1299-how-to-include-a-list-unsubscribe-header),
+[SES pricing](https://aws.amazon.com/ses/pricing/),
+[SES list management](https://docs.aws.amazon.com/ses/latest/dg/sending-email-list-management.html),
+[SES endpoints](https://docs.aws.amazon.com/general/latest/gr/ses.html), all read 2026-11-03.
+SES list management in Zurich is unverified.
+
+### Open check for the owner
+
+Before the first send, find out **when and how each contact opted in**, and write down date and
+source:
+
+- Consent (or the last mail) older than 2 years: Brevo and MailerLite refuse the contact. Mailjet
+  recommends re-confirmation after 6 months without a send.
+- Sign-up through a form that sent no confirmation mail: CleverReach refuses the contact.
+- Old addresses: send a small test batch first, because a high hard-bounce rate suspends a fresh
+  account at every vendor.
+
+The first run's open points change too. The existing-customer exception no longer matters, because
+every contact consented. Its "Brevo or CleverReach" choice is now Mailjet, Brevo or CleverReach.
+
+---
+
+## First run (superseded on 2026-11-03)
+
+Everything below was written before the owner said the list is already opt-in. Its Brevo verdict
+rested on Brevo's double-opt-in API and is **superseded** by the redo above. The research on
+Hostpoint, the law, DNS and the integration sketch still holds where the redo does not say
+otherwise.
+
+## TL;DR (superseded)
 
 - **Don't send campaigns through Hostpoint.** Its AGB allow newsletters only with opt-in and opt-out,
   and they reserve limits. Its old manual names 1,000 mails per address per 24 h. Worse, campaigns
