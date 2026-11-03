@@ -45,3 +45,6 @@ phpstan.neon
 
 # macOS Finder metadata
 .DS_Store
+
+# /brag launch-video output (local only)
+/brag-output/
