@@ -554,7 +554,8 @@ cron_daily() {
     run sh "$APP/bin/cron-daily"
     expect_exit "cron-daily exits 0 on a fresh server" 0
     expect_no_output "a fresh server prints nothing"
-    [ -d "$APP/var/stats/spool" ] && [ -d "$APP/var/stats/salt" ] || fail "a fresh server has no stats spool or salt directory"
+    [ -d "$APP/var/stats/spool" ] || fail "a fresh server has no stats spool directory"
+    [ -d "$APP/var/stats/salt" ] || fail "a fresh server has no stats salt directory"
     ok "a fresh server gets the stats directories"
 
     mkdir -p "$APP/var/import-staging/abandoned" "$APP/var/import-staging/young" "$APP/var/sessions/prod"
