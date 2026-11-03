@@ -7,6 +7,7 @@ namespace App\Seo\Controller;
 use App\Shared\Http\PublicCache;
 use App\Shared\Translation\LocalizedRoutes;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\Cache;
 use Symfony\Component\Routing\Attribute\Route;
@@ -27,11 +28,20 @@ final class RobotsController extends AbstractController
         '/hochzeitslocation/*/anfrage',
     ];
 
+    public function __construct(
+        // Pre-launch, temporary: true keeps Googlebot off the whole site; other crawlers are unaffected.
+        #[Autowire('%seo.robots_block_google%')]
+        private readonly bool $blockGoogle,
+    ) {
+    }
+
     #[Route('/robots.txt', name: 'robots', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function __invoke(): Response
     {
-        $lines = ['User-agent: *'];
+        // Googlebot obeys only its own group once one exists, so it never reads the `*` rules below.
+        $lines = $this->blockGoogle ? ['User-agent: Googlebot', 'Disallow: /', ''] : [];
+        $lines[] = 'User-agent: *';
         foreach (self::DISALLOW as $path) {
             $lines[] = 'Disallow: '.$path;
         }

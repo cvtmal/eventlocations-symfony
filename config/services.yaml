@@ -34,6 +34,10 @@ parameters:
     # Q18, #36: the home page's hero, the SHA-256 of the original file of a venue photo. No published
     # photo with this hash: the hero is the first Spotlight card's photo (HomeHero::fromCards).
     home.hero_photo: cfbf9375b66ff088996ab8a64d99552e0caac0dcd0ca86189a54e4858c8b96d1
+    # Temporary, pre-launch: robots.txt opens with `User-agent: Googlebot` + `Disallow: /`; every other
+    # crawler (the LLM ones included) keeps the normal rules (Seo\Controller\RobotsController).
+    # Set to false at launch and drop the Googlebot group from RobotsTxtTest::test_the_exact_body.
+    seo.robots_block_google: true
 
 services:
     # default configuration for services in *this* file
