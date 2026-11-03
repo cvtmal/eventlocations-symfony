@@ -33,6 +33,21 @@ framework:
                 max_duration: 300
                 retry_failed:
                     max_retries: 3
+            # eventlokale's internal JSON API, for app:crm:crawl-eventlokale's private list (#49).
+            # Crm\EventlokaleCrawl paces the calls; the retries cover 429 (Retry-After honoured),
+            # 5xx and transport errors before a 429 counts toward the crawl's stop streak.
+            eventlokale.client:
+                base_uri: 'https://www.eventlokale.ch'
+                headers:
+                    User-Agent: 'Mozilla/5.0 (compatible; venue-list/1.0)'
+                    Accept: 'application/json'
+                timeout: 30
+                max_duration: 120
+                retry_failed:
+                    max_retries: 2
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 60000
 
 when@test:
     framework:
@@ -43,6 +58,10 @@ when@test:
             scoped_clients:
                 wix.client:
                     base_uri: 'https://static.wixstatic.com'
+                    retry_failed:
+                        delay: 0
+                eventlokale.client:
+                    base_uri: 'https://www.eventlokale.ch'
                     retry_failed:
                         delay: 0
         session:
