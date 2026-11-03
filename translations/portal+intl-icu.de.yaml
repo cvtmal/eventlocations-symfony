@@ -102,7 +102,7 @@ mail:
 flash:
     check_inbox: Bitte prüfen Sie Ihr Postfach. Hat die Adresse noch kein Passwort, erhalten Sie gleich eine E-Mail.
     reset_sent: Bitte prüfen Sie Ihr Postfach. Gehört die Adresse zu einem Konto, erhalten Sie gleich eine E-Mail.
-    password_reset: Ihr Passwort ist gespeichert. Sie können sich jetzt anmelden.
+    password_reset: Ihr Passwort ist gespeichert. Sie sind jetzt angemeldet.
     profile_saved: Ihre Angaben sind gespeichert.
     password_changed: Ihr Passwort ist geändert. Bitte melden Sie sich mit dem neuen Passwort an.
     account_deactivated: Das Konto ist deaktiviert. Laufende Anmeldungen sind beendet.
@@ -317,7 +317,6 @@ review:
         empty: Diese Location hat noch keine Manager.
         remove: Entfernen
         remove_for: '{name} als Manager entfernen'
-        email: E-Mail eines bestehenden Kontos
         add: Hinzufügen
     flash:
         approved: Zugriff bestätigt. Die E-Mail ist unterwegs.
@@ -329,6 +328,38 @@ review:
         manager_added: Manager hinzugefügt.
         manager_removed: Manager entfernt.
         manager_known: Diese Person ist bereits Manager dieser Location.
-        manager_unknown: Zu dieser E-Mail-Adresse gibt es kein Konto.
         manager_invalid: Bitte eine gültige E-Mail-Adresse eingeben.
         manager_gone: Diese Person ist nicht mehr Manager dieser Location.
+invite:
+    panel:
+        email: E-Mail
+        email_help: Hat die Adresse noch kein Konto, auch Vor- und Nachnamen angeben. Die Person erhält dann eine Einladung per E-Mail.
+        first_name: Vorname
+        last_name: Nachname
+        pending: Einladung offen
+        resend: Einladung erneut senden
+        resend_for: Einladung an {name} erneut senden
+    flash:
+        invited: Einladung an {email} gesendet.
+        added_mailed: Manager hinzugefügt. Die E-Mail ist unterwegs.
+        resent: Einladung erneut gesendet.
+        names_needed: Zu dieser Adresse gibt es noch kein Konto. Für die Einladung bitte Vor- und Nachnamen angeben.
+        deactivated: Dieses Konto ist deaktiviert. Bitte zuerst unter Konten reaktivieren.
+        taken: Zu dieser Adresse wurde eben ein Konto angelegt. Bitte noch einmal hinzufügen.
+        mail_failed: "Achtung: Der Zugriff ist erteilt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
+    mail:
+        invitation:
+            subject: Sie sind Location-Manager für {venue}
+            preheader: Wählen Sie Ihr Passwort, dann können Sie {venue} verwalten.
+            greeting: Guten Tag {name}
+            intro: Das Team von Hochzeitslocation hat Sie als Location-Manager für {venue} eingetragen und dafür ein Konto für Sie angelegt.
+            next: Wählen Sie über den Link unten Ihr Passwort. Danach sind Sie angemeldet und können die Angaben, Fotos und Kontaktdaten von {venue} pflegen.
+            button: Passwort wählen
+            validity: Der Link ist 7 Tage gültig und funktioniert nur einmal. Ist er abgelaufen, fordern Sie auf der Anmeldeseite unter «Passwort vergessen» einfach einen neuen an.
+            not_you: Falls Sie damit nichts zu tun haben, können Sie diese E-Mail ignorieren.
+        added:
+            subject: Sie sind Location-Manager für {venue}
+            preheader: Sie können {venue} jetzt in Ihrem Konto verwalten.
+            greeting: Guten Tag {name}
+            intro: Das Team von Hochzeitslocation hat Sie als Location-Manager für {venue} eingetragen. Sie können die Location jetzt in Ihrem Konto verwalten.
+            button: Zu meinem Konto

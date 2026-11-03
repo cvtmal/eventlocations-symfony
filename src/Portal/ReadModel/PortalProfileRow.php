@@ -11,6 +11,7 @@ final readonly class PortalProfileRow
         public string $lastName,
         public ?string $phone,
         public string $email,
+        public bool $active,
     ) {
     }
 }

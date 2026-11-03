@@ -74,6 +74,22 @@ final class ReviewQueueTest extends WebTestCase
         self::assertStringContainsString('deactivated@example.ch', $crawler->filter('#review-requests tbody')->text());
     }
 
+    public function test_approving_a_deactivated_account_is_refused_and_mails_nobody(): void
+    {
+        $this->logInAs();
+        $manager = PortalUserFactory::new()->deactivated()->create();
+        $venue = VenueFactory::createOne();
+        PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => $venue]);
+
+        $this->decide($manager, $venue, 'annehmen');
+
+        self::assertResponseRedirects('/admin/pruefung', 303);
+        self::assertEmailCount(0);
+        self::assertSame('pending', $this->accessStatus($manager, $venue));
+        self::assertSame(0, $this->auditCount(GrantVenueAccess::class));
+        self::assertStringContainsString('Dieses Konto ist deaktiviert.', $this->client->followRedirect()->filter('.toast--error')->text());
+    }
+
     public function test_the_tab_counts_the_requests(): void
     {
         $this->logInAs();

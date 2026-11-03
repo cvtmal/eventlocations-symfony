@@ -18,7 +18,7 @@ final class PortalProfileQuery
 
     public function find(string $id): ?PortalProfileRow
     {
-        $row = $this->connection->fetchAssociative('SELECT first_name, last_name, phone, email FROM portal_users WHERE id = :id', ['id' => $id]);
+        $row = $this->connection->fetchAssociative('SELECT first_name, last_name, phone, email, is_active FROM portal_users WHERE id = :id', ['id' => $id]);
 
         if (false === $row) {
             return null;
@@ -29,6 +29,7 @@ final class PortalProfileQuery
             (string) $row['last_name'],
             null === $row['phone'] ? null : (string) $row['phone'],
             (string) $row['email'],
+            (bool) $row['is_active'],
         );
     }
 }

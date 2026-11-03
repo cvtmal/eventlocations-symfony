@@ -57,6 +57,31 @@ final class PortalMailer
         return $this->sendAccessMail($email, $firstName, $venueName, 'claims.mail.rejected.subject', 'portal/email/access_rejected.html.twig');
     }
 
+    /**
+     * The invitation of an account staff created, or of one that has no password yet. It greets by the name staff
+     * typed, not by anything a visitor sent. False when the mail did not go, or the account is gone or deactivated.
+     */
+    public function sendInvitation(string $portalUserId, string $email, string $firstName, string $venueName): bool
+    {
+        $token = $this->links->invitationToken($portalUserId);
+        if (null === $token) {
+            return false;
+        }
+
+        return $this->sendLocationMail($email, 'invite.mail.invitation.subject', $venueName, 'portal/email/invitation.html.twig', [
+            'firstName' => $firstName,
+            'token' => $token,
+        ]);
+    }
+
+    /**
+     * An account with a password that staff made a manager of a location.
+     */
+    public function sendManagerAdded(string $email, string $firstName, string $venueName): bool
+    {
+        return $this->sendAccessMail($email, $firstName, $venueName, 'invite.mail.added.subject', 'portal/email/manager_added.html.twig');
+    }
+
     public function sendLocationSubmitted(string $email, string $firstName, string $venueName): bool
     {
         return $this->sendLocationMail($email, 'onboarding.mail.submitted.subject', $venueName, 'portal/email/location_submitted.html.twig', [
