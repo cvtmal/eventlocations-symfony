@@ -80,6 +80,21 @@ final class SimilarVenuesTest extends WebTestCase
         self::assertSame('80 Personen', $line->text());
     }
 
+    public function test_the_name_link_stretches_over_the_whole_card(): void
+    {
+        $card = $this->detailPage()->filter('.similar-card')
+            ->reduce(static fn (Crawler $card): bool => str_contains($card->text(), 'Andere in Zürich'));
+        self::assertCount(1, $card);
+
+        // One link per card, search/_card's stretched one, named by the venue: the photo opens it through the overlay.
+        $links = $card->filter('a, button');
+        self::assertCount(1, $links);
+        self::assertSame('card__link', $links->attr('class'));
+        self::assertSame('/hochzeitslocation/andere-in-zuerich', $links->attr('href'));
+        self::assertSame('Andere in Zürich', $links->text());
+        self::assertCount(1, $card->filter('.similar-card__picture, .similar-card__placeholder'));
+    }
+
     public function test_the_band_links_to_every_location(): void
     {
         $crawler = $this->detailPage();

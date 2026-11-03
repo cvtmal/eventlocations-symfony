@@ -113,7 +113,10 @@
     }
 }
 
+// The name's .card__link (search/_card.scss) stretches over the card. The ring sits inside the card: the track scrolls,
+// so it clips anything drawn outside a slide.
 .similar-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--space-16);
@@ -121,6 +124,11 @@
     padding: var(--space-16) var(--space-16) var(--space-24);
     border-radius: var(--radius-card);
     background: var(--c-surface-raised);
+
+    &:has(.card__link:focus-visible) {
+        outline: var(--focus-ring);
+        outline-offset: -2px;
+    }
 }
 
 .similar-card__picture,
@@ -158,14 +166,6 @@
 .similar-card__name {
     font-size: var(--fs-h3);
     line-height: var(--lh-h3);
-
-    a {
-        text-decoration: none;
-
-        &:hover {
-            text-decoration: underline;
-        }
-    }
 }
 
 // One line of text here, not the listing card's icon row.
