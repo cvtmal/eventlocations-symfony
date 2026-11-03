@@ -24,7 +24,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * The task list (CRM-5, D20): the four tabs, its pills, "Aufgabe erfassen", and done and undone by PRG.
+ * The task list (CRM-5, D20): the four tabs, Alle first and the default, its pills, "Aufgabe erfassen", and done and undone by PRG.
  */
 final class TaskListTest extends WebTestCase
 {
@@ -38,20 +38,26 @@ final class TaskListTest extends WebTestCase
     private const string LIST = '/admin/crm/aufgaben';
     private const string SAME_SITE = 'same-origin';
 
-    public function test_the_page_opens_on_my_open_tasks(): void
+    public function test_the_page_opens_on_all_tasks_the_first_tab(): void
     {
         self::mockTime('2026-10-31 10:00:00 UTC');
         ['user' => $me] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
-        TaskFactory::createOne(['title' => 'Meine', 'assignee' => $me]);
-        TaskFactory::createOne(['title' => 'Fremde', 'assignee' => AdminUserFactory::createOne()]);
+        TaskFactory::createOne(['title' => 'Meine', 'assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
+        TaskFactory::createOne(['title' => 'Fremde', 'assignee' => AdminUserFactory::createOne(), 'dueOn' => new \DateTimeImmutable('2026-11-08')]);
+        TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigte', 'assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-01')]);
 
         $crawler = $this->client->request('GET', self::LIST);
 
         self::assertResponseIsSuccessful();
-        self::assertSame(['Meine'], $this->titles($crawler));
+        self::assertSame(['Meine', 'Fremde', 'Erledigte'], $this->titles($crawler));
+        self::assertSame('3', $crawler->filter('.page-header h1 .muted')->text(), 'The heading counts the tab it shows.');
         self::assertSame(['CRM', 'Aufgaben'], $crawler->filter('.breadcrumbs__item')->each(static fn (Crawler $item): string => $item->text()));
-        self::assertSame(['Meine', 'Heute', 'Überfällig', 'Alle'], $crawler->filter('.tabs .tab')->each(static fn (Crawler $tab): string => $tab->text()));
-        self::assertSame('Meine', $crawler->filter('.tab[aria-current="page"]')->text());
+        self::assertSame(['Alle', 'Meine', 'Heute', 'Überfällig'], $crawler->filter('.tabs .tab')->each(static fn (Crawler $tab): string => $tab->text()));
+        self::assertSame(
+            [self::LIST.'?view=alle', self::LIST.'?view=meine', self::LIST.'?view=heute', self::LIST.'?view=ueberfaellig'],
+            $crawler->filter('.tabs .tab')->each(static fn (Crawler $tab): string => (string) $tab->attr('href')),
+        );
+        self::assertSame('Alle', $crawler->filter('.tab[aria-current="page"]')->text());
         self::assertSame('Andrea Keller', $crawler->filter('#task-list tbody tr td')->eq(2)->text());
     }
 
@@ -60,10 +66,11 @@ final class TaskListTest extends WebTestCase
      */
     public static function tabs(): iterable
     {
+        yield 'Meine, my open ones' => ['meine', 'Meine', ['Meine künftige']];
         yield 'Heute, for everyone' => ['heute', 'Heute', ['Fremde heutige']];
         yield 'Überfällig, for everyone' => ['ueberfaellig', 'Überfällig', ['Fremde alte']];
-        yield 'Alle, the done ones last' => ['alle', 'Alle', ['Fremde alte', 'Fremde heutige', 'Erledigte']];
-        yield 'an unknown tab is the first' => ['morgen', 'Meine', []];
+        yield 'Alle, the done ones last' => ['alle', 'Alle', ['Fremde alte', 'Fremde heutige', 'Meine künftige', 'Erledigte']];
+        yield 'an unknown tab is the first' => ['morgen', 'Alle', ['Fremde alte', 'Fremde heutige', 'Meine künftige', 'Erledigte']];
     }
 
     /**
@@ -77,12 +84,14 @@ final class TaskListTest extends WebTestCase
         $other = AdminUserFactory::createOne();
         TaskFactory::createOne(['title' => 'Fremde heutige', 'assignee' => $other, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
         TaskFactory::createOne(['title' => 'Fremde alte', 'assignee' => $other, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
+        TaskFactory::createOne(['title' => 'Meine künftige', 'assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-08')]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigte', 'assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-01')]);
 
         $crawler = $this->client->request('GET', self::LIST.'?view='.$view);
 
         self::assertResponseIsSuccessful();
         self::assertSame($titles, $this->titles($crawler));
+        self::assertSame((string) \count($titles), $crawler->filter('.page-header h1 .muted')->text());
         self::assertSame($active, $crawler->filter('.tab[aria-current="page"]')->text());
     }
 
@@ -90,10 +99,10 @@ final class TaskListTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        $crawler = $this->client->request('GET', self::LIST.'?view[]=alle');
+        $crawler = $this->client->request('GET', self::LIST.'?view[]=meine');
 
         self::assertResponseIsSuccessful();
-        self::assertSame('Meine', $crawler->filter('.tab[aria-current="page"]')->text());
+        self::assertSame('Alle', $crawler->filter('.tab[aria-current="page"]')->text());
     }
 
     /**

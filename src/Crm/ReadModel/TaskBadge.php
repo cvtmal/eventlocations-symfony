@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Admin\Security\AdminIdentity;
-use App\Crm\ValueObject\TaskDueDate;
 use Doctrine\DBAL\Connection;
-use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * The count beside "Aufgaben" in the sidebar: the viewer's open tasks due today or overdue (D20). The sidebar is on
+ * The count beside "Aufgaben" in the sidebar: the viewer's open tasks, whatever their due date (owner, 2026-11-03;
+ * D20 counted only those due today or overdue), so it matches the Meine tab and "Meine Aufgaben". The sidebar is on
  * every back-office page and the company list is at its ceiling (P12), so a statement of its own cannot sit on each of
  * them. `OwnerOptionsQuery::all()`, which the lists, the task list and the records run before they render, carries the
  * count as a column and hands it over here; only a page without that statement, like the dashboard, runs `count()`'s.
@@ -20,14 +19,13 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 final class TaskBadge implements ResetInterface
 {
-    private const string COUNT = 'SELECT COUNT(*) FROM crm_tasks t WHERE t.assignee_id = :viewer AND t.done_at IS NULL AND t.due_on <= :today';
+    private const string COUNT = 'SELECT COUNT(*) FROM crm_tasks t WHERE t.assignee_id = :viewer AND t.done_at IS NULL';
 
     private ?int $count = null;
 
     public function __construct(
         private readonly Connection $connection,
         private readonly Security $security,
-        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -82,6 +80,6 @@ final class TaskBadge implements ResetInterface
      */
     private function parameters(string $viewer): array
     {
-        return ['viewer' => $viewer, 'today' => TaskDueDate::today($this->clock->now())];
+        return ['viewer' => $viewer];
     }
 }

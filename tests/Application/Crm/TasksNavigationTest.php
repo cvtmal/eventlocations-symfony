@@ -40,25 +40,31 @@ final class TasksNavigationTest extends WebTestCase
         self::assertCount(1, $active->filter('use[href$="#square-check-big"]'));
     }
 
-    public function test_the_badge_counts_my_tasks_due_today_or_overdue(): void
+    public function test_the_badge_counts_my_open_tasks_and_matches_my_tab(): void
     {
         self::mockTime('2026-10-31 10:00:00 UTC');
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
-        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
         TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
-        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
+        TaskFactory::createMany(4, ['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-08')]);
+        TaskFactory::new()->done(new \DateTimeImmutable('2026-10-30 10:00:00 UTC'))->create(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
         TaskFactory::createOne(['assignee' => AdminUserFactory::createOne(), 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame('2', $crawler->filter('.sidebar__badge')->text());
+        self::assertSame('5', $crawler->filter('.sidebar__badge')->text());
+
+        $crawler = $this->client->request('GET', '/admin/crm/aufgaben?view=meine');
+
+        self::assertSame('5', $crawler->filter('.sidebar__badge')->text());
+        self::assertSame('5', $crawler->filter('.page-header h1 .muted')->text());
     }
 
     public function test_at_nought_there_is_no_badge(): void
     {
         self::mockTime('2026-10-31 10:00:00 UTC');
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
-        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
+        TaskFactory::new()->done(new \DateTimeImmutable('2026-10-30 10:00:00 UTC'))->create(['assignee' => $me]);
+        TaskFactory::createOne(['assignee' => AdminUserFactory::createOne()]);
 
         foreach (['/admin', '/admin/crm/firmen'] as $page) {
             $this->client->request('GET', $page);

@@ -19,7 +19,7 @@ use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * The sidebar's count (D20): which tasks it holds, and that it costs a page one statement at most, none when the owners
+ * The sidebar's count (owner, 2026-11-03): which tasks it holds, and that it costs a page one statement at most, none when the owners
  * statement carried it.
  */
 final class TaskBadgeTest extends KernelTestCase
@@ -28,30 +28,19 @@ final class TaskBadgeTest extends KernelTestCase
     use Factories;
     use RollsBackDatabase;
 
-    public function test_it_counts_my_open_tasks_due_today_or_earlier(): void
+    public function test_it_counts_my_open_tasks_whatever_their_due_date(): void
     {
         self::mockTime('2026-10-31 10:00:00 UTC');
         $me = AdminUserFactory::createOne();
         TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
         TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
-        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
+        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-08')]);
         TaskFactory::createOne(['assignee' => AdminUserFactory::createOne(), 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-31 09:00:00 UTC'))->create(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
 
         $this->viewAs($me);
 
-        self::assertSame(2, $this->badge()->count());
-    }
-
-    public function test_today_is_zurichs(): void
-    {
-        self::mockTime('2026-10-31 23:30:00 UTC'); // 1 November in Zurich.
-        $me = AdminUserFactory::createOne();
-        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
-
-        $this->viewAs($me);
-
-        self::assertSame(1, $this->badge()->count());
+        self::assertSame(3, $this->badge()->count());
     }
 
     public function test_without_a_user_there_is_no_count_and_no_statement(): void
