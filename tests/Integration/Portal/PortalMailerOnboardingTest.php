@@ -10,8 +10,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Mime\Email;
 
 /**
- * The four mails of the review (#45, POR-12, POR-13). The `rejected` row needs Phase 3's route, `portal_location_setup_step`,
- * and the `notice` row needs #43's `admin_portal_review`.
+ * The four mails of the review (#45, POR-12, POR-13), and staff's notice of an access request (`portal-b4-followups`).
+ * The `rejected` row needs Phase 3's route, `portal_location_setup_step`, and both notices need #43's `admin_portal_review`.
  */
 final class PortalMailerOnboardingTest extends KernelTestCase
 {
@@ -31,6 +31,12 @@ final class PortalMailerOnboardingTest extends KernelTestCase
             'contact',
             'Neue Location zur Prüfung: Seehaus Meilen',
             ['Anna Meier', 'anna@example.ch', 'tab=neu'],
+        ];
+        yield 'access request notice' => [
+            static fn (PortalMailer $mailer): bool => $mailer->sendAccessRequestNotice('Seehaus Meilen', 'Anna Meier', 'anna@example.ch'),
+            'contact',
+            'Neue Zugriffsanfrage: Seehaus Meilen',
+            ['Für Seehaus Meilen liegt eine neue Zugriffsanfrage vor.', 'Anna Meier', 'anna@example.ch', '/admin/pruefung?tab=requests'],
         ];
         yield 'accepted' => [
             static fn (PortalMailer $mailer): bool => $mailer->sendLocationAccepted('anna@example.ch', 'Anna', 'Seehaus Meilen', 1234),

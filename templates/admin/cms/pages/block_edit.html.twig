@@ -1,6 +1,7 @@
 {#
-    One text block (#26). Context from `TextBlockEditController`: definition (ContentBlockDefinition), form, stale
-    (a 409 re-render), locales list<{code, label}>, last_edit (?AuditLogRow).
+    One text block (#26). Context from `TextBlockEditController`: definition (ContentBlockDefinition), page_default
+    (list<TranslatableInterface>, the page's own paragraphs for an empty field, see ContentBlockPageDefault), form,
+    stale (a 409 re-render), locales list<{code, label}>, last_edit (?AuditLogRow).
 #}
 {% extends 'admin/base.html.twig' %}
 
@@ -27,7 +28,7 @@
 
 {% block main %}
     {{ form_start(form, {attr: {id: 'text-block-form', class: 'content-editor', novalidate: 'novalidate', 'aria-labelledby': 'text-block', 'data-unsaved-guard': ''}}) }}
-        {% embed 'admin/components/_card.html.twig' with {title: 'blocks.editor.card'|trans({}, 'cms'), id: 'text-block', editor_form: form, stale: stale, locales: locales, definition: definition} only %}
+        {% embed 'admin/components/_card.html.twig' with {title: 'blocks.editor.card'|trans({}, 'cms'), id: 'text-block', editor_form: form, stale: stale, locales: locales, definition: definition, page_default: page_default} only %}
             {% block body %}
                 {{ form_errors(editor_form) }}
                 {% if stale %}
@@ -35,6 +36,13 @@
                 {% endif %}
                 {% if definition.fallback %}
                     <p class="muted">{{ 'blocks.editor.fallback'|trans({text: definition.fallback|trans}, 'cms') }}</p>
+                {% elseif page_default %}
+                    <div class="muted" id="text-block-default">
+                        <p>{{ 'blocks.editor.page_default'|trans({count: page_default|length}, 'cms') }}</p>
+                        {% for paragraph in page_default %}
+                            <p>«{{ paragraph|trans }}»</p>
+                        {% endfor %}
+                    </div>
                 {% else %}
                     <p class="muted">{{ 'blocks.editor.no_fallback'|trans({}, 'cms') }}</p>
                 {% endif %}

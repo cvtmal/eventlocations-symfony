@@ -1,0 +1,14 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'claims.mail.notice.preheader'|trans({venue: venueName}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('claims.mail.notice.greeting'|trans({}, 'portal')) }}
+{{ blocks.p('claims.mail.notice.intro'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.facts([
+    {label: 'claims.mail.notice.manager'|trans({}, 'portal'), value: managerName},
+    {label: 'claims.mail.notice.email'|trans({}, 'portal'), value: managerEmail},
+]) }}
+{{ blocks.button('claims.mail.notice.button'|trans({}, 'portal'), url('admin_portal_review', {tab: 'requests'})) }}
+{% endblock %}

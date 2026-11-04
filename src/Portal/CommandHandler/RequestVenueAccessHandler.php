@@ -20,13 +20,17 @@ final class RequestVenueAccessHandler implements CommandHandlerInterface
     ) {
     }
 
-    public function __invoke(RequestVenueAccess $command): void
+    /**
+     * @return string|null the location's name when this request wrote the pending row, for staff's mail; null
+     *                     when a row was already there
+     */
+    public function __invoke(RequestVenueAccess $command): ?string
     {
         $venue = $this->venues->find($command->venueNumber);
         if (null === $venue || !$venue->isPublished) {
             throw VenueNotClaimable::forNumber($command->venueNumber);
         }
 
-        $this->access->insertPending($command->portalUserId, $venue->id, $this->clock->now());
+        return $this->access->insertPending($command->portalUserId, $venue->id, $this->clock->now()) ? $venue->name : null;
     }
 }

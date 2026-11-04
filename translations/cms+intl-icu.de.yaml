@@ -611,6 +611,7 @@ blocks:
             body: 'Markdown: **fett**, *kursiv*, Links und Listen, keine Bilder. Leer lassen, um den Text zu entfernen.'
         fallback: 'Ohne eigenen Text erscheint: «{text}»'
         no_fallback: Ohne eigenen Text erscheint an dieser Stelle nichts.
+        page_default: '{count, plural, one {Ohne eigenen Text erscheint dieser Absatz:} other {Ohne eigenen Text erscheinen diese # Absätze:}}'
     flash:
         saved: '«{name}» gespeichert.'
         unchanged: 'Keine Änderungen an «{name}».'

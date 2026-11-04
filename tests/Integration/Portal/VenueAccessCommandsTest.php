@@ -43,8 +43,8 @@ final class VenueAccessCommandsTest extends KernelTestCase
         $repository = self::getContainer()->get(PortalVenueAccessRepository::class);
         self::assertInstanceOf(PortalVenueAccessRepository::class, $repository);
 
-        $repository->insertPending($manager->id(), $venue->id(), new \DateTimeImmutable());
-        $repository->insertPending($manager->id(), $venue->id(), new \DateTimeImmutable());
+        self::assertTrue($repository->insertPending($manager->id(), $venue->id(), new \DateTimeImmutable()));
+        self::assertFalse($repository->insertPending($manager->id(), $venue->id(), new \DateTimeImmutable()));
 
         self::assertSame([['status' => 'pending', 'confirmed_at' => null]], $this->accessRows($manager, $venue));
     }
@@ -55,7 +55,7 @@ final class VenueAccessCommandsTest extends KernelTestCase
         $venue = $this->venue();
         $this->logInAs($manager);
 
-        $this->dispatch(new RequestVenueAccess($manager->id(), $venue->number()));
+        self::assertSame($venue->name(), $this->dispatch(new RequestVenueAccess($manager->id(), $venue->number())));
 
         self::assertSame([['status' => 'pending', 'confirmed_at' => null]], $this->accessRows($manager, $venue));
         self::assertSame(
@@ -63,6 +63,17 @@ final class VenueAccessCommandsTest extends KernelTestCase
             $this->auditRows('portal_user', $manager->id()),
         );
         self::assertSame('portal_user', $this->connection->fetchOne('SELECT actor_type FROM admin_audit_log'));
+    }
+
+    public function test_a_request_that_meets_an_existing_row_answers_null(): void
+    {
+        $manager = PortalUserFactory::createOne();
+        $venue = $this->venue();
+        PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => $venue]);
+        $this->logInAs($manager);
+
+        self::assertNull($this->dispatch(new RequestVenueAccess($manager->id(), $venue->number())));
+        self::assertSame([['status' => 'pending', 'confirmed_at' => null]], $this->accessRows($manager, $venue));
     }
 
     public function test_requesting_an_unpublished_venue_is_refused_without_an_audit_row(): void

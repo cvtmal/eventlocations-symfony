@@ -5,17 +5,22 @@ declare(strict_types=1);
 namespace App\Search\Extension;
 
 use App\Shared\Extension\ContentBlockDefinition;
+use App\Shared\Extension\ContentBlockPageDefault;
 use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
  * The long text of the home page, above the regions (#36, HP-6). Until staff write one, the
  * template shows the catalogue's two paragraphs, which is why there is no fallback here: a
- * declared fallback is a single paragraph.
+ * declared fallback is a single paragraph. `search/home.html.twig` and the block editor both
+ * read DEFAULT_PARAGRAPHS, so the editor's hint cannot drift from the page.
  */
-final class HomeTextBlock implements ContentBlockDefinition
+final class HomeTextBlock implements ContentBlockDefinition, ContentBlockPageDefault
 {
     public const string KEY = 'home.text';
+
+    /** Keys in the `search` catalogue. */
+    public const array DEFAULT_PARAGRAPHS = ['home.about.lead', 'home.about.filters'];
 
     public function key(): string
     {
@@ -40,5 +45,10 @@ final class HomeTextBlock implements ContentBlockDefinition
     public function fallback(): ?TranslatableInterface
     {
         return null;
+    }
+
+    public function pageDefault(): array
+    {
+        return array_map(static fn (string $key): TranslatableInterface => new TranslatableMessage($key, [], 'search'), self::DEFAULT_PARAGRAPHS);
     }
 }

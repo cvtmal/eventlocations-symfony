@@ -200,6 +200,33 @@ final class TextBlockEditorTest extends WebTestCase
         self::assertSame($purges, $this->purger()->listings);
     }
 
+    public function test_the_home_text_hint_quotes_the_paragraphs_the_empty_home_page_shows(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+
+        $crawler = $this->client->request('GET', '/admin/textbausteine/home.text');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('erscheint an dieser Stelle nichts', $crawler->filter('#text-block-form')->text());
+        $hint = $crawler->filter('#text-block-default p')->each(static fn (Crawler $paragraph): string => $paragraph->text());
+        self::assertSame('Ohne eigenen Text erscheinen diese 2 Absätze:', array_shift($hint));
+        self::assertStringStartsWith('«Jede Hochzeit ist einzigartig, genau wie ihr Ort.', $hint[0]);
+        self::assertStringStartsWith('«Mit unseren Filtern grenzen Sie die Auswahl', $hint[1]);
+
+        $home = $this->client->request('GET', '/')->filter('.home-about__text > p')->each(static fn (Crawler $paragraph): string => '«'.$paragraph->text().'»');
+        self::assertSame($home, $hint);
+    }
+
+    public function test_a_block_with_no_default_says_nothing_appears(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+
+        $crawler = $this->client->request('GET', self::EDITOR);
+
+        self::assertStringContainsString('Ohne eigenen Text erscheint an dieser Stelle nichts.', $crawler->filter('#text-block-form')->text());
+        self::assertCount(0, $crawler->filter('#text-block-default'));
+    }
+
     public function test_only_a_declared_block_is_editable(): void
     {
         $this->logInAs(AdminRole::Editor);
