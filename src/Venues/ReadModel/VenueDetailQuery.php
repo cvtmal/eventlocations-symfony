@@ -10,6 +10,7 @@ use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
+use App\Venues\ValueObject\InstagramProfile;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
@@ -232,7 +233,7 @@ final class VenueDetailQuery
             ),
             $venuePhotos,
             self::wedding($row, $termsByGroup),
-            self::nullableString($row['instagram']),
+            InstagramProfile::fromInput(self::nullableString($row['instagram']))?->url(),
             (bool) $row['coordinates_from_town'],
         );
     }

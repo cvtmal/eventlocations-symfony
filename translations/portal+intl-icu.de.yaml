@@ -218,7 +218,7 @@ onboarding:
             accepted_mail_failed: "Achtung: Die Location ist online, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
             rejected: Location abgelehnt.
             rejected_mail_failed: "Achtung: Die Location ist abgelehnt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
-            missing: "Die Location ist noch nicht vollständig: {missing}"
+            missing: "Die Location ist noch nicht vollständig. Es fehlt: {missing}"
     error:
         too_many: Sie haben bereits {limit} unfertige Locations. Schliessen Sie eine davon ab oder schreiben Sie uns.
     mail:

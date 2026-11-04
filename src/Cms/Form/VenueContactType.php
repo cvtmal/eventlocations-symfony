@@ -28,9 +28,17 @@ final class VenueContactType extends VenueCardType
             ->add('inquiryEmail', EmailType::class, ['label' => 'contact.field.inquiry_email', 'help' => 'contact.help.inquiry_email', 'required' => false])
             ->add('website', UrlType::class, ['label' => 'contact.field.website', 'required' => false, 'default_protocol' => 'https'])
             ->add('contactPerson', TextType::class, ['label' => 'contact.field.contact_person', 'required' => false])
-            ->add('instagram', UrlType::class, ['label' => 'contact.field.instagram', 'required' => false, 'default_protocol' => 'https']);
+            // Text, not `UrlType`: its default protocol turned `@handle` into `https://@handle`, a dead link (#45 F-m3).
+            ->add('instagram', TextType::class, [
+                'label' => 'contact.field.instagram',
+                'help' => 'contact.help.instagram',
+                'required' => false,
+                'invalid_message' => 'cms.venue.instagram.invalid',
+                'invalid_message_parameters' => ['{{ value }}' => ''],
+            ]);
 
         $builder->get('phone')->addModelTransformer(new PhoneNumberTransformer());
+        $builder->get('instagram')->addModelTransformer(new InstagramProfileTransformer());
     }
 
     public function configureOptions(OptionsResolver $resolver): void

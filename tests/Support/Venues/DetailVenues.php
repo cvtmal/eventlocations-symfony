@@ -61,7 +61,7 @@ final class DetailVenues
         $venue->changePriceLevel(PriceLevel::Medium);
         $venue->changeSeatingCapacity(1200, 1500);
         $venue->describePartyRules(PartyAllowed::Limited, true, new \DateTimeImmutable('1970-01-01 02:00:00'));
-        $venue->changeInstagram('https://www.instagram.com/schloss-seeblick');
+        $venue->changeInstagram('https://www.instagram.com/schloss.seeblick');
         $em->flush();
 
         $translation = VenueTranslationFactory::createOne([

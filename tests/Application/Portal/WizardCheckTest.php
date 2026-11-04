@@ -69,15 +69,32 @@ final class WizardCheckTest extends WebTestCase
         self::assertSame('Schritt 6 von 6', $crawler->filter('.progress__label')->text());
         self::assertSame('Das fehlt noch', $crawler->filter('#check-missing')->text());
         $gap = $crawler->filter('section[aria-labelledby="check-missing"] li a');
-        self::assertSame('Keine Fotos', $gap->text());
+        self::assertSame('Mindestens ein Foto', $gap->text());
         self::assertSame($this->url($venue, 'fotos'), $gap->attr('href'));
 
         $crawler = $this->press($venue);
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertStringContainsString('Keine Fotos', $crawler->filter('.form-error')->text());
+        self::assertStringContainsString('Es fehlt: Mindestens ein Foto', $crawler->filter('.form-error')->text());
         self::assertSame('draft', $this->submissionStatus($venue));
         self::assertSame([], $this->mails);
+    }
+
+    /** The frame says "Es fehlt", so each gap reads as a noun and the word is not doubled (#45 F-m2). */
+    public function test_every_gap_reads_as_a_noun_under_the_frame(): void
+    {
+        $venue = $this->draft($this->logInAsManager(), ['inquiry_email']);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertSame(['Kurztext', 'Haupt-Gebäudeart', 'Mindestens ein Foto'], $crawler->filter('section[aria-labelledby="check-missing"] li a')->each(static fn (Crawler $gap): string => $gap->text()));
+
+        $crawler = $this->press($venue);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $error = $crawler->filter('.form-error')->text();
+        self::assertSame('Die Location ist noch nicht vollständig. Es fehlt: Kurztext, Haupt-Gebäudeart, Mindestens ein Foto', $error);
+        self::assertSame(1, substr_count($error, 'fehlt'));
     }
 
     public function test_the_rights_checkbox_is_required(): void

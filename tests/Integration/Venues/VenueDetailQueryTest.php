@@ -371,7 +371,7 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame(['exclusive'], $codes($wedding->usage));
         self::assertSame(['dj'], $codes($wedding->vendors));
         self::assertSame(['de', 'en'], $codes($wedding->languages));
-        self::assertSame('https://www.instagram.com/schloss-seeblick', $detail->instagram);
+        self::assertSame('https://www.instagram.com/schloss.seeblick', $detail->instagram);
 
         self::assertSame(
             [TermGroup::Building, TermGroup::Setting, TermGroup::SuitableFor, TermGroup::Infrastructure, TermGroup::Surroundings],

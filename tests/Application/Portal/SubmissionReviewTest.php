@@ -312,7 +312,7 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertSame('unpublished', $this->venueStatus($venue));
         self::assertSame('submitted', $this->submissionStatus($venue));
         $crawler = $this->client->followRedirect();
-        self::assertStringContainsString('noch nicht vollständig: Keine Fotos', $crawler->filter('.toast--error')->text());
+        self::assertStringContainsString('noch nicht vollständig. Es fehlt: Mindestens ein Foto', $crawler->filter('.toast--error')->text());
         self::assertCount(1, $crawler->filter('#review-submissions form'));
     }
 

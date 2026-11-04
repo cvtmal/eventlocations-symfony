@@ -100,7 +100,7 @@ final class VenueMappingTest extends KernelTestCase
         $venue->changePriceLevel(PriceLevel::Exclusive);
         $venue->changeSeatingCapacity(120, 180);
         $venue->describePartyRules(PartyAllowed::Limited, true, new \DateTimeImmutable('1970-01-01 02:30:00'));
-        $venue->changeInstagram('https://www.instagram.com/testhaus-vier');
+        $venue->changeInstagram('https://www.instagram.com/testhaus.vier');
 
         $translation = new VenueTranslation($venue, 'de', 'testhaus-vier-mapping', 'Kurz.', 'Lang.', 'Meta.', 'Parkplätze vor dem Haus.');
         $translation->describeWedding('Romantisch am See', 'Mit Bühne 100 Plätze.', 'Musik bis 2 Uhr.', 'Mai bis Oktober');
@@ -153,7 +153,7 @@ final class VenueMappingTest extends KernelTestCase
         self::assertSame(PartyAllowed::Limited, $loaded->party());
         self::assertTrue($loaded->hasCurfew());
         self::assertSame('02:30', $loaded->curfewAt()?->format('H:i'));
-        self::assertSame('https://www.instagram.com/testhaus-vier', $loaded->instagram());
+        self::assertSame('https://www.instagram.com/testhaus.vier', $loaded->instagram());
 
         $loadedTranslation = $this->em->getRepository(VenueTranslation::class)->findOneBy(['venue' => $loaded]);
         self::assertInstanceOf(VenueTranslation::class, $loadedTranslation);

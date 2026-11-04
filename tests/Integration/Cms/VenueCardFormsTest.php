@@ -217,7 +217,8 @@ final class VenueCardFormsTest extends KernelTestCase
         yield 'e-mail of invalid UTF-8' => [VenueCard::Contact, ['inquiryEmail' => "a\xff@example.ch"], 'inquiryEmail'];
         yield 'website with another scheme' => [VenueCard::Contact, ['website' => 'ftp://example.ch'], 'website'];
         yield 'website too long' => [VenueCard::Contact, ['website' => 'https://example.ch/'.str_repeat('a', 482)], 'website'];
-        yield 'Instagram over http' => [VenueCard::Contact, ['instagram' => 'http://instagram.com/x'], 'instagram'];
+        yield 'Instagram naming no profile' => [VenueCard::Contact, ['instagram' => 'https://example.ch'], 'instagram'];
+        yield 'Instagram with a NUL' => [VenueCard::Contact, ['instagram' => "re\0mise"], 'instagram'];
         yield 'contact person with a NUL' => [VenueCard::Contact, ['contactPerson' => "An\0na"], 'contactPerson'];
         yield 'unknown catering' => [VenueCard::Faq, ['ownCatering' => 'sometimes'], 'ownCatering'];
         yield 'score alone' => [VenueCard::Rating, ['count' => ''], 'count'];

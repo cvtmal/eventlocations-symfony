@@ -66,7 +66,7 @@ final class ContentReaderTest extends TestCase
         self::assertSame(['summary' => 'Kurz.', 'description' => 'Lang.', 'metaDescription' => 'Meta.', 'parkingText' => 'Parkplätze.', 'ambience' => 'Romantisch am See', 'capacityNote' => 'Mit Tanzfläche 100 Plätze.', 'partyNote' => 'Musik bis 2 Uhr.', 'openingHours' => 'Mai bis Oktober', 'region' => null], $venue->translations['de']);
         self::assertSame([PriceLevel::Medium, 120, 180], [$venue->priceLevel, $venue->capacitySeated, $venue->capacityStanding]);
         self::assertSame([PartyAllowed::Limited, true, '02:00'], [$venue->party, $venue->hasCurfew, $venue->curfewAt?->format('H:i')]);
-        self::assertSame('https://www.instagram.com/schloss-beispiel', $venue->instagram);
+        self::assertSame('https://www.instagram.com/schloss.beispiel', $venue->instagram);
         self::assertSame(['de', 'gsw'], $venue->terms['language']);
         self::assertCount(1, $venue->photos);
         self::assertSame(['aussen.JPEG', 'jpg', ['de' => 'Aussen']], [$venue->photos[0]->file, $venue->photos[0]->extension, $venue->photos[0]->alt]);

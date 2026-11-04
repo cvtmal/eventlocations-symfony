@@ -70,7 +70,10 @@ final class VenueCardsValidationTest extends WebTestCase
         yield 'phone of letters' => ['venue_contact', ['phone' => 'abc'], '#venue_contact_phone'];
         yield 'e-mail without a dot in the domain' => ['venue_contact', ['inquiryEmail' => 'info@seeblick'], '#venue_contact_inquiryEmail'];
         yield 'website without http' => ['venue_contact', ['website' => 'ftp://seeblick.example'], '#venue_contact_website'];
-        yield 'instagram over http' => ['venue_contact', ['instagram' => 'http://www.instagram.com/seeblick'], '#venue_contact_instagram'];
+        yield 'instagram naming a website' => ['venue_contact', ['instagram' => 'https://www.seeblick.example'], '#venue_contact_instagram'];
+        yield 'instagram post, not a profile' => ['venue_contact', ['instagram' => 'https://www.instagram.com/p/C0abc123/'], '#venue_contact_instagram'];
+        yield 'instagram handle with a space' => ['venue_contact', ['instagram' => '@schloss seeblick'], '#venue_contact_instagram'];
+        yield 'instagram handle of 31 characters' => ['venue_contact', ['instagram' => str_repeat('a', 31)], '#venue_contact_instagram'];
         yield 'contact person too long' => ['venue_contact', ['contactPerson' => $long(151)], '#venue_contact_contactPerson'];
 
         yield 'unknown own catering' => ['venue_faq', ['ownCatering' => 'sometimes'], '#venue_faq_ownCatering_error'];
@@ -145,6 +148,71 @@ final class VenueCardsValidationTest extends WebTestCase
             'venue_faq' => 'checked',
             default => array_values($values)[0],
         }, $shown);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function instagramInputs(): iterable
+    {
+        yield 'handle' => ['remise.rebhalde'];
+        yield '@handle' => ['@remise.rebhalde'];
+        yield 'profile URL' => ['https://www.instagram.com/remise.rebhalde/?hl=de'];
+        yield 'profile URL over http, without www' => ['http://instagram.com/remise.rebhalde'];
+    }
+
+    /** The card stores every accepted shape as the one profile link, and shows that link back (#45 F-m3). */
+    #[DataProvider('instagramInputs')]
+    public function test_an_instagram_handle_or_url_is_stored_as_the_profile_link(string $input): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->venue();
+
+        $this->post($venue, 'venue_contact', ['instagram' => $input]);
+
+        self::assertResponseRedirects();
+        self::assertSame('https://www.instagram.com/remise.rebhalde', $this->connection->fetchOne('SELECT instagram FROM venues WHERE id = ?', [$venue->id()]));
+        $crawler = $this->client->followRedirect();
+        self::assertSame('https://www.instagram.com/remise.rebhalde', $crawler->filter('#venue_contact_instagram')->attr('value'));
+    }
+
+    public function test_an_emptied_instagram_is_removed(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->venue();
+
+        $this->post($venue, 'venue_contact', ['instagram' => ' ']);
+
+        self::assertResponseRedirects();
+        self::assertNull($this->connection->fetchOne('SELECT instagram FROM venues WHERE id = ?', [$venue->id()]));
+    }
+
+    /**
+     * The old `UrlType` stored a dotted handle typed without `@` as `https://remise.rebhalde`, which names no profile.
+     * Sent back untouched it stays as stored and blocks no other field; a readable old shape shows as the profile link
+     * (small-ux-followups F-M1).
+     */
+    public function test_an_untouched_unreadable_instagram_does_not_block_the_card(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->venue();
+        $this->connection->executeStatement("UPDATE venues SET instagram = 'https://remise.rebhalde' WHERE id = ?", [$venue->id()]);
+
+        $this->post($venue, 'venue_contact', ['contactPerson' => 'Beat Muster']);
+
+        self::assertResponseRedirects();
+        self::assertSame(['Beat Muster', 'https://remise.rebhalde'], $this->connection->fetchNumeric('SELECT contact_person, instagram FROM venues WHERE id = ?', [$venue->id()]));
+    }
+
+    public function test_a_readable_old_instagram_shows_as_the_profile_link(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->venue();
+        $this->connection->executeStatement("UPDATE venues SET instagram = 'https://@remiserebhalde' WHERE id = ?", [$venue->id()]);
+
+        $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
+
+        self::assertSame('https://www.instagram.com/remiserebhalde', $crawler->filter('#venue_contact_instagram')->attr('value'));
     }
 
     private function venue(): Venue

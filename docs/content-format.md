@@ -75,7 +75,7 @@ contact:                              # all optional
   inquiry_email: anfragen@example.ch  # receives the inquiries
   website: https://example.ch         # starts with http:// or https://
   contact_person: Anna Muster
-  instagram: https://www.instagram.com/schloss-beispiel   # starts with https://
+  instagram: https://www.instagram.com/schloss.beispiel   # starts with https://
 faq:                                  # optional; null or missing = unknown
   own_catering: allowed               # allowed | fixed_caterer
   daylight: true

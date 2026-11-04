@@ -26,7 +26,7 @@
             {% block body %}
                 <ul>
                     {% for gap in gaps %}
-                        <li><a href="{{ path('portal_location_setup_step', {number: number, step: gap.step}) }}">{{ ('dashboard.incomplete.missing.' ~ gap.code)|trans({}, 'cms') }}</a></li>
+                        <li><a href="{{ path('portal_location_setup_step', {number: number, step: gap.step}) }}">{{ ('editor.checklist.item.' ~ gap.code)|trans({}, 'cms') }}</a></li>
                     {% endfor %}
                 </ul>
             {% endblock %}

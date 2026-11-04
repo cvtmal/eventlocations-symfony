@@ -77,7 +77,7 @@ final class VenueMarkdownTest extends WebTestCase
         self::assertStringContainsString("\n- 0.9 km bis Bahnhof Zürich Stadelhofen\n", $body);
         self::assertStringContainsString("\n- **Parking?** 100 Parkplätze (kostenlos)\n", $body);
         self::assertStringContainsString("\n- [Website](https://seeblick.example)\n", $body);
-        self::assertStringContainsString("\n- [Instagram](https://www.instagram.com/schloss-seeblick)\n", $body);
+        self::assertStringContainsString("\n- [Instagram](https://www.instagram.com/schloss.seeblick)\n", $body);
         self::assertStringContainsString("\n- [Anfrage über das Formular](".self::HTML_URL."#anfrage)\n", $body);
         self::assertStringContainsString("\n> Ein wunderbarer Tag am See.\n>\n> Loreana - Besucherin, April 2025\n", $body);
     }

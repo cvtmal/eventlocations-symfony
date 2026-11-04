@@ -28,7 +28,7 @@ final class ImportWeddingFactsTest extends KernelTestCase
         $this->assertImports();
 
         self::assertSame(
-            ['medium', 120, 180, 'limited', true, '02:00', 'https://www.instagram.com/schloss-fakten'],
+            ['medium', 120, 180, 'limited', true, '02:00', 'https://www.instagram.com/schloss.fakten'],
             array_values($this->factsOf('schloss-fakten')),
         );
         self::assertSame(
@@ -117,7 +117,7 @@ final class ImportWeddingFactsTest extends KernelTestCase
             'price_level' => 'medium',
             'capacity' => ['seated' => 120, 'standing' => 180],
             'party' => ['allowed' => 'limited', 'has_curfew' => true, 'curfew_at' => '02:00'],
-            'contact' => ['instagram' => 'https://www.instagram.com/schloss-fakten'],
+            'contact' => ['instagram' => 'https://www.instagram.com/schloss.fakten'],
             'terms' => [
                 'ceremony' => ['free_ceremony', 'rain_alternative'],
                 'amenity' => ['overnight', 'dance_floor'],
