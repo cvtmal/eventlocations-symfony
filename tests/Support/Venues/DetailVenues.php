@@ -165,6 +165,15 @@ final class DetailVenues
         return self::locationless($slug, $name, $canton);
     }
 
+    /** A published venue with a canton and a pin but no town, as production's after the go-live import. */
+    public static function inCantonWithPin(string $lat, string $lng, string $slug = 'scheune-mit-pin', string $name = 'Scheune Mit Pin', string $cantonCode = 'zh'): Venue
+    {
+        $canton = repository(Canton::class)->find($cantonCode);
+        \assert($canton instanceof Canton);
+
+        return self::locationless($slug, $name, $canton, null, ['lat' => $lat, 'lng' => $lng]);
+    }
+
     /** A published venue that knows only a region text (#21). */
     public static function inRegionOnly(EntityManagerInterface $em, string $region, string $slug = 'remise-nur-region', string $name = 'Remise Nur Region'): Venue
     {
@@ -182,9 +191,12 @@ final class DetailVenues
         return $town;
     }
 
-    private static function locationless(string $slug, string $name, ?Canton $canton, ?string $region = null): Venue
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    private static function locationless(string $slug, string $name, ?Canton $canton, ?string $region = null, array $attributes = []): Venue
     {
-        $venue = VenueFactory::new()->withoutLocation($canton)->create([
+        $venue = VenueFactory::new()->withoutLocation($canton)->create($attributes + [
             'name' => $name,
             'tier' => Tier::Basic,
             'status' => VenueStatus::Published,

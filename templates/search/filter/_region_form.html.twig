@@ -5,9 +5,11 @@
     natively. With JS (js/region-filter.js): the tabs appear, the hidden fields carry the values and only the active
     tab's field is enabled, so the two tabs never compete at submit. Never write "Karte" as visible text here: the map's
     name stays in aria-label (ListingControllerTest checks the bar's text).
-    While no published venue has a town (#21, filter_has_data('place')) the form only offers cantons: the modifier hides
+    While no published venue has coordinates (filter_has_data('place')) the form only offers cantons: the modifier hides
     the tabs and the Ort panel and `disabled` keeps those fields out of a no-JS submit. Nothing is removed, because
     js/region-filter.js reads these elements unguarded. A bookmarked ?place= keeps the full form for that request.
+    While no published venue has a town (filter_has_data('town')) the Umkreis starts at 1 km, because 0 means "only
+    that town or ZIP" and would match nothing; a bookmarked ?radius=0 still parses and the slider shows 1.
     Landing pages (#17): the action stays the plain listing and the hidden state keeps every other filter, a building
     page's `building` included. `data-landing` maps each canton with a page to its path; region-filter.js submits a
     canton choice there (S5: no redirect). Without JS a canton is ?canton=…, noindexed and canonical to its path.
@@ -59,7 +61,7 @@
         <div class="region-filter__radius">
             <label for="filter-region-radius">{{ 'filter.radius_label'|trans({}, 'search') }}</label>
             <output for="filter-region-radius" hidden></output>
-            <input type="range" id="filter-region-radius" name="radius" min="0" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_RADIUS') }}" step="1" value="{{ criteria.radius ?? default_radius }}" data-default="{{ default_radius }}"{% if canton_only %} disabled{% endif %}>
+            <input type="range" id="filter-region-radius" name="radius" min="{{ filter_has_data('town') ? 0 : 1 }}" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_RADIUS') }}" step="1" value="{{ criteria.radius ?? default_radius }}" data-default="{{ default_radius }}"{% if canton_only %} disabled{% endif %}>
         </div>
     </div>
     <div class="region-filter__side">
