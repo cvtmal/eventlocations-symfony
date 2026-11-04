@@ -268,7 +268,7 @@ nothing while the file fails `app:prod:check-env`. The command prints variable n
 | `ADMIN_DEV_AUTOLOGIN` | Must stay empty |
 | `MEDIA_ROOT` | `/home/djweddin/www/hochzeitslocation.ch/var/media`, absolute, inside `var/` so it survives a deploy |
 | `MEDIA_MAX_PIXELS`, `MEDIA_MAX_PORTRAIT_RATIO` | `20000000` and `2` for a CMS photo. Raise the pixels only together with `memory_limit` in `public/.user.ini`. |
-| `GOOGLE_MAPS_EMBED_KEY` | Optional. Restrict the key to the Maps Embed API and the site's referrer. Empty: only the link to Google Maps. |
+| `GOOGLE_MAPS_EMBED_KEY` | Optional. Restrict the key to the Maps Embed API and the referrer `https://hochzeitslocation.ch/*`. Empty: only the link to Google Maps. After a change, run `sh bin/prod-import purge`, or cached pages keep the old map for up to a day. |
 | `SENTRY_DSN` | Optional. Empty: no error reports. |
 | `SYMFONY_TRUSTED_PROXIES` | Only if the probe shows a proxy in front of PHP. The exact address, never `REMOTE_ADDR`. |
 
@@ -328,17 +328,20 @@ Every command except `help` needs both, `export` included.
 |---|---|
 | `sh bin/prod-import export` | Writes the content folders from the CSV. Touches neither Neon nor the server. |
 | `sh bin/prod-import import` | `app:venues:import` against Neon, media into `var/prod-media` |
+| `sh bin/prod-import import-dry` | `app:venues:import --dry-run` against Neon: the summary and the venues it would keep. Writes nothing. |
 | `sh bin/prod-import sync` | rsync to the server. Additive: it deletes nothing there. |
 | `sh bin/prod-import purge` | Empties the HTTP cache on the server |
 | `sh bin/prod-import all` | `import`, then `sync`, then `purge` |
 | `sh bin/prod-import regenerate [--venue=N]` | `app:media:regenerate` against Neon, then `sync`, then `purge` |
 
-**Run order:** first deploy (it creates the schema and the towns), then `export`, then `all`, and
-only then may staff edit. Check that the summary shows no failures and that a venue page shows its
-photos.
+**Run order:** first deploy (it creates the schema and the towns), then `export`, then
+`import-dry` until its summary is right, then `all`. Check that the summary shows no failures and
+that a venue page shows its photos.
 
-Later imports skip every venue staff have edited and report it as `cms_edited`. That is the import
-guard doing its job (see `docs/content-format.md`, "After a CMS edit").
+Every import keeps each venue staff or a manager have edited since its last import, and lists it as
+`cms_edited`: nothing in its folder reaches it, its coordinates included. That is the import guard
+doing its job (see `docs/content-format.md`, "After a CMS edit"). `import-dry` shows that list
+before anything is written.
 
 **Never:**
 
@@ -353,30 +356,149 @@ at a time. It runs by hand only, never from cron.
 
 ### Liechtenstein venues (#46), once
 
-The release with #46 makes Liechtenstein region `li` and stops the export skipping its 4 rows.
-Run these in order; each step is safe to rerun. Only step 4 fails before the deploy: the import
-refuses the 4 folders on the canton code (`fk_venues_canton_code`, exit 1, the other venues are
-unaffected). Steps 2 and 3 only write files under `content/`.
+Replaced by the next section. Don't run the old #46 steps; its geocode and import steps are wrong
+now.
+
+### Geocode the venues (Q3) and add Liechtenstein (#46), once
+
+**This replaces the standalone #46 runbook.** The steps of 2026-11-04's "Liechtenstein venues
+(#46), once" are all in here; run only this list. Its old step 4 expected "the rest unchanged",
+which is wrong: the unedited venues show as "updated" because they get their pins (step 5).
+
+One sequence for two jobs, because both arrive with the same import:
+
+- **#46:** the release makes Liechtenstein region `li`, and the export stops skipping its 4 rows.
+- **Q3:** the map pins. The owner set `GOOGLE_MAPS_EMBED_KEY` on the server (2026-11-04), but a
+  venue shows a map only when it has coordinates, and production has none yet. The coordinates are
+  already in the content folders: the geocoder ran on 2026-11-02 at 17:39 and gave 242 of the 243
+  folders a `geo:`. The go-live import ran before that, between 16:21 and 16:46.
+
+Run the steps in order; each is safe to rerun.
+
+What each step touches:
+- Steps 2 to 4 write only under `content/` in the main checkout: copies in `owner/`, a `geo:` in
+  each `venues/*/venue.yaml` that has none, and `owner/geocode-report.csv`, which every geocode run
+  replaces.
+- Step 5 reads Neon and writes nothing.
+- Step 6 writes the venues in Neon, adds media on the server and empties the server's page cache.
+- Steps 7 and 8 are back-office saves.
+
+Deploy first (step 1). Without the #46 release on the server, the import refuses the 4
+Liechtenstein folders on the canton code (`fk_venues_canton_code`, exit 1). The other venues are
+unaffected.
+
+**Before you start:**
+
+- **Main checkout:** run `git pull --ff-only`, so it holds the commit production runs, then
+  `make vendor` and `make up`. Put `PROD_DATABASE_URL` and `PROD_SSH` in the shell, as above.
+- **The Places key:** a key of its own, not the embed key. Restrict it to "Places API (New)", and
+  to your own IP address if you like. It lives in the shell only: never in `.env*`, the repo or the
+  server's files. Each search is a "Text Search Pro" call: 5,000 a month are free, then USD 32 per
+  1,000. This run makes about 10: the dry run and the real run each ask the 5 folders without
+  `geo:`. Put it in the shell with:
+  ```sh
+  read -rs GOOGLE_PLACES_API_KEY && export GOOGLE_PLACES_API_KEY
+  ```
+- **The embed key's referrer rule** in the Cloud console must allow `https://hochzeitslocation.ch/*`.
+  The site sends Google only its origin (`Referrer-Policy: strict-origin-when-cross-origin`), so a
+  rule naming a path never matches. `www` only redirects, so it serves no page and needs no rule.
+  After any change of the key in `.env.local`, run `sh bin/prod-import purge`; otherwise cached
+  pages keep the old map for up to a day.
 
 1. **Deploy.** `bin/deploy` runs the migration, then `app:geo:import-towns`: expect 13 new towns.
    Check that `/hochzeitslocations?canton=li` answers 200 with 0 results and that the place search
    suggests "Vaduz".
-2. **Export:** `sh bin/prod-import export`. Expect 247 venues and 4 new folders `<slug>-<id8>`;
-   the 243 existing folders stay byte-identical, and no line says "not in Switzerland".
-3. **Geocode.** Put the key in the shell only (`read -rs GOOGLE_PLACES_API_KEY && export
-   GOOGLE_PLACES_API_KEY`), then run
-   `docker compose exec -T -e GOOGLE_PLACES_API_KEY php php bin/console app:venues:geocode`. Only
-   folders without `geo:` are asked: the 4, plus any folder still without `geo:`. Today that is 5,
-   because the Swiss folder the earlier run did not find is asked again. The run overwrites
-   `content/owner/geocode-report.csv`; read it. A `NO` row means a wrong pin: fix that folder's
-   `geo:` by hand before step 4, or delete it to leave the venue without a pin.
-4. **Import:** `sh bin/prod-import all`. Expect 4 created and the rest unchanged or `cms_edited`;
-   media sync and purge follow. The 4 venues now have no CRM company, but each already has one:
-   the customer import of 2026-11-03 created it, linked to no venue. Do **not** run
-   `sh bin/prod-import crm-bootstrap`, and do not press "Firmen aus … Locations anlegen" on the CRM
-   company list or "Firma anlegen" in the CRM card of a venue in the CMS, before step 5 is done:
-   each would create a second company for these venues.
-5. **Link the 4 venues to their companies, in the CRM, by hand.** The pairs are in
+2. **Save what is there.** Every geocode run replaces the report and lists only the folders it
+   asked, so a rerun would lose the 242 results of 2026-11-02. The tarball takes the venue files as
+   they are now, for the undo below.
+   Both commands leave an existing copy alone, so a second run keeps the first one:
+   ```sh
+   cp -n content/owner/geocode-report.csv content/owner/geocode-report-2026-11-02.csv
+   [ -e content/owner/venue-yaml-before-q3.tgz ] || tar -czf content/owner/venue-yaml-before-q3.tgz content/venues/*/venue.yaml
+   ```
+   The saved report has 243 rows: 242 `set`, 1 `not found`, and 13 rows whose `name_matches` is
+   `NO` (the name Google found shares no word with ours). The 13 and the 1 are listed for step 8 in
+   `content/owner/q3-pin-check.md`, which git ignores, because real names stay out of the repo.
+3. **Export:** `sh bin/prod-import export`. Expect 247 venues and 4 new folders `<slug>-<id8>`. The
+   243 existing folders stay byte-identical, their `geo:` included, and no line says "not in
+   Switzerland".
+4. **Geocode the folders without `geo:`:** the 4 Liechtenstein folders, and the Swiss one Google
+   did not find.
+   1. Dry run first. It writes only the report:
+      ```sh
+      docker compose exec -T -e GOOGLE_PLACES_API_KEY php php bin/console app:venues:geocode --dry-run
+      ```
+      Expect `Dry run: … found, … not found, 0 failed, 242 already had coordinates.`, where found
+      plus not found is 5. Read `content/owner/geocode-report.csv`: 5 rows. A `would set` row shows
+      the name and address Google matched.
+   2. Run the same command without `--dry-run`. It asks the same 5 again and writes `geo:` into
+      the folders it finds.
+   3. Read the report again. Add every `NO` row and every `not found` row to
+      `q3-pin-check.md` for step 8.
+   4. If a row reads `failed` (the network, or Google's quota), the command exits 1. Run it again:
+      it asks only what is still missing.
+   5. When done, run `unset GOOGLE_PLACES_API_KEY`. If you won't need the key again, delete it in
+      the Cloud console.
+5. **Import dry run:** `sh bin/prod-import import-dry`. It reads Neon and writes nothing. First
+   comes one line per venue that would change, about 240 of them, such as `updated    <folder>`,
+   `created    <folder>` or `cms_edited  <folder>`. Then the summary:
+   ```text
+   Dry run: Venues: 247 seen, 4 created, U updated, N unchanged, 0 failed, 0 unpublished. …
+   K venues kept because the CMS edited them; --overwrite-cms-edits replaces them:
+   ```
+   followed by the list of those folders. The "kept" line and its list appear only when K is more
+   than 0, and read "1 venue kept" for one.
+   - "updated" are the unedited venues that get their pin, because their folder gained `geo:`
+     after the go-live import.
+   - "unchanged" are the ones that still have no `geo:`.
+   - "created" are the 4 Liechtenstein venues.
+   - U + N + K is 243.
+
+   A `failed` line means stop: send it to the dev team. Keep the list of kept venues, because the
+   import gives them no pin (step 7). Never use `--overwrite-cms-edits`: it would replace
+   everything staff and managers changed on those venues.
+
+   **The threshold.** Step 7 types at most K pins by hand: every kept folder has a `geo:`, and some
+   kept venues may already have a pin from staff. If K is **more than 20**, do step 6 as usual,
+   skip step 7 and ask the dev lead, who will have a command built that sets only their
+   coordinates. Steps 8 to 10 go ahead, the CRM links included, because they don't depend on
+   step 7.
+6. **Import:** note the time, which is the point to restore to for an undo. Then run
+   `sh bin/prod-import all`: import, media sync, purge. Expect the counts of step 5 without
+   "Dry run".
+
+   The 4 Liechtenstein venues now have no CRM company, but each already has one: the customer import
+   of 2026-11-03 created it, linked to no venue. Do **not** run `sh bin/prod-import crm-bootstrap`,
+   and do not press "Firmen aus … Locations anlegen" on the CRM company list or "Firma anlegen" in
+   the CRM card of a venue in the CMS, before step 9 is done: each would create a second company
+   for these venues.
+7. **Pins for the kept venues, by hand,** at most 20 (step 5's threshold). For each folder in step
+   5's list:
+   1. Open `content/venues/<folder>/venue.yaml` and copy the two numbers under `geo:`, `lat` and
+      `lng`. A folder without `geo:` has no pin to copy: skip it.
+   2. In the back office, open Locations, search the venue, open it and go to the card "Adresse &
+      Lage". Look at "Breite" and "Länge" before typing:
+      - **Both empty:** put `lat` into "Breite" and `lng` into "Länge", then save.
+      - **Filled, with the note "Ortsmitte von …, auf der Website ohne Karte" below them:** that
+        is a town centre, which shows no map. Replace it with the folder's two numbers and save.
+      - **Filled, without that note:** staff set this pin. Leave it. If the venue's map shows the
+        wrong place, step 8 fixes it.
+
+      A save empties the page cache by itself.
+8. **Check the possible wrong pins** with `content/owner/q3-pin-check.md`. For each venue:
+   1. Open its page and press "Karte laden", or "Auf Google Maps öffnen". Compare the pin with the
+      venue, for example with its website.
+   2. A wrong pin: right-click the real building in Google Maps, and the first line of the menu
+      holds the two numbers. Put them into "Adresse & Lage" as in step 7.
+   3. If you don't know where the venue is, remove the pin: no map is better than a wrong one. How
+      depends on «PLZ / Ort» in the same card:
+      - **Empty** (most venues, which have only a canton): empty "Breite" and "Länge" and save.
+      - **Filled:** press «Ortsmitte übernehmen». The CMS refuses empty fields for a venue with a
+        town, saying "Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen." A town
+        centre shows no map, and the distance search then uses the town.
+
+   The list explains the same steps.
+9. **Link the 4 Liechtenstein venues to their companies, in the CRM, by hand.** The pairs are in
    `content/owner/46-crm-links.md` in the main checkout (git-ignored, real names stay out of the
    repo), one per line:
    - link venue `<LI venue 1>` to company `<LI company 1>`
@@ -394,9 +516,27 @@ unaffected). Steps 2 and 3 only write files under `content/`.
    venue's CMS page shows that company in its CRM card. A search by each venue's name shows no
    second company. If the 4 were the only venues without a company, the button "Firmen aus …
    Locations anlegen" is gone from the list.
-6. **Check.** The 4 detail pages answer 200 and read "Liechtenstein", `?canton=li` lists 4, they
-   are in `sitemap-venues-*.xml`, and `/hochzeitslocations/liechtenstein` is a 404 until a fifth
-   Liechtenstein venue exists.
+10. **Check.**
+    - **Pins.** Open five venue pages from different cantons, one of them in Liechtenstein. Each
+      shows the map box with "Karte laden"; nothing loads from Google before the click. The click
+      shows Google's map with the pin on the venue. A box with only "Auf Google Maps öffnen" means
+      the server has no embed key: see "Before you start".
+    - **Distance search.** `/hochzeitslocations?place=8001&radius=20` now lists venues around
+      Zürich.
+    - **Liechtenstein.** The 4 detail pages answer 200 and read "Liechtenstein", and `?canton=li`
+      lists 4. They are in `sitemap-venues-*.xml`. `/hochzeitslocations/liechtenstein` is a 404
+      until a fifth Liechtenstein venue exists.
+    - **Keep:** `geocode-report-2026-11-02.csv`, `venue-yaml-before-q3.tgz` and `q3-pin-check.md`
+      stay in the main checkout's `content/owner/`. Git ignores them.
+
+**Undo.**
+- **One wrong pin:** "Adresse & Lage", as in step 8.
+- **Before step 6,** nothing has reached production. If step 3 changed any of the 243 folders,
+  which it should not, `tar -xzf content/owner/venue-yaml-before-q3.tgz` puts their `venue.yaml`
+  back as it was in step 2, `geo:` included.
+- **The whole of step 6:** use Neon's restore to the time you noted (§Restore production), then
+  `sh bin/prod-import purge`. It also undoes every other change made since then, so for a few pins
+  prefer the back office.
 
 ### Customer sheet (#48)
 
@@ -416,7 +556,8 @@ company and venue names and classes, never an email or a phone number.
 
 1. Make a Neon branch first, so a bad run can be undone.
 2. `sh bin/prod-import crm-bootstrap`. It is safe to run again: a second run creates nothing.
-   Not while the 4 Liechtenstein venues are unlinked, though (§Liechtenstein venues (#46), step 5).
+   Not while the 4 Liechtenstein venues are unlinked, though (§Geocode the venues (Q3) and add
+   Liechtenstein (#46), step 9).
    Without it, every row that matches a venue is reported as blocked.
 3. `sh bin/prod-import customers-dry`, then read the report. If names need fixing, fix them in the
    sheet and run it again, until the report is right.
