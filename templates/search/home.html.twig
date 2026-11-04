@@ -93,8 +93,10 @@
                 {%- if text %}
                 <div class="home-about__staff">{{ text }}</div>
                 {%- else %}
-                <p>{{ 'home.about.lead'|trans({}, 'search') }}</p>
-                <p>{{ 'home.about.filters'|trans({}, 'search') }}</p>
+                {#- The same keys the block editor quotes in its hint. -#}
+                {%- for key in constant('App\\Search\\Extension\\HomeTextBlock::DEFAULT_PARAGRAPHS') %}
+                <p>{{ key|trans({}, 'search') }}</p>
+                {%- endfor %}
                 {%- endif %}
             </div>
             <dl class="home-about__kinds">

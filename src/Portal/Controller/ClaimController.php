@@ -10,6 +10,7 @@ use App\Cms\ReadModel\VenueListRow;
 use App\Cms\ValueObject\VenueNumber;
 use App\Portal\Command\RequestVenueAccess;
 use App\Portal\Exception\VenueNotClaimable;
+use App\Portal\Mailer\PortalMailer;
 use App\Portal\ReadModel\ManagerAccessQuery;
 use App\Portal\Security\PortalIdentity;
 use App\Portal\ValueObject\PortalFlash;
@@ -19,13 +20,16 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
  * POR-5: a manager finds a published location and asks for access. The number travels in the POST body, so the
  * route takes no `{number}` and `PortalRoutesAreClosedTest` walks it without a strict parameter. Asking twice
- * reads first and dispatches nothing, because a no-op command would still write an audit row.
+ * reads first and dispatches nothing, because a no-op command would still write an audit row. Staff get a mail
+ * at `site.contact_email` only when the request wrote the pending row, so a second click mails nobody; staff
+ * add a manager through `GrantVenueAccess` or `InviteLocationManager`, never through this route.
  */
 final class ClaimController extends AbstractController
 {
@@ -53,7 +57,7 @@ final class ClaimController extends AbstractController
     }
 
     #[Route('/konto/locations/zugriff', name: 'portal_claims_ask', methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    public function ask(Request $request, #[CurrentUser] PortalIdentity $identity, MessageBusInterface $commandBus): Response
+    public function ask(Request $request, #[CurrentUser] PortalIdentity $identity, MessageBusInterface $commandBus, PortalMailer $mailer): Response
     {
         $input = $request->request->all();
         $number = $input['number'] ?? null;
@@ -76,8 +80,12 @@ final class ClaimController extends AbstractController
         }
 
         try {
-            $commandBus->dispatch(new RequestVenueAccess($identity->id(), $number));
+            $venueName = $commandBus->dispatch(new RequestVenueAccess($identity->id(), $number))->last(HandledStamp::class)?->getResult();
             $this->addFlash('success', PortalFlash::message('claims.flash.requested'));
+            // After the commit, so a mail cannot undo the request; `PortalMailer` swallows a failed send.
+            if (\is_string($venueName)) {
+                $mailer->sendAccessRequestNotice($venueName, $identity->displayName(), $identity->email());
+            }
         } catch (HandlerFailedException $failure) {
             if ([] === $failure->getWrappedExceptions(VenueNotClaimable::class)) {
                 throw $failure;

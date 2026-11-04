@@ -27,11 +27,12 @@ class PortalVenueAccessRepository extends ServiceEntityRepository
 
     /**
      * Raw SQL, because two parallel clicks by one manager must not meet a unique violation: the second one
-     * writes nothing and raises nothing, and an existing row of any status stays as it is.
+     * writes nothing and raises nothing, and an existing row of any status stays as it is. True when this call
+     * wrote the row, so only one of the two clicks tells staff.
      */
-    public function insertPending(string $portalUserId, string $venueId, \DateTimeImmutable $at): void
+    public function insertPending(string $portalUserId, string $venueId, \DateTimeImmutable $at): bool
     {
-        $this->getEntityManager()->getConnection()->executeStatement(
+        return 0 < $this->getEntityManager()->getConnection()->executeStatement(
             <<<'SQL'
                 INSERT INTO portal_venue_access (portal_user_id, venue_id, status, requested_at)
                 VALUES (:user, :venue, :status, :at)

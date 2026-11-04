@@ -289,6 +289,14 @@ claims:
             greeting: Guten Tag {name}
             intro: Wir konnten Ihre Anfrage für {venue} nicht bestätigen.
             again: Sie können den Zugriff jederzeit erneut anfragen.
+        notice:
+            subject: "Neue Zugriffsanfrage: {venue}"
+            preheader: "Für {venue} liegt eine neue Zugriffsanfrage vor."
+            greeting: Neue Zugriffsanfrage
+            intro: "Für {venue} liegt eine neue Zugriffsanfrage vor."
+            manager: Angefragt von
+            email: E-Mail
+            button: Zur Prüfung
 review:
     title: Prüfung
     nav: Prüfung

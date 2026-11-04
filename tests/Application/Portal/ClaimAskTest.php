@@ -15,6 +15,10 @@ use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Mailer\Event\MessageEvent;
+use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Mime\Email;
 use Zenstruck\Foundry\Test\Factories;
 
 final class ClaimAskTest extends WebTestCase
@@ -40,6 +44,59 @@ final class ClaimAskTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertStringContainsString('Ihre Anfrage liegt bei uns.', $crawler->text());
         self::assertSame('Anfrage liegt bei uns', trim($crawler->filter('#claim-results .pill')->text()));
+    }
+
+    public function test_asking_mails_staff_at_the_contact_address(): void
+    {
+        $this->logInAsManager($this->createManager(attributes: ['email' => 'manager@example.ch', 'firstName' => 'Max', 'lastName' => 'Muster']));
+        $venue = VenueFactory::createOne(['name' => 'Schloss Seeblick']);
+
+        $this->ask($venue);
+
+        self::assertEmailCount(1);
+        $mail = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $mail);
+        self::assertSame([self::getContainer()->getParameter('site.contact_email')], array_map(static fn ($address): string => $address->getAddress(), $mail->getTo()));
+        self::assertSame('Neue Zugriffsanfrage: Schloss Seeblick', $mail->getSubject());
+        $html = (string) $mail->getHtmlBody();
+        self::assertStringContainsString('Max Muster', $html);
+        self::assertStringContainsString('manager@example.ch', $html);
+        self::assertStringContainsString('http://localhost/admin/pruefung?tab=requests', $html);
+    }
+
+    public function test_asking_again_mails_nobody(): void
+    {
+        $this->logInAsManager();
+        $venue = VenueFactory::createOne();
+
+        $this->ask($venue);
+        $this->ask($venue);
+
+        self::assertEmailCount(0);
+    }
+
+    public function test_a_failing_staff_mail_keeps_the_request(): void
+    {
+        $manager = $this->logInAsManager();
+        $venue = VenueFactory::createOne();
+        $dispatcher = self::getContainer()->get('event_dispatcher');
+        self::assertInstanceOf(EventDispatcherInterface::class, $dispatcher);
+        $failed = false;
+        $dispatcher->addListener(MessageEvent::class, static function (MessageEvent $event) use (&$failed): void {
+            if ($event->isQueued()) {
+                $failed = true;
+                throw new TransportException('The mail server is gone.');
+            }
+        }, 50);
+
+        $this->ask($venue);
+
+        self::assertTrue($failed, 'The staff mail was never attempted.');
+        self::assertEmailCount(0);
+
+        self::assertResponseRedirects('/konto/locations/suchen', 303);
+        self::assertSame([['status' => 'pending']], $this->accessRows($manager, $venue));
+        self::assertStringContainsString('Ihre Anfrage liegt bei uns.', $this->client->followRedirect()->text());
     }
 
     public function test_asking_is_audited_as_the_portal_user(): void
@@ -100,6 +157,7 @@ final class ClaimAskTest extends WebTestCase
         self::assertResponseRedirects('/konto/locations/suchen', 303);
         self::assertSame([], $this->accessRows($manager, $venue));
         self::assertSame(0, $this->auditCount());
+        self::assertEmailCount(0);
         self::assertStringContainsString('Das hat nicht geklappt.', $this->client->followRedirect()->text());
     }
 
@@ -140,6 +198,7 @@ final class ClaimAskTest extends WebTestCase
 
         self::assertResponseRedirects('/konto/locations/suchen', 303);
         self::assertSame([], $this->accessRows($manager, $venue));
+        self::assertEmailCount(0);
         self::assertStringContainsString('Diese Location ist nicht mehr verfügbar.', $this->client->followRedirect()->text());
     }
 

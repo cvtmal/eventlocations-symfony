@@ -58,6 +58,17 @@ final class PortalMailer
     }
 
     /**
+     * Tells staff, at `site.contact_email`, that a manager asked for access to a location (`ClaimController`).
+     */
+    public function sendAccessRequestNotice(string $venueName, string $managerName, string $managerEmail): bool
+    {
+        return $this->sendLocationMail($this->contactEmail, 'claims.mail.notice.subject', $venueName, 'portal/email/access_notice.html.twig', [
+            'managerName' => $managerName,
+            'managerEmail' => $managerEmail,
+        ]);
+    }
+
+    /**
      * The invitation of an account staff created, or of one that has no password yet. It greets by the name staff
      * typed, not by anything a visitor sent. False when the mail did not go, or the account is gone or deactivated.
      */

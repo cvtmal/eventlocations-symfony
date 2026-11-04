@@ -16,6 +16,7 @@ use App\Cms\ReadModel\ContentBlockStatusQuery;
 use App\Cms\ValueObject\CmsFlash;
 use App\Cms\ValueObject\TextBlockKey;
 use App\Shared\Extension\ContentBlockDefinition;
+use App\Shared\Extension\ContentBlockPageDefault;
 use App\Shared\Extension\ContentBlockRegistry;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
@@ -115,6 +116,7 @@ final class TextBlockEditController extends AbstractController
     {
         return $this->render('admin/cms/pages/block_edit.html.twig', [
             'definition' => $definition,
+            'page_default' => $definition instanceof ContentBlockPageDefault ? $definition->pageDefault() : [],
             'form' => $form,
             'stale' => $stale,
             'locales' => array_map(
