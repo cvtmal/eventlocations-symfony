@@ -205,6 +205,7 @@ contact:
     help:
         phone: 'Zum Beispiel «044 123 45 67» oder «+41 44 123 45 67».'
         inquiry_email: Hierhin gehen die Anfragen der Paare.
+        instagram: 'Der Name (zum Beispiel «@remise») oder der Link zum Profil.'
 
 faq:
     field:

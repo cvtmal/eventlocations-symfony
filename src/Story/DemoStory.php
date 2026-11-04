@@ -289,7 +289,7 @@ final class DemoStory extends Story
                 default => null,
             };
             if (0 === $step % 3) {
-                $venue->changeInstagram('https://www.instagram.com/demo-location-'.$i);
+                $venue->changeInstagram('https://www.instagram.com/demo_location_'.$i);
             }
             $translation->describeWedding(
                 self::AMBIENCES[$step % \count(self::AMBIENCES)],

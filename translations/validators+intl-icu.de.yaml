@@ -50,6 +50,7 @@ cms:
             scheme: Die Adresse muss mit «https://» oder «http://» beginnen.
         instagram:
             scheme: Der Instagram-Link muss mit «https://» beginnen.
+            invalid: Bitte einen Instagram-Namen wie «@remise» oder einen Link wie «https://www.instagram.com/remise» eingeben.
         rating:
             format: Bitte eine Note wie «8.4» eingeben, mit höchstens einer Nachkommastelle.
             range: Die Note liegt zwischen {min} und {max}.

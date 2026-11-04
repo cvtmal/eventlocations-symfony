@@ -28,6 +28,7 @@ final readonly class VenueDetail
      * @param list<DetailReview>    $reviews    newest first
      * @param list<DetailRoom>      $rooms      in position order
      * @param list<Picture>         $photos     venue-level photos in position order
+     * @param ?string               $instagram  `https://www.instagram.com/<handle>`, null when the stored value names no profile (`InstagramProfile`)
      */
     public function __construct(
         public string $id,

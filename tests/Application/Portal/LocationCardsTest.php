@@ -108,6 +108,36 @@ final class LocationCardsTest extends WebTestCase
     }
 
     /**
+     * The old `UrlType` stored a dotted handle typed without `@` as `https://remise.rebhalde`, which names no profile.
+     * Sent back untouched it stays as stored and blocks nothing; only a changed value is checked (small-ux-followups F-M1).
+     */
+    public function test_an_untouched_unreadable_instagram_does_not_block_the_contact_card(): void
+    {
+        $venue = $this->managedVenue($this->logInAsManager());
+        $this->connection->executeStatement("UPDATE venues SET instagram = 'https://remise.rebhalde' WHERE id = ?", [$venue->id()]);
+
+        $this->post(LocationCard::Contact, $venue, ['contactPerson' => 'Anna Muster']);
+
+        self::assertResponseRedirects($this->url($venue).'#'.LocationCard::Contact->anchor());
+        self::assertSame(['Anna Muster', 'https://remise.rebhalde'], $this->connection->fetchNumeric('SELECT contact_person, instagram FROM venues WHERE id = ?', [$venue->id()]));
+        $changes = json_decode((string) $this->connection->fetchOne("SELECT changes FROM admin_audit_log WHERE subject_type = 'venue' AND subject_id = ?", [(string) $venue->number()]), true);
+        self::assertIsArray($changes);
+        self::assertSame(['contactPerson'], $changes['changed']);
+    }
+
+    public function test_a_changed_instagram_that_names_no_profile_is_refused(): void
+    {
+        $venue = $this->managedVenue($this->logInAsManager());
+        $this->connection->executeStatement("UPDATE venues SET instagram = 'https://remise.rebhalde' WHERE id = ?", [$venue->id()]);
+
+        $crawler = $this->post(LocationCard::Contact, $venue, ['instagram' => 'https://www.remise.example', 'contactPerson' => 'Anna Muster']);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSame('true', $crawler->filter('#venue_contact_instagram')->attr('aria-invalid'));
+        self::assertSame([null, 'https://remise.rebhalde'], $this->connection->fetchNumeric('SELECT contact_person, instagram FROM venues WHERE id = ?', [$venue->id()]));
+    }
+
+    /**
      * One crafted field per case: together, a field that had slipped into the form would hide behind the others.
      *
      * @return iterable<string, array{LocationCard, array<string, mixed>, array<string, mixed>}>

@@ -34,7 +34,7 @@ final class ContentSchemaTest extends TestCase
                 'highway' => ['km' => 3.2, 'name' => 'A1'],
                 'airport' => ['km' => 12.0],
             ],
-            'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster', 'instagram' => 'https://www.instagram.com/schloss-beispiel'],
+            'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster', 'instagram' => 'https://www.instagram.com/schloss.beispiel'],
             'faq' => ['own_catering' => 'allowed', 'daylight' => null],
             'party' => ['allowed' => 'limited', 'has_curfew' => true, 'curfew_at' => '02:00'],
             'rating' => ['score' => 9.0, 'count' => 47, 'highlights' => ['food', 'atmosphere']],

@@ -306,7 +306,7 @@ final class VenueDetailControllerTest extends WebTestCase
             $crawler->filter('.venue-wedding dd')->each(static fn (Crawler $dd): string => $dd->text()),
         );
         self::assertSelectorExists('.venue-facts + .venue-wedding');
-        $instagram = $crawler->filter('#kontakt a[href="https://www.instagram.com/schloss-seeblick"]');
+        $instagram = $crawler->filter('#kontakt a[href="https://www.instagram.com/schloss.seeblick"]');
         self::assertCount(1, $instagram);
         self::assertSame('Instagram', $instagram->text());
         self::assertSame('nofollow noopener', $instagram->attr('rel'));
@@ -359,6 +359,34 @@ final class VenueDetailControllerTest extends WebTestCase
 
         self::assertCount(0, $crawler->filter('.venue-wedding'));
         self::assertCount(0, $crawler->filter('a[href*="instagram"]'));
+    }
+
+    /**
+     * @return iterable<string, array{string, ?string}> stored value, expected link (null: no link)
+     */
+    public static function storedInstagram(): iterable
+    {
+        // The old `UrlType` field stored a handle typed with or without `@` like this.
+        yield 'handle' => ['https://remiserebhalde', 'https://www.instagram.com/remiserebhalde'];
+        yield '@handle' => ['https://@remiserebhalde', 'https://www.instagram.com/remiserebhalde'];
+        yield 'profile URL' => ['https://instagram.com/remiserebhalde/?hl=de', 'https://www.instagram.com/remiserebhalde'];
+        yield 'garbage: another site' => ['https://www.remiserebhalde.ch', null];
+        yield 'garbage: a post' => ['https://www.instagram.com/p/C0abc123/', null];
+    }
+
+    /** Existing rows link right at render time, without a data migration; one that names no profile has no link (#45 F-m3). */
+    #[DataProvider('storedInstagram')]
+    public function test_a_stored_instagram_links_the_profile_or_nothing(string $stored, ?string $expected): void
+    {
+        $venue = DetailVenues::full($this->em);
+        $this->em->flush();
+        $this->connection->executeStatement('UPDATE venues SET instagram = ? WHERE id = ?', [$stored, $venue->id()]);
+
+        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+
+        $links = $crawler->filter('#kontakt a[data-stats-click="instagram"]')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
+        self::assertSame(null === $expected ? [] : [$expected], $links);
+        self::assertStringNotContainsString($stored, (string) $this->client->getResponse()->getContent());
     }
 
     public function test_reviews_carry_the_rating_anchor_when_there_is_no_score(): void

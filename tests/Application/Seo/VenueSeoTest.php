@@ -94,7 +94,7 @@ final class VenueSeoTest extends WebTestCase
         self::assertSame(self::FULL_URL, $venue['url']);
         self::assertSame('Schloss Seeblick', $venue['name']);
         self::assertSame(300, $venue['maximumAttendeeCapacity']);
-        self::assertSame(['https://seeblick.example', 'https://www.instagram.com/schloss-seeblick'], $venue['sameAs']);
+        self::assertSame(['https://seeblick.example', 'https://www.instagram.com/schloss.seeblick'], $venue['sameAs']);
 
         self::assertIsArray($venue['address']);
         self::assertSame('Seestrasse 1', $venue['address']['streetAddress']);

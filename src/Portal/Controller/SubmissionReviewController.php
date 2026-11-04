@@ -115,7 +115,7 @@ final class SubmissionReviewController extends AbstractController
 
     private function missing(VenueRuleViolation $violation): string
     {
-        return implode(', ', array_map(fn (string $code): string => $this->translator->trans('dashboard.incomplete.missing.'.$code, [], 'cms'), $violation->missing));
+        return implode(', ', array_map(fn (string $code): string => $this->translator->trans('editor.checklist.item.'.$code, [], 'cms'), $violation->missing));
     }
 
     /**

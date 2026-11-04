@@ -13,10 +13,15 @@
     // Tab scrolls to the hidden input, not its tile, so this clears the sticky band and the rest of a tile. Behind
     // `:focus-visible` because, set for a pointer too, it recentres the page under a tap on a chip just above the band.
     // Tiles and chips hold still. Blink and WebKit also match it on a select by pointer, so a tap on one of the three
-    // selects would move them; only a device with a fine pointer gets it, so a phone's tap holds still (#41). A mouse
-    // click on a select still moves it, accepted: Tab to a select needs the padding.
+    // selects would move them; the select case alone needs a fine pointer, so a phone's tap holds still (#41) and a
+    // phone with a hardware keyboard or Full Keyboard Access keeps the padding on tiles and chips (small-ux-followups).
+    // A mouse click on a select still moves it, accepted: Tab to a select needs the padding.
+    &:has(:focus-visible:not(select)) {
+        scroll-padding-bottom: 10rem;
+    }
+
     @media (any-pointer: fine) {
-        &:has(:focus-visible) {
+        &:has(select:focus-visible) {
             scroll-padding-bottom: 10rem;
         }
     }

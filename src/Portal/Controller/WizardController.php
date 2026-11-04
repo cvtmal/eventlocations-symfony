@@ -219,7 +219,7 @@ final class WizardController extends AbstractController
 
     private function refusal(VenueRuleViolation $violation): string
     {
-        $labels = array_map(fn (string $code): string => $this->translator->trans('dashboard.incomplete.missing.'.$code, [], 'cms'), $violation->missing);
+        $labels = array_map(fn (string $code): string => $this->translator->trans('editor.checklist.item.'.$code, [], 'cms'), $violation->missing);
 
         return $this->translator->trans('onboarding.check.refused', ['missing' => implode(', ', $labels)], 'portal');
     }

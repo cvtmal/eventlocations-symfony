@@ -74,7 +74,7 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertFalse($edit->coordinatesFromTown);
         self::assertNull($edit->townCentreHint());
         self::assertSame(['0.9', 'Zürich Stadelhofen', '3.2', null, '12.0', 'Zürich'], [$edit->stationKm, $edit->stationName, $edit->highwayKm, $edit->highwayName, $edit->airportKm, $edit->airportName]);
-        self::assertSame([DetailVenues::FULL_PHONE, 'info@seeblick.example', 'https://seeblick.example', 'Anna Muster', 'https://www.instagram.com/schloss-seeblick'], [$edit->phone, $edit->inquiryEmail, $edit->website, $edit->contactPerson, $edit->instagram]);
+        self::assertSame([DetailVenues::FULL_PHONE, 'info@seeblick.example', 'https://seeblick.example', 'Anna Muster', 'https://www.instagram.com/schloss.seeblick'], [$edit->phone, $edit->inquiryEmail, $edit->website, $edit->contactPerson, $edit->instagram]);
         self::assertSame([OwnCatering::Allowed, true], [$edit->ownCatering, $edit->daylight]);
         self::assertSame(['9.2', 474], [$edit->ratingScore, $edit->ratingCount]);
         self::assertSame([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Location], $edit->highlights);
