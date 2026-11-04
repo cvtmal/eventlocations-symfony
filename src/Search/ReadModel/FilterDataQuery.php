@@ -25,7 +25,10 @@ final class FilterDataQuery implements ResetInterface
 {
     /** The `access.*` and `price.*` keys are built from their enums' cases, because each case needs a bound value. */
     private const FILTERS = [
-        'place' => 'v.town_id IS NOT NULL',
+        // The radius search measures from the venue's own coordinates, so a canton-only venue with a pin is found.
+        'place' => 'v.lat IS NOT NULL AND v.lng IS NOT NULL',
+        // Radius 0 matches the venue's town or ZIP; without a venue that has a town it would match nothing.
+        'town' => 'v.town_id IS NOT NULL',
         'rooms' => 'v.room_count >= 1',
         'area' => 'v.largest_room_m2 IS NOT NULL',
         'height' => 'v.max_room_height_m IS NOT NULL',

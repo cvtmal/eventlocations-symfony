@@ -399,7 +399,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame(['Gasthof Linde'], $this->names($crawler));
     }
 
-    public function test_the_region_form_offers_only_cantons_until_a_venue_has_a_town(): void
+    public function test_the_region_form_offers_only_cantons_until_a_venue_has_coordinates(): void
     {
         DetailVenues::inCantonOnly();
         DetailVenues::withoutPlace();
@@ -416,6 +416,33 @@ final class ListingControllerTest extends WebTestCase
         }
     }
 
+    public function test_the_ort_tab_shows_for_venues_with_coordinates_but_no_town(): void
+    {
+        DetailVenues::inCantonOnly();
+        DetailVenues::inCantonWithPin('47.3769', '8.5417');
+
+        $form = $this->get('/hochzeitslocations')->filter('#filter-region-form');
+
+        self::assertStringNotContainsString('region-filter--canton-only', (string) $form->attr('class'));
+        self::assertNull($form->filter('#filter-region-place')->attr('disabled'));
+        self::assertNull($form->filter('#filter-region-radius')->attr('disabled'));
+        // 0 km means "only that town or ZIP", which no town-less venue matches.
+        self::assertSame('1', $form->filter('#filter-region-radius')->attr('min'));
+
+        self::assertSame(['Scheune Mit Pin'], $this->names($this->get('/hochzeitslocations?place=8001&radius=5')));
+    }
+
+    public function test_a_bookmarked_radius_zero_without_towns_still_renders(): void
+    {
+        DetailVenues::inCantonWithPin('47.3769', '8.5417');
+
+        $crawler = $this->get('/hochzeitslocations?place=8001&radius=0');
+
+        self::assertSame([], $this->names($crawler));
+        self::assertSame('0', $crawler->filter('#filter-region-radius')->attr('value'));
+        self::assertSame('1', $crawler->filter('#filter-region-radius')->attr('min'));
+    }
+
     public function test_the_ort_tab_comes_back_with_the_first_town(): void
     {
         DetailVenues::inCantonOnly();
@@ -426,6 +453,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertStringNotContainsString('region-filter--canton-only', (string) $form->attr('class'));
         self::assertNull($form->filter('#filter-region-place')->attr('disabled'));
         self::assertNull($form->filter('#filter-region-radius')->attr('disabled'));
+        self::assertSame('0', $form->filter('#filter-region-radius')->attr('min'));
     }
 
     public function test_a_bookmarked_place_keeps_the_full_form_and_its_chip(): void

@@ -31,7 +31,7 @@ final class FilterDataQueryTest extends KernelTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const KEYS = ['place', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height', 'price.moderate', 'price.medium', 'price.exclusive', 'curfew'];
+    private const KEYS = ['place', 'town', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height', 'price.moderate', 'price.medium', 'price.exclusive', 'curfew'];
 
     private EntityManagerInterface $em;
     private Connection $connection;
@@ -189,12 +189,21 @@ final class FilterDataQueryTest extends KernelTestCase
         self::assertSame([], $this->query->terms(TermGroup::Setting));
     }
 
-    public function test_published_venues_without_a_town_are_no_data(): void
+    public function test_published_venues_without_coordinates_are_no_data(): void
     {
         DetailVenues::withoutPlace();
         DetailVenues::inCantonOnly();
 
         self::assertFalse($this->query->has('place'));
+        self::assertFalse($this->query->has('town'));
+    }
+
+    public function test_coordinates_without_a_town_are_place_data_but_no_town(): void
+    {
+        DetailVenues::inCantonWithPin('47.3769', '8.5417');
+
+        self::assertTrue($this->query->has('place'));
+        self::assertFalse($this->query->has('town'));
     }
 
     public function test_an_unpublished_venue_with_a_town_is_no_data(): void
@@ -209,6 +218,7 @@ final class FilterDataQueryTest extends KernelTestCase
         DetailVenues::minimal();
 
         self::assertTrue($this->query->has('place'));
+        self::assertTrue($this->query->has('town'));
     }
 
     public function test_a_second_call_runs_no_query_and_reset_asks_again(): void
