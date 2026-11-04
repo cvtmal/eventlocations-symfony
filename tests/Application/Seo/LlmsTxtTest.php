@@ -67,6 +67,13 @@ final class LlmsTxtTest extends WebTestCase
         self::assertStringContainsString("\n- [Sitemap](http://localhost/sitemap.xml): ", $body);
     }
 
+    public function test_a_liechtenstein_venue_is_noted_without_kanton(): void
+    {
+        DetailVenues::inCantonOnly('remise-vaduz', 'Remise Vaduz', 'li');
+
+        self::assertStringContainsString('remise-vaduz.md): Liechtenstein, bis 80 Personen'."\n", $this->llmsTxt());
+    }
+
     public function test_every_link_answers_200_and_an_unpublished_venue_is_not_listed(): void
     {
         $data = $this->seedPublicRoutes();

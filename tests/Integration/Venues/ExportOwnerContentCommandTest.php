@@ -251,15 +251,28 @@ final class ExportOwnerContentCommandTest extends KernelTestCase
         self::assertSame([[1, null], [2, self::OLDER_ALT]], $this->photoRows(self::key()));
     }
 
-    public function test_a_liechtenstein_row_makes_no_request_and_no_folder(): void
+    public function test_a_liechtenstein_row_is_overlaid_like_any_other_and_a_rerun_is_byte_stable(): void
     {
         $row = self::newerRow(['Region' => 'Liechtenstein', 'ID' => self::LIECHTENSTEIN_ID, 'Telefon' => '+4233001122']);
 
         self::assertSame(Command::SUCCESS, $this->exportBoth([self::olderRow(), $row]));
 
-        self::assertStringContainsString('Skipped: 1. Unresolved: 0.', $this->owner->getDisplay());
-        self::assertCount(1, (array) glob($this->content->path().'/venues/*', \GLOB_ONLYDIR));
-        self::assertNotContains('https://static.wixstatic.com/media/'.self::NEWER_COVER, $this->wix->requested());
+        $display = $this->owner->getDisplay();
+        self::assertStringContainsString('Rows: 2. Overlaid: 2 (2 updated, 0 unchanged). Unresolved: 0.', $display);
+        self::assertStringNotContainsString('Skipped', $display);
+        self::assertStringNotContainsString('not in Switzerland', $display);
+        $key = self::key(self::NEWER_NAME, self::LIECHTENSTEIN_ID);
+        $venue = $this->yaml($key);
+        self::assertSame(['canton' => 'li'], $venue['address']);
+        self::assertSame('exclusive', $venue['price_level']);
+        self::assertContains('https://static.wixstatic.com/media/'.self::NEWER_COVER, $this->wix->requested());
+        $bytes = $this->folderBytes();
+
+        self::assertSame(Command::SUCCESS, $this->legacyExport());
+        self::assertSame(Command::SUCCESS, $this->ownerExport());
+
+        self::assertStringContainsString('Rows: 2. Overlaid: 2 (0 updated, 2 unchanged). Unresolved: 0.', $this->owner->getDisplay());
+        self::assertSame($bytes, $this->folderBytes());
     }
 
     public function test_a_dry_run_makes_no_request_and_writes_only_the_report(): void

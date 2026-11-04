@@ -9,7 +9,7 @@
 {% if venue.place.townName %}
     {% set share_text = 'detail.actions.share_text'|trans({name: venue.name, town: venue.place.townName}, 'venues') %}
 {% elseif venue.place.canton %}
-    {% set share_text = 'detail.actions.share_text_canton'|trans({name: venue.name, canton: venue.place.canton|trans}, 'venues') %}
+    {% set share_text = 'detail.actions.share_text_canton'|trans({name: venue.name, canton: venue.place.canton|trans, canton_code: venue.place.canton.value}, 'venues') %}
 {% else %}
     {% set share_text = venue.name %}
 {% endif %}

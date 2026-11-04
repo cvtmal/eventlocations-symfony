@@ -150,6 +150,16 @@ final class SitemapTest extends WebTestCase
         }
     }
 
+    public function test_four_liechtenstein_venues_give_no_landing_page_entry(): void
+    {
+        $this->inCanton(Canton::LI, 4);
+
+        $locations = $this->values($this->fetch('/sitemap-pages.xml'), 'loc', self::SITEMAP_NS);
+
+        self::assertNotContains('http://localhost/hochzeitslocations/liechtenstein', $locations, 'Under the threshold (#46, owner answer C).');
+        self::assertContains('http://localhost/hochzeitslocations', $locations);
+    }
+
     public function test_without_venues_the_listing_has_no_lastmod(): void
     {
         $xml = $this->fetch('/sitemap-pages.xml');

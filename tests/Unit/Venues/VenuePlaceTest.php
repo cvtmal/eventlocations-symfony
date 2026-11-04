@@ -30,6 +30,7 @@ final class VenuePlaceTest extends TestCase
             [['canton.be', 'geo'], ['place.canton', 'venues']],
             array_map(static fn (array $call): array => [$call[0], $call[2]], $translator->calls),
         );
+        self::assertSame('be', $translator->calls[1][1]['canton_code'], 'the "Kanton" select keys on the code (#46)');
     }
 
     public function test_a_region_text_is_shown_verbatim(): void

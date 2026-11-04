@@ -91,8 +91,8 @@ similar:
 landing:
     breadcrumb_label: Navigationspfad
     canton:
-        heading: 'Hochzeitslocations im Kanton {canton}'
-        intro: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} im Kanton {canton}: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt bei der Location an.'
+        heading: 'Hochzeitslocations {canton_code, select, li {in} other {im Kanton}} {canton}'
+        intro: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} {canton_code, select, li {in} other {im Kanton}} {canton}: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt bei der Location an.'
     town:
         heading: 'Hochzeitslocations in {town}'
         intro: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} in {town}: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt bei der Location an.'

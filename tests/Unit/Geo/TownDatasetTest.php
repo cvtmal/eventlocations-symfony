@@ -82,10 +82,10 @@ final class TownDatasetTest extends TestCase
         $dataset = TownDataset::fromCsvFile(self::CSV);
         $towns = $dataset->collapsed()->records();
 
-        self::assertCount(4057, $dataset->records());
-        self::assertCount(3959, $towns);
-        self::assertCount(26, array_unique(array_map(static fn (TownRecord $t): string => $t->canton->value, $towns)));
-        self::assertSame(4057, array_sum(array_map(static fn (TownRecord $t): int => \count($t->zips), $towns)));
+        self::assertCount(4070, $dataset->records());
+        self::assertCount(3972, $towns);
+        self::assertCount(27, array_unique(array_map(static fn (TownRecord $t): string => $t->canton->value, $towns)));
+        self::assertSame(4070, array_sum(array_map(static fn (TownRecord $t): int => \count($t->zips), $towns)));
         self::assertSame('8712', $this->find($towns, Canton::ZH, 'Stäfa')->zip);
         self::assertCount(24, $this->find($towns, Canton::ZH, 'Zürich')->zips);
     }

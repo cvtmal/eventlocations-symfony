@@ -9,8 +9,10 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Finds a venue's position by name with Google's Places Text Search (new API), limited to
- * Switzerland. The key is a constructor argument and reaches no log, file or message.
+ * Finds a venue's position by name with Google's Places Text Search (new API), limited to a box
+ * around Switzerland that also covers Liechtenstein (#46); `regionCode` CH only biases the ranking,
+ * so a Liechtenstein venue is placed too. The key is a constructor argument and reaches no log,
+ * file or message.
  */
 final class VenueGeocoder
 {
@@ -28,7 +30,7 @@ final class VenueGeocoder
     }
 
     /**
-     * The best match, or null when nothing was found or it lies outside Switzerland.
+     * The best match, or null when nothing was found or it lies outside the box.
      *
      * @throws ExceptionInterface on a transport error or a status other than 200
      */

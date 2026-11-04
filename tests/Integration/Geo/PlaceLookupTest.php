@@ -110,6 +110,26 @@ final class PlaceLookupTest extends KernelTestCase
         self::assertSame('Genève', $this->firstTown('ge')->name);
     }
 
+    public function test_vaduz_is_found_by_name_and_zip(): void
+    {
+        self::assertSame('li', $this->firstTown('vaduz')->cantonCode);
+        self::assertSame('Vaduz', $this->firstTown('vaduz')->name);
+        self::assertSame('Vaduz', $this->lookup->suggest('9490')[0]->name);
+    }
+
+    public function test_liech_suggests_the_liechtenstein_region(): void
+    {
+        self::assertContains('li', $this->cantonCodes('liech'));
+    }
+
+    public function test_liechtenstein_comes_after_the_swiss_cantons(): void
+    {
+        $codes = $this->cantonCodes('l');
+
+        self::assertContains('lu', $codes);
+        self::assertSame('li', array_last($codes));
+    }
+
     public function test_at_most_eight_results(): void
     {
         self::assertLessThanOrEqual(8, \count($this->lookup->suggest('a')));
@@ -165,6 +185,16 @@ final class PlaceLookupTest extends KernelTestCase
         self::assertNull($canton->townId);
         self::assertNull($canton->name);
         self::assertNull($canton->zip);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function cantonCodes(string $q): array
+    {
+        $cantons = array_filter($this->lookup->suggest($q), static fn (PlaceSuggestion $s): bool => PlaceType::Canton === $s->type);
+
+        return array_values(array_map(static fn (PlaceSuggestion $s): string => $s->cantonCode, $cantons));
     }
 
     private function firstTown(string $q): PlaceSuggestion

@@ -29,7 +29,7 @@ final class OwnerContentExporter
     public const string LEFT_OUT_AVIF = 'an AVIF image, which the import refuses';
     public const string LEFT_OUT_DOWNLOAD = 'the download failed; the next run tries again';
 
-    private const array COUNTERS = ['updated', 'unchanged', 'skipped', 'photos', 'cached', 'downloaded', 'wouldDownload', 'failed', 'leftOut', 'priceLevel', 'seated', 'standing', 'party', 'noCurfew', 'curfewAt', 'ownCatering', 'capacityNote', 'partyNote', 'openingHours', 'parkingText'];
+    private const array COUNTERS = ['updated', 'unchanged', 'photos', 'cached', 'downloaded', 'wouldDownload', 'failed', 'leftOut', 'priceLevel', 'seated', 'standing', 'party', 'noCurfew', 'curfewAt', 'ownCatering', 'capacityNote', 'partyNote', 'openingHours', 'parkingText'];
 
     public function __construct(
         private readonly ContentReader $reader,
@@ -67,21 +67,11 @@ final class OwnerContentExporter
         $withoutStanding = [];
         $exported = [];
         $seen = [];
-        $skippedIds = [];
 
         foreach ($rows as $number => $row) {
             $id8 = 1 === preg_match('/^[0-9a-f]{8}/', $row['ID'] ?? '', $match) ? $match[0] : null;
             if (null !== $id8) {
                 $seen[$id8] = true;
-            }
-            // Liechtenstein: no folder from #21, so no download either.
-            if (LegacyVenueMapper::isSkipped($row)) {
-                ++$counts['skipped'];
-                if (null !== $id8) {
-                    $skippedIds[$id8] = true;
-                }
-                $notes[] = \sprintf('row %d: skipped, not in Switzerland', $number);
-                continue;
             }
 
             try {
@@ -129,9 +119,7 @@ final class OwnerContentExporter
             if (null !== $id8 && isset($exported[$id8])) {
                 continue;
             }
-            if (null !== $id8 && isset($skippedIds[$id8])) {
-                $notes[] = $key.': in the CSV but not in Switzerland; left alone';
-            } elseif (null === $id8 || !isset($seen[$id8])) {
+            if (null === $id8 || !isset($seen[$id8])) {
                 $notes[] = $key.': stale, not in the CSV; left alone';
             }
         }

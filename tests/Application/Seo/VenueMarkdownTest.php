@@ -127,6 +127,16 @@ final class VenueMarkdownTest extends WebTestCase
         self::assertStringContainsString("\n\\# Kein Titel\n\\- keine Liste\n\\<b\\>kein HTML\\</b\\>\n", $body);
     }
 
+    public function test_a_liechtenstein_town_is_followed_by_liechtenstein_without_kanton(): void
+    {
+        VenueTranslationFactory::createOne(['venue' => \App\Factory\VenueFactory::createOne(['town' => DetailVenues::town('Vaduz')]), 'slug' => 'remise-vaduz']);
+
+        $this->client->request('GET', '/hochzeitslocation/remise-vaduz.md');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString("\n9490 Vaduz, Liechtenstein\n", (string) $this->client->getResponse()->getContent());
+    }
+
     public function test_a_history_slug_redirects_to_the_current_markdown(): void
     {
         $venue = DetailVenues::full($this->em);

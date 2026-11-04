@@ -12,7 +12,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Where a venue is, as far as that is known (#21): a town, else a canton, else the source's
  * region text, else nothing. Translating it gives the one line a card or the detail head
  * shows: `Stäfa`, `Kanton Zürich`, the text verbatim, or ''. "Kanton Zürich" and not a bare
- * "Zürich", which would read as the town and state something the source does not say.
+ * "Zürich", which would read as the town and state something the source does not say; but a
+ * plain "Liechtenstein", a country and no canton (#46, the select on `canton_code`).
  */
 final readonly class VenuePlace implements TranslatableInterface
 {
@@ -39,7 +40,7 @@ final readonly class VenuePlace implements TranslatableInterface
             return $this->townName;
         }
         if (null !== $this->canton) {
-            return $translator->trans('place.canton', ['canton' => $this->canton->trans($translator, $locale)], 'venues', $locale);
+            return $translator->trans('place.canton', ['canton' => $this->canton->trans($translator, $locale), 'canton_code' => $this->canton->value], 'venues', $locale);
         }
 
         return $this->region ?? '';

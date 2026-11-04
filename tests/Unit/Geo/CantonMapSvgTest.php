@@ -44,7 +44,9 @@ final class CantonMapSvgTest extends TestCase
         foreach ($group->getElementsByTagName('path') as $path) {
             $ids[] = $path->getAttribute('id');
         }
-        $expected = array_map(static fn (Canton $canton): string => 'ch-'.$canton->value, Canton::cases());
+        // no LI shape (#46, owner answer B)
+        $swiss = array_filter(Canton::cases(), static fn (Canton $canton): bool => Canton::LI !== $canton);
+        $expected = array_map(static fn (Canton $canton): string => 'ch-'.$canton->value, $swiss);
 
         self::assertCount(26, $ids);
         self::assertEqualsCanonicalizing($expected, $ids);

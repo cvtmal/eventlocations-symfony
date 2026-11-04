@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace App\Venues\ValueObject\Content;
 
 /**
- * One row of the owner's CSV as the paths #21 owns in a venue.yaml (D7). A skipped row
- * (Liechtenstein, Q13) carries nothing else.
+ * One row of the owner's CSV as the paths #21 owns in a venue.yaml (D7).
  */
 final readonly class LegacyVenue
 {
@@ -29,12 +28,6 @@ final readonly class LegacyVenue
         public int $descriptionRule,
         public string $summarySource,
         public array $notes,
-        public bool $skipped = false,
     ) {
-    }
-
-    public static function skipped(): self
-    {
-        return new self('', '', 0, null, null, null, null, null, '', null, 4, '', [], true);
     }
 }

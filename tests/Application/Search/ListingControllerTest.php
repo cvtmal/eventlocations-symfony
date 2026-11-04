@@ -317,14 +317,18 @@ final class ListingControllerTest extends WebTestCase
 
         // No JS: the <select> and the text field work, and the hidden fields stay out of the way.
         $options = $form->filter('noscript select[name="canton"] option');
-        self::assertCount(27, $options);
+        self::assertCount(28, $options);
         self::assertSame('Alle Kantone', $options->first()->text());
+        $labels = $options->each(static fn (Crawler $option): string => $option->text());
+        $jura = array_search('Jura', $labels, true);
+        self::assertIsInt($jura);
+        self::assertSame(['Jura', 'Liechtenstein', 'Luzern'], \array_slice($labels, $jura, 3), 'Liechtenstein sorts in alphabetically (#46)');
         self::assertSame('zh', $form->filter('noscript select[name="canton"] option[selected]')->attr('value'));
         self::assertSame('zh', $form->filter('input[type="hidden"][name="canton"][disabled]')->attr('value'));
         self::assertCount(1, $form->filter('input[type="hidden"][name="place"][disabled]'));
         self::assertCount(1, $form->filter('[role="tablist"][hidden]'));
 
-        self::assertCount(26, $form->filter('[role="option"]'));
+        self::assertCount(27, $form->filter('[role="option"]'));
         self::assertSame('Zürich', $form->filter('#filter-region-canton')->attr('value'));
         self::assertNull($form->filter('#filter-region-canton')->attr('name'));
 
@@ -371,6 +375,17 @@ final class ListingControllerTest extends WebTestCase
         $crawler = $this->get('/hochzeitslocations?canton=zh');
 
         self::assertSame(['Scheune Nur Kanton'], $this->names($crawler));
+    }
+
+    public function test_canton_li_lists_only_liechtenstein_venues(): void
+    {
+        DetailVenues::inCantonOnly('remise-vaduz', 'Remise Vaduz', 'li');
+        DetailVenues::inCantonOnly('scheune-sankt-gallen', 'Scheune Sankt Gallen', 'sg');
+
+        $crawler = $this->get('/hochzeitslocations?canton=li');
+
+        self::assertSame(['Remise Vaduz'], $this->names($crawler));
+        self::assertSame(['Liechtenstein'], $this->cardPlace($crawler, 'Remise Vaduz'), 'no "Kanton" before Liechtenstein (#46)');
     }
 
     public function test_a_radius_search_excludes_venues_without_a_town(): void

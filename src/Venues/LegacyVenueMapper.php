@@ -17,7 +17,7 @@ use App\Venues\ValueObject\Content\LegacyVenue;
  */
 final class LegacyVenueMapper
 {
-    public const string NOTE_PHONE_DROPPED = 'phone dropped: not a Swiss number';
+    public const string NOTE_PHONE_DROPPED = 'phone dropped: not a Swiss or Liechtenstein number';
     public const string NOTE_EMAIL_DROPPED = 'e-mail dropped: not an address';
     public const string NOTE_WEBSITE_DROPPED = 'website dropped: not an http(s) address';
 
@@ -49,11 +49,10 @@ final class LegacyVenueMapper
         'Neuenburg' => 'ne',
         'Genf' => 'ge',
         'Jura' => 'ju',
+        'Liechtenstein' => 'li',
         'Fribourg' => 'fr',
         'Rümlang' => 'zh',
     ];
-
-    private const string SKIPPED_REGION = 'Liechtenstein';
 
     /** docs/content-format.schema.json and the matching CHECKs. */
     private const int NAME_MAX_LENGTH = 150;
@@ -71,9 +70,6 @@ final class LegacyVenueMapper
      */
     public function map(array $row): LegacyVenue
     {
-        if (self::isSkipped($row)) {
-            return LegacyVenue::skipped();
-        }
         $region = self::text($row['Region'] ?? '');
 
         $id = $row['ID'] ?? '';
@@ -142,16 +138,6 @@ final class LegacyVenueMapper
         );
     }
 
-    /**
-     * A row outside Switzerland (Q13): skipped by #21 and #32 alike, before any download.
-     *
-     * @param array<string, string> $row
-     */
-    public static function isSkipped(array $row): bool
-    {
-        return self::SKIPPED_REGION === self::text($row['Region'] ?? '');
-    }
-
     private static function name(string $value): string
     {
         $name = trim((string) preg_replace('/\s+/u', ' ', self::text($value)));
@@ -192,6 +178,9 @@ final class LegacyVenueMapper
         }
         if (1 === preg_match('/^\+41\d{9}$/D', $phone)) {
             return $phone;
+        }
+        if (1 === preg_match('/^(?:\+|00)423(\d{7})$/D', $phone, $match)) {
+            return '+423'.$match[1];
         }
         $notes[] = self::NOTE_PHONE_DROPPED;
 

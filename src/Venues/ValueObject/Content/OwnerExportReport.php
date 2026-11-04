@@ -46,7 +46,7 @@ final readonly class OwnerExportReport
         $c = $this->counts;
 
         return [
-            \sprintf('%sRows: %d. Overlaid: %d (%d updated, %d unchanged). Skipped: %d. Unresolved: %d.', $this->dryRun ? 'Dry run: ' : '', $c['rows'], $c['updated'] + $c['unchanged'], $c['updated'], $c['unchanged'], $c['skipped'], \count($this->unresolved)),
+            \sprintf('%sRows: %d. Overlaid: %d (%d updated, %d unchanged). Unresolved: %d.', $this->dryRun ? 'Dry run: ' : '', $c['rows'], $c['updated'] + $c['unchanged'], $c['updated'], $c['unchanged'], \count($this->unresolved)),
             \sprintf('Photos: %d listed, %d cached, %d downloaded, %d would download, %d failed to download, %d left out.', $c['photos'], $c['cached'], $c['downloaded'], $c['wouldDownload'], $c['failed'], $c['leftOut']),
             \sprintf('Facts: %d price level, %d seated, %d standing, %d party, %d no curfew, %d curfew time, %d own catering.', $c['priceLevel'], $c['seated'], $c['standing'], $c['party'], $c['noCurfew'], $c['curfewAt'], $c['ownCatering']),
             \sprintf('Notes: %d capacity, %d party, %d opening hours, %d parking. Spot-check: %d civil_ceremony from the older form.', $c['capacityNote'], $c['partyNote'], $c['openingHours'], $c['parkingText'], \count($this->spotCheck)),

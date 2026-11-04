@@ -26,7 +26,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * S11: the home page's HTML stays ≤ 60 KB gzip in the worst case: all 26 cantons live, three
+ * S11: the home page's HTML stays ≤ 60 KB gzip in the worst case: all 27 regions live, three
  * Spotlight cards with a 200-character summary, both tags, a rating with three highlights and a
  * 60-character ambience, the `home.text` block at 1500 characters and the footer note at 300.
  * SEARCH_PERF_REPORT=1 prints the size.
@@ -73,7 +73,7 @@ final class HomeHtmlBudgetTest extends WebTestCase
             self::assertResponseIsSuccessful();
             self::assertCount(3, $crawler->filter('.home-spotlight .card'));
             self::assertCount(6, $crawler->filter('.home-spotlight .card__tags .tag'));
-            self::assertCount(26, $crawler->filter('#regionen a'));
+            self::assertCount(27, $crawler->filter('#regionen a'));
             self::assertCount(1, $crawler->filter('.home-about__staff strong'), 'The staff text renders.');
 
             $html = (string) $client->getResponse()->getContent();

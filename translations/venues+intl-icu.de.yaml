@@ -243,7 +243,7 @@ reviewer_role:
 
 # Detail page (#8, venue_show). Numbers arrive pre-formatted (swiss_number, swiss_range).
 place:
-    canton: 'Kanton {canton}'
+    canton: '{canton_code, select, li {} other {Kanton }}{canton}'
 detail:
     hero:
         label: 'Bilder von {name}'
@@ -268,7 +268,7 @@ detail:
         whatsapp: WhatsApp
         email: E-Mail
         share_text: '{name} in {town}'
-        share_text_canton: '{name} im Kanton {canton}'
+        share_text_canton: '{name} {canton_code, select, li {in} other {im Kanton}} {canton}'
         print: Drucken
     head:
         place: '{zip} {town}'

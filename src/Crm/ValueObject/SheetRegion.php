@@ -9,9 +9,9 @@ namespace App\Crm\ValueObject;
  * name, or a row and a venue, can be told apart when their places differ (D4). The sheet names a canton
  * in German, or a region wider than one: "Basel", "Appenzell", "Zentralschweiz", "Ostschweiz".
  *
- * Liechtenstein is no Swiss canton, so it holds the pseudo-code `li`, which no venue's `canton_code` has:
- * it fits no canton, and two Liechtenstein rows still fit each other. An empty or unrecognised cell is
- * unknown, and unknown fits everything.
+ * Liechtenstein maps to `li`, the code of the Liechtenstein venues since #46: a Liechtenstein row fits those
+ * venues and other Liechtenstein rows, and no Swiss canton. An empty or unrecognised cell is unknown, and
+ * unknown fits everything.
  */
 final readonly class SheetRegion
 {

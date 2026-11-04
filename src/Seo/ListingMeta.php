@@ -118,7 +118,7 @@ final class ListingMeta
     private function parameters(LandingPage $landing): array
     {
         return match ($landing->type) {
-            LandingType::Canton => ['canton' => (string) $landing->canton?->trans($this->translator)],
+            LandingType::Canton => ['canton' => (string) $landing->canton?->trans($this->translator), 'canton_code' => (string) $landing->canton?->value],
             LandingType::Town => ['town' => (string) $landing->townName],
             LandingType::Building => ['heading' => $this->heading($landing)],
         };

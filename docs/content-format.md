@@ -166,8 +166,8 @@ reviews:                              # replaced as a whole on every change
 | `address.street` | text ≤ 150 | Needs `zip` and `town`. |
 | `address.zip` | `'NNNN'` | Quote it. Any ZIP of the town works, not only the lowest. `zip` and `town` come together. |
 | `address.town` | text | Official town name; matched exactly after folding case and umlauts (`Zürich` = `ZÜRICH` = `Zuerich`, but not `Zurich`). |
-| `address.canton` | one of the 26 codes (`zh`, `be`, …) | The venue's canton when there is no town, or to tell two towns apart (the import then says so). With a town it must match the town's canton; a mismatch fails the venue as an unknown town. |
-| `geo.lat`, `geo.lng` | decimal degrees | Inside Switzerland. Optional, both or neither. |
+| `address.canton` | one of the 27 codes (the 26 cantons `zh`, `be`, … and `li` for Liechtenstein) | The venue's canton when there is no town, or to tell two towns apart (the import then says so). With a town it must match the town's canton; a mismatch fails the venue as an unknown town. |
+| `geo.lat`, `geo.lng` | decimal degrees | Inside Switzerland or Liechtenstein. Optional, both or neither. |
 | `distances.<station\|highway\|airport>` | `km` 0–500 (one decimal), `name` ≤ 150 | A name needs its km. |
 | `contact.phone` | E.164 (`'+41…'`) | Quote it. |
 | `contact.inquiry_email` | e-mail ≤ 254 | |

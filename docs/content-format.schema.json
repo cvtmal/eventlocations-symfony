@@ -208,14 +208,15 @@
                         "vs",
                         "ne",
                         "ge",
-                        "ju"
+                        "ju",
+                        "li"
                     ]
                 }
             }
         },
         "geo": {
             "type": "object",
-            "description": "Coordinates (WGS84) inside Switzerland.",
+            "description": "Coordinates (WGS84) inside Switzerland or Liechtenstein.",
             "additionalProperties": false,
             "properties": {
                 "lat": {

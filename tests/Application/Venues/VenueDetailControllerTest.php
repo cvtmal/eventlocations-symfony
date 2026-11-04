@@ -241,6 +241,18 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertSame('Scheune Nur Kanton im Kanton Zürich', $crawler->filter('[data-share-title]')->attr('data-share-title'));
     }
 
+    public function test_a_liechtenstein_venue_is_named_without_kanton(): void
+    {
+        DetailVenues::inCantonOnly('remise-vaduz', 'Remise Vaduz', 'li');
+
+        $crawler = $this->page('/hochzeitslocation/remise-vaduz');
+
+        self::assertSame('Remise Vaduz in Liechtenstein | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSelectorTextSame('.venue-head__place', 'Liechtenstein');
+        self::assertSame('Remise Vaduz in Liechtenstein', $crawler->filter('[data-share-title]')->attr('data-share-title'));
+        self::assertStringNotContainsString('Kanton Liechtenstein', (string) $this->client->getResponse()->getContent());
+    }
+
     public function test_a_region_only_venue_shows_the_text_verbatim(): void
     {
         DetailVenues::inRegionOnly($this->em, 'Schweizweit');

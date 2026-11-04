@@ -351,6 +351,53 @@ guard doing its job (see `docs/content-format.md`, "After a CMS edit").
 To warm the cache afterwards, run `sh bin/warm-cache`, which requests every public page once, one
 at a time. It runs by hand only, never from cron.
 
+### Liechtenstein venues (#46), once
+
+The release with #46 makes Liechtenstein region `li` and stops the export skipping its 4 rows.
+Run these in order; each step is safe to rerun. Only step 4 fails before the deploy: the import
+refuses the 4 folders on the canton code (`fk_venues_canton_code`, exit 1, the other venues are
+unaffected). Steps 2 and 3 only write files under `content/`.
+
+1. **Deploy.** `bin/deploy` runs the migration, then `app:geo:import-towns`: expect 13 new towns.
+   Check that `/hochzeitslocations?canton=li` answers 200 with 0 results and that the place search
+   suggests "Vaduz".
+2. **Export:** `sh bin/prod-import export`. Expect 247 venues and 4 new folders `<slug>-<id8>`;
+   the 243 existing folders stay byte-identical, and no line says "not in Switzerland".
+3. **Geocode.** Put the key in the shell only (`read -rs GOOGLE_PLACES_API_KEY && export
+   GOOGLE_PLACES_API_KEY`), then run
+   `docker compose exec -T -e GOOGLE_PLACES_API_KEY php php bin/console app:venues:geocode`. Only
+   folders without `geo:` are asked: the 4, plus any folder still without `geo:`. Today that is 5,
+   because the Swiss folder the earlier run did not find is asked again. The run overwrites
+   `content/owner/geocode-report.csv`; read it. A `NO` row means a wrong pin: fix that folder's
+   `geo:` by hand before step 4, or delete it to leave the venue without a pin.
+4. **Import:** `sh bin/prod-import all`. Expect 4 created and the rest unchanged or `cms_edited`;
+   media sync and purge follow. The 4 venues now have no CRM company, but each already has one:
+   the customer import of 2026-11-03 created it, linked to no venue. Do **not** run
+   `sh bin/prod-import crm-bootstrap`, and do not press "Firmen aus … Locations anlegen" on the CRM
+   company list or "Firma anlegen" in the CRM card of a venue in the CMS, before step 5 is done:
+   each would create a second company for these venues.
+5. **Link the 4 venues to their companies, in the CRM, by hand.** The pairs are in
+   `content/owner/46-crm-links.md` in the main checkout (git-ignored, real names stay out of the
+   repo), one per line:
+   - link venue `<LI venue 1>` to company `<LI company 1>`
+   - link venue `<LI venue 2>` to company `<LI company 2>`
+   - link venue `<LI venue 3>` to company `<LI company 3>`
+   - link venue `<LI venue 4>` to company `<LI company 4>`
+
+   For each pair: `/admin/crm/firmen`, search the company's name, open it, then on its card
+   "Locations" press "Verknüpfen", type the venue's name or number, choose it and press
+   "Verknüpfen". The toast says "Location verknüpft.". A venue offered with "bei …" in its line
+   already belongs to a company; stop and look before going on.
+
+   **Owner's check.** On `/admin/crm/firmen`, a search by each company's name shows exactly one
+   company, with 1 in the column "Locations". Its page lists the venue under "Locations", and the
+   venue's CMS page shows that company in its CRM card. A search by each venue's name shows no
+   second company. If the 4 were the only venues without a company, the button "Firmen aus …
+   Locations anlegen" is gone from the list.
+6. **Check.** The 4 detail pages answer 200 and read "Liechtenstein", `?canton=li` lists 4, they
+   are in `sitemap-venues-*.xml`, and `/hochzeitslocations/liechtenstein` is a 404 until a fifth
+   Liechtenstein venue exists.
+
 ### Customer sheet (#48)
 
 The owner's customer sheet goes into the CRM once. Put it at `content/owner/kunden-master.csv` in
@@ -369,6 +416,7 @@ company and venue names and classes, never an email or a phone number.
 
 1. Make a Neon branch first, so a bad run can be undone.
 2. `sh bin/prod-import crm-bootstrap`. It is safe to run again: a second run creates nothing.
+   Not while the 4 Liechtenstein venues are unlinked, though (§Liechtenstein venues (#46), step 5).
    Without it, every row that matches a venue is reported as blocked.
 3. `sh bin/prod-import customers-dry`, then read the report. If names need fixing, fix them in the
    sheet and run it again, until the report is right.

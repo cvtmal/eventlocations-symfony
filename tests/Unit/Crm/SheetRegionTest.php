@@ -48,7 +48,7 @@ final class SheetRegionTest extends TestCase
         $labels = [
             'Zürich', 'Bern', 'Luzern', 'Uri', 'Schwyz', 'Obwalden', 'Nidwalden', 'Glarus', 'Zug', 'Freiburg', 'Solothurn',
             'Basel-Stadt', 'Basel-Landschaft', 'Schaffhausen', 'Appenzell Ausserrhoden', 'Appenzell Innerrhoden', 'St. Gallen',
-            'Graubünden', 'Aargau', 'Thurgau', 'Tessin', 'Waadt', 'Wallis', 'Neuenburg', 'Genf', 'Jura',
+            'Graubünden', 'Aargau', 'Thurgau', 'Tessin', 'Waadt', 'Wallis', 'Neuenburg', 'Genf', 'Jura', 'Liechtenstein',
         ];
 
         $codes = array_map(static fn (string $label): array => SheetRegion::fromSheet($label)->codes(), $labels);
@@ -76,13 +76,13 @@ final class SheetRegionTest extends TestCase
         self::assertFalse($region->compatibleWithCanton('ag'));
     }
 
-    public function test_liechtenstein_fits_no_swiss_canton_but_itself(): void
+    public function test_liechtenstein_fits_only_itself(): void
     {
         $region = SheetRegion::fromSheet('Liechtenstein');
 
         self::assertTrue($region->isKnown());
         foreach (Canton::cases() as $canton) {
-            self::assertFalse($region->compatibleWithCanton($canton->value), $canton->value);
+            self::assertSame(Canton::LI === $canton, $region->compatibleWithCanton($canton->value), $canton->value);
         }
         self::assertFalse($region->compatibleWith(SheetRegion::fromSheet('Ostschweiz')));
         self::assertTrue($region->compatibleWith(SheetRegion::fromSheet('Liechtenstein')));

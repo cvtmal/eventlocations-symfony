@@ -10,7 +10,7 @@
     {% set heading = ('landing.building.' ~ landing.building ~ '.heading')|trans({}, 'search') %}
     {% set intro = ('landing.building.' ~ landing.building ~ '.intro')|trans(count, 'search') %}
 {% else %}
-    {% set place = {canton: landing.canton ? landing.canton|trans : '', town: landing.townName ?? ''} %}
+    {% set place = {canton: landing.canton ? landing.canton|trans : '', canton_code: landing.canton.value ?? '', town: landing.townName ?? ''} %}
     {% set heading = ('landing.' ~ landing.type.value ~ '.heading')|trans(place, 'search') %}
     {% set intro = ('landing.' ~ landing.type.value ~ '.intro')|trans(place|merge(count), 'search') %}
 {% endif %}
