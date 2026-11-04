@@ -26,6 +26,7 @@ Usage: bin/prod-import <command>
 
   export                   write the content folders from the owner's CSV (local dev DB, no Neon)
   import                   app:venues:import against Neon, media into PROD_MEDIA_DIR
+  import-dry               app:venues:import --dry-run against Neon: the summary and the kept venues, no writes
   regenerate [--venue=N]   app:media:regenerate against Neon, then sync, then purge
   sync                     rsync the media to the server, additive: nothing is deleted there
   purge                    empty the HTTP cache on the server
@@ -35,8 +36,9 @@ Usage: bin/prod-import <command>
   customers                app:crm:import-customers against Neon
   help                     this text
 
-Run order: first deploy (migrations and towns), then export, then all, and only then may staff
-edit. --prune is refused: an empty or unmounted venues/ would unpublish every unedited venue.
+Run order: first deploy (migrations and towns), then export, then import-dry until its summary
+is right, then all. The import keeps every venue staff edited and lists it; import-dry shows the
+list first. --prune is refused: an empty or unmounted venues/ would unpublish every unedited venue.
 
 Customer sheet (#48): crm-bootstrap, then customers-dry until the report is right, then
 customers, then customers-dry shows 0 new.
@@ -158,7 +160,7 @@ main() {
             usage
             return 0
             ;;
-        export | import | regenerate | sync | purge | all | crm-bootstrap | customers-dry | customers) ;;
+        export | import | import-dry | regenerate | sync | purge | all | crm-bootstrap | customers-dry | customers) ;;
         *)
             usage >&2
             die "unknown command: $cmd"
@@ -171,6 +173,7 @@ main() {
     case "$cmd" in
         export) export_content ;;
         import) import_content ;;
+        import-dry) prod_console app:venues:import --dry-run ;;
         regenerate)
             # New variants change nothing for a visitor until they are on the server.
             regenerate_media "$@"

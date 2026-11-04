@@ -761,6 +761,7 @@ prod_import_refusals() {
     for arguments in "import --prune" "all --prune" "regenerate --prune" "sync --prune" "import --prune=1" \
         "import --overwrite-cms-edits" "import --force" "cache:clear" "doctrine:database:drop --force" \
         "regenerate --venue=abc" "regenerate --venue=1 --venue=2" "import --venue=1" \
+        "import-dry --overwrite-cms-edits" "import-dry --force" "import-dry extra" \
         "customers --force" "customers-dry extra" "crm-bootstrap --limit=1"; do
         # shellcheck disable=SC2086 # Each string is several arguments.
         run prod_import $arguments
@@ -797,6 +798,19 @@ prod_import_commands() {
         fail "the connection string is on an argument list"
     fi
     ok "the connection string is on no argument list"
+
+    clear_log
+    run prod_import import-dry
+    expect_exit "prod-import import-dry exits 0" 0
+    last="$(grep -n 'app:venues:import' "$STUB_LOG" | tail -n 1)"
+    case "$last" in
+        *"-e APP_ENV=prod -e DATABASE_URL -e MEDIA_ROOT=/var/www/html/var/prod-media/originals -e MEDIA_PUBLIC_DIR=/var/www/html/var/prod-media/public php "*" app:venues:import --dry-run") ok "import-dry runs the import's dry run with the production env" ;;
+        *) fail "import-dry ran another command or env" ;;
+    esac
+    if grep -q -E '^(rsync|ssh) ' "$STUB_LOG"; then
+        fail "import-dry synced or purged"
+    fi
+    ok "import-dry neither syncs nor purges"
 
     clear_log
     run prod_import all
