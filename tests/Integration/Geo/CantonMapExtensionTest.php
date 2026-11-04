@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Twig\Environment;
 
 /**
- * {{ canton_map() }} renders the canton SVG unescaped, with every canton id.
+ * {{ canton_map() }} renders the canton SVG unescaped, with every Swiss canton id.
  */
 final class CantonMapExtensionTest extends KernelTestCase
 {
@@ -22,8 +22,12 @@ final class CantonMapExtensionTest extends KernelTestCase
 
         self::assertStringStartsWith('<svg', $html);
         foreach (Canton::cases() as $canton) {
+            if (Canton::LI === $canton) {
+                continue; // no LI shape (#46, owner answer B)
+            }
             self::assertStringContainsString('id="ch-'.$canton->value.'"', $html);
         }
+        self::assertStringNotContainsString('id="ch-li"', $html);
         self::assertStringContainsString('id="lakes"', $html);
     }
 }

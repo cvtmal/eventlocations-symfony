@@ -18,7 +18,6 @@ final class LegacyVenueMapperTest extends TestCase
     {
         $venue = self::map([]);
 
-        self::assertFalse($venue->skipped);
         self::assertSame('1a2b3c4d', $venue->id8);
         self::assertSame('Landgasthof Beispielhof', $venue->name);
         self::assertSame(120, $venue->capacityMax);
@@ -37,7 +36,7 @@ final class LegacyVenueMapperTest extends TestCase
     {
         $catalogue = Yaml::parseFile(\dirname(__DIR__, 3).'/translations/geo+intl-icu.de.yaml');
         \assert(\is_array($catalogue) && \is_array($catalogue['canton']));
-        self::assertCount(26, $catalogue['canton']);
+        self::assertCount(27, $catalogue['canton']);
 
         foreach ($catalogue['canton'] as $code => $label) {
             self::assertSame($code, self::map(['Region' => (string) $label])->cantonCode, (string) $label);
@@ -66,9 +65,13 @@ final class LegacyVenueMapperTest extends TestCase
         self::assertSame([$canton, $text], [$venue->cantonCode, $venue->region]);
     }
 
-    public function test_liechtenstein_is_skipped_whatever_the_rest_says(): void
+    public function test_liechtenstein_maps_to_li_and_is_mapped_like_any_row(): void
     {
-        self::assertTrue(self::map(['Region' => 'Liechtenstein', 'Kapazität' => 'viele', 'ID' => 'x'])->skipped);
+        $venue = self::map(['Region' => ' Liechtenstein ', 'Name' => 'Schloss Beispiel ']);
+
+        self::assertSame(['li', null], [$venue->cantonCode, $venue->region]);
+        self::assertSame('Schloss Beispiel', $venue->name);
+        self::assertSame([], $venue->notes);
     }
 
     public function test_an_empty_region_gives_neither_and_a_note(): void
@@ -89,7 +92,10 @@ final class LegacyVenueMapperTest extends TestCase
         yield 'quoted international' => ["'+41441234567", '+41441234567', false];
         yield 'empty' => ['', null, false];
         yield 'too short' => ['365', null, true];
-        yield 'foreign' => ['+4233001122', null, true];
+        yield 'Liechtenstein' => ['+4233001122', '+4233001122', false];
+        yield 'Liechtenstein with 00 and spaces' => ['00423 300 11 22', '+4233001122', false];
+        yield 'Liechtenstein too long' => ['+42330011223', null, true];
+        yield 'foreign' => ['+4930123456', null, true];
     }
 
     #[DataProvider('phones')]
@@ -152,12 +158,6 @@ final class LegacyVenueMapperTest extends TestCase
         $venue = self::map(['Vorstellungstext' => WixCsv::richText(), 'Ambiente' => str_repeat('a', 200)]);
 
         self::assertSame(200, mb_strlen($venue->summary));
-    }
-
-    public function test_the_skip_rule_is_public_for_the_owner_export(): void
-    {
-        self::assertTrue(LegacyVenueMapper::isSkipped(WixCsv::row(['Region' => ' Liechtenstein '])));
-        self::assertFalse(LegacyVenueMapper::isSkipped(WixCsv::row()));
     }
 
     /**

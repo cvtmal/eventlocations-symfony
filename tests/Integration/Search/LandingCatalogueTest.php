@@ -63,7 +63,7 @@ final class LandingCatalogueTest extends KernelTestCase
         self::assertInstanceOf(Connection::class, $connection);
         $cantonSlugs = $connection->fetchFirstColumn('SELECT slug FROM cantons');
 
-        self::assertCount(26, $cantonSlugs);
+        self::assertCount(27, $cantonSlugs);
         self::assertSame([], array_values(array_intersect($this->buildingSlugs(), $cantonSlugs)), '/hochzeitslocations/{slug} resolves a canton first, so a building would never be reached.');
     }
 

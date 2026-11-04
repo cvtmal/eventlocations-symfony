@@ -41,7 +41,7 @@ final class LegacyContentExporter
             }
         }
 
-        $counts = array_fill_keys(['created', 'updated', 'unchanged', 'skipped', 'canton', 'region', 'phoneDropped', 'phoneEmpty', 'emailDropped', 'websiteDropped', 'rule1', 'rule2', 'rule3', 'rule4', 'sentence', 'word', 'whole', 'ambience'], 0);
+        $counts = array_fill_keys(['created', 'updated', 'unchanged', 'canton', 'region', 'phoneDropped', 'phoneEmpty', 'emailDropped', 'websiteDropped', 'rule1', 'rule2', 'rule3', 'rule4', 'sentence', 'word', 'whole', 'ambience'], 0);
         $counts['rows'] = \count($rows);
         $regions = [];
         $cantons = [];
@@ -50,23 +50,14 @@ final class LegacyContentExporter
         $exported = [];
         // Every row's id, mapped or not, so a row that fails is not also called stale (F-m3).
         $seen = [];
-        $skippedIds = [];
 
         foreach ($rows as $number => $row) {
             $id8 = self::id8($row);
             if (null !== $id8) {
                 $seen[$id8] = true;
-                if (LegacyVenueMapper::isSkipped($row)) {
-                    $skippedIds[$id8] = true;
-                }
             }
             try {
                 $venue = $this->mapper->map($row);
-                if ($venue->skipped) {
-                    ++$counts['skipped'];
-                    $notes[] = \sprintf('row %d: skipped, not in Switzerland', $number);
-                    continue;
-                }
                 if (isset($exported[$venue->id8])) {
                     throw InvalidWixExport::unresolvedRow('another row has the same first 8 characters of the ID');
                 }
@@ -94,9 +85,7 @@ final class LegacyContentExporter
             if (null !== $id8 && isset($exported[$id8])) {
                 continue;
             }
-            if (null !== $id8 && isset($skippedIds[$id8])) {
-                $notes[] = $key.': in the CSV but not in Switzerland; left alone';
-            } elseif (null === $id8 || !isset($seen[$id8])) {
+            if (null === $id8 || !isset($seen[$id8])) {
                 $notes[] = $key.': stale, not in the CSV; left alone';
             }
             // Else the row is in the CSV and already reported as unresolved.

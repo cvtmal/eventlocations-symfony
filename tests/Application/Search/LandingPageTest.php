@@ -114,7 +114,7 @@ final class LandingPageTest extends WebTestCase
             $this->client->request('GET', '/hochzeitslocations/'.$slug);
             $answered[$code] = $this->client->getResponse()->getStatusCode();
         }
-        self::assertCount(26, $answered);
+        self::assertCount(27, $answered);
         foreach ($answered as $code => $status) {
             self::assertSame(\in_array($code, $live, true) ? 200 : 404, $status, (string) $code);
         }
@@ -139,6 +139,25 @@ final class LandingPageTest extends WebTestCase
 
         $this->get('/hochzeitslocations/tessin');
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Tessin');
+    }
+
+    public function test_liechtenstein_gets_its_page_at_five_venues_and_no_kanton(): void
+    {
+        $this->inCanton(Canton::LI, 4);
+        $this->client->request('GET', '/hochzeitslocations/liechtenstein');
+        self::assertResponseStatusCodeSame(404, 'Four venues stay under the threshold (#46, owner answer C).');
+
+        $this->inCanton(Canton::LI, 1);
+
+        $crawler = $this->get('/hochzeitslocations/liechtenstein');
+        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations in Liechtenstein');
+        self::assertStringStartsWith('5 Hochzeitslocations in Liechtenstein: ', $crawler->filter('.listing-hero__intro > p')->text());
+        $title = $crawler->filter('title')->text();
+        self::assertStringContainsString('in Liechtenstein', $title);
+        self::assertStringNotContainsString('Kanton', $title);
+        self::assertStringStartsWith('Hochzeitslocations in Liechtenstein: ', (string) $crawler->filter('meta[name="description"]')->attr('content'));
+        self::assertSame(['Hochzeitslocations', 'Liechtenstein'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['Hochzeitslocations', 'Liechtenstein'], array_column($this->breadcrumbJsonLd($crawler), 'name'));
     }
 
     public function test_five_venues_in_one_town_switch_a_town_page_on(): void

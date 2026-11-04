@@ -28,8 +28,8 @@ final class ImportTownsCommandTest extends KernelTestCase
 
     public function test_dataset_is_imported_collapsed(): void
     {
-        self::assertSame(3959, (int) $this->connection->fetchOne('SELECT count(*) FROM towns'));
-        self::assertSame(4057, (int) $this->connection->fetchOne('SELECT count(*) FROM town_zips'));
+        self::assertSame(3972, (int) $this->connection->fetchOne('SELECT count(*) FROM towns'));
+        self::assertSame(4070, (int) $this->connection->fetchOne('SELECT count(*) FROM town_zips'));
 
         $stafa = $this->connection->fetchAssociative("SELECT zip, slug FROM towns WHERE canton_code = 'zh' AND name = 'Stäfa'");
         self::assertSame(['zip' => '8712', 'slug' => 'staefa'], $stafa);
@@ -49,8 +49,8 @@ final class ImportTownsCommandTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $this->tester->execute([]));
 
         $output = $this->tester->getDisplay();
-        self::assertStringContainsString('0 inserted, 0 updated, 3959 unchanged', $output);
-        self::assertStringContainsString('4057 total, 0 added, 0 removed', $output);
+        self::assertStringContainsString('0 inserted, 0 updated, 3972 unchanged', $output);
+        self::assertStringContainsString('4070 total, 0 added, 0 removed', $output);
         self::assertSame($before, $this->connection->fetchOne('SELECT max(updated_at) FROM towns'));
     }
 

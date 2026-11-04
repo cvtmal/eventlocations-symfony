@@ -9,7 +9,7 @@ use Twig\Attribute\AsTwigFunction;
 
 /**
  * {{ canton_map() }} inlines assets/maps/cantons.svg (26 `<path id="ch-<code>">` plus a
- * lakes layer; source and licence in assets/maps/LICENSES.md).
+ * lakes layer; source and licence in assets/maps/LICENSES.md). Liechtenstein has no path (#46).
  */
 final class CantonMapExtension
 {

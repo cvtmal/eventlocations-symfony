@@ -19,6 +19,8 @@ final class PhoneNumberTest extends TestCase
         yield 'mobile' => ['+41791234567', '079 123 45 67'];
         yield 'free number' => ['+41800123456', '0800 123 456'];
         yield 'premium number' => ['+41900123456', '0900 123 456'];
+        yield 'liechtenstein' => ['+4232345678', '+423 234 56 78'];
+        yield 'liechtenstein with wrong length' => ['+423234567890', '+423234567890'];
         yield 'other country' => ['+4930123456', '+4930123456'];
         yield 'swiss with wrong length' => ['+4144123456', '+4144123456'];
     }

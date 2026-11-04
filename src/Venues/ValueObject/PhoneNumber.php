@@ -7,7 +7,8 @@ namespace App\Venues\ValueObject;
 /**
  * A venue's phone number as stored (E.164, `chk_venues_phone`), with its Swiss display form
  * for the phone reveal (DP-11): `+41441234567` → `044 123 45 67`, `+41800123456` →
- * `0800 123 456`. Any other value (another country, an unexpected length) is shown as stored.
+ * `0800 123 456`. A Liechtenstein number keeps its country code (#46): `+4232345678` →
+ * `+423 234 56 78`. Any other value (another country, an unexpected length) is shown as stored.
  */
 final readonly class PhoneNumber
 {
@@ -28,6 +29,9 @@ final readonly class PhoneNumber
 
     public function display(): string
     {
+        if (1 === preg_match('/^\+423([0-9]{3})([0-9]{2})([0-9]{2})$/', $this->e164, $match)) {
+            return \sprintf('+423 %s %s %s', $match[1], $match[2], $match[3]);
+        }
         if (1 !== preg_match('/^\+41([0-9]{9})$/', $this->e164, $match)) {
             return $this->e164;
         }

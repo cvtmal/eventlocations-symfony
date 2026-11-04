@@ -65,6 +65,13 @@ final class VenueSitemapQueryTest extends KernelTestCase
         self::assertSame(['veroeffentlicht'], $this->slugs($this->query->page(1)));
     }
 
+    public function test_a_liechtenstein_venue_appears(): void
+    {
+        DetailVenues::inCantonOnly('remise-vaduz', 'Remise Vaduz', 'li');
+
+        self::assertSame(['remise-vaduz'], $this->slugs($this->query->page(1)));
+    }
+
     public function test_lastmod_follows_the_translation(): void
     {
         $venue = DetailVenues::minimal();

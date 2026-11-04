@@ -239,7 +239,7 @@ final class ListingExtension
         return match ($page->type) {
             LandingType::Canton => 'related' === $context
                 ? $this->translator->trans('related.canton', ['canton' => $page->canton?->trans($this->translator)], 'search')
-                : $this->translator->trans('breadcrumb.canton', ['canton' => $page->canton?->trans($this->translator)], 'seo'),
+                : $this->translator->trans('breadcrumb.canton', ['canton' => $page->canton?->trans($this->translator), 'canton_code' => $page->canton?->value], 'seo'),
             LandingType::Town => 'related' === $context
                 ? $this->translator->trans('related.town', ['town' => $page->townName], 'search')
                 : (string) $page->townName,

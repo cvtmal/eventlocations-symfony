@@ -81,6 +81,18 @@ final class VenuePhoneControllerTest extends WebTestCase
         $this->assertPrivateNoindex();
     }
 
+    public function test_a_liechtenstein_number_keeps_its_country_code(): void
+    {
+        $venue = DetailVenues::full($this->em);
+        $venue->changeContact('+4232345678', null, null, null);
+        $this->em->flush();
+
+        $this->get(self::URL, '10.0.0.9');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('a[href="tel:+4232345678"]', '+423 234 56 78');
+    }
+
     public function test_not_found_for_an_unknown_slug_and_a_venue_without_phone(): void
     {
         DetailVenues::minimal();

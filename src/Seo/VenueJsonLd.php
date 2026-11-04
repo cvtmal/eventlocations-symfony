@@ -58,7 +58,7 @@ final class VenueJsonLd
             'postalCode' => $facts->zip,
             'addressLocality' => $facts->town,
             'addressRegion' => $facts->canton?->trans($this->translator),
-            'addressCountry' => 'CH',
+            'addressCountry' => $facts->canton?->countryCode() ?? 'CH',
         ]);
     }
 
@@ -73,7 +73,7 @@ final class VenueJsonLd
 
         return [
             '@type' => 'AdministrativeArea',
-            'name' => $this->translator->trans('venue.canton_area', ['canton' => $facts->canton->trans($this->translator)], 'seo'),
+            'name' => $this->translator->trans('venue.canton_area', ['canton' => $facts->canton->trans($this->translator), 'canton_code' => $facts->canton->value], 'seo'),
         ];
     }
 

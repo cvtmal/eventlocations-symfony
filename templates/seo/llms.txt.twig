@@ -36,7 +36,7 @@
 {% for venue in venues %}
 {% set notes = [
     venue.townName ? 'detail.head.place'|trans({zip: venue.zip ?? '', town: venue.townName}, 'venues') : null,
-    venue.canton ? 'venue.canton_area'|trans({canton: venue.canton|trans}, 'seo') : null,
+    venue.canton ? 'venue.canton_area'|trans({canton: venue.canton|trans, canton_code: venue.canton.value}, 'seo') : null,
     'llms.capacity'|trans({count: venue.capacityMax|swiss_number}, 'seo'),
 ]|filter(note => note) %}
 - [{{ venue.name|md }}]({{ url('venue_markdown', {slug: venue.slug}) }}): {{ notes|join(', ')|md }}

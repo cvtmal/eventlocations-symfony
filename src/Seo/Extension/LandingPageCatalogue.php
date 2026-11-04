@@ -112,10 +112,10 @@ final class LandingPageCatalogue implements LandingPageSource, ResetInterface
     }
 
     /**
-     * @return array{canton: string, town: string}
+     * @return array{canton: string, canton_code: string, town: string}
      */
     private function place(LandingPage $page): array
     {
-        return ['canton' => (string) $page->canton?->trans($this->translator), 'town' => (string) $page->townName];
+        return ['canton' => (string) $page->canton?->trans($this->translator), 'canton_code' => (string) $page->canton?->value, 'town' => (string) $page->townName];
     }
 }

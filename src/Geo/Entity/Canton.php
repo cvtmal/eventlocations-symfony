@@ -9,8 +9,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A canton row. Code-keyed vocabulary row (S4): the primary key is the lower-case code,
- * a documented exception to EntityId. The 26 rows are seeded by the migration; the
- * label comes from the `geo` catalogue via App\Geo\ValueObject\Canton.
+ * a documented exception to EntityId. The 27 rows (26 cantons and Liechtenstein, #46) are seeded by
+ * the migrations; the label comes from the `geo` catalogue via App\Geo\ValueObject\Canton.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'cantons')]

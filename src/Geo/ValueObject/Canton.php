@@ -8,7 +8,7 @@ use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The 26 Swiss cantons, in official BFS order (1 ZH … 26 JU).
+ * The 26 Swiss cantons in BFS order (1 ZH … 26 JU), then Liechtenstein (`li`, pseudo BFS number 27, #46).
  *
  * The value is the lower-case code used as the `cantons` primary key and in query
  * parameters (S4). Labels come from the `geo` catalogue (`canton.<code>`); slug, SVG id
@@ -42,9 +42,16 @@ enum Canton: string implements TranslatableInterface
     case NE = 'ne';
     case GE = 'ge';
     case JU = 'ju';
+    case LI = 'li';
 
     public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
         return $translator->trans('canton.'.$this->value, [], 'geo', $locale);
+    }
+
+    /** ISO 3166-1 alpha-2 of the country the region belongs to. */
+    public function countryCode(): string
+    {
+        return self::LI === $this ? 'LI' : 'CH';
     }
 }

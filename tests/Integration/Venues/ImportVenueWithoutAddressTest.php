@@ -33,6 +33,17 @@ final class ImportVenueWithoutAddressTest extends KernelTestCase
         self::assertNull($venue['lng']);
     }
 
+    public function test_a_liechtenstein_folder_imports_with_canton_li_and_its_pin(): void
+    {
+        $this->content->venue('a-venue', ['address' => [...self::NO_ADDRESS, 'canton' => 'li'], 'geo' => ['lat' => 47.141, 'lng' => 9.521]]);
+
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+
+        $venue = $this->venueRow('a-venue');
+        self::assertIsArray($venue);
+        self::assertSame(['li', null, 47.141, 9.521], [$venue['canton_code'], $venue['town_id'], $venue['lat'], $venue['lng']]);
+    }
+
     public function test_a_region_text_folder_keeps_the_text_and_has_no_canton(): void
     {
         $this->content->venue('a-venue', ['address' => null, 'geo' => null, 'translations' => ['de' => ['region' => 'Schweizweit']]]);

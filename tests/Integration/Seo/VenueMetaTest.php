@@ -33,6 +33,11 @@ final class VenueMetaTest extends KernelTestCase
         self::assertSame('Schloss Au im Kanton Zürich | Hochzeitslocation', $meta->title);
     }
 
+    public function test_liechtenstein_alone_is_named_without_kanton(): void
+    {
+        self::assertSame('Schloss Au in Liechtenstein | Hochzeitslocation', $this->meta(canton: Canton::LI)->title);
+    }
+
     public function test_a_venue_without_a_place_has_the_name_alone(): void
     {
         self::assertSame('Schloss Au | Hochzeitslocation', $this->meta()->title);

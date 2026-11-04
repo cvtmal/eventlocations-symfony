@@ -146,6 +146,21 @@ final class CustomerClassifierTest extends TestCase
         self::assertSame('Seehaus Fiktiv (Zürich)', $out[0]->record?->name);
     }
 
+    public function test_a_liechtenstein_row_matches_a_liechtenstein_venue_of_the_same_name(): void
+    {
+        // #46: Liechtenstein venues carry `li`, so the row's region fits them.
+        $out = $this->classify([self::row(2, 'Rheinhaus Fiktiv', 'Liechtenstein')], venues: [self::venue('Rheinhaus Fiktiv', 'li', 'Rheinhaus Fiktiv AG')]);
+
+        self::assertSame([[2, 'matched (venue)', 'Rheinhaus Fiktiv']], self::summary($out));
+        self::assertSame('same name', $out[0]->reason);
+
+        // A Swiss canton next door still does not fit.
+        $out = $this->classify([self::row(2, 'Rheinhaus Fiktiv', 'Liechtenstein')], venues: [self::venue('Rheinhaus Fiktiv', 'sg', 'Rheinhaus Fiktiv AG')]);
+
+        self::assertSame([[2, 'new', 'Rheinhaus Fiktiv (Liechtenstein)']], self::summary($out));
+        self::assertSame('other canton', $out[0]->reason);
+    }
+
     public function test_a_name_suffixed_for_a_namesake_elsewhere_keeps_its_suffix_for_its_duplicates(): void
     {
         $venue = self::venue('Seehaus Fiktiv', 'be', 'Seehaus Fiktiv AG');

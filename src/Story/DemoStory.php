@@ -45,8 +45,8 @@ use function Zenstruck\Foundry\Persistence\flush_after;
 /**
  * 60 fictional demo venues (S8), loaded by `make seed` through AppStory.
  *
- * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town) and every
- *   tier (3/6/9/12/30, spread over the cantons).
+ * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town), plus one
+ *   Liechtenstein venue (#46), and every tier (3/6/9/12/30, spread over the cantons).
  * - 1–5 rooms, 0–3 reviews, 0–2 documents, terms of every group (one main building and
  *   one main setting each, "Hochzeit" always), about one in three without a rating.
  * - Deterministic: faker is seeded and the distribution is index-based.
@@ -102,9 +102,15 @@ final class DemoStory extends Story
 
     /**
      * Venues in the owner's shape (#21): no address, a canton, a region text, or nothing. Each
-     * is the third of its canton, so every canton keeps its two venues with a town.
+     * is the third of its canton, so every canton keeps its two venues with a town. 52 is
+     * Zürich's third; 53 is the Liechtenstein venue (#46), so Bern keeps its two venues with a
+     * town.
      */
-    private const CANTON_ONLY = [52, 53];
+    private const CANTON_ONLY = [52, self::LIECHTENSTEIN];
+    /** Canton only, no town, like the Liechtenstein venues of the owner's export (#46). */
+    private const LIECHTENSTEIN = 53;
+    /** Its phone, so the reveal shows the `+423` format in dev. */
+    private const LIECHTENSTEIN_PHONE = '+4232345678';
     private const REGION_ONLY = 54;
     private const NO_PLACE = 55;
     private const REGION_TEXT = 'Schweizweit';
@@ -140,7 +146,8 @@ final class DemoStory extends Story
         }
 
         for ($i = 0; $i < self::VENUES; ++$i) {
-            $canton = Canton::cases()[$i % 26];
+            // The rotation covers the 26 cantons only; Liechtenstein gets venue 53 alone.
+            $canton = self::LIECHTENSTEIN === $i ? Canton::LI : Canton::cases()[$i % 26];
             $towns = $this->towns->findBy(['canton' => $canton->value], ['population' => 'DESC', 'name' => 'ASC'], 3);
             $town = $towns[intdiv($i, 26)] ?? $towns[0] ?? throw new \LogicException(\sprintf('No town in canton %s.', $canton->value));
             $name = self::PREFIXES[$i % 12].' '.self::SUFFIXES[$i % 15];
@@ -169,6 +176,15 @@ final class DemoStory extends Story
         $factory = VenueFactory::new()->withFaq();
         if (0 !== $i % 4) {
             $factory = $factory->withContact();
+        }
+        if (self::LIECHTENSTEIN === $i) {
+            // After withContact(), whose faker draws stay, so every other venue keeps its data.
+            $factory = $factory->afterInstantiate(static fn (Venue $venue) => $venue->changeContact(
+                self::LIECHTENSTEIN_PHONE,
+                $venue->inquiryEmail(),
+                null === $venue->website() ? null : str_replace('.example.ch', '.example.li', $venue->website()),
+                $venue->contactPerson(),
+            ));
         }
         if (0 !== $i % 3) {
             $factory = $factory->withDistances();

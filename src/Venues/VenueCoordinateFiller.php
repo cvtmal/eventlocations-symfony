@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues;
 
+use App\Geo\ValueObject\Canton;
 use App\Venues\Exception\InvalidWixExport;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
@@ -20,14 +21,14 @@ final class VenueCoordinateFiller
 
     private const float PAUSE_SECONDS = 0.1;
 
-    /** Canton code to the name the search should carry. */
+    /** Canton code to the name the search should carry; Liechtenstein's name is also its country. */
     private const array CANTON_NAMES = [
         'zh' => 'Zürich', 'be' => 'Bern', 'lu' => 'Luzern', 'ur' => 'Uri', 'sz' => 'Schwyz',
         'ow' => 'Obwalden', 'nw' => 'Nidwalden', 'gl' => 'Glarus', 'zg' => 'Zug', 'fr' => 'Freiburg',
         'so' => 'Solothurn', 'bs' => 'Basel-Stadt', 'bl' => 'Basel-Landschaft', 'sh' => 'Schaffhausen',
         'ar' => 'Appenzell Ausserrhoden', 'ai' => 'Appenzell Innerrhoden', 'sg' => 'St. Gallen',
         'gr' => 'Graubünden', 'ag' => 'Aargau', 'tg' => 'Thurgau', 'ti' => 'Tessin', 'vd' => 'Waadt',
-        'vs' => 'Wallis', 'ne' => 'Neuenburg', 'ge' => 'Genf', 'ju' => 'Jura',
+        'vs' => 'Wallis', 'ne' => 'Neuenburg', 'ge' => 'Genf', 'ju' => 'Jura', 'li' => 'Liechtenstein',
     ];
 
     public function __construct(
@@ -103,14 +104,15 @@ final class VenueCoordinateFiller
 
     private function query(\stdClass $document): string
     {
-        $canton = isset($document->address->canton) && \is_string($document->address->canton)
-            ? (self::CANTON_NAMES[$document->address->canton] ?? '')
-            : '';
+        $code = isset($document->address->canton) && \is_string($document->address->canton) ? $document->address->canton : '';
+        $canton = self::CANTON_NAMES[$code] ?? '';
         $region = isset($document->translations->de->region) && \is_string($document->translations->de->region)
             ? $document->translations->de->region
             : '';
+        // "Vaduz Liechtenstein Schweiz" would pull the search towards Switzerland.
+        $country = 'CH' === (Canton::tryFrom($code)?->countryCode() ?? 'CH') ? ' Schweiz' : '';
 
-        return trim($document->name.' '.('' !== $canton ? $canton : $region).' Schweiz');
+        return trim($document->name.' '.('' !== $canton ? $canton : $region).$country);
     }
 
     /** True when the two names share a word of four letters or more, case and umlauts folded. */

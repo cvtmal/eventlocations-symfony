@@ -100,6 +100,18 @@ final class LandingPageCatalogueTest extends KernelTestCase
         self::assertSame(2, $be->venueCount);
     }
 
+    public function test_a_liechtenstein_entry_has_no_kanton(): void
+    {
+        $this->inCanton(Canton::LI, 2);
+
+        $li = $this->catalogue()->page('canton.li');
+        self::assertNotNull($li);
+        self::assertSame('Hochzeitslocations in Liechtenstein', $li->name);
+        self::assertStringStartsWith('2 Hochzeitslocations in Liechtenstein:', $li->defaultIntro);
+        self::assertSame('2 Hochzeitslocations in Liechtenstein | Hochzeitslocation', $li->defaultTitle);
+        self::assertStringStartsWith('Hochzeitslocations in Liechtenstein:', $li->defaultDescription);
+    }
+
     public function test_a_page_with_one_venue_reads_in_the_singular(): void
     {
         $this->withBuilding($this->inTown('Stäfa', 1), 'castle');

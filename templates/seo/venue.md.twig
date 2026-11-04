@@ -10,7 +10,7 @@
 # {{ venue.name|md }}
 
 {% if venue.place.townName %}
-{{ 'detail.head.place'|trans({zip: venue.zip ?? '', town: venue.place.townName}, 'venues')|md }}{% if venue.place.canton %}, {{ 'venue.canton_area'|trans({canton: venue.place.canton|trans}, 'seo')|md }}{% endif %}
+{{ 'detail.head.place'|trans({zip: venue.zip ?? '', town: venue.place.townName}, 'venues')|md }}{% if venue.place.canton %}, {{ 'venue.canton_area'|trans({canton: venue.place.canton|trans, canton_code: venue.place.canton.value}, 'seo')|md }}{% endif %}
 
 
 {% elseif venue.place.isKnown() %}

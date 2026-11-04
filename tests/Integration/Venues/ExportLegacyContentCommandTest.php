@@ -41,7 +41,7 @@ final class ExportLegacyContentCommandTest extends KernelTestCase
 
         self::assertSame(Command::SUCCESS, $this->export(['--dry-run' => true]));
         $dry = $this->exporter->getDisplay();
-        self::assertStringContainsString('Dry run: Rows: 2. Mapped: 2 (2 created, 0 updated, 0 unchanged). Skipped: 0. Unresolved: 0.', $dry);
+        self::assertStringContainsString('Dry run: Rows: 2. Mapped: 2 (2 created, 0 updated, 0 unchanged). Unresolved: 0.', $dry);
         self::assertStringContainsString('Place: 1 canton, 1 region text (Basel 1). Cantons used: 1.', $dry);
         self::assertStringContainsString('Contact: 0 phone dropped, 0 phones empty, 0 e-mails dropped, 0 websites dropped.', $dry);
         self::assertStringContainsString('Descriptions: 2 section, 0 before facts, 0 long paragraphs, 0 none.', $dry);
@@ -61,14 +61,29 @@ final class ExportLegacyContentCommandTest extends KernelTestCase
         ], $this->yaml(self::key()));
     }
 
-    public function test_liechtenstein_is_skipped_and_is_no_failure(): void
+    public function test_a_liechtenstein_row_is_exported_with_canton_li_and_a_rerun_is_byte_stable(): void
     {
-        $this->csv([WixCsv::row(), WixCsv::row(['Region' => 'Liechtenstein', 'ID' => self::SECOND_ID, 'Telefon' => '+4233001122'])]);
+        $this->csv([WixCsv::row(), WixCsv::row(['Name' => 'Schloss Erfunden ', 'Region' => 'Liechtenstein', 'ID' => self::SECOND_ID, 'Telefon' => '00423 300 11 22'])]);
 
         self::assertSame(Command::SUCCESS, $this->export());
 
-        self::assertStringContainsString('Rows: 2. Mapped: 1 (1 created, 0 updated, 0 unchanged). Skipped: 1. Unresolved: 0.', $this->exporter->getDisplay());
-        self::assertCount(1, $this->folders());
+        $display = $this->exporter->getDisplay();
+        self::assertStringContainsString('Rows: 2. Mapped: 2 (2 created, 0 updated, 0 unchanged). Unresolved: 0.', $display);
+        self::assertStringContainsString('Place: 2 canton, 0 region text. Cantons used: 2.', $display);
+        self::assertStringNotContainsString('Skipped', $display);
+        self::assertStringNotContainsString('not in Switzerland', $display);
+        $key = self::key('Schloss Erfunden', self::SECOND_ID);
+        self::assertSame([self::key(), $key], $this->folders());
+        $venue = $this->yaml($key);
+        self::assertSame('Schloss Erfunden', $venue['name']);
+        self::assertSame(['canton' => 'li'], $venue['address']);
+        self::assertSame(['phone' => '+4233001122', 'inquiry_email' => WixCsv::EMAIL, 'website' => WixCsv::WEBSITE], $venue['contact']);
+        $bytes = (string) file_get_contents($this->file($key));
+
+        self::assertSame(Command::SUCCESS, $this->export());
+
+        self::assertStringContainsString('Rows: 2. Mapped: 2 (0 created, 0 updated, 2 unchanged). Unresolved: 0.', $this->exporter->getDisplay());
+        self::assertSame($bytes, file_get_contents($this->file($key)));
     }
 
     public function test_a_region_without_a_canton_lands_in_the_translation(): void
@@ -226,7 +241,7 @@ final class ExportLegacyContentCommandTest extends KernelTestCase
         self::assertStringNotContainsString('stale', $this->exporter->getDisplay());
     }
 
-    public function test_the_old_folder_of_a_liechtenstein_row_gets_its_own_line(): void
+    public function test_a_row_that_moves_to_liechtenstein_updates_its_folder(): void
     {
         $this->csv([WixCsv::row(), WixCsv::row(['Name' => 'Scheune Zwei', 'ID' => self::SECOND_ID])]);
         $this->export();
@@ -235,8 +250,9 @@ final class ExportLegacyContentCommandTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $this->export());
 
         $key = self::key('Scheune Zwei', self::SECOND_ID);
-        self::assertStringContainsString($key.': in the CSV but not in Switzerland; left alone', $this->exporter->getDisplay());
+        self::assertStringContainsString('Rows: 2. Mapped: 2 (0 created, 1 updated, 1 unchanged). Unresolved: 0.', $this->exporter->getDisplay());
         self::assertStringNotContainsString($key.': stale', $this->exporter->getDisplay());
+        self::assertSame(['canton' => 'li'], $this->yaml($key)['address']);
     }
 
     public function test_the_output_never_holds_a_contact_value(): void

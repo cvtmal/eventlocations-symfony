@@ -63,6 +63,20 @@ final class VenueJsonLdTest extends KernelTestCase
         self::assertSame(['@type' => 'AdministrativeArea', 'name' => 'Kanton Zürich'], $data['containedInPlace']);
     }
 
+    public function test_a_liechtenstein_address_is_in_liechtenstein(): void
+    {
+        $data = $this->build($this->facts(zip: '9490', town: 'Vaduz', canton: Canton::LI));
+
+        self::assertSame(['@type' => 'PostalAddress', 'postalCode' => '9490', 'addressLocality' => 'Vaduz', 'addressRegion' => 'Liechtenstein', 'addressCountry' => 'LI'], $data['address']);
+    }
+
+    public function test_liechtenstein_alone_is_named_without_kanton(): void
+    {
+        $data = $this->build($this->facts(canton: Canton::LI));
+
+        self::assertSame(['@type' => 'AdministrativeArea', 'name' => 'Liechtenstein'], $data['containedInPlace']);
+    }
+
     public function test_a_venue_without_a_place_is_a_bare_event_venue(): void
     {
         $data = $this->build($this->facts());

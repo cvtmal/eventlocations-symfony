@@ -49,7 +49,7 @@ final class VenueMeta
         }
 
         if (null !== $facts->canton) {
-            return [['venue.title_canton', $name + ['canton' => $facts->canton->trans($this->translator)]], $fallback];
+            return [['venue.title_canton', $name + ['canton' => $facts->canton->trans($this->translator), 'canton_code' => $facts->canton->value]], $fallback];
         }
 
         return [$fallback];

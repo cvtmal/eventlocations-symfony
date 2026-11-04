@@ -36,6 +36,13 @@ final class GeoSchemaMigrationTest extends KernelTestCase
         self::assertSame('genf', $slugs['ge']);
     }
 
+    public function test_liechtenstein_is_the_27th_region(): void
+    {
+        $row = $this->connection->fetchAssociative("SELECT bfs_number, slug, svg_id FROM cantons WHERE code = 'li'");
+
+        self::assertSame(['bfs_number' => 27, 'slug' => 'liechtenstein', 'svg_id' => 'ch-li'], $row);
+    }
+
     public function test_fold_functions(): void
     {
         self::assertSame('zuerich zurich', $this->connection->fetchOne("SELECT geo_search_key('Zürich')"));

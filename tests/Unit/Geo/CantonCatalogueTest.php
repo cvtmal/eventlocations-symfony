@@ -10,7 +10,7 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The Canton enum and the `geo` catalogue name the same 26 cantons.
+ * The Canton enum and the `geo` catalogue name the same 26 cantons plus Liechtenstein (#46).
  */
 final class CantonCatalogueTest extends TestCase
 {
@@ -21,8 +21,19 @@ final class CantonCatalogueTest extends TestCase
         $labels = $this->cantonLabels();
         $codes = array_map(static fn (Canton $canton): string => $canton->value, Canton::cases());
 
-        self::assertCount(26, Canton::cases());
+        self::assertCount(27, Canton::cases());
         self::assertEqualsCanonicalizing($codes, array_keys($labels));
+    }
+
+    public function test_only_liechtenstein_is_outside_switzerland(): void
+    {
+        self::assertSame('LI', Canton::LI->countryCode());
+
+        foreach (Canton::cases() as $canton) {
+            if (Canton::LI !== $canton) {
+                self::assertSame('CH', $canton->countryCode(), $canton->value);
+            }
+        }
     }
 
     public function test_labels_are_non_empty_swiss_german(): void
