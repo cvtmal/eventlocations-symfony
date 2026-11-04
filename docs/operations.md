@@ -356,22 +356,31 @@ at a time. It runs by hand only, never from cron.
 
 ### Liechtenstein venues (#46), once
 
-Replaced by the next section. Don't run the old #46 steps; its geocode and import steps are wrong
-now.
+Replaced by the next section, which holds the same steps plus a saved report and an import dry
+run. Done on production on 2026-11-04.
 
 ### Geocode the venues (Q3) and add Liechtenstein (#46), once
 
-**This replaces the standalone #46 runbook.** The steps of 2026-11-04's "Liechtenstein venues
-(#46), once" are all in here; run only this list. Its old step 4 expected "the rest unchanged",
-which is wrong: the unedited venues show as "updated" because they get their pins (step 5).
+**Done on production on 2026-11-04** (the owner). The figures:
+- **Geocode (step 4):** 5 folders asked. 4 found, the 4 Liechtenstein venues, with no `NO`. 1 not
+  found, the Swiss venue Google had not found on 2026-11-02 either.
+- **Import dry run (step 5):** `247 seen, 4 created, 0 updated, 243 unchanged, 0 failed`, 0 kept,
+  photos +33.
+
+Production already had the 242 Swiss pins: the go-live import of 2026-11-02 carried their `geo:`,
+and the live pages' JSON-LD holds the folders' coordinates. This runbook had read file times the
+other way round and expected about 240 "updated" lines. That was wrong; #46's "the rest
+unchanged" was right.
+
+The steps stay here for a rerun, for example after a new export or new venues. This section
+replaces the standalone #46 runbook: its steps are all here, so run only this list.
 
 One sequence for two jobs, because both arrive with the same import:
 
 - **#46:** the release makes Liechtenstein region `li`, and the export stops skipping its 4 rows.
-- **Q3:** the map pins. The owner set `GOOGLE_MAPS_EMBED_KEY` on the server (2026-11-04), but a
-  venue shows a map only when it has coordinates, and production has none yet. The coordinates are
-  already in the content folders: the geocoder ran on 2026-11-02 at 17:39 and gave 242 of the 243
-  folders a `geo:`. The go-live import ran before that, between 16:21 and 16:46.
+- **Q3:** the map pins. A venue shows a map only when it has coordinates and the server has
+  `GOOGLE_MAPS_EMBED_KEY`, which the owner set on 2026-11-04. The geocoder writes the coordinates
+  into the content folders as `geo:`, and the import carries them to production.
 
 Run the steps in order; each is safe to rerun.
 
@@ -394,8 +403,8 @@ unaffected.
 - **The Places key:** a key of its own, not the embed key. Restrict it to "Places API (New)", and
   to your own IP address if you like. It lives in the shell only: never in `.env*`, the repo or the
   server's files. Each search is a "Text Search Pro" call: 5,000 a month are free, then USD 32 per
-  1,000. This run makes about 10: the dry run and the real run each ask the 5 folders without
-  `geo:`. Put it in the shell with:
+  1,000. A run makes two calls per folder without `geo:`, one in the dry run and one in the real
+  run: 10 on 2026-11-04. Put it in the shell with:
   ```sh
   read -rs GOOGLE_PLACES_API_KEY && export GOOGLE_PLACES_API_KEY
   ```
@@ -422,17 +431,17 @@ unaffected.
 3. **Export:** `sh bin/prod-import export`. Expect 247 venues and 4 new folders `<slug>-<id8>`. The
    243 existing folders stay byte-identical, their `geo:` included, and no line says "not in
    Switzerland".
-4. **Geocode the folders without `geo:`:** the 4 Liechtenstein folders, and the Swiss one Google
-   did not find.
+4. **Geocode the folders without `geo:`.** On 2026-11-04 these were the 4 Liechtenstein folders
+   and the Swiss one Google did not find. Since then, only that Swiss one is left without `geo:`.
    1. Dry run first. It writes only the report:
       ```sh
       docker compose exec -T -e GOOGLE_PLACES_API_KEY php php bin/console app:venues:geocode --dry-run
       ```
-      Expect `Dry run: … found, … not found, 0 failed, 242 already had coordinates.`, where found
-      plus not found is 5. Read `content/owner/geocode-report.csv`: 5 rows. A `would set` row shows
-      the name and address Google matched.
-   2. Run the same command without `--dry-run`. It asks the same 5 again and writes `geo:` into
-      the folders it finds.
+      Expect `Dry run: … found, … not found, 0 failed, … already had coordinates.`, with one report
+      row per folder asked: on 2026-11-04, 5 rows and 242 already had coordinates. A `would set`
+      row shows the name and address Google matched.
+   2. Run the same command without `--dry-run`. It asks the same folders again and writes `geo:`
+      into the ones it finds.
    3. Read the report again. Add every `NO` row and every `not found` row to
       `q3-pin-check.md` for step 8.
    4. If a row reads `failed` (the network, or Google's quota), the command exits 1. Run it again:
@@ -440,19 +449,20 @@ unaffected.
    5. When done, run `unset GOOGLE_PLACES_API_KEY`. If you won't need the key again, delete it in
       the Cloud console.
 5. **Import dry run:** `sh bin/prod-import import-dry`. It reads Neon and writes nothing. First
-   comes one line per venue that would change, about 240 of them, such as `updated    <folder>`,
-   `created    <folder>` or `cms_edited  <folder>`. Then the summary:
+   comes one line per venue that would change, such as `created    <folder>`,
+   `updated    <folder>` or `cms_edited  <folder>`. On 2026-11-04 those were the 4 `created`
+   lines. Then the summary:
    ```text
    Dry run: Venues: 247 seen, 4 created, U updated, N unchanged, 0 failed, 0 unpublished. …
    K venues kept because the CMS edited them; --overwrite-cms-edits replaces them:
    ```
    followed by the list of those folders. The "kept" line and its list appear only when K is more
    than 0, and read "1 venue kept" for one.
-   - "updated" are the unedited venues that get their pin, because their folder gained `geo:`
-     after the go-live import.
-   - "unchanged" are the ones that still have no `geo:`.
-   - "created" are the 4 Liechtenstein venues.
-   - U + N + K is 243.
+   - "updated": unedited venues whose folder changed since their last import, a new `geo:`
+     included. On 2026-11-04: 0.
+   - "unchanged": venues whose folder did not change since their last import. On 2026-11-04: 243.
+   - "created": new folders. On 2026-11-04: the 4 Liechtenstein venues.
+   - U + N + K is the number of folders that existed before the export, 243 on 2026-11-04.
 
    A `failed` line means stop: send it to the dev team. Keep the list of kept venues, because the
    import gives them no pin (step 7). Never use `--overwrite-cms-edits`: it would replace
