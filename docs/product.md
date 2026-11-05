@@ -41,12 +41,23 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 | # | Item | Needs | Status |
 |---|---|---|---|
 | 1 | Security audit triage (2 high, 8 medium, 17 low) | Owner has read the report and triages | PO proposes: H1 guest-copy relay and H2 IPv6 limiter keys first, with M6, M8, M1 |
-| 2 | CRM "Locations" merge (companies and contacts become one record, one Location per venue, couples only as inquiries) | Owner picks an option and the 11 defaults | PO and tech lead back option A, 3 cycles |
+| 2 | CRM "Locations" merge | Decided 2026-11-05 (owner): option A, all 11 defaults of the research. Cycle go and the production counts (§6 of the research) still to come | Cycles: crm-locations-names, then contacts, then one-per-venue. See "CRM Locations" below |
 | 3 | Q3 pin check: 13 doubtful map pins and 1 venue without a pin | Owner, by hand | In `content/owner/q3-pin-check.md` |
 | 4 | When to let Googlebot in | Owner | Blocked on purpose after launch; no date set |
 | 5 | Price of a self-created entry | Owner | Not set; plays no part in the app |
 | 6 | Server settings for the "In der Nähe" map: `GOOGLE_MAPS_JS_KEY` and the map ID | Owner | Page works without them, but shows no map |
 | 7 | #53 google-rating: billing country for the Google Places key | Owner | Planned; Google's stars and count would replace our own ratings and reviews on the detail page, and the Bewertungen tab would go |
+
+## CRM "Locations" (decided 2026-11-05)
+
+Research: `.rpi-tracking/research/2026-11-04/crm-locations-merge-options.md`. The owner chose option A (evolve in place) and accepted every default.
+
+- The CRM's Firmen and Kontakte become one record, **Location**. A Location may have one Eintrag (venue); without one it is a prospect. Prospects sit in the same list under an "Ohne Eintrag" tab. Staff link a new venue to a prospect by hand; there is no automatic name match.
+- The CMS venue screens are renamed **Einträge** (staff screens only). The public site and `/konto` keep "Location".
+- People become a contact card on the Location, with no page, list or timeline of their own. Removing one deletes the row only. Contacts without a company are erased after a dry run shows the count.
+- Couples leave the CRM and exist only as Anfragen, under the existing 12-month purge. No composer on an Anfrage. Couples already in the CRM are erased at the switch (Anfragen stay, notes blanked, tasks removed).
+- A deal shows its Location's contact card, and its Eintrag comes from the Location. A manager confirmed in `/konto` is copied once onto the card.
+- Cycles, in order: `crm-locations-names` (no migration), `crm-locations-contacts`, `crm-locations-one-per-venue`. Each needs the owner's go to implement.
 
 ## Parked
 
