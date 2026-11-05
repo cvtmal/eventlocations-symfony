@@ -133,7 +133,7 @@ accounts:
         invalid: Diese Suche geht nicht. Hier stehen alle Konten.
     empty:
         title: Noch keine Konten
-        text: Registriert sich jemand für eine Location, erscheint das Konto hier.
+        text: Registriert sich jemand für einen Eintrag, erscheint das Konto hier.
         search_title: Keine Konten gefunden
     action:
         deactivate: Deaktivieren
@@ -341,9 +341,9 @@ review:
         action_failed: Das hat nicht geklappt. Bitte noch einmal versuchen.
         manager_added: Manager hinzugefügt.
         manager_removed: Manager entfernt.
-        manager_known: Diese Person ist bereits Manager dieser Location.
+        manager_known: Diese Person ist bereits Manager dieses Eintrags.
         manager_invalid: Bitte eine gültige E-Mail-Adresse eingeben.
-        manager_gone: Diese Person ist nicht mehr Manager dieser Location.
+        manager_gone: Diese Person ist nicht mehr Manager dieses Eintrags.
 invite:
     panel:
         email: E-Mail
