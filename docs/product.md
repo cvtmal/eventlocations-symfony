@@ -1,10 +1,10 @@
 # Hochzeitslocation: product
 
-_Last updated: 2026-11-05 (through #52) · Owner of this file: the product owner (the WHAT). The tech lead owns the HOW. Scope, settled decisions, requirements and the cycle log stay in `docs/rpi-cycles.md`; operations in `docs/operations.md`._
+_Last updated: 2026-11-05 (through #53; CRM Locations merge #54-#56 in progress) · Owner of this file: the product owner (the WHAT). The tech lead owns the HOW. Scope, settled decisions, requirements and the cycle log stay in `docs/rpi-cycles.md`; operations in `docs/operations.md`._
 
 ## What it is
 
-A Swiss wedding-venue listing site at **hochzeitslocation.ch**, run by Pick n Roll GmbH. Couples search venues, save favourites and send inquiries. Venues are sold paid tiers. Venue managers can maintain their own entry. It is live since 2026-11-02 with about 247 venues (243 Swiss, 4 in Liechtenstein). Language: German only for now.
+A Swiss wedding-venue listing site at **hochzeitslocation.ch**, run by Pick n Roll GmbH. Couples search venues, save favourites and send inquiries. Venues are sold paid tiers. Venue managers can maintain their own entry. It is live since 2026-11-02 with 249 venues (245 Swiss, 4 in Liechtenstein). Language: German only for now.
 
 It is not an eventlokale clone: no magazine, no provider listings, no event types, no award.
 
@@ -23,6 +23,7 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 - Home page, one listing page with filters (region incl. place/postcode and radius, guests, wedding facts, more), canton landing pages, one detail page per venue with photos, facts and map, similar venues.
 - Guest filter with four size bands (bis 50, bis 100, bis 150, über 150 Gäste), matched against a venue's maximum capacity; a select on the listing overlay and the home search, "Alle Gästezahlen" for none. Old `?guests=N` links fall into their band (#51, `52313d0`).
 - "In der Nähe" page at `/hochzeitslocation-in-meiner-naehe`, linked from the header, phone menu and footer: the visitor shares a location or types a PLZ/Ort and sees venues within 30 km, nearest first, on a Google Maps map; without a location all pins show. Until the owner sets `GOOGLE_MAPS_JS_KEY` and the map ID on the server, the page shows the controls and the list without a map (#52, `13c3b49`).
+- Detail page shows Google's stars and review count (#53) once a venue has a place ID; our own ratings and reviews and the Bewertungen tab are gone. Staff set the place ID in the CMS card "Google-Bewertung".
 - Merkliste (favourites) without login, kept in a cookie.
 - Inquiry form on every venue; the inquiry goes to the venue by e-mail and is stored for the CRM.
 - Ranking by paid tier (Beliebte Location, Empfehlung, Top Premium, Premium, none), shuffled daily within a tier.
@@ -40,13 +41,13 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 
 | # | Item | Needs | Status |
 |---|---|---|---|
-| 1 | Security audit triage (2 high, 8 medium, 17 low) | Owner has read the report and triages | PO proposes: H1 guest-copy relay and H2 IPv6 limiter keys first, with M6, M8, M1 |
-| 2 | CRM "Locations" merge | Decided 2026-11-05 (owner): option A, all 11 defaults of the research. Cycle go and the production counts (§6 of the research) still to come | Cycles: crm-locations-names, then contacts, then one-per-venue. See "CRM Locations" below |
+| 1 | Security audit triage (2 high, 8 medium, 17 low) | Owner, when they choose to pick it up | Set aside by the owner on 2026-11-05. PO proposal when it returns: H1 guest-copy relay and H2 IPv6 limiter keys first, with M6, M8, M1 |
+| 2 | CRM "Locations" merge | Owner go given 2026-11-05 (option A, all 11 defaults); deploys the owner's | #54 crm-locations-names, #55 crm-locations-contacts, #56 crm-locations-one-per-venue in progress. See "CRM Locations" below |
 | 3 | Q3 pin check: 13 doubtful map pins and 1 venue without a pin | Owner, by hand | In `content/owner/q3-pin-check.md` |
 | 4 | When to let Googlebot in | Owner | Blocked on purpose after launch; no date set |
 | 5 | Price of a self-created entry | Owner | Not set; plays no part in the app |
 | 6 | Server settings for the "In der Nähe" map: `GOOGLE_MAPS_JS_KEY` and the map ID | Owner | Page works without them, but shows no map |
-| 7 | #53 google-rating: billing country for the Google Places key | Owner | Planned; Google's stars and count would replace our own ratings and reviews on the detail page, and the Bewertungen tab would go |
+| 7 | Place IDs for Google ratings | Staff, per venue, in the CMS card "Google-Bewertung" | Billing country answered (Switzerland). Stars show on a detail page only once the venue has a place ID |
 
 ## CRM "Locations" (decided 2026-11-05)
 
