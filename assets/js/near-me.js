@@ -118,10 +118,10 @@
                     background: accent,
                     borderColor: accent,
                     glyphColor: onAccent,
-                    glyph: count > 1 ? String(count) : undefined,
-                }).element,
+                    glyphText: count > 1 ? String(count) : undefined,
+                }),
             });
-            marker.addListener('gmp-click', () => {
+            marker.addEventListener('gmp-click', () => {
                 info.setContent(list(pin.v));
                 info.open({ map, anchor: marker });
             });
