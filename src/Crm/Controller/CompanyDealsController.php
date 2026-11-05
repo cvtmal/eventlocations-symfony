@@ -20,7 +20,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_EDITOR')]
 final class CompanyDealsController extends AbstractController
 {
-    #[Route('/admin/crm/firmen/{id}/deals', name: 'admin_crm_companies_deals', requirements: ['id' => Requirement::UUID], methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
+    #[Route('/admin/crm/locations/{id}/deals', name: 'admin_crm_companies_deals', requirements: ['id' => Requirement::UUID], methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(string $id, CompanyRecordQuery $companies, OwnerOptionsQuery $owners, DealCardQuery $deals): Response
     {
         $company = $companies->find($id) ?? throw $this->createNotFoundException();

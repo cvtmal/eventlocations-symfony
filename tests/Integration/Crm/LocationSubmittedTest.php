@@ -59,7 +59,7 @@ final class LocationSubmittedTest extends KernelTestCase
 
         $this->publishes($this->event($venue));
 
-        self::assertSame('Neue Location eingereicht: Schloss Seeblick', $this->connection->fetchOne('SELECT body FROM crm_activities'));
+        self::assertSame('Neuer Eintrag eingereicht: Schloss Seeblick', $this->connection->fetchOne('SELECT body FROM crm_activities'));
     }
 
     public function test_a_known_contact_is_not_duplicated(): void

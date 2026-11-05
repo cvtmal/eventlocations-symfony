@@ -43,16 +43,16 @@ final class CsvExportTest extends WebTestCase
             ->create(['name' => 'Seeblick Events', 'owner' => $owner]);
         $this->entityManager()->getConnection()->executeStatement("UPDATE crm_companies SET created_at = '2026-12-31 23:30:00+00' WHERE id = ?", [$company->id()]);
 
-        $this->client->request('GET', '/admin/crm/firmen/export');
+        $this->client->request('GET', '/admin/crm/locations/export');
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('Content-Type', 'text/csv; charset=UTF-8');
         // After 23:00 UTC it is the next day in Zürich: the file name and the cell carry the staff's date.
-        self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=firmen-2027-01-01.csv');
+        self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=locations-2027-01-01.csv');
         $content = $this->content();
         self::assertStringStartsWith(CsvStream::BOM, $content);
         self::assertSame([
-            ['Name', 'Firmenname', 'Website', 'Telefon', 'E-Mail', 'Adresse', 'Phase', 'Zuständig', 'Locations', 'Herkunft', 'Erstellt'],
+            ['Name', 'Firmenname', 'Website', 'Telefon', 'E-Mail', 'Adresse', 'Phase', 'Zuständig', 'Einträge', 'Herkunft', 'Erstellt'],
             ['Seeblick Events', 'Seeblick Events GmbH, Zürich', 'https://seeblick.example.ch', '', 'info@seeblick.example.ch', "Seestrasse 1\n8706 Meilen", 'Kunde', 'Andrea Keller', '1', 'Manuell erfasst', '01.01.2027'],
         ], $this->records($content));
     }
@@ -75,7 +75,7 @@ final class CsvExportTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=kontakte-2026-06-15.csv');
         // P13: an E.164 number leads with `+`, so it takes the `'` like any other cell.
         self::assertSame([
-            ['Vorname', 'Nachname', 'Art', 'Firma', 'Position', 'E-Mail', 'Telefon', 'Zuständig'],
+            ['Vorname', 'Nachname', 'Art', 'Location', 'Position', 'E-Mail', 'Telefon', 'Zuständig'],
             ['Laura', 'Meier', 'Location-Kontakt', 'Seeblick Events', 'Eventmanagerin', 'laura@example.ch', "'+41791234567", 'Andrea Keller'],
         ], $this->records($this->content()));
     }
@@ -84,7 +84,7 @@ final class CsvExportTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        $this->client->request('GET', '/admin/crm/firmen/export');
+        $this->client->request('GET', '/admin/crm/locations/export');
         self::assertResponseStatusCodeSame(403);
         $this->client->request('GET', '/admin/crm/kontakte/export');
         self::assertResponseStatusCodeSame(403);
@@ -99,13 +99,13 @@ final class CsvExportTest extends WebTestCase
         ContactFactory::createOne(['firstName' => null, 'lastName' => 'Brunner', 'kind' => ContactKind::Couple]);
         ContactFactory::createOne(['firstName' => null, 'lastName' => 'Meier', 'kind' => ContactKind::Other]);
 
-        $this->client->request('GET', '/admin/crm/firmen/export?stage=customer&sort=name&dir=desc&page=9');
+        $this->client->request('GET', '/admin/crm/locations/export?stage=customer&sort=name&dir=desc&page=9');
         self::assertSame(['Zürcher Gastro AG', 'Alpenhof AG'], array_column(\array_slice($this->records($this->content()), 1), 0));
 
         $this->client->request('GET', '/admin/crm/kontakte/export?kind=couple');
         self::assertSame(['Brunner'], array_column(\array_slice($this->records($this->content()), 1), 1));
 
-        $this->client->request('GET', '/admin/crm/firmen/export?q=keinetreffer');
+        $this->client->request('GET', '/admin/crm/locations/export?q=keinetreffer');
         self::assertCount(1, $this->records($this->content()));
     }
 
@@ -114,7 +114,7 @@ final class CsvExportTest extends WebTestCase
         $this->logInAs();
         CompanyFactory::createMany(51);
 
-        $this->client->request('GET', '/admin/crm/firmen/export');
+        $this->client->request('GET', '/admin/crm/locations/export');
 
         self::assertCount(52, $this->records($this->content()));
     }
@@ -125,7 +125,7 @@ final class CsvExportTest extends WebTestCase
         CompanyFactory::createOne(['name' => '=cmd|\' /C calc\'!A0']);
         ContactFactory::createOne(['firstName' => '@SUM(1)', 'lastName' => '-2+3']);
 
-        $this->client->request('GET', '/admin/crm/firmen/export');
+        $this->client->request('GET', '/admin/crm/locations/export');
         self::assertSame('\'=cmd|\' /C calc\'!A0', $this->records($this->content())[1][0]);
 
         $this->client->request('GET', '/admin/crm/kontakte/export');
@@ -136,9 +136,9 @@ final class CsvExportTest extends WebTestCase
     {
         $this->logInAs();
 
-        $this->client->request('GET', '/admin/crm/firmen/export?stage=bogus');
+        $this->client->request('GET', '/admin/crm/locations/export?stage=bogus');
         self::assertResponseStatusCodeSame(303);
-        self::assertResponseRedirects('/admin/crm/firmen?stage=bogus', 303);
+        self::assertResponseRedirects('/admin/crm/locations?stage=bogus', 303);
         $this->client->followRedirect();
         self::assertResponseStatusCodeSame(422);
 
@@ -150,8 +150,8 @@ final class CsvExportTest extends WebTestCase
     {
         $this->logInAs();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen?stage=customer&page=2&sort=created&dir=desc');
-        self::assertSame('/admin/crm/firmen/export?stage=customer&sort=created&dir=desc', $crawler->filter('.page-header__actions a[href*="/export"]')->attr('href'));
+        $crawler = $this->client->request('GET', '/admin/crm/locations?stage=customer&page=2&sort=created&dir=desc');
+        self::assertSame('/admin/crm/locations/export?stage=customer&sort=created&dir=desc', $crawler->filter('.page-header__actions a[href*="/export"]')->attr('href'));
 
         $crawler = $this->client->request('GET', '/admin/crm/kontakte');
         self::assertSame('/admin/crm/kontakte/export', $crawler->filter('.page-header__actions a[href*="/export"]')->attr('href'));
@@ -161,7 +161,7 @@ final class CsvExportTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        foreach (['/admin/crm/firmen', '/admin/crm/kontakte'] as $list) {
+        foreach (['/admin/crm/locations', '/admin/crm/kontakte'] as $list) {
             $crawler = $this->client->request('GET', $list);
 
             self::assertResponseIsSuccessful();

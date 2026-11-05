@@ -61,12 +61,12 @@ final class ContactRecordTest extends WebTestCase
         self::assertSame('/admin/api/crm/contacts/'.$contact->id(), $props['url']);
         self::assertSame(['first_name', 'last_name', 'kind', 'company', 'position', 'email', 'phone', 'owner'], array_column($props['fields'], 'name'));
         self::assertSame(
-            ['name' => 'company', 'label' => 'Firma', 'type' => 'combobox', 'value' => $company->id(), 'display' => 'Seeblick Events GmbH', 'lookupUrl' => '/admin/api/crm/companies'],
+            ['name' => 'company', 'label' => 'Location', 'type' => 'combobox', 'value' => $company->id(), 'display' => 'Seeblick Events GmbH', 'lookupUrl' => '/admin/api/crm/companies'],
             $props['fields'][3],
         );
         self::assertStringContainsString('laura@example.ch', $crawler->filter('[data-island="record-properties"] .record-properties')->text());
 
-        self::assertSame('/admin/crm/firmen/'.$company->id(), $crawler->filter('.crm-side .crm-side__link')->attr('href'));
+        self::assertSame('/admin/crm/locations/'.$company->id(), $crawler->filter('.crm-side .crm-side__link')->attr('href'));
         self::assertSame('Kunde', $crawler->filter('.crm-side .pill')->text());
         self::assertSelectorNotExists('#record-actions');
     }
@@ -79,7 +79,7 @@ final class ContactRecordTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/crm/kontakte/'.$contact->id());
 
         self::assertSame('Brunner', $crawler->filter('h1#record-title')->text());
-        self::assertSelectorTextContains('.crm-side', 'Keiner Firma zugeordnet.');
+        self::assertSelectorTextContains('.crm-side', 'Keiner Location zugeordnet.');
     }
 
     public function test_an_unknown_contact_is_a_404(): void

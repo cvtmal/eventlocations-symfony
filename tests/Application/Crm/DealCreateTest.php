@@ -49,7 +49,7 @@ final class DealCreateTest extends WebTestCase
             $crawler = $this->client->request('GET', self::NEW.'?company='.$company);
 
             self::assertResponseStatusCodeSame(422);
-            self::assertStringContainsString('Bitte eine Firma aus der Liste wählen.', $crawler->filter('.form')->text());
+            self::assertStringContainsString('Bitte eine Location aus der Liste wählen.', $crawler->filter('.form')->text());
         }
     }
 
@@ -182,7 +182,7 @@ final class DealCreateTest extends WebTestCase
         $crawler = $this->client->submitForm('Erfassen', ['deal[name]' => 'Premium 2027', 'deal[venue]' => $venue->id()]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('Diese Location gehört nicht zu dieser Firma.', $crawler->filter('.form')->text());
+        self::assertStringContainsString('Dieser Eintrag gehört nicht zu dieser Location.', $crawler->filter('.form')->text());
     }
 
     public function test_an_unknown_failure_is_not_swallowed(): void

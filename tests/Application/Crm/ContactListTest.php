@@ -47,7 +47,7 @@ final class ContactListTest extends WebTestCase
         self::assertSame('LM', $row->filter('.avatar')->text());
         self::assertStringContainsString('Eventmanagerin', $row->text());
         self::assertStringContainsString('Location-Kontakt', $row->text());
-        self::assertSame('/admin/crm/firmen/'.$company->id(), $row->filter('a[href^="/admin/crm/firmen/"]')->attr('href'));
+        self::assertSame('/admin/crm/locations/'.$company->id(), $row->filter('a[href^="/admin/crm/locations/"]')->attr('href'));
         self::assertStringContainsString('laura@example.ch', $row->text());
         self::assertStringContainsString('Andrea Keller', $row->text());
         self::assertSame('—', $crawler->filter('#contact-list tbody tr')->eq(0)->filter('td')->eq(2)->text());

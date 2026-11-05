@@ -65,7 +65,7 @@ final class InquiriesNavigationTest extends WebTestCase
     public static function pages(): iterable
     {
         yield 'dashboard, its own statement' => ['/admin'];
-        yield 'company list, the owners column' => ['/admin/crm/firmen'];
+        yield 'company list, the owners column' => ['/admin/crm/locations'];
         yield 'inbox, the tabs' => [self::INBOX];
     }
 

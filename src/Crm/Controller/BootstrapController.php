@@ -24,7 +24,7 @@ final class BootstrapController extends AbstractController
     public const int BATCH = 100;
     public const string TOKEN = 'submit';
 
-    #[Route('/admin/crm/firmen/bootstrap', name: 'admin_crm_companies_bootstrap', methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
+    #[Route('/admin/crm/locations/bootstrap', name: 'admin_crm_companies_bootstrap', methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(Request $request, CompanyBootstrap $bootstrap): Response
     {
         $token = $request->request->all()['_token'] ?? null;

@@ -10,7 +10,7 @@ use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
- * "Firmen" in the CRM section. It stays active on every route named `admin_crm_companies_…`, so the
+ * "Locations" in the CRM section. It stays active on every route named `admin_crm_companies_…`, so the
  * record and create pages keep the item highlighted.
  */
 final class CompaniesNavigationItem implements NavigationItem
@@ -46,7 +46,7 @@ final class CompaniesNavigationItem implements NavigationItem
     }
 
     /**
-     * Firmen in the CRM section, first (D20): above #28's Deals (300), #29's Anfragen (200) and #27b's Aufgaben (100), with Kontakte (400) between.
+     * Locations in the CRM section, first (D20): above #28's Deals (300), #29's Anfragen (200) and #27b's Aufgaben (100), with Kontakte (400) between.
      */
     public function priority(): int
     {

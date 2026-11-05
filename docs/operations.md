@@ -645,14 +645,14 @@ unaffected.
 
    The 4 Liechtenstein venues now have no CRM company, but each already has one: the customer import
    of 2026-11-03 created it, linked to no venue. Do **not** run `sh bin/prod-import crm-bootstrap`,
-   and do not press "Firmen aus … Locations anlegen" on the CRM company list or "Firma anlegen" in
+   and do not press "Locations aus … Einträgen anlegen" on the CRM Locations list or "Location anlegen" in
    the CRM card of a venue in the CMS, before step 9 is done: each would create a second company
    for these venues.
 7. **Pins for the kept venues, by hand,** at most 20 (step 5's threshold). For each folder in step
    5's list:
    1. Open `content/venues/<folder>/venue.yaml` and copy the two numbers under `geo:`, `lat` and
       `lng`. A folder without `geo:` has no pin to copy: skip it.
-   2. In the back office, open Locations, search the venue, open it and go to the card "Adresse &
+   2. In the back office, open Einträge, search the venue, open it and go to the card "Adresse &
       Lage". Look at "Breite" and "Länge" before typing:
       - **Both empty:** put `lat` into "Breite" and `lng` into "Länge", then save.
       - **Filled, with the note "Ortsmitte von …, auf der Website ohne Karte" below them:** that
@@ -682,16 +682,16 @@ unaffected.
    - link venue `<LI venue 3>` to company `<LI company 3>`
    - link venue `<LI venue 4>` to company `<LI company 4>`
 
-   For each pair: `/admin/crm/firmen`, search the company's name, open it, then on its card
-   "Locations" press "Verknüpfen", type the venue's name or number, choose it and press
-   "Verknüpfen". The toast says "Location verknüpft.". A venue offered with "bei …" in its line
+   For each pair: `/admin/crm/locations`, search the company's name, open it, then on its card
+   "Einträge" press "Verknüpfen", type the venue's name or number, choose it and press
+   "Verknüpfen". The toast says "Eintrag verknüpft.". A venue offered with "bei …" in its line
    already belongs to a company; stop and look before going on.
 
-   **Owner's check.** On `/admin/crm/firmen`, a search by each company's name shows exactly one
-   company, with 1 in the column "Locations". Its page lists the venue under "Locations", and the
+   **Owner's check.** On `/admin/crm/locations`, a search by each company's name shows exactly one
+   company, with 1 in the column "Einträge". Its page lists the venue under "Einträge", and the
    venue's CMS page shows that company in its CRM card. A search by each venue's name shows no
-   second company. If the 4 were the only venues without a company, the button "Firmen aus …
-   Locations anlegen" is gone from the list.
+   second company. If the 4 were the only venues without a company, the button "Locations aus …
+   Einträgen anlegen" is gone from the list.
 10. **Check.**
     - **Pins.** Open five venue pages from different cantons, one of them in Liechtenstein. Each
       shows the map box with "Karte laden"; nothing loads from Google before the click. The click

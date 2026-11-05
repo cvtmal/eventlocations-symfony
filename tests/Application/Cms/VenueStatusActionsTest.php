@@ -195,7 +195,7 @@ final class VenueStatusActionsTest extends WebTestCase
         $this->client->submit($crawler->filter('#venue-delete form[name="delete"]')->form());
 
         self::assertResponseRedirects($this->url($venue));
-        self::assertSame('Eine veröffentlichte Location kann nicht gelöscht werden. Bitte zuerst offline nehmen.', $this->client->followRedirect()->filter('.toast')->text());
+        self::assertSame('Ein veröffentlichter Eintrag kann nicht gelöscht werden. Bitte zuerst offline nehmen.', $this->client->followRedirect()->filter('.toast')->text());
         self::assertSame('published', $this->venueStatus($venue->number()));
         self::assertSame(0, $this->auditRows($venue->number()));
     }

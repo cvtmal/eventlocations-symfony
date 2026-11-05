@@ -47,7 +47,7 @@ final class EmailDraftApiTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $contact = ContactFactory::createOne(['firstName' => 'Laura', 'company' => CompanyFactory::createOne(['name' => 'Seeblick Events GmbH'])]);
-        $template = $this->template('Grüezi {contact.first_name}', '{company.name}');
+        $template = $this->template('Grüezi {contact.first_name}', '{location.name}');
 
         $this->draft(['kind' => 'contact', 'recordId' => $contact->id(), 'template' => $template]);
 

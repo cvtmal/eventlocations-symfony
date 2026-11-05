@@ -151,7 +151,7 @@ final class RecordTasksTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $props = json_decode((string) $crawler->filter('[data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
@@ -169,14 +169,14 @@ final class RecordTasksTest extends WebTestCase
         TaskFactory::createOne(['title' => 'Spätere', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-11-02')]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigte', 'company' => $company]);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $card = $crawler->filter('#aufgaben');
         self::assertSame('Aufgaben (3)', $card->filter('h2')->text());
         self::assertSame(['Überfällige', 'Rückruf Laura Meier', 'Spätere'], $card->filter('.crm-task__title')->each(static fn (Crawler $title): string => $title->text()));
         self::assertSame(['Überfällig', 'Heute', 'Mo, 2.11.'], $card->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
         self::assertSame('«Überfällige» als erledigt markieren', $card->filter('.crm-task__toggle')->first()->attr('aria-label'));
-        self::assertSame('/admin/crm/firmen/'.$company->id().'#aufgaben', $card->filter('input[name="return_to"]')->first()->attr('value'));
+        self::assertSame('/admin/crm/locations/'.$company->id().'#aufgaben', $card->filter('input[name="return_to"]')->first()->attr('value'));
     }
 
     public function test_the_card_on_a_company_shows_a_renewal_task_on_its_deal(): void
@@ -186,7 +186,7 @@ final class RecordTasksTest extends WebTestCase
         $company = CompanyFactory::createOne();
         TaskFactory::createOne(['title' => 'Verlängerung: Premium 2026', 'deal' => DealFactory::createOne(['company' => $company]), 'isRenewal' => true]);
 
-        $card = $this->client->request('GET', '/admin/crm/firmen/'.$company->id())->filter('#aufgaben');
+        $card = $this->client->request('GET', '/admin/crm/locations/'.$company->id())->filter('#aufgaben');
 
         self::assertSame('Aufgaben (1)', $card->filter('h2')->text());
         self::assertSame('Verlängerung: Premium 2026', $card->filter('.crm-task__title')->text());
@@ -223,7 +223,7 @@ final class RecordTasksTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertSame('Aufgaben (0)', $crawler->filter('#aufgaben h2')->text());
         self::assertSame('Keine offenen Aufgaben.', $crawler->filter('#aufgaben .crm-side__empty')->text());
@@ -235,11 +235,11 @@ final class RecordTasksTest extends WebTestCase
         $company = CompanyFactory::createOne();
         TaskFactory::createOne(['title' => 'Rückruf', 'company' => $company]);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
         $form = $crawler->filter('#aufgaben form')->form();
         $this->client->submit($form, [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id().'#aufgaben', 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#aufgaben', 303);
         $crawler = $this->client->followRedirect();
         self::assertSame('Aufgaben (0)', $crawler->filter('#aufgaben h2')->text());
     }

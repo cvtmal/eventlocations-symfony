@@ -104,14 +104,14 @@ final class LandingPageEditorTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $crawler = $this->client->request('GET', '/admin/landingpages');
-        self::assertStringContainsString('sobald eine publizierte Location', $crawler->filter('.empty')->text());
+        self::assertStringContainsString('sobald ein publizierter Eintrag', $crawler->filter('.empty')->text());
 
         $this->inCanton(Canton::ZH, 1);
 
         foreach (['q=xyz-unbekannt', 'typ=town', 'typ=building&q=zürich'] as $query) {
             $empty = $this->client->request('GET', '/admin/landingpages?'.$query)->filter('.empty')->text();
             self::assertStringContainsString('Keine Seite passt zu diesem Filter.', $empty, $query);
-            self::assertStringNotContainsString('sobald eine publizierte Location', $empty, $query);
+            self::assertStringNotContainsString('sobald ein publizierter Eintrag', $empty, $query);
         }
     }
 

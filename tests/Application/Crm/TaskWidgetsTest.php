@@ -44,9 +44,9 @@ final class TaskWidgetsTest extends WebTestCase
         self::assertSame('Meine Aufgaben', $widget->filter('h2')->text());
         self::assertSame(['Offerte senden', 'Rückruf', 'Ablage'], $this->titles($widget));
         self::assertSame(['Überfällig', 'Heute', 'Di, 3.11.'], $widget->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
-        self::assertSame(['Firma · Gutshof Lindenhalde AG', 'Kontakt · Laura Meier'], $widget->filter('.crm-list__detail')->each(static fn (Crawler $detail): string => $detail->text()));
+        self::assertSame(['Location · Gutshof Lindenhalde AG', 'Kontakt · Laura Meier'], $widget->filter('.crm-list__detail')->each(static fn (Crawler $detail): string => $detail->text()));
         self::assertSame(
-            ['/admin/crm/firmen/'.$company->id(), '/admin/crm/kontakte/'.$contact->id()],
+            ['/admin/crm/locations/'.$company->id(), '/admin/crm/kontakte/'.$contact->id()],
             $widget->filter('.crm-list__detail a')->each(static fn (Crawler $link): ?string => $link->attr('href')),
         );
         self::assertCount(1, $widget->filter('.task-widget__row')->last()->filter('.crm-task__text > *'), 'A task on no object has no second line.');
@@ -78,7 +78,7 @@ final class TaskWidgetsTest extends WebTestCase
 
         self::assertSame('Überfällig', $widget->filter('h2')->text());
         self::assertSame(['Vertrag', 'Ohne Objekt'], $this->titles($widget));
-        self::assertSame(['Firma · Seehotel · Beat Frei', 'Beat Frei'], $widget->filter('.crm-list__detail')->each(static fn (Crawler $detail): string => $detail->text()));
+        self::assertSame(['Location · Seehotel · Beat Frei', 'Beat Frei'], $widget->filter('.crm-list__detail')->each(static fn (Crawler $detail): string => $detail->text()));
     }
 
     public function test_the_links_open_the_matching_tab(): void

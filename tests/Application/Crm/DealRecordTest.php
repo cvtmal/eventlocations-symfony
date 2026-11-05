@@ -71,7 +71,7 @@ final class DealRecordTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame('Premium 2027', $crawler->filter('h1')->text());
         self::assertSame('Angebot', $crawler->filter('.crm-record__identity .pill')->text());
-        self::assertSame('/admin/crm/firmen/'.$company->id(), $crawler->filter('.crm-record__identity a')->attr('href'));
+        self::assertSame('/admin/crm/locations/'.$company->id(), $crawler->filter('.crm-record__identity a')->attr('href'));
         self::assertSame('Seeblick Events', $crawler->filter('section[aria-labelledby="deal-company-title"] a')->text());
         self::assertSame('Laura Meier', $crawler->filter('#kontakte .crm-side__link')->text());
         self::assertSame('Schloss Seeblick', $crawler->filter('#location .crm-side__link')->text());
@@ -123,7 +123,7 @@ final class DealRecordTest extends WebTestCase
 
         $crawler = $this->client->request('GET', $this->url(DealFactory::createOne()));
 
-        self::assertSame('Keine Location gewählt.', $crawler->filter('#location .crm-side__empty')->text());
+        self::assertSame('Kein Eintrag gewählt.', $crawler->filter('#location .crm-side__empty')->text());
         self::assertSame('Noch keine Kontakte auf diesem Deal.', $crawler->filter('#kontakte .crm-side__empty')->text());
         self::assertCount(0, $crawler->filter('#kontakte .btn'));
     }

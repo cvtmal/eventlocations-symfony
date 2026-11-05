@@ -50,8 +50,8 @@ final class VenueCrmPanelTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $panel = $crawler->filter('aside section[aria-labelledby="crm"]');
         self::assertSame('CRM', $panel->filter('h2')->text());
-        self::assertSame('/admin/crm/firmen/'.$company->id(), $panel->filter('.crm-panel__open')->attr('href'));
-        self::assertSame('Firma öffnen', $panel->filter('.crm-panel__open')->text());
+        self::assertSame('/admin/crm/locations/'.$company->id(), $panel->filter('.crm-panel__open')->attr('href'));
+        self::assertSame('Location öffnen', $panel->filter('.crm-panel__open')->text());
         self::assertSame('Seeblick Events GmbH', $panel->filter('.crm-panel__name')->text());
         self::assertSame('SE', $panel->filter('.avatar')->text());
         self::assertSame('Kunde · seit '.$company->createdAt()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('Y'), $panel->filter('.crm-panel__stage')->text());
@@ -158,9 +158,9 @@ final class VenueCrmPanelTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
 
         $panel = $crawler->filter('aside section[aria-labelledby="crm"]');
-        self::assertSame('Diese Location gehört noch zu keiner Firma.', $panel->filter('p')->text());
-        self::assertSame('/admin/crm/locations/'.$venue->id().'/firma', $panel->filter('form')->attr('action'));
-        self::assertSame('Firma anlegen', $panel->filter('form button')->text());
+        self::assertSame('Dieser Eintrag gehört noch zu keiner Location.', $panel->filter('p')->text());
+        self::assertSame('/admin/crm/eintraege/'.$venue->id().'/location', $panel->filter('form')->attr('action'));
+        self::assertSame('Location anlegen', $panel->filter('form button')->text());
         self::assertCount(0, $panel->filter('.crm-panel__open'));
     }
 
@@ -175,7 +175,7 @@ final class VenueCrmPanelTest extends WebTestCase
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#crm', 303);
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT count(*) FROM crm_companies WHERE origin = 'venue' AND name = ?", [$venue->name()]));
         $crawler = $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Firma angelegt.');
+        self::assertSelectorTextContains('.toast', 'Location angelegt.');
         self::assertSame($venue->name(), $crawler->filter('.crm-panel__name')->text());
     }
 
@@ -193,7 +193,7 @@ final class VenueCrmPanelTest extends WebTestCase
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_companies'));
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM admin_audit_log WHERE command = ?', [CreateCompanyForVenue::class]), 'A stale tab must not log a company that never existed.');
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Diese Location hat bereits eine Firma.');
+        self::assertSelectorTextContains('.toast', 'Dieser Eintrag hat bereits eine Location.');
     }
 
     public function test_an_address_taken_at_the_last_moment_is_a_flash(): void
@@ -207,7 +207,7 @@ final class VenueCrmPanelTest extends WebTestCase
 
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#crm', 303);
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast--error', 'Firma nicht angelegt');
+        self::assertSelectorTextContains('.toast--error', 'Location nicht angelegt');
     }
 
     public function test_a_venue_deleted_at_the_last_moment_is_a_404(): void
@@ -227,7 +227,7 @@ final class VenueCrmPanelTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
 
-        $this->client->request('POST', '/admin/crm/locations/'.$venue->id().'/firma');
+        $this->client->request('POST', '/admin/crm/eintraege/'.$venue->id().'/location');
 
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#crm', 303);
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_companies'));
@@ -237,7 +237,7 @@ final class VenueCrmPanelTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        $this->client->request('POST', '/admin/crm/locations/'.EntityId::generate().'/firma');
+        $this->client->request('POST', '/admin/crm/eintraege/'.EntityId::generate().'/location');
 
         self::assertResponseStatusCodeSame(404);
     }

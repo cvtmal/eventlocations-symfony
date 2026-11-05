@@ -243,7 +243,7 @@ final class EmailApiTest extends WebTestCase
         $this->mail(['kind' => 'company', 'recordId' => $company->id(), 'contactId' => $stranger->id()]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame(['value' => ['Dieser Kontakt gehört zu einer anderen Firma.']], $this->errors());
+        self::assertSame(['value' => ['Dieser Kontakt gehört zu einer anderen Location.']], $this->errors());
         $this->assertNothingHappened();
     }
 
@@ -389,7 +389,7 @@ final class EmailApiTest extends WebTestCase
         $gone->anonymise(new \DateTimeImmutable('2026-10-23 09:00:00+00'));
         $this->entityManager()->flush();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         $items = $crawler->filter('[data-island="timeline"] .timeline-item--card');

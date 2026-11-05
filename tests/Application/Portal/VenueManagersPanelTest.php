@@ -55,7 +55,7 @@ final class VenueManagersPanelTest extends WebTestCase
 
         $panel = $this->panel(DetailVenues::withoutPlace());
 
-        self::assertSame('Diese Location hat noch keine Manager.', $panel->filter('p.muted')->text());
+        self::assertSame('Dieser Eintrag hat noch keine Manager.', $panel->filter('p.muted')->text());
         self::assertCount(0, $panel->filter('li'));
     }
 

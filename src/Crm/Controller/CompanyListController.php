@@ -29,7 +29,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_EDITOR')]
 final class CompanyListController extends AbstractController
 {
-    #[Route('/admin/crm/firmen', name: 'admin_crm_companies', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
+    #[Route('/admin/crm/locations', name: 'admin_crm_companies', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(Request $request, CompanyListQuery $companies, OwnerOptionsQuery $owners, UnlinkedVenuesQuery $unlinkedVenues, FormFactoryInterface $forms): Response
     {
         $data = new CompanyFilterData();

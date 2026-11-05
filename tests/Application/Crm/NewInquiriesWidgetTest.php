@@ -38,7 +38,7 @@ final class NewInquiriesWidgetTest extends WebTestCase
         self::assertSame('Neue Anfragen, Tabelle', $widget->filter('[role="region"]')->attr('aria-label'), 'Two regions with one name fail axe\'s landmark-unique.');
         self::assertSame('Alle ansehen', $widget->filter('.widget__head-link a')->text());
         self::assertSame('/admin/crm/anfragen', $widget->filter('.widget__head-link a')->attr('href'));
-        self::assertSame(['Paar', 'Location', 'Gäste', 'Status'], $widget->filter('thead th')->each(static fn (Crawler $head): string => $head->text()));
+        self::assertSame(['Paar', 'Eintrag', 'Gäste', 'Status'], $widget->filter('thead th')->each(static fn (Crawler $head): string => $head->text()));
         $cells = $widget->filter('tbody td');
         self::assertSame('Sina Huber', $cells->eq(0)->filter('strong')->text());
         self::assertSame('31.10.2026', $cells->eq(0)->filter('.crm-list__detail')->text(), 'The date is Zurich\'s, and absolute.');

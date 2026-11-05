@@ -124,7 +124,7 @@ final class VenueListScreenTest extends WebTestCase
             self::assertResponseStatusCodeSame(422, $query);
             self::assertSame(['Schloss Seeblick'], $this->names($crawler), $query);
             self::assertCount(0, $crawler->filter('.filter-chip'), $query);
-            self::assertSame('Ein Filter war ungültig. Die Liste zeigt alle Locations.', $crawler->filter('main .form-error[role="alert"]')->text(), $query);
+            self::assertSame('Ein Filter war ungültig. Die Liste zeigt alle Einträge.', $crawler->filter('main .form-error[role="alert"]')->text(), $query);
         }
         $crawler = $this->client->request('GET', '/admin/locations?tier=premium');
         self::assertCount(0, $crawler->filter('main .form-error'));
@@ -182,7 +182,7 @@ final class VenueListScreenTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/locations?q=nirgendwo');
 
         self::assertResponseIsSuccessful();
-        self::assertSame('Keine Locations', $crawler->filter('.empty__title')->text());
+        self::assertSame('Keine Einträge', $crawler->filter('.empty__title')->text());
         self::assertSame('7', $crawler->filter('.table__empty')->attr('colspan'));
     }
 

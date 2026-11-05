@@ -114,14 +114,14 @@ crm:
         amount: Bitte einen Betrag in Franken bis 99'999'999.99 eingeben, zum Beispiel «1'250.50».
         date: Bitte ein gültiges Datum eingeben.
     deal:
-        company: Bitte eine Firma aus der Liste wählen.
+        company: Bitte eine Location aus der Liste wählen.
         stage: Bitte eine Phase aus der Liste wählen.
         lost_reason: Bitte einen Grund aus der Liste wählen.
     link_venue:
-        required: Bitte eine Location aus der Liste wählen.
+        required: Bitte einen Eintrag aus der Liste wählen.
     activity:
-        kind: Dieser Eintrag gehört zu einer Firma oder einem Kontakt.
-        record: Dieser Eintrag gehört zu einer Firma oder einem Kontakt.
+        kind: Diese Aktivität gehört zu einer Location oder einem Kontakt.
+        record: Diese Aktivität gehört zu einer Location oder einem Kontakt.
         type: Bitte eine Art aus der Liste wählen.
         occurred_at: Bitte ein gültiges Datum mit Uhrzeit eingeben.
     task:

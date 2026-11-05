@@ -29,7 +29,7 @@ final class CompanyCreateTest extends WebTestCase
         ['user' => $owner] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
         AdminUserFactory::new()->afterInstantiate(static fn (AdminUser $user) => $user->deactivate())->create(['displayName' => 'Ehemalig']);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/neu');
+        $crawler = $this->client->request('GET', '/admin/crm/locations/neu');
         self::assertResponseIsSuccessful();
         self::assertSame(['', $owner->id()], $crawler->filter('#company_owner option')->each(static fn (Crawler $option): string => (string) $option->attr('value')), 'A deactivated account is not offered.');
 
@@ -44,18 +44,18 @@ final class CompanyCreateTest extends WebTestCase
         self::assertResponseStatusCodeSame(303);
         $row = $this->connection->fetchAssociative('SELECT id, name, website, email, owner_id, origin, stage FROM crm_companies');
         self::assertIsArray($row);
-        self::assertResponseRedirects('/admin/crm/firmen/'.$row['id']);
+        self::assertResponseRedirects('/admin/crm/locations/'.$row['id']);
         self::assertSame(['Seeblick Events GmbH', 'https://seeblick.example', 'info@seeblick.example', $owner->id(), 'manual', 'prospect'], [$row['name'], $row['website'], $row['email'], $row['owner_id'], $row['origin'], $row['stage']]);
 
         $this->client->followRedirect();
         self::assertSelectorTextContains('h1', 'Seeblick Events GmbH');
-        self::assertSelectorTextContains('.toast', 'Firma «Seeblick Events GmbH» erfasst.');
+        self::assertSelectorTextContains('.toast', 'Location «Seeblick Events GmbH» erfasst.');
     }
 
     public function test_invalid_input_is_a_422_on_the_fields(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $this->client->request('GET', '/admin/crm/firmen/neu');
+        $this->client->request('GET', '/admin/crm/locations/neu');
 
         $crawler = $this->client->submitForm('Erfassen', [
             'company[name]' => '   ',
@@ -76,7 +76,7 @@ final class CompanyCreateTest extends WebTestCase
     {
         $this->commandsFailWith(InvalidPropertyValue::unknown('owner'));
         $this->logInAs(AdminRole::Editor);
-        $this->client->request('GET', '/admin/crm/firmen/neu');
+        $this->client->request('GET', '/admin/crm/locations/neu');
 
         $crawler = $this->client->submitForm('Erfassen', ['company[name]' => 'Seeblick Events GmbH']);
 
@@ -93,7 +93,7 @@ final class CompanyCreateTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        $this->client->request('POST', '/admin/crm/firmen/neu', ['company' => ['name' => 'Seeblick Events'] + $token], server: $server);
+        $this->client->request('POST', '/admin/crm/locations/neu', ['company' => ['name' => 'Seeblick Events'] + $token], server: $server);
 
         self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString('CSRF', (string) $this->client->getResponse()->getContent());
@@ -103,7 +103,7 @@ final class CompanyCreateTest extends WebTestCase
     public function test_a_nul_character_is_refused_once(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $this->client->request('GET', '/admin/crm/firmen/neu');
+        $this->client->request('GET', '/admin/crm/locations/neu');
 
         $crawler = $this->client->submitForm('Erfassen', ['company[name]' => "See\0blick"]);
 
@@ -113,7 +113,7 @@ final class CompanyCreateTest extends WebTestCase
 
     public function test_anonymous_is_sent_to_the_login(): void
     {
-        $this->client->request('GET', '/admin/crm/firmen/neu');
+        $this->client->request('GET', '/admin/crm/locations/neu');
 
         self::assertResponseRedirects('/admin/login');
     }

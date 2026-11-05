@@ -32,7 +32,7 @@ final class VenueSearchProviderTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame([[
-            'label' => 'Locations',
+            'label' => 'Einträge',
             'results' => [[
                 'type' => 'venue',
                 'label' => 'Schloss Seeblick',

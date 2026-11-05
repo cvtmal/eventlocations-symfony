@@ -65,7 +65,7 @@ final class VenueBasicsCardTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame('true', $crawler->filter('#venue_basics_slug')->attr('aria-invalid'));
-        self::assertStringContainsString('Diesen Slug hat schon eine andere Location', $crawler->filter('#stammdaten')->text());
+        self::assertStringContainsString('Diesen Slug hat schon ein anderer Eintrag', $crawler->filter('#stammdaten')->text());
         self::assertSame('wiesenhof-ohne-ort', $crawler->filter('#venue_basics_slug')->attr('value'));
         self::assertSame(DetailVenues::MINIMAL_SLUG, $this->connection->fetchOne("SELECT slug FROM venue_translations WHERE venue_id = ? AND locale = 'de'", [$venue->id()]));
         self::assertSame([], $this->purger()->venues);

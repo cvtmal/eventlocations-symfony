@@ -58,7 +58,7 @@ final class ApplyDealTierTest extends WebTestCase
 
         $crawler = $this->client->followRedirect();
 
-        self::assertSelectorTextContains('.toast', 'Der Tier gilt jetzt auf der Location.');
+        self::assertSelectorTextContains('.toast', 'Der Tier gilt jetzt auf dem Eintrag.');
         self::assertCount(0, $crawler->filter('[commandfor="deal-tier"]'));
         self::assertCount(0, $crawler->filter('#deal-tier'));
     }

@@ -67,7 +67,7 @@ final class VenueCrmPanelOnRecordPagesTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin/_probe/datensatz/'.$venue->number());
 
-        self::assertSame('/admin/crm/locations/'.$venue->id().'/firma', $crawler->filter('aside .crm-panel__create')->attr('action'));
+        self::assertSame('/admin/crm/eintraege/'.$venue->id().'/location', $crawler->filter('aside .crm-panel__create')->attr('action'));
     }
 
     public function test_a_number_no_venue_has_renders_nothing(): void
