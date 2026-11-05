@@ -37,6 +37,30 @@ final class VenueGeocoderTest extends TestCase
 
     public function test_locate_returns_the_first_place_inside_switzerland(): void
     {
+        $sent = [];
+        $client = new MockHttpClient(static function (string $method, string $url, array $options) use (&$sent): JsonMockResponse {
+            $sent = $options['normalized_headers'];
+
+            return new JsonMockResponse(['places' => [[
+                'id' => 'ChIJGEHEIM12345',
+                'displayName' => ['text' => 'SOHO Zurich'],
+                'formattedAddress' => 'Seefeldstrasse 1, 8008 Zürich',
+                'location' => ['latitude' => 47.3555551, 'longitude' => 8.5555551],
+            ]]]);
+        });
+
+        $hit = (new VenueGeocoder($client, 'k'))->locate('SOHO Zurich Zürich Schweiz');
+
+        self::assertNotNull($hit);
+        self::assertSame(47.355555, $hit->lat);
+        self::assertSame(8.555555, $hit->lng);
+        self::assertSame('SOHO Zurich', $hit->name);
+        self::assertSame('ChIJGEHEIM12345', $hit->placeId);
+        self::assertSame(['X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.location'], $sent['x-goog-fieldmask']);
+    }
+
+    public function test_locate_without_an_id_reports_an_empty_place_id(): void
+    {
         $client = new MockHttpClient(new JsonMockResponse(['places' => [[
             'displayName' => ['text' => 'SOHO Zurich'],
             'formattedAddress' => 'Seefeldstrasse 1, 8008 Zürich',
@@ -46,9 +70,7 @@ final class VenueGeocoderTest extends TestCase
         $hit = (new VenueGeocoder($client, 'k'))->locate('SOHO Zurich Zürich Schweiz');
 
         self::assertNotNull($hit);
-        self::assertSame(47.355555, $hit->lat);
-        self::assertSame(8.555555, $hit->lng);
-        self::assertSame('SOHO Zurich', $hit->name);
+        self::assertSame('', $hit->placeId);
     }
 
     public function test_locate_drops_a_place_outside_switzerland(): void
@@ -102,6 +124,15 @@ final class VenueGeocoderTest extends TestCase
 
         self::assertSame(1, $counts['failed']);
         self::assertStringNotContainsString('geo:', (string) file_get_contents($this->root.'/venues/soho-1/venue.yaml'));
+    }
+
+    public function test_the_search_text_names_the_canton_or_the_region_and_the_country(): void
+    {
+        self::assertSame('SOHO Zurich Zürich Schweiz', VenueCoordinateFiller::searchText('SOHO Zurich', 'zh', 'Seefeld'));
+        self::assertSame('Rheinhof Bodensee Schweiz', VenueCoordinateFiller::searchText('Rheinhof', '', 'Bodensee'));
+        self::assertSame('Rheinhof Liechtenstein', VenueCoordinateFiller::searchText('Rheinhof', 'li', ''));
+        // As `app:venues:geocode` has always asked: an empty place leaves two spaces, which the search ignores.
+        self::assertSame('Rheinhof  Schweiz', VenueCoordinateFiller::searchText('Rheinhof', '', ''));
     }
 
     public function test_names_match_on_a_shared_word_with_umlauts_folded(): void

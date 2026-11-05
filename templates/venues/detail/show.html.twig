@@ -3,8 +3,9 @@
     Slots for later cycles (final names, see CLAUDE.md "Venues"):
       - {% block map %} at the end of <section id="standort"> (#15 fills it with venue_map(); nothing without coordinates), which renders only on venue.hasLocation();
       - {% block inquiry %} inside <section id="anfrage"> (#14 fills it with inquiry_form(); `inquiry` is the bound form of a POST re-render, and no whitespace, so :empty hides the section);
+      - {% block google_rating %} after the head (#53 fills it with venue_google_rating(); nothing without a place ID or when hidden; the previews override it with a note);
       - the Merken button in _actions via favorites/_merken_button.html.twig (#7/#13).
-    Both blocks live in this file on purpose: a block inside an included partial cannot be overridden.
+    The blocks live in this file on purpose: a block inside an included partial cannot be overridden.
 #}
 {% extends 'base.html.twig' %}
 
@@ -38,7 +39,7 @@
         {{ include('venues/detail/_actions.html.twig', {venue: venue}, with_context = false) }}
         <div class="venue-content">
             {{ include('venues/detail/_head.html.twig', {venue: venue}, with_context = false) }}
-            {% if venue.hasRatingSection() %}{{ include('venues/detail/_rating.html.twig', {venue: venue}, with_context = false) }}{% endif %}
+            {% block google_rating %}{{ venue_google_rating(venue) }}{% endblock %}
             {% if venue.hasFacts() %}{{ include('venues/detail/_facts.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.wedding.hasAny() %}{{ include('venues/detail/_wedding.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.rooms is not empty %}{{ include('venues/detail/_rooms.html.twig', {venue: venue}, with_context = false) }}{% endif %}
@@ -52,7 +53,6 @@
             {% if venue.hasContact() %}{{ include('venues/detail/_contact.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.documents is not empty %}{{ include('venues/detail/_documents.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             <section id="anfrage" class="venue-inquiry">{% block inquiry %}{{ inquiry_form(venue, inquiry ?? null) }}{% endblock %}</section>
-            {% if venue.reviews is not empty %}{{ include('venues/detail/_reviews.html.twig', {venue: venue}, with_context = false) }}{% endif %}
         </div>
     </div>
     {{ render(controller('App\\Search\\Controller\\SimilarVenuesController', {venueId: venue.id})) }}
@@ -65,4 +65,5 @@
     <script type="module" src="{{ asset('js/print.js') }}"></script>
     <script type="module" src="{{ asset('js/phone-reveal.js') }}"></script>
     <script type="module" src="{{ asset('js/venue-map.js') }}"></script>
+    <script type="module" src="{{ asset('js/google-rating.js') }}"></script>
 {% endblock %}

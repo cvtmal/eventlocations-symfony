@@ -17,7 +17,6 @@ use App\Search\ReadModel\SearchCriteria;
 use App\Search\Twig\ListingExtension;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Search\LandingFixtures;
-use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -181,10 +180,8 @@ final class ListingExtensionTest extends KernelTestCase
         self::assertSame('Seeterrasse', $stored->alt);
     }
 
-    public function test_rating_label_and_venue_path(): void
+    public function test_venue_path(): void
     {
-        self::assertSame(RatingLabel::Outstanding, $this->extension->ratingLabel(9.0));
-        self::assertNull($this->extension->ratingLabel(7.0));
         self::assertSame('/hochzeitslocation/schloss-au', $this->extension->venuePath('schloss-au'));
     }
 

@@ -6,7 +6,6 @@ namespace App\Tests\Application\Search;
 
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
-use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
 use App\Search\ReadModel\NearbyVenuesQuery;
@@ -14,7 +13,6 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -25,8 +23,7 @@ use function Zenstruck\Foundry\Persistence\repository;
 
 /**
  * S11: the near-me page's HTML stays ≤ 60 KB gzip in both of its worst cases (#52), with a key, so the pins are in it:
- * LIMIT full cards within 30 km (one photo each, a 200-character summary, both tags, a rating with three highlights,
- * a 60-character name), and the whole-Switzerland map with ALL_CAP pins of 60-character names.
+ * LIMIT full cards within 30 km (one photo each, a 200-character summary, both tags, a 60-character name), and the whole-Switzerland map with ALL_CAP pins of 60-character names.
  * SEARCH_PERF_REPORT=1 prints the sizes.
  */
 #[Group('budget')]
@@ -129,15 +126,12 @@ final class NearbyHtmlBudgetTest extends WebTestCase
     private function fullVenue(int $i, Town $town, float $lat, float $lng): void
     {
         $ambience = mb_substr(str_repeat('Romantisch und ländlich am See. ', 2), 0, 60);
-        $venue = VenueFactory::new()->rated('8.7', 1234)
+        $venue = VenueFactory::new()
             ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::cases()[$i % 3]))
             ->create(['name' => $this->venueName($i), 'capacityMin' => 40, 'capacityMax' => 1200, 'town' => $town, 'lat' => $lat, 'lng' => $lng]);
         VenueTranslationFactory::new()
             ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null))
             ->create(['venue' => $venue, 'summary' => $this->text(200, $i)]);
-        foreach ([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Architecture] as $position => $code) {
-            VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => $position + 1, 'code' => $code]);
-        }
         foreach ([1, 2] as $position) {
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
         }

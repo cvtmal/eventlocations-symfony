@@ -14,7 +14,7 @@ final class VenueJsonLdTest extends KernelTestCase
 {
     public function test_a_full_address_is_a_local_business(): void
     {
-        $data = $this->build($this->facts(street: 'Seestrasse 1', zip: '8712', town: 'Stäfa', canton: Canton::ZH, lat: 47.2, lng: 8.7, score: 9.2, count: 474));
+        $data = $this->build($this->facts(street: 'Seestrasse 1', zip: '8712', town: 'Stäfa', canton: Canton::ZH, lat: 47.2, lng: 8.7));
 
         self::assertSame(['EventVenue', 'LocalBusiness'], $data['@type']);
         self::assertSame('https://example.ch/v#venue', $data['@id']);
@@ -31,8 +31,9 @@ final class VenueJsonLdTest extends KernelTestCase
             'addressCountry' => 'CH',
         ], $data['address']);
         self::assertSame(['@type' => 'GeoCoordinates', 'latitude' => 47.2, 'longitude' => 8.7], $data['geo']);
-        self::assertSame(['@type' => 'AggregateRating', 'ratingValue' => 9.2, 'ratingCount' => 474, 'bestRating' => 10], $data['aggregateRating']);
         self::assertArrayNotHasKey('containedInPlace', $data);
+        // No rating key: #53 retired our own rating, and Google's never goes into JSON-LD.
+        self::assertSame(['@context', '@type', '@id', 'name', 'url', 'description', 'address', 'geo', 'maximumAttendeeCapacity'], array_keys($data));
     }
 
     public function test_zip_and_town_without_a_street_stay_a_local_business(): void
@@ -53,13 +54,12 @@ final class VenueJsonLdTest extends KernelTestCase
         self::assertSame('Kanton Zürich', self::array($data, 'containedInPlace')['name']);
     }
 
-    public function test_a_canton_alone_is_named_and_earns_no_stars(): void
+    public function test_a_canton_alone_is_named(): void
     {
-        $data = $this->build($this->facts(canton: Canton::ZH, score: 9.0, count: 10));
+        $data = $this->build($this->facts(canton: Canton::ZH));
 
         self::assertSame('EventVenue', $data['@type']);
         self::assertArrayNotHasKey('address', $data);
-        self::assertArrayNotHasKey('aggregateRating', $data);
         self::assertSame(['@type' => 'AdministrativeArea', 'name' => 'Kanton Zürich'], $data['containedInPlace']);
     }
 
@@ -82,7 +82,7 @@ final class VenueJsonLdTest extends KernelTestCase
         $data = $this->build($this->facts());
 
         self::assertSame('EventVenue', $data['@type']);
-        foreach (['address', 'containedInPlace', 'geo', 'aggregateRating'] as $key) {
+        foreach (['address', 'containedInPlace', 'geo'] as $key) {
             self::assertArrayNotHasKey($key, $data);
         }
     }
@@ -100,13 +100,6 @@ final class VenueJsonLdTest extends KernelTestCase
         self::assertArrayNotHasKey('geo', $this->build($this->facts(lat: 47.2)));
     }
 
-    public function test_a_rating_without_a_count_is_left_out(): void
-    {
-        $data = $this->build($this->facts(zip: '8712', town: 'Stäfa', score: 9.0, count: 0));
-
-        self::assertArrayNotHasKey('aggregateRating', $data);
-    }
-
     public function test_at_most_three_images_and_the_same_as_links(): void
     {
         $data = $this->build($this->facts(images: ['a', 'b', 'c', 'd'], sameAs: ['https://a.example', 'https://www.instagram.com/a']));
@@ -120,7 +113,7 @@ final class VenueJsonLdTest extends KernelTestCase
      */
     public static function shapes(): iterable
     {
-        yield 'full' => [['street' => 'Seestrasse 1', 'zip' => '8712', 'town' => 'Stäfa', 'canton' => Canton::ZH, 'lat' => 47.2, 'lng' => 8.7, 'score' => 9.2, 'count' => 10]];
+        yield 'full' => [['street' => 'Seestrasse 1', 'zip' => '8712', 'town' => 'Stäfa', 'canton' => Canton::ZH, 'lat' => 47.2, 'lng' => 8.7]];
         yield 'zip and town' => [['zip' => '8712', 'town' => 'Stäfa']];
         yield 'canton only' => [['canton' => Canton::ZH]];
         yield 'nothing' => [[]];
@@ -185,11 +178,9 @@ final class VenueJsonLdTest extends KernelTestCase
         ?Canton $canton = null,
         ?float $lat = null,
         ?float $lng = null,
-        ?float $score = null,
-        ?int $count = null,
         array $images = [],
         array $sameAs = [],
     ): VenueFacts {
-        return new VenueFacts('Schloss Au', 'https://example.ch/v', 'Ein Schloss.', 120, $street, $zip, $town, $canton, $lat, $lng, $score, $count, $images, $sameAs);
+        return new VenueFacts('Schloss Au', 'https://example.ch/v', 'Ein Schloss.', 120, $street, $zip, $town, $canton, $lat, $lng, $images, $sameAs);
     }
 }

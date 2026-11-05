@@ -15,6 +15,7 @@ use App\Cms\ValueObject\VenueCardSaveOutcome;
 use App\Cms\ValueObject\VenueNumber;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
+use App\Venues\ValueObject\GooglePlaceId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -95,10 +96,10 @@ final class VenueEditController extends AbstractController
         return $this->save(VenueCard::Faq, $number, $request);
     }
 
-    #[Route('/bewertung', name: 'admin_locations_rating', methods: ['POST'])]
-    public function rating(int $number, Request $request): Response
+    #[Route('/google-bewertung', name: 'admin_locations_google', methods: ['POST'])]
+    public function google(int $number, Request $request): Response
     {
-        return $this->save(VenueCard::Rating, $number, $request);
+        return $this->save(VenueCard::Google, $number, $request);
     }
 
     private function save(VenueCard $card, int $number, Request $request): Response
@@ -169,6 +170,7 @@ final class VenueEditController extends AbstractController
             'missing' => $edit->missingForPublish($this->locales->default()),
             'history' => $this->history($edit->number()),
             'cards' => VenueCard::cases(),
+            'google_check_url' => null === $edit->googlePlaceId ? null : GooglePlaceId::mapsUrl($edit->header->name, $edit->googlePlaceId),
         ], new Response(status: $status));
     }
 }

@@ -127,6 +127,9 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'count without score' => ['chk_venues_rating', ["UPDATE venues SET rating_count = 3 WHERE id = '{venue}'"]];
         yield 'score above 10' => ['chk_venues_rating', ["UPDATE venues SET rating_score = 10.1, rating_count = 1 WHERE id = '{venue}'"]];
         yield 'negative rating count' => ['chk_venues_rating_count', ["UPDATE venues SET rating_score = 8.0, rating_count = -1 WHERE id = '{venue}'"]];
+        yield 'google place ID with a space' => ['chk_venues_google_place_id', ["UPDATE venues SET google_place_id = 'ChIJN1t tDeuEmsRU' WHERE id = '{venue}'"]];
+        yield 'google place ID of 9 characters' => ['chk_venues_google_place_id', ["UPDATE venues SET google_place_id = 'ChIJN1t_t' WHERE id = '{venue}'"]];
+        yield 'google rating hidden without a place ID' => ['chk_venues_google_rating_hidden', ["UPDATE venues SET google_rating_hidden = TRUE WHERE id = '{venue}'"]];
         yield 'negative room count' => ['chk_venues_room_count', ["UPDATE venues SET room_count = -1 WHERE id = '{venue}'"]];
         yield 'largest room zero' => ['chk_venues_largest_room_m2', ["UPDATE venues SET largest_room_m2 = 0 WHERE id = '{venue}'"]];
         yield 'tallest room above 30 m' => ['chk_venues_max_room_height_m', ["UPDATE venues SET max_room_height_m = 30.01 WHERE id = '{venue}'"]];

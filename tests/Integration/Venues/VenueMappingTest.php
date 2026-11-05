@@ -28,7 +28,6 @@ use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -95,7 +94,6 @@ final class VenueMappingTest extends KernelTestCase
         $venue->changeContact('+41441234567', 'info@example.ch', 'https://example.ch', 'Frau Muster');
         $venue->changeDistances('1.5', 'Stäfa', '12.0', 'A3', null, null);
         $venue->answerFaq(OwnCatering::FixedCaterer, true);
-        $venue->rate('9.1', 42);
         $venue->summariseRooms(1, 180, '4.20');
         $venue->changePriceLevel(PriceLevel::Exclusive);
         $venue->changeSeatingCapacity(120, 180);
@@ -142,8 +140,6 @@ final class VenueMappingTest extends KernelTestCase
         self::assertSame(VenueStatus::Published, $loaded->status());
         self::assertSame(OwnCatering::FixedCaterer, $loaded->ownCatering());
         self::assertTrue($loaded->daylight());
-        self::assertSame(9.1, $loaded->ratingScore());
-        self::assertSame(RatingLabel::Outstanding, $loaded->ratingLabel());
         self::assertSame(1.5, $loaded->distanceStationKm());
         self::assertSame(4.2, $loaded->maxRoomHeightM());
         self::assertSame('zh', $loaded->canton()?->code());
@@ -228,6 +224,25 @@ final class VenueMappingTest extends KernelTestCase
         $loadedTranslation = $this->em->getRepository(VenueTranslation::class)->findOneBy(['venue' => $loadedNothing]);
         self::assertInstanceOf(VenueTranslation::class, $loadedTranslation);
         self::assertSame('Schweizweit', $loadedTranslation->region());
+    }
+
+    public function test_the_google_place_round_trips(): void
+    {
+        $placed = $this->venue('Testhaus Google');
+        $placed->changeGooglePlace('ChIJN1t_tDeuEmsRUsoyG83frY4', true);
+        $plain = $this->venue('Testhaus Ohne');
+        $this->em->flush();
+        $this->em->clear();
+
+        $loaded = $this->em->find(Venue::class, $placed->id());
+        self::assertInstanceOf(Venue::class, $loaded);
+        self::assertSame('ChIJN1t_tDeuEmsRUsoyG83frY4', $loaded->googlePlaceId());
+        self::assertTrue($loaded->googleRatingHidden());
+
+        $loadedPlain = $this->em->find(Venue::class, $plain->id());
+        self::assertInstanceOf(Venue::class, $loadedPlain);
+        self::assertNull($loadedPlain->googlePlaceId());
+        self::assertFalse($loadedPlain->googleRatingHidden());
     }
 
     private function venue(string $name): Venue

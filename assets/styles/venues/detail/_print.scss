@@ -25,8 +25,8 @@
         .similar-venues,
         .carousel__controls,
         .venue-room__links,
-        .venue-reviews__more,
         .venue-map,
+        .venue-google-rating,
         .dialog__header form,
         .dialog__footer,
         .venue-contact__list li:has([data-phone-reveal]),
@@ -44,10 +44,8 @@
             display: block;
         }
 
-        .venue-rating,
         .venue-wedding,
-        .venue-room,
-        .venue-review {
+        .venue-room {
             padding: 0;
             border-radius: 0;
             background: none;
@@ -80,13 +78,11 @@
 
         // Longer than what is left of a sheet on a rich venue: they break between rows, not after half a page of white.
         .venue-wedding,
-        .venue-rooms,
-        .venue-reviews {
+        .venue-rooms {
             break-inside: auto;
         }
 
-        .venue-facts__row,
-        .venue-review {
+        .venue-facts__row {
             break-inside: avoid;
         }
 

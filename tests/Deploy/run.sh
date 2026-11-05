@@ -736,6 +736,7 @@ write_stub_tools() {
 #!/bin/sh
 printf 'docker %s\n' "$*" >> "$STUB_LOG"
 [ -z "${DATABASE_URL:-}" ] || printf 'docker env DATABASE_URL=%s\n' "$DATABASE_URL" >> "$STUB_LOG"
+[ -z "${GOOGLE_PLACES_API_KEY:-}" ] || printf 'docker env GOOGLE_PLACES_API_KEY=%s\n' "$GOOGLE_PLACES_API_KEY" >> "$STUB_LOG"
 exit 0
 STUB
     cat > "$work/tools/ssh" <<'STUB'
@@ -762,7 +763,8 @@ prod_import_refusals() {
         "import --overwrite-cms-edits" "import --force" "cache:clear" "doctrine:database:drop --force" \
         "regenerate --venue=abc" "regenerate --venue=1 --venue=2" "import --venue=1" \
         "import-dry --overwrite-cms-edits" "import-dry --force" "import-dry extra" \
-        "customers --force" "customers-dry extra" "crm-bootstrap --limit=1"; do
+        "customers --force" "customers-dry extra" "crm-bootstrap --limit=1" \
+        "places-find --limit=5" "places-apply-dry extra" "places-apply --dry-run"; do
         # shellcheck disable=SC2086 # Each string is several arguments.
         run prod_import $arguments
         [ "$rc" != 0 ] || fail "prod-import accepted '$arguments'"
@@ -875,6 +877,49 @@ purge" ] || fail "prod-import all ran another order: $steps"
 
     run prod_import help
     expect_output "help states the run order" "Run order: first deploy"
+    expect_output "help states the place ID order" "places-apply-dry until right"
+
+    clear_log
+    GOOGLE_PLACES_API_KEY=fake-places-key
+    export GOOGLE_PLACES_API_KEY
+    run prod_import places-find
+    unset GOOGLE_PLACES_API_KEY
+    expect_exit "prod-import places-find exits 0" 0
+    last="$(grep -n 'app:venues:find-google-places' "$STUB_LOG" | tail -n 1)"
+    case "$last" in
+        *"-e GOOGLE_PLACES_API_KEY -e APP_ENV=prod -e DATABASE_URL -e MEDIA_ROOT=/var/www/html/var/prod-media/originals -e MEDIA_PUBLIC_DIR=/var/www/html/var/prod-media/public php "*" app:venues:find-google-places") ok "places-find runs the lookup with the production env" ;;
+        *) fail "places-find ran another command or env" ;;
+    esac
+    grep -q '^docker env GOOGLE_PLACES_API_KEY=fake-places-key' "$STUB_LOG" || fail "the Places key did not reach compose"
+    if grep -v '^docker env ' "$STUB_LOG" | grep -q fake-places-key; then
+        fail "the Places key is on an argument list"
+    fi
+    ok "the Places key reaches compose by its environment, on no argument list"
+    if grep -q -E '^(rsync|ssh) ' "$STUB_LOG"; then
+        fail "places-find synced or purged"
+    fi
+    ok "places-find neither syncs nor purges"
+
+    clear_log
+    run prod_import places-apply-dry
+    expect_exit "prod-import places-apply-dry exits 0" 0
+    last="$(grep -n 'app:venues:apply-google-places' "$STUB_LOG" | tail -n 1)"
+    case "$last" in
+        *"-e APP_ENV=prod -e DATABASE_URL -e MEDIA_ROOT=/var/www/html/var/prod-media/originals -e MEDIA_PUBLIC_DIR=/var/www/html/var/prod-media/public php "*" app:venues:apply-google-places --dry-run") ok "places-apply-dry runs the dry run with the production env" ;;
+        *) fail "places-apply-dry ran another command or env" ;;
+    esac
+    if grep -q -E '^(rsync|ssh) ' "$STUB_LOG"; then
+        fail "places-apply-dry synced or purged"
+    fi
+    ok "places-apply-dry neither syncs nor purges"
+
+    clear_log
+    run prod_import places-apply
+    expect_exit "prod-import places-apply exits 0" 0
+    steps="$(sed -n 's/.*app:venues:apply-google-places --dry-run.*/dry-run/p; s/.*app:venues:apply-google-places$/apply/p; s/^ssh .*app:http-cache:clear.*/purge/p' "$STUB_LOG")"
+    [ "$steps" = "apply
+purge" ] || fail "places-apply ran another order: $steps"
+    ok "places-apply applies, then purges"
 }
 
 pull_backup() { # pull_backup <args...>

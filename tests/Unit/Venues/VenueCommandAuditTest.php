@@ -8,13 +8,13 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Venues\Command\AddRoom;
 use App\Venues\Command\AddVenueDocument;
 use App\Venues\Command\AddVenuePhoto;
-use App\Venues\Command\AddVenueReview;
 use App\Venues\Command\AnswerVenueFaq;
+use App\Venues\Command\AssignVenueGooglePlace;
 use App\Venues\Command\ChangeRoom;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Command\ChangeVenueCapacity;
 use App\Venues\Command\ChangeVenueContact;
-use App\Venues\Command\ChangeVenueReview;
+use App\Venues\Command\ChangeVenueGooglePlace;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
@@ -23,13 +23,11 @@ use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\DescribeVenuePhoto;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
-use App\Venues\Command\RateVenue;
 use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Command\RelocateVenue;
 use App\Venues\Command\RemoveRoom;
 use App\Venues\Command\RemoveVenueDocument;
 use App\Venues\Command\RemoveVenuePhoto;
-use App\Venues\Command\RemoveVenueReview;
 use App\Venues\Command\ReorderRooms;
 use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
@@ -38,7 +36,6 @@ use App\Venues\Command\UnpublishVenue;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -63,6 +60,7 @@ final class VenueCommandAuditTest extends TestCase
         '8.654321',
         'Seestrasse 99',
         'Geheimregion',
+        'ChIJGEHEIM12345',
     ];
 
     /**
@@ -81,7 +79,8 @@ final class VenueCommandAuditTest extends TestCase
         yield 'wedding facts' => [new ChangeVenueWeddingFacts(self::NUMBER, '1', $changed, PriceLevel::Medium, 80, 120, PartyAllowed::Yes, true, '23:00', ['de' => ['ambience' => $text, 'capacityNote' => $text, 'partyNote' => $text, 'openingHours' => $text]], ['ceremony' => ['chapel']])];
         yield 'contact' => [new ChangeVenueContact(self::NUMBER, '1', $changed, '+41449998877', 'geheim@beispiel.ch', 'https://geheim.example', 'Geheime Person', 'https://geheim.example/insta')];
         yield 'faq' => [new AnswerVenueFaq(self::NUMBER, '1', $changed, OwnCatering::Allowed, true)];
-        yield 'rate' => [new RateVenue(self::NUMBER, '1', $changed, '8.4', 12, [RatingHighlight::Food])];
+        yield 'google_place' => [new ChangeVenueGooglePlace(self::NUMBER, '1', ['placeId', 'ratingHidden'], 'ChIJGEHEIM12345', true)];
+        yield 'google_place_assign' => [new AssignVenueGooglePlace(self::NUMBER, 'ChIJGEHEIM12345')];
         yield 'created' => [new RecordVenueCreated(self::NUMBER, 'Schloss Muster')];
         yield 'tier' => [new ChangeVenueTier(self::NUMBER, Tier::Premium)];
         yield 'publish' => [new PublishVenue(self::NUMBER)];
@@ -100,9 +99,6 @@ final class VenueCommandAuditTest extends TestCase
         yield 'retitle document' => [new RetitleVenueDocument(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', ['de' => $text])];
         yield 'reorder documents' => [new ReorderVenueDocuments(self::NUMBER, ['0199a1b2-0000-7000-8000-000000000001'])];
         yield 'remove document' => [new RemoveVenueDocument(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
-        yield 'add review' => [new AddVenueReview(self::NUMBER, 'de', 'Geheime Person', 'visitor_f', '2026-09', $text)];
-        yield 'change review' => [new ChangeVenueReview(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', 'Geheime Person', 'visitor_f', '2026-09', $text)];
-        yield 'remove review' => [new RemoveVenueReview(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
     }
 
     #[DataProvider('commands')]

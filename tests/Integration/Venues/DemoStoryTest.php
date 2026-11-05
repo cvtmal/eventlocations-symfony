@@ -81,14 +81,11 @@ final class DemoStoryTest extends KernelTestCase
         );
         self::assertSame(DemoStory::VENUES, $this->rows("SELECT count(DISTINCT slug) FROM venue_translations WHERE locale = 'de'"));
         self::assertSame(DemoStory::VENUES, $this->rows('SELECT count(DISTINCT name) FROM venues'));
-        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE rating_score IS NULL'));
-        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE rating_score < 7.7'));
         self::assertSame(0, $this->rows("SELECT count(*) FROM venue_translations WHERE summary LIKE '%ß%' OR description LIKE '%ß%'"));
 
         $perVenue = $this->connection->fetchAllAssociative(<<<'SQL'
             SELECT v.room_count,
                 (SELECT count(*) FROM rooms r WHERE r.venue_id = v.id) AS rooms,
-                (SELECT count(*) FROM venue_reviews r WHERE r.venue_id = v.id) AS reviews,
                 (SELECT count(*) FROM venue_documents d WHERE d.venue_id = v.id) AS documents,
                 (SELECT count(*) FROM venue_terms t WHERE t.venue_id = v.id AND t.term_group = 'building' AND t.is_main) AS main_buildings,
                 (SELECT count(*) FROM venue_terms t WHERE t.venue_id = v.id AND t.term_group = 'setting' AND t.is_main) AS main_settings,
@@ -101,7 +98,6 @@ final class DemoStoryTest extends KernelTestCase
             self::assertSame((int) $venue['rooms'], (int) $venue['room_count']);
             self::assertGreaterThanOrEqual(1, (int) $venue['rooms']);
             self::assertLessThanOrEqual(5, (int) $venue['rooms']);
-            self::assertLessThanOrEqual(3, (int) $venue['reviews']);
             self::assertLessThanOrEqual(2, (int) $venue['documents']);
             self::assertSame(1, (int) $venue['main_buildings']);
             self::assertSame(1, (int) $venue['main_settings']);

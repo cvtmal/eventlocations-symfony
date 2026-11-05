@@ -69,7 +69,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         // Nav: every item points at an existing section.
         $targets = $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
-        self::assertSame(['#beschreibung', '#bilder', '#kontakt', '#standort', '#bewertung'], $targets);
+        self::assertSame(['#beschreibung', '#bilder', '#kontakt', '#standort'], $targets);
         foreach ($targets as $target) {
             self::assertCount(1, $crawler->filter($target), $target);
         }
@@ -98,10 +98,6 @@ final class VenueDetailControllerTest extends WebTestCase
         $facts = $crawler->filter('.venue-head__facts li')->each(static fn (Crawler $li): string => $li->text());
         self::assertSame(['Schloss', 'Am See', '50 - 300 Personen'], $facts);
         self::assertCount(2, $crawler->filter('.venue-head__description p'));
-
-        // Bewertung.
-        self::assertSelectorTextContains('#bewertung .venue-rating__summary', 'Herausragend (9.2) | 474');
-        self::assertSame(['Feines Essen', 'Stilvolle Atmosphäre', 'Einmalige Lage'], $crawler->filter('.venue-rating__highlights li')->each(static fn (Crawler $li): string => $li->text()));
 
         // Fact lists: groups in DP-7 order, two lists and no rule between them (no board draws one).
         self::assertSame(
@@ -155,11 +151,8 @@ final class VenueDetailControllerTest extends WebTestCase
         // #14's form fills the slot.
         self::assertCount(1, $crawler->filter('section#anfrage form'));
 
-        // Reviews: three visible, the fourth behind "Alle Kommentare".
-        self::assertCount(3, $crawler->filter('.venue-reviews > .venue-review'));
-        self::assertSelectorTextContains('.venue-reviews > .venue-review', 'Loreana - Besucherin, April 2025');
-        self::assertSelectorTextContains('.venue-reviews details summary', 'Alle Kommentare');
-        self::assertCount(1, $crawler->filter('.venue-reviews details .venue-review'));
+        // No own rating or reviews since #53.
+        self::assertCount(0, $crawler->filter('#bewertung, .venue-rating, .venue-reviews'));
 
         // Ähnliche Locations: 12 cards, linking to the detail pages, and "Alle Locations".
         self::assertSelectorTextContains('.similar-venues h2', 'Ähnliche Locations');
@@ -389,17 +382,17 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertStringNotContainsString($stored, (string) $this->client->getResponse()->getContent());
     }
 
-    public function test_reviews_carry_the_rating_anchor_when_there_is_no_score(): void
+    public function test_retired_reviews_still_in_the_database_are_not_shown(): void
     {
         $venue = DetailVenues::minimal();
+        // #53: the rows stay until the drop migration, but no page reads them.
         VenueReviewFactory::createOne(['venue' => $venue, 'firstName' => 'Lea', 'reviewedMonth' => new \DateTimeImmutable('2024-11-01')]);
 
         $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
 
-        self::assertSame(['#beschreibung', '#standort', '#bewertung'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
-        self::assertSelectorExists('section#bewertung.venue-reviews');
-        self::assertSelectorNotExists('.venue-reviews details');
-        self::assertSelectorTextContains('.venue-review__byline', 'November 2024');
+        self::assertSame(['#beschreibung', '#standort'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
+        self::assertCount(0, $crawler->filter('#bewertung, .venue-reviews, .venue-review'));
+        self::assertStringNotContainsString('Lea', (string) $this->client->getResponse()->getContent());
     }
 
     public function test_an_old_slug_redirects_permanently(): void

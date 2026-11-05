@@ -10,7 +10,6 @@ use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -35,7 +34,6 @@ final class VocabularyCatalogueTest extends TestCase
     {
         yield 'TermGroup' => [TermGroup::class, 'term_group'];
         yield 'Tier' => [Tier::class, 'tier'];
-        yield 'RatingLabel' => [RatingLabel::class, 'rating_label'];
         yield 'RatingHighlight' => [RatingHighlight::class, 'rating_highlight'];
         yield 'OwnCatering' => [OwnCatering::class, 'own_catering'];
         yield 'FloorMaterial' => [FloorMaterial::class, 'floor_material'];

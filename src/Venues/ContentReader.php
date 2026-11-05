@@ -8,15 +8,12 @@ use App\Shared\Translation\EnabledLocale;
 use App\Venues\Exception\InvalidContent;
 use App\Venues\ValueObject\Content\DocumentContent;
 use App\Venues\ValueObject\Content\PhotoContent;
-use App\Venues\ValueObject\Content\ReviewContent;
 use App\Venues\ValueObject\Content\RoomContent;
 use App\Venues\ValueObject\Content\VenueContent;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -155,9 +152,6 @@ final class ContentReader
             if (isset($data->distances->{$distance})) {
                 $errors = [...$errors, ...self::decimalErrors('/distances/'.$distance.'/km', $data->distances->{$distance}->km, 1)];
             }
-        }
-        if (isset($data->rating)) {
-            $errors = [...$errors, ...self::decimalErrors('/rating/score', $data->rating->score, 1)];
         }
 
         $roomKeys = [];
@@ -322,12 +316,6 @@ final class ContentReader
         foreach (get_object_vars($data->terms ?? new \stdClass()) as $group => $codes) {
             $terms[$group] = array_values($codes);
         }
-        $reviews = [];
-        foreach ($data->reviews ?? [] as $review) {
-            $month = \DateTimeImmutable::createFromFormat('!Y-m-d', $review->month.'-01');
-            \assert(false !== $month);
-            $reviews[] = new ReviewContent($review->first_name, ReviewerRole::from($review->role), $month, $review->locale ?? 'de', $review->text);
-        }
         $distance = static fn (string $name): ?\stdClass => $data->distances->{$name} ?? null;
         $curfewAt = null;
         if (isset($data->party->curfew_at)) {
@@ -368,16 +356,12 @@ final class ContentReader
             hasCurfew: $data->party->has_curfew ?? null,
             curfewAt: $curfewAt,
             instagram: $data->contact->instagram ?? null,
-            ratingScore: self::decimal($data->rating->score ?? null, 1),
-            ratingCount: $data->rating->count ?? null,
-            highlights: array_values(array_map(static fn (string $code): RatingHighlight => RatingHighlight::from($code), $data->rating->highlights ?? [])),
             terms: $terms,
             mainTerms: self::strings($data->main_terms ?? null),
             translations: $translations,
             photos: $photos,
             rooms: $rooms,
             documents: $documents,
-            reviews: $reviews,
         );
     }
 

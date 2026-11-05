@@ -8,7 +8,7 @@ use App\Venues\Exception\StaleEdit;
 
 /**
  * The stale check of one child row (#25, PF2, D16): a photo's alt texts, a room, a document
- * title or a review. VenueEditing::open() compares the venue's token, but close() moves
+ * title. VenueEditing::open() compares the venue's token, but close() moves
  * `venues.updated_at` on every write, so two requests of one island (an upload and an alt
  * save) would stale each other. A row token instead changes only when that row (or a child
  * it touches) was written.

@@ -37,7 +37,6 @@ final class ContentSchemaTest extends TestCase
             'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster', 'instagram' => 'https://www.instagram.com/schloss.beispiel'],
             'faq' => ['own_catering' => 'allowed', 'daylight' => null],
             'party' => ['allowed' => 'limited', 'has_curfew' => true, 'curfew_at' => '02:00'],
-            'rating' => ['score' => 9.0, 'count' => 47, 'highlights' => ['food', 'atmosphere']],
             'terms' => [
                 'setting' => ['lake'], 'building' => ['castle', 'event_venue'], 'suitable_for' => ['wedding'], 'surroundings' => ['garden'],
                 'ceremony' => ['free_ceremony'], 'amenity' => ['overnight', 'dance_floor'], 'dining' => ['vegan'], 'vendor' => ['dj'], 'usage' => ['exclusive'], 'language' => ['de', 'gsw'],
@@ -59,7 +58,6 @@ final class ContentSchemaTest extends TestCase
                 'photos' => [['file' => 'saal.webp']],
             ]],
             'documents' => [['file' => 'preisliste.pdf', 'title' => ['de' => 'Preisliste']]],
-            'reviews' => [['first_name' => 'Laura', 'role' => 'visitor_f', 'month' => '2025-06', 'locale' => 'de', 'text' => 'Schön.']],
         ];
     }
 
@@ -88,9 +86,7 @@ final class ContentSchemaTest extends TestCase
         yield 'unknown tier' => [$set($full, 'tier', 'gold'), '/tier: "gold" is not an allowed value'];
         yield 'extra property' => [$set($full, 'slug', 'schloss'), '/: Unknown properties: slug'];
         yield 'unquoted zip' => [$set($full, 'address.zip', 8001), '/address/zip:'];
-        yield 'month as int' => [$set($full, 'reviews.0.month', 202506), '/reviews/0/month:'];
         yield 'bad phone' => [$set($full, 'contact.phone', '044 123 45 67'), '/contact/phone:'];
-        yield 'four highlights' => [$set($full, 'rating.highlights', ['food', 'atmosphere', 'value', 'location']), '/rating/highlights:'];
         yield 'missing de translation' => [$set($full, 'translations', ['fr' => ['summary' => 'Court.']]), '/translations:'];
         yield 'empty seating entry' => [$set($full, 'rooms.0.seating', ['concert' => []]), '/rooms/0/seating/concert:'];
         yield 'gif photo' => [$set($full, 'photos.0.file', 'a.gif'), '/photos/0/file:'];
@@ -103,6 +99,8 @@ final class ContentSchemaTest extends TestCase
         yield 'unknown party value' => [$set($full, 'party.allowed', 'maybe'), '/party/allowed: "maybe" is not an allowed value'];
         yield 'ambience of 61 characters' => [$set($full, 'translations.de.ambience', str_repeat('a', 61)), '/translations/de/ambience:'];
         yield 'empty opening hours' => [$set($full, 'translations.de.opening_hours', ''), '/translations/de/opening_hours:'];
+        yield 'a rating, retired in #53' => [$set($full, 'rating', ['score' => 9.0, 'count' => 47]), '/: Unknown properties: rating'];
+        yield 'reviews, retired in #53' => [$set($full, 'reviews', [['first_name' => 'Laura', 'role' => 'visitor_f', 'month' => '2025-06', 'text' => 'Schön.']]), '/: Unknown properties: reviews'];
     }
 
     /**

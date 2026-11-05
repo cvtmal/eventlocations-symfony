@@ -14,9 +14,6 @@ use App\Venues\ValueObject\InstagramProfile;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\RatingLabel;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
@@ -31,7 +28,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * renders, and — separately, for the phone reveal only — the phone number.
  *
  * The page costs four queries: resolveSlug() (1) and detail() (3: the venue with its terms,
- * highlights, documents and reviews as `jsonb_agg` sub-selects; the rooms; all photos).
+ * documents as `jsonb_agg` sub-selects; the rooms; all photos).
  */
 final class VenueDetailQuery
 {
@@ -132,9 +129,10 @@ final class VenueDetailQuery
                     v.distance_station_km, v.station_name, v.distance_highway_km, v.highway_name,
                     v.distance_airport_km, v.airport_name,
                     v.phone IS NOT NULL AS has_phone, v.inquiry_email, v.website, v.contact_person,
-                    v.own_catering, v.daylight, v.rating_score, v.rating_count,
+                    v.own_catering, v.daylight,
                     v.price_level, v.capacity_seated, v.capacity_standing, v.party, v.has_curfew,
                     to_char(v.curfew_at, 'HH24:MI') AS curfew_at, v.instagram, v.coordinates_from_town,
+                    v.google_place_id, v.google_rating_hidden,
                     t.slug, t.summary, t.description, t.meta_description, t.parking_text,
                     t.ambience, t.capacity_note, t.party_note, t.opening_hours, t.region,
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
@@ -142,15 +140,10 @@ final class VenueDetailQuery
                         FROM venue_terms vt
                         JOIN taxonomy_terms tt ON tt.term_group = vt.term_group AND tt.code = vt.term_code
                         WHERE vt.venue_id = v.id) AS terms,
-                    (SELECT COALESCE(jsonb_agg(h.code ORDER BY h.position), '[]'::jsonb)
-                        FROM venue_rating_highlights h WHERE h.venue_id = v.id) AS highlights,
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', d.id, 'title', dtr.title) ORDER BY d.position), '[]'::jsonb)
                         FROM venue_documents d
                         {$documentTranslation}
-                        WHERE d.venue_id = v.id AND dtr.title IS NOT NULL) AS documents,
-                    (SELECT COALESCE(jsonb_agg(jsonb_build_object('first_name', r.first_name, 'role', r.role, 'month', r.reviewed_month, 'text', r.text)
-                            ORDER BY r.reviewed_month DESC, r.id), '[]'::jsonb)
-                        FROM venue_reviews r WHERE r.venue_id = v.id) AS reviews
+                        WHERE d.venue_id = v.id AND dtr.title IS NOT NULL) AS documents
                 FROM venues v
                 LEFT JOIN towns tw ON tw.id = v.town_id
                 {$translation}
@@ -176,16 +169,12 @@ final class VenueDetailQuery
         \assert(null === $row['capacity_min'] || \is_int($row['capacity_min']));
         \assert(\is_bool($row['has_phone']));
         \assert(null === $row['daylight'] || \is_bool($row['daylight']));
-        \assert(null === $row['rating_count'] || \is_int($row['rating_count']));
         \assert(null === $row['own_catering'] || \is_string($row['own_catering']));
         \assert(\is_string($row['terms']));
-        \assert(\is_string($row['highlights']));
         \assert(\is_string($row['documents']));
-        \assert(\is_string($row['reviews']));
 
         $venueId = $row['id'];
         [$mainBuilding, $mainSetting, $factGroups, $termsByGroup] = $this->terms(self::decode($row['terms']));
-        $ratingScore = self::nullableFloat($row['rating_score']);
         $rooms = $this->rooms($venueId, $locale);
         [$venuePhotos, $roomPhotos] = $this->photos($venueId, $row['number'], $row['name'], $rooms, $locale);
 
@@ -208,13 +197,6 @@ final class VenueDetailQuery
             $mainBuilding,
             $mainSetting,
             $factGroups,
-            $ratingScore,
-            null === $ratingScore ? null : $row['rating_count'],
-            null === $ratingScore ? null : RatingLabel::fromScore($ratingScore),
-            array_map(
-                static fn (mixed $code): RatingHighlight => RatingHighlight::from(\is_string($code) ? $code : ''),
-                self::decode($row['highlights']),
-            ),
             null === $row['own_catering'] ? null : OwnCatering::from($row['own_catering']),
             $row['daylight'],
             self::nullableString($row['parking_text']),
@@ -224,7 +206,6 @@ final class VenueDetailQuery
             self::nullableString($row['website']),
             self::nullableString($row['contact_person']),
             self::documents(self::decode($row['documents'])),
-            self::reviews(self::decode($row['reviews'])),
             array_map(
                 static fn (DetailRoom $room): DetailRoom => isset($roomPhotos[$room->id])
                     ? new DetailRoom($room->id, $room->name, $room->description, $room->capacityMin, $room->capacityMax, $room->areaM2, $room->heightM, $room->floorMaterial, $room->seatings, $roomPhotos[$room->id])
@@ -235,6 +216,8 @@ final class VenueDetailQuery
             self::wedding($row, $termsByGroup),
             InstagramProfile::fromInput(self::nullableString($row['instagram']))?->url(),
             (bool) $row['coordinates_from_town'],
+            self::nullableString($row['google_place_id']),
+            (bool) $row['google_rating_hidden'],
         );
     }
 
@@ -461,25 +444,6 @@ final class VenueDetailQuery
 
             return new DetailDocument($item['id'], $item['title']);
         }, $documents);
-    }
-
-    /**
-     * @param list<mixed> $reviews
-     *
-     * @return list<DetailReview>
-     */
-    private static function reviews(array $reviews): array
-    {
-        return array_map(static function (mixed $item): DetailReview {
-            \assert(\is_array($item) && \is_string($item['first_name']) && \is_string($item['role']) && \is_string($item['month']) && \is_string($item['text']));
-
-            return new DetailReview(
-                $item['first_name'],
-                ReviewerRole::from($item['role']),
-                new \DateTimeImmutable($item['month'], new \DateTimeZone('UTC')),
-                $item['text'],
-            );
-        }, $reviews);
     }
 
     /**

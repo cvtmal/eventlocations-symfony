@@ -13,13 +13,13 @@ use App\Shared\Translation\EnabledLocale;
 use App\Venues\Command\AddRoom;
 use App\Venues\Command\AddVenueDocument;
 use App\Venues\Command\AddVenuePhoto;
-use App\Venues\Command\AddVenueReview;
 use App\Venues\Command\AnswerVenueFaq;
+use App\Venues\Command\AssignVenueGooglePlace;
 use App\Venues\Command\ChangeRoom;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Command\ChangeVenueCapacity;
 use App\Venues\Command\ChangeVenueContact;
-use App\Venues\Command\ChangeVenueReview;
+use App\Venues\Command\ChangeVenueGooglePlace;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
@@ -27,13 +27,11 @@ use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\DescribeVenuePhoto;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
-use App\Venues\Command\RateVenue;
 use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Command\RelocateVenue;
 use App\Venues\Command\RemoveRoom;
 use App\Venues\Command\RemoveVenueDocument;
 use App\Venues\Command\RemoveVenuePhoto;
-use App\Venues\Command\RemoveVenueReview;
 use App\Venues\Command\ReorderRooms;
 use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
@@ -90,14 +88,18 @@ final class CmsTranslationKeysTest extends KernelTestCase
         $commands = [
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
             ChangeVenueTerms::class, ChangeVenueWeddingFacts::class, ChangeVenueContact::class, ChangeVenueCapacity::class, AnswerVenueFaq::class,
-            RateVenue::class, ChangeVenueTier::class, PublishVenue::class, UnpublishVenue::class,
+            ChangeVenueTier::class, PublishVenue::class, UnpublishVenue::class,
             AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class,
             AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,
             AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,
-            AddVenueReview::class, ChangeVenueReview::class, RemoveVenueReview::class,
+            ChangeVenueGooglePlace::class, AssignVenueGooglePlace::class,
         ];
         foreach ($commands as $command) {
             $keys[] = 'history.command.'.substr($command, strrpos($command, '\\') + 1);
+        }
+        // Retired in #53: the commands are gone, but old audit rows still name them in the Verlauf.
+        foreach (['RateVenue', 'AddVenueReview', 'ChangeVenueReview', 'RemoveVenueReview'] as $retired) {
+            $keys[] = 'history.command.'.$retired;
         }
 
         foreach ($keys as $key) {

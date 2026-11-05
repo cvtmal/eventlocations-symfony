@@ -67,7 +67,7 @@ final class VenueMarkdownTest extends WebTestCase
         self::assertStringEndsWith("\n---\n\nSeite der Location: ".self::HTML_URL."\n", $body);
         self::assertStringNotContainsString("\n\n\n", $body);
         self::assertSame(
-            ['## Bewertung', '## Ausstattung und Eignung', '## Hochzeit', '## Räume', '## Häufige Fragen', '## Standort', '## Kontakt', '## Dokumente', '## Das sagen Besucher- und Veranstalterinnen'],
+            ['## Ausstattung und Eignung', '## Hochzeit', '## Räume', '## Häufige Fragen', '## Standort', '## Kontakt', '## Dokumente'],
             array_values(preg_grep('/^## /', explode("\n", $body)) ?: []),
         );
         self::assertStringContainsString("\n- 50 - 300 Personen\n\nErster Absatz über das Schloss.\n\nZweiter Absatz mit dem Park.\n", $body);
@@ -79,7 +79,9 @@ final class VenueMarkdownTest extends WebTestCase
         self::assertStringContainsString("\n- [Website](https://seeblick.example)\n", $body);
         self::assertStringContainsString("\n- [Instagram](https://www.instagram.com/schloss.seeblick)\n", $body);
         self::assertStringContainsString("\n- [Anfrage über das Formular](".self::HTML_URL."#anfrage)\n", $body);
-        self::assertStringContainsString("\n> Ein wunderbarer Tag am See.\n>\n> Loreana - Besucherin, April 2025\n", $body);
+        // #53: no own rating or reviews, and no Google value in cached text either.
+        self::assertStringNotContainsString('Bewertung', $body);
+        self::assertStringNotContainsString('Google', $body);
     }
 
     public function test_the_phone_number_and_the_email_address_never_appear(): void

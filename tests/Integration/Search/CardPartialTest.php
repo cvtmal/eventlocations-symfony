@@ -99,9 +99,6 @@ final class CardPartialTest extends KernelTestCase
             summary: 'Ein Schloss am See.',
             priceLevel: null,
             ambience: null,
-            ratingScore: null,
-            ratingCount: null,
-            highlights: [],
             photos: $photos > 0 ? array_map($this->photo(...), range(1, $photos)) : [],
         );
 

@@ -355,49 +355,6 @@
                 }
             }
         },
-        "rating": {
-            "type": "object",
-            "description": "Guest rating; score and count together.",
-            "additionalProperties": false,
-            "properties": {
-                "score": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 10,
-                    "description": "Score 0–10, at most one decimal."
-                },
-                "count": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Number of ratings."
-                },
-                "highlights": {
-                    "type": "array",
-                    "maxItems": 3,
-                    "uniqueItems": true,
-                    "description": "Up to three highlights, in display order.",
-                    "items": {
-                        "description": "Highlight code.",
-                        "enum": [
-                            "food",
-                            "atmosphere",
-                            "architecture",
-                            "location",
-                            "hospitality",
-                            "reachability",
-                            "equipment",
-                            "programme",
-                            "value"
-                        ],
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "score",
-                "count"
-            ]
-        },
         "terms": {
             "type": "object",
             "description": "Vocabulary terms per group (lists of codes).",
@@ -996,62 +953,6 @@
                 "required": [
                     "file",
                     "title"
-                ]
-            }
-        },
-        "reviews": {
-            "type": "array",
-            "description": "Guest reviews; the list is replaced as a whole.",
-            "items": {
-                "type": "object",
-                "description": "One review.",
-                "additionalProperties": false,
-                "properties": {
-                    "first_name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "First name of the reviewer (≤ 50).",
-                        "maxLength": 50
-                    },
-                    "role": {
-                        "description": "Reviewer role.",
-                        "enum": [
-                            "visitor_f",
-                            "visitor_m",
-                            "organiser_f",
-                            "organiser_m"
-                        ],
-                        "type": "string"
-                    },
-                    "month": {
-                        "type": "string",
-                        "minLength": 7,
-                        "description": "Month of the review, quoted ('2025-06').",
-                        "maxLength": 7,
-                        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
-                    },
-                    "locale": {
-                        "description": "Language of the text (default de).",
-                        "enum": [
-                            "de",
-                            "fr",
-                            "it",
-                            "en"
-                        ],
-                        "type": "string"
-                    },
-                    "text": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "Review text (≤ 1000).",
-                        "maxLength": 1000
-                    }
-                },
-                "required": [
-                    "first_name",
-                    "role",
-                    "month",
-                    "text"
                 ]
             }
         }

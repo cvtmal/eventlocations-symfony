@@ -1,0 +1,18 @@
+{#
+    Card "Google-Bewertung" (#53), staff only. Include with `with_context = false`: form, card, number, stale,
+    google_check_url (the Maps link of the loaded place ID, null without one). The switch needs a saved ID
+    (`chk_venues_google_rating_hidden`), so it is shown only when one was loaded; otherwise it is marked rendered
+    and submits as false.
+#}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, google_check_url: google_check_url|default(null)} only %}
+    {% block fields %}
+        {{ form_row(form.placeId) }}
+        {% if google_check_url %}
+            <p class="form-hint venue-card__hint"><a href="{{ google_check_url }}" target="_blank" rel="noopener">{{ 'google.check'|trans({}, 'cms') }}</a></p>
+            {{ form_row(form.ratingHidden) }}
+        {% else %}
+            {% do form.ratingHidden.setRendered %}
+            <p class="form-hint">{{ 'google.no_id_yet'|trans({}, 'cms') }}</p>
+        {% endif %}
+    {% endblock %}
+{% endembed %}

@@ -77,12 +77,6 @@ final class VenueCardsValidationTest extends WebTestCase
         yield 'contact person too long' => ['venue_contact', ['contactPerson' => $long(151)], '#venue_contact_contactPerson'];
 
         yield 'unknown own catering' => ['venue_faq', ['ownCatering' => 'sometimes'], '#venue_faq_ownCatering_error'];
-
-        yield 'score alone' => ['venue_rating', ['count' => ''], '#venue_rating_count'];
-        yield 'count alone' => ['venue_rating', ['score' => ''], '#venue_rating_score'];
-        yield 'score above 10' => ['venue_rating', ['score' => '10.1'], '#venue_rating_score'];
-        yield 'score with two decimals' => ['venue_rating', ['score' => '9.25'], '#venue_rating_score'];
-        yield 'negative count' => ['venue_rating', ['count' => '-1'], '#venue_rating_count'];
     }
 
     /**
@@ -118,7 +112,6 @@ final class VenueCardsValidationTest extends WebTestCase
         yield 'wedding' => ['venue_wedding', ['capacitySeated' => '1100'], 'SELECT capacity_seated::text FROM venues WHERE id = ?', '1100', '#venue_wedding_capacitySeated'];
         yield 'contact' => ['venue_contact', ['website' => 'https://neu.seeblick.example'], 'SELECT website FROM venues WHERE id = ?', 'https://neu.seeblick.example', '#venue_contact_website'];
         yield 'faq' => ['venue_faq', ['daylight' => 'no'], 'SELECT daylight::text FROM venues WHERE id = ?', 'false', '#venue_faq_daylight_1'];
-        yield 'rating' => ['venue_rating', ['count' => '500'], 'SELECT rating_count::text FROM venues WHERE id = ?', '500', '#venue_rating_count'];
     }
 
     /**

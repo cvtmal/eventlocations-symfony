@@ -29,8 +29,6 @@ final readonly class VenueFacts
         public ?Canton $canton,
         public ?float $lat,
         public ?float $lng,
-        public ?float $ratingScore,
-        public ?int $ratingCount,
         public array $imageUrls,
         public array $sameAs,
     ) {
@@ -57,8 +55,6 @@ final readonly class VenueFacts
             $canton,
             $venue->coordinatesFromTown ? null : $venue->lat,
             $venue->coordinatesFromTown ? null : $venue->lng,
-            $venue->ratingScore,
-            $venue->ratingCount,
             $imageUrls,
             array_values(array_filter([$venue->website, $venue->instagram], static fn (?string $url): bool => null !== $url)),
         );

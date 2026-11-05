@@ -80,11 +80,11 @@ trait HandlesVenueMedia
     }
 
     /**
-     * The row token of a room, document or review, as the read models give it.
+     * The row token of a room or document, as the read models give it.
      */
     private function rowToken(string $table, string $id): string
     {
-        \assert(\in_array($table, ['rooms', 'venue_documents', 'venue_reviews'], true));
+        \assert(\in_array($table, ['rooms', 'venue_documents'], true));
 
         return (string) $this->connection->fetchOne(\sprintf('SELECT EXTRACT(EPOCH FROM updated_at)::bigint FROM %s WHERE id = ?', $table), [$id]);
     }
@@ -94,7 +94,7 @@ trait HandlesVenueMedia
      */
     private function ageRow(string $table, string $id): void
     {
-        \assert(\in_array($table, ['rooms', 'venue_documents', 'venue_reviews'], true));
+        \assert(\in_array($table, ['rooms', 'venue_documents'], true));
         $this->connection->executeStatement(\sprintf("UPDATE %s SET updated_at = updated_at - INTERVAL '1 hour' WHERE id = ?", $table), [$id]);
     }
 

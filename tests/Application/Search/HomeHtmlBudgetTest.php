@@ -6,7 +6,6 @@ namespace App\Tests\Application\Search;
 
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
-use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\ValueObject\Canton;
 use App\Search\Extension\HomeTextBlock;
@@ -18,7 +17,6 @@ use App\Tests\Support\Search\LandingFixtures;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
@@ -27,8 +25,7 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * S11: the home page's HTML stays ≤ 60 KB gzip in the worst case: all 27 regions live, three
- * Spotlight cards with a 200-character summary, both tags, a rating with three highlights and a
- * 60-character ambience, the `home.text` block at 1500 characters and the footer note at 300.
+ * Spotlight cards with a 200-character summary and both tags with a 60-character ambience, the `home.text` block at 1500 characters and the footer note at 300.
  * SEARCH_PERF_REPORT=1 prints the size.
  */
 #[Group('budget')]
@@ -92,7 +89,7 @@ final class HomeHtmlBudgetTest extends WebTestCase
     private function spotlightVenue(int $i): void
     {
         $ambience = mb_substr(str_repeat('Romantisch und ländlich am See. ', 2), 0, 60);
-        $venue = VenueFactory::new()->rated('8.7', 1234)
+        $venue = VenueFactory::new()
             ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::cases()[$i % 3]))
             ->create([
                 'name' => 'Schlossgut Hohenrain am See '.$i,
@@ -104,9 +101,6 @@ final class HomeHtmlBudgetTest extends WebTestCase
         VenueTranslationFactory::new()
             ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null))
             ->create(['venue' => $venue, 'summary' => mb_substr(str_repeat('Hochzeit am See mit Garten. ', 8), 0, 200)]);
-        foreach ([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Architecture] as $position => $code) {
-            VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => $position + 1, 'code' => $code]);
-        }
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
     }
 

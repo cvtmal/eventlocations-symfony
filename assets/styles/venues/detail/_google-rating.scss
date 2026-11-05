@@ -1,0 +1,37 @@
+// Google rating (#53, D9), after the head; `.venue-content`'s gap spaces it like every section. Keyless it is the link
+// to the venue's Google reviews. With a key the box reserves the element's height from the first paint, and the link
+// and Google's element share one grid cell, so the element replacing the link shifts nothing.
+.venue-google-rating {
+    display: grid;
+    align-items: center;
+    justify-items: start;
+
+    > * {
+        grid-area: 1 / 1;
+    }
+}
+
+// PROVISIONAL until the owner's real-key run (Phase 1): Google documents no height ("Do not set a fixed height"), only
+// widths (horizontal 180–500 px). This is the name, rating and attribution rows at the element's default 16 px font,
+// one line each (`truncation-preferred`), plus its padding. Measure at 390 and 1440 px and set it from that.
+.venue-google-rating--live {
+    min-block-size: 7rem;
+}
+
+.venue-google-rating__link[hidden] {
+    display: none;
+}
+
+// Theming only through `color-scheme` and the documented `--gmp-mat-*` properties (custom-styling guide). The site has
+// one light theme, so the element must not follow a dark OS setting. The attribution keeps Google's colours.
+gmp-place-details-compact {
+    --gmp-mat-color-surface: var(--c-surface-raised);
+    --gmp-mat-color-on-surface: var(--c-ink-strong);
+    --gmp-mat-color-on-surface-variant: var(--c-ink);
+    --gmp-mat-color-primary: var(--c-accent-strong);
+    --gmp-mat-font-family: var(--font-sans);
+
+    inline-size: 100%;
+    max-inline-size: 31.25rem;
+    color-scheme: light;
+}

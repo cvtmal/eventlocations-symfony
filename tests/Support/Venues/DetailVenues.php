@@ -11,8 +11,6 @@ use App\Factory\VenueDocumentTranslationFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenuePhotoTranslationFactory;
-use App\Factory\VenueRatingHighlightFactory;
-use App\Factory\VenueReviewFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Canton;
@@ -22,8 +20,6 @@ use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
@@ -57,7 +53,6 @@ final class DetailVenues
         $venue->changeContact(self::FULL_PHONE, 'info@seeblick.example', 'https://seeblick.example', 'Anna Muster');
         $venue->changeDistances('0.9', 'Zürich Stadelhofen', '3.2', null, '12.0', 'Zürich');
         $venue->answerFaq(OwnCatering::Allowed, true);
-        $venue->rate('9.2', 474);
         $venue->changePriceLevel(PriceLevel::Medium);
         $venue->changeSeatingCapacity(1200, 1500);
         $venue->describePartyRules(PartyAllowed::Limited, true, new \DateTimeImmutable('1970-01-01 02:00:00'));
@@ -92,23 +87,9 @@ final class DetailVenues
         VenueTermFactory::new()->term(TermGroup::Language, 'de')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Language, 'en')->create(['venue' => $venue]);
 
-        foreach ([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Location] as $i => $highlight) {
-            VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => $i + 1, 'code' => $highlight]);
-        }
-
         foreach (['Preisliste', 'Menüvorschläge'] as $i => $title) {
             $document = VenueDocumentFactory::createOne(['venue' => $venue, 'position' => $i + 1]);
             VenueDocumentTranslationFactory::createOne(['document' => $document, 'title' => $title]);
-        }
-
-        $reviews = [
-            ['Loreana', ReviewerRole::VisitorF, '2025-04-01', 'Ein wunderbarer Tag am See.'],
-            ['Marco', ReviewerRole::OrganiserM, '2025-01-01', 'Alles hat geklappt.'],
-            ['Sandra', ReviewerRole::OrganiserF, '2024-06-01', 'Sehr freundliche Gastgeber.'],
-            ['Peter', ReviewerRole::VisitorM, '2023-03-01', 'Schöne Aussicht.'],
-        ];
-        foreach ($reviews as [$firstName, $role, $month, $text]) {
-            VenueReviewFactory::createOne(['venue' => $venue, 'firstName' => $firstName, 'role' => $role, 'reviewedMonth' => new \DateTimeImmutable($month), 'text' => $text]);
         }
 
         $hall = RoomFactory::createOne(['venue' => $venue, 'position' => 1, 'capacityMin' => 50, 'capacityMax' => 300, 'areaM2' => 220, 'heightM' => '4.00', 'floorMaterial' => FloorMaterial::Parquet]);

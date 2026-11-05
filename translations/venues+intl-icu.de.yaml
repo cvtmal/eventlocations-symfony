@@ -192,11 +192,6 @@ tier:
     premium: Premium
     basic: Standard
 
-rating_label:
-    recommended: Empfohlen
-    excellent: Ausgezeichnet
-    outstanding: Herausragend
-
 rating_highlight:
     food: Feines Essen
     atmosphere: Stilvolle Atmosphäre
@@ -257,7 +252,6 @@ detail:
         photos: Bilder
         contact: Kontakt
         location: Standort
-        rating: Bewertung
     actions:
         label: 'Anfragen & Merken'
         check_availability: Verfügbarkeit prüfen
@@ -274,11 +268,9 @@ detail:
         place: '{zip} {town}'
         capacity: '{range} Personen'
         facts_label: Auf einen Blick
-    rating:
-        heading: Bewertung
-        summary_labelled: '{label} ({score}) | {count}'
-        summary: '{score} | {count}'
-        highlights_intro: 'Was Besucher/innen und Veranstalter/innen an dieser Location besonders gefällt:'
+    google_rating:
+        label: Google-Bewertung
+        link: Bewertungen auf Google Maps ansehen
     facts:
         heading: Ausstattung und Eignung
     wedding:
@@ -345,10 +337,6 @@ detail:
         person: 'Kontaktperson: {name}'
     documents:
         heading: Dokumente
-    reviews:
-        heading: Das sagen Besucher- und Veranstalterinnen
-        byline: '{name} - {role}, {month, date, ::MMMMyyyy}'
-        all: Alle Kommentare
     phone:
         title: 'Telefonnummer von {name}'
         heading: 'Telefonnummer von {name}'

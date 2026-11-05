@@ -109,8 +109,8 @@ final class VenueSeoTest extends WebTestCase
         self::assertCount(3, $venue['image']);
         self::assertStringStartsWith('http://localhost/media/', $venue['image'][0]);
 
-        self::assertIsArray($venue['aggregateRating']);
-        self::assertSame(['@type' => 'AggregateRating', 'ratingValue' => 9.2, 'ratingCount' => 474, 'bestRating' => 10], $venue['aggregateRating']);
+        // #53: no rating of any kind; Google's never goes into JSON-LD.
+        self::assertSame([], preg_grep('/rating/i', array_keys($venue)));
     }
 
     public function test_the_breadcrumb_runs_from_the_listing_to_the_venue(): void
@@ -153,7 +153,6 @@ final class VenueSeoTest extends WebTestCase
         self::assertSame('Ein kleines Gartenhaus.', $crawler->filter('meta[name="description"]')->attr('content'));
         $venue = $this->venueNode($crawler);
         self::assertArrayNotHasKey('image', $venue);
-        self::assertArrayNotHasKey('aggregateRating', $venue);
         self::assertIsArray($venue['address']);
         self::assertArrayNotHasKey('streetAddress', $venue['address']);
     }
@@ -170,7 +169,6 @@ final class VenueSeoTest extends WebTestCase
         self::assertSame(['@type' => 'AdministrativeArea', 'name' => 'Kanton Zürich'], $venue['containedInPlace']);
         self::assertArrayNotHasKey('address', $venue);
         self::assertArrayNotHasKey('geo', $venue);
-        self::assertArrayNotHasKey('aggregateRating', $venue);
     }
 
     public function test_town_centre_coordinates_are_no_place_and_no_geo(): void

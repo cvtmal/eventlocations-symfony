@@ -8,7 +8,6 @@ use App\Factory\RoomFactory;
 use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
-use App\Factory\VenueReviewFactory;
 use App\Tests\Support\Media\TestImages;
 use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
@@ -26,8 +25,8 @@ use Zenstruck\Foundry\Test\Factories;
  * The import guard (#24, S8): app:venues:import never overwrites a venue the CMS edited or
  * deleted since its last import, not with --force or --prune either, until
  * --overwrite-cms-edits. A CMS edit is made through VenueEditing::close(), as the CMS
- * commands do; hand-made rows (a gallery photo, a room without a key, a document, a review)
- * come from factories.
+ * commands do; hand-made rows (a gallery photo, a room without a key, a document) come from
+ * factories.
  *
  * The deleted-venue cases write the tombstone and delete the venue by SQL; the end-to-end case
  * through DeleteVenue is DeleteVenueTest's (Step 4.11).
@@ -54,7 +53,7 @@ final class ImportGuardTest extends KernelTestCase
         $row = $this->row();
         self::assertSame([self::HAND_NAME, 120], [$row['name'], $row['capacity_max']]);
         self::assertNotNull($row['cms_edited_at']);
-        self::assertSame(4, $this->handRowCount());
+        self::assertSame(3, $this->handRowCount());
     }
 
     public function test_an_unchanged_folder_stays_unchanged(): void
@@ -79,7 +78,7 @@ final class ImportGuardTest extends KernelTestCase
 
         self::assertStringContainsString('cms_edited  '.self::KEY, $this->display());
         self::assertSame($before, $this->row());
-        self::assertSame(4, $this->handRowCount());
+        self::assertSame(3, $this->handRowCount());
     }
 
     public function test_force_does_not_overwrite_an_edit_of_a_changed_folder(): void
@@ -395,7 +394,7 @@ final class ImportGuardTest extends KernelTestCase
     }
 
     /**
-     * Rows only the CMS makes: a gallery photo, a room without a key, a document, a review.
+     * Rows only the CMS makes: a gallery photo, a room without a key, a document.
      */
     private function handRows(): void
     {
@@ -404,7 +403,6 @@ final class ImportGuardTest extends KernelTestCase
         VenuePhotoFactory::createOne(['venue' => $venue, 'originalPath' => 'cms/'.self::KEY.'/hand.jpg']);
         RoomFactory::createOne(['venue' => $venue]);
         VenueDocumentFactory::createOne(['venue' => $venue, 'path' => 'cms/'.self::KEY.'/hand.pdf']);
-        VenueReviewFactory::createOne(['venue' => $venue]);
         $this->em->clear();
     }
 
@@ -414,8 +412,7 @@ final class ImportGuardTest extends KernelTestCase
 
         return $this->rows("venue_photos WHERE venue_id = ? AND original_path LIKE 'cms/%'", [$id])
             + $this->rows('rooms WHERE venue_id = ? AND content_key IS NULL', [$id])
-            + $this->rows("venue_documents WHERE venue_id = ? AND path LIKE 'cms/%'", [$id])
-            + $this->rows('venue_reviews WHERE venue_id = ?', [$id]);
+            + $this->rows("venue_documents WHERE venue_id = ? AND path LIKE 'cms/%'", [$id]);
     }
 
     /**

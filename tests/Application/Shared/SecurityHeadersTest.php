@@ -144,6 +144,28 @@ final class SecurityHeadersTest extends WebTestCase
         self::assertStringNotContainsString('nonce=', (string) $response->getContent());
     }
 
+    public function test_a_venue_with_a_google_place_carries_the_places_policy(): void
+    {
+        // #53: the policy is set per response by venue_google_rating(), not by a route default.
+        $saved = [$_SERVER['GOOGLE_MAPS_JS_KEY'] ?? null, $_ENV['GOOGLE_MAPS_JS_KEY'] ?? null];
+        $_SERVER['GOOGLE_MAPS_JS_KEY'] = $_ENV['GOOGLE_MAPS_JS_KEY'] = 'test-key';
+        try {
+            $venue = DetailVenues::full($this->em);
+            $this->em->flush();
+            $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4' WHERE id = ?", [$venue->id()]);
+
+            $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+            $response = $this->client->getResponse();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(ContentSecurityPolicy::GOOGLE_PLACES_POLICY, $response->headers->get('Content-Security-Policy'));
+            $this->assertPlainHeaders($response, 'detail with a Google place');
+            self::assertStringNotContainsString('nonce=', (string) $response->getContent());
+        } finally {
+            [$_SERVER['GOOGLE_MAPS_JS_KEY'], $_ENV['GOOGLE_MAPS_JS_KEY']] = $saved;
+        }
+    }
+
     public function test_only_the_near_me_route_opts_into_another_policy(): void
     {
         $router = self::getContainer()->get(RouterInterface::class);

@@ -7,7 +7,6 @@ namespace App\Search\ReadModel;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\ArrayParameterType;
@@ -31,10 +30,8 @@ final class ListingQuery
      * cannot drift. The town is optional (#21), hence the LEFT JOIN, in one place for both.
      */
     private const CARD_COLUMNS = <<<'SQL'
-        v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max, v.rating_score, v.rating_count,
-            tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary, v.price_level, t.ambience,
-            (SELECT COALESCE(jsonb_agg(h.code ORDER BY h.position), '[]'::jsonb)
-                FROM venue_rating_highlights h WHERE h.venue_id = v.id) AS highlights
+        v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max,
+            tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary, v.price_level, t.ambience
         SQL;
     private const CARD_TOWN_JOIN = 'LEFT JOIN towns tw ON tw.id = v.town_id';
 
@@ -251,12 +248,6 @@ final class ListingQuery
         \assert(\is_string($row['summary']));
         \assert(null === $row['price_level'] || \is_string($row['price_level']));
         \assert(null === $row['ambience'] || \is_string($row['ambience']));
-        \assert(null === $row['rating_score'] || is_numeric($row['rating_score']));
-        \assert(null === $row['rating_count'] || \is_int($row['rating_count']));
-        \assert(\is_string($row['highlights']));
-
-        $highlights = json_decode($row['highlights'], true, 512, \JSON_THROW_ON_ERROR);
-        \assert(\is_array($highlights));
 
         return new ListingCard(
             $row['id'],
@@ -270,13 +261,6 @@ final class ListingQuery
             $row['summary'],
             null === $row['price_level'] ? null : PriceLevel::from($row['price_level']),
             $row['ambience'],
-            null === $row['rating_score'] ? null : (float) $row['rating_score'],
-            $row['rating_count'],
-            array_values(array_map(static function (mixed $code): RatingHighlight {
-                \assert(\is_string($code));
-
-                return RatingHighlight::from($code);
-            }, $highlights)),
             $photos[$row['id']] ?? [],
         );
     }

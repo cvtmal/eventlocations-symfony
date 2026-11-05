@@ -9,7 +9,7 @@ use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
- * The venue's Räume tab (#25), after Übersicht (1000); Fotos 900, Räume 800, Dokumente 700, Bewertungen 600.
+ * The venue's Räume tab (#25), after Übersicht (1000); Fotos 900, Räume 800, Dokumente 700 (#53 retired Bewertungen, 600).
  */
 final class VenueRoomsRecordTab implements RecordTab
 {

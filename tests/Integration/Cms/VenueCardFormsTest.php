@@ -21,20 +21,20 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\ChangeVenueBasics;
+use App\Venues\Command\ChangeVenueGooglePlace;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\CreateVenue;
-use App\Venues\Command\RateVenue;
 use App\Venues\Command\RelocateVenue;
 use App\Venues\CommandHandler\ChangeVenueTermsHandler;
 use App\Venues\CommandHandler\ChangeVenueWeddingFactsHandler;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
@@ -221,19 +221,12 @@ final class VenueCardFormsTest extends KernelTestCase
         yield 'Instagram with a NUL' => [VenueCard::Contact, ['instagram' => "re\0mise"], 'instagram'];
         yield 'contact person with a NUL' => [VenueCard::Contact, ['contactPerson' => "An\0na"], 'contactPerson'];
         yield 'unknown catering' => [VenueCard::Faq, ['ownCatering' => 'sometimes'], 'ownCatering'];
-        yield 'score alone' => [VenueCard::Rating, ['count' => ''], 'count'];
-        yield 'count alone' => [VenueCard::Rating, ['score' => ''], 'score'];
-        yield 'score 10.1' => [VenueCard::Rating, ['score' => '10.1'], 'score'];
-        yield 'score with two decimals' => [VenueCard::Rating, ['score' => '9.25'], 'score'];
-        yield 'negative count' => [VenueCard::Rating, ['count' => '-1'], 'count'];
-        yield 'count beyond INTEGER' => [VenueCard::Rating, ['count' => '2147483648'], 'count'];
-        yield 'four highlights' => [VenueCard::Rating, ['highlights' => ['food', 'atmosphere', 'location', 'value']], 'highlights'];
-        yield 'highlights without a rating' => [VenueCard::Rating, ['score' => '', 'count' => ''], 'highlights'];
         yield 'a token with letters' => [VenueCard::Faq, ['loadedAt' => '17000x'], ''];
         yield 'a token of invalid UTF-8' => [VenueCard::Faq, ['loadedAt' => "17000\xff"], ''];
-        yield 'a score of invalid UTF-8' => [VenueCard::Rating, ['score' => "9.\xff"], 'score'];
-        yield 'a count of invalid UTF-8' => [VenueCard::Rating, ['count' => "1\xff"], 'count'];
         yield 'an unknown tier of invalid UTF-8' => [VenueCard::Basics, ['tier' => "\xff"], 'tier'];
+        yield 'place ID with a space' => [VenueCard::Google, ['placeId' => 'ChIJN1t tDeuEmsRUsoyG83frY4'], 'placeId'];
+        yield 'place ID of 9 characters' => [VenueCard::Google, ['placeId' => 'ChIJN1t_t'], 'placeId'];
+        yield 'place ID of invalid UTF-8' => [VenueCard::Google, ['placeId' => "ChIJN1t_tDeu\xffEmsRUso"], 'placeId'];
     }
 
     /**
@@ -254,16 +247,64 @@ final class VenueCardFormsTest extends KernelTestCase
     public function test_comma_decimals_are_read_as_points(): void
     {
         $edit = $this->edit(DetailVenues::full($this->em));
-        $form = $this->card(VenueCard::Rating, $edit);
+        $form = $this->card(VenueCard::Address, $edit);
         $values = self::values($form->createView());
-        $values['score'] = '8,4';
+        $values['stationKm'] = '0,7';
         $form->submit($values);
 
         self::assertTrue($form->isValid(), (string) $form->getErrors(true));
-        $command = $form->getData()->toCommand($edit->number(), $edit, ['score']);
-        self::assertInstanceOf(RateVenue::class, $command);
-        self::assertSame('8.4', $command->score);
-        self::assertSame([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Location], $command->highlights);
+        $command = $form->getData()->toCommand($edit->number(), $edit, ['stationKm']);
+        self::assertInstanceOf(RelocateVenue::class, $command);
+        self::assertSame('0.7', $command->stationKm);
+    }
+
+    public function test_a_google_place_id_is_trimmed_and_reaches_the_command(): void
+    {
+        $edit = $this->edit(DetailVenues::full($this->em));
+        $form = $this->card(VenueCard::Google, $edit);
+        $values = self::values($form->createView());
+        $values['placeId'] = '  ChIJN1t_tDeuEmsRUsoyG83frY4 ';
+        $form->submit($values);
+
+        self::assertTrue($form->isValid(), (string) $form->getErrors(true));
+        $changed = ChangedFields::between(VenueCard::Google->dataClass()::from($edit), $form->getData());
+        self::assertSame(['placeId'], $changed);
+        $command = $form->getData()->toCommand($edit->number(), $edit, $changed);
+        self::assertInstanceOf(ChangeVenueGooglePlace::class, $command);
+        self::assertSame(['ChIJN1t_tDeuEmsRUsoyG83frY4', false], [$command->placeId, $command->ratingHidden]);
+    }
+
+    public function test_a_wrong_google_place_id_names_its_rule(): void
+    {
+        $edit = $this->edit(DetailVenues::full($this->em));
+        $form = $this->card(VenueCard::Google, $edit);
+        $values = self::values($form->createView());
+        $values['placeId'] = 'ChIJ <script>';
+        $form->submit($values);
+
+        $errors = $form->get('placeId')->getErrors();
+        self::assertCount(1, $errors);
+        $error = $errors[0];
+        self::assertInstanceOf(FormError::class, $error);
+        self::assertSame('cms.venue.google.place_id_format', $error->getMessageTemplate());
+    }
+
+    public function test_an_emptied_google_place_id_is_null_and_takes_the_switch_along(): void
+    {
+        $venue = DetailVenues::full($this->em);
+        $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4', google_rating_hidden = true WHERE id = ?", [$venue->id()]);
+        $edit = $this->edit($venue);
+        $form = $this->card(VenueCard::Google, $edit);
+        $view = $form->createView();
+        self::assertTrue($view['ratingHidden']->vars['checked']);
+        $values = self::values($view);
+        $values['placeId'] = '';
+        $form->submit($values);
+
+        self::assertTrue($form->isValid(), (string) $form->getErrors(true));
+        $command = $form->getData()->toCommand($edit->number(), $edit, ['placeId']);
+        self::assertInstanceOf(ChangeVenueGooglePlace::class, $command);
+        self::assertNull($command->placeId);
     }
 
     public function test_the_town_centre_press_reaches_the_command(): void
@@ -420,11 +461,14 @@ final class VenueCardFormsTest extends KernelTestCase
     }
 
     /**
-     * What a browser would send for the rendered form: each field's value, the checked boxes and radios of
-     * an expanded choice, no button.
+     * What a browser would send for the rendered form: each field's value, a single checkbox only when checked,
+     * the checked boxes and radios of an expanded choice, no button.
      */
     private static function values(FormView $view): mixed
     {
+        if (\in_array('checkbox', $view->vars['block_prefixes'], true)) {
+            return true === $view->vars['checked'] ? $view->vars['value'] : null;
+        }
         if (!($view->vars['compound'] ?? false)) {
             return $view->vars['value'];
         }

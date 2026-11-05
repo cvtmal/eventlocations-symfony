@@ -8,13 +8,15 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
 
 /**
- * Deletes a review (#25, CMS-8). The venue's score and count stay as they are (D17).
+ * Sets a Google place ID a person confirmed in the lookup report (#53, `app:venues:apply-google-places`). It never
+ * overwrites a place ID the venue already has: the handler answers false then. The audit summary names the field,
+ * never the value.
  */
-final readonly class RemoveVenueReview implements AuditableCommand
+final readonly class AssignVenueGooglePlace implements AuditableCommand
 {
     public function __construct(
         public int $venueNumber,
-        public string $reviewId,
+        public string $placeId,
     ) {
     }
 
@@ -25,6 +27,6 @@ final readonly class RemoveVenueReview implements AuditableCommand
 
     public function auditSummary(): array
     {
-        return ['review_id' => $this->reviewId];
+        return ['changed' => ['googlePlaceId']];
     }
 }

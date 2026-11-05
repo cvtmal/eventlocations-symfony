@@ -1,11 +1,9 @@
 {# Sticky anchor nav (DP-3). An item renders only when its target section exists (P12). Params: venue. #}
-{% set rating_target = venue.hasRatingSection() or venue.reviews is not empty %}
 <nav class="venue-nav" aria-label="{{ 'detail.nav.label'|trans({}, 'venues') }}">
     <ul class="venue-nav__list">
         <li><a href="#beschreibung">{{ 'detail.nav.description'|trans({}, 'venues') }}</a></li>
         {% if venue.photos is not empty %}<li><a href="#bilder">{{ 'detail.nav.photos'|trans({}, 'venues') }}</a></li>{% endif %}
         {% if venue.hasContact() %}<li><a href="#kontakt">{{ 'detail.nav.contact'|trans({}, 'venues') }}</a></li>{% endif %}
         {% if venue.hasLocation() %}<li><a href="#standort">{{ 'detail.nav.location'|trans({}, 'venues') }}</a></li>{% endif %}
-        {% if rating_target %}<li><a href="#bewertung">{{ 'detail.nav.rating'|trans({}, 'venues') }}</a></li>{% endif %}
     </ul>
 </nav>

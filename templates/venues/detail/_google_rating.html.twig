@@ -1,0 +1,9 @@
+{#
+    Google rating (#53, D1, D9), rendered by venue_google_rating(). Params: place_id, maps_key (null = keyless), maps_url.
+    The server sends no gmp- tag: with a key, assets/js/google-rating.js builds Google's compact Place Details element
+    after the page's load event and once the box is in view, and hides the link when the element has loaded. Keyless,
+    without JS, or when Google refuses, the link to the venue's reviews on Google Maps is what stays.
+#}
+<div class="venue-google-rating{% if maps_key %} venue-google-rating--live{% endif %}"{% if maps_key %} data-google-rating data-maps-key="{{ maps_key }}" data-place-id="{{ place_id }}" role="region" aria-label="{{ 'detail.google_rating.label'|trans({}, 'venues') }}"{% endif %}>
+    <a class="venue-google-rating__link" href="{{ maps_url }}" target="_blank" rel="noopener"{% if maps_key %} data-google-rating-link{% endif %}>{{ 'detail.google_rating.link'|trans({}, 'venues') }}<span class="visually-hidden">{{ 'detail.location.map.new_tab'|trans({}, 'venues') }}</span></a>
+</div>

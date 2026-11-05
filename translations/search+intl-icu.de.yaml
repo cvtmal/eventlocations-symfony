@@ -66,11 +66,6 @@ card:
     # Visually hidden before the price tag, so "Mittel" is not read alone.
     price_level: 'Preisniveau:'
     photos_label: 'Bilder von {name}'
-    rating: '{label} ({score}) | {count}'
-    rating_unlabelled: '({score}) | {count}'
-    # The accessible name of the thumbs-up icon after the count.
-    rating_count: Bewertungen
-    highlight: '“{highlight}”'
 pagination:
     label: Seiten
     range: '{from} - {to} von {total} Resultaten'

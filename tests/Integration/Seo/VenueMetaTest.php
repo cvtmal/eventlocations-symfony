@@ -96,8 +96,6 @@ final class VenueMetaTest extends KernelTestCase
             $canton,
             $lat,
             $lng,
-            null,
-            null,
             [],
             [],
         ));

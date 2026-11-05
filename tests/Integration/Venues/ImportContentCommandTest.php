@@ -36,7 +36,7 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(['Schloss Beispiel', 'premium', 'published', 180, 20, '8001', 'zh'], [$venue['name'], $venue['tier'], $venue['status'], $venue['capacity_max'], $venue['capacity_min'], $venue['zip'], $venue['canton_code']]);
         self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', (string) $venue['content_hash']);
         self::assertSame('Zürich', $this->connection->fetchOne('SELECT name FROM towns WHERE id = ?', [$venue['town_id']]));
-        self::assertSame(['+41441234567', 'anfragen@example.ch', '0.9', 'Bahnhof Beispiel', 'allowed', true, '9.0', 47], [
+        self::assertSame(['+41441234567', 'anfragen@example.ch', '0.9', 'Bahnhof Beispiel', 'allowed', true, null, null], [
             $venue['phone'], $venue['inquiry_email'], $venue['distance_station_km'], $venue['station_name'], $venue['own_catering'], $venue['daylight'], $venue['rating_score'], $venue['rating_count'],
         ]);
         self::assertSame([2, 180, '6.50'], [$venue['room_count'], $venue['largest_room_m2'], $venue['max_room_height_m']]);
@@ -47,8 +47,7 @@ final class ImportContentCommandTest extends KernelTestCase
             [['term_group' => 'building', 'term_code' => 'castle', 'is_main' => true], ['term_group' => 'building', 'term_code' => 'villa', 'is_main' => false], ['term_group' => 'setting', 'term_code' => 'lake', 'is_main' => false]],
             $this->connection->fetchAllAssociative('SELECT term_group, term_code, is_main FROM venue_terms WHERE venue_id = ? ORDER BY term_group, term_code', [$id]),
         );
-        self::assertSame(['food', 'value'], $this->connection->fetchFirstColumn('SELECT code FROM venue_rating_highlights WHERE venue_id = ? ORDER BY position', [$id]));
-        self::assertSame(['2025-06-01'], $this->connection->fetchFirstColumn('SELECT reviewed_month FROM venue_reviews WHERE venue_id = ?', [$id]));
+        self::assertSame(0, $this->rows('venue_rating_highlights') + $this->rows('venue_reviews'));
         self::assertSame(
             [['content_key' => 'rittersaal', 'position' => 1, 'capacity_banquet_min' => 20, 'capacity_banquet_max' => 100, 'capacity_apero_max' => null, 'name' => 'Rittersaal'],
                 ['content_key' => 'gewoelbekeller', 'position' => 2, 'capacity_banquet_min' => null, 'capacity_banquet_max' => null, 'capacity_apero_max' => 60, 'name' => 'Gewölbekeller']],
@@ -99,13 +98,18 @@ final class ImportContentCommandTest extends KernelTestCase
         $this->import();
         $number = $this->venueNumber('schloss-beispiel');
         $photoId = $this->connection->fetchOne('SELECT id FROM venue_photos');
+        // #53: the retired rating and reviews stay in the database until the drop migration; a re-import neither reads nor deletes them.
+        $this->connection->executeStatement('UPDATE venues SET rating_score = 9.0, rating_count = 47 WHERE number = ?', [$number]);
+        $this->connection->executeStatement(
+            "INSERT INTO venue_reviews (id, venue_id, locale, first_name, role, reviewed_month, text) SELECT gen_random_uuid(), id, 'de', 'Laura', 'visitor_f', '2025-06-01', 'Ein schöner Tag.' FROM venues WHERE number = ?",
+            [$number],
+        );
 
         $this->content->change('schloss-beispiel', [
             'tier' => 'top_premium',
             'capacity' => ['max' => 250],
             'translations' => ['de' => ['summary' => 'Neu zusammengefasst.']],
             'terms' => ['building' => ['castle', 'hotel']],
-            'reviews' => [['first_name' => 'Marco', 'role' => 'organiser_m', 'month' => '2026-01', 'text' => 'Sehr gut organisiert.']],
         ]);
         self::assertSame(Command::SUCCESS, $this->import(), $this->display());
 
@@ -116,7 +120,8 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame('Neu zusammengefasst.', $this->connection->fetchOne('SELECT summary FROM venue_translations WHERE venue_id = ?', [$venue['id']]));
         self::assertSame('schloss-beispiel', $this->connection->fetchOne('SELECT slug FROM venue_translations WHERE venue_id = ?', [$venue['id']]));
         self::assertSame(['castle', 'hotel'], $this->connection->fetchFirstColumn("SELECT term_code FROM venue_terms WHERE venue_id = ? AND term_group = 'building' ORDER BY term_code", [$venue['id']]));
-        self::assertSame(['Marco'], $this->connection->fetchFirstColumn('SELECT first_name FROM venue_reviews WHERE venue_id = ?', [$venue['id']]));
+        self::assertSame(['Laura'], $this->connection->fetchFirstColumn('SELECT first_name FROM venue_reviews WHERE venue_id = ?', [$venue['id']]));
+        self::assertSame(['9.0', 47], [$venue['rating_score'], $venue['rating_count']]);
         self::assertSame($photoId, $this->connection->fetchOne('SELECT id FROM venue_photos'));
         self::assertSame(0, $this->rows('venue_slug_history'));
         self::assertSame([$number, $this->venueNumber('seehaus-muster'), $number], $this->purger()->venues, 'only the updated venue is purged again');
@@ -281,10 +286,8 @@ final class ImportContentCommandTest extends KernelTestCase
             'distances' => ['station' => ['km' => 0.9, 'name' => 'Bahnhof Beispiel']],
             'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch'],
             'faq' => ['own_catering' => 'allowed', 'daylight' => true],
-            'rating' => ['score' => 9.0, 'count' => 47, 'highlights' => ['food', 'value']],
             'terms' => ['building' => ['castle', 'villa'], 'setting' => ['lake']],
             'main_terms' => ['building' => 'castle'],
-            'reviews' => [['first_name' => 'Laura', 'role' => 'visitor_f', 'month' => '2025-06', 'text' => 'Ein schöner Tag.']],
             'rooms' => [
                 ['key' => 'rittersaal', 'translations' => ['de' => ['name' => 'Rittersaal']], 'area_m2' => 180, 'height_m' => 6.5, 'seating' => ['banquet' => ['min' => 20, 'max' => 100]]],
                 ['key' => 'gewoelbekeller', 'translations' => ['de' => ['name' => 'Gewölbekeller']], 'area_m2' => 60, 'height_m' => 2.4, 'seating' => ['apero' => ['max' => 60]]],

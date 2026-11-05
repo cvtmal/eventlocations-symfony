@@ -34,6 +34,9 @@ Usage: bin/prod-import <command>
   crm-bootstrap            app:crm:bootstrap against Neon: one company per venue that has none
   customers-dry            app:crm:import-customers --dry-run against Neon: the report, no writes
   customers                app:crm:import-customers against Neon
+  places-find              app:venues:find-google-places against Neon: the place ID report, no writes
+  places-apply-dry         app:venues:apply-google-places --dry-run against Neon: the summary, no writes
+  places-apply             app:venues:apply-google-places against Neon, then purge
   help                     this text
 
 Run order: first deploy (migrations and towns), then export, then import-dry until its summary
@@ -43,11 +46,15 @@ list first. --prune is refused: an empty or unmounted venues/ would unpublish ev
 Customer sheet (#48): crm-bootstrap, then customers-dry until the report is right, then
 customers, then customers-dry shows 0 new.
 
+Google place IDs (#53): places-find (needs GOOGLE_PLACES_API_KEY in the shell), check the report,
+mark apply=yes, then places-apply-dry until right, then places-apply.
+
 Environment, never in a file:
   PROD_DATABASE_URL   Neon's direct string
   PROD_SSH            the owner's unrestricted login, user@host (not the forced-command deploy key)
   PROD_MEDIA_DIR      inside the checkout, default var/prod-media
   PROD_CUSTOMERS_CSV  inside the checkout, default content/owner/kunden-master.csv
+  GOOGLE_PLACES_API_KEY  places-find only: a Places API (New) key restricted to your IP
 USAGE
 }
 
@@ -75,7 +82,9 @@ prod_console() { # prod_console <console args...>
 
     # -e with a bare name: compose reads the value from its own environment, so it is on no argv.
     # The prefix is what sets it: without one, compose would fall back to DATABASE_URL in .env.
+    # GOOGLE_PLACES_API_KEY (#53's places-find) comes the same way, from the shell when it is set.
     DATABASE_URL="$PROD_DATABASE_URL" docker compose exec -T \
+        -e GOOGLE_PLACES_API_KEY \
         -e APP_ENV=prod \
         -e DATABASE_URL \
         -e MEDIA_ROOT="$CONTAINER_ROOT/$MEDIA_DIR/originals" \
@@ -161,6 +170,7 @@ main() {
             return 0
             ;;
         export | import | import-dry | regenerate | sync | purge | all | crm-bootstrap | customers-dry | customers) ;;
+        places-find | places-apply-dry | places-apply) ;;
         *)
             usage >&2
             die "unknown command: $cmd"
@@ -190,6 +200,13 @@ main() {
         crm-bootstrap) prod_console app:crm:bootstrap ;;
         customers-dry) import_customers --dry-run ;;
         customers) import_customers ;;
+        places-find) prod_console app:venues:find-google-places ;;
+        places-apply-dry) prod_console app:venues:apply-google-places --dry-run ;;
+        places-apply)
+            # The handlers purge only the local container's cache store.
+            prod_console app:venues:apply-google-places
+            purge_cache
+            ;;
     esac
 }
 
