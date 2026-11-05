@@ -76,4 +76,27 @@ final class TownLocatorTest extends KernelTestCase
         self::assertSame([], $this->locator->withinKm('0192f1c4-0000-7000-8000-000000000000', 5));
         self::assertSame([], $this->locator->withinKm('not-a-uuid', 5));
     }
+
+    public function test_nearest_gives_the_closest_town_to_a_point(): void
+    {
+        $connection = self::getContainer()->get(Connection::class);
+        self::assertInstanceOf(Connection::class, $connection);
+        $stafa = $connection->fetchAssociative('SELECT lat, lng FROM towns WHERE id = :id', ['id' => $this->stafaId]);
+        self::assertIsArray($stafa);
+        self::assertIsNumeric($stafa['lat']);
+        self::assertIsNumeric($stafa['lng']);
+
+        // About 220 m north of Stäfa's centre.
+        $town = $this->locator->nearest((float) $stafa['lat'] + 0.002, (float) $stafa['lng']);
+
+        self::assertInstanceOf(TownDistance::class, $town);
+        self::assertSame('Stäfa', $town->name);
+        self::assertLessThan(1.0, $town->distanceKm);
+    }
+
+    public function test_nearest_is_null_without_a_town_within_20_km(): void
+    {
+        // In the Aosta valley: inside near-me's box (CH + 30 km), but far from any Swiss town.
+        self::assertNull($this->locator->nearest(45.60, 7.50));
+    }
 }

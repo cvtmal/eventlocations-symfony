@@ -18,7 +18,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * The home page (#36) comes first, so `bin/warm-cache` reaches it right after the listing; it
  * shows venues, so it shares the listing's `lastmod`.
  * Landing pages (#17) follow the listing: every live one, page 1, unfiltered, with the newest
- * change among its venues. The legal pages (#18) come last, without `lastmod`: their text changes
+ * change among its venues. The near-me page (#52) follows the landing pages with the listing's
+ * `lastmod`, since it shows venues. The legal pages (#18) come last, without `lastmod`: their text changes
  * only with a deploy, and no date of it is stored.
  */
 final class PagesSitemap
@@ -54,6 +55,8 @@ final class PagesSitemap
                 );
             }
         }
+
+        $urls[] = new SitemapUrl($this->urls->generate('nearby', [], UrlGeneratorInterface::ABSOLUTE_URL), $newest);
 
         foreach (self::LEGAL_ROUTES as $route) {
             $urls[] = new SitemapUrl($this->urls->generate($route, [], UrlGeneratorInterface::ABSOLUTE_URL), null);

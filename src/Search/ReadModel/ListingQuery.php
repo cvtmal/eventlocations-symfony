@@ -71,13 +71,13 @@ final class ListingQuery
     /**
      * The published venues among the given numbers, in the given order (the Merkliste's saved
      * order). Unknown and unpublished numbers are left out, so the caller can see what is stale.
-     * Two queries, none for an empty list.
+     * Two queries, none for an empty list. #52 asks for one photo per card.
      *
      * @param list<int> $numbers
      *
      * @return list<ListingCard>
      */
-    public function cardsByNumbers(array $numbers, string $locale): array
+    public function cardsByNumbers(array $numbers, string $locale, int $photosPerCard = self::PHOTOS_PER_CARD): array
     {
         if ([] === $numbers) {
             return [];
@@ -107,7 +107,7 @@ final class ListingQuery
             return $position[$a['number']] <=> $position[$b['number']];
         });
 
-        return $this->cards($rows, $locale);
+        return $this->cards($rows, $locale, $photosPerCard);
     }
 
     public function count(SearchCriteria $criteria): int

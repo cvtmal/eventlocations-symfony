@@ -69,6 +69,16 @@ final class CardPartialTest extends KernelTestCase
         self::assertSame(['', ''], \array_slice($alts, 1));
     }
 
+    public function test_a_distance_adds_a_third_fact(): void
+    {
+        $crawler = new Crawler($this->render(['distance' => '4 km']));
+
+        $facts = $crawler->filter('.card-facts__item');
+        self::assertCount(3, $facts);
+        self::assertSame('Entfernung 4 km', $facts->eq(2)->text());
+        self::assertCount(2, (new Crawler($this->render()))->filter('.card-facts__item'));
+    }
+
     /**
      * @param array<string, string> $context
      */

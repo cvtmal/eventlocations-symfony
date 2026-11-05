@@ -1,0 +1,66 @@
+{#
+    /hochzeitslocation-in-meiner-naehe (#52). Variables from NearbyController:
+      centre (?NearbyCentre), notice (null|'not_found'|'position'), ort (?string, the submitted value), cards (list<ListingCard>,
+      nearest first), distances (venue number → whole km), venue_count (int), pins (?string, the pin JSON; null without a key),
+      maps_key, map_id, radius_km, wider_href (?string, set only when nothing is near), wider_km, filtered (bool: any of
+      lat, lng, ort in the query), centre_point (?NearbyPoint).
+    Four states: no location (the controls and, with a key, the whole-Switzerland map), the same with a notice, located (the
+    list, nearest first), and nothing near (a link to the listing at wider_km). Without a key there is no map element and no
+    Google URL anywhere: near-me.js then runs the geolocation button only.
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'nearby.title'|trans({}, 'search') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}{% if filtered %}<meta name="robots" content="noindex, follow">{% endif %}<meta name="description" content="{{ 'nearby.meta_description'|trans({km: radius_km}, 'search') }}">{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ url('nearby') }}">{% endblock %}
+
+{% block main %}
+    <div class="listing container nearby">
+        <h1 class="nearby__title">{{ 'nearby.title'|trans({}, 'search') }}</h1>
+        <p class="nearby__intro">{{ 'nearby.intro'|trans({km: radius_km}, 'search') }}</p>
+        <form class="nearby__search" method="get" action="{{ path('nearby') }}" role="search">
+            {{ include('components/_text_input.html.twig', {id: 'nearby-ort', name: 'ort', label: 'nearby.form.label'|trans({}, 'search'), label_hidden: false, value: ort ?? '', autocomplete: 'off', error: notice == 'not_found' ? 'nearby.notice.not_found'|trans({}, 'search') : null}, with_context = false) }}
+            {{ include('components/_button.html.twig', {type: 'submit', label: 'nearby.form.submit'|trans({}, 'search')}, with_context = false) }}
+        </form>
+        <form class="nearby__geo" method="get" action="{{ path('nearby') }}" data-near-me-geo data-error="{{ 'nearby.geo.error'|trans({}, 'search') }}" data-pending="{{ 'nearby.geo.pending'|trans({}, 'search') }}" hidden>
+            <input type="hidden" name="lat">
+            <input type="hidden" name="lng">
+            {{ include('components/_button.html.twig', {type: 'submit', variant: 'secondary', icon: 'map-pin', label: 'nearby.geo.button'|trans({}, 'search')}, with_context = false) }}
+            <p class="nearby__geo-error" data-near-me-geo-error role="status" hidden></p>
+        </form>
+        {%- if notice == 'position' %}
+        <p class="nearby__notice">{{ icon('info') }}<span>{{ 'nearby.notice.position'|trans({}, 'search') }}</span></p>
+        {%- endif %}
+        {%- if pins is not null %}
+        {{ include('search/_nearby_map.html.twig', {pins: pins, maps_key: maps_key, map_id: map_id, centre_point: centre_point, radius_km: radius_km, count: venue_count, has_results: cards is not empty}, with_context = false) }}
+        {%- endif %}
+        {%- if centre is not null %}
+        <section class="nearby__results" id="nearby-results" tabindex="-1" aria-labelledby="nearby-results-heading">
+            <h2 class="nearby__heading" id="nearby-results-heading">
+                {%- if centre.label is not null -%}
+                    {{ 'nearby.results.heading_place'|trans({count: venue_count, formatted: venue_count|swiss_number, km: radius_km, place: centre.label}, 'search') }}
+                {%- else -%}
+                    {{ 'nearby.results.heading_position'|trans({count: venue_count, formatted: venue_count|swiss_number, km: radius_km}, 'search') }}
+                {%- endif -%}
+            </h2>
+            {%- if cards is not empty %}
+            <ol class="listing__results" aria-label="{{ 'nearby.results.label'|trans({}, 'search') }}">
+                {%- for card in cards %}
+                <li class="listing__item">{{ include('search/_card.html.twig', {card: card, index: loop.index0, heading: 'h3', distance: 'nearby.distance'|trans({km: distances[card.number]|swiss_number}, 'search')}, with_context = false) }}</li>
+                {%- endfor %}
+            </ol>
+            {%- else %}
+            <div class="listing-empty">
+                <span class="listing-empty__disc" aria-hidden="true">{{ icon('map-pin') }}</span>
+                <p class="listing-empty__title">{{ 'nearby.empty.title'|trans({km: radius_km}, 'search') }}</p>
+                {{ include('components/_button.html.twig', {href: wider_href, label: 'nearby.empty.link'|trans({km: wider_km}, 'search'), size: 'lg'}, with_context = false) }}
+            </div>
+            {%- endif %}
+        </section>
+        {%- endif %}
+    </div>
+{% endblock %}
+
+{% block scripts %}<script type="module" src="{{ asset('js/near-me.js') }}"></script>{% endblock %}

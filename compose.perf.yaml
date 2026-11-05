@@ -15,6 +15,7 @@ services:
       APP_DEBUG: "0"
       APP_SECRET: perf-only-not-a-secret
       GOOGLE_MAPS_EMBED_KEY: ""
+      GOOGLE_MAPS_JS_KEY: ""
     volumes:
       - perf_vendor:/var/www/html/vendor
       - perf_var:/var/www/html/var

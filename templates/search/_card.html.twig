@@ -4,7 +4,8 @@
       place, summary, priceLevel, ambience, ratingScore, ratingCount, highlights, photos),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
       action: merken|remove|none (default merken),
-      heading: the title's element, h1 to h6 (default h2; a page with its own h2 above the cards passes h3).
+      heading: the title's element, h1 to h6 (default h2; a page with its own h2 above the cards passes h3),
+      distance: an already-translated distance ("4 km") for the facts line (#52), default none.
     The title link stretches over the card (.card__link::after) and is the card's one accessible link. The photo column
     sits above that overlay so the carousel can be swiped and its arrows clicked; each slide therefore carries its own
     link to the detail page (tabindex="-1", aria-hidden="true": no extra tab stop or screen-reader link), the placeholder
@@ -40,7 +41,7 @@
     </div>
     <div class="card__body">
         <div class="card__top">
-            {{ include('search/_card_facts.html.twig', {capacity_min: card.capacityMin, capacity_max: card.capacityMax, place: card.place}, with_context = false) }}
+            {{ include('search/_card_facts.html.twig', {capacity_min: card.capacityMin, capacity_max: card.capacityMax, place: card.place, distance: distance|default(null)}, with_context = false) }}
             {%- if action == 'merken' %}
             {{ include('favorites/_merken_button.html.twig', {number: card.number, name: card.name, variant: 'card'}, with_context = false) }}
             {%- elseif action == 'remove' %}
