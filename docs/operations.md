@@ -269,6 +269,8 @@ nothing while the file fails `app:prod:check-env`. The command prints variable n
 | `MEDIA_ROOT` | `/home/djweddin/www/hochzeitslocation.ch/var/media`, absolute, inside `var/` so it survives a deploy |
 | `MEDIA_MAX_PIXELS`, `MEDIA_MAX_PORTRAIT_RATIO` | `20000000` and `2` for a CMS photo. Raise the pixels only together with `memory_limit` in `public/.user.ini`. |
 | `GOOGLE_MAPS_EMBED_KEY` | Optional. Restrict the key to the Maps Embed API and the referrer `https://hochzeitslocation.ch/*`. Empty: only the link to Google Maps. After a change, run `sh bin/prod-import purge`, or cached pages keep the old map for up to a day. |
+| `GOOGLE_MAPS_JS_KEY` | Optional. The near-me map (#52). A separate key, restricted to the Maps JavaScript API and the referrers `https://hochzeitslocation.ch/*` and `https://www.hochzeitslocation.ch/*`. Empty: the page shows the list only and makes no request to Google. Billed after 10,000 map loads a month; there is no cap (owner, 2026-11-05). After a change, run `sh bin/prod-import purge`. |
+| `GOOGLE_MAPS_MAP_ID` | Required when `GOOGLE_MAPS_JS_KEY` is set: the raster JavaScript Map ID. `app:prod:check-env` refuses `DEMO_MAP_ID` then. After a change, purge as above. |
 | `SENTRY_DSN` | Optional. Empty: no error reports. |
 | `SYMFONY_TRUSTED_PROXIES` | Only if the probe shows a proxy in front of PHP. The exact address, never `REMOTE_ADDR`. |
 
@@ -307,6 +309,33 @@ member, and each enrols again at the next login:
 ```
 
 A forgotten password is `app:admin:reset-password <e-mail>`.
+
+### Near-me map key (#52)
+
+The page `/hochzeitslocation-in-meiner-naehe` shows its list without a key. The map needs a Maps
+JavaScript API key and a Map ID, both the owner's to create:
+
+1. In the Google Cloud console, open the project that holds the Embed key, and check under Billing
+   that a billing account is linked.
+2. Open the **Maps JavaScript API** product page and click **Enable**.
+3. Go to **Google Maps Platform → Keys & Credentials → Create credentials → API key**. Name it
+   "hochzeitslocation near-me (prod)".
+4. In "Select API restrictions", keep **only Maps JavaScript API**, then click **Create**.
+5. Open the key. Under application restrictions, choose **Websites** and add
+   `https://hochzeitslocation.ch/*` and `https://www.hochzeitslocation.ch/*`. Save.
+6. Optional, for the real-key CSP check: repeat steps 3–5 for a **development key**, name
+   "near-me (dev)", Maps JavaScript API only, websites `http://localhost:8080/*` and the lane ports
+   in use. Keep localhost off the production key. The dev key goes in a lane's git-ignored
+   `.env.local`, never in a committed file.
+7. Go to **Google Maps Platform → Map Management → Create map ID**. Name "near-me", map type
+   **JavaScript**, **Raster**. Copy the Map ID.
+8. Optional: **Billing → Budgets & alerts → Create budget**, scoped to this project, with the
+   50/90/100 % alerts to the billing admins. A budget alert only warns; it never stops the map.
+9. On the server, set `GOOGLE_MAPS_JS_KEY` and `GOOGLE_MAPS_MAP_ID` in `.env.local`, run
+   `sh bin/deploy check`, then `sh bin/prod-import purge` so cached pages pick up the map.
+
+There is no quota cap (owner, 2026-11-05): each view of the page with a key is one map load, free up
+to 10,000 a month and billed above that without a limit.
 
 ## Content import
 

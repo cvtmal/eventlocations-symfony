@@ -117,6 +117,11 @@ final class CheckProductionEnvCommand
             $problems[] = 'MEDIA_PUBLIC_DIR must be an absolute path or .env\'s default.';
         }
 
+        $mapId = $value('GOOGLE_MAPS_MAP_ID');
+        if ('' !== $value('GOOGLE_MAPS_JS_KEY') && ('' === $mapId || 'DEMO_MAP_ID' === $mapId)) {
+            $problems[] = 'GOOGLE_MAPS_MAP_ID must be the production Map ID when GOOGLE_MAPS_JS_KEY is set, not empty and not DEMO_MAP_ID.';
+        }
+
         return $problems;
     }
 

@@ -1,0 +1,16 @@
+{#
+    The near-me map (#52), rendered only with a GOOGLE_MAPS_JS_KEY. Include with `only`:
+      pins (the pin JSON of NearbyPins), maps_key, map_id, centre_point (?NearbyPoint), radius_km, count (venues on the map),
+      has_results (bool: renders the skip link to the list).
+    The box is visible from the first paint at its fixed CSS height, so starting the map shifts nothing (#52, CLS). Without
+    JS it holds the fallback line; near-me.js swaps the line for the canvas when it starts, and back when the script or
+    the key fails. Both have the same height.
+#}
+{%- set label = centre_point
+    ? 'nearby.map.label_near'|trans({count: count, formatted: count|swiss_number, km: radius_km}, 'search')
+    : 'nearby.map.label_all'|trans({count: count, formatted: count|swiss_number}, 'search') -%}
+{%- if has_results %}<a class="nearby-map__skip" href="#nearby-results" data-near-me-skip>{{ 'nearby.map.skip'|trans({}, 'search') }}</a>{% endif %}
+<div class="nearby-map" role="region" aria-label="{{ label }}" data-near-me-map data-maps-key="{{ maps_key }}" data-map-id="{{ map_id }}" data-near-me-pins="{{ pins }}"{% if centre_point %} data-centre-lat="{{ centre_point.lat }}" data-centre-lng="{{ centre_point.lng }}" data-radius="{{ radius_km * 1000 }}"{% endif %} data-label-you="{{ 'nearby.map.you'|trans({}, 'search') }}" data-label-group="{{ 'nearby.map.group'|trans({count: 2, formatted: '__count__'}, 'search') }}">
+    <div class="nearby-map__canvas" data-near-me-canvas hidden></div>
+    <p class="nearby-map__error" data-near-me-error>{{ 'nearby.map.error'|trans({}, 'search') }}</p>
+</div>

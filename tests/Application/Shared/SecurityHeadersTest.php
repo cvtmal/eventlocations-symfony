@@ -7,6 +7,7 @@ namespace App\Tests\Application\Shared;
 use App\Factory\VenueFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Shared\Security\ContentSecurityPolicy;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\ValueObject\VenueStatus;
@@ -19,6 +20,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Routing\RouterInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -31,6 +33,8 @@ final class SecurityHeadersTest extends WebTestCase
     use ImportsTownDataset;
 
     private const string POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-src https://www.google.com; frame-ancestors 'none'";
+    /** #52's route-scoped policy, a literal copy so a change to the constant shows up here. */
+    private const string MAPS_POLICY = "default-src 'none'; script-src 'self' 'unsafe-eval' blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.ggpht.com https://*.googleusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' data: blob: https://*.googleapis.com https://*.google.com https://*.gstatic.com; worker-src blob:; form-action 'self'; base-uri 'none'; frame-src https://www.google.com; frame-ancestors 'none'";
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -125,6 +129,34 @@ final class SecurityHeadersTest extends WebTestCase
             self::assertSame(self::POLICY, $this->client->getResponse()->headers->get('Content-Security-Policy'), $url);
             self::assertStringNotContainsString('nonce=', (string) $this->client->getResponse()->getContent(), $url);
         }
+    }
+
+    public function test_the_near_me_page_carries_the_maps_policy(): void
+    {
+        $this->client->request('GET', '/hochzeitslocation-in-meiner-naehe?ort=8712');
+        $response = $this->client->getResponse();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(self::MAPS_POLICY, $response->headers->get('Content-Security-Policy'));
+        self::assertSame('camera=(), microphone=(), geolocation=(self), payment=()', $response->headers->get('Permissions-Policy'));
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+        self::assertSame('strict-origin-when-cross-origin', $response->headers->get('Referrer-Policy'));
+        self::assertStringNotContainsString('nonce=', (string) $response->getContent());
+    }
+
+    public function test_only_the_near_me_route_opts_into_another_policy(): void
+    {
+        $router = self::getContainer()->get(RouterInterface::class);
+        self::assertInstanceOf(RouterInterface::class, $router);
+
+        $opted = [];
+        foreach ($router->getRouteCollection()->all() as $name => $route) {
+            if ($route->hasDefault(ContentSecurityPolicy::ROUTE_ATTRIBUTE)) {
+                $opted[] = $name;
+            }
+        }
+
+        self::assertSame(['nearby.de'], $opted);
     }
 
     public function test_hsts_only_over_https(): void

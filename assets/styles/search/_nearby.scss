@@ -1,0 +1,173 @@
+@use '../abstracts/breakpoints' as bp;
+
+// The near-me page (#52, search/nearby.html.twig): stacked at every width, controls → map → list, the DOM order.
+// Two classes, so it beats `.listing.container`, which it comes after in app.scss.
+.listing.nearby {
+    gap: var(--space-24);
+    padding-top: var(--space-16);
+
+    @include bp.up(md) {
+        padding-top: var(--space-40);
+    }
+
+    .listing__results {
+        gap: var(--space-24);
+    }
+}
+
+.nearby__title {
+    margin: 0;
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+}
+
+.nearby__intro {
+    max-width: 40rem;
+    margin: 0;
+}
+
+.nearby__search {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-16);
+
+    @include bp.up(sm) {
+        flex-direction: row;
+        align-items: flex-end;
+    }
+
+    .text-input {
+        inline-size: 100%;
+        max-inline-size: 24rem;
+    }
+}
+
+// near-me.js unhides it when the browser offers geolocation; `display` here would beat `hidden`.
+.nearby__geo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+.nearby__geo-error {
+    margin: 0;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+}
+
+.nearby__notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-12);
+    margin: 0;
+    padding: var(--space-16) var(--space-24);
+    border-radius: var(--radius-image);
+    background: var(--c-surface-raised);
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex: none;
+        color: var(--c-accent-strong);
+    }
+}
+
+.nearby__results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.nearby__heading {
+    margin: 0;
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+}
+
+// Visible from the first paint at a fixed height (the canvas and the fallback line share it), so the map shifts nothing.
+.nearby-map {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-image);
+    background: var(--c-surface-alt);
+}
+
+.nearby-map__canvas,
+.nearby-map__error {
+    block-size: 22rem;
+
+    @include bp.up(md) {
+        block-size: 30rem;
+    }
+}
+
+.nearby-map__canvas[hidden] {
+    display: none;
+}
+
+.nearby-map__error {
+    display: grid;
+    place-content: center;
+    margin: 0;
+    padding: var(--space-24);
+    text-align: center;
+    color: var(--c-ink);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+// Visually hidden until focused, then in flow above the map.
+.nearby-map__skip {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+
+    &:focus-visible {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip-path: none;
+        align-self: flex-start;
+        font-weight: var(--fw-semibold);
+    }
+
+}
+
+// The visitor's position on the map.
+.nearby-map__you {
+    width: 16px;
+    height: 16px;
+    border: 3px solid var(--c-surface);
+    border-radius: 50%;
+    background: var(--c-accent-strong);
+    box-shadow: var(--shadow-float);
+}
+
+// Google's info window: the venues of one pin.
+.nearby-map__info {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    li + li {
+        margin-top: var(--space-8);
+    }
+}

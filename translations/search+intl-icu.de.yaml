@@ -327,6 +327,38 @@ home:
                 text: 'Scheunen, Lofts, Wintergärten, Berghütten und Chalets.'
     regions:
         heading: 'Hochzeitslocations nach Region'
+# #52: the near-me page (In der Nähe).
+nearby:
+    nav: 'In der Nähe'
+    title: 'Hochzeitslocations in Ihrer Nähe'
+    meta_description: 'Finden Sie Hochzeitslocations im Umkreis von {km} km um Ihren Standort oder eine PLZ, auf der Karte und in der Liste.'
+    intro: 'Geben Sie Ihre PLZ oder Ihren Ort ein oder verwenden Sie Ihren Standort. Wir zeigen Ihnen alle Locations im Umkreis von {km} km.'
+    form:
+        label: 'PLZ oder Ort'
+        submit: Suchen
+    geo:
+        button: 'Meinen Standort verwenden'
+        pending: 'Standort wird ermittelt …'
+        error: 'Standort nicht verfügbar. Bitte geben Sie eine PLZ oder einen Ort ein.'
+    notice:
+        not_found: 'Diesen Ort haben wir nicht gefunden. Bitte prüfen Sie die PLZ oder den Ort.'
+        position: 'Für diesen Standort können wir keine Locations anzeigen. Bitte geben Sie eine PLZ oder einen Ort ein.'
+    results:
+        heading_place: '{count, plural, one {{formatted} Location} other {{formatted} Locations}} im Umkreis von {km} km von {place}'
+        heading_position: '{count, plural, one {{formatted} Location} other {{formatted} Locations}} im Umkreis von {km} km um Ihren Standort'
+        label: 'Locations in der Nähe'
+    distance: '{km} km'
+    distance_label: Entfernung
+    empty:
+        title: 'Keine Location im Umkreis von {km} km.'
+        link: 'Locations im Umkreis von {km} km ansehen'
+    map:
+        label_all: '{count, plural, one {Karte: {formatted} Location in der Schweiz} other {Karte: {formatted} Locations in der Schweiz}}'
+        label_near: '{count, plural, one {Karte: {formatted} Location im Umkreis von {km} km} other {Karte: {formatted} Locations im Umkreis von {km} km}}'
+        skip: 'Karte überspringen'
+        you: 'Ihr Standort'
+        group: '{count, plural, other {{formatted} Locations}}'
+        error: 'Die Karte kann gerade nicht angezeigt werden.'
 # #26: labels of the Search module's text blocks in the back office's text-block list.
 blocks:
     home_text:

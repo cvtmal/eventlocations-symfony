@@ -14,6 +14,7 @@ use Symfony\Component\Uid\Uuid;
 final class TownLocator
 {
     private const MAX_KM = 200.0;
+    private const NEAREST_KM = 20.0;
 
     public function __construct(
         private readonly Connection $connection,
@@ -45,14 +46,41 @@ final class TownLocator
             ['id' => $townId, 'metres' => $km * 1000],
         );
 
-        return array_map(static function (array $row): TownDistance {
-            \assert(\is_string($row['id']));
-            \assert(\is_string($row['name']));
-            \assert(\is_string($row['canton_code']));
-            \assert(\is_string($row['zip']));
-            \assert(is_numeric($row['distance_km']));
+        return array_map(self::townDistance(...), $rows);
+    }
 
-            return new TownDistance($row['id'], $row['name'], $row['canton_code'], $row['zip'], (float) $row['distance_km']);
-        }, $rows);
+    /**
+     * The nearest town within 20 km of a point, for near-me's 50 km link (#52); earth_box lets
+     * idx_towns_earth prefilter.
+     */
+    public function nearest(float $lat, float $lng): ?TownDistance
+    {
+        $row = $this->connection->fetchAssociative(
+            <<<'SQL'
+                WITH p AS MATERIALIZED (SELECT ll_to_earth(:lat, :lng) AS e)
+                SELECT t.id, t.name, t.canton_code, t.zip, earth_distance(p.e, ll_to_earth(t.lat, t.lng)) / 1000 AS distance_km
+                FROM towns t CROSS JOIN p
+                WHERE earth_box(p.e, :metres) @> ll_to_earth(t.lat, t.lng)
+                ORDER BY distance_km, t.name
+                LIMIT 1
+                SQL,
+            ['lat' => $lat, 'lng' => $lng, 'metres' => self::NEAREST_KM * 1000],
+        );
+
+        return false === $row ? null : self::townDistance($row);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private static function townDistance(array $row): TownDistance
+    {
+        \assert(\is_string($row['id']));
+        \assert(\is_string($row['name']));
+        \assert(\is_string($row['canton_code']));
+        \assert(\is_string($row['zip']));
+        \assert(is_numeric($row['distance_km']));
+
+        return new TownDistance($row['id'], $row['name'], $row['canton_code'], $row['zip'], (float) $row['distance_km']);
     }
 }

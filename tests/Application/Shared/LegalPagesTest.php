@@ -173,6 +173,19 @@ final class LegalPagesTest extends WebTestCase
         self::assertStringContainsString('«'.$open.'»', $text);
     }
 
+    public function test_the_near_me_page_is_named_in_the_google_maps_section(): void
+    {
+        $text = $this->page('/datenschutz')->filter('main')->text();
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+
+        // #52 (Q6): the sentence quotes the nav link and the button, so it must follow them.
+        self::assertStringContainsString('«'.$translator->trans('nearby.nav', [], 'search', 'de').'»', $text);
+        self::assertStringContainsString('«'.$translator->trans('nearby.geo.button', [], 'search', 'de').'»', $text);
+        self::assertStringContainsString('sofort beim Aufruf', $text);
+        self::assertStringContainsString('Server-Protokollen', $text);
+    }
+
     private function page(string $path): Crawler
     {
         $crawler = $this->client->request('GET', $path);

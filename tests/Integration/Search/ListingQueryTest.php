@@ -623,6 +623,18 @@ final class ListingQueryTest extends KernelTestCase
         self::assertCount(2, $cards[0]->photos);
     }
 
+    public function test_cards_by_numbers_take_a_photo_limit(): void
+    {
+        $venue = $this->venue('Mit drei Bildern');
+        foreach ([1, 2, 3] as $position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
+
+        $cards = $this->query()->cardsByNumbers([$venue->number()], 'de', 1);
+
+        self::assertCount(1, $cards[0]->photos);
+    }
+
     /**
      * @param list<string> $expectedNames
      */

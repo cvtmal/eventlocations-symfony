@@ -31,3 +31,5 @@ Built in #10 (`filter-region`):
 - **Towns:** the 13 Liechtenstein rows (ZIP 9485–9498, canton `LI`, BFS number = Gemeinde number 7001–7011, population 0, "Mauren FL" → "Mauren") sit in `data/geo/towns.csv` in zip order, derived by `data/geo/SOURCE.md`'s rules from the same LV95 file as the Swiss rows: 4,070 rows, 3,972 towns, 4,070 ZIPs. The deploy's `app:geo:import-towns` loads them; the migration does not.
 - **Place search:** "vaduz" and "9490" find Vaduz, and "liech" suggests the `li` region; among region suggestions `li` comes last, as `PlaceLookup` orders by BFS number (`PlaceLookupTest`).
 - **Rollback:** `down()` deletes the Liechtenstein towns and the `li` row, so it fails on the FK while a venue is in Liechtenstein and never deletes one. After a rollback the code must roll back too, or the next `app:geo:import-towns` fails on the missing `li` row.
+
+**Built in #52 (`near-me-map`).** `TownLocator::nearest(float $lat, float $lng): ?TownDistance` gives the nearest town within 20 km of a point (`earth_box` over `idx_towns_earth`, then distance and name), `null` beyond; near-me uses it for its 50 km link after a position search. Tests in `TownLocatorTest`.

@@ -81,6 +81,8 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'MEDIA_ROOT missing' => ['MEDIA_ROOT', ['MEDIA_ROOT' => null], self::DATABASE_PASSWORD];
         yield 'MEDIA_ROOT .env default' => ['MEDIA_ROOT', ['MEDIA_ROOT' => '%kernel.project_dir%/var/media'], 'kernel.project_dir'];
         yield 'MEDIA_PUBLIC_DIR relative' => ['MEDIA_PUBLIC_DIR', ['MEDIA_PUBLIC_DIR' => 'public/media-marker'], 'public/media-marker'];
+        yield 'GOOGLE_MAPS_MAP_ID demo with a key' => ['GOOGLE_MAPS_MAP_ID', ['GOOGLE_MAPS_JS_KEY' => 'maps-key-marker', 'GOOGLE_MAPS_MAP_ID' => 'DEMO_MAP_ID'], 'maps-key-marker'];
+        yield 'GOOGLE_MAPS_MAP_ID empty with a key' => ['GOOGLE_MAPS_MAP_ID', ['GOOGLE_MAPS_JS_KEY' => 'maps-key-marker', 'GOOGLE_MAPS_MAP_ID' => ''], 'maps-key-marker'];
     }
 
     public function test_the_database_url_is_named_only_once_for_both_dead_options(): void
@@ -129,6 +131,12 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'optional SENTRY_DSN' => [['SENTRY_DSN' => 'https://key@o1.ingest.de.sentry.io/1']];
         yield 'optional SYMFONY_TRUSTED_PROXIES' => [['SYMFONY_TRUSTED_PROXIES' => '127.0.0.1']];
         yield 'a clean url with more options' => [['DATABASE_URL' => self::DATABASE_URL.'&application_name=site']];
+    }
+
+    public function test_a_key_with_a_real_map_id_and_no_key_at_all_are_fine(): void
+    {
+        self::assertSame([], CheckProductionEnvCommand::problems(self::env(['GOOGLE_MAPS_JS_KEY' => 'k', 'GOOGLE_MAPS_MAP_ID' => 'abc123']), self::COMMITTED_KEY));
+        self::assertSame([], CheckProductionEnvCommand::problems(self::env(['GOOGLE_MAPS_JS_KEY' => '', 'GOOGLE_MAPS_MAP_ID' => 'DEMO_MAP_ID']), self::COMMITTED_KEY));
     }
 
     public function test_the_media_public_dir_default_is_the_literal_in_env_file(): void

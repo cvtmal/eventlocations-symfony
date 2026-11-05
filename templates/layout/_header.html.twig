@@ -7,6 +7,7 @@
         <nav class="site-header__actions" aria-label="{{ 'layout.header.menu_label'|trans }}">
             <a class="site-header__link" href="{{ path('listing') }}"{% if on_listing %} aria-current="page"{% endif %}>{{ 'layout.header.locations'|trans }}</a>
             <a class="site-header__link" href="{{ path('home') ~ '#regionen' }}">{{ 'layout.header.regions'|trans }}</a>
+            <a class="site-header__link" href="{{ path('nearby') }}"{% if current_route == 'nearby' %} aria-current="page"{% endif %}>{{ 'nearby.nav'|trans({}, 'search') }}</a>
             {# merkliste.js fills and unhides the badge; these strings stand in for 48 repeated attributes on the cards. data-sync-token is the constant of the stateless check, so cached HTML stays identical #}
             <a class="btn btn--icon site-header__favorites" href="{{ path('merkliste') }}" data-merkliste-link data-sync-token="{{ csrf_token('submit') }}" data-toast-added="{{ 'toast.added'|trans({name: '__name__'}, 'favorites') }}" data-toast-removed="{{ 'toast.removed'|trans({name: '__name__'}, 'favorites') }}" data-toast-full="{{ 'toast.full'|trans({}, 'favorites') }}" data-toast-link="{{ 'toast.link'|trans({}, 'favorites') }}">{{ icon('heart') }}<span class="visually-hidden">{{ 'layout.header.favorites'|trans }} </span><span class="count-badge" data-merkliste-count hidden></span></a>
             {% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, href: path('portal_register')} only %}

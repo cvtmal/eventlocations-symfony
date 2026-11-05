@@ -1,10 +1,14 @@
 {#
     The listing card's facts line: guests and place. The similar card writes its own line of text and keeps only the class.
     Include with `only`: capacity_min (int|null), capacity_max (int), place (a VenuePlace). The pin renders only when the place is known.
+    distance (string|null, #52): an already-translated distance ("4 km"), a third item when given.
 #}
 <ul class="card-facts">
     <li class="card-facts__item">{{ icon('user') }}{{ swiss_range(capacity_min ?? capacity_max, capacity_max) }}</li>
     {%- if place.isKnown() %}
     <li class="card-facts__item">{{ icon('map-pin') }}{{ place|trans }}</li>
+    {%- endif %}
+    {%- if distance|default(null) %}
+    <li class="card-facts__item">{{ icon('route') }}<span class="visually-hidden">{{ 'nearby.distance_label'|trans({}, 'search') }} </span>{{ distance }}</li>
     {%- endif %}
 </ul>
