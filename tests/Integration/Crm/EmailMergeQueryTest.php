@@ -19,7 +19,7 @@ final class EmailMergeQueryTest extends KernelTestCase
     use Factories;
     use RollsBackDatabase;
 
-    private const string ALL = '{contact.first_name}|{company.name}|{venue.name}';
+    private const string ALL = '{contact.first_name}|{location.name}|{venue.name}';
 
     public function test_a_company_without_a_venue_leaves_the_venue_empty(): void
     {

@@ -34,7 +34,7 @@ final class CompanyFromVenueController extends AbstractController
 {
     public const string TOKEN = 'submit';
 
-    #[Route('/admin/crm/locations/{venueId}/firma', name: 'admin_crm_company_from_venue', requirements: ['venueId' => Requirement::UUID], methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
+    #[Route('/admin/crm/eintraege/{venueId}/location', name: 'admin_crm_company_from_venue', requirements: ['venueId' => Requirement::UUID], methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(string $venueId, Request $request, VenueContactFactsQuery $venues, VenueCompanyQuery $companies, MessageBusInterface $commandBus): Response
     {
         $venue = $venues->find($venueId) ?? throw $this->createNotFoundException();

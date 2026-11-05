@@ -85,7 +85,7 @@ final class AccessRequestsNavigationTest extends WebTestCase
             ['Eins Paar', 'Zwei Paar', 'Drei Paar', 'Vier Paar', 'Fünf Paar'],
             $widget->filter('tbody strong')->each(static fn (Crawler $name): string => $name->text()),
         );
-        self::assertSame(['Name', 'Location', 'Angefragt am'], $widget->filter('thead th')->each(static fn (Crawler $head): string => $head->text()));
+        self::assertSame(['Name', 'Eintrag', 'Angefragt am'], $widget->filter('thead th')->each(static fn (Crawler $head): string => $head->text()));
         $cells = $widget->filter('tbody tr')->first()->filter('td');
         self::assertSame('Erste Location', $cells->eq(1)->text());
         self::assertSame('02.10.2026', $cells->eq(2)->text());

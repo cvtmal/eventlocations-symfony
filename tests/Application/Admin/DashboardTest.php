@@ -65,7 +65,7 @@ final class DashboardTest extends WebTestCase
         $new = $crawler->filter('.topbar__actions a.btn--primary');
         self::assertSame('Neu', $new->text());
         self::assertSame('/admin/locations/neu', $new->attr('href'));
-        self::assertSame(['Statistik, letzte 7 Tage', 'Neue Anfragen', 'Zugriffsanfragen', 'Meine Aufgaben', 'Überfällig', 'Verlängerungen', 'Unvollständige Locations', 'Änderungen von Locations', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
+        self::assertSame(['Statistik, letzte 7 Tage', 'Neue Anfragen', 'Zugriffsanfragen', 'Meine Aufgaben', 'Überfällig', 'Verlängerungen', 'Unvollständige Einträge', 'Änderungen an Einträgen', 'Zuletzt bearbeitet'], $crawler->filter('.widget h2')->each(static fn (Crawler $heading): string => $heading->text()));
 
         $incomplete = $crawler->filter('.widget')->eq(6);
         self::assertSame('/admin/locations/'.$hut->number(), $incomplete->filter('.venue-widget__name')->attr('href'));
@@ -106,7 +106,7 @@ final class DashboardTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Besuche 0 Seitenaufrufe 0 Kontaktklicks 0 Anfragen 0 Noch keine Daten', 'Noch keine Anfragen.', 'Keine offenen Zugriffsanfragen.', 'Keine offenen Aufgaben.', 'Nichts ist überfällig.', 'In den nächsten 60 Tagen endet kein Vertrag.', 'Alle Locations sind vollständig.', 'Noch keine Änderungen.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
+        self::assertSame(['Besuche 0 Seitenaufrufe 0 Kontaktklicks 0 Anfragen 0 Noch keine Daten', 'Noch keine Anfragen.', 'Keine offenen Zugriffsanfragen.', 'Keine offenen Aufgaben.', 'Nichts ist überfällig.', 'In den nächsten 60 Tagen endet kein Vertrag.', 'Alle Einträge sind vollständig.', 'Noch keine Änderungen.', 'Noch nichts im Backoffice bearbeitet.'], $crawler->filter('.widget .card__body')->each(static fn (Crawler $text): string => $text->text()));
     }
 
     public function test_a_manager_s_change_shows_and_an_admin_follows_it_to_the_audit_log(): void
@@ -174,6 +174,6 @@ final class DashboardTest extends WebTestCase
 
     private function changesWidget(Crawler $dashboard): Crawler
     {
-        return $dashboard->filter('.widget')->reduce(static fn (Crawler $widget): bool => 'Änderungen von Locations' === $widget->filter('h2')->text());
+        return $dashboard->filter('.widget')->reduce(static fn (Crawler $widget): bool => 'Änderungen an Einträgen' === $widget->filter('h2')->text());
     }
 }

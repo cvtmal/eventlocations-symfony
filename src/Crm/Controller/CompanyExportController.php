@@ -33,7 +33,7 @@ final class CompanyExportController extends AbstractController
 {
     private const string ZONE = 'Europe/Zurich';
 
-    #[Route('/admin/crm/firmen/export', name: 'admin_crm_companies_export', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
+    #[Route('/admin/crm/locations/export', name: 'admin_crm_companies_export', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(
         Request $request,
         CompanyListQuery $companies,
@@ -55,7 +55,7 @@ final class CompanyExportController extends AbstractController
         $zone = new \DateTimeZone(self::ZONE);
 
         return CsvStream::response(
-            'firmen-'.$clock->now()->setTimezone($zone)->format('Y-m-d').'.csv',
+            'locations-'.$clock->now()->setTimezone($zone)->format('Y-m-d').'.csv',
             [
                 $translator->trans('company.property.name', [], 'crm'),
                 $translator->trans('company.property.legal_name', [], 'crm'),

@@ -70,7 +70,7 @@ editor:
         confirm: Offline nehmen
         failed: Das hat nicht geklappt. Bitte laden Sie die Seite neu und versuchen Sie es noch einmal.
     changes:
-        title: Änderungen von Locations
+        title: Änderungen an Einträgen
         empty: Noch keine Änderungen.
         all: Alle im Audit-Log ansehen
 profile:
@@ -198,8 +198,8 @@ onboarding:
         resubmit: Wieder veröffentlichen
         in_review: Wird geprüft
     queue:
-        tab: Neue Locations
-        empty: Keine neuen Locations.
+        tab: Neue Einträge
+        empty: Keine neuen Einträge.
         accept: Annehmen
         reject: Ablehnen
         spam: Spam löschen
@@ -207,18 +207,18 @@ onboarding:
         reason_title: "{venue} ablehnen"
         reason_submit: Ablehnen
         column:
-            location: Location
+            location: Eintrag
             place: Ort
             manager: Eingereicht von
             submitted: Eingereicht am
         field:
             reason: Grund (geht per E-Mail an den Manager)
         flash:
-            accepted: Location angenommen. Sie ist jetzt online.
-            accepted_mail_failed: "Achtung: Die Location ist online, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
-            rejected: Location abgelehnt.
-            rejected_mail_failed: "Achtung: Die Location ist abgelehnt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
-            missing: "Die Location ist noch nicht vollständig. Es fehlt: {missing}"
+            accepted: Eintrag angenommen. Er ist jetzt online.
+            accepted_mail_failed: "Achtung: Der Eintrag ist online, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
+            rejected: Eintrag abgelehnt.
+            rejected_mail_failed: "Achtung: Der Eintrag ist abgelehnt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
+            missing: "Der Eintrag ist noch nicht vollständig. Es fehlt: {missing}"
     error:
         too_many: Sie haben bereits {limit} unfertige Locations. Schliessen Sie eine davon ab oder schreiben Sie uns.
     mail:
@@ -313,7 +313,7 @@ review:
         name: Name
         email: E-Mail
         phone: Telefon
-        location: Location
+        location: Eintrag
         date: Angefragt am
         actions: Aktionen
     action:
@@ -325,10 +325,10 @@ review:
         deactivated: Konto deaktiviert
     empty:
         title: Keine offenen Zugriffsanfragen
-        text: Fragt jemand Zugriff auf eine Location an, erscheint die Anfrage hier.
+        text: Fragt jemand Zugriff auf einen Eintrag an, erscheint die Anfrage hier.
     panel:
         title: Location-Manager
-        empty: Diese Location hat noch keine Manager.
+        empty: Dieser Eintrag hat noch keine Manager.
         remove: Entfernen
         remove_for: '{name} als Manager entfernen'
         add: Hinzufügen

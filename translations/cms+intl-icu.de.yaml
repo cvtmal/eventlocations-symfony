@@ -2,24 +2,24 @@
 
 venue:
     error:
-        slug_taken: 'Diesen Slug hat schon eine andere Location, jetzt oder früher.'
+        slug_taken: 'Diesen Slug hat schon ein anderer Eintrag, jetzt oder früher.'
         slug_without_letters: 'Der Slug braucht mindestens einen Buchstaben oder eine Ziffer.'
         unknown_town: 'Diesen Ort kennen wir nicht. Bitte PLZ und Ort prüfen, zum Beispiel «8706 Meilen».'
         ambiguous_town: 'PLZ und Ort passen zu mehreren Orten. Bitte den Kanton wählen.'
         town_centre_needs_town: 'Für die Ortsmitte braucht es zuerst einen Ort unter «PLZ / Ort».'
         coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
         not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
-        still_published: 'Eine veröffentlichte Location kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
+        still_published: 'Ein veröffentlichter Eintrag kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
         too_many_photos: 'Eine Location zeigt höchstens 30 Fotos. Entfernen Sie zuerst ein Foto.'
 
 nav:
     section: CMS
-    locations: Locations
+    locations: Einträge
 
 list:
-    title: Locations
-    new: Location erfassen
-    table_label: Locations
+    title: Einträge
+    new: Eintrag erfassen
+    table_label: Einträge
     tabs:
         label: Status
         all: Alle
@@ -41,7 +41,7 @@ list:
         status: Status
         submit: Filtern
         reset: Filter löschen
-        invalid: Ein Filter war ungültig. Die Liste zeigt alle Locations.
+        invalid: Ein Filter war ungültig. Die Liste zeigt alle Einträge.
     chip:
         search: 'Suche: «{q}»'
         tier: 'Tier: {label}'
@@ -49,7 +49,7 @@ list:
         address_missing: Ohne Adresse
         remove: 'Filter «{label}» entfernen'
     column:
-        location: Location
+        location: Eintrag
         tier: Tier
         guests: Gäste
         photos: Fotos
@@ -69,20 +69,20 @@ list:
         previous: Zurück
         next: Weiter
     empty:
-        title: Keine Locations
-        text: Keine Location passt zu diesen Filtern.
+        title: Keine Einträge
+        text: Kein Eintrag passt zu diesen Filtern.
 
 create:
-    title: Location erfassen
-    card: Neue Location
-    intro: Die Location startet unpubliziert. Alles Weitere folgt im Editor.
+    title: Eintrag erfassen
+    card: Neuer Eintrag
+    intro: Der Eintrag startet unpubliziert. Alles Weitere folgt im Editor.
     submit: Erfassen
     cancel: Abbrechen
     flash: '«{name}» ist erfasst. Sie bleibt unpubliziert, bis Kurztext, Haupt-Gebäudeart und ein Foto da sind.'
 
 editor:
     title: '{name} bearbeiten'
-    tabs_label: Bereiche der Location
+    tabs_label: Bereiche des Eintrags
     overview: Übersicht
     locales_label: Sprache
     locale:
@@ -220,7 +220,7 @@ google:
         hidden: Google-Bewertung ausblenden
     help:
         place_id: 'Die ID des Eintrags auf Google Maps, meist beginnend mit «ChIJ». Leer: keine Google-Bewertung auf der Website.'
-        hidden: Sterne und Anzahl Bewertungen erscheinen dann nicht auf der Seite der Location.
+        hidden: Sterne und Anzahl Bewertungen erscheinen dann nicht auf der Seite des Eintrags.
     check: Auf Google Maps prüfen
     no_id_yet: Den Schalter zum Ausblenden gibt es, sobald eine Place ID gespeichert ist.
 
@@ -243,7 +243,7 @@ publish:
 
 delete:
     action: Löschen
-    title: Location löschen?
+    title: Eintrag löschen?
     text: '«{name}» wird mit allen Fotos, Räumen und Dokumenten gelöscht. Das lässt sich nicht rückgängig machen.'
     confirm: Endgültig löschen
     cancel: Abbrechen
@@ -269,8 +269,8 @@ history:
         system: Das System
         portal_user: Gelöschtes Konto
     command:
-        fallback: die Location geändert
-        RecordVenueCreated: die Location erfasst
+        fallback: den Eintrag geändert
+        RecordVenueCreated: den Eintrag erfasst
         ChangeVenueBasics: die Stammdaten geändert
         ChangeVenueTexts: die Texte geändert
         RelocateVenue: Adresse und Lage geändert
@@ -280,8 +280,8 @@ history:
         ChangeVenueContact: den Kontakt geändert
         AnswerVenueFaq: die häufigen Fragen beantwortet
         ChangeVenueTier: den Tier geändert
-        PublishVenue: die Location publiziert
-        UnpublishVenue: die Location offline genommen
+        PublishVenue: den Eintrag publiziert
+        UnpublishVenue: den Eintrag offline genommen
         AddVenuePhoto: ein Foto hochgeladen
         ReorderVenuePhotos: die Fotos neu angeordnet
         DescribeVenuePhoto: den Alt-Text eines Fotos geändert
@@ -304,13 +304,13 @@ history:
         RemoveVenueReview: eine Bewertung gelöscht
 
 search:
-    label: Locations
+    label: Einträge
 
 dashboard:
     new: Neu
     incomplete:
-        title: Unvollständige Locations
-        empty: Alle Locations sind vollständig.
+        title: Unvollständige Einträge
+        empty: Alle Einträge sind vollständig.
         all: '{count, plural, one {# unvollständige ansehen} other {Alle # unvollständigen ansehen}}'
         missing:
             photo: Keine Fotos
@@ -510,7 +510,7 @@ landing:
         column:
             page: Seite
             type: Typ
-            venues: Locations
+            venues: Einträge
             threshold: Schwelle
             texts: Texte
             edited: Zuletzt geändert
@@ -520,7 +520,7 @@ landing:
             next: Weiter
         empty:
             title: Keine Landingpages
-            text: Eine Seite erscheint hier, sobald eine publizierte Location zu ihr gehört.
+            text: Eine Seite erscheint hier, sobald ein publizierter Eintrag zu ihr gehört.
             no_match: Keine Seite passt zu diesem Filter.
     type:
         canton: Kanton
@@ -534,7 +534,7 @@ landing:
         default: Standard
     editor:
         title: '{name} bearbeiten'
-        venues: '{count, plural, one {# Location} other {# Locations}}'
+        venues: '{count, plural, one {# Eintrag} other {# Einträge}}'
         view: Seite ansehen
         card: Texte
         field:
@@ -542,7 +542,7 @@ landing:
             title: SEO-Titel
             description: Meta-Beschreibung
         help:
-            intro: 'Markdown: **fett**, *kursiv*, Links und Listen, keine Bilder. Eine eigene Einleitung ist fester Text, die Anzahl Locations zählt darin nicht mit. Leer lassen für den Standardtext.'
+            intro: 'Markdown: **fett**, *kursiv*, Links und Listen, keine Bilder. Eine eigene Einleitung ist fester Text, die Anzahl Einträge zählt darin nicht mit. Leer lassen für den Standardtext.'
             title: Der ganze Titel im Browser-Tab und in der Google-Suche. Gilt für die erste Seite; leer lassen für den Standardtitel.
             description: Der Text unter dem Titel in der Google-Suche. Gilt für die erste Seite; leer lassen für die Standardbeschreibung.
         preview:
@@ -624,11 +624,11 @@ stats:
         merkliste: Merkliste
         other: Andere Seiten
     venues:
-        title: Locations
+        title: Einträge
         number: 'Nr. {number}'
-        empty: Im Zeitraum noch keine Zahlen zu Locations.
+        empty: Im Zeitraum noch keine Zahlen zu Einträgen.
         column:
-            venue: Location
+            venue: Eintrag
             impressions: Impressionen
     media_kit:
         link: Mediakit

@@ -69,7 +69,7 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertStringContainsString('Petra Keller', $row->text());
         self::assertSame('Vorschau', $row->filter('a[href="/admin/locations/'.$venue->number().'/vorschau"]')->text());
         $tab = $crawler->filter('.tabs .tab--active');
-        self::assertStringContainsString('Neue Locations', $tab->text());
+        self::assertStringContainsString('Neue Einträge', $tab->text());
         self::assertSame('1', trim($tab->filter('.pill')->text()));
     }
 
@@ -81,7 +81,7 @@ final class SubmissionReviewTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/pruefung');
 
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Neue Locations', $crawler->filter('.tabs .tab--active')->text());
+        self::assertStringContainsString('Neue Einträge', $crawler->filter('.tabs .tab--active')->text());
         self::assertCount(1, $crawler->filter('#review-submissions tbody tr'));
     }
 
@@ -117,8 +117,8 @@ final class SubmissionReviewTest extends WebTestCase
 
         $crawler = $this->client->request('GET', self::QUEUE);
 
-        self::assertStringContainsString('Neue Locations', $crawler->filter('.tabs .tab--active')->text());
-        self::assertSame('Keine neuen Locations.', $crawler->filter('.empty__title')->text());
+        self::assertStringContainsString('Neue Einträge', $crawler->filter('.tabs .tab--active')->text());
+        self::assertSame('Keine neuen Einträge.', $crawler->filter('.empty__title')->text());
     }
 
     public function test_an_empty_tab_says_so(): void
@@ -127,7 +127,7 @@ final class SubmissionReviewTest extends WebTestCase
 
         $crawler = $this->client->request('GET', self::QUEUE);
 
-        self::assertSame('Keine neuen Locations.', $crawler->filter('.empty__title')->text());
+        self::assertSame('Keine neuen Einträge.', $crawler->filter('.empty__title')->text());
     }
 
     public function test_the_badge_counts_submissions_too(): void
@@ -178,7 +178,7 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertSame([['actor_id' => $staff['user']->id(), 'subject_type' => 'portal_submission', 'subject_id' => (string) $venue->number()]], $audit);
 
         $crawler = $this->client->followRedirect();
-        self::assertStringContainsString('Location angenommen.', $crawler->filter('.toast--success')->text());
+        self::assertStringContainsString('Eintrag angenommen.', $crawler->filter('.toast--success')->text());
         self::assertCount(0, $crawler->filter('#review-submissions form'));
     }
 
@@ -248,7 +248,7 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertSame('published', $this->venueStatus($venue));
         self::assertSame('accepted', $this->submissionStatus($venue));
         self::assertSame(0, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
-        self::assertStringContainsString('Location angenommen.', $this->client->followRedirect()->filter('.toast--success')->text());
+        self::assertStringContainsString('Eintrag angenommen.', $this->client->followRedirect()->filter('.toast--success')->text());
     }
 
     /**
@@ -381,7 +381,7 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertEmailHtmlBodyContains($mail, '/konto/locations/'.$venue->number().'/einrichten/pruefen');
 
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM admin_audit_log WHERE command = ?', [RejectSubmission::class]));
-        self::assertStringContainsString('Location abgelehnt.', $this->client->followRedirect()->filter('.toast--success')->text());
+        self::assertStringContainsString('Eintrag abgelehnt.', $this->client->followRedirect()->filter('.toast--success')->text());
 
         $this->logInAsManager($manager);
         $this->client->request('GET', '/konto/locations/'.$venue->number().'/einrichten/pruefen');

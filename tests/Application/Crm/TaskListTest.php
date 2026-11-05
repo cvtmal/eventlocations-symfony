@@ -155,8 +155,8 @@ final class TaskListTest extends WebTestCase
 
         $details = $this->client->request('GET', self::LIST)->filter('#task-list .crm-list__detail');
 
-        self::assertSame('Firma · Seeblick Events GmbH', $details->eq(0)->text());
-        self::assertSame('/admin/crm/firmen/'.$company->id(), $details->eq(0)->filter('a')->attr('href'));
+        self::assertSame('Location · Seeblick Events GmbH', $details->eq(0)->text());
+        self::assertSame('/admin/crm/locations/'.$company->id(), $details->eq(0)->filter('a')->attr('href'));
         self::assertSame('Kontakt · Laura Meier', $details->eq(1)->text());
         self::assertSame('/admin/crm/kontakte/'.$contact->id(), $details->eq(1)->filter('a')->attr('href'));
         self::assertSame('Deal · Seehotel Bellerive', $details->eq(2)->text());

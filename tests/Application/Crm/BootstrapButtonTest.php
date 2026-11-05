@@ -22,28 +22,28 @@ final class BootstrapButtonTest extends WebTestCase
     use AdminSession;
     use Factories;
 
-    private const string FORM = 'form[action="/admin/crm/firmen/bootstrap"]';
+    private const string FORM = 'form[action="/admin/crm/locations/bootstrap"]';
 
     public function test_a_post_handles_one_batch_and_a_repeat_finishes(): void
     {
         $this->logInAs(AdminRole::Editor);
         VenueFactory::new()->withoutLocation(null)->many(BootstrapController::BATCH + 1)->create();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen');
-        self::assertSelectorTextContains(self::FORM.' button', 'Firmen aus 101 Locations anlegen');
+        $crawler = $this->client->request('GET', '/admin/crm/locations');
+        self::assertSelectorTextContains(self::FORM.' button', 'Locations aus 101 Einträgen anlegen');
 
         $crawler = $this->press($crawler);
 
         self::assertSame(100, $this->companies());
-        self::assertSelectorTextContains('.toast', '100 Firmen und 0 Kontakte angelegt.');
+        self::assertSelectorTextContains('.toast', '100 Locations und 0 Kontakte angelegt.');
         self::assertSelectorTextContains('.toast', 'Ohne Kontaktperson: 100.');
         self::assertSelectorTextContains('.toast', 'Noch offen: 1.');
-        self::assertSelectorTextContains(self::FORM.' button', 'Firma aus 1 Location anlegen');
+        self::assertSelectorTextContains(self::FORM.' button', 'Location aus 1 Eintrag anlegen');
 
         $this->press($crawler);
 
         self::assertSame(101, $this->companies());
-        self::assertSelectorTextContains('.toast', '1 Firma und 0 Kontakte angelegt.');
+        self::assertSelectorTextContains('.toast', '1 Location und 0 Kontakte angelegt.');
         self::assertSelectorTextContains('.toast', 'Noch offen: 0.');
         self::assertSelectorNotExists(self::FORM);
     }
@@ -54,7 +54,7 @@ final class BootstrapButtonTest extends WebTestCase
         $venue = VenueFactory::new()->withoutLocation(null)->create();
         CompanyFactory::new()->withVenues($venue)->create();
 
-        $this->client->request('GET', '/admin/crm/firmen');
+        $this->client->request('GET', '/admin/crm/locations');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists(self::FORM);
@@ -65,9 +65,9 @@ final class BootstrapButtonTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         VenueFactory::new()->withoutLocation(null)->create();
 
-        $this->client->request('POST', '/admin/crm/firmen/bootstrap');
+        $this->client->request('POST', '/admin/crm/locations/bootstrap');
 
-        self::assertResponseRedirects('/admin/crm/firmen', 303);
+        self::assertResponseRedirects('/admin/crm/locations', 303);
         self::assertSame(0, $this->companies());
     }
 
@@ -79,18 +79,18 @@ final class BootstrapButtonTest extends WebTestCase
         $broken = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Kaputt']);
         VenueFactory::new()->withoutLocation(null)->create(['name' => 'Heil']);
 
-        $this->press($this->client->request('GET', '/admin/crm/firmen'));
+        $this->press($this->client->request('GET', '/admin/crm/locations'));
 
         self::assertSame(1, $this->companies());
         self::assertSelectorTextContains('.toast--success', 'Fehlgeschlagen: 1. Noch offen: 1.');
         self::assertSelectorTextSame('.toast--error .toast__message', 'Nicht angelegt: '.$broken->number().': chk_test_bootstrap');
-        self::assertSelectorTextContains(self::FORM.' button', 'Firma aus 1 Location anlegen');
+        self::assertSelectorTextContains(self::FORM.' button', 'Location aus 1 Eintrag anlegen');
     }
 
     private function press(Crawler $crawler): Crawler
     {
         $this->client->submit($crawler->filter(self::FORM)->form());
-        self::assertResponseRedirects('/admin/crm/firmen', 303);
+        self::assertResponseRedirects('/admin/crm/locations', 303);
 
         return $this->client->followRedirect();
     }

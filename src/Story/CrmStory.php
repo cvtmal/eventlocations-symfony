@@ -59,7 +59,7 @@ final class CrmStory extends Story
             'Verlängerung Tier',
             'Verlängerung des Eintrags von {venue.name}',
             "Guten Tag {contact.first_name}\n\n"
-            ."Der Eintrag von {venue.name} läuft bald aus. Damit {company.name} ohne Unterbruch sichtbar bleibt, verlängern wir ihn gerne:\n\n"
+            ."Der Eintrag von {venue.name} läuft bald aus. Damit {location.name} ohne Unterbruch sichtbar bleibt, verlängern wir ihn gerne:\n\n"
             ."- gleiche Stufe, gleiche Leistungen\n"
             ."- neue Laufzeit von zwölf Monaten\n"
             ."- Rechnung nach Ihrer Zusage\n\n"
@@ -70,7 +70,7 @@ final class CrmStory extends Story
             'Fotos anfordern',
             'Neue Fotos für {venue.name}',
             "Guten Tag {contact.first_name}\n\n"
-            ."Für den Eintrag von {venue.name} hätten wir gerne neue Bilder. Könnte {company.name} uns bis Ende Monat Folgendes senden?\n\n"
+            ."Für den Eintrag von {venue.name} hätten wir gerne neue Bilder. Könnte {location.name} uns bis Ende Monat Folgendes senden?\n\n"
             ."- fünf bis zehn Fotos im Querformat\n"
             ."- ein Foto des Festsaals, gedeckt für ein Hochzeitsessen\n"
             ."- ein Foto der Aussenansicht\n\n"

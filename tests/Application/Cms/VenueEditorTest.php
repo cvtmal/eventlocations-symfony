@@ -85,7 +85,7 @@ final class VenueEditorTest extends WebTestCase
         self::assertSame('Übersicht', $first->text());
         self::assertSame($this->url($venue), $first->attr('href'));
         self::assertSame('page', $first->attr('aria-current'));
-        self::assertSame('Locations', $crawler->filter('.sidebar__item[aria-current="page"] .sidebar__label')->text());
+        self::assertSame('Einträge', $crawler->filter('.sidebar__item[aria-current="page"] .sidebar__label')->text());
     }
 
     public function test_an_admin_sees_delete_on_an_unpublished_venue_and_the_whole_history(): void
@@ -216,7 +216,7 @@ final class VenueEditorTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame('true', $crawler->filter('#venue_basics_slug')->attr('aria-invalid'));
-        self::assertStringContainsString('Diesen Slug hat schon eine andere Location', $crawler->filter('#stammdaten')->text());
+        self::assertStringContainsString('Diesen Slug hat schon ein anderer Eintrag', $crawler->filter('#stammdaten')->text());
         self::assertNotSame($taken->number(), $venue->number());
     }
 

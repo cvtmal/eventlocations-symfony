@@ -30,8 +30,8 @@ final class SearchProvidersTest extends WebTestCase
         CompanyFactory::createOne(['name' => 'Alpenhof AG']);
 
         self::assertSame([[
-            'label' => 'Firmen',
-            'results' => [['type' => 'company', 'label' => 'Zürcher Gastro AG', 'detail' => 'Kunde', 'url' => '/admin/crm/firmen/'.$company->id()]],
+            'label' => 'Locations',
+            'results' => [['type' => 'company', 'label' => 'Zürcher Gastro AG', 'detail' => 'Kunde', 'url' => '/admin/crm/locations/'.$company->id()]],
         ]], $this->searchGroups('zuercher'));
     }
 
@@ -72,7 +72,7 @@ final class SearchProvidersTest extends WebTestCase
         CompanyFactory::createOne(['name' => 'Seeblick Events']);
         ContactFactory::createOne(['firstName' => 'Sara', 'lastName' => 'Seeblick']);
 
-        self::assertSame(['Locations', 'Firmen', 'Kontakte'], array_column($this->searchGroups('seeblick'), 'label'));
+        self::assertSame(['Einträge', 'Locations', 'Kontakte'], array_column($this->searchGroups('seeblick'), 'label'));
     }
 
     public function test_each_group_stops_at_five(): void

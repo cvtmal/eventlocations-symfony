@@ -43,7 +43,7 @@ final class VenueCreateTest extends WebTestCase
         self::assertSame('Neue Scheune', $crawler->filter('.record-header h1')->text());
         self::assertStringContainsString('Unpubliziert', $crawler->filter('.record-header')->text());
         self::assertCount(0, $crawler->filter('.venue-checklist__item--done'));
-        self::assertStringContainsString('Andrea Keller hat die Location erfasst', $crawler->filter('section[aria-labelledby="venue-history"]')->text());
+        self::assertStringContainsString('Andrea Keller hat den Eintrag erfasst', $crawler->filter('section[aria-labelledby="venue-history"]')->text());
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'venue' AND subject_id = ?", [(string) $row['number']]));
 
         if (\is_string($row['slug'])) {

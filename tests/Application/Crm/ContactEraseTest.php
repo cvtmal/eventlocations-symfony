@@ -42,7 +42,7 @@ final class ContactEraseTest extends WebTestCase
         self::assertSame('contact-erase', $crawler->filter('#record-actions button.dropdown__item--danger')->attr('commandfor'));
         self::assertSelectorExists('#contact-erase form[method="dialog"] button[autofocus]');
         self::assertSelectorTextContains('#contact-erase', '«Zelda Unverwechselbar» wird endgültig gelöscht');
-        self::assertSelectorTextContains('#contact-erase', 'Steht dieselbe E-Mail-Adresse bei der Firma, wird sie dort ebenfalls entfernt.');
+        self::assertSelectorTextContains('#contact-erase', 'Steht dieselbe E-Mail-Adresse bei der Location, wird sie dort ebenfalls entfernt.');
         self::assertSelectorTextContains('#contact-erase', 'muss von Hand im CMS entfernt werden');
         $this->client->submit($crawler->filter('#contact-erase form[action$="/loeschen"]')->form());
 

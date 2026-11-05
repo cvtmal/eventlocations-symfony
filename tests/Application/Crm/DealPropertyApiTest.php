@@ -175,7 +175,7 @@ final class DealPropertyApiTest extends WebTestCase
         $this->patch($deal->id(), ['field' => 'venue', 'value' => $venue->id(), 'expected' => null]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame(['value' => ['Diese Location gehört nicht zu dieser Firma.']], $this->errors());
+        self::assertSame(['value' => ['Dieser Eintrag gehört nicht zu dieser Location.']], $this->errors());
     }
 
     public function test_the_end_of_a_won_contract_moves_the_company_stage(): void

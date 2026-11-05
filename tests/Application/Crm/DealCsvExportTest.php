@@ -48,7 +48,7 @@ final class DealCsvExportTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Type', 'text/csv; charset=UTF-8');
         self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=deals-2027-01-01.csv');
         self::assertSame([
-            ['Name', 'Firma', 'Location', 'Phase', 'Verlustgrund', 'Tier', 'Wert (CHF)', 'Vertragsbeginn', 'Vertragsende', 'Erwarteter Abschluss', 'Zuständig'],
+            ['Name', 'Location', 'Eintrag', 'Phase', 'Verlustgrund', 'Tier', 'Wert (CHF)', 'Vertragsbeginn', 'Vertragsende', 'Erwarteter Abschluss', 'Zuständig'],
             ['Premium 2027', 'Seeblick Events', 'Schloss Seeblick', 'Verloren', 'Budget', 'Premium', '1234.50', '01.01.2027', '31.12.2027', '15.11.2026', 'Andrea Keller'],
         ], $this->records());
     }

@@ -44,7 +44,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * reaches the handlers' no-ops.
  */
 #[IsGranted('ROLE_EDITOR')]
-#[Route('/admin/crm/firmen/{id}', requirements: ['id' => Requirement::UUID], options: [LocalizedRoutes::UNLOCALIZED => true])]
+#[Route('/admin/crm/locations/{id}', requirements: ['id' => Requirement::UUID], options: [LocalizedRoutes::UNLOCALIZED => true])]
 final class CompanyRecordController extends AbstractController
 {
     public const string DELETE_FORM = 'delete_company';
@@ -77,7 +77,7 @@ final class CompanyRecordController extends AbstractController
         ]);
     }
 
-    #[Route('/locations', name: 'admin_crm_companies_link_venue', methods: ['POST'])]
+    #[Route('/eintraege', name: 'admin_crm_companies_link_venue', methods: ['POST'])]
     public function link(string $id, Request $request): Response
     {
         $data = new LinkVenueData();
@@ -100,7 +100,7 @@ final class CompanyRecordController extends AbstractController
         return $this->redirectToRoute('admin_crm_companies_show', ['id' => $id, '_fragment' => 'locations'], status: Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/locations/{venueId}/entfernen', name: 'admin_crm_companies_unlink_venue', requirements: ['venueId' => Requirement::UUID], methods: ['POST'])]
+    #[Route('/eintraege/{venueId}/entfernen', name: 'admin_crm_companies_unlink_venue', requirements: ['venueId' => Requirement::UUID], methods: ['POST'])]
     public function unlink(string $id, string $venueId, Request $request): Response
     {
         $token = $request->request->all()['_token'] ?? null;

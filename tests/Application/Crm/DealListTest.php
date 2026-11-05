@@ -51,7 +51,7 @@ final class DealListTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Deals 1');
         $row = $crawler->filter('#deal-list tbody tr')->first();
         self::assertSame('/admin/crm/deals/'.$deal->id(), $row->filter('.crm-list__link')->attr('href'));
-        self::assertSame('/admin/crm/firmen/'.$company->id(), $row->filter('.crm-list__detail')->attr('href'));
+        self::assertSame('/admin/crm/locations/'.$company->id(), $row->filter('.crm-list__detail')->attr('href'));
         self::assertStringContainsString('Seeblick Events', $row->text());
         self::assertStringContainsString('Angebot', $row->text());
         self::assertStringContainsString('Premium', $row->filter('td')->eq(2)->text());

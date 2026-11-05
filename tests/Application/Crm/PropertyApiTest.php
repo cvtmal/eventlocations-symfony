@@ -205,7 +205,7 @@ final class PropertyApiTest extends WebTestCase
         $this->patch($this->companyUrl($company->id()), ['field' => 'stage', 'value' => 'prospect', 'expected' => 'customer']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame(['value' => ['Die Phase dieser Firma ergibt sich aus ihren gewonnenen Deals.']], $this->errors());
+        self::assertSame(['value' => ['Die Phase dieser Location ergibt sich aus ihren gewonnenen Deals.']], $this->errors());
         self::assertSame('customer', $this->connection->fetchOne('SELECT stage FROM crm_companies WHERE id = ?', [$company->id()]));
         self::assertSame(0, $this->auditRows('company', $company->id()));
     }

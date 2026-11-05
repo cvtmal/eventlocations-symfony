@@ -31,7 +31,7 @@ final class CompanyCreateController extends AbstractController
     /** The handler's field names, as `InvalidPropertyValue::$field`, to the form's. */
     private const array FIELDS = ['name' => 'name', 'owner' => 'owner'];
 
-    #[Route('/admin/crm/firmen/neu', name: 'admin_crm_companies_new', methods: ['GET', 'POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
+    #[Route('/admin/crm/locations/neu', name: 'admin_crm_companies_new', methods: ['GET', 'POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(Request $request, MessageBusInterface $commandBus, OwnerOptionsQuery $owners, TranslatorInterface $translator): Response
     {
         $data = new CompanyData();

@@ -46,15 +46,15 @@ final class CompanyRecordTest extends WebTestCase
         $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues($venue)->create(['name' => 'Seeblick Events GmbH', 'owner' => $owner]);
         $laura = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         self::assertSame('Seeblick Events GmbH', $crawler->filter('h1#record-title')->text());
         self::assertSame('SE', $crawler->filter('.crm-record__identity .avatar')->text());
         self::assertSame('Kunde', $crawler->filter('.crm-record__identity .pill')->text());
-        self::assertSame(['CRM', 'Firmen', 'Seeblick Events GmbH'], $crawler->filter('.breadcrumbs__item')->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['CRM', 'Locations', 'Seeblick Events GmbH'], $crawler->filter('.breadcrumbs__item')->each(static fn (Crawler $item): string => $item->text()));
         self::assertSame('Seeblick Events GmbH', $crawler->filter('.breadcrumbs__item [data-crm-follow="name"]')->text());
-        self::assertSame('Firmen', $crawler->filter('.sidebar__item[aria-current="page"]')->text());
+        self::assertSame('Locations', $crawler->filter('.sidebar__item[aria-current="page"]')->text());
 
         $props = json_decode((string) $crawler->filter('[data-island="record-properties"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
@@ -68,7 +68,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertStringContainsString('Andrea Keller', $crawler->filter('[data-island="record-properties"] .record-properties')->text());
         self::assertStringContainsString('manuell erfasst', $crawler->filter('.crm-record__properties')->text());
 
-        self::assertSame('Locations (1)', $crawler->filter('#crm-venues-title')->text());
+        self::assertSame('Einträge (1)', $crawler->filter('#crm-venues-title')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#locations .crm-side__link')->attr('href'));
         self::assertSame('Kontakte (1)', $crawler->filter('#crm-contacts-title')->text());
         self::assertSame('/admin/crm/kontakte/'.$laura->id(), $crawler->filter('#kontakte .crm-side__link')->attr('href'));
@@ -84,10 +84,10 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne(['origin' => CompanyOrigin::Venue]);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('aus Location', $crawler->filter('.crm-record__properties')->text());
+        self::assertStringContainsString('aus Eintrag', $crawler->filter('.crm-record__properties')->text());
         // `target` and `rel` need an `href`, and `crm-record.js` fills it after an inline save.
         self::assertSame('', $crawler->filter('.crm-record__website')->attr('href'));
         self::assertNotNull($crawler->filter('.crm-record__website')->attr('hidden'));
@@ -97,10 +97,10 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        $this->client->request('GET', '/admin/crm/firmen/'.EntityId::generate());
+        $this->client->request('GET', '/admin/crm/locations/'.EntityId::generate());
         self::assertResponseStatusCodeSame(404);
 
-        $this->client->request('GET', '/admin/crm/firmen/not-a-uuid');
+        $this->client->request('GET', '/admin/crm/locations/not-a-uuid');
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -109,15 +109,15 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne(['name' => 'Seeblick Events GmbH']);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertSame('link-venue', $crawler->filter('#locations button[command="show-modal"]')->attr('commandfor'));
         $this->client->submit($crawler->filter('#link-venue-form')->form(['link_venue[venue]' => $venue->id()]));
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id().'#locations', 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
         self::assertSame($company->id(), $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]));
         $crawler = $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Location verknüpft.');
+        self::assertSelectorTextContains('.toast', 'Eintrag verknüpft.');
         self::assertSame(['Schloss Seeblick'], $crawler->filter('#locations .crm-side__link')->each(static fn (Crawler $link): string => $link->text()));
     }
 
@@ -126,7 +126,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Admin);
         $company = CompanyFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $props = json_decode((string) $crawler->filter('#link-venue [data-island="combobox"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
@@ -140,12 +140,12 @@ final class CompanyRecordTest extends WebTestCase
         $venue = VenueFactory::new()->withoutLocation(null)->create();
         $other = CompanyFactory::new()->withVenues($venue)->create();
         $company = CompanyFactory::createOne();
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $this->client->submit($crawler->filter('#link-venue-form')->form(['link_venue[venue]' => $venue->id()]));
 
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast--error', 'gehört schon zu einer anderen Firma');
+        self::assertSelectorTextContains('.toast--error', 'gehört schon zu einer anderen Location');
         self::assertSame($other->id(), $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]));
     }
 
@@ -153,12 +153,12 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
         $form = $crawler->filter('#link-venue-form')->form();
 
         $this->client->submit($form, ['link_venue[venue]' => '']);
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast--error', 'Bitte eine Location aus der Liste wählen.');
+        self::assertSelectorTextContains('.toast--error', 'Bitte einen Eintrag aus der Liste wählen.');
 
         $this->client->submit($form, ['link_venue[venue]' => EntityId::generate()]);
         $this->client->followRedirect();
@@ -177,9 +177,9 @@ final class CompanyRecordTest extends WebTestCase
         $company = CompanyFactory::createOne();
         $venue = VenueFactory::new()->withoutLocation(null)->create();
 
-        $this->client->request('POST', '/admin/crm/firmen/'.$company->id().'/locations', ['link_venue' => ['venue' => $venue->id()] + $token], server: $server);
+        $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/eintraege', ['link_venue' => ['venue' => $venue->id()] + $token], server: $server);
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id().'#locations', 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
         $this->client->followRedirect();
         self::assertSelectorExists('.toast--error');
@@ -190,15 +190,15 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $this->client->submit($crawler->filter('#link-venue-form')->form(['link_venue[venue]' => $venue->id()]));
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id().'#locations', 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
         self::assertSame(0, $this->auditRows($company->id()));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Location verknüpft.');
+        self::assertSelectorTextContains('.toast', 'Eintrag verknüpft.');
     }
 
     public function test_a_venue_is_unlinked(): void
@@ -206,16 +206,16 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
-        $button = $crawler->filter('#locations button[aria-label="Schloss Seeblick von dieser Firma lösen"]');
+        $button = $crawler->filter('#locations button[aria-label="Schloss Seeblick von dieser Location lösen"]');
         self::assertCount(1, $button);
         $this->client->submit($button->form());
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id().'#locations', 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('#locations', 'Noch keine Location verknüpft.');
+        self::assertSelectorTextContains('#locations', 'Noch kein Eintrag verknüpft.');
     }
 
     public function test_a_stale_unlink_says_so_and_sends_no_command(): void
@@ -223,17 +223,17 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $form = $this->client->request('GET', '/admin/crm/firmen/'.$company->id())->filter('#locations button[aria-label="Schloss Seeblick von dieser Firma lösen"]')->form();
+        $form = $this->client->request('GET', '/admin/crm/locations/'.$company->id())->filter('#locations button[aria-label="Schloss Seeblick von dieser Location lösen"]')->form();
         $other = CompanyFactory::createOne();
         $this->connection->executeStatement('UPDATE crm_company_venues SET company_id = ?', [$other->id()]);
 
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id().'#locations', 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
         self::assertSame($other->id(), $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]));
         self::assertSame(0, $this->auditRows($company->id()));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast--error', 'Diese Location gehört nicht mehr zu dieser Firma.');
+        self::assertSelectorTextContains('.toast--error', 'Dieser Eintrag gehört nicht mehr zu dieser Location.');
     }
 
     public function test_an_unlink_on_a_deleted_company_is_a_404(): void
@@ -241,7 +241,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $form = $this->client->request('GET', '/admin/crm/firmen/'.$company->id())->filter('#locations button[aria-label="Schloss Seeblick von dieser Firma lösen"]')->form();
+        $form = $this->client->request('GET', '/admin/crm/locations/'.$company->id())->filter('#locations button[aria-label="Schloss Seeblick von dieser Location lösen"]')->form();
         $this->connection->executeStatement('DELETE FROM crm_companies');
 
         $this->client->submit($form);
@@ -256,7 +256,7 @@ final class CompanyRecordTest extends WebTestCase
         $venue = VenueFactory::new()->withoutLocation(null)->create();
         $company = CompanyFactory::new()->withVenues($venue)->create();
 
-        $this->client->request('POST', '/admin/crm/firmen/'.$company->id().'/locations/'.$venue->id().'/entfernen');
+        $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/eintraege/'.$venue->id().'/entfernen');
 
         self::assertResponseRedirects(null, 303);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
@@ -267,17 +267,17 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Admin);
         $company = CompanyFactory::createOne(['name' => 'Seeblick Events GmbH']);
         ContactFactory::createOne(['company' => $company]);
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertSame('company-delete', $crawler->filter('#record-actions button.dropdown__item--danger')->attr('commandfor'));
         self::assertSelectorExists('#company-delete form[method="dialog"] button[autofocus]');
         $this->client->submit($crawler->filter('#company-delete form[action$="/loeschen"]')->form());
 
-        self::assertResponseRedirects('/admin/crm/firmen', 303);
+        self::assertResponseRedirects('/admin/crm/locations', 303);
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
         self::assertNull($this->connection->fetchOne('SELECT company_id FROM crm_contacts'));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Firma «Seeblick Events GmbH» gelöscht.');
+        self::assertSelectorTextContains('.toast', 'Location «Seeblick Events GmbH» gelöscht.');
     }
 
     /**
@@ -290,9 +290,9 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Admin);
         $company = CompanyFactory::createOne();
 
-        $this->client->request('POST', '/admin/crm/firmen/'.$company->id().'/loeschen', ['delete_company' => $token], server: $server);
+        $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/loeschen', ['delete_company' => $token], server: $server);
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id(), 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id(), 303);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
         $this->client->followRedirect();
         self::assertSelectorExists('.toast--error');
@@ -303,14 +303,14 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Admin);
         $company = CompanyFactory::createOne();
         DealFactory::createOne(['company' => $company]);
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $this->client->submit($crawler->filter('#company-delete form[action$="/loeschen"]')->form());
 
-        self::assertResponseRedirects('/admin/crm/firmen/'.$company->id(), 303);
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id(), 303);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Diese Firma hat Deals und lässt sich nicht löschen.');
+        self::assertSelectorTextContains('.toast', 'Diese Location hat Deals und lässt sich nicht löschen.');
     }
 
     public function test_a_derived_stage_is_read_only_and_says_where_it_comes_from(): void
@@ -319,7 +319,7 @@ final class CompanyRecordTest extends WebTestCase
         $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->create();
         DealFactory::new()->inStage('won')->create(['company' => $company]);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $props = json_decode((string) $crawler->filter('[data-island="record-properties"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
@@ -335,7 +335,7 @@ final class CompanyRecordTest extends WebTestCase
         $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->create();
         DealFactory::new()->inStage('offer')->create(['company' => $company]);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $props = json_decode((string) $crawler->filter('[data-island="record-properties"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
@@ -349,7 +349,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $this->client->request('POST', '/admin/crm/firmen/'.$company->id().'/loeschen');
+        $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/loeschen');
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
@@ -363,7 +363,7 @@ final class CompanyRecordTest extends WebTestCase
             ActivityFactory::new()->onCompany($company)->create(['actor' => $author, 'body' => 'Eintrag '.$day, 'occurredAt' => new \DateTimeImmutable(\sprintf('2026-08-%02dT10:00:00+02:00', $day))]);
         }
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
@@ -402,7 +402,7 @@ final class CompanyRecordTest extends WebTestCase
         $company = CompanyFactory::createOne();
         ActivityFactory::new()->onCompany($company)->create(['body' => '<script>alert(1)</script><b>fett</b>']);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         $html = (string) $this->client->getResponse()->getContent();
@@ -433,7 +433,7 @@ final class CompanyRecordTest extends WebTestCase
             'created_at' => '2026-10-29 11:48:00+01',
         ]);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         $system = $crawler->filter('[data-island="timeline"] .timeline-item--system');
@@ -453,7 +453,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertInstanceOf(MessageBusInterface::class, $bus);
         $bus->dispatch(new IngestInquiry($inquiry->id()));
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
@@ -486,7 +486,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertInstanceOf(EntityManagerInterface::class, $entityManager);
         $entityManager->flush();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         self::assertSame(['Schloss Seeblick', 'Inhalt entfernt'], $crawler->filter('[data-island="timeline"] .timeline-item--card .muted')->each(static fn (Crawler $body): string => $body->text()));
@@ -498,7 +498,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertSame('Noch keine Aktivitäten.', $crawler->filter('[data-island="timeline"] .crm-timeline')->text());
     }
@@ -511,7 +511,7 @@ final class CompanyRecordTest extends WebTestCase
         DealFactory::new()->inStage('won')->many(5)->create(['company' => $company]);
         DealFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $card = $crawler->filter('#deals');
         self::assertSame('Deals (6)', $card->filter('h2')->text());
@@ -522,7 +522,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame('Premium · bis 31.12.2027', $first->filter('.crm-side__detail')->text());
         self::assertSame('Angebot', $first->filter('.pill')->text());
         self::assertSame("CHF 4'800", $first->filter('.deal-side__amount')->text());
-        self::assertSame('/admin/crm/firmen/'.$company->id().'/deals', $card->filter('.deal-side__all a')->attr('href'));
+        self::assertSame('/admin/crm/locations/'.$company->id().'/deals', $card->filter('.deal-side__all a')->attr('href'));
     }
 
     public function test_a_company_without_deals_says_so(): void
@@ -530,7 +530,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertSame('Noch keine Deals.', $crawler->filter('#deals .crm-side__empty')->text());
         self::assertCount(0, $crawler->filter('.deal-side__all'));
@@ -540,7 +540,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
-        $url = '/admin/crm/firmen/'.$company->id();
+        $url = '/admin/crm/locations/'.$company->id();
         $deals = DealFactory::createMany(6, ['company' => $company]);
         DealFactory::createOne(['name' => 'Fremd']);
 
@@ -563,7 +563,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id().'/deals');
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id().'/deals');
 
         self::assertSame('Noch keine Deals.', $crawler->filter('.empty__title')->text());
     }
@@ -572,7 +572,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        $this->client->request('GET', '/admin/crm/firmen/019a0000-0000-7000-8000-000000000000/deals');
+        $this->client->request('GET', '/admin/crm/locations/019a0000-0000-7000-8000-000000000000/deals');
 
         self::assertResponseStatusCodeSame(404);
     }
@@ -584,7 +584,7 @@ final class CompanyRecordTest extends WebTestCase
         DealFactory::createMany(3, ['company' => $company]);
 
         // The company, the owners, the deals, the access-request badge; with the user's refresh 5 in production (N14's ceiling 5).
-        self::assertSame(4, $this->queriesOf('/admin/crm/firmen/'.$company->id().'/deals'));
+        self::assertSame(4, $this->queriesOf('/admin/crm/locations/'.$company->id().'/deals'));
     }
 
     public function test_the_composer_can_write_to_the_company_and_its_contacts_with_an_address(): void
@@ -595,7 +595,7 @@ final class CompanyRecordTest extends WebTestCase
         ContactFactory::createOne(['company' => $company, 'lastName' => 'Keller', 'email' => null]);
         $mia = ContactFactory::createOne(['company' => $company, 'firstName' => 'Mia', 'lastName' => 'Zürcher', 'email' => 'mia@seeblick.example']);
 
-        $crawler = $this->client->request('GET', '/admin/crm/firmen/'.$company->id());
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         self::assertResponseIsSuccessful();
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
@@ -621,7 +621,7 @@ final class CompanyRecordTest extends WebTestCase
         // timeline's activities, venue names and audit rows, the composer's mail templates, the Aufgaben card, the Deals
         // card, the access-request badge; with the user's refresh 10 in production (N14's ceiling 10). The address is the
         // worst case: without one the templates are not read.
-        self::assertSame(9, $this->queriesOf('/admin/crm/firmen/'.$company->id()));
+        self::assertSame(9, $this->queriesOf('/admin/crm/locations/'.$company->id()));
     }
 
     private function auditRows(string $companyId): int

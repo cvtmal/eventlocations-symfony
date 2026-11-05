@@ -15,20 +15,20 @@ final class MergeFieldsTest extends TestCase
 
         self::assertSame(
             'Liebe Mia, Muster AG führt Schloss Seeblick.',
-            $fields->apply('Liebe {contact.first_name}, {company.name} führt {venue.name}.'),
+            $fields->apply('Liebe {contact.first_name}, {location.name} führt {venue.name}.'),
         );
     }
 
     public function test_the_tokens_are_the_fixed_list(): void
     {
-        self::assertSame(['{contact.first_name}', '{company.name}', '{venue.name}'], MergeFields::TOKENS);
+        self::assertSame(['{contact.first_name}', '{location.name}', '{venue.name}'], MergeFields::TOKENS);
     }
 
     public function test_a_null_value_is_empty(): void
     {
         $fields = new MergeFields(null, null, null);
 
-        self::assertSame('Liebe , zu  und .', $fields->apply('Liebe {contact.first_name}, zu {company.name} und {venue.name}.'));
+        self::assertSame('Liebe , zu  und .', $fields->apply('Liebe {contact.first_name}, zu {location.name} und {venue.name}.'));
     }
 
     public function test_an_unknown_token_stays_literal(): void
@@ -46,6 +46,20 @@ final class MergeFieldsTest extends TestCase
     }
 
     public function test_a_value_holding_a_token_is_not_expanded_again(): void
+    {
+        $fields = new MergeFields('{location.name}', 'Muster AG', null);
+
+        self::assertSame('{location.name}, Muster AG', $fields->apply('{contact.first_name}, {location.name}'));
+    }
+
+    public function test_the_old_company_token_is_an_alias_of_the_location(): void
+    {
+        $fields = new MergeFields('Mia', 'Muster AG', 'Schloss Seeblick');
+
+        self::assertSame('Muster AG = Muster AG', $fields->apply('{company.name} = {location.name}'));
+    }
+
+    public function test_a_value_holding_the_old_token_is_not_expanded_again(): void
     {
         $fields = new MergeFields('{company.name}', 'Muster AG', null);
 

@@ -66,7 +66,7 @@ final class TasksNavigationTest extends WebTestCase
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-30 10:00:00 UTC'))->create(['assignee' => $me]);
         TaskFactory::createOne(['assignee' => AdminUserFactory::createOne()]);
 
-        foreach (['/admin', '/admin/crm/firmen'] as $page) {
+        foreach (['/admin', '/admin/crm/locations'] as $page) {
             $this->client->request('GET', $page);
 
             self::assertSelectorNotExists('.sidebar__badge');
@@ -78,10 +78,10 @@ final class TasksNavigationTest extends WebTestCase
      */
     public static function pagesWithOwners(): iterable
     {
-        yield 'company list' => ['/admin/crm/firmen'];
+        yield 'company list' => ['/admin/crm/locations'];
         yield 'contact list' => ['/admin/crm/kontakte'];
         yield 'task list' => ['/admin/crm/aufgaben'];
-        yield 'company record' => ['/admin/crm/firmen/{company}'];
+        yield 'company record' => ['/admin/crm/locations/{company}'];
         yield 'contact record' => ['/admin/crm/kontakte/{contact}'];
     }
 
@@ -113,7 +113,7 @@ final class TasksNavigationTest extends WebTestCase
 
         // The user's refresh, the owners with the badge, COUNT, the rows, the venues left for the bootstrap, the
         // access-request badge (P12 ceiling 5, passed on purpose by #43).
-        self::assertSame(6, $this->queriesOf('/admin/crm/firmen'));
+        self::assertSame(6, $this->queriesOf('/admin/crm/locations'));
         self::assertSelectorTextSame('.sidebar__badge', '1');
     }
 
