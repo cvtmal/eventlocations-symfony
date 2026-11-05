@@ -62,15 +62,15 @@ final class LandingContentBlockTest extends WebTestCase
         $this->withBuilding($this->inTown('Stäfa', 5), 'castle');
 
         self::assertSame(
-            '5 Hochzeitslocations im Kanton Zürich: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt bei der Location an.',
+            '5 Hochzeitslocations im Kanton Zürich: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt bei der Location an.',
             $this->intro('/hochzeitslocations/zuerich')->filter('p')->text(),
         );
         self::assertSame(
-            '5 Hochzeitslocations in Stäfa: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt bei der Location an.',
+            '5 Hochzeitslocations in Stäfa: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt bei der Location an.',
             $this->intro('/hochzeitslocations/zuerich/staefa')->filter('p')->text(),
         );
         self::assertSame(
-            '<p>5 Locations für Ihre Hochzeit im Schloss: Vergleichen Sie Fotos, Platz für Gäste und Bewertungen und fragen Sie direkt an.</p>',
+            '<p>5 Locations für Ihre Hochzeit im Schloss: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt an.</p>',
             trim($this->intro('/hochzeitslocations/schloss')->html()),
         );
         $this->assertPublicAndSessionFree();

@@ -3,8 +3,8 @@
 listing:
     title: 'Hochzeitslocations in der Schweiz | {site}'
     title_page: 'Hochzeitslocations Schweiz – Seite {page} | {site}'
-    description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
-    description_page: 'Hochzeitslocations in der Schweiz, Seite {page}: Fotos, Platz für Gäste, Bewertungen und Lage aller Locations auf einen Blick.'
+    description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste und Lage aller Locations auf einen Blick.'
+    description_page: 'Hochzeitslocations in der Schweiz, Seite {page}: Fotos, Platz für Gäste und Lage aller Locations auf einen Blick.'
 home:
     title: 'Hochzeitslocations in der Schweiz finden | {site}'
     description: 'Finden Sie die passende Hochzeitslocation in der Schweiz: nach Region, Location-Art und Gästezahl suchen und direkt bei der Location anfragen.'
@@ -20,7 +20,7 @@ landing:
         title_page: 'Hochzeitslocations {canton_code, select, li {in} other {im Kanton}} {canton} – Seite {page} | {site}'
         title_page_short: 'Hochzeitslocations {canton} – Seite {page} | {site}'
         title_page_bare: 'Hochzeitslocations {canton} – Seite {page}'
-        description: 'Hochzeitslocations {canton_code, select, li {in} other {im Kanton}} {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
+        description: 'Hochzeitslocations {canton_code, select, li {in} other {im Kanton}} {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
     town:
         title_count: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} in {town} | {site}'
         title: 'Hochzeitslocations in {town} | {site}'
@@ -29,13 +29,13 @@ landing:
         title_page: 'Hochzeitslocations in {town} – Seite {page} | {site}'
         title_page_short: 'Hochzeitslocations {town} – Seite {page} | {site}'
         title_page_bare: 'Hochzeit {town} – Seite {page}'
-        description: 'Hochzeitslocations in {town}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
+        description: 'Hochzeitslocations in {town}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
     building:
         title_count: '{heading}: {count, plural, one {# Location} other {# Locations}} | {site}'
         title: '{heading} | {site}'
         title_page: '{heading} – Seite {page} | {site}'
         title_page_bare: '{heading} – Seite {page}'
-        description: '{heading}: {count, plural, one {# Location} other {# Locations}} in der Schweiz mit Fotos, Platz für Gäste, Bewertungen und Lage im Vergleich.'
+        description: '{heading}: {count, plural, one {# Location} other {# Locations}} in der Schweiz mit Fotos, Platz für Gäste und Lage im Vergleich.'
 # /llms.txt and the venues' Markdown views (seo-llms-txt). Numbers arrive pre-formatted ({formatted}, {count} in capacity).
 llms:
     summary: 'Hochzeitslocations in der ganzen Schweiz: Schlösser, Scheunen, Restaurants und Locations am See mit Platz für Gäste, Lage, Ausstattung und Bewertungen.'
