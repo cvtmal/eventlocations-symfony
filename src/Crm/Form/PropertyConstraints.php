@@ -7,7 +7,6 @@ namespace App\Crm\Form;
 use App\Crm\ValueObject\Chf;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\TaskDueDate;
@@ -145,8 +144,6 @@ final readonly class PropertyConstraints
             ContactProperty::Email => self::email(),
             ContactProperty::Phone => self::phone(),
             ContactProperty::Position => self::text(150),
-            ContactProperty::Kind => self::choice(array_map(static fn (ContactKind $kind): string => $kind->value, ContactKind::cases())),
-            ContactProperty::Company, ContactProperty::Owner => self::reference(),
         };
     }
 

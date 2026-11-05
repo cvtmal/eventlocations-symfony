@@ -27,7 +27,7 @@ use Psr\Clock\ClockInterface;
 /**
  * Under the locks, company then deal (D11): the same target is a no-op, another stage than the expected one is stale
  * (D17-b), lost needs a reason (N9). Going back from won or lost clears `closedAt` and the reason. The stage change
- * goes on the deal's and the company's timeline, never a contact's, so an erasure has nothing to do with it (D28).
+ * goes on the deal's and the company's timeline (D28).
  * Its title and payload are a snapshot: the company's timeline outlives a deleted deal (D17-d). A deal that leaves won
  * has no contract to renew, so its open renewal task is done with it.
  */

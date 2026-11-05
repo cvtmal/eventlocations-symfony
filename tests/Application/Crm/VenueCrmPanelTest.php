@@ -8,7 +8,6 @@ use App\Admin\Extension\RecordPanel;
 use App\Admin\Extension\RecordPanelRegistry;
 use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\CreateCompanyForVenue;
-use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\Extension\VenueCrmPanel;
 use App\Crm\ReadModel\VenueCompanyQuery;
@@ -43,7 +42,7 @@ final class VenueCrmPanelTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
         $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues($venue)->create(['name' => 'Seeblick Events GmbH']);
-        $contact = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
+        ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
 
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
 
@@ -57,19 +56,19 @@ final class VenueCrmPanelTest extends WebTestCase
         self::assertSame('Kunde · seit '.$company->createdAt()->setTimezone(new \DateTimeZone('Europe/Zurich'))->format('Y'), $panel->filter('.crm-panel__stage')->text());
         self::assertSame('Kontakt', $panel->filter('dt')->text());
         self::assertSame('Laura Meier', $panel->filter('dd a')->text());
-        self::assertSame('/admin/crm/kontakte/'.$contact->id(), $panel->filter('dd a')->attr('href'));
+        // A contact has no page since #55: the name leads to the Location's Kontakte card.
+        self::assertSame('/admin/crm/locations/'.$company->id().'#kontakte', $panel->filter('dd a')->attr('href'));
         self::assertCount(0, $panel->filter('form'));
     }
 
-    public function test_the_panel_lists_the_open_tasks_of_the_company_its_contacts_and_its_deals(): void
+    public function test_the_panel_lists_the_open_tasks_of_the_company_and_its_deals(): void
     {
         self::mockTime('2026-10-31 10:00:00 UTC');
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $contact = ContactFactory::createOne(['company' => $company]);
         TaskFactory::createOne(['title' => 'Vertrag senden', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
-        TaskFactory::createOne(['title' => 'Rückruf', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
+        TaskFactory::createOne(['title' => 'Rückruf', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
         TaskFactory::createOne(['title' => 'Verlängerung', 'deal' => DealFactory::createOne(['company' => $company]), 'dueOn' => new \DateTimeImmutable('2026-11-02')]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'company' => $company]);
         TaskFactory::createOne(['title' => 'Fremd', 'company' => CompanyFactory::createOne()]);
@@ -194,20 +193,6 @@ final class VenueCrmPanelTest extends WebTestCase
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM admin_audit_log WHERE command = ?', [CreateCompanyForVenue::class]), 'A stale tab must not log a company that never existed.');
         $this->client->followRedirect();
         self::assertSelectorTextContains('.toast', 'Dieser Eintrag hat bereits eine Location.');
-    }
-
-    public function test_an_address_taken_at_the_last_moment_is_a_flash(): void
-    {
-        $this->commandsFailWith(ContactEmailTaken::create());
-        $this->logInAs(AdminRole::Editor);
-        $venue = DetailVenues::withoutPlace();
-        $form = $this->client->request('GET', '/admin/locations/'.$venue->number())->filter('section[aria-labelledby="crm"] form')->form();
-
-        $this->client->submit($form);
-
-        self::assertResponseRedirects('/admin/locations/'.$venue->number().'#crm', 303);
-        $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast--error', 'Location nicht angelegt');
     }
 
     public function test_a_venue_deleted_at_the_last_moment_is_a_404(): void

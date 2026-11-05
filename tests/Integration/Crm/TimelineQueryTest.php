@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Crm;
 
-use App\Crm\Command\EraseContact;
 use App\Crm\Command\IngestInquiry;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
@@ -16,7 +15,6 @@ use App\Crm\ValueObject\TimelineCursor;
 use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
 use App\Inquiries\Entity\Inquiry;
@@ -31,7 +29,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * D12, D15: a company timeline merges its activities with the audit events of its venues; a contact's holds
+ * D12, D15: a company timeline merges its activities with the audit events of its venues; a deal's holds
  * activities only. The system events are the allow-list and nothing else.
  */
 final class TimelineQueryTest extends KernelTestCase
@@ -97,21 +95,18 @@ final class TimelineQueryTest extends KernelTestCase
         self::assertSame([], $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries);
     }
 
-    public function test_a_type_filter_and_a_contact_timeline_show_no_system_events(): void
+    public function test_a_type_filter_shows_no_system_events(): void
     {
         $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
         $venue = $this->linkedVenue($company);
         $this->audit($venue->number(), PublishVenue::class, '2026-10-21 09:00:00+00', ['status' => 'published']);
-        $call = ActivityFactory::new()->ofType(ActivityType::CALL)->onCompany($company)->onContact($contact)->create();
+        $call = ActivityFactory::new()->ofType(ActivityType::CALL)->onCompany($company)->create();
         ActivityFactory::new()->ofType(ActivityType::NOTE)->onCompany($company)->create();
         $this->em->clear();
 
         $calls = $this->query()->page(RecordKind::Company, $company->id(), ActivityType::CALL, null)->entries;
-        $own = $this->query()->page(RecordKind::Contact, $contact->id(), null, null)->entries;
 
         self::assertSame([$call->id()], array_map(static fn (TimelineEntry $entry): string => $entry->id, $calls));
-        self::assertSame([$call->id()], array_map(static fn (TimelineEntry $entry): string => $entry->id, $own));
     }
 
     public function test_the_company_own_audit_rows_do_not_show(): void
@@ -224,20 +219,18 @@ final class TimelineQueryTest extends KernelTestCase
         self::assertNull($plain->email);
     }
 
-    public function test_an_inquiry_entry_reads_its_inquiry_on_the_contact_and_the_company(): void
+    public function test_an_inquiry_entry_reads_its_inquiry_on_the_company(): void
     {
         $company = CompanyFactory::createOne();
         $inquiry = $this->ingestedInquiry($company);
-        ['contact_id' => $contactId, 'activity_id' => $activityId] = $this->link($inquiry);
+        $activityId = $this->activityOf($inquiry);
 
-        $onContact = $this->query()->page(RecordKind::Contact, (string) $contactId, null, null)->entries;
         $onCompany = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;
         $single = $this->query()->entry((string) $activityId);
 
         self::assertNotNull($single);
-        self::assertCount(1, $onContact);
         self::assertCount(1, $onCompany);
-        foreach ([$onContact[0], $onCompany[0], $single] as $entry) {
+        foreach ([$onCompany[0], $single] as $entry) {
             self::assertSame($activityId, $entry->id);
             self::assertSame(ActivityType::INQUIRY, $entry->typeCode);
             self::assertSame($inquiry->venueName(), $entry->title);
@@ -247,16 +240,18 @@ final class TimelineQueryTest extends KernelTestCase
         }
     }
 
-    public function test_an_entry_erased_off_a_contact_stays_on_the_company_and_no_longer_names_the_inquiry(): void
+    /**
+     * An entry anonymised before #55, when an erased couple took its entries' text along.
+     */
+    public function test_an_anonymised_inquiry_entry_no_longer_names_its_inquiry(): void
     {
         $company = CompanyFactory::createOne();
         $inquiry = $this->ingestedInquiry($company);
-        ['contact_id' => $contactId, 'activity_id' => $activityId] = $this->link($inquiry);
-
-        $this->dispatch(new EraseContact((string) $contactId));
+        $this->connection->executeStatement(
+            "UPDATE crm_activities SET title = NULL, body = NULL, payload = '{}', anonymised_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [$this->activityOf($inquiry)],
+        );
         $this->em->clear();
-
-        self::assertSame(['contact_id' => null, 'activity_id' => $activityId], $this->link($inquiry), 'The inquiry outlives the contact, and the entry survives on the company.');
 
         $entries = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;
         self::assertCount(1, $entries);
@@ -264,18 +259,6 @@ final class TimelineQueryTest extends KernelTestCase
         self::assertNull($entries[0]->title);
         self::assertNull($entries[0]->inquiryId);
         self::assertNull($entries[0]->inquiryCouple);
-    }
-
-    public function test_an_entry_erased_with_no_company_leaves_the_link_with_no_entry(): void
-    {
-        $inquiry = $this->ingestedInquiry(null);
-        ['contact_id' => $contactId, 'activity_id' => $activityId] = $this->link($inquiry);
-
-        $this->dispatch(new EraseContact((string) $contactId));
-        $this->em->clear();
-
-        self::assertSame(['contact_id' => null, 'activity_id' => null], $this->link($inquiry));
-        self::assertNull($this->query()->entry((string) $activityId));
     }
 
     public function test_an_inquiry_entry_keeps_its_title_after_the_inquiry_is_purged(): void
@@ -326,15 +309,12 @@ final class TimelineQueryTest extends KernelTestCase
         return $inquiry;
     }
 
-    /**
-     * @return array{contact_id: mixed, activity_id: mixed}
-     */
-    private function link(Inquiry $inquiry): array
+    private function activityOf(Inquiry $inquiry): string
     {
-        $link = $this->connection->fetchAssociative('SELECT contact_id, activity_id FROM crm_inquiry_links WHERE inquiry_id = ?', [$inquiry->id()]);
-        self::assertIsArray($link);
+        $activityId = $this->connection->fetchOne('SELECT activity_id FROM crm_inquiry_links WHERE inquiry_id = ?', [$inquiry->id()]);
+        self::assertIsString($activityId);
 
-        return ['contact_id' => $link['contact_id'], 'activity_id' => $link['activity_id']];
+        return $activityId;
     }
 
     private function linkedVenue(Company $company): Venue

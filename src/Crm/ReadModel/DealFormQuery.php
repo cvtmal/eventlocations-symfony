@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * The second step of "Deal erfassen" in one statement (N5): the company, its linked venues and its contacts.
+ * The second step of "Deal erfassen" in one statement (N5): the company and its linked venues.
  */
 final class DealFormQuery
 {
@@ -19,12 +19,7 @@ final class DealFormQuery
                    FROM crm_company_venues cv
                    JOIN venues v ON v.id = cv.venue_id
                    WHERE cv.company_id = c.id
-               ), '[]') AS venues,
-               COALESCE((
-                   SELECT json_agg(json_build_object('id', p.id, 'label', concat_ws(' ', p.first_name, p.last_name)) ORDER BY lower(p.last_name), p.id)
-                   FROM crm_contacts p
-                   WHERE p.company_id = c.id
-               ), '[]') AS contacts
+               ), '[]') AS venues
         FROM crm_companies c
         WHERE c.id = :id
         SQL;
@@ -48,7 +43,7 @@ final class DealFormQuery
             return null;
         }
 
-        return new DealFormCompany((string) $row['id'], (string) $row['name'], self::options((string) $row['venues']), self::options((string) $row['contacts']));
+        return new DealFormCompany((string) $row['id'], (string) $row['name'], self::options((string) $row['venues']));
     }
 
     /**

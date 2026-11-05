@@ -11,7 +11,6 @@ use App\Crm\Exception\DealNotRenewable;
 use App\Crm\ValueObject\LostReason;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
@@ -36,7 +35,6 @@ final class RenewDealTest extends KernelTestCase
         $venue = VenueFactory::new()->withoutLocation(null)->create();
         $company = CompanyFactory::new()->withVenues($venue)->create();
         $owner = AdminUserFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
         $old = DealFactory::new()->inStage('won')->create([
             'name' => 'Premium 2026',
             'company' => $company,
@@ -47,7 +45,6 @@ final class RenewDealTest extends KernelTestCase
             'contractStartOn' => new \DateTimeImmutable('2026-01-01'),
             'contractEndOn' => new \DateTimeImmutable('2026-12-31'),
         ]);
-        $this->link($old, $contact->id());
         $id = EntityId::generate();
 
         $this->dispatch(new RenewDeal($id, $old->id()));
@@ -70,7 +67,6 @@ final class RenewDealTest extends KernelTestCase
             'SELECT name, company_id, venue_id, tier, amount_rappen, owner_id, stage_code, contract_start_on, contract_end_on, expected_close_on, renewed_from_id, closed_at, lost_reason FROM crm_deals WHERE id = ?',
             [$id],
         ));
-        self::assertSame([$contact->id()], $this->connection->fetchFirstColumn('SELECT contact_id FROM crm_deal_contacts WHERE deal_id = ?', [$id]));
         self::assertSame([['command' => RenewDeal::class, 'changes' => ['renewed_from' => $old->id()]]], $this->auditRows('deal', $id));
     }
 
@@ -156,10 +152,5 @@ final class RenewDealTest extends KernelTestCase
             'contractStartOn' => new \DateTimeImmutable('2026-01-01'),
             'contractEndOn' => new \DateTimeImmutable('2026-12-31'),
         ]);
-    }
-
-    private function link(Deal $deal, string $contactId): void
-    {
-        $this->connection->executeStatement('INSERT INTO crm_deal_contacts (deal_id, contact_id) VALUES (?, ?)', [$deal->id(), $contactId]);
     }
 }

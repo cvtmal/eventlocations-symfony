@@ -54,9 +54,8 @@ final class VenueCompanyQueryTest extends KernelTestCase
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create();
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $contact = ContactFactory::createOne(['company' => $company]);
         TaskFactory::createOne(['title' => 'Später', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-11-05')]);
-        TaskFactory::createOne(['title' => 'Früher', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
+        TaskFactory::createOne(['title' => 'Früher', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
         TaskFactory::createOne(['title' => 'Verlängerung', 'deal' => DealFactory::createOne(['company' => $company]), 'dueOn' => new \DateTimeImmutable('2026-11-03')]);
         TaskFactory::createOne(['title' => 'Fremder Deal', 'deal' => DealFactory::createOne()]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'company' => $company]);

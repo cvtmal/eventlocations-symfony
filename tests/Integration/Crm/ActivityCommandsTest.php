@@ -15,15 +15,14 @@ use App\Crm\Exception\ActivityNotFound;
 use App\Crm\Exception\ActivityNotYours;
 use App\Crm\Exception\ActivityReadOnly;
 use App\Crm\Exception\CompanyNotFound;
-use App\Crm\Exception\ContactNotFound;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\RecordKind;
 use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\InquiryFactory;
+use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -60,7 +59,6 @@ final class ActivityCommandsTest extends KernelTestCase
         self::assertSame($author->id(), $activity->actor()?->id());
         self::assertSame((new \DateTimeImmutable(self::WHEN))->getTimestamp(), $activity->occurredAt()->getTimestamp());
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_companies WHERE activity_id = ? AND company_id = ?', $id, $company->id()));
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activity_contacts WHERE activity_id = ?', $id));
     }
 
     public function test_the_audit_row_names_the_type_and_never_the_text(): void
@@ -78,31 +76,6 @@ final class ActivityCommandsTest extends KernelTestCase
             ['command' => EditActivity::class, 'changes' => ['action' => 'edited']],
             ['command' => DeleteActivity::class, 'changes' => ['action' => 'deleted']],
         ], $this->auditRows('activity', $id));
-    }
-
-    public function test_an_entry_on_a_contact_also_goes_on_its_company(): void
-    {
-        $author = AdminUserFactory::createOne();
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        $id = EntityId::generate();
-
-        $this->dispatch(new LogActivity($id, RecordKind::Contact, $contact->id(), ActivityType::MEETING, 'Besichtigung', new \DateTimeImmutable(self::WHEN), $author->id()));
-
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_contacts WHERE activity_id = ? AND contact_id = ?', $id, $contact->id()));
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_companies WHERE activity_id = ? AND company_id = ?', $id, $company->id()));
-    }
-
-    public function test_an_entry_on_a_contact_without_a_company_links_the_contact_alone(): void
-    {
-        $author = AdminUserFactory::createOne();
-        $contact = ContactFactory::createOne();
-        $id = EntityId::generate();
-
-        $this->dispatch(new LogActivity($id, RecordKind::Contact, $contact->id(), ActivityType::NOTE, 'Text', new \DateTimeImmutable(self::WHEN), $author->id()));
-
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_contacts WHERE activity_id = ?', $id));
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activity_companies WHERE activity_id = ?', $id));
     }
 
     public function test_a_type_only_the_system_writes_is_refused(): void
@@ -133,7 +106,6 @@ final class ActivityCommandsTest extends KernelTestCase
         $author = AdminUserFactory::createOne();
 
         $this->failure(new LogActivity(EntityId::generate(), RecordKind::Company, EntityId::generate(), ActivityType::NOTE, 'Text', new \DateTimeImmutable(self::WHEN), $author->id()), CompanyNotFound::class);
-        $this->failure(new LogActivity(EntityId::generate(), RecordKind::Contact, 'not-a-uuid', ActivityType::NOTE, 'Text', new \DateTimeImmutable(self::WHEN), $author->id()), ContactNotFound::class);
     }
 
     public function test_you_can_rewrite_your_own_entry(): void
@@ -176,8 +148,7 @@ final class ActivityCommandsTest extends KernelTestCase
     {
         $author = AdminUserFactory::createOne();
         $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne();
-        $activity = ActivityFactory::new()->onCompany($company)->onContact($contact)->create(['actor' => $author]);
+        $activity = ActivityFactory::new()->onCompany($company)->create(['actor' => $author]);
         $id = $activity->id();
         $this->em->clear();
 
@@ -185,7 +156,6 @@ final class ActivityCommandsTest extends KernelTestCase
 
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activities WHERE id = ?', $id));
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activity_companies WHERE activity_id = ?', $id));
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activity_contacts WHERE activity_id = ?', $id));
     }
 
     public function test_an_entry_of_somebody_else_is_refused_for_an_admin_too(): void
@@ -236,7 +206,9 @@ final class ActivityCommandsTest extends KernelTestCase
     public function test_an_ingested_inquiry_entry_can_be_neither_edited_nor_deleted(): void
     {
         $admin = AdminUserFactory::createOne(['role' => AdminRole::Admin]);
-        $this->dispatch(new IngestInquiry(InquiryFactory::createOne()->id()));
+        $venue = VenueFactory::new()->withContact()->create();
+        CompanyFactory::new()->withVenues($venue)->create();
+        $this->dispatch(new IngestInquiry(InquiryFactory::createOne(['venue' => $venue])->id()));
         $id = (string) $this->connection->fetchOne('SELECT activity_id FROM crm_inquiry_links');
 
         $this->failure(new EditActivity($id, 'Text', new \DateTimeImmutable(self::WHEN), $admin->id()), ActivityReadOnly::class);

@@ -6,9 +6,7 @@ namespace App\Tests\Application\Crm;
 
 use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\ChangeDealLostReason;
-use App\Crm\Command\LinkDealContact;
 use App\Crm\Command\MoveDealStage;
-use App\Crm\Command\UnlinkDealContact;
 use App\Crm\Entity\Deal;
 use App\Crm\ValueObject\LostReason;
 use App\Factory\CompanyFactory;
@@ -53,8 +51,9 @@ final class DealRecordTest extends WebTestCase
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => Tier::Premium]);
         $company = CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']);
-        $laura = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
+        ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
         ContactFactory::createOne(['firstName' => 'Marc', 'lastName' => 'Widmer', 'company' => $company]);
+        ContactFactory::createOne(['firstName' => 'Pia', 'lastName' => 'Anderswo']);
         $deal = DealFactory::new()->inStage('offer')->create([
             'name' => 'Premium 2027',
             'company' => $company,
@@ -64,7 +63,6 @@ final class DealRecordTest extends WebTestCase
             'contractEndOn' => new \DateTimeImmutable('2027-12-31'),
             'owner' => $owner,
         ]);
-        $this->link($deal->id(), $laura->id());
 
         $crawler = $this->client->request('GET', $this->url($deal));
 
@@ -73,14 +71,14 @@ final class DealRecordTest extends WebTestCase
         self::assertSame('Angebot', $crawler->filter('.crm-record__identity .pill')->text());
         self::assertSame('/admin/crm/locations/'.$company->id(), $crawler->filter('.crm-record__identity a')->attr('href'));
         self::assertSame('Seeblick Events', $crawler->filter('section[aria-labelledby="deal-company-title"] a')->text());
-        self::assertSame('Laura Meier', $crawler->filter('#kontakte .crm-side__link')->text());
+        // The Location's contacts, read-only (#55): no link, no button.
+        self::assertSame(['Laura Meier', 'Marc Widmer'], $crawler->filter('#kontakte .crm-side__name')->each(static fn (Crawler $name): string => $name->text()));
+        self::assertCount(0, $crawler->filter('#kontakte a, #kontakte button, #kontakte form'));
         self::assertSame('Schloss Seeblick', $crawler->filter('#location .crm-side__link')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#location .crm-side__link')->attr('href'));
         self::assertSame('deal', $this->timelineProps($crawler)['kind']);
         self::assertSame('/admin/api/crm/deals/'.$deal->id().'/timeline', $this->timelineProps($crawler)['urls']['timeline'] ?? null);
         self::assertNull($this->timelineProps($crawler)['email']);
-        self::assertSame(1, $crawler->filter('#deal_contact_contact option[value="'.$this->contactId($company->id(), 'Widmer').'"]')->count());
-        self::assertSame(0, $crawler->filter('#deal_contact_contact option[value="'.$laura->id().'"]')->count());
     }
 
     public function test_the_fields_hold_the_stored_value_and_edit_an_amount_as_francs(): void
@@ -124,7 +122,7 @@ final class DealRecordTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->url(DealFactory::createOne()));
 
         self::assertSame('Kein Eintrag gewählt.', $crawler->filter('#location .crm-side__empty')->text());
-        self::assertSame('Noch keine Kontakte auf diesem Deal.', $crawler->filter('#kontakte .crm-side__empty')->text());
+        self::assertSame('Noch keine Kontakte bei dieser Location.', $crawler->filter('#kontakte .crm-side__empty')->text());
         self::assertCount(0, $crawler->filter('#kontakte .btn'));
     }
 
@@ -175,85 +173,6 @@ final class DealRecordTest extends WebTestCase
 
         self::assertResponseRedirects('/admin/crm/deals/'.$id, 303);
         self::assertSame(1, (int) $this->connection()->fetchOne('SELECT count(*) FROM crm_deals WHERE id = ?', [$id]));
-    }
-
-    public function test_a_contact_of_the_company_goes_on_the_deal(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        $deal = DealFactory::createOne(['company' => $company]);
-
-        $crawler = $this->client->request('GET', $this->url($deal));
-        $this->client->submit($crawler->filter('#link-contact-form')->form(), ['deal_contact[contact]' => $contact->id()]);
-
-        self::assertResponseRedirects('/admin/crm/deals/'.$deal->id().'#kontakte', 303);
-        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT count(*) FROM crm_deal_contacts WHERE deal_id = ? AND contact_id = ?', [$deal->id(), $contact->id()]));
-        self::assertSame(1, $this->auditRows(LinkDealContact::class));
-    }
-
-    public function test_the_form_refuses_a_contact_it_does_not_offer(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $deal = DealFactory::createOne();
-        $other = ContactFactory::createOne(['company' => CompanyFactory::createOne()]);
-
-        $crawler = $this->client->request('GET', $this->url($deal));
-        $form = $crawler->filter('#link-contact-form')->form();
-        $form->disableValidation()->setValues(['deal_contact[contact]' => $other->id()]);
-        $this->client->submit($form);
-
-        self::assertResponseRedirects('/admin/crm/deals/'.$deal->id().'#kontakte', 303);
-        self::assertSame(0, $this->auditRows(LinkDealContact::class));
-        $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Bitte einen Kontakt aus der Liste wählen.');
-    }
-
-    public function test_a_contact_comes_off_the_deal(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        $deal = DealFactory::createOne(['company' => $company]);
-        $this->link($deal->id(), $contact->id());
-
-        $crawler = $this->client->request('GET', $this->url($deal));
-        $this->client->submit($crawler->filter('#kontakte form.crm-side__form')->form());
-
-        self::assertResponseRedirects('/admin/crm/deals/'.$deal->id().'#kontakte', 303);
-        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT count(*) FROM crm_deal_contacts WHERE deal_id = ?', [$deal->id()]));
-        self::assertSame(1, $this->auditRows(UnlinkDealContact::class));
-    }
-
-    public function test_an_unlink_of_a_contact_not_on_the_deal_sends_no_command(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        $deal = DealFactory::createOne(['company' => $company]);
-        $this->link($deal->id(), $contact->id());
-
-        $crawler = $this->client->request('GET', $this->url($deal));
-        $form = $crawler->filter('#kontakte form.crm-side__form')->form();
-        $this->connection()->executeStatement('DELETE FROM crm_deal_contacts WHERE deal_id = ?', [$deal->id()]);
-        $this->client->submit($form);
-
-        self::assertResponseRedirects('/admin/crm/deals/'.$deal->id().'#kontakte', 303);
-        self::assertSame(0, $this->auditRows(UnlinkDealContact::class));
-    }
-
-    public function test_an_unlink_without_its_token_changes_nothing(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        $deal = DealFactory::createOne(['company' => $company]);
-        $this->link($deal->id(), $contact->id());
-
-        $this->client->request('POST', $this->url($deal).'/kontakte/'.$contact->id().'/entfernen');
-
-        self::assertResponseRedirects('/admin/crm/deals/'.$deal->id().'#kontakte', 303);
-        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT count(*) FROM crm_deal_contacts WHERE deal_id = ?', [$deal->id()]));
     }
 
     public function test_the_stage_form_moves_the_deal(): void
@@ -416,9 +335,8 @@ final class DealRecordTest extends WebTestCase
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $contacts = ContactFactory::createMany(3, ['company' => $company]);
+        ContactFactory::createMany(3, ['company' => $company]);
         $deal = DealFactory::createOne(['company' => $company, 'venue' => $venue, 'owner' => $owner]);
-        $this->link($deal->id(), $contacts[0]->id());
         TaskFactory::createOne(['deal' => $deal]);
 
         // The deal with its company, venue and contacts, the owners with the sidebar's badge, the stages, the timeline's
@@ -436,16 +354,6 @@ final class DealRecordTest extends WebTestCase
     {
         $crawler = $this->client->request('GET', $this->url($deal));
         $this->client->submit($crawler->filter('form.deal-stage-form')->form(['deal_stage[stage]' => $stage, 'deal_stage[lostReason]' => $reason ?? '']));
-    }
-
-    private function link(string $dealId, string $contactId): void
-    {
-        $this->connection()->insert('crm_deal_contacts', ['deal_id' => $dealId, 'contact_id' => $contactId]);
-    }
-
-    private function contactId(string $companyId, string $lastName): string
-    {
-        return (string) $this->connection()->fetchOne('SELECT id FROM crm_contacts WHERE company_id = ? AND last_name = ?', [$companyId, $lastName]);
     }
 
     private function auditRows(string $command): int

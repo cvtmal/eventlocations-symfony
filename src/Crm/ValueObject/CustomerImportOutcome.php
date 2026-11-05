@@ -12,19 +12,18 @@ final readonly class CustomerImportOutcome
 {
     private function __construct(
         public ?string $companyId,
-        public bool $emailTaken,
         public int $activities,
     ) {
     }
 
-    public static function created(string $companyId, bool $emailTaken, int $activities): self
+    public static function created(string $companyId, int $activities): self
     {
-        return new self($companyId, $emailTaken, $activities);
+        return new self($companyId, $activities);
     }
 
     public static function skipped(): self
     {
-        return new self(null, false, 0);
+        return new self(null, 0);
     }
 
     public function isSkipped(): bool

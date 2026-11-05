@@ -37,6 +37,39 @@
             {{ include('admin/components/_button.html.twig', {label: 'record.venues.link_submit'|trans({}, 'crm'), variant: 'primary', type: 'submit', attributes: {form: 'link-venue-form'}}, with_context = false) }}
         {% endblock %}
     {% endembed %}
+    {% embed 'admin/components/_modal.html.twig' with {
+        id: 'contact-new',
+        title: 'record.contacts.add_title'|trans({}, 'crm'),
+        close_label: 'record.contacts.close'|trans({}, 'crm'),
+        contact_form: contact_new_form,
+    } only %}
+        {% block body %}{{ include('admin/crm/company/_contact_form.html.twig', {form: contact_form, form_id: 'contact-new-form'}, with_context = false) }}{% endblock %}
+        {% block footer %}
+            <form method="dialog"><button class="btn">{{ 'record.contacts.cancel'|trans({}, 'crm') }}</button></form>
+            {{ include('admin/components/_button.html.twig', {label: 'record.contacts.save'|trans({}, 'crm'), variant: 'primary', type: 'submit', attributes: {form: 'contact-new-form'}}, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+    {% for contact in company.contacts %}
+        {% embed 'admin/components/_modal.html.twig' with {
+            id: 'contact-' ~ contact.id,
+            title: 'record.contacts.edit_title'|trans({}, 'crm'),
+            close_label: 'record.contacts.close'|trans({}, 'crm'),
+            contact_form: contact_forms[contact.id],
+            remove_action: path('admin_crm_companies_contacts_remove', {id: company.id, contactId: contact.id}),
+            remove_token: remove_token,
+            form_id: 'contact-' ~ contact.id ~ '-form',
+        } only %}
+            {% block body %}{{ include('admin/crm/company/_contact_form.html.twig', {form: contact_form, form_id: form_id}, with_context = false) }}{% endblock %}
+            {% block footer %}
+                <form class="crm-contact__remove" method="post" action="{{ remove_action }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token(remove_token) }}">
+                    {{ include('admin/components/_button.html.twig', {label: 'record.contacts.remove'|trans({}, 'crm'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                </form>
+                <form method="dialog"><button class="btn">{{ 'record.contacts.cancel'|trans({}, 'crm') }}</button></form>
+                {{ include('admin/components/_button.html.twig', {label: 'record.contacts.save'|trans({}, 'crm'), variant: 'primary', type: 'submit', attributes: {form: form_id}}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {% endfor %}
     {% if delete_form %}
         {% embed 'admin/components/_modal.html.twig' with {
             id: 'company-delete',
@@ -110,7 +143,8 @@
                 icon: 'plus',
                 variant: 'ghost',
                 size: 'sm',
-                href: path('admin_crm_contacts_new', {company: company.id}),
+                type: 'button',
+                attributes: {commandfor: 'contact-new', command: 'show-modal', 'aria-label': 'record.contacts.add_label'|trans({}, 'crm')},
             }, with_context = false) }}
         </div>
         <div class="card__body">
@@ -122,9 +156,18 @@
                         <li class="crm-side__item">
                             {{ include('admin/components/_avatar.html.twig', {initials: contact.initials}, with_context = false) }}
                             <span class="crm-side__text">
-                                <a class="crm-side__link" href="{{ path('admin_crm_contacts_show', {id: contact.id}) }}">{{ contact.fullName }}</a>
+                                <span class="crm-side__name">{{ contact.fullName }}</span>
                                 {% if contact.position %}<span class="crm-side__detail">{{ contact.position }}</span>{% endif %}
+                                {% if contact.email %}<a class="crm-side__detail crm-side__reach" href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
+                                {% if contact.phone %}<a class="crm-side__detail crm-side__reach" href="tel:{{ contact.phone|replace({' ': ''}) }}">{{ contact.phone }}</a>{% endif %}
                             </span>
+                            {{ include('admin/components/_button.html.twig', {
+                                label: 'record.contacts.edit'|trans({}, 'crm'),
+                                variant: 'ghost',
+                                size: 'sm',
+                                type: 'button',
+                                attributes: {commandfor: 'contact-' ~ contact.id, command: 'show-modal', 'aria-label': 'record.contacts.edit_label'|trans({name: contact.fullName}, 'crm')},
+                            }, with_context = false) }}
                         </li>
                     {% endfor %}
                 </ul>

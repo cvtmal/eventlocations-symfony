@@ -9,9 +9,9 @@ use App\Inquiries\ValueObject\MailStatus;
 use App\Inquiries\ValueObject\Occasion;
 
 /**
- * One inquiry in the inbox's detail pane. `venueId` is null once the venue is deleted, `contactId` once the couple is
- * erased; the inquiry itself outlives both. `venueNumber` is the inquiry's copy, so it stays after the venue: only
- * `venueId` says whether the edit page still exists.
+ * One inquiry in the inbox's detail pane. `venueId` is null once the venue is deleted; the inquiry itself outlives it.
+ * `venueNumber` is the inquiry's copy, so it stays after the venue: only `venueId` says whether the edit page still
+ * exists. The couple is no CRM contact (#55): `email` is where a reply goes.
  */
 final readonly class InquiryDetail
 {
@@ -30,7 +30,6 @@ final readonly class InquiryDetail
         public InquiryStatus $status,
         public MailStatus $venueMail,
         public MailStatus $guestMail,
-        public ?string $contactId,
         public \DateTimeImmutable $receivedAt,
     ) {
     }

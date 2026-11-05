@@ -13,8 +13,10 @@ use App\Crm\Exception\CompanyHasDeals;
 use App\Crm\Exception\CompanyNotFound;
 use App\Crm\Exception\VenueAlreadyLinked;
 use App\Crm\Exception\VenueNotFound;
+use App\Crm\Form\ContactData;
 use App\Crm\Form\LinkVenueData;
 use App\Crm\Form\LinkVenueType;
+use App\Crm\ReadModel\CompanyRecordContact;
 use App\Crm\ReadModel\CompanyRecordQuery;
 use App\Crm\ReadModel\DealCardQuery;
 use App\Crm\ReadModel\EmailRecipient;
@@ -28,6 +30,7 @@ use App\Shared\Translation\LocalizedRoutes;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -72,8 +75,11 @@ final class CompanyRecordController extends AbstractController
             'tasks' => $tasks->openOf(RecordKind::Company, $id),
             'deals' => $deals->forCompany($id),
             'link_form' => $this->linkForm($id)->createView(),
+            'contact_new_form' => CompanyContactsController::contactForm($this->forms, $this->generateUrl('admin_crm_companies_contacts_create', ['id' => $id]))->createView(),
+            'contact_forms' => $this->contactForms($id, $company->contacts),
             'delete_form' => $this->isGranted('ROLE_ADMIN') ? $this->deleteForm($id)->createView() : null,
             'unlink_token' => self::UNLINK_TOKEN,
+            'remove_token' => CompanyContactsController::REMOVE_TOKEN,
         ]);
     }
 
@@ -156,6 +162,24 @@ final class CompanyRecordController extends AbstractController
             'action' => $this->generateUrl('admin_crm_companies_link_venue', ['id' => $id]),
             'venue_url' => $this->generateUrl('admin_api_crm_venues'),
         ]);
+    }
+
+    /**
+     * The edit dialog of each contact on the card, prefilled from the record's own statement (no query of its own).
+     *
+     * @param list<CompanyRecordContact> $contacts
+     *
+     * @return array<string, FormView>
+     */
+    private function contactForms(string $id, array $contacts): array
+    {
+        $views = [];
+        foreach ($contacts as $contact) {
+            $action = $this->generateUrl('admin_crm_companies_contacts_edit', ['id' => $id, 'contactId' => $contact->id]);
+            $views[$contact->id] = CompanyContactsController::contactForm($this->forms, $action, $contact->id, ContactData::fromRecord($contact))->createView();
+        }
+
+        return $views;
     }
 
     /**

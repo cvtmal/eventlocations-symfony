@@ -82,7 +82,6 @@ final class EmailApiDeliveryFailureTest extends WebTestCase
             ['type_code' => 'email_sent', 'title' => 'Ihre Offerte', 'body' => 'Guten Tag', 'status' => 'failed'],
             $this->connection->fetchAssociative("SELECT type_code, title, body, payload->>'status' AS status FROM crm_activities WHERE id = ?", [$id]),
         );
-        self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_activity_contacts WHERE activity_id = ?', [$id]));
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_activity_companies WHERE activity_id = ?', [$id]));
         self::assertSame(
             '{"type": "email_sent"}',

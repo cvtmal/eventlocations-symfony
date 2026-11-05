@@ -12,7 +12,7 @@ use App\Crm\Repository\DealRepository;
 use App\Shared\Messenger\CommandHandlerInterface;
 
 /**
- * The database does the cascade (contacts SET NULL; venue links, timeline links, tasks CASCADE).
+ * The database does the cascade (contacts, venue links, timeline links, tasks CASCADE; #55).
  * The handler then deletes the entries the company was the last object of (D16), so no entry is
  * left on no timeline. A company with a deal stays: one admin click must not erase contract and
  * money history, and `fk_crm_deals_company_id` would answer a 500 (#28's D7).

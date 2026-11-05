@@ -189,7 +189,7 @@ server has no Node and no Sass, and pipes it through the gate. On the server:
 2. `bin/deploy` checks that the tarball is complete and that `.env.local` exists, then runs
    `app:prod:check-env` from the stage, against the real `.env.local`.
 3. Migrations run from the stage, while the old code is still live. That is safe because
-   migrations are additive.
+   migrations are additive. The one exception is #55, see §CRM contacts switch (#55).
 4. `rsync --delete` copies the stage over the app, keeping the four protected paths.
 5. In the app: the shell empties `var/cache/prod`, then `cache:warmup`, `app:geo:import-towns` and
    `app:http-cache:clear`.
@@ -247,7 +247,7 @@ There is no rollback. To go back, **revert the commit on `main`, let CI pass, an
 run always deploys the head of `main`, and the workflow has no input for an older commit.
 
 Migrations are never reverted, so the reverted code runs on the newer schema. That works because
-migrations are additive. If data itself is wrong, see [Backups and restore](#backups-and-restore).
+migrations are additive, except #55's (its own undo is in §CRM contacts switch (#55)). If data itself is wrong, see [Backups and restore](#backups-and-restore).
 
 ## `.env.local`
 
@@ -473,6 +473,212 @@ SQL
   commit does not land.
 - **The drop must not be deployed until the owner has seen 0 rows or decided about the rows.**
   Neon's point-in-time restore (§Restore production) is the undo for an unwanted drop.
+
+### CRM contacts switch (#55)
+
+#55 makes the CRM's contacts the contact card of their Location (`crm_companies`), and couples
+leave the CRM: an inquiry stays an Anfrage (`inquiries`, `crm_inquiry_links` and the `inquiry`
+entries keep every row), but no couple is a contact any more. The contact pages, the contact list,
+erase, the JSON export, the nightly couple purge and deal contacts are gone. One migration,
+`Version20261105193544`, moves the data:
+
+- couple contact rows are deleted;
+- the e-mail is unique per Location (`uk_crm_contacts_company_email`), no longer across the CRM;
+- a person is copied once onto a Location they belong on but are missing from (same e-mail, or
+  same names when there is none): the person of a deal contact link (E6) onto the deal's
+  Location, a person with entries on another Location (C6) onto that Location, and every active
+  manager onto their venue's Location with the position "Location-Manager";
+- a task on a contact moves to its Location; the tasks on nothing (F5, 18 staff to-dos written on
+  the task list) stay exactly as they are;
+- `crm_activity_contacts` and `crm_deal_contacts` are dropped, the one deal contact link of
+  2026-11-05 included;
+- `crm_contacts.kind`, `owner_id`, `crm_tasks.contact_id` and `crm_inquiry_links.contact_id` are
+  dropped, and `crm_contacts.company_id` becomes NOT NULL: deleting a Location deletes its
+  contacts.
+
+The migration guards itself. It runs in one transaction: a failed precondition or postcondition
+rolls the whole migration back, so production keeps the old schema and the old code.
+
+**1. Before the deploy (read-only).** In the main checkout, with `make up` running, as in §Google
+rating (#53) step 3. The guard counts are the migration's own queries, word for word, and the
+labels are those of its `#55 pre:` lines in the deploy log:
+
+```sh
+read -rs PROD_DATABASE_URL && export PROD_DATABASE_URL
+docker compose exec -T -e PROD_DATABASE_URL database sh -c 'psql "$PROD_DATABASE_URL"' <<'SQL'
+SELECT 'A6 companies with 2+ venues' AS metric, (WITH cv AS (SELECT company_id, count(*) AS venues FROM crm_company_venues GROUP BY company_id) SELECT count(*) FROM cv WHERE venues > 1) AS n
+UNION ALL SELECT 'V2 venues on 2+ companies', (SELECT count(*) FROM (SELECT venue_id FROM crm_company_venues GROUP BY venue_id HAVING count(*) > 1) x)
+UNION ALL SELECT 'C4 non-couple contacts without a company', (SELECT count(*) FROM crm_contacts WHERE kind <> 'couple' AND company_id IS NULL)
+UNION ALL SELECT 'C5 couples with a company', (SELECT count(*) FROM crm_contacts WHERE kind = 'couple' AND company_id IS NOT NULL)
+UNION ALL SELECT 'D4 staff entries on a couple', (SELECT count(*) FROM crm_activities a WHERE a.type_code <> 'inquiry' AND EXISTS (SELECT 1 FROM crm_activity_contacts l JOIN crm_contacts p ON p.id = l.contact_id WHERE l.activity_id = a.id AND p.kind = 'couple'))
+UNION ALL SELECT 'D6 inquiry entries with no company link', (SELECT count(*) FROM crm_activities a WHERE a.type_code = 'inquiry' AND NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id))
+UNION ALL SELECT 'E7 deal links to a couple', (SELECT count(*) FROM crm_deal_contacts dc JOIN crm_contacts p ON p.id = dc.contact_id WHERE p.kind = 'couple')
+UNION ALL SELECT 'T-couple tasks on a couple', (SELECT count(*) FROM crm_tasks t JOIN crm_contacts p ON p.id = t.contact_id WHERE p.kind = 'couple')
+UNION ALL SELECT 'C3 couples', (SELECT count(*) FROM crm_contacts WHERE kind = 'couple')
+UNION ALL SELECT 'C6 non-couple contacts with entries on another company', (SELECT count(*) FROM crm_contacts p WHERE p.kind <> 'couple' AND EXISTS (SELECT 1 FROM crm_activity_contacts l JOIN crm_activity_companies lc ON lc.activity_id = l.activity_id WHERE l.contact_id = p.id AND lc.company_id IS DISTINCT FROM p.company_id))
+UNION ALL SELECT 'E6 deal contact links', (SELECT count(*) FROM crm_deal_contacts)
+UNION ALL SELECT 'F1 tasks on a company', (SELECT count(*) FROM crm_tasks WHERE company_id IS NOT NULL)
+UNION ALL SELECT 'F2 tasks on a contact', (SELECT count(*) FROM crm_tasks WHERE contact_id IS NOT NULL)
+UNION ALL SELECT 'F4 tasks on a deal', (SELECT count(*) FROM crm_tasks WHERE deal_id IS NOT NULL)
+UNION ALL SELECT 'F5 tasks on nothing', (SELECT count(*) FROM crm_tasks WHERE num_nonnulls(company_id, contact_id, deal_id) = 0)
+UNION ALL SELECT 'I1 active manager access rows', (SELECT count(*) FROM portal_venue_access WHERE status = 'active')
+UNION ALL SELECT 'I2 managers with a CRM contact of the same e-mail', (SELECT count(*) FROM portal_users u WHERE EXISTS (SELECT 1 FROM crm_contacts p WHERE p.email = u.email))
+UNION ALL SELECT 'B2 venues without a company', (SELECT count(*) FROM venues v WHERE NOT EXISTS (SELECT 1 FROM crm_company_venues x WHERE x.venue_id = v.id))
+UNION ALL SELECT 'inquiries', (SELECT count(*) FROM inquiries)
+UNION ALL SELECT 'inquiry links', (SELECT count(*) FROM crm_inquiry_links)
+UNION ALL SELECT 'inquiry entries', (SELECT count(*) FROM crm_activities WHERE type_code = 'inquiry')
+UNION ALL SELECT 'entries', (SELECT count(*) FROM crm_activities)
+UNION ALL SELECT 'X0 entries with no link', (SELECT count(*) FROM crm_activities a WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id))
+UNION ALL SELECT 'tasks', (SELECT count(*) FROM crm_tasks)
+UNION ALL SELECT 'non-couple contacts', (SELECT count(*) FROM crm_contacts WHERE kind <> 'couple')
+UNION ALL SELECT 'audit rows', (SELECT count(*) FROM admin_audit_log);
+SQL
+```
+
+Then name the rows the deploy will copy, and check where the tasks on nothing come from, with the
+same command and this SQL:
+
+```sql
+-- E6: each deal contact link. on_deal_location false: the deploy copies the person onto the deal's Location.
+SELECT d.name AS deal, c.name AS deal_location, p.first_name, p.last_name, p.email, p.company_id = d.company_id AS on_deal_location
+FROM crm_deal_contacts dc
+JOIN crm_deals d ON d.id = dc.deal_id
+JOIN crm_companies c ON c.id = d.company_id
+JOIN crm_contacts p ON p.id = dc.contact_id;
+-- C6: each person with entries on another Location, and that Location. The deploy copies the person there.
+SELECT DISTINCT p.first_name, p.last_name, p.email, own.name AS own_location, other.name AS other_location
+FROM crm_contacts p
+JOIN crm_activity_contacts l ON l.contact_id = p.id
+JOIN crm_activity_companies lc ON lc.activity_id = l.activity_id
+JOIN crm_companies other ON other.id = lc.company_id
+LEFT JOIN crm_companies own ON own.id = p.company_id
+WHERE p.kind <> 'couple' AND lc.company_id IS DISTINCT FROM p.company_id;
+-- I1: each active manager and their venue's Location. already_there false: the deploy adds them as "Location-Manager".
+SELECT u.email, c.name AS location, EXISTS (SELECT 1 FROM crm_contacts p WHERE p.company_id = cv.company_id AND p.email = u.email) AS already_there
+FROM portal_venue_access a
+JOIN portal_users u ON u.id = a.portal_user_id
+JOIN crm_company_venues cv ON cv.venue_id = a.venue_id
+JOIN crm_companies c ON c.id = cv.company_id
+WHERE a.status = 'active';
+-- F5: where the tasks on nothing come from. Expected: one row, on_kind empty, count = F5.
+SELECT a.changes->>'on' AS on_kind, count(*)
+FROM crm_tasks t
+JOIN admin_audit_log a ON a.subject_type = 'task' AND a.subject_id = t.id::text AND a.command = 'App\Crm\Command\CreateTask'
+WHERE num_nonnulls(t.company_id, t.contact_id, t.deal_id) = 0
+GROUP BY 1;
+SELECT count(*) AS f5_written_by_staff FROM crm_tasks WHERE num_nonnulls(company_id, contact_id, deal_id) = 0 AND created_by_id IS NOT NULL;
+```
+
+Expected on 2026-11-05 (the owner's counts on Neon). The first eight rows
+are the guards: any of them above 0 stops the deploy.
+
+| Row | Expected | Above the expected value |
+|---|---|---|
+| A6 companies with 2+ venues | 0 | Stops the deploy. Tell the lead: that Location must be split first (#56's business) |
+| V2 venues on 2+ companies | 0 (a unique key forbids it) | Stops the deploy. Tell the lead |
+| C4 non-couple contacts without a company | 0 | Stops the deploy. Staff attach those people to a Location or delete them in the old contact list, then deploy again |
+| C5 couples with a company | 0 | Stops the deploy. Tell the lead: deleting those couples would delete staff work |
+| D4 staff entries on a couple | 0 | Same as C5 |
+| D6 inquiry entries with no company link | 0 | Stops the deploy. Tell the lead: the switch would delete those Anfrage entries |
+| E7 deal links to a couple | 0 | Same as C5 |
+| T-couple tasks on a couple | 0 | Same as C5 |
+| C3 couples | 0 | Never stops it: the deploy deletes those couples, their Anfragen stay |
+| C6 non-couple contacts with entries on another company | 1 | More people are copied. The second query names them |
+| E6 deal contact links | 1 | More links are dropped, each person copied onto the deal's Location if missing there. The first query names them |
+| F1, F2, F4 tasks on a company, contact, deal | 0, 0, 0 | F2 above 0: those tasks move to the contact's Location |
+| F5 tasks on nothing | 18 | Staff wrote more to-dos; they stay untouched |
+| I1 active manager access rows | 3 | More managers; each gets a row on their Location unless already there (third query) |
+| I2 managers with a CRM contact of the same e-mail | 1 | Informational |
+| B2 venues without a company | 0 | A manager of such a venue gets no row; staff link the venue to a Location first |
+| inquiries, inquiry links, inquiry entries | not measured | Must stay unchanged by the deploy |
+| entries | 1204 | After the deploy: entries − X0 |
+| X0 entries with no link | not measured, expected 0 | Above 0: those entries were already invisible; the deploy deletes them |
+| tasks, non-couple contacts | 18, 1255 | The postconditions start from these |
+| audit rows | not measured (1505 on a company, 1 on a contact) | Must stay unchanged by the deploy |
+
+The F5 query should give one row, `on_kind` empty, with the F5 count, and `f5_written_by_staff`
+the same count. Another result does not stop the deploy (the migration leaves those tasks alone);
+tell the lead.
+
+**2. What the deploy prints.**
+
+- **Every guard 0:** the deploy goes on. Its log shows the `#55 pre:` lines with the numbers above,
+  for example `[notice] #55 pre: C6 non-couple contacts with entries on another company = 1`.
+- **A guard above 0:** the migration aborts with one message that names every failing row, for
+  example
+  `#55 precondition failed: C4 = 2 (non-couple contacts without a company); D4 = 1 (staff entries on a couple). See docs/operations.md "CRM contacts switch (#55)".`,
+  then `bin/deploy` says `the migration failed, the app is unchanged`. Nothing of #55 has
+  changed: the old code serves on the old schema. Migrations before #55 in the same release stay
+  applied, as always. Do what the table says for the named rows, tell the lead, and deploy again.
+- **A postcondition fails:** `#55 postcondition failed: <check>: expected <n>, got <m>[; <check>: …]. Nothing was changed. See docs/operations.md "CRM contacts switch (#55)".`
+  The migration did not do what it promised on this data. Same state as above; tell the lead, do
+  not retry.
+
+**3. The deploy window.** This migration is the one exception to "migrations are additive"
+(§Deploy and purge, step 3): it drops tables and columns the old code still reads. For the seconds
+between the migration and the sync, the old code meets the new schema: CRM pages can fail, and an
+inquiry sent then is saved but not ingested. Deploy on a quiet evening. A manager confirmed in that
+window gets no row on their Location: staff add the row on the Location's contact card, or remove
+and add the manager on the panel.
+
+**4. After the deploy.** In the app directory over SSH, ingest whatever the window missed (the
+night's `cron-daily` would do it too):
+
+```sh
+/usr/local/php85/bin/php bin/console app:crm:backfill-inquiries
+```
+
+Then, read-only, from the main checkout as in step 1:
+
+```sql
+SELECT 'migration head' AS metric, (SELECT max(version) FROM doctrine_migration_versions) AS n
+UNION ALL SELECT 'contacts', (SELECT count(*) FROM crm_contacts)::text
+UNION ALL SELECT 'contacts without a Location', (SELECT count(*) FROM crm_contacts WHERE company_id IS NULL)::text
+UNION ALL SELECT 'contacts with position Location-Manager', (SELECT count(*) FROM crm_contacts WHERE position = 'Location-Manager')::text
+UNION ALL SELECT 'active managers missing on their Location', (SELECT count(*) FROM portal_venue_access a JOIN crm_company_venues cv ON cv.venue_id = a.venue_id JOIN portal_users u ON u.id = a.portal_user_id WHERE a.status = 'active' AND NOT EXISTS (SELECT 1 FROM crm_contacts p WHERE p.company_id = cv.company_id AND p.email = u.email))::text
+UNION ALL SELECT 'tasks', (SELECT count(*) FROM crm_tasks)::text
+UNION ALL SELECT 'tasks on nothing', (SELECT count(*) FROM crm_tasks WHERE num_nonnulls(company_id, deal_id) = 0)::text
+UNION ALL SELECT 'entries', (SELECT count(*) FROM crm_activities)::text
+UNION ALL SELECT 'entries with no link', (SELECT count(*) FROM crm_activities a WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id))::text
+UNION ALL SELECT 'inquiries', (SELECT count(*) FROM inquiries)::text
+UNION ALL SELECT 'inquiry links', (SELECT count(*) FROM crm_inquiry_links)::text
+UNION ALL SELECT 'inquiry entries', (SELECT count(*) FROM crm_activities WHERE type_code = 'inquiry')::text
+UNION ALL SELECT 'audit rows', (SELECT count(*) FROM admin_audit_log)::text
+UNION ALL SELECT 'H1 audit rows on company', (SELECT count(*) FROM admin_audit_log WHERE subject_type = 'company')::text
+UNION ALL SELECT 'H2 audit rows on contact', (SELECT count(*) FROM admin_audit_log WHERE subject_type = 'contact')::text
+UNION ALL SELECT 'old tables left', (SELECT num_nonnulls(to_regclass('crm_activity_contacts'), to_regclass('crm_deal_contacts')))::text
+UNION ALL SELECT 'old columns left', (SELECT count(*) FROM information_schema.columns WHERE (table_name, column_name) IN (('crm_contacts', 'kind'), ('crm_contacts', 'owner_id'), ('crm_tasks', 'contact_id'), ('crm_inquiry_links', 'contact_id')))::text
+UNION ALL SELECT 'K2 Liechtenstein venues on a Location', (SELECT count(*) FROM venues v JOIN crm_company_venues x ON x.venue_id = v.id WHERE v.canton_code = 'li')::text;
+```
+
+| Row | Expected |
+|---|---|
+| migration head | `DoctrineMigrations\Version20261105193544` |
+| contacts | `non-couple contacts` of the deploy log plus the copies: 1255 + 1 (C6) + 0–1 (E6) + 0–3 (managers), so 1256–1260 with the 2026-11-05 numbers. The step 1 queries say which copies to expect: E6 rows with `on_deal_location` false, the C6 rows, I1 rows with `already_there` false |
+| contacts without a Location, active managers missing on their Location, entries with no link, old tables left, old columns left | 0 |
+| contacts with position Location-Manager | at least the managers copied |
+| tasks | `tasks` of the deploy log minus T-couple (18) |
+| tasks on nothing | F5 of the deploy log (18) |
+| entries | `entries` minus X0 of the deploy log (1204) |
+| inquiries, inquiry links, inquiry entries, audit rows | as in the deploy log |
+| H1, H2 audit rows on company, on contact | as before the deploy (1505 and 1 on 2026-11-05, plus staff edits since) |
+| K2 Liechtenstein venues on a Location | 4 |
+
+Finally, check that the E6 and C6 people from step 1 sit on both Locations now (put in the e-mails
+the step 1 queries printed; an e-mail-less person: look them up by name on the Location's card):
+
+```sql
+SELECT c.name AS location, p.first_name, p.last_name, p.email, p.position
+FROM crm_contacts p JOIN crm_companies c ON c.id = p.company_id
+WHERE p.email IN ('<e6 e-mail>', '<c6 e-mail>')
+ORDER BY p.email, c.name;
+```
+
+**Undo.** Revert the #55 commits on `main` and wait for CI. Then restore Neon to just before the
+deploy (§Restore production) and run the deploy at once. The migration's `down()` restores the
+schema only: the deleted couples, the entry and deal links, the moved tasks' contact, `kind` and
+`owner_id` come back only from the restore. Reverting the code alone does not work: the old code
+needs the old schema.
 
 ## Content import
 
@@ -755,7 +961,7 @@ Enter the three lines of `deploy/crontab.txt` in the panel's Cronjob Manager. Al
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, couple purge, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
 
 The two cache jobs share a lock, `var/cache-clear.lock`. The midnight clear waits up to 60 s for it,
 and the guard skips a tick when it is held.
@@ -770,7 +976,7 @@ prints nothing, so every mail is worth reading.
 |---|---|---|
 | `cron-daily: inquiries-purge failed`, or `pool-prune` | The retention promise in the privacy text is at risk. Often Neon was unreachable. | Run `sh bin/cron-daily` in the app directory. If it fails again, read the error in the mail. |
 | `cron-daily: staging-sweep failed`, `sessions-sweep`, or `lock-sweep` | The sweep could not delete. `bin/cron-daily` creates its directories itself, so a missing directory is not the cause. | Read the step's own output in the mail, fix that, and run `sh bin/cron-daily` in the app directory |
-| `cron-daily: crm-purge failed`, or `crm-backfill`, with lines `<id>: <class>` | One couple could not be erased, or one inquiry could not be ingested. The line names the class only. | Nothing at first: the next night retries it. If the same id comes back, read the class and check that row. A `crm-backfill` line with a count only (`1 inquiries ingested, 0 failed.`) and no "failed" line is a repaired inquiry, not an error. |
+| `cron-daily: crm-backfill failed`, with lines `<id>: <class>` | One inquiry could not be ingested. The line names the class only. | Nothing at first: the next night retries it. If the same id comes back, read the class and check that row. A `crm-backfill` line with a count only (`1 inquiries ingested, 0 failed.`) and no "failed" line is a repaired inquiry, not an error. |
 | `cron-daily: stats-ingest failed` | The day files were not loaded. Often Neon was unreachable. Nothing is lost: the files stay in `var/stats/spool`. | Nothing at first: the next night or the Statistik button loads them. If it fails again, see [Statistik](#statistik). |
 | `<id> venue <n> since <time> UTC` | An inquiry stayed `pending`: its process died, and the venue may have no mail | See below |
 | `cron-midnight: the cache lock stayed busy for 60 s` | A guard run held the lock | If the next night is clean, nothing. A lock older than 10 minutes is taken over by itself. |

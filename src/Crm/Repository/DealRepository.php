@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Crm\Repository;
 
 use App\Crm\Entity\Deal;
-use App\Crm\Entity\DealContact;
 use App\Crm\Exception\DealNotFound;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
@@ -74,42 +73,18 @@ class DealRepository extends ServiceEntityRepository
         );
     }
 
-    /**
-     * @return list<DealContact>
-     */
-    public function contactLinksOf(string $dealId): array
-    {
-        return $this->getEntityManager()->getRepository(DealContact::class)->findBy(['deal' => $dealId]);
-    }
-
-    public function hasContact(string $dealId, string $contactId): bool
-    {
-        return (bool) $this->getEntityManager()->getConnection()->fetchOne(
-            'SELECT EXISTS (SELECT 1 FROM crm_deal_contacts WHERE deal_id = ? AND contact_id = ?)',
-            [$dealId, $contactId],
-        );
-    }
-
     public function add(Deal $deal): void
     {
         $this->getEntityManager()->persist($deal);
     }
 
     /**
-     * Deletes the row with SQL and lets the database cascade (contact links, timeline links, tasks; a renewal
+     * Deletes the row with SQL and lets the database cascade (timeline links, tasks; a renewal
      * keeps standing, SET NULL). Not `remove()`: a managed task that still points at a removed deal would fail the
      * next flush.
      */
     public function delete(string $id): void
     {
         $this->getEntityManager()->getConnection()->executeStatement('DELETE FROM crm_deals WHERE id = ?', [$id]);
-    }
-
-    public function unlinkContact(string $dealId, string $contactId): void
-    {
-        $this->getEntityManager()->getConnection()->executeStatement(
-            'DELETE FROM crm_deal_contacts WHERE deal_id = ? AND contact_id = ?',
-            [$dealId, $contactId],
-        );
     }
 }

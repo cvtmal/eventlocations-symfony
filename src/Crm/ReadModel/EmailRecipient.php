@@ -32,12 +32,4 @@ final readonly class EmailRecipient
 
         return $recipients;
     }
-
-    /**
-     * @return list<self>
-     */
-    public static function ofContact(ContactRecord $contact): array
-    {
-        return null === $contact->email ? [] : [new self($contact->id, $contact->fullName(), $contact->email)];
-    }
 }

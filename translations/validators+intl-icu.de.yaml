@@ -120,8 +120,8 @@ crm:
     link_venue:
         required: Bitte einen Eintrag aus der Liste wählen.
     activity:
-        kind: Diese Aktivität gehört zu einer Location oder einem Kontakt.
-        record: Diese Aktivität gehört zu einer Location oder einem Kontakt.
+        kind: Diese Aktivität gehört zu einer Location oder einem Deal.
+        record: Diese Aktivität gehört zu einer Location oder einem Deal.
         type: Bitte eine Art aus der Liste wählen.
         occurred_at: Bitte ein gültiges Datum mit Uhrzeit eingeben.
     task:

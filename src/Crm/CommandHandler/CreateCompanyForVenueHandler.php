@@ -8,36 +8,30 @@ use App\Crm\Command\CreateCompanyForVenue;
 use App\Crm\Entity\Company;
 use App\Crm\Entity\CompanyVenue;
 use App\Crm\Entity\Contact;
-use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\Repository\CompanyVenueRepository;
-use App\Crm\Repository\ContactRepository;
 use App\Crm\ValueObject\BootstrapOutcome;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\ContactEmail;
-use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\PropertyValue;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Uid\EntityId;
 use App\Venues\Entity\Venue;
 use App\Venues\ReadModel\VenueContactFacts;
 use App\Venues\ReadModel\VenueContactFactsQuery;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Takes the venue's advisory lock (shared with LinkVenue) before it looks for a link, so a re-run, a
  * second tab or a staff link cannot give a venue two companies. Only reads the venue, so
- * `cms_edited_at` stays. A taken address is left out of the contact rather than failing the venue;
- * under concurrency the unique key decides, mapped to ContactEmailTaken by flushing here, so the
- * venue is reported as failed and a second try leaves the address out.
+ * `cms_edited_at` stays. The contact is the first row of a brand-new Location, so its address can
+ * never be taken (the unique key is per Location, #55).
  */
 final class CreateCompanyForVenueHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly VenueContactFactsQuery $venues,
         private readonly CompanyVenueRepository $links,
-        private readonly ContactRepository $contacts,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -61,24 +55,13 @@ final class CreateCompanyForVenueHandler implements CommandHandlerInterface
 
         $person = PropertyValue::canonical($venue->contactPerson);
         if (null === $person) {
-            return BootstrapOutcome::created($company->id(), false, false);
+            return BootstrapOutcome::created($company->id(), false);
         }
 
-        $email = ContactEmail::normalise($venue->inquiryEmail);
-        $emailTaken = null !== $email && $this->contacts->emailTaken($email);
-        $contactEmail = $emailTaken ? null : $email;
         [$firstName, $lastName] = self::split($person);
-        $this->em->persist(new Contact(EntityId::generate(), $firstName, $lastName, ContactKind::VenueContact, $company, $contactEmail));
+        $this->em->persist(new Contact(EntityId::generate(), $company, $firstName, $lastName, ContactEmail::normalise($venue->inquiryEmail)));
 
-        if (null !== $contactEmail) {
-            try {
-                $this->em->flush();
-            } catch (UniqueConstraintViolationException) {
-                throw ContactEmailTaken::create();
-            }
-        }
-
-        return BootstrapOutcome::created($company->id(), true, $emailTaken);
+        return BootstrapOutcome::created($company->id(), true);
     }
 
     private static function address(VenueContactFacts $venue): ?string

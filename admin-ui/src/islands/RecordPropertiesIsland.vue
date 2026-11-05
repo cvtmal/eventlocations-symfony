@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import PropertyRow from '../crm/PropertyRow.vue';
 
-// The property card of a company or contact record (D10): one row per field, each saving on its own. A save
+// The property card of a company or deal record (D10): one row per field, each saving on its own. A save
 // also dispatches `crm:property-saved` ({name, value, display}) from the card, so the page can follow a rename.
 defineProps({
     url: { type: String, required: true },

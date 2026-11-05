@@ -21,19 +21,13 @@ company:
         notes: Notizen
 
 contact:
-    kind:
-        venue_contact: Location-Kontakt
-        couple: Brautpaar
-        other: Andere
     property:
         first_name: Vorname
         last_name: Nachname
         email: E-Mail
         phone: Telefon
         position: Position
-        kind: Art
         company: Location
-        owner: Zuständig
 
 api:
     stale: Dieses Feld wurde inzwischen geändert. Bitte die Seite neu laden.
@@ -68,7 +62,6 @@ properties:
 nav:
     section: CRM
     companies: Locations
-    contacts: Kontakte
     deals: Deals
     inquiries: Anfragen
     tasks: Aufgaben
@@ -76,7 +69,6 @@ nav:
 
 search:
     companies: Locations
-    contacts: Kontakte
     deals: Deals
 
 flash:
@@ -84,6 +76,7 @@ flash:
 
 list:
     export: CSV exportieren
+    export_contacts: Kontakte exportieren
     companies:
         title: Locations
         new: Location erfassen
@@ -97,19 +90,6 @@ list:
             owner: Zuständig
             venues: Einträge
             created: Erstellt
-    contacts:
-        title: Kontakte
-        new: Kontakt erfassen
-        table_label: Kontakte
-        empty:
-            title: Keine Kontakte
-            text: Kein Kontakt passt zu diesen Filtern.
-        column:
-            name: Name
-            kind: Art
-            company: Location
-            email: E-Mail
-            owner: Zuständig
     deals:
         title: Deals
         new: Deal
@@ -129,16 +109,13 @@ list:
             owner: Zuständig
     filter:
         search: Suchen
-        search_companies: Location suchen …
-        search_contacts: Name oder E-Mail suchen …
+        search_companies: Location, Kontakt oder E-Mail suchen …
         search_deals: Deal oder Location suchen …
         submit: Filtern
         reset: Filter zurücksetzen
         invalid: Diese Filter sind ungültig. Gezeigt wird die ungefilterte Liste.
         stage: Phase
         all_stages: Alle Phasen
-        kind: Art
-        all_kinds: Alle Arten
         owner: Zuständig
         all_owners: Alle Zuständigen
         owner_none: Ohne Zuständige
@@ -152,7 +129,6 @@ list:
         close: 'Abschluss: {label}'
         search: 'Suche: {q}'
         stage: 'Phase: {label}'
-        kind: 'Art: {label}'
         owner: 'Zuständig: {label}'
         remove: '{label} entfernen'
     pagination:
@@ -172,22 +148,17 @@ create:
         title: Location erfassen
         card: Neue Location
         intro: Name genügt. Alles Weitere lässt sich danach auf der Seite der Location ergänzen.
-    contact:
-        title: Kontakt erfassen
-        card: Neuer Kontakt
-        intro: Nachname genügt. Alles Weitere lässt sich danach auf der Kontaktseite ergänzen.
     deal:
         title: Deal erfassen
         card: Neuer Deal
         company_card: Location wählen
-        intro: Ein Deal gehört zu einer Location. Wähle sie zuerst, ihre Einträge und Kontakte stehen dann zur Auswahl.
+        intro: Ein Deal gehört zu einer Location. Wähle sie zuerst, ihre Einträge stehen dann zur Auswahl.
         company: Location
         company_of: 'Location: {name}'
         next: Weiter
         tier_none: Kein Tier
         venue_none: Kein Eintrag
-        contacts: Kontakte
-        name_help: Zum Beispiel «Premium 2027». Bitte keine Personennamen, denn der Deal bleibt bestehen, wenn ein Kontakt gelöscht wird.
+        name_help: Zum Beispiel «Premium 2027».
     submit: Erfassen
     cancel: Abbrechen
     owner_none: Niemand
@@ -195,7 +166,6 @@ create:
         website: Mit «https://», zum Beispiel https://www.example.ch
     flash:
         company: 'Location «{name}» erfasst.'
-        contact: 'Kontakt «{name}» erfasst.'
         deal: 'Deal «{name}» erfasst.'
 
 record:
@@ -231,35 +201,36 @@ record:
         title: Kontakte
         add: Hinzufügen
         add_label: Kontakt bei dieser Location erfassen
+        add_title: Kontakt erfassen
         empty: Noch keine Kontakte.
-    company:
-        title: Location
-        empty: Keiner Location zugeordnet.
+        edit: Bearbeiten
+        edit_label: '{name} bearbeiten'
+        edit_title: Kontakt bearbeiten
+        save: Speichern
+        cancel: Abbrechen
+        close: Schliessen
+        remove: Entfernen
+        flash:
+            created: 'Kontakt «{name}» erfasst.'
+            changed: 'Kontakt «{name}» gespeichert.'
+            unchanged: Nichts geändert.
+            removed: 'Kontakt «{name}» entfernt.'
+            invalid: 'Kontakt nicht gespeichert: Nachname fehlt oder eine Angabe ist ungültig.'
+            email_taken: Diese E-Mail-Adresse steht schon bei einem Kontakt dieser Location.
     delete:
         action: Location löschen
         title: Location löschen
-        text: '«{name}» wird gelöscht. Kontakte bleiben ohne Location erhalten, Verknüpfungen zu Einträgen und Aufgaben werden entfernt.'
+        text: '«{name}» wird gelöscht, samt ihren Kontakten. Verknüpfungen zu Einträgen und Aufgaben werden entfernt.'
         confirm: Löschen
         cancel: Abbrechen
         close: Schliessen
         flash: 'Location «{name}» gelöscht.'
         has_deals: Diese Location hat Deals und lässt sich nicht löschen. Bitte zuerst die Deals löschen.
-    export:
-        action: Exportieren
-    erase:
-        action: Kontakt löschen
-        title: Kontakt löschen
-        text: '«{name}» wird endgültig gelöscht, samt Aufgaben und Aktivitäten im Verlauf. Aktivitäten, die auch bei der Location stehen, bleiben dort ohne Inhalt bestehen.'
-        copies: Steht dieselbe E-Mail-Adresse bei der Location, wird sie dort ebenfalls entfernt. Eine Kopie bei einem verknüpften Eintrag (Kontaktperson, Anfrage-E-Mail) bleibt bestehen und muss von Hand im CMS entfernt werden.
-        confirm: Löschen
-        cancel: Abbrechen
-        close: Schliessen
-        flash: Kontakt gelöscht.
 
 bootstrap:
     action: "{count, plural, one {Location aus # Eintrag anlegen} other {Locations aus # Einträgen anlegen}}"
     flash:
-        done: "{companies, plural, one {# Location} other {# Locations}} und {contacts, plural, one {# Kontakt} other {# Kontakte}} angelegt. Ohne Kontaktperson: {without}. E-Mail bereits vergeben: {taken}. Einträge mit gleicher Anfrage-E-Mail: {shared}. Übersprungen: {skipped}. Fehlgeschlagen: {failed}. Noch offen: {remaining}."
+        done: "{companies, plural, one {# Location} other {# Locations}} und {contacts, plural, one {# Kontakt} other {# Kontakte}} angelegt. Ohne Kontaktperson: {without}. Einträge mit gleicher Anfrage-E-Mail: {shared}. Übersprungen: {skipped}. Fehlgeschlagen: {failed}. Noch offen: {remaining}."
         failures: "Nicht angelegt: {failures}"
 
 panel:
@@ -277,7 +248,6 @@ panel:
     flash:
         created: Location angelegt.
         already: Dieser Eintrag hat bereits eine Location.
-        email_taken: Location nicht angelegt, die E-Mail-Adresse wurde eben einem anderen Kontakt zugewiesen. Bitte nochmals versuchen.
 
 deal:
     stage:
@@ -338,7 +308,7 @@ deal:
     renew:
         action: Verlängern
         title: Deal verlängern
-        text: Ein neuer Deal für die nächste Vertragsperiode entsteht in der Phase «Neu». Location, Eintrag, Tier, Wert, Zuständige und Kontakte werden übernommen.
+        text: Ein neuer Deal für die nächste Vertragsperiode entsteht in der Phase «Neu». Location, Eintrag, Tier, Wert und Zuständige werden übernommen.
         confirm: Verlängern
         cancel: Abbrechen
         close: Schliessen
@@ -369,19 +339,7 @@ deal:
             empty: Kein Eintrag gewählt.
         contacts:
             title: Kontakte
-            add: Hinzufügen
-            add_title: Kontakt hinzufügen
-            field: Kontakt
-            submit: Hinzufügen
-            cancel: Abbrechen
-            close: Schliessen
-            empty: Noch keine Kontakte auf diesem Deal.
-            unlink: '{name} von diesem Deal lösen'
-            flash:
-                linked: Kontakt hinzugefügt.
-                unlinked: Kontakt gelöst.
-                invalid: Bitte einen Kontakt aus der Liste wählen.
-                another_company: Dieser Kontakt gehört inzwischen zu einer anderen Location.
+            empty: Noch keine Kontakte bei dieser Location.
         delete:
             action: Deal löschen
             title: Deal löschen
@@ -519,7 +477,6 @@ task:
     invoice_title: Rechnung stellen
     object:
         company: Location
-        contact: Kontakt
         deal: Deal
     list:
         title: Aufgaben
@@ -546,7 +503,7 @@ task:
                 text: Offene Aufgaben mit einem vergangenen Datum erscheinen hier.
             alle:
                 title: Noch keine Aufgaben
-                text: Erfasse hier oder auf einer Location oder einem Kontakt die erste Aufgabe.
+                text: Erfasse hier oder auf einer Location oder einem Deal die erste Aufgabe.
     form:
         heading: Aufgabe erfassen
         title: Aufgabe
@@ -594,7 +551,7 @@ inquiry:
     detail:
         label: Anfrage
         for: Anfrage für
-        open_contact: Kontakt öffnen
+        reply: Per E-Mail antworten
         mark_done: Als erledigt markieren
         occasion: Anlass
         guests: Anzahl Gäste

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Crm;
 
-use App\Crm\Command\EraseContact;
 use App\Crm\Command\IngestInquiry;
-use App\Crm\ValueObject\InquiryStatus;
+use App\Factory\CompanyFactory;
 use App\Factory\InquiryFactory;
+use App\Factory\VenueFactory;
 use App\Inquiries\Entity\Inquiry;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use Doctrine\DBAL\Exception\DriverException;
@@ -40,7 +40,7 @@ final class BackfillInquiriesCommandTest extends KernelTestCase
         self::assertSame('1 inquiries ingested, 0 failed.', trim($output));
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_inquiry_links WHERE inquiry_id = ?', $missed->id()));
         self::assertSame(2, $this->rows('SELECT count(*) FROM crm_inquiry_links'));
-        self::assertSame(2, $this->rows('SELECT count(*) FROM crm_contacts'));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts'));
         self::assertSame(2, $this->rows('SELECT count(*) FROM crm_activities'));
     }
 
@@ -70,7 +70,6 @@ final class BackfillInquiriesCommandTest extends KernelTestCase
             $this->lines($output),
         );
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_inquiry_links WHERE inquiry_id = ?', $failing->id()));
-        self::assertSame(0, $this->rows("SELECT count(*) FROM crm_contacts WHERE email = 'failing@example.ch'"));
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_inquiry_links WHERE inquiry_id = ?', $fine->id()));
 
         $this->connection->executeStatement('ALTER TABLE crm_inquiry_links DROP CONSTRAINT test_refused_inquiries');
@@ -84,8 +83,8 @@ final class BackfillInquiriesCommandTest extends KernelTestCase
     public function test_a_failure_inside_the_handler_is_named_by_its_own_class(): void
     {
         $failing = $this->inquiry('failing@example.ch');
-        // The handler's lookup by e-mail fails, unlike a flush, which the bus runs after the handler and does not wrap.
-        $this->connection->executeStatement('ALTER TABLE crm_contacts RENAME COLUMN email TO test_email');
+        // The handler's Location lookup fails, unlike a flush, which the bus runs after the handler and does not wrap.
+        $this->connection->executeStatement('ALTER TABLE crm_company_venues RENAME COLUMN venue_id TO test_venue_id');
 
         [$status, $output] = $this->backfill();
 
@@ -108,28 +107,15 @@ final class BackfillInquiriesCommandTest extends KernelTestCase
         );
     }
 
-    public function test_after_an_erasure_the_link_stays_empty_and_the_run_brings_nobody_back(): void
-    {
-        $inquiry = $this->inquiry('erased@example.ch');
-        $this->dispatch(new IngestInquiry($inquiry->id()));
-        $contactId = (string) $this->connection->fetchOne('SELECT contact_id FROM crm_inquiry_links');
-        $this->em->clear();
-        $this->dispatch(new EraseContact($contactId));
-
-        [$status, $output] = $this->backfill();
-
-        self::assertSame(Command::SUCCESS, $status);
-        self::assertSame('', $output);
-        self::assertSame(
-            ['inquiry_id' => $inquiry->id(), 'contact_id' => null, 'activity_id' => null, 'status' => InquiryStatus::New->value],
-            $this->connection->fetchAssociative('SELECT inquiry_id, contact_id, activity_id, status FROM crm_inquiry_links'),
-        );
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts'));
-    }
-
+    /**
+     * On a venue with a Location, so the ingest writes an entry as well as the link row.
+     */
     private function inquiry(string $email, string $createdAt = '2026-10-01 10:00:00 UTC'): Inquiry
     {
-        return InquiryFactory::createOne(['email' => $email, 'createdAt' => new \DateTimeImmutable($createdAt)]);
+        $venue = VenueFactory::new()->withContact()->create();
+        CompanyFactory::new()->withVenues($venue)->create();
+
+        return InquiryFactory::createOne(['email' => $email, 'createdAt' => new \DateTimeImmutable($createdAt), 'venue' => $venue]);
     }
 
     /**

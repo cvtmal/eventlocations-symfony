@@ -1,6 +1,7 @@
 {#
     One inquiry in full. Include with `with_context = false`: detail (InquiryDetail), return_to (a path under `/admin/`).
-    A venue that is gone stays as a name, an erased couple's contact has no link. The forms post to
+    A venue that is gone stays as a name; "Per E-Mail antworten" writes to the couple's address (#55: a couple is no CRM
+    contact). The forms post to
     `InquiryStatusController`, the resend form under the pills to `InquiryResendController`.
 #}
 <article class="card crm-inbox__detail" id="anfrage-detail" aria-label="{{ 'inquiry.detail.label'|trans({}, 'crm') }}">
@@ -13,8 +14,8 @@
             </span>
         </div>
         <div class="crm-inbox__actions">
-            {% if detail.contactId %}
-                {{ include('admin/components/_button.html.twig', {label: 'inquiry.detail.open_contact'|trans({}, 'crm'), href: path('admin_crm_contacts_show', {id: detail.contactId})}, with_context = false) }}
+            {% if detail.email %}
+                {{ include('admin/components/_button.html.twig', {label: 'inquiry.detail.reply'|trans({}, 'crm'), href: 'mailto:' ~ detail.email}, with_context = false) }}
             {% endif %}
             {% if detail.status.value != 'done' %}
                 <form method="post" action="{{ path('admin_crm_inquiries_status', {id: detail.id}) }}">

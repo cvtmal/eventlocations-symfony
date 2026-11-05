@@ -16,7 +16,7 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * The CRM's groups in the global search (CRM-6, D20): below the venues, folded, and with a link to
- * the record.
+ * the record. A contact has no group since #55: its name or e-mail finds its Location.
  */
 final class SearchProvidersTest extends WebTestCase
 {
@@ -35,7 +35,7 @@ final class SearchProvidersTest extends WebTestCase
         ]], $this->searchGroups('zuercher'));
     }
 
-    public function test_an_editor_finds_a_deal_by_folded_name_below_the_contacts(): void
+    public function test_an_editor_finds_a_deal_by_folded_name(): void
     {
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne(['name' => 'Alpenhof AG']);
@@ -48,31 +48,29 @@ final class SearchProvidersTest extends WebTestCase
         ]], $this->searchGroups('verlaengerung'));
     }
 
-    public function test_an_editor_finds_a_contact_by_name_or_e_mail(): void
+    public function test_a_location_is_found_by_its_contact_s_name_or_e_mail(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $company = CompanyFactory::createOne(['name' => 'Alpenhof AG']);
-        $laura = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Müller', 'company' => $company, 'email' => 'laura@example.ch']);
-        $pia = ContactFactory::createOne(['firstName' => null, 'lastName' => 'Brunner', 'company' => null, 'email' => 'post@brunner.example.ch']);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->create(['name' => 'Alpenhof AG']);
+        ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Müller', 'company' => $company, 'email' => 'laura@example.ch']);
+        ContactFactory::createOne(['firstName' => 'Pia', 'lastName' => 'Brunner', 'company' => CompanyFactory::createOne(['name' => 'Seeblick']), 'email' => 'post@brunner.example.ch']);
+        $hit = [[
+            'label' => 'Locations',
+            'results' => [['type' => 'company', 'label' => 'Alpenhof AG', 'detail' => 'Kunde', 'url' => '/admin/crm/locations/'.$company->id()]],
+        ]];
 
-        self::assertSame([[
-            'label' => 'Kontakte',
-            'results' => [['type' => 'contact', 'label' => 'Laura Müller', 'detail' => 'Alpenhof AG', 'url' => '/admin/crm/kontakte/'.$laura->id()]],
-        ]], $this->searchGroups('mueller'));
-        self::assertSame([[
-            'label' => 'Kontakte',
-            'results' => [['type' => 'contact', 'label' => 'Brunner', 'detail' => 'post@brunner.example.ch', 'url' => '/admin/crm/kontakte/'.$pia->id()]],
-        ]], $this->searchGroups('post@brunner'));
+        self::assertSame($hit, $this->searchGroups('mueller'));
+        self::assertSame($hit, $this->searchGroups('laura@example'));
     }
 
     public function test_the_groups_stand_below_the_venues(): void
     {
         $this->logInAs(AdminRole::Editor);
         VenueFactory::new()->withoutLocation(null)->create(['name' => 'Seeblick Saal']);
-        CompanyFactory::createOne(['name' => 'Seeblick Events']);
-        ContactFactory::createOne(['firstName' => 'Sara', 'lastName' => 'Seeblick']);
+        $company = CompanyFactory::createOne(['name' => 'Seeblick Events']);
+        DealFactory::createOne(['name' => 'Seeblick 2027', 'company' => $company]);
 
-        self::assertSame(['Einträge', 'Locations', 'Kontakte'], array_column($this->searchGroups('seeblick'), 'label'));
+        self::assertSame(['Einträge', 'Locations', 'Deals'], array_column($this->searchGroups('seeblick'), 'label'));
     }
 
     public function test_each_group_stops_at_five(): void

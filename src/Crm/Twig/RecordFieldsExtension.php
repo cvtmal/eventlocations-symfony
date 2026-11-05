@@ -5,33 +5,28 @@ declare(strict_types=1);
 namespace App\Crm\Twig;
 
 use App\Crm\ReadModel\CompanyRecord;
-use App\Crm\ReadModel\ContactRecord;
 use App\Crm\ReadModel\DealFormOption;
 use App\Crm\ReadModel\DealRecord;
 use App\Crm\ReadModel\OwnerOption;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
-use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\DealProperty;
 use App\Venues\ValueObject\Tier;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Attribute\AsTwigFunction;
 
 /**
- * The `fields` prop of the `record-properties` island (D10) for a company, contact or deal page, in the
+ * The `fields` prop of the `record-properties` island (D10) for a company or deal page, in the
  * order of Company.dc.html. `value` is canonical (ids, codes), `display` what the read-only fallback
  * and the island show, `draft` the text to edit where that is not `value`. The page renders the fallback
  * from the same list, so both say the same.
  *
- * @phpstan-type Field array{name: string, label: string, type: string, value: ?string, display: ?string, draft?: ?string, required?: bool, readonly?: bool, options?: list<array{value: string, label: string}>, lookupUrl?: string}
+ * @phpstan-type Field array{name: string, label: string, type: string, value: ?string, display: ?string, draft?: ?string, required?: bool, readonly?: bool, options?: list<array{value: string, label: string}>}
  */
 final readonly class RecordFieldsExtension
 {
     public function __construct(
         private TranslatorInterface $translator,
-        private UrlGeneratorInterface $urls,
     ) {
     }
 
@@ -55,28 +50,6 @@ final readonly class RecordFieldsExtension
             $this->stageField($company, $stages),
             $this->field(CompanyProperty::Owner, 'select', $company->ownerId, $company->ownerName, options: self::ownerOptions($owners)),
             $this->field(CompanyProperty::Notes, 'textarea', $company->notes),
-        ];
-    }
-
-    /**
-     * @param list<OwnerOption> $owners the selectable owners (`OwnerOptionsQuery::selectable()`)
-     *
-     * @return list<Field>
-     */
-    #[AsTwigFunction('crm_contact_fields')]
-    public function contact(ContactRecord $contact, array $owners): array
-    {
-        $kinds = array_map(fn (ContactKind $kind): array => ['value' => $kind->value, 'label' => $kind->trans($this->translator)], ContactKind::cases());
-
-        return [
-            $this->field(ContactProperty::FirstName, 'text', $contact->firstName),
-            $this->field(ContactProperty::LastName, 'text', $contact->lastName, required: true),
-            $this->field(ContactProperty::Kind, 'select', $contact->kind->value, $contact->kind->trans($this->translator), required: true, options: $kinds),
-            $this->field(ContactProperty::Company, 'combobox', $contact->companyId, $contact->companyName, lookupUrl: $this->urls->generate('admin_api_crm_companies')),
-            $this->field(ContactProperty::Position, 'text', $contact->position),
-            $this->field(ContactProperty::Email, 'email', $contact->email),
-            $this->field(ContactProperty::Phone, 'tel', $contact->phone),
-            $this->field(ContactProperty::Owner, 'select', $contact->ownerId, $contact->ownerName, options: self::ownerOptions($owners)),
         ];
     }
 
@@ -143,13 +116,12 @@ final readonly class RecordFieldsExtension
      * @return Field
      */
     private function field(
-        CompanyProperty|ContactProperty|DealProperty $property,
+        CompanyProperty|DealProperty $property,
         string $type,
         ?string $value,
         ?string $display = null,
         bool $required = false,
         ?array $options = null,
-        ?string $lookupUrl = null,
     ): array {
         $field = [
             'name' => $property->value,
@@ -163,9 +135,6 @@ final readonly class RecordFieldsExtension
         }
         if (null !== $options) {
             $field['options'] = $options;
-        }
-        if (null !== $lookupUrl) {
-            $field['lookupUrl'] = $lookupUrl;
         }
 
         return $field;

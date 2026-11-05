@@ -31,7 +31,7 @@ final class CrmFormsCsrfTest extends KernelTestCase
     public static function forms(): iterable
     {
         yield 'company' => [CompanyType::class, ['owners' => []]];
-        yield 'contact' => [ContactType::class, ['owners' => [], 'company_url' => '/admin/api/crm/companies']];
+        yield 'contact' => [ContactType::class, []];
         yield 'link venue' => [LinkVenueType::class, ['venue_url' => '/admin/api/crm/venues']];
         yield 'task' => [TaskType::class, ['owners' => []]];
         yield 'email template' => [EmailTemplateType::class, []];

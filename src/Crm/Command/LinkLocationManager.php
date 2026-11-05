@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Crm\Command;
 
 /**
- * Turns a confirmed location manager, or the manager who submitted a new location, into a `venue_contact` with a
+ * Turns a confirmed location manager, or the manager who submitted a new location, into a contact row on the venue's Location with a
  * timeline entry (POR-7), from `LinkLocationManagerListener`. Not auditable: the approve or the submit is the record,
  * and it has its own audit row.
  */

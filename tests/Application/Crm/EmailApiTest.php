@@ -42,12 +42,11 @@ final class EmailApiTest extends WebTestCase
     private const string SUBJECT = 'Ihre Offerte';
     private const string BODY = "Guten Tag\n\n**Danke** für Ihr Interesse.";
 
-    public function test_a_mail_from_a_contact_answers_201_with_its_entry(): void
+    public function test_a_mail_to_a_contact_answers_201_with_its_entry(): void
     {
         $this->logInAs(AdminRole::Editor, 'Andrea Keller');
-        $contact = ContactFactory::createOne(['company' => CompanyFactory::createOne(), 'email' => self::CONTACT_ADDRESS]);
 
-        $this->mail(['kind' => 'contact', 'recordId' => $contact->id()]);
+        $this->mail($this->toContact());
 
         self::assertResponseStatusCodeSame(201);
         self::assertResponseHeaderSame('Content-Type', 'application/json');
@@ -74,29 +73,6 @@ final class EmailApiTest extends WebTestCase
         ], $entry);
     }
 
-    public function test_a_contact_links_itself_and_its_company(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company, 'email' => self::CONTACT_ADDRESS]);
-
-        $this->mail(['kind' => 'contact', 'recordId' => $contact->id()]);
-
-        self::assertResponseStatusCodeSame(201);
-        $this->assertSentTo(self::CONTACT_ADDRESS, [$contact->id()], [$company->id()]);
-    }
-
-    public function test_a_contact_without_a_company_links_itself_alone(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['email' => self::CONTACT_ADDRESS]);
-
-        $this->mail(['kind' => 'contact', 'recordId' => $contact->id()]);
-
-        self::assertResponseStatusCodeSame(201);
-        $this->assertSentTo(self::CONTACT_ADDRESS, [$contact->id()], []);
-    }
-
     public function test_a_company_with_no_contact_chosen_uses_its_own_address(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -105,10 +81,10 @@ final class EmailApiTest extends WebTestCase
         $this->mail(['kind' => 'company', 'recordId' => $company->id(), 'contactId' => null]);
 
         self::assertResponseStatusCodeSame(201);
-        $this->assertSentTo(self::COMPANY_ADDRESS, [], [$company->id()]);
+        $this->assertSentTo(self::COMPANY_ADDRESS, $company->id());
     }
 
-    public function test_a_contact_chosen_on_a_company_gets_the_mail_and_both_links(): void
+    public function test_a_contact_chosen_on_a_company_gets_the_mail_on_the_company_s_timeline(): void
     {
         $this->logInAs(AdminRole::Editor);
         $company = $this->companyWithAddress();
@@ -117,7 +93,7 @@ final class EmailApiTest extends WebTestCase
         $this->mail(['kind' => 'company', 'recordId' => $company->id(), 'contactId' => $contact->id()]);
 
         self::assertResponseStatusCodeSame(201);
-        $this->assertSentTo(self::CONTACT_ADDRESS, [$contact->id()], [$company->id()]);
+        $this->assertSentTo(self::CONTACT_ADDRESS, $company->id());
     }
 
     /**
@@ -138,7 +114,7 @@ final class EmailApiTest extends WebTestCase
         $this->mail(['kind' => 'company', 'recordId' => $company->id(), 'contactId' => $contactId]);
 
         self::assertResponseStatusCodeSame(201);
-        $this->assertSentTo(self::COMPANY_ADDRESS, [], [$company->id()]);
+        $this->assertSentTo(self::COMPANY_ADDRESS, $company->id());
     }
 
     /**
@@ -148,9 +124,8 @@ final class EmailApiTest extends WebTestCase
     public function test_the_real_mailer_keeps_the_staff_name_on_the_site_s_address(): void
     {
         $this->logInAs(AdminRole::Editor, 'Andrea Keller');
-        $contact = ContactFactory::createOne(['email' => self::CONTACT_ADDRESS]);
 
-        $this->mail(['kind' => 'contact', 'recordId' => $contact->id(), 'cc' => ' Tom@Example.CH ']);
+        $this->mail(['cc' => ' Tom@Example.CH '] + $this->toContact());
 
         self::assertResponseStatusCodeSame(201);
         $mail = $this->sentMail();
@@ -169,9 +144,8 @@ final class EmailApiTest extends WebTestCase
     public function test_twig_syntax_in_a_mail_stays_literal(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['email' => self::CONTACT_ADDRESS]);
 
-        $this->mail(['kind' => 'contact', 'recordId' => $contact->id(), 'body' => 'Rechnung: {{ 7*7 }}']);
+        $this->mail(['body' => 'Rechnung: {{ 7*7 }}'] + $this->toContact());
 
         self::assertResponseStatusCodeSame(201);
         $html = (string) $this->sentMail()->getHtmlBody();
@@ -193,6 +167,7 @@ final class EmailApiTest extends WebTestCase
         yield 'a body over 20000' => [['body' => str_repeat('a', 20001)], 'body'];
         yield 'a contact id that is no uuid' => [['contactId' => 'keine-uuid'], 'contactId'];
         yield 'a deal' => [['kind' => 'deal'], 'kind'];
+        yield 'a contact, which has no record since #55' => [['kind' => 'contact'], 'kind'];
     }
 
     /**
@@ -220,7 +195,6 @@ final class EmailApiTest extends WebTestCase
         foreach ([
             ['kind' => 'company', 'recordId' => $company->id()],
             ['kind' => 'company', 'recordId' => $company->id(), 'contactId' => $contact->id()],
-            ['kind' => 'contact', 'recordId' => $contact->id()],
         ] as $target) {
             $this->mail($target);
 
@@ -247,18 +221,6 @@ final class EmailApiTest extends WebTestCase
         $this->assertNothingHappened();
     }
 
-    public function test_a_contact_with_no_company_is_another_company_s_contact_too(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $company = $this->companyWithAddress();
-        $loose = ContactFactory::createOne(['email' => self::CONTACT_ADDRESS]);
-
-        $this->mail(['kind' => 'company', 'recordId' => $company->id(), 'contactId' => $loose->id()]);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertSame(['value'], array_keys($this->errors()));
-    }
-
     public function test_an_unknown_record_is_a_404(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -266,7 +228,6 @@ final class EmailApiTest extends WebTestCase
 
         foreach ([
             ['kind' => 'company', 'recordId' => EntityId::generate()],
-            ['kind' => 'contact', 'recordId' => EntityId::generate()],
             ['kind' => 'company', 'recordId' => $company->id(), 'contactId' => EntityId::generate()],
         ] as $target) {
             $this->mail($target);
@@ -325,10 +286,10 @@ final class EmailApiTest extends WebTestCase
     public function test_an_error_in_the_mail_pipeline_stores_a_failed_entry(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['email' => self::CONTACT_ADDRESS]);
+        $target = $this->toContact();
         $this->failMail(queued: false);
 
-        $this->mail(['kind' => 'contact', 'recordId' => $contact->id()]);
+        $this->mail($target);
 
         self::assertResponseStatusCodeSame(201);
         self::assertSame(['to' => self::CONTACT_ADDRESS, 'cc' => null, 'status' => 'failed'], $this->entry()['email']);
@@ -342,12 +303,12 @@ final class EmailApiTest extends WebTestCase
     public function test_an_error_before_the_mail_pipeline_bubbles_and_stores_nothing(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['email' => self::CONTACT_ADDRESS]);
+        $target = $this->toContact();
         $this->failMail(queued: true);
         $this->client->catchExceptions(false);
 
         try {
-            $this->mail(['kind' => 'contact', 'recordId' => $contact->id()]);
+            $this->mail($target);
             self::fail('The error should have bubbled.');
         } catch (HandlerFailedException $failure) {
             self::assertSame('Kaputt.', $failure->getPrevious()?->getMessage());
@@ -405,6 +366,19 @@ final class EmailApiTest extends WebTestCase
         self::assertStringNotContainsString('Nicht gesendet', $items->eq(2)->filter('.timeline-item__meta')->text());
     }
 
+    /**
+     * A contact on a Location, as the composer names it since #55: the company record with the contact's id.
+     *
+     * @return array{kind: string, recordId: string, contactId: string}
+     */
+    private function toContact(): array
+    {
+        $company = CompanyFactory::createOne();
+        $contact = ContactFactory::createOne(['company' => $company, 'email' => self::CONTACT_ADDRESS]);
+
+        return ['kind' => 'company', 'recordId' => $company->id(), 'contactId' => $contact->id()];
+    }
+
     private function companyWithAddress(): Company
     {
         return CompanyFactory::new()->afterInstantiate(static fn (Company $company) => $company->changeEmail(self::COMPANY_ADDRESS))->create();
@@ -432,17 +406,12 @@ final class EmailApiTest extends WebTestCase
         });
     }
 
-    /**
-     * @param list<string> $contacts
-     * @param list<string> $companies
-     */
-    private function assertSentTo(string $address, array $contacts, array $companies): void
+    private function assertSentTo(string $address, string $companyId): void
     {
         self::assertEmailCount(1);
         $entry = $this->entry();
         self::assertSame(['to' => $address, 'cc' => null, 'status' => 'sent'], $entry['email']);
-        self::assertSame($contacts, $this->connection->fetchFirstColumn('SELECT contact_id FROM crm_activity_contacts WHERE activity_id = ?', [$entry['id']]));
-        self::assertSame($companies, $this->connection->fetchFirstColumn('SELECT company_id FROM crm_activity_companies WHERE activity_id = ?', [$entry['id']]));
+        self::assertSame([$companyId], $this->connection->fetchFirstColumn('SELECT company_id FROM crm_activity_companies WHERE activity_id = ?', [$entry['id']]));
     }
 
     private function assertNothingHappened(): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Inquiries;
 
+use App\Factory\CompanyFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Inquiries\Event\InquirySubmitted;
 use App\Tests\Integration\Geo\ImportsTownDataset;
@@ -450,7 +451,8 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(303);
         $link = $this->connection->fetchAssociative('SELECT inquiry_id, status FROM crm_inquiry_links');
         self::assertSame(['inquiry_id' => $this->rows()[0]['id'], 'status' => 'new'], $link);
-        self::assertSame(['couple'], $this->connection->fetchFirstColumn('SELECT kind FROM crm_contacts WHERE email = ?', ['anna@example.ch']));
+        // A couple is no CRM contact since #55: the inquiry and its link row are the record.
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_contacts WHERE email = ?', ['anna@example.ch']));
     }
 
     public function test_the_honeypot_writes_nothing_to_the_crm(): void
@@ -465,12 +467,13 @@ final class SubmitInquiryControllerTest extends WebTestCase
     }
 
     /**
-     * Without its type row the flush fails on a foreign key, which closes the EntityManager, as a duplicate e-mail
-     * does. The guest sees none of it, and no link row is what lets the nightly backfill pick the inquiry up.
+     * Without its type row the flush fails on a foreign key, which closes the EntityManager. The guest sees none of it,
+     * and no link row is what lets the nightly backfill pick the inquiry up. The venue has a Location, because without
+     * one the ingestion writes only the link row and no entry (#55 D5), so nothing would fail.
      */
     public function test_a_failing_ingestion_does_not_reach_the_guest_and_leaves_the_inquiry(): void
     {
-        DetailVenues::full($this->em);
+        CompanyFactory::new()->withVenues(DetailVenues::full($this->em))->create();
         $this->connection->executeStatement("DELETE FROM crm_activity_types WHERE code = 'inquiry'");
 
         $this->post(self::SLUG, InquiryFormFields::valid());

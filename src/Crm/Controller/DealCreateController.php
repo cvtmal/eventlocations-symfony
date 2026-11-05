@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Crm\Controller;
 
-use App\Crm\Exception\ContactOfAnotherCompany;
 use App\Crm\Exception\ContractEndsBeforeStart;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\VenueNotLinked;
@@ -12,7 +11,6 @@ use App\Crm\Form\DealData;
 use App\Crm\Form\DealPickCompanyType;
 use App\Crm\Form\DealType;
 use App\Crm\Form\ListQueryString;
-use App\Crm\ReadModel\DealFormCompany;
 use App\Crm\ReadModel\DealFormQuery;
 use App\Crm\ReadModel\OwnerOptionsQuery;
 use App\Crm\ValueObject\CrmFlash;
@@ -32,7 +30,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * "Deal erfassen" (CRM-7, N5) in two steps: without `?company=` a GET form picks the company, because the company never
- * changes and the venue list depends on it; with it the deal form offers that company's venues and contacts. Neither
+ * changes and the venue list depends on it; with it the deal form offers that company's venues. Neither
  * step needs its own endpoint.
  */
 #[IsGranted('ROLE_EDITOR')]
@@ -62,7 +60,7 @@ final class DealCreateController extends AbstractController
 
                 return $this->redirectToRoute('admin_crm_deals_show', ['id' => $id], status: Response::HTTP_SEE_OTHER);
             } catch (HandlerFailedException $failure) {
-                self::showOnForm($form, $company, $failure, $translator);
+                self::showOnForm($form, $failure, $translator);
             }
         }
 
@@ -86,14 +84,13 @@ final class DealCreateController extends AbstractController
     /**
      * @throws HandlerFailedException when the handler failed for another reason
      */
-    private static function showOnForm(FormInterface $form, DealFormCompany $company, HandlerFailedException $failure, TranslatorInterface $translator): void
+    private static function showOnForm(FormInterface $form, HandlerFailedException $failure, TranslatorInterface $translator): void
     {
         foreach ($failure->getWrappedExceptions() as $exception) {
             [$field, $key] = match (true) {
                 $exception instanceof InvalidPropertyValue => [self::FIELDS[$exception->field] ?? throw $failure, $exception->isRequired() ? 'api.required' : 'api.unknown_choice'],
                 $exception instanceof ContractEndsBeforeStart => ['contractEnd', 'api.contract_ends_before_start'],
                 $exception instanceof VenueNotLinked => ['venue', 'api.venue_not_linked'],
-                $exception instanceof ContactOfAnotherCompany && [] !== $company->contacts => ['contacts', 'api.contact_of_another_company'],
                 default => throw $failure,
             };
             $form->get($field)->addError(new FormError($translator->trans($key, [], 'crm')));

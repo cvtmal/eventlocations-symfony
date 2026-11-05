@@ -28,14 +28,12 @@ final class EmailMergeQuery
     }
 
     /**
-     * Null when the record is not there, or when `$contactId` names no contact of that company. A contact record is its
-     * own recipient, so `$contactId` plays no part there, as in `SendCrmEmailHandler`.
+     * Null when the record is not there, or when `$contactId` names no contact of that company.
      */
     public function fields(RecordKind $kind, string $recordId, ?string $contactId): ?MergeFields
     {
         return match ($kind) {
             RecordKind::Company => $this->ofCompany($recordId, $contactId),
-            RecordKind::Contact => $this->ofContact($recordId),
             RecordKind::Deal => null,
         };
     }
@@ -54,19 +52,6 @@ final class EmailMergeQuery
         }
 
         return self::fieldsOf($row);
-    }
-
-    private function ofContact(string $contactId): ?MergeFields
-    {
-        $row = $this->connection->fetchAssociative(
-            'SELECT p.first_name, c.name AS company_name, '.self::VENUE_NAME.' AS venue_name
-             FROM crm_contacts p
-             LEFT JOIN crm_companies c ON c.id = p.company_id
-             WHERE p.id = :record',
-            ['record' => $contactId],
-        );
-
-        return false === $row ? null : self::fieldsOf($row);
     }
 
     /**

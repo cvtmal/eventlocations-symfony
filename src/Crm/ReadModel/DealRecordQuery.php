@@ -11,8 +11,8 @@ use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A deal record page in one statement (D20): the deal, its company, owner and venue, its contacts and what its forms
- * offer as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
+ * A deal record page in one statement (D20): the deal, its company, owner and venue, its Location's contact rows
+ * (read-only, #55) and what its forms offer as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
  */
 final class DealRecordQuery
 {
@@ -26,17 +26,9 @@ final class DealRecordQuery
                    SELECT json_agg(json_build_object('id', p.id, 'first_name', p.first_name, 'last_name', p.last_name,
                                                      'position', p.position)
                                    ORDER BY lower(p.last_name), lower(coalesce(p.first_name, '')), p.id)
-                   FROM crm_deal_contacts dc
-                   JOIN crm_contacts p ON p.id = dc.contact_id
-                   WHERE dc.deal_id = d.id
-               ), '[]') AS contacts,
-               COALESCE((
-                   SELECT json_agg(json_build_object('id', p.id, 'label', concat_ws(' ', p.first_name, p.last_name))
-                                   ORDER BY lower(p.last_name), lower(coalesce(p.first_name, '')), p.id)
                    FROM crm_contacts p
                    WHERE p.company_id = d.company_id
-                     AND NOT EXISTS (SELECT 1 FROM crm_deal_contacts dc WHERE dc.deal_id = d.id AND dc.contact_id = p.id)
-               ), '[]') AS linkable,
+               ), '[]') AS contacts,
                COALESCE((
                    SELECT json_agg(json_build_object('id', lv.id, 'label', lv.name) ORDER BY lower(lv.name), lv.number)
                    FROM crm_company_venues cv
@@ -98,7 +90,6 @@ final class DealRecordQuery
                 (string) $contact['last_name'],
                 self::text($contact['position']),
             ), self::list($row['contacts'])),
-            self::options($row['linkable']),
             self::options($row['company_venues']),
             (bool) $row['renewable'],
         );

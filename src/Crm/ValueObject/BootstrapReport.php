@@ -17,7 +17,6 @@ final readonly class BootstrapReport
         public int $companies,
         public int $contacts,
         public int $withoutContactPerson,
-        public int $emailsTaken,
         public int $sharedEmails,
         public int $skipped,
         public array $failures,

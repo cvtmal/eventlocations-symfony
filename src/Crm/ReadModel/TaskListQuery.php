@@ -20,14 +20,13 @@ final class TaskListQuery
 
     private const string COLUMNS = <<<'SQL'
         SELECT t.id, t.title, t.due_on, t.done_at, u.display_name AS assignee_name, t.company_id, co.name AS company_name,
-               t.contact_id, p.first_name, p.last_name, t.deal_id, dc.name AS deal_company_name
+               t.deal_id, dc.name AS deal_company_name
         SQL;
 
     private const string FROM = <<<'SQL'
         FROM crm_tasks t
         JOIN admin_users u ON u.id = t.assignee_id
         LEFT JOIN crm_companies co ON co.id = t.company_id
-        LEFT JOIN crm_contacts p ON p.id = t.contact_id
         LEFT JOIN crm_deals d ON d.id = t.deal_id
         LEFT JOIN crm_companies dc ON dc.id = d.company_id
         SQL;
@@ -59,15 +58,14 @@ final class TaskListQuery
     }
 
     /**
-     * The Aufgaben card. A task has one object (D8), so a company's card also collects the tasks on its contacts,
-     * as the design's "Rückruf Laura Meier" and as P8 does for timeline entries, and those on its deals, or a renewal
-     * task would show nowhere but on the deal (D25).
+     * The Aufgaben card. A task has one object (D8), so a company's card also collects the tasks on its deals, as P8
+     * does for timeline entries, or a renewal task would show nowhere but on the deal (D25).
      *
      * @return list<TaskRow>
      */
     public function openOf(RecordKind $kind, string $id): array
     {
-        $record = 't.'.$kind->taskColumn().' = :record'.(RecordKind::Company === $kind ? ' OR p.company_id = :record OR d.company_id = :record' : '');
+        $record = 't.'.$kind->taskColumn().' = :record'.(RecordKind::Company === $kind ? ' OR d.company_id = :record' : '');
 
         return array_map(self::row(...), $this->connection->fetchAllAssociative(
             self::COLUMNS.' '.self::FROM.' WHERE t.done_at IS NULL AND ('.$record.')'.self::ORDER,
@@ -140,8 +138,6 @@ final class TaskListQuery
      */
     private static function row(array $row): TaskRow
     {
-        $contactName = null === $row['contact_id'] ? null : trim(($row['first_name'] ?? '').' '.$row['last_name']);
-
         return new TaskRow(
             (string) $row['id'],
             (string) $row['title'],
@@ -150,8 +146,6 @@ final class TaskListQuery
             (string) $row['assignee_name'],
             null === $row['company_id'] ? null : (string) $row['company_id'],
             null === $row['company_name'] ? null : (string) $row['company_name'],
-            null === $row['contact_id'] ? null : (string) $row['contact_id'],
-            $contactName,
             null === $row['deal_id'] ? null : (string) $row['deal_id'],
             null === $row['deal_company_name'] ? null : (string) $row['deal_company_name'],
         );

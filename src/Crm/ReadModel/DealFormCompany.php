@@ -11,13 +11,11 @@ final readonly class DealFormCompany
 {
     /**
      * @param list<DealFormOption> $venues
-     * @param list<DealFormOption> $contacts
      */
     public function __construct(
         public string $id,
         public string $name,
         public array $venues,
-        public array $contacts,
     ) {
     }
 }

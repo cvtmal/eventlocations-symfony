@@ -11,8 +11,9 @@ use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * LEG-2. What #29 derives goes with the row: `crm_inquiry_links` cascades, and contacts and
- * activities fall under `app:crm:purge` (CRM-11), so no purge event exists.
+ * LEG-2. What #29 derives goes with the row: `crm_inquiry_links` cascades, and the `inquiry` entry
+ * holds no personal data (its title is the venue's name; the couple is no CRM contact, #55), so no
+ * purge event exists.
  */
 final class PurgeInquiriesHandler implements CommandHandlerInterface
 {

@@ -8,10 +8,8 @@ use App\Admin\Entity\AdminUser;
 use App\Crm\Command\SendCrmEmail;
 use App\Crm\Entity\Activity;
 use App\Crm\Entity\ActivityCompany;
-use App\Crm\Entity\ActivityContact;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
-use App\Crm\Entity\Contact;
 use App\Crm\Exception\ContactOfAnotherCompany;
 use App\Crm\Exception\NoEmailAddress;
 use App\Crm\Mailer\CrmMailer;
@@ -36,9 +34,9 @@ use Symfony\Component\Mime\Exception\RfcComplianceException;
  * only transport errors, so anything else that fails in its pipeline is a `HandlerFailedException`, and `Address` refuses
  * some values at build time. Any other error bubbles, and nothing is stored.
  *
- * The record is locked as in `LogActivityHandler`, so an erasure either sees the new link and anonymises the entry, or
- * this handler sees the contact gone. `to` stays the real address under the override, so the entry says what staff asked
- * for. Log text carries the entry and where the cause was raised, never its message, which can quote an address.
+ * The Location is locked as in `LogActivityHandler`, then the chosen contact row, which must sit on that Location. The
+ * entry goes on the Location (#55: a contact has no timeline of its own). `to` stays the real address under the
+ * override, so the entry says what staff asked for. Log text carries the entry and where the cause was raised, never its message, which can quote an address.
  */
 final class SendCrmEmailHandler implements CommandHandlerInterface
 {
@@ -54,9 +52,8 @@ final class SendCrmEmailHandler implements CommandHandlerInterface
 
     public function __invoke(SendCrmEmail $command): void
     {
-        [$address, $company, $contact] = match ($command->kind) {
+        [$address, $company] = match ($command->kind) {
             RecordKind::Company => $this->companyTarget($command->recordId, $command->contactId),
-            RecordKind::Contact => $this->contactTarget($command->recordId),
             RecordKind::Deal => throw new \LogicException('A deal has no mail step, the API refuses it.'),
         };
         $type = $this->em->find(ActivityType::class, ActivityType::EMAIL_SENT) ?? throw new \LogicException('The migration seeds this type.');
@@ -75,40 +72,25 @@ final class SendCrmEmailHandler implements CommandHandlerInterface
         );
 
         $this->em->persist($activity);
-        if (null !== $contact) {
-            $this->em->persist(new ActivityContact($activity, $contact));
-        }
-        if (null !== $company) {
-            $this->em->persist(new ActivityCompany($activity, $company));
-        }
+        $this->em->persist(new ActivityCompany($activity, $company));
     }
 
     /**
-     * @return array{string, Company, ?Contact}
+     * @return array{string, Company}
      */
     private function companyTarget(string $companyId, ?string $contactId): array
     {
         $company = $this->companies->lock($companyId);
         if (null === $contactId) {
-            return [$company->email() ?? throw NoEmailAddress::forCompany($companyId), $company, null];
+            return [$company->email() ?? throw NoEmailAddress::forCompany($companyId), $company];
         }
 
         $contact = $this->contacts->lock($contactId);
-        if ($contact->company()?->id() !== $company->id()) {
+        if ($contact->company()->id() !== $company->id()) {
             throw ContactOfAnotherCompany::forContact($contactId);
         }
 
-        return [$contact->email() ?? throw NoEmailAddress::forContact($contactId), $company, $contact];
-    }
-
-    /**
-     * @return array{string, ?Company, Contact}
-     */
-    private function contactTarget(string $contactId): array
-    {
-        $contact = $this->contacts->lock($contactId);
-
-        return [$contact->email() ?? throw NoEmailAddress::forContact($contactId), $contact->company(), $contact];
+        return [$contact->email() ?? throw NoEmailAddress::forContact($contactId), $company];
     }
 
     private function send(SendCrmEmail $command, string $address, AdminUser $actor): EmailStatus

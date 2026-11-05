@@ -31,7 +31,6 @@ final class BootstrapCommand
             \sprintf('companies created: %d', $report->companies),
             \sprintf('contacts created: %d', $report->contacts),
             \sprintf('venues without a contact person: %d (expected: no export writes contact_person)', $report->withoutContactPerson),
-            \sprintf('e-mails taken: %d', $report->emailsTaken),
             \sprintf('venues sharing an inquiry e-mail: %d', $report->sharedEmails),
             \sprintf('skipped: %d', $report->skipped),
             \sprintf('failed: %d', $report->failed()),

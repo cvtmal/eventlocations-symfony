@@ -34,6 +34,9 @@ final class CompanyListQuery
                (SELECT COUNT(*) FROM crm_company_venues cv WHERE cv.company_id = c.id) AS venue_count
         SQL;
 
+    /** The expression of `idx_crm_contacts_search_key`, verbatim, or the index does not apply. */
+    private const string CONTACT_NAME_KEY = "geo_search_key(coalesce(p.first_name, '') || ' ' || p.last_name)";
+
     public function __construct(
         private readonly Connection $connection,
     ) {
@@ -139,9 +142,14 @@ final class CompanyListQuery
 
         $q = null === $filter->q ? '' : trim($filter->q);
         if ('' !== $q) {
-            // A query that folds to nothing ('!!!') matches nothing, not everything.
-            $conditions[] = "(geo_fold_de(:q) <> '' AND (geo_search_key(c.name) LIKE '%' || geo_fold_de(:q) || '%' OR geo_search_key(c.name) LIKE '%' || geo_fold(:q) || '%'))";
+            // A query that folds to nothing ('!!!') matches no name, not every one. A Location is also found by its
+            // contact rows' names and e-mails (#55 D16).
+            $conditions[] = "((geo_fold_de(:q) <> '' AND (geo_search_key(c.name) LIKE '%' || geo_fold_de(:q) || '%' OR geo_search_key(c.name) LIKE '%' || geo_fold(:q) || '%'))"
+                .' OR EXISTS (SELECT 1 FROM crm_contacts p WHERE p.company_id = c.id AND ('
+                ."(geo_fold_de(:q) <> '' AND (".self::CONTACT_NAME_KEY." LIKE '%' || geo_fold_de(:q) || '%' OR ".self::CONTACT_NAME_KEY." LIKE '%' || geo_fold(:q) || '%'))"
+                .' OR p.email LIKE :q_email)))';
             $parameters['q'] = $q;
+            $parameters['q_email'] = '%'.addcslashes(mb_strtolower($q), '\\%_').'%';
         }
         if (null !== $filter->stage) {
             $conditions[] = 'c.stage = :stage';

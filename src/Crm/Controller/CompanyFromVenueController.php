@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Crm\Controller;
 
 use App\Crm\Command\CreateCompanyForVenue;
-use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\ReadModel\VenueCompanyQuery;
 use App\Crm\ValueObject\BootstrapOutcome;
@@ -61,10 +60,8 @@ final class CompanyFromVenueController extends AbstractController
             if ([] !== $failure->getWrappedExceptions(VenueNotFound::class)) {
                 throw $this->createNotFoundException();
             }
-            if ([] === $failure->getWrappedExceptions(ContactEmailTaken::class)) {
-                throw $failure;
-            }
-            $this->addFlash('error', CrmFlash::message('panel.flash.email_taken'));
+
+            throw $failure;
         }
     }
 }

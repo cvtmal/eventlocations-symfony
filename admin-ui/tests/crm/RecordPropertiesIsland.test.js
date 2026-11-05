@@ -39,10 +39,10 @@ function island() {
     return mount(RecordPropertiesIsland, { props: { url: '/admin/api/crm/companies/c1', fields, labels }, attachTo: document.body });
 }
 
-function companyIsland() {
+function comboboxIsland() {
     return mount(RecordPropertiesIsland, {
         props: {
-            url: '/admin/api/crm/contacts/k1',
+            url: '/admin/api/crm/companies/c1',
             fields: [{ name: 'company', label: 'Firma', type: 'combobox', value: 'co-1', display: 'Alte Firma', lookupUrl: '/admin/api/crm/companies' }],
             labels,
         },
@@ -207,7 +207,7 @@ describe('RecordPropertiesIsland', () => {
             : json({ value: 'co-2' })));
         vi.stubGlobal('fetch', fetch);
         vi.useFakeTimers();
-        wrapper = companyIsland();
+        wrapper = comboboxIsland();
 
         await row(wrapper, 'company').get('.property__edit').trigger('click');
         await row(wrapper, 'company').get('[role="combobox"]').setValue('See');
@@ -227,7 +227,7 @@ describe('RecordPropertiesIsland', () => {
     it('refuses text in a combobox with no option chosen, and sends nothing', async () => {
         const fetch = vi.fn();
         vi.stubGlobal('fetch', fetch);
-        wrapper = companyIsland();
+        wrapper = comboboxIsland();
 
         await row(wrapper, 'company').get('.property__edit').trigger('click');
         await row(wrapper, 'company').get('[role="combobox"]').setValue('Seeblick');
@@ -247,7 +247,7 @@ describe('RecordPropertiesIsland', () => {
     it('empties a combobox only when its text is empty', async () => {
         const fetch = vi.fn(() => Promise.resolve(json({ value: null })));
         vi.stubGlobal('fetch', fetch);
-        wrapper = companyIsland();
+        wrapper = comboboxIsland();
 
         await row(wrapper, 'company').get('.property__edit').trigger('click');
         await row(wrapper, 'company').get('[role="combobox"]').setValue('  ');
@@ -261,7 +261,7 @@ describe('RecordPropertiesIsland', () => {
     it('keeps an unchanged combobox value', async () => {
         const fetch = vi.fn(() => Promise.resolve(json({ value: 'co-1' })));
         vi.stubGlobal('fetch', fetch);
-        wrapper = companyIsland();
+        wrapper = comboboxIsland();
 
         await row(wrapper, 'company').get('.property__edit').trigger('click');
         await row(wrapper, 'company').get('form').trigger('submit');
@@ -272,7 +272,7 @@ describe('RecordPropertiesIsland', () => {
     });
 
     it('names the listbox of a combobox after its field', async () => {
-        wrapper = companyIsland();
+        wrapper = comboboxIsland();
 
         await row(wrapper, 'company').get('.property__edit').trigger('click');
 
@@ -352,7 +352,7 @@ describe('RecordPropertiesIsland', () => {
 
     it('leaves a Unicode address alone', async () => {
         const wrapper = mount(RecordPropertiesIsland, {
-            props: { url: '/admin/api/crm/contacts/k1', fields: [{ name: 'email', label: 'E-Mail', type: 'email', value: 'a@müller.ch' }], labels },
+            props: { url: '/admin/api/crm/companies/c1', fields: [{ name: 'email', label: 'E-Mail', type: 'email', value: 'a@müller.ch' }], labels },
             attachTo: document.body,
         });
 
@@ -365,7 +365,7 @@ describe('RecordPropertiesIsland', () => {
 
     it('lets Esc close an open list and not the row', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => json({ options: [{ value: 'co-2', label: 'Neue Firma' }] })));
-        const wrapper = companyIsland();
+        const wrapper = comboboxIsland();
         await row(wrapper, 'company').get('button').trigger('click');
         const input = row(wrapper, 'company').get('[role="combobox"]');
         await input.setValue('Neu');

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Application\Crm;
 
 use App\Admin\ValueObject\AdminRole;
-use App\Crm\Command\EraseContact;
 use App\Crm\Command\IngestInquiry;
 use App\Crm\Exception\InquiryNotFound;
 use App\Crm\ValueObject\InquiryStatus;
@@ -196,6 +195,10 @@ final class InquiryInboxTest extends WebTestCase
             'Telefon' => '+41 79 000 00 01',
         ], $this->facts($detail));
         self::assertSame('mailto:sina@example.ch', $detail->filter('.crm-inbox__facts a')->attr('href'));
+        // The couple is no CRM contact (#55): the reply button writes to the inquiry's address.
+        $reply = $detail->filter('.crm-inbox__actions a');
+        self::assertSame(['Per E-Mail antworten', 'mailto:sina@example.ch'], [$reply->text(), $reply->attr('href')]);
+        self::assertCount(0, $detail->filter('a[href*="/admin/crm/kontakte"]'));
         self::assertSame("Liebes Team\n\nist der Juni frei?", $detail->filter('.crm-inbox__message')->text(null, false));
         self::assertSame('seen', $detail->filter('#inquiry-status option[selected]')->attr('value'));
         self::assertSame(['new', 'seen', 'done'], $detail->filter('#inquiry-status option')->each(static fn (Crawler $option): ?string => $option->attr('value')));
@@ -530,22 +533,6 @@ final class InquiryInboxTest extends WebTestCase
 
         self::assertResponseRedirects(self::LIST, 303);
         self::assertStringContainsString('Diese Anfrage gibt es nicht mehr.', $this->client->followRedirect()->filter('.toast')->text());
-    }
-
-    public function test_kontakt_oeffnen_links_the_contact_until_it_is_erased(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $id = $this->inquiry();
-        $contactId = (string) $this->connection->fetchOne('SELECT contact_id FROM crm_inquiry_links WHERE inquiry_id = ?', [$id]);
-
-        $crawler = $this->client->request('GET', self::LIST.'/'.$id);
-        self::assertSame('/admin/crm/kontakte/'.$contactId, $crawler->selectLink('Kontakt öffnen')->attr('href'));
-
-        $this->dispatch(new EraseContact($contactId));
-
-        $crawler = $this->client->request('GET', self::LIST.'/'.$id);
-        self::assertResponseIsSuccessful();
-        self::assertCount(0, $crawler->selectLink('Kontakt öffnen'));
     }
 
     public function test_a_deleted_venue_shows_its_name_unlinked(): void

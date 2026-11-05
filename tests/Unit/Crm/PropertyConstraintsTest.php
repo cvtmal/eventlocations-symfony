@@ -47,9 +47,6 @@ final class PropertyConstraintsTest extends TestCase
         yield 'email' => [ContactProperty::Email, 'anna@example.ch', 'anna müller@example.ch'];
         yield 'phone' => [ContactProperty::Phone, '079 123 45 67', '+'];
         yield 'position' => [ContactProperty::Position, 'Inhaberin', str_repeat('x', 151)];
-        yield 'kind' => [ContactProperty::Kind, 'venue_contact', 'friend'];
-        yield 'company' => [ContactProperty::Company, self::UUID, '42'];
-        yield 'owner' => [ContactProperty::Owner, null, 'not-a-uuid'];
     }
 
     /**

@@ -7,7 +7,6 @@ namespace App\Tests\Integration\Crm;
 use App\Crm\Command\IngestInquiry;
 use App\Crm\Entity\InquiryLink;
 use App\Crm\Repository\InquiryLinkRepository;
-use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
@@ -20,7 +19,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * CRM-9: an inquiry becomes a couple contact, a timeline entry and a link row, once. A known e-mail is the same person.
+ * CRM-9: an inquiry becomes a timeline entry on its venue's Location and a link row, once. The couple is no CRM contact
+ * (#55); a venue without a Location gets the link row only (D5).
  */
 final class IngestInquiryTest extends KernelTestCase
 {
@@ -28,9 +28,12 @@ final class IngestInquiryTest extends KernelTestCase
     use Factories;
     use RollsBackDatabase;
 
-    public function test_a_new_address_writes_a_couple_an_entry_and_a_link(): void
+    public function test_an_inquiry_on_a_location_s_venue_writes_an_entry_and_a_link_and_no_contact(): void
     {
+        $venue = VenueFactory::new()->withContact()->create();
+        $company = CompanyFactory::new()->withVenues($venue)->create();
         $inquiry = InquiryFactory::createOne([
+            'venue' => $venue,
             'firstName' => 'Sina',
             'lastName' => 'Huber',
             'email' => 'Sina.Huber@Example.ch',
@@ -40,15 +43,7 @@ final class IngestInquiryTest extends KernelTestCase
 
         self::assertTrue($this->dispatch(new IngestInquiry($inquiry->id())));
 
-        $contact = $this->connection->fetchAssociative('SELECT id, first_name, last_name, email, phone, kind, company_id FROM crm_contacts');
-        self::assertIsArray($contact);
-        self::assertSame('Sina', $contact['first_name']);
-        self::assertSame('Huber', $contact['last_name']);
-        self::assertSame('sina.huber@example.ch', $contact['email']);
-        self::assertSame('044 123 45 67', $contact['phone']);
-        self::assertSame(ContactKind::Couple->value, $contact['kind']);
-        self::assertNull($contact['company_id']);
-
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts'));
         $activity = $this->connection->fetchAssociative(
             'SELECT id, type_code, actor_id, title, body, payload, EXTRACT(EPOCH FROM occurred_at)::bigint AS occurred_at FROM crm_activities',
         );
@@ -59,91 +54,61 @@ final class IngestInquiryTest extends KernelTestCase
         self::assertNull($activity['body']);
         self::assertSame('{}', $activity['payload']);
         self::assertSame((new \DateTimeImmutable('2026-10-30 09:15:00 UTC'))->getTimestamp(), (int) $activity['occurred_at']);
-
+        self::assertSame($company->id(), $this->connection->fetchOne('SELECT company_id FROM crm_activity_companies WHERE activity_id = ?', [$activity['id']]));
         self::assertSame(
-            ['contact_id' => $contact['id'], 'activity_id' => $activity['id'], 'status' => InquiryStatus::New->value],
-            $this->connection->fetchAssociative('SELECT contact_id, activity_id, status FROM crm_inquiry_links WHERE inquiry_id = ?', [$inquiry->id()]),
-        );
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_contacts WHERE activity_id = ? AND contact_id = ?', $activity['id'], $contact['id']));
-    }
-
-    public function test_a_known_address_keeps_the_contact_and_fills_only_its_blanks(): void
-    {
-        $contact = ContactFactory::createOne([
-            'firstName' => null,
-            'lastName' => 'Staff-Name',
-            'kind' => ContactKind::VenueContact,
-            'email' => 'sina@example.ch',
-        ]);
-        $inquiry = InquiryFactory::createOne(['firstName' => 'Sina', 'lastName' => 'Huber', 'email' => 'SINA@EXAMPLE.CH', 'phone' => '044 123 45 67']);
-
-        self::assertTrue($this->dispatch(new IngestInquiry($inquiry->id())));
-
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_contacts'));
-        self::assertSame(
-            ['id' => $contact->id(), 'first_name' => 'Sina', 'last_name' => 'Staff-Name', 'phone' => '044 123 45 67', 'kind' => ContactKind::VenueContact->value],
-            $this->connection->fetchAssociative('SELECT id, first_name, last_name, phone, kind FROM crm_contacts'),
+            ['activity_id' => $activity['id'], 'status' => InquiryStatus::New->value],
+            $this->connection->fetchAssociative('SELECT activity_id, status FROM crm_inquiry_links WHERE inquiry_id = ?', [$inquiry->id()]),
         );
     }
 
-    public function test_a_known_contact_keeps_the_values_staff_entered(): void
-    {
-        $contact = ContactFactory::createOne(['firstName' => 'Staff', 'lastName' => 'Keller', 'kind' => ContactKind::Other, 'email' => 'sina@example.ch']);
-        $contact->changePhone('079 000 00 00');
-        $this->em->flush();
-        $inquiry = InquiryFactory::createOne(['firstName' => 'Sina', 'lastName' => 'Huber', 'email' => 'sina@example.ch', 'phone' => '044 123 45 67']);
-
-        $this->dispatch(new IngestInquiry($inquiry->id()));
-
-        self::assertSame(
-            ['first_name' => 'Staff', 'last_name' => 'Keller', 'phone' => '079 000 00 00', 'kind' => ContactKind::Other->value],
-            $this->connection->fetchAssociative('SELECT first_name, last_name, phone, kind FROM crm_contacts'),
-        );
-        self::assertSame($contact->id(), $this->connection->fetchOne('SELECT contact_id FROM crm_inquiry_links'));
-    }
-
-    public function test_a_venue_with_a_company_puts_the_entry_on_both_timelines(): void
+    public function test_a_contact_row_with_the_couple_s_address_is_not_touched(): void
     {
         $venue = VenueFactory::new()->withContact()->create();
         $company = CompanyFactory::new()->withVenues($venue)->create();
+        $contact = ContactFactory::createOne(['company' => $company, 'firstName' => null, 'lastName' => 'Staff-Name', 'email' => 'sina@example.ch']);
+        $inquiry = InquiryFactory::createOne(['venue' => $venue, 'firstName' => 'Sina', 'lastName' => 'Huber', 'email' => 'SINA@EXAMPLE.CH', 'phone' => '044 123 45 67']);
+
+        self::assertTrue($this->dispatch(new IngestInquiry($inquiry->id())));
+
+        self::assertSame(
+            [['id' => $contact->id(), 'first_name' => null, 'last_name' => 'Staff-Name', 'phone' => null]],
+            $this->connection->fetchAllAssociative('SELECT id, first_name, last_name, phone FROM crm_contacts'),
+        );
+    }
+
+    public function test_a_venue_without_a_location_gets_a_link_row_and_no_entry(): void
+    {
+        $inquiry = InquiryFactory::createOne();
+
+        self::assertTrue($this->dispatch(new IngestInquiry($inquiry->id())));
+
+        self::assertSame(
+            ['activity_id' => null, 'status' => InquiryStatus::New->value],
+            $this->connection->fetchAssociative('SELECT activity_id, status FROM crm_inquiry_links WHERE inquiry_id = ?', [$inquiry->id()]),
+        );
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activities'));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_companies'));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts'));
+    }
+
+    public function test_a_deleted_venue_gets_a_link_row_and_no_entry(): void
+    {
+        $venue = VenueFactory::new()->withContact()->create();
+        CompanyFactory::new()->withVenues($venue)->create();
         $inquiry = InquiryFactory::createOne(['venue' => $venue]);
-
-        $this->dispatch(new IngestInquiry($inquiry->id()));
-
-        $activityId = $this->connection->fetchOne('SELECT id FROM crm_activities');
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_contacts WHERE activity_id = ?', $activityId));
-        self::assertSame($company->id(), $this->connection->fetchOne('SELECT company_id FROM crm_activity_companies WHERE activity_id = ?', [$activityId]));
-        self::assertNull($this->connection->fetchOne('SELECT company_id FROM crm_contacts'));
-    }
-
-    public function test_a_venue_without_a_company_stays_on_the_contact(): void
-    {
-        $inquiry = InquiryFactory::createOne();
-
-        $this->dispatch(new IngestInquiry($inquiry->id()));
-
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_contacts'));
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activity_companies'));
-    }
-
-    public function test_a_deleted_venue_keeps_the_title_and_stays_on_the_contact(): void
-    {
-        $inquiry = InquiryFactory::createOne();
         $id = $inquiry->id();
-        $name = $inquiry->venueName();
         $this->connection->executeStatement('UPDATE inquiries SET venue_id = NULL WHERE id = ?', [$id]);
         $this->em->clear();
 
         self::assertTrue($this->dispatch(new IngestInquiry($id)));
 
-        self::assertSame($name, $this->connection->fetchOne('SELECT title FROM crm_activities'));
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_contacts'));
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activity_companies'));
+        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_inquiry_links WHERE inquiry_id = ? AND activity_id IS NULL', $id));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activities'));
     }
 
     public function test_a_second_dispatch_writes_nothing(): void
     {
-        $id = InquiryFactory::createOne()->id();
+        $id = $this->onLocation()->id();
         $links = $this->links();
 
         self::assertFalse($links->has($id));
@@ -151,7 +116,6 @@ final class IngestInquiryTest extends KernelTestCase
         self::assertTrue($links->has($id));
         self::assertFalse($this->dispatch(new IngestInquiry($id)));
 
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_contacts'));
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activities'));
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_inquiry_links'));
     }
@@ -170,41 +134,31 @@ final class IngestInquiryTest extends KernelTestCase
     {
         self::assertFalse($this->dispatch(new IngestInquiry(EntityId::generate())));
 
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts'));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_inquiry_links'));
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activities'));
     }
 
-    public function test_two_inquiries_from_one_address_are_one_contact_and_two_entries(): void
+    public function test_two_inquiries_from_one_address_are_two_entries(): void
     {
-        $first = InquiryFactory::createOne(['email' => 'sina@example.ch']);
-        $second = InquiryFactory::createOne(['email' => 'Sina@Example.CH']);
+        $venue = VenueFactory::new()->withContact()->create();
+        CompanyFactory::new()->withVenues($venue)->create();
+        $first = InquiryFactory::createOne(['venue' => $venue, 'email' => 'sina@example.ch']);
+        $second = InquiryFactory::createOne(['venue' => $venue, 'email' => 'Sina@Example.CH']);
 
         $this->dispatch(new IngestInquiry($first->id()));
         $this->dispatch(new IngestInquiry($second->id()));
 
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_contacts'));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts'));
         self::assertSame(2, $this->rows('SELECT count(*) FROM crm_activities'));
-        self::assertSame(2, $this->rows('SELECT count(*) FROM crm_activity_contacts'));
-        self::assertSame(2, $this->rows('SELECT count(*) FROM crm_inquiry_links'));
-        self::assertSame(1, $this->rows('SELECT count(DISTINCT contact_id) FROM crm_inquiry_links'));
-    }
-
-    public function test_an_idn_address_is_ingested(): void
-    {
-        $inquiry = InquiryFactory::createOne(['email' => 'Anna@MÜNCHEN.example']);
-
-        self::assertTrue($this->dispatch(new IngestInquiry($inquiry->id())));
-
-        self::assertSame('anna@münchen.example', $this->connection->fetchOne('SELECT email FROM crm_contacts'));
+        self::assertSame(2, $this->rows('SELECT count(*) FROM crm_inquiry_links WHERE activity_id IS NOT NULL'));
     }
 
     public function test_it_writes_no_audit_row(): void
     {
-        $inquiry = InquiryFactory::createOne();
+        $inquiry = $this->onLocation();
 
         $this->dispatch(new IngestInquiry($inquiry->id()));
 
-        self::assertSame(0, $this->rows('SELECT count(*) FROM admin_audit_log WHERE command = ?', IngestInquiry::class));
         self::assertSame(0, $this->rows('SELECT count(*) FROM admin_audit_log'));
     }
 
@@ -213,7 +167,7 @@ final class IngestInquiryTest extends KernelTestCase
      */
     public function test_the_link_loads_by_the_inquiry_id(): void
     {
-        $id = InquiryFactory::createOne()->id();
+        $id = $this->onLocation()->id();
         $this->dispatch(new IngestInquiry($id));
         $this->em->clear();
 
@@ -222,7 +176,16 @@ final class IngestInquiryTest extends KernelTestCase
         self::assertInstanceOf(InquiryLink::class, $link);
         self::assertInstanceOf(Inquiry::class, $link->inquiry());
         self::assertSame($id, $link->inquiry()->id());
+        self::assertNotNull($link->activity());
         self::assertSame(InquiryStatus::New, $link->status());
+    }
+
+    private function onLocation(): Inquiry
+    {
+        $venue = VenueFactory::new()->withContact()->create();
+        CompanyFactory::new()->withVenues($venue)->create();
+
+        return InquiryFactory::createOne(['venue' => $venue]);
     }
 
     private function links(): InquiryLinkRepository

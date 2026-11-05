@@ -9,14 +9,11 @@ use App\Admin\Extension\TimelineActivityTypeRegistry;
 use App\Crm\Command\LogActivity;
 use App\Crm\Entity\Activity;
 use App\Crm\Entity\ActivityCompany;
-use App\Crm\Entity\ActivityContact;
 use App\Crm\Entity\ActivityDeal;
 use App\Crm\Entity\ActivityType;
-use App\Crm\Entity\Contact;
 use App\Crm\Exception\ActivityReadOnly;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Repository\CompanyRepository;
-use App\Crm\Repository\ContactRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\ValueObject\PropertyValue;
 use App\Crm\ValueObject\RecordKind;
@@ -24,16 +21,15 @@ use App\Shared\Messenger\CommandHandlerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Writes a manual entry (P7: `body` only) and links it. An entry on a contact or a deal also goes on its company, so
- * it shows on both timelines; one on a company stays there (P8). The record is locked, so an erasure either sees the
- * new link and anonymises the entry, or this handler sees the contact gone. A deal locks company first (D11).
+ * Writes a manual entry (P7: `body` only) and links it. An entry on a deal also goes on its company, so it shows on
+ * both timelines; one on a company stays there (P8). The record is locked, so a delete either sees the new link or
+ * this handler sees the record gone. A deal locks company first (D11).
  */
 final class LogActivityHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly TimelineActivityTypeRegistry $types,
         private readonly CompanyRepository $companies,
-        private readonly ContactRepository $contacts,
         private readonly DealRepository $deals,
         private readonly EntityManagerInterface $em,
     ) {
@@ -58,7 +54,6 @@ final class LogActivityHandler implements CommandHandlerInterface
 
         $links = match ($command->kind) {
             RecordKind::Company => [new ActivityCompany($activity, $this->companies->lock($command->recordId))],
-            RecordKind::Contact => $this->contactLinks($activity, $this->contacts->lock($command->recordId)),
             RecordKind::Deal => $this->dealLinks($activity, $command->recordId),
         };
 
@@ -76,19 +71,5 @@ final class LogActivityHandler implements CommandHandlerInterface
         $company = $this->companies->lock($this->deals->companyIdOf($dealId));
 
         return [new ActivityDeal($activity, $this->deals->lock($dealId)), new ActivityCompany($activity, $company)];
-    }
-
-    /**
-     * @return list<ActivityCompany|ActivityContact>
-     */
-    private function contactLinks(Activity $activity, Contact $contact): array
-    {
-        $company = $contact->company();
-        $links = [new ActivityContact($activity, $contact)];
-        if (null !== $company) {
-            $links[] = new ActivityCompany($activity, $company);
-        }
-
-        return $links;
     }
 }

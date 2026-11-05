@@ -26,9 +26,8 @@ final class VenueCompanyQuery
                    SELECT json_agg(json_build_object('title', t.title, 'due_on', t.due_on)
                                    ORDER BY t.due_on, lower(t.title), t.id)
                    FROM crm_tasks t
-                   LEFT JOIN crm_contacts tp ON tp.id = t.contact_id
                    LEFT JOIN crm_deals td ON td.id = t.deal_id
-                   WHERE t.done_at IS NULL AND (t.company_id = c.id OR tp.company_id = c.id OR td.company_id = c.id)
+                   WHERE t.done_at IS NULL AND (t.company_id = c.id OR td.company_id = c.id)
                ), '[]') AS tasks,
                od.id AS deal_id, od.name AS deal_name, od.stage_code AS deal_stage, od.amount_rappen AS deal_amount
         FROM venues v

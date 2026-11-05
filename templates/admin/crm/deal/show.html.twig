@@ -1,7 +1,6 @@
 {% extends 'admin/crm/_record_layout.html.twig' %}
 
 {% form_theme stage_form 'admin/form/theme.html.twig' %}
-{% form_theme contact_form 'admin/form/theme.html.twig' %}
 
 {% set record_type = 'deal' %}
 {% set record_id = deal.id %}
@@ -88,22 +87,6 @@
             {% endblock %}
         {% endembed %}
     {% endif %}
-    {% embed 'admin/components/_modal.html.twig' with {
-        id: 'link-contact',
-        title: 'deal.record.contacts.add_title'|trans({}, 'crm'),
-        close_label: 'deal.record.contacts.close'|trans({}, 'crm'),
-        contact_form: contact_form,
-    } only %}
-        {% block body %}
-            {{ form_start(contact_form, {attr: {id: 'link-contact-form', class: 'form', novalidate: 'novalidate'}}) }}
-                {{ form_row(contact_form.contact) }}
-            {{ form_end(contact_form) }}
-        {% endblock %}
-        {% block footer %}
-            <form method="dialog"><button class="btn">{{ 'deal.record.contacts.cancel'|trans({}, 'crm') }}</button></form>
-            {{ include('admin/components/_button.html.twig', {label: 'deal.record.contacts.submit'|trans({}, 'crm'), variant: 'primary', type: 'submit', attributes: {form: 'link-contact-form'}}, with_context = false) }}
-        {% endblock %}
-    {% endembed %}
     {% if delete_form %}
         {% embed 'admin/components/_modal.html.twig' with {
             id: 'deal-delete',
@@ -142,16 +125,6 @@
     <section class="card crm-side" id="kontakte" aria-labelledby="deal-contacts-title">
         <div class="card__head">
             <h2 id="deal-contacts-title">{{ 'deal.record.contacts.title'|trans({}, 'crm') }} <span class="crm-side__count">({{ deal.contacts|length }})</span></h2>
-            {% if deal.linkable is not empty %}
-                {{ include('admin/components/_button.html.twig', {
-                    label: 'deal.record.contacts.add'|trans({}, 'crm'),
-                    icon: 'plus',
-                    variant: 'ghost',
-                    size: 'sm',
-                    type: 'button',
-                    attributes: {commandfor: 'link-contact', command: 'show-modal'},
-                }, with_context = false) }}
-            {% endif %}
         </div>
         <div class="card__body">
             {% if deal.contacts is empty %}
@@ -162,20 +135,9 @@
                         <li class="crm-side__item">
                             {{ include('admin/components/_avatar.html.twig', {initials: contact.initials}, with_context = false) }}
                             <span class="crm-side__text">
-                                <a class="crm-side__link" href="{{ path('admin_crm_contacts_show', {id: contact.id}) }}">{{ contact.fullName }}</a>
+                                <span class="crm-side__name">{{ contact.fullName }}</span>
                                 {% if contact.position %}<span class="crm-side__detail">{{ contact.position }}</span>{% endif %}
                             </span>
-                            <form class="crm-side__form" method="post" action="{{ path('admin_crm_deals_unlink_contact', {id: deal.id, contactId: contact.id}) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token(unlink_token) }}">
-                                {{ include('admin/components/_button.html.twig', {
-                                    label: 'deal.record.contacts.unlink'|trans({name: contact.fullName}, 'crm'),
-                                    icon: 'x',
-                                    icon_only: true,
-                                    variant: 'ghost',
-                                    size: 'sm',
-                                    type: 'submit',
-                                }, with_context = false) }}
-                            </form>
                         </li>
                     {% endfor %}
                 </ul>

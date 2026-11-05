@@ -20,7 +20,6 @@ final readonly class CustomerImportReport
      * @param int                          $created         companies created, or on a dry run the ones a real run would create
      * @param int                          $contacts        contacts created, likewise
      * @param int                          $activities      mails logged, likewise
-     * @param int                          $emailsTaken     contacts created without the company's email, which another contact holds (real run)
      * @param int                          $skippedAtWrite  new customers the handler skipped: a company of the folded name existed by then (real run)
      * @param list<string>                 $failures        `row <n>: <reason>`
      */
@@ -31,7 +30,6 @@ final readonly class CustomerImportReport
         public int $created,
         public int $contacts,
         public int $activities,
-        public int $emailsTaken,
         public int $skippedAtWrite,
         public array $failures,
     ) {
@@ -111,7 +109,7 @@ final readonly class CustomerImportReport
     {
         $out = ['# Customer import'.($this->dryRun ? ' (dry run)' : ''), '', '- '.$this->summary()];
         if (!$this->dryRun) {
-            $out[] = \sprintf('- Contacts without the company\'s email, which another contact holds: %d. New customers skipped at write, a company of the name existed by then: %d.', $this->emailsTaken, $this->skippedAtWrite);
+            $out[] = \sprintf('- New customers skipped at write, a company of the name existed by then: %d.', $this->skippedAtWrite);
         }
         $out[] = '';
 

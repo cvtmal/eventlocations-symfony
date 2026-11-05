@@ -17,8 +17,6 @@ final readonly class TaskRow
         public string $assigneeName,
         public ?string $companyId,
         public ?string $companyName,
-        public ?string $contactId,
-        public ?string $contactName,
         public ?string $dealId,
         public ?string $dealCompanyName,
     ) {
@@ -26,6 +24,6 @@ final readonly class TaskRow
 
     public function hasObject(): bool
     {
-        return null !== $this->companyId || null !== $this->contactId || null !== $this->dealId;
+        return null !== $this->companyId || null !== $this->dealId;
     }
 }

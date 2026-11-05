@@ -7,13 +7,14 @@ namespace App\Story;
 use App\Admin\Repository\AdminUserRepository;
 use App\Crm\Command\ChangeInquiryStatus;
 use App\Crm\Command\IngestInquiry;
+use App\Crm\CommandHandler\LinkLocationManagerHandler;
 use App\Crm\CompanyStageSync;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
+use App\Crm\Entity\Contact;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
@@ -34,8 +35,8 @@ use function Zenstruck\Foundry\faker;
 
 /**
  * Fictional CRM data for the dev back office (#27): 12 companies, 8 of them made from the first
- * demo venues (so the bootstrap button still has venues to work on), their contacts, timeline
- * entries and tasks of the dev admin, due today, overdue and later, 14 deals over every stage of
+ * demo venues (so the bootstrap button still has venues to work on), their contact rows (the first
+ * venue company's first one a Location-Manager, #55), timeline entries and tasks of the dev admin, due today, overdue and later, 14 deals over every stage of
  * the pipeline, six inquiries on the linked venues for the inbox (#29), and two mail templates
  * (#30). Seeded, so every `make seed` on an empty CRM writes the same data; it skips when a
  * company exists, because `make seed` appends.
@@ -118,21 +119,19 @@ final class CrmStory extends Story
         }
 
         foreach ($companies as $index => $company) {
-            $contacts = [];
-            foreach (range(1, 1 + $index % 2) as $_) {
-                $contacts[] = ContactFactory::new()->withDetails()->create([
+            foreach (range(1, 1 + $index % 2) as $number) {
+                $contact = ContactFactory::new()->withDetails();
+                if (0 === $index && 1 === $number) {
+                    $contact = $contact->afterInstantiate(static fn (Contact $manager) => $manager->changePosition(LinkLocationManagerHandler::MANAGER_POSITION));
+                }
+                $contact->create([
                     'company' => $company,
-                    'kind' => ContactKind::VenueContact,
                     'email' => 0 === $index % 4 ? null : $faker->unique()->safeEmail(),
                 ]);
             }
 
             foreach (range(0, $index % 4) as $entry) {
-                $activity = ActivityFactory::new()->ofType($types[($index + $entry) % \count($types)])->onCompany($company);
-                if (0 === $entry) {
-                    $activity = $activity->onContact($contacts[0]);
-                }
-                $activity->create(['actor' => $admin]);
+                ActivityFactory::new()->ofType($types[($index + $entry) % \count($types)])->onCompany($company)->create(['actor' => $admin]);
             }
 
             if (0 === $index % 2) {
@@ -145,9 +144,7 @@ final class CrmStory extends Story
             }
         }
 
-        ContactFactory::new()->withDetails()->many(3)->create(['kind' => ContactKind::Other]);
         TaskFactory::new()->done($today->modify('-1 day')->setTime(16, 0))->create(['assignee' => $admin, 'createdBy' => $admin, 'dueOn' => $today->modify('-2 days')]);
-        TaskFactory::createOne(['assignee' => $admin, 'createdBy' => $admin, 'dueOn' => $today, 'contact' => ContactFactory::createOne(['kind' => ContactKind::Other])]);
 
         $this->deals($companies, $venues, $today);
         $this->inquiries($venues, $today);
@@ -188,8 +185,8 @@ final class CrmStory extends Story
     }
 
     /**
-     * Each goes through `IngestInquiry`, as a real one does, so the inbox, the timeline and the couple contacts stay in
-     * step. A demo venue without an inquiry address can take no inquiry.
+     * Each goes through `IngestInquiry`, as a real one does, so the inbox and the timeline stay in step; a couple is no
+     * contact (#55). A demo venue without an inquiry address can take no inquiry.
      *
      * @param list<Venue> $venues
      */

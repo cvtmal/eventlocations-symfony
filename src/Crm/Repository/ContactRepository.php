@@ -35,17 +35,17 @@ class ContactRepository extends ServiceEntityRepository
     }
 
     /**
-     * Whether another contact has the address (compared canonically). The unique key still decides
-     * under concurrency.
+     * Whether another contact of this Location has the address (compared canonically). The same
+     * address on another Location is fine (#55). The unique key still decides under concurrency.
      */
-    public function emailTaken(string $email, ?string $exceptId = null): bool
+    public function emailTaken(string $companyId, string $email, ?string $exceptId = null): bool
     {
         $email = ContactEmail::normalise($email);
         if (null === $email) {
             return false;
         }
 
-        $contact = $this->findOneBy(['email' => $email]);
+        $contact = $this->findOneBy(['company' => $companyId, 'email' => $email]);
 
         return null !== $contact && $contact->id() !== $exceptId;
     }

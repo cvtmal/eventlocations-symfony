@@ -13,18 +13,17 @@ final readonly class BootstrapOutcome
     private function __construct(
         public ?string $companyId,
         public bool $contactCreated,
-        public bool $emailTaken,
     ) {
     }
 
-    public static function created(string $companyId, bool $contactCreated, bool $emailTaken): self
+    public static function created(string $companyId, bool $contactCreated): self
     {
-        return new self($companyId, $contactCreated, $emailTaken);
+        return new self($companyId, $contactCreated);
     }
 
     public static function skipped(): self
     {
-        return new self(null, false, false);
+        return new self(null, false);
     }
 
     public function isSkipped(): bool

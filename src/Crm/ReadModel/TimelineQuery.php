@@ -10,9 +10,9 @@ use App\Crm\ValueObject\TimelineCursor;
 use Doctrine\DBAL\Connection;
 
 /**
- * The timeline of a company, a contact or a deal (CRM-4): its activities by keyset on `(occurred_at, id)`, and on a
- * company also the audit-log events of its linked venues, merged in PHP (D15). Two sources, so a page costs the
- * activities, the venue lookup and the audit rows: three statements for a company, one for a contact or a deal.
+ * The timeline of a company or a deal (CRM-4): its activities by keyset on `(occurred_at, id)`, and on a company also
+ * the audit-log events of its linked venues, merged in PHP (D15). Two sources, so a page costs the activities, the
+ * venue lookup and the audit rows: three statements for a company, one for a deal.
  *
  * The audit commands are plain class names, pinned to their classes by a test. Photos, rooms, texts and every other
  * venue edit never reach a timeline.
@@ -118,7 +118,7 @@ final class TimelineQuery
     private static function activityEntry(array $row): TimelineEntry
     {
         $isStageChange = TimelineEntry::EVENT_DEAL_STAGE_CHANGED === $row['type_code'];
-        // The inquiry can outlive an erased contact: its entry stays on the company, anonymised, and must not name it.
+        // An entry anonymised before #55 (an erased couple's) stays on the company and must not name its inquiry.
         $inquiryId = null === $row['anonymised_at'] && null !== $row['inquiry_id'] ? (string) $row['inquiry_id'] : null;
         // Anonymising empties the payload, so an erased entry has no status and shows no address.
         $email = TimelineEntry::EMAIL_SENT === $row['type_code'] && null !== $row['payload_status']

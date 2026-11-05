@@ -6,27 +6,22 @@ namespace App\Tests\Integration\Crm;
 
 use App\Crm\Command\CreateCompanyForVenue;
 use App\Crm\Command\DeleteCompany;
-use App\Crm\Command\EraseContact;
+use App\Crm\Command\RemoveContact;
 use App\Crm\Command\UnlinkVenue;
-use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\ValueObject\BootstrapOutcome;
-use App\Crm\ValueObject\ContactKind;
-use App\Factory\ContactFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Entity\Venue;
-use Doctrine\DBAL\Connection;
-use Doctrine\ORM\Events;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * One company per venue (CRM-1, D19): the venue's facts, its contact person as a `venue_contact`, a
- * taken e-mail left out, and a repeat that changes nothing. The venue itself is only read.
+ * One company per venue (CRM-1, D19): the venue's facts, its contact person as the Location's first
+ * contact row with the inquiry address (never taken on a new Location, #55), and a repeat that changes nothing. The venue itself is only read.
  */
 final class CreateCompanyForVenueTest extends KernelTestCase
 {
@@ -50,7 +45,6 @@ final class CreateCompanyForVenueTest extends KernelTestCase
         self::assertInstanceOf(BootstrapOutcome::class, $outcome);
         self::assertSame($id, $outcome->companyId);
         self::assertTrue($outcome->contactCreated);
-        self::assertFalse($outcome->emailTaken);
         self::assertSame(
             [
                 'name' => 'Schloss Seeblick',
@@ -66,8 +60,8 @@ final class CreateCompanyForVenueTest extends KernelTestCase
         );
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_company_venues WHERE company_id = ? AND venue_id = ?', $id, $venue->id()));
         self::assertSame(
-            ['first_name' => 'Laura', 'last_name' => 'Meier', 'email' => 'info@seeblick.example.ch', 'kind' => ContactKind::VenueContact->value, 'company_id' => $id],
-            $this->connection->fetchAssociative('SELECT first_name, last_name, email, kind, company_id FROM crm_contacts WHERE company_id = ?', [$id]),
+            ['first_name' => 'Laura', 'last_name' => 'Meier', 'email' => 'info@seeblick.example.ch', 'company_id' => $id],
+            $this->connection->fetchAssociative('SELECT first_name, last_name, email, company_id FROM crm_contacts WHERE company_id = ?', [$id]),
         );
         self::assertSame([['command' => CreateCompanyForVenue::class, 'changes' => ['venue' => $venue->id()]]], $this->auditRows('company', $id));
     }
@@ -126,45 +120,9 @@ final class CreateCompanyForVenueTest extends KernelTestCase
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts WHERE company_id = ?', $id));
     }
 
-    public function test_a_taken_email_is_left_out_of_the_contact_and_kept_on_the_company(): void
-    {
-        ContactFactory::createOne(['email' => 'info@teilen.example.ch']);
-        $venue = $this->venue('Geteilte Adresse', 'Laura Meier', 'INFO@teilen.example.ch');
-        $id = EntityId::generate();
-
-        $outcome = $this->dispatch(new CreateCompanyForVenue($venue->id(), $id));
-
-        self::assertInstanceOf(BootstrapOutcome::class, $outcome);
-        self::assertTrue($outcome->contactCreated);
-        self::assertTrue($outcome->emailTaken);
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_contacts WHERE company_id = ? AND email IS NULL', $id));
-        self::assertSame('info@teilen.example.ch', $this->connection->fetchOne('SELECT email FROM crm_companies WHERE id = ?', [$id]));
-    }
-
-    public function test_an_address_taken_after_the_check_is_refused_and_writes_nothing(): void
-    {
-        $venue = $this->venue('Knapp', 'Laura Meier', 'info@knapp.example.ch');
-        $id = EntityId::generate();
-        $this->em->getEventManager()->addEventListener(Events::preFlush, new class($this->connection) {
-            public function __construct(private readonly Connection $connection)
-            {
-            }
-
-            public function preFlush(): void
-            {
-                $this->connection->executeStatement("INSERT INTO crm_contacts (id, last_name, kind, email) VALUES (?, 'Keller', 'other', 'info@knapp.example.ch')", [EntityId::generate()]);
-            }
-        });
-
-        $this->failure(new CreateCompanyForVenue($venue->id(), $id), ContactEmailTaken::class);
-
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_companies WHERE id = ?', $id));
-        self::assertSame([], $this->auditRows('company', $id));
-    }
-
     /**
      * Accepted by the lead for the owner's Outcome (review m5): CRM-1 reads "one company per venue
-     * that has none", so nothing records that a venue has none on purpose. An erased person comes
+     * that has none", so nothing records that a venue has none on purpose. A removed contact row comes
      * back from `venues.contact_person` when the venue is unlinked or its company deleted. A tombstone
      * or a hidden button would change this test.
      *
@@ -176,7 +134,7 @@ final class CreateCompanyForVenueTest extends KernelTestCase
         $venue = $this->venue('Wieder da', 'Laura Meier', 'laura@wieder.example.ch');
         $first = EntityId::generate();
         $this->dispatch(new CreateCompanyForVenue($venue->id(), $first));
-        $this->dispatch(new EraseContact((string) $this->connection->fetchOne('SELECT id FROM crm_contacts WHERE company_id = ?', [$first])));
+        $this->dispatch(new RemoveContact((string) $this->connection->fetchOne('SELECT id FROM crm_contacts WHERE company_id = ?', [$first]), $first));
         $this->em->clear();
         $this->dispatch('unlink' === $how ? new UnlinkVenue($first, $venue->id()) : new DeleteCompany($first));
         $this->em->clear();

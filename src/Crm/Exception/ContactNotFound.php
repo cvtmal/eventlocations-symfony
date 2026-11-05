@@ -7,7 +7,7 @@ namespace App\Crm\Exception;
 use App\Shared\Exception\DomainException;
 
 /**
- * No contact has this id (erased, or never existed). Pages answer 404.
+ * No contact row has this id, or not on the Location named (removed, or never existed). Pages answer 404.
  */
 final class ContactNotFound extends DomainException
 {

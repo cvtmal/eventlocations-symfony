@@ -14,7 +14,6 @@ use App\Crm\ReadModel\TimelineQuery;
 use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
@@ -86,7 +85,6 @@ final class TimelineApiTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $deal = DealFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $deal->company()]);
 
         $this->send('POST', self::ACTIVITIES, ['kind' => 'deal', 'recordId' => $deal->id(), 'type' => ActivityType::NOTE, 'body' => 'Offerte folgt', 'occurredAt' => '2026-10-31T14:05']);
 
@@ -94,15 +92,12 @@ final class TimelineApiTest extends WebTestCase
         $id = $this->entry()['id'];
         self::assertSame([$id], $this->timelineIds('deals', $deal->id()));
         self::assertSame([$id], $this->timelineIds('companies', $deal->company()->id()));
-        self::assertSame([], $this->timelineIds('contacts', $contact->id()));
     }
 
-    public function test_a_stage_change_reads_as_a_system_line_on_deal_and_company_and_never_on_a_contact(): void
+    public function test_a_stage_change_reads_as_a_system_line_on_deal_and_company(): void
     {
         ['user' => $me] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
         $deal = DealFactory::createOne(['name' => 'Verlängerung 2027']);
-        $contact = ContactFactory::createOne(['company' => $deal->company()]);
-        $this->connection->insert('crm_deal_contacts', ['deal_id' => $deal->id(), 'contact_id' => $contact->id()]);
         $commandBus = self::getContainer()->get('command.bus');
         self::assertInstanceOf(MessageBusInterface::class, $commandBus);
         $commandBus->dispatch(new MoveDealStage($deal->id(), 'negotiation', 'new', $me->id()));
@@ -118,7 +113,6 @@ final class TimelineApiTest extends WebTestCase
                 $entries[0]['kind'], $entries[0]['type'], $entries[0]['actorName'], $entries[0]['title'], $entries[0]['body'], $entries[0]['stage'], $entries[0]['canEdit'],
             ]);
         }
-        self::assertSame([], $this->timelineIds('contacts', $contact->id()));
     }
 
     public function test_the_deal_timeline_of_an_unknown_deal_is_a_json_404(): void
@@ -129,20 +123,6 @@ final class TimelineApiTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(404);
         self::assertResponseHeaderSame('Content-Type', 'application/json');
-    }
-
-    public function test_an_entry_on_a_contact_shows_on_both_timelines(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-
-        $this->send('POST', self::ACTIVITIES, ['kind' => 'contact', 'recordId' => $contact->id(), 'type' => 'note', 'body' => 'Beide', 'occurredAt' => '2026-10-31T14:05']);
-        self::assertResponseStatusCodeSame(201);
-        $id = $this->entry()['id'];
-
-        self::assertSame([$id], $this->idsOf($this->timelineUrl('contacts', $contact->id())));
-        self::assertSame([$id], $this->idsOf($this->timelineUrl('companies', $company->id())));
     }
 
     /**
@@ -217,7 +197,7 @@ final class TimelineApiTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        foreach (['company' => EntityId::generate(), 'contact' => 'not-a-uuid'] as $kind => $recordId) {
+        foreach (['company' => EntityId::generate(), 'deal' => 'not-a-uuid'] as $kind => $recordId) {
             $this->send('POST', self::ACTIVITIES, ['kind' => $kind, 'recordId' => $recordId, 'type' => 'note', 'body' => 'Text', 'occurredAt' => '2026-10-31T14:05']);
             self::assertResponseStatusCodeSame(404);
             self::assertResponseHeaderSame('Content-Type', 'application/json');
@@ -458,11 +438,11 @@ final class TimelineApiTest extends WebTestCase
     public function test_a_timeline_says_per_entry_what_the_viewer_may_edit(): void
     {
         $staff = $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne();
-        $mine = ActivityFactory::new()->onContact($contact)->create(['actor' => $staff['user'], 'occurredAt' => new \DateTimeImmutable('2026-10-21 09:00:00+00')]);
-        ActivityFactory::new()->onContact($contact)->create(['actor' => AdminUserFactory::createOne(), 'occurredAt' => new \DateTimeImmutable('2026-10-20 09:00:00+00')]);
+        $company = CompanyFactory::createOne();
+        $mine = ActivityFactory::new()->onCompany($company)->create(['actor' => $staff['user'], 'occurredAt' => new \DateTimeImmutable('2026-10-21 09:00:00+00')]);
+        ActivityFactory::new()->onCompany($company)->create(['actor' => AdminUserFactory::createOne(), 'occurredAt' => new \DateTimeImmutable('2026-10-20 09:00:00+00')]);
 
-        $entries = $this->page($this->timelineUrl('contacts', $contact->id()))['entries'];
+        $entries = $this->page($this->timelineUrl('companies', $company->id()))['entries'];
 
         self::assertSame([$mine->id()], array_column(array_filter($entries, static fn (array $entry): bool => $entry['canEdit']), 'id'));
     }
@@ -471,7 +451,7 @@ final class TimelineApiTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
 
-        foreach (['companies', 'contacts'] as $segment) {
+        foreach (['companies', 'deals'] as $segment) {
             $this->client->request('GET', $this->timelineUrl($segment, EntityId::generate()));
             self::assertResponseStatusCodeSame(404);
             self::assertResponseHeaderSame('Content-Type', 'application/json');
