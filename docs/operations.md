@@ -764,8 +764,8 @@ SELECT c.id, c.name, count(*) FROM crm_company_venues l JOIN crm_companies c ON 
   the migration gave up before changing anything. The first lock lets readers through, but the
   later `ALTER TABLE` and `DROP TABLE` take ACCESS EXCLUSIVE on `crm_companies` and on the public
   `venues` table (the dropped link table's FKs point at both), so a long reader (a cron, a slow
-  query) can cause it too, and public venue pages may pause for up to 15 s at the end of the
-  migration. Same state as above; deploy again at a quieter moment.
+  query) can cause it too. Public venue pages wait while those statements run, normally well
+  under a second, at most 15 s. Same state as above; deploy again at a quieter moment.
 
 **3. The deploy window.** The second exception to "migrations are additive" (§Deploy and purge,
 step 3): the migration drops `crm_company_venues`, which the old code still reads. For the seconds
