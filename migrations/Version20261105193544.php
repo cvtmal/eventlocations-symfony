@@ -15,16 +15,17 @@ use Doctrine\Migrations\AbstractMigration;
  * Rules, in order:
  * 1. Preconditions abort (one message listing every failing metric): A6 company with 2+ venues, V2 venue on 2+
  *    companies, C4 non-couple contact without a company, C5 couple with a company, D4 staff entry on a couple,
- *    D6 inquiry entry with no company link, E7 deal link to a couple, T-couple task on a couple. The couple count C3
- *    never aborts: it grows with every inquiry.
+ *    D6 inquiry entry with no company link, E7 deal link to a couple, T-couple task on a couple, X0 entry with no
+ *    link before the switch. The couple count C3 never aborts: it grows with every inquiry.
  * 2. Couple contact rows are deleted. `inquiries`, `crm_inquiry_links` rows and `inquiry` entries stay.
  * 3. The unique e-mail becomes per Location: `uk_crm_contacts_company_email (company_id, email)`.
  * 4. Copies onto a Location, once, only what is missing there (same e-mail, or same names without one): a deal
  *    contact (E6) onto its deal's Location, a contact with entries on another Location (C6) onto that Location, an
  *    active manager (portal) onto their venue's Location with position MANAGER_POSITION.
  * 5. Tasks on a contact move to its Location; the tasks on nothing (F5) stay untouched.
- * 6. Entries linked only to a contact get its Location; `crm_activity_contacts` and `crm_deal_contacts` are dropped;
- *    entries left with no Location and no deal are deleted (the `ActivityRepository::deleteUnlinked()` rule).
+ * 6. Entries linked only to a contact get its Location; `crm_activity_contacts` and `crm_deal_contacts` are dropped.
+ *    No entry is deleted: an entry with no link before the switch aborts (X0), and one that would lose its last link
+ *    with the couples aborts too (D4, D6); P-entries and P-unlinked check it.
  * 7. `crm_tasks.contact_id`, `crm_inquiry_links.contact_id`, `crm_contacts.kind` and `crm_contacts.owner_id` go;
  *    `crm_contacts.company_id` becomes NOT NULL with ON DELETE CASCADE; a task sits on a company or a deal or nothing.
  * 8. Postconditions with exact pre/post arithmetic (counts read by fetchOne before the steps and printed with
@@ -59,6 +60,7 @@ final class Version20261105193544 extends AbstractMigration
         'D6' => ['inquiry entries with no company link', "SELECT count(*) FROM crm_activities a WHERE a.type_code = 'inquiry' AND NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id)"],
         'E7' => ['deal links to a couple', "SELECT count(*) FROM crm_deal_contacts dc JOIN crm_contacts p ON p.id = dc.contact_id WHERE p.kind = 'couple'"],
         'T-couple' => ['tasks on a couple', "SELECT count(*) FROM crm_tasks t JOIN crm_contacts p ON p.id = t.contact_id WHERE p.kind = 'couple'"],
+        'X0' => ['entries with no link before the switch', 'SELECT count(*) FROM crm_activities a WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id)'],
     ];
 
     /** Code => [meaning, count query]; reported in the deploy log, never guarded. The totals feed the postconditions. */
@@ -77,7 +79,6 @@ final class Version20261105193544 extends AbstractMigration
         'inquiry links' => ['', 'SELECT count(*) FROM crm_inquiry_links'],
         'inquiry entries' => ['', "SELECT count(*) FROM crm_activities WHERE type_code = 'inquiry'"],
         'entries' => ['', 'SELECT count(*) FROM crm_activities'],
-        'X0' => ['entries with no link', 'SELECT count(*) FROM crm_activities a WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id)'],
         'tasks' => ['', 'SELECT count(*) FROM crm_tasks'],
         'non-couple contacts' => ['', "SELECT count(*) FROM crm_contacts WHERE kind <> 'couple'"],
         'audit rows' => ['', 'SELECT count(*) FROM admin_audit_log'],
@@ -108,10 +109,11 @@ final class Version20261105193544 extends AbstractMigration
     {
         // Doctrine opened the transaction before up(). A guest inquiry or an audited staff or /konto action committing
         // between these reads and the postconditions would move the exact counts and roll an unattended deploy back
-        // for nothing: SHARE mode lets reads through and makes writers wait the second this migration takes, and the
-        // lock_timeout turns a long wait into a rollback instead of a hung deploy.
+        // for nothing. The lock comes before the first count, so the counts are consistent: SHARE ROW EXCLUSIVE lets
+        // reads through and makes writers wait the second this migration takes; lock_timeout turns a long wait into
+        // a rollback instead of a hung deploy.
         $this->connection->executeStatement("SET LOCAL lock_timeout = '15s'");
-        $this->connection->executeStatement('LOCK TABLE '.implode(', ', self::LOCKED).' IN SHARE MODE');
+        $this->connection->executeStatement('LOCK TABLE '.implode(', ', self::LOCKED).' IN SHARE ROW EXCLUSIVE MODE');
 
         $pre = [];
         foreach (self::GUARDS + self::REPORTED as $code => [$meaning, $sql]) {
@@ -191,12 +193,6 @@ final class Version20261105193544 extends AbstractMigration
 
         $this->addSql('DROP TABLE crm_activity_contacts');
         $this->addSql('DROP TABLE crm_deal_contacts');
-
-        $this->addSql(<<<'SQL'
-            DELETE FROM crm_activities a
-            WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies c WHERE c.activity_id = a.id)
-              AND NOT EXISTS (SELECT 1 FROM crm_activity_deals d WHERE d.activity_id = a.id)
-            SQL);
 
         $this->addSql('ALTER TABLE crm_tasks DROP CONSTRAINT chk_crm_tasks_one_object');
         $this->addSql('DROP INDEX idx_crm_tasks_contact_id');
@@ -330,7 +326,7 @@ final class Version20261105193544 extends AbstractMigration
             'P-inquiries' => [$pre['inquiries'], 'SELECT count(*) FROM inquiries'],
             'P-links' => [$pre['inquiry links'], 'SELECT count(*) FROM crm_inquiry_links'],
             'P-inquiry-entries' => [$pre['inquiry entries'], "SELECT count(*) FROM crm_activities WHERE type_code = 'inquiry'"],
-            'P-entries' => [$pre['entries'] - $pre['X0'], 'SELECT count(*) FROM crm_activities'],
+            'P-entries' => [$pre['entries'], 'SELECT count(*) FROM crm_activities'],
             'P-unlinked' => [0, 'SELECT count(*) FROM crm_activities a WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id)'],
             'P-orphan-tasks' => [$pre['F5'], 'SELECT count(*) FROM crm_tasks WHERE num_nonnulls(company_id, deal_id) = 0'],
             'P-tasks' => [$pre['tasks'] - $pre['T-couple'], 'SELECT count(*) FROM crm_tasks'],

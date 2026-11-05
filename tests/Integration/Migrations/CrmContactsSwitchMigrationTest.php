@@ -94,6 +94,7 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
         $ids = $this->prodShape();
         $orphansBefore = $this->orphanTasks();
         self::assertCount(18, $orphansBefore);
+        $entriesBefore = $this->intOf('SELECT count(*) FROM crm_activities');
 
         $this->migrate('up', $this->logger());
 
@@ -125,10 +126,10 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
         self::assertSame($orphansBefore, $this->orphanTasks());
         self::assertSame(19, $this->intOf('SELECT count(*) FROM crm_tasks'));
 
-        // D2 gets its contact's Location; the C6 entry keeps only the Location it named; the unlinked entry is gone.
+        // D2 gets its contact's Location; the C6 entry keeps only the Location it named; no entry is deleted.
         self::assertSame([$ids['L1']], $this->companiesOf($ids['D2']));
         self::assertSame([$ids['Y']], $this->companiesOf($ids['C6entry']));
-        self::assertSame(0, $this->intOf(\sprintf("SELECT count(*) FROM crm_activities WHERE id = '%s'", $ids['X0'])));
+        self::assertSame($entriesBefore, $this->intOf('SELECT count(*) FROM crm_activities'));
 
         self::assertContains('#55 pre: C3 couples = 2', $this->logLines);
         self::assertContains('#55 pre: F5 tasks on nothing = 18', $this->logLines);
@@ -221,6 +222,17 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
         $this->migrate('down');
 
         $this->assertAbortsWith('D6 = 1 (inquiry entries with no company link)', 0);
+    }
+
+    /** Never measured on production: an entry nothing points at is not deleted unseen, the deploy stops instead. */
+    public function test_aborts_on_x0_an_entry_with_no_link(): void
+    {
+        $entry = ActivityFactory::createOne()->id();
+        $this->em->clear();
+        $this->migrate('down');
+
+        $this->assertAbortsWith('X0 = 1 (entries with no link before the switch)', 0);
+        self::assertSame(1, $this->intOf(\sprintf("SELECT count(*) FROM crm_activities WHERE id = '%s'", $entry)));
     }
 
     public function test_aborts_on_e7_a_deal_linked_to_a_couple(): void
@@ -414,11 +426,12 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
 
         /** @var list<string> $expected */
         $expected = \constant($migration::class.'::LOCKED');
-        sort($expected);
+        self::assertNotEmpty($expected);
+        // down()'s foreign keys hold the same mode on a few tables already; every counted table must be among them.
         $held = $this->connection->fetchFirstColumn(
-            "SELECT c.relname FROM pg_locks l JOIN pg_class c ON c.oid = l.relation WHERE l.pid = pg_backend_pid() AND l.mode = 'ShareLock' AND l.granted ORDER BY 1",
+            "SELECT c.relname FROM pg_locks l JOIN pg_class c ON c.oid = l.relation WHERE l.pid = pg_backend_pid() AND l.mode = 'ShareRowExclusiveLock' AND l.granted",
         );
-        self::assertSame($expected, $held);
+        self::assertSame([], array_values(array_diff($expected, $held)));
         self::assertSame('15s', $this->connection->fetchOne('SHOW lock_timeout'));
     }
 
@@ -430,7 +443,7 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
     /**
      * The production shape at small scale (research §Migration test): prospects, one-venue Locations, an imported LI
      * Location, the C6 person, both E6 variants, a D2 entry, 18 tasks on nothing, a task on a contact, two couples with
-     * their inquiries, three managers and an entry with no link.
+     * their inquiries and three managers.
      *
      * @return array<string, string>
      */
@@ -458,7 +471,6 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
         $entry2 = ActivityFactory::new()->ofType(ActivityType::INQUIRY)->onCompany($l2)->create(['title' => 'B Anfrage'])->id();
         $c6Entry = ActivityFactory::new()->onCompany($l2)->create()->id();
         $d2Entry = ActivityFactory::createOne()->id();
-        $x0Entry = ActivityFactory::createOne()->id();
 
         $m1 = PortalUserFactory::createOne(['email' => 'm1@example.com', 'firstName' => 'Mara', 'lastName' => 'Meier']);
         $m2 = PortalUserFactory::createOne(['email' => 'm2@example.com']);
@@ -501,7 +513,7 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
 
         return [
             'L1' => $l1->id(), 'L2' => $l2->id(), 'Y' => $l2->id(), 'Z' => $prospect2->id(), 'LI' => $li->id(),
-            'F2' => $f2, 'D2' => $d2Entry, 'C6entry' => $c6Entry, 'X0' => $x0Entry,
+            'F2' => $f2, 'D2' => $d2Entry, 'C6entry' => $c6Entry,
         ];
     }
 

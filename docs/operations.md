@@ -514,6 +514,7 @@ UNION ALL SELECT 'D4 staff entries on a couple', (SELECT count(*) FROM crm_activ
 UNION ALL SELECT 'D6 inquiry entries with no company link', (SELECT count(*) FROM crm_activities a WHERE a.type_code = 'inquiry' AND NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id))
 UNION ALL SELECT 'E7 deal links to a couple', (SELECT count(*) FROM crm_deal_contacts dc JOIN crm_contacts p ON p.id = dc.contact_id WHERE p.kind = 'couple')
 UNION ALL SELECT 'T-couple tasks on a couple', (SELECT count(*) FROM crm_tasks t JOIN crm_contacts p ON p.id = t.contact_id WHERE p.kind = 'couple')
+UNION ALL SELECT 'X0 entries with no link before the switch', (SELECT count(*) FROM crm_activities a WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id))
 UNION ALL SELECT 'C3 couples', (SELECT count(*) FROM crm_contacts WHERE kind = 'couple')
 UNION ALL SELECT 'C6 non-couple contacts with entries on another company', (SELECT count(*) FROM crm_contacts p WHERE p.kind <> 'couple' AND EXISTS (SELECT 1 FROM crm_activity_contacts l JOIN crm_activity_companies lc ON lc.activity_id = l.activity_id WHERE l.contact_id = p.id AND lc.company_id IS DISTINCT FROM p.company_id))
 UNION ALL SELECT 'E6 deal contact links', (SELECT count(*) FROM crm_deal_contacts)
@@ -528,7 +529,6 @@ UNION ALL SELECT 'inquiries', (SELECT count(*) FROM inquiries)
 UNION ALL SELECT 'inquiry links', (SELECT count(*) FROM crm_inquiry_links)
 UNION ALL SELECT 'inquiry entries', (SELECT count(*) FROM crm_activities WHERE type_code = 'inquiry')
 UNION ALL SELECT 'entries', (SELECT count(*) FROM crm_activities)
-UNION ALL SELECT 'X0 entries with no link', (SELECT count(*) FROM crm_activities a WHERE NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id) AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id))
 UNION ALL SELECT 'tasks', (SELECT count(*) FROM crm_tasks)
 UNION ALL SELECT 'non-couple contacts', (SELECT count(*) FROM crm_contacts WHERE kind <> 'couple')
 UNION ALL SELECT 'audit rows', (SELECT count(*) FROM admin_audit_log);
@@ -579,9 +579,10 @@ are the guards: any of them above 0 stops the deploy.
 | C4 non-couple contacts without a company | 0 | Stops the deploy. Staff attach those people to a Location or delete them in the old contact list, then deploy again |
 | C5 couples with a company | 0 | Stops the deploy. Tell the lead: deleting those couples would delete staff work |
 | D4 staff entries on a couple | 0 | Same as C5 |
-| D6 inquiry entries with no company link | 0 | Stops the deploy. Tell the lead: the switch would delete those Anfrage entries |
+| D6 inquiry entries with no company link | 0 | Stops the deploy. Tell the lead: those Anfrage entries would be left with no link |
 | E7 deal links to a couple | 0 | Same as C5 |
 | T-couple tasks on a couple | 0 | Same as C5 |
+| X0 entries with no link before the switch | 0 (not measured on 2026-11-05) | Stops the deploy: the switch deletes no entry unseen. Stop and tell the owner |
 | C3 couples | 0 | Never stops it: the deploy deletes those couples, their Anfragen stay |
 | C6 non-couple contacts with entries on another company | 1 | More people are copied. The second query names them |
 | E6 deal contact links | 1 | More links are dropped, each person copied onto the deal's Location if missing there. The first query names them |
@@ -591,8 +592,7 @@ are the guards: any of them above 0 stops the deploy.
 | I2 managers with a CRM contact of the same e-mail | 1 | Informational |
 | B2 venues without a company | 0 | A manager of such a venue gets no row; staff link the venue to a Location first |
 | inquiries, inquiry links, inquiry entries | not measured | Must stay unchanged by the deploy |
-| entries | 1204 | After the deploy: entries − X0 |
-| X0 entries with no link | not measured, expected 0 | Above 0: those entries were already invisible; the deploy deletes them |
+| entries | 1204 | Must stay unchanged by the deploy |
 | tasks, non-couple contacts | 18, 1255 | The postconditions start from these |
 | audit rows | not measured (1505 on a company, 1 on a contact) | Must stay unchanged by the deploy |
 
@@ -617,7 +617,7 @@ PostgreSQL 18 function a deployed migration calls. On an older server the migrat
 - **A postcondition fails:** `#55 postcondition failed: <check>: expected <n>, got <m>[; <check>: …]. Nothing was changed. See docs/operations.md "CRM contacts switch (#55)".`
   The migration did not do what it promised on this data. Same state as above; tell the lead, do
   not retry. Concurrent traffic cannot cause it: before its first count the migration locks every
-  table it counts against writers (`LOCKED`, SHARE mode), so a guest inquiry or a staff or
+  table it counts against writers (`LOCKED`, SHARE ROW EXCLUSIVE mode), so a guest inquiry or a staff or
   `/konto` action sent meanwhile waits the second the migration takes.
 - **`canceling statement due to lock timeout`:** a writer held one of those tables for 15 s, so
   the migration gave up before changing anything. Same state as above; deploy again at a quieter
@@ -668,7 +668,7 @@ UNION ALL SELECT 'K2 Liechtenstein venues on a Location', (SELECT count(*) FROM 
 | contacts with position Location-Manager | at least the managers copied |
 | tasks | `tasks` of the deploy log minus T-couple (18) |
 | tasks on nothing | F5 of the deploy log (18) |
-| entries | `entries` minus X0 of the deploy log (1204) |
+| entries | `entries` of the deploy log (1204): the switch deletes no entry |
 | inquiries, inquiry links, inquiry entries, audit rows | as in the deploy log |
 | H1, H2 audit rows on company, on contact | as before the deploy (1505 and 1 on 2026-11-05, plus staff edits since) |
 | K2 Liechtenstein venues on a Location | 4 |
