@@ -59,14 +59,14 @@ function fakeGoogle({ reject = false } = {}) {
             made.markers.push(this);
         }
 
-        addListener(name, listener) {
+        addEventListener(name, listener) {
             this.listeners[name] = listener;
         }
     }
+    // Google's PinElement is itself the marker's content; its `element` property is deprecated.
     class PinElement {
         constructor(options) {
             this.options = options;
-            this.element = document.createElement('div');
         }
     }
     class Circle {
@@ -276,6 +276,9 @@ describe('near-me map (#52)', () => {
         expect(made.maps[0].fitBounds).toHaveBeenCalledTimes(1);
         expect(made.markers[0].options.title).toBe('<b>x</b>');
         expect(made.markers[1].options.title).toBe('3 Locations');
+        expect(made.markers[0].options.content.options.glyphText).toBeUndefined();
+        expect(made.markers[1].options.content.options.glyphText).toBe('3');
+        expect(made.markers[1].options.content.options).not.toHaveProperty('glyph');
         expect(error().hidden).toBe(true);
     });
 
