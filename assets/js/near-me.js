@@ -1,6 +1,9 @@
 // Near-me page (#52): the "Meinen Standort verwenden" button and, when the server rendered a map element (a key is
-// set), the Google Maps JavaScript API map. Self-contained, no imports. The one global is Google's documented
-// `gm_authFailure` hook (a stated deviation from "no globals"); names and URLs reach the DOM through textContent only.
+// set), the Google Maps JavaScript API map. Self-contained, no imports. The two globals are Google's documented
+// `gm_authFailure` hook and the `callback` the API calls once it is ready (a stated deviation from "no globals"): with
+// `loading=async` the script's own load event comes before `google.maps.importLibrary` exists
+// (developers.google.com/maps/documentation/javascript/load-maps-js-api). Names and URLs reach the DOM through
+// textContent only.
 (() => {
     const geo = document.querySelector('form[data-near-me-geo]');
     if (geo && navigator.geolocation) {
@@ -148,6 +151,10 @@
     };
 
     window.gm_authFailure = fallback;
+    window.nearMeMapReady = () => {
+        delete window.nearMeMapReady;
+        build().catch(fallback);
+    };
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?${new URLSearchParams({
         key: data.mapsKey,
@@ -155,11 +162,9 @@
         loading: 'async',
         language: 'de',
         region: 'CH',
+        callback: 'nearMeMapReady',
     })}`;
     script.async = true;
     script.addEventListener('error', fallback);
-    script.addEventListener('load', () => {
-        build().catch(fallback);
-    });
     document.head.append(script);
 })();
