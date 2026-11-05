@@ -119,7 +119,9 @@
     overflow-wrap: anywhere;
 }
 
+// 24 px lines: the e-mail and phone links sit one under the other, and WCAG 2.5.8 wants a 24 px target (#55 follow-up).
 .crm-side__reach {
+    line-height: 24px;
     overflow-wrap: anywhere;
 
     &:hover {
