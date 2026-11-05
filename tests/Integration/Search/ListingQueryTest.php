@@ -163,15 +163,37 @@ final class ListingQueryTest extends KernelTestCase
         yield 'unknown ZIP, radius 5' => ['place=0000'];
     }
 
-    public function test_guests_fall_inside_the_capacity_range(): void
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('guestBands')]
+    public function test_a_guest_band_matches_capacity_max_inside_its_bounds(string $guests, array $expected): void
     {
-        $this->venue('Nur Maximum', ['capacityMax' => 100, 'capacityMin' => null]);
-        $this->venue('Minimum darunter', ['capacityMax' => 200, 'capacityMin' => 50]);
-        $this->venue('Minimum gleich', ['capacityMax' => 200, 'capacityMin' => 100]);
-        $this->venue('Minimum darüber', ['capacityMax' => 300, 'capacityMin' => 150]);
-        $this->venue('Zu klein', ['capacityMax' => 80, 'capacityMin' => null]);
+        foreach ([50, 51, 100, 101, 150, 151, 500] as $max) {
+            $this->venue(\sprintf('Max %03d', $max), ['capacityMax' => $max, 'capacityMin' => null]);
+        }
+        $this->venue('Max 100 Min 90', ['capacityMax' => 100, 'capacityMin' => 90]);
 
-        $this->assertMatches(['Minimum darunter', 'Minimum gleich', 'Nur Maximum'], 'guests=100');
+        $this->assertMatches($expected, 'guests='.$guests);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function guestBands(): iterable
+    {
+        yield 'bis 50' => ['50', ['Max 050']];
+        yield 'bis 100' => ['100', ['Max 051', 'Max 100', 'Max 100 Min 90']];
+        yield 'bis 150' => ['150', ['Max 101', 'Max 150']];
+        yield 'über 150' => ['151', ['Max 151', 'Max 500']];
+    }
+
+    public function test_capacity_min_is_ignored_by_the_band(): void
+    {
+        $this->venue('Gross', ['capacityMax' => 300, 'capacityMin' => 250]);
+
+        $this->assertMatches(['Gross'], 'guests=151');
+        $this->assertMatches(['Gross'], 'guests=200');
     }
 
     #[DataProvider('nameQueries')]

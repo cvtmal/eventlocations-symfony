@@ -1,24 +1,20 @@
 {#
-    The guests overlay's two GET forms (#11, FI-3). Include with `with_context = false`: criteria (SearchCriteria).
-    #filter-guests-form holds the number input; its submit button sits in the overlay footer and joins through
-    form="filter-guests-form". The bubbles are submit buttons in a second, sibling form: inside the first one a bubble
-    would be the form's default button, so Enter in the input would submit 20 instead of the typed number. Each form
-    carries the other filters, so without JS a bubble applies its number at once. With JS (js/guests-filter.js) a bubble
-    fills the input instead, and aria-pressed follows the input's value.
-    Both forms take their action, hidden state and count URL from listing_form() (#17), so a landing page keeps its path.
+    The guests overlay's GET form (#11, #51, FI-3). Include with `with_context = false`: criteria (SearchCriteria).
+    Four radios, one per GuestBand (bands on capacity_max), drawn as bubbles; each input sits inside its label, so the
+    visually hidden radio is positioned inside its bubble and a Tab stop scrolls to the bubble. The form holds no submit
+    button: the overlay footer's joins through form="filter-guests-form", so Enter on a radio and the footer button
+    both apply the band, with or without JS. No script of its own; js/overlay-form.js clears it.
+    listing_form() gives the action, hidden state and count URL (#17), so a landing page keeps its path.
 #}
-{%- set picks = [20, 30, 50, 80, 100, 150, 200, 350, 500] -%}
 {%- set target = listing_form(criteria, ['guests']) -%}
 <form id="filter-guests-form" class="guests-filter" method="get" action="{{ target.action }}" autocomplete="off" data-live-count data-live-count-url="{{ target.count }}" data-overlay-form>
     {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: target.except}, with_context = false) -}}
-    <div class="text-input guests-filter__field">
-        <label class="text-input__label visually-hidden" for="filter-guests-input">{{ 'filter.guests'|trans({}, 'search') }}</label>
-        <input class="text-input__field guests-filter__input" id="filter-guests-input" name="guests" type="number" min="1" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_GUESTS') }}" step="1" inputmode="numeric" autocomplete="off" placeholder="{{ 'filter.guests'|trans({}, 'search') }}" value="{{ criteria.guests }}">
-    </div>
-</form>
-<form class="guests-bubbles" method="get" action="{{ target.action }}" aria-label="{{ 'filter.guests_picks'|trans({}, 'search') }}" data-guests-bubbles>
-    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: target.except}, with_context = false) -}}
-    {%- for n in picks %}
-    <button type="submit" class="guests-bubble guests-bubble--{{ n }}" name="guests" value="{{ n }}" aria-pressed="{{ criteria.guests == n ? 'true' : 'false' }}">{{ n }}</button>
-    {%- endfor %}
+    <fieldset class="guests-bands">
+        <legend class="visually-hidden">{{ 'filter.guests'|trans({}, 'search') }}</legend>
+        <div class="guests-bubbles">
+            {%- for band in enum_cases('App\\Search\\ValueObject\\GuestBand') %}
+            <label class="guests-bubble guests-bubble--{{ band.value }}"><input class="visually-hidden" type="radio" name="guests" value="{{ band.value }}"{% if criteria.guests is same as(band) %} checked{% endif %}><span class="guests-bubble__label">{{ band|trans }}</span></label>
+            {%- endfor %}
+        </div>
+    </fieldset>
 </form>

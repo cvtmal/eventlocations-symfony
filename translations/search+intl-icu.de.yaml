@@ -12,7 +12,12 @@ filter:
     region: Region
     guests: Anzahl Gäste
     guests_title: Wie viele Gäste erwarten Sie?
-    guests_picks: Gästezahl wählen
+    # #51: GuestBand's labels, keyed by its case value (the canonical `guests` parameter).
+    guests_band:
+        50: 'bis 50 Gäste'
+        100: 'bis 100 Gäste'
+        150: 'bis 150 Gäste'
+        151: 'über 150 Gäste'
     more: weitere Filter +
     more_title: Wählen Sie weitere Filter und Möglichkeiten
     more_active: 'weitere Filter ({count})'
@@ -57,8 +62,6 @@ chip:
     place_generic: Ort
     place: '{place}'
     place_radius: '{place} + {radius} km'
-    # guests = count|swiss_number; count = the number, for the plural only.
-    guests: '{count, plural, one {{guests} Gast} other {{guests} Gäste}}'
 card:
     # Visually hidden before the price tag, so "Mittel" is not read alone.
     price_level: 'Preisniveau:'
@@ -264,7 +267,7 @@ home:
         type: Location-Art
         type_all: 'Alle Arten'
         guests: 'Anzahl Gäste'
-        guests_placeholder: 'z.B. 80'
+        guests_all: 'Alle Gästezahlen'
         submit: Suche
     category:
         castle: 'Burg & Schloss'

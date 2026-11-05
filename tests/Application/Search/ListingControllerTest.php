@@ -223,7 +223,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame('Filter Zürich entfernen', $chip->attr('aria-label'));
 
         $crawler = $this->get('/hochzeitslocations?guests=120');
-        self::assertSame(['120 Gäste'], $crawler->filter('.filter-bar .chip')->each(static fn (Crawler $c): string => $c->text()));
+        self::assertSame(['bis 150 Gäste'], $crawler->filter('.filter-bar .chip')->each(static fn (Crawler $c): string => $c->text()));
 
         $crawler = $this->get('/hochzeitslocations?setting[]=lake&setting[]=river');
         self::assertSame(['Remise Zürich', 'Seehaus Zürich'], $this->names($crawler));
@@ -231,10 +231,10 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame('/hochzeitslocations', $crawler->filter('.filter-bar .chip a')->attr('href'));
         self::assertCount(1, $crawler->filter('#filter-more input[name="setting[]"][value="lake"][checked]'));
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=120&setting[]=lake&page=1');
-        self::assertSame('/hochzeitslocations?guests=120&setting%5B0%5D=lake', $crawler->filter('#filter-region .overlay__footer a')->attr('href'));
+        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=150&setting[]=lake&page=1');
+        self::assertSame('/hochzeitslocations?guests=150&setting%5B0%5D=lake', $crawler->filter('#filter-region .overlay__footer a')->attr('href'));
         self::assertSame('/hochzeitslocations?canton=zh&setting%5B0%5D=lake', $crawler->filter('#filter-guests .overlay__footer a')->attr('href'));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=120', $crawler->filter('#filter-more .overlay__footer a')->attr('href'));
+        self::assertSame('/hochzeitslocations?canton=zh&guests=150', $crawler->filter('#filter-more .overlay__footer a')->attr('href'));
     }
 
     public function test_filter_bar_has_three_triggers_and_overlays(): void
@@ -293,7 +293,7 @@ final class ListingControllerTest extends WebTestCase
     {
         $this->venue(['town' => $this->town('Zürich')]);
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=80&setting[]=lake');
+        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=100&setting[]=lake');
         $form = $crawler->filter('#filter-region form#filter-region-form');
 
         self::assertCount(1, $form);
@@ -303,7 +303,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame('Wo soll Ihre Hochzeit stattfinden?', $crawler->filter('#filter-region-title')->text());
 
         // The other groups travel as hidden state; this overlay's own fields do not.
-        self::assertSame('80', $form->filter('input[type="hidden"][name="guests"]')->attr('value'));
+        self::assertSame('100', $form->filter('input[type="hidden"][name="guests"]')->attr('value'));
         self::assertSame('lake', $form->filter('input[type="hidden"][name="setting[]"]')->attr('value'));
         self::assertCount(0, $form->filter('input[type="hidden"][name="radius"]'));
 

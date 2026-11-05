@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Search\ReadModel;
 
 use App\Geo\ValueObject\Canton;
+use App\Search\ValueObject\GuestBand;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
@@ -20,7 +21,8 @@ use Symfony\Component\Uid\Uuid;
  * - `canton`: one canton code (`zh`, case-insensitive).
  * - `place` + `radius`: a town UUID or a 4-digit ZIP; radius 0–50 km, default 5, kept only
  *   with a place (0 = the town or ZIP itself).
- * - `guests`: 1–50000.
+ * - `guests`: a guest count 1–50000, bucketed into a GuestBand (≤ 50, ≤ 100, ≤ 150, more);
+ *   canonical 50|100|150|151, so a legacy count keeps working.
  * - `q`: name search, trimmed, whitespace collapsed, at most 100 characters, needs a letter
  *   or digit.
  * - `setting[]`, `building[]` (OR inside the group), `infra[]`, `furniture[]`, `tech[]`,
@@ -78,7 +80,7 @@ final readonly class SearchCriteria
         public ?Canton $canton,
         public ?string $place,
         public ?int $radius,
-        public ?int $guests,
+        public ?GuestBand $guests,
         public ?string $q,
         public array $terms,
         public array $access,
@@ -150,12 +152,13 @@ final readonly class SearchCriteria
         ksort($prices, \SORT_STRING);
 
         $area = self::int($raw['area'] ?? null, 1, max(self::AREAS));
+        $guests = self::int($raw['guests'] ?? null, 1, self::MAX_GUESTS);
 
         return new self(
             \is_string($raw['canton'] ?? null) ? Canton::tryFrom(strtolower($raw['canton'])) : null,
             $place,
             $radius,
-            self::int($raw['guests'] ?? null, 1, self::MAX_GUESTS),
+            null === $guests ? null : GuestBand::fromGuests($guests),
             self::q($raw['q'] ?? null),
             $terms,
             array_values($access),
@@ -213,7 +216,7 @@ final readonly class SearchCriteria
             }
         }
         if (null !== $this->guests) {
-            $query['guests'] = (string) $this->guests;
+            $query['guests'] = (string) $this->guests->value;
         }
         if (null !== $this->q) {
             $query['q'] = $this->q;

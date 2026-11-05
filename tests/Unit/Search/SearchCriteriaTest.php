@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Search;
 use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\KnownTerms;
 use App\Search\ReadModel\SearchCriteria;
+use App\Search\ValueObject\GuestBand;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
@@ -38,7 +39,7 @@ final class SearchCriteriaTest extends TestCase
     public function test_a_full_state_survives_the_url_round_trip(): void
     {
         $criteria = $this->fromUrl(
-            'canton=zh&place='.self::TOWN.'&radius=12&guests=80&q=Gasthof%20M%C3%BCller'
+            'canton=zh&place='.self::TOWN.'&radius=12&guests=100&q=Gasthof%20M%C3%BCller'
             .'&setting[]=lake&setting[]=countryside&access[]=station&access[]=airport&building[]=farm'
             .'&infra[]=wifi&infra[]=air_conditioning&furniture[]=chairs&tech[]=projector_screen&surroundings[]=garden'
             .'&rooms=2&area=100&height=3.5&page=3',
@@ -47,7 +48,7 @@ final class SearchCriteriaTest extends TestCase
         self::assertSame(Canton::ZH, $criteria->canton);
         self::assertSame(self::TOWN, $criteria->place);
         self::assertSame(12, $criteria->radius);
-        self::assertSame(80, $criteria->guests);
+        self::assertSame(GuestBand::UpTo100, $criteria->guests);
         self::assertSame('Gasthof Müller', $criteria->q);
         self::assertSame(['countryside', 'lake'], $criteria->termCodes(TermGroup::Setting));
         self::assertSame([Access::Airport, Access::Station], $criteria->access);
@@ -89,7 +90,7 @@ final class SearchCriteriaTest extends TestCase
 
     public function test_a_url_without_the_wedding_filters_keeps_its_query(): void
     {
-        $query = 'canton=zh&place=8712&radius=12&guests=80&q=See&setting%5B0%5D=lake&access%5B0%5D=station&building%5B0%5D=farm'
+        $query = 'canton=zh&place=8712&radius=12&guests=100&q=See&setting%5B0%5D=lake&access%5B0%5D=station&building%5B0%5D=farm'
             .'&infra%5B0%5D=wifi&furniture%5B0%5D=chairs&tech%5B0%5D=projector_screen&surroundings%5B0%5D=garden'
             .'&rooms=2&area=100&height=3.5&page=3';
 
@@ -248,6 +249,29 @@ final class SearchCriteriaTest extends TestCase
         yield 'page[]' => ['page[]=2'];
     }
 
+    /**
+     * @return iterable<string, array{string, GuestBand, string}>
+     */
+    public static function legacyGuests(): iterable
+    {
+        foreach ([
+            '120' => GuestBand::UpTo150, '80' => GuestBand::UpTo100, '1' => GuestBand::UpTo50, '50' => GuestBand::UpTo50,
+            '51' => GuestBand::UpTo100, '150' => GuestBand::UpTo150, '151' => GuestBand::Over150, '200' => GuestBand::Over150,
+            '500' => GuestBand::Over150, '50000' => GuestBand::Over150,
+        ] as $guests => $band) {
+            yield 'guests='.$guests => [(string) $guests, $band, (string) $band->value];
+        }
+    }
+
+    #[DataProvider('legacyGuests')]
+    public function test_a_legacy_guest_count_maps_to_its_band(string $guests, GuestBand $band, string $canonical): void
+    {
+        $criteria = $this->fromUrl('guests='.$guests);
+
+        self::assertSame($band, $criteria->guests);
+        self::assertSame($canonical, $criteria->toQuery()['guests'] ?? null);
+    }
+
     public function test_garbage_next_to_valid_values_keeps_the_valid_ones(): void
     {
         $criteria = $this->fromUrl('guests=abc&canton=zh&setting[]=nope&setting[]=lake&page[]=x&radius=999&q[]=1&rooms[]=2');
@@ -301,9 +325,9 @@ final class SearchCriteriaTest extends TestCase
 
     public function test_with_canton_keeps_the_other_filters(): void
     {
-        $criteria = $this->fromUrl('guests=80&setting[]=lake&page=2')->withCanton(Canton::ZH);
+        $criteria = $this->fromUrl('guests=100&setting[]=lake&page=2')->withCanton(Canton::ZH);
 
-        self::assertSame(['canton' => 'zh', 'guests' => '80', 'setting' => ['lake'], 'page' => '2'], $criteria->toQuery());
+        self::assertSame(['canton' => 'zh', 'guests' => '100', 'setting' => ['lake'], 'page' => '2'], $criteria->toQuery());
         self::assertNull($criteria->withCanton(null)->canton);
     }
 

@@ -53,7 +53,7 @@ final class CountControllerTest extends WebTestCase
     public function test_counts_the_filtered_venues(): void
     {
         self::assertSame(['count' => 2], $this->fetchCount('/_search/count?canton=zh'));
-        self::assertSame(['count' => 1], $this->fetchCount('/_search/count?canton=zh&guests=150'));
+        self::assertSame(['count' => 1], $this->fetchCount('/_search/count?canton=zh&guests=151'));
         self::assertSame(['count' => 3], $this->fetchCount('/_search/count'));
     }
 

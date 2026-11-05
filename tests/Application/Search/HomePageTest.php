@@ -13,6 +13,7 @@ use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\ListingCard;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
+use App\Search\ValueObject\GuestBand;
 use App\Shared\ReadModel\ContentBlocks;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Cms\ResetsContentBlocks;
@@ -145,7 +146,7 @@ final class HomePageTest extends WebTestCase
         self::assertSame('/hochzeitslocations', $form->attr('action'));
         self::assertSame('get', $form->attr('method'));
 
-        $this->client->submit($form->form(), ['canton' => 'zh', 'building[0]' => 'castle', 'guests' => '80']);
+        $this->client->submit($form->form(), ['canton' => 'zh', 'building[0]' => 'castle', 'guests' => '100']);
 
         self::assertResponseIsSuccessful();
         self::assertSame('/hochzeitslocations', $this->client->getRequest()->getPathInfo());
@@ -153,7 +154,7 @@ final class HomePageTest extends WebTestCase
         self::assertInstanceOf(KnownTermsQuery::class, $terms);
         $criteria = SearchCriteria::fromQuery($this->client->getRequest()->query, $terms->all());
         self::assertSame(Canton::ZH, $criteria->canton);
-        self::assertSame(80, $criteria->guests);
+        self::assertSame(GuestBand::UpTo100, $criteria->guests);
         self::assertSame(['building' => ['castle']], $criteria->terms);
     }
 
@@ -191,6 +192,17 @@ final class HomePageTest extends WebTestCase
         $kinds = $crawler->filter('#home-type option');
         self::assertCount(6, $kinds);
         self::assertSame('Alle Arten', $kinds->first()->text());
+    }
+
+    public function test_the_guests_select_offers_all_and_the_four_bands(): void
+    {
+        $options = $this->get('/')->filter('select#home-guests[name="guests"] option');
+
+        self::assertSame(['', '50', '100', '150', '151'], $options->each(static fn (Crawler $option): string => (string) $option->attr('value')));
+        self::assertSame(
+            ['Alle Gästezahlen', 'bis 50 Gäste', 'bis 100 Gäste', 'bis 150 Gäste', 'über 150 Gäste'],
+            $options->each(static fn (Crawler $option): string => $option->text()),
+        );
     }
 
     public function test_a_tile_links_to_the_landing_page_over_the_threshold_and_to_the_filter_under_it(): void

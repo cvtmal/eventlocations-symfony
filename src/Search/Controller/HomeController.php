@@ -9,6 +9,7 @@ use App\Search\ReadModel\HomeHero;
 use App\Search\ReadModel\HomeHeroQuery;
 use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\ListingQuery;
+use App\Search\ValueObject\GuestBand;
 use App\Search\ValueObject\HomeCategory;
 use App\Shared\Http\PublicCache;
 use Psr\Clock\ClockInterface;
@@ -56,6 +57,7 @@ final class HomeController extends AbstractController
             'hero' => $this->hero->photo($this->heroPhoto, $locale) ?? HomeHero::fromCards($cards),
             'categories' => $this->categories(),
             'regions' => $this->regions($locale),
+            'guest_bands' => GuestBand::cases(),
         ]);
 
         return $response->setCache(PublicCache::listing($now));

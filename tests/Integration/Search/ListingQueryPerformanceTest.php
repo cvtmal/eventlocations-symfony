@@ -169,7 +169,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $parts = [
             'place='.$this->zurich()->id(),
             'radius=50',
-            'guests=80',
+            'guests=100',
             'q=hof',
             'access[]=station',
             'rooms=2',
@@ -199,7 +199,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
     private function matchingHeaviestQuery(): string
     {
         $venue = $this->connection->fetchAssociative(<<<'SQL'
-            SELECT v.id, v.name, v.capacity_min, v.capacity_max, v.room_count, v.largest_room_m2, v.price_level, v.has_curfew,
+            SELECT v.id, v.name, v.capacity_max, v.room_count, v.largest_room_m2, v.price_level, v.has_curfew,
                 v.distance_station_km <= 1 AS station, v.distance_highway_km <= 10 AS highway, v.distance_airport_km <= 30 AS airport
             FROM venues v, towns z
             WHERE z.name = 'Zürich'
@@ -217,13 +217,13 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         self::assertIsInt($venue['capacity_max']);
         self::assertIsInt($venue['room_count']);
         self::assertIsInt($venue['largest_room_m2']);
-        $min = \is_int($venue['capacity_min']) ? $venue['capacity_min'] : 1;
         $access = array_values(array_filter(['station', 'highway', 'airport'], static fn (string $a): bool => true === $venue[$a]))[0] ?? self::fail('The venue is near nothing.');
 
         $parts = [
             'place='.$this->zurich()->id(),
             'radius=50',
-            'guests='.max($min, min(80, $venue['capacity_max'])),
+            // The codec buckets the venue's own maximum into its band, which the venue matches.
+            'guests='.$venue['capacity_max'],
             'q='.rawurlencode(mb_strtolower(mb_substr($venue['name'], 0, 3))),
             'access[]='.$access,
             'rooms='.min(2, $venue['room_count']),

@@ -88,7 +88,7 @@ final class WeddingFilterTest extends WebTestCase
         self::assertSame(['overnight'], $this->values($crawler, 'amenity[]'));
         self::assertSame([], $this->values($crawler, 'usage[]'));
         self::assertSame([], $this->values($crawler, 'curfew'));
-        self::assertSame(['Preisniveau', 'Trauung', 'Feier und Ausstattung'], $this->legends($crawler));
+        self::assertSame(['Preisniveau', 'Trauung', 'Feier und Ausstattung'], $this->legends($crawler->filter('#filter-more')));
     }
 
     public function test_a_curfew_only_shows_for_a_venue_that_stated_none(): void
@@ -102,7 +102,7 @@ final class WeddingFilterTest extends WebTestCase
 
         self::assertCount(1, $crawler->filter('#filter-more-curfew-none'));
         self::assertSame('Keine Sperrstunde', $crawler->filter('label[for="filter-more-curfew-none"]')->text());
-        self::assertSame(['Feier und Ausstattung'], $this->legends($crawler));
+        self::assertSame(['Feier und Ausstattung'], $this->legends($crawler->filter('#filter-more')));
     }
 
     public function test_without_facts_the_group_is_absent_and_only_the_name_shows(): void

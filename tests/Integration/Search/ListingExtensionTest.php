@@ -75,11 +75,11 @@ final class ListingExtensionTest extends KernelTestCase
         try {
             $this->inCanton(Canton::ZH, 5);
             $extension = $this->extension();
-            $criteria = $this->criteria(['canton' => 'zh', 'guests' => '80']);
+            $criteria = $this->criteria(['canton' => 'zh', 'guests' => '100']);
 
-            self::assertSame('/hochzeitslocations/zuerich?guests=80', $extension->listingPath($criteria));
-            self::assertSame('/hochzeitslocations/zuerich?guests=80&page=2', $extension->listingPath($criteria, 2), 'Pagination keeps the path.');
-            self::assertSame('/hochzeitslocations?guests=80', $extension->listingPathWithout($criteria, 'canton'));
+            self::assertSame('/hochzeitslocations/zuerich?guests=100', $extension->listingPath($criteria));
+            self::assertSame('/hochzeitslocations/zuerich?guests=100&page=2', $extension->listingPath($criteria, 2), 'Pagination keeps the path.');
+            self::assertSame('/hochzeitslocations?guests=100', $extension->listingPathWithout($criteria, 'canton'));
             self::assertSame('/hochzeitslocations/zuerich', $extension->listingPathWithout($criteria, 'guests'));
             self::assertSame('/hochzeitslocations?canton=be', $extension->listingPath($this->criteria(['canton' => 'be'])), 'A thin canton stays in the query.');
             self::assertSame(['zh' => '/hochzeitslocations/zuerich'], $extension->landingCantonPaths());
@@ -93,9 +93,9 @@ final class ListingExtensionTest extends KernelTestCase
     {
         $criteria = $this->criteria(['guests' => '120', 'canton' => 'ZH', 'page' => '3']);
 
-        self::assertSame('/hochzeitslocations?canton=zh&guests=120&page=3', $this->extension->listingPath($criteria));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=120&page=2', $this->extension->listingPath($criteria, 2));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=120', $this->extension->listingPath($criteria, 1));
+        self::assertSame('/hochzeitslocations?canton=zh&guests=150&page=3', $this->extension->listingPath($criteria));
+        self::assertSame('/hochzeitslocations?canton=zh&guests=150&page=2', $this->extension->listingPath($criteria, 2));
+        self::assertSame('/hochzeitslocations?canton=zh&guests=150', $this->extension->listingPath($criteria, 1));
         self::assertSame('/hochzeitslocations', $this->extension->listingPath(SearchCriteria::none()));
     }
 
@@ -125,41 +125,41 @@ final class ListingExtensionTest extends KernelTestCase
     public function test_listing_path_without(): void
     {
         $criteria = $this->criteria([
-            'canton' => 'zh', 'place' => '8001', 'radius' => '10', 'guests' => '80',
+            'canton' => 'zh', 'place' => '8001', 'radius' => '10', 'guests' => '100',
             'setting' => ['lake', 'river'], 'page' => '2',
         ]);
 
         self::assertSame(
-            '/hochzeitslocations?place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/hochzeitslocations?place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'canton'),
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80&setting%5B0%5D=river',
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=river',
             $this->extension->listingPathWithout($criteria, 'setting', 'lake'),
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/hochzeitslocations?canton=zh&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, ['place', 'radius']),
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80',
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100',
             $this->extension->listingPathWithout($this->criteria([
-                'canton' => 'zh', 'place' => '8001', 'radius' => '10', 'guests' => '80', 'setting' => ['river'],
+                'canton' => 'zh', 'place' => '8001', 'radius' => '10', 'guests' => '100', 'setting' => ['river'],
             ]), 'setting', 'river'),
             'Removing the last value drops the key.',
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'rooms'),
             'An absent param changes nothing but page.',
         );
         self::assertSame(
-            '/hochzeitslocations?place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/hochzeitslocations?place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'canton', 'zh'),
             'A scalar equal to the value is dropped.',
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=80&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'canton', 'be'),
         );
     }
@@ -192,7 +192,7 @@ final class ListingExtensionTest extends KernelTestCase
     {
         $twig = self::getContainer()->get('twig');
         self::assertInstanceOf(Environment::class, $twig);
-        $criteria = $this->criteria(['canton' => 'zh', 'guests' => '80', 'setting' => ['lake', 'river'], 'q' => 'See', 'page' => '2']);
+        $criteria = $this->criteria(['canton' => 'zh', 'guests' => '100', 'setting' => ['lake', 'river'], 'q' => 'See', 'page' => '2']);
 
         $crawler = new Crawler($twig->render('search/filter/_hidden_state.html.twig', ['criteria' => $criteria, 'except' => ['guests', 'q']]));
         $inputs = $crawler->filter('input')->each(

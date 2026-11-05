@@ -14,10 +14,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * The guests overlay (#11, FI-3): the number input form, the nine bubbles in their own form, the chip and the
+ * The guests overlay (#11, #51, FI-3): one live-count form with four band radios on capacity_max, the chip and the
  * filter itself. Own venues on the test's connection, rolled back afterwards.
  */
 final class GuestsFilterTest extends WebTestCase
@@ -25,7 +26,8 @@ final class GuestsFilterTest extends WebTestCase
     use Factories;
     use LandingFixtures;
 
-    private const array PICKS = ['20', '30', '50', '80', '100', '150', '200', '350', '500'];
+    private const array BANDS = ['50', '100', '150', '151'];
+    private const array LABELS = ['bis 50 Gäste', 'bis 100 Gäste', 'bis 150 Gäste', 'über 150 Gäste'];
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -46,37 +48,40 @@ final class GuestsFilterTest extends WebTestCase
         parent::tearDown();
     }
 
-    public function test_guests_narrow_the_listing(): void
+    public function test_a_band_narrows_the_listing_on_capacity_max(): void
     {
-        $this->venue('Saal Hundert', null, 100);
-        $this->venue('Stube Neunundneunzig', null, 99);
+        $this->venue('Stube Vierzig', null, 40);
+        $this->venue('Saal Hundertzwanzig', null, 120);
+        $this->venue('Halle Vierhundert', null, 400);
 
-        self::assertSame(['Saal Hundert'], $this->names($this->get('/hochzeitslocations?guests=100')));
+        self::assertSame(['Saal Hundertzwanzig'], $this->names($this->get('/hochzeitslocations?guests=150')));
     }
 
-    public function test_capacity_min_excludes_a_venue_above_the_guest_count(): void
+    public function test_a_large_venue_is_not_in_bis_50(): void
+    {
+        $this->venue('Stube Vierzig', null, 40);
+        $this->venue('Halle Vierhundert', 10, 400);
+
+        self::assertSame(['Stube Vierzig'], $this->names($this->get('/hochzeitslocations?guests=50')));
+    }
+
+    public function test_capacity_min_is_ignored(): void
     {
         $this->venue('Halle Gross', 150, 200);
-        $this->venue('Scheune Passend', 80, 200);
+        $this->venue('Scheune Klein', 120, 140);
 
-        self::assertSame(['Scheune Passend'], $this->names($this->get('/hochzeitslocations?guests=120')));
-    }
-
-    public function test_venues_without_a_minimum_match_on_the_maximum(): void
-    {
-        $this->venue('Gut Ohne Minimum', null, 300);
-
-        self::assertSame(['Gut Ohne Minimum'], $this->names($this->get('/hochzeitslocations?guests=280')));
+        self::assertSame(['Halle Gross'], $this->names($this->get('/hochzeitslocations?guests=151')));
+        self::assertSame(['Scheune Klein'], $this->names($this->get('/hochzeitslocations?guests=110')));
     }
 
     public function test_the_count_endpoint_agrees_with_the_listing(): void
     {
         $this->venue('Saal Hundert', null, 100);
-        $this->venue('Halle Gross', 150, 200);
-        $this->venue('Gut Ohne Minimum', null, 300);
+        $this->venue('Halle Hundertzwanzig', 110, 120);
+        $this->venue('Gut Dreihundert', null, 300);
 
-        $total = $this->get('/hochzeitslocations?guests=120')->filter('.card')->count();
-        $this->client->request('GET', '/_search/count?guests=120');
+        $total = $this->get('/hochzeitslocations?guests=150')->filter('.card')->count();
+        $this->client->request('GET', '/_search/count?guests=150');
 
         self::assertSame(1, $total);
         self::assertSame(['count' => 1], json_decode((string) $this->client->getResponse()->getContent(), true));
@@ -87,9 +92,12 @@ final class GuestsFilterTest extends WebTestCase
      */
     public static function chipLabels(): iterable
     {
-        yield 'plural' => ['120', '120 Gäste'];
-        yield 'singular' => ['1', '1 Gast'];
-        yield 'grouped' => ['1500', "1'500 Gäste"];
+        foreach (self::BANDS as $i => $band) {
+            yield 'band '.$band => [$band, self::LABELS[$i]];
+        }
+        yield 'legacy 120' => ['120', 'bis 150 Gäste'];
+        yield 'legacy 1' => ['1', 'bis 50 Gäste'];
+        yield 'legacy 1500' => ['1500', 'über 150 Gäste'];
     }
 
     #[DataProvider('chipLabels')]
@@ -120,16 +128,16 @@ final class GuestsFilterTest extends WebTestCase
         $crawler = $this->get('/hochzeitslocations?guests='.$guests);
 
         self::assertCount(0, $crawler->filter('.filter-bar .chip'));
-        self::assertSame('', $crawler->filter('#filter-guests-input')->attr('value'));
-        self::assertCount(0, $crawler->filter('.guests-bubble[aria-pressed="true"]'));
+        self::assertCount(0, $crawler->filter('#filter-guests-form input[name="guests"][checked]'));
     }
 
-    public function test_overlay_is_a_get_form_with_the_live_count_contract(): void
+    public function test_overlay_is_one_get_form_with_the_live_count_contract(): void
     {
         $crawler = $this->get('/hochzeitslocations?canton=zh&guests=120');
 
         $overlay = $crawler->filter('#filter-guests');
         self::assertSame('Wie viele Gäste erwarten Sie?', $overlay->filter('h2')->text());
+        self::assertCount(1, $overlay->filter('form'));
 
         $form = $crawler->filter('#filter-guests-form');
         self::assertSame('get', $form->attr('method'));
@@ -138,12 +146,10 @@ final class GuestsFilterTest extends WebTestCase
         self::assertNotNull($form->attr('data-live-count'));
         self::assertNotNull($form->attr('data-overlay-form'));
 
-        $input = $form->filter('input[name="guests"]');
-        self::assertSame(
-            ['number', '1', '50000', '1', 'numeric', '120'],
-            [$input->attr('type'), $input->attr('min'), $input->attr('max'), $input->attr('step'), $input->attr('inputmode'), $input->attr('value')],
-        );
-        self::assertSame('Anzahl Gäste', $crawler->filter('label[for="filter-guests-input"]')->text());
+        self::assertCount(0, $crawler->filter('#filter-guests input[type="number"]'));
+        self::assertCount(0, $crawler->filter('form.guests-bubbles'));
+        self::assertCount(0, $crawler->filter('#filter-guests [aria-pressed]'));
+        self::assertSame('Anzahl Gäste', $form->filter('fieldset.guests-bands > legend')->text());
 
         $submit = $overlay->filter('.overlay__footer button[type="submit"]');
         self::assertSame('filter-guests-form', $submit->attr('form'));
@@ -156,96 +162,116 @@ final class GuestsFilterTest extends WebTestCase
         self::assertSame('/hochzeitslocations?canton=zh', $overlay->filter('.overlay__footer a[data-overlay-clear]')->attr('href'));
     }
 
-    public function test_bubbles_are_nine_submit_buttons_in_ascending_order(): void
+    public function test_four_radios_in_ascending_order_with_their_labels(): void
     {
-        $bubbles = $this->get('/hochzeitslocations')->filter('form.guests-bubbles button');
+        $bubbles = $this->get('/hochzeitslocations')->filter('#filter-guests-form label.guests-bubble');
 
-        self::assertSame(self::PICKS, $bubbles->each(static fn (Crawler $bubble): string => (string) $bubble->attr('value')));
-        self::assertSame(self::PICKS, $bubbles->each(static fn (Crawler $bubble): string => $bubble->text()));
+        self::assertSame(self::LABELS, $bubbles->each(static fn (Crawler $bubble): string => $bubble->text()));
         self::assertSame(
-            array_fill(0, 9, 'submit guests'),
-            $bubbles->each(static fn (Crawler $bubble): string => $bubble->attr('type').' '.$bubble->attr('name')),
+            array_map(static fn (string $band): string => 'radio guests '.$band, self::BANDS),
+            $bubbles->each(static fn (Crawler $bubble): string => \sprintf(
+                '%s %s %s',
+                $bubble->filter('input')->attr('type'),
+                $bubble->filter('input')->attr('name'),
+                $bubble->filter('input')->attr('value'),
+            )),
         );
-        self::assertSame('Gästezahl wählen', $this->get('/hochzeitslocations')->filter('form.guests-bubbles')->attr('aria-label'));
     }
 
-    public function test_only_the_matching_bubble_is_pressed(): void
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function checkedRadios(): iterable
     {
-        $pressed = $this->get('/hochzeitslocations?guests=150')->filter('.guests-bubble[aria-pressed="true"]');
-        self::assertSame(['150'], $pressed->each(static fn (Crawler $bubble): string => (string) $bubble->attr('value')));
-        self::assertCount(8, $this->get('/hochzeitslocations?guests=150')->filter('.guests-bubble[aria-pressed="false"]'));
-
-        self::assertCount(0, $this->get('/hochzeitslocations?guests=120')->filter('.guests-bubble[aria-pressed="true"]'));
+        yield 'none' => ['', []];
+        yield 'band 150' => ['guests=150', ['150']];
+        yield 'legacy 120' => ['guests=120', ['150']];
+        yield 'legacy 1500' => ['guests=1500', ['151']];
     }
 
-    public function test_enter_cannot_reach_a_bubble(): void
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('checkedRadios')]
+    public function test_only_the_matching_radio_is_checked(string $query, array $expected): void
+    {
+        $checked = $this->get('/hochzeitslocations?'.$query)->filter('#filter-guests-form input[name="guests"][checked]');
+
+        self::assertSame($expected, $checked->each(static fn (Crawler $radio): string => (string) $radio->attr('value')));
+    }
+
+    public function test_enter_reaches_only_the_footer_submit(): void
     {
         $crawler = $this->get('/hochzeitslocations');
 
-        // A submit button inside the input's form would be its default button (D1).
-        self::assertCount(0, $crawler->filter('#filter-guests-form button'));
-        self::assertCount(0, $crawler->filter('.guests-bubble[form]'));
+        self::assertCount(0, $crawler->filter('#filter-guests-form button, #filter-guests-form input[type="submit"]'));
+        self::assertCount(1, $crawler->filter('[type="submit"][form="filter-guests-form"]'));
         self::assertCount(0, $crawler->filter('form form'));
     }
 
-    public function test_both_forms_keep_the_other_filters(): void
+    public function test_the_form_keeps_the_other_filters(): void
     {
         $crawler = $this->get('/hochzeitslocations?canton=zh&guests=150&setting[]=lake&page=1');
 
-        foreach (['#filter-guests-form', 'form.guests-bubbles'] as $form) {
-            self::assertSame(
-                ['canton=zh', 'setting[]=lake'],
-                $this->hiddenState($crawler, $form),
-                $form,
-            );
-        }
+        self::assertSame(['canton=zh', 'setting[]=lake'], $this->hiddenState($crawler, '#filter-guests-form'));
     }
 
-    public function test_both_forms_carry_the_wedding_filters(): void
+    public function test_the_form_carries_the_wedding_filters(): void
     {
-        $crawler = $this->get('/hochzeitslocations?price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight&usage[]=exclusive&guests=80');
+        $crawler = $this->get('/hochzeitslocations?price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight&usage[]=exclusive&guests=100');
 
-        foreach (['#filter-guests-form', 'form.guests-bubbles'] as $form) {
-            self::assertSame(
-                ['ceremony[]=chapel', 'amenity[]=overnight', 'usage[]=exclusive', 'price[]=medium', 'curfew=none'],
-                $this->hiddenState($crawler, $form),
-                $form,
-            );
-        }
+        self::assertSame(
+            ['ceremony[]=chapel', 'amenity[]=overnight', 'usage[]=exclusive', 'price[]=medium', 'curfew=none'],
+            $this->hiddenState($crawler, '#filter-guests-form'),
+        );
     }
 
-    public function test_a_bubble_submit_applies_its_value(): void
+    public function test_a_radio_submit_applies_its_band(): void
     {
-        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=80');
+        $this->venue('Saal Achtzig', null, 80);
+        $this->venue('Halle Vierhundert', null, 400);
 
-        $form = $crawler->filter('form.guests-bubbles button[value="150"]')->form();
-        $this->client->submit($form);
+        $crawler = $this->get('/hochzeitslocations?setting[]=lake&guests=150');
+        $form = $crawler->filter('#filter-guests-form')->form();
+        $radios = $form['guests'];
+        self::assertInstanceOf(ChoiceFormField::class, $radios);
+        $radios->select('100');
+        $crawler = $this->client->submit($form);
 
         self::assertResponseIsSuccessful();
         parse_str((string) parse_url((string) $this->client->getRequest()->getUri(), \PHP_URL_QUERY), $query);
-        self::assertSame(['canton' => 'zh', 'guests' => '150'], $query);
+        // DomCrawler lists the radio before the hidden inputs; a browser keeps tree order. Order is not the point.
+        self::assertEqualsCanonicalizing(['setting' => ['lake'], 'guests' => '100'], $query);
+        self::assertCount(1, $crawler->filter('.filter-bar .chip')->reduce(static fn (Crawler $chip): bool => 'bis 100 Gäste' === $chip->text()));
     }
 
-    public function test_both_forms_keep_a_canton_landing_path(): void
+    public function test_the_form_keeps_a_canton_landing_path(): void
     {
         $this->inCanton(Canton::ZH, 5);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich?guests=80&setting[]=lake');
+        $crawler = $this->get('/hochzeitslocations/zuerich?guests=100&setting[]=lake');
 
         // listing_form() (#17): the path facet stays in the action and out of the hidden state and the count query.
-        foreach (['#filter-guests-form', 'form.guests-bubbles'] as $form) {
-            self::assertSame('/hochzeitslocations/zuerich', $crawler->filter($form)->attr('action'), $form);
-            self::assertSame(['setting[]=lake'], $this->hiddenState($crawler, $form), $form);
-        }
+        self::assertSame('/hochzeitslocations/zuerich', $crawler->filter('#filter-guests-form')->attr('action'));
+        self::assertSame(['setting[]=lake'], $this->hiddenState($crawler, '#filter-guests-form'));
         self::assertSame('/_search/count?canton=zh&', $crawler->filter('#filter-guests-form')->attr('data-live-count-url'));
 
-        $this->client->submit($crawler->filter('form.guests-bubbles button[value="150"]')->form());
+        $form = $crawler->filter('#filter-guests-form')->form();
+        $radios = $form['guests'];
+        self::assertInstanceOf(ChoiceFormField::class, $radios);
+        $radios->select('150');
+        $this->client->submit($form);
 
         self::assertResponseIsSuccessful();
         $uri = (string) $this->client->getRequest()->getUri();
         parse_str((string) parse_url($uri, \PHP_URL_QUERY), $query);
         self::assertSame('/hochzeitslocations/zuerich', parse_url($uri, \PHP_URL_PATH));
-        self::assertSame(['guests' => '150', 'setting' => ['lake']], $query);
+        self::assertEqualsCanonicalizing(['setting' => ['lake'], 'guests' => '150'], $query);
+    }
+
+    public function test_the_listing_loads_no_guests_script(): void
+    {
+        self::assertCount(0, $this->get('/hochzeitslocations')->filter('script[src*="guests-filter"]'));
     }
 
     private function get(string $uri): Crawler

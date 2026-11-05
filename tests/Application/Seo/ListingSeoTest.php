@@ -76,7 +76,7 @@ final class ListingSeoTest extends WebTestCase
             // A radius other than 0 is no town page, and no canton is named: the plain listing.
             ['/hochzeitslocations?place='.$town.'&radius=5', self::CLEAN, true, 0, self::TITLE],
             // A live canton in the query belongs on its landing page (P5): noindex, canonical there.
-            ['/hochzeitslocations?guests=80&canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/hochzeitslocations?guests=100&canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
             ['/hochzeitslocations?setting[]=lake', self::CLEAN, true, 0, self::TITLE],
             ['/hochzeitslocations?canton=zh&page=2', self::ZURICH, true, 0, self::ZURICH_TITLE],
         ];
@@ -100,7 +100,7 @@ final class ListingSeoTest extends WebTestCase
             ['/hochzeitslocations/zuerich?page=1', self::ZURICH, false, 2, self::ZURICH_TITLE],
             ['/hochzeitslocations/zuerich?utm_source=x', self::ZURICH, false, 2, self::ZURICH_TITLE],
             ['/hochzeitslocations/zuerich?page=2', self::ZURICH.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | Hochzeitslocation'],
-            ['/hochzeitslocations/zuerich?guests=80', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/hochzeitslocations/zuerich?guests=100', self::ZURICH, true, 0, self::ZURICH_TITLE],
             ['/hochzeitslocations/zuerich?building[]=castle', self::ZURICH, true, 0, self::ZURICH_TITLE],
             // The path wins over the query (P3), so this is the clean canton page.
             ['/hochzeitslocations/zuerich?canton=be', self::ZURICH, false, 2, self::ZURICH_TITLE],
@@ -108,13 +108,13 @@ final class ListingSeoTest extends WebTestCase
 
             ['/hochzeitslocations/zuerich/zuerich', self::TOWN, false, 2, self::TOWN_TITLE],
             ['/hochzeitslocations/zuerich/zuerich?page=2', self::TOWN.'?page=2', false, 2, 'Hochzeitslocations in Zürich – Seite 2 | Hochzeitslocation'],
-            ['/hochzeitslocations/zuerich/zuerich?guests=80', self::TOWN, true, 0, self::TOWN_TITLE],
+            ['/hochzeitslocations/zuerich/zuerich?guests=100', self::TOWN, true, 0, self::TOWN_TITLE],
             ['/hochzeitslocations?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
             ['/hochzeitslocations/zuerich?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
 
             ['/hochzeitslocations/schloss', self::CASTLE, false, 2, self::CASTLE_TITLE],
             ['/hochzeitslocations/schloss?page=2', self::CASTLE.'?page=2', false, 2, 'Hochzeit im Schloss – Seite 2 | Hochzeitslocation'],
-            ['/hochzeitslocations/schloss?guests=80', self::CASTLE, true, 0, self::CASTLE_TITLE],
+            ['/hochzeitslocations/schloss?guests=100', self::CASTLE, true, 0, self::CASTLE_TITLE],
             ['/hochzeitslocations?building[]=castle', self::CASTLE, true, 0, self::CASTLE_TITLE],
             // A canton outranks a building: the facet the canton page cannot hold stays in the query.
             ['/hochzeitslocations/schloss?canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
@@ -136,7 +136,7 @@ final class ListingSeoTest extends WebTestCase
             self::assertSame([49], array_column($this->itemList($this->get($url.'?page=2')), 'position'), $url);
         }
 
-        foreach (['/hochzeitslocations/zuerich?guests=80', '/hochzeitslocations?canton=zh', '/hochzeitslocations/zuerich/zuerich?guests=80', '/hochzeitslocations/schloss?guests=80'] as $url) {
+        foreach (['/hochzeitslocations/zuerich?guests=100', '/hochzeitslocations?canton=zh', '/hochzeitslocations/zuerich/zuerich?guests=100', '/hochzeitslocations/schloss?guests=100'] as $url) {
             self::assertSame([], $this->blocks($this->get($url), 'ItemList'), $url);
         }
     }

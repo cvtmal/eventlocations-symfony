@@ -166,9 +166,8 @@
     }
 }
 
-// The large field of Region and Guests; More's stays at the shared size.
-.overlay--region .text-input__field,
-.guests-filter__input {
+// Region's large field; More's stays at the shared size.
+.overlay--region .text-input__field {
     min-height: 3.25rem;
     font-size: 1.5rem;
     line-height: 2rem;
