@@ -1,6 +1,6 @@
 # Hochzeitslocation
 
-Swiss wedding-venue listing site: a home page, one listing page with filters, one detail page per venue, and a Merkliste without login. It is modelled on eventlokale.ch's wedding search. Scope, settled decisions, requirements and the cycle order live in `docs/rpi-cycles.md`; read it before starting a cycle.
+Swiss wedding-venue listing site: a home page, one listing page with filters, one detail page per venue, and a Merkliste without login. It is modelled on eventlokale.ch's wedding search. Scope, settled decisions, requirements and the cycle order live in `docs/rpi-cycles.md`; read it before starting a cycle. The current product view (what it does today, open product questions, roadmap) is `docs/product.md`, kept by the product owner.
 
 ## Tech Stack
 
