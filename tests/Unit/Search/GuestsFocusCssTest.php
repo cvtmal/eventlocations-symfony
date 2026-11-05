@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * At 200 % Firefox leaves a focused bubble partly out of frame and the others stop flush with the edge. The padding must
- * stay off the field: `overlay.js` focuses it on opening, and the overlay has to open at its top.
+ * stay off the close button: `overlay.js` focuses it on opening, and the overlay has to open at its top.
  */
 final class GuestsFocusCssTest extends TestCase
 {
@@ -16,7 +16,7 @@ final class GuestsFocusCssTest extends TestCase
     {
         $partial = (string) file_get_contents(\dirname(__DIR__, 3).'/assets/styles/search/_filter-guests.scss');
 
-        self::assertMatchesRegularExpression('/&:has\(\.guests-bubble:focus-visible, \.overlay__footer :focus-visible\) \{\s+scroll-padding-block: 50%;/', $partial);
+        self::assertMatchesRegularExpression('/&:has\(\.guests-bubbles :focus-visible, \.overlay__footer :focus-visible\) \{\s+scroll-padding-block: 50%;/', $partial);
         self::assertSame(1, substr_count($partial, 'scroll-padding-block:'));
     }
 }

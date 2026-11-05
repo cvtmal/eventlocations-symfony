@@ -241,7 +241,8 @@ final class LandingPageTest extends WebTestCase
 
     public function test_query_filters_narrow_a_canton_page_and_pagination_keeps_its_path(): void
     {
-        $this->inCanton(Canton::ZH, 48);
+        // 49 in band 101–150 (the factory's 120), so the filtered page still has a second page (#51).
+        $this->inCanton(Canton::ZH, 49);
         $big = $this->zurichVenue(400);
         $this->inCanton(Canton::BE, 5);
 
@@ -249,13 +250,13 @@ final class LandingPageTest extends WebTestCase
         self::assertSame([$big->name()], $this->cardNames($crawler));
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
 
-        $crawler = $this->get('/hochzeitslocations/zuerich?guests=100');
+        $crawler = $this->get('/hochzeitslocations/zuerich?guests=150');
         self::assertCount(48, $crawler->filter('article.card'));
         $pages = $crawler->filter('.pagination a.pagination__page')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
-        self::assertSame(['/hochzeitslocations/zuerich?guests=100', '/hochzeitslocations/zuerich?guests=100&page=2'], $pages);
+        self::assertSame(['/hochzeitslocations/zuerich?guests=150', '/hochzeitslocations/zuerich?guests=150&page=2'], $pages);
 
         $crawler = $this->get('/hochzeitslocations/zuerich?page=2');
-        self::assertCount(1, $crawler->filter('article.card'));
+        self::assertCount(2, $crawler->filter('article.card'));
         self::assertSame('/hochzeitslocations/zuerich', $crawler->filter('.pagination a.pagination__arrow')->first()->attr('href'));
     }
 

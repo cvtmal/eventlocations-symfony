@@ -1,5 +1,5 @@
-// Overlay form (#12, shared with #11): "Filter löschen" empties the form and stays open, closing discards what was not
-// applied. For every form[data-overlay-form] in a popover; the link is [data-overlay-clear]. live-count.js recounts.
+// Overlay form (#12, shared with #11): "Filter löschen" empties the form (checkboxes and radios unchecked, text and
+// selects emptied, hidden inputs kept) and stays open, closing discards what was not applied. For every form[data-overlay-form] in a popover; the link is [data-overlay-clear]. live-count.js recounts.
 // Self-contained: no imports, no globals.
 (() => {
     document.querySelectorAll('form[data-overlay-form]').forEach((form) => {
@@ -11,7 +11,7 @@
         overlay.querySelector('[data-overlay-clear]')?.addEventListener('click', (event) => {
             event.preventDefault();
             [...form.elements].forEach((control) => {
-                if (control.type === 'checkbox') {
+                if (control.type === 'checkbox' || control.type === 'radio') {
                     control.checked = false;
                 } else if (control.matches('input:not([type="hidden"]), select')) {
                     control.value = '';

@@ -66,12 +66,12 @@ final class LandingPathsTest extends KernelTestCase
 
     public function test_a_town_with_radius_zero_is_its_town_page(): void
     {
-        $query = $this->query(['place' => $this->staefa, 'radius' => '0', 'guests' => '80']);
+        $query = $this->query(['place' => $this->staefa, 'radius' => '0', 'guests' => '100']);
         [$page, $rest] = $this->paths->locate($query);
 
         self::assertSame(LandingType::Town, $page?->type);
-        self::assertSame(['guests' => '80'], $rest);
-        self::assertSame('/hochzeitslocations/zuerich/staefa?guests=80', $this->paths->url($query));
+        self::assertSame(['guests' => '100'], $rest);
+        self::assertSame('/hochzeitslocations/zuerich/staefa?guests=100', $this->paths->url($query));
         self::assertSame('/hochzeitslocations/zuerich/staefa', $this->paths->url($this->query(['canton' => 'zh', 'place' => $this->staefa, 'radius' => '0'])));
     }
 
@@ -112,7 +112,7 @@ final class LandingPathsTest extends KernelTestCase
 
     public function test_exactly_one_live_building_is_its_building_page(): void
     {
-        self::assertSame('/hochzeitslocations/schloss?guests=80', $this->paths->url($this->query(['guests' => '80', 'building' => ['castle']])));
+        self::assertSame('/hochzeitslocations/schloss?guests=100', $this->paths->url($this->query(['guests' => '100', 'building' => ['castle']])));
         self::assertSame('/hochzeitslocations?building%5B0%5D=castle&building%5B1%5D=hotel', $this->paths->url($this->query(['building' => ['castle', 'hotel']])));
         self::assertSame('/hochzeitslocations?building%5B0%5D=hotel', $this->paths->url($this->query(['building' => ['hotel']])));
     }
@@ -130,7 +130,7 @@ final class LandingPathsTest extends KernelTestCase
     {
         $query = $this->query([
             'height' => '3', 'curfew' => 'none', 'price' => ['medium'], 'usage' => ['exclusive'],
-            'setting' => ['lake'], 'q' => 'see', 'guests' => '80', 'canton' => 'zh', 'page' => '2',
+            'setting' => ['lake'], 'q' => 'see', 'guests' => '100', 'canton' => 'zh', 'page' => '2',
         ]);
         [, $rest] = $this->paths->locate($query);
 

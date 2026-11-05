@@ -26,7 +26,7 @@ const MODE = __ENV.MODE || 'uncached';
 const RUN = __ENV.RUN || String(Date.now());
 // building[]=castle matches nothing on demo ×1 (/_search/count 0), so the default is the first setting
 // with a result: countryside (1 venue on ×1 after tests/Load/live-canton.sql, 10 on ×10).
-const FILTERS = __ENV.FILTERS || 'canton=zh&guests=80&setting[]=countryside';
+const FILTERS = __ENV.FILTERS || 'canton=zh&guests=100&setting[]=countryside';
 const CANTON = __ENV.CANTON || 'zuerich';
 const DETAIL_SLUG = __ENV.DETAIL_SLUG;
 if (!DETAIL_SLUG) {

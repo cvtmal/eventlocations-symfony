@@ -17,8 +17,9 @@ use Doctrine\DBAL\ParameterType;
  * - Published means status published and a translation in the default locale (the card
  *   needs a slug and a summary).
  * - Groups combine with AND; inside a group setting, building and price are OR, the other
- *   term groups and access AND. Guests fall inside [capacity_min, capacity_max]. No curfew
- *   means the venue stated it: has_curfew NULL is unknown and never matches.
+ *   term groups and access AND. Guests pick a GuestBand on capacity_max alone (#51);
+ *   capacity_min is not read. No curfew means the venue stated it: has_curfew NULL is unknown
+ *   and never matches.
  * - The radius centre is a joined MATERIALIZED CTE (`centre c`): only that shape lets the
  *   planner use idx_venues_earth. An unknown town or ZIP leaves the CTE empty, so 0 rows.
  *
@@ -77,10 +78,14 @@ final readonly class ListingSql
         }
 
         if (null !== $criteria->guests) {
-            $where[] = 'v.capacity_max >= :guests';
-            $where[] = '(v.capacity_min IS NULL OR v.capacity_min <= :guests)';
-            $params['guests'] = $criteria->guests;
-            $types['guests'] = ParameterType::INTEGER;
+            $where[] = 'v.capacity_max >= :guests_min';
+            $params['guests_min'] = $criteria->guests->min();
+            $types['guests_min'] = ParameterType::INTEGER;
+            if (null !== ($max = $criteria->guests->max())) {
+                $where[] = 'v.capacity_max <= :guests_max';
+                $params['guests_max'] = $max;
+                $types['guests_max'] = ParameterType::INTEGER;
+            }
         }
 
         foreach (SearchCriteria::PARAMS as $group) {

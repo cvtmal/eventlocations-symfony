@@ -1,6 +1,6 @@
 # Hochzeitslocation: RPI cycles
 
-_Last updated: 2026-11-05 (#52 near-me-map (map of venues near the visitor) done, keyless in production until the owner sets the Maps JavaScript key; Q3 closed: embed key set by the owner on 2026-11-04, pins live since the go-live import of 2026-11-02, and the Q3/#46 runbook in `docs/operations.md` ran on production on 2026-11-04 with 4 Liechtenstein venues created and 243 unchanged; #46 liechtenstein-venues done: Liechtenstein is region li, its 4 venues import with the owner's prod runbook in `docs/operations.md`, owner answers A–J and R5–R7 recorded under Q13; #20 prod-deploy done, confirmed by the owner: live on hochzeitslocation.ch since 2026-11-02; Q20 answered: entries are paid, the first publish of a newly created location writes the CRM task "Rechnung stellen", whoever created it; Location-Konten added: S16, POR, Q20, #42–#45; #42 portal-accounts, #43 portal-claims, #44 portal-editor and #45 portal-onboarding done; Q19 closed, "Location eintragen" links to `/konto/registrieren`; #0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #19 performance-caching, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #25 cms-venue-media, #26 cms-pages, #27 crm-foundation (#27a, #27b crm-timeline), #28 crm-deals, #29 crm-inquiries (Production backfill count: open, after launch), #30 crm-email (production mail check: open, after launch), #31 venue-wedding-facts, #32 owner-content-import, #33 filter-wedding, #35 brand-foundation, #36 home-page, #37 listing-redesign, #38 filter-overlays-redesign, #39 detail-redesign, #40 brand-voice and #41 redesign-verification (the owner's Safari and iOS sitting and Q15's sign-off: open, after the next deploy) done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added; Q13 answered yes, #46 `liechtenstein-venues` added; Q14 answered, no redirects; Q3 key on its way; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
+_Last updated: 2026-11-05 (#51 guest-bands done (four guest bands); #52 near-me-map (map of venues near the visitor) done, keyless in production until the owner sets the Maps JavaScript key; Q3 closed: embed key set by the owner on 2026-11-04, pins live since the go-live import of 2026-11-02, and the Q3/#46 runbook in `docs/operations.md` ran on production on 2026-11-04 with 4 Liechtenstein venues created and 243 unchanged; #46 liechtenstein-venues done: Liechtenstein is region li, its 4 venues import with the owner's prod runbook in `docs/operations.md`, owner answers A–J and R5–R7 recorded under Q13; #20 prod-deploy done, confirmed by the owner: live on hochzeitslocation.ch since 2026-11-02; Q20 answered: entries are paid, the first publish of a newly created location writes the CRM task "Rechnung stellen", whoever created it; Location-Konten added: S16, POR, Q20, #42–#45; #42 portal-accounts, #43 portal-claims, #44 portal-editor and #45 portal-onboarding done; Q19 closed, "Location eintragen" links to `/konto/registrieren`; #0 project-skeleton, #1 design-system, #2 i18n-foundation, #3 geo-reference-data, #4 venue-schema, #5 venue-media, #6 search-query, #7 listing-page, #8 venue-detail-page, #9 venue-content-import, #10 filter-region, #11 filter-guests, #12 filter-more, #13 merkliste, #14 inquiry-form, #15 venue-map, #16 seo-foundation, #17 seo-landing-pages, #18 legal-pages, #19 performance-caching, #21 legacy-data-import, #22 admin-foundation, #23 admin-ui-kit, #24 cms-venues, #25 cms-venue-media, #26 cms-pages, #27 crm-foundation (#27a, #27b crm-timeline), #28 crm-deals, #29 crm-inquiries (Production backfill count: open, after launch), #30 crm-email (production mail check: open, after launch), #31 venue-wedding-facts, #32 owner-content-import, #33 filter-wedding, #35 brand-foundation, #36 home-page, #37 listing-redesign, #38 filter-overlays-redesign, #39 detail-redesign, #40 brand-voice and #41 redesign-verification (the owner's Safari and iOS sitting and Q15's sign-off: open, after the next deploy) done; owner answered Q1, Q2, Q4–Q12; back office (CMS #22–#26, CRM #27–#30) added; owner data from deine-hochzeitslocation.ch analysed, S14 and #31–#33 added; Q13 answered yes, #46 `liechtenstein-venues` added; Q14 answered, no redirects; Q3 key on its way; production content is the Wix CSV only, venues without addresses accepted) · Source: this file (scope, requirements, order), `docs/reference/` (screenshots of the original), `docs/reference/admin/` (back-office design reference, public redesign planned: S15, Q15–Q19, #34–#41)_
 
 We are building a Swiss wedding-venue listing site: one listing page with filters, one detail page per venue, and a Merkliste that needs no login. It started from the layout and content structure of eventlokale.ch's wedding search, and takes its look from the brand design (S15). It is **not** an eventlokale clone: there is no magazine, no providers, no event types, no Award.
 
@@ -128,6 +128,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 47 | `venue-stats` | W15 | S17 (owner, 2026-11-03) | 13, 14, 20, 24, 44 | `stats_events`, `stats_daily`, `stats_ingest_files` | — | ✅ Done |
 | 48 | `crm-customer-import-2` | — | CRM customer sheet | 27, 29 | — | — | ✅ Done |
 | 49 | `eventlokale-crawler` | — | — (owner request) | 27a | — | — | ✅ Done |
+| 51 | `guest-bands` | — | FI-3 (owner, 2026-11-05) | 6, 11, 38 | — | — | ✅ Done |
 | 52 | `near-me-map` | — | — (owner request 2026-11-05) | 7, 10, 13, 15, 16, 19 | — | — | ✅ Done |
 
 ### Waves at a glance
@@ -288,7 +289,7 @@ The base is songrequest's module-first modular monolith, `src/<Module>/<Layer>/`
 - **Venue-authored text** lives in `venue_translations (venue_id, locale, slug, summary, description, meta_description)`, plus `room_translations` and `document_translations`, all with a fallback to `de`. The venue name is a proper noun and stays on `venues`.
 - **Town names:** the official name comes from the dataset. A later `town_names (town_id, locale, name, slug)` table adds exonyms such as Genf/Genève.
 - **Routes:** German paths are unprefixed. Every public route is declared in Symfony's localized form (`path: ['de' => '/hochzeitslocations']`) from day one. Later locales add `'fr' => '/fr/lieux-de-mariage'` and so on, with no route renamed. #2 adds a test that fails on a public route without the localized form.
-- **Query parameters** use stable, language-neutral codes (`?canton=zh&guests=120&setting=lake`), so a URL shared in one language works in another. Path segments of landing pages are localized slugs.
+- **Query parameters** use stable, language-neutral codes (`?canton=zh&guests=150&setting=lake`), so a URL shared in one language works in another. Path segments of landing pages are localized slugs.
 - Swiss formatting (`1'500`, `30.10.2026`) comes through a `SwissFormatExtension` like songrequest's.
 
 ### S5. URLs
@@ -564,7 +565,7 @@ IDs are referenced by the overview and the cycles.
   
   It behaves like the original and looks as drawn in #34.
 - **FI-2 Ort/PLZ:** autocomplete over towns and postcodes. Selecting one filters venues in that town or within a radius around it; #6 settles the radius, after checking eventlokale's `standort=` behaviour.
-- **FI-3 Guests** (`filter-guests.jpg`): overlay with the h2 "Wie viele Gäste erwarten Sie?", an "Anzahl Gäste" number input, and bubbles 20/30/50/80/100/150/200/350/500 sized by value, which fill the input. It has the same footer buttons. #6 settles the capacity semantics.
+- **FI-3 Guests** (`filter-guests.jpg`): overlay with the h2 "Wie viele Gäste erwarten Sie?" and four radio bubbles "bis 50 Gäste", "bis 100 Gäste", "bis 150 Gäste", "über 150 Gäste", sized by band, on the venue's maximum capacity; no number input. It has the same footer buttons. (#51, owner 2026-11-05; was a number input and nine bubbles, #11.)
 - **FI-4 Weitere Filter** (`filter-more.jpg`): overlay "Wählen Sie weitere Filter und Möglichkeiten" with a sticky footer ("N Resultate anzeigen", "Filter löschen"). Its sections, in eventlokale's order:
   1. **Suche eine konkrete Location:** "Name eingeben".
   2. **Lage:** round icon buttons Am Fluss, Am See, Auf dem Land, In den Bergen, In der Stadt.
@@ -1134,7 +1135,7 @@ IDs are referenced by the overview and the cycles.
   | Mobiliar `furniture[]`, Technik `tech[]` | AND, inferred (same bundle loop as infra/surroundings; not measured) |
   | Erreichbarkeit `access[]` | multi-value AND (our decision; eventlokale is single-select) |
   | Between groups | AND |
-  | Guests | `capacity_max ≥ g AND (capacity_min IS NULL OR capacity_min ≤ g)` (`personen=10` → 680; min ≤ g ≤ max ≈ 684 vs max-only ≈ 918) |
+  | Guests | `capacity_max ≥ g AND (capacity_min IS NULL OR capacity_min ≤ g)` (`personen=10` → 680; min ≤ g ≤ max ≈ 684 vs max-only ≈ 918). Since #51: a band on `capacity_max` (`GuestBand`), canonical 50\|100\|150\|151; `capacity_min` is not read. |
   | Radius | default 5 km once a place is picked, 0–50 km in whole km, 0 = the place only; measured on the venue's coordinates from the town centre (a ZIP's centre is its most populous town); an unknown place matches nothing |
   | Erreichbarkeit thresholds | station ≤ 1 km, highway ≤ 10 km, airport ≤ 30 km; NULL distance = not near (`App\Venues\ValueObject\Access::maxDistanceKm()`) |
   | Anzahl Räume `rooms` | 1–6 (6 = "≥ 6"), `room_count ≥ n` |
@@ -1145,7 +1146,7 @@ IDs are referenced by the overview and the cycles.
   - **Grammar of `fromQuery()`.** Invalid values are dropped silently, never a 4xx/5xx. It reads `$query->all()` once and type-checks every value (`InputBag::get()`/`all($key)` would answer a scalar/array mismatch with a 400).
     - `canton`: one code, case-insensitive.
     - `place`: a town UUID (lower-cased) or a 4-digit ZIP. `radius` 0–50, kept only with `place`, default 5.
-    - `guests`: 1–50000.
+    - `guests`: 1–50000. Since #51: a band on `capacity_max` (`GuestBand`), canonical 50|100|150|151; `capacity_min` is not read.
     - `q`: trimmed, whitespace collapsed, ≤ 100 chars, needs `\p{L}\p{N}`, invalid UTF-8 dropped. The SQL also guards `geo_fold_de(:q) <> ''`, so `日本` matches nothing.
     - `setting[] building[] infra[] furniture[] tech[] surroundings[]`: known `taxonomy_terms` codes of the matching group only (`infra` → `infrastructure`, `tech` → `technology`; `TermGroup`'s docblock says so). A scalar is taken as a one-element list; nested arrays are skipped. `suitable_for` is not a listing filter.
     - `access[]`: `station|highway|airport`.
@@ -1175,7 +1176,7 @@ IDs are referenced by the overview and the cycles.
   | `q=hof` only (seqscan + indexscan off) | 2.1–4.8 | `idx_venues_search_key` |
   | `setting[]=mountains` only (seqscan + indexscan off) | 2.2–2.4 | `idx_venue_terms_term_group_term_code` |
 
-  "Heaviest" = radius 50 km around Zürich, guests 80, `q=hof`, access station, rooms 2, area 100, height 2.5, the 3 most used settings, the 4 most used buildings, the most used code of each AND group. The class has two tests (budget; the three index checks, each in a savepoint), so it builds DemoStory ×10 twice; it gets `DemoStory` from the container and removes `%app.media_public_dir%` in `tearDown()`.
+  "Heaviest" = radius 50 km around Zürich, guests band 100, `q=hof`, access station, rooms 2, area 100, height 2.5, the 3 most used settings, the 4 most used buildings, the most used code of each AND group. The class has two tests (budget; the three index checks, each in a savepoint), so it builds DemoStory ×10 twice; it gets `DemoStory` from the container and removes `%app.media_public_dir%` in `tearDown()`.
 - **Tests:** `tests/Unit/Search/{SearchCriteriaTest,CardPhotoTest}.php` (round trip, canonical form, ~45 garbage cases), `tests/Unit/Venues/AccessTest.php`, `tests/Integration/Search/{SearchIndexesMigrationTest,KnownTermsQueryTest,ListingQueryTest,SimilarVenuesQueryTest,ListingQueryPerformanceTest}.php`, `tests/Application/Search/{CountControllerTest,PlacesControllerTest}.php`. Read models are built by hand in tests (`TranslationJoin` is removed from the test container; `ListingQueryTest::enabledLocale()`).
 - **Closed carried items:** #0 F-m1 (`because()` wording) and F-m2 (`self::layer('Repository')` in `InfrastructureAccessTest`); #3 F-m4 (`PlaceLookup` guards the folded value, `WHERE q.de <> ''`: `日本`/`Ελλάδα` → []); #3 short-query ranking (≤ 2 folded chars rank by `least(zip_count, 3)` first: `a` → Aarau, `ba` → Basel); #3 optional `trans('canton.zh', [], 'geo') === 'Zürich'` (asserted in `PlacesControllerTest`); #4 Erreichbarkeit thresholds (`Access::maxDistanceKm()`); `symfony/clock` declared.
 - **Deviations:**
@@ -1465,6 +1466,8 @@ IDs are referenced by the overview and the cycles.
   - Low confidence: on a phone the hover colour may stay on a bubble after a second tap until the next tap (no `(hover: hover)` convention yet).
   - **Owner options:** white numbers on the large bubbles; a × in the input.
   - **Pending human:** Firefox and Safari (`cqi` with `aspect-ratio`, `formdata`, `form.reset()` on close, a no-JS bubble submit), a real phone at 390 px (tap accuracy, numeric keyboard, soft keyboard over the sticky footer), a screen reader (nine `aria-pressed` buttons in the labelled form), a look at `var/shots/guests-*` beside `docs/reference/filter-guests.jpg`.
+
+Superseded by #51: the number input, the nine bubbles, the second form and `guests-filter.js` are gone; see §51.
 
 ### 12. `filter-more`
 
@@ -1812,7 +1815,7 @@ Runs alone, because it renames the tokens every later lane uses. It starts after
 
 - **Route:** the YAML 302 in `config/routes.yaml` goes; `Search\Controller\HomeController` takes `GET /` with the route name `home`, localized like the others. It sits in Search because categories, Spotlight and regions are Search's, and no phpat rule or module changes. `HomeRedirectTest` becomes `HomePageTest`.
 - **Read:** `ListingQuery` gains a method for the first N cards in LP-4's order, on the existing card SQL, with no second ordering. Regions and links come from `LandingPages`. Pin the query count like `MoreFilterTest` does.
-- **Form (HP-2):** no script. Native selects and a number input, `canton`, `building[]`, `guests`. JS has 810 B left of 15,360 and `AssetBudgetTest` counts every file in `assets/js/`, so this page adds 0 B.
+- **Form (HP-2):** no script. Native selects and a number input, `canton`, `building[]`, `guests` (since #51 the guests field is a select of the four bands). JS has 810 B left of 15,360 and `AssetBudgetTest` counts every file in `assets/js/`, so this page adds 0 B.
 - **Hero image (Q18):** through `venue_picture(priority=true)`; it is the page's LCP element, with `width` and `height` from the stored image.
 - **Text:** home strings in `search`, in "Sie". `HomeTextBlock` as a `ContentBlockDefinition` with a limit, which puts it in the back office's text-block list automatically (#26).
 - **SEO:** a `Seo` home meta beside `ListingMeta`, canonical `/`, `og:type website`, one h1, `site_jsonld()`. The home URL goes first in `Seo\PagesSitemap::urls()`. **`/` is not `listing`:** #19's TTLs, purge list and `bin/warm-cache` must learn it, so a CMS save and the midnight seed change refresh Spotlight. Check `lastmod` and `PublicPagesStartNoSessionTest`.
@@ -2921,6 +2924,27 @@ Owner request of 2026-11-03, outside the waves. Depends on #27a (`Crm\CsvStream`
   - the unit tests (client, crawl, CSV) and the command test pass with invented payloads, and no test reaches the network;
   - `make lint` passes;
   - the owner's full run is outside the cycle.
+
+### 51. `guest-bands`
+
+Owner request of 2026-11-05, outside the waves. Depends on #6 (codec and SQL), #11 (the guests overlay) and #38 (its look). The listing's guests filter becomes four size bands on the venue's maximum capacity: "bis 50 Gäste" (max ≤ 50), "bis 100 Gäste" (51–100), "bis 150 Gäste" (101–150), "über 150 Gäste" (> 150). The number input goes away on the listing overlay and on the home search. The `guests` parameter stays an integer (canonical `50|100|150|151`); a legacy count such as `?guests=120` buckets into its band and canonicalises through `toQuery()`, with no redirect (S5). Research and plan: `.rpi-tracking/research/2026-11-05/guest-bands-research.md` and `.rpi-tracking/plans/2026-11-05/guest-bands-plan.md`. Working notes: `.claude/rules/module-search.md`.
+
+- **Owner's answers (2026-11-05):** four bands as above; on max capacity, not "fits my party"; the number input goes on both pages; old links keep working and land on their band.
+- **Coordinator decisions:** (1) bubbles keep the 666 × 583 stage, colours and check mark, sizes grow with the band, the full label on two lines; (2) the home select's empty option is "Alle Gästezahlen"; (3) the overlay title "Wie viele Gäste erwarten Sie?" and the trigger "Anzahl Gäste" stay; (4) without JS a band applies through the footer button, like Region and More.
+- **Done when:**
+  - codec (`GuestBand`, legacy bucketing), SQL (band on `capacity_max`), the overlay (one form, four radios, no script) and the home select are built as planned;
+  - the Phase 3 tests of the plan pass;
+  - `make lint`, `make test` and `make perf-check` pass;
+  - the S11 checks of the plan's Phase 5 have run;
+  - the docs and rules that stated the old behaviour are corrected.
+
+**Outcome (2026-11-05, Implement).** The guests filter is four bands on `capacity_max`. `Search\ValueObject\GuestBand` (50/100/150/151, `fromGuests`, `min`/`max`, labels `filter.guests_band.*`); `SearchCriteria::$guests` is a `?GuestBand`, a legacy count buckets into its band and `toQuery()` writes the canonical value; `ListingSql` filters `capacity_max` between the band's bounds and no longer reads `capacity_min`. The overlay is one `#filter-guests-form` with four labelled radios drawn as bubbles on the old stage; Enter and the no-JS apply go through the footer button. `assets/js/guests-filter.js` is deleted, `overlay-form.js` clears radios, the chip shows the band ("bis 150 Gäste"), and the home search has `select#home-guests` ("Alle Gästezahlen" + four bands). No migration, no index, no package, no route, no config change, no new Makefile target.
+
+- **Gates:** `make lint` passes. `make test`: PHPUnit 5,874 tests, 68,266 assertions; Vitest 451 tests in 33 files. The first run had 6 failures, all test expectations the plan had not listed (see the implementation log); they were fixed and the suite was rerun green. `make perf-check` passes (18 tests): CSS 13,700 B gzip of 25,600; page JS on the listing 12,303 of 15,360 B (about 640 B lower: `guests-filter.js` 683 B gone, `overlay-form.js` +43 B), home 5,115, detail 9,017, Merkliste 6,153; the 6 KB group 6,132 of 6,144 B, unchanged; `ListingHtmlBudgetTest` 52,261 B gzip (listing) and 52,380 B (canton page) of 61,440; `HomeHtmlBudgetTest` 6,438 B. Lighthouse 13.5 (mobile, dev, demo data): `/hochzeitslocations?guests=150` 97 / 100 / 100 / 69 (LCP 2.1 s, CLS 0, TBT 0 ms), `/` 99 / 100 / 100 / 69 (LCP 1.6 s, CLS 0, TBT 0 ms); SEO fails only `is-crawlable` (dev `X-Robots-Tag: noindex`). vnu: no errors on either URL; the listing keeps #46's region-tooltip warning (`aria-hidden` next to `hidden`).
+- **Browser work:** headless Chromium in the lighthouse tools image at exact 390 and 1440 px on demo data (`make seed`, 60 venues: band 50 has 1, 100 has 10, 150 has 8, 151 has 41). Screenshots in the worktree's `var/shots/guest-bands/` (overlay none, selected 150, focus ring, after "Filter löschen", chip after close, home). No horizontal overflow at 390, no two bubbles touch, every label on two lines inside its bubble. Keyboard: Tab from the close button lands on the checked radio, arrows change the band and the live count, "Filter löschen" stays open with no radio checked, Esc discards, Enter submits. No JS: a band applies through the footer button with `setting[]=lake` kept and on `/hochzeitslocations/zuerich` with the path kept. Not tried: Firefox, Safari, a real phone, a screen reader, real data (no real-data load in the lane).
+- **Carried forward:** the owner looks at the 390/1440 shots (bubble sizes and positions are the plan's starting map, untuned); the PO is told the filter changed (`docs/product.md` is the PO's); the k6 default `canton=zh&guests=100&setting[]=countryside` is not re-measured on the perf stack; the band distribution on the 243 production venues is unchecked (research §Potential Next Research).
+
+Working notes: `.claude/rules/module-search.md`.
 
 ### 52. `near-me-map`
 

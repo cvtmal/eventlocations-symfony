@@ -1,12 +1,13 @@
 {#
     Filter-bar slot "Anzahl Gäste" (#11, FI-3). Included twice with `with_context = false`: criteria (SearchCriteria),
     part: chips|trigger. Renders <li class="filter-bar__item">s: one chip per active value (part chips), or the trigger
-    plus its overlay (part trigger). The forms live in search/filter/_guests_form.html.twig; the footer's submit button
-    joins the number input's form by its `form` attribute, and "Filter löschen" is js/overlay-form.js's clear link.
+    plus its overlay (part trigger). The form lives in search/filter/_guests_form.html.twig; the footer's submit button
+    joins it by its `form` attribute, and "Filter löschen" is js/overlay-form.js's clear link. The chip shows the
+    band's label (#51).
 #}
 {%- if part == 'chips' -%}
     {%- if criteria.guests is not null -%}
-        {%- set label = 'chip.guests'|trans({count: criteria.guests, guests: criteria.guests|swiss_number}, 'search') -%}
+        {%- set label = criteria.guests|trans -%}
         <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, 'guests'), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
     {%- endif -%}
 {%- elseif part == 'trigger' -%}

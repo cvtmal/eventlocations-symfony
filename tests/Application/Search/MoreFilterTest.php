@@ -267,23 +267,24 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=80&setting[]=lake');
+        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=100&setting[]=lake');
 
-        self::assertSame(['Zürich', '80 Gäste', 'weitere Filter (1)'], $this->chips($crawler));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=80', $crawler->filter('.chip--more a')->attr('href'));
+        self::assertSame(['Zürich', 'bis 100 Gäste', 'weitere Filter (1)'], $this->chips($crawler));
+        self::assertSame('/hochzeitslocations?canton=zh&guests=100', $crawler->filter('.chip--more a')->attr('href'));
     }
 
     public function test_the_form_carries_the_other_slots_and_never_the_page(): void
     {
+        // In band 100 (51–100, #51), so `guests=100&page=2` exists.
         for ($i = 0; $i <= ListingQuery::PER_PAGE; ++$i) {
-            $this->venue(['capacityMax' => 200]);
+            $this->venue(['capacityMax' => 100]);
         }
 
-        $crawler = $this->get('/hochzeitslocations?guests=80&setting[]=lake&page=1');
-        self::assertSame(['guests' => '80'], $this->hiddenState($crawler));
+        $crawler = $this->get('/hochzeitslocations?guests=100&setting[]=lake&page=1');
+        self::assertSame(['guests' => '100'], $this->hiddenState($crawler));
 
-        $crawler = $this->get('/hochzeitslocations?guests=80&page=2');
-        self::assertSame(['guests' => '80'], $this->hiddenState($crawler));
+        $crawler = $this->get('/hochzeitslocations?guests=100&page=2');
+        self::assertSame(['guests' => '100'], $this->hiddenState($crawler));
     }
 
     public function test_the_live_count_and_overlay_form_contract(): void
