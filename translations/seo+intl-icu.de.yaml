@@ -38,7 +38,7 @@ landing:
         description: '{heading}: {count, plural, one {# Location} other {# Locations}} in der Schweiz mit Fotos, Platz für Gäste und Lage im Vergleich.'
 # /llms.txt and the venues' Markdown views (seo-llms-txt). Numbers arrive pre-formatted ({formatted}, {count} in capacity).
 llms:
-    summary: 'Hochzeitslocations in der ganzen Schweiz: Schlösser, Scheunen, Restaurants und Locations am See mit Platz für Gäste, Lage, Ausstattung und Bewertungen.'
+    summary: 'Hochzeitslocations in der ganzen Schweiz: Schlösser, Scheunen, Restaurants und Locations am See mit Platz für Gäste, Lage und Ausstattung.'
     about: 'Alle Inhalte sind auf Deutsch. Zu jeder Location gibt es neben ihrer Seite eine Markdown-Fassung; die Links unter «Locations» führen dorthin. Anfragen gehen über das Formular auf der Seite der Location.'
     filters: 'Die Übersicht lässt sich über Parameter filtern, zum Beispiel nach der Zahl der Gäste:'
     section:
