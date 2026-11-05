@@ -15,7 +15,6 @@ use App\Venues\ValueObject\Tier;
 final class DealData
 {
     public ?string $name = null;
-    public ?string $venue = null;
     public ?Tier $tier = null;
     public ?int $amount = null;
     public ?string $contractStart = null;
@@ -23,13 +22,16 @@ final class DealData
     public ?string $expectedClose = null;
     public ?string $owner = null;
 
-    public function toCommand(string $id, string $companyId): CreateDeal
+    /**
+     * @param string|null $venueId the Location's Eintrag, which a new deal takes (#56 D7)
+     */
+    public function toCommand(string $id, string $companyId, ?string $venueId): CreateDeal
     {
         return new CreateDeal(
             $id,
             (string) $this->name,
             $companyId,
-            $this->venue,
+            $venueId,
             $this->tier,
             $this->amount,
             TaskDueDate::parse($this->contractStart),

@@ -107,7 +107,7 @@ final class CrmStory extends Story
         foreach ($venues as $index => $venue) {
             $companies[] = CompanyFactory::new()
                 ->inStage($stages[$index % \count($stages)])
-                ->withVenues($venue)
+                ->withVenue($venue)
                 ->create([
                     'name' => $venue->name(),
                     'origin' => CompanyOrigin::Venue,

@@ -11,7 +11,7 @@ use Doctrine\DBAL\Connection;
 
 /**
  * The timeline of a company or a deal (CRM-4): its activities by keyset on `(occurred_at, id)`, and on a company also
- * the audit-log events of its linked venues, merged in PHP (D15). Two sources, so a page costs the activities, the
+ * the audit-log events of its Eintrag, merged in PHP (D15). Two sources, so a page costs the activities, the
  * venue lookup and the audit rows: three statements for a company, one for a deal.
  *
  * The audit commands are plain class names, pinned to their classes by a test. Photos, rooms, texts and every other
@@ -149,7 +149,7 @@ final class TimelineQuery
     {
         /** @var array<string, string> $names venue number => name */
         $names = $this->connection->fetchAllKeyValue(
-            'SELECT CAST(v.number AS text), v.name FROM crm_company_venues cv JOIN venues v ON v.id = cv.venue_id WHERE cv.company_id = :id',
+            'SELECT CAST(v.number AS text), v.name FROM crm_companies c JOIN venues v ON v.id = c.venue_id WHERE c.id = :id',
             ['id' => $companyId],
         );
 

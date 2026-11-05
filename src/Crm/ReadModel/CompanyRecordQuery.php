@@ -12,23 +12,16 @@ use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A company record page in one statement (D20): the company, its owner's name, and its venues and
- * contacts as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
+ * A company record page in one statement (D20): the company, its owner's name, its Eintrag (#56) and
+ * its contacts as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
  */
 final class CompanyRecordQuery
 {
     private const string SQL = <<<'SQL'
         SELECT c.id, c.name, c.legal_name, c.website, c.phone, c.email, c.address, c.stage, c.owner_id, c.notes,
                c.origin, c.created_at, u.display_name AS owner_name,
-               COALESCE((
-                   SELECT json_agg(json_build_object('id', v.id, 'number', v.number, 'name', v.name, 'tier', v.tier,
-                                                     'town', tw.name, 'canton', v.canton_code)
-                                   ORDER BY lower(v.name), v.number)
-                   FROM crm_company_venues cv
-                   JOIN venues v ON v.id = cv.venue_id
-                   LEFT JOIN towns tw ON tw.id = v.town_id
-                   WHERE cv.company_id = c.id
-               ), '[]') AS venues,
+               v.id AS venue_id, v.number AS venue_number, v.name AS venue_name, v.tier AS venue_tier,
+               tw.name AS venue_town, v.canton_code AS venue_canton,
                COALESCE((
                    SELECT json_agg(json_build_object('id', p.id, 'first_name', p.first_name, 'last_name', p.last_name,
                                                      'position', p.position, 'email', p.email, 'phone', p.phone)
@@ -42,6 +35,8 @@ final class CompanyRecordQuery
                ) AS stage_derived
         FROM crm_companies c
         LEFT JOIN admin_users u ON u.id = c.owner_id
+        LEFT JOIN venues v ON v.id = c.venue_id
+        LEFT JOIN towns tw ON tw.id = v.town_id
         WHERE c.id = :id
         SQL;
 
@@ -74,13 +69,13 @@ final class CompanyRecordQuery
             self::text($row['notes']),
             CompanyOrigin::from((string) $row['origin']),
             new \DateTimeImmutable((string) $row['created_at']),
-            array_map(static fn (array $venue): CompanyRecordVenue => new CompanyRecordVenue(
-                (string) $venue['id'],
-                (int) $venue['number'],
-                (string) $venue['name'],
-                Tier::from((string) $venue['tier']),
-                VenuePlace::of(self::text($venue['town']), self::text($venue['canton']), null),
-            ), self::list($row['venues'])),
+            null === $row['venue_id'] ? null : new CompanyRecordVenue(
+                (string) $row['venue_id'],
+                (int) $row['venue_number'],
+                (string) $row['venue_name'],
+                Tier::from((string) $row['venue_tier']),
+                VenuePlace::of(self::text($row['venue_town']), self::text($row['venue_canton']), null),
+            ),
             array_map(static fn (array $contact): CompanyRecordContact => new CompanyRecordContact(
                 (string) $contact['id'],
                 self::text($contact['first_name']),

@@ -52,7 +52,7 @@ final class BootstrapButtonTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         $this->client->request('GET', '/admin/crm/locations');
 

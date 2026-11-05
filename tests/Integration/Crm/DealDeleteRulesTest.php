@@ -31,7 +31,7 @@ final class DealDeleteRulesTest extends KernelTestCase
     public function test_deleting_a_venue_keeps_the_deal_without_it(): void
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['status' => VenueStatus::Unpublished, 'name' => 'Remise Weg']);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $deal = DealFactory::createOne(['company' => $company, 'venue' => $venue]);
         $this->em->clear();
 

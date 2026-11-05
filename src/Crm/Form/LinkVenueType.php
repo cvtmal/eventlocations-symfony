@@ -10,7 +10,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * The "+ Verknüpfen" dialog of a company (CRM-1): a venue combobox on `admin_api_crm_venues`
+ * The "Eintrag zuordnen" dialog of a Location (CRM-1): a venue combobox on `admin_api_crm_venues`
  * (`venue_url`). It posts to `admin_crm_companies_link_venue` and comes back with a flash (PRG).
  */
 final class LinkVenueType extends AbstractType

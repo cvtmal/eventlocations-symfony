@@ -63,7 +63,7 @@ final class OnboardingWalkTest extends WebTestCase
         $this->pressPublish($number, 'Veröffentlichen');
         $this->assertPublicPage($number, Response::HTTP_GONE);
         self::assertSame(self::EMAIL, $this->connection->fetchOne(
-            'SELECT c.email FROM crm_contacts c JOIN crm_company_venues l ON l.company_id = c.company_id JOIN venues v ON v.id = l.venue_id WHERE v.number = ?',
+            'SELECT c.email FROM crm_contacts c JOIN crm_companies l ON l.id = c.company_id JOIN venues v ON v.id = l.venue_id WHERE v.number = ?',
             [$number],
         ));
 
@@ -361,7 +361,7 @@ final class OnboardingWalkTest extends WebTestCase
     private function invoiceTasks(int $number): int
     {
         return (int) $this->connection->fetchOne(
-            "SELECT count(*) FROM crm_tasks t JOIN crm_company_venues l ON l.company_id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
+            "SELECT count(*) FROM crm_tasks t JOIN crm_companies l ON l.id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
             [$number],
         );
     }

@@ -28,24 +28,26 @@ final class CompanyListQueryTest extends KernelTestCase
     use Factories;
     use RollsBackDatabase;
 
-    public function test_it_reads_a_row_with_owner_and_venue_count(): void
+    public function test_it_reads_a_row_with_owner_and_eintrag(): void
     {
         $owner = AdminUserFactory::createOne(['displayName' => 'Andrea Keller']);
-        $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
-        $company = CompanyFactory::new()->withDetails()->inStage(CompanyStage::Customer)->withVenues(...$venues)->create(['name' => 'Seeblick Events GmbH', 'owner' => $owner]);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->withDetails()->inStage(CompanyStage::Customer)->withVenue($venue)->create(['name' => 'Seeblick Events GmbH', 'owner' => $owner]);
+        CompanyFactory::createOne(['name' => 'Zürcher Hof']);
 
         $page = $this->query()->search(new CompanyListFilter(), CompanySort::Name, SortDirection::Asc, 1);
 
-        self::assertSame(1, $page->total);
+        self::assertSame(2, $page->total);
         $row = $page->rows[0];
-        self::assertSame([$company->id(), 'Seeblick Events GmbH', $company->website(), CompanyStage::Customer, 'Andrea Keller', 2], [$row->id, $row->name, $row->website, $row->stage, $row->ownerName, $row->venueCount]);
+        self::assertSame([$company->id(), 'Seeblick Events GmbH', $company->website(), CompanyStage::Customer, 'Andrea Keller', 'Schloss Seeblick'], [$row->id, $row->name, $row->website, $row->stage, $row->ownerName, $row->venueName]);
         self::assertSame('SE', $row->initials());
+        self::assertNull($page->rows[1]->venueName);
     }
 
     public function test_the_filters_combine(): void
     {
         $owner = AdminUserFactory::createOne();
-        CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues(VenueFactory::new()->withoutLocation(null)->create())->create(['name' => 'Zürcher Gastro', 'owner' => $owner]);
+        CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenue(VenueFactory::new()->withoutLocation(null)->create())->create(['name' => 'Zürcher Gastro', 'owner' => $owner]);
         CompanyFactory::new()->inStage(CompanyStage::Customer)->create(['name' => 'Zürcher Hof']);
         CompanyFactory::createOne(['name' => 'Alpenhof']);
         $query = $this->query();
@@ -56,6 +58,19 @@ final class CompanyListQueryTest extends KernelTestCase
         self::assertSame(['Zürcher Gastro'], $this->names($query, new CompanyListFilter(stage: CompanyStage::Customer, owner: $owner->id())));
         self::assertSame(['Alpenhof', 'Zürcher Hof'], $this->names($query, new CompanyListFilter(owner: CompanyListFilter::OWNER_NONE)));
         self::assertSame(['Zürcher Hof'], $this->names($query, new CompanyListFilter(q: 'zürcher', venues: CompanyListFilter::VENUES_WITHOUT)));
+        self::assertSame(['Zürcher Gastro'], $this->names($query, new CompanyListFilter(venues: CompanyListFilter::VENUES_WITH)));
+    }
+
+    public function test_sorting_by_eintrag_orders_by_its_name_with_the_ones_without_last(): void
+    {
+        CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation(null)->create(['name' => 'Bergsicht']))->create(['name' => 'Zeta']);
+        CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation(null)->create(['name' => 'Alpenblick']))->create(['name' => 'Ypsilon']);
+        CompanyFactory::createOne(['name' => 'Alpha']);
+        $query = $this->query();
+        $names = static fn (SortDirection $direction): array => array_map(static fn (CompanyListRow $row): string => $row->name, $query->search(new CompanyListFilter(), CompanySort::Venues, $direction, 1)->rows);
+
+        self::assertSame(['Ypsilon', 'Zeta', 'Alpha'], $names(SortDirection::Asc));
+        self::assertSame(['Zeta', 'Ypsilon', 'Alpha'], $names(SortDirection::Desc));
     }
 
     public function test_it_sorts_and_clamps_the_page(): void
@@ -95,10 +110,10 @@ final class CompanyListQueryTest extends KernelTestCase
         self::assertSame([], $query->quickSearch('!!!', 5));
     }
 
-    public function test_the_record_carries_venues_and_contacts(): void
+    public function test_the_record_carries_its_eintrag_and_contacts(): void
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']);
+        $company = CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']);
         ContactFactory::new()->withDetails()->create(['firstName' => 'Marc', 'lastName' => 'Widmer', 'company' => $company]);
         ContactFactory::createOne(['firstName' => null, 'lastName' => 'Brunner', 'company' => $company]);
         $records = self::getContainer()->get(CompanyRecordQuery::class);
@@ -107,8 +122,10 @@ final class CompanyListQueryTest extends KernelTestCase
         $record = $records->find($company->id());
 
         self::assertNotNull($record);
-        self::assertSame([[$venue->id(), $venue->number(), 'Schloss Seeblick']], array_map(static fn ($v): array => [$v->id, $v->number, $v->name], $record->venues));
-        self::assertFalse($record->venues[0]->place->isKnown());
+        self::assertNotNull($record->venue);
+        self::assertSame([$venue->id(), $venue->number(), 'Schloss Seeblick'], [$record->venue->id, $record->venue->number, $record->venue->name]);
+        self::assertFalse($record->venue->place->isKnown());
+        self::assertNull($records->find(CompanyFactory::createOne()->id())?->venue);
         self::assertSame(['Brunner', 'Marc Widmer'], array_map(static fn ($c): string => $c->fullName(), $record->contacts));
         self::assertSame([null, true], [$record->contacts[0]->phone, null !== $record->contacts[1]->phone]);
         self::assertSame('Seeblick Events', $records->name($company->id()));

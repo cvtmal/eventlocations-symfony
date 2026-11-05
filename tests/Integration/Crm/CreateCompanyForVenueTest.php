@@ -58,7 +58,7 @@ final class CreateCompanyForVenueTest extends KernelTestCase
             ],
             $this->connection->fetchAssociative('SELECT name, website, phone, email, address, stage, origin, owner_id FROM crm_companies WHERE id = ?', [$id]),
         );
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_company_venues WHERE company_id = ? AND venue_id = ?', $id, $venue->id()));
+        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_companies WHERE id = ? AND venue_id = ?', $id, $venue->id()));
         self::assertSame(
             ['first_name' => 'Laura', 'last_name' => 'Meier', 'email' => 'info@seeblick.example.ch', 'company_id' => $id],
             $this->connection->fetchAssociative('SELECT first_name, last_name, email, company_id FROM crm_contacts WHERE company_id = ?', [$id]),
@@ -142,7 +142,7 @@ final class CreateCompanyForVenueTest extends KernelTestCase
         $second = EntityId::generate();
         $this->dispatch(new CreateCompanyForVenue($venue->id(), $second));
 
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_company_venues WHERE company_id = ? AND venue_id = ?', $second, $venue->id()));
+        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_companies WHERE id = ? AND venue_id = ?', $second, $venue->id()));
         self::assertSame(
             ['first_name' => 'Laura', 'last_name' => 'Meier', 'email' => 'laura@wieder.example.ch'],
             $this->connection->fetchAssociative('SELECT first_name, last_name, email FROM crm_contacts WHERE company_id = ?', [$second]),

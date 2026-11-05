@@ -36,7 +36,8 @@ use function Zenstruck\Foundry\Persistence\repository;
  * The #55 migration, run down and up inside the test's transaction (Postgres DDL is transactional, so the rollback in
  * tearDown() puts app_test back on the head schema). Fixtures: Foundry only for tables and mappings #55 leaves alone,
  * created before down(); the old-shape rows (contacts with a kind, the two link tables, tasks, inquiry links) by raw
- * SQL after down(), so the test holds with the old code and with the new.
+ * SQL after down(), so the test holds with the old code and with the new. #56 dropped `crm_company_venues`, so a down
+ * first runs #56's down(), which brings the link rows back from `crm_companies.venue_id`.
  */
 final class CrmContactsSwitchMigrationTest extends KernelTestCase
 {
@@ -47,6 +48,9 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
      * stays out of PHPStan's sight.
      */
     private const MIGRATION_FILE = 'migrations/Version20261105193544.php';
+
+    /** #56, which reads the link table #55's up() needs back into `crm_companies.venue_id`. */
+    private const NEXT_MIGRATION_FILE = 'migrations/Version20261105214935.php';
 
     /** FK order; the two link tables exist only on the old schema. */
     private const TABLES = [
@@ -165,9 +169,11 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
 
     public function test_aborts_on_a6_a_company_with_two_venues(): void
     {
-        CompanyFactory::new()->withVenues($this->venue(), $this->venue())->create();
+        $company = CompanyFactory::new()->withVenue($this->venue())->create()->id();
+        $second = $this->venue();
         $this->em->clear();
         $this->migrate('down');
+        $this->connection->insert('crm_company_venues', ['id' => EntityId::generate(), 'company_id' => $company, 'venue_id' => $second->id()]);
 
         $this->assertAbortsWith('A6 = 1 (companies with 2+ venues)', 0);
     }
@@ -175,7 +181,7 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
     public function test_aborts_on_v2_a_venue_on_two_companies(): void
     {
         $venue = $this->venue();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
         $other = CompanyFactory::createOne()->id();
         $this->em->clear();
         $this->migrate('down');
@@ -274,7 +280,7 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
     public function test_couples_alone_never_abort(): void
     {
         $venue = $this->venue();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $inquiry = InquiryFactory::createOne(['venue' => $venue])->id();
         $entry = ActivityFactory::new()->ofType(ActivityType::INQUIRY)->onCompany($company)->create(['title' => 'Schloss'])->id();
         $this->em->clear();
@@ -362,7 +368,7 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
     {
         $x = CompanyFactory::createOne();
         $yVenue = $this->venue();
-        $y = CompanyFactory::new()->withVenues($yVenue)->create();
+        $y = CompanyFactory::new()->withVenue($yVenue)->create();
         $deal = DealFactory::createOne(['company' => $y])->id();
         $entry = ActivityFactory::new()->onCompany($y)->create()->id();
         $manager = PortalUserFactory::createOne(['email' => 'chef@example.com']);
@@ -389,7 +395,7 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
     {
         $x = CompanyFactory::createOne();
         $zVenue = $this->venue();
-        $z = CompanyFactory::new()->withVenues($zVenue)->create();
+        $z = CompanyFactory::new()->withVenue($zVenue)->create();
         $deal = DealFactory::createOne(['company' => $z])->id();
         $manager = PortalUserFactory::createOne(['email' => 'r@example.com', 'firstName' => 'Portal', 'lastName' => 'Name']);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $zVenue]);
@@ -458,12 +464,12 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
         $v1 = $this->venue();
         $v2 = $this->venue();
         $vW = $this->venue();
-        $l1 = CompanyFactory::new()->withVenues($v1)->create(['name' => 'Location Eins', 'origin' => CompanyOrigin::Venue]);
-        $l2 = CompanyFactory::new()->withVenues($v2)->create(['name' => 'Location Zwei', 'origin' => CompanyOrigin::Venue]);
-        $w = CompanyFactory::new()->withVenues($vW)->create(['name' => 'Location W', 'origin' => CompanyOrigin::Venue]);
+        $l1 = CompanyFactory::new()->withVenue($v1)->create(['name' => 'Location Eins', 'origin' => CompanyOrigin::Venue]);
+        $l2 = CompanyFactory::new()->withVenue($v2)->create(['name' => 'Location Zwei', 'origin' => CompanyOrigin::Venue]);
+        $w = CompanyFactory::new()->withVenue($vW)->create(['name' => 'Location W', 'origin' => CompanyOrigin::Venue]);
         $canton = repository(Canton::class)->find('li');
         self::assertInstanceOf(Canton::class, $canton);
-        $li = CompanyFactory::new()->withVenues(VenueFactory::new()->withoutLocation($canton)->create())->create(['name' => 'Vaduz Import']);
+        $li = CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation($canton)->create())->create(['name' => 'Vaduz Import']);
 
         $iq1 = InquiryFactory::createOne(['venue' => $v1])->id();
         $iq2 = InquiryFactory::createOne(['venue' => $v2])->id();
@@ -621,15 +627,20 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
 
     private function migrate(string $direction, ?LoggerInterface $logger = null): void
     {
+        if ('down' === $direction && $this->hasColumn('crm_companies.venue_id')) {
+            $next = $this->migration(file: self::NEXT_MIGRATION_FILE);
+            $next->down(new Schema());
+            $this->execute($next);
+        }
         $migration = $this->migration($logger);
         'up' === $direction ? $migration->up(new Schema()) : $migration->down(new Schema());
         $this->execute($migration);
     }
 
     /** A fresh instance per direction: addSql() accumulates. */
-    private function migration(?LoggerInterface $logger = null): AbstractMigration
+    private function migration(?LoggerInterface $logger = null, string $file = self::MIGRATION_FILE): AbstractMigration
     {
-        $file = \dirname(__DIR__, 3).'/'.self::MIGRATION_FILE;
+        $file = \dirname(__DIR__, 3).'/'.$file;
         require_once $file;
         $class = 'DoctrineMigrations\\'.basename($file, '.php');
         $migration = new $class($this->connection, $logger ?? new NullLogger());

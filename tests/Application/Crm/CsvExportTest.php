@@ -32,8 +32,8 @@ final class CsvExportTest extends WebTestCase
     {
         self::mockTime('2026-12-31 23:30:00 UTC');
         ['user' => $owner] = $this->logInAs(AdminRole::Admin, 'Andrea Keller');
-        $venue = VenueFactory::new()->withoutLocation(null)->create();
-        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues($venue)
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenue($venue)
             ->afterInstantiate(static function (Company $company): void {
                 $company->changeLegalName('Seeblick Events GmbH, Zürich');
                 $company->changeWebsite('https://seeblick.example.ch');
@@ -52,8 +52,8 @@ final class CsvExportTest extends WebTestCase
         $content = $this->content();
         self::assertStringStartsWith(CsvStream::BOM, $content);
         self::assertSame([
-            ['Name', 'Firmenname', 'Website', 'Telefon', 'E-Mail', 'Adresse', 'Phase', 'Zuständig', 'Einträge', 'Herkunft', 'Erstellt'],
-            ['Seeblick Events', 'Seeblick Events GmbH, Zürich', 'https://seeblick.example.ch', '', 'info@seeblick.example.ch', "Seestrasse 1\n8706 Meilen", 'Kunde', 'Andrea Keller', '1', 'Manuell erfasst', '01.01.2027'],
+            ['Name', 'Firmenname', 'Website', 'Telefon', 'E-Mail', 'Adresse', 'Phase', 'Zuständig', 'Eintrag', 'Herkunft', 'Erstellt'],
+            ['Seeblick Events', 'Seeblick Events GmbH, Zürich', 'https://seeblick.example.ch', '', 'info@seeblick.example.ch', "Seestrasse 1\n8706 Meilen", 'Kunde', 'Andrea Keller', 'Schloss Seeblick', 'Manuell erfasst', '01.01.2027'],
         ], $this->records($content));
     }
 

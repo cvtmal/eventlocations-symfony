@@ -21,7 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 final class CrmSchemaMigrationTest extends KernelTestCase
 {
     private const TABLES = [
-        'crm_companies', 'crm_contacts', 'crm_company_venues', 'crm_activity_types', 'crm_activities',
+        'crm_companies', 'crm_contacts', 'crm_activity_types', 'crm_activities',
         'crm_activity_companies', 'crm_tasks', 'crm_deal_stages', 'crm_deals', 'crm_activity_deals',
         'crm_inquiry_links', 'crm_email_templates',
     ];
@@ -45,9 +45,8 @@ final class CrmSchemaMigrationTest extends KernelTestCase
     private const SEED = [
         "INSERT INTO admin_users (id, email, display_name, password_hash, role) VALUES ('{admin}', 'crm-schema@example.test', 'Schema', 'x', 'admin')",
         "INSERT INTO venues (id, name, tier, status, capacity_max) VALUES ('{venue}', 'Crm Testhaus', 'basic', 'published', 100), ('{venue2}', 'Crm Zweithaus', 'basic', 'published', 50)",
-        "INSERT INTO crm_companies (id, name, origin, owner_id) VALUES ('{company}', 'Testhaus AG', 'venue', '{admin}'), ('{company2}', 'Zweite GmbH', 'manual', NULL)",
+        "INSERT INTO crm_companies (id, name, origin, owner_id, venue_id) VALUES ('{company}', 'Testhaus AG', 'venue', '{admin}', '{venue}'), ('{company2}', 'Zweite GmbH', 'manual', NULL, NULL)",
         "INSERT INTO crm_contacts (id, first_name, last_name, email, company_id) VALUES ('{contact}', 'Anna', 'Muster', 'anna@example.test', '{company}')",
-        "INSERT INTO crm_company_venues (id, company_id, venue_id) VALUES (gen_random_uuid(), '{company}', '{venue}')",
         "INSERT INTO crm_activities (id, type_code, occurred_at, actor_id, body) VALUES ('{activity}', 'note', CURRENT_TIMESTAMP, '{admin}', 'Erstes Gespräch.')",
         "INSERT INTO crm_activity_companies (activity_id, company_id) VALUES ('{activity}', '{company}')",
         "INSERT INTO crm_tasks (id, title, due_on, assignee_id, created_by_id, company_id) VALUES ('{task}', 'Nachfassen', '2026-11-02', '{admin}', '{admin}', '{company}')",
@@ -104,10 +103,9 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'e-mail taken on the same Location' => ['uk_crm_contacts_company_email', ["INSERT INTO crm_contacts (id, last_name, email, company_id) VALUES (gen_random_uuid(), 'Kopie', 'anna@example.test', '{company}')"]];
         yield 'contact of unknown company' => ['fk_crm_contacts_company_id', ["UPDATE crm_contacts SET company_id = '{missing}' WHERE id = '{contact}'"]];
 
-        // crm_company_venues
-        yield 'venue linked twice' => ['uk_crm_company_venues_venue_id', ["INSERT INTO crm_company_venues (id, company_id, venue_id) VALUES (gen_random_uuid(), '{company2}', '{venue}')"]];
-        yield 'link to unknown company' => ['fk_crm_company_venues_company_id', ["INSERT INTO crm_company_venues (id, company_id, venue_id) VALUES (gen_random_uuid(), '{missing}', '{venue2}')"]];
-        yield 'link to unknown venue' => ['fk_crm_company_venues_venue_id', ["INSERT INTO crm_company_venues (id, company_id, venue_id) VALUES (gen_random_uuid(), '{company2}', '{missing}')"]];
+        // crm_companies
+        yield 'venue on two Locations' => ['uk_crm_companies_venue_id', ["UPDATE crm_companies SET venue_id = '{venue}' WHERE id = '{company2}'"]];
+        yield 'Eintrag of unknown venue' => ['fk_crm_companies_venue_id', ["UPDATE crm_companies SET venue_id = '{missing}' WHERE id = '{company2}'"]];
 
         // crm_activity_types
         yield 'type position taken' => ['uk_crm_activity_types_position', ["INSERT INTO crm_activity_types (code, position) SELECT 'extra', position FROM crm_activity_types WHERE code = 'note'"]];
@@ -237,6 +235,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'anonymised entry' => [["UPDATE crm_activities SET title = NULL, body = NULL, payload = '{}', anonymised_at = CURRENT_TIMESTAMP WHERE id = '{activity}'"]];
         yield 'task without object or creator' => [["UPDATE crm_tasks SET company_id = NULL, created_by_id = NULL WHERE id = '{task}'"]];
         yield 'every stage' => [["UPDATE crm_companies SET stage = 'customer' WHERE id = '{company}'", "UPDATE crm_companies SET stage = 'former_customer' WHERE id = '{company}'"]];
+        yield 'an Eintrag on a second Location' => [["UPDATE crm_companies SET venue_id = '{venue2}' WHERE id = '{company2}'"]];
         yield 'task on a deal' => [["UPDATE crm_tasks SET company_id = NULL, deal_id = '{deal}' WHERE id = '{task}'"]];
         yield 'a done renewal task beside an ordinary one on the deal' => [[
             "INSERT INTO crm_tasks (id, title, due_on, assignee_id, deal_id) VALUES (gen_random_uuid(), 'Ordentlich', '2026-11-02', '{admin}', '{deal}')",
@@ -273,7 +272,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         );
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
-        self::assertCount(12, $primaryKeys);
+        self::assertCount(11, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
@@ -305,12 +304,11 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         );
     }
 
-    public function test_deleting_a_venue_drops_its_link_and_keeps_the_company(): void
+    public function test_deleting_a_venue_frees_its_location(): void
     {
         $this->sql("DELETE FROM venues WHERE id = '{venue}'");
 
-        self::assertSame(0, $this->rows("SELECT count(*) FROM crm_company_venues WHERE venue_id = '{venue}'"));
-        self::assertSame(1, $this->rows("SELECT count(*) FROM crm_companies WHERE id = '{company}'"));
+        self::assertSame(1, $this->rows("SELECT count(*) FROM crm_companies WHERE id = '{company}' AND venue_id IS NULL"));
     }
 
     public function test_deleting_a_company_deletes_its_contacts_and_drops_its_links_and_tasks(): void
@@ -319,7 +317,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         $this->sql("DELETE FROM crm_companies WHERE id = '{company}'");
 
         self::assertSame(0, $this->rows("SELECT count(*) FROM crm_contacts WHERE id = '{contact}'"));
-        self::assertSame(0, $this->rows("SELECT count(*) FROM crm_company_venues WHERE company_id = '{company}'"));
+        self::assertSame(1, $this->rows("SELECT count(*) FROM venues WHERE id = '{venue}'"));
         self::assertSame(0, $this->rows("SELECT count(*) FROM crm_activity_companies WHERE company_id = '{company}'"));
         self::assertSame(0, $this->rows("SELECT count(*) FROM crm_tasks WHERE id = '{task}'"));
         self::assertSame(1, $this->rows("SELECT count(*) FROM crm_activities WHERE id = '{activity}'"));

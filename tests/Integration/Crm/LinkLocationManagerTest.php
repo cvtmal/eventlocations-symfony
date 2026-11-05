@@ -35,7 +35,7 @@ final class LinkLocationManagerTest extends KernelTestCase
     public function test_a_new_address_writes_a_location_manager_row_and_a_null_actor_note_on_the_location(): void
     {
         $venue = $this->venue('Schloss Seeblick');
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
 
         $this->confirm($venue, 'Petra.Keller@Example.ch', 'Petra', 'Keller', '044 123 45 67');
 
@@ -64,7 +64,7 @@ final class LinkLocationManagerTest extends KernelTestCase
     public function test_a_row_on_this_location_keeps_staffs_values_and_fills_only_the_blanks(): void
     {
         $venue = $this->venue();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $blank = ContactFactory::createOne(['company' => $company, 'firstName' => null, 'lastName' => 'Staff-Name', 'email' => 'petra@example.ch']);
         $filled = ContactFactory::createOne(['company' => $company, 'firstName' => 'Staff-Vorname', 'lastName' => 'Staff-Name', 'email' => 'paul@example.ch']);
         $filled->changePhone('071 000 00 00');
@@ -88,7 +88,7 @@ final class LinkLocationManagerTest extends KernelTestCase
     public function test_a_known_contact_on_another_location_gets_a_row_on_this_location_too(): void
     {
         $venue = $this->venue();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $other = CompanyFactory::createOne();
         $contact = ContactFactory::createOne(['company' => $other, 'firstName' => 'Staff', 'lastName' => 'Keller', 'email' => 'petra@example.ch']);
 
@@ -105,7 +105,7 @@ final class LinkLocationManagerTest extends KernelTestCase
     public function test_a_second_confirm_writes_no_second_row(): void
     {
         $venue = $this->venue();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         $this->confirm($venue);
         $this->confirm($venue, 'Petra@Example.ch', 'Anders', 'Neu', '079 111 11 11');
@@ -117,7 +117,7 @@ final class LinkLocationManagerTest extends KernelTestCase
     public function test_a_venue_with_a_company_runs_no_create_company_command(): void
     {
         $venue = $this->venue();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         $this->confirm($venue);
 
@@ -131,7 +131,7 @@ final class LinkLocationManagerTest extends KernelTestCase
 
         $this->confirm($venue, 'petra@example.ch');
 
-        $companyId = $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]);
+        $companyId = $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venue->id()]);
         self::assertIsString($companyId);
         self::assertSame('Schloss Seeblick', $this->connection->fetchOne('SELECT name FROM crm_companies WHERE id = ?', [$companyId]));
         self::assertSame($companyId, $this->connection->fetchOne('SELECT company_id FROM crm_contacts'));
@@ -148,7 +148,7 @@ final class LinkLocationManagerTest extends KernelTestCase
         $this->confirm($venue, 'laura@seeblick.example.ch', 'Laura', 'Keller', '044 123 45 67');
 
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_contacts'));
-        $companyId = $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]);
+        $companyId = $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venue->id()]);
         $contactId = $this->connection->fetchOne('SELECT id FROM crm_contacts');
         self::assertIsString($contactId);
         self::assertSame(
@@ -161,7 +161,7 @@ final class LinkLocationManagerTest extends KernelTestCase
     public function test_link_location_manager_writes_no_audit_row(): void
     {
         $venue = $this->venue();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         $this->confirm($venue);
 
@@ -172,7 +172,7 @@ final class LinkLocationManagerTest extends KernelTestCase
     public function test_a_failing_crm_does_not_fail_the_approve(): void
     {
         $venue = $this->venue();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
         $manager = PortalUserFactory::createOne();
         PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => $venue]);
         $this->dispatch(new GrantVenueAccess($manager->id(), $venue->id(), GrantVenueAccess::VIA_REVIEW));

@@ -32,7 +32,7 @@ final class EmailDraftApiTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events GmbH']);
+        $company = CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events GmbH']);
         $contact = ContactFactory::createOne(['firstName' => 'Laura', 'company' => $company]);
         $template = $this->template('Grüezi {contact.first_name}', "{company.name}\n\n{venue.name}");
 

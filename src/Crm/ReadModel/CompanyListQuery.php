@@ -21,17 +21,16 @@ final class CompanyListQuery
     private const string FROM = <<<'SQL'
         FROM crm_companies c
         LEFT JOIN admin_users u ON u.id = c.owner_id
+        LEFT JOIN venues ev ON ev.id = c.venue_id
         SQL;
 
     private const string COLUMNS = <<<'SQL'
-        SELECT c.id, c.name, c.website, c.stage, u.display_name AS owner_name, c.created_at,
-               (SELECT COUNT(*) FROM crm_company_venues cv WHERE cv.company_id = c.id) AS venue_count
+        SELECT c.id, c.name, c.website, c.stage, u.display_name AS owner_name, c.created_at, ev.name AS venue_name
         SQL;
 
     private const string CSV_COLUMNS = <<<'SQL'
         SELECT c.name, c.legal_name, c.website, c.phone, c.email, c.address, c.stage, u.display_name AS owner_name,
-               c.origin, c.created_at,
-               (SELECT COUNT(*) FROM crm_company_venues cv WHERE cv.company_id = c.id) AS venue_count
+               c.origin, c.created_at, ev.name AS venue_name
         SQL;
 
     /** The expression of `idx_crm_contacts_search_key`, verbatim, or the index does not apply. */
@@ -95,7 +94,7 @@ final class CompanyListQuery
                 null === $row['address'] ? null : (string) $row['address'],
                 CompanyStage::from((string) $row['stage']),
                 null === $row['owner_name'] ? null : (string) $row['owner_name'],
-                (int) $row['venue_count'],
+                null === $row['venue_name'] ? null : (string) $row['venue_name'],
                 CompanyOrigin::from((string) $row['origin']),
                 new \DateTimeImmutable((string) $row['created_at']),
             );
@@ -122,7 +121,7 @@ final class CompanyListQuery
             null === $row['website'] ? null : (string) $row['website'],
             CompanyStage::from((string) $row['stage']),
             null === $row['owner_name'] ? null : (string) $row['owner_name'],
-            (int) $row['venue_count'],
+            null === $row['venue_name'] ? null : (string) $row['venue_name'],
             new \DateTimeImmutable((string) $row['created_at']),
         ), $rows);
     }
@@ -162,8 +161,7 @@ final class CompanyListQuery
             $parameters['owner'] = $filter->owner;
         }
         if (null !== $filter->venues) {
-            $exists = 'EXISTS (SELECT 1 FROM crm_company_venues cv WHERE cv.company_id = c.id)';
-            $conditions[] = CompanyListFilter::VENUES_WITH === $filter->venues ? $exists : 'NOT '.$exists;
+            $conditions[] = CompanyListFilter::VENUES_WITH === $filter->venues ? 'c.venue_id IS NOT NULL' : 'c.venue_id IS NULL';
         }
 
         return [$conditions, $parameters];

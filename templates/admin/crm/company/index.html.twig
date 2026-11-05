@@ -47,12 +47,15 @@
         {% set label = 'list.chip.owner'|trans({label: owner_choice ? owner_choice.label|trans : filter.owner}, 'crm') %}
         {% set chips = chips|merge([{label: label, remove_href: admin_query_path({owner: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'crm')}]) %}
     {% endif %}
-    {% if filter.venues %}
-        {% set label = ('list.filter.venues_' ~ filter.venues)|trans({}, 'crm') %}
-        {% set chips = chips|merge([{label: label, remove_href: admin_query_path({venues: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'crm')}]) %}
-    {% endif %}
+
+    {% set tabs = [] %}
+    {% for value in [null, 'with', 'without'] %}
+        {% set tabs = tabs|merge([{label: ('list.companies.tab.' ~ (value ?? 'all'))|trans({}, 'crm'), href: admin_query_path({venues: value, page: null}), active: (filter.venues ?: null) == value}]) %}
+    {% endfor %}
+    {{ include('admin/components/_tabs.html.twig', {label: 'list.companies.tabs_label'|trans({}, 'crm'), items: tabs}, with_context = false) }}
 
     {% do form.q.setRendered() %}
+    {% do form.venues.setRendered() %}
     {% embed 'admin/components/_filter_bar.html.twig' with {
         action: path('admin_crm_companies'),
         id: 'company-filter',
@@ -60,20 +63,22 @@
         search_label: 'list.filter.search'|trans({}, 'crm'),
         search_placeholder: 'list.filter.search_companies'|trans({}, 'crm'),
         submit_label: 'list.filter.submit'|trans({}, 'crm'),
-        reset_href: chips is empty ? null : path('admin_crm_companies'),
+        reset_href: chips is empty ? null : path('admin_crm_companies', {venues: filter.venues ?: null}),
         reset_label: 'list.filter.reset'|trans({}, 'crm'),
         chips: chips,
         filter_form: form,
         sort: sort,
         dir: dir,
+        venues: filter.venues,
     } only %}
         {% block filters %}
-            {% for field in ['stage', 'owner', 'venues'] %}
+            {% for field in ['stage', 'owner'] %}
                 <label class="visually-hidden" for="{{ filter_form[field].vars.id }}">{{ filter_form[field].vars.label|trans({}, 'crm') }}</label>
                 {{ form_widget(filter_form[field], {attr: {class: 'filter-bar__control'}}) }}
             {% endfor %}
             <input type="hidden" name="sort" value="{{ sort }}">
             <input type="hidden" name="dir" value="{{ dir }}">
+            {% if venues %}<input type="hidden" name="venues" value="{{ venues }}">{% endif %}
         {% endblock %}
     {% endembed %}
     {% if form.vars.submitted and not form.vars.valid %}
@@ -109,7 +114,7 @@
                         </td>
                         <td>{{ include('admin/components/_pill.html.twig', {label: row.stage|trans, tone: crm_tone(row.stage)}, with_context = false) }}</td>
                         <td>{{ row.ownerName ?? '—' }}</td>
-                        <td>{{ row.venueCount|swiss_number }}</td>
+                        <td>{{ row.venueName ?? '—' }}</td>
                         <td class="muted">{{ row.createdAt|swiss_date }}</td>
                     {% endblock %}
                 {% endembed %}

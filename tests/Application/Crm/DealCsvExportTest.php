@@ -32,7 +32,7 @@ final class DealCsvExportTest extends WebTestCase
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         DealFactory::new()->inStage('lost', reason: LostReason::Budget)->create([
             'name' => 'Premium 2027',
-            'company' => CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']),
+            'company' => CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']),
             'venue' => $venue,
             'tier' => Tier::Premium,
             'amountRappen' => 123450,

@@ -29,9 +29,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * "Deal erfassen" (CRM-7, N5) in two steps: without `?company=` a GET form picks the company, because the company never
- * changes and the venue list depends on it; with it the deal form offers that company's venues. Neither
- * step needs its own endpoint.
+ * "Deal erfassen" (CRM-7, N5) in two steps: without `?company=` a GET form picks the Location, because it never
+ * changes and the Eintrag depends on it; with it the deal form shows that Location's Eintrag, which the deal takes
+ * (#56 D7). Neither step needs its own endpoint.
  */
 #[IsGranted('ROLE_EDITOR')]
 final class DealCreateController extends AbstractController
@@ -55,7 +55,7 @@ final class DealCreateController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $id = EntityId::generate();
             try {
-                $commandBus->dispatch($data->toCommand($id, $company->id));
+                $commandBus->dispatch($data->toCommand($id, $company->id, $company->venue?->id));
                 $this->addFlash('success', CrmFlash::message('create.flash.deal', ['name' => (string) $data->name]));
 
                 return $this->redirectToRoute('admin_crm_deals_show', ['id' => $id], status: Response::HTTP_SEE_OTHER);
@@ -90,10 +90,11 @@ final class DealCreateController extends AbstractController
             [$field, $key] = match (true) {
                 $exception instanceof InvalidPropertyValue => [self::FIELDS[$exception->field] ?? throw $failure, $exception->isRequired() ? 'api.required' : 'api.unknown_choice'],
                 $exception instanceof ContractEndsBeforeStart => ['contractEnd', 'api.contract_ends_before_start'],
-                $exception instanceof VenueNotLinked => ['venue', 'api.venue_not_linked'],
+                // The Eintrag changed between the read and the lock; the form has no Eintrag field (#56 D7).
+                $exception instanceof VenueNotLinked => [null, 'api.venue_not_linked'],
                 default => throw $failure,
             };
-            $form->get($field)->addError(new FormError($translator->trans($key, [], 'crm')));
+            (null === $field ? $form : $form->get($field))->addError(new FormError($translator->trans($key, [], 'crm')));
 
             return;
         }

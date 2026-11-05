@@ -92,7 +92,7 @@ final class CompanyExportController extends AbstractController
                 $row->address,
                 $row->stage->trans($translator),
                 $row->ownerName,
-                (string) $row->venueCount,
+                (string) $row->venueName,
                 $row->origin->trans($translator),
                 $row->createdAt->setTimezone($zone)->format('d.m.Y'),
             ];

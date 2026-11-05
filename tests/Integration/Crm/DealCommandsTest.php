@@ -51,7 +51,7 @@ final class DealCommandsTest extends KernelTestCase
     public function test_a_new_deal_starts_at_new_with_its_links(): void
     {
         $venue = self::venue();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $owner = AdminUserFactory::createOne();
         $id = EntityId::generate();
 
@@ -102,8 +102,8 @@ final class DealCommandsTest extends KernelTestCase
     public function test_a_new_deal_takes_only_the_companys_own_venue(): void
     {
         $company = CompanyFactory::createOne();
-        $other = CompanyFactory::new()->withVenues(self::venue())->create();
-        $foreignVenue = (string) $this->connection->fetchOne('SELECT venue_id FROM crm_company_venues WHERE company_id = ?', [$other->id()]);
+        $other = CompanyFactory::new()->withVenue(self::venue())->create();
+        $foreignVenue = (string) $this->connection->fetchOne('SELECT venue_id FROM crm_companies WHERE id = ?', [$other->id()]);
 
         $this->failure(new CreateDeal(EntityId::generate(), 'Premium', $company->id(), $foreignVenue), VenueNotLinked::class);
         $this->failure(new CreateDeal(EntityId::generate(), 'Premium', $company->id(), self::venue()->id()), VenueNotLinked::class);
@@ -197,7 +197,7 @@ final class DealCommandsTest extends KernelTestCase
     public function test_the_venue_changes_only_to_one_of_the_companys(): void
     {
         $venue = self::venue();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $deal = DealFactory::createOne(['company' => $company]);
 
         $this->failure(new ChangeDealProperty($deal->id(), DealProperty::Venue, self::venue()->id(), null), VenueNotLinked::class);

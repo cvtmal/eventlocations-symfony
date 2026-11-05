@@ -31,7 +31,7 @@ final class IngestInquiryTest extends KernelTestCase
     public function test_an_inquiry_on_a_location_s_venue_writes_an_entry_and_a_link_and_no_contact(): void
     {
         $venue = VenueFactory::new()->withContact()->create();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $inquiry = InquiryFactory::createOne([
             'venue' => $venue,
             'firstName' => 'Sina',
@@ -64,7 +64,7 @@ final class IngestInquiryTest extends KernelTestCase
     public function test_a_contact_row_with_the_couple_s_address_is_not_touched(): void
     {
         $venue = VenueFactory::new()->withContact()->create();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $contact = ContactFactory::createOne(['company' => $company, 'firstName' => null, 'lastName' => 'Staff-Name', 'email' => 'sina@example.ch']);
         $inquiry = InquiryFactory::createOne(['venue' => $venue, 'firstName' => 'Sina', 'lastName' => 'Huber', 'email' => 'SINA@EXAMPLE.CH', 'phone' => '044 123 45 67']);
 
@@ -94,7 +94,7 @@ final class IngestInquiryTest extends KernelTestCase
     public function test_a_deleted_venue_gets_a_link_row_and_no_entry(): void
     {
         $venue = VenueFactory::new()->withContact()->create();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
         $inquiry = InquiryFactory::createOne(['venue' => $venue]);
         $id = $inquiry->id();
         $this->connection->executeStatement('UPDATE inquiries SET venue_id = NULL WHERE id = ?', [$id]);
@@ -141,7 +141,7 @@ final class IngestInquiryTest extends KernelTestCase
     public function test_two_inquiries_from_one_address_are_two_entries(): void
     {
         $venue = VenueFactory::new()->withContact()->create();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
         $first = InquiryFactory::createOne(['venue' => $venue, 'email' => 'sina@example.ch']);
         $second = InquiryFactory::createOne(['venue' => $venue, 'email' => 'Sina@Example.CH']);
 
@@ -183,7 +183,7 @@ final class IngestInquiryTest extends KernelTestCase
     private function onLocation(): Inquiry
     {
         $venue = VenueFactory::new()->withContact()->create();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         return InquiryFactory::createOne(['venue' => $venue]);
     }

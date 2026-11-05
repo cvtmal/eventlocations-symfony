@@ -7,8 +7,7 @@ namespace App\Crm\Exception;
 use App\Shared\Exception\DomainException;
 
 /**
- * A deal's venue is one of its company's venues (CRM-7): `crm_company_venues` holds the link, and `venue_id` alone
- * would not prove it.
+ * A deal's venue is its Location's Eintrag (CRM-7, `crm_companies.venue_id`); `venue_id` alone would not prove it.
  */
 final class VenueNotLinked extends DomainException
 {

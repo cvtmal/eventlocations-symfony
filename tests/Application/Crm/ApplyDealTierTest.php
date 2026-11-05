@@ -165,7 +165,7 @@ final class ApplyDealTierTest extends WebTestCase
     private function won(string $stage = 'won'): array
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => Tier::Basic]);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
 
         return [
             'deal' => DealFactory::new()->inStage($stage)->create(['company' => $company, 'venue' => $venue, 'tier' => Tier::Premium]),

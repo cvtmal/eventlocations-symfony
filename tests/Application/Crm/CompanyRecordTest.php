@@ -43,7 +43,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues($venue)->create(['name' => 'Seeblick Events GmbH', 'owner' => $owner]);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenue($venue)->create(['name' => 'Seeblick Events GmbH', 'owner' => $owner]);
         $laura = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
 
         $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
@@ -68,7 +68,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertStringContainsString('Andrea Keller', $crawler->filter('[data-island="record-properties"] .record-properties')->text());
         self::assertStringContainsString('manuell erfasst', $crawler->filter('.crm-record__properties')->text());
 
-        self::assertSame('Einträge (1)', $crawler->filter('#crm-venues-title')->text());
+        self::assertSame('Eintrag', $crawler->filter('#crm-venues-title')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#locations .crm-side__link')->attr('href'));
         self::assertSame('Kontakte (1)', $crawler->filter('#crm-contacts-title')->text());
         // A contact has no page since #55: the name is text, the card's dialogs add and edit (ContactCardTest).
@@ -118,10 +118,27 @@ final class CompanyRecordTest extends WebTestCase
         $this->client->submit($crawler->filter('#link-venue-form')->form(['link_venue[venue]' => $venue->id()]));
 
         self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
-        self::assertSame($company->id(), $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]));
+        self::assertSame($company->id(), $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venue->id()]));
         $crawler = $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Eintrag verknüpft.');
+        self::assertSelectorTextContains('.toast', 'Eintrag zugeordnet.');
         self::assertSame(['Schloss Seeblick'], $crawler->filter('#locations .crm-side__link')->each(static fn (Crawler $link): string => $link->text()));
+        self::assertCount(0, $crawler->filter('#link-venue'));
+    }
+
+    public function test_a_location_with_an_eintrag_shows_it_with_loesen_and_no_zuordnen(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->withVenue($venue)->create();
+
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
+
+        self::assertCount(0, $crawler->filter('#link-venue'));
+        self::assertCount(0, $crawler->filter('#locations .card__head button'));
+        self::assertCount(1, $crawler->filter('#locations .crm-side__item'));
+        $button = $crawler->filter('#locations .crm-side__form button[type="submit"]');
+        self::assertSame('Lösen', $button->text());
+        self::assertSame('Schloss Seeblick von dieser Location lösen', $button->attr('aria-label'));
     }
 
     public function test_the_link_dialog_opens_on_its_field(): void
@@ -141,7 +158,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        $other = CompanyFactory::new()->withVenues($venue)->create();
+        $other = CompanyFactory::new()->withVenue($venue)->create();
         $company = CompanyFactory::createOne();
         $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
@@ -149,7 +166,23 @@ final class CompanyRecordTest extends WebTestCase
 
         $this->client->followRedirect();
         self::assertSelectorTextContains('.toast--error', 'gehört schon zu einer anderen Location');
-        self::assertSame($other->id(), $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]));
+        self::assertSame($other->id(), $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venue->id()]));
+    }
+
+    public function test_a_second_eintrag_is_refused_with_a_flash(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $first = VenueFactory::new()->withoutLocation(null)->create();
+        $second = VenueFactory::new()->withoutLocation(null)->create();
+        $company = CompanyFactory::new()->withVenue($first)->create();
+
+        $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/eintraege', ['link_venue' => ['venue' => $second->id(), '_token' => $this->linkToken()]]);
+
+        self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
+        self::assertSame($company->id(), $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$first->id()]));
+        self::assertFalse($this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$second->id()]));
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.toast--error', 'Diese Location hat schon einen Eintrag. Zuerst lösen.');
     }
 
     public function test_an_empty_or_unknown_venue_is_refused_with_a_flash(): void
@@ -166,7 +199,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->client->submit($form, ['link_venue[venue]' => EntityId::generate()]);
         $this->client->followRedirect();
         self::assertSelectorTextContains('.toast--error', 'existiert nicht mehr');
-        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies WHERE venue_id IS NOT NULL'));
     }
 
     /**
@@ -183,7 +216,7 @@ final class CompanyRecordTest extends WebTestCase
         $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/eintraege', ['link_venue' => ['venue' => $venue->id()] + $token], server: $server);
 
         self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
-        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies WHERE venue_id IS NOT NULL'));
         $this->client->followRedirect();
         self::assertSelectorExists('.toast--error');
     }
@@ -192,23 +225,23 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
-        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
+        $company = CompanyFactory::new()->withVenue($venue)->create();
 
-        $this->client->submit($crawler->filter('#link-venue-form')->form(['link_venue[venue]' => $venue->id()]));
+        // A stale dialog: the page with the Eintrag offers none.
+        $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/eintraege', ['link_venue' => ['venue' => $venue->id(), '_token' => $this->linkToken()]]);
 
         self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
-        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies WHERE venue_id IS NOT NULL'));
         self::assertSame(0, $this->auditRows($company->id()));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'Eintrag verknüpft.');
+        self::assertSelectorTextContains('.toast', 'Eintrag zugeordnet.');
     }
 
     public function test_a_venue_is_unlinked(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $button = $crawler->filter('#locations button[aria-label="Schloss Seeblick von dieser Location lösen"]');
@@ -216,24 +249,28 @@ final class CompanyRecordTest extends WebTestCase
         $this->client->submit($button->form());
 
         self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
-        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
-        $this->client->followRedirect();
-        self::assertSelectorTextContains('#locations', 'Noch kein Eintrag verknüpft.');
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies WHERE venue_id IS NOT NULL'));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM venues WHERE id = ?', [$venue->id()]));
+        $crawler = $this->client->followRedirect();
+        self::assertSelectorTextContains('#locations', 'Noch kein Eintrag zugeordnet.');
+        self::assertSame('link-venue', $crawler->filter('#locations button[command="show-modal"]')->attr('commandfor'));
     }
 
     public function test_a_stale_unlink_says_so_and_sends_no_command(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $form = $this->client->request('GET', '/admin/crm/locations/'.$company->id())->filter('#locations button[aria-label="Schloss Seeblick von dieser Location lösen"]')->form();
         $other = CompanyFactory::createOne();
-        $this->connection->executeStatement('UPDATE crm_company_venues SET company_id = ?', [$other->id()]);
+        // Moved to another Location meanwhile: released here, then assigned there (the unique key forbids one step).
+        $this->connection->executeStatement('UPDATE crm_companies SET venue_id = NULL WHERE id = ?', [$company->id()]);
+        $this->connection->executeStatement('UPDATE crm_companies SET venue_id = ? WHERE id = ?', [$venue->id(), $other->id()]);
 
         $this->client->submit($form);
 
         self::assertResponseRedirects('/admin/crm/locations/'.$company->id().'#locations', 303);
-        self::assertSame($other->id(), $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]));
+        self::assertSame($other->id(), $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venue->id()]));
         self::assertSame(0, $this->auditRows($company->id()));
         $this->client->followRedirect();
         self::assertSelectorTextContains('.toast--error', 'Dieser Eintrag gehört nicht mehr zu dieser Location.');
@@ -243,7 +280,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $form = $this->client->request('GET', '/admin/crm/locations/'.$company->id())->filter('#locations button[aria-label="Schloss Seeblick von dieser Location lösen"]')->form();
         $this->connection->executeStatement('DELETE FROM crm_companies');
 
@@ -257,12 +294,12 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
 
         $this->client->request('POST', '/admin/crm/locations/'.$company->id().'/eintraege/'.$venue->id().'/entfernen');
 
         self::assertResponseRedirects(null, 303);
-        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies WHERE venue_id IS NOT NULL'));
     }
 
     public function test_an_admin_deletes_a_company_and_its_contacts_go_with_it(): void
@@ -419,7 +456,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         ['user' => $viewer] = $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $erased = ActivityFactory::new()->onCompany($company)->create(['body' => 'Geheim']);
         $erased->anonymise(new \DateTimeImmutable('2026-10-01T10:00:00+02:00'));
         $entityManager = self::getContainer()->get('doctrine.orm.entity_manager');
@@ -450,7 +487,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->withContact()->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $inquiry = InquiryFactory::createOne(['venue' => $venue, 'firstName' => 'Sina', 'lastName' => 'Huber']);
         $bus = self::getContainer()->get(MessageBusInterface::class);
         self::assertInstanceOf(MessageBusInterface::class, $bus);
@@ -614,16 +651,24 @@ final class CompanyRecordTest extends WebTestCase
     public function test_the_page_stays_within_its_statements(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
-        $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
-        $company = CompanyFactory::new()->withVenues(...$venues)->afterInstantiate(static fn (Company $company) => $company->changeEmail('info@seeblick.example'))->create(['owner' => $owner]);
+        $venue = VenueFactory::new()->withoutLocation(null)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->afterInstantiate(static fn (Company $company) => $company->changeEmail('info@seeblick.example'))->create(['owner' => $owner]);
         ContactFactory::createMany(3, ['company' => $company]);
         TaskFactory::createMany(2, ['company' => $company]);
 
-        // The company with its venues and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
+        // The Location with its Eintrag and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
         // timeline's activities, venue names and audit rows, the composer's mail templates, the Aufgaben card, the Deals
         // card, the access-request badge; with the user's refresh 10 in production (N14's ceiling 10). The address is the
         // worst case: without one the templates are not read.
         self::assertSame(9, $this->queriesOf('/admin/crm/locations/'.$company->id()));
+    }
+
+    /** The link form's CSRF token, from a Location that still offers the dialog (the token is per form, not per page). */
+    private function linkToken(): string
+    {
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.CompanyFactory::createOne()->id());
+
+        return (string) $crawler->filter('#link-venue-form input[name="link_venue[_token]"]')->attr('value');
     }
 
     private function auditRows(string $companyId): int

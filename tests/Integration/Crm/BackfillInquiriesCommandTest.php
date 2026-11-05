@@ -84,7 +84,7 @@ final class BackfillInquiriesCommandTest extends KernelTestCase
     {
         $failing = $this->inquiry('failing@example.ch');
         // The handler's Location lookup fails, unlike a flush, which the bus runs after the handler and does not wrap.
-        $this->connection->executeStatement('ALTER TABLE crm_company_venues RENAME COLUMN venue_id TO test_venue_id');
+        $this->connection->executeStatement('ALTER TABLE crm_companies RENAME COLUMN venue_id TO test_venue_id');
 
         [$status, $output] = $this->backfill();
 
@@ -113,7 +113,7 @@ final class BackfillInquiriesCommandTest extends KernelTestCase
     private function inquiry(string $email, string $createdAt = '2026-10-01 10:00:00 UTC'): Inquiry
     {
         $venue = VenueFactory::new()->withContact()->create();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         return InquiryFactory::createOne(['email' => $email, 'createdAt' => new \DateTimeImmutable($createdAt), 'venue' => $venue]);
     }

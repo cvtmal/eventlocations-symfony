@@ -231,7 +231,7 @@ final class ImportCustomersCommandTest extends KernelTestCase
     private function counts(): array
     {
         $counts = [];
-        foreach (['crm_companies', 'crm_contacts', 'crm_activities', 'crm_activity_companies', 'crm_company_venues', 'admin_audit_log'] as $table) {
+        foreach (['crm_companies', 'crm_contacts', 'crm_activities', 'crm_activity_companies', 'admin_audit_log'] as $table) {
             $counts[$table] = $this->rows('SELECT count(*) FROM '.$table);
         }
 

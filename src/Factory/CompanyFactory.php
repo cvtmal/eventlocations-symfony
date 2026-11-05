@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Crm\Entity\Company;
-use App\Crm\Entity\CompanyVenue;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
 use App\Shared\Uid\EntityId;
 use App\Venues\Entity\Venue;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
-use function Zenstruck\Foundry\Persistence\persist;
-
 /**
  * A manually created prospect without details or owner. States add the record's properties and
- * venue links, so tests describe only what they need.
+ * the Eintrag, so tests describe only what they need.
  *
  * @extends PersistentObjectFactory<Company>
  */
@@ -44,15 +41,11 @@ final class CompanyFactory extends PersistentObjectFactory
     }
 
     /**
-     * Links the venues after the company is stored (crm_company_venues).
+     * Gives the Location its Eintrag (`crm_companies.venue_id`, #56).
      */
-    public function withVenues(Venue ...$venues): self
+    public function withVenue(Venue $venue): self
     {
-        return $this->afterPersist(static function (Company $company) use ($venues): void {
-            foreach ($venues as $venue) {
-                persist(CompanyVenue::class, ['company' => $company, 'venue' => $venue]);
-            }
-        });
+        return $this->afterInstantiate(static fn (Company $company) => $company->assignVenue($venue));
     }
 
     /**

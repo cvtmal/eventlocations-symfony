@@ -11,7 +11,6 @@ use App\Crm\Exception\ContractEndsBeforeStart;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
-use App\Crm\Repository\CompanyVenueRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\Repository\DealStageRepository;
 use App\Crm\ValueObject\PropertyValue;
@@ -24,7 +23,6 @@ final class CreateDealHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly CompanyRepository $companies,
-        private readonly CompanyVenueRepository $companyVenues,
         private readonly DealRepository $deals,
         private readonly DealStageRepository $stages,
         private readonly OwnerResolver $owners,
@@ -44,7 +42,7 @@ final class CreateDealHandler implements CommandHandlerInterface
             $name,
             $company,
             $this->stages->get(DealStage::NEW),
-            null === $command->venueId ? null : $this->companyVenues->venueOf($company->id(), $command->venueId),
+            null === $command->venueId ? null : $this->companies->venueOf($company->id(), $command->venueId),
             $command->tier,
             $command->amountRappen,
             $command->contractStartOn,

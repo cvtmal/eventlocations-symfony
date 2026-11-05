@@ -6,10 +6,9 @@ namespace App\Crm\CommandHandler;
 
 use App\Crm\Command\CreateCompanyForVenue;
 use App\Crm\Entity\Company;
-use App\Crm\Entity\CompanyVenue;
 use App\Crm\Entity\Contact;
 use App\Crm\Exception\VenueNotFound;
-use App\Crm\Repository\CompanyVenueRepository;
+use App\Crm\Repository\CompanyRepository;
 use App\Crm\ValueObject\BootstrapOutcome;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\ContactEmail;
@@ -22,8 +21,8 @@ use App\Venues\ReadModel\VenueContactFactsQuery;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Takes the venue's advisory lock (shared with LinkVenue) before it looks for a link, so a re-run, a
- * second tab or a staff link cannot give a venue two companies. Only reads the venue, so
+ * Takes the venue's advisory lock (shared with LinkVenue) before it looks for the venue's Location, so a
+ * re-run, a second tab or a staff assignment cannot give a venue two Locations. Only reads the venue, so
  * `cms_edited_at` stays. The contact is the first row of a brand-new Location, so its address can
  * never be taken (the unique key is per Location, #55).
  */
@@ -31,7 +30,7 @@ final class CreateCompanyForVenueHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly VenueContactFactsQuery $venues,
-        private readonly CompanyVenueRepository $links,
+        private readonly CompanyRepository $companies,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -40,8 +39,8 @@ final class CreateCompanyForVenueHandler implements CommandHandlerInterface
     {
         $venue = $this->venues->find($command->venueId) ?? throw VenueNotFound::forId($command->venueId);
 
-        $this->links->lockVenue($venue->id);
-        if (null !== $this->links->forVenue($venue->id)) {
+        $this->companies->lockVenue($venue->id);
+        if (null !== $this->companies->forVenue($venue->id)) {
             return BootstrapOutcome::skipped();
         }
 
@@ -50,8 +49,8 @@ final class CreateCompanyForVenueHandler implements CommandHandlerInterface
         $company->changePhone(PropertyValue::canonical($venue->phone));
         $company->changeEmail(ContactEmail::normalise($venue->inquiryEmail));
         $company->changeAddress(self::address($venue));
+        $company->assignVenue($this->em->getReference(Venue::class, $venue->id) ?? throw VenueNotFound::forId($venue->id));
         $this->em->persist($company);
-        $this->em->persist(new CompanyVenue($company, $this->em->getReference(Venue::class, $venue->id) ?? throw VenueNotFound::forId($venue->id)));
 
         $person = PropertyValue::canonical($venue->contactPerson);
         if (null === $person) {

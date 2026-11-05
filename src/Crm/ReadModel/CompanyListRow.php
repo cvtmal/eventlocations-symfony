@@ -15,7 +15,7 @@ final readonly class CompanyListRow
         public ?string $website,
         public CompanyStage $stage,
         public ?string $ownerName,
-        public int $venueCount,
+        public ?string $venueName,
         public \DateTimeImmutable $createdAt,
     ) {
     }

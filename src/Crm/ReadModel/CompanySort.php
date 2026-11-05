@@ -23,7 +23,8 @@ enum CompanySort: string
             self::Name => 'lower(c.name)',
             // The stages in their lifecycle order, not alphabetically.
             self::Stage => "array_position(ARRAY['prospect', 'customer', 'former_customer']::text[], c.stage::text)",
-            self::Venues => 'venue_count',
+            // The Eintrag's name; the direction applies to the name only, so Locations without one stay last both ways.
+            self::Venues => '(ev.id IS NULL), lower(ev.name)',
             self::Created => 'c.created_at',
         };
     }

@@ -22,7 +22,7 @@ final readonly class CompanyCsvRow
         public ?string $address,
         public CompanyStage $stage,
         public ?string $ownerName,
-        public int $venueCount,
+        public ?string $venueName,
         public CompanyOrigin $origin,
         public \DateTimeImmutable $createdAt,
     ) {

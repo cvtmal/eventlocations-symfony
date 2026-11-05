@@ -9,17 +9,13 @@ use App\Crm\ValueObject\RecordKind;
 use Doctrine\DBAL\Connection;
 
 /**
- * The merge values for a draft (CRM-10), one statement per kind. `{venue.name}` is filled only for a company with exactly
- * one venue: with several, the code cannot know which one staff mean, and a wrong name is worse than a gap. A deal has
- * no mail step, so it gives null.
+ * The merge values for a draft (CRM-10), one statement per kind. `{venue.name}` is the Location's Eintrag's name, empty
+ * without one (#56). A deal has no mail step, so it gives null.
  */
 final class EmailMergeQuery
 {
     private const string VENUE_NAME = <<<'SQL'
-        (SELECT CASE WHEN count(*) = 1 THEN min(v.name) END
-         FROM crm_company_venues cv
-         JOIN venues v ON v.id = cv.venue_id
-         WHERE cv.company_id = c.id)
+        (SELECT v.name FROM venues v WHERE v.id = c.venue_id)
         SQL;
 
     public function __construct(

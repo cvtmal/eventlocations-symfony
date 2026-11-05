@@ -10,7 +10,7 @@ use App\Crm\Entity\ActivityCompany;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
 use App\Crm\Entity\Contact;
-use App\Crm\Repository\CompanyVenueRepository;
+use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\ContactRepository;
 use App\Crm\ValueObject\ContactEmail;
 use App\Shared\Messenger\CommandHandlerInterface;
@@ -36,7 +36,7 @@ final class LinkLocationManagerHandler implements CommandHandlerInterface
 
     public function __construct(
         private readonly ContactRepository $contacts,
-        private readonly CompanyVenueRepository $companyVenues,
+        private readonly CompanyRepository $companies,
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
         private readonly TranslatorInterface $translator,
@@ -46,7 +46,7 @@ final class LinkLocationManagerHandler implements CommandHandlerInterface
 
     public function __invoke(LinkLocationManager $command): void
     {
-        $company = $this->companyVenues->forVenue($command->venueId)?->company();
+        $company = $this->companies->forVenue($command->venueId);
         if (null === $company) {
             return;
         }

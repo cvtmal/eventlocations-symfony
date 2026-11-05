@@ -44,7 +44,7 @@ final class LookupQueriesTest extends KernelTestCase
     public function test_the_venue_lookup_finds_by_name_or_number(): void
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']);
+        CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']);
         $lookup = self::getContainer()->get(VenueLookupQuery::class);
         self::assertInstanceOf(VenueLookupQuery::class, $lookup);
 

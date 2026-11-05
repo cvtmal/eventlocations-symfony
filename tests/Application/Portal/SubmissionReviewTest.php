@@ -17,7 +17,6 @@ use App\Factory\VenueTranslationFactory;
 use App\Portal\Command\AcceptSubmission;
 use App\Portal\Command\RejectSubmission;
 use App\Portal\Entity\PortalUser;
-use App\Shared\Uid\EntityId;
 use App\Tests\Application\Crm\ForgedPosts;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Portal\PortalSession;
@@ -227,7 +226,7 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertResponseRedirects(self::QUEUE, 303);
         self::assertSame('accepted', $this->submissionStatus($venue));
         self::assertSame([['title' => 'Rechnung stellen', 'assignee_id' => $admin->id(), 'name' => 'Seehaus']], $this->connection->fetchAllAssociative(
-            'SELECT t.title, t.assignee_id, c.name FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id JOIN crm_company_venues l ON l.company_id = c.id WHERE l.venue_id = ?',
+            'SELECT t.title, t.assignee_id, c.name FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id WHERE c.venue_id = ?',
             [$venue->id()],
         ));
     }
@@ -568,7 +567,7 @@ final class SubmissionReviewTest extends WebTestCase
     private function companyOf(Venue $venue, array $attributes = []): string
     {
         $company = CompanyFactory::createOne($attributes);
-        $this->connection->insert('crm_company_venues', ['id' => EntityId::generate(), 'company_id' => $company->id(), 'venue_id' => $venue->id()]);
+        $this->connection->update('crm_companies', ['venue_id' => $venue->id()], ['id' => $company->id()]);
 
         return $company->id();
     }

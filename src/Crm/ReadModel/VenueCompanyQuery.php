@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
 
 /**
  * The venue panel in one statement (D20): it runs on every tab of a venue, #25's too. A record is
- * addressed by its number, so the join goes through `v.number` to `crm_company_venues.venue_id` (D2).
+ * addressed by its number, so the join goes through `v.number` to `crm_companies.venue_id` (D2, #56).
  */
 final class VenueCompanyQuery
 {
@@ -31,8 +31,7 @@ final class VenueCompanyQuery
                ), '[]') AS tasks,
                od.id AS deal_id, od.name AS deal_name, od.stage_code AS deal_stage, od.amount_rappen AS deal_amount
         FROM venues v
-        LEFT JOIN crm_company_venues l ON l.venue_id = v.id
-        LEFT JOIN crm_companies c ON c.id = l.company_id
+        LEFT JOIN crm_companies c ON c.venue_id = v.id
         LEFT JOIN LATERAL (
             SELECT d.id, d.name, d.stage_code, d.amount_rappen
             FROM crm_deals d
@@ -55,7 +54,7 @@ final class VenueCompanyQuery
      */
     public function companyIdOf(string $venueId): ?string
     {
-        $companyId = $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venueId]);
+        $companyId = $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venueId]);
 
         return false === $companyId ? null : (string) $companyId;
     }

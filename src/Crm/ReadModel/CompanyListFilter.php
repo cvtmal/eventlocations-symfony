@@ -8,7 +8,7 @@ use App\Crm\ValueObject\CompanyStage;
 
 /**
  * What the company list narrows by (CRM-6, D20): `q` a name, `stage`, `owner` an admin user id or
- * `OWNER_NONE`, `venues` `VENUES_WITH` or `VENUES_WITHOUT` a linked venue.
+ * `OWNER_NONE`, `venues` `VENUES_WITH` or `VENUES_WITHOUT` an Eintrag (the list's tabs, #56).
  */
 final readonly class CompanyListFilter
 {

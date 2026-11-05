@@ -10,7 +10,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Whether a deal has a tier to offer (D20), read live with no stored flag: won, a venue and a tier set, the venue still
- * the company's, and its tier another one. An equal tier offers nothing; a later change by the CMS or an import offers
+ * the Location's Eintrag, and its tier another one. An equal tier offers nothing; a later change by the CMS or an import offers
  * it again. One statement; no offer for an unknown or malformed id.
  */
 final class DealTierOfferQuery
@@ -20,7 +20,7 @@ final class DealTierOfferQuery
         FROM crm_deals d
         JOIN crm_deal_stages s ON s.code = d.stage_code
         JOIN venues v ON v.id = d.venue_id
-        JOIN crm_company_venues l ON l.venue_id = d.venue_id AND l.company_id = d.company_id
+        JOIN crm_companies lc ON lc.id = d.company_id AND lc.venue_id = d.venue_id
         WHERE d.id = :id AND s.is_won AND d.tier IS NOT NULL AND d.tier <> v.tier
         SQL;
 

@@ -55,7 +55,7 @@ final class DealStageApiTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => Tier::Basic]);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $deal = DealFactory::new()->inStage('negotiation')->create(['company' => $company, 'venue' => $venue, 'tier' => Tier::Premium]);
 
         $this->move($deal->id(), ['stage' => 'won', 'expected' => 'negotiation']);

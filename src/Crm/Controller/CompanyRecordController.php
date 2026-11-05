@@ -10,6 +10,7 @@ use App\Crm\Command\DeleteCompany;
 use App\Crm\Command\LinkVenue;
 use App\Crm\Command\UnlinkVenue;
 use App\Crm\Exception\CompanyHasDeals;
+use App\Crm\Exception\CompanyHasVenue;
 use App\Crm\Exception\CompanyNotFound;
 use App\Crm\Exception\VenueAlreadyLinked;
 use App\Crm\Exception\VenueNotFound;
@@ -41,17 +42,17 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * A company record (CRM-1, CRM-3): the page, and the forms its cards post. Linking and unlinking a
- * venue and deleting the company are PRG: a refusal is a flash, as #24's status actions. A link or
- * unlink that would change nothing sends no command, so it leaves no audit row (P1); only a true race
- * reaches the handlers' no-ops.
+ * A company record (CRM-1, CRM-3): the page, and the forms its cards post. Assigning and releasing the
+ * Eintrag (#56) and deleting the Location are PRG: a refusal is a flash, as #24's status actions. An
+ * assignment or release that would change nothing sends no command, so it leaves no audit row (P1); only
+ * a true race reaches the handlers' no-ops.
  */
 #[IsGranted('ROLE_EDITOR')]
 #[Route('/admin/crm/locations/{id}', requirements: ['id' => Requirement::UUID], options: [LocalizedRoutes::UNLOCALIZED => true])]
 final class CompanyRecordController extends AbstractController
 {
     public const string DELETE_FORM = 'delete_company';
-    /** The token id of the per-venue unlink buttons, plain forms because a page holds several. */
+    /** The token id of the Eintrag's release form, a plain form as the contact cards' remove buttons. */
     public const string UNLINK_TOKEN = 'submit';
 
     public function __construct(
@@ -197,6 +198,7 @@ final class CompanyRecordController extends AbstractController
         foreach ($failure->getWrappedExceptions() as $exception) {
             return match (true) {
                 $exception instanceof VenueAlreadyLinked => 'record.venues.flash.already_linked',
+                $exception instanceof CompanyHasVenue => 'record.venues.flash.has_venue',
                 $exception instanceof VenueNotFound => 'record.venues.flash.venue_not_found',
                 $exception instanceof CompanyNotFound => throw $this->createNotFoundException(),
                 default => throw $failure,

@@ -8,8 +8,8 @@ use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 
 /**
- * A venue in the Locations card of a company (CRM-1). `id` is what the unlink form posts, `number`
- * what the venue editor's URL takes.
+ * The Eintrag on a Location's record (CRM-1, #56), also a deal's venue. `id` is what the release form
+ * posts, `number` what the venue editor's URL takes.
  */
 final readonly class CompanyRecordVenue
 {

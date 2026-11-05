@@ -8,13 +8,15 @@ use App\Admin\Entity\AdminUser;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
+use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A venue operator we sell to (S13, CRM-1). The id comes in through the constructor so the caller
  * knows it before dispatching (the AdminUser precedent); it still comes only from EntityId::generate().
- * Its venues hang off it through CompanyVenue. `stage` is set by hand until #28 derives it.
+ * Its Eintrag is `venue` (0..1, `uk_crm_companies_venue_id`; deleting the venue sets it NULL, #56).
+ * `stage` is set by hand until #28 derives it.
  * Values arrive canonical (trimmed, empty = null) from the handlers.
  *
  * idx_crm_companies_search_key (GIN trigram on geo_search_key(name)) is an expression index
@@ -23,6 +25,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 #[ORM\Table(name: 'crm_companies')]
 #[ORM\Index(name: 'idx_crm_companies_owner_id', columns: ['owner_id'])]
+#[ORM\UniqueConstraint(name: 'uk_crm_companies_venue_id', columns: ['venue_id'])]
 class Company
 {
     #[ORM\Id]
@@ -53,6 +56,11 @@ class Company
     #[ORM\ManyToOne(targetEntity: AdminUser::class)]
     #[ORM\JoinColumn(name: 'owner_id', nullable: true, onDelete: 'RESTRICT')]
     private ?AdminUser $owner = null;
+
+    /** The unique key doubles as the venue_id index. */
+    #[ORM\ManyToOne(targetEntity: Venue::class)]
+    #[ORM\JoinColumn(name: 'venue_id', nullable: true, onDelete: 'SET NULL')]
+    private ?Venue $venue = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
@@ -130,6 +138,18 @@ class Company
         $this->touch();
     }
 
+    public function assignVenue(Venue $venue): void
+    {
+        $this->venue = $venue;
+        $this->touch();
+    }
+
+    public function releaseVenue(): void
+    {
+        $this->venue = null;
+        $this->touch();
+    }
+
     public function id(): string
     {
         return $this->id;
@@ -173,6 +193,12 @@ class Company
     public function owner(): ?AdminUser
     {
         return $this->owner;
+    }
+
+    /** The Eintrag (#56), or null. */
+    public function venue(): ?Venue
+    {
+        return $this->venue;
     }
 
     public function notes(): ?string

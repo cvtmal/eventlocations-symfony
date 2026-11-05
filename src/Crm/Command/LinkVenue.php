@@ -8,9 +8,9 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
 
 /**
- * Links a venue to a company (CRM-1). A venue belongs to one company at most: linking one that
- * belongs to another company is refused (VenueAlreadyLinked); linking it again to the same company
- * changes nothing.
+ * Assigns a venue to a Location as its Eintrag (CRM-1, #56): one Location per venue
+ * (VenueAlreadyLinked), one Eintrag per Location (CompanyHasVenue); the same pair again changes
+ * nothing.
  */
 final readonly class LinkVenue implements AuditableCommand
 {

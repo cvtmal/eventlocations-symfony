@@ -12,7 +12,6 @@ use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\StaleProperty;
 use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
-use App\Crm\Repository\CompanyVenueRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\Repository\TaskRepository;
 use App\Crm\ValueObject\DealProperty;
@@ -35,7 +34,6 @@ final class ChangeDealPropertyHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly CompanyRepository $companies,
-        private readonly CompanyVenueRepository $companyVenues,
         private readonly DealRepository $deals,
         private readonly TaskRepository $tasks,
         private readonly OwnerResolver $owners,
@@ -73,7 +71,7 @@ final class ChangeDealPropertyHandler implements CommandHandlerInterface
 
         match ($property) {
             DealProperty::Name => $deal->rename((string) $value),
-            DealProperty::Venue => $deal->changeVenue(null === $value ? null : $this->companyVenues->venueOf($companyId, $value)),
+            DealProperty::Venue => $deal->changeVenue(null === $value ? null : $this->companies->venueOf($companyId, $value)),
             DealProperty::Tier => $deal->changeTier(null === $value ? null : Tier::tryFrom($value) ?? throw InvalidPropertyValue::unknown($property->value)),
             DealProperty::Amount => $deal->changeAmount(null === $value ? null : (int) $value),
             DealProperty::ContractStart => $deal->changeContractStart($on),

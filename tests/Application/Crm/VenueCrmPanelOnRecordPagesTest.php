@@ -36,7 +36,7 @@ final class VenueCrmPanelOnRecordPagesTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events GmbH']);
+        CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events GmbH']);
 
         $this->client->request('GET', '/admin/_probe/datensatz/'.$venue->number());
 
@@ -48,7 +48,7 @@ final class VenueCrmPanelOnRecordPagesTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events GmbH']);
+        CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events GmbH']);
         $document = VenueDocumentFactory::createOne(['venue' => $venue]);
         $base = '/admin/locations/'.$venue->number();
 

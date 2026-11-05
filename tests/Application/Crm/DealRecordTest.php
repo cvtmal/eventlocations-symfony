@@ -50,7 +50,7 @@ final class DealRecordTest extends WebTestCase
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => Tier::Premium]);
-        $company = CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']);
+        $company = CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']);
         ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
         ContactFactory::createOne(['firstName' => 'Marc', 'lastName' => 'Widmer', 'company' => $company]);
         ContactFactory::createOne(['firstName' => 'Pia', 'lastName' => 'Anderswo']);
@@ -106,7 +106,7 @@ final class DealRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $linked = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Alpenhof']);
         $gone = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Altes Haus']);
-        $company = CompanyFactory::new()->withVenues($linked)->create();
+        $company = CompanyFactory::new()->withVenue($linked)->create();
         $deal = DealFactory::createOne(['company' => $company, 'venue' => $gone]);
 
         $crawler = $this->client->request('GET', $this->url($deal));
@@ -334,7 +334,7 @@ final class DealRecordTest extends WebTestCase
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         ContactFactory::createMany(3, ['company' => $company]);
         $deal = DealFactory::createOne(['company' => $company, 'venue' => $venue, 'owner' => $owner]);
         TaskFactory::createOne(['deal' => $deal]);
