@@ -61,7 +61,7 @@ final class EmailRecipientTest extends TestCase
             null,
             CompanyOrigin::cases()[0],
             new \DateTimeImmutable('2026-11-01'),
-            [],
+            null,
             $contacts,
             false,
         );

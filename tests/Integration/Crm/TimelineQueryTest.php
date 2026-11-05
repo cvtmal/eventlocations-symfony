@@ -7,7 +7,6 @@ namespace App\Tests\Integration\Crm;
 use App\Crm\Command\IngestInquiry;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
-use App\Crm\Entity\CompanyVenue;
 use App\Crm\ReadModel\TimelineEntry;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\RecordKind;
@@ -300,7 +299,7 @@ final class TimelineQueryTest extends KernelTestCase
     {
         $venue = VenueFactory::new()->withContact()->create();
         if (null !== $company) {
-            $this->em->persist(new CompanyVenue($company, $venue));
+            $company->assignVenue($venue);
             $this->em->flush();
         }
         $inquiry = InquiryFactory::createOne(['firstName' => 'Sina', 'lastName' => 'Huber', 'email' => 'sina@example.ch', 'venue' => $venue]);
@@ -320,7 +319,7 @@ final class TimelineQueryTest extends KernelTestCase
     private function linkedVenue(Company $company): Venue
     {
         $venue = VenueFactory::createOne();
-        $this->em->persist(new CompanyVenue($company, $venue));
+        $company->assignVenue($venue);
         $this->em->flush();
 
         return $venue;

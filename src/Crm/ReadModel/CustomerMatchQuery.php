@@ -55,8 +55,7 @@ final class CustomerMatchQuery
         $rows = $this->connection->fetchAllAssociative(<<<'SQL'
             SELECT v.id, v.name, geo_fold_de(v.name) AS key, v.canton_code, v.website, co.id AS company_id, co.name AS company_name
             FROM venues v
-            LEFT JOIN crm_company_venues cv ON cv.venue_id = v.id
-            LEFT JOIN crm_companies co ON co.id = cv.company_id
+            LEFT JOIN crm_companies co ON co.venue_id = v.id
             ORDER BY v.name, v.id
             SQL);
 
@@ -80,8 +79,7 @@ final class CustomerMatchQuery
             SELECT co.id, co.name, geo_fold_de(co.name) AS key, co.website, co.email,
                    string_agg(DISTINCT v.canton_code, ',' ORDER BY v.canton_code) AS cantons
             FROM crm_companies co
-            LEFT JOIN crm_company_venues cv ON cv.company_id = co.id
-            LEFT JOIN venues v ON v.id = cv.venue_id
+            LEFT JOIN venues v ON v.id = co.venue_id
             GROUP BY co.id
             ORDER BY co.name, co.id
             SQL);

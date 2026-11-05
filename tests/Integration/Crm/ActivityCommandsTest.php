@@ -207,7 +207,7 @@ final class ActivityCommandsTest extends KernelTestCase
     {
         $admin = AdminUserFactory::createOne(['role' => AdminRole::Admin]);
         $venue = VenueFactory::new()->withContact()->create();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
         $this->dispatch(new IngestInquiry(InquiryFactory::createOne(['venue' => $venue])->id()));
         $id = (string) $this->connection->fetchOne('SELECT activity_id FROM crm_inquiry_links');
 

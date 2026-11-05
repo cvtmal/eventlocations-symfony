@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 /**
- * The company of a new deal, with what the form offers from it (N5).
+ * The Location of a new deal, with its Eintrag, which the deal takes (N5, #56 D7).
  */
 final readonly class DealFormCompany
 {
-    /**
-     * @param list<DealFormOption> $venues
-     */
     public function __construct(
         public string $id,
         public string $name,
-        public array $venues,
+        public ?DealFormOption $venue,
     ) {
     }
 }

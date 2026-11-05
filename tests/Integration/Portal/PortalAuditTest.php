@@ -8,7 +8,6 @@ use App\Admin\ReadModel\AuditLogFilter;
 use App\Admin\ReadModel\AuditLogQuery;
 use App\Admin\ValueObject\AuditActorType;
 use App\Cms\ReadModel\VenueHeaderQuery;
-use App\Crm\Entity\CompanyVenue;
 use App\Crm\ReadModel\TimelineEntry;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\RecordKind;
@@ -92,7 +91,7 @@ final class PortalAuditTest extends KernelTestCase
     {
         $company = CompanyFactory::createOne();
         $venue = $this->venue();
-        $this->em->persist(new CompanyVenue($company, $venue));
+        $company->assignVenue($venue);
         $this->em->flush();
         $id = $this->venueRow($venue, $this->manager());
         $this->em->clear();

@@ -90,7 +90,7 @@ final class CustomerMatchQueryTest extends KernelTestCase
         $linked = VenueFactory::new()->withoutLocation($this->canton('be'))
             ->afterInstantiate(static fn (Venue $venue) => $venue->changeContact(null, null, 'https://www.seehaus-erfunden.example.ch/', null))
             ->create(['name' => 'Seehaus Erfunden']);
-        $company = CompanyFactory::new()->withVenues($linked)->create(['name' => 'Seehaus Erfunden AG']);
+        $company = CompanyFactory::new()->withVenue($linked)->create(['name' => 'Seehaus Erfunden AG']);
         $alone = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Waldhaus Bärenegg']);
 
         $venues = $this->byId($this->query()->venues());
@@ -99,13 +99,10 @@ final class CustomerMatchQueryTest extends KernelTestCase
         self::assertEquals(new CustomerMatchVenue($alone->id(), 'Waldhaus Bärenegg', 'waldhaus baerenegg', null, null, null, null), $venues[$alone->id()]);
     }
 
-    public function test_companies_come_with_their_venues_cantons(): void
+    public function test_companies_come_with_their_eintrags_canton(): void
     {
-        $bern = VenueFactory::new()->withoutLocation($this->canton('be'))->create();
-        $zurich = VenueFactory::new()->withoutLocation($this->canton('zh'))->create();
-        $zurichToo = VenueFactory::new()->withoutLocation($this->canton('zh'))->create();
-        $nowhere = VenueFactory::new()->withoutLocation(null)->create();
-        $group = CompanyFactory::new()->withVenues($zurich, $bern, $zurichToo, $nowhere)->create(['name' => 'Gruppe Erfunden']);
+        $zurich = CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation($this->canton('zh'))->create())->create(['name' => 'Zunft Erfunden']);
+        $nowhere = CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation(null)->create())->create(['name' => 'Ort Erfunden']);
         $plain = CompanyFactory::new()->afterInstantiate(static function (Company $company): void {
             $company->changeWebsite('https://buehne-fiktiv.example.ch');
             $company->changeEmail('Info@Buehne-Fiktiv.example.ch');
@@ -113,7 +110,8 @@ final class CustomerMatchQueryTest extends KernelTestCase
 
         $companies = $this->byId($this->query()->companies());
 
-        self::assertSame(['be', 'zh'], $companies[$group->id()]->cantons);
+        self::assertSame(['zh'], $companies[$zurich->id()]->cantons);
+        self::assertSame([], $companies[$nowhere->id()]->cantons);
         self::assertEquals(new CustomerMatchCompany($plain->id(), 'Bühne Fiktiv GmbH', 'buehne fiktiv gmbh', 'https://buehne-fiktiv.example.ch', 'info@buehne-fiktiv.example.ch', []), $companies[$plain->id()]);
     }
 

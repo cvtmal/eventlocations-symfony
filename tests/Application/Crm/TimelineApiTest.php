@@ -9,7 +9,6 @@ use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\LogActivity;
 use App\Crm\Command\MoveDealStage;
 use App\Crm\Entity\ActivityType;
-use App\Crm\Entity\CompanyVenue;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
@@ -385,7 +384,7 @@ final class TimelineApiTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
         $venue = VenueFactory::createOne();
-        $this->entityManager()->persist(new CompanyVenue($company, $venue));
+        $company->assignVenue($venue);
         $this->entityManager()->flush();
         $this->connection->insert('admin_audit_log', [
             'id' => EntityId::generate(),

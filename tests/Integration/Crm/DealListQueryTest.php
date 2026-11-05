@@ -65,7 +65,7 @@ final class DealListQueryTest extends KernelTestCase
     public function test_the_csv_rows_hold_what_the_list_leaves_out(): void
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         DealFactory::new()->inStage('lost', reason: LostReason::Budget)->create([
             'company' => $company,
             'venue' => $venue,
@@ -81,20 +81,18 @@ final class DealListQueryTest extends KernelTestCase
         self::assertSame('2027-12-31', $rows[0]->contractEndOn?->format('Y-m-d'));
     }
 
-    public function test_the_form_offers_the_companys_own_venues(): void
+    public function test_the_form_carries_the_locations_eintrag(): void
     {
-        $venues = [
-            VenueFactory::new()->withoutLocation(null)->create(['name' => 'Zunfthaus']),
-            VenueFactory::new()->withoutLocation(null)->create(['name' => 'Alpenhof']),
-        ];
-        $company = CompanyFactory::new()->withVenues(...$venues)->create(['name' => 'Seeblick Events']);
-        CompanyFactory::new()->withVenues(VenueFactory::new()->withoutLocation(null)->create())->create();
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Alpenhof']);
+        $company = CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']);
+        CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation(null)->create())->create();
 
         $form = $this->forms()->company($company->id());
 
         self::assertNotNull($form);
         self::assertSame('Seeblick Events', $form->name);
-        self::assertSame(['Alpenhof', 'Zunfthaus'], array_map(static fn ($option): string => $option->label, $form->venues));
+        self::assertSame([$venue->id(), 'Alpenhof'], [$form->venue?->id, $form->venue?->label]);
+        self::assertNull($this->forms()->company(CompanyFactory::createOne()->id())?->venue);
     }
 
     public function test_an_unknown_or_malformed_company_is_no_form(): void

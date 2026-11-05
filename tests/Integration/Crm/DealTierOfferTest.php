@@ -78,7 +78,7 @@ final class DealTierOfferTest extends KernelTestCase
     public function test_a_venue_no_longer_linked_offers_nothing(): void
     {
         $deal = $this->deal(Tier::Premium, Tier::Basic, 'won');
-        $this->connection->executeStatement('DELETE FROM crm_company_venues');
+        $this->connection->executeStatement('UPDATE crm_companies SET venue_id = NULL');
 
         self::assertNull($this->offers()->forDeal($deal));
     }
@@ -86,7 +86,10 @@ final class DealTierOfferTest extends KernelTestCase
     public function test_a_venue_linked_to_another_company_offers_nothing(): void
     {
         $deal = $this->deal(Tier::Premium, Tier::Basic, 'won');
-        $this->connection->executeStatement('UPDATE crm_company_venues SET company_id = ?', [CompanyFactory::createOne()->id()]);
+        // Released from the deal's Location, then assigned to another one (the unique key forbids one step).
+        $venueId = $this->connection->fetchOne('SELECT venue_id FROM crm_deals WHERE id = ?', [$deal]);
+        $this->connection->executeStatement('UPDATE crm_companies SET venue_id = NULL WHERE venue_id = ?', [$venueId]);
+        $this->connection->executeStatement('UPDATE crm_companies SET venue_id = ? WHERE id = ?', [$venueId, CompanyFactory::createOne()->id()]);
 
         self::assertNull($this->offers()->forDeal($deal));
     }
@@ -100,7 +103,7 @@ final class DealTierOfferTest extends KernelTestCase
     private function deal(?Tier $dealTier, Tier $venueTier, string $stage): string
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => $venueTier]);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
 
         return DealFactory::new()->inStage($stage)->create(['company' => $company, 'venue' => $venue, 'tier' => $dealTier])->id();
     }

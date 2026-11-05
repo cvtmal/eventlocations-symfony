@@ -81,6 +81,11 @@ list:
         title: Locations
         new: Location erfassen
         table_label: Locations
+        tabs_label: Einträge
+        tab:
+            all: Alle
+            with: Mit Eintrag
+            without: Ohne Eintrag
         empty:
             title: Keine Locations
             text: Keine Location passt zu diesen Filtern.
@@ -88,7 +93,7 @@ list:
             company: Location
             stage: Phase
             owner: Zuständig
-            venues: Einträge
+            venues: Eintrag
             created: Erstellt
     deals:
         title: Deals
@@ -121,10 +126,6 @@ list:
         owner_none: Ohne Zuständige
         close: Abschluss
         all_close: 'Abschluss: alle'
-        venues: Einträge
-        all_venues: Mit und ohne Eintrag
-        venues_with: Mit Eintrag
-        venues_without: Ohne Eintrag
     chip:
         close: 'Abschluss: {label}'
         search: 'Suche: {q}'
@@ -152,7 +153,7 @@ create:
         title: Deal erfassen
         card: Neuer Deal
         company_card: Location wählen
-        intro: Ein Deal gehört zu einer Location. Wähle sie zuerst, ihre Einträge stehen dann zur Auswahl.
+        intro: Ein Deal gehört zu einer Location. Wähle sie zuerst; ihr Eintrag wird übernommen.
         company: Location
         company_of: 'Location: {name}'
         next: Weiter
@@ -179,24 +180,26 @@ record:
     created_on: "{date} · {origin, select, venue {aus Eintrag} other {manuell erfasst}}"
     stage_label: 'Phase: {stage}'
     venues:
-        title: Einträge
-        link: Verknüpfen
-        link_label: Eintrag verknüpfen
-        link_title: Eintrag verknüpfen
+        title: Eintrag
+        link: Zuordnen
+        link_label: Eintrag zuordnen
+        link_title: Eintrag zuordnen
         link_field: Eintrag
-        link_help: Name oder Nummer des Eintrags eingeben. Ein Eintrag gehört zu höchstens einer Location.
-        link_submit: Verknüpfen
+        link_help: Name oder Nummer des Eintrags eingeben. Ein Eintrag gehört zu höchstens einer Location, eine Location hat höchstens einen Eintrag.
+        link_submit: Zuordnen
         cancel: Abbrechen
         close: Schliessen
-        empty: Noch kein Eintrag verknüpft.
-        unlink: '{name} von dieser Location lösen'
+        empty: Noch kein Eintrag zugeordnet.
+        unlink: Lösen
+        unlink_label: '{name} von dieser Location lösen'
         flash:
-            linked: Eintrag verknüpft.
+            linked: Eintrag zugeordnet.
             unlinked: Eintrag gelöst.
             not_linked: Dieser Eintrag gehört nicht mehr zu dieser Location.
             invalid: Bitte einen Eintrag aus der Liste wählen.
             already_linked: Dieser Eintrag gehört schon zu einer anderen Location. Dort zuerst lösen.
             venue_not_found: Dieser Eintrag existiert nicht mehr.
+            has_venue: Diese Location hat schon einen Eintrag. Zuerst lösen.
     contacts:
         title: Kontakte
         add: Hinzufügen
@@ -220,7 +223,7 @@ record:
     delete:
         action: Location löschen
         title: Location löschen
-        text: '«{name}» wird gelöscht, samt ihren Kontakten. Verknüpfungen zu Einträgen und Aufgaben werden entfernt.'
+        text: '«{name}» wird gelöscht, samt ihren Kontakten. Ihr Eintrag wird frei, ihre Aufgaben werden entfernt.'
         confirm: Löschen
         cancel: Abbrechen
         close: Schliessen

@@ -19,7 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * "Deal erfassen" (CRM-7, N5): the company first in a GET form, then the deal form with its venues.
+ * "Deal erfassen" (CRM-7, N5): the Location first in a GET form, then the deal form, which takes its Eintrag (#56).
  */
 final class DealCreateTest extends WebTestCase
 {
@@ -58,13 +58,15 @@ final class DealCreateTest extends WebTestCase
         ['user' => $owner] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
         AdminUserFactory::new()->afterInstantiate(static fn (AdminUser $user) => $user->deactivate())->create(['displayName' => 'Ehemalig']);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $company = CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']);
+        $company = CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']);
         ContactFactory::createOne(['company' => $company]);
 
         $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
         self::assertResponseIsSuccessful();
         self::assertSame(['', $owner->id()], $crawler->filter('#deal_owner option')->each(static fn (Crawler $option): string => (string) $option->attr('value')));
-        self::assertSame(['', $venue->id()], $crawler->filter('#deal_venue option')->each(static fn (Crawler $option): string => (string) $option->attr('value')));
+        // The deal takes the Location's Eintrag: shown, not chosen.
+        self::assertCount(0, $crawler->filter('[name="deal[venue]"]'));
+        self::assertSame('Eintrag Schloss Seeblick', $crawler->filter('#deal-venue')->text());
         self::assertSelectorExists('.field__addon input[name="deal[amount]"]');
         self::assertStringContainsString('Seeblick Events', $crawler->filter('.form')->text());
         // A deal has no contacts of its own since #55: its page shows the Location's.
@@ -72,7 +74,6 @@ final class DealCreateTest extends WebTestCase
 
         $this->client->submitForm('Erfassen', [
             'deal[name]' => '  Premium 2027 ',
-            'deal[venue]' => $venue->id(),
             'deal[tier]' => 'premium',
             'deal[amount]' => "1'250.50",
             'deal[contractStart]' => '2027-01-01',
@@ -101,12 +102,14 @@ final class DealCreateTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $this->client->request('GET', self::NEW.'?company='.$company->id());
+        $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
+        self::assertSame('Eintrag Kein Eintrag', $crawler->filter('#deal-venue')->text());
 
         $this->client->submitForm('Erfassen', ['deal[name]' => 'Premium 2027']);
 
         self::assertResponseStatusCodeSame(303);
-        self::assertNull($this->connection->fetchOne('SELECT amount_rappen FROM crm_deals'));
+        // A Location without an Eintrag gives a deal without one.
+        self::assertSame([null, null], array_values((array) $this->connection->fetchAssociative('SELECT amount_rappen, venue_id FROM crm_deals')));
     }
 
     /**
@@ -150,13 +153,13 @@ final class DealCreateTest extends WebTestCase
         self::assertStringContainsString('Das Vertragsende liegt vor dem Vertragsbeginn.', $crawler->filter('.form')->text());
     }
 
-    public function test_a_foreign_venue_is_refused(): void
+    public function test_a_posted_venue_is_refused_as_an_extra_field(): void
     {
         $this->logInAs(AdminRole::Editor);
         $foreign = VenueFactory::new()->withoutLocation(null)->create();
-        CompanyFactory::new()->withVenues($foreign)->create();
+        CompanyFactory::new()->withVenue($foreign)->create();
         $own = VenueFactory::new()->withoutLocation(null)->create();
-        $company = CompanyFactory::new()->withVenues($own)->create();
+        $company = CompanyFactory::new()->withVenue($own)->create();
 
         $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
         $form = $crawler->selectButton('Erfassen')->form();
@@ -170,15 +173,15 @@ final class DealCreateTest extends WebTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_deals'));
     }
 
-    public function test_a_venue_unlinked_while_the_form_was_open_lands_on_the_field(): void
+    public function test_an_eintrag_released_while_the_form_was_open_is_a_form_error(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
 
         $this->commandsFailWith(VenueNotLinked::toCompany($venue->id(), $company->id()));
         $this->client->request('GET', self::NEW.'?company='.$company->id());
-        $crawler = $this->client->submitForm('Erfassen', ['deal[name]' => 'Premium 2027', 'deal[venue]' => $venue->id()]);
+        $crawler = $this->client->submitForm('Erfassen', ['deal[name]' => 'Premium 2027']);
 
         self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString('Dieser Eintrag gehört nicht zu dieser Location.', $crawler->filter('.form')->text());

@@ -24,7 +24,11 @@
                 <div class="crm-create__fields">
                     {{ form_row(create_form.name) }}
                     <div class="field-row">
-                        {{ form_row(create_form.venue) }}
+                        {# A new deal takes its Location's Eintrag (#56 D7): shown, not chosen. #}
+                        <div class="field" id="deal-venue">
+                            <span class="field__label">{{ 'deal.property.venue'|trans({}, 'crm') }}</span>
+                            <span>{{ company.venue ? company.venue.label : 'create.deal.venue_none'|trans({}, 'crm') }}</span>
+                        </div>
                         {{ form_row(create_form.tier) }}
                     </div>
                     <div class="field-row">

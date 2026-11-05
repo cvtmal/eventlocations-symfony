@@ -14,7 +14,7 @@ final class UnlinkedVenuesQuery
 {
     private const string UNLINKED = <<<'SQL'
         FROM venues v
-        WHERE NOT EXISTS (SELECT 1 FROM crm_company_venues l WHERE l.venue_id = v.id)
+        WHERE NOT EXISTS (SELECT 1 FROM crm_companies c WHERE c.venue_id = v.id)
         SQL;
 
     public function __construct(

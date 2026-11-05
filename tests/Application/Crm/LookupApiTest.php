@@ -38,7 +38,7 @@ final class LookupApiTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         $free = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Seeblick Lodge']);
-        CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events GmbH']);
+        CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events GmbH']);
 
         self::assertSame(['options' => [
             ['value' => $venue->id(), 'label' => 'Schloss Seeblick', 'detail' => 'Nr. '.$venue->number().' · bei Seeblick Events GmbH'],

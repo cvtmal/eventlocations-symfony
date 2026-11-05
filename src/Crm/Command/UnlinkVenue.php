@@ -8,7 +8,7 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
 
 /**
- * Removes a venue from a company (CRM-1). A venue that is not linked to this company is left alone.
+ * Releases a Location's Eintrag (CRM-1, #56). A venue that is not this Location's Eintrag is left alone.
  */
 final readonly class UnlinkVenue implements AuditableCommand
 {

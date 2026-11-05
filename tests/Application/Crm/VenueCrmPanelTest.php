@@ -41,7 +41,7 @@ final class VenueCrmPanelTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues($venue)->create(['name' => 'Seeblick Events GmbH']);
+        $company = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenue($venue)->create(['name' => 'Seeblick Events GmbH']);
         ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
 
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
@@ -66,7 +66,7 @@ final class VenueCrmPanelTest extends WebTestCase
         self::mockTime('2026-10-31 10:00:00 UTC');
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         TaskFactory::createOne(['title' => 'Vertrag senden', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
         TaskFactory::createOne(['title' => 'Rückruf', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
         TaskFactory::createOne(['title' => 'Verlängerung', 'deal' => DealFactory::createOne(['company' => $company]), 'dueOn' => new \DateTimeImmutable('2026-11-02')]);
@@ -85,7 +85,7 @@ final class VenueCrmPanelTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         DealFactory::new()->inStage('offer')->create(['name' => 'Später', 'company' => $company, 'venue' => $venue, 'expectedCloseOn' => new \DateTimeImmutable('2027-06-01')]);
         $soonest = DealFactory::new()->inStage('negotiation')->create(['name' => 'Verlängerung 2027', 'company' => $company, 'venue' => $venue, 'amountRappen' => 480000, 'expectedCloseOn' => new \DateTimeImmutable('2027-01-15')]);
         DealFactory::new()->inStage('won')->create(['name' => 'Gewonnen', 'company' => $company, 'venue' => $venue, 'expectedCloseOn' => new \DateTimeImmutable('2026-01-01')]);
@@ -105,7 +105,7 @@ final class VenueCrmPanelTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         DealFactory::new()->inStage('lost')->create(['company' => $company, 'venue' => $venue]);
 
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
@@ -117,7 +117,7 @@ final class VenueCrmPanelTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         $this->client->request('GET', '/admin/locations/'.$venue->number());
 
@@ -129,7 +129,7 @@ final class VenueCrmPanelTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         $this->client->request('GET', '/admin/locations/'.$venue->number());
 
@@ -231,7 +231,7 @@ final class VenueCrmPanelTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::withoutPlace();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         ContactFactory::createMany(3, ['company' => $company]);
         $url = '/admin/locations/'.$venue->number();
 

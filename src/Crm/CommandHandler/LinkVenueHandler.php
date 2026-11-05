@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Crm\CommandHandler;
 
 use App\Crm\Command\LinkVenue;
-use App\Crm\Entity\CompanyVenue;
+use App\Crm\Exception\CompanyHasVenue;
 use App\Crm\Exception\VenueAlreadyLinked;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\Repository\CompanyRepository;
-use App\Crm\Repository\CompanyVenueRepository;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -17,15 +16,15 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Takes the venue's advisory lock (shared with CreateCompanyForVenue) before it looks for a link,
- * so two writers cannot both see the venue free. The unique key still decides, mapped to
- * VenueAlreadyLinked by flushing here.
+ * Takes the venue's advisory lock (shared with CreateCompanyForVenue) before it looks for the venue's
+ * Location, so two writers cannot both see the venue free. The unique key `uk_crm_companies_venue_id`
+ * still decides, mapped to VenueAlreadyLinked by flushing here. A Location that has another Eintrag
+ * is refused with CompanyHasVenue (#56): release it first.
  */
 final class LinkVenueHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly CompanyRepository $companies,
-        private readonly CompanyVenueRepository $links,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -38,17 +37,21 @@ final class LinkVenueHandler implements CommandHandlerInterface
             throw VenueNotFound::forId($command->venueId);
         }
 
-        $this->links->lockVenue($venue->id());
-        $link = $this->links->forVenue($venue->id());
-        if (null !== $link) {
-            if ($link->company()->id() === $company->id()) {
+        $this->companies->lockVenue($venue->id());
+        $current = $company->venue();
+        if (null !== $current) {
+            if ($current->id() === $venue->id()) {
                 return;
             }
 
+            throw CompanyHasVenue::forCompany($company->id());
+        }
+
+        if (null !== $this->companies->forVenue($venue->id())) {
             throw VenueAlreadyLinked::forVenue($venue->id());
         }
 
-        $this->em->persist(new CompanyVenue($company, $venue));
+        $company->assignVenue($venue);
 
         try {
             $this->em->flush();

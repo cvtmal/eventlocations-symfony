@@ -8,7 +8,6 @@ use App\Crm\Command\ApplyDealTier;
 use App\Crm\Exception\DealTierNotApplicable;
 use App\Crm\Exception\StaleProperty;
 use App\Crm\Repository\CompanyRepository;
-use App\Crm\Repository\CompanyVenueRepository;
 use App\Crm\Repository\DealRepository;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Command\ChangeVenueTier;
@@ -24,7 +23,6 @@ final class ApplyDealTierHandler implements CommandHandlerInterface
     public function __construct(
         private readonly CompanyRepository $companies,
         private readonly DealRepository $deals,
-        private readonly CompanyVenueRepository $companyVenues,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
@@ -32,7 +30,7 @@ final class ApplyDealTierHandler implements CommandHandlerInterface
     public function __invoke(ApplyDealTier $command): void
     {
         $companyId = $this->deals->companyIdOf($command->dealId);
-        $this->companies->lock($companyId);
+        $company = $this->companies->lock($companyId);
         $deal = $this->deals->lock($command->dealId);
 
         $venue = $deal->venue();
@@ -40,7 +38,7 @@ final class ApplyDealTierHandler implements CommandHandlerInterface
         if (null === $venue || null === $tier || !$deal->stage()->isWon()) {
             throw DealTierNotApplicable::forDeal($deal->id());
         }
-        if ($tier === $venue->tier() || $companyId !== $this->companyVenues->forVenue($venue->id())?->company()->id()) {
+        if ($tier === $venue->tier() || $company->venue()?->id() !== $venue->id()) {
             throw DealTierNotApplicable::forDeal($deal->id());
         }
         if ($command->expected !== $venue->tier()) {

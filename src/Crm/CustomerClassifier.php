@@ -484,7 +484,7 @@ final class CustomerClassifier
     }
 
     /**
-     * R3: a venue by its canton; a company by its venues' cantons, unknown without one.
+     * R3: a venue by its canton; a company by its Eintrag's canton, unknown without one.
      *
      * @param Match $match
      */

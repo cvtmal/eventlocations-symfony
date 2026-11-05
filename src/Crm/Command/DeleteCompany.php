@@ -9,7 +9,7 @@ use App\Shared\Messenger\AuditSubject;
 
 /**
  * Deletes a company (CRM-1, `admin` only, decided by the controller). Its contacts stay without a
- * company, its venue links, tasks and timeline links go, and entries left on no timeline are
+ * company, its Eintrag is freed, its tasks and timeline links go, and entries left on no timeline are
  * deleted (D16).
  */
 final readonly class DeleteCompany implements AuditableCommand

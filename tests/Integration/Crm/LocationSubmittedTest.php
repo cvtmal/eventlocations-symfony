@@ -40,7 +40,7 @@ final class LocationSubmittedTest extends KernelTestCase
 
         $this->publishes($this->event($venue));
 
-        $companyId = $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]);
+        $companyId = $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venue->id()]);
         self::assertIsString($companyId);
         self::assertSame('Schloss Seeblick', $this->connection->fetchOne('SELECT name FROM crm_companies WHERE id = ?', [$companyId]));
         self::assertSame([
@@ -69,7 +69,7 @@ final class LocationSubmittedTest extends KernelTestCase
 
         $this->publishes($this->event($venue));
 
-        $companyId = $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]);
+        $companyId = $this->connection->fetchOne('SELECT id FROM crm_companies WHERE venue_id = ?', [$venue->id()]);
         self::assertSame(2, $this->connection->fetchOne('SELECT count(*) FROM crm_contacts'));
         self::assertSame(1, $this->connection->fetchOne("SELECT count(*) FROM crm_contacts WHERE company_id = ? AND email = 'petra@example.ch'", [$companyId]));
         self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_activity_companies WHERE company_id = ?', [$companyId]));

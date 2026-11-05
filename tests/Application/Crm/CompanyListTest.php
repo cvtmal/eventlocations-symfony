@@ -34,7 +34,7 @@ final class CompanyListTest extends WebTestCase
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
-        $seeblick = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues($venue)->create(['name' => 'Seeblick Events GmbH', 'owner' => $owner]);
+        $seeblick = CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenue($venue)->create(['name' => 'Seeblick Events GmbH', 'owner' => $owner]);
         CompanyFactory::createOne(['name' => 'Alpenhof AG']);
 
         $crawler = $this->client->request('GET', '/admin/crm/locations');
@@ -47,7 +47,9 @@ final class CompanyListTest extends WebTestCase
         self::assertSame('SE', $row->filter('.avatar')->text());
         self::assertStringContainsString('Kunde', $row->text());
         self::assertStringContainsString('Andrea Keller', $row->text());
-        self::assertSame('1', $row->filter('td')->eq(3)->text());
+        self::assertSame('Eintrag', $crawler->filter('#company-list thead th')->eq(3)->text());
+        self::assertSame('Schloss Seeblick', $row->filter('td')->eq(3)->text());
+        self::assertSame('—', $crawler->filter('#company-list tbody tr')->eq(0)->filter('td')->eq(3)->text());
         self::assertCount(1, $crawler->filter('a[href="/admin/crm/locations/neu"]'));
         self::assertSame('Locations', $crawler->filter('.sidebar__item[aria-current="page"]')->text());
     }
@@ -64,21 +66,31 @@ final class CompanyListTest extends WebTestCase
         self::assertSelectorTextContains('.filter-chip', 'Suche: zuercher');
     }
 
-    public function test_it_filters_by_stage_owner_and_venues(): void
+    public function test_it_filters_by_stage_owner_and_the_eintrag_tabs(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenues($venue)->create(['name' => 'Kunde mit Location', 'owner' => $owner]);
+        CompanyFactory::new()->inStage(CompanyStage::Customer)->withVenue($venue)->create(['name' => 'Kunde mit Location', 'owner' => $owner]);
         CompanyFactory::new()->inStage(CompanyStage::Customer)->create(['name' => 'Kunde ohne Location']);
         CompanyFactory::createOne(['name' => 'Interessent']);
 
         self::assertSame(['Kunde mit Location', 'Kunde ohne Location'], $this->names($this->client->request('GET', '/admin/crm/locations?stage=customer')));
         self::assertSame(['Kunde mit Location'], $this->names($this->client->request('GET', '/admin/crm/locations?owner='.$owner->id())));
         self::assertSame(['Interessent', 'Kunde ohne Location'], $this->names($this->client->request('GET', '/admin/crm/locations?owner=none')));
+        $crawler = $this->client->request('GET', '/admin/crm/locations');
+        self::assertSame(['Alle', 'Mit Eintrag', 'Ohne Eintrag'], $crawler->filter('.tabs .tab')->each(static fn (Crawler $tab): string => $tab->text()));
+        self::assertSame('Alle', $crawler->filter('.tab--active')->text());
         self::assertSame(['Kunde mit Location'], $this->names($this->client->request('GET', '/admin/crm/locations?venues=with')));
         $crawler = $this->client->request('GET', '/admin/crm/locations?venues=without&stage=customer');
         self::assertSame(['Kunde ohne Location'], $this->names($crawler));
-        self::assertSame(['Phase: Kunde', 'Ohne Eintrag'], $crawler->filter('.filter-chip')->each(static fn (Crawler $chip): string => $chip->text()));
+        self::assertSame(['Phase: Kunde'], $crawler->filter('.filter-chip')->each(static fn (Crawler $chip): string => $chip->text()));
+        self::assertSame('Ohne Eintrag', $crawler->filter('.tab--active')->text());
+        self::assertSame('page', $crawler->filter('.tab--active')->attr('aria-current'));
+        // The tabs keep the other filters; the search form and "Filter zurücksetzen" keep the tab.
+        self::assertSame('/admin/crm/locations?venues=with&stage=customer', $crawler->filter('.tabs .tab')->eq(1)->attr('href'));
+        self::assertSame('without', $crawler->filter('.filter-bar input[type="hidden"][name="venues"]')->attr('value'));
+        self::assertCount(0, $crawler->filter('.filter-bar select[name="venues"]'));
+        self::assertSame('/admin/crm/locations?venues=without', $crawler->filter('.filter-bar__reset')->attr('href'));
     }
 
     public function test_an_invalid_filter_shows_the_unfiltered_list_at_422(): void
@@ -96,17 +108,19 @@ final class CompanyListTest extends WebTestCase
     public function test_it_sorts_by_a_column_and_ignores_an_unknown_one(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
-        CompanyFactory::new()->withVenues(...$venues)->create(['name' => 'Beta']);
+        CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation(null)->create(['name' => 'Seeblick']))->create(['name' => 'Beta']);
+        CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation(null)->create(['name' => 'Bergsicht']))->create(['name' => 'Delta']);
         CompanyFactory::createOne(['name' => 'Alpha']);
         CompanyFactory::new()->inStage(CompanyStage::FormerCustomer)->create(['name' => 'Gamma']);
 
-        self::assertSame(['Gamma', 'Beta', 'Alpha'], $this->names($this->client->request('GET', '/admin/crm/locations?sort=name&dir=desc')));
-        self::assertSame(['Beta', 'Alpha', 'Gamma'], $this->names($this->client->request('GET', '/admin/crm/locations?sort=venues&dir=desc')));
-        self::assertSame(['Alpha', 'Beta', 'Gamma'], $this->names($this->client->request('GET', '/admin/crm/locations?sort=stage')));
+        self::assertSame(['Gamma', 'Delta', 'Beta', 'Alpha'], $this->names($this->client->request('GET', '/admin/crm/locations?sort=name&dir=desc')));
+        // By the Eintrag's name; the Locations without one stay last both ways.
+        self::assertSame(['Delta', 'Beta', 'Alpha', 'Gamma'], $this->names($this->client->request('GET', '/admin/crm/locations?sort=venues&dir=asc')));
+        self::assertSame(['Beta', 'Delta', 'Alpha', 'Gamma'], $this->names($this->client->request('GET', '/admin/crm/locations?sort=venues&dir=desc')));
+        self::assertSame(['Alpha', 'Beta', 'Delta', 'Gamma'], $this->names($this->client->request('GET', '/admin/crm/locations?sort=stage')));
         $crawler = $this->client->request('GET', '/admin/crm/locations?sort=evil&dir=sideways');
         self::assertResponseIsSuccessful();
-        self::assertSame(['Alpha', 'Beta', 'Gamma'], $this->names($crawler));
+        self::assertSame(['Alpha', 'Beta', 'Delta', 'Gamma'], $this->names($crawler));
         self::assertSame('ascending', $crawler->filter('th[aria-sort]')->attr('aria-sort'));
     }
 
@@ -134,7 +148,7 @@ final class CompanyListTest extends WebTestCase
     public function test_the_list_stays_within_its_statements(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
-        CompanyFactory::new()->withVenues(VenueFactory::new()->withoutLocation(null)->create())->create(['owner' => $owner]);
+        CompanyFactory::new()->withVenue(VenueFactory::new()->withoutLocation(null)->create())->create(['owner' => $owner]);
         CompanyFactory::createMany(2);
 
         // The owners, which carry the sidebar's badge (`TaskBadge`), COUNT, the rows, the venues left for the bootstrap,

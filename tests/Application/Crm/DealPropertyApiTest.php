@@ -76,7 +76,7 @@ final class DealPropertyApiTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::createOne();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $owner = AdminUserFactory::createOne();
         $deal = DealFactory::createOne(['company' => $company]);
 

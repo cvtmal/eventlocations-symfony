@@ -33,7 +33,7 @@ final class RenewDealTest extends KernelTestCase
     public function test_it_copies_the_deal_into_the_next_period(): void
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create();
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $owner = AdminUserFactory::createOne();
         $old = DealFactory::new()->inStage('won')->create([
             'name' => 'Premium 2026',

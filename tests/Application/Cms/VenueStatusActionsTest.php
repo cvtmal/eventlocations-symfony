@@ -90,7 +90,7 @@ final class VenueStatusActionsTest extends WebTestCase
 
         self::assertSame('published', $this->venueStatus($number));
         self::assertSame([['name' => 'Neue Scheune', 'title' => 'Rechnung stellen', 'assignee_id' => $staff['user']->id()]], $this->connection->fetchAllAssociative(
-            'SELECT c.name, t.title, t.assignee_id FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id JOIN crm_company_venues l ON l.company_id = c.id JOIN venues v ON v.id = l.venue_id WHERE v.number = ?',
+            'SELECT c.name, t.title, t.assignee_id FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id JOIN venues v ON v.id = c.venue_id WHERE v.number = ?',
             [$number],
         ));
 
@@ -268,7 +268,7 @@ final class VenueStatusActionsTest extends WebTestCase
     private function invoiceTasks(int $number): int
     {
         return (int) $this->connection->fetchOne(
-            "SELECT count(*) FROM crm_tasks t JOIN crm_company_venues l ON l.company_id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
+            "SELECT count(*) FROM crm_tasks t JOIN crm_companies l ON l.id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
             [$number],
         );
     }

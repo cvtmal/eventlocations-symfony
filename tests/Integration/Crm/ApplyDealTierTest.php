@@ -109,7 +109,7 @@ final class ApplyDealTierTest extends KernelTestCase
     public function test_a_venue_no_longer_linked_applies_nothing(): void
     {
         ['deal' => $deal, 'venue' => $venue] = $this->wonDeal();
-        $this->connection->executeStatement('DELETE FROM crm_company_venues');
+        $this->connection->executeStatement('UPDATE crm_companies SET venue_id = NULL');
 
         $this->failure(new ApplyDealTier($deal->id(), Tier::Basic), DealTierNotApplicable::class);
 
@@ -173,7 +173,7 @@ final class ApplyDealTierTest extends KernelTestCase
     private function wonDeal(string $stage = 'won', ?Tier $tier = Tier::Premium, Tier $venueTier = Tier::Basic): array
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['tier' => $venueTier]);
-        $company = CompanyFactory::new()->withVenues($venue)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->create();
         $deal = DealFactory::new()->inStage($stage)->create(['company' => $company, 'venue' => $venue, 'tier' => $tier]);
         $this->em->clear();
 

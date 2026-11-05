@@ -30,10 +30,10 @@ final class DealRecordQuery
                    WHERE p.company_id = d.company_id
                ), '[]') AS contacts,
                COALESCE((
-                   SELECT json_agg(json_build_object('id', lv.id, 'label', lv.name) ORDER BY lower(lv.name), lv.number)
-                   FROM crm_company_venues cv
-                   JOIN venues lv ON lv.id = cv.venue_id
-                   WHERE cv.company_id = d.company_id
+                   SELECT json_agg(json_build_object('id', lv.id, 'label', lv.name))
+                   FROM crm_companies lc
+                   JOIN venues lv ON lv.id = lc.venue_id
+                   WHERE lc.id = d.company_id
                ), '[]') AS company_venues,
                s.is_won AND d.contract_end_on IS NOT NULL
                    AND NOT EXISTS (SELECT 1 FROM crm_deals r WHERE r.renewed_from_id = d.id) AS renewable

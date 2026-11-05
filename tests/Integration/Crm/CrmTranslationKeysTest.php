@@ -39,8 +39,8 @@ final class CrmTranslationKeysTest extends KernelTestCase
             // ActivityReadOnly, CompanyStageDerived; `api.email_taken` stays for the island's labels (#55).
             'api.stale', 'api.not_found', 'api.email_taken', 'api.required', 'api.unknown_choice', 'api.not_yours', 'api.read_only',
             'api.stage_derived', 'api.contract_ends_before_start', 'api.venue_not_linked', 'api.contact_of_another_company', 'api.lost_reason_required', 'api.no_email_address',
-            // CompanyRecordController: VenueAlreadyLinked, VenueNotFound, CompanyHasDeals, a refused form.
-            'record.venues.flash.already_linked', 'record.venues.flash.venue_not_found', 'record.venues.flash.invalid',
+            // CompanyRecordController: VenueAlreadyLinked, CompanyHasVenue, VenueNotFound, CompanyHasDeals, a refused form.
+            'record.venues.flash.already_linked', 'record.venues.flash.has_venue', 'record.venues.flash.venue_not_found', 'record.venues.flash.invalid',
             'record.delete.has_deals',
             'flash.action_failed',
             // The bootstrap and the panel: BootstrapOutcome's two branches.

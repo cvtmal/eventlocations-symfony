@@ -21,6 +21,7 @@
 {% endblock %}
 
 {% block record_dialogs %}
+    {% if company.venue is null %}
     {% embed 'admin/components/_modal.html.twig' with {
         id: 'link-venue',
         title: 'record.venues.link_title'|trans({}, 'crm'),
@@ -37,6 +38,7 @@
             {{ include('admin/components/_button.html.twig', {label: 'record.venues.link_submit'|trans({}, 'crm'), variant: 'primary', type: 'submit', attributes: {form: 'link-venue-form'}}, with_context = false) }}
         {% endblock %}
     {% endembed %}
+    {% endif %}
     {% embed 'admin/components/_modal.html.twig' with {
         id: 'contact-new',
         title: 'record.contacts.add_title'|trans({}, 'crm'),
@@ -95,41 +97,41 @@
 {% block record_aside %}
     <section class="card crm-side" id="locations" aria-labelledby="crm-venues-title">
         <div class="card__head">
-            <h2 id="crm-venues-title">{{ 'record.venues.title'|trans({}, 'crm') }} <span class="crm-side__count">({{ company.venues|length }})</span></h2>
-            {{ include('admin/components/_button.html.twig', {
-                label: 'record.venues.link'|trans({}, 'crm'),
-                icon: 'plus',
-                variant: 'ghost',
-                size: 'sm',
-                type: 'button',
-                attributes: {commandfor: 'link-venue', command: 'show-modal'},
-            }, with_context = false) }}
+            <h2 id="crm-venues-title">{{ 'record.venues.title'|trans({}, 'crm') }}</h2>
+            {% if company.venue is null %}
+                {{ include('admin/components/_button.html.twig', {
+                    label: 'record.venues.link'|trans({}, 'crm'),
+                    icon: 'plus',
+                    variant: 'ghost',
+                    size: 'sm',
+                    type: 'button',
+                    attributes: {commandfor: 'link-venue', command: 'show-modal', 'aria-label': 'record.venues.link_label'|trans({}, 'crm')},
+                }, with_context = false) }}
+            {% endif %}
         </div>
         <div class="card__body">
-            {% if company.venues is empty %}
+            {% set venue = company.venue %}
+            {% if venue is null %}
                 <p class="crm-side__empty">{{ 'record.venues.empty'|trans({}, 'crm') }}</p>
             {% else %}
                 <ul class="crm-side__list">
-                    {% for venue in company.venues %}
-                        <li class="crm-side__item">
-                            <span class="crm-side__thumb">{{ admin_icon('landmark') }}</span>
-                            <span class="crm-side__text">
-                                <a class="crm-side__link" href="{{ path('admin_locations_edit', {number: venue.number}) }}">{{ venue.name }}</a>
-                                <span class="crm-side__detail">{{ venue.tier|trans }}{% if venue.place.isKnown %} · {{ venue.place|trans }}{% endif %}</span>
-                            </span>
-                            <form class="crm-side__form" method="post" action="{{ path('admin_crm_companies_unlink_venue', {id: company.id, venueId: venue.id}) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token(unlink_token) }}">
-                                {{ include('admin/components/_button.html.twig', {
-                                    label: 'record.venues.unlink'|trans({name: venue.name}, 'crm'),
-                                    icon: 'x',
-                                    icon_only: true,
-                                    variant: 'ghost',
-                                    size: 'sm',
-                                    type: 'submit',
-                                }, with_context = false) }}
-                            </form>
-                        </li>
-                    {% endfor %}
+                    <li class="crm-side__item">
+                        <span class="crm-side__thumb">{{ admin_icon('landmark') }}</span>
+                        <span class="crm-side__text">
+                            <a class="crm-side__link" href="{{ path('admin_locations_edit', {number: venue.number}) }}">{{ venue.name }}</a>
+                            <span class="crm-side__detail">{{ venue.tier|trans }}{% if venue.place.isKnown %} · {{ venue.place|trans }}{% endif %}</span>
+                        </span>
+                        <form class="crm-side__form" method="post" action="{{ path('admin_crm_companies_unlink_venue', {id: company.id, venueId: venue.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token(unlink_token) }}">
+                            {{ include('admin/components/_button.html.twig', {
+                                label: 'record.venues.unlink'|trans({}, 'crm'),
+                                variant: 'ghost',
+                                size: 'sm',
+                                type: 'submit',
+                                attributes: {'aria-label': 'record.venues.unlink_label'|trans({name: venue.name}, 'crm')},
+                            }, with_context = false) }}
+                        </form>
+                    </li>
                 </ul>
             {% endif %}
         </div>

@@ -283,7 +283,7 @@ final class ReviewQueueTest extends WebTestCase
         $this->connection->executeStatement('ALTER TABLE crm_activities ADD CONSTRAINT test_refuses_all CHECK (false) NOT VALID');
         $this->logInAs();
         [$manager, $venue] = $this->pendingRequest();
-        CompanyFactory::new()->withVenues($venue)->create();
+        CompanyFactory::new()->withVenue($venue)->create();
 
         $this->decide($manager, $venue, 'annehmen');
 

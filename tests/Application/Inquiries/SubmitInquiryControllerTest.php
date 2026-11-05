@@ -473,7 +473,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
      */
     public function test_a_failing_ingestion_does_not_reach_the_guest_and_leaves_the_inquiry(): void
     {
-        CompanyFactory::new()->withVenues(DetailVenues::full($this->em))->create();
+        CompanyFactory::new()->withVenue(DetailVenues::full($this->em))->create();
         $this->connection->executeStatement("DELETE FROM crm_activity_types WHERE code = 'inquiry'");
 
         $this->post(self::SLUG, InquiryFormFields::valid());

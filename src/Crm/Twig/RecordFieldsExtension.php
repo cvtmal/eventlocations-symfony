@@ -55,7 +55,7 @@ final readonly class RecordFieldsExtension
 
     /**
      * A deal's stored amount is Rappen and its dates `Y-m-d`, so `DealProperty` gives the text of each, as the API does.
-     * A company's venue can have been unlinked since, and a select has to offer what the deal holds.
+     * A Location's Eintrag can have been released since, and a select has to offer what the deal holds.
      *
      * @param list<OwnerOption> $owners the selectable owners (`OwnerOptionsQuery::selectable()`)
      *

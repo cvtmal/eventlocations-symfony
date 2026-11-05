@@ -15,7 +15,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * The company list's filter: a GET form in the query string (`createNamed('')`), as #24's venue list.
- * `sort`, `dir` and `page` are read beside it (`allow_extra_fields`). P10: selects, no tabs.
+ * `sort`, `dir` and `page` are read beside it (`allow_extra_fields`). `venues` is set by the tabs (Alle /
+ * Mit Eintrag / Ohne Eintrag, #56 OD1) and travels as a hidden field; the other filters are selects.
  */
 final class CompanyFilterType extends AbstractType
 {
@@ -31,13 +32,10 @@ final class CompanyFilterType extends AbstractType
                 ...OwnerChoices::options($options['owners'], withNone: true),
             ])
             ->add('venues', ChoiceType::class, [
-                'label' => 'list.filter.venues',
+                'label' => false,
                 'required' => false,
-                'placeholder' => 'list.filter.all_venues',
-                'choices' => [
-                    'list.filter.venues_with' => CompanyListFilter::VENUES_WITH,
-                    'list.filter.venues_without' => CompanyListFilter::VENUES_WITHOUT,
-                ],
+                'choices' => [CompanyListFilter::VENUES_WITH => CompanyListFilter::VENUES_WITH, CompanyListFilter::VENUES_WITHOUT => CompanyListFilter::VENUES_WITHOUT],
+                'choice_translation_domain' => false,
             ]);
     }
 

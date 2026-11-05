@@ -15,7 +15,7 @@ final readonly class DealRecord
     /**
      * @param string                     $stage         the code of its stage
      * @param list<CompanyRecordContact> $contacts      the contact rows of the deal's Location (#55)
-     * @param list<DealFormOption>       $companyVenues the venues a deal of this company can name
+     * @param list<DealFormOption>       $companyVenues the Location's Eintrag (0..1, #56) a deal can name
      * @param bool                       $renewable     won, with a contract end, and not renewed yet (D21)
      */
     public function __construct(

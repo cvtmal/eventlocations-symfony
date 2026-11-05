@@ -9,7 +9,7 @@ use App\Crm\Entity\Activity;
 use App\Crm\Entity\ActivityCompany;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\InquiryLink;
-use App\Crm\Repository\CompanyVenueRepository;
+use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\InquiryLinkRepository;
 use App\Inquiries\Repository\InquiryRepository;
 use App\Shared\Messenger\CommandHandlerInterface;
@@ -29,7 +29,7 @@ final class IngestInquiryHandler implements CommandHandlerInterface
     public function __construct(
         private readonly InquiryRepository $inquiries,
         private readonly InquiryLinkRepository $links,
-        private readonly CompanyVenueRepository $companyVenues,
+        private readonly CompanyRepository $companies,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -42,8 +42,8 @@ final class IngestInquiryHandler implements CommandHandlerInterface
         }
 
         $venueId = $inquiry->venue()?->id();
-        $companyVenue = null === $venueId ? null : $this->companyVenues->forVenue($venueId);
-        if (null === $companyVenue) {
+        $company = null === $venueId ? null : $this->companies->forVenue($venueId);
+        if (null === $company) {
             $this->em->persist(new InquiryLink($inquiry, null));
 
             return true;
@@ -58,7 +58,7 @@ final class IngestInquiryHandler implements CommandHandlerInterface
             null,
         );
         $this->em->persist($activity);
-        $this->em->persist(new ActivityCompany($activity, $companyVenue->company()));
+        $this->em->persist(new ActivityCompany($activity, $company));
         $this->em->persist(new InquiryLink($inquiry, $activity));
 
         return true;

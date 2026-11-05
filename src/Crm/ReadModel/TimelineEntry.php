@@ -7,7 +7,7 @@ namespace App\Crm\ReadModel;
 use App\Crm\ValueObject\ActivityDate;
 
 /**
- * One line of a record's timeline: a staff-written activity, or a system event. A system event is a linked venue's,
+ * One line of a record's timeline: a staff-written activity, or a system event. A system event is the Location's Eintrag's,
  * read from the audit log (company timeline only), or a deal's stage change, an activity row with a snapshot in its
  * payload (D17-d). A system entry has no body and nobody can edit it.
  */

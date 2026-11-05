@@ -189,7 +189,8 @@ server has no Node and no Sass, and pipes it through the gate. On the server:
 2. `bin/deploy` checks that the tarball is complete and that `.env.local` exists, then runs
    `app:prod:check-env` from the stage, against the real `.env.local`.
 3. Migrations run from the stage, while the old code is still live. That is safe because
-   migrations are additive. The one exception is #55, see §CRM contacts switch (#55).
+   migrations are additive. The exceptions are #55 and #56, see §CRM contacts switch (#55) and
+   §CRM one Eintrag per Location (#56).
 4. `rsync --delete` copies the stage over the app, keeping the four protected paths.
 5. In the app: the shell empties `var/cache/prod`, then `cache:warmup`, `app:geo:import-towns` and
    `app:http-cache:clear`.
@@ -247,7 +248,8 @@ There is no rollback. To go back, **revert the commit on `main`, let CI pass, an
 run always deploys the head of `main`, and the workflow has no input for an older commit.
 
 Migrations are never reverted, so the reverted code runs on the newer schema. That works because
-migrations are additive, except #55's (its own undo is in §CRM contacts switch (#55)). If data itself is wrong, see [Backups and restore](#backups-and-restore).
+migrations are additive, except #55's and #56's (their own undo is in §CRM contacts switch (#55)
+and §CRM one Eintrag per Location (#56)). If data itself is wrong, see [Backups and restore](#backups-and-restore).
 
 ## `.env.local`
 
@@ -637,7 +639,8 @@ night's `cron-daily` would do it too):
 /usr/local/php85/bin/php bin/console app:crm:backfill-inquiries
 ```
 
-Then, read-only, from the main checkout as in step 1:
+Then, read-only, from the main checkout as in step 1 (this query reads `crm_company_venues`, so
+it only works before #56; after #56, use the checks of §CRM one Eintrag per Location (#56)):
 
 ```sql
 SELECT 'migration head' AS metric, (SELECT max(version) FROM doctrine_migration_versions) AS n
@@ -688,6 +691,134 @@ deploy (§Restore production) and run the deploy at once. The migration's `down(
 schema only: the deleted couples, the entry and deal links, the moved tasks' contact, `kind` and
 `owner_id` come back only from the restore. Reverting the code alone does not work: the old code
 needs the old schema.
+
+### CRM one Eintrag per Location (#56)
+
+#56 moves the Location's Eintrag onto the Location: one migration, `Version20261105214935`, adds
+`crm_companies.venue_id` (unique, `ON DELETE SET NULL`: deleting a venue frees its Location),
+copies every row of `crm_company_venues` into it and drops that table. Staff now "Eintrag
+zuordnen" on a Location without one and "Lösen" on a Location with one; a Location holds one
+Eintrag at most. The Locations list gets the tabs "Alle / Mit Eintrag / Ohne Eintrag", and a new
+deal takes its Location's Eintrag.
+
+**Deploy #56 alone**, after #55 is live and step 4 of §CRM contacts switch (#55) passed. A deploy
+runs each migration in its own transaction (there is no `--all-or-nothing`), so if #56's guard
+stopped a deploy that also carried #55, #55's migration would stay applied under the old code.
+
+The migration guards itself, in one transaction: a failed precondition or postcondition rolls it
+back, so production keeps the old schema and the old code.
+
+**1. Before the deploy (read-only).** In the main checkout, with `make up` running, as in §CRM
+contacts switch (#55) step 1. The counts are the migration's own queries, word for word, and the
+labels are those of its `#56 pre:` lines in the deploy log. #55 already proved the server is
+PostgreSQL 18 (`down()` uses `uuidv7()`), so `SELECT version();` is not needed again.
+
+```sh
+read -rs PROD_DATABASE_URL && export PROD_DATABASE_URL
+docker compose exec -T -e PROD_DATABASE_URL database sh -c 'psql "$PROD_DATABASE_URL"' <<'SQL'
+SELECT 'A6 companies with 2+ venues' AS metric, (WITH cv AS (SELECT company_id, count(*) AS venues FROM crm_company_venues GROUP BY company_id) SELECT count(*) FROM cv WHERE venues > 1) AS n
+UNION ALL SELECT 'V2 venues on 2+ companies', (SELECT count(*) FROM (SELECT venue_id FROM crm_company_venues GROUP BY venue_id HAVING count(*) > 1) x)
+UNION ALL SELECT 'A1 companies', (SELECT count(*) FROM crm_companies)
+UNION ALL SELECT 'A5 companies with a venue', (SELECT count(DISTINCT company_id) FROM crm_company_venues)
+UNION ALL SELECT 'links', (SELECT count(*) FROM crm_company_venues)
+UNION ALL SELECT 'B1 venues', (SELECT count(*) FROM venues)
+UNION ALL SELECT 'B2 venues without a company', (SELECT count(*) FROM venues v WHERE NOT EXISTS (SELECT 1 FROM crm_company_venues x WHERE x.venue_id = v.id))
+UNION ALL SELECT 'K2 Liechtenstein venues on a company', (SELECT count(*) FROM crm_company_venues x JOIN venues v ON v.id = x.venue_id WHERE v.canton_code = 'li');
+SQL
+```
+
+Expected on 2026-11-05 (the owner's counts on Neon; #55 neither adds nor removes a Location or a
+link). The first two rows are the guards: either above 0 stops the deploy.
+
+| Row | Expected | Above the expected value |
+|---|---|---|
+| A6 companies with 2+ venues | 0 | Stops the deploy. List them with the query below; staff "lösen" the extra Einträge on the old card and give each its own Location with "Location anlegen" on the venue's CRM panel, then deploy again |
+| V2 venues on 2+ companies | 0 (a unique key forbids it) | Stops the deploy. Tell the lead |
+| A1 companies | 1499 | Locations staff created since. Informational; the postconditions start from the live value |
+| A5 companies with a venue, links | 249, 249 | Equal while A6 is 0. More: staff linked venues since |
+| B1 venues | 249 | More venues since; informational |
+| B2 venues without a company | 0 | A venue without a Location stays without one |
+| K2 Liechtenstein venues on a company | 4 | Must stay the same after the deploy |
+
+```sql
+-- A6 above 0: the Locations holding 2 or more Einträge.
+SELECT c.id, c.name, count(*) FROM crm_company_venues l JOIN crm_companies c ON c.id = l.company_id GROUP BY c.id, c.name HAVING count(*) > 1;
+```
+
+**2. What the deploy prints.**
+
+- **Both guards 0:** the deploy goes on. Its log shows the `#56 pre:` lines with the numbers
+  above, for example `[notice] #56 pre: links = 249`.
+- **A guard above 0:** the migration aborts with one message that names every failing row, for
+  example
+  `#56 precondition failed: A6 = 1 (companies with 2+ venues). Nothing was changed. See docs/operations.md "CRM one Eintrag per Location (#56)".`,
+  then `bin/deploy` says `the migration failed, the app is unchanged`. The old code serves on the
+  old schema. Do what the table says, tell the lead, and deploy again.
+- **A postcondition fails:** `#56 postcondition failed: <check>: expected <n>, got <m>[; <check>: …]. Nothing was changed. See docs/operations.md "CRM one Eintrag per Location (#56)".`
+  The checks are `P-links` (Locations with an Eintrag = links), `P-copied` (every link copied
+  exactly), `P-companies` (A1), `P-venues` (B1), `P-B2` and `P-K2`. Same state as above; tell the
+  lead, do not retry. Concurrent traffic cannot cause it: before its first count the migration
+  locks `crm_companies`, `crm_company_venues` and `venues` against writers (SHARE ROW EXCLUSIVE
+  mode), so a staff action sent meanwhile waits the second the migration takes.
+- **`canceling statement due to lock timeout`:** a query held one of those tables for 15 s, so
+  the migration gave up before changing anything. The first lock lets readers through, but the
+  later `ALTER TABLE` and `DROP TABLE` take ACCESS EXCLUSIVE on `crm_companies` and on the public
+  `venues` table (the dropped link table's FKs point at both), so a long reader (a cron, a slow
+  query) can cause it too, and public venue pages may pause for up to 15 s at the end of the
+  migration. Same state as above; deploy again at a quieter moment.
+
+**3. The deploy window.** The second exception to "migrations are additive" (§Deploy and purge,
+step 3): the migration drops `crm_company_venues`, which the old code still reads. For the seconds
+between the migration and the sync:
+
+- CRM pages and the venue editor's CRM panel answer 500;
+- an inquiry sent then is saved but not ingested (step 4 ingests it, or the night's `cron-daily`);
+- a manager confirmed then gets no row on their Location: staff remove and add the manager on the
+  panel;
+- a venue first published then gets no "Rechnung stellen" task: `CreateInvoiceTaskListener` logs
+  it and never retries, so staff add the task by hand.
+
+Deploy on a quiet evening.
+
+**4. After the deploy.** In the app directory over SSH, ingest whatever the window missed:
+
+```sh
+/usr/local/php85/bin/php bin/console app:crm:backfill-inquiries
+```
+
+Then, read-only, from the main checkout as in step 1:
+
+```sql
+SELECT 'migration head' AS metric, (SELECT max(version) FROM doctrine_migration_versions) AS n
+UNION ALL SELECT 'locations', (SELECT count(*) FROM crm_companies)::text
+UNION ALL SELECT 'with an Eintrag', (SELECT count(*) FROM crm_companies WHERE venue_id IS NOT NULL)::text
+UNION ALL SELECT 'venues without a Location', (SELECT count(*) FROM venues v WHERE NOT EXISTS (SELECT 1 FROM crm_companies c WHERE c.venue_id = v.id))::text
+UNION ALL SELECT 'Liechtenstein Einträge', (SELECT count(*) FROM crm_companies c JOIN venues v ON v.id = c.venue_id WHERE v.canton_code = 'li')::text
+UNION ALL SELECT 'link table left', (to_regclass('crm_company_venues') IS NOT NULL)::text;
+```
+
+A Location with 2 or more Einträge is impossible now (`uk_crm_companies_venue_id` is one venue
+per Location row), so it is not queried.
+
+| Row | Expected |
+|---|---|
+| migration head | `DoctrineMigrations\Version20261105214935` |
+| locations | A1 of the deploy log (1499 + Locations created since) |
+| with an Eintrag | `links` of the deploy log (249) |
+| venues without a Location | B2 of the deploy log (0) |
+| Liechtenstein Einträge | K2 of the deploy log (4) |
+| link table left | `false` |
+
+**Undo.** Revert the #56 commits on `main` and wait for CI. Then restore Neon to just before the
+deploy (§Restore production) and deploy at once. Reverting the code alone fails: the old code needs
+`crm_company_venues`. `down()` is complete (every Eintrag comes back as a link row, with new ids and
+timestamps), so the lead may instead run, in the app directory before deploying the revert,
+
+```sh
+/usr/local/php85/bin/php bin/console doctrine:migrations:execute 'DoctrineMigrations\Version20261105214935' --down --no-interaction
+```
+
+which keeps the writes made since the deploy.
 
 ## Content import
 
@@ -902,6 +1033,8 @@ unaffected.
    "Verknüpfen". The toast says "Eintrag verknüpft.". A venue offered with "bei …" in its line
    already belongs to a company; stop and look before going on.
 
+   Since #56 the card is "Eintrag" and the button "Zuordnen"; the steps are done on production.
+
    **Owner's check.** On `/admin/crm/locations`, a search by each company's name shows exactly one
    company, with 1 in the column "Einträge". Its page lists the venue under "Einträge", and the
    venue's CMS page shows that company in its CRM card. A search by each venue's name shows no
@@ -948,7 +1081,8 @@ company and venue names and classes, never an email or a phone number.
 1. Make a Neon branch first, so a bad run can be undone.
 2. `sh bin/prod-import crm-bootstrap`. It is safe to run again: a second run creates nothing.
    Not while the 4 Liechtenstein venues are unlinked, though (§Geocode the venues (Q3) and add
-   Liechtenstein (#46), step 9).
+   Liechtenstein (#46), step 9). Since #56 the card is "Eintrag" and the button "Zuordnen"; the
+   steps are done on production.
    Without it, every row that matches a venue is reported as blocked.
 3. `sh bin/prod-import customers-dry`, then read the report. If names need fixing, fix them in the
    sheet and run it again, until the report is right.

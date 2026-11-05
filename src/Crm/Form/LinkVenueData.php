@@ -8,7 +8,7 @@ use App\Shared\Validator\CleanText;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * "+ Verknüpfen" on a company (CRM-1): the venue id the combobox submits.
+ * "Eintrag zuordnen" on a Location (CRM-1): the venue id the combobox submits.
  */
 final class LinkVenueData
 {
