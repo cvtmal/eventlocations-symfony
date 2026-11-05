@@ -54,6 +54,16 @@ final class LegacyCompanyPathTest extends WebTestCase
         self::assertResponseRedirects('/admin/crm/locations', 301);
     }
 
+    public function test_a_query_key_cannot_replace_the_record_id(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $id = CompanyFactory::createOne()->id();
+
+        $this->client->request('GET', '/admin/crm/firmen/'.$id.'?id=00000000-0000-7000-8000-000000000000');
+
+        self::assertResponseRedirects('/admin/crm/locations/'.$id, 301);
+    }
+
     public function test_the_old_export_moves_for_an_admin_and_refuses_an_editor(): void
     {
         $this->logInAs(AdminRole::Admin);

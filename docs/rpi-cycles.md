@@ -131,6 +131,7 @@ The owner runs several sessions at once, one cycle each. These rules keep them f
 | 51 | `guest-bands` | — | FI-3 (owner, 2026-11-05) | 6, 11, 38 | — | — | ✅ Done |
 | 52 | `near-me-map` | — | — (owner request 2026-11-05) | 7, 10, 13, 15, 16, 19 | — | — | ✅ Done |
 | 53 | `google-rating` | — | — (owner request 2026-11-05) | 8, 15, 24, 25, 52 | `venues`: `google_place_id`, `google_rating_hidden`; drops `rating_score`, `rating_count`, `venue_rating_highlights`, `venue_reviews` (commit B, gated) | ~~D7~~ | In progress |
+| 54 | `crm-locations-names` | — | — (owner decision 2026-11-05, CRM Locations Option A, cycle 1 of 3) | 24, 27, 30, 45 | — | — | ✅ Done |
 
 ### Waves at a glance
 
@@ -3017,6 +3018,37 @@ Owner request of 2026-11-05, outside the waves. Depends on #8 (detail page), #15
   - **Drop gate:** Commit B `google-rating-drop` waits for the owner's production SQL (operations §Google rating (#53) step 3), after Commit A is deployed.
   - **Owner follow-ups:** the Google Cloud steps (enable Places UI Kit, add it to the key's API restrictions; the quota cap is optional); the real-key check (operations §Google rating (#53), "Real-key check"): the element's height at 390 and 1440 px for `.venue-google-rating--live`'s `min-block-size`, the look, German labels, `gmp-load`, no CSP violation; then the one-off lookup.
   - **For #52 (found here, fixed on main):** `assets/js/near-me.js` built the map on the bootstrap script's `load` event, where `google.maps.importLibrary` is still `undefined` with `loading=async`. #53 reported it; main fixed it with the same `callback` parameter in the hotfix `near-me-callback` (`a793a88`), before #53 landed.
+
+### 54. `crm-locations-names`
+
+Owner decision of 2026-11-05 (via the PO), outside the waves: the CRM company becomes the "Location" (Option A, "evolve in place"), cycle 1 of 3; #55 `crm-locations-contacts` and #56 `crm-locations-one-per-venue` follow, in that order. Depends on #24 (CMS venue screens), #27 (CRM companies), #30 (merge fields) and #45 (Portal's staff screens). Product view: `docs/product.md` "CRM Locations". Prior research: `.rpi-tracking/research/2026-11-04/crm-locations-merge-options.md`; research, plan, change log and review: `.rpi-tracking/{research,plans,changes,reviews}/2026-11-05/crm-locations-names-*.md`. Working notes: `.claude/rules/module-crm.md` (glossary and `#54`), `module-cms.md`, `module-portal.md`. Runbook: `docs/operations.md`.
+
+- **Decisions (owner and lead, 2026-11-05):**
+  - Q1: the CMS's own "Locations" become "Einträge" on the CMS staff screens only (nav, list, editor, widgets, search group); `/konto` and the public site keep "Location".
+  - Q11: the code keeps `Company`/`crm_companies`, the route names `admin_crm_companies*`, the JSON paths `/admin/api/crm/companies…`; a glossary line in `module-crm.md`.
+  - OD1a: the venue noun on Portal's staff screens says "Eintrag"; the role names "Location-Manager", "Location-Konto", "Konten für Locations" stay.
+  - OD2a: the `cms` keys `/konto` shares with the staff screens keep "Location".
+  - OD3a: "Firmenname" stays (the registered firm name).
+  - OD4a: the CRM timeline's "Eintrag" stays; "Aktivität" only where the two senses meet.
+  - OD5a: the admin login tagline stays.
+  - OD6a: the merge-field help lists only `{location.name}`; `{company.name}` stays a hidden alias.
+  - OD7: the company CSV is `locations-YYYY-MM-DD.csv` and its headers follow the screens. At most 2 staff users; no known spreadsheet depends on the old headers or filename.
+- **Done when:**
+  - every back-office screen says "Location(s)" for the CRM company, "Eintrag/Einträge" for the venue, and no CRM string is ambiguous;
+  - `/admin/crm/locations…` serves the CRM pages; each old `/admin/crm/firmen…` GET answers 301 with its query, same UUIDs;
+  - stored templates with `{company.name}` still merge;
+  - `/konto`, the public site and the mails are unchanged; no migration;
+  - `make lint`, `make test`, `make perf-check` pass, and the S11 back-office checks ran on the lane.
+
+**Outcome (2026-11-05).** Landed as `crm-locations-names` plus the finisher `crm-locations-names-finish`. Review: **Complete** (0 critical, 0 major, 2 minor), both minors fixed in the finisher.
+
+- **Paths:** `admin_crm_companies*` moved from `/admin/crm/firmen…` to `/admin/crm/locations…`; the venue-sense sub-paths moved too, so cycle 3 needs no second move: link/unlink `…/{id}/eintraege…`, from-venue `/admin/crm/eintraege/{venueId}/location` (all POST). New `Crm\Controller\LegacyCompanyPathController` (`#[IsGranted('ROLE_EDITOR')]`, export `ROLE_ADMIN`) answers the five old GETs (list, `neu`, `export`, `{id}`, `{id}/deals`) with a 301 to the route by name, the query kept; route parameters win over a query key; `no-store` as every `/admin` response. POSTs are not redirected: a CRM form opened before the deploy and sent after it fails once (404/405). Fragments survive (RFC 9110 §10.2.2, checked in headless Chrome).
+- **Merge:** `MergeFields::TOKENS` names `{location.name}`; a private `{company.name}` alias merges the same value in the same single `strtr`. No stored template is rewritten. `CrmStory` uses the new token.
+- **Wording:** catalogues `crm` (~80 values), `cms` (30), `validators` (4), `portal` (15). The CSV headers: company "Einträge", contact "Location", deal "Location, Eintrag". Kept by decision (R6): "Location-Kontakt", "Location-Manager", "Location-Konto", "Konten für Locations", "Location-Zugriff bestätigt", the inquiry lines "an die Location", the admin tagline, the 9 `/konto`-shared `cms` keys. Activity bodies written before the deploy keep "Neue Location eingereicht"; audit labels are translated at read time.
+- **Gate (Implement):** `make lint` passes; PHPUnit 5,964 tests in three chunks (baseline 5,954 + 10); Vitest 478; `make perf-check` 23 tests. S11: Lighthouse `/admin/crm/locations` 99 / **100** / 100 (SEO 54, `noindex` by design), `/admin/locations` 100 / 100 / 100; vnu "No errors" on `/admin/crm/locations`, a record, `/neu`, `/admin/locations`, `/admin/locations/neu`, `/admin`; `/konto/locations/neu` and a `/konto` photo page unchanged; 390 px without horizontal overflow on seven touched screens; ⌘K groups "Einträge" above "Locations".
+- **Deviation:** `make test` ran as `make sass db-test admin-build`, three PHPUnit chunks and `make admin-test`, because the full run exceeds the tool's 10-minute foreground limit; same scope.
+- **Open:** a visual pass at 1440 px against `docs/reference/admin/{Company,Locations,Sidebar,Main}.png` (labels differ by design) and a keyboard-only walkthrough, for a human. `cms` `error.not_found` ("Diese Location oder dieser Eintrag existiert nicht mehr.", shared with `/konto`) reads oddly on staff screens; a later split is a product call. For #55: the generic CRM "Dieser Eintrag existiert nicht mehr." / "Bitte einen Eintrag aus der Liste wählen" (OD4a) will show on contact screens too; the `/kontakte/{id}` redirect needs a lookup, so it may want a neutral `LegacyCrmPathController`.
+- **Deploy:** no migration, package, cron or env change. Staff bookmarks keep working through the 301s; deploy at a quiet moment.
 
 ## Out of scope / proposals (not scheduled)
 
