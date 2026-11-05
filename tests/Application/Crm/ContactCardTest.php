@@ -44,7 +44,7 @@ final class ContactCardTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         $add = $crawler->filter('#kontakte .card__head button[command="show-modal"]');
-        self::assertSame(['contact-new', 'Kontakt bei dieser Location erfassen'], [$add->attr('commandfor'), $add->attr('aria-label')]);
+        self::assertSame(['contact-new', 'Kontakt hinzufügen'], [$add->attr('commandfor'), $add->attr('aria-label')]);
         self::assertSame('Kontakt erfassen', $crawler->filter('#contact-new-title')->text());
         self::assertSame(['Laura Meier', 'Eventmanagerin', 'laura@seeblick.example', '+41 44 123 45 67'], $crawler->filter('#kontakte .crm-side__text > *')->each(static fn (Crawler $line): string => $line->text()));
         self::assertSame('mailto:laura@seeblick.example', $crawler->filter('#kontakte a[href^="mailto:"]')->attr('href'));

@@ -17,7 +17,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The CRM comboboxes' sources, in `ComboboxType`'s answer shape `{"options": [{"value", "label", "detail"}]}`:
- * companies (the contact's Firma) and venues ("+ Verknüpfen"). Reads only; the CSRF attribute is the
+ * companies (the deal form's Location picker) and venues ("+ Verknüpfen"). Reads only; the CSRF attribute is the
  * `/admin/api/` convention (`ExtensionPointsTest`) and leaves a GET unchecked.
  */
 #[IsGranted('ROLE_EDITOR')]

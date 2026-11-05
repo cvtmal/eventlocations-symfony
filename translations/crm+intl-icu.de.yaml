@@ -200,7 +200,7 @@ record:
     contacts:
         title: Kontakte
         add: Hinzufügen
-        add_label: Kontakt bei dieser Location erfassen
+        add_label: Kontakt hinzufügen
         add_title: Kontakt erfassen
         empty: Noch keine Kontakte.
         edit: Bearbeiten
