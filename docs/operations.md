@@ -427,9 +427,10 @@ the dev team; the page keeps showing the link meanwhile.
    the server's page cache. A place ID does not stamp `cms_edited_at`, so later folder imports
    still reach these venues.
 5. `unset GOOGLE_PLACES_API_KEY`, and delete the key in the Cloud console.
+6. Delete `content/owner/google-places-report.csv`. It holds Google's names and addresses, which
+   the Maps terms (§3.2.3) do not let us keep; only the place IDs in the database stay.
 
-**Undo:** clear the ID in the CMS card. The report is replaced on every run, so copy it before a
-rerun if you want to keep it. Google recommends refreshing place IDs older than 12 months: clear
+**Undo:** clear the ID in the CMS card. Google recommends refreshing place IDs older than 12 months: clear
 the venue's ID and rerun steps 1–4. There is no cron.
 
 **3. Retiring our own ratings: the production check before the drop.** #53 removes every reader

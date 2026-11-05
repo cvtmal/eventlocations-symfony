@@ -1,4 +1,4 @@
-// What #25's tabs share: the column of the two server pages, the message a failed write leaves in an island, and the
+// What #25's tabs share: the column of the documents pages, the message a failed write leaves in an island, and the
 // host page's no-JS fallback.
 .venue-media {
     display: flex;
@@ -7,22 +7,11 @@
     min-width: 0;
 }
 
-.venue-media__toolbar {
-    display: flex;
-    justify-content: flex-end;
-}
-
-// The forms of the two server pages stack their rows like the editor's cards.
+// The forms of the documents pages stack their rows like the editor's cards.
 .venue-media__form .card__body {
     display: flex;
     flex-direction: column;
     gap: var(--a-space-4);
-}
-
-// A list row is one line, but a review's text needs the width the actions would otherwise lose.
-.venue-media .venue-media__excerpt {
-    min-width: 240px;
-    white-space: normal;
 }
 
 .media-alert {
