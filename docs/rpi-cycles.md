@@ -3016,7 +3016,7 @@ Owner request of 2026-11-05, outside the waves. Depends on #8 (detail page), #15
 - **Open:**
   - **Drop gate:** Commit B `google-rating-drop` waits for the owner's production SQL (operations §Google rating (#53) step 3), after Commit A is deployed.
   - **Owner follow-ups:** the Google Cloud steps (enable Places UI Kit, add it to the key's API restrictions; the quota cap is optional); the real-key check (operations §Google rating (#53), "Real-key check"): the element's height at 390 and 1440 px for `.venue-google-rating--live`'s `min-block-size`, the look, German labels, `gmp-load`, no CSP violation; then the one-off lookup.
-  - **For #52 (found here, not fixed in #53):** `assets/js/near-me.js` builds the map on the bootstrap script's `load` event, where `google.maps.importLibrary` is still `undefined` with `loading=async`; a dummy-key probe on `?ort=8001` confirmed it. With a real key the map would fall back instead of drawing. The fix is the same `callback` parameter `google-rating.js` uses. Open follow-up for #52.
+  - **For #52 (found here, fixed on main):** `assets/js/near-me.js` built the map on the bootstrap script's `load` event, where `google.maps.importLibrary` is still `undefined` with `loading=async`. #53 reported it; main fixed it with the same `callback` parameter in the hotfix `near-me-callback` (`a793a88`), before #53 landed.
 
 ## Out of scope / proposals (not scheduled)
 
