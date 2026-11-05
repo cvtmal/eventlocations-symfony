@@ -106,9 +106,10 @@ function fakeGoogle({ reject = false } = {}) {
     return made;
 }
 
+// Google calls the `callback` named in the URL once importLibrary exists; the script's load event comes earlier.
 async function loadGoogle(options) {
     const made = fakeGoogle(options);
-    googleScripts()[0].dispatchEvent(new Event('load'));
+    window[new URL(googleScripts()[0].src).searchParams.get('callback')]();
     await flush();
 
     return made;
@@ -116,6 +117,7 @@ async function loadGoogle(options) {
 
 afterEach(() => {
     delete window.gm_authFailure;
+    delete window.nearMeMapReady;
     delete window.google;
     delete navigator.geolocation;
     vi.restoreAllMocks();
@@ -196,6 +198,7 @@ describe('near-me map (#52)', () => {
 
         expect(document.querySelectorAll('script')).toHaveLength(0);
         expect(window.gm_authFailure).toBeUndefined();
+        expect(window.nearMeMapReady).toBeUndefined();
     });
 
     it('appends exactly one script with the documented parameters and swaps the line for the canvas', () => {
@@ -203,9 +206,33 @@ describe('near-me map (#52)', () => {
 
         expect(googleScripts()).toHaveLength(1);
         const url = new URL(googleScripts()[0].src);
-        expect(Object.fromEntries(url.searchParams)).toEqual({ key: 'test-key', v: 'weekly', loading: 'async', language: 'de', region: 'CH' });
+        expect(Object.fromEntries(url.searchParams)).toEqual({
+            key: 'test-key',
+            v: 'weekly',
+            loading: 'async',
+            language: 'de',
+            region: 'CH',
+            callback: 'nearMeMapReady',
+        });
         expect(googleScripts()[0].async).toBe(true);
         expect(canvas().hidden).toBe(false);
+        expect(error().hidden).toBe(true);
+    });
+
+    it('builds from Google\'s callback, not from the script\'s load event', async () => {
+        mount(mapElement());
+        // What the real script does with loading=async: google.maps exists at the load event, importLibrary not yet.
+        window.google = { maps: {} };
+        googleScripts()[0].dispatchEvent(new Event('load'));
+        await flush();
+        expect(canvas().hidden).toBe(false);
+        expect(error().hidden).toBe(true);
+
+        const made = await loadGoogle();
+
+        expect(made.maps).toHaveLength(1);
+        expect(window.google.maps.importLibrary).toHaveBeenCalledTimes(3);
+        expect(window.nearMeMapReady).toBeUndefined();
         expect(error().hidden).toBe(true);
     });
 
