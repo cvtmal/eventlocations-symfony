@@ -1,6 +1,6 @@
 # Hochzeitslocation: product
 
-_Last updated: 2026-11-05 (through #53; CRM Locations merge #54-#56 in progress) · Owner of this file: the product owner (the WHAT). The tech lead owns the HOW. Scope, settled decisions, requirements and the cycle log stay in `docs/rpi-cycles.md`; operations in `docs/operations.md`._
+_Last updated: 2026-11-05 (through #53; CRM Locations: #54 live, #55-#56 in progress) · Owner of this file: the product owner (the WHAT). The tech lead owns the HOW. Scope, settled decisions, requirements and the cycle log stay in `docs/rpi-cycles.md`; operations in `docs/operations.md`._
 
 ## What it is
 
@@ -42,7 +42,7 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 | # | Item | Needs | Status |
 |---|---|---|---|
 | 1 | Security audit triage (2 high, 8 medium, 17 low) | Owner, when they choose to pick it up | Set aside by the owner on 2026-11-05. PO proposal when it returns: H1 guest-copy relay and H2 IPv6 limiter keys first, with M6, M8, M1 |
-| 2 | CRM "Locations" merge | Owner go given 2026-11-05 (option A, all 11 defaults); deploys the owner's | #54 crm-locations-names, #55 crm-locations-contacts, #56 crm-locations-one-per-venue in progress. See "CRM Locations" below |
+| 2 | CRM "Locations" merge | Owner go given 2026-11-05 (option A, all 11 defaults); deploys the owner's | #54 live; #55 crm-locations-contacts and #56 crm-locations-one-per-venue in progress. See "CRM Locations" below |
 | 3 | Q3 pin check: 13 doubtful map pins and 1 venue without a pin | Owner, by hand | In `content/owner/q3-pin-check.md` |
 | 4 | When to let Googlebot in | Owner | Blocked on purpose after launch; no date set |
 | 5 | Price of a self-created entry | Owner | Not set; plays no part in the app |
@@ -58,7 +58,7 @@ Research: `.rpi-tracking/research/2026-11-04/crm-locations-merge-options.md`. Th
 - People become a contact card on the Location, with no page, list or timeline of their own. Removing one deletes the row only. Contacts without a company are erased after a dry run shows the count.
 - Couples leave the CRM and exist only as Anfragen, under the existing 12-month purge. No composer on an Anfrage. Couples already in the CRM are erased at the switch (Anfragen stay, notes blanked, tasks removed).
 - A deal shows its Location's contact card, and its Eintrag comes from the Location. A manager confirmed in `/konto` is copied once onto the card.
-- Cycles, in order: `crm-locations-names` (no migration), `crm-locations-contacts`, `crm-locations-one-per-venue`. Each needs the owner's go to implement.
+- Cycles, in order: #54 `crm-locations-names` (live: the CRM says "Locations" at `/admin/crm/locations…` with 301s from `/firmen`, the CMS says "Einträge", merge token `{location.name}` with `{company.name}` still working, CSV `locations-YYYY-MM-DD.csv`), then #55 `crm-locations-contacts` (in implementation), then #56 `crm-locations-one-per-venue` (after #55 is live). The owner gave the go for all three on 2026-11-05.
 
 ## Parked
 
