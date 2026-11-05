@@ -32,11 +32,6 @@ final class DealCardQuery
         return $this->card(' WHERE d.company_id = :id', $companyId);
     }
 
-    public function forContact(string $contactId): DealCard
-    {
-        return $this->card(' JOIN crm_deal_contacts dc ON dc.deal_id = d.id AND dc.contact_id = :id', $contactId);
-    }
-
     /**
      * @return list<DealCardRow>
      */

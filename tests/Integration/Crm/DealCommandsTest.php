@@ -9,15 +9,11 @@ use App\Crm\Command\ChangeDealProperty;
 use App\Crm\Command\CreateDeal;
 use App\Crm\Command\DeleteCompany;
 use App\Crm\Command\DeleteDeal;
-use App\Crm\Command\EraseContact;
-use App\Crm\Command\LinkDealContact;
 use App\Crm\Command\MoveDealStage;
-use App\Crm\Command\UnlinkDealContact;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Deal;
 use App\Crm\Exception\CompanyHasDeals;
 use App\Crm\Exception\CompanyNotFound;
-use App\Crm\Exception\ContactOfAnotherCompany;
 use App\Crm\Exception\ContractEndsBeforeStart;
 use App\Crm\Exception\DealNotFound;
 use App\Crm\Exception\InvalidPropertyValue;
@@ -27,7 +23,6 @@ use App\Crm\Exception\UnknownDealStage;
 use App\Crm\Exception\VenueNotLinked;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\LostReason;
-use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
@@ -57,7 +52,6 @@ final class DealCommandsTest extends KernelTestCase
     {
         $venue = self::venue();
         $company = CompanyFactory::new()->withVenues($venue)->create();
-        $contact = ContactFactory::createOne(['company' => $company]);
         $owner = AdminUserFactory::createOne();
         $id = EntityId::generate();
 
@@ -72,7 +66,6 @@ final class DealCommandsTest extends KernelTestCase
             new \DateTimeImmutable('2027-12-31'),
             new \DateTimeImmutable('2026-12-01'),
             $owner->id(),
-            [$contact->id(), $contact->id()],
         ));
 
         self::assertSame(
@@ -92,9 +85,8 @@ final class DealCommandsTest extends KernelTestCase
             ],
             $this->connection->fetchAssociative('SELECT name, company_id, venue_id, tier, amount_rappen, contract_start_on, contract_end_on, expected_close_on, stage_code, owner_id, lost_reason, closed_at FROM crm_deals WHERE id = ?', [$id]),
         );
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_deal_contacts WHERE deal_id = ?', $id));
         self::assertSame(
-            [['command' => CreateDeal::class, 'changes' => ['fields' => ['name', 'venue', 'tier', 'amount', 'contract_start', 'contract_end', 'expected_close', 'owner', 'contacts']]]],
+            [['command' => CreateDeal::class, 'changes' => ['fields' => ['name', 'venue', 'tier', 'amount', 'contract_start', 'contract_end', 'expected_close', 'owner']]]],
             $this->auditRows('deal', $id),
         );
     }
@@ -107,7 +99,7 @@ final class DealCommandsTest extends KernelTestCase
         $this->failure(new CreateDeal(EntityId::generate(), 'Premium', EntityId::generate()), CompanyNotFound::class);
     }
 
-    public function test_a_new_deal_takes_only_the_companys_own_venue_and_contacts(): void
+    public function test_a_new_deal_takes_only_the_companys_own_venue(): void
     {
         $company = CompanyFactory::createOne();
         $other = CompanyFactory::new()->withVenues(self::venue())->create();
@@ -116,10 +108,6 @@ final class DealCommandsTest extends KernelTestCase
         $this->failure(new CreateDeal(EntityId::generate(), 'Premium', $company->id(), $foreignVenue), VenueNotLinked::class);
         $this->failure(new CreateDeal(EntityId::generate(), 'Premium', $company->id(), self::venue()->id()), VenueNotLinked::class);
         $this->failure(new CreateDeal(EntityId::generate(), 'Premium', $company->id(), 'keine-uuid'), VenueNotLinked::class);
-        $this->em->clear();
-        $this->failure(new CreateDeal(EntityId::generate(), 'Premium', $company->id(), contactIds: [ContactFactory::createOne(['company' => $other])->id()]), ContactOfAnotherCompany::class);
-        $this->em->clear();
-        $this->failure(new CreateDeal(EntityId::generate(), 'Premium', $company->id(), contactIds: [ContactFactory::createOne()->id()]), ContactOfAnotherCompany::class);
         $this->em->clear();
 
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_deals WHERE company_id = ?', $company->id()));
@@ -239,7 +227,6 @@ final class DealCommandsTest extends KernelTestCase
         self::assertEquals(['deal_name' => 'Premium 2027', 'from' => 'new', 'to' => 'offer'], json_decode((string) $activity['payload'], true, flags: \JSON_THROW_ON_ERROR));
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_deals WHERE activity_id = ? AND deal_id = ?', $activity['id'], $deal->id()));
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_companies WHERE activity_id = ? AND company_id = ?', $activity['id'], $company->id()));
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_activity_contacts'));
     }
 
     public function test_a_second_identical_move_adds_nothing(): void
@@ -353,51 +340,20 @@ final class DealCommandsTest extends KernelTestCase
             new ChangeDealProperty($id, DealProperty::Name, 'Basic', null),
             new MoveDealStage($id, 'won', 'new', $actor),
             new DeleteDeal($id),
-            new LinkDealContact($id, EntityId::generate()),
-            new UnlinkDealContact($id, EntityId::generate()),
             new DeleteDeal('keine-uuid'),
         ] as $command) {
             $this->failure($command, DealNotFound::class);
         }
     }
 
-    public function test_a_contact_is_linked_once_and_unlinked(): void
-    {
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        $deal = DealFactory::createOne(['company' => $company]);
-
-        $this->dispatch(new LinkDealContact($deal->id(), $contact->id()));
-        $this->dispatch(new LinkDealContact($deal->id(), $contact->id()));
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_deal_contacts WHERE deal_id = ?', $deal->id()));
-
-        $this->dispatch(new UnlinkDealContact($deal->id(), $contact->id()));
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_deal_contacts WHERE deal_id = ?', $deal->id()));
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_contacts WHERE id = ?', $contact->id()));
-        self::assertSame(['action' => 'contact_unlinked'], $this->auditRows('deal', $deal->id())[2]['changes']);
-    }
-
-    public function test_a_contact_of_another_company_is_not_linked(): void
-    {
-        $deal = DealFactory::createOne();
-
-        $this->failure(new LinkDealContact($deal->id(), ContactFactory::createOne(['company' => CompanyFactory::createOne()])->id()), ContactOfAnotherCompany::class);
-        $this->em->clear();
-
-        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_deal_contacts'));
-    }
-
     public function test_every_deal_write_locks_the_company_before_the_deal(): void
     {
         $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
         $actor = AdminUserFactory::createOne()->id();
 
         $commands = [
             static fn (Deal $deal): object => new ChangeDealProperty($deal->id(), DealProperty::Name, 'Neu', $deal->name()),
             static fn (Deal $deal): object => new MoveDealStage($deal->id(), 'won', 'new', $actor),
-            static fn (Deal $deal): object => new LinkDealContact($deal->id(), $contact->id()),
-            static fn (Deal $deal): object => new UnlinkDealContact($deal->id(), $contact->id()),
             static fn (Deal $deal): object => new DeleteDeal($deal->id()),
         ];
         foreach ($commands as $command) {
@@ -417,19 +373,6 @@ final class DealCommandsTest extends KernelTestCase
         $this->failure(new DeleteCompany($company->id()), CompanyHasDeals::class);
 
         self::assertSame(1, $this->rows('SELECT count(*) FROM crm_companies WHERE id = ?', $company->id()));
-    }
-
-    public function test_a_note_on_a_deal_survives_the_erasure_of_its_contact(): void
-    {
-        $contact = ContactFactory::createOne();
-        $deal = DealFactory::createOne();
-        $note = ActivityFactory::new()->onContact($contact)->onDeal($deal)->create(['body' => 'Mit dem Paar telefoniert.']);
-        $this->em->clear();
-
-        $this->dispatch(new EraseContact($contact->id()));
-
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_activity_deals WHERE activity_id = ? AND deal_id = ?', $note->id(), $deal->id()));
-        self::assertNull($this->connection->fetchOne('SELECT body FROM crm_activities WHERE id = ?', [$note->id()]));
     }
 
     public function test_a_task_on_a_deal_goes_with_the_deal_only(): void

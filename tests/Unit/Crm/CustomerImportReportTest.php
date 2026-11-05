@@ -61,7 +61,7 @@ final class CustomerImportReportTest extends TestCase
         $markdown = $this->report(dryRun: false, failures: ['row 14: ContactEmailTaken'])->markdown();
 
         self::assertStringStartsWith("# Customer import\n\n- Customers: 13 rows,", $markdown);
-        self::assertStringContainsString('- Contacts without the company\'s email, which another contact holds: 1. New customers skipped at write, a company of the name existed by then: 0.', $markdown);
+        self::assertStringContainsString('- New customers skipped at write, a company of the name existed by then: 0.', $markdown);
         self::assertStringContainsString('- row 2: Landgut Erfunden', $markdown);
         self::assertStringContainsString('- row 14: Gasthof Beispiel (Zürich), named apart from Gasthof Beispiel (other canton: Gasthof Beispiel)', $markdown);
         self::assertStringContainsString('- row 4: Schloss Erdacht → Schloss Erdacht', $markdown);
@@ -119,7 +119,7 @@ final class CustomerImportReportTest extends TestCase
         ];
 
         // 13 sheet rows: 2..14
-        return new CustomerImportReport($dryRun, 13, $classifications, 2, 2, 3, $dryRun ? 0 : 1, 0, $failures);
+        return new CustomerImportReport($dryRun, 13, $classifications, 2, 2, 3, 0, $failures);
     }
 
     /**

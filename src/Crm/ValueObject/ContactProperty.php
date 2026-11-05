@@ -8,8 +8,8 @@ use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The inline-editable fields of a contact record (CRM-2, D10): the allow-list of the `field` a
- * PATCH may name. `company` takes a company id, `owner` an admin user id, `kind` a ContactKind value.
+ * The fields of a contact row on a Location's card (CRM-2, #55): the allow-list whose rules
+ * `PropertyConstraints::contact()` holds for the card's dialog form.
  */
 enum ContactProperty: string implements TranslatableInterface
 {
@@ -18,14 +18,11 @@ enum ContactProperty: string implements TranslatableInterface
     case Email = 'email';
     case Phone = 'phone';
     case Position = 'position';
-    case Kind = 'kind';
-    case Company = 'company';
-    case Owner = 'owner';
 
-    /** Whether the field may be emptied (every field but the last name and the kind). */
+    /** Whether the field may be emptied (every field but the last name). */
     public function isNullable(): bool
     {
-        return self::LastName !== $this && self::Kind !== $this;
+        return self::LastName !== $this;
     }
 
     public function trans(TranslatorInterface $translator, ?string $locale = null): string

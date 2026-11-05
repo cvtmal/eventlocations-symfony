@@ -39,7 +39,6 @@ final class BootstrapController extends AbstractController
             'companies' => $report->companies,
             'contacts' => $report->contacts,
             'without' => $report->withoutContactPerson,
-            'taken' => $report->emailsTaken,
             'shared' => $report->sharedEmails,
             'skipped' => $report->skipped,
             'failed' => $report->failed(),

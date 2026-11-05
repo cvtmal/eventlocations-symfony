@@ -12,7 +12,6 @@ use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\TaskNotFound;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
@@ -143,13 +142,12 @@ final class TaskListTest extends WebTestCase
         self::assertSame('0', $crawler->filter('input[name="done"]')->attr('value'));
     }
 
-    public function test_a_row_links_its_company_or_contact(): void
+    public function test_a_row_links_its_company_or_deal(): void
     {
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne(['name' => 'Seeblick Events GmbH']);
-        $contact = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier']);
         TaskFactory::createOne(['title' => 'A', 'assignee' => $me, 'company' => $company]);
-        TaskFactory::createOne(['title' => 'B', 'assignee' => $me, 'contact' => $contact]);
+        TaskFactory::createOne(['title' => 'B', 'assignee' => $me]);
         $deal = DealFactory::createOne(['company' => CompanyFactory::createOne(['name' => 'Seehotel Bellerive'])]);
         TaskFactory::createOne(['title' => 'C', 'assignee' => $me, 'deal' => $deal]);
 
@@ -157,10 +155,10 @@ final class TaskListTest extends WebTestCase
 
         self::assertSame('Location · Seeblick Events GmbH', $details->eq(0)->text());
         self::assertSame('/admin/crm/locations/'.$company->id(), $details->eq(0)->filter('a')->attr('href'));
-        self::assertSame('Kontakt · Laura Meier', $details->eq(1)->text());
-        self::assertSame('/admin/crm/kontakte/'.$contact->id(), $details->eq(1)->filter('a')->attr('href'));
-        self::assertSame('Deal · Seehotel Bellerive', $details->eq(2)->text());
-        self::assertSame('/admin/crm/deals/'.$deal->id(), $details->eq(2)->filter('a')->attr('href'));
+        // B is on no object: no second line.
+        self::assertCount(2, $details);
+        self::assertSame('Deal · Seehotel Bellerive', $details->eq(1)->text());
+        self::assertSame('/admin/crm/deals/'.$deal->id(), $details->eq(1)->filter('a')->attr('href'));
     }
 
     /**
@@ -206,8 +204,8 @@ final class TaskListTest extends WebTestCase
         $this->post(self::LIST.'?view=alle', ['task' => ['title' => ' Ablage ordnen ', 'dueOn' => '2026-11-03', 'assignee' => $other->id(), '_token' => 'csrf-token']]);
 
         self::assertResponseRedirects(self::LIST.'?view=alle', 303);
-        $row = $this->connection->fetchAssociative('SELECT title, due_on, assignee_id, created_by_id, company_id, contact_id FROM crm_tasks');
-        self::assertSame(['title' => 'Ablage ordnen', 'due_on' => '2026-11-03', 'assignee_id' => $other->id(), 'created_by_id' => $me->id(), 'company_id' => null, 'contact_id' => null], $row);
+        $row = $this->connection->fetchAssociative('SELECT title, due_on, assignee_id, created_by_id, company_id, deal_id FROM crm_tasks');
+        self::assertSame(['title' => 'Ablage ordnen', 'due_on' => '2026-11-03', 'assignee_id' => $other->id(), 'created_by_id' => $me->id(), 'company_id' => null, 'deal_id' => null], $row);
         $crawler = $this->client->followRedirect();
         self::assertStringContainsString('Aufgabe erstellt.', $crawler->filter('.toast')->text());
         self::assertSame(['Ablage ordnen'], $this->titles($crawler));

@@ -79,11 +79,27 @@ final class CompanyListQueryTest extends KernelTestCase
         self::assertSame([], $this->query()->quickSearch('  ', 5));
     }
 
+    public function test_a_location_is_found_by_its_contact_s_name_or_email(): void
+    {
+        $company = CompanyFactory::createOne(['name' => 'Seeblick Events']);
+        ContactFactory::createOne(['firstName' => 'Jürg', 'lastName' => 'Müller', 'company' => $company, 'email' => 'juerg@seeblick.example']);
+        ContactFactory::createOne(['firstName' => 'Jürg', 'lastName' => 'Müller', 'company' => $company, 'email' => 'zweiter@seeblick.example']);
+        CompanyFactory::createOne(['name' => 'Alpenhof AG']);
+        $query = $this->query();
+
+        foreach (['muller', 'Jürg Müller', 'JUERG@seeblick', 'seeblick.example'] as $q) {
+            self::assertSame(['Seeblick Events'], array_map(static fn (CompanyListRow $row): string => $row->name, $query->quickSearch($q, 5)), $q);
+            self::assertSame(['Seeblick Events'], $this->names($query, new CompanyListFilter(q: $q)), $q);
+        }
+        self::assertSame([], $query->quickSearch('%', 5));
+        self::assertSame([], $query->quickSearch('!!!', 5));
+    }
+
     public function test_the_record_carries_venues_and_contacts(): void
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         $company = CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']);
-        ContactFactory::createOne(['firstName' => 'Marc', 'lastName' => 'Widmer', 'company' => $company]);
+        ContactFactory::new()->withDetails()->create(['firstName' => 'Marc', 'lastName' => 'Widmer', 'company' => $company]);
         ContactFactory::createOne(['firstName' => null, 'lastName' => 'Brunner', 'company' => $company]);
         $records = self::getContainer()->get(CompanyRecordQuery::class);
         self::assertInstanceOf(CompanyRecordQuery::class, $records);
@@ -94,6 +110,7 @@ final class CompanyListQueryTest extends KernelTestCase
         self::assertSame([[$venue->id(), $venue->number(), 'Schloss Seeblick']], array_map(static fn ($v): array => [$v->id, $v->number, $v->name], $record->venues));
         self::assertFalse($record->venues[0]->place->isKnown());
         self::assertSame(['Brunner', 'Marc Widmer'], array_map(static fn ($c): string => $c->fullName(), $record->contacts));
+        self::assertSame([null, true], [$record->contacts[0]->phone, null !== $record->contacts[1]->phone]);
         self::assertSame('Seeblick Events', $records->name($company->id()));
         self::assertNull($records->find(EntityId::generate()));
         self::assertNull($records->find('not-a-uuid'));

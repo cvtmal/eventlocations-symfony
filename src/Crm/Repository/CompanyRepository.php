@@ -44,8 +44,8 @@ class CompanyRepository extends ServiceEntityRepository
     }
 
     /**
-     * Deletes the row with SQL and lets the database cascade (contacts SET NULL; venue links,
-     * timeline links and tasks CASCADE). Not `remove()`: a managed task or contact that still points
+     * Deletes the row with SQL and lets the database cascade (contacts, venue links, timeline
+     * links and tasks CASCADE; #55). Not `remove()`: a managed task or contact that still points
      * at a removed entity would fail the next flush.
      */
     public function delete(string $id): void

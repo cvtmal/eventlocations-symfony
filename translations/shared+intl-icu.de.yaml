@@ -30,10 +30,10 @@ legal:
             retention: 'Wir speichern Anfragen zusammen mit dem Versandstatus und löschen sie {months, plural, one {# Monat} other {# Monate}} nach dem Eingang. E-Mails, die eine Location erhalten hat, liegen bei der Location und werden davon nicht berührt.'
         crm:
             title: Kontakte von Locations
-            # TODO owner: review this section (#27, D18): the retention is the cycle's default, "until no longer needed, deleted on request". Limit of "löschen wir sie früher": an erasure also blanks the company's e-mail when it is the person's address, but venues.contact_person and venues.inquiry_email stay, because Crm writes no venue data; staff remove that copy by hand in the CMS, as the erase dialog says.
-            data: 'Wenn Sie für eine Location arbeiten, bearbeiten wir Ihre geschäftlichen Kontaktdaten: Name, Position, E-Mail-Adresse, Telefonnummer und Ihre Firma. Dazu kommen unsere Notizen und Aufgaben zum Austausch mit Ihnen.'
+            # Since #55 a contact is a row on its Location's card: a removal deletes that row only. venues.contact_person and venues.inquiry_email stay, because Crm writes no venue data; staff remove that copy by hand in the CMS.
+            data: 'Wenn Sie für eine Location arbeiten, bearbeiten wir Ihre geschäftlichen Kontaktdaten: Name, Rolle, E-Mail-Adresse, Telefonnummer und Ihre Location. Dazu kommen unsere Notizen zur Zusammenarbeit mit Ihrer Location.'
             purpose: Wir nutzen sie, um die Zusammenarbeit mit den Locations zu pflegen. Diese Daten sind nur in unserem internen Bereich sichtbar und liegen in derselben Datenbank wie die Anfragen.
-            retention: Wir speichern sie, solange wir sie für die Zusammenarbeit brauchen. Verlangen Sie die Löschung, löschen wir sie früher. Dabei entfernen wir auch den Inhalt der Einträge über Sie.
+            retention: Wir speichern sie, solange wir sie für die Zusammenarbeit brauchen. Verlangen Sie die Löschung, löschen wir sie früher.
         merkliste:
             title: Merkliste und Cookie
             text: 'Die Merkliste funktioniert ohne Konto. Dafür setzen wir ein einziges Cookie mit dem Namen «merkliste». Es merkt sich, welche Locations Sie gespeichert haben. Es ist für diese Funktion nötig, darum fragen wir nicht nach Ihrer Einwilligung.'

@@ -28,7 +28,7 @@ final readonly class CompanyBootstrap
 
     public function run(?int $limit = null): BootstrapReport
     {
-        $companies = $contacts = $withoutContactPerson = $emailsTaken = $skipped = 0;
+        $companies = $contacts = $withoutContactPerson = $skipped = 0;
         $failures = [];
 
         foreach ($this->venues->numbers($limit) as $number => $venueId) {
@@ -50,10 +50,9 @@ final readonly class CompanyBootstrap
             }
             ++$companies;
             $outcome->contactCreated ? ++$contacts : ++$withoutContactPerson;
-            $emailsTaken += $outcome->emailTaken ? 1 : 0;
         }
 
-        return new BootstrapReport($companies, $contacts, $withoutContactPerson, $emailsTaken, $this->venues->sharingInquiryEmail(), $skipped, $failures, $this->venues->remaining());
+        return new BootstrapReport($companies, $contacts, $withoutContactPerson, $this->venues->sharingInquiryEmail(), $skipped, $failures, $this->venues->remaining());
     }
 
     /**

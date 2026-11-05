@@ -10,7 +10,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * One timeline entry (S13, D7), linked to its objects through ActivityCompany and ActivityContact.
+ * One timeline entry (S13, D7), linked to its objects through ActivityCompany and ActivityDeal.
  * `title` and `body` are both nullable: a manual entry stores its text in `body` only, `title`
  * serves #29 and #30 (P7); one of them is set until the entry is anonymised
  * (chk_crm_activities_content). `actor` is null for entries without a staff author (#29).

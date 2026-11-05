@@ -6,7 +6,6 @@ namespace App\Crm\CommandHandler;
 
 use App\Crm\Command\RenewDeal;
 use App\Crm\Entity\Deal;
-use App\Crm\Entity\DealContact;
 use App\Crm\Entity\DealStage;
 use App\Crm\Exception\DealNotRenewable;
 use App\Crm\Repository\CompanyRepository;
@@ -16,12 +15,11 @@ use App\Crm\Repository\TaskRepository;
 use App\Crm\ValueObject\ContractPeriod;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Translation\EnabledLocale;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Under the locks, company then deal (D11). The copy takes company, venue, tier, amount, owner and contacts, never
+ * Under the locks, company then deal (D11). The copy takes company, venue, tier, amount and owner, never
  * `closedAt` or `lostReason`: a renewal starts over at `new`, expected to close when the old contract ends. The old
  * deal's open renewal task is done with it, in one transaction (D21). A new open deal changes no derived stage.
  */
@@ -32,7 +30,6 @@ final class RenewDealHandler implements CommandHandlerInterface
         private readonly DealRepository $deals,
         private readonly DealStageRepository $stages,
         private readonly TaskRepository $tasks,
-        private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
         private readonly TranslatorInterface $translator,
         private readonly EnabledLocale $locales,
@@ -68,10 +65,6 @@ final class RenewDealHandler implements CommandHandlerInterface
             $old,
         );
         $this->deals->add($renewal);
-
-        foreach ($this->deals->contactLinksOf($old->id()) as $link) {
-            $this->em->persist(new DealContact($renewal, $link->contact()));
-        }
 
         $task = $this->tasks->renewalOf($old->id());
         if (null !== $task && !$task->isDone()) {

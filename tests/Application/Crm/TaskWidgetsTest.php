@@ -7,7 +7,6 @@ namespace App\Tests\Application\Crm;
 use App\Admin\ValueObject\AdminRole;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Tests\Support\Admin\AdminSession;
@@ -33,9 +32,9 @@ final class TaskWidgetsTest extends WebTestCase
         self::mockTime('2026-10-31 10:00:00 UTC');
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne(['name' => 'Gutshof Lindenhalde AG']);
-        $contact = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier']);
+        $deal = DealFactory::createOne(['company' => CompanyFactory::createOne(['name' => 'Seehotel Bellerive'])]);
         TaskFactory::createOne(['title' => 'Offerte senden', 'assignee' => $me, 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
-        TaskFactory::createOne(['title' => 'Rückruf', 'assignee' => $me, 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
+        TaskFactory::createOne(['title' => 'Rückruf', 'assignee' => $me, 'deal' => $deal, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
         TaskFactory::createOne(['title' => 'Ablage', 'assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-11-03')]);
         TaskFactory::createOne(['title' => 'Fremde', 'assignee' => AdminUserFactory::createOne(), 'dueOn' => new \DateTimeImmutable('2026-11-04')]);
 
@@ -44,9 +43,9 @@ final class TaskWidgetsTest extends WebTestCase
         self::assertSame('Meine Aufgaben', $widget->filter('h2')->text());
         self::assertSame(['Offerte senden', 'Rückruf', 'Ablage'], $this->titles($widget));
         self::assertSame(['Überfällig', 'Heute', 'Di, 3.11.'], $widget->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
-        self::assertSame(['Location · Gutshof Lindenhalde AG', 'Kontakt · Laura Meier'], $widget->filter('.crm-list__detail')->each(static fn (Crawler $detail): string => $detail->text()));
+        self::assertSame(['Location · Gutshof Lindenhalde AG', 'Deal · Seehotel Bellerive'], $widget->filter('.crm-list__detail')->each(static fn (Crawler $detail): string => $detail->text()));
         self::assertSame(
-            ['/admin/crm/locations/'.$company->id(), '/admin/crm/kontakte/'.$contact->id()],
+            ['/admin/crm/locations/'.$company->id(), '/admin/crm/deals/'.$deal->id()],
             $widget->filter('.crm-list__detail a')->each(static fn (Crawler $link): ?string => $link->attr('href')),
         );
         self::assertCount(1, $widget->filter('.task-widget__row')->last()->filter('.crm-task__text > *'), 'A task on no object has no second line.');

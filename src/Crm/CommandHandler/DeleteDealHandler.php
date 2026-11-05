@@ -12,7 +12,7 @@ use App\Crm\Repository\DealRepository;
 use App\Shared\Messenger\CommandHandlerInterface;
 
 /**
- * The database does the cascade (contact links, timeline links, tasks; a renewal stays, SET NULL). The handler then
+ * The database does the cascade (timeline links, tasks; a renewal stays, SET NULL). The handler then
  * deletes the entries the deal was the last object of, as DeleteCompanyHandler does, and brings the company's stage
  * up to date. The delete is SQL, so nothing waits for a flush (N11).
  */

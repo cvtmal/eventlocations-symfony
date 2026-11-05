@@ -22,8 +22,8 @@ final class CrmSchemaMigrationTest extends KernelTestCase
 {
     private const TABLES = [
         'crm_companies', 'crm_contacts', 'crm_company_venues', 'crm_activity_types', 'crm_activities',
-        'crm_activity_companies', 'crm_activity_contacts', 'crm_tasks', 'crm_deal_stages', 'crm_deals',
-        'crm_deal_contacts', 'crm_activity_deals', 'crm_inquiry_links', 'crm_email_templates',
+        'crm_activity_companies', 'crm_tasks', 'crm_deal_stages', 'crm_deals', 'crm_activity_deals',
+        'crm_inquiry_links', 'crm_email_templates',
     ];
 
     private const IDS = [
@@ -46,18 +46,16 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         "INSERT INTO admin_users (id, email, display_name, password_hash, role) VALUES ('{admin}', 'crm-schema@example.test', 'Schema', 'x', 'admin')",
         "INSERT INTO venues (id, name, tier, status, capacity_max) VALUES ('{venue}', 'Crm Testhaus', 'basic', 'published', 100), ('{venue2}', 'Crm Zweithaus', 'basic', 'published', 50)",
         "INSERT INTO crm_companies (id, name, origin, owner_id) VALUES ('{company}', 'Testhaus AG', 'venue', '{admin}'), ('{company2}', 'Zweite GmbH', 'manual', NULL)",
-        "INSERT INTO crm_contacts (id, first_name, last_name, email, kind, company_id, owner_id) VALUES ('{contact}', 'Anna', 'Muster', 'anna@example.test', 'venue_contact', '{company}', '{admin}')",
+        "INSERT INTO crm_contacts (id, first_name, last_name, email, company_id) VALUES ('{contact}', 'Anna', 'Muster', 'anna@example.test', '{company}')",
         "INSERT INTO crm_company_venues (id, company_id, venue_id) VALUES (gen_random_uuid(), '{company}', '{venue}')",
         "INSERT INTO crm_activities (id, type_code, occurred_at, actor_id, body) VALUES ('{activity}', 'note', CURRENT_TIMESTAMP, '{admin}', 'Erstes Gespräch.')",
         "INSERT INTO crm_activity_companies (activity_id, company_id) VALUES ('{activity}', '{company}')",
-        "INSERT INTO crm_activity_contacts (activity_id, contact_id) VALUES ('{activity}', '{contact}')",
         "INSERT INTO crm_tasks (id, title, due_on, assignee_id, created_by_id, company_id) VALUES ('{task}', 'Nachfassen', '2026-11-02', '{admin}', '{admin}', '{company}')",
         "INSERT INTO crm_deals (id, name, company_id, venue_id, stage_code, owner_id) VALUES ('{deal}', 'Premium 2027', '{company}', '{venue}', 'new', '{admin}')",
         "INSERT INTO crm_deals (id, name, company_id, stage_code) VALUES ('{deal2}', 'Basic 2027', '{company2}', 'offer')",
-        "INSERT INTO crm_deal_contacts (deal_id, contact_id) VALUES ('{deal}', '{contact}')",
         "INSERT INTO crm_activity_deals (activity_id, deal_id) VALUES ('{activity}', '{deal}')",
         "INSERT INTO inquiries (id, venue_id, venue_number, venue_name, venue_slug, recipient_email, locale, occasion, guest_count, message, first_name, last_name, email, fingerprint) SELECT id, '{venue}'::uuid, 1, 'Crm Testhaus', 'crm-testhaus', 'haus@example.test', 'de', 'wedding', 80, 'Grüezi', 'Anna', 'Muster', 'anna@example.test', repeat('a', 64) FROM (VALUES ('{inquiry}'::uuid), ('{inquiry2}'::uuid)) AS seed (id)",
-        "INSERT INTO crm_inquiry_links (inquiry_id, contact_id, activity_id) VALUES ('{inquiry}', '{contact}', '{activity}')",
+        "INSERT INTO crm_inquiry_links (inquiry_id, activity_id) VALUES ('{inquiry}', '{activity}')",
     ];
 
     private Connection $connection;
@@ -94,7 +92,6 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'unknown origin' => ['chk_crm_companies_origin', ["UPDATE crm_companies SET origin = 'import' WHERE id = '{company}'"]];
         yield 'unknown company owner' => ['fk_crm_companies_owner_id', ["UPDATE crm_companies SET owner_id = '{missing}' WHERE id = '{company}'"]];
         yield 'company owner is not deleted' => ['fk_crm_companies_owner_id', [
-            'UPDATE crm_contacts SET owner_id = NULL',
             'UPDATE crm_deals SET owner_id = NULL',
             'DELETE FROM crm_tasks',
             'DELETE FROM crm_activities',
@@ -104,10 +101,8 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         // crm_contacts
         yield 'blank last name' => ['chk_crm_contacts_last_name', ["UPDATE crm_contacts SET last_name = '' WHERE id = '{contact}'"]];
         yield 'upper-case e-mail' => ['chk_crm_contacts_email_lower', ["UPDATE crm_contacts SET email = 'Anna@example.test' WHERE id = '{contact}'"]];
-        yield 'e-mail taken' => ['uk_crm_contacts_email', ["INSERT INTO crm_contacts (id, last_name, email, kind) VALUES (gen_random_uuid(), 'Kopie', 'anna@example.test', 'other')"]];
-        yield 'unknown kind' => ['chk_crm_contacts_kind', ["UPDATE crm_contacts SET kind = 'lead' WHERE id = '{contact}'"]];
+        yield 'e-mail taken on the same Location' => ['uk_crm_contacts_company_email', ["INSERT INTO crm_contacts (id, last_name, email, company_id) VALUES (gen_random_uuid(), 'Kopie', 'anna@example.test', '{company}')"]];
         yield 'contact of unknown company' => ['fk_crm_contacts_company_id', ["UPDATE crm_contacts SET company_id = '{missing}' WHERE id = '{contact}'"]];
-        yield 'unknown contact owner' => ['fk_crm_contacts_owner_id', ["UPDATE crm_contacts SET owner_id = '{missing}' WHERE id = '{contact}'"]];
 
         // crm_company_venues
         yield 'venue linked twice' => ['uk_crm_company_venues_venue_id', ["INSERT INTO crm_company_venues (id, company_id, venue_id) VALUES (gen_random_uuid(), '{company2}', '{venue}')"]];
@@ -132,16 +127,12 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         // link tables
         yield 'company link to unknown activity' => ['fk_crm_activity_companies_activity_id', ["INSERT INTO crm_activity_companies (activity_id, company_id) VALUES ('{missing}', '{company2}')"]];
         yield 'activity link to unknown company' => ['fk_crm_activity_companies_company_id', ["INSERT INTO crm_activity_companies (activity_id, company_id) VALUES ('{activity}', '{missing}')"]];
-        yield 'contact link to unknown activity' => ['fk_crm_activity_contacts_activity_id', ["INSERT INTO crm_activity_contacts (activity_id, contact_id) VALUES ('{missing}', '{contact}')"]];
-        yield 'activity link to unknown contact' => ['fk_crm_activity_contacts_contact_id', ["INSERT INTO crm_activity_contacts (activity_id, contact_id) VALUES ('{activity}', '{missing}')"]];
 
         // crm_tasks
         yield 'blank task title' => ['chk_crm_tasks_title', ["UPDATE crm_tasks SET title = ' ' WHERE id = '{task}'"]];
-        yield 'task on two objects' => ['chk_crm_tasks_one_object', ["UPDATE crm_tasks SET contact_id = '{contact}' WHERE id = '{task}'"]];
         yield 'unknown assignee' => ['fk_crm_tasks_assignee_id', ["UPDATE crm_tasks SET assignee_id = '{missing}' WHERE id = '{task}'"]];
         yield 'unknown task creator' => ['fk_crm_tasks_created_by_id', ["UPDATE crm_tasks SET created_by_id = '{missing}' WHERE id = '{task}'"]];
         yield 'task of unknown company' => ['fk_crm_tasks_company_id', ["UPDATE crm_tasks SET company_id = '{missing}' WHERE id = '{task}'"]];
-        yield 'task of unknown contact' => ['fk_crm_tasks_contact_id', ["UPDATE crm_tasks SET company_id = NULL, contact_id = '{missing}' WHERE id = '{task}'"]];
         yield 'task of unknown deal' => ['fk_crm_tasks_deal_id', ["UPDATE crm_tasks SET company_id = NULL, deal_id = '{missing}' WHERE id = '{task}'"]];
         yield 'task on a company and a deal' => ['chk_crm_tasks_one_object', ["UPDATE crm_tasks SET deal_id = '{deal}' WHERE id = '{task}'"]];
         yield 'renewal task without a deal' => ['chk_crm_tasks_renewal', ["UPDATE crm_tasks SET is_renewal = TRUE WHERE id = '{task}'"]];
@@ -172,15 +163,12 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         ]];
 
         // link tables of a deal
-        yield 'contact link to unknown deal' => ['fk_crm_deal_contacts_deal_id', ["INSERT INTO crm_deal_contacts (deal_id, contact_id) VALUES ('{missing}', '{contact}')"]];
-        yield 'deal link to unknown contact' => ['fk_crm_deal_contacts_contact_id', ["INSERT INTO crm_deal_contacts (deal_id, contact_id) VALUES ('{deal2}', '{missing}')"]];
         yield 'deal link to unknown activity' => ['fk_crm_activity_deals_activity_id', ["INSERT INTO crm_activity_deals (activity_id, deal_id) VALUES ('{missing}', '{deal2}')"]];
         yield 'activity link to unknown deal' => ['fk_crm_activity_deals_deal_id', ["INSERT INTO crm_activity_deals (activity_id, deal_id) VALUES ('{activity}', '{missing}')"]];
 
         // crm_inquiry_links
         yield 'unknown inquiry status' => ['chk_crm_inquiry_links_status', ["UPDATE crm_inquiry_links SET status = 'open' WHERE inquiry_id = '{inquiry}'"]];
         yield 'link to unknown inquiry' => ['fk_crm_inquiry_links_inquiry_id', ["INSERT INTO crm_inquiry_links (inquiry_id) VALUES ('{missing}')"]];
-        yield 'inquiry link to unknown contact' => ['fk_crm_inquiry_links_contact_id', ["INSERT INTO crm_inquiry_links (inquiry_id, contact_id) VALUES ('{inquiry2}', '{missing}')"]];
         yield 'inquiry link to unknown activity' => ['fk_crm_inquiry_links_activity_id', ["INSERT INTO crm_inquiry_links (inquiry_id, activity_id) VALUES ('{inquiry2}', '{missing}')"]];
 
         // crm_email_templates
@@ -239,15 +227,15 @@ final class CrmSchemaMigrationTest extends KernelTestCase
     public static function acceptances(): iterable
     {
         yield 'contacts without e-mail' => [[
-            "INSERT INTO crm_contacts (id, last_name, kind) VALUES (gen_random_uuid(), 'Eins', 'other')",
-            "INSERT INTO crm_contacts (id, last_name, kind) VALUES (gen_random_uuid(), 'Zwei', 'couple')",
+            "INSERT INTO crm_contacts (id, last_name, company_id) VALUES (gen_random_uuid(), 'Eins', '{company}')",
+            "INSERT INTO crm_contacts (id, last_name, company_id) VALUES (gen_random_uuid(), 'Zwei', '{company}')",
         ]];
-        yield 'contact without company or first name' => [["UPDATE crm_contacts SET company_id = NULL, first_name = NULL WHERE id = '{contact}'"]];
+        yield 'contact without first name' => [["UPDATE crm_contacts SET first_name = NULL WHERE id = '{contact}'"]];
+        yield 'same e-mail on two Locations' => [["INSERT INTO crm_contacts (id, last_name, email, company_id) VALUES (gen_random_uuid(), 'Kopie', 'anna@example.test', '{company2}')"]];
         yield 'entry with a title only' => [["UPDATE crm_activities SET body = NULL, title = 'Anfrage' WHERE id = '{activity}'"]];
         yield 'entry without actor' => [["UPDATE crm_activities SET actor_id = NULL WHERE id = '{activity}'"]];
         yield 'anonymised entry' => [["UPDATE crm_activities SET title = NULL, body = NULL, payload = '{}', anonymised_at = CURRENT_TIMESTAMP WHERE id = '{activity}'"]];
         yield 'task without object or creator' => [["UPDATE crm_tasks SET company_id = NULL, created_by_id = NULL WHERE id = '{task}'"]];
-        yield 'task on a contact' => [["UPDATE crm_tasks SET company_id = NULL, contact_id = '{contact}' WHERE id = '{task}'"]];
         yield 'every stage' => [["UPDATE crm_companies SET stage = 'customer' WHERE id = '{company}'", "UPDATE crm_companies SET stage = 'former_customer' WHERE id = '{company}'"]];
         yield 'task on a deal' => [["UPDATE crm_tasks SET company_id = NULL, deal_id = '{deal}' WHERE id = '{task}'"]];
         yield 'a done renewal task beside an ordinary one on the deal' => [[
@@ -285,7 +273,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         );
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
-        self::assertCount(14, $primaryKeys);
+        self::assertCount(12, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
@@ -325,26 +313,16 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         self::assertSame(1, $this->rows("SELECT count(*) FROM crm_companies WHERE id = '{company}'"));
     }
 
-    public function test_deleting_a_company_keeps_its_contacts_and_drops_its_links_and_tasks(): void
+    public function test_deleting_a_company_deletes_its_contacts_and_drops_its_links_and_tasks(): void
     {
         $this->sql("DELETE FROM crm_deals WHERE company_id = '{company}'");
         $this->sql("DELETE FROM crm_companies WHERE id = '{company}'");
 
-        self::assertSame(1, $this->rows("SELECT count(*) FROM crm_contacts WHERE id = '{contact}' AND company_id IS NULL"));
+        self::assertSame(0, $this->rows("SELECT count(*) FROM crm_contacts WHERE id = '{contact}'"));
         self::assertSame(0, $this->rows("SELECT count(*) FROM crm_company_venues WHERE company_id = '{company}'"));
         self::assertSame(0, $this->rows("SELECT count(*) FROM crm_activity_companies WHERE company_id = '{company}'"));
         self::assertSame(0, $this->rows("SELECT count(*) FROM crm_tasks WHERE id = '{task}'"));
         self::assertSame(1, $this->rows("SELECT count(*) FROM crm_activities WHERE id = '{activity}'"));
-    }
-
-    public function test_deleting_a_contact_drops_its_links_and_tasks(): void
-    {
-        $this->sql("UPDATE crm_tasks SET company_id = NULL, contact_id = '{contact}' WHERE id = '{task}'");
-        $this->sql("DELETE FROM crm_contacts WHERE id = '{contact}'");
-
-        self::assertSame(0, $this->rows("SELECT count(*) FROM crm_activity_contacts WHERE contact_id = '{contact}'"));
-        self::assertSame(0, $this->rows("SELECT count(*) FROM crm_tasks WHERE id = '{task}'"));
-        self::assertSame(1, $this->rows("SELECT count(*) FROM crm_activity_companies WHERE activity_id = '{activity}'"));
     }
 
     private function sql(string $sql): int

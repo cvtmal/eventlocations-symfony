@@ -6,11 +6,9 @@ namespace App\Factory;
 
 use App\Crm\Entity\Activity;
 use App\Crm\Entity\ActivityCompany;
-use App\Crm\Entity\ActivityContact;
 use App\Crm\Entity\ActivityDeal;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
-use App\Crm\Entity\Contact;
 use App\Crm\Entity\Deal;
 use App\Shared\Uid\EntityId;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
@@ -41,13 +39,6 @@ final class ActivityFactory extends PersistentObjectFactory
     {
         return $this->afterPersist(static function (Activity $activity) use ($company): void {
             persist(ActivityCompany::class, ['activity' => $activity, 'company' => $company]);
-        });
-    }
-
-    public function onContact(Contact $contact): self
-    {
-        return $this->afterPersist(static function (Activity $activity) use ($contact): void {
-            persist(ActivityContact::class, ['activity' => $activity, 'contact' => $contact]);
         });
     }
 

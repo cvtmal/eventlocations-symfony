@@ -7,7 +7,6 @@ namespace App\Tests\Application\Crm;
 use App\Admin\ValueObject\AdminRole;
 use App\Crm\ValueObject\CompanyStage;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
@@ -37,18 +36,6 @@ final class PropertyApiTest extends WebTestCase
         self::assertSame(1, $this->auditRows('company', $company->id()));
     }
 
-    public function test_a_contact_save_lower_cases_the_email(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['email' => null]);
-
-        $this->patch($this->contactUrl($contact->id()), ['field' => 'email', 'value' => 'Anna.Muster@Example.CH', 'expected' => '']);
-
-        self::assertResponseIsSuccessful();
-        self::assertSame(['value' => 'anna.muster@example.ch'], $this->answer());
-        self::assertSame(1, $this->auditRows('contact', $contact->id()));
-    }
-
     public function test_an_unchanged_value_is_a_success_without_an_audit_row(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -60,18 +47,6 @@ final class PropertyApiTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(['value' => 'Seeblick Events'], $this->answer());
         self::assertSame(0, $this->auditRows('company', $company->id()));
-    }
-
-    public function test_an_unchanged_contact_value_is_a_success_without_an_audit_row(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['lastName' => 'Muster']);
-
-        $this->patch($this->contactUrl($contact->id()), ['field' => 'last_name', 'value' => ' Muster ', 'expected' => 'Something else']);
-
-        self::assertResponseIsSuccessful();
-        self::assertSame(['value' => 'Muster'], $this->answer());
-        self::assertSame(0, $this->auditRows('contact', $contact->id()));
     }
 
     public function test_emptying_a_field_stores_null(): void
@@ -97,20 +72,6 @@ final class PropertyApiTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Type', 'application/json');
         self::assertArrayHasKey('', $this->errors());
         self::assertSame('Seeblick Events', $this->connection->fetchOne('SELECT name FROM crm_companies WHERE id = ?', [$company->id()]));
-    }
-
-    public function test_a_stale_contact_field_is_a_409(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['lastName' => 'Muster']);
-
-        $this->patch($this->contactUrl($contact->id()), ['field' => 'last_name', 'value' => 'Beispiel', 'expected' => 'Damals']);
-
-        self::assertResponseStatusCodeSame(409);
-        self::assertResponseHeaderSame('Content-Type', 'application/json');
-        self::assertArrayHasKey('', $this->errors());
-        self::assertSame('Muster', $this->connection->fetchOne('SELECT last_name FROM crm_contacts WHERE id = ?', [$contact->id()]));
-        self::assertSame(0, $this->auditRows('contact', $contact->id()));
     }
 
     public function test_a_nul_character_is_a_422_on_the_value(): void
@@ -149,25 +110,13 @@ final class PropertyApiTest extends WebTestCase
     public function test_a_bad_email_is_a_422_on_the_value(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne();
+        $company = CompanyFactory::createOne();
 
-        $this->patch($this->contactUrl($contact->id()), ['field' => 'email', 'value' => 'anna@', 'expected' => $contact->email()]);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertSame(['value'], array_keys($this->errors()));
-        self::assertSame(0, $this->auditRows('contact', $contact->id()));
-    }
-
-    public function test_a_taken_email_is_a_422_on_the_value(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        ContactFactory::createOne(['email' => 'anna@example.ch']);
-        $contact = ContactFactory::createOne();
-
-        $this->patch($this->contactUrl($contact->id()), ['field' => 'email', 'value' => 'ANNA@example.ch', 'expected' => $contact->email()]);
+        $this->patch($this->companyUrl($company->id()), ['field' => 'email', 'value' => 'anna@', 'expected' => null]);
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame(['value'], array_keys($this->errors()));
+        self::assertSame(0, $this->auditRows('company', $company->id()));
     }
 
     public function test_emptying_a_required_field_is_a_422(): void
@@ -252,7 +201,8 @@ final class PropertyApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
         self::assertResponseHeaderSame('Content-Type', 'application/json');
 
-        $this->patch($this->contactUrl(EntityId::generate()), ['field' => 'last_name', 'value' => 'x', 'expected' => null]);
+        // A contact has no PATCH endpoint since #55: its card posts dialogs (ContactCardTest).
+        $this->client->request('PATCH', '/admin/api/crm/contacts/'.EntityId::generate(), server: ['CONTENT_TYPE' => 'application/json'], content: '{}');
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -265,17 +215,6 @@ final class PropertyApiTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame('Seeblick Events', $this->connection->fetchOne('SELECT name FROM crm_companies WHERE id = ?', [$company->id()]));
-    }
-
-    public function test_a_missing_token_is_refused_for_a_contact(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['lastName' => 'Muster']);
-
-        $this->client->request('PATCH', $this->contactUrl($contact->id()), server: ['CONTENT_TYPE' => 'application/json'], content: '{"field": "last_name", "value": "x", "expected": "Muster"}');
-
-        self::assertResponseStatusCodeSame(403);
-        self::assertSame('Muster', $this->connection->fetchOne('SELECT last_name FROM crm_contacts WHERE id = ?', [$contact->id()]));
     }
 
     public function test_an_anonymous_visitor_gets_a_json_401(): void
@@ -291,11 +230,6 @@ final class PropertyApiTest extends WebTestCase
     private function companyUrl(string $id): string
     {
         return '/admin/api/crm/companies/'.$id;
-    }
-
-    private function contactUrl(string $id): string
-    {
-        return '/admin/api/crm/contacts/'.$id;
     }
 
     /**

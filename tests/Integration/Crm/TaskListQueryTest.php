@@ -10,7 +10,6 @@ use App\Crm\ReadModel\TaskView;
 use App\Crm\ValueObject\RecordKind;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Tests\Support\Admin\RollsBackDatabase;
@@ -102,20 +101,17 @@ final class TaskListQueryTest extends KernelTestCase
     {
         $me = AdminUserFactory::createOne(['displayName' => 'Andrea Keller']);
         $company = CompanyFactory::createOne(['name' => 'Seeblick Events GmbH']);
-        $contact = ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier']);
-        $single = ContactFactory::createOne(['firstName' => null, 'lastName' => 'Widmer']);
+        $deal = DealFactory::createOne(['company' => CompanyFactory::createOne(['name' => 'Alpenhof AG'])]);
         TaskFactory::createOne(['title' => 'A', 'assignee' => $me, 'company' => $company]);
-        TaskFactory::createOne(['title' => 'B', 'assignee' => $me, 'contact' => $contact]);
-        TaskFactory::createOne(['title' => 'C', 'assignee' => $me, 'contact' => $single]);
-        TaskFactory::createOne(['title' => 'D', 'assignee' => $me]);
+        TaskFactory::createOne(['title' => 'B', 'assignee' => $me, 'deal' => $deal]);
+        TaskFactory::createOne(['title' => 'C', 'assignee' => $me]);
 
-        [$a, $b, $c, $d] = $this->rows(TaskView::Mine, $me->id());
+        [$a, $b, $c] = $this->rows(TaskView::Mine, $me->id());
 
         self::assertSame('Andrea Keller', $a->assigneeName);
-        self::assertSame([$company->id(), 'Seeblick Events GmbH', null, null], [$a->companyId, $a->companyName, $a->contactId, $a->contactName]);
-        self::assertSame([null, null, $contact->id(), 'Laura Meier'], [$b->companyId, $b->companyName, $b->contactId, $b->contactName]);
-        self::assertSame('Widmer', $c->contactName);
-        self::assertSame([null, null], [$d->companyId, $d->contactId]);
+        self::assertSame([$company->id(), 'Seeblick Events GmbH', null], [$a->companyId, $a->companyName, $a->dealId]);
+        self::assertSame([null, $deal->id(), 'Alpenhof AG'], [$b->companyId, $b->dealId, $b->dealCompanyName]);
+        self::assertSame([null, null, false], [$c->companyId, $c->dealId, $c->hasObject()]);
     }
 
     public function test_a_tab_pages_at_fifty(): void
@@ -131,30 +127,6 @@ final class TaskListQueryTest extends KernelTestCase
         self::assertSame([51, 2], [$first->total, $first->lastPage]);
         self::assertCount(1, $second->rows);
         self::assertSame(2, $beyond->page);
-    }
-
-    public function test_a_contact_card_holds_the_open_tasks_on_that_contact(): void
-    {
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        TaskFactory::createOne(['title' => 'Auf dem Kontakt', 'contact' => $contact]);
-        TaskFactory::createOne(['title' => 'Auf der Firma', 'company' => $company]);
-        TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigt', 'contact' => $contact]);
-
-        self::assertSame(['Auf dem Kontakt'], array_map(static fn (TaskRow $row): string => $row->title, $this->query()->openOf(RecordKind::Contact, $contact->id())));
-    }
-
-    public function test_a_company_card_also_collects_the_tasks_on_its_contacts(): void
-    {
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
-        $elsewhere = ContactFactory::createOne(['company' => CompanyFactory::createOne()]);
-        TaskFactory::createOne(['title' => 'Auf der Firma', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-11-02')]);
-        TaskFactory::createOne(['title' => 'Auf dem Kontakt', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-11-01')]);
-        TaskFactory::createOne(['title' => 'Anderswo', 'contact' => $elsewhere]);
-        TaskFactory::createOne(['title' => 'Ohne Bezug']);
-
-        self::assertSame(['Auf dem Kontakt', 'Auf der Firma'], array_map(static fn (TaskRow $row): string => $row->title, $this->query()->openOf(RecordKind::Company, $company->id())));
     }
 
     public function test_a_company_card_also_collects_the_tasks_on_its_deals(): void

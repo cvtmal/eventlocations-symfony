@@ -8,7 +8,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Puts an activity on a deal's timeline (S13), the sibling of ActivityCompany and ActivityContact.
+ * Puts an activity on a deal's timeline (S13), the sibling of ActivityCompany.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'crm_activity_deals')]

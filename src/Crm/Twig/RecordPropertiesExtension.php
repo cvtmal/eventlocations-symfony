@@ -9,7 +9,7 @@ use Twig\Attribute\AsTwigFunction;
 
 /**
  * The labels of the `record-properties` island (D10), translated once here so the company and
- * contact pages pass the same set: `admin_island('record-properties', {url, fields, labels: crm_property_labels()})`.
+ * deal pages pass the same set: `admin_island('record-properties', {url, fields, labels: crm_property_labels()})`.
  */
 final readonly class RecordPropertiesExtension
 {

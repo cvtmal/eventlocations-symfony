@@ -20,8 +20,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
- * The second step of "Deal erfassen" (N5). `company` brings its linked venues and its contacts, so a foreign one is no
- * choice at all; `owners` are the selectable staff accounts. A new deal always starts at `new`, so there is no stage.
+ * The second step of "Deal erfassen" (N5). `company` brings its linked venues, so a foreign one is no choice at
+ * all; `owners` are the selectable staff accounts. A new deal always starts at `new`, so there is no stage.
  */
 final class DealType extends AbstractType
 {
@@ -39,10 +39,6 @@ final class DealType extends AbstractType
             ->add('contractEnd', DateType::class, self::day('deal.property.contract_end'))
             ->add('expectedClose', DateType::class, self::day('deal.property.expected_close'))
             ->add('owner', ChoiceType::class, ['label' => 'deal.property.owner', 'required' => false, 'placeholder' => 'create.owner_none', ...OwnerChoices::options($options['owners'])]);
-
-        if ([] !== $company->contacts) {
-            $builder->add('contacts', ChoiceType::class, ['label' => 'create.deal.contacts', 'required' => false, 'multiple' => true, 'expanded' => true, ...self::options($company->contacts)]);
-        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void

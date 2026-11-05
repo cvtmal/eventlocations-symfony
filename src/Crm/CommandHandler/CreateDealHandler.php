@@ -6,34 +6,28 @@ namespace App\Crm\CommandHandler;
 
 use App\Crm\Command\CreateDeal;
 use App\Crm\Entity\Deal;
-use App\Crm\Entity\DealContact;
 use App\Crm\Entity\DealStage;
-use App\Crm\Exception\ContactOfAnotherCompany;
 use App\Crm\Exception\ContractEndsBeforeStart;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\CompanyVenueRepository;
-use App\Crm\Repository\ContactRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\Repository\DealStageRepository;
 use App\Crm\ValueObject\PropertyValue;
 use App\Shared\Messenger\CommandHandlerInterface;
-use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * The form offers only the company's venues and contacts; the handler holds the rule under the company's lock.
+ * The form offers only the company's venues; the handler holds the rule under the company's lock.
  */
 final class CreateDealHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly CompanyRepository $companies,
         private readonly CompanyVenueRepository $companyVenues,
-        private readonly ContactRepository $contacts,
         private readonly DealRepository $deals,
         private readonly DealStageRepository $stages,
         private readonly OwnerResolver $owners,
-        private readonly EntityManagerInterface $em,
     ) {
     }
 
@@ -59,13 +53,5 @@ final class CreateDealHandler implements CommandHandlerInterface
             $this->owners->resolve($command->ownerId),
         );
         $this->deals->add($deal);
-
-        foreach (array_unique($command->contactIds) as $contactId) {
-            $contact = $this->contacts->lock($contactId);
-            if ($contact->company()?->id() !== $company->id()) {
-                throw ContactOfAnotherCompany::forContact($contactId);
-            }
-            $this->em->persist(new DealContact($deal, $contact));
-        }
     }
 }

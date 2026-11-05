@@ -64,7 +64,7 @@ final class InquiryInboxQuery
     {
         $row = $this->connection->fetchAssociative(
             'SELECT i.id, i.first_name, i.last_name, i.venue_name, i.venue_id, i.venue_number, i.occasion, i.guest_count, i.event_date,'
-            .' i.email, i.phone, i.message, l.status, i.venue_mail_status, i.guest_mail_status, l.contact_id, i.created_at '
+            .' i.email, i.phone, i.message, l.status, i.venue_mail_status, i.guest_mail_status, i.created_at '
             .self::FROM.' WHERE l.inquiry_id = :id',
             ['id' => $id],
         );
@@ -87,7 +87,6 @@ final class InquiryInboxQuery
             InquiryStatus::from((string) $row['status']),
             MailStatus::from((string) $row['venue_mail_status']),
             MailStatus::from((string) $row['guest_mail_status']),
-            null === $row['contact_id'] ? null : (string) $row['contact_id'],
             new \DateTimeImmutable((string) $row['created_at']),
         );
     }
@@ -118,7 +117,7 @@ final class InquiryInboxQuery
 
     /**
      * What `app:crm:backfill-inquiries` still has to ingest, oldest first. "No link row" means "never ingested": the row
-     * outlives an erased contact, so an erased person is not brought back.
+     * outlives its entry, so a backfill never ingests an inquiry twice.
      *
      * @return list<string>
      */

@@ -10,13 +10,11 @@ use App\Crm\Command\CreateTask;
 use App\Crm\Command\ReopenTask;
 use App\Crm\Entity\Task;
 use App\Crm\Exception\CompanyNotFound;
-use App\Crm\Exception\ContactNotFound;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\TaskNotFound;
 use App\Crm\ValueObject\RecordKind;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
@@ -53,23 +51,8 @@ final class TaskCommandsTest extends KernelTestCase
         self::assertSame($assignee->id(), $task->assignee()->id());
         self::assertSame($author->id(), $task->createdBy()?->id());
         self::assertSame($company->id(), $task->company()?->id());
-        self::assertNull($task->contact());
+        self::assertNull($task->deal(), 'D8: a task has one object at most.');
         self::assertFalse($task->isDone());
-    }
-
-    public function test_a_task_on_a_contact_has_that_contact_only(): void
-    {
-        $author = AdminUserFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => CompanyFactory::createOne()]);
-        $id = EntityId::generate();
-
-        $this->dispatch(new CreateTask($id, 'Rückruf', new \DateTimeImmutable(self::DUE), $author->id(), $author->id(), RecordKind::Contact, $contact->id()));
-
-        $this->em->clear();
-        $task = $this->em->find(Task::class, $id);
-        self::assertNotNull($task);
-        self::assertSame($contact->id(), $task->contact()?->id());
-        self::assertNull($task->company(), 'D8: a task has one object at most.');
     }
 
     public function test_a_task_from_the_list_is_on_no_record(): void
@@ -83,7 +66,7 @@ final class TaskCommandsTest extends KernelTestCase
         $task = $this->em->find(Task::class, $id);
         self::assertNotNull($task);
         self::assertNull($task->company());
-        self::assertNull($task->contact());
+        self::assertNull($task->deal());
     }
 
     public function test_the_audit_rows_never_hold_the_title(): void
@@ -131,7 +114,6 @@ final class TaskCommandsTest extends KernelTestCase
         $author = AdminUserFactory::createOne();
 
         $this->failure(new CreateTask(EntityId::generate(), 'Rückruf', new \DateTimeImmutable(self::DUE), $author->id(), $author->id(), RecordKind::Company, EntityId::generate()), CompanyNotFound::class);
-        $this->failure(new CreateTask(EntityId::generate(), 'Rückruf', new \DateTimeImmutable(self::DUE), $author->id(), $author->id(), RecordKind::Contact, EntityId::generate()), ContactNotFound::class);
     }
 
     public function test_done_keeps_the_moment_of_the_clock_and_undone_clears_it(): void

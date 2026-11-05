@@ -6,7 +6,7 @@ import TimelineList from '../crm/TimelineList.vue';
 import { isNewer } from '../crm/entries.js';
 import { failureOf } from '../crm/failure.js';
 
-// The middle column of a company or contact record (CRM-3, CRM-4, D12): filter tabs, composer, list. The first page
+// The middle column of a company or deal record (CRM-3, CRM-4, D12): filter tabs, composer, list. The first page
 // comes with the props (P6), so opening a record costs no request. `kind` and `recordId` name the record (the lead's
 // D1); #28 adds a `deal` kind in PHP and nothing here. Quick actions `[data-composer-tab]` in the left card are
 // outside the island, hence the document listener. Props: `Crm\TimelineProps`.

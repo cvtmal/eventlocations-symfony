@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Crm\Entity;
 
-use App\Admin\Entity\AdminUser;
 use App\Crm\Repository\ContactRepository;
 use App\Crm\ValueObject\ContactEmail;
-use App\Crm\ValueObject\ContactKind;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * A person (S13, CRM-2), with 0..1 company. The e-mail goes through ContactEmail, so it is stored
- * lower-case and the plain unique key means "unique when present, case-insensitively" (D6). Only
- * the last name is required: a venue's contact person may be a single word (D19).
+ * A person on one Location's contact card (S13, CRM-2; #55): the row belongs to its company and goes
+ * with it (CASCADE). The same person on two Locations is two rows. The e-mail goes through
+ * ContactEmail, so it is stored lower-case and the unique key on (company_id, email) means "unique
+ * per Location when present, case-insensitively" (D6). Only the last name is required: a venue's
+ * contact person may be a single word (D19).
  *
  * idx_crm_contacts_search_key (GIN trigram on geo_search_key(coalesce(first_name, '') || ' ' ||
  * last_name)) is an expression index that exists in the database only.
@@ -22,8 +22,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
 #[ORM\Table(name: 'crm_contacts')]
 #[ORM\Index(name: 'idx_crm_contacts_company_id', columns: ['company_id'])]
-#[ORM\Index(name: 'idx_crm_contacts_owner_id', columns: ['owner_id'])]
-#[ORM\UniqueConstraint(name: 'uk_crm_contacts_email', columns: ['email'])]
+#[ORM\UniqueConstraint(name: 'uk_crm_contacts_company_email', columns: ['company_id', 'email'])]
 class Contact
 {
     #[ORM\Id]
@@ -45,16 +44,9 @@ class Contact
     #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]
     private ?string $position = null;
 
-    #[ORM\Column(type: Types::STRING, length: 20, enumType: ContactKind::class)]
-    private ContactKind $kind;
-
     #[ORM\ManyToOne(targetEntity: Company::class)]
-    #[ORM\JoinColumn(name: 'company_id', nullable: true, onDelete: 'SET NULL')]
-    private ?Company $company;
-
-    #[ORM\ManyToOne(targetEntity: AdminUser::class)]
-    #[ORM\JoinColumn(name: 'owner_id', nullable: true, onDelete: 'RESTRICT')]
-    private ?AdminUser $owner = null;
+    #[ORM\JoinColumn(name: 'company_id', nullable: false, onDelete: 'CASCADE')]
+    private Company $company;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
@@ -64,20 +56,16 @@ class Contact
 
     public function __construct(
         string $id,
+        Company $company,
         ?string $firstName,
         string $lastName,
-        ContactKind $kind,
-        ?Company $company = null,
         ?string $email = null,
-        ?AdminUser $owner = null,
     ) {
         $this->id = $id;
+        $this->company = $company;
         $this->firstName = $firstName;
         $this->lastName = $lastName;
-        $this->kind = $kind;
-        $this->company = $company;
         $this->email = ContactEmail::normalise($email);
-        $this->owner = $owner;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
@@ -109,24 +97,6 @@ class Contact
     public function changePosition(?string $position): void
     {
         $this->position = $position;
-        $this->touch();
-    }
-
-    public function changeKind(ContactKind $kind): void
-    {
-        $this->kind = $kind;
-        $this->touch();
-    }
-
-    public function moveToCompany(?Company $company): void
-    {
-        $this->company = $company;
-        $this->touch();
-    }
-
-    public function assignOwner(?AdminUser $owner): void
-    {
-        $this->owner = $owner;
         $this->touch();
     }
 
@@ -165,19 +135,9 @@ class Contact
         return $this->position;
     }
 
-    public function kind(): ContactKind
-    {
-        return $this->kind;
-    }
-
-    public function company(): ?Company
+    public function company(): Company
     {
         return $this->company;
-    }
-
-    public function owner(): ?AdminUser
-    {
-        return $this->owner;
     }
 
     public function createdAt(): \DateTimeImmutable

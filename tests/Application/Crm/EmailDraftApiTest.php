@@ -43,18 +43,6 @@ final class EmailDraftApiTest extends WebTestCase
         self::assertSame(['subject' => 'Grüezi Laura', 'body' => "Seeblick Events GmbH\n\nSchloss Seeblick"], $this->answer());
     }
 
-    public function test_a_contact_draft_merges_the_contact_and_its_company(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['firstName' => 'Laura', 'company' => CompanyFactory::createOne(['name' => 'Seeblick Events GmbH'])]);
-        $template = $this->template('Grüezi {contact.first_name}', '{location.name}');
-
-        $this->draft(['kind' => 'contact', 'recordId' => $contact->id(), 'template' => $template]);
-
-        self::assertResponseIsSuccessful();
-        self::assertSame(['subject' => 'Grüezi Laura', 'body' => 'Seeblick Events GmbH'], $this->answer());
-    }
-
     public function test_a_missing_value_is_empty_and_an_empty_contact_is_none(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -110,9 +98,6 @@ final class EmailDraftApiTest extends WebTestCase
 
         $this->draft(['kind' => 'company', 'recordId' => self::UUID, 'template' => $template]);
         self::assertResponseStatusCodeSame(404);
-
-        $this->draft(['kind' => 'contact', 'recordId' => self::UUID, 'template' => $template]);
-        self::assertResponseStatusCodeSame(404);
     }
 
     public function test_a_contact_of_another_company_is_a_404(): void
@@ -127,11 +112,21 @@ final class EmailDraftApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
-    public function test_a_deal_is_a_422_on_kind(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function kindsWithoutADraft(): iterable
+    {
+        yield 'a deal' => ['deal'];
+        yield 'a contact, which has no record since #55' => ['contact'];
+    }
+
+    #[DataProvider('kindsWithoutADraft')]
+    public function test_a_kind_without_a_draft_is_a_422_on_kind(string $kind): void
     {
         $this->logInAs(AdminRole::Editor);
 
-        $this->draft(['kind' => 'deal', 'recordId' => self::UUID, 'template' => self::UUID]);
+        $this->draft(['kind' => $kind, 'recordId' => self::UUID, 'template' => self::UUID]);
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame(['kind'], array_keys($this->answer()['errors']));

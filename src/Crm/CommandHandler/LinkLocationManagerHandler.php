@@ -7,14 +7,12 @@ namespace App\Crm\CommandHandler;
 use App\Crm\Command\LinkLocationManager;
 use App\Crm\Entity\Activity;
 use App\Crm\Entity\ActivityCompany;
-use App\Crm\Entity\ActivityContact;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
 use App\Crm\Entity\Contact;
 use App\Crm\Repository\CompanyVenueRepository;
 use App\Crm\Repository\ContactRepository;
 use App\Crm\ValueObject\ContactEmail;
-use App\Crm\ValueObject\ContactKind;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Uid\EntityId;
@@ -23,15 +21,19 @@ use Psr\Clock\ClockInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Writes `Contact`, `Activity` and the links itself, as `IngestInquiryHandler` does. A known e-mail is the same person:
- * staff's values stay, only a blank first name, phone or company is filled, and a contact on another company stays
- * there, because one person has one company. The kind stays too, with one exception: a `couple` becomes a
- * `venue_contact`, because the inquiry ingest set that kind, not staff, and `app:crm:purge` would erase a manager who
- * kept it. The entry still sits on the venue's company. Nobody wrote it, so it has no actor. A manager removed and
- * approved again gets a second entry, which is what happened.
+ * Writes `Contact`, `Activity` and the link itself, as `IngestInquiryHandler` does. A manager is one contact row per
+ * Location (#55): the row is looked up by (Location, e-mail) and created on the venue's Location with the position
+ * "Location-Manager". A row that is already there keeps staff's values; only a blank first name, phone or position is
+ * filled. The values are copied once: a later `/konto` profile change does not update the row (Q8). A venue without
+ * a Location gets nothing here; the listener creates the Location first, and logs when that fails. The entry sits on
+ * the Location. Nobody wrote it, so it has no actor. A manager removed and approved again gets a second entry, which
+ * is what happened.
  */
 final class LinkLocationManagerHandler implements CommandHandlerInterface
 {
+    /** The position of a manager's contact row; the #55 migration writes the same value. */
+    public const string MANAGER_POSITION = 'Location-Manager';
+
     public function __construct(
         private readonly ContactRepository $contacts,
         private readonly CompanyVenueRepository $companyVenues,
@@ -45,7 +47,11 @@ final class LinkLocationManagerHandler implements CommandHandlerInterface
     public function __invoke(LinkLocationManager $command): void
     {
         $company = $this->companyVenues->forVenue($command->venueId)?->company();
-        $contact = $this->contactOf($command, $company);
+        if (null === $company) {
+            return;
+        }
+
+        $this->writeContact($command, $company);
         $activity = new Activity(
             EntityId::generate(),
             $this->em->getReference(ActivityType::class, ActivityType::NOTE) ?? throw new \LogicException('ActivityType has no subclass, so a reference always resolves.'),
@@ -56,22 +62,20 @@ final class LinkLocationManagerHandler implements CommandHandlerInterface
         );
 
         $this->em->persist($activity);
-        $this->em->persist(new ActivityContact($activity, $contact));
-        if (null !== $company) {
-            $this->em->persist(new ActivityCompany($activity, $company));
-        }
+        $this->em->persist(new ActivityCompany($activity, $company));
     }
 
-    private function contactOf(LinkLocationManager $command, ?Company $company): Contact
+    private function writeContact(LinkLocationManager $command, Company $company): void
     {
         $email = ContactEmail::normalise($command->email);
-        $contact = $this->contacts->findOneBy(['email' => $email]);
+        $contact = $this->contacts->findOneBy(['company' => $company, 'email' => $email]);
         if (null === $contact) {
-            $contact = new Contact(EntityId::generate(), $command->firstName, $command->lastName, ContactKind::VenueContact, $company, $email);
+            $contact = new Contact(EntityId::generate(), $company, $command->firstName, $command->lastName, $email);
             $contact->changePhone($command->phone);
+            $contact->changePosition(self::MANAGER_POSITION);
             $this->em->persist($contact);
 
-            return $contact;
+            return;
         }
 
         if (null === $contact->firstName()) {
@@ -80,13 +84,8 @@ final class LinkLocationManagerHandler implements CommandHandlerInterface
         if (null === $contact->phone() && null !== $command->phone) {
             $contact->changePhone($command->phone);
         }
-        if (null === $contact->company() && null !== $company) {
-            $contact->moveToCompany($company);
+        if (null === $contact->position()) {
+            $contact->changePosition(self::MANAGER_POSITION);
         }
-        if (ContactKind::Couple === $contact->kind()) {
-            $contact->changeKind(ContactKind::VenueContact);
-        }
-
-        return $contact;
     }
 }

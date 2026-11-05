@@ -4,36 +4,59 @@ declare(strict_types=1);
 
 namespace App\Crm\Form;
 
+use App\Crm\Command\ChangeContact;
 use App\Crm\Command\CreateContact;
-use App\Crm\ValueObject\ContactKind;
+use App\Crm\ReadModel\CompanyRecordContact;
+use App\Crm\ValueObject\PropertyValue;
 
 /**
- * "Kontakt erfassen" (CRM-2): name, kind, company and the reachability facts; the record page does the
- * rest. `company` is a company id, preset by the company page's "+ Hinzufügen" (`?company=<id>`).
+ * The add and edit dialogs of a Location's contact card (CRM-2, #55): name, position and the reachability facts. The
+ * rules are `PropertyConstraints::contact()`'s, set by `ContactType`.
  */
 final class ContactData
 {
     public ?string $firstName = null;
     public ?string $lastName = null;
-    public ?ContactKind $kind = ContactKind::VenueContact;
-    public ?string $company = null;
+    public ?string $position = null;
     public ?string $email = null;
     public ?string $phone = null;
-    public ?string $position = null;
-    public ?string $owner = null;
 
-    public function toCommand(string $id): CreateContact
+    public static function fromRecord(CompanyRecordContact $contact): self
     {
-        return new CreateContact(
-            $id,
-            $this->firstName,
-            (string) $this->lastName,
-            $this->kind ?? throw new \LogicException('Validate the form before building its command.'),
-            $this->company,
-            $this->email,
-            $this->phone,
-            $this->position,
-            $this->owner,
-        );
+        $data = new self();
+        $data->firstName = $contact->firstName;
+        $data->lastName = $contact->lastName;
+        $data->position = $contact->position;
+        $data->email = $contact->email;
+        $data->phone = $contact->phone;
+
+        return $data;
+    }
+
+    public function toCreate(string $id, string $companyId): CreateContact
+    {
+        return new CreateContact($id, $companyId, $this->firstName, (string) $this->lastName, $this->email, $this->phone, $this->position);
+    }
+
+    /**
+     * Null when the dialog changes nothing (the no-op rule): an unchanged save leaves no audit row. Values are compared
+     * as the handler stores them.
+     */
+    public function toChange(string $companyId, CompanyRecordContact $current): ?ChangeContact
+    {
+        $fields = array_keys(array_filter(
+            [
+                'first_name' => PropertyValue::canonical($this->firstName) !== $current->firstName,
+                'last_name' => PropertyValue::canonical($this->lastName) !== $current->lastName,
+                'email' => PropertyValue::canonical($this->email, email: true) !== $current->email,
+                'phone' => PropertyValue::canonical($this->phone) !== $current->phone,
+                'position' => PropertyValue::canonical($this->position) !== $current->position,
+            ],
+        ));
+        if ([] === $fields) {
+            return null;
+        }
+
+        return new ChangeContact($current->id, $companyId, $this->firstName, (string) $this->lastName, $this->email, $this->phone, $this->position, $fields);
     }
 }

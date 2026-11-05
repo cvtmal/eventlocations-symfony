@@ -1,0 +1,18 @@
+{#
+    The fields of a contact dialog on the Location record (#55): the add dialog and every edit dialog. The submit sits in
+    the modal footer and names the form by `form_id`. No `novalidate`: `required`, `maxlength` and the input types let the
+    browser stop most mistakes, because a refusal by the server is only a flash.
+#}
+{% form_theme form 'admin/form/theme.html.twig' %}
+{{ form_start(form, {attr: {id: form_id, class: 'form'}}) }}
+    {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+    <div class="field-row">
+        {{ form_row(form.firstName) }}
+        {{ form_row(form.lastName) }}
+    </div>
+    {{ form_row(form.position) }}
+    <div class="field-row">
+        {{ form_row(form.email) }}
+        {{ form_row(form.phone) }}
+    </div>
+{{ form_end(form) }}

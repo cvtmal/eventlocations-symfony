@@ -9,13 +9,13 @@ use App\Crm\CsvStream;
 use App\Crm\Entity\Company;
 use App\Crm\Entity\Contact;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\AdminSession;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -67,7 +67,7 @@ final class CsvExportTest extends WebTestCase
                 $contact->changePosition('Eventmanagerin');
                 $contact->changePhone('+41791234567');
             })
-            ->create(['firstName' => 'Laura', 'lastName' => 'Meier', 'kind' => ContactKind::VenueContact, 'company' => $company, 'email' => 'laura@example.ch', 'owner' => $owner]);
+            ->create(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company, 'email' => 'laura@example.ch']);
 
         $this->client->request('GET', '/admin/crm/kontakte/export');
 
@@ -75,8 +75,8 @@ final class CsvExportTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=kontakte-2026-06-15.csv');
         // P13: an E.164 number leads with `+`, so it takes the `'` like any other cell.
         self::assertSame([
-            ['Vorname', 'Nachname', 'Art', 'Location', 'Position', 'E-Mail', 'Telefon', 'Zuständig'],
-            ['Laura', 'Meier', 'Location-Kontakt', 'Seeblick Events', 'Eventmanagerin', 'laura@example.ch', "'+41791234567", 'Andrea Keller'],
+            ['Vorname', 'Nachname', 'Location', 'Position', 'E-Mail', 'Telefon'],
+            ['Laura', 'Meier', 'Seeblick Events', 'Eventmanagerin', 'laura@example.ch', "'+41791234567"],
         ], $this->records($this->content()));
     }
 
@@ -96,14 +96,8 @@ final class CsvExportTest extends WebTestCase
         CompanyFactory::new()->inStage(CompanyStage::Customer)->create(['name' => 'Alpenhof AG']);
         CompanyFactory::new()->inStage(CompanyStage::Customer)->create(['name' => 'Zürcher Gastro AG']);
         CompanyFactory::createOne(['name' => 'Interessent AG']);
-        ContactFactory::createOne(['firstName' => null, 'lastName' => 'Brunner', 'kind' => ContactKind::Couple]);
-        ContactFactory::createOne(['firstName' => null, 'lastName' => 'Meier', 'kind' => ContactKind::Other]);
-
         $this->client->request('GET', '/admin/crm/locations/export?stage=customer&sort=name&dir=desc&page=9');
         self::assertSame(['Zürcher Gastro AG', 'Alpenhof AG'], array_column(\array_slice($this->records($this->content()), 1), 0));
-
-        $this->client->request('GET', '/admin/crm/kontakte/export?kind=couple');
-        self::assertSame(['Brunner'], array_column(\array_slice($this->records($this->content()), 1), 1));
 
         $this->client->request('GET', '/admin/crm/locations/export?q=keinetreffer');
         self::assertCount(1, $this->records($this->content()));
@@ -141,9 +135,6 @@ final class CsvExportTest extends WebTestCase
         self::assertResponseRedirects('/admin/crm/locations?stage=bogus', 303);
         $this->client->followRedirect();
         self::assertResponseStatusCodeSame(422);
-
-        $this->client->request('GET', '/admin/crm/kontakte/export?kind=bogus');
-        self::assertResponseRedirects('/admin/crm/kontakte?kind=bogus', 303);
     }
 
     public function test_the_lists_offer_the_export_to_admins_with_the_current_filters(): void
@@ -151,22 +142,22 @@ final class CsvExportTest extends WebTestCase
         $this->logInAs();
 
         $crawler = $this->client->request('GET', '/admin/crm/locations?stage=customer&page=2&sort=created&dir=desc');
-        self::assertSame('/admin/crm/locations/export?stage=customer&sort=created&dir=desc', $crawler->filter('.page-header__actions a[href*="/export"]')->attr('href'));
-
-        $crawler = $this->client->request('GET', '/admin/crm/kontakte');
-        self::assertSame('/admin/crm/kontakte/export', $crawler->filter('.page-header__actions a[href*="/export"]')->attr('href'));
+        // The contacts have no list of their own since #55: their CSV, unfiltered, sits on the Locations list.
+        self::assertSame(
+            ['/admin/crm/locations/export?stage=customer&sort=created&dir=desc', '/admin/crm/kontakte/export'],
+            $crawler->filter('.page-header__actions a[href*="/export"]')->each(static fn (Crawler $link): string => (string) $link->attr('href')),
+        );
+        self::assertSame('Kontakte exportieren', $crawler->filter('.page-header__actions a[href="/admin/crm/kontakte/export"]')->text());
     }
 
     public function test_an_editor_sees_no_export_button(): void
     {
         $this->logInAs(AdminRole::Editor);
 
-        foreach (['/admin/crm/locations', '/admin/crm/kontakte'] as $list) {
-            $crawler = $this->client->request('GET', $list);
+        $crawler = $this->client->request('GET', '/admin/crm/locations');
 
-            self::assertResponseIsSuccessful();
-            self::assertCount(0, $crawler->filter('a[href*="/export"]'), $list);
-        }
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('a[href*="/export"]'));
     }
 
     private function content(): string

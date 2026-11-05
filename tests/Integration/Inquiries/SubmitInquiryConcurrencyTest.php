@@ -244,13 +244,12 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
 
     private function removeFixtures(): void
     {
-        // The children commit, so what `IngestInquiryListener` wrote stays too. This goes first: the inquiry's delete
-        // cascades to its link, the only way back to the entry.
+        // The children commit, so what `IngestInquiryListener` wrote stays too (the couple is no contact, #55). This goes
+        // first: the inquiry's delete cascades to its link, the only way back to the entry.
         $this->connection->executeStatement(
             'DELETE FROM crm_activities WHERE id IN (SELECT l.activity_id FROM crm_inquiry_links l JOIN inquiries i ON i.id = l.inquiry_id WHERE i.venue_name = ?)',
             [self::NAME],
         );
-        $this->connection->executeStatement('DELETE FROM crm_contacts WHERE email = ?', [self::GUEST]);
         $this->connection->executeStatement('DELETE FROM inquiries WHERE venue_name = ?', [self::NAME]);
         $this->connection->executeStatement('DELETE FROM venues WHERE name = ?', [self::NAME]);
     }

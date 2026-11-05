@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\CompanyProperty;
-use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\PropertyValue;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * The current value of one field of a company, contact or deal, for the API's no-op check before it
+ * The current value of one field of a company or deal, for the API's no-op check before it
  * dispatches (P1): an unchanged save leaves no audit row. One statement; null when the record does
  * not exist, a non-UUID id included, so no 22P02 reaches a 500. The handler repeats the check
  * under its row lock.
@@ -39,22 +38,6 @@ final class RecordPropertyQuery
         };
 
         return $this->read('crm_companies', $column, $companyId, CompanyProperty::Email === $property);
-    }
-
-    public function contact(string $contactId, ContactProperty $property): ?CurrentProperty
-    {
-        $column = match ($property) {
-            ContactProperty::FirstName => 'first_name',
-            ContactProperty::LastName => 'last_name',
-            ContactProperty::Email => 'email',
-            ContactProperty::Phone => 'phone',
-            ContactProperty::Position => 'position',
-            ContactProperty::Kind => 'kind',
-            ContactProperty::Company => 'company_id',
-            ContactProperty::Owner => 'owner_id',
-        };
-
-        return $this->read('crm_contacts', $column, $contactId, ContactProperty::Email === $property);
     }
 
     /**

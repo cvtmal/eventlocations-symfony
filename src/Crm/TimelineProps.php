@@ -18,7 +18,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The props of the `timeline` island (D12): the first page of the record's timeline (P6), the tabs from the registry and
- * the strings, translated once here so a company and a contact pass the same set. They cost one statement beyond
+ * the strings, translated once here so a company and a deal pass the same set. They cost one statement beyond
  * `TimelineQuery::page()`, `EmailTemplateQuery::options()`, and only on a record with an address, the one that can send.
  * `_timeline.html.twig` renders the first page from the same array as its fallback.
  */

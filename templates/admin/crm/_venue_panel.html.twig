@@ -22,7 +22,7 @@
                 <dl class="crm-panel__facts">
                     <dt>{{ 'panel.contact'|trans({}, 'crm') }}</dt>
                     {% for contact in crm_venue.contacts %}
-                        <dd><a href="{{ path('admin_crm_contacts_show', {id: contact.id}) }}">{{ contact.fullName }}</a></dd>
+                        <dd><a href="{{ path('admin_crm_companies_show', {id: crm_venue.companyId}) }}#kontakte">{{ contact.fullName }}</a></dd>
                     {% else %}
                         <dd>{{ 'panel.no_contact'|trans({}, 'crm') }}</dd>
                     {% endfor %}

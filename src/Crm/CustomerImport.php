@@ -50,7 +50,7 @@ final readonly class CustomerImport
         $index = new CustomerMatchIndex($this->query->venues(), $this->query->companies(), $this->query->contactEmails(), $this->query->similar(CustomerClassifier::similarNames($rows)));
         $classifications = $this->classifier->classify($rows, $index, $keys);
 
-        $created = $contacts = $activities = $emailsTaken = $skippedAtWrite = 0;
+        $created = $contacts = $activities = $skippedAtWrite = 0;
         $failures = [];
         foreach ($classifications as $classification) {
             if (CustomerRowClass::New !== $classification->class || null === $classification->record) {
@@ -86,10 +86,9 @@ final readonly class CustomerImport
             ++$created;
             ++$contacts;
             $activities += $outcome->activities;
-            $emailsTaken += $outcome->emailTaken ? 1 : 0;
         }
 
-        $report = new CustomerImportReport($dryRun, \count($rows), $classifications, $created, $contacts, $activities, $emailsTaken, $skippedAtWrite, $failures);
+        $report = new CustomerImportReport($dryRun, \count($rows), $classifications, $created, $contacts, $activities, $skippedAtWrite, $failures);
         ContentYamlFile::replace($this->reportFile(), $report->markdown());
 
         return $report;

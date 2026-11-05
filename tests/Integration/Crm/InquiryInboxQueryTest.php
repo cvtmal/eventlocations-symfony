@@ -185,7 +185,6 @@ final class InquiryInboxQueryTest extends KernelTestCase
             'message' => "Erste Zeile\nZweite Zeile",
         ])->id();
         $this->dispatch(new IngestInquiry($id));
-        $contactId = (string) $this->connection->fetchOne('SELECT contact_id FROM crm_inquiry_links WHERE inquiry_id = ?', [$id]);
 
         $detail = $this->query()->detail($id);
 
@@ -204,20 +203,17 @@ final class InquiryInboxQueryTest extends KernelTestCase
         self::assertSame(InquiryStatus::New, $detail->status);
         self::assertSame(MailStatus::Pending, $detail->venueMail);
         self::assertSame(MailStatus::Pending, $detail->guestMail);
-        self::assertSame($contactId, $detail->contactId);
     }
 
-    public function test_the_detail_survives_a_deleted_venue_and_an_erased_contact(): void
+    public function test_the_detail_survives_a_deleted_venue(): void
     {
         $id = $this->inquiry();
         $this->connection->executeStatement('UPDATE inquiries SET venue_id = NULL WHERE id = ?', [$id]);
-        $this->connection->executeStatement('UPDATE crm_inquiry_links SET contact_id = NULL WHERE inquiry_id = ?', [$id]);
 
         $detail = $this->query()->detail($id);
 
         self::assertNotNull($detail);
         self::assertNull($detail->venueId);
-        self::assertNull($detail->contactId);
     }
 
     public function test_the_detail_of_an_unknown_or_unlinked_inquiry_is_null(): void

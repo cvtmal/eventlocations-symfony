@@ -11,8 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A to-do of a staff member (S13, CRM-5): a due date, an assignee, done or not, and at most one
- * object (chk_crm_tasks_one_object; none when created from the task list). A task goes with its
- * company, contact or deal (CASCADE). `isRenewal` marks the one task `app:crm:renewal-tasks` writes
+ * object, a company or a deal (chk_crm_tasks_one_object; none when created from the task list). A
+ * task goes with its company or deal (CASCADE). `isRenewal` marks the one task `app:crm:renewal-tasks` writes
  * for a deal (uk_crm_tasks_renewal, which survives completion, so a done task is not created again);
  * while open it follows the deal's `contract_end` and its leaving won.
  */
@@ -21,7 +21,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_crm_tasks_assignee_id', columns: ['assignee_id'])]
 #[ORM\Index(name: 'idx_crm_tasks_created_by_id', columns: ['created_by_id'])]
 #[ORM\Index(name: 'idx_crm_tasks_company_id', columns: ['company_id'])]
-#[ORM\Index(name: 'idx_crm_tasks_contact_id', columns: ['contact_id'])]
 #[ORM\Index(name: 'idx_crm_tasks_deal_id', columns: ['deal_id'])]
 #[ORM\Index(name: 'idx_crm_tasks_due_on', columns: ['due_on'])]
 #[ORM\UniqueConstraint(name: 'uk_crm_tasks_renewal', columns: ['deal_id'], options: ['where' => 'is_renewal'])]
@@ -52,10 +51,6 @@ class Task
     #[ORM\JoinColumn(name: 'company_id', nullable: true, onDelete: 'CASCADE')]
     private ?Company $company;
 
-    #[ORM\ManyToOne(targetEntity: Contact::class)]
-    #[ORM\JoinColumn(name: 'contact_id', nullable: true, onDelete: 'CASCADE')]
-    private ?Contact $contact;
-
     #[ORM\ManyToOne(targetEntity: Deal::class)]
     #[ORM\JoinColumn(name: 'deal_id', nullable: true, onDelete: 'CASCADE')]
     private ?Deal $deal;
@@ -79,11 +74,10 @@ class Task
         AdminUser $assignee,
         ?AdminUser $createdBy,
         ?Company $company = null,
-        ?Contact $contact = null,
         ?Deal $deal = null,
         bool $isRenewal = false,
     ) {
-        if (\count(array_filter([$company, $contact, $deal])) > 1) {
+        if (\count(array_filter([$company, $deal])) > 1) {
             throw new \LogicException('A task is linked to one object at most.');
         }
         if ($isRenewal && null === $deal) {
@@ -96,7 +90,6 @@ class Task
         $this->assignee = $assignee;
         $this->createdBy = $createdBy;
         $this->company = $company;
-        $this->contact = $contact;
         $this->deal = $deal;
         $this->isRenewal = $isRenewal;
         $this->createdAt = new \DateTimeImmutable();
@@ -159,11 +152,6 @@ class Task
     public function company(): ?Company
     {
         return $this->company;
-    }
-
-    public function contact(): ?Contact
-    {
-        return $this->contact;
     }
 
     public function deal(): ?Deal

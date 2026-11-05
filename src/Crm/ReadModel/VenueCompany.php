@@ -14,7 +14,7 @@ final readonly class VenueCompany
 {
     /**
      * @param list<CompanyRecordContact> $contacts
-     * @param list<VenueCompanyTask>     $tasks    the company's open tasks, those on its contacts and deals included
+     * @param list<VenueCompanyTask>     $tasks    the company's open tasks, those on its deals included
      * @param ?VenueOpenDeal             $openDeal the open deal on this venue that closes soonest
      */
     public function __construct(

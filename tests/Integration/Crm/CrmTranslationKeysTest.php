@@ -10,7 +10,6 @@ use App\Crm\TimelineProps;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\CustomerNoteField;
 use App\Crm\ValueObject\DealProperty;
@@ -36,8 +35,8 @@ final class CrmTranslationKeysTest extends KernelTestCase
         $catalogue = $translator->getCatalogue('de');
 
         $keys = [
-            // CrmApi: StaleProperty, CompanyNotFound|ContactNotFound|ActivityNotFound, ContactEmailTaken, InvalidPropertyValue,
-            // ActivityNotYours, ActivityReadOnly, CompanyStageDerived.
+            // CrmApi: StaleProperty, CompanyNotFound|ContactNotFound|ActivityNotFound, InvalidPropertyValue, ActivityNotYours,
+            // ActivityReadOnly, CompanyStageDerived; `api.email_taken` stays for the island's labels (#55).
             'api.stale', 'api.not_found', 'api.email_taken', 'api.required', 'api.unknown_choice', 'api.not_yours', 'api.read_only',
             'api.stage_derived', 'api.contract_ends_before_start', 'api.venue_not_linked', 'api.contact_of_another_company', 'api.lost_reason_required', 'api.no_email_address',
             // CompanyRecordController: VenueAlreadyLinked, VenueNotFound, CompanyHasDeals, a refused form.
@@ -75,9 +74,6 @@ final class CrmTranslationKeysTest extends KernelTestCase
         }
         foreach (CompanyProperty::cases() as $case) {
             $keys[] = 'company.property.'.$case->value;
-        }
-        foreach (ContactKind::cases() as $case) {
-            $keys[] = 'contact.kind.'.$case->value;
         }
         foreach (ContactProperty::cases() as $case) {
             $keys[] = 'contact.property.'.$case->value;

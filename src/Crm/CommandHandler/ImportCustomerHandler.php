@@ -7,39 +7,32 @@ namespace App\Crm\CommandHandler;
 use App\Crm\Command\ImportCustomer;
 use App\Crm\Entity\Activity;
 use App\Crm\Entity\ActivityCompany;
-use App\Crm\Entity\ActivityContact;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
 use App\Crm\Entity\Contact;
-use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Repository\CompanyRepository;
-use App\Crm\Repository\ContactRepository;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\ContactEmail;
-use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\CustomerImportOutcome;
 use App\Crm\ValueObject\CustomerRecord;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Uid\EntityId;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * One customer of the owner's sheet in one transaction (#48 R7, R8): a manual prospect without an
- * owner, its contact, and one logged mail per date linked to both. Nobody wrote the mails here, so they
- * have no actor. The name's advisory lock and the folded-name check under it keep a rerun or a second
- * run from creating the company twice; the runner's classification already skips known names, so this
- * is the race guard. A taken address is left out of the contact; under concurrency the unique key
- * decides, mapped to ContactEmailTaken by flushing here, so the row is reported as failed and a second
- * run leaves the address out.
+ * owner, its contact row, and one logged mail per date on the company. Nobody wrote the mails here, so
+ * they have no actor. The name's advisory lock and the folded-name check under it keep a rerun or a
+ * second run from creating the company twice; the runner's classification already skips known names,
+ * so this is the race guard. The contact is the first row of a brand-new Location, so its address can
+ * never be taken (the unique key is per Location, #55).
  */
 final class ImportCustomerHandler implements CommandHandlerInterface
 {
     public function __construct(
         private readonly CompanyRepository $companies,
-        private readonly ContactRepository $contacts,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
         private readonly EnabledLocale $locales,
@@ -62,10 +55,7 @@ final class ImportCustomerHandler implements CommandHandlerInterface
         $company->changeNotes($this->notes($record));
         $this->em->persist($company);
 
-        $emailTaken = null !== $email && $this->contacts->emailTaken($email);
-        $contactEmail = $emailTaken ? null : $email;
-        $contact = new Contact(EntityId::generate(), $record->firstName, $record->lastName, ContactKind::VenueContact, $company, $contactEmail);
-        $this->em->persist($contact);
+        $this->em->persist(new Contact(EntityId::generate(), $company, $record->firstName, $record->lastName, $email));
 
         $type = $this->em->getReference(ActivityType::class, ActivityType::EMAIL_LOGGED) ?? throw new \LogicException('ActivityType has no subclass, so a reference always resolves.');
         $body = $this->translator->trans('customer_import.mail_body', [], 'crm', $this->locales->default());
@@ -73,18 +63,9 @@ final class ImportCustomerHandler implements CommandHandlerInterface
             $activity = new Activity(EntityId::generate(), $type, $date, null, null, $body);
             $this->em->persist($activity);
             $this->em->persist(new ActivityCompany($activity, $company));
-            $this->em->persist(new ActivityContact($activity, $contact));
         }
 
-        if (null !== $contactEmail) {
-            try {
-                $this->em->flush();
-            } catch (UniqueConstraintViolationException) {
-                throw ContactEmailTaken::create();
-            }
-        }
-
-        return CustomerImportOutcome::created($company->id(), $emailTaken, \count($record->mailDates));
+        return CustomerImportOutcome::created($company->id(), \count($record->mailDates));
     }
 
     /**

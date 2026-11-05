@@ -36,9 +36,6 @@
                         {{ form_row(create_form.contractEnd) }}
                     </div>
                     {{ form_row(create_form.owner) }}
-                    {% if create_form.contacts is defined %}
-                        {{ form_row(create_form.contacts) }}
-                    {% endif %}
                 </div>
             {% endblock %}
             {% block foot %}

@@ -30,7 +30,7 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * A company record (CRM-1, CRM-3, D20): the properties card with its island and read-only fallback, the
- * Locations card (link, unlink) and the Kontakte card, and deletion for admins only.
+ * Locations card (link, unlink) and the Kontakte card (its dialogs: `ContactCardTest`), and deletion for admins only.
  */
 final class CompanyRecordTest extends WebTestCase
 {
@@ -71,8 +71,11 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame('Einträge (1)', $crawler->filter('#crm-venues-title')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#locations .crm-side__link')->attr('href'));
         self::assertSame('Kontakte (1)', $crawler->filter('#crm-contacts-title')->text());
-        self::assertSame('/admin/crm/kontakte/'.$laura->id(), $crawler->filter('#kontakte .crm-side__link')->attr('href'));
-        self::assertCount(1, $crawler->filter('#kontakte a[href="/admin/crm/kontakte/neu?company='.$company->id().'"]'));
+        // A contact has no page since #55: the name is text, the card's dialogs add and edit (ContactCardTest).
+        self::assertSame('Laura Meier', $crawler->filter('#kontakte .crm-side__name')->text());
+        self::assertCount(0, $crawler->filter('#kontakte .crm-side__link'));
+        self::assertSame('contact-new', $crawler->filter('#kontakte .card__head button[command="show-modal"]')->attr('commandfor'));
+        self::assertSame('contact-'.$laura->id(), $crawler->filter('#kontakte .crm-side__item button[command="show-modal"]')->attr('commandfor'));
 
         // An editor gets no Aktionen.
         self::assertSelectorNotExists('#record-actions');
@@ -262,7 +265,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_company_venues'));
     }
 
-    public function test_an_admin_deletes_a_company_and_its_contacts_stay(): void
+    public function test_an_admin_deletes_a_company_and_its_contacts_go_with_it(): void
     {
         $this->logInAs(AdminRole::Admin);
         $company = CompanyFactory::createOne(['name' => 'Seeblick Events GmbH']);
@@ -275,7 +278,7 @@ final class CompanyRecordTest extends WebTestCase
 
         self::assertResponseRedirects('/admin/crm/locations', 303);
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
-        self::assertNull($this->connection->fetchOne('SELECT company_id FROM crm_contacts'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_contacts'));
         $this->client->followRedirect();
         self::assertSelectorTextContains('.toast', 'Location «Seeblick Events GmbH» gelöscht.');
     }
@@ -613,9 +616,8 @@ final class CompanyRecordTest extends WebTestCase
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venues = VenueFactory::new()->withoutLocation(null)->many(2)->create();
         $company = CompanyFactory::new()->withVenues(...$venues)->afterInstantiate(static fn (Company $company) => $company->changeEmail('info@seeblick.example'))->create(['owner' => $owner]);
-        $contacts = ContactFactory::createMany(3, ['company' => $company]);
-        TaskFactory::createOne(['company' => $company]);
-        TaskFactory::createOne(['contact' => $contacts[0]]);
+        ContactFactory::createMany(3, ['company' => $company]);
+        TaskFactory::createMany(2, ['company' => $company]);
 
         // The company with its venues and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
         // timeline's activities, venue names and audit rows, the composer's mail templates, the Aufgaben card, the Deals

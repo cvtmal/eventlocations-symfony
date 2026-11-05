@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Crm;
 
+use App\Crm\CommandHandler\LinkLocationManagerHandler;
 use App\Crm\EventListener\LinkLocationManagerListener;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\ReadModel\VenueCompanyQuery;
-use App\Crm\ValueObject\ContactKind;
 use App\Factory\ContactFactory;
 use App\Factory\VenueFactory;
 use App\Portal\Event\LocationSubmitted;
@@ -48,9 +48,9 @@ final class LocationSubmittedTest extends KernelTestCase
             'last_name' => 'Keller',
             'email' => 'petra@example.ch',
             'phone' => '044 123 45 67',
-            'kind' => ContactKind::VenueContact->value,
+            'position' => LinkLocationManagerHandler::MANAGER_POSITION,
             'company_id' => $companyId,
-        ], $this->connection->fetchAssociative('SELECT first_name, last_name, email, phone, kind, company_id FROM crm_contacts'));
+        ], $this->connection->fetchAssociative('SELECT first_name, last_name, email, phone, position, company_id FROM crm_contacts'));
     }
 
     public function test_the_timeline_entry_uses_the_submission_wording(): void
@@ -62,25 +62,17 @@ final class LocationSubmittedTest extends KernelTestCase
         self::assertSame('Neuer Eintrag eingereicht: Schloss Seeblick', $this->connection->fetchOne('SELECT body FROM crm_activities'));
     }
 
-    public function test_a_known_contact_is_not_duplicated(): void
+    public function test_a_contact_on_another_location_gets_a_row_on_the_new_one(): void
     {
         $venue = $this->draft();
         ContactFactory::createOne(['email' => 'petra@example.ch']);
 
         $this->publishes($this->event($venue));
 
-        self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_contacts'));
-        self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_activity_contacts'));
-    }
-
-    public function test_a_couple_who_submits_becomes_a_venue_contact(): void
-    {
-        $venue = $this->draft();
-        $contact = ContactFactory::createOne(['kind' => ContactKind::Couple, 'email' => 'petra@example.ch']);
-
-        $this->publishes($this->event($venue));
-
-        self::assertSame(ContactKind::VenueContact->value, $this->connection->fetchOne('SELECT kind FROM crm_contacts WHERE id = ?', [$contact->id()]));
+        $companyId = $this->connection->fetchOne('SELECT company_id FROM crm_company_venues WHERE venue_id = ?', [$venue->id()]);
+        self::assertSame(2, $this->connection->fetchOne('SELECT count(*) FROM crm_contacts'));
+        self::assertSame(1, $this->connection->fetchOne("SELECT count(*) FROM crm_contacts WHERE company_id = ? AND email = 'petra@example.ch'", [$companyId]));
+        self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_activity_companies WHERE company_id = ?', [$companyId]));
     }
 
     public function test_a_crm_failure_is_logged_without_its_message_and_never_escapes(): void

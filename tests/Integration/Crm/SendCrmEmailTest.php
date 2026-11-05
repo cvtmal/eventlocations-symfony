@@ -234,7 +234,9 @@ final class SendCrmEmailTest extends KernelTestCase
 
     private function command(string $id, string $contactId, ?string $cc = null, ?string $actingUserId = null): SendCrmEmail
     {
-        return new SendCrmEmail($id, RecordKind::Contact, $contactId, null, $cc, self::SUBJECT, self::BODY, $actingUserId ?? AdminUserFactory::createOne()->id());
+        $companyId = (string) $this->connection->fetchOne('SELECT company_id FROM crm_contacts WHERE id = ?', [$contactId]);
+
+        return new SendCrmEmail($id, RecordKind::Company, $companyId, $contactId, $cc, self::SUBJECT, self::BODY, $actingUserId ?? AdminUserFactory::createOne()->id());
     }
 
     private function handler(MailerInterface $mailer, ?string $override = null, LoggerInterface $logger = new NullLogger()): SendCrmEmailHandler

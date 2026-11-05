@@ -5,21 +5,17 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Crm;
 
 use App\Crm\Command\CreateCompany;
-use App\Crm\Command\CreateContact;
 use App\Crm\Command\DeleteCompany;
 use App\Crm\Command\LinkVenue;
 use App\Crm\Command\UnlinkVenue;
 use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
-use App\Crm\Entity\Contact;
 use App\Crm\Exception\CompanyNotFound;
-use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\VenueAlreadyLinked;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
 use App\Factory\ActivityFactory;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
@@ -32,7 +28,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * CRM-1 and CRM-2's create, link and delete commands through command.bus against app_test in a
+ * CRM-1's create, link and delete commands through command.bus against app_test in a
  * rolled-back transaction: the rows, the business rules and the audit row, which names fields only.
  */
 final class CompanyCommandsTest extends KernelTestCase
@@ -78,45 +74,6 @@ final class CompanyCommandsTest extends KernelTestCase
         $this->failure(new CreateCompany(EntityId::generate(), '   '), InvalidPropertyValue::class);
     }
 
-    public function test_it_creates_a_contact_at_a_company(): void
-    {
-        $company = CompanyFactory::createOne();
-        $id = EntityId::generate();
-
-        $this->dispatch(new CreateContact($id, ' Anna ', 'Muster', ContactKind::VenueContact, $company->id(), 'Anna@Example.TEST', '+41 79 123 45 67', 'Inhaberin'));
-
-        $this->em->clear();
-        $contact = $this->em->find(Contact::class, $id);
-        self::assertInstanceOf(Contact::class, $contact);
-        self::assertSame('Anna', $contact->firstName());
-        self::assertSame('anna@example.test', $contact->email());
-        self::assertSame($company->id(), $contact->company()?->id());
-        self::assertSame(ContactKind::VenueContact, $contact->kind());
-        $audit = $this->auditRows('contact', $id);
-        self::assertEquals(['fields' => ['first_name', 'last_name', 'company', 'email', 'phone', 'position'], 'kind' => 'venue_contact'], $audit[0]['changes']);
-        self::assertStringNotContainsString('anna', strtolower((string) json_encode($audit)));
-    }
-
-    public function test_a_taken_email_is_refused_case_insensitively(): void
-    {
-        ContactFactory::createOne(['email' => 'anna@example.test']);
-
-        $this->failure(new CreateContact(EntityId::generate(), null, 'Zweite', ContactKind::Other, email: ' ANNA@example.test'), ContactEmailTaken::class);
-    }
-
-    public function test_contacts_without_email_do_not_clash(): void
-    {
-        $this->dispatch(new CreateContact(EntityId::generate(), null, 'Eins', ContactKind::Other, email: ''));
-        $this->dispatch(new CreateContact(EntityId::generate(), null, 'Zwei', ContactKind::Other));
-
-        self::assertSame(2, $this->rows("SELECT count(*) FROM crm_contacts WHERE email IS NULL AND last_name IN ('Eins', 'Zwei')"));
-    }
-
-    public function test_a_contact_at_an_unknown_company_is_refused(): void
-    {
-        $this->failure(new CreateContact(EntityId::generate(), null, 'Muster', ContactKind::Other, EntityId::generate()), CompanyNotFound::class);
-    }
-
     public function test_it_links_and_unlinks_a_venue(): void
     {
         $company = CompanyFactory::createOne();
@@ -157,20 +114,20 @@ final class CompanyCommandsTest extends KernelTestCase
         $this->failure(new LinkVenue(EntityId::generate(), $venue->id()), CompanyNotFound::class);
     }
 
-    public function test_deleting_a_company_keeps_contacts_and_shared_entries(): void
+    public function test_deleting_a_company_deletes_its_contacts_and_keeps_shared_entries(): void
     {
         $venue = VenueFactory::new()->withoutLocation()->create();
         $company = CompanyFactory::new()->withVenues($venue)->create();
         $contact = ContactFactory::createOne(['company' => $company]);
         $companyOnly = ActivityFactory::new()->onCompany($company)->create();
-        $shared = ActivityFactory::new()->ofType(ActivityType::CALL)->onCompany($company)->onContact($contact)->create();
+        $shared = ActivityFactory::new()->ofType(ActivityType::CALL)->onCompany($company)->onCompany(CompanyFactory::createOne())->create();
         TaskFactory::createOne(['company' => $company]);
         $companyId = $company->id();
 
         $this->dispatch(new DeleteCompany($companyId));
 
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_companies WHERE id = ?', $companyId));
-        self::assertSame(1, $this->rows('SELECT count(*) FROM crm_contacts WHERE id = ? AND company_id IS NULL', $contact->id()));
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_contacts WHERE id = ?', $contact->id()));
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_company_venues WHERE venue_id = ?', $venue->id()));
         self::assertSame(1, $this->rows('SELECT count(*) FROM venues WHERE id = ?', $venue->id()));
         self::assertSame(0, $this->rows('SELECT count(*) FROM crm_tasks WHERE company_id = ?', $companyId));

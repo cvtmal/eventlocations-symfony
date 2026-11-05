@@ -112,6 +112,26 @@
     font-size: 13px;
 }
 
+// A contact on the Location card (#55) has no page of its own: the name is text, the e-mail and phone are links.
+.crm-side__name {
+    color: var(--a-ink);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.crm-side__reach {
+    overflow-wrap: anywhere;
+
+    &:hover {
+        color: var(--a-link-hover);
+    }
+}
+
+// The edit dialog's "Entfernen" stands apart from cancel and save.
+.crm-contact__remove {
+    margin-right: auto;
+}
+
 .crm-side__empty {
     margin: var(--a-space-2) 0;
     color: var(--a-muted);

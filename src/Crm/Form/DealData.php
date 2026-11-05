@@ -23,9 +23,6 @@ final class DealData
     public ?string $expectedClose = null;
     public ?string $owner = null;
 
-    /** @var list<string> */
-    public array $contacts = [];
-
     public function toCommand(string $id, string $companyId): CreateDeal
     {
         return new CreateDeal(
@@ -39,7 +36,6 @@ final class DealData
             TaskDueDate::parse($this->contractEnd),
             TaskDueDate::parse($this->expectedClose),
             $this->owner,
-            $this->contacts,
         );
     }
 }

@@ -14,9 +14,6 @@ use App\Venues\ValueObject\Tier;
  */
 final readonly class CreateDeal implements AuditableCommand
 {
-    /**
-     * @param list<string> $contactIds
-     */
     public function __construct(
         public string $id,
         public string $name,
@@ -28,7 +25,6 @@ final readonly class CreateDeal implements AuditableCommand
         public ?\DateTimeImmutable $contractEndOn = null,
         public ?\DateTimeImmutable $expectedCloseOn = null,
         public ?string $ownerId = null,
-        public array $contactIds = [],
     ) {
     }
 
@@ -49,7 +45,6 @@ final readonly class CreateDeal implements AuditableCommand
                 'contract_end' => $this->contractEndOn,
                 'expected_close' => $this->expectedCloseOn,
                 'owner' => $this->ownerId,
-                'contacts' => [] === $this->contactIds ? null : $this->contactIds,
             ],
             static fn (mixed $value): bool => null !== $value,
         ))];

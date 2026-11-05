@@ -12,7 +12,6 @@ use App\Crm\ReadModel\SortDirection;
 use App\Crm\ValueObject\LostReason;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
@@ -82,24 +81,20 @@ final class DealListQueryTest extends KernelTestCase
         self::assertSame('2027-12-31', $rows[0]->contractEndOn?->format('Y-m-d'));
     }
 
-    public function test_the_form_offers_the_companys_own_venues_and_contacts(): void
+    public function test_the_form_offers_the_companys_own_venues(): void
     {
         $venues = [
             VenueFactory::new()->withoutLocation(null)->create(['name' => 'Zunfthaus']),
             VenueFactory::new()->withoutLocation(null)->create(['name' => 'Alpenhof']),
         ];
         $company = CompanyFactory::new()->withVenues(...$venues)->create(['name' => 'Seeblick Events']);
-        ContactFactory::createOne(['firstName' => 'Anna', 'lastName' => 'Muster', 'company' => $company]);
-        ContactFactory::createOne(['firstName' => null, 'lastName' => 'Brunner', 'company' => $company]);
         CompanyFactory::new()->withVenues(VenueFactory::new()->withoutLocation(null)->create())->create();
-        ContactFactory::createOne(['company' => CompanyFactory::createOne()]);
 
         $form = $this->forms()->company($company->id());
 
         self::assertNotNull($form);
         self::assertSame('Seeblick Events', $form->name);
         self::assertSame(['Alpenhof', 'Zunfthaus'], array_map(static fn ($option): string => $option->label, $form->venues));
-        self::assertSame(['Brunner', 'Anna Muster'], array_map(static fn ($option): string => $option->label, $form->contacts));
     }
 
     public function test_an_unknown_or_malformed_company_is_no_form(): void

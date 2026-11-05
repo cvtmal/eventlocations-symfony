@@ -8,14 +8,13 @@ use App\Crm\ValueObject\LostReason;
 use App\Venues\ValueObject\Tier;
 
 /**
- * A deal record page: the deal with its names, the contacts on it, and what its forms offer.
+ * A deal record page: the deal with its names, its Location's contact rows, and what its forms offer.
  */
 final readonly class DealRecord
 {
     /**
      * @param string                     $stage         the code of its stage
-     * @param list<CompanyRecordContact> $contacts      the contacts on the deal
-     * @param list<DealFormOption>       $linkable      the company's other contacts
+     * @param list<CompanyRecordContact> $contacts      the contact rows of the deal's Location (#55)
      * @param list<DealFormOption>       $companyVenues the venues a deal of this company can name
      * @param bool                       $renewable     won, with a contract end, and not renewed yet (D21)
      */
@@ -37,14 +36,8 @@ final readonly class DealRecord
         public ?\DateTimeImmutable $closedAt,
         public \DateTimeImmutable $createdAt,
         public array $contacts,
-        public array $linkable,
         public array $companyVenues,
         public bool $renewable,
     ) {
-    }
-
-    public function hasContact(string $contactId): bool
-    {
-        return array_any($this->contacts, static fn (CompanyRecordContact $contact): bool => $contactId === $contact->id);
     }
 }

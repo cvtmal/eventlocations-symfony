@@ -6,7 +6,6 @@ namespace App\Tests\Integration\Crm;
 
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Crm\ValueObject\LostReason;
 use App\Venues\ValueObject\Tier;
@@ -27,7 +26,6 @@ final class CrmVocabularyChecksTest extends KernelTestCase
     {
         yield 'company stage' => ['chk_crm_companies_stage', CompanyStage::class];
         yield 'company origin' => ['chk_crm_companies_origin', CompanyOrigin::class];
-        yield 'contact kind' => ['chk_crm_contacts_kind', ContactKind::class];
         yield 'lost reason' => ['chk_crm_deals_lost_reason', LostReason::class];
         yield 'deal tier' => ['chk_crm_deals_tier', Tier::class];
         yield 'inquiry status' => ['chk_crm_inquiry_links_status', InquiryStatus::class];

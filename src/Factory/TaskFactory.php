@@ -39,7 +39,6 @@ final class TaskFactory extends PersistentObjectFactory
             'assignee' => lazy(static fn () => AdminUserFactory::createOne()),
             'createdBy' => null,
             'company' => null,
-            'contact' => null,
         ];
     }
 }

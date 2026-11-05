@@ -7,7 +7,6 @@ namespace App\Tests\Application\Crm;
 use App\Admin\ValueObject\AdminRole;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\TaskFactory;
 use App\Tests\Support\Admin\AdminSession;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -79,10 +78,8 @@ final class TasksNavigationTest extends WebTestCase
     public static function pagesWithOwners(): iterable
     {
         yield 'company list' => ['/admin/crm/locations'];
-        yield 'contact list' => ['/admin/crm/kontakte'];
         yield 'task list' => ['/admin/crm/aufgaben'];
         yield 'company record' => ['/admin/crm/locations/{company}'];
-        yield 'contact record' => ['/admin/crm/kontakte/{contact}'];
     }
 
     #[DataProvider('pagesWithOwners')]
@@ -91,7 +88,7 @@ final class TasksNavigationTest extends WebTestCase
         self::mockTime('2026-10-31 10:00:00 UTC');
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
         TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
-        $url = strtr($page, ['{company}' => CompanyFactory::createOne()->id(), '{contact}' => ContactFactory::createOne()->id()]);
+        $url = strtr($page, ['{company}' => CompanyFactory::createOne()->id()]);
 
         $crawler = $this->requestCounting($url);
 
@@ -114,19 +111,6 @@ final class TasksNavigationTest extends WebTestCase
         // The user's refresh, the owners with the badge, COUNT, the rows, the venues left for the bootstrap, the
         // access-request badge (P12 ceiling 5, passed on purpose by #43).
         self::assertSame(6, $this->queriesOf('/admin/crm/locations'));
-        self::assertSelectorTextSame('.sidebar__badge', '1');
-    }
-
-    public function test_the_contact_list_holds_its_count_with_the_users_refresh(): void
-    {
-        self::mockTime('2026-10-31 10:00:00 UTC');
-        ['user' => $me] = $this->logInAs(AdminRole::Editor);
-        TaskFactory::createOne(['assignee' => $me, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
-        ContactFactory::createOne();
-        $this->entityManager()->clear();
-
-        // The user's refresh, the owners with the badge, COUNT, the rows, the access-request badge.
-        self::assertSame(5, $this->queriesOf('/admin/crm/kontakte'));
         self::assertSelectorTextSame('.sidebar__badge', '1');
     }
 

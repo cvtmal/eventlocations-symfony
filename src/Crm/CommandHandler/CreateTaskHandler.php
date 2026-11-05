@@ -10,7 +10,6 @@ use App\Crm\Entity\Task;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
-use App\Crm\Repository\ContactRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\ValueObject\PropertyValue;
 use App\Crm\ValueObject\RecordKind;
@@ -18,7 +17,7 @@ use App\Shared\Messenger\CommandHandlerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Writes the task. Only an active account can get a new task (`OwnerResolver`). The record is locked, so an erasure
+ * Writes the task. Only an active account can get a new task (`OwnerResolver`). The record is locked, so a delete
  * either sees the task and takes it along, or this handler sees the record gone.
  */
 final class CreateTaskHandler implements CommandHandlerInterface
@@ -26,7 +25,6 @@ final class CreateTaskHandler implements CommandHandlerInterface
     public function __construct(
         private readonly OwnerResolver $owners,
         private readonly CompanyRepository $companies,
-        private readonly ContactRepository $contacts,
         private readonly DealRepository $deals,
         private readonly EntityManagerInterface $em,
     ) {
@@ -37,11 +35,10 @@ final class CreateTaskHandler implements CommandHandlerInterface
         $title = PropertyValue::canonical($command->title) ?? throw InvalidPropertyValue::required('title');
         $assignee = $this->owners->resolve($command->assigneeId) ?? throw InvalidPropertyValue::required('owner');
 
-        [$company, $contact, $deal] = match ($command->kind) {
-            null => [null, null, null],
-            RecordKind::Company => [$this->companies->lock((string) $command->recordId), null, null],
-            RecordKind::Contact => [null, $this->contacts->lock((string) $command->recordId), null],
-            RecordKind::Deal => [null, null, $this->deals->lock((string) $command->recordId)],
+        [$company, $deal] = match ($command->kind) {
+            null => [null, null],
+            RecordKind::Company => [$this->companies->lock((string) $command->recordId), null],
+            RecordKind::Deal => [null, $this->deals->lock((string) $command->recordId)],
         };
 
         $this->em->persist(new Task(
@@ -51,7 +48,6 @@ final class CreateTaskHandler implements CommandHandlerInterface
             $assignee,
             $this->em->getReference(AdminUser::class, $command->actingUserId),
             $company,
-            $contact,
             $deal,
         ));
     }

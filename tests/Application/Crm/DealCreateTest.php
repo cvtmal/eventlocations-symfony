@@ -19,7 +19,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * "Deal erfassen" (CRM-7, N5): the company first in a GET form, then the deal form with its venues and contacts.
+ * "Deal erfassen" (CRM-7, N5): the company first in a GET form, then the deal form with its venues.
  */
 final class DealCreateTest extends WebTestCase
 {
@@ -59,7 +59,7 @@ final class DealCreateTest extends WebTestCase
         AdminUserFactory::new()->afterInstantiate(static fn (AdminUser $user) => $user->deactivate())->create(['displayName' => 'Ehemalig']);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         $company = CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events']);
-        $contact = ContactFactory::createOne(['company' => $company]);
+        ContactFactory::createOne(['company' => $company]);
 
         $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
         self::assertResponseIsSuccessful();
@@ -67,6 +67,8 @@ final class DealCreateTest extends WebTestCase
         self::assertSame(['', $venue->id()], $crawler->filter('#deal_venue option')->each(static fn (Crawler $option): string => (string) $option->attr('value')));
         self::assertSelectorExists('.field__addon input[name="deal[amount]"]');
         self::assertStringContainsString('Seeblick Events', $crawler->filter('.form')->text());
+        // A deal has no contacts of its own since #55: its page shows the Location's.
+        self::assertCount(0, $crawler->filter('[name^="deal[contacts]"]'));
 
         $this->client->submitForm('Erfassen', [
             'deal[name]' => '  Premium 2027 ',
@@ -77,7 +79,6 @@ final class DealCreateTest extends WebTestCase
             'deal[contractEnd]' => '2027-12-31',
             'deal[expectedClose]' => '2026-11-15',
             'deal[owner]' => $owner->id(),
-            'deal[contacts]' => [$contact->id()],
         ]);
 
         self::assertResponseStatusCodeSame(303);
@@ -88,7 +89,6 @@ final class DealCreateTest extends WebTestCase
             ['Premium 2027', $company->id(), $venue->id(), 'premium', 125050, '2027-01-01', '2027-12-31', '2026-11-15', $owner->id(), 'new'],
             [$row['name'], $row['company_id'], $row['venue_id'], $row['tier'], (int) $row['amount_rappen'], $row['contract_start_on'], $row['contract_end_on'], $row['expected_close_on'], $row['owner_id'], $row['stage_code']],
         );
-        self::assertSame($contact->id(), $this->connection->fetchOne('SELECT contact_id FROM crm_deal_contacts WHERE deal_id = ?', [$row['id']]));
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT count(*) FROM admin_audit_log WHERE subject_type = 'deal' AND subject_id = ?", [$row['id']]));
 
         $this->client->followRedirect();
@@ -101,8 +101,7 @@ final class DealCreateTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
 
-        $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
-        self::assertCount(0, $crawler->filter('input[name="deal[contacts][]"]'));
+        $this->client->request('GET', self::NEW.'?company='.$company->id());
 
         $this->client->submitForm('Erfassen', ['deal[name]' => 'Premium 2027']);
 

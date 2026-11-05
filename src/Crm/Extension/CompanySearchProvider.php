@@ -13,8 +13,8 @@ use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The company group of the global ⌘K search (CRM-6, D20): the list's folded name search, each result
- * linking to the record. Below the venues' 300.
+ * The company group of the global ⌘K search (CRM-6, D20): the list's search, which also finds a Location by
+ * its contact rows' names and e-mails (#55 D16), each result linking to the record. Below the venues' 300.
  */
 final readonly class CompanySearchProvider implements SearchProvider
 {

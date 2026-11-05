@@ -7,12 +7,9 @@ namespace App\Tests\Integration\Crm;
 use App\Crm\ReadModel\RecordPropertyQuery;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
-use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\DealProperty;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
@@ -47,20 +44,6 @@ final class RecordPropertyQueryTest extends KernelTestCase
         }
     }
 
-    public function test_it_reads_every_contact_field(): void
-    {
-        $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['email' => 'anna@example.ch', 'kind' => ContactKind::VenueContact, 'company' => $company]);
-        $query = $this->query();
-
-        self::assertSame('anna@example.ch', $query->contact($contact->id(), ContactProperty::Email)?->value);
-        self::assertSame('venue_contact', $query->contact($contact->id(), ContactProperty::Kind)?->value);
-        self::assertSame($company->id(), $query->contact($contact->id(), ContactProperty::Company)?->value);
-        foreach (ContactProperty::cases() as $property) {
-            self::assertNotNull($query->contact($contact->id(), $property), $property->value);
-        }
-    }
-
     public function test_it_reads_a_deal_field_in_its_stored_form(): void
     {
         $deal = DealFactory::createOne(['name' => 'Premium 2027', 'amountRappen' => 125050, 'tier' => Tier::Premium, 'expectedCloseOn' => new \DateTimeImmutable('2027-03-01')]);
@@ -82,8 +65,6 @@ final class RecordPropertyQueryTest extends KernelTestCase
 
         self::assertNull($query->company(EntityId::generate(), CompanyProperty::Name));
         self::assertNull($query->company('42', CompanyProperty::Name));
-        self::assertNull($query->contact(EntityId::generate(), ContactProperty::LastName));
-        self::assertNull($query->contact("x'; --", ContactProperty::LastName));
     }
 
     private function query(): RecordPropertyQuery

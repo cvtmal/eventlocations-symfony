@@ -8,7 +8,6 @@ use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\CreateTask;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
-use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Shared\Uid\EntityId;
@@ -37,7 +36,6 @@ final class RecordTasksTest extends WebTestCase
     public static function kinds(): iterable
     {
         yield 'a company' => ['company', 'company_id'];
-        yield 'a contact' => ['contact', 'contact_id'];
         yield 'a deal' => ['deal', 'deal_id'];
     }
 
@@ -48,7 +46,6 @@ final class RecordTasksTest extends WebTestCase
         $assignee = AdminUserFactory::createOne();
         $record = match ($kind) {
             'company' => CompanyFactory::createOne(),
-            'contact' => ContactFactory::createOne(),
             default => DealFactory::createOne(),
         };
 
@@ -58,7 +55,7 @@ final class RecordTasksTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Type', 'application/json');
         $id = $this->answer()['id'] ?? null;
         self::assertIsString($id);
-        $row = $this->connection->fetchAssociative('SELECT title, due_on, assignee_id, created_by_id, company_id, contact_id, deal_id FROM crm_tasks WHERE id = ?', [$id]);
+        $row = $this->connection->fetchAssociative('SELECT title, due_on, assignee_id, created_by_id, company_id, deal_id FROM crm_tasks WHERE id = ?', [$id]);
         self::assertIsArray($row);
         self::assertSame('Rückruf', $row['title']);
         self::assertSame(self::DUE, $row['due_on']);
@@ -120,7 +117,7 @@ final class RecordTasksTest extends WebTestCase
     {
         ['user' => $me] = $this->logInAs(AdminRole::Editor);
 
-        $this->send(['kind' => 'contact', 'recordId' => EntityId::generate(), 'title' => 'Rückruf', 'dueOn' => self::DUE, 'assigneeId' => $me->id()]);
+        $this->send(['kind' => 'company', 'recordId' => EntityId::generate(), 'title' => 'Rückruf', 'dueOn' => self::DUE, 'assigneeId' => $me->id()]);
 
         self::assertResponseStatusCodeSame(404);
         self::assertSame([''], array_keys($this->errors()));
@@ -163,9 +160,8 @@ final class RecordTasksTest extends WebTestCase
         self::mockTime('2026-10-31 10:00:00 UTC');
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
-        $contact = ContactFactory::createOne(['company' => $company]);
         TaskFactory::createOne(['title' => 'Überfällige', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-30')]);
-        TaskFactory::createOne(['title' => 'Rückruf Laura Meier', 'contact' => $contact, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
+        TaskFactory::createOne(['title' => 'Rückruf Laura Meier', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-10-31')]);
         TaskFactory::createOne(['title' => 'Spätere', 'company' => $company, 'dueOn' => new \DateTimeImmutable('2026-11-02')]);
         TaskFactory::new()->done(new \DateTimeImmutable('2026-10-29 10:00:00 UTC'))->create(['title' => 'Erledigte', 'company' => $company]);
 
@@ -190,19 +186,6 @@ final class RecordTasksTest extends WebTestCase
 
         self::assertSame('Aufgaben (1)', $card->filter('h2')->text());
         self::assertSame('Verlängerung: Premium 2026', $card->filter('.crm-task__title')->text());
-    }
-
-    public function test_the_card_on_a_contact_shows_its_tasks(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $contact = ContactFactory::createOne(['company' => CompanyFactory::createOne()]);
-        $task = TaskFactory::createOne(['title' => 'Rückruf', 'contact' => $contact]);
-
-        $crawler = $this->client->request('GET', '/admin/crm/kontakte/'.$contact->id());
-
-        self::assertSame('Aufgaben (1)', $crawler->filter('#aufgaben h2')->text());
-        self::assertSame('Rückruf', $crawler->filter('#aufgaben .crm-task__title')->text());
-        self::assertSame('/admin/crm/aufgaben/'.$task->id().'/status', $crawler->filter('#aufgaben form')->attr('action'));
     }
 
     public function test_the_card_on_a_deal_shows_its_tasks_and_only_those(): void

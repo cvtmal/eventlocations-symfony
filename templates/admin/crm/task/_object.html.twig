@@ -5,8 +5,6 @@
 #}
 {%- if task.companyId -%}
     {{- 'task.object.company'|trans({}, 'crm') }} · <a href="{{ path('admin_crm_companies_show', {id: task.companyId}) }}">{{ task.companyName }}</a>
-{%- elseif task.contactId -%}
-    {{- 'task.object.contact'|trans({}, 'crm') }} · <a href="{{ path('admin_crm_contacts_show', {id: task.contactId}) }}">{{ task.contactName }}</a>
 {%- elseif task.dealId -%}
     {{- 'task.object.deal'|trans({}, 'crm') }} · <a href="{{ path('admin_crm_deals_show', {id: task.dealId}) }}">{{ task.dealCompanyName }}</a>
 {%- endif -%}

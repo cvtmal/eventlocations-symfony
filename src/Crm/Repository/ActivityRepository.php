@@ -23,8 +23,8 @@ class ActivityRepository extends ServiceEntityRepository
     }
 
     /**
-     * Loads the entry under `SELECT … FOR UPDATE` (inside the bus transaction), so an erasure cannot blank it
-     * between the check and the write.
+     * Loads the entry under `SELECT … FOR UPDATE` (inside the bus transaction), so a concurrent edit or delete
+     * cannot change it between the check and the write.
      *
      * @throws ActivityNotFound
      */
@@ -50,20 +50,6 @@ class ActivityRepository extends ServiceEntityRepository
     }
 
     /**
-     * Ids of the activities on the contact's timeline.
-     *
-     * @return list<string>
-     */
-    public function idsLinkedToContact(string $contactId): array
-    {
-        /* @var list<string> */
-        return $this->getEntityManager()->getConnection()->fetchFirstColumn(
-            'SELECT activity_id FROM crm_activity_contacts WHERE contact_id = ?',
-            [$contactId],
-        );
-    }
-
-    /**
      * Ids of the activities on the deal's timeline.
      *
      * @return list<string>
@@ -74,24 +60,6 @@ class ActivityRepository extends ServiceEntityRepository
         return $this->getEntityManager()->getConnection()->fetchFirstColumn(
             'SELECT activity_id FROM crm_activity_deals WHERE deal_id = ?',
             [$dealId],
-        );
-    }
-
-    /**
-     * Blanks title, body and payload of the activities and marks them anonymised (D16).
-     *
-     * @param list<string> $ids
-     */
-    public function anonymise(array $ids, \DateTimeImmutable $at): void
-    {
-        if ([] === $ids) {
-            return;
-        }
-
-        $this->getEntityManager()->getConnection()->executeStatement(
-            "UPDATE crm_activities SET title = NULL, body = NULL, payload = '{}', anonymised_at = :at, updated_at = :at WHERE id IN (:ids)",
-            ['at' => $at->format('Y-m-d H:i:sO'), 'ids' => $ids],
-            ['ids' => ArrayParameterType::STRING],
         );
     }
 
@@ -114,7 +82,6 @@ class ActivityRepository extends ServiceEntityRepository
                 DELETE FROM crm_activities a
                 WHERE a.id IN (:ids)
                   AND NOT EXISTS (SELECT 1 FROM crm_activity_companies l WHERE l.activity_id = a.id)
-                  AND NOT EXISTS (SELECT 1 FROM crm_activity_contacts l WHERE l.activity_id = a.id)
                   AND NOT EXISTS (SELECT 1 FROM crm_activity_deals l WHERE l.activity_id = a.id)
                 SQL,
             ['ids' => $ids],

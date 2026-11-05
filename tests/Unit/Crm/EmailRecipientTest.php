@@ -6,11 +6,9 @@ namespace App\Tests\Unit\Crm;
 
 use App\Crm\ReadModel\CompanyRecord;
 use App\Crm\ReadModel\CompanyRecordContact;
-use App\Crm\ReadModel\ContactRecord;
 use App\Crm\ReadModel\EmailRecipient;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
-use App\Crm\ValueObject\ContactKind;
 use PHPUnit\Framework\TestCase;
 
 final class EmailRecipientTest extends TestCase
@@ -44,15 +42,6 @@ final class EmailRecipientTest extends TestCase
         self::assertSame([], EmailRecipient::ofCompany($this->company(null, [new CompanyRecordContact('c-1', 'Rolf', 'Keller', null)])));
     }
 
-    public function test_a_contact_gives_itself_or_nobody(): void
-    {
-        self::assertEquals(
-            [new EmailRecipient('c-1', 'Laura Meier', 'laura@seeblick.example')],
-            EmailRecipient::ofContact($this->contact('laura@seeblick.example')),
-        );
-        self::assertSame([], EmailRecipient::ofContact($this->contact(null)));
-    }
-
     /**
      * @param list<CompanyRecordContact> $contacts
      */
@@ -75,25 +64,6 @@ final class EmailRecipientTest extends TestCase
             [],
             $contacts,
             false,
-        );
-    }
-
-    private function contact(?string $email): ContactRecord
-    {
-        return new ContactRecord(
-            'c-1',
-            'Laura',
-            'Meier',
-            $email,
-            null,
-            null,
-            ContactKind::cases()[0],
-            null,
-            null,
-            null,
-            null,
-            null,
-            new \DateTimeImmutable('2026-11-01'),
         );
     }
 }

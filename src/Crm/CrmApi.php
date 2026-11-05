@@ -10,7 +10,6 @@ use App\Crm\Exception\ActivityNotYours;
 use App\Crm\Exception\ActivityReadOnly;
 use App\Crm\Exception\CompanyNotFound;
 use App\Crm\Exception\CompanyStageDerived;
-use App\Crm\Exception\ContactEmailTaken;
 use App\Crm\Exception\ContactNotFound;
 use App\Crm\Exception\ContactOfAnotherCompany;
 use App\Crm\Exception\ContractEndsBeforeStart;
@@ -159,7 +158,7 @@ final class CrmApi
         $subject = self::canonicalText($payload, 'subject');
         $body = self::canonicalText($payload, 'body');
 
-        $violations = $this->recordFields($this->validator->startContext(), $kind, $recordId, [RecordKind::Company, RecordKind::Contact])
+        $violations = $this->recordFields($this->validator->startContext(), $kind, $recordId, [RecordKind::Company])
             ->atPath('contactId')->validate($contactId, new Assert\Sequentially(PropertyConstraints::emailContact()))
             ->atPath('cc')->validate($cc, new Assert\Sequentially(PropertyConstraints::emailCc()))
             ->atPath('subject')->validate($subject, new Assert\Sequentially(PropertyConstraints::emailSubject()))
@@ -189,7 +188,7 @@ final class CrmApi
         $contactId = '' === ($query['contact'] ?? null) ? null : $query['contact'] ?? null;
 
         $violations = $this->validator->startContext()
-            ->atPath('kind')->validate($kind, self::choice([RecordKind::Company->value, RecordKind::Contact->value], 'crm.activity.kind'))
+            ->atPath('kind')->validate($kind, self::choice([RecordKind::Company->value], 'crm.activity.kind'))
             ->atPath('recordId')->validate($recordId, new Assert\Sequentially([new Assert\NotBlank(message: 'crm.activity.record'), ...PropertyConstraints::emailContact()]))
             ->atPath('template')->validate($templateId, new Assert\Sequentially([new Assert\NotBlank(message: 'crm.property.choice'), ...PropertyConstraints::emailContact()]))
             ->atPath('contact')->validate($contactId, new Assert\Sequentially(PropertyConstraints::emailContact()))
@@ -285,7 +284,6 @@ final class CrmApi
         foreach ($failure->getWrappedExceptions() as $exception) {
             return match (true) {
                 $exception instanceof StaleProperty => $this->error('', 'api.stale', Response::HTTP_CONFLICT),
-                $exception instanceof ContactEmailTaken => $this->error('value', 'api.email_taken', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof CompanyStageDerived => $this->error('value', 'api.stage_derived', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof InvalidPropertyValue => $this->error('value', $exception->isRequired() ? 'api.required' : 'api.unknown_choice', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof ContractEndsBeforeStart => $this->error('value', 'api.contract_ends_before_start', Response::HTTP_UNPROCESSABLE_ENTITY),

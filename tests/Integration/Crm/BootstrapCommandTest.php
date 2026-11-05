@@ -44,7 +44,6 @@ final class BootstrapCommandTest extends KernelTestCase
                 'companies created: 4',
                 'contacts created: 2',
                 'venues without a contact person: 2 (expected: no export writes contact_person)',
-                'e-mails taken: 1',
                 'venues sharing an inquiry e-mail: 2',
                 'skipped: 0',
                 'failed: 0',

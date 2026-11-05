@@ -24,6 +24,7 @@
                 {% endif %}
                 {% if is_granted('ROLE_ADMIN') %}
                     {{ include('admin/components/_button.html.twig', {label: 'list.export'|trans({}, 'crm'), variant: 'secondary', icon: 'download', href: path('admin_crm_companies_export', app.request.query.all|filter((value, key) => key != 'page'))}, with_context = false) }}
+                    {{ include('admin/components/_button.html.twig', {label: 'list.export_contacts'|trans({}, 'crm'), variant: 'secondary', icon: 'download', href: path('admin_crm_contacts_export')}, with_context = false) }}
                 {% endif %}
             {% endblock %}
             {{ include('admin/components/_button.html.twig', {label: 'list.companies.new'|trans({}, 'crm'), variant: 'primary', icon: 'plus', href: path('admin_crm_companies_new')}, with_context = false) }}
