@@ -405,6 +405,23 @@ final class CrmContactsSwitchMigrationTest extends KernelTestCase
         self::assertNull($this->connection->fetchOne("SELECT to_regclass('crm_activity_contacts')"));
     }
 
+    /** Writers committing during an unattended deploy must wait, not move the counts the postconditions compare. */
+    public function test_up_locks_the_counted_tables_against_writers_before_it_reads(): void
+    {
+        $this->migrate('down');
+        $migration = $this->migration();
+        $migration->up(new Schema());
+
+        /** @var list<string> $expected */
+        $expected = \constant($migration::class.'::LOCKED');
+        sort($expected);
+        $held = $this->connection->fetchFirstColumn(
+            "SELECT c.relname FROM pg_locks l JOIN pg_class c ON c.oid = l.relation WHERE l.pid = pg_backend_pid() AND l.mode = 'ShareLock' AND l.granted ORDER BY 1",
+        );
+        self::assertSame($expected, $held);
+        self::assertSame('15s', $this->connection->fetchOne('SHOW lock_timeout'));
+    }
+
     public function test_the_manager_position_is_the_one_the_code_writes(): void
     {
         self::assertSame(LinkLocationManagerHandler::MANAGER_POSITION, \constant($this->migration()::class.'::MANAGER_POSITION'));

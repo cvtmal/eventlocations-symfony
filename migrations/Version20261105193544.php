@@ -83,6 +83,13 @@ final class Version20261105193544 extends AbstractMigration
         'audit rows' => ['', 'SELECT count(*) FROM admin_audit_log'],
     ];
 
+    /** Every table the pre-counts read and the app writes; locked against writers for the migration's transaction. */
+    public const array LOCKED = [
+        'inquiries', 'crm_inquiry_links', 'admin_audit_log', 'crm_companies', 'crm_company_venues', 'crm_contacts',
+        'crm_activities', 'crm_activity_companies', 'crm_activity_contacts', 'crm_activity_deals', 'crm_deals',
+        'crm_deal_contacts', 'crm_tasks', 'portal_users', 'portal_venue_access', 'venues',
+    ];
+
     /** The tasks on nothing, as one hash; %s is the "on nothing" condition of the schema it runs on. */
     private const F5_FINGERPRINT = "SELECT coalesce(md5(string_agg(id::text || '|' || title || '|' || due_on || '|' || coalesce(done_at::text, '') || '|' || assignee_id || '|' || updated_at::text, ',' ORDER BY id)), '') FROM crm_tasks WHERE %s";
 
@@ -99,6 +106,13 @@ final class Version20261105193544 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        // Doctrine opened the transaction before up(). A guest inquiry or an audited staff or /konto action committing
+        // between these reads and the postconditions would move the exact counts and roll an unattended deploy back
+        // for nothing: SHARE mode lets reads through and makes writers wait the second this migration takes, and the
+        // lock_timeout turns a long wait into a rollback instead of a hung deploy.
+        $this->connection->executeStatement("SET LOCAL lock_timeout = '15s'");
+        $this->connection->executeStatement('LOCK TABLE '.implode(', ', self::LOCKED).' IN SHARE MODE');
+
         $pre = [];
         foreach (self::GUARDS + self::REPORTED as $code => [$meaning, $sql]) {
             $pre[$code] = (int) $this->connection->fetchOne($sql);

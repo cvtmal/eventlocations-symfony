@@ -18,7 +18,8 @@
 #   1. check the unpacked files, rsync    a half-built tarball or a missing tool changes nothing
 #   2. app:prod:check-env  (from stage)   a bad .env.local never touches the live tree
 #   3. migrations          (from stage)   migrations are additive, so the old code keeps working
-#                                         until the sync a few seconds later
+#                                         until the sync a few seconds later (the one exception,
+#                                         #55, is in docs/operations.md)
 #   4. rsync stage -> app                 the only moment the live tree is mixed (seconds)
 #   5. drop var/cache/prod, cache:warmup  the old container must not boot the new code (see below)
 #   6. geo import, HTTP cache clear       the store lives in var/share and outlives the sync

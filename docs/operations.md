@@ -600,6 +600,10 @@ The F5 query should give one row, `on_kind` empty, with the F5 count, and `f5_wr
 the same count. Another result does not stop the deploy (the migration leaves those tasks alone);
 tell the lead.
 
+`SELECT version();` must start with `PostgreSQL 18`: the copies use `uuidv7()`, the first
+PostgreSQL 18 function a deployed migration calls. On an older server the migration stops with
+`function uuidv7() does not exist` and changes nothing.
+
 **2. What the deploy prints.**
 
 - **Every guard 0:** the deploy goes on. Its log shows the `#55 pre:` lines with the numbers above,
@@ -612,7 +616,12 @@ tell the lead.
   applied, as always. Do what the table says for the named rows, tell the lead, and deploy again.
 - **A postcondition fails:** `#55 postcondition failed: <check>: expected <n>, got <m>[; <check>: …]. Nothing was changed. See docs/operations.md "CRM contacts switch (#55)".`
   The migration did not do what it promised on this data. Same state as above; tell the lead, do
-  not retry.
+  not retry. Concurrent traffic cannot cause it: before its first count the migration locks every
+  table it counts against writers (`LOCKED`, SHARE mode), so a guest inquiry or a staff or
+  `/konto` action sent meanwhile waits the second the migration takes.
+- **`canceling statement due to lock timeout`:** a writer held one of those tables for 15 s, so
+  the migration gave up before changing anything. Same state as above; deploy again at a quieter
+  moment.
 
 **3. The deploy window.** This migration is the one exception to "migrations are additive"
 (§Deploy and purge, step 3): it drops tables and columns the old code still reads. For the seconds
