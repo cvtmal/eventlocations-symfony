@@ -2,7 +2,7 @@
     The venue editor (CMS-2): one card per `Cms\ValueObject\VenueCard`, each its own form. Context from
     `VenueEditController`: venue (VenueHeader), edit (VenueEdit), forms (card value → FormView), bound_card, stale,
     locales list<{code, label}>, missing (codes of `VenueEdit::missingForPublish()`), history list<{actor, action, at}>,
-    cards (the VenueCard cases).
+    cards (the VenueCard cases), google_check_url (the Maps link of the loaded place ID, null without one).
 #}
 {% extends 'admin/cms/venue/_layout.html.twig' %}
 
@@ -20,6 +20,7 @@
                 stale: stale and bound_card == card.value,
                 locales: locales,
                 town_centre_hint: edit.townCentreHint,
+                google_check_url: google_check_url,
             }, with_context = false) }}
         {% endfor %}
     </div>

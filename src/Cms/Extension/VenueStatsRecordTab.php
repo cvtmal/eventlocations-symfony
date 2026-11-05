@@ -9,7 +9,7 @@ use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
- * The venue's Statistik tab (#47), the last one: after Bewertungen (600).
+ * The venue's Statistik tab (#47), the last one: after Dokumente (700).
  */
 final class VenueStatsRecordTab implements RecordTab
 {

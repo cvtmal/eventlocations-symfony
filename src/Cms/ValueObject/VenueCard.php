@@ -14,8 +14,8 @@ use App\Cms\Form\VenueContactData;
 use App\Cms\Form\VenueContactType;
 use App\Cms\Form\VenueFaqData;
 use App\Cms\Form\VenueFaqType;
-use App\Cms\Form\VenueRatingData;
-use App\Cms\Form\VenueRatingType;
+use App\Cms\Form\VenueGoogleData;
+use App\Cms\Form\VenueGoogleType;
 use App\Cms\Form\VenueTermsData;
 use App\Cms\Form\VenueTermsType;
 use App\Cms\Form\VenueTextsData;
@@ -36,7 +36,7 @@ enum VenueCard: string
     case Wedding = 'wedding';
     case Contact = 'contact';
     case Faq = 'faq';
-    case Rating = 'rating';
+    case Google = 'google';
 
     /**
      * The POST route, `admin_locations_<card>` (the navigation marks every `admin_locations_…` route).
@@ -64,7 +64,7 @@ enum VenueCard: string
             self::Wedding => 'hochzeit',
             self::Contact => 'kontakt',
             self::Faq => 'faq',
-            self::Rating => 'bewertung',
+            self::Google => 'google-bewertung',
         };
     }
 
@@ -89,7 +89,7 @@ enum VenueCard: string
             self::Wedding => VenueWeddingType::class,
             self::Contact => VenueContactType::class,
             self::Faq => VenueFaqType::class,
-            self::Rating => VenueRatingType::class,
+            self::Google => VenueGoogleType::class,
         };
     }
 
@@ -106,7 +106,7 @@ enum VenueCard: string
             self::Wedding => VenueWeddingData::class,
             self::Contact => VenueContactData::class,
             self::Faq => VenueFaqData::class,
-            self::Rating => VenueRatingData::class,
+            self::Google => VenueGoogleData::class,
         };
     }
 }

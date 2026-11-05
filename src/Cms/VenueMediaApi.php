@@ -94,7 +94,7 @@ final class VenueMediaApi
     }
 
     /**
-     * The venue, or one of its photos, rooms, documents, reviews, is unknown (D21).
+     * The venue, or one of its photos, rooms, documents, is unknown (D21).
      */
     public function notFound(): JsonResponse
     {

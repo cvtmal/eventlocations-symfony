@@ -6,7 +6,6 @@ namespace App\Tests\Unit\Venues\Entity;
 
 use App\Geo\Entity\Canton;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\TestCase;
@@ -81,26 +80,6 @@ final class VenueTest extends TestCase
         self::assertNull($venue->lng());
     }
 
-    public function test_unrated_venue_has_no_label(): void
-    {
-        $venue = VenueObjects::venue();
-        $venue->rate(null, null);
-
-        self::assertNull($venue->ratingScore());
-        self::assertNull($venue->ratingCount());
-        self::assertNull($venue->ratingLabel());
-    }
-
-    public function test_rating_gives_the_label_of_its_score(): void
-    {
-        $venue = VenueObjects::venue();
-        $venue->rate('8.4', 12);
-
-        self::assertSame(8.4, $venue->ratingScore());
-        self::assertSame(12, $venue->ratingCount());
-        self::assertSame(RatingLabel::Excellent, $venue->ratingLabel());
-    }
-
     public function test_decimal_columns_read_back_as_floats(): void
     {
         $venue = VenueObjects::venue();
@@ -150,6 +129,33 @@ final class VenueTest extends TestCase
 
         self::assertSame('Seehaus Oberwil', $venue->name());
         self::assertGreaterThan($before, $venue->updatedAt());
+    }
+
+    public function test_a_google_place_is_set_and_an_unchanged_one_reports_no_change(): void
+    {
+        $venue = VenueObjects::venue();
+        $before = $venue->updatedAt();
+        usleep(1);
+
+        self::assertTrue($venue->changeGooglePlace('ChIJN1t_tDeuEmsRUsoyG83frY4', true));
+        self::assertSame('ChIJN1t_tDeuEmsRUsoyG83frY4', $venue->googlePlaceId());
+        self::assertTrue($venue->googleRatingHidden());
+        self::assertGreaterThan($before, $venue->updatedAt());
+
+        $touched = $venue->updatedAt();
+        self::assertFalse($venue->changeGooglePlace('ChIJN1t_tDeuEmsRUsoyG83frY4', true));
+        self::assertSame($touched, $venue->updatedAt());
+    }
+
+    public function test_without_a_google_place_the_rating_cannot_be_hidden(): void
+    {
+        $venue = VenueObjects::venue();
+        $venue->changeGooglePlace('ChIJN1t_tDeuEmsRUsoyG83frY4', true);
+
+        self::assertTrue($venue->changeGooglePlace(null, true));
+        self::assertNull($venue->googlePlaceId());
+        self::assertFalse($venue->googleRatingHidden());
+        self::assertFalse($venue->changeGooglePlace(null, true));
     }
 
     public function test_content_key_and_hash(): void

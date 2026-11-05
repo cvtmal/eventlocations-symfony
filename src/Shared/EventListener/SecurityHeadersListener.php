@@ -16,8 +16,8 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * ErrorListener and ProfilerController already lift the policy from debug pages, so there is no
  * debug branch here, and a page re-rendered at 422 keeps its CSP.
  *
- * One route (`nearby`, #52) opts into `ContentSecurityPolicy::GOOGLE_MAPS` through its `_csp`
- * default; everything else keeps `POLICY`.
+ * One route (`nearby`, #52) opts in through its `_csp` default; the detail page's rating (#53) sets
+ * `google_places` per response; everything else keeps `POLICY`.
  */
 #[AsEventListener(event: KernelEvents::RESPONSE, priority: -10)]
 final class SecurityHeadersListener
@@ -35,7 +35,8 @@ final class SecurityHeadersListener
             return;
         }
 
-        $maps = ContentSecurityPolicy::GOOGLE_MAPS === $event->getRequest()->attributes->get(ContentSecurityPolicy::ROUTE_ATTRIBUTE);
+        $csp = $event->getRequest()->attributes->get(ContentSecurityPolicy::ROUTE_ATTRIBUTE);
+        $maps = ContentSecurityPolicy::GOOGLE_MAPS === $csp;
         $headers = $event->getResponse()->headers;
         $headers->set('X-Content-Type-Options', 'nosniff');
         // Not no-referrer: #13's no-JS toggle and #14's CSRF fallback read the same-origin Referer.
@@ -47,8 +48,12 @@ final class SecurityHeadersListener
         }
 
         if (str_starts_with((string) $headers->get('Content-Type'), 'text/html')) {
-            // The maps policy never takes a nonce: one would disable its style 'unsafe-inline'.
-            $headers->set('Content-Security-Policy', $maps ? ContentSecurityPolicy::GOOGLE_MAPS_POLICY : $this->policy());
+            // Neither Google policy takes a nonce: one would disable its style 'unsafe-inline'.
+            $headers->set('Content-Security-Policy', match (true) {
+                $maps => ContentSecurityPolicy::GOOGLE_MAPS_POLICY,
+                ContentSecurityPolicy::GOOGLE_PLACES === $csp => ContentSecurityPolicy::GOOGLE_PLACES_POLICY,
+                default => $this->policy(),
+            });
         }
     }
 

@@ -60,11 +60,13 @@ legal:
             # TODO owner: delete this key and its template line if Sentry does not ship, and confirm a test event holds no IP address, cookies or form contents (T4).
             errors: Technische Fehler melden wir an Sentry, einen Dienst der Functional Software, Inc. (USA). Die Fehlerberichte liegen in der EU (Frankfurt). Sie enthalten die aufgerufene Seite, aber weder IP-Adresse noch Cookies noch Formularinhalte. Die Kontodaten unseres Sentry-Zugangs liegen in den USA.
         maps:
-            title: Karten von Google Maps
+            title: Karten und Bewertungen von Google Maps
             # TODO owner: check Google's controller and address against policies.google.com/privacy before go-live (T8, #15).
-            text: Auf der Seite einer Location kann eine Karte von Google Maps erscheinen, ein Dienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Wir laden sie erst, wenn Sie auf «Karte laden» klicken. Vorher wird nichts an Google übertragen. Mit dem Klick ruft Ihr Browser die Karte direkt bei Google ab; dabei erhält Google Ihre IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen.
+            text: Auf der Seite einer Location kann eine Karte von Google Maps erscheinen, ein Dienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Die Karte laden wir erst, wenn Sie auf «Karte laden» klicken; für die Karte wird vorher nichts an Google übertragen. Mit dem Klick ruft Ihr Browser die Karte direkt bei Google ab; dabei erhält Google Ihre IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen.
             # #52: the near-me page loads Google Maps on view (owner Q6); quotes the nav link and the button, pinned by LegalPagesTest.
             nearby: 'Die Seite «In der Nähe» lädt die Karte von Google Maps sofort beim Aufruf. Dabei erhält Google Ihre IP-Adresse, die Adresse unserer Website und den angezeigten Kartenausschnitt, und Google kann Cookies setzen. Wenn Sie «Meinen Standort verwenden» wählen, fragt Ihr Browser nach Ihrem Standort. Wir erhalten ihn nur auf etwa 1 km gerundet als Teil der aufgerufenen Adresse; wir speichern ihn nicht in unserer Datenbank, und wie jede aufgerufene Adresse erscheint er in den Server-Protokollen des Hostings.'
+            # #53: the detail page's Google rating loads on view; pinned by LegalPagesTest
+            rating: 'Auf der Seite einer Location kann die Google-Bewertung erscheinen: Sterne und Anzahl Bewertungen von Google Maps. Ihr Browser lädt sie ohne Klick direkt bei Google, sobald dieser Teil der Seite sichtbar wird. Dabei erhält Google Ihre IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen. Wir speichern keine Bewertungen von Google.'
             policy: 'Es gelten die Datenschutzbestimmungen von Google:'
             policy_link: policies.google.com/privacy
         links:

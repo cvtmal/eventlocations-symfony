@@ -7,7 +7,6 @@ namespace App\Tests\Application\Crm;
 use App\Admin\ValueObject\AdminRole;
 use App\Factory\CompanyFactory;
 use App\Factory\VenueDocumentFactory;
-use App\Factory\VenueReviewFactory;
 use App\Tests\Fixtures\Admin\AdminExtensionProbeKernel;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Venues\DetailVenues;
@@ -51,10 +50,9 @@ final class VenueCrmPanelOnRecordPagesTest extends WebTestCase
         $venue = DetailVenues::withoutPlace();
         CompanyFactory::new()->withVenues($venue)->create(['name' => 'Seeblick Events GmbH']);
         $document = VenueDocumentFactory::createOne(['venue' => $venue]);
-        $review = VenueReviewFactory::createOne(['venue' => $venue]);
         $base = '/admin/locations/'.$venue->number();
 
-        foreach (['', '/fotos', '/raeume', '/dokumente', '/dokumente/'.$document->id(), '/bewertungen', '/bewertungen/neu', '/bewertungen/'.$review->id()] as $tab) {
+        foreach (['', '/fotos', '/raeume', '/dokumente', '/dokumente/'.$document->id()] as $tab) {
             $this->client->request('GET', $base.$tab);
 
             self::assertResponseIsSuccessful($base.$tab);

@@ -6,7 +6,6 @@ namespace App\Tests\Application\Search;
 
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
-use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
@@ -20,7 +19,6 @@ use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
@@ -34,8 +32,7 @@ use function Zenstruck\Foundry\Persistence\repository;
 /**
  * S11: the listing HTML stays ≤ 60 KB gzip in the worst case, a full page of 48 cards with
  * eight photos (three widths × three formats each), a 200-character summary, both tags (a price
- * level, all three across the page, and a 60-character ambience), a rating with three highlights
- * and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 90
+ * level, all three across the page, and a 60-character ambience) and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 90
  * checkboxes (83 terms, 3 access, 3 price, 1 curfew) and 21 options render. All 48 venues sit in
  * different towns of one canton, so the same page also renders as that canton's landing page
  * (#17: breadcrumb, intro, canton chip, its JSON-LD), which must fit the same budget. Staff
@@ -75,7 +72,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
             $ambience = mb_substr(str_repeat('Romantisch und ländlich am See. ', 2), 0, 60);
             for ($i = 1; $i <= ListingQuery::PER_PAGE; ++$i) {
                 $price = PriceLevel::cases()[$i % 3];
-                $factory = VenueFactory::new()->rated('8.7', 1234)
+                $factory = VenueFactory::new()
                     ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel($price));
                 if (1 === $i) {
                     $factory = $factory->withRoomFacts(6, 300, '5.0')
@@ -94,9 +91,6 @@ final class ListingHtmlBudgetTest extends WebTestCase
                 VenueTranslationFactory::new()
                     ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null))
                     ->create(['venue' => $venue, 'summary' => mb_substr(str_repeat('Hochzeit am See mit Garten. ', 8), 0, 200)]);
-                foreach ([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Architecture] as $position => $code) {
-                    VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => $position + 1, 'code' => $code]);
-                }
                 for ($position = 1; $position <= 8; ++$position) {
                     VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
                 }

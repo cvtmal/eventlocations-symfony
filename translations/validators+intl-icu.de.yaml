@@ -51,13 +51,8 @@ cms:
         instagram:
             scheme: Der Instagram-Link muss mit «https://» beginnen.
             invalid: Bitte einen Instagram-Namen wie «@remise» oder einen Link wie «https://www.instagram.com/remise» eingeben.
-        rating:
-            format: Bitte eine Note wie «8.4» eingeben, mit höchstens einer Nachkommastelle.
-            range: Die Note liegt zwischen {min} und {max}.
-            count_range: Bitte eine Anzahl ab 0 eingeben.
-            both: Note und Anzahl Bewertungen gehören zusammen.
-            highlights_max: Bitte höchstens {limit} Highlights wählen.
-            highlights_need_rating: Highlights gibt es nur mit einer Bewertung.
+        google:
+            place_id_format: 'Bitte eine gültige Place ID eingeben: nur Buchstaben, Ziffern, «-» und «_», mindestens 10 Zeichen.'
     landing:
         too_long: Bitte höchstens {limit} Zeichen eingeben.
         version:
@@ -107,18 +102,6 @@ cms:
             failed: Die Datei kam nicht vollständig an. Bitte noch einmal versuchen.
         title:
             required: Bitte einen Titel eingeben.
-    review:
-        locale:
-            invalid: Das Formular ist veraltet. Bitte die Seite neu laden.
-        first_name:
-            required: Bitte einen Vornamen eingeben.
-        role:
-            required: Bitte eine Rolle wählen.
-        month:
-            required: Bitte den Monat eingeben.
-            format: Bitte einen Monat wie «2026-06» eingeben.
-        text:
-            required: Bitte den Text der Bewertung eingeben.
 crm:
     property:
         unknown_field: Dieses Feld lässt sich nicht bearbeiten.

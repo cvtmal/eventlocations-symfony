@@ -7,7 +7,6 @@ namespace App\Cms\ReadModel;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 
 /**
  * Every card's values of the venue editor, read in one statement with `loadedAt`, so the stale token and
@@ -24,6 +23,7 @@ use App\Venues\ValueObject\RatingHighlight;
  * - `terms` has a key for every `TermGroup` (codes in `position` order, `[]` when none); `mainTerms` holds
  *   the main code of a group that has one (building, setting).
  * - `translations` is keyed by locale and holds only the rows that exist.
+ * - `googlePlaceId` and `googleRatingHidden` (#53) are the card "Google-Bewertung"; the switch is only true with an ID.
  */
 final readonly class VenueEdit
 {
@@ -35,7 +35,6 @@ final readonly class VenueEdit
      * @param array<string, VenueEditTranslation> $translations
      * @param array<string, list<string>>         $terms
      * @param array<string, string>               $mainTerms
-     * @param list<RatingHighlight>               $highlights
      */
     public function __construct(
         public VenueHeader $header,
@@ -60,9 +59,6 @@ final readonly class VenueEdit
         public ?string $instagram,
         public ?OwnCatering $ownCatering,
         public ?bool $daylight,
-        public ?string $ratingScore,
-        public ?int $ratingCount,
-        public array $highlights,
         public ?PriceLevel $priceLevel,
         public ?int $capacitySeated,
         public ?int $capacityStanding,
@@ -73,6 +69,8 @@ final readonly class VenueEdit
         public array $terms,
         public array $mainTerms,
         public int $galleryPhotoCount,
+        public ?string $googlePlaceId,
+        public bool $googleRatingHidden,
     ) {
     }
 

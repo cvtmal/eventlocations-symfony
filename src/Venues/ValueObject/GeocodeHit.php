@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Venues\ValueObject;
 
 /**
- * One place a geocoder found: the name and address it knows, and its position in degrees.
+ * One place a geocoder found: the name and address it knows, its position in degrees, and Google's place ID
+ * ('' when the answer had none; #53's lookup reports it, the geocode report does not).
  */
 final readonly class GeocodeHit
 {
@@ -14,6 +15,7 @@ final readonly class GeocodeHit
         public string $address,
         public float $lat,
         public float $lng,
+        public string $placeId = '',
     ) {
     }
 }

@@ -1,7 +1,6 @@
 @use '../abstracts/breakpoints' as bp;
 
-// The listing card (#7, LP-2): a white card, stacked below md, a row from md, the rating as a bordered column
-// from xl. The title link stretches over the card; the photo column sits above that link so the carousel can be
+// The listing card (#7, LP-2): a white card, stacked below md, a row from md. The title link stretches over the card; the photo column sits above that link so the carousel can be
 // swiped and its arrows clicked, and each slide links to the detail page itself (.card__photo-link), so a tap on a
 // photo still opens the venue.
 .card {
@@ -99,22 +98,6 @@
     @include bp.up(md) {
         padding: var(--space-8) var(--space-8) var(--space-8) 0;
     }
-
-    // Scoped to the listing's row: a rated venue in a card of another width keeps its stacked body. The last row takes
-    // the slack, so the rating's rule runs the height of the body.
-    @include bp.up(xl) {
-        .listing__item &:has(.card__rating) {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 13.75rem;
-            grid-template-rows: auto auto auto 1fr;
-            grid-template-areas:
-                'top rating'
-                'title rating'
-                'summary rating'
-                'tags rating';
-            gap: var(--space-8) var(--space-24);
-        }
-    }
 }
 
 .card__top {
@@ -122,10 +105,6 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-8);
-
-    @include bp.up(xl) {
-        grid-area: top;
-    }
 }
 
 // Wraps instead of an ellipsis: real names run to 48 characters. The tier badge is a block above the link (LP-2).
@@ -139,10 +118,6 @@
         display: flex;
         width: fit-content;
         margin-bottom: var(--space-8);
-    }
-
-    @include bp.up(xl) {
-        grid-area: title;
     }
 }
 
@@ -173,10 +148,6 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     line-clamp: 3;
-
-    @include bp.up(xl) {
-        grid-area: summary;
-    }
 }
 
 // The owner's price level and ambience (#33, LP-7); a long ambience wraps instead of overflowing the card.
@@ -187,25 +158,10 @@
     margin: var(--space-8) 0 0;
     padding: 0;
     list-style: none;
-    grid-area: tags;
 }
 
 .card__tags .tag {
     white-space: normal;
-}
-
-.card__rating {
-    margin-top: var(--space-8);
-    padding-top: var(--space-16);
-    border-top: 1px solid var(--c-line-soft);
-
-    @include bp.up(xl) {
-        grid-area: rating;
-        margin-top: 0;
-        padding: 0 0 0 var(--space-24);
-        border-top: 0;
-        border-left: 1px solid var(--c-line-soft);
-    }
 }
 
 .card-facts {
@@ -223,45 +179,6 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-8);
-
-    .icon {
-        width: 1.125rem;
-        height: 1.125rem;
-        color: var(--c-accent-strong);
-    }
-}
-
-.rating-summary__line {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    margin: 0 0 var(--space-8);
-    font-size: var(--fs-small);
-    font-weight: var(--fw-bold);
-    line-height: var(--lh-small);
-
-    .icon {
-        width: 1rem;
-        height: 1rem;
-        color: var(--c-accent-strong);
-    }
-}
-
-.rating-summary__highlights {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--fs-small);
-    line-height: var(--lh-small);
-
-    li {
-        display: flex;
-        align-items: center;
-        gap: var(--space-8);
-    }
 
     .icon {
         width: 1.125rem;

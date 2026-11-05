@@ -368,7 +368,6 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $this->cloneTable('venues', 'v.id', ['id' => 'm.id', 'name' => "v.name || ' ' || m.n"]);
         $this->cloneTable('venue_translations', 'v.venue_id', ['id' => 'gen_random_uuid()', 'venue_id' => 'm.id', 'slug' => "v.slug || '-' || m.n"]);
         $this->cloneTable('venue_terms', 'v.venue_id', ['venue_id' => 'm.id']);
-        $this->cloneTable('venue_rating_highlights', 'v.venue_id', ['venue_id' => 'm.id']);
 
         // Photos only through the factory or a column-agnostic clone of a factory row, so the
         // media cycle's NOT NULL columns are filled in either merge order.
@@ -398,7 +397,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             ['photos' => self::PHOTOS_PER_VENUE, 'template' => $template->id()],
         );
 
-        $this->connection->executeStatement('ANALYZE venues, venue_translations, venue_terms, venue_rating_highlights, venue_photos');
+        $this->connection->executeStatement('ANALYZE venues, venue_translations, venue_terms, venue_photos');
 
         $venueCount = DemoStory::VENUES * (self::COPIES + 1);
         self::assertSame($venueCount, (int) $this->connection->fetchOne('SELECT count(*) FROM venues'));

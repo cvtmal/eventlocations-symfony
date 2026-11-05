@@ -23,8 +23,8 @@ use App\Portal\Form\VenueCapacityType;
 
 /**
  * The cards a manager edits, in page order (POR-8). `Cms\ValueObject\VenueCard` is the staff list: this one has
- * no `basics` and no `rating`, so no route exists for them. Six cards reuse staff's form, data class and
- * template; `Capacity` is the manager's own, the maximum alone.
+ * no `basics` and no `google` (#53: the Google place ID stays with staff), so no route exists for them. Six cards
+ * reuse staff's form, data class and template; `Capacity` is the manager's own, the maximum alone.
  */
 enum LocationCard: string
 {

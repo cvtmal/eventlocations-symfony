@@ -15,7 +15,6 @@ use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\ValueObject\LandingType;
-use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\TermGroup;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -36,7 +35,6 @@ use Twig\Attribute\AsTwigFunction;
  * - `landing_links(landing)`: "Andere suchten auch nach", live landing pages only.
  * - `landing_breadcrumb(landing)`: a landing page's breadcrumb items, absolute URLs, the last without one.
  * - `card_picture(photo, venueName)`: the CardPhoto → Picture recipe of #6, null without variants.
- * - `rating_label(score)`: RatingLabel::fromScore() (Twig cannot call static enum methods).
  * - `venue_path(slug)`: the detail page's path (#8's `venue_show`).
  * - `selected_place(criteria)`: the filter's `place` resolved to its town, null without a place or for an unknown one.
  * - `filter_has_data(filter)`: whether a published venue carries the filter's data (FilterDataQuery).
@@ -195,12 +193,6 @@ final class ListingExtension
             ImageVariants::fromArray($photo->variants),
             $photo->alt ?? $this->translator->trans('picture.alt_fallback', ['name' => $venueName, 'position' => $photo->position], 'media'),
         );
-    }
-
-    #[AsTwigFunction('rating_label')]
-    public function ratingLabel(float $score): ?RatingLabel
-    {
-        return RatingLabel::fromScore($score);
     }
 
     #[AsTwigFunction('venue_path')]

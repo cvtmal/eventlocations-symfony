@@ -16,7 +16,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * #25's record tabs (Fotos 900, Räume 800, Dokumente 700, Bewertungen 600, after #24's Übersicht, then #47's Statistik 500) and the two
+ * #25's record tabs (Fotos 900, Räume 800, Dokumente 700, after #24's Übersicht, then #47's Statistik 500; #53 retired Bewertungen) and the two
  * island host pages, whose mount points carry what the islands need (Step 8.1, 8.2, 8.5).
  */
 final class VenueMediaTabsTest extends WebTestCase
@@ -28,7 +28,6 @@ final class VenueMediaTabsTest extends WebTestCase
         'fotos' => 'Fotos',
         'raeume' => 'Räume',
         'dokumente' => 'Dokumente',
-        'bewertungen' => 'Bewertungen',
         'statistik' => 'Statistik',
     ];
 
@@ -62,6 +61,23 @@ final class VenueMediaTabsTest extends WebTestCase
             $this->client->request('GET', '/admin/locations/99999999/'.$path);
             self::assertResponseStatusCodeSame(404, $path);
         }
+    }
+
+    public function test_the_retired_reviews_tab_and_rating_card_are_gone(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = VenueFactory::new()->withoutLocation()->create();
+        $base = '/admin/locations/'.$venue->number();
+
+        $this->client->request('GET', $base.'/bewertungen');
+        self::assertResponseStatusCodeSame(404);
+        $this->client->request('POST', $base.'/bewertung');
+        self::assertContains($this->client->getResponse()->getStatusCode(), [404, 405]);
+
+        $crawler = $this->client->request('GET', $base);
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('form[name="venue_rating"], #bewertung'));
+        self::assertNotContains('Bewertungen', $crawler->filter('nav.tabs--record a')->each(static fn (Crawler $tab): string => $tab->text()));
     }
 
     public function test_an_anonymous_visitor_is_sent_to_the_login(): void

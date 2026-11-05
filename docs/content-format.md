@@ -83,10 +83,6 @@ party:                                # optional; missing = unknown; its fields 
   allowed: limited                    # 'yes' | limited | 'no', quote yes and no
   has_curfew: true                    # false = no curfew
   curfew_at: '02:00'                  # HH:MM 00:00–23:59, quoted; needs has_curfew: true
-rating:                               # optional; score and count together
-  score: 9.0                          # 0–10, at most one decimal
-  count: 47
-  highlights: [food, atmosphere, architecture]   # at most 3, no repeats
 terms:                                # lists of codes per group (see the table below)
   setting: [lake, countryside]
   building: [castle, event_venue]
@@ -145,12 +141,6 @@ rooms:                                # in display order
 documents:                            # in display order; files in documents/
   - file: preisliste.pdf
     title: {de: Preisliste}           # required, ≤ 200
-reviews:                              # replaced as a whole on every change
-  - first_name: Laura                 # ≤ 50
-    role: visitor_f                   # visitor_f | visitor_m | organiser_f | organiser_m
-    month: '2025-06'                  # YYYY-MM, quoted
-    locale: de                        # optional, language of the text, default de
-    text: Ein wunderschöner Tag, alles hat gepasst.   # ≤ 1000
 ```
 
 ## Field reference
@@ -179,15 +169,12 @@ reviews:                              # replaced as a whole on every change
 | `party.allowed` | `'yes'`, `limited`, `'no'`, null | Quote yes and no. |
 | `party.has_curfew` | true, false, null | `false` means no curfew, null unknown. |
 | `party.curfew_at` | `'HH:MM'` `00:00`–`23:59`, null | Quote it. Needs `has_curfew: true`. Midnight is `'00:00'`. |
-| `rating.score`, `rating.count` | 0–10 (one decimal), ≥ 0 | Both or neither. |
-| `rating.highlights` | ≤ 3 codes | `food`, `atmosphere`, `architecture`, `location`, `hospitality`, `reachability`, `equipment`, `programme`, `value`. |
 | `terms.<group>` | list of codes | See the vocabulary below. |
 | `main_terms.<setting\|building\|suitable_for>` | one code | Must also be listed under `terms`. |
 | `translations.<locale>` | `summary` ≤ 200 (required), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250, `ambience` ≤ 60, `capacity_note`, `party_note`, `opening_hours` ≤ 250, `region` ≤ 60 | `de` is required; other locales only once the site serves them (today only `de`). |
 | `photos[]` | `file`, `alt.<locale>` ≤ 700 | Order = display order. |
 | `rooms[]` | `key`, `translations.<locale>.name` ≤ 100 (+ `description`), `capacity`, `area_m2` 1–50000, `height_m` (> 0, ≤ 30, two decimals), `floor_material`, `seating`, `photos` | Order = display order. A seating entry needs `min` or `max`. |
 | `documents[]` | `file` (`.pdf`), `title.<locale>` ≤ 200 | `title.de` is required. |
-| `reviews[]` | `first_name` ≤ 50, `role`, `month` `'YYYY-MM'`, `locale`, `text` ≤ 1000 | |
 
 The wedding facts (`price_level`, `capacity.seated`, `capacity.standing`, `party`,
 `contact.instagram`, the term groups `ceremony` to `language` and the four texts `ambience`,
@@ -218,7 +205,7 @@ An unknown code fails the venue with its position, e.g. `/terms/building/0: "pal
 
 ### YAML pitfalls
 
-- Quote the ZIP (`'8001'`), the phone (`'+41441234567'`) and the review month (`'2025-06'`).
+- Quote the ZIP (`'8001'`) and the phone (`'+41441234567'`).
   Unquoted, YAML reads numbers (and full dates as timestamps) and the schema rejects them.
 - Quote `'yes'` and `'no'` under `party.allowed`, and the curfew (`'02:00'`).
 - Midnight is `'00:00'`. `24:00` is rejected, because the database time would come back as
@@ -276,7 +263,7 @@ make sf c="app:venues:import [path] [--dry-run] [--only=key] [--prune] [--force]
 | `--only=<key>` | Imports one folder. |
 | `--prune` | Unpublishes content venues whose folder is gone (files kept; the folder coming back publishes an unedited venue again). A folder that exists but is invalid is not pruned. A venue edited in the CMS is kept published and listed, unless `--overwrite-cms-edits` is given too. Not combinable with `--only`. |
 | `--force` | Applies every folder even when unchanged (photos are still not regenerated). It never overwrites a venue edited in the CMS. |
-| `--overwrite-cms-edits` | Also applies the folders of venues edited in the CMS since their last import, even when the folder is unchanged, and recreates venues deleted in the CMS (with a new number). **Every CMS edit of those venues is lost**, including photos, rooms, documents and reviews added by hand. With `--prune` it also unpublishes edited venues whose folder is gone. |
+| `--overwrite-cms-edits` | Also applies the folders of venues edited in the CMS since their last import, even when the folder is unchanged, and recreates venues deleted in the CMS (with a new number). **Every CMS edit of those venues is lost**, including photos, rooms and documents added by hand. With `--prune` it also unpublishes edited venues whose folder is gone. |
 | `-v` | Also lists the unchanged venues. |
 
 The exit code is `1` when any folder failed (the message lists `<key>: <problem>` for each),
@@ -362,8 +349,8 @@ It owns exactly these paths and keeps every other key, including the paths above
   `translations.de.parking_text`
 - `photos` and the files in `photos/`
 
-It never touches `tier`, `faq.daylight`, `terms.furniture`, `rooms`, `documents`, `rating`,
-`reviews` or `contact.instagram`. A value the CSV no longer holds removes its path, and a
+It never touches `tier`, `faq.daylight`, `terms.furniture`, `rooms`, `documents` or
+`contact.instagram`. A value the CSV no longer holds removes its path, and a
 section left empty goes with it; the codes in a group are sorted, so running either export
 again, in either order, leaves the file byte-identical. Facts come only from the CSV's
 fixed columns and its form answers, matched whole against fixed tables; anything else goes
@@ -386,3 +373,6 @@ left out, notes cut to 250 characters) go to `content/owner/export-report.md`, w
 
 The format holds every venue column of the site and nothing else. Barrier-free access and
 free parking are `amenity` codes (`wheelchair_access`, `parking`), not fields of their own.
+
+`rating` and `reviews` were removed in #53 (the site shows the Google rating instead, set in
+the CMS); a `venue.yaml` that still has them is refused.

@@ -8,7 +8,6 @@ use App\Factory\RoomFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenuePhotoTranslationFactory;
-use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
@@ -25,7 +24,6 @@ use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
@@ -460,7 +458,7 @@ final class ListingQueryTest extends KernelTestCase
 
     public function test_card_fields(): void
     {
-        $venue = VenueFactory::new()->rated('8.4', 12)->create([
+        $venue = VenueFactory::createOne([
             'name' => 'Seehaus Stäfa',
             'town' => $this->town('Stäfa'),
             'tier' => Tier::Premium,
@@ -468,9 +466,6 @@ final class ListingQueryTest extends KernelTestCase
             'capacityMax' => 150,
         ]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => 'seehaus-staefa', 'summary' => 'Am Zürichsee.']);
-        VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => 2, 'code' => RatingHighlight::Food]);
-        VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => 1, 'code' => RatingHighlight::Value]);
-        $this->venue('Unbewertet');
 
         $cards = $this->byName($this->query()->results(SearchCriteria::none(), 'de')->cards);
         $card = $cards['Seehaus Stäfa'];
@@ -483,14 +478,7 @@ final class ListingQueryTest extends KernelTestCase
         self::assertSame(150, $card->capacityMax);
         self::assertSame('Stäfa', $card->place->townName);
         self::assertSame('Am Zürichsee.', $card->summary);
-        self::assertSame(8.4, $card->ratingScore);
-        self::assertSame(12, $card->ratingCount);
-        self::assertSame([RatingHighlight::Value, RatingHighlight::Food], $card->highlights);
         self::assertSame([], $card->photos);
-
-        self::assertNull($cards['Unbewertet']->ratingScore);
-        self::assertNull($cards['Unbewertet']->ratingCount);
-        self::assertSame([], $cards['Unbewertet']->highlights);
     }
 
     public function test_photos_are_the_first_eight_venue_photos(): void

@@ -8,7 +8,6 @@ use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenuePhoto;
-use App\Venues\Entity\VenueReview;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\Repository\VenueRepository;
@@ -16,8 +15,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Loads a venue's child rows for the CMS media commands (#25): one photo, room, document or
- * review by id, and the ordered rows of a scope. A row of another venue, and an id that is
+ * Loads a venue's child rows for the CMS media commands (#25): one photo, room or document
+ * by id, and the ordered rows of a scope. A row of another venue, and an id that is
  * not a UUID, is VenueRowNotFound (D21), so a crafted id never reaches Postgres as a GUID.
  *
  * Every lookup is a query, so a row deleted by a concurrent save is gone after
@@ -72,14 +71,6 @@ final class VenueRows
     public function document(Venue $venue, string $documentId): VenueDocument
     {
         return $this->find(VenueDocument::class, $venue, $documentId) ?? throw VenueRowNotFound::document($venue->number(), $documentId);
-    }
-
-    /**
-     * @throws VenueRowNotFound
-     */
-    public function review(Venue $venue, string $reviewId): VenueReview
-    {
-        return $this->find(VenueReview::class, $venue, $reviewId) ?? throw VenueRowNotFound::review($venue->number(), $reviewId);
     }
 
     /**
@@ -170,7 +161,7 @@ final class VenueRows
     }
 
     /**
-     * @template T of VenuePhoto|Room|VenueDocument|VenueReview
+     * @template T of VenuePhoto|Room|VenueDocument
      *
      * @param class-string<T> $class
      *

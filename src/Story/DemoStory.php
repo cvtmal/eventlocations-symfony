@@ -11,8 +11,6 @@ use App\Factory\VenueDocumentTranslationFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenuePhotoTranslationFactory;
-use App\Factory\VenueRatingHighlightFactory;
-use App\Factory\VenueReviewFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
@@ -28,8 +26,6 @@ use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
@@ -47,8 +43,8 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  *
  * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town), plus one
  *   Liechtenstein venue (#46), and every tier (3/6/9/12/30, spread over the cantons).
- * - 1–5 rooms, 0–3 reviews, 0–2 documents, terms of every group (one main building and
- *   one main setting each, "Hochzeit" always), about one in three without a rating.
+ * - 1–5 rooms, 0–2 documents, terms of every group (one main building and one main setting
+ *   each, "Hochzeit" always). No own rating or reviews: #53 retired them.
  * - Deterministic: faker is seeded and the distribution is index-based.
  * - Idempotent: it does nothing when venues exist, because `make seed` appends.
  * - Needs the towns of app:geo:import-towns (make seed runs it first).
@@ -189,12 +185,6 @@ final class DemoStory extends Story
         if (0 !== $i % 3) {
             $factory = $factory->withDistances();
         }
-        // About one in three is unrated; venue 4 is rated below the first label (7.7).
-        $rated = 2 !== $i % 3;
-        if ($rated) {
-            $factory = $factory->rated(4 === $i ? '7.4' : \sprintf('%.1f', $faker->randomFloat(1, 7.0, 9.6)), $faker->numberBetween(1, 400));
-        }
-
         $hasAddress = !\in_array($i, [...self::CANTON_ONLY, self::REGION_ONLY, self::NO_PLACE], true);
         if (!$hasAddress) {
             $factory = $factory->withoutLocation(\in_array($i, self::CANTON_ONLY, true) ? $town->canton() : null);
@@ -225,23 +215,6 @@ final class DemoStory extends Story
 
         $rooms = $this->createRooms($faker, $venue, $capacityMax);
         $this->assignTerms($faker, $venue, $terms);
-
-        if ($rated) {
-            foreach (array_values($faker->randomElements(RatingHighlight::cases(), $faker->numberBetween(0, 3))) as $index => $highlight) {
-                VenueRatingHighlightFactory::createOne(['venue' => $venue, 'position' => $index + 1, 'code' => $highlight]);
-            }
-        }
-
-        for ($review = $faker->numberBetween(0, 3); $review > 0; --$review) {
-            VenueReviewFactory::createOne([
-                'venue' => $venue,
-                'locale' => 'de',
-                'firstName' => $faker->firstName(),
-                'role' => $faker->randomElement(ReviewerRole::cases()),
-                'reviewedMonth' => \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-3 years', 'now')),
-                'text' => self::text($faker, 300),
-            ]);
-        }
 
         $documents = [];
         for ($position = 1, $count = $faker->numberBetween(0, 2); $position <= $count; ++$position) {

@@ -8,8 +8,6 @@ use App\Cms\Form\DocumentTitleType;
 use App\Cms\Form\DocumentUploadData;
 use App\Cms\Form\DocumentUploadType;
 use App\Cms\Form\PhotoAltData;
-use App\Cms\Form\ReviewData;
-use App\Cms\Form\ReviewType;
 use App\Cms\Form\RoomData;
 use App\Cms\Form\RoomType;
 use App\Tests\Support\Content\ContentFolder;
@@ -227,58 +225,6 @@ final class VenueMediaFormsTest extends KernelTestCase
         }
     }
 
-    public function test_a_review_builds_its_commands(): void
-    {
-        $form = $this->review(self::reviewPayload() + ['locale' => 'de']);
-
-        self::assertTrue($form->isValid(), (string) $form->getErrors(true));
-        $data = $form->getData();
-        self::assertInstanceOf(ReviewData::class, $data);
-        $command = $data->toAddCommand(7);
-        self::assertSame(['de', 'Lea', 'organiser_f', '2026-06', 'Ein schöner Tag.'], [$command->locale, $command->firstName, $command->role, $command->month, $command->text]);
-
-        $form = $this->review(self::reviewPayload() + ['loadedAt' => '1730000000'], edit: true);
-        self::assertTrue($form->isValid(), (string) $form->getErrors(true));
-        $data = $form->getData();
-        self::assertInstanceOf(ReviewData::class, $data);
-        self::assertSame('1730000000', $data->toChangeCommand(7, 'review-id')->loadedAt);
-    }
-
-    /**
-     * @return iterable<string, array{array<string, string>, string, bool}>
-     */
-    public static function invalidReviews(): iterable
-    {
-        yield 'month 13' => [['month' => '2026-13'], 'month', false];
-        yield 'month 00' => [['month' => '2026-00'], 'month', false];
-        yield 'year 0' => [['month' => '0000-01'], 'month', false];
-        yield 'a date' => [['month' => '2026-06-01'], 'month', false];
-        yield 'invalid UTF-8 month' => [['month' => "2026-\xff"], 'month', false];
-        yield 'no first name' => [['firstName' => ''], 'firstName', false];
-        yield 'first name too long' => [['firstName' => str_repeat('a', 51)], 'firstName', false];
-        yield 'text with a NUL' => [['text' => "a\0b"], 'text', false];
-        yield 'text too long' => [['text' => str_repeat('a', 1001)], 'text', false];
-        yield 'unknown role' => [['role' => 'critic'], 'role', false];
-        yield 'another locale' => [['locale' => 'fr'], 'locale', false];
-        yield 'locale with invalid UTF-8' => [['locale' => "\xff"], 'locale', false];
-        yield 'locale with a NUL' => [['locale' => "d\0e"], 'locale', false];
-        yield 'edit without token' => [[], 'loadedAt', true];
-        yield 'token with invalid UTF-8' => [['loadedAt' => "\xff"], 'loadedAt', true];
-        yield 'token with a NUL' => [['loadedAt' => "1\x002"], 'loadedAt', true];
-    }
-
-    /**
-     * @param array<string, string> $override
-     */
-    #[DataProvider('invalidReviews')]
-    public function test_a_review_refuses(array $override, string $field, bool $edit): void
-    {
-        $form = $this->review(array_replace(self::reviewPayload() + ($edit ? [] : ['locale' => 'de']), $override), $edit);
-
-        self::assertFalse($form->isValid());
-        self::assertArrayHasKey($field, self::errors($form), (string) $form->getErrors(true));
-    }
-
     /**
      * @return array<string, mixed>
      */
@@ -294,14 +240,6 @@ final class VenueMediaFormsTest extends KernelTestCase
             'floorMaterial' => 'parquet',
             'seating' => ['banquet' => ['min' => 40, 'max' => 100]],
         ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function reviewPayload(): array
-    {
-        return ['firstName' => 'Lea', 'role' => 'organiser_f', 'month' => '2026-06', 'text' => 'Ein schöner Tag.'];
     }
 
     /**
@@ -326,19 +264,6 @@ final class VenueMediaFormsTest extends KernelTestCase
     {
         $form = $this->forms->create(DocumentUploadType::class, new DocumentUploadData(), ['csrf_protection' => false]);
         $form->submit(['file' => $file, 'titles' => $titles]);
-
-        return $form;
-    }
-
-    /**
-     * @param array<string, string> $payload
-     *
-     * @return FormInterface<mixed>
-     */
-    private function review(array $payload, bool $edit = false): FormInterface
-    {
-        $form = $this->forms->create(ReviewType::class, new ReviewData(), ['edit' => $edit, 'csrf_protection' => false]);
-        $form->submit($payload);
 
         return $form;
     }

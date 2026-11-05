@@ -7,7 +7,6 @@ namespace App\Venues\ValueObject\Content;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 
@@ -20,12 +19,10 @@ final readonly class VenueContent
     /**
      * @param array<string, list<string>>                                                                                                                                                                                       $terms        codes by TermGroup value
      * @param array<string, string>                                                                                                                                                                                             $mainTerms    code by TermGroup value
-     * @param list<RatingHighlight>                                                                                                                                                                                             $highlights
      * @param array<string, array{summary: string, description: ?string, metaDescription: ?string, parkingText: ?string, ambience: ?string, capacityNote: ?string, partyNote: ?string, openingHours: ?string, region: ?string}> $translations by locale
      * @param list<PhotoContent>                                                                                                                                                                                                $photos       gallery photos
      * @param list<RoomContent>                                                                                                                                                                                                 $rooms
      * @param list<DocumentContent>                                                                                                                                                                                             $documents
-     * @param list<ReviewContent>                                                                                                                                                                                               $reviews
      */
     public function __construct(
         public string $key,
@@ -60,16 +57,12 @@ final readonly class VenueContent
         public ?bool $hasCurfew,
         public ?\DateTimeImmutable $curfewAt,
         public ?string $instagram,
-        public ?string $ratingScore,
-        public ?int $ratingCount,
-        public array $highlights,
         public array $terms,
         public array $mainTerms,
         public array $translations,
         public array $photos,
         public array $rooms,
         public array $documents,
-        public array $reviews,
     ) {
     }
 }

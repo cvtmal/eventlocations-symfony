@@ -129,6 +129,20 @@ final class VenueEditingTest extends KernelTestCase
         self::assertSame(0, $purger->listings);
     }
 
+    public function test_close_without_marking_purges_and_leaves_cms_edited_at_alone(): void
+    {
+        $venue = VenueFactory::createOne(['contentKey' => 'seehaus-probe']);
+        $purger = $this->purger();
+
+        $editing = $this->editing();
+        $editing->close($editing->lock($venue->number()), purgeListings: false, markCmsEdited: false);
+        $this->em->flush();
+
+        self::assertNull($this->connection->fetchOne('SELECT cms_edited_at FROM venues WHERE id = ?', [$venue->id()]));
+        self::assertSame([$venue->number()], $purger->venues);
+        self::assertSame(0, $purger->listings);
+    }
+
     public function test_a_failing_command_purges_nothing(): void
     {
         $venue = VenueFactory::createOne();

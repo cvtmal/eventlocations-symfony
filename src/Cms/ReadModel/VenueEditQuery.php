@@ -7,7 +7,6 @@ namespace App\Cms\ReadModel;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\TownText;
 use Doctrine\DBAL\Connection;
@@ -40,12 +39,11 @@ final class VenueEditQuery
                        v.distance_highway_km::text AS highway_km, v.highway_name,
                        v.distance_airport_km::text AS airport_km, v.airport_name,
                        v.phone, v.inquiry_email, v.website, v.contact_person, v.instagram,
-                       v.own_catering, v.daylight, v.rating_score::text AS rating_score, v.rating_count,
+                       v.own_catering, v.daylight,
                        v.price_level, v.capacity_seated, v.capacity_standing, v.party, v.has_curfew,
                        to_char(v.curfew_at, 'HH24:MI') AS curfew_at,
+                       v.google_place_id, v.google_rating_hidden,
                        (SELECT COUNT(*) FROM venue_photos p WHERE p.venue_id = v.id AND p.room_id IS NULL) AS gallery_photo_count,
-                       (SELECT COALESCE(jsonb_agg(h.code ORDER BY h.position), '[]')
-                        FROM venue_rating_highlights h WHERE h.venue_id = v.id) AS highlights,
                        (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
                                                   ORDER BY vt.term_group, tt.position), '[]')
                         FROM venue_terms vt
@@ -92,9 +90,6 @@ final class VenueEditQuery
             instagram: self::string($row['instagram']),
             ownCatering: null === $row['own_catering'] ? null : OwnCatering::from((string) $row['own_catering']),
             daylight: self::bool($row['daylight']),
-            ratingScore: self::string($row['rating_score']),
-            ratingCount: self::int($row['rating_count']),
-            highlights: array_map(RatingHighlight::from(...), self::strings((string) $row['highlights'])),
             priceLevel: null === $row['price_level'] ? null : PriceLevel::from((string) $row['price_level']),
             capacitySeated: self::int($row['capacity_seated']),
             capacityStanding: self::int($row['capacity_standing']),
@@ -105,6 +100,8 @@ final class VenueEditQuery
             terms: $terms,
             mainTerms: $mainTerms,
             galleryPhotoCount: (int) $row['gallery_photo_count'],
+            googlePlaceId: self::string($row['google_place_id']),
+            googleRatingHidden: (bool) $row['google_rating_hidden'],
         );
     }
 
@@ -151,14 +148,6 @@ final class VenueEditQuery
         }
 
         return $translations;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function strings(string $json): array
-    {
-        return array_map(strval(...), self::decode($json));
     }
 
     /**

@@ -10,13 +10,14 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * S11 budgets for the shipped assets (#1): CSS ≤ 25 KB gzip, JS ≤ 15 KB gzip per page, carousel.js ≤ 2 KB gzip,
- * the Region overlay's JS ≤ 6 KB gzip (#10), near-me.js ≤ 4 KB gzip (#52), at most two font files, and self-contained
- * JS modules. Reads the CSS `make sass` builds (a prerequisite of `make test`).
+ * the Region overlay's JS ≤ 6 KB gzip (#10), near-me.js ≤ 4 KB gzip (#52), google-rating.js ≤ 2 KB gzip (#53), at most
+ * two font files, and self-contained JS modules. Reads the CSS `make sass` builds (a prerequisite of `make test`).
  *
  * The JS budget is per page, as S11 words it (#47): a page loads base.html.twig's scripts plus its own template's.
  * Every public script must be referenced by base, one of PAGES, the back office's scripts or the styleguide, so a
  * new script cannot escape the measure. The near-me page (#52) counts base + near-me.js: the Google Maps script it
- * loads at runtime is not ours and not referenced through asset('js/…'), S1's stated exception.
+ * loads at runtime is not ours and not referenced through asset('js/…'), S1's stated exception. The same holds for the
+ * detail page (#53): it counts our loader google-rating.js, not Google's script and element, which it loads on view.
  */
 #[Group('budget')]
 final class AssetBudgetTest extends TestCase
@@ -56,6 +57,11 @@ final class AssetBudgetTest extends TestCase
     public function test_near_me_js_is_within_4_kb_gzip(): void
     {
         self::assertLessThanOrEqual(4096, self::gzipSize((string) file_get_contents(self::root().'/assets/js/near-me.js')));
+    }
+
+    public function test_google_rating_js_is_within_2_kb_gzip(): void
+    {
+        self::assertLessThanOrEqual(2048, self::gzipSize((string) file_get_contents(self::root().'/assets/js/google-rating.js')));
     }
 
     public function test_region_overlay_javascript_is_within_6_kb_gzip(): void

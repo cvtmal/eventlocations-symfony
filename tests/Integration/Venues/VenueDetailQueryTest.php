@@ -21,9 +21,6 @@ use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\RatingLabel;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
@@ -211,6 +208,31 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame('maison-sans-allemand', $detail->slug);
     }
 
+    public function test_the_google_place_decides_whether_the_rating_shows(): void
+    {
+        $venue = DetailVenues::full($this->em);
+
+        $none = $this->query->detail($venue->number(), 'de');
+        self::assertNotNull($none);
+        self::assertNull($none->googlePlaceId);
+        self::assertFalse($none->googleRatingHidden);
+        self::assertFalse($none->showsGoogleRating());
+
+        $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4' WHERE id = :id", ['id' => $venue->id()]);
+        $set = $this->query->detail($venue->number(), 'de');
+        self::assertNotNull($set);
+        self::assertSame('ChIJN1t_tDeuEmsRUsoyG83frY4', $set->googlePlaceId);
+        self::assertFalse($set->googleRatingHidden);
+        self::assertTrue($set->showsGoogleRating());
+
+        $this->connection->executeStatement('UPDATE venues SET google_rating_hidden = TRUE WHERE id = :id', ['id' => $venue->id()]);
+        $hidden = $this->query->detail($venue->number(), 'de');
+        self::assertNotNull($hidden);
+        self::assertSame('ChIJN1t_tDeuEmsRUsoyG83frY4', $hidden->googlePlaceId);
+        self::assertTrue($hidden->googleRatingHidden);
+        self::assertFalse($hidden->showsGoogleRating());
+    }
+
     public function test_maps_every_field_of_a_full_venue(): void
     {
         $venue = DetailVenues::full($this->em);
@@ -250,12 +272,6 @@ final class VenueDetailQueryTest extends KernelTestCase
             )),
         );
 
-        self::assertTrue($detail->hasRatingSection());
-        self::assertSame(9.2, $detail->ratingScore);
-        self::assertSame(474, $detail->ratingCount);
-        self::assertSame(RatingLabel::Outstanding, $detail->ratingLabel);
-        self::assertSame([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Location], $detail->highlights);
-
         self::assertTrue($detail->hasFaq());
         self::assertSame(OwnCatering::Allowed, $detail->ownCatering);
         self::assertTrue($detail->daylight);
@@ -273,11 +289,6 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame('Anna Muster', $detail->contactPerson);
 
         self::assertSame(['Preisliste', 'Menüvorschläge'], array_map(static fn ($d) => $d->title, $detail->documents));
-
-        self::assertSame(['Loreana', 'Marco', 'Sandra', 'Peter'], array_map(static fn ($r) => $r->firstName, $detail->reviews));
-        self::assertSame(ReviewerRole::VisitorF, $detail->reviews[0]->role);
-        self::assertSame('2025-04', $detail->reviews[0]->month->format('Y-m'));
-        self::assertSame('Ein wunderbarer Tag am See.', $detail->reviews[0]->text);
 
         self::assertCount(2, $detail->rooms);
         [$hall, $cellar] = $detail->rooms;
@@ -333,10 +344,6 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertNull($detail->mainSetting);
         self::assertSame([], $detail->factGroups);
         self::assertFalse($detail->hasFacts());
-        self::assertNull($detail->ratingScore);
-        self::assertNull($detail->ratingLabel);
-        self::assertFalse($detail->hasRatingSection());
-        self::assertSame([], $detail->highlights);
         self::assertFalse($detail->hasFaq());
         self::assertSame([], $detail->distances);
         self::assertFalse($detail->wedding->hasAny());
@@ -344,7 +351,6 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertFalse($detail->hasPhone);
         self::assertFalse($detail->hasContact());
         self::assertSame([], $detail->documents);
-        self::assertSame([], $detail->reviews);
         self::assertSame([], $detail->rooms);
         self::assertSame([], $detail->photos);
     }
@@ -404,20 +410,6 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertNotNull($detail);
         self::assertFalse($detail->wedding->hasCurfew);
         self::assertTrue($detail->wedding->hasAny());
-    }
-
-    public function test_a_score_below_the_threshold_has_no_label(): void
-    {
-        $venue = DetailVenues::minimal();
-        $venue->rate('7.4', 12);
-        $this->em->flush();
-
-        $detail = $this->query->detail($venue->number(), 'de');
-
-        self::assertNotNull($detail);
-        self::assertTrue($detail->hasRatingSection());
-        self::assertSame(7.4, $detail->ratingScore);
-        self::assertNull($detail->ratingLabel);
     }
 
     public function test_phone_is_read_separately(): void

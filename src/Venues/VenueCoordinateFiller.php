@@ -105,14 +105,24 @@ final class VenueCoordinateFiller
     private function query(\stdClass $document): string
     {
         $code = isset($document->address->canton) && \is_string($document->address->canton) ? $document->address->canton : '';
-        $canton = self::CANTON_NAMES[$code] ?? '';
         $region = isset($document->translations->de->region) && \is_string($document->translations->de->region)
             ? $document->translations->de->region
             : '';
-        // "Vaduz Liechtenstein Schweiz" would pull the search towards Switzerland.
-        $country = 'CH' === (Canton::tryFrom($code)?->countryCode() ?? 'CH') ? ' Schweiz' : '';
 
-        return trim($document->name.' '.('' !== $canton ? $canton : $region).$country);
+        return self::searchText($document->name, $code, $region);
+    }
+
+    /**
+     * The text search for a venue: its name, then the canton's name or else the region, then "Schweiz" for a
+     * Swiss canton. Shared with #53's place ID lookup (`GooglePlaceFinder`), so both ask the same question.
+     */
+    public static function searchText(string $name, string $cantonCode, string $region): string
+    {
+        $canton = self::CANTON_NAMES[$cantonCode] ?? '';
+        // "Vaduz Liechtenstein Schweiz" would pull the search towards Switzerland.
+        $country = 'CH' === (Canton::tryFrom($cantonCode)?->countryCode() ?? 'CH') ? ' Schweiz' : '';
+
+        return trim($name.' '.('' !== $canton ? $canton : $region).$country);
     }
 
     /** True when the two names share a word of four letters or more, case and umlauts folded. */
@@ -127,9 +137,11 @@ final class VenueCoordinateFiller
     }
 
     /**
+     * The report's CSV, also #53's place ID report (`GooglePlaceFinder`).
+     *
      * @param list<list<string>> $rows
      */
-    private static function csv(array $rows): string
+    public static function csv(array $rows): string
     {
         $out = fopen('php://memory', 'w+');
         if (false === $out) {

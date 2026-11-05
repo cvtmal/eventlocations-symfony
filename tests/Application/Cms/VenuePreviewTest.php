@@ -12,6 +12,7 @@ use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 final class VenuePreviewTest extends WebTestCase
@@ -49,6 +50,48 @@ final class VenuePreviewTest extends WebTestCase
         // The public page itself stays gone.
         $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::FULL_SLUG);
         self::assertResponseStatusCodeSame(410);
+    }
+
+    public function test_a_google_place_shows_a_note_and_loads_nothing_from_google(): void
+    {
+        $saved = [$_SERVER['GOOGLE_MAPS_JS_KEY'] ?? null, $_ENV['GOOGLE_MAPS_JS_KEY'] ?? null];
+        $_SERVER['GOOGLE_MAPS_JS_KEY'] = $_ENV['GOOGLE_MAPS_JS_KEY'] = 'test-key';
+        try {
+            $this->logInAs(AdminRole::Editor);
+            $venue = DetailVenues::full($this->em());
+            $this->em()->flush();
+            $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4' WHERE id = ?", [$venue->id()]);
+
+            $crawler = $this->client->request('GET', $this->url($venue));
+
+            self::assertResponseIsSuccessful();
+            self::assertSame(
+                ['Hier zeigt die Website die Google-Bewertung. Die Vorschau lädt sie nicht.'],
+                $crawler->filter('.venue-content > .preview-banner__note')->each(static fn (Crawler $note): string => $note->text()),
+            );
+            self::assertSelectorNotExists('[data-google-rating]');
+            self::assertStringNotContainsString('data-maps-key', (string) $this->client->getResponse()->getContent());
+            self::assertStringNotContainsString('googleapis', (string) $this->client->getResponse()->headers->get('Content-Security-Policy'));
+
+            $this->connection->executeStatement('UPDATE venues SET google_rating_hidden = TRUE WHERE id = ?', [$venue->id()]);
+            $crawler = $this->client->request('GET', $this->url($venue));
+
+            self::assertSame('Die Google-Bewertung ist für diese Location ausgeblendet.', $crawler->filter('.venue-content > .preview-banner__note')->text());
+        } finally {
+            [$_SERVER['GOOGLE_MAPS_JS_KEY'], $_ENV['GOOGLE_MAPS_JS_KEY']] = $saved;
+        }
+    }
+
+    public function test_without_a_google_place_the_preview_has_no_rating_note(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::full($this->em());
+        $this->em()->flush();
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('.venue-content > .preview-banner__note'));
     }
 
     public function test_anonymous_is_sent_to_the_login(): void

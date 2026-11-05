@@ -22,8 +22,6 @@ use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenueDocumentTranslation;
 use App\Venues\Entity\VenuePhoto;
 use App\Venues\Entity\VenuePhotoTranslation;
-use App\Venues\Entity\VenueRatingHighlight;
-use App\Venues\Entity\VenueReview;
 use App\Venues\Entity\VenueTerm;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\Exception\InvalidContent;
@@ -64,7 +62,7 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * 5. New photos: store the original content-addressed under MEDIA_ROOT and render the
  *    variants into a staging directory, all before the first DB write.
  * 6. Write: the venue's fields; translations and slugs (old slug to venue_slug_history);
- *    terms, highlights, reviews and every translation set replaced; rooms, photos and
+ *    terms and every translation set replaced; rooms, photos and
  *    documents kept when their identity matches (room key; room key + original; original)
  *    and moved in two flushes because their position uniques are not deferrable.
  * 7. Publish the new variants and PDFs; files of removed rows are deleted by RemoveVenueFiles
@@ -366,14 +364,14 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         $venue->changeSeatingCapacity($content->capacitySeated, $content->capacityStanding);
         $venue->describePartyRules($content->party, $content->hasCurfew, $content->curfewAt);
         $venue->changeInstagram($content->instagram);
-        $venue->rate($content->ratingScore, $content->ratingCount);
 
         return $venue;
     }
 
     /**
-     * Deletes the replaced-as-a-whole rows of an existing venue: terms, highlights, reviews,
-     * and the translations of the rooms, photos and documents it keeps.
+     * Deletes the replaced-as-a-whole rows of an existing venue: terms, and the translations
+     * of the rooms, photos and documents it keeps. The retired highlights and reviews (#53) are
+     * left alone: the import neither reads nor deletes them until the drop migration.
      *
      * @param array<string, Room>          $rooms
      * @param array<string, VenuePhoto>    $photos
@@ -381,9 +379,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
      */
     private function replaceOwnedSets(Venue $venue, array $rooms, array $photos, array $documents): void
     {
-        foreach ([VenueTerm::class, VenueRatingHighlight::class, VenueReview::class] as $class) {
-            $this->em->createQuery(\sprintf('DELETE FROM %s x WHERE x.venue = :venue', $class))->setParameter('venue', $venue)->execute();
-        }
+        $this->em->createQuery(\sprintf('DELETE FROM %s x WHERE x.venue = :venue', VenueTerm::class))->setParameter('venue', $venue)->execute();
         foreach ([[RoomTranslation::class, 'room', $rooms], [VenuePhotoTranslation::class, 'photo', $photos], [VenueDocumentTranslation::class, 'document', $documents]] as [$class, $field, $owners]) {
             if ([] !== $owners) {
                 $this->em->createQuery(\sprintf('DELETE FROM %s x WHERE x.%s IN (:owners)', $class, $field))->setParameter('owners', array_values($owners))->execute();
@@ -429,12 +425,6 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
                 \assert($term instanceof TaxonomyTerm, 'The schema pins the codes to taxonomy_terms.');
                 $this->em->persist(new VenueTerm($venue, $term, ($content->mainTerms[$group] ?? null) === $code));
             }
-        }
-        foreach ($content->highlights as $index => $highlight) {
-            $this->em->persist(new VenueRatingHighlight($venue, $index + 1, $highlight));
-        }
-        foreach ($content->reviews as $review) {
-            $this->em->persist(new VenueReview($venue, $review->locale, $review->firstName, $review->role, $review->month, $review->text));
         }
     }
 

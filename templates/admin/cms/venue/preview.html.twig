@@ -1,7 +1,8 @@
 {#
     Preview of a venue's public page (CMS-9): the public detail template, published or not, with a banner above the
     hero. Nothing here may reach a search engine or a guest: no canonical, hreflang, JSON-LD or social tags, robots
-    `noindex` (the `/admin` response headers say the same), and a note in place of the inquiry form. It loads the
+    `noindex` (the `/admin` response headers say the same), and a note in place of the inquiry form and of Google's
+    rating (#53). It loads the
     public `app.css`, so the banner is styled by `venues/_preview-banner.scss` with `--c-*` tokens (P18).
     Optional context: back_url, the banner link's target (default: the staff editor).
 #}
@@ -26,5 +27,8 @@
     </div>
     {{ parent() }}
 {% endblock %}
+
+{# Google's element never loads here (#53): the preview keeps the site CSP and names where the rating would be. #}
+{% block google_rating %}{% if venue.googlePlaceId %}<p class="preview-banner__note">{{ (venue.googleRatingHidden ? 'preview.google_rating_hidden' : 'preview.google_rating')|trans({}, 'cms') }}</p>{% endif %}{% endblock %}
 
 {% block inquiry %}<p class="preview-banner__note">{{ 'preview.inquiry_note'|trans({}, 'cms') }}</p>{% endblock %}

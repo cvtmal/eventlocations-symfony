@@ -27,21 +27,6 @@
 
 {{ venue.descriptionText()|md_block }}
 
-{% if venue.hasRatingSection() %}
-## {{ 'detail.rating.heading'|trans({}, 'venues')|md }}
-
-{% if venue.ratingLabel %}{{ 'detail.rating.summary_labelled'|trans({label: venue.ratingLabel|trans, score: venue.ratingScore|swiss_number(1), count: venue.ratingCount|swiss_number}, 'venues')|md }}{% else %}{{ 'detail.rating.summary'|trans({score: venue.ratingScore|swiss_number(1), count: venue.ratingCount|swiss_number}, 'venues')|md }}{% endif %}
-
-
-{% if venue.highlights is not empty %}
-{{ 'detail.rating.highlights_intro'|trans({}, 'venues')|md }}
-
-{% for highlight in venue.highlights %}
-- {{ highlight|trans|md }}
-{% endfor %}
-
-{% endif %}
-{% endif %}
 {% if venue.hasFacts() %}
 ## {{ 'detail.facts.heading'|trans({}, 'venues')|md }}
 
@@ -171,16 +156,6 @@
 - [{{ document.title|md }}]({{ absolute_url(document_url(venue.number, document.id)) }})
 {% endfor %}
 
-{% endif %}
-{% if venue.reviews is not empty %}
-## {{ 'detail.reviews.heading'|trans({}, 'venues')|md }}
-
-{% for review in venue.reviews %}
-{{ review.text|md_block|split("\n")|map(line => line == '' ? '>' : '> ' ~ line)|join("\n") }}
->
-> {{ 'detail.reviews.byline'|trans({name: review.firstName, role: review.role|trans, month: review.month}, 'venues')|md }}
-
-{% endfor %}
 {% endif %}
 ---
 

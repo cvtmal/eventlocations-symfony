@@ -35,6 +35,11 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * dispatches for a won deal (#28); the import never does. close() is what protects staff work
  * and hand-made rows from an import (S8: the import skips a venue with cms_edited_at set). A
  * handler that changed nothing returns before close().
+ *
+ * The Google place commands (#53) close with `markCmsEdited: false`: the place ID is outside the
+ * content format, so no import can overwrite it and it needs no S8 protection, while a stamp would
+ * freeze the venue against every later folder import. The entity moves updated_at itself, so
+ * other open forms still go stale.
  */
 final class VenueEditing
 {
@@ -82,11 +87,14 @@ final class VenueEditing
     }
 
     /**
-     * Marks the CMS edit and purges the HTTP cache once the transaction has committed.
+     * Marks the CMS edit, unless told not to, and purges the HTTP cache once the transaction has
+     * committed.
      */
-    public function close(Venue $venue, bool $purgeListings = true): void
+    public function close(Venue $venue, bool $purgeListings = true, bool $markCmsEdited = true): void
     {
-        $venue->markCmsEdited($this->clock->now());
+        if ($markCmsEdited) {
+            $venue->markCmsEdited($this->clock->now());
+        }
         $this->commandBus->dispatch(new PurgeVenueCache($venue->number()), [new DispatchAfterCurrentBusStamp()]);
         if ($purgeListings) {
             $this->commandBus->dispatch(new PurgeListingsCache(), [new DispatchAfterCurrentBusStamp()]);

@@ -12,7 +12,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * Finds a venue's position by name with Google's Places Text Search (new API), limited to a box
  * around Switzerland that also covers Liechtenstein (#46); `regionCode` CH only biases the ranking,
  * so a Liechtenstein venue is placed too. The key is a constructor argument and reaches no log,
- * file or message.
+ * file or message. The field mask also asks for the place ID (#53's lookup), which keeps the call a
+ * Text Search Pro one.
  */
 final class VenueGeocoder
 {
@@ -39,7 +40,7 @@ final class VenueGeocoder
         $data = $this->client->request('POST', self::ENDPOINT, [
             'headers' => [
                 'X-Goog-Api-Key' => $this->apiKey,
-                'X-Goog-FieldMask' => 'places.displayName,places.formattedAddress,places.location',
+                'X-Goog-FieldMask' => 'places.id,places.displayName,places.formattedAddress,places.location',
             ],
             'json' => [
                 'textQuery' => $query,
@@ -68,6 +69,7 @@ final class VenueGeocoder
             \is_string($place['formattedAddress'] ?? null) ? $place['formattedAddress'] : '',
             round($lat, 6),
             round($lng, 6),
+            \is_string($place['id'] ?? null) ? $place['id'] : '',
         );
     }
 }

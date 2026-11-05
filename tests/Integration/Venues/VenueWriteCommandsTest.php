@@ -21,7 +21,6 @@ use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\CreateVenue;
 use App\Venues\Command\PublishVenue;
-use App\Venues\Command\RateVenue;
 use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\CommandHandler\ChangeVenueBasicsHandler;
@@ -33,7 +32,6 @@ use App\Venues\SlugAllocator;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
@@ -352,24 +350,6 @@ final class VenueWriteCommandsTest extends KernelTestCase
         self::assertSame($daylight, $saved->daylight());
     }
 
-    public function test_a_rating_is_set_changed_and_cleared_with_positions_from_one(): void
-    {
-        $venue = $this->venueWithSlug('bewertung');
-
-        $this->dispatch(new RateVenue($venue->number(), $this->token($venue), ['score'], '8.4', 120, [RatingHighlight::Food, RatingHighlight::Location]));
-        self::assertSame([1 => 'food', 2 => 'location'], $this->highlights($venue));
-        self::assertSame(8.4, $this->reload($venue)->ratingScore());
-
-        $this->dispatch(new RateVenue($venue->number(), $this->token($venue), ['highlights'], '9.1', 130, [RatingHighlight::Value, RatingHighlight::Food, RatingHighlight::Atmosphere]));
-        self::assertSame([1 => 'value', 2 => 'food', 3 => 'atmosphere'], $this->highlights($venue));
-        self::assertSame(130, $this->reload($venue)->ratingCount());
-
-        $this->dispatch(new RateVenue($venue->number(), $this->token($venue), ['score', 'count', 'highlights'], null, null, []));
-        self::assertSame([], $this->highlights($venue));
-        self::assertNull($this->reload($venue)->ratingScore());
-        self::assertNull($this->reload($venue)->ratingCount());
-    }
-
     public function test_create_writes_an_unpublished_cms_venue_and_one_audit_row(): void
     {
         $number = $this->dispatch(new CreateVenue('Neue Scheune', Tier::Empfehlung, 150));
@@ -564,14 +544,5 @@ final class VenueWriteCommandsTest extends KernelTestCase
             "SELECT term_group || ':' || term_code || CASE WHEN is_main THEN '*' ELSE '' END AS t FROM venue_terms WHERE venue_id = ? ORDER BY t",
             [$venue->id()],
         );
-    }
-
-    /**
-     * @return array<int, string> position → code
-     */
-    private function highlights(Venue $venue): array
-    {
-        /* @var array<int, string> */
-        return $this->connection->fetchAllKeyValue('SELECT position, code FROM venue_rating_highlights WHERE venue_id = ? ORDER BY position', [$venue->id()]);
     }
 }

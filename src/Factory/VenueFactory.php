@@ -69,14 +69,6 @@ final class VenueFactory extends PersistentObjectFactory
         ));
     }
 
-    /**
-     * @param string $score one decimal, e.g. '8.4'
-     */
-    public function rated(string $score, int $count): self
-    {
-        return $this->afterInstantiate(static fn (Venue $venue) => $venue->rate($score, $count));
-    }
-
     public function withRoomFacts(int $roomCount, ?int $largestRoomM2, ?string $maxRoomHeightM): self
     {
         return $this->afterInstantiate(static fn (Venue $venue) => $venue->summariseRooms($roomCount, $largestRoomM2, $maxRoomHeightM));

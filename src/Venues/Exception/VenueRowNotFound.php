@@ -7,7 +7,7 @@ namespace App\Venues\Exception;
 use App\Shared\Exception\DomainException;
 
 /**
- * The venue has no photo, room, document or review with this id (#25, D21). A row of another
+ * The venue has no photo, room or document with this id (#25, D21). A row of another
  * venue counts as not found, so an id from one record never reaches another. The CMS answers
  * 404.
  */
@@ -34,10 +34,5 @@ final class VenueRowNotFound extends DomainException
     public static function document(int $venueNumber, string $documentId): self
     {
         return new self($venueNumber, 'document', $documentId);
-    }
-
-    public static function review(int $venueNumber, string $reviewId): self
-    {
-        return new self($venueNumber, 'review', $reviewId);
     }
 }

@@ -1,7 +1,7 @@
 {#
     One venue card (LP-2, LP-3). Owned by #7; #13 reuses it on /merkliste. Include with `only`:
       card (a ListingCard, or anything with its public properties: number, slug, name, tier, capacityMin, capacityMax,
-      place, summary, priceLevel, ambience, ratingScore, ratingCount, highlights, photos),
+      place, summary, priceLevel, ambience, photos),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
       action: merken|remove|none (default merken),
       heading: the title's element, h1 to h6 (default h2; a page with its own h2 above the cards passes h3),
@@ -64,11 +64,6 @@
             <li><span class="tag">{{ card.ambience }}</span></li>
             {%- endif %}
         </ul>
-        {%- endif %}
-        {%- if card.ratingScore is not null %}
-        <div class="card__rating">
-            {{ include('search/_card_rating.html.twig', {score: card.ratingScore, count: card.ratingCount ?? 0, highlights: card.highlights}, with_context = false) }}
-        </div>
         {%- endif %}
     </div>
 </article>

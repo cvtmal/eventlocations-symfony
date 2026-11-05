@@ -73,7 +73,7 @@ final class LegalPagesTest extends WebTestCase
             'Statistik',
             'Schutz vor Missbrauch',
             'Hosting und Datenbank',
-            'Karten von Google Maps',
+            'Karten und Bewertungen von Google Maps',
             'Links zu anderen Anbietern',
             'Interner Bereich',
             'Ihre Rechte',
@@ -184,6 +184,18 @@ final class LegalPagesTest extends WebTestCase
         self::assertStringContainsString('«'.$translator->trans('nearby.geo.button', [], 'search', 'de').'»', $text);
         self::assertStringContainsString('sofort beim Aufruf', $text);
         self::assertStringContainsString('Server-Protokollen', $text);
+    }
+
+    public function test_the_google_rating_is_explained_and_the_map_clause_names_only_the_map(): void
+    {
+        $text = $this->page('/datenschutz')->filter('main')->text();
+
+        // #53: the detail page's rating loads on view, so "nothing before the click" now speaks of the map only.
+        self::assertStringContainsString('Die Karte laden wir erst, wenn Sie auf «Karte laden» klicken; für die Karte wird vorher nichts an Google übertragen.', $text);
+        self::assertStringNotContainsString('Vorher wird nichts an Google übertragen.', $text);
+        self::assertStringContainsString('Auf der Seite einer Location kann die Google-Bewertung erscheinen', $text);
+        self::assertStringContainsString('ohne Klick direkt bei Google, sobald dieser Teil der Seite sichtbar wird', $text);
+        self::assertStringContainsString('Wir speichern keine Bewertungen von Google.', $text);
     }
 
     private function page(string $path): Crawler

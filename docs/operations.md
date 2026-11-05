@@ -269,7 +269,7 @@ nothing while the file fails `app:prod:check-env`. The command prints variable n
 | `MEDIA_ROOT` | `/home/djweddin/www/hochzeitslocation.ch/var/media`, absolute, inside `var/` so it survives a deploy |
 | `MEDIA_MAX_PIXELS`, `MEDIA_MAX_PORTRAIT_RATIO` | `20000000` and `2` for a CMS photo. Raise the pixels only together with `memory_limit` in `public/.user.ini`. |
 | `GOOGLE_MAPS_EMBED_KEY` | Optional. Restrict the key to the Maps Embed API and the referrer `https://hochzeitslocation.ch/*`. Empty: only the link to Google Maps. After a change, run `sh bin/prod-import purge`, or cached pages keep the old map for up to a day. |
-| `GOOGLE_MAPS_JS_KEY` | Optional. The near-me map (#52). A separate key, restricted to the Maps JavaScript API and the referrers `https://hochzeitslocation.ch/*` and `https://www.hochzeitslocation.ch/*`. Empty: the page shows the list only and makes no request to Google. Billed after 10,000 map loads a month; there is no cap (owner, 2026-11-05). After a change, run `sh bin/prod-import purge`. |
+| `GOOGLE_MAPS_JS_KEY` | Optional. The near-me map (#52) and the Google rating on venue pages (#53). A separate key, restricted to **Maps JavaScript API and Places UI Kit** and the referrers `https://hochzeitslocation.ch/*` and `https://www.hochzeitslocation.ch/*`. Empty: no map on the near-me page (the list only), and venue pages show only the link to the venue's reviews on Google Maps; neither makes a request to Google. Map loads are billed after 10,000 a month with no cap (owner, 2026-11-05); the rating's cap is optional, see §Google rating (#53). After a change, run `sh bin/prod-import purge`. |
 | `GOOGLE_MAPS_MAP_ID` | Required when `GOOGLE_MAPS_JS_KEY` is set: the raster JavaScript Map ID. `app:prod:check-env` refuses `DEMO_MAP_ID` then. After a change, purge as above. |
 | `SENTRY_DSN` | Optional. Empty: no error reports. |
 | `SYMFONY_TRUSTED_PROXIES` | Only if the probe shows a proxy in front of PHP. The exact address, never `REMOTE_ADDR`. |
@@ -336,6 +336,142 @@ JavaScript API key and a Map ID, both the owner's to create:
 
 There is no quota cap (owner, 2026-11-05): each view of the page with a key is one map load, free up
 to 10,000 a month and billed above that without a limit.
+
+### Google rating (#53)
+
+A venue page shows the venue's Google stars and review count when three things hold: the server has
+`GOOGLE_MAPS_JS_KEY`, staff have set the venue's Google place ID (CMS card "Google-Bewertung", or
+the one-off lookup below), and the switch "Google-Bewertung ausblenden" is off. Google's own element
+(Places UI Kit, compact Place Details) draws name, stars, count and attribution in the visitor's
+browser, after the page has loaded and once that part of the page is in view. We store only the
+place ID; no rating, count or name from Google is stored or cached. Without the key, when the key
+or the quota fails, or without JavaScript, the page shows the link "Bewertungen auf Google Maps
+ansehen" instead. Our own ratings and reviews are retired (below).
+
+**1. The owner's Google Cloud steps.**
+
+1. Billing address: answered on 2026-11-05, it is in Switzerland, so nothing to change.
+2. In the project of the Embed and near-me keys, open **Places UI Kit**
+   (`placewidgets.googleapis.com`) and click **Enable**. Enable the **Maps JavaScript API** as well
+   if #52's steps have not.
+3. Open the `GOOGLE_MAPS_JS_KEY` key → **API restrictions** → add **Places UI Kit** and keep
+   **Maps JavaScript API**. Leave the website restrictions as they are. The dev key of #52's step 6
+   gets the same addition.
+4. **Quota cap, optional** (as #52's budget alert; the owner accepts paying for loads): **APIs &
+   Services → Places UI Kit → Quotas**, set the requests per day to, for example, 1,000. That is at
+   most about 30,000 a month: 10,000 are free, then USD 1.00 per 1,000. Once the cap is reached,
+   venue pages show the link instead of the stars until the next day. This cap is the rating's own;
+   #52's "no cap" for the map stays.
+5. If the server already has `GOOGLE_MAPS_JS_KEY` (and #52's `GOOGLE_MAPS_MAP_ID`, which
+   `app:prod:check-env` requires with it), nothing on the server changes. Otherwise set both as in
+   §Near-me map key (#52), run `sh bin/deploy check`, then `sh bin/prod-import purge`.
+
+Each view of a venue page that has a place ID and scrolls the rating into view is one "Places UI
+Kit" request. The CMS and `/konto` previews show a note instead and cost nothing.
+
+**Real-key check (owner follow-up).** #53 was built against Google's documentation with a dummy key;
+the element has not yet rendered with a real one. Before or right after the release:
+
+1. Give the dev key (#52's step 6) the API restrictions **Maps JavaScript API** and **Places UI
+   Kit** and the website `http://localhost:8136/*` (or the port of the lane you use; keep
+   localhost off the production key). Put it into the lane's git-ignored `.env.local` as
+   `GOOGLE_MAPS_JS_KEY=…`, never into a committed file.
+2. Give one dev venue a real place ID, for example
+   `UPDATE venues SET google_place_id = 'ChIJ…' WHERE number = 1;` (a venue you know on Google
+   Maps), and open its page at 390 and 1440 px.
+3. Check and write down:
+   - the element's real height at both widths. The box reserves `min-block-size: 7rem` (112 px) in
+     `assets/styles/venues/detail/_google-rating.scss` (`.venue-google-rating--live`), a
+     provisional value because Google documents no height. Set it to the measured height, so the
+     page does not move when the element appears;
+   - the look: name, stars and count on our light ground, and Google's attribution visible;
+   - the labels are German (`language=de`);
+   - the console shows no CSP violation, and the element fires `gmp-load` (the link to Google Maps
+     disappears);
+   - `make lighthouse URL=/hochzeitslocation/<slug>` with the box in view: LCP and CLS as without
+     the key. A miss caused only by Google's script is accepted (#53's Outcome).
+4. Afterwards remove the key from `.env.local` and reset the venue
+   (`UPDATE venues SET google_place_id = NULL, google_rating_hidden = FALSE WHERE number = 1;`).
+
+A failure here (a CSP violation, a wrong height that moves the page, English labels) goes back to
+the dev team; the page keeps showing the link meanwhile.
+
+**2. Finding the place IDs, once.** In the main checkout, with `make up` running, as for
+§Content import. The lookup reads Neon, so the venue numbers are production's.
+
+- `PROD_DATABASE_URL` and `PROD_SSH` in the shell, as in §Content import.
+- A **Places API (New)** key of its own, restricted to that API **and to your own IP address**. It
+  lives in the shell only, never in `.env*`, the repo or the server's files:
+  ```sh
+  read -rs GOOGLE_PLACES_API_KEY && export GOOGLE_PLACES_API_KEY
+  ```
+- Cost: one Text Search Pro call per venue without a place ID; 5,000 a month are free.
+
+1. `sh bin/prod-import places-find`. It asks Google for every venue without a place ID (any status)
+   and writes `content/owner/google-places-report.csv`, one row per venue: `number`, `name`,
+   `published`, `status` (`found`, `not found`, `failed`), `query`, `place_id`, `matched_name`,
+   `name_matches` (`yes` or `NO`), `address`, `distance_km` (to the venue's pin; empty when the
+   venue has none or only its town centre), `apply`. It writes nothing to the database, and
+   `apply` is always empty. It prints `Looked up: F found, M not found, X failed.` and exits 1 when
+   any row failed; a rerun asks only the venues still without an ID.
+2. Open the report. For each `found` row decide: write `yes` in `apply` when `name_matches` is
+   `yes` and `distance_km` is small (under 1 km), or after checking the venue in Google Maps. Leave
+   `NO` rows, far rows and `not found` rows empty, and set those by hand in the CMS card
+   "Google-Bewertung" (it has an "Auf Google Maps prüfen" link once an ID is saved).
+3. `sh bin/prod-import places-apply-dry` until its summary is right:
+   `Dry run: A assigned, K kept (already had a place ID), R refused (not a place ID), U unknown venue.`,
+   followed by the numbers of the kept, refused and unknown rows. It writes nothing. It exits 1
+   when R or U is above 0.
+4. `sh bin/prod-import places-apply`. It sets only the `yes` rows, never overwrites a venue that
+   already has an ID (`kept`), writes an audit row per venue (actor `console`), and then empties
+   the server's page cache. A place ID does not stamp `cms_edited_at`, so later folder imports
+   still reach these venues.
+5. `unset GOOGLE_PLACES_API_KEY`, and delete the key in the Cloud console.
+
+**Undo:** clear the ID in the CMS card. The report is replaced on every run, so copy it before a
+rerun if you want to keep it. Google recommends refreshing place IDs older than 12 months: clear
+the venue's ID and rerun steps 1–4. There is no cron.
+
+**3. Retiring our own ratings: the production check before the drop.** #53 removes every reader
+and writer of our own rating, rating highlights and reviews (CMS tab "Bewertungen", rating card,
+public sections, listing cards, JSON-LD, the content format), but the columns
+`venues.rating_score`, `venues.rating_count` and the tables `venue_rating_highlights` and
+`venue_reviews` stay until a second commit drops them. That commit, `google-rating-drop`, waits on
+its own branch for this check.
+
+Run it **after** the release with #53 is deployed, because only then can nobody add a rating or a
+review. In the main checkout, with `make up` running. The php image has no `psql`, so the
+`database` service runs it; the connection string reaches the container by name only:
+
+```sh
+read -rs PROD_DATABASE_URL && export PROD_DATABASE_URL
+docker compose exec -T -e PROD_DATABASE_URL database sh -c 'psql "$PROD_DATABASE_URL"' <<'SQL'
+SELECT
+  (SELECT count(*) FROM venues WHERE rating_score IS NOT NULL) AS rated_venues,
+  (SELECT count(*) FROM venue_rating_highlights)              AS highlights,
+  (SELECT count(*) FROM venue_reviews)                        AS reviews,
+  (SELECT count(DISTINCT venue_id) FROM venue_reviews)        AS venues_with_reviews;
+SQL
+```
+
+- **All four are 0:** nothing is lost. Tell the dev lead; `google-rating-drop` may land and go out
+  with the next deploy.
+- **Any is not 0:** look at the rows first, with the same command and this SQL:
+  ```sql
+  SELECT v.number, v.name, v.rating_score, v.rating_count FROM venues v WHERE v.rating_score IS NOT NULL ORDER BY v.number;
+  SELECT v.number, r.first_name, r.reviewed_month FROM venue_reviews r JOIN venues v ON v.id = r.venue_id ORDER BY 1, 3;
+  ```
+  Then decide: (a) drop anyway, optionally after saving the rows to a git-ignored file first
+  (`\copy` would write inside the container, so use `COPY … TO STDOUT` and redirect):
+  ```sh
+  docker compose exec -T -e PROD_DATABASE_URL database sh -c 'psql -q "$PROD_DATABASE_URL"' > content/owner/own-ratings-<date>.csv <<'SQL'
+  COPY (SELECT v.number, v.name, v.rating_score, v.rating_count FROM venues v WHERE v.rating_score IS NOT NULL ORDER BY v.number) TO STDOUT WITH (FORMAT csv, HEADER);
+  SQL
+  ```
+  (the same with the `venue_reviews` query for the reviews); or (b) keep the tables, and the drop
+  commit does not land.
+- **The drop must not be deployed until the owner has seen 0 rows or decided about the rows.**
+  Neon's point-in-time restore (§Restore production) is the undo for an unwanted drop.
 
 ## Content import
 

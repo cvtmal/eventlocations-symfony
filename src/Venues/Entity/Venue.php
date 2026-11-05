@@ -11,7 +11,6 @@ use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingLabel;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Types\Types;
@@ -51,6 +50,10 @@ use Doctrine\ORM\Mapping as ORM;
  * - The owner facts (#31, S14) are all nullable, NULL meaning unknown, and the page shows
  *   nothing for them. `capacity_seated` / `capacity_standing` are the owner's numbers and are
  *   not checked against `capacity_max`. Their translated texts live in VenueTranslation.
+ * - `google_place_id` (#53) is the only Google value we may store (Maps Platform Terms §3.2.3,
+ *   Places API policies): Google's own element draws the rating in the browser. It is outside
+ *   the content format, so no import writes it. `google_rating_hidden` is staff's switch to hide
+ *   that rating; it exists only with a place ID (chk_venues_google_rating_hidden).
  */
 #[ORM\Entity(repositoryClass: VenueRepository::class)]
 #[ORM\Table(name: 'venues')]
@@ -162,9 +165,16 @@ class Venue
     #[ORM\Column(type: Types::STRING, length: 500, nullable: true)]
     private ?string $instagram = null;
 
+    /**
+     * Retired in #53 (the page shows the Google rating instead); nothing writes it any more.
+     * Dropped, with its mapping and ratingScore(), by the drop migration.
+     */
     #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 1, nullable: true)]
     private ?string $ratingScore = null;
 
+    /**
+     * Retired in #53, as `$ratingScore`; dropped by the drop migration.
+     */
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $ratingCount = null;
 
@@ -191,6 +201,12 @@ class Venue
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $awaitsFirstPublish = false;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $googlePlaceId = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $googleRatingHidden = false;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
@@ -380,14 +396,25 @@ class Venue
     }
 
     /**
-     * Score as a one-decimal string ('8.4') with the number shown next to it; both NULL for
-     * an unrated venue (chk_venues_rating).
+     * Sets the Google place ID and the switch that hides its rating (#53). Without a place ID the
+     * switch is cleared, because it has nothing to hide (chk_venues_google_rating_hidden).
+     *
+     * @return bool whether anything changed
      */
-    public function rate(?string $score, ?int $count): void
+    public function changeGooglePlace(?string $placeId, bool $ratingHidden): bool
     {
-        $this->ratingScore = $score;
-        $this->ratingCount = $count;
+        if (null === $placeId) {
+            $ratingHidden = false;
+        }
+        if ($placeId === $this->googlePlaceId && $ratingHidden === $this->googleRatingHidden) {
+            return false;
+        }
+
+        $this->googlePlaceId = $placeId;
+        $this->googleRatingHidden = $ratingHidden;
         $this->touch();
+
+        return true;
     }
 
     /**
@@ -614,19 +641,31 @@ class Venue
         return $this->instagram;
     }
 
+    public function googlePlaceId(): ?string
+    {
+        return $this->googlePlaceId;
+    }
+
+    public function googleRatingHidden(): bool
+    {
+        return $this->googleRatingHidden;
+    }
+
+    /**
+     * Retired in #53: no page, read model or command uses it. It stays only while the column is
+     * mapped, because a mapped property nobody reads fails PHPStan; the drop migration removes it.
+     */
     public function ratingScore(): ?float
     {
         return self::toFloat($this->ratingScore);
     }
 
+    /**
+     * Retired in #53, as ratingScore().
+     */
     public function ratingCount(): ?int
     {
         return $this->ratingCount;
-    }
-
-    public function ratingLabel(): ?RatingLabel
-    {
-        return null === $this->ratingScore ? null : RatingLabel::fromScore($this->ratingScore);
     }
 
     public function roomCount(): ?int

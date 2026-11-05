@@ -13,8 +13,6 @@ use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\TestCase;
@@ -59,8 +57,7 @@ final class ContentReaderTest extends TestCase
         self::assertSame([Tier::Premium, VenueStatus::Published, 180, 20], [$venue->tier, $venue->status, $venue->capacityMax, $venue->capacityMin]);
         self::assertSame(['8001', 'Zürich', 'zh'], [$venue->zip, $venue->townName, $venue->cantonCode]);
         self::assertSame(['0.9', 'Bahnhof Beispiel', '3.2', 'A1', '12.0', null], [$venue->stationKm, $venue->stationName, $venue->highwayKm, $venue->highwayName, $venue->airportKm, $venue->airportName]);
-        self::assertSame([OwnCatering::Allowed, null, '9.0', 47], [$venue->ownCatering, $venue->daylight, $venue->ratingScore, $venue->ratingCount]);
-        self::assertSame([RatingHighlight::Food, RatingHighlight::Atmosphere], $venue->highlights);
+        self::assertSame([OwnCatering::Allowed, null], [$venue->ownCatering, $venue->daylight]);
         self::assertSame(['castle', 'event_venue'], $venue->terms['building']);
         self::assertSame(['building' => 'castle', 'setting' => 'lake'], $venue->mainTerms);
         self::assertSame(['summary' => 'Kurz.', 'description' => 'Lang.', 'metaDescription' => 'Meta.', 'parkingText' => 'Parkplätze.', 'ambience' => 'Romantisch am See', 'capacityNote' => 'Mit Tanzfläche 100 Plätze.', 'partyNote' => 'Musik bis 2 Uhr.', 'openingHours' => 'Mai bis Oktober', 'region' => null], $venue->translations['de']);
@@ -75,17 +72,15 @@ final class ContentReaderTest extends TestCase
         self::assertSame('png', $venue->rooms[0]->photos[0]->extension);
         self::assertSame(['preisliste.pdf', ['de' => 'Preisliste']], [$venue->documents[0]->file, $venue->documents[0]->title]);
         self::assertGreaterThan(100, $venue->documents[0]->sizeBytes);
-        self::assertSame(['Laura', ReviewerRole::VisitorF, '2025-06-01', 'de'], [$venue->reviews[0]->firstName, $venue->reviews[0]->role, $venue->reviews[0]->month->format('Y-m-d'), $venue->reviews[0]->locale]);
     }
 
-    public function test_defaults_for_status_and_review_locale(): void
+    public function test_defaults_for_status(): void
     {
-        $this->content->venue('a-venue', ['reviews' => [['first_name' => 'Ben', 'role' => 'visitor_m', 'month' => '2024-12', 'text' => 'Gut.']]]);
+        $this->content->venue('a-venue');
 
         $venue = $this->reader->read($this->content->folder('a-venue'));
 
         self::assertSame(VenueStatus::Published, $venue->status);
-        self::assertSame('de', $venue->reviews[0]->locale);
         self::assertSame([], $venue->photos);
     }
 

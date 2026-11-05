@@ -6,7 +6,6 @@ namespace App\Tests\Application\Search;
 
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
-use App\Factory\VenueRatingHighlightFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
@@ -14,7 +13,6 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
@@ -56,13 +54,10 @@ final class ListingControllerTest extends WebTestCase
 
     public function test_renders_hero_cards_and_facts(): void
     {
-        $rated = VenueFactory::new()->rated('9.0', 474)->create([
+        $premium = VenueFactory::createOne([
             'name' => 'Schloss Seeburg', 'tier' => Tier::Premium, 'capacityMin' => 50, 'capacityMax' => 450, 'town' => $this->town('Stäfa'),
         ]);
-        VenueTranslationFactory::createOne(['venue' => $rated, 'slug' => 'schloss-seeburg']);
-        foreach ([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Value] as $position => $code) {
-            VenueRatingHighlightFactory::createOne(['venue' => $rated, 'position' => $position + 1, 'code' => $code]);
-        }
+        VenueTranslationFactory::createOne(['venue' => $premium, 'slug' => 'schloss-seeburg']);
         $this->venue(['name' => 'Gasthof Linde'], ['slug' => 'gasthof-linde']);
         $this->venue(['name' => 'Remise Au']);
 
@@ -77,17 +72,11 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame('/hochzeitslocation/schloss-seeburg', $card->filter('.card__link')->attr('href'));
         self::assertSame(['50 - 450', 'Stäfa'], $card->filter('.card-facts__item')->each(static fn (Crawler $item): string => $item->text()));
         self::assertSame('Premium', $card->filter('.card__title .badge')->text());
-        self::assertStringStartsWith('Herausragend (9.0) | 474', $card->filter('.rating-summary__line')->text());
-        self::assertCount(1, $card->filter('.rating-summary__line svg[role="img"][aria-label="Bewertungen"]'));
-        self::assertSame(
-            ['“Feines Essen”', '“Stilvolle Atmosphäre”', '“Top Preis/Leistung”'],
-            $card->filter('.rating-summary__highlights li')->each(static fn (Crawler $item): string => $item->text()),
-        );
+        self::assertCount(0, $crawler->filter('.card__rating, .rating-summary__line'), 'No own rating on a card since #53.');
 
         $basic = $this->card($crawler, 'Gasthof Linde');
         self::assertSame('/hochzeitslocation/gasthof-linde', $basic->filter('.card__link')->attr('href'));
         self::assertCount(0, $basic->filter('.badge'));
-        self::assertCount(0, $basic->filter('.card__rating'));
 
         $this->get('/hochzeitslocations?q=Linde');
         self::assertSelectorTextSame('.listing-hero__count', '1 Resultat');

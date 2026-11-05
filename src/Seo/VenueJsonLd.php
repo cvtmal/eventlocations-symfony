@@ -9,14 +9,14 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * SEO-2: the venue node. Its type follows the data: Google requires `address` for LocalBusiness,
- * so a venue without ZIP and town is a plain EventVenue, and review stars need LocalBusiness
- * too. Missing facts are left out, never filled. `telephone` stays out on purpose: JSON-LD is
- * page HTML and DP-11 keeps the number out of it. `email` stays out per SEO-2.
+ * so a venue without ZIP and town is a plain EventVenue. Missing facts are left out, never
+ * filled. `telephone` stays out on purpose: JSON-LD is page HTML and DP-11 keeps the number out
+ * of it. `email` stays out per SEO-2. There is no rating: Google's rating never goes here (Search
+ * review-snippet rules forbid marking up ratings taken from another site, #53).
  */
 final class VenueJsonLd
 {
     private const int MAX_IMAGES = 3;
-    private const int BEST_RATING = 10;
 
     public function __construct(
         private readonly TranslatorInterface $translator,
@@ -43,7 +43,6 @@ final class VenueJsonLd
             'maximumAttendeeCapacity' => $facts->capacityMax,
             'image' => \array_slice($facts->imageUrls, 0, self::MAX_IMAGES),
             'sameAs' => $facts->sameAs,
-            'aggregateRating' => $business ? self::rating($facts) : null,
         ]);
     }
 
@@ -87,23 +86,6 @@ final class VenueJsonLd
         }
 
         return ['@type' => 'GeoCoordinates', 'latitude' => $facts->lat, 'longitude' => $facts->lng];
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private static function rating(VenueFacts $facts): ?array
-    {
-        if (null === $facts->ratingScore || null === $facts->ratingCount || $facts->ratingCount <= 0) {
-            return null;
-        }
-
-        return [
-            '@type' => 'AggregateRating',
-            'ratingValue' => $facts->ratingScore,
-            'ratingCount' => $facts->ratingCount,
-            'bestRating' => self::BEST_RATING,
-        ];
     }
 
     /**

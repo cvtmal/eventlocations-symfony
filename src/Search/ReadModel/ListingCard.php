@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Search\ReadModel;
 
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 
@@ -17,8 +16,7 @@ use App\Venues\ValueObject\VenuePlace;
 final readonly class ListingCard
 {
     /**
-     * @param list<RatingHighlight> $highlights in position order
-     * @param list<CardPhoto>       $photos     at most 8, in position order
+     * @param list<CardPhoto> $photos at most 8, in position order
      */
     public function __construct(
         public string $id,
@@ -32,9 +30,6 @@ final readonly class ListingCard
         public string $summary,
         public ?PriceLevel $priceLevel,
         public ?string $ambience,
-        public ?float $ratingScore,
-        public ?int $ratingCount,
-        public array $highlights,
         public array $photos,
     ) {
     }

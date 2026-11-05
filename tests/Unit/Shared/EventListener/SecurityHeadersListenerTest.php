@@ -19,6 +19,9 @@ final class SecurityHeadersListenerTest extends TestCase
     /** A literal copy, so a change to the constant shows up as a diff here. */
     private const string MAPS_POLICY = "default-src 'none'; script-src 'self' 'unsafe-eval' blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.ggpht.com https://*.googleusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' data: blob: https://*.googleapis.com https://*.google.com https://*.gstatic.com; worker-src blob:; form-action 'self'; base-uri 'none'; frame-src https://www.google.com; frame-ancestors 'none'";
     private const array MAPS_ROUTE = [ContentSecurityPolicy::ROUTE_ATTRIBUTE => ContentSecurityPolicy::GOOGLE_MAPS];
+    /** #53: the maps policy plus `frame-src https://*.google.com` (Google's CSP guide), a literal copy as above. */
+    private const string PLACES_POLICY = "default-src 'none'; script-src 'self' 'unsafe-eval' blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.ggpht.com https://*.googleusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' data: blob: https://*.googleapis.com https://*.google.com https://*.gstatic.com; worker-src blob:; form-action 'self'; base-uri 'none'; frame-src https://www.google.com https://*.google.com; frame-ancestors 'none'";
+    private const array PLACES_RESPONSE = [ContentSecurityPolicy::ROUTE_ATTRIBUTE => ContentSecurityPolicy::GOOGLE_PLACES];
 
     public function test_an_html_response_gets_the_exact_policy_and_the_plain_headers(): void
     {
@@ -98,6 +101,27 @@ final class SecurityHeadersListenerTest extends TestCase
         $response = $this->respond($nonce, attributes: self::MAPS_ROUTE);
 
         self::assertSame(self::MAPS_POLICY, $response->headers->get('Content-Security-Policy'));
+        self::assertStringNotContainsString('nonce-', (string) $response->headers->get('Content-Security-Policy'));
+    }
+
+    public function test_the_places_value_gets_the_places_policy_without_geolocation(): void
+    {
+        $response = $this->respond(new CspNonce(), attributes: self::PLACES_RESPONSE);
+
+        self::assertSame(self::PLACES_POLICY, $response->headers->get('Content-Security-Policy'));
+        self::assertSame(ContentSecurityPolicy::GOOGLE_PLACES_POLICY, $response->headers->get('Content-Security-Policy'));
+        self::assertSame('camera=(), microphone=(), geolocation=(), payment=()', $response->headers->get('Permissions-Policy'));
+        self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
+    }
+
+    public function test_the_places_value_never_takes_a_nonce(): void
+    {
+        $nonce = new CspNonce();
+        $nonce->value();
+
+        $response = $this->respond($nonce, attributes: self::PLACES_RESPONSE);
+
+        self::assertSame(self::PLACES_POLICY, $response->headers->get('Content-Security-Policy'));
         self::assertStringNotContainsString('nonce-', (string) $response->headers->get('Content-Security-Policy'));
     }
 

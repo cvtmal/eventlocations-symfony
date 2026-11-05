@@ -21,7 +21,6 @@ use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
@@ -76,10 +75,9 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame(['0.9', 'Zürich Stadelhofen', '3.2', null, '12.0', 'Zürich'], [$edit->stationKm, $edit->stationName, $edit->highwayKm, $edit->highwayName, $edit->airportKm, $edit->airportName]);
         self::assertSame([DetailVenues::FULL_PHONE, 'info@seeblick.example', 'https://seeblick.example', 'Anna Muster', 'https://www.instagram.com/schloss.seeblick'], [$edit->phone, $edit->inquiryEmail, $edit->website, $edit->contactPerson, $edit->instagram]);
         self::assertSame([OwnCatering::Allowed, true], [$edit->ownCatering, $edit->daylight]);
-        self::assertSame(['9.2', 474], [$edit->ratingScore, $edit->ratingCount]);
-        self::assertSame([RatingHighlight::Food, RatingHighlight::Atmosphere, RatingHighlight::Location], $edit->highlights);
         self::assertSame([PriceLevel::Medium, 1200, 1500, PartyAllowed::Limited, true, '02:00'], [$edit->priceLevel, $edit->capacitySeated, $edit->capacityStanding, $edit->party, $edit->hasCurfew, $edit->curfewAt]);
         self::assertSame(3, $edit->galleryPhotoCount);
+        self::assertSame([null, false], [$edit->googlePlaceId, $edit->googleRatingHidden]);
 
         $de = $edit->translation('de');
         self::assertNotNull($de);
@@ -109,6 +107,16 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertNull($header->lastEditor);
     }
 
+    public function test_the_google_place_and_its_switch_are_read(): void
+    {
+        $venue = DetailVenues::minimal();
+        $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4', google_rating_hidden = true WHERE id = ?", [$venue->id()]);
+
+        $edit = $this->find($venue);
+
+        self::assertSame(['ChIJN1t_tDeuEmsRUsoyG83frY4', true], [$edit->googlePlaceId, $edit->googleRatingHidden]);
+    }
+
     public function test_a_minimal_venue_has_nulls_and_the_publish_gaps(): void
     {
         $venue = DetailVenues::minimal();
@@ -118,9 +126,10 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame('3004 Bern', $edit->town);
         self::assertSame('be', $edit->cantonCode);
         self::assertSame([null, null, null], [$edit->capacityMin, $edit->stationKm, $edit->stationName]);
-        self::assertSame([null, null, null, null, []], [$edit->phone, $edit->ownCatering, $edit->daylight, $edit->ratingScore, $edit->highlights]);
+        self::assertSame([null, null, null], [$edit->phone, $edit->ownCatering, $edit->daylight]);
         self::assertSame([null, null, null], [$edit->priceLevel, $edit->hasCurfew, $edit->curfewAt]);
         self::assertSame([], $edit->mainTerms);
+        self::assertSame([null, false], [$edit->googlePlaceId, $edit->googleRatingHidden]);
         self::assertSame(0, $edit->galleryPhotoCount);
         self::assertNull($edit->header->cover);
         self::assertSame([VenueEdit::MISSING_MAIN_BUILDING, VenueEdit::MISSING_PHOTO], $edit->missingForPublish('de'));
