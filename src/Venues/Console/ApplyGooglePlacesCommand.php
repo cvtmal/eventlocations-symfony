@@ -20,10 +20,13 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 
 /**
- * One-off (#53, D6): sets the place IDs a person marked `apply=yes` in content/owner/google-places-report.csv,
- * through `AssignVenueGooglePlace` (audited as `console`), which never overwrites a venue's place ID. The report
- * is never trusted beyond `yes`: an ID that is not a place ID is refused. Prints venue numbers only, never an ID.
- * The handlers' purge empties this process's cache store only; `bin/prod-import places-apply` purges the server's.
+ * One-off (#53, D6; #57): sets the place IDs marked `apply=yes` in content/owner/google-places-report.csv (#57
+ * pre-marks the confident rows, a person may mark more), through `AssignVenueGooglePlace` (audited as `console`),
+ * which never overwrites a venue's place ID. A venue that already has one is counted as kept before any command
+ * (#57), so a rerun writes no audit row; the handler's own check still covers a CMS save in between. The report
+ * is never trusted beyond `yes`: an ID that is not a place ID is refused. A dry run of a #57 report first counts
+ * its rows by confidence. Prints counts and venue numbers only, never an ID. The handlers' purge empties this
+ * process's cache store only; `bin/prod-import places-apply` purges the server's.
  */
 #[AsCommand(name: 'app:venues:apply-google-places', description: 'Set the place IDs a person marked apply=yes in the report')]
 final class ApplyGooglePlacesCommand
@@ -49,9 +52,13 @@ final class ApplyGooglePlacesCommand
             return Command::FAILURE;
         }
 
+        if ($dryRun) {
+            self::reportCounts($io, $rows);
+        }
+
         $outcomes = ['assigned' => [], 'kept' => [], 'refused' => [], 'unknown' => []];
         $rows = array_values(array_filter($rows, static fn (array $row): bool => $row['apply']));
-        $hasPlace = $dryRun ? $this->venues->havePlace(array_column($rows, 'number')) : [];
+        $hasPlace = $this->venues->havePlace(array_column($rows, 'number'));
         foreach ($rows as $row) {
             try {
                 $placeId = GooglePlaceId::fromInput($row['placeId']);
@@ -60,12 +67,11 @@ final class ApplyGooglePlacesCommand
             }
             if (null === $placeId) {
                 $outcomes['refused'][] = $row['number'];
+            } elseif (true === ($hasPlace[$row['number']] ?? null)) {
+                // Kept without dispatching: every dispatched command leaves an audit row, even one that changes nothing.
+                $outcomes['kept'][] = $row['number'];
             } elseif ($dryRun) {
-                $outcomes[match ($hasPlace[$row['number']] ?? null) {
-                    null => 'unknown',
-                    true => 'kept',
-                    false => 'assigned',
-                }][] = $row['number'];
+                $outcomes[isset($hasPlace[$row['number']]) ? 'assigned' : 'unknown'][] = $row['number'];
             } else {
                 $outcomes[$this->assign($row['number'], $placeId->value)][] = $row['number'];
             }
@@ -86,6 +92,30 @@ final class ApplyGooglePlacesCommand
         }
 
         return [] === $outcomes['refused'] && [] === $outcomes['unknown'] ? Command::SUCCESS : Command::FAILURE;
+    }
+
+    /**
+     * The dry run's first line for a #57 report: its rows by confidence and how many are marked `yes`. A #53
+     * report has no `confidence` column and gets no such line.
+     *
+     * @param list<array{number: int, placeId: string, apply: bool, confidence: ?string}> $rows
+     */
+    private static function reportCounts(SymfonyStyle $io, array $rows): void
+    {
+        $confidences = array_values(array_filter(array_column($rows, 'confidence'), static fn (?string $confidence): bool => null !== $confidence));
+        if ([] === $confidences) {
+            return;
+        }
+        $counts = array_count_values($confidences);
+
+        $io->writeln(\sprintf(
+            'Report: %d confident, %d doubtful, %d not found, %d failed; %d rows marked yes.',
+            $counts['confident'] ?? 0,
+            $counts['doubtful'] ?? 0,
+            $counts['not found'] ?? 0,
+            $counts['failed'] ?? 0,
+            \count(array_filter($rows, static fn (array $row): bool => $row['apply'])),
+        ));
     }
 
     /**

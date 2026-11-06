@@ -398,42 +398,89 @@ the element has not yet rendered with a real one. Before or right after the rele
 A failure here (a CSP violation, a wrong height that moves the page, English labels) goes back to
 the dev team; the page keeps showing the link meanwhile.
 
-**2. Finding the place IDs, once.** In the main checkout, with `make up` running, as for
-§Content import. The lookup reads Neon, so the venue numbers are production's.
+**2. Finding the place IDs, once (#57).** In the main checkout, with `make up` running, as for
+§Content import. The lookup reads Neon, so the venue numbers are production's. It sets an ID on its
+own only where Google's answer clearly is the venue; every other venue lands on the owner's to-do
+list with a reason, to be set by hand. The normal path is find → dry run → apply (steps 3, 5, 6),
+with no editing of the CSV.
 
-- `PROD_DATABASE_URL` and `PROD_SSH` in the shell, as in §Content import.
-- A **Places API (New)** key of its own, restricted to that API **and to your own IP address**. It
-  lives in the shell only, never in `.env*`, the repo or the server's files:
-  ```sh
-  read -rs GOOGLE_PLACES_API_KEY && export GOOGLE_PLACES_API_KEY
-  ```
-- Cost: one Text Search Pro call per venue without a place ID; 5,000 a month are free.
+1. **Key (owner).** In the Cloud console, in the project with billing: enable **Places API (New)**,
+   then **Credentials → Create credentials → API key**, named "place-ID lookup (one-off)".
+   - **API restrictions:** Places API (New) only (not the legacy "Places API").
+   - **Application restrictions:** IP addresses = the Mac's public IP as Google sees it (behind a
+     router: the network's public IP, as any "what is my IP" page shows it).
 
-1. `sh bin/prod-import places-find`. It asks Google for every venue without a place ID (any status)
-   and writes `content/owner/google-places-report.csv`, one row per venue: `number`, `name`,
-   `published`, `status` (`found`, `not found`, `failed`), `query`, `place_id`, `matched_name`,
-   `name_matches` (`yes` or `NO`), `address`, `distance_km` (to the venue's pin; empty when the
-   venue has none or only its town centre), `apply`. It writes nothing to the database, and
-   `apply` is always empty. It prints `Looked up: F found, M not found, X failed.` and exits 1 when
-   any row failed; a rerun asks only the venues still without an ID.
-2. Open the report. For each `found` row decide: write `yes` in `apply` when `name_matches` is
-   `yes` and `distance_km` is small (under 1 km), or after checking the venue in Google Maps. Leave
-   `NO` rows, far rows and `not found` rows empty, and set those by hand in the CMS card
-   "Google-Bewertung" (it has an "Auf Google Maps prüfen" link once an ID is saved).
-3. `sh bin/prod-import places-apply-dry` until its summary is right:
+   The key lives in the shell only, never in `.env*`, the repo or the server's files:
+   ```sh
+   read -rs GOOGLE_PLACES_API_KEY && export GOOGLE_PLACES_API_KEY
+   ```
+2. **Cost.** One Text Search Pro request per venue without a place ID, with up to 5 results each at
+   no extra charge: about 249 requests, inside the 5,000 free Pro requests a month, so USD 0. Even
+   20 reruns in a month stay free; above the free amount it would be USD 0.032 per venue.
+3. `PROD_DATABASE_URL` and `PROD_SSH` in the shell, as in §Content import; then
+   `sh bin/prod-import places-find`. It asks Google for every venue without a place ID (any status)
+   and writes `content/owner/google-places-report.csv`, one row per venue, by number:
+   - `confidence`: `confident`, `doubtful`, `not found` or `failed`;
+   - `reason`: one German sentence saying why (for example "Google kennt diese Wörter unseres
+     Namens nicht: …", "Derselbe Google-Ort passt auch zu Location …");
+   - `apply`: pre-filled `yes` on confident rows only, empty on all others;
+   - `maps_url`: a Google Maps link on every row (the found place, or a search for our question
+     when Google found nothing or the request failed);
+   - `place_id`, `google_name`, `google_address`: Google's top answer;
+   - `distance_km`: to the venue's pin (empty without a pin or with only the town centre);
+   - `query`: what was asked; and `number`, `name`, `published`.
+
+   It writes nothing to the database. **Write down** the two lines it prints:
+   `Looked up: C confident, D doubtful, N not found, X failed.` and
+   `Doubtful: name_differs …, google_name_longer …, …` (reason codes and counts). Expected on the
+   Q3 data: about two thirds confident (at most 168 of 247), the rest on the to-do list.
+   - **Outcome A:** X = 0 → go on.
+   - **Outcome B:** X > 0 (it exits 1) → run it again later. It asks only the venues still without
+     an ID and **replaces the CSV**, so apply first (step 6) if rows were marked by hand.
+
+   If nearly every row is `canton_unknown` or `place_differs`, stop and tell the dev team: Google's
+   answer could not be read.
+
+   **The owner's to-do list** is every row whose `apply` is empty (doubtful, not found, failed).
+   Filter the CSV on the `confidence` column, or print number, name, confidence, Maps link and
+   reason:
+   ```sh
+   docker compose exec -T php php -r '$f = fopen($argv[1], "r"); $h = fgetcsv($f, null, ",", "\"", ""); while (false !== ($r = fgetcsv($f, null, ",", "\"", ""))) { $r = array_combine($h, $r); if ("" === $r["apply"]) { echo implode(" | ", [$r["number"], $r["name"], $r["confidence"], $r["maps_url"], $r["reason"]]), "\n"; } }' content/owner/google-places-report.csv
+   ```
+4. **Optional: open a few Maps links** of confident rows. Nothing needs editing; to stop a wrong
+   one, clear its `apply` cell before step 6.
+5. `sh bin/prod-import places-apply-dry`. It writes nothing. **Write down** both lines:
+   `Report: C confident, D doubtful, N not found, X failed; Y rows marked yes.` and
    `Dry run: A assigned, K kept (already had a place ID), R refused (not a place ID), U unknown venue.`,
-   followed by the numbers of the kept, refused and unknown rows. It writes nothing. It exits 1
-   when R or U is above 0.
-4. `sh bin/prod-import places-apply`. It sets only the `yes` rows, never overwrites a venue that
-   already has an ID (`kept`), writes an audit row per venue (actor `console`), and then empties
-   the server's page cache. A place ID does not stamp `cms_edited_at`, so later folder imports
-   still reach these venues.
-5. `unset GOOGLE_PLACES_API_KEY`, and delete the key in the Cloud console.
-6. Delete `content/owner/google-places-report.csv`. It holds Google's names and addresses, which
-   the Maps terms (§3.2.3) do not let us keep; only the place IDs in the database stay.
+   followed by the numbers of the kept, refused and unknown rows.
+   - **Outcome A:** Y = C minus the cells cleared in step 4, plus any `yes` written by hand; A = Y,
+     K = R = U = 0 → go on.
+   - **Outcome B:** K > 0: a venue got an ID in the CMS meanwhile; it keeps it, fine. R > 0 or
+     U > 0 (it exits 1): a hand-edited cell is not a place ID, or a venue was deleted → fix or
+     clear those cells and repeat.
+6. `sh bin/prod-import places-apply`. It sets only the `yes` rows through the audited command
+   (actor `console`), never overwrites a venue that already has an ID (`kept`, no audit row), and
+   then empties the server's page cache. A place ID does not stamp `cms_edited_at`, so later folder
+   imports still reach these venues. Running it a second time assigns nothing and writes no audit row
+   (`0 assigned, … kept`).
+7. `unset GOOGLE_PLACES_API_KEY`, and **delete the key in the Cloud console**.
+8. **The owner, by hand.** For every row of the to-do list (step 3), open the venue in the CMS card
+   "Google-Bewertung", check with `maps_url` (or search by hand), and paste the right place ID or
+   leave it empty. The `reason` says why the row was not trusted.
+9. **Delete** `content/owner/google-places-report.csv` once the to-do list is done. It holds Google's names
+   and addresses, which the Maps terms (§3.2.3) do not let us keep; only the place IDs in the
+   database stay (they are exempt).
+10. **Real-key check (owner).** On hochzeitslocation.ch (the server has `GOOGLE_MAPS_JS_KEY`), open
+    one venue whose Google place has reviews and one whose place has none. Pick both from the
+    report's Maps links before deleting the CSV, or later from the CMS card's "Auf Google Maps
+    prüfen". Write down what each page shows: stars and count / a name alone / only the link
+    "Bewertungen auf Google Maps ansehen". Nothing is built for the no-reviews case; if it shows a
+    lone name, tell the PO, and that becomes a separate small cycle.
 
 **Undo:** clear the ID in the CMS card. Google recommends refreshing place IDs older than 12 months: clear
-the venue's ID and rerun steps 1–4. There is no cron.
+the venue's ID and rerun steps 1, 3 and 5–7 (key, find, dry run, apply, unset and delete the key).
+A confident row that later proves wrong is undone the same way: clear the ID in the CMS card, and
+paste the right one if there is one. There is no cron.
 
 **3. Retiring our own ratings: the production check before the drop.** #53 removes every reader
 and writer of our own rating, rating highlights and reviews (CMS tab "Bewertungen", rating card,

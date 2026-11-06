@@ -45,4 +45,13 @@ final readonly class GooglePlaceId
     {
         return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($venueName).'&query_place_id='.rawurlencode($placeId);
     }
+
+    /**
+     * A Maps search for the lookup's question (#57), for a report row without a candidate, so staff can search by
+     * hand.
+     */
+    public static function searchUrl(string $query): string
+    {
+        return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($query);
+    }
 }

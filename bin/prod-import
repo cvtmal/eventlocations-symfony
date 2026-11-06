@@ -46,8 +46,8 @@ list first. --prune is refused: an empty or unmounted venues/ would unpublish ev
 Customer sheet (#48): crm-bootstrap, then customers-dry until the report is right, then
 customers, then customers-dry shows 0 new.
 
-Google place IDs (#53): places-find (needs GOOGLE_PLACES_API_KEY in the shell), check the report,
-mark apply=yes, then places-apply-dry until right, then places-apply.
+Google place IDs (#53, #57): places-find (needs GOOGLE_PLACES_API_KEY in the shell; confident rows
+come pre-marked apply=yes), check the report, then places-apply-dry until right, then places-apply.
 
 Environment, never in a file:
   PROD_DATABASE_URL   Neon's direct string

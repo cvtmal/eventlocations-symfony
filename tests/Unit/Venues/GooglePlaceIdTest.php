@@ -73,4 +73,12 @@ final class GooglePlaceIdTest extends TestCase
             GooglePlaceId::mapsUrl('Schloss & Gärten Münchenwiler', 'ChIJN1t_tDeuEmsRUsoyG83frY4'),
         );
     }
+
+    public function test_the_search_url_encodes_the_query(): void
+    {
+        self::assertSame(
+            'https://www.google.com/maps/search/?api=1&query=Hof%20Nirgends%20Bern%20Schweiz',
+            GooglePlaceId::searchUrl('Hof Nirgends Bern Schweiz'),
+        );
+    }
 }
