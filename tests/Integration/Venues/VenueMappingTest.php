@@ -18,8 +18,6 @@ use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenueDocumentTranslation;
 use App\Venues\Entity\VenuePhoto;
 use App\Venues\Entity\VenuePhotoTranslation;
-use App\Venues\Entity\VenueRatingHighlight;
-use App\Venues\Entity\VenueReview;
 use App\Venues\Entity\VenueSlugHistory;
 use App\Venues\Entity\VenueTerm;
 use App\Venues\Entity\VenueTranslation;
@@ -27,8 +25,6 @@ use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
@@ -117,8 +113,6 @@ final class VenueMappingTest extends KernelTestCase
             new VenueSlugHistory($venue, 'de', 'testhaus-4-mapping'),
             new VenueTerm($venue, $building, true),
             new VenueTerm($venue, $setting, true),
-            new VenueRatingHighlight($venue, 1, RatingHighlight::Location),
-            new VenueReview($venue, 'de', 'Anna', ReviewerRole::OrganiserF, new \DateTimeImmutable('2026-03-15'), 'Sehr schön.'),
             $room,
             new RoomTranslation($room, 'de', 'Saal'),
             $document,
@@ -170,15 +164,6 @@ final class VenueMappingTest extends KernelTestCase
         self::assertInstanceOf(Room::class, $loadedRoom);
         self::assertSame(FloorMaterial::Parquet, $loadedRoom->floorMaterial());
         self::assertSame(100, $loadedRoom->seatingMax(Seating::Banquet));
-
-        $review = $this->em->getRepository(VenueReview::class)->findOneBy(['venue' => $loaded]);
-        self::assertInstanceOf(VenueReview::class, $review);
-        self::assertSame(ReviewerRole::OrganiserF, $review->role());
-        self::assertSame('2026-03-01', $review->reviewedMonth()->format('Y-m-d'));
-
-        $highlight = $this->em->getRepository(VenueRatingHighlight::class)->findOneBy(['venue' => $loaded]);
-        self::assertInstanceOf(VenueRatingHighlight::class, $highlight);
-        self::assertSame(RatingHighlight::Location, $highlight->code());
 
         $loadedPhoto = $this->em->getRepository(VenuePhoto::class)->findOneBy(['venue' => $loaded]);
         self::assertInstanceOf(VenuePhoto::class, $loadedPhoto);

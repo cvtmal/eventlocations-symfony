@@ -18,7 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A venue, the root of the Venues aggregate. Its owned rows (translations, terms, rooms,
- * reviews, documents, photos) point at it and are deleted with it.
+ * documents, photos) point at it and are deleted with it.
  *
  * - `number` is the stable public number (Merkliste id, S7), an identity column the
  *   database assigns on insert; Doctrine reads it back after the flush.
@@ -164,19 +164,6 @@ class Venue
 
     #[ORM\Column(type: Types::STRING, length: 500, nullable: true)]
     private ?string $instagram = null;
-
-    /**
-     * Retired in #53 (the page shows the Google rating instead); nothing writes it any more.
-     * Dropped, with its mapping and ratingScore(), by the drop migration.
-     */
-    #[ORM\Column(type: Types::DECIMAL, precision: 3, scale: 1, nullable: true)]
-    private ?string $ratingScore = null;
-
-    /**
-     * Retired in #53, as `$ratingScore`; dropped by the drop migration.
-     */
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $ratingCount = null;
 
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $roomCount = null;
@@ -649,23 +636,6 @@ class Venue
     public function googleRatingHidden(): bool
     {
         return $this->googleRatingHidden;
-    }
-
-    /**
-     * Retired in #53: no page, read model or command uses it. It stays only while the column is
-     * mapped, because a mapped property nobody reads fails PHPStan; the drop migration removes it.
-     */
-    public function ratingScore(): ?float
-    {
-        return self::toFloat($this->ratingScore);
-    }
-
-    /**
-     * Retired in #53, as ratingScore().
-     */
-    public function ratingCount(): ?int
-    {
-        return $this->ratingCount;
     }
 
     public function roomCount(): ?int

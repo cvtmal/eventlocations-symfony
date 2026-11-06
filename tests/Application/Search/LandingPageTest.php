@@ -67,7 +67,7 @@ final class LandingPageTest extends WebTestCase
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
         self::assertCount(1, $crawler->filter('h1'));
         self::assertSame(
-            '5 Hochzeitslocations im Kanton Zürich: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt bei der Location an.',
+            '5 Hochzeitslocations im Kanton Zürich: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
             $crawler->filter('.listing-hero__intro > p')->text(),
         );
         self::assertSame($zurich, $this->cardNames($crawler));
@@ -220,7 +220,7 @@ final class LandingPageTest extends WebTestCase
 
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeit im Schloss');
         self::assertSame(
-            '5 Locations für Ihre Hochzeit im Schloss: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt an.',
+            '5 Locations für deine Hochzeit im Schloss: Vergleiche Fotos und Platz für Gäste und frag direkt an.',
             $crawler->filter('.listing-hero__intro > p')->text(),
         );
         self::assertCount(5, $crawler->filter('article.card'));

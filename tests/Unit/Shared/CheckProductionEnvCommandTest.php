@@ -60,7 +60,7 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'INQUIRY_RECIPIENT_OVERRIDE set' => ['INQUIRY_RECIPIENT_OVERRIDE', ['INQUIRY_RECIPIENT_OVERRIDE' => 'someone@example.ch'], 'someone@example.ch'];
         yield 'ADMIN_DEV_AUTOLOGIN set' => ['ADMIN_DEV_AUTOLOGIN', ['ADMIN_DEV_AUTOLOGIN' => 'autologin-marker'], 'autologin-marker'];
         yield 'DEFAULT_URI local' => ['DEFAULT_URI', ['DEFAULT_URI' => 'http://localhost:8080'], 'localhost'];
-        yield 'DEFAULT_URI with a slash' => ['DEFAULT_URI', ['DEFAULT_URI' => 'https://hochzeitslocation.ch/'], 'hochzeitslocation.ch/'];
+        yield 'DEFAULT_URI with a slash' => ['DEFAULT_URI', ['DEFAULT_URI' => 'https://deine-eventlocation.ch/'], 'deine-eventlocation.ch/'];
         yield 'DATABASE_URL other scheme' => ['DATABASE_URL', ['DATABASE_URL' => 'mysql://site:'.self::DATABASE_PASSWORD.'@'.self::DATABASE_HOST.'/site?sslmode=require'], self::DATABASE_PASSWORD];
         yield 'DATABASE_URL compose host' => ['DATABASE_URL', ['DATABASE_URL' => self::urlOn('database')], self::DATABASE_PASSWORD];
         yield 'DATABASE_URL localhost' => ['DATABASE_URL', ['DATABASE_URL' => self::urlOn('LOCALHOST')], self::DATABASE_PASSWORD];
@@ -76,7 +76,7 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'MAILER_DSN empty' => ['MAILER_DSN', ['MAILER_DSN' => ''], self::DATABASE_PASSWORD];
         yield 'MAILER_DSN mailpit' => ['MAILER_DSN', ['MAILER_DSN' => 'smtp://mailpit:1025'], 'smtp://mailpit:1025'];
         yield 'MAILER_FROM other domain' => ['MAILER_FROM', ['MAILER_FROM' => 'Site <hallo@example.ch>'], 'hallo@example.ch'];
-        yield 'MAILER_FROM bare address' => ['MAILER_FROM', ['MAILER_FROM' => 'hallo@hochzeitslocation.ch'], 'hallo@hochzeitslocation.ch'];
+        yield 'MAILER_FROM bare address' => ['MAILER_FROM', ['MAILER_FROM' => 'hallo@deine-eventlocation.ch'], 'hallo@deine-eventlocation.ch'];
         yield 'MEDIA_ROOT relative' => ['MEDIA_ROOT', ['MEDIA_ROOT' => 'var/media-marker'], 'var/media-marker'];
         yield 'MEDIA_ROOT missing' => ['MEDIA_ROOT', ['MEDIA_ROOT' => null], self::DATABASE_PASSWORD];
         yield 'MEDIA_ROOT .env default' => ['MEDIA_ROOT', ['MEDIA_ROOT' => '%kernel.project_dir%/var/media'], 'kernel.project_dir'];
@@ -277,10 +277,10 @@ final class CheckProductionEnvCommandTest extends TestCase
             'ADMIN_TOTP_KEY' => base64_encode(str_repeat("\x05", \SODIUM_CRYPTO_SECRETBOX_KEYBYTES)),
             'INQUIRY_RECIPIENT_OVERRIDE' => '',
             'ADMIN_DEV_AUTOLOGIN' => '',
-            'DEFAULT_URI' => 'https://hochzeitslocation.ch',
+            'DEFAULT_URI' => 'https://deine-eventlocation.ch',
             'DATABASE_URL' => self::DATABASE_URL,
             'MAILER_DSN' => 'smtp://fake:fake@mail.example.ch:587',
-            'MAILER_FROM' => 'Hochzeitslocation <hallo@hochzeitslocation.ch>',
+            'MAILER_FROM' => 'deine-eventlocation.ch <hallo@deine-eventlocation.ch>',
             'MEDIA_ROOT' => '/home/site/www/hochzeitslocation.ch/var/media',
             'MEDIA_PUBLIC_DIR' => '%kernel.project_dir%/public/media',
         ];
@@ -306,6 +306,9 @@ final class CheckProductionEnvCommandTest extends TestCase
             '__NEON_ENDPOINT__' => 'ep-fake-endpoint',
             '__NEON_DATABASE__' => 'site',
             '__MAILER_PASSWORD__' => 'fake-mail-password',
+            // The template still names the Hostpoint-era site; F15 rewrites deploy/ for the new host (F0a leaves it).
+            'DEFAULT_URI=https://hochzeitslocation.ch' => 'DEFAULT_URI=https://deine-eventlocation.ch',
+            'MAILER_FROM="Hochzeitslocation <hallo@hochzeitslocation.ch>"' => 'MAILER_FROM="deine-eventlocation.ch <hallo@deine-eventlocation.ch>"',
         ]);
 
         $values = (new Dotenv())->parse($filled);

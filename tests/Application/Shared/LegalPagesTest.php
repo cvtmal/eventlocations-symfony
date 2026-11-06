@@ -54,10 +54,10 @@ final class LegalPagesTest extends WebTestCase
         $crawler = $this->page('/impressum');
 
         $text = $crawler->filter('main')->text();
-        foreach (['Pick n Roll GmbH', 'Sonneggstrasse 61', '8006 Zürich', 'UID-Nr.: CHE-134.034.546 MWST', 'hallo@hochzeitslocation.ch'] as $fact) {
+        foreach (['Pick n Roll GmbH', 'Sonneggstrasse 61', '8006 Zürich', 'UID-Nr.: CHE-134.034.546 MWST', 'hallo@deine-eventlocation.ch'] as $fact) {
             self::assertStringContainsString($fact, $text);
         }
-        self::assertCount(1, $crawler->filter('main a[href="mailto:hallo@hochzeitslocation.ch"]'));
+        self::assertCount(1, $crawler->filter('main a[href="mailto:hallo@deine-eventlocation.ch"]'));
         self::assertCount(0, $crawler->filter('main a[href^="tel:"]'));
     }
 
@@ -76,7 +76,7 @@ final class LegalPagesTest extends WebTestCase
             'Karten und Bewertungen von Google Maps',
             'Links zu anderen Anbietern',
             'Interner Bereich',
-            'Ihre Rechte',
+            'Deine Rechte',
         ], $crawler->filter('main h2')->each(static fn (Crawler $h2): string => $h2->text()));
         self::assertStringContainsString('Pick n Roll GmbH', $crawler->filter('main address')->text());
     }
@@ -115,9 +115,9 @@ final class LegalPagesTest extends WebTestCase
     {
         $text = $this->page('/datenschutz')->filter('main')->text();
 
-        self::assertStringContainsString('Wenn Sie für eine Location arbeiten, bearbeiten wir Ihre geschäftlichen Kontaktdaten', $text);
+        self::assertStringContainsString('Wenn du für eine Location arbeitest, bearbeiten wir deine geschäftlichen Kontaktdaten', $text);
         self::assertStringContainsString('um die Zusammenarbeit mit den Locations zu pflegen', $text);
-        self::assertStringContainsString('Verlangen Sie die Löschung, löschen wir sie früher', $text);
+        self::assertStringContainsString('Verlangst du die Löschung, löschen wir sie früher', $text);
     }
 
     public function test_the_datenschutz_page_explains_the_statistics_and_how_to_refuse(): void
@@ -125,7 +125,7 @@ final class LegalPagesTest extends WebTestCase
         $text = $this->page('/datenschutz')->filter('main')->text();
 
         self::assertStringContainsString('Wir zählen ohne Cookies und ohne Drittanbieter', $text);
-        self::assertStringContainsString('Ihre IP-Adresse speichern wir nicht', $text);
+        self::assertStringContainsString('Deine IP-Adresse speichern wir nicht', $text);
         // stats.js sends nothing when navigator.globalPrivacyControl is set (#47).
         self::assertStringContainsString('Global Privacy Control, zählen wir nichts', $text);
     }
@@ -169,7 +169,7 @@ final class LegalPagesTest extends WebTestCase
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         $load = $translator->trans('detail.location.map.load', [], 'venues', 'de');
         $open = $translator->trans('detail.location.map.open', [], 'venues', 'de');
-        self::assertStringContainsString('erst, wenn Sie auf «'.$load.'» klicken', $text);
+        self::assertStringContainsString('erst, wenn du auf «'.$load.'» klickst', $text);
         self::assertStringContainsString('«'.$open.'»', $text);
     }
 
@@ -191,7 +191,7 @@ final class LegalPagesTest extends WebTestCase
         $text = $this->page('/datenschutz')->filter('main')->text();
 
         // #53: the detail page's rating loads on view, so "nothing before the click" now speaks of the map only.
-        self::assertStringContainsString('Die Karte laden wir erst, wenn Sie auf «Karte laden» klicken; für die Karte wird vorher nichts an Google übertragen.', $text);
+        self::assertStringContainsString('Die Karte laden wir erst, wenn du auf «Karte laden» klickst; für die Karte wird vorher nichts an Google übertragen.', $text);
         self::assertStringNotContainsString('Vorher wird nichts an Google übertragen.', $text);
         self::assertStringContainsString('Auf der Seite einer Location kann die Google-Bewertung erscheinen', $text);
         self::assertStringContainsString('ohne Klick direkt bei Google, sobald dieser Teil der Seite sichtbar wird', $text);

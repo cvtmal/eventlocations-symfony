@@ -55,33 +55,6 @@ final class TestImages
     }
 
     /**
-     * A two-frame animated WebP: RIFF/WEBP with VP8X (animation flag), ANIM, and one ANMF
-     * per frame around a gd-encoded still's VP8 chunk. getimagesize() reads it as a WebP, and
-     * gd cannot decode it (#32 Probe 0.4).
-     *
-     * @param int<1, max> $width
-     * @param int<1, max> $height
-     */
-    public static function animatedWebp(int $width = 64, int $height = 48): string
-    {
-        $chunk = static fn (string $fourCc, string $payload): string => $fourCc.pack('V', \strlen($payload)).$payload.(1 === \strlen($payload) % 2 ? "\0" : '');
-        $u24 = static fn (int $value): string => substr(pack('V', $value), 0, 3);
-
-        $frames = '';
-        foreach ([0xCC3333, 0x3366AA] as $colour) {
-            $image = imagecreatetruecolor($width, $height);
-            imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, $colour);
-            ob_start();
-            imagewebp($image, null, 80);
-            // A simple lossy WebP is RIFF<size>WEBP followed by one VP8 chunk.
-            $frames .= $chunk('ANMF', $u24(0).$u24(0).$u24($width - 1).$u24($height - 1).$u24(100)."\0".substr((string) ob_get_clean(), 12));
-        }
-        $body = 'WEBP'.$chunk('VP8X', \chr(0x02)."\0\0\0".$u24($width - 1).$u24($height - 1)).$chunk('ANIM', pack('V', 0xFFFFFFFF).pack('v', 0)).$frames;
-
-        return 'RIFF'.pack('V', \strlen($body)).$body;
-    }
-
-    /**
      * A PNG whose IHDR declares $width × $height and whose data is a few garbage bytes, so
      * getimagesize() reads the size without anything being decoded.
      *
@@ -152,22 +125,6 @@ final class TestImages
         $body = 'WEBPVP8X'.pack('V', \strlen($chunk)).$chunk;
 
         return 'RIFF'.pack('V', \strlen($body)).$body;
-    }
-
-    /**
-     * A small real AVIF, for checks that must refuse it whatever its name says.
-     *
-     * @param int<1, max> $width
-     * @param int<1, max> $height
-     */
-    public static function avif(int $width = 64, int $height = 48): string
-    {
-        $image = imagecreatetruecolor($width, $height);
-        imagefill($image, 0, 0, (int) imagecolorallocate($image, 30, 120, 60));
-        ob_start();
-        imageavif($image);
-
-        return (string) ob_get_clean();
     }
 
     /**

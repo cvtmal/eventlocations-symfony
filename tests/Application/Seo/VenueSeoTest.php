@@ -163,7 +163,7 @@ final class VenueSeoTest extends WebTestCase
 
         $crawler = $this->get('/hochzeitslocation/scheune-nur-kanton');
 
-        self::assertSame('Scheune Nur Kanton im Kanton Zürich | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Scheune Nur Kanton im Kanton Zürich | deine-eventlocation.ch', $crawler->filter('title')->text());
         $venue = $this->venueNode($crawler);
         self::assertSame('EventVenue', $venue['@type']);
         self::assertSame(['@type' => 'AdministrativeArea', 'name' => 'Kanton Zürich'], $venue['containedInPlace']);

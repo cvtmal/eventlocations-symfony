@@ -45,7 +45,7 @@ final class LocationStatsControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(['9', '6', '30', '2', '0', '0'], $crawler->filter('.stats-kpis .kpi__value')->each(static fn (Crawler $value): string => $value->text()));
-        self::assertStringContainsString('Ihre eigenen Aufrufe', $crawler->filter('#stats-own-traffic')->text());
+        self::assertStringContainsString('Deine eigenen Aufrufe', $crawler->filter('#stats-own-traffic')->text());
         self::assertSame('30 Tage', $crawler->filter('.stats-figures nav.tabs a[aria-current="page"]')->text());
         self::assertSame($this->url($venue).'?zeitraum=7', $crawler->filter('.stats-figures nav.tabs a')->first()->attr('href'));
     }

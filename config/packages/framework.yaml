@@ -23,16 +23,8 @@ framework:
     #esi: true
     #fragments: true
 
-    # Wix's media server, for app:owner:export-content's photos (#32). One request at a time is
-    # the caller's rule (Venues\WixPhotoCache); retries cover 5xx, 429 and transport errors.
     http_client:
         scoped_clients:
-            wix.client:
-                base_uri: 'https://static.wixstatic.com'
-                timeout: 30
-                max_duration: 300
-                retry_failed:
-                    max_retries: 3
             # eventlokale's internal JSON API, for app:crm:crawl-eventlokale's private list (#49).
             # Crm\EventlokaleCrawl paces the calls; the retries cover 429 (Retry-After honoured),
             # 5xx and transport errors before a 429 counts toward the crawl's stop streak.
@@ -52,14 +44,10 @@ framework:
 when@test:
     framework:
         test: true
-        # Replaces the transport under every client, so no test can reach Wix (#32 PD10).
+        # Replaces the transport under every client, so no test can reach the network (#32 PD10).
         http_client:
             mock_response_factory: App\Tests\Support\Http\WixImageResponses
             scoped_clients:
-                wix.client:
-                    base_uri: 'https://static.wixstatic.com'
-                    retry_failed:
-                        delay: 0
                 eventlokale.client:
                     base_uri: 'https://www.eventlokale.ch'
                     retry_failed:
@@ -86,5 +74,5 @@ when@prod:
             default_ttl: 0
             allow_reload: false
             allow_revalidate: false
-        trusted_hosts: ['^hochzeitslocation\.ch$', '^www\.hochzeitslocation\.ch$']
+        trusted_hosts: ['^deine-eventlocation\.ch$', '^www\.deine-eventlocation\.ch$', '^deineeventlocation\.ch$']
         trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-port']

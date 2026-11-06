@@ -49,7 +49,7 @@ final class LlmsTxtTest extends WebTestCase
         $body = $this->llmsTxt();
 
         self::assertSame('text/plain; charset=UTF-8', $this->client->getResponse()->headers->get('Content-Type'));
-        self::assertStringStartsWith("# Hochzeitslocation\n\n> Hochzeitslocations in der ganzen Schweiz", $body);
+        self::assertStringStartsWith("# deine-eventlocation.ch\n\n> Hochzeitslocations in der ganzen Schweiz", $body);
         self::assertStringEndsWith("](http://localhost/datenschutz)\n", $body);
         self::assertSame(
             ['## Suche', '## Kantone', '## Orte', '## Location-Arten', '## Locations', '## Optional'],

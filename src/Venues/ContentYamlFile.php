@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues;
 
-use App\Venues\Exception\InvalidWixExport;
+use App\Venues\Exception\InvalidContentFolder;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -28,7 +28,7 @@ final class ContentYamlFile
      * @param list<string> $sections paths that must be maps when present, dotted for nesting
      *                               (`translations.de`)
      *
-     * @throws InvalidWixExport for a file that cannot be read; it stays as it is
+     * @throws InvalidContentFolder for a file that cannot be read; it stays as it is
      */
     public static function read(string $file, string $key, array $sections = []): ?\stdClass
     {
@@ -38,10 +38,10 @@ final class ContentYamlFile
         try {
             $document = Yaml::parse((string) file_get_contents($file), self::PARSE_FLAGS);
         } catch (ParseException) {
-            throw InvalidWixExport::unreadableFolder($key);
+            throw InvalidContentFolder::unreadableFolder($key);
         }
         if (!$document instanceof \stdClass) {
-            throw InvalidWixExport::unreadableFolder($key);
+            throw InvalidContentFolder::unreadableFolder($key);
         }
         foreach ($sections as $path) {
             $node = $document;
@@ -52,7 +52,7 @@ final class ContentYamlFile
                 $node = $node->{$name};
             }
             if (!$node instanceof \stdClass) {
-                throw InvalidWixExport::unreadableFolder($key);
+                throw InvalidContentFolder::unreadableFolder($key);
             }
         }
 

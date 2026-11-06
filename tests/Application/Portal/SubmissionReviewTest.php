@@ -338,7 +338,7 @@ final class SubmissionReviewTest extends WebTestCase
         $this->client->submit($crawler->filter('form[name="reject_submission"]')->form(), ['reject_submission[reason]' => '   ']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('main', 'Bitte geben Sie einen Grund an.');
+        self::assertSelectorTextContains('main', 'Bitte gib einen Grund an.');
         self::assertSame('submitted', $this->submissionStatus($venue));
         self::assertEmailCount(0);
     }
@@ -375,7 +375,7 @@ final class SubmissionReviewTest extends WebTestCase
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
         self::assertEmailAddressContains($mail, 'To', 'petra@example.ch');
-        self::assertEmailHeaderSame($mail, 'Subject', 'Ihre Location Seehaus');
+        self::assertEmailHeaderSame($mail, 'Subject', 'Deine Location Seehaus');
         self::assertEmailHtmlBodyContains($mail, self::REASON);
         self::assertEmailHtmlBodyContains($mail, '/konto/locations/'.$venue->number().'/einrichten/pruefen');
 

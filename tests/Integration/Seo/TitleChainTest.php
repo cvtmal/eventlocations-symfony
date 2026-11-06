@@ -15,11 +15,11 @@ final class TitleChainTest extends KernelTestCase
      */
     public static function fits(): iterable
     {
-        yield '23 characters fit the long form' => [23, ' in Zürich mieten | Hochzeitslocation'];
-        yield '24 characters fall to the town form' => [24, ' in Zürich | Hochzeitslocation'];
-        yield '30 characters still fit the town form' => [30, ' in Zürich | Hochzeitslocation'];
-        yield '31 characters fall to the name' => [31, ' | Hochzeitslocation'];
-        yield '40 characters still fit the name' => [40, ' | Hochzeitslocation'];
+        yield '18 characters fit the long form' => [18, ' in Zürich mieten | deine-eventlocation.ch'];
+        yield '19 characters fall to the town form' => [19, ' in Zürich | deine-eventlocation.ch'];
+        yield '25 characters still fit the town form' => [25, ' in Zürich | deine-eventlocation.ch'];
+        yield '26 characters fall to the name' => [26, ' | deine-eventlocation.ch'];
+        yield '35 characters still fit the name' => [35, ' | deine-eventlocation.ch'];
     }
 
     #[DataProvider('fits')]
@@ -40,16 +40,16 @@ final class TitleChainTest extends KernelTestCase
         $title = $this->chain()->fit($this->townPatterns($name), $name);
 
         self::assertLessThanOrEqual(TitleChain::MAX, mb_strlen($title));
-        self::assertSame('Wort Wort Wort Wort Wort Wort Wort Wort… | Hochzeitslocation', $title);
+        self::assertSame('Wort Wort Wort Wort Wort Wort Wort… | deine-eventlocation.ch', $title);
     }
 
-    public function test_a_name_of_41_characters_is_cut(): void
+    public function test_a_name_of_36_characters_is_cut(): void
     {
-        $name = str_repeat('x', 19).' '.str_repeat('y', 21);
+        $name = str_repeat('x', 19).' '.str_repeat('y', 16);
 
         $title = $this->chain()->fit($this->townPatterns($name), $name);
 
-        self::assertSame(str_repeat('x', 19).'… | Hochzeitslocation', $title);
+        self::assertSame(str_repeat('x', 19).'… | deine-eventlocation.ch', $title);
     }
 
     public function test_one_endless_word_is_cut_at_the_limit(): void
@@ -59,7 +59,7 @@ final class TitleChainTest extends KernelTestCase
         $title = $this->chain()->fit($this->townPatterns($name), $name);
 
         self::assertSame(TitleChain::MAX, mb_strlen($title));
-        self::assertStringEndsWith('ü… | Hochzeitslocation', $title);
+        self::assertStringEndsWith('ü… | deine-eventlocation.ch', $title);
     }
 
     /**

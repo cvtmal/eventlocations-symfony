@@ -153,7 +153,7 @@ final class LandingPageEditorTest extends WebTestCase
         $description = (string) $crawler->filter('#landing_texts_locales_de_description')->attr('placeholder');
         self::assertStringContainsString('Zürich', $title);
         self::assertNotSame('', $description);
-        self::assertStringContainsString('Vergleichen Sie Fotos', (string) $crawler->filter('#landing_texts_locales_de_intro')->attr('placeholder'));
+        self::assertStringContainsString('Vergleiche Fotos', (string) $crawler->filter('#landing_texts_locales_de_intro')->attr('placeholder'));
         self::assertSame($title, $crawler->filter('[data-serp-target="title"][data-serp-locale="de"]')->text());
         self::assertSame($description, $crawler->filter('[data-serp-target="description"][data-serp-locale="de"]')->text());
         self::assertSame('http://localhost/hochzeitslocations/zuerich', $crawler->filter('.serp-preview__url')->text());
@@ -251,7 +251,7 @@ final class LandingPageEditorTest extends WebTestCase
         self::assertSame([], $this->bodies());
         $public = $this->client->request('GET', '/hochzeitslocations/zuerich');
         self::assertSame($default, $public->filter('title')->text());
-        self::assertStringContainsString('Vergleichen Sie Fotos', $public->filter('.listing-hero__intro')->text());
+        self::assertStringContainsString('Vergleiche Fotos', $public->filter('.listing-hero__intro')->text());
     }
 
     public function test_a_title_of_sixty_one_characters_is_refused_on_its_field(): void

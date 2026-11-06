@@ -13,19 +13,19 @@ remove:
     label_for: '{name} entfernen'
 
 merkliste:
-    title: Ihre Merkliste
-    meta_description: Alle Hochzeitslocations, die Sie sich gemerkt haben, auf einen Blick.
+    title: Deine Merkliste
+    meta_description: Alle Hochzeitslocations, die du dir gemerkt hast, auf einen Blick.
     # formatted = count|swiss_number
     count: '{count, plural, one {# Location} other {{formatted} Locations}}'
     results_label: Gemerkte Locations
     empty:
-        title: Ihre Merkliste ist noch leer.
+        title: Deine Merkliste ist noch leer.
         cta: Locations entdecken
-    full: 'Ihre Merkliste ist voll: Es passen {max} Locations hinein. Entfernen Sie eine, um eine neue zu merken.'
+    full: 'Deine Merkliste ist voll: Es passen {max} Locations hinein. Entferne eine, um eine neue zu merken.'
 
 # Toasts built by merkliste.js. The name reaches them as the placeholder __name__.
 toast:
-    added: '{name} wurde Ihrer Merkliste hinzugefügt.'
-    removed: '{name} wurde von Ihrer Merkliste entfernt.'
-    full: Ihre Merkliste ist voll.
+    added: '{name} wurde deiner Merkliste hinzugefügt.'
+    removed: '{name} wurde von deiner Merkliste entfernt.'
+    full: Deine Merkliste ist voll.
     link: Zur Merkliste

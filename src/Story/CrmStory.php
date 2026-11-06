@@ -64,7 +64,7 @@ final class CrmStory extends Story
             ."- gleiche Stufe, gleiche Leistungen\n"
             ."- neue Laufzeit von zwölf Monaten\n"
             ."- Rechnung nach Ihrer Zusage\n\n"
-            ."Die Stufen im Überblick: [hochzeitslocation.ch](https://hochzeitslocation.ch)\n\n"
+            ."Die Stufen im Überblick: [deine-eventlocation.ch](https://deine-eventlocation.ch)\n\n"
             .'Freundliche Grüsse',
         ],
         [

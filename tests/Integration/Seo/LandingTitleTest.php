@@ -104,21 +104,22 @@ final class LandingTitleTest extends KernelTestCase
             $titles[$code] = $meta->for($this->criteria($page, 1), $this->listingPage($page->venues, 1), $page)->title;
         }
 
-        // C2: ten take the first pattern, St. Gallen and Graubünden the second, Schaffhausen the third.
+        // C2, with the 22-character site name: no canton keeps its count; six take the second pattern,
+        // Thurgau, Solothurn, Obwalden and Nidwalden the third, St. Gallen, Graubünden and Schaffhausen the fourth.
         self::assertSame([
-            'zh' => '52 Hochzeitslocations im Kanton Zürich | Hochzeitslocation',
-            'be' => '34 Hochzeitslocations im Kanton Bern | Hochzeitslocation',
-            'lu' => '31 Hochzeitslocations im Kanton Luzern | Hochzeitslocation',
-            'sg' => 'Hochzeitslocations im Kanton St. Gallen | Hochzeitslocation',
-            'tg' => '14 Hochzeitslocations im Kanton Thurgau | Hochzeitslocation',
-            'ag' => '13 Hochzeitslocations im Kanton Aargau | Hochzeitslocation',
-            'sz' => '9 Hochzeitslocations im Kanton Schwyz | Hochzeitslocation',
-            'vs' => '8 Hochzeitslocations im Kanton Wallis | Hochzeitslocation',
-            'so' => '8 Hochzeitslocations im Kanton Solothurn | Hochzeitslocation',
-            'gr' => 'Hochzeitslocations im Kanton Graubünden | Hochzeitslocation',
-            'ow' => '7 Hochzeitslocations im Kanton Obwalden | Hochzeitslocation',
-            'nw' => '6 Hochzeitslocations im Kanton Nidwalden | Hochzeitslocation',
-            'sh' => 'Hochzeitslocations Kanton Schaffhausen | Hochzeitslocation',
+            'zh' => 'Hochzeitslocations im Kanton Zürich | deine-eventlocation.ch',
+            'be' => 'Hochzeitslocations im Kanton Bern | deine-eventlocation.ch',
+            'lu' => 'Hochzeitslocations im Kanton Luzern | deine-eventlocation.ch',
+            'sg' => 'Hochzeitslocations St. Gallen | deine-eventlocation.ch',
+            'tg' => 'Hochzeitslocations Kanton Thurgau | deine-eventlocation.ch',
+            'ag' => 'Hochzeitslocations im Kanton Aargau | deine-eventlocation.ch',
+            'sz' => 'Hochzeitslocations im Kanton Schwyz | deine-eventlocation.ch',
+            'vs' => 'Hochzeitslocations im Kanton Wallis | deine-eventlocation.ch',
+            'so' => 'Hochzeitslocations Kanton Solothurn | deine-eventlocation.ch',
+            'gr' => 'Hochzeitslocations Graubünden | deine-eventlocation.ch',
+            'ow' => 'Hochzeitslocations Kanton Obwalden | deine-eventlocation.ch',
+            'nw' => 'Hochzeitslocations Kanton Nidwalden | deine-eventlocation.ch',
+            'sh' => 'Hochzeitslocations Schaffhausen | deine-eventlocation.ch',
         ], $titles);
     }
 
@@ -129,7 +130,7 @@ final class LandingTitleTest extends KernelTestCase
         self::assertNotNull($page);
 
         self::assertSame(
-            'Hochzeitslocations Zürich – Seite 2 | Hochzeitslocation',
+            'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch',
             $meta->for($this->criteria($page, 2), $this->listingPage(52, 2), $page)->title,
         );
     }

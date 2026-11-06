@@ -18,8 +18,8 @@ use Symfony\Component\Dotenv\Dotenv;
 #[AsCommand('app:prod:check-env', 'Refuse a production environment that is unsafe (#20)')]
 final class CheckProductionEnvCommand
 {
-    private const string SITE_URL = 'https://hochzeitslocation.ch';
-    private const string SENDER_SUFFIX = '@hochzeitslocation.ch>';
+    private const string SITE_URL = 'https://deine-eventlocation.ch';
+    private const string SENDER_SUFFIX = '@deine-eventlocation.ch>';
     /** `.env`'s literal: production leaves it (C2c), and the env is read before Symfony resolves it. */
     private const string MEDIA_PUBLIC_DIR_DEFAULT = '%kernel.project_dir%/public/media';
     private const array COMPOSE_DATABASE_HOSTS = ['database', 'localhost'];
