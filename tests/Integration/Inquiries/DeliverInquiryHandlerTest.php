@@ -237,7 +237,7 @@ final class DeliverInquiryHandlerTest extends KernelTestCase
 
         return new DeliverInquiryHandler(
             $this->inquiries,
-            new InquiryMailer($mailer, $translator, $format, 'hallo@hochzeitslocation.ch', $override),
+            new InquiryMailer($mailer, $translator, $format, 'hallo@deine-eventlocation.ch', $override),
             new MockClock(self::NOW),
             $logger,
         );

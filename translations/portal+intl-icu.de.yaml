@@ -1,6 +1,6 @@
 shell:
     account: Konto
-    wordmark: Hochzeitslocation
+    wordmark: deine-eventlocation.ch
     skip_to_content: Zum Inhalt springen
     main_nav: Hauptnavigation
     my_locations: Meine Locations
@@ -8,7 +8,7 @@ shell:
     logout: Abmelden
 login:
     title: Anmelden
-    tagline: Ihre Location, von Ihnen gepflegt.
+    tagline: Deine Location, von dir gepflegt.
     audience: Für Betreiberinnen und Betreiber von Locations.
     email: E-Mail
     password: Passwort
@@ -17,11 +17,11 @@ login:
     register: Noch kein Konto? Jetzt registrieren
     error:
         invalid: E-Mail oder Passwort ist falsch.
-        disabled: Dieses Konto ist deaktiviert. Bitte schreiben Sie uns.
-        throttled: Zu viele Versuche. Bitte versuchen Sie es in 15 Minuten wieder.
+        disabled: Dieses Konto ist deaktiviert. Bitte schreib uns.
+        throttled: Zu viele Versuche. Bitte versuch es in 15 Minuten wieder.
 register:
     title: Konto erstellen
-    intro: Mit einem Konto pflegen Sie Ihre Location selbst. Ihr Passwort wählen Sie danach über den Link in unserer E-Mail.
+    intro: Mit einem Konto pflegst du deine Location selbst. Dein Passwort wählst du danach über den Link in unserer E-Mail.
     first_name: Vorname
     last_name: Nachname
     password_help: 'Mindestens {min} Zeichen.'
@@ -29,15 +29,15 @@ register:
     submit: Konto erstellen
     login: Bereits ein Konto? Anmelden
     error:
-        rate_limited: Zu viele Versuche. Bitte versuchen Sie es in einer Stunde wieder.
+        rate_limited: Zu viele Versuche. Bitte versuch es in einer Stunde wieder.
 forgot:
     title: Passwort vergessen
-    intro: Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Link für ein neues Passwort.
+    intro: Gib deine E-Mail-Adresse ein. Wir senden dir einen Link für ein neues Passwort.
     submit: Link senden
     login: Zurück zur Anmeldung
 reset:
     title: Passwort wählen
-    intro: Wählen Sie ein Passwort für Ihr Konto.
+    intro: Wähle ein Passwort für dein Konto.
     new_password: Neues Passwort
     password_repeat: Passwort wiederholen
     submit: Passwort speichern
@@ -46,13 +46,13 @@ reset:
         password_mismatch: Die beiden Passwörter stimmen nicht überein.
     invalid:
         title: Link nicht mehr gültig
-        text: Dieser Link ist abgelaufen, wurde bereits benutzt oder ist unvollständig. Fordern Sie einfach einen neuen an.
+        text: Dieser Link ist abgelaufen, wurde bereits benutzt oder ist unvollständig. Fordere einfach einen neuen an.
         link: Neuen Link anfordern
 overview:
     title: Meine Locations
     empty:
-        title: Ihr Konto ist bereit
-        text: Mit Ihrem Konto ist noch keine Location verknüpft.
+        title: Dein Konto ist bereit
+        text: Mit deinem Konto ist noch keine Location verknüpft.
 editor:
     title: '{name} bearbeiten'
     preview: Vorschau
@@ -64,11 +64,11 @@ editor:
     offline:
         action: Offline nehmen
         title: Location offline nehmen?
-        text: '«{name}» ist danach für Gäste nicht mehr sichtbar. Sie können die Angaben weiter bearbeiten. Damit die Location wieder online geht, prüft unser Team sie zuerst.'
+        text: '«{name}» ist danach für Gäste nicht mehr sichtbar. Du kannst die Angaben weiter bearbeiten. Damit die Location wieder online geht, prüft unser Team sie zuerst.'
         close: Schliessen
         cancel: Abbrechen
         confirm: Offline nehmen
-        failed: Das hat nicht geklappt. Bitte laden Sie die Seite neu und versuchen Sie es noch einmal.
+        failed: Das hat nicht geklappt. Bitte lade die Seite neu und versuch es noch einmal.
     changes:
         title: Änderungen an Einträgen
         empty: Noch keine Änderungen.
@@ -76,36 +76,36 @@ editor:
 profile:
     title: Profil
     section:
-        details: Ihre Angaben
+        details: Deine Angaben
         password: Passwort ändern
     phone: Telefon
-    email_hint: Ihre E-Mail-Adresse ändert unser Team für Sie. Schreiben Sie uns einfach.
+    email_hint: Deine E-Mail-Adresse ändert unser Team für dich. Schreib uns einfach.
     current_password: Aktuelles Passwort
-    password_hint: Nach dem Ändern melden Sie sich mit dem neuen Passwort wieder an.
+    password_hint: Nach dem Ändern meldest du dich mit dem neuen Passwort wieder an.
     save: Speichern
 mail:
     register:
-        subject: Wählen Sie Ihr Passwort
-        preheader: Noch ein Schritt, dann ist Ihr Konto bereit.
+        subject: Wähle dein Passwort
+        preheader: Noch ein Schritt, dann ist dein Konto bereit.
         greeting: Guten Tag
-        intro: Danke für Ihre Registrierung. Wählen Sie über den Link unten Ihr Passwort. Damit ist auch Ihre E-Mail-Adresse bestätigt.
+        intro: Danke für deine Registrierung. Wähle über den Link unten dein Passwort. Damit ist auch deine E-Mail-Adresse bestätigt.
         button: Passwort wählen
         validity: Der Link ist 48 Stunden gültig und funktioniert nur einmal.
-        not_you: Falls Sie sich nicht registriert haben, können Sie diese E-Mail ignorieren.
+        not_you: Falls du dich nicht registriert hast, kannst du diese E-Mail ignorieren.
     reset:
-        subject: Ihr neues Passwort
-        preheader: Mit diesem Link wählen Sie ein neues Passwort.
+        subject: Dein neues Passwort
+        preheader: Mit diesem Link wählst du ein neues Passwort.
         greeting: Guten Tag
-        intro: Sie haben ein neues Passwort angefordert. Über den Link unten wählen Sie es.
+        intro: Du hast ein neues Passwort angefordert. Über den Link unten wählst du es.
         button: Neues Passwort wählen
         validity: Der Link ist eine Stunde gültig und funktioniert nur einmal.
-        not_you: Falls Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren. Ihr Passwort bleibt, wie es ist.
+        not_you: Falls du das nicht angefordert hast, kannst du diese E-Mail ignorieren. Dein Passwort bleibt, wie es ist.
 flash:
-    check_inbox: Bitte prüfen Sie Ihr Postfach. Hat die Adresse noch kein Passwort, erhalten Sie gleich eine E-Mail.
-    reset_sent: Bitte prüfen Sie Ihr Postfach. Gehört die Adresse zu einem Konto, erhalten Sie gleich eine E-Mail.
-    password_reset: Ihr Passwort ist gespeichert. Sie sind jetzt angemeldet.
-    profile_saved: Ihre Angaben sind gespeichert.
-    password_changed: Ihr Passwort ist geändert. Bitte melden Sie sich mit dem neuen Passwort an.
+    check_inbox: Bitte prüfe dein Postfach. Hat die Adresse noch kein Passwort, erhältst du gleich eine E-Mail.
+    reset_sent: Bitte prüfe dein Postfach. Gehört die Adresse zu einem Konto, erhältst du gleich eine E-Mail.
+    password_reset: Dein Passwort ist gespeichert. Du bist jetzt angemeldet.
+    profile_saved: Deine Angaben sind gespeichert.
+    password_changed: Dein Passwort ist geändert. Bitte melde dich mit dem neuen Passwort an.
     account_deactivated: Das Konto ist deaktiviert. Laufende Anmeldungen sind beendet.
     account_reactivated: Das Konto ist wieder aktiv.
     account_action_failed: Das hat nicht geklappt. Bitte noch einmal versuchen.
@@ -147,9 +147,9 @@ accounts:
 onboarding:
     new:
         title: Neue Location eintragen
-        intro: Drei Angaben reichen für den Anfang. Den Rest ergänzen Sie in den nächsten Schritten.
+        intro: Drei Angaben reichen für den Anfang. Den Rest ergänzt du in den nächsten Schritten.
         submit: Weiter
-        search_link: Ihre Location gibt es schon? Suchen Sie sie.
+        search_link: Deine Location gibt es schon? Such sie.
         create_anyway: Trotzdem neu anlegen
         field:
             name: Name der Location
@@ -171,7 +171,7 @@ onboarding:
         pruefen: Prüfen
     next: Weiter
     photos:
-        intro: Laden Sie Fotos Ihrer Location hoch. Das erste Foto ist das Titelbild.
+        intro: Lade Fotos deiner Location hoch. Das erste Foto ist das Titelbild.
         fallback_title: Foto hochladen
         fallback_label: Foto
         fallback_submit: Hochladen
@@ -179,13 +179,13 @@ onboarding:
     check:
         title: Prüfen und veröffentlichen
         missing: Das fehlt noch
-        hint_inquiry: Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Tragen Sie sie im Kontakt ein.
+        hint_inquiry: Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Trag sie im Kontakt ein.
         preview: Vorschau
         edit: Angaben ändern
         rights: Ich darf diese Location vertreten und habe die Rechte an ihren Texten und Fotos.
         submit: Veröffentlichen
         resubmit: Wieder veröffentlichen
-        in_review: Wird geprüft. Sie können die Angaben währenddessen weiter bearbeiten.
+        in_review: Wird geprüft. Du kannst die Angaben währenddessen weiter bearbeiten.
         rejected: Wir konnten die Location noch nicht veröffentlichen
         refused: "Die Location ist noch nicht vollständig. Es fehlt: {missing}"
     overview:
@@ -220,7 +220,7 @@ onboarding:
             rejected_mail_failed: "Achtung: Der Eintrag ist abgelehnt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
             missing: "Der Eintrag ist noch nicht vollständig. Es fehlt: {missing}"
     error:
-        too_many: Sie haben bereits {limit} unfertige Locations. Schliessen Sie eine davon ab oder schreiben Sie uns.
+        too_many: Du hast bereits {limit} unfertige Locations. Schliess eine davon ab oder schreib uns.
     mail:
         submitted:
             subject: Wir prüfen {venue}
@@ -228,7 +228,7 @@ onboarding:
             greeting: Guten Tag {name}
             intro: Danke. {venue} ist bei uns eingegangen. Wir prüfen die Angaben und melden uns per E-Mail.
             button: Zu meinem Konto
-            editing: Sie können die Angaben während der Prüfung weiter bearbeiten.
+            editing: Du kannst die Angaben während der Prüfung weiter bearbeiten.
         notice:
             subject: "Neue Location zur Prüfung: {venue}"
             preheader: "{venue} wartet auf die Prüfung."
@@ -244,11 +244,11 @@ onboarding:
             intro: Wir haben {venue} geprüft und veröffentlicht. Die Location ist jetzt online.
             button: Zur Location
         rejected:
-            subject: Ihre Location {venue}
+            subject: Deine Location {venue}
             preheader: Wir konnten {venue} noch nicht veröffentlichen.
             greeting: Guten Tag {name}
             intro: "Wir konnten {venue} noch nicht veröffentlichen. Das ist der Grund:"
-            next: Passen Sie die Angaben an und senden Sie die Location wieder zur Prüfung.
+            next: Pass die Angaben an und sende die Location wieder zur Prüfung.
             button: Angaben anpassen
 claims:
     title: Location suchen
@@ -265,30 +265,30 @@ claims:
         ask_for: Zugriff auf {name} anfragen
     state:
         pending: Anfrage liegt bei uns
-        active: Ihre Location
+        active: Deine Location
     empty:
-        start_title: Suchen Sie Ihre Location
-        start_text: Geben Sie mindestens zwei Zeichen ein.
+        start_title: Such deine Location
+        start_text: Gib mindestens zwei Zeichen ein.
         none_title: Keine Location gefunden
-        none_text: Prüfen Sie die Schreibweise oder suchen Sie nach dem Ort.
+        none_text: Prüfe die Schreibweise oder such nach dem Ort.
     flash:
-        requested: Ihre Anfrage liegt bei uns. Wir melden uns per E-Mail.
-        already: Ihre Anfrage liegt schon bei uns, oder Sie haben bereits Zugriff.
+        requested: Deine Anfrage liegt bei uns. Wir melden uns per E-Mail.
+        already: Deine Anfrage liegt schon bei uns, oder du hast bereits Zugriff.
         not_available: Diese Location ist nicht mehr verfügbar.
         failed: Das hat nicht geklappt. Bitte noch einmal versuchen.
     mail:
         approved:
-            subject: Ihr Zugriff auf {venue} ist bestätigt
-            preheader: Sie können {venue} jetzt verwalten.
+            subject: Dein Zugriff auf {venue} ist bestätigt
+            preheader: Du kannst {venue} jetzt verwalten.
             greeting: Guten Tag {name}
-            intro: Wir haben Ihre Anfrage geprüft. Sie können {venue} jetzt in Ihrem Konto verwalten.
+            intro: Wir haben deine Anfrage geprüft. Du kannst {venue} jetzt in deinem Konto verwalten.
             button: Zu meinem Konto
         rejected:
-            subject: Ihre Anfrage für {venue}
-            preheader: Wir konnten Ihre Anfrage nicht bestätigen.
+            subject: Deine Anfrage für {venue}
+            preheader: Wir konnten deine Anfrage nicht bestätigen.
             greeting: Guten Tag {name}
-            intro: Wir konnten Ihre Anfrage für {venue} nicht bestätigen.
-            again: Sie können den Zugriff jederzeit erneut anfragen.
+            intro: Wir konnten deine Anfrage für {venue} nicht bestätigen.
+            again: Du kannst den Zugriff jederzeit erneut anfragen.
         notice:
             subject: "Neue Zugriffsanfrage: {venue}"
             preheader: "Für {venue} liegt eine neue Zugriffsanfrage vor."
@@ -363,17 +363,17 @@ invite:
         mail_failed: "Achtung: Der Zugriff ist erteilt, aber die E-Mail ging nicht raus. Bitte die Person direkt informieren."
     mail:
         invitation:
-            subject: Sie sind Location-Manager für {venue}
-            preheader: Wählen Sie Ihr Passwort, dann können Sie {venue} verwalten.
+            subject: Du bist Location-Manager für {venue}
+            preheader: Wähle dein Passwort, dann kannst du {venue} verwalten.
             greeting: Guten Tag {name}
-            intro: Das Team von Hochzeitslocation hat Sie als Location-Manager für {venue} eingetragen und dafür ein Konto für Sie angelegt.
-            next: Wählen Sie über den Link unten Ihr Passwort. Danach sind Sie angemeldet und können die Angaben, Fotos und Kontaktdaten von {venue} pflegen.
+            intro: Das Team von deine-eventlocation.ch hat dich als Location-Manager für {venue} eingetragen und dafür ein Konto für dich angelegt.
+            next: Wähle über den Link unten dein Passwort. Danach bist du angemeldet und kannst die Angaben, Fotos und Kontaktdaten von {venue} pflegen.
             button: Passwort wählen
-            validity: Der Link ist 7 Tage gültig und funktioniert nur einmal. Ist er abgelaufen, fordern Sie auf der Anmeldeseite unter «Passwort vergessen» einfach einen neuen an.
-            not_you: Falls Sie damit nichts zu tun haben, können Sie diese E-Mail ignorieren.
+            validity: Der Link ist 7 Tage gültig und funktioniert nur einmal. Ist er abgelaufen, forderst du auf der Anmeldeseite unter «Passwort vergessen» einfach einen neuen an.
+            not_you: Falls du damit nichts zu tun hast, kannst du diese E-Mail ignorieren.
         added:
-            subject: Sie sind Location-Manager für {venue}
-            preheader: Sie können {venue} jetzt in Ihrem Konto verwalten.
+            subject: Du bist Location-Manager für {venue}
+            preheader: Du kannst {venue} jetzt in deinem Konto verwalten.
             greeting: Guten Tag {name}
-            intro: Das Team von Hochzeitslocation hat Sie als Location-Manager für {venue} eingetragen. Sie können die Location jetzt in Ihrem Konto verwalten.
+            intro: Das Team von deine-eventlocation.ch hat dich als Location-Manager für {venue} eingetragen. Du kannst die Location jetzt in deinem Konto verwalten.
             button: Zu meinem Konto

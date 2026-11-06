@@ -23,7 +23,7 @@ use Twig\Environment;
 final class CrmMailerTest extends KernelTestCase
 {
     private const string OVERRIDE = 'override@hochzeitslocation.test';
-    private const string MAILBOX = 'hallo@hochzeitslocation.ch';
+    private const string MAILBOX = 'hallo@deine-eventlocation.ch';
     private const string TO = 'mia@example.ch';
     private const string CC = 'tom@example.ch';
 
@@ -132,7 +132,7 @@ final class CrmMailerTest extends KernelTestCase
             new MarkdownRenderer(),
             new EnabledLocale(['de'], 'de'),
             self::MAILBOX,
-            'Hochzeitslocation <'.self::MAILBOX.'>',
+            'deine-eventlocation.ch <'.self::MAILBOX.'>',
             $override,
         );
     }

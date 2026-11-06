@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues\Console;
 
-use App\Venues\Exception\InvalidWixExport;
+use App\Venues\Exception\InvalidContentFolder;
 use App\Venues\VenueCoordinateFiller;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -14,8 +14,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * One-off: writes `geo:` (lat, lng) into every venue folder that has none, found by name and
- * region with Google Places. Run it after app:owner:export-content and before app:venues:import
- * (bin/prod-import all), and before staff edit: the import skips a venue staff changed.
+ * region with Google Places. Run it before app:venues:import (bin/prod-import all), and before
+ * staff edit: the import skips a venue staff changed.
  * GOOGLE_PLACES_API_KEY comes from the shell only, never from a file. The report at
  * content/owner/geocode-report.csv lists each venue with the name Google matched.
  */
@@ -46,7 +46,7 @@ final class GeocodeVenuesCommand
 
         try {
             $counts = $this->filler->fill($this->contentRoot, $dryRun, $limit);
-        } catch (InvalidWixExport $exception) {
+        } catch (InvalidContentFolder $exception) {
             $io->error($exception->getMessage());
 
             return Command::FAILURE;

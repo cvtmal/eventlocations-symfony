@@ -153,7 +153,7 @@ final class ReviewQueueTest extends WebTestCase
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
         self::assertEmailAddressContains($mail, 'To', $manager->email());
-        self::assertEmailHeaderSame($mail, 'Subject', 'Ihr Zugriff auf Schloss Seeblick ist bestätigt');
+        self::assertEmailHeaderSame($mail, 'Subject', 'Dein Zugriff auf Schloss Seeblick ist bestätigt');
 
         $audit = $this->connection->fetchAllAssociative('SELECT actor_type, actor_id, subject_type, subject_id FROM admin_audit_log WHERE command = ?', [GrantVenueAccess::class]);
         self::assertSame([['actor_type' => 'admin_user', 'actor_id' => $staff['user']->id(), 'subject_type' => 'portal_user', 'subject_id' => $manager->id()]], $audit);
@@ -237,7 +237,7 @@ final class ReviewQueueTest extends WebTestCase
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
         self::assertEmailAddressContains($mail, 'To', $manager->email());
-        self::assertEmailHeaderSame($mail, 'Subject', 'Ihre Anfrage für Schloss Seeblick');
+        self::assertEmailHeaderSame($mail, 'Subject', 'Deine Anfrage für Schloss Seeblick');
 
         $audit = $this->connection->fetchAllAssociative('SELECT actor_type, actor_id, subject_type, subject_id FROM admin_audit_log WHERE command = ?', [RevokeVenueAccess::class]);
         self::assertSame([['actor_type' => 'admin_user', 'actor_id' => $staff['user']->id(), 'subject_type' => 'portal_user', 'subject_id' => $manager->id()]], $audit);

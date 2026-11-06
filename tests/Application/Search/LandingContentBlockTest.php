@@ -62,15 +62,15 @@ final class LandingContentBlockTest extends WebTestCase
         $this->withBuilding($this->inTown('Stäfa', 5), 'castle');
 
         self::assertSame(
-            '5 Hochzeitslocations im Kanton Zürich: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt bei der Location an.',
+            '5 Hochzeitslocations im Kanton Zürich: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
             $this->intro('/hochzeitslocations/zuerich')->filter('p')->text(),
         );
         self::assertSame(
-            '5 Hochzeitslocations in Stäfa: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt bei der Location an.',
+            '5 Hochzeitslocations in Stäfa: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
             $this->intro('/hochzeitslocations/zuerich/staefa')->filter('p')->text(),
         );
         self::assertSame(
-            '<p>5 Locations für Ihre Hochzeit im Schloss: Vergleichen Sie Fotos und Platz für Gäste und fragen Sie direkt an.</p>',
+            '<p>5 Locations für deine Hochzeit im Schloss: Vergleiche Fotos und Platz für Gäste und frag direkt an.</p>',
             trim($this->intro('/hochzeitslocations/schloss')->html()),
         );
         $this->assertPublicAndSessionFree();
@@ -85,7 +85,7 @@ final class LandingContentBlockTest extends WebTestCase
 
         self::assertSame(['Am Zürichsee feiern.', 'Zweiter Absatz.'], $intro->filter('p')->each(static fn (Crawler $p): string => $p->text()));
         self::assertSame('Zürichsee', $intro->filter('strong')->text());
-        self::assertStringNotContainsString('Vergleichen Sie Fotos', $intro->text());
+        self::assertStringNotContainsString('Vergleiche Fotos', $intro->text());
         $this->assertPublicAndSessionFree();
     }
 
@@ -184,7 +184,7 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.intro' => $body]);
 
-        self::assertStringContainsString('Vergleichen Sie Fotos', $this->intro('/hochzeitslocations/zuerich')->text());
+        self::assertStringContainsString('Vergleiche Fotos', $this->intro('/hochzeitslocations/zuerich')->text());
     }
 
     public function test_public_pages_on_a_cold_pool_stay_public_and_set_no_cookie(): void

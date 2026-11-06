@@ -43,16 +43,10 @@ final class ImageVariantGenerator
     public const int SETTINGS_VERSION = 1;
 
     /**
-     * The memory a console batch (import, regenerate, owner export) needs: gd holds a decoded
+     * The memory a console batch (import, regenerate) needs: gd holds a decoded
      * original at about 5 bytes a pixel, so a 60 MP photo stops PHP's stock 256M (#32 D9).
      */
     public const string BATCH_MEMORY_LIMIT = '512M';
-
-    /**
-     * The largest original a batch accepts at BATCH_MEMORY_LIMIT, checked by the owner export
-     * before it decodes, so a larger photo is left out rather than stopping the run.
-     */
-    public const int BATCH_MAX_PIXELS = 100_000_000;
 
     /** What a batch command prints when raiseBatchMemoryLimit() fails; it goes on regardless. */
     public const string BATCH_MEMORY_WARNING = 'memory_limit could not be raised to '.self::BATCH_MEMORY_LIMIT.': photos above about 40 MP may stop the run.';

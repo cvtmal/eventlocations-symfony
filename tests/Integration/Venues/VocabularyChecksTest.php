@@ -12,8 +12,6 @@ use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\RatingHighlight;
-use App\Venues\ValueObject\ReviewerRole;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
@@ -36,8 +34,6 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'status' => ['chk_venues_status', VenueStatus::class];
         yield 'own catering' => ['chk_venues_own_catering', OwnCatering::class];
         yield 'floor material' => ['chk_rooms_floor_material', FloorMaterial::class];
-        yield 'reviewer role' => ['chk_venue_reviews_role', ReviewerRole::class];
-        yield 'rating highlight' => ['chk_venue_rating_highlights_code', RatingHighlight::class];
         yield 'term group' => ['chk_taxonomy_terms_term_group', TermGroup::class];
         yield 'price level' => ['chk_venues_price_level', PriceLevel::class];
         yield 'party' => ['chk_venues_party', PartyAllowed::class];

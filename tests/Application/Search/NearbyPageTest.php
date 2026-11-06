@@ -99,7 +99,7 @@ final class NearbyPageTest extends WebTestCase
 
         $crawler = $this->page(self::URL.'?lat=47.239&lng=8.721');
 
-        self::assertSame('2 Locations im Umkreis von 30 km um Ihren Standort', $crawler->filter('h2#nearby-results-heading')->text());
+        self::assertSame('2 Locations im Umkreis von 30 km um deinen Standort', $crawler->filter('h2#nearby-results-heading')->text());
     }
 
     #[DataProvider('notices')]
@@ -204,7 +204,7 @@ final class NearbyPageTest extends WebTestCase
         $bare = $this->page(self::URL);
         self::assertCount(0, $bare->filter('meta[name="robots"]'));
         self::assertSame('http://localhost'.self::URL, $bare->filter('link[rel="canonical"]')->attr('href'));
-        self::assertSame('Hochzeitslocations in Ihrer Nähe | Hochzeitslocation', $bare->filter('title')->text());
+        self::assertSame('Hochzeitslocations in deiner Nähe | deine-eventlocation.ch', $bare->filter('title')->text());
 
         foreach (['?ort=8712', '?ort=', '?lat=47.23&lng=8.67', '?lat=52.52&lng=13.40', '?ort=xyzxyz'] as $query) {
             $crawler = $this->page(self::URL.$query);

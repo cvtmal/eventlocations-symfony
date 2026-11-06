@@ -57,7 +57,7 @@ final class RegisterTest extends WebTestCase
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
         self::assertEmailAddressContains($mail, 'To', self::EMAIL);
-        self::assertSame('Wählen Sie Ihr Passwort', $mail->getSubject());
+        self::assertSame('Wähle dein Passwort', $mail->getSubject());
         self::assertEmailHtmlBodyContains($mail, 'Guten Tag');
         self::assertEmailHtmlBodyContains($mail, '48 Stunden');
         self::assertEmailHtmlBodyContains($mail, 'http://localhost/konto/passwort-neu/');

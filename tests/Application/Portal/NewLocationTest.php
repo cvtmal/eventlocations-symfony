@@ -171,7 +171,7 @@ final class NewLocationTest extends WebTestCase
     {
         yield 'no name' => [['name' => ''], 'Bitte'];
         yield 'a name without letters' => [['name' => '!!'], 'Buchstaben'];
-        yield 'no town' => [['town' => ''], 'Bitte geben Sie PLZ und Ort an.'];
+        yield 'no town' => [['town' => ''], 'Bitte gib PLZ und Ort an.'];
     }
 
     /**
@@ -201,7 +201,7 @@ final class NewLocationTest extends WebTestCase
         $crawler = $this->submitForm();
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertStringContainsString('Sie haben bereits 10 unfertige Locations. Schliessen Sie eine davon ab oder schreiben Sie uns.', $crawler->filter('form[name="new_location"]')->text());
+        self::assertStringContainsString('Du hast bereits 10 unfertige Locations. Schliess eine davon ab oder schreib uns.', $crawler->filter('form[name="new_location"]')->text());
         self::assertSame(10, $this->venues());
     }
 

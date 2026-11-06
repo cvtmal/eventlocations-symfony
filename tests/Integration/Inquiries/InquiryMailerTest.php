@@ -66,8 +66,8 @@ final class InquiryMailerTest extends KernelTestCase
         self::assertSame((string) $inquiry->recipientEmail(), $mail->getHeaders()->getHeaderBody(InquiryMailer::ORIGINAL_RECIPIENT_HEADER));
         self::assertSame(['anna@example.ch'], $this->addresses($mail->getReplyTo()));
         self::assertSame('Anna Muster', $mail->getReplyTo()[0]->getName());
-        self::assertSame(['hallo@hochzeitslocation.ch'], $this->addresses($mail->getFrom()));
-        self::assertSame('Hochzeitslocation', $mail->getFrom()[0]->getName());
+        self::assertSame(['hallo@deine-eventlocation.ch'], $this->addresses($mail->getFrom()));
+        self::assertSame('deine-eventlocation.ch', $mail->getFrom()[0]->getName());
         self::assertSame("Neue Anfrage für Schloss Seeblick: Anna Muster, 12.09.2026, 1'200 Gäste", $mail->getSubject());
 
         $html = (string) $mail->getHtmlBody();
@@ -122,9 +122,9 @@ final class InquiryMailerTest extends KernelTestCase
 
         $mail = $this->sentMail();
         self::assertSame(['anna@example.ch'], $this->addresses($mail->getTo()));
-        self::assertSame(['hallo@hochzeitslocation.ch'], $this->addresses($mail->getReplyTo()));
-        self::assertSame(['hallo@hochzeitslocation.ch'], $this->addresses($mail->getFrom()));
-        self::assertSame('Ihre Anfrage an Schloss Seeblick', $mail->getSubject());
+        self::assertSame(['hallo@deine-eventlocation.ch'], $this->addresses($mail->getReplyTo()));
+        self::assertSame(['hallo@deine-eventlocation.ch'], $this->addresses($mail->getFrom()));
+        self::assertSame('Deine Anfrage an Schloss Seeblick', $mail->getSubject());
         self::assertFalse($mail->getHeaders()->has(InquiryMailer::ORIGINAL_RECIPIENT_HEADER));
         self::assertStringContainsString('Danke, Anna!', (string) $mail->getTextBody());
         self::assertStringContainsString('Ist der Termin frei?', (string) $mail->getTextBody());
@@ -208,7 +208,7 @@ final class InquiryMailerTest extends KernelTestCase
         $format = self::getContainer()->get(SwissFormatExtension::class);
         self::assertInstanceOf(SwissFormatExtension::class, $format);
 
-        return new InquiryMailer($recorder, $translator, $format, 'hallo@hochzeitslocation.ch', $override);
+        return new InquiryMailer($recorder, $translator, $format, 'hallo@deine-eventlocation.ch', $override);
     }
 
     private function sentMail(): Email
@@ -235,7 +235,7 @@ final class InquiryMailerTest extends KernelTestCase
         $pattern = '/<img src="cid:'.preg_quote($logo->getContentId(), '/').'"[^>]*>/';
         $found = preg_match($pattern, (string) $mail->getHtmlBody(), $image);
         self::assertSame(1, $found);
-        self::assertStringContainsString('alt="hochzeitslocation.ch"', $image[0]);
+        self::assertStringContainsString('alt="deine-eventlocation.ch"', $image[0]);
         self::assertStringContainsString('width="126"', $image[0]);
         self::assertStringContainsString('height="28"', $image[0]);
     }

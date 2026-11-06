@@ -151,7 +151,7 @@ final class PasswordResetTest extends WebTestCase
         self::assertResponseRedirects('/konto/locations/neu');
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('.toast__message', 'Ihr Passwort ist gespeichert');
+        self::assertSelectorTextContains('.toast__message', 'Dein Passwort ist gespeichert');
 
         $this->client->getCookieJar()->clear();
         $this->submitManagerLogin($user->email());

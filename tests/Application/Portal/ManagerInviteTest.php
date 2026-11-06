@@ -99,7 +99,7 @@ final class ManagerInviteTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertResponseIsSuccessful();
         self::assertStringContainsString(self::VENUE, $crawler->filter('main')->text());
-        self::assertStringContainsString('Ihr Passwort ist gespeichert', $crawler->filter('.toast__message')->text());
+        self::assertStringContainsString('Dein Passwort ist gespeichert', $crawler->filter('.toast__message')->text());
 
         $this->client->request('GET', $link);
         self::assertResponseStatusCodeSame(Response::HTTP_GONE);

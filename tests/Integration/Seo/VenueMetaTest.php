@@ -16,36 +16,36 @@ final class VenueMetaTest extends KernelTestCase
     {
         $meta = $this->meta(town: 'Stäfa', canton: Canton::ZH);
 
-        self::assertSame('Schloss Au in Stäfa mieten | Hochzeitslocation', $meta->title);
+        self::assertSame('Schloss Au in Stäfa mieten | deine-eventlocation.ch', $meta->title);
     }
 
     public function test_a_name_too_long_for_the_town_keeps_the_name(): void
     {
         $meta = $this->meta(town: 'Rapperswil-Jona', name: 'Grand Hotel Seeblick und Kurhaus');
 
-        self::assertSame('Grand Hotel Seeblick und Kurhaus | Hochzeitslocation', $meta->title);
+        self::assertSame('Grand Hotel Seeblick und Kurhaus | deine-eventlocation.ch', $meta->title);
     }
 
     public function test_a_venue_with_only_a_canton_names_the_canton(): void
     {
         $meta = $this->meta(canton: Canton::ZH);
 
-        self::assertSame('Schloss Au im Kanton Zürich | Hochzeitslocation', $meta->title);
+        self::assertSame('Schloss Au im Kanton Zürich | deine-eventlocation.ch', $meta->title);
     }
 
     public function test_liechtenstein_alone_is_named_without_kanton(): void
     {
-        self::assertSame('Schloss Au in Liechtenstein | Hochzeitslocation', $this->meta(canton: Canton::LI)->title);
+        self::assertSame('Schloss Au in Liechtenstein | deine-eventlocation.ch', $this->meta(canton: Canton::LI)->title);
     }
 
     public function test_a_venue_without_a_place_has_the_name_alone(): void
     {
-        self::assertSame('Schloss Au | Hochzeitslocation', $this->meta()->title);
+        self::assertSame('Schloss Au | deine-eventlocation.ch', $this->meta()->title);
     }
 
     public function test_an_empty_town_counts_as_none(): void
     {
-        self::assertSame('Schloss Au | Hochzeitslocation', $this->meta(town: '')->title);
+        self::assertSame('Schloss Au | deine-eventlocation.ch', $this->meta(town: '')->title);
     }
 
     public function test_coordinates_make_it_a_place(): void

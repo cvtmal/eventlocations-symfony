@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Venues;
 
 use App\Geo\ValueObject\Canton;
-use App\Venues\Exception\InvalidWixExport;
+use App\Venues\Exception\InvalidContentFolder;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 
@@ -40,7 +40,7 @@ final class VenueCoordinateFiller
     /**
      * @return array{found: int, missed: int, failed: int, skipped: int}
      *
-     * @throws InvalidWixExport for a venue.yaml that cannot be read
+     * @throws InvalidContentFolder for a venue.yaml that cannot be read
      */
     public function fill(string $root, bool $dryRun, ?int $limit = null): array
     {

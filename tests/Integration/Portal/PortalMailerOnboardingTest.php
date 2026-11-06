@@ -47,7 +47,7 @@ final class PortalMailerOnboardingTest extends KernelTestCase
         yield 'rejected' => [
             static fn (PortalMailer $mailer): bool => $mailer->sendLocationRejected('anna@example.ch', 'Anna', 'Seehaus Meilen', 1234, 'Die Fotos fehlen.'),
             'anna@example.ch',
-            'Ihre Location Seehaus Meilen',
+            'Deine Location Seehaus Meilen',
             ['Guten Tag Anna', 'Die Fotos fehlen.', '/konto/locations/1234/einrichten/pruefen'],
         ];
     }
