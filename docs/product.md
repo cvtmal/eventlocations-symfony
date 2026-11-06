@@ -42,7 +42,7 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 | # | Item | Needs | Status |
 |---|---|---|---|
 | 1 | Security audit triage (2 high, 8 medium, 17 low) | Owner, when they choose to pick it up | Set aside by the owner on 2026-11-05. PO proposal when it returns: H1 guest-copy relay and H2 IPv6 limiter keys first, with M6, M8, M1 |
-| 2 | CRM "Locations" merge | Done 2026-11-05 | #54-#56 live. Open for a human: a keyboard-only and a 390/1440 px walkthrough of the Location record, the list tabs and the contact card. See "CRM Locations" below |
+| 2 | CRM "Locations" merge | Done 2026-11-05 | #54-#56 live; the keyboard and 390/1440 px walkthrough of the Location record, the list tabs and the contact card is done (owner, 2026-11-06). See "CRM Locations" below |
 | 3 | Q3 pin check: 13 doubtful map pins and 1 venue without a pin | Owner, by hand | In `content/owner/q3-pin-check.md` |
 | 4 | When to let Googlebot in | Owner | Blocked on purpose after launch; no date set |
 | 5 | Price of a self-created entry | Owner | Not set; plays no part in the app |
