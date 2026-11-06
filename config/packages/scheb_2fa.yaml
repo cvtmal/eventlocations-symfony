@@ -8,7 +8,7 @@ scheb_two_factor:
     code_reuse_cache_duration: 60
     totp:
         enabled: true
-        issuer: 'Hochzeitslocation Backoffice'
+        issuer: 'deine-eventlocation.ch Backoffice'
         server_name: null
         leeway: 15
         template: admin/security/totp.html.twig

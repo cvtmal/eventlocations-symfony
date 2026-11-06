@@ -131,41 +131,41 @@ crm:
         subject_line: Der Betreff darf nur eine Zeile haben.
 inquiry:
     occasion:
-        required: Bitte wählen Sie einen Anlass.
+        required: Bitte wähle einen Anlass.
     guests:
-        required: Bitte geben Sie die Anzahl Gäste an.
-        invalid: Bitte geben Sie die Anzahl Gäste als ganze Zahl an.
-        range: Bitte geben Sie zwischen 1 und 5000 Gäste an.
+        required: Bitte gib die Anzahl Gäste an.
+        invalid: Bitte gib die Anzahl Gäste als ganze Zahl an.
+        range: Bitte gib zwischen 1 und 5000 Gäste an.
     event_date:
-        invalid: Bitte geben Sie ein gültiges Datum an.
+        invalid: Bitte gib ein gültiges Datum an.
     message:
-        required: Bitte schreiben Sie eine Nachricht.
+        required: Bitte schreib eine Nachricht.
         too_long: Die Nachricht darf höchstens 5000 Zeichen lang sein.
         invalid: Die Nachricht enthält ungültige Zeichen.
     first_name:
-        required: Bitte geben Sie Ihren Vornamen an.
+        required: Bitte gib deinen Vornamen an.
         too_long: Der Vorname darf höchstens 100 Zeichen lang sein.
         invalid: Der Vorname enthält ungültige Zeichen.
     last_name:
-        required: Bitte geben Sie Ihren Namen an.
+        required: Bitte gib deinen Namen an.
         too_long: Der Name darf höchstens 100 Zeichen lang sein.
         invalid: Der Name enthält ungültige Zeichen.
     email:
-        required: Bitte geben Sie Ihre E-Mail-Adresse an.
-        invalid: Bitte geben Sie eine gültige E-Mail-Adresse an.
+        required: Bitte gib deine E-Mail-Adresse an.
+        invalid: Bitte gib eine gültige E-Mail-Adresse an.
         too_long: Die E-Mail-Adresse darf höchstens 254 Zeichen lang sein.
     phone:
-        invalid: Bitte geben Sie eine gültige Telefonnummer an.
+        invalid: Bitte gib eine gültige Telefonnummer an.
 portal:
     onboarding:
-        town_required: Bitte geben Sie PLZ und Ort an.
-        inquiry_email_required: Bitte geben Sie eine E-Mail-Adresse für Anfragen an.
-        photo_required: Bitte wählen Sie ein Foto aus.
-        rights_required: Bitte bestätigen Sie, dass Sie die Location vertreten dürfen und die Rechte an ihren Texten und Fotos haben.
-        reason_required: Bitte geben Sie einen Grund an.
+        town_required: Bitte gib PLZ und Ort an.
+        inquiry_email_required: Bitte gib eine E-Mail-Adresse für Anfragen an.
+        photo_required: Bitte wähle ein Foto aus.
+        rights_required: Bitte bestätige, dass du die Location vertreten darfst und die Rechte an ihren Texten und Fotos hast.
+        reason_required: Bitte gib einen Grund an.
         reason_too_long: Bitte höchstens {limit} Zeichen eingeben.
     photo:
-        rate_limited: Sie haben in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuchen Sie es später noch einmal.
+        rate_limited: Du hast in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuch es später noch einmal.
 shared:
     text:
         invalid: Der Text enthält ungültige Zeichen.

@@ -140,7 +140,7 @@ final class WizardTest extends WebTestCase
         $crawler = $this->save($venue, 'kontakt', 'venue_contact', ['venue_contact[inquiryEmail]' => '']);
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertStringContainsString('Bitte geben Sie eine E-Mail-Adresse für Anfragen an.', $crawler->filter('#kontakt')->text());
+        self::assertStringContainsString('Bitte gib eine E-Mail-Adresse für Anfragen an.', $crawler->filter('#kontakt')->text());
         self::assertNull($this->inquiryEmail($venue));
     }
 

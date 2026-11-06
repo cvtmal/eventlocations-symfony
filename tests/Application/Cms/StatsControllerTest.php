@@ -180,7 +180,7 @@ final class StatsControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('Content-Type', 'text/csv; charset=UTF-8');
-        self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=hochzeitslocation-mediakit-2026-11-03.csv');
+        self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=deine-eventlocation-mediakit-2026-11-03.csv');
         $body = (string) $this->client->getInternalResponse()->getContent();
         self::assertStringStartsWith("\u{FEFF}", $body);
         self::assertStringEndsWith("\r\n", $body);

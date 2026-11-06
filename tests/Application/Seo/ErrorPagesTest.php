@@ -57,7 +57,7 @@ final class ErrorPagesTest extends WebTestCase
         $crawler = $this->client->request('GET', '/hochzeitslocation/gibt-es-nicht');
 
         self::assertResponseStatusCodeSame(404);
-        self::assertSame('Seite nicht gefunden | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Seite nicht gefunden | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertCount(1, $crawler->filter('h1'));
         self::assertSelectorTextSame('h1', 'Diese Seite gibt es nicht');
         self::assertSame('/hochzeitslocations', $crawler->filter('.error-page a')->attr('href'));
@@ -94,7 +94,7 @@ final class ErrorPagesTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(410);
         self::assertSelectorTextSame('h1', 'Diese Location ist nicht mehr dabei');
-        self::assertSame('Location nicht mehr verfügbar | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Location nicht mehr verfügbar | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertCount(0, $crawler->filter('link[hreflang]'));
         $this->assertHeroWithIcon($crawler, 'landmark');
     }
@@ -107,7 +107,7 @@ final class ErrorPagesTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(500);
         self::assertSelectorTextSame('h1', 'Da ist etwas schiefgelaufen');
-        self::assertSame('Fehler | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Fehler | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertStringNotContainsString('Diese Seite gibt es nicht', (string) $this->client->getResponse()->getContent());
         self::assertStringNotContainsString('forced secret', (string) $this->client->getResponse()->getContent());
         self::assertSame(self::POLICY, $this->client->getResponse()->headers->get('Content-Security-Policy'));

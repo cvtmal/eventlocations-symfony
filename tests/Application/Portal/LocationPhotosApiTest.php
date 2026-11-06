@@ -30,7 +30,7 @@ final class LocationPhotosApiTest extends WebTestCase
     }
     use SendsVenueMediaRequests;
 
-    private const string RATE_LIMITED = 'Sie haben in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuchen Sie es später noch einmal.';
+    private const string RATE_LIMITED = 'Du hast in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuch es später noch einmal.';
 
     protected function tearDown(): void
     {

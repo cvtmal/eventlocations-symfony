@@ -83,8 +83,8 @@ final class HomePageTest extends WebTestCase
                 'Kategorien durchsuchen',
                 'In vier Schritten zur Traumlocation',
                 'Locations im Spotlight',
-                'Planen Sie Ihre Hochzeit',
-                'Die passende Hochzeitslocation für Ihren Tag',
+                'Plane deine Hochzeit',
+                'Die passende Hochzeitslocation für deinen Tag',
                 'Hochzeitslocations nach Region',
             ],
             $crawler->filter('main section')->each(static fn (Crawler $section): string => $section->filter('h1, h2')->first()->text()),
@@ -103,9 +103,9 @@ final class HomePageTest extends WebTestCase
         self::assertCount(1, $crawler->filter('link[rel="alternate"][hreflang="de-CH"]'));
         self::assertCount(1, $crawler->filter('link[rel="alternate"][hreflang="x-default"]'));
         self::assertStringContainsString('"WebSite"', $crawler->filter('script[type="application/ld+json"]')->text());
-        self::assertSame('Hochzeitslocations in der Schweiz finden | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Hochzeitslocations Schweiz finden | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSame(
-            'Finden Sie die passende Hochzeitslocation in der Schweiz: nach Region, Location-Art und Gästezahl suchen und direkt bei der Location anfragen.',
+            'Finde die passende Hochzeitslocation in der Schweiz: nach Region, Location-Art und Gästezahl suchen und direkt bei der Location anfragen.',
             $crawler->filter('meta[name="description"]')->attr('content'),
         );
     }

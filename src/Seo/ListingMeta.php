@@ -47,7 +47,10 @@ final class ListingMeta
         $numbered = !$filtered && $page->page > 1;
 
         if (null === $located) {
-            $title = $this->translator->trans($numbered ? 'listing.title_page' : 'listing.title', ['site' => $this->site, 'page' => (string) $page->page], 'seo');
+            $parameters = ['page' => (string) $page->page];
+            $title = $numbered
+                ? $this->titles->fit([['listing.title_page', $parameters], ['listing.title_page_bare', $parameters]], $this->translator->trans('listing.title_page_bare', $parameters, 'seo'))
+                : $this->translator->trans('listing.title', ['site' => $this->site], 'seo');
             $description = $this->translator->trans($numbered ? 'listing.description_page' : 'listing.description', ['page' => (string) $page->page], 'seo');
         } elseif ($numbered) {
             $title = $this->landingTitle($located, true, $page->page);

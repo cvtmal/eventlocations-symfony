@@ -31,14 +31,14 @@ final class ListingSeoTest extends WebTestCase
     use LandingFixtures;
 
     private const string CLEAN = 'http://localhost/hochzeitslocations';
-    private const string TITLE = 'Hochzeitslocations in der Schweiz | Hochzeitslocation';
-    private const string PAGE_2_TITLE = 'Hochzeitslocations Schweiz – Seite 2 | Hochzeitslocation';
+    private const string TITLE = 'Hochzeitslocations in der Schweiz | deine-eventlocation.ch';
+    private const string PAGE_2_TITLE = 'Hochzeitslocations Schweiz – Seite 2';
     private const string ZURICH = 'http://localhost/hochzeitslocations/zuerich';
-    private const string ZURICH_TITLE = '49 Hochzeitslocations im Kanton Zürich | Hochzeitslocation';
+    private const string ZURICH_TITLE = 'Hochzeitslocations im Kanton Zürich | deine-eventlocation.ch';
     private const string TOWN = 'http://localhost/hochzeitslocations/zuerich/zuerich';
-    private const string TOWN_TITLE = '49 Hochzeitslocations in Zürich | Hochzeitslocation';
+    private const string TOWN_TITLE = '49 Hochzeitslocations in Zürich | deine-eventlocation.ch';
     private const string CASTLE = 'http://localhost/hochzeitslocations/schloss';
-    private const string CASTLE_TITLE = 'Hochzeit im Schloss: 49 Locations | Hochzeitslocation';
+    private const string CASTLE_TITLE = 'Hochzeit im Schloss: 49 Locations | deine-eventlocation.ch';
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -99,7 +99,7 @@ final class ListingSeoTest extends WebTestCase
             ['/hochzeitslocations/zuerich', self::ZURICH, false, 2, self::ZURICH_TITLE],
             ['/hochzeitslocations/zuerich?page=1', self::ZURICH, false, 2, self::ZURICH_TITLE],
             ['/hochzeitslocations/zuerich?utm_source=x', self::ZURICH, false, 2, self::ZURICH_TITLE],
-            ['/hochzeitslocations/zuerich?page=2', self::ZURICH.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | Hochzeitslocation'],
+            ['/hochzeitslocations/zuerich?page=2', self::ZURICH.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
             ['/hochzeitslocations/zuerich?guests=100', self::ZURICH, true, 0, self::ZURICH_TITLE],
             ['/hochzeitslocations/zuerich?building[]=castle', self::ZURICH, true, 0, self::ZURICH_TITLE],
             // The path wins over the query (P3), so this is the clean canton page.
@@ -107,13 +107,13 @@ final class ListingSeoTest extends WebTestCase
             ['/hochzeitslocations?canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
 
             ['/hochzeitslocations/zuerich/zuerich', self::TOWN, false, 2, self::TOWN_TITLE],
-            ['/hochzeitslocations/zuerich/zuerich?page=2', self::TOWN.'?page=2', false, 2, 'Hochzeitslocations in Zürich – Seite 2 | Hochzeitslocation'],
+            ['/hochzeitslocations/zuerich/zuerich?page=2', self::TOWN.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
             ['/hochzeitslocations/zuerich/zuerich?guests=100', self::TOWN, true, 0, self::TOWN_TITLE],
             ['/hochzeitslocations?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
             ['/hochzeitslocations/zuerich?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
 
             ['/hochzeitslocations/schloss', self::CASTLE, false, 2, self::CASTLE_TITLE],
-            ['/hochzeitslocations/schloss?page=2', self::CASTLE.'?page=2', false, 2, 'Hochzeit im Schloss – Seite 2 | Hochzeitslocation'],
+            ['/hochzeitslocations/schloss?page=2', self::CASTLE.'?page=2', false, 2, 'Hochzeit im Schloss – Seite 2 | deine-eventlocation.ch'],
             ['/hochzeitslocations/schloss?guests=100', self::CASTLE, true, 0, self::CASTLE_TITLE],
             ['/hochzeitslocations?building[]=castle', self::CASTLE, true, 0, self::CASTLE_TITLE],
             // A canton outranks a building: the facet the canton page cannot hold stays in the query.
@@ -195,7 +195,7 @@ final class ListingSeoTest extends WebTestCase
         self::assertSame($crawler->filter('title')->text(), $crawler->filter('meta[name="twitter:title"]')->attr('content'));
         self::assertSame($crawler->filter('meta[name="description"]')->attr('content'), $crawler->filter('meta[name="twitter:description"]')->attr('content'));
         self::assertSame('de_CH', $crawler->filter('meta[property="og:locale"]')->attr('content'));
-        self::assertSame('Hochzeitslocation', $crawler->filter('meta[property="og:site_name"]')->attr('content'));
+        self::assertSame('deine-eventlocation.ch', $crawler->filter('meta[property="og:site_name"]')->attr('content'));
     }
 
     public function test_without_a_photo_there_is_no_image_and_a_small_card(): void

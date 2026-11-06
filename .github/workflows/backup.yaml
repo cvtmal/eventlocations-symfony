@@ -2,11 +2,10 @@ name: Backup
 
 # Nightly pg_dump of Neon production, test-restored, kept 7 days as an artifact, reported
 # to the Sentry cron monitor. It runs here because the host's pg_dump 16 cannot dump Neon 18 (C7).
+# The schedule is off until F15 sets up the new host; run it by hand (workflow_dispatch).
 #
 # Secrets: NEON_BACKUP_URL (the direct string), SENTRY_CRON_URL (optional).
 on:
-  schedule:
-    - cron: '17 4 * * *' # UTC
   workflow_dispatch:
     inputs:
       allow_empty:

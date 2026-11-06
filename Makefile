@@ -163,7 +163,7 @@ validate-html: ## Nu Html Checker on the rendered HTML of URL=/path (ADMIN=1 or 
 ## —— Performance (perf stack, PERF-1, see docs/performance-baseline.md) ——
 .PHONY: perf-up perf-seed perf-run perf-lighthouse perf-down
 # The explicit -f keeps the lane's compose.override.yaml (ports, subnet) out of the perf project.
-PERF := NGINX_HOST_PORT=8096 DB_HOST_PORT=5446 docker compose -p hochzeitslocation-perf -f compose.yaml -f compose.perf.yaml
+PERF := NGINX_HOST_PORT=8096 DB_HOST_PORT=5446 docker compose -p deine-eventlocation-perf -f compose.yaml -f compose.perf.yaml
 PERF_PHP := $(PERF) exec -T php
 PERF_DB := $(PERF) exec -T database psql -U app -v ON_ERROR_STOP=1
 TIMES ?= 1

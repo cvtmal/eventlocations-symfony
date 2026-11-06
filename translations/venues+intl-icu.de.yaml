@@ -192,17 +192,6 @@ tier:
     premium: Premium
     basic: Standard
 
-rating_highlight:
-    food: Feines Essen
-    atmosphere: Stilvolle Atmosphäre
-    architecture: Einzigartige Architektur
-    location: Einmalige Lage
-    hospitality: Freundliche Gastgeber
-    reachability: Perfekte Erreichbarkeit
-    equipment: Moderne Ausstattung
-    programme: Attraktives Programm
-    value: 'Top Preis/Leistung'
-
 price_level:
     moderate: Moderat
     medium: Mittel
@@ -229,12 +218,6 @@ seating:
     banquet: Bankett
     apero: Apéro
     concert: Konzert
-
-reviewer_role:
-    visitor_f: Besucherin
-    visitor_m: Besucher
-    organiser_f: Veranstalterin
-    organiser_m: Veranstalter
 
 # Detail page (#8, venue_show). Numbers arrive pre-formatted (swiss_number, swiss_range).
 place:

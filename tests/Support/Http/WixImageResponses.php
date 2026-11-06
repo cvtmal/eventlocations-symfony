@@ -9,7 +9,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * The test environment's HTTP transport (framework.yaml, when@test: mock_response_factory),
- * under every client, so no test can reach Wix or anything else (#32 PD10). A test registers
+ * under every client, so no test can reach the network (#32 PD10). A test registers
  * the responses for a media id; a URL nobody registered throws, which fails the test loudly.
  */
 final class WixImageResponses

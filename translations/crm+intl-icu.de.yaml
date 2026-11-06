@@ -624,16 +624,3 @@ email_template:
 lookup:
     venue_number: 'Nr. {number}'
     venue_company: 'bei {company}'
-customer_import:
-    mail_body: Akquise-Mail gesendet (Kundenliste)
-    note:
-        heading: 'Aus der Kundenliste, Zeile {row}'
-        status: Status
-        salutation: Anrede
-        region: Region
-        instagram: Instagram
-        note: Notiz
-        email: E-Mail (Kundenliste)
-        phone: Telefon (Kundenliste)
-        website: Website (Kundenliste)
-        mail_sent: Mail gesendet am (Kundenliste)

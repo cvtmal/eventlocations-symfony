@@ -42,7 +42,7 @@ final class ProfileTest extends WebTestCase
         self::assertResponseStatusCodeSame(303);
         self::assertResponseRedirects('/konto/profil');
         $crawler = $this->client->followRedirect();
-        self::assertStringContainsString('Ihre Angaben sind gespeichert.', $crawler->text());
+        self::assertStringContainsString('Deine Angaben sind gespeichert.', $crawler->text());
         self::assertSame('Nora Meier', trim($crawler->filter('.sidebar__name')->text()));
 
         $user = $this->reload($manager);
@@ -162,7 +162,7 @@ final class ProfileTest extends WebTestCase
 
         $crawler = $this->client->followRedirect();
         self::assertResponseIsSuccessful();
-        self::assertStringContainsString('Ihr Passwort ist geändert.', $crawler->text());
+        self::assertStringContainsString('Dein Passwort ist geändert.', $crawler->text());
         self::assertCount(0, $crawler->filter('.sidebar'));
 
         $this->client->request('GET', '/konto/profil');

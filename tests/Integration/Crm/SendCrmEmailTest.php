@@ -249,7 +249,7 @@ final class SendCrmEmailTest extends KernelTestCase
         return new SendCrmEmailHandler(
             $companies,
             $contacts,
-            new CrmMailer($mailer, new MarkdownRenderer(), new EnabledLocale(['de'], 'de'), 'hallo@hochzeitslocation.ch', 'Hochzeitslocation <hallo@hochzeitslocation.ch>', $override),
+            new CrmMailer($mailer, new MarkdownRenderer(), new EnabledLocale(['de'], 'de'), 'hallo@deine-eventlocation.ch', 'deine-eventlocation.ch <hallo@deine-eventlocation.ch>', $override),
             $this->em,
             new MockClock('2026-11-01 10:00:00 UTC'),
             $logger,

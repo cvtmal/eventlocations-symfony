@@ -79,7 +79,7 @@ final class ClaimSearchTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame([], $this->names($crawler));
-        self::assertStringContainsString('Suchen Sie Ihre Location', $crawler->filter('#claim-results')->text());
+        self::assertStringContainsString('Such deine Location', $crawler->filter('#claim-results')->text());
     }
 
     /**
@@ -123,7 +123,7 @@ final class ClaimSearchTest extends WebTestCase
         $crawler = $this->search('seeblick');
 
         self::assertCount(0, $crawler->filter(self::ASK_BUTTON));
-        self::assertSame('Ihre Location', trim($crawler->filter('#claim-results .pill')->text()));
+        self::assertSame('Deine Location', trim($crawler->filter('#claim-results .pill')->text()));
     }
 
     public function test_the_staff_editors_name_is_not_rendered(): void

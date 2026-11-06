@@ -104,7 +104,7 @@ final class WizardCheckTest extends WebTestCase
         $crawler = $this->press($venue, rights: false);
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertStringContainsString('Bitte bestätigen Sie', $crawler->filter('form[name="submit_location"]')->text());
+        self::assertStringContainsString('Bitte bestätige', $crawler->filter('form[name="submit_location"]')->text());
         self::assertSame('draft', $this->submissionStatus($venue));
         self::assertSame([], $this->mails);
     }
@@ -129,7 +129,7 @@ final class WizardCheckTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->url($venue));
 
         self::assertResponseIsSuccessful();
-        self::assertSame('/konto/locations/'.$venue->number().'#kontakt', $crawler->selectLink('Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Tragen Sie sie im Kontakt ein.')->attr('href'));
+        self::assertSame('/konto/locations/'.$venue->number().'#kontakt', $crawler->selectLink('Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Trag sie im Kontakt ein.')->attr('href'));
 
         $this->press($venue);
 

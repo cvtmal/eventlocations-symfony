@@ -18,7 +18,7 @@ ROUTER="$PWD/var/release/check-router.php"
 DATABASE=app_release_check
 PORT=8099
 URL="http://127.0.0.1:$PORT"
-SITE=hochzeitslocation.ch
+SITE=deine-eventlocation.ch
 server=""
 database_exists=""
 
@@ -90,7 +90,7 @@ ADMIN_DEV_AUTOLOGIN=
 DEFAULT_URI=https://$SITE
 DATABASE_URL="postgresql://app:app@database:5432/$DATABASE?serverVersion=18&charset=utf8"
 MAILER_DSN=null://null
-MAILER_FROM="Hochzeitslocation <hallo@$SITE>"
+MAILER_FROM="deine-eventlocation.ch <hallo@$SITE>"
 MEDIA_ROOT=$MEDIA/originals
 MEDIA_PUBLIC_DIR=$MEDIA/public
 ENV
@@ -124,9 +124,10 @@ boot() {
 
 check_config() {
     console debug:config framework trusted_hosts > "$CHECK/var-output"
-    grep -qF '^hochzeitslocation\.ch$' "$CHECK/var-output" || fail "trusted_hosts lacks the bare host"
-    grep -qF '^www\.hochzeitslocation\.ch$' "$CHECK/var-output" || fail "trusted_hosts lacks www"
-    ok "both hosts are trusted"
+    grep -qF '^deine-eventlocation\.ch$' "$CHECK/var-output" || fail "trusted_hosts lacks the bare host"
+    grep -qF '^www\.deine-eventlocation\.ch$' "$CHECK/var-output" || fail "trusted_hosts lacks www"
+    grep -qF '^deineeventlocation\.ch$' "$CHECK/var-output" || fail "trusted_hosts lacks the redirect domain"
+    ok "the three hosts are trusted"
     console debug:config sentry > "$CHECK/var-output"
     grep -q 'send_default_pii: false' "$CHECK/var-output" || fail "Sentry may send personal data"
     ok "Sentry sends no personal data"

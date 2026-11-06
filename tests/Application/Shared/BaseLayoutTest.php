@@ -102,11 +102,11 @@ final class BaseLayoutTest extends WebTestCase
         $crawler = $this->home();
 
         foreach (['.site-header__wordmark img', '.site-footer__brand img'] as $selector) {
-            self::assertSame('hochzeitslocation.ch', $crawler->filter($selector)->attr('alt'));
+            self::assertSame('deine-eventlocation.ch', $crawler->filter($selector)->attr('alt'));
         }
 
         $year = (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Zurich')))->format('Y');
-        self::assertSame("© {$year} hochzeitslocation.ch", $crawler->filter('.site-footer__copy')->text());
+        self::assertSame("© {$year} deine-eventlocation.ch", $crawler->filter('.site-footer__copy')->text());
     }
 
     public function test_locations_is_the_current_page_on_the_listing_only(): void
@@ -150,7 +150,7 @@ final class BaseLayoutTest extends WebTestCase
 
         self::assertCount(2, $crawler->filter('.site-footer__column span.site-footer__heading'));
         self::assertCount(0, $crawler->filter('.site-footer__heading a'));
-        self::assertSame('mailto:hallo@hochzeitslocation.ch', $crawler->filter('.site-footer__column a[href^="mailto:"]')->attr('href'));
+        self::assertSame('mailto:hallo@deine-eventlocation.ch', $crawler->filter('.site-footer__column a[href^="mailto:"]')->attr('href'));
         self::assertSame('/#regionen', $crawler->filter('.site-footer__column a')->eq(1)->attr('href'));
         self::assertSame('/hochzeitslocation-in-meiner-naehe', $crawler->filter('.site-footer__column a')->eq(2)->attr('href'));
     }

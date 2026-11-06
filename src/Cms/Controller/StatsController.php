@@ -132,7 +132,7 @@ final class StatsController extends AbstractController
         $response->headers->set('Content-Type', self::CSV_CONTENT_TYPE);
         $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            'hochzeitslocation-mediakit-'.$today->format('Y-m-d').'.csv',
+            'deine-eventlocation-mediakit-'.$today->format('Y-m-d').'.csv',
         ));
 
         return $response;

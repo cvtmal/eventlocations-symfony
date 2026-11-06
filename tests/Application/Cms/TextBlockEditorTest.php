@@ -211,7 +211,7 @@ final class TextBlockEditorTest extends WebTestCase
         $hint = $crawler->filter('#text-block-default p')->each(static fn (Crawler $paragraph): string => $paragraph->text());
         self::assertSame('Ohne eigenen Text erscheinen diese 2 Absätze:', array_shift($hint));
         self::assertStringStartsWith('«Jede Hochzeit ist einzigartig, genau wie ihr Ort.', $hint[0]);
-        self::assertStringStartsWith('«Mit unseren Filtern grenzen Sie die Auswahl', $hint[1]);
+        self::assertStringStartsWith('«Mit unseren Filtern grenzt du die Auswahl', $hint[1]);
 
         $home = $this->client->request('GET', '/')->filter('.home-about__text > p')->each(static fn (Crawler $paragraph): string => '«'.$paragraph->text().'»');
         self::assertSame($home, $hint);

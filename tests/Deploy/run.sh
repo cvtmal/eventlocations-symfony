@@ -834,24 +834,6 @@ purge" ] || fail "prod-import all ran another order: $steps"
     ok "regenerate passes --venue and ends in a purge"
 
     clear_log
-    run prod_import customers-dry
-    expect_exit "prod-import customers-dry exits 0" 0
-    last="$(grep -n 'app:crm:import-customers' "$STUB_LOG" | tail -n 1)"
-    case "$last" in
-        *"-e APP_ENV=prod -e DATABASE_URL -e MEDIA_ROOT=/var/www/html/var/prod-media/originals -e MEDIA_PUBLIC_DIR=/var/www/html/var/prod-media/public php "*" app:crm:import-customers content/owner/kunden-master.csv --dry-run") ok "customers-dry runs the dry run with the production env" ;;
-        *) fail "customers-dry ran another command or env" ;;
-    esac
-
-    clear_log
-    run prod_import customers
-    expect_exit "prod-import customers exits 0" 0
-    last="$(grep -n 'app:crm:import-customers' "$STUB_LOG" | tail -n 1)"
-    case "$last" in
-        *"-e APP_ENV=prod -e DATABASE_URL -e MEDIA_ROOT=/var/www/html/var/prod-media/originals -e MEDIA_PUBLIC_DIR=/var/www/html/var/prod-media/public php "*" app:crm:import-customers content/owner/kunden-master.csv") ok "customers runs the real import with the production env" ;;
-        *) fail "customers ran another command or env" ;;
-    esac
-
-    clear_log
     run prod_import crm-bootstrap
     expect_exit "prod-import crm-bootstrap exits 0" 0
     last="$(grep -n 'app:crm:bootstrap' "$STUB_LOG" | tail -n 1)"
@@ -859,19 +841,6 @@ purge" ] || fail "prod-import all ran another order: $steps"
         *"-e APP_ENV=prod -e DATABASE_URL -e MEDIA_ROOT=/var/www/html/var/prod-media/originals -e MEDIA_PUBLIC_DIR=/var/www/html/var/prod-media/public php "*" app:crm:bootstrap") ok "crm-bootstrap runs app:crm:bootstrap with the production env" ;;
         *) fail "crm-bootstrap ran another command or env" ;;
     esac
-
-    clear_log
-    PROD_CUSTOMERS_CSV=/etc/passwd
-    export PROD_CUSTOMERS_CSV
-    run prod_import customers-dry
-    expect_failure "prod-import refuses a customer sheet outside the checkout"
-    unset PROD_CUSTOMERS_CSV
-    rm "$work/checkout/content/owner/kunden-master.csv"
-    run prod_import customers
-    expect_failure "prod-import customers fails without the sheet"
-    expect_output "the refusal names the sheet" "content/owner/kunden-master.csv is missing"
-    : > "$work/checkout/content/owner/kunden-master.csv"
-    expect_no_calls "a refused customer import calls nothing"
 
     run prod_import help
     expect_output "help states the run order" "Run order: first deploy"
@@ -967,8 +936,6 @@ prepare() {
     pack "$work/release" "$work/release.tgz"
     live_tree
     cp "$ROOT/bin/prod-import" "$work/checkout/bin/prod-import"
-    # The customer commands check that the sheet is there; the stub php never reads it.
-    : > "$work/checkout/content/owner/kunden-master.csv"
 }
 
 main() {
