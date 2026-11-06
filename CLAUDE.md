@@ -1,3 +1,5 @@
+> **Fork notice:** this repository is the fork for **deine-eventlocation.ch** (event venues), taken from hochzeitslocation-symfony on 2026-11-06. Read `KICKOFF.md` first. Until cycle F0 rewrites this file, everything below describes the wedding site: follow it for HOW (architecture, conventions, commands), and `KICKOFF.md` for WHAT.
+
 # Hochzeitslocation
 
 Swiss wedding-venue listing site: a home page, one listing page with filters, one detail page per venue, and a Merkliste without login. It is modelled on eventlokale.ch's wedding search. Scope, settled decisions, requirements and the cycle order live in `docs/rpi-cycles.md`; read it before starting a cycle. The current product view (what it does today, open product questions, roadmap) is `docs/product.md`, kept by the product owner.
