@@ -22,7 +22,7 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 **Public site**
 - Home page, one listing page with filters (region incl. place/postcode and radius, guests, wedding facts, more), canton landing pages, one detail page per venue with photos, facts and map, similar venues.
 - Guest filter with four size bands (bis 50, bis 100, bis 150, über 150 Gäste), matched against a venue's maximum capacity; a select on the listing overlay and the home search, "Alle Gästezahlen" for none. Old `?guests=N` links fall into their band (#51, `52313d0`).
-- "In der Nähe" page at `/hochzeitslocation-in-meiner-naehe`, linked from the header, phone menu and footer: the visitor shares a location or types a PLZ/Ort and sees venues within 30 km, nearest first, on a Google Maps map; without a location all pins show. Until the owner sets `GOOGLE_MAPS_JS_KEY` and the map ID on the server, the page shows the controls and the list without a map (#52, `13c3b49`).
+- "In der Nähe" page at `/hochzeitslocation-in-meiner-naehe`, linked from the header, phone menu and footer: the visitor shares a location or types a PLZ/Ort and sees venues within 30 km, nearest first, on a Google Maps map; without a location all pins show. The Google Maps key and map ID are set on the server (owner, 2026-11-06) (#52, `13c3b49`).
 - Detail page shows Google's stars and review count (#53) once a venue has a place ID; our own ratings and reviews and the Bewertungen tab are gone. Staff set the place ID in the CMS card "Google-Bewertung".
 - Merkliste (favourites) without login, kept in a cookie.
 - Inquiry form on every venue; the inquiry goes to the venue by e-mail and is stored for the CRM.
@@ -46,7 +46,6 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 | 3 | Q3 pin check: 13 doubtful map pins and 1 venue without a pin | Owner, by hand | In `content/owner/q3-pin-check.md` |
 | 4 | When to let Googlebot in | Owner | Blocked on purpose after launch; no date set |
 | 5 | Price of a self-created entry | Owner | Not set; plays no part in the app |
-| 6 | Server settings for the "In der Nähe" map: `GOOGLE_MAPS_JS_KEY` and the map ID | Owner | Page works without them, but shows no map |
 | 7 | Place IDs for Google ratings | Staff, per venue, in the CMS card "Google-Bewertung" | Billing country answered (Switzerland). Stars show on a detail page only once the venue has a place ID |
 
 ## CRM "Locations" (decided 2026-11-05)
