@@ -6,7 +6,7 @@ namespace App\Tests\Unit\Venues;
 
 use App\Tests\Support\Media\MediaFiles;
 use App\Venues\ContentYamlFile;
-use App\Venues\Exception\InvalidWixExport;
+use App\Venues\Exception\InvalidContentFolder;
 use PHPUnit\Framework\TestCase;
 
 final class ContentYamlFileTest extends TestCase
@@ -70,7 +70,7 @@ final class ContentYamlFileTest extends TestCase
 
         self::assertNotNull(ContentYamlFile::read($file, 'venue', ['translations']));
 
-        $this->expectException(InvalidWixExport::class);
+        $this->expectException(InvalidContentFolder::class);
         $this->expectExceptionMessage('venue: venue.yaml cannot be read');
 
         ContentYamlFile::read($file, 'venue', ['translations', 'translations.de']);
@@ -81,7 +81,7 @@ final class ContentYamlFileTest extends TestCase
         $file = $this->directory.'/venue.yaml';
         ContentYamlFile::replace($file, "name: Kaputt\n  tier: basic\n");
 
-        $this->expectException(InvalidWixExport::class);
+        $this->expectException(InvalidContentFolder::class);
 
         ContentYamlFile::read($file, 'venue');
     }

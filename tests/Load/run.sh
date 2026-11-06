@@ -10,7 +10,7 @@ set -euo pipefail
 MODE="${1:?usage: tests/Load/run.sh <uncached|all>}"
 case "$MODE" in uncached|all) ;; *) echo "MODE must be uncached or all, got \"$MODE\"" >&2; exit 64 ;; esac
 OUT=var/perf
-PERF=(docker compose -p hochzeitslocation-perf -f compose.yaml -f compose.perf.yaml)
+PERF=(docker compose -p deine-eventlocation-perf -f compose.yaml -f compose.perf.yaml)
 PSQL=("${PERF[@]}" exec -T database psql -U app -d app -v ON_ERROR_STOP=1 -At)
 TIMES="$(cat "$OUT/seed-times" 2>/dev/null || echo 1)"
 TAG="$MODE-x$TIMES"
@@ -31,7 +31,7 @@ echo "DETAIL_SLUG=$DETAIL_SLUG (x$TIMES)"
 (
     while true; do
         docker stats --no-stream --format "$(date +%H:%M:%S) {{.Name}} {{.CPUPerc}} {{.MemUsage}}" \
-            hochzeitslocation-perf-php-1 hochzeitslocation-perf-nginx-1 hochzeitslocation-perf-database-1 >> "$OUT/stats-$TAG.log"
+            deine-eventlocation-perf-php-1 deine-eventlocation-perf-nginx-1 deine-eventlocation-perf-database-1 >> "$OUT/stats-$TAG.log"
         sleep 5
     done
 ) &
@@ -39,7 +39,7 @@ SAMPLER=$!
 trap 'kill "$SAMPLER" 2>/dev/null || true' EXIT
 
 set +e
-docker run --rm --network hochzeitslocation-perf_default --cpuset-cpus 2-7 \
+docker run --rm --network deine-eventlocation-perf_default --cpuset-cpus 2-7 \
     -v "$PWD/tests/Load:/scripts:ro" -v "$PWD/$OUT:/results" \
     -e MODE="$MODE" -e DETAIL_SLUG="$DETAIL_SLUG" -e RUN="$(date +%s)" \
     ${FILTERS:+-e FILTERS="$FILTERS"} ${CANTON:+-e CANTON="$CANTON"} \

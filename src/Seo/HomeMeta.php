@@ -26,7 +26,7 @@ final class HomeMeta
     public function for(): PageMeta
     {
         return new PageMeta(
-            $this->titles->fit([['home.title', []]], $this->site),
+            $this->titles->fit([['home.title', []], ['home.title_short', []]], $this->site),
             MetaDescription::fit($this->translator->trans('home.description', [], 'seo')),
             $this->urls->generate('home', [], UrlGeneratorInterface::ABSOLUTE_URL),
             false,

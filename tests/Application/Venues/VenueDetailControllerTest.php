@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Application\Venues;
 
 use App\Factory\VenueFactory;
-use App\Factory\VenueReviewFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
@@ -61,7 +60,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
 
-        self::assertSame('Schloss Seeblick in Zürich mieten | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Schloss Seeblick in Zürich mieten | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSame('Schloss Seeblick: Hochzeit am See.', $crawler->filter('meta[name="description"]')->attr('content'));
         self::assertCount(1, $crawler->filter('h1'));
         self::assertStringContainsString('Schloss Seeblick', $crawler->filter('h1')->text());
@@ -214,7 +213,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/wiesenhof-ohne-ort');
 
-        self::assertSame('Wiesenhof Ohne Ort | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Wiesenhof Ohne Ort | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertCount(0, $crawler->filter('#standort'));
         self::assertCount(0, $crawler->filter('.venue-nav a[href="#standort"]'));
         self::assertCount(0, $crawler->filter('.venue-head__place'));
@@ -228,7 +227,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/scheune-nur-kanton');
 
-        self::assertSame('Scheune Nur Kanton im Kanton Zürich | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Scheune Nur Kanton im Kanton Zürich | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Kanton Zürich');
         self::assertCount(0, $crawler->filter('#standort'));
         self::assertSame('Scheune Nur Kanton im Kanton Zürich', $crawler->filter('[data-share-title]')->attr('data-share-title'));
@@ -240,7 +239,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/remise-vaduz');
 
-        self::assertSame('Remise Vaduz in Liechtenstein | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Remise Vaduz in Liechtenstein | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Liechtenstein');
         self::assertSame('Remise Vaduz in Liechtenstein', $crawler->filter('[data-share-title]')->attr('data-share-title'));
         self::assertStringNotContainsString('Kanton Liechtenstein', (string) $this->client->getResponse()->getContent());
@@ -252,7 +251,7 @@ final class VenueDetailControllerTest extends WebTestCase
 
         $crawler = $this->page('/hochzeitslocation/remise-nur-region');
 
-        self::assertSame('Remise Nur Region | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Remise Nur Region | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Schweizweit');
         self::assertSame('Remise Nur Region', $crawler->filter('[data-share-title]')->attr('data-share-title'));
     }
@@ -380,19 +379,6 @@ final class VenueDetailControllerTest extends WebTestCase
         $links = $crawler->filter('#kontakt a[data-stats-click="instagram"]')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
         self::assertSame(null === $expected ? [] : [$expected], $links);
         self::assertStringNotContainsString($stored, (string) $this->client->getResponse()->getContent());
-    }
-
-    public function test_retired_reviews_still_in_the_database_are_not_shown(): void
-    {
-        $venue = DetailVenues::minimal();
-        // #53: the rows stay until the drop migration, but no page reads them.
-        VenueReviewFactory::createOne(['venue' => $venue, 'firstName' => 'Lea', 'reviewedMonth' => new \DateTimeImmutable('2024-11-01')]);
-
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
-
-        self::assertSame(['#beschreibung', '#standort'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
-        self::assertCount(0, $crawler->filter('#bewertung, .venue-reviews, .venue-review'));
-        self::assertStringNotContainsString('Lea', (string) $this->client->getResponse()->getContent());
     }
 
     public function test_an_old_slug_redirects_permanently(): void

@@ -15,15 +15,15 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  * test seeds one town, two venues and one row in every child table inside a transaction
  * that is rolled back afterwards.
  *
- * test_every_constraint_has_a_rejection_case() lists every chk_/uk_/fk_ name of the 13
+ * test_every_constraint_has_a_rejection_case() lists every chk_/uk_/fk_ name of the 11
  * tables, so a new constraint without a case here fails.
  */
 final class VenueSchemaMigrationTest extends KernelTestCase
 {
     private const TABLES = [
         'venues', 'venue_translations', 'venue_slug_history', 'taxonomy_terms', 'venue_terms',
-        'venue_rating_highlights', 'venue_reviews', 'rooms', 'room_translations', 'venue_documents',
-        'venue_document_translations', 'venue_photos', 'venue_photo_translations',
+        'rooms', 'room_translations', 'venue_documents', 'venue_document_translations', 'venue_photos',
+        'venue_photo_translations',
     ];
 
     private const IDS = [
@@ -48,8 +48,6 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         "INSERT INTO venue_translations (id, venue_id, locale, slug, summary) VALUES (gen_random_uuid(), '{venue}', 'de', 'testhaus-venues', 'Kurz.'), (gen_random_uuid(), '{venue2}', 'de', 'zweithaus-venues', 'Kurz.')",
         "INSERT INTO venue_slug_history (id, venue_id, locale, slug) VALUES (gen_random_uuid(), '{venue}', 'de', 'altes-testhaus')",
         "INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES ('{venue}', 'setting', 'lake', TRUE), ('{venue}', 'building', 'castle', TRUE), ('{venue}', 'building', 'villa', FALSE)",
-        "INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 1, 'food')",
-        "INSERT INTO venue_reviews (id, venue_id, locale, first_name, role, reviewed_month, text) VALUES (gen_random_uuid(), '{venue}', 'de', 'Anna', 'visitor_f', '2026-05-01', 'Schön.')",
         "INSERT INTO rooms (id, venue_id, position) VALUES ('{room}', '{venue}', 1)",
         "INSERT INTO room_translations (id, room_id, locale, name) VALUES (gen_random_uuid(), '{room}', 'de', 'Saal')",
         "INSERT INTO venue_documents (id, venue_id, position, path, size_bytes) VALUES ('{doc}', '{venue}', 1, 'demo/a.pdf', 1000)",
@@ -123,10 +121,6 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'curfew time with has_curfew NULL' => ['chk_venues_curfew_at', ["UPDATE venues SET curfew_at = '02:00' WHERE id = '{venue}'"]];
         yield 'curfew time with has_curfew false' => ['chk_venues_curfew_at', ["UPDATE venues SET has_curfew = FALSE, curfew_at = '02:00' WHERE id = '{venue}'"]];
         yield 'instagram over http' => ['chk_venues_instagram', ["UPDATE venues SET instagram = 'http://www.instagram.com/testhaus' WHERE id = '{venue}'"]];
-        yield 'score without count' => ['chk_venues_rating', ["UPDATE venues SET rating_score = 8.0 WHERE id = '{venue}'"]];
-        yield 'count without score' => ['chk_venues_rating', ["UPDATE venues SET rating_count = 3 WHERE id = '{venue}'"]];
-        yield 'score above 10' => ['chk_venues_rating', ["UPDATE venues SET rating_score = 10.1, rating_count = 1 WHERE id = '{venue}'"]];
-        yield 'negative rating count' => ['chk_venues_rating_count', ["UPDATE venues SET rating_score = 8.0, rating_count = -1 WHERE id = '{venue}'"]];
         yield 'google place ID with a space' => ['chk_venues_google_place_id', ["UPDATE venues SET google_place_id = 'ChIJN1t tDeuEmsRU' WHERE id = '{venue}'"]];
         yield 'google place ID of 9 characters' => ['chk_venues_google_place_id', ["UPDATE venues SET google_place_id = 'ChIJN1t_t' WHERE id = '{venue}'"]];
         yield 'google rating hidden without a place ID' => ['chk_venues_google_rating_hidden', ["UPDATE venues SET google_rating_hidden = TRUE WHERE id = '{venue}'"]];
@@ -182,19 +176,6 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'unknown term' => ['fk_venue_terms_term', ["INSERT INTO venue_terms (venue_id, term_group, term_code) VALUES ('{venue}', 'building', 'spaceship')"]];
         yield 'term in the wrong group' => ['fk_venue_terms_term', ["INSERT INTO venue_terms (venue_id, term_group, term_code) VALUES ('{venue}', 'setting', 'castle')"]];
         yield 'used term is not deleted' => ['fk_venue_terms_term', ["DELETE FROM taxonomy_terms WHERE term_group = 'building' AND code = 'castle'"]];
-
-        // venue_rating_highlights
-        yield 'highlight position taken' => ['pk_venue_rating_highlights', ["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 1, 'value')"]];
-        yield 'highlight twice' => ['uk_venue_rating_highlights_venue_id_code', ["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 2, 'food')"]];
-        yield 'fourth highlight' => ['chk_venue_rating_highlights_position', ["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 4, 'value')"]];
-        yield 'unknown highlight' => ['chk_venue_rating_highlights_code', ["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 2, 'wifi')"]];
-        yield 'highlight of unknown venue' => ['fk_venue_rating_highlights_venue_id', ["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{missing}', 1, 'food')"]];
-
-        // venue_reviews
-        yield 'review locale' => ['chk_venue_reviews_locale', ["UPDATE venue_reviews SET locale = '' WHERE venue_id = '{venue}'"]];
-        yield 'unknown reviewer role' => ['chk_venue_reviews_role', ["UPDATE venue_reviews SET role = 'owner_f' WHERE venue_id = '{venue}'"]];
-        yield 'review month not on day 1' => ['chk_venue_reviews_reviewed_month', ["UPDATE venue_reviews SET reviewed_month = '2026-05-02' WHERE venue_id = '{venue}'"]];
-        yield 'review of unknown venue' => ['fk_venue_reviews_venue_id', ["INSERT INTO venue_reviews (id, venue_id, locale, first_name, role, reviewed_month, text) VALUES (gen_random_uuid(), '{missing}', 'de', 'Ben', 'visitor_m', '2026-05-01', 'Gut.')"]];
 
         // rooms
         yield 'room position taken' => ['uk_rooms_venue_id_position', ["INSERT INTO rooms (id, venue_id, position) VALUES (gen_random_uuid(), '{venue}', 1)"]];
@@ -270,14 +251,12 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'coordinates without a town' => [["UPDATE venues SET town_id = NULL, zip = NULL, street = NULL WHERE id = '{venue}'"]];
         yield 'distances 0 and 500 with names' => [["UPDATE venues SET distance_station_km = 0, station_name = 'Stäfa', distance_highway_km = 500, highway_name = 'A3', distance_airport_km = 12.5, airport_name = NULL WHERE id = '{venue}'"]];
         yield 'contact fields' => [["UPDATE venues SET phone = '+41441234567', inquiry_email = 'info@example.ch', website = 'https://example.ch', contact_person = 'Frau Muster' WHERE id = '{venue}'"]];
-        yield 'rating 0 and 10 with count 0' => [["UPDATE venues SET rating_score = 0, rating_count = 0 WHERE id = '{venue}'", "UPDATE venues SET rating_score = 10.0, rating_count = 4766 WHERE id = '{venue}'"]];
         yield 'room facts at their bounds' => [["UPDATE venues SET room_count = 0, largest_room_m2 = 50000, max_room_height_m = 30 WHERE id = '{venue}'"]];
         yield 'FAQ answers' => [["UPDATE venues SET own_catering = 'fixed_caterer', daylight = FALSE WHERE id = '{venue}'"]];
         yield 'wedding facts at their bounds' => [["UPDATE venues SET price_level = 'exclusive', capacity_seated = 1, capacity_standing = 50000, party = 'limited', has_curfew = TRUE, curfew_at = '00:00', instagram = 'https://www.instagram.com/testhaus' WHERE id = '{venue}'"]];
         yield 'same slug in another locale' => [["INSERT INTO venue_translations (id, venue_id, locale, slug, summary) VALUES (gen_random_uuid(), '{venue2}', 'fr', 'testhaus-venues', 'Court.')"]];
         yield 'many terms without primary position' => [["INSERT INTO taxonomy_terms (term_group, code, position) VALUES ('building', 'igloo', 40), ('building', 'treehouse', 41)"]];
         yield 'main setting and main building, other venue main building' => [["INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES ('{venue2}', 'building', 'castle', TRUE), ('{venue2}', 'setting', 'lake', TRUE), ('{venue2}', 'setting', 'city', FALSE)"]];
-        yield 'three highlights' => [["INSERT INTO venue_rating_highlights (venue_id, position, code) VALUES ('{venue}', 2, 'value'), ('{venue}', 3, 'location')"]];
         yield 'room at its bounds' => [["UPDATE rooms SET capacity_min = 1, capacity_max = 50000, area_m2 = 50000, height_m = 30, floor_material = 'parquet', capacity_seminar_min = 20, capacity_seminar_max = 20, capacity_concert_max = 50000 WHERE id = '{room}'"]];
         yield 'photo with a single width in webp and jpg' => [["UPDATE venue_photos SET width = 300, height = 1, dominant_color = '#000000', variants = '{\"widths\": [300], \"formats\": [\"webp\", \"jpg\"]}' WHERE id = '{photo}'"]];
         yield 'content key and hash' => [["UPDATE venues SET content_key = 'testhaus-8999', content_hash = repeat('0f', 32) WHERE id = '{venue}'", "UPDATE venues SET content_key = NULL, content_hash = NULL WHERE id = '{venue}'"]];
@@ -333,7 +312,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
         self::assertContains('uk_venue_terms_venue_id_term_group_main', $names);
-        self::assertCount(13, $primaryKeys);
+        self::assertCount(11, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
@@ -398,8 +377,6 @@ final class VenueSchemaMigrationTest extends KernelTestCase
             'venue_translations' => "SELECT count(*) FROM venue_translations WHERE venue_id = '{$venue}'",
             'venue_slug_history' => "SELECT count(*) FROM venue_slug_history WHERE venue_id = '{$venue}'",
             'venue_terms' => "SELECT count(*) FROM venue_terms WHERE venue_id = '{$venue}'",
-            'venue_rating_highlights' => "SELECT count(*) FROM venue_rating_highlights WHERE venue_id = '{$venue}'",
-            'venue_reviews' => "SELECT count(*) FROM venue_reviews WHERE venue_id = '{$venue}'",
             'rooms' => "SELECT count(*) FROM rooms WHERE venue_id = '{$venue}'",
             'room_translations' => "SELECT count(*) FROM room_translations WHERE room_id = '".self::IDS['{room}']."'",
             'venue_documents' => "SELECT count(*) FROM venue_documents WHERE venue_id = '{$venue}'",

@@ -42,7 +42,7 @@ final class ClaimAskTest extends WebTestCase
         self::assertSame([['status' => 'pending']], $this->accessRows($manager, $venue));
 
         $crawler = $this->client->followRedirect();
-        self::assertStringContainsString('Ihre Anfrage liegt bei uns.', $crawler->text());
+        self::assertStringContainsString('Deine Anfrage liegt bei uns.', $crawler->text());
         self::assertSame('Anfrage liegt bei uns', trim($crawler->filter('#claim-results .pill')->text()));
     }
 
@@ -96,7 +96,7 @@ final class ClaimAskTest extends WebTestCase
 
         self::assertResponseRedirects('/konto/locations/suchen', 303);
         self::assertSame([['status' => 'pending']], $this->accessRows($manager, $venue));
-        self::assertStringContainsString('Ihre Anfrage liegt bei uns.', $this->client->followRedirect()->text());
+        self::assertStringContainsString('Deine Anfrage liegt bei uns.', $this->client->followRedirect()->text());
     }
 
     public function test_asking_is_audited_as_the_portal_user(): void
@@ -126,7 +126,7 @@ final class ClaimAskTest extends WebTestCase
         self::assertResponseRedirects('/konto/locations/suchen', 303);
         self::assertSame([['status' => 'pending']], $this->accessRows($manager, $venue));
         self::assertSame(1, $this->auditCount());
-        self::assertStringContainsString('Ihre Anfrage liegt schon bei uns', $this->client->followRedirect()->text());
+        self::assertStringContainsString('Deine Anfrage liegt schon bei uns', $this->client->followRedirect()->text());
     }
 
     public function test_a_location_with_a_manager_follows_the_same_path(): void

@@ -67,7 +67,7 @@ final class CantonWordingTest extends KernelTestCase
             'count' => 5,
             'page' => '2',
             'name' => 'Schloss Au',
-            'site' => 'Hochzeitslocation',
+            'site' => 'deine-eventlocation.ch',
         ], $domain);
     }
 }

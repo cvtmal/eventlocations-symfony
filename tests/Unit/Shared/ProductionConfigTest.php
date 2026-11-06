@@ -25,9 +25,9 @@ final class ProductionConfigTest extends TestCase
         $hosts = $framework['trusted_hosts'];
         self::assertIsArray($hosts);
 
-        self::assertSame(['^hochzeitslocation\.ch$', '^www\.hochzeitslocation\.ch$'], $hosts);
+        self::assertSame(['^deine-eventlocation\.ch$', '^www\.deine-eventlocation\.ch$', '^deineeventlocation\.ch$'], $hosts);
 
-        foreach (['hochzeitslocation.ch' => true, 'www.hochzeitslocation.ch' => true, 'hochzeitslocation.ch.evil.example' => false, 'evilhochzeitslocation.ch' => false] as $host => $trusted) {
+        foreach (['deine-eventlocation.ch' => true, 'www.deine-eventlocation.ch' => true, 'deineeventlocation.ch' => true, 'www.deineeventlocation.ch' => false, 'deine-eventlocation.ch.evil.example' => false, 'evildeine-eventlocation.ch' => false] as $host => $trusted) {
             $matches = array_filter($hosts, static fn (mixed $pattern): bool => 1 === preg_match('{'.$pattern.'}', $host));
             self::assertSame($trusted, [] !== $matches, $host);
         }

@@ -10,8 +10,6 @@
 set -eu
 
 MEDIA_DIR="${PROD_MEDIA_DIR:-var/prod-media}"
-CSV="${PROD_CSV:-content/owner/Locations+Startseite.csv}"
-CUSTOMERS_CSV="${PROD_CUSTOMERS_CSV:-content/owner/kunden-master.csv}"
 # compose.yaml mounts the checkout here.
 CONTAINER_ROOT="${PROD_CONTAINER_ROOT:-/var/www/html}"
 REMOTE_APP="${PROD_REMOTE_APP:-www/hochzeitslocation.ch}"
@@ -24,7 +22,6 @@ usage() {
     cat <<'USAGE'
 Usage: bin/prod-import <command>
 
-  export                   write the content folders from the owner's CSV (local dev DB, no Neon)
   import                   app:venues:import against Neon, media into PROD_MEDIA_DIR
   import-dry               app:venues:import --dry-run against Neon: the summary and the kept venues, no writes
   regenerate [--venue=N]   app:media:regenerate against Neon, then sync, then purge
@@ -32,19 +29,14 @@ Usage: bin/prod-import <command>
   purge                    empty the HTTP cache on the server
   all                      import, then sync, then purge
   crm-bootstrap            app:crm:bootstrap against Neon: one company per venue that has none
-  customers-dry            app:crm:import-customers --dry-run against Neon: the report, no writes
-  customers                app:crm:import-customers against Neon
   places-find              app:venues:find-google-places against Neon: the place ID report, no writes
   places-apply-dry         app:venues:apply-google-places --dry-run against Neon: the summary, no writes
   places-apply             app:venues:apply-google-places against Neon, then purge
   help                     this text
 
-Run order: first deploy (migrations and towns), then export, then import-dry until its summary
-is right, then all. The import keeps every venue staff edited and lists it; import-dry shows the
-list first. --prune is refused: an empty or unmounted venues/ would unpublish every unedited venue.
-
-Customer sheet (#48): crm-bootstrap, then customers-dry until the report is right, then
-customers, then customers-dry shows 0 new.
+Run order: first deploy (migrations and towns), then import-dry until its summary is right, then
+all. The import keeps every venue staff edited and lists it; import-dry shows the list first.
+--prune is refused: an empty or unmounted venues/ would unpublish every unedited venue.
 
 Google place IDs (#53, #57): places-find (needs GOOGLE_PLACES_API_KEY in the shell; confident rows
 come pre-marked apply=yes), check the report, then places-apply-dry until right, then places-apply.
@@ -53,7 +45,6 @@ Environment, never in a file:
   PROD_DATABASE_URL   Neon's direct string
   PROD_SSH            the owner's unrestricted login, user@host (not the forced-command deploy key)
   PROD_MEDIA_DIR      inside the checkout, default var/prod-media
-  PROD_CUSTOMERS_CSV  inside the checkout, default content/owner/kunden-master.csv
   GOOGLE_PLACES_API_KEY  places-find only: a Places API (New) key restricted to your IP
 USAGE
 }
@@ -92,27 +83,8 @@ prod_console() { # prod_console <console args...>
         php "$@"
 }
 
-export_content() {
-    [ -f "$CSV" ] || die "$CSV is missing, the owner exports it fresh from Wix"
-    docker compose exec -T php php bin/console --no-interaction app:legacy:export-content "$CSV"
-    docker compose exec -T php php bin/console --no-interaction app:owner:export-content "$CSV"
-}
-
 import_content() {
     prod_console app:venues:import
-}
-
-require_customers_csv() {
-    # Read by the php container, so it has to stay inside the checkout.
-    case "$CUSTOMERS_CSV" in
-        "" | /* | ..* | */..*) die "PROD_CUSTOMERS_CSV must be a path inside the checkout" ;;
-    esac
-    [ -f "$CUSTOMERS_CSV" ] || die "$CUSTOMERS_CSV is missing"
-}
-
-import_customers() { # import_customers [--dry-run]
-    require_customers_csv
-    prod_console app:crm:import-customers "$CUSTOMERS_CSV" "$@"
 }
 
 regenerate_media() { # regenerate_media [--venue=N]
@@ -169,7 +141,7 @@ main() {
             usage
             return 0
             ;;
-        export | import | import-dry | regenerate | sync | purge | all | crm-bootstrap | customers-dry | customers) ;;
+        import | import-dry | regenerate | sync | purge | all | crm-bootstrap) ;;
         places-find | places-apply-dry | places-apply) ;;
         *)
             usage >&2
@@ -181,7 +153,6 @@ main() {
     require_env
 
     case "$cmd" in
-        export) export_content ;;
         import) import_content ;;
         import-dry) prod_console app:venues:import --dry-run ;;
         regenerate)
@@ -198,8 +169,6 @@ main() {
             purge_cache
             ;;
         crm-bootstrap) prod_console app:crm:bootstrap ;;
-        customers-dry) import_customers --dry-run ;;
-        customers) import_customers ;;
         places-find) prod_console app:venues:find-google-places ;;
         places-apply-dry) prod_console app:venues:apply-google-places --dry-run ;;
         places-apply)

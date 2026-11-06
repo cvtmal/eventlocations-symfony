@@ -18,9 +18,9 @@ parameters:
     app.content_root: '%env(resolve:CONTENT_ROOT)%'
     app.import_staging_dir: '%kernel.project_dir%/var/import-staging'
     # Public contact address of the site (Q5); the guest copy's Reply-To (#14).
-    site.contact_email: 'hallo@hochzeitslocation.ch'
+    site.contact_email: 'hallo@deine-eventlocation.ch'
     # Site and operator (Q5): JSON-LD, title suffix; #18's legal pages reuse them.
-    site.name: 'Hochzeitslocation'
+    site.name: 'deine-eventlocation.ch'
     site.operator_name: 'Pick n Roll GmbH'
     site.operator_street: 'Sonneggstrasse 61'
     site.operator_postcode: '8006'
@@ -105,8 +105,4 @@ when@test:
             public: true
         # The transport of every HTTP client in tests (framework.yaml, when@test, #32 PD10).
         App\Tests\Support\Http\WixImageResponses:
-            public: true
-        # WixPhotoCacheTest takes the real service, wired to wix.client and its retries.
-        App\Venues\WixPhotoCache:
-            autowire: true
             public: true

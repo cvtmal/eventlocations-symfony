@@ -1,5 +1,5 @@
 -- Demo data ×10 for the perf stack (S11, PERF-1; plan PD4): clones every venue 9 times, with its
--- translations, terms, rating highlights and venue-level photos. Run by `make perf-seed TIMES=10` on
+-- translations, terms and venue-level photos. Run by `make perf-seed TIMES=10` on
 -- a fresh dump of the lane's seeded database; never against the lane or the test database.
 --
 -- Columns are listed from information_schema (not generated, not identity), so `number` and
@@ -51,7 +51,7 @@ BEGIN
        AND is_generated = 'NEVER' AND is_identity = 'NO';
     EXECUTE format('INSERT INTO venue_translations (%s) SELECT %s FROM venue_translations v JOIN clone_map m ON m.src = v.venue_id', cols, sel);
 
-    -- venue_terms and venue_rating_highlights: only the venue changes.
+    -- venue_terms: only the venue changes.
     SELECT string_agg(quote_ident(column_name), ', ' ORDER BY ordinal_position),
            string_agg(CASE column_name WHEN 'venue_id' THEN 'm.id' ELSE 'v.' || quote_ident(column_name) END, ', ' ORDER BY ordinal_position)
       INTO cols, sel
@@ -59,14 +59,6 @@ BEGIN
      WHERE table_schema = current_schema() AND table_name = 'venue_terms'
        AND is_generated = 'NEVER' AND is_identity = 'NO';
     EXECUTE format('INSERT INTO venue_terms (%s) SELECT %s FROM venue_terms v JOIN clone_map m ON m.src = v.venue_id', cols, sel);
-
-    SELECT string_agg(quote_ident(column_name), ', ' ORDER BY ordinal_position),
-           string_agg(CASE column_name WHEN 'venue_id' THEN 'm.id' ELSE 'v.' || quote_ident(column_name) END, ', ' ORDER BY ordinal_position)
-      INTO cols, sel
-      FROM information_schema.columns
-     WHERE table_schema = current_schema() AND table_name = 'venue_rating_highlights'
-       AND is_generated = 'NEVER' AND is_identity = 'NO';
-    EXECUTE format('INSERT INTO venue_rating_highlights (%s) SELECT %s FROM venue_rating_highlights v JOIN clone_map m ON m.src = v.venue_id', cols, sel);
 
     -- venue_photos: each venue-level photo once per clone, column-agnostic through jsonb, so the
     -- NOT NULL media columns are filled. Files live under public/media/<number>/<photo id>-*, so a
@@ -99,4 +91,4 @@ BEGIN
 END
 $$;
 
-ANALYZE venues, venue_translations, venue_terms, venue_rating_highlights, venue_photos;
+ANALYZE venues, venue_translations, venue_terms, venue_photos;

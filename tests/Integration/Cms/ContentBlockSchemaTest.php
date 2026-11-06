@@ -6,10 +6,7 @@ namespace App\Tests\Integration\Cms;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
-use Doctrine\DBAL\Schema\Schema;
-use Doctrine\Migrations\AbstractMigration;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -18,12 +15,6 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  */
 final class ContentBlockSchemaTest extends KernelTestCase
 {
-    /**
-     * Migrations are loaded by path, not autoloaded, so the class is named from the file and
-     * stays out of PHPStan's sight.
-     */
-    private const MIGRATION_FILE = 'migrations/Version20261031070024.php';
-
     private const INSERT = "INSERT INTO content_blocks (key, locale, body_markdown, updated_at) VALUES ('landing.canton.zh.intro', 'de', 'Ein Text.', CURRENT_TIMESTAMP)";
 
     private const UPDATE = "UPDATE content_blocks SET %s WHERE key = 'landing.canton.zh.intro' AND locale = 'de'";
@@ -98,33 +89,6 @@ final class ContentBlockSchemaTest extends KernelTestCase
         }
         foreach ($tested as $name) {
             self::assertContains($name, $names, $name.' is not a constraint of these tables');
-        }
-    }
-
-    /**
-     * Postgres DDL is transactional, so down() and up() run inside the test's transaction and
-     * the rollback restores the table.
-     */
-    public function test_down_reverses_up(): void
-    {
-        $this->runMigration('down');
-        self::assertNull($this->connection->fetchOne("SELECT to_regclass('content_blocks')"));
-
-        $this->runMigration('up');
-        self::assertSame('content_blocks', $this->connection->fetchOne("SELECT to_regclass('content_blocks')::text"));
-    }
-
-    private function runMigration(string $direction): void
-    {
-        $file = \dirname(__DIR__, 3).'/'.self::MIGRATION_FILE;
-        require_once $file;
-        $class = 'DoctrineMigrations\\'.basename($file, '.php');
-        $migration = new $class($this->connection, new NullLogger());
-        self::assertInstanceOf(AbstractMigration::class, $migration);
-        'up' === $direction ? $migration->up(new Schema()) : $migration->down(new Schema());
-
-        foreach ($migration->getSql() as $query) {
-            $this->connection->executeStatement($query->getStatement());
         }
     }
 }

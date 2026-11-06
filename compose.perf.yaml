@@ -1,6 +1,6 @@
 # Prod-mode perf stack for PERF-1 (S11, #19; docs/performance-baseline.md). Always its own Compose
 # project next to the lane stack, without the lane's compose.override.yaml:
-#   docker compose -p hochzeitslocation-perf -f compose.yaml -f compose.perf.yaml …
+#   docker compose -p deine-eventlocation-perf -f compose.yaml -f compose.perf.yaml …
 # The `make perf-*` targets are the entry point; they also set the host ports (8096, 5446), which sit
 # outside the lane table of docs/rpi-cycles.md.
 #

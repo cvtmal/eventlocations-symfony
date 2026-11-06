@@ -289,7 +289,7 @@ final class ListingControllerTest extends WebTestCase
         self::assertSame('get', $form->attr('method'));
         self::assertSame('/hochzeitslocations', $form->attr('action'));
         self::assertSame('/_search/count?', $form->attr('data-live-count-url'));
-        self::assertSame('Wo soll Ihre Hochzeit stattfinden?', $crawler->filter('#filter-region-title')->text());
+        self::assertSame('Wo soll deine Hochzeit stattfinden?', $crawler->filter('#filter-region-title')->text());
 
         // The other groups travel as hidden state; this overlay's own fields do not.
         self::assertSame('100', $form->filter('input[type="hidden"][name="guests"]')->attr('value'));
@@ -476,7 +476,7 @@ final class ListingControllerTest extends WebTestCase
         $crawler = $this->get('/hochzeitslocations?q=zzzzzz');
 
         self::assertSelectorTextSame('.listing-hero__count', '0 Resultate');
-        self::assertSelectorTextSame('.listing-empty__title', 'Keine Location passt zu Ihren Filtern');
+        self::assertSelectorTextSame('.listing-empty__title', 'Keine Location passt zu deinen Filtern');
         self::assertSame('/hochzeitslocations', $crawler->filter('.listing-empty a')->attr('href'));
         self::assertSame('Filter löschen', $crawler->filter('.listing-empty a')->text());
         self::assertCount(0, $crawler->filter('.card'));
@@ -550,7 +550,7 @@ final class ListingControllerTest extends WebTestCase
 
         $crawler = $this->get('/hochzeitslocations');
 
-        self::assertSame('Hochzeitslocations in der Schweiz | Hochzeitslocation', $crawler->filter('title')->text());
+        self::assertSame('Hochzeitslocations in der Schweiz | deine-eventlocation.ch', $crawler->filter('title')->text());
         $description = (string) $crawler->filter('meta[name="description"]')->attr('content');
         self::assertNotSame('', $description);
         self::assertLessThanOrEqual(155, mb_strlen($description));

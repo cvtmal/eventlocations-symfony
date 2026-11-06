@@ -253,7 +253,7 @@ final class OnboardingWalkTest extends WebTestCase
         }, self::getMailerMessages());
         self::assertSame([
             [self::EMAIL, 'Wir prüfen '.self::NAME],
-            ['hallo@hochzeitslocation.ch', 'Neue Location zur Prüfung: '.self::NAME],
+            ['hallo@deine-eventlocation.ch', 'Neue Location zur Prüfung: '.self::NAME],
         ], $mails);
 
         $crawler = $this->client->followRedirect();

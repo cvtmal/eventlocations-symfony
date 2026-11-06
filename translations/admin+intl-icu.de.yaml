@@ -1,6 +1,6 @@
 # Strings of the back office (#22). Keys: <context>.<description>. Tone: "du", as in the design.
 shell:
-    wordmark: Hochzeitslocation
+    wordmark: deine-eventlocation.ch
     backoffice: Backoffice
     skip_to_content: Zum Inhalt springen
     main_nav: Hauptnavigation
@@ -22,7 +22,7 @@ role:
 login:
     title: Anmelden
     tagline: Locations pflegen, Kunden betreuen.
-    team_only: Nur für das Team von Hochzeitslocation.
+    team_only: Nur für das Team von deine-eventlocation.ch.
     email: E-Mail
     password: Passwort
     submit: Weiter
