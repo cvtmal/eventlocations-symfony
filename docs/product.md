@@ -46,7 +46,9 @@ It is not an eventlokale clone: no magazine, no provider listings, no event type
 | 3 | Q3 pin check: 13 doubtful map pins and 1 venue without a pin | Owner, by hand | In `content/owner/q3-pin-check.md` |
 | 4 | When to let Googlebot in | Owner | Blocked on purpose after launch; no date set |
 | 5 | Price of a self-created entry | Owner | Not set; plays no part in the app |
-| 7 | Place IDs for Google ratings | Staff, per venue, in the CMS card "Google-Bewertung" | Billing country answered (Switzerland). Stars show on a detail page only once the venue has a place ID |
+| 7 | Place IDs for Google ratings | #57 `google-places-auto` (in progress): fills the IDs from Google, doubtful rows go to a staff report; the owner runs it on production with a short-lived server key | Billing country answered (Switzerland). Stars show on a detail page only once the venue has a place ID. Expected cost about CHF 0 (inside Google's free monthly calls) |
+| 8 | Drop our retired rating data (branch `google-rating-drop`, `63683ad`) | Owner runs the read-only SQL in `docs/operations.md` §Google rating (#53) step 3 on production | Not urgent, nothing broken meanwhile. All counts 0: it merges and goes out with the next deploy. Any count above 0: the owner looks at the rows and decides drop, export first, or keep |
+| 9 | Real-key check of the Google box on a detail page (first real render) | Owner, in the #57 runbook | Also settles what a venue with an ID but no Google reviews shows (expected: the place name, no stars). PO preference if that looks odd: show nothing |
 
 ## CRM "Locations" (decided 2026-11-05)
 
