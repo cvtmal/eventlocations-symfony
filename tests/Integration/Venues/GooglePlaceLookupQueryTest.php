@@ -79,6 +79,24 @@ final class GooglePlaceLookupQueryTest extends KernelTestCase
         self::assertLessThanOrEqual($first->number(), $limited[0]->number);
     }
 
+    public function test_place_owners_lists_the_venues_holding_each_place_id(): void
+    {
+        $first = DetailVenues::minimal();
+        $second = DetailVenues::inCantonOnly();
+        $third = DetailVenues::inCantonWithPin('47.3', '8.5');
+        $without = DetailVenues::withoutPlace();
+        $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJSharedPlace01' WHERE id IN (?, ?)", [$second->id(), $first->id()]);
+        $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJOtherPlace002' WHERE id = ?", [$third->id()]);
+
+        $owners = $this->query->placeOwners();
+
+        $shared = [$first->number(), $second->number()];
+        sort($shared);
+        self::assertSame($shared, $owners['ChIJSharedPlace01'] ?? null);
+        self::assertSame([$third->number()], $owners['ChIJOtherPlace002'] ?? null);
+        self::assertNotContains($without->number(), array_merge(...array_values($owners)));
+    }
+
     /**
      * The rows of the given venues only: the test database may hold venues of other tests' fixtures.
      *

@@ -239,6 +239,26 @@ reviewer_role:
 # Detail page (#8, venue_show). Numbers arrive pre-formatted (swiss_number, swiss_range).
 place:
     canton: '{canton_code, select, li {} other {Kanton }}{canton}'
+# Place ID lookup report (#57, GooglePlaceVerdict): the `reason` column, one key per GooglePlaceReason.
+# {km} arrives pre-formatted with one decimal; {words}, {area} and {numbers} are comma-separated lists.
+google_place:
+    reason:
+        failed: 'Anfrage an Google fehlgeschlagen. places-find nochmals ausführen.'
+        no_result: 'Google findet nichts zu dieser Suche.'
+        not_a_venue: 'Treffer ist ein Ort, eine Strasse oder ein Gebiet, kein Betrieb.'
+        closed: 'Google führt diesen Betrieb als dauerhaft geschlossen.'
+        generic_name: 'Unser Name besteht nur aus allgemeinen Wörtern.'
+        no_place: 'Bei uns sind weder Kanton noch Region erfasst.'
+        name_differs: 'Google kennt diese Wörter unseres Namens nicht: {words}.'
+        google_name_longer: 'Googles Name hat zusätzliche Wörter: {words}.'
+        place_name_only: 'Unser Name nennt nur den Ort, und Googles Name lautet nicht genau gleich.'
+        common_name: 'Häufiger Name ohne Ortsangabe.'
+        canton_unknown: 'Google nennt keinen Kanton.'
+        place_differs: 'Ort passt nicht: Google nennt {area}.'
+        far_from_pin: '{km} km von unserem Pin entfernt.'
+        ambiguous: 'Google findet mehrere passende Betriebe.'
+        same_place: 'Derselbe Google-Ort passt auch zu Location {numbers}.'
+        match: 'Name und Ort stimmen überein.'
 detail:
     hero:
         label: 'Bilder von {name}'

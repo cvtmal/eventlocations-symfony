@@ -12,7 +12,8 @@ use Doctrine\DBAL\ParameterType;
 /**
  * The venues the one-off place ID lookup (#53, `app:venues:find-google-places`) asks Google about: every venue
  * without a place ID, any status, by number. A venue staff gave an ID is never asked again. `havePlace()` lets
- * the apply command's dry run say what a real run would keep or not find.
+ * the apply command keep a venue that already has an ID without dispatching (#57), and its dry run say what a real
+ * run would keep or not find; `placeOwners()` lets #57's finder see an ID already held by another venue.
  */
 final class GooglePlaceLookupQuery
 {
@@ -78,5 +79,20 @@ final class GooglePlaceLookupQuery
         }
 
         return $found;
+    }
+
+    /**
+     * The venues that already hold each place ID; the column has no unique constraint, so one ID may have several.
+     *
+     * @return array<string, list<int>> place ID → venue numbers, ascending
+     */
+    public function placeOwners(): array
+    {
+        $owners = [];
+        foreach ($this->connection->fetchAllAssociative('SELECT google_place_id, number FROM venues WHERE google_place_id IS NOT NULL ORDER BY number') as $row) {
+            $owners[(string) $row['google_place_id']][] = (int) $row['number'];
+        }
+
+        return $owners;
     }
 }
