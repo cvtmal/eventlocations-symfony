@@ -48,7 +48,11 @@ final class SubmissionQueryTest extends KernelTestCase
         $statuses = $this->query()->statuses([$draft->number(), $submitted->number(), $without->number()]);
 
         self::assertCount(1, $holder->getData()['default'] ?? []);
-        self::assertSame([$draft->number() => SubmissionStatus::Draft, $submitted->number() => SubmissionStatus::Submitted], $statuses);
+        // A lookup by number (the overview reads it per location), so its row order is not part of the contract.
+        $expected = [$draft->number() => SubmissionStatus::Draft, $submitted->number() => SubmissionStatus::Submitted];
+        ksort($expected);
+        ksort($statuses);
+        self::assertSame($expected, $statuses);
     }
 
     public function test_no_numbers_ask_nothing(): void
