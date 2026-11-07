@@ -51,7 +51,7 @@ final class VenueDetailQuery
     ];
 
     /** The order of a room's capacity lines (D3, as on the original). */
-    private const SEATING_ORDER = [Seating::Banquet, Seating::Seminar, Seating::Concert, Seating::Apero];
+    private const SEATING_ORDER = [Seating::Banquet, Seating::Seminar, Seating::UShape, Seating::Block, Seating::Concert, Seating::Apero];
 
     public function __construct(
         private readonly Connection $connection,
@@ -306,6 +306,7 @@ final class VenueDetailQuery
                 SELECT r.id, r.capacity_min, r.capacity_max, r.area_m2, r.height_m, r.floor_material,
                     r.capacity_banquet_min, r.capacity_banquet_max, r.capacity_seminar_min, r.capacity_seminar_max,
                     r.capacity_concert_min, r.capacity_concert_max, r.capacity_apero_min, r.capacity_apero_max,
+                    r.capacity_u_shape_min, r.capacity_u_shape_max, r.capacity_block_min, r.capacity_block_max,
                     rt.name, rt.description
                 FROM rooms r
                 {$translation}

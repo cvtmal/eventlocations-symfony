@@ -177,10 +177,12 @@ floor_material:
     wood: Holz
 
 seating:
-    seminar: Seminar
+    seminar: Seminar/Parlament
     banquet: Bankett
-    apero: Apéro
-    concert: Konzert
+    apero: Apéro/Stehempfang
+    concert: Konzert/Reihen
+    u_shape: U-Form
+    block: Block
 
 # Detail page (#8, venue_show). Numbers arrive pre-formatted (swiss_number, swiss_range).
 place:
@@ -263,9 +265,11 @@ detail:
         floor: 'Boden: {floor}'
         seating:
             banquet: Bankett (sitzend)
-            seminar: Seminar (sitzend)
-            concert: Theater (sitzend)
-            apero: 'Apéro, Party (stehend)'
+            seminar: Seminar/Parlament (sitzend)
+            u_shape: U-Form (sitzend)
+            block: Block (sitzend)
+            concert: Konzert/Reihen (sitzend)
+            apero: Apéro/Stehempfang (stehend)
     faq:
         heading: Häufige Fragen
         own_catering: Eigenes Catering?

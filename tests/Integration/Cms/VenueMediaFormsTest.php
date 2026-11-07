@@ -73,6 +73,8 @@ final class VenueMediaFormsTest extends KernelTestCase
             'banquet' => ['min' => 40, 'max' => 100],
             'apero' => ['min' => null, 'max' => null],
             'concert' => ['min' => null, 'max' => null],
+            'u_shape' => ['min' => null, 'max' => null],
+            'block' => ['min' => null, 'max' => null],
         ], $command->seating);
     }
 
@@ -102,7 +104,7 @@ final class VenueMediaFormsTest extends KernelTestCase
         yield 'name with a NUL' => [['names' => ['de' => "Ritter\0saal"]], 'names.de'];
         yield 'name too long' => [['names' => ['de' => str_repeat('a', 101)]], 'names.de'];
         yield 'description with invalid UTF-8' => [['descriptions' => ['de' => "Kamin\xff"]], 'descriptions.de'];
-        yield 'min above max' => [['capacityMin' => 200], 'capacityMax'];
+        yield 'min above max without layouts' => [['capacityMin' => 200, 'seating' => []], 'capacityMax'];
         yield 'capacity out of range' => [['capacityMax' => 50001], 'capacityMax'];
         yield 'capacity not a number' => [['capacityMax' => 'viele'], 'capacityMax'];
         yield 'area zero' => [['areaM2' => 0], 'areaM2'];
@@ -126,6 +128,13 @@ final class VenueMediaFormsTest extends KernelTestCase
 
         self::assertFalse($form->isValid());
         self::assertArrayHasKey($field, self::errors($form), (string) $form->getErrors(true));
+    }
+
+    public function test_under_a_layout_the_locked_room_range_is_not_checked(): void
+    {
+        $form = $this->room(array_replace(self::roomPayload(), ['capacityMin' => 200, 'capacityMax' => 100, 'seating' => ['block' => ['min' => 10, 'max' => 60]]]));
+
+        self::assertTrue($form->isValid(), (string) $form->getErrors(true));
     }
 
     public function test_photo_alts_build_the_command(): void

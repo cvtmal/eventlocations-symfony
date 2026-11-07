@@ -33,6 +33,36 @@ final class RoomTest extends TestCase
         self::assertSame(3.5, $room->heightM());
     }
 
+    public function test_the_layouts_give_the_room_its_guest_range(): void
+    {
+        $room = new Room(VenueObjects::venue(), 1, 10, 400);
+
+        $room->offerSeating(Seating::Banquet, 40, 150);
+        self::assertSame([40, 150], [$room->capacityMin(), $room->capacityMax()]);
+
+        $room->offerSeating(Seating::Apero, 30, 220);
+        $room->offerSeating(Seating::UShape, 5, null);
+        $room->offerSeating(Seating::Block, null, 24);
+        self::assertSame([30, 220], [$room->capacityMin(), $room->capacityMax()], 'greatest max, least min of the layouts with a max');
+
+        $room->reshape(1, 999, null, null, null);
+        self::assertSame([30, 220], [$room->capacityMin(), $room->capacityMax()], 'the stated range gives way');
+
+        foreach (Seating::cases() as $seating) {
+            $room->offerSeating($seating, null, null);
+        }
+        $room->reshape(1, 999, null, null, null);
+        self::assertSame([1, 999], [$room->capacityMin(), $room->capacityMax()], 'without layouts the stated range stays');
+    }
+
+    public function test_layout_range(): void
+    {
+        self::assertNull(Seating::guestRange([]));
+        self::assertNull(Seating::guestRange([['min' => 20, 'max' => null]]));
+        self::assertSame(['min' => null, 'max' => 80], Seating::guestRange([['min' => null, 'max' => 80], ['min' => 5, 'max' => null]]));
+        self::assertSame(['min' => 12, 'max' => 300], Seating::guestRange([['min' => 50, 'max' => 300], ['min' => 12, 'max' => 40], ['min' => null, 'max' => 90]]));
+    }
+
     public function test_content_key_move_and_reshape(): void
     {
         self::assertNull((new Room(VenueObjects::venue(), 1))->contentKey());

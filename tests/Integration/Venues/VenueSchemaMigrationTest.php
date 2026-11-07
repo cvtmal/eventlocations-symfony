@@ -182,10 +182,14 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'room area zero' => ['chk_rooms_area_m2', ["UPDATE rooms SET area_m2 = 0 WHERE id = '{room}'"]];
         yield 'room height above 30 m' => ['chk_rooms_height_m', ["UPDATE rooms SET height_m = 30.5 WHERE id = '{room}'"]];
         yield 'unknown floor' => ['chk_rooms_floor_material', ["UPDATE rooms SET floor_material = 'marble' WHERE id = '{room}'"]];
-        yield 'seminar min above max' => ['chk_rooms_capacity_seminar', ["UPDATE rooms SET capacity_seminar_min = 50, capacity_seminar_max = 20 WHERE id = '{room}'"]];
+        yield 'seminar min above max' => ['chk_rooms_capacity_seminar', ["UPDATE rooms SET capacity_max = 20, capacity_seminar_min = 50, capacity_seminar_max = 20 WHERE id = '{room}'"]];
         yield 'banquet zero' => ['chk_rooms_capacity_banquet', ["UPDATE rooms SET capacity_banquet_min = 0 WHERE id = '{room}'"]];
         yield 'apero above 50000' => ['chk_rooms_capacity_apero', ["UPDATE rooms SET capacity_apero_max = 50001 WHERE id = '{room}'"]];
-        yield 'concert min above max' => ['chk_rooms_capacity_concert', ["UPDATE rooms SET capacity_concert_min = 300, capacity_concert_max = 200 WHERE id = '{room}'"]];
+        yield 'concert min above max' => ['chk_rooms_capacity_concert', ["UPDATE rooms SET capacity_max = 200, capacity_concert_min = 300, capacity_concert_max = 200 WHERE id = '{room}'"]];
+        yield 'u-shape min above max' => ['chk_rooms_capacity_u_shape', ["UPDATE rooms SET capacity_max = 20, capacity_u_shape_min = 30, capacity_u_shape_max = 20 WHERE id = '{room}'"]];
+        yield 'block zero' => ['chk_rooms_capacity_block', ["UPDATE rooms SET capacity_block_max = 0 WHERE id = '{room}'"]];
+        yield 'room without a max under a layout' => ['chk_rooms_capacity_layouts', ["UPDATE rooms SET capacity_min = NULL, capacity_max = NULL, capacity_banquet_max = 100 WHERE id = '{room}'"]];
+        yield 'room max off its greatest layout' => ['chk_rooms_capacity_layouts', ["UPDATE rooms SET capacity_max = 200, capacity_banquet_max = 120, capacity_block_max = 40 WHERE id = '{room}'"]];
         yield 'room key taken in the venue' => ['uk_rooms_venue_id_content_key', [
             "UPDATE rooms SET content_key = 'saal' WHERE id = '{room}'",
             "INSERT INTO rooms (id, venue_id, position, content_key) VALUES (gen_random_uuid(), '{venue}', 2, 'saal')",
@@ -255,6 +259,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'many terms without primary position' => [["INSERT INTO taxonomy_terms (term_group, code, position) VALUES ('building', 'igloo', 40), ('building', 'treehouse', 41)"]];
         yield 'main setting and main building, other venue main building' => [["INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES ('{venue2}', 'building', 'castle', TRUE), ('{venue2}', 'setting', 'lake', TRUE), ('{venue2}', 'setting', 'city', FALSE)"]];
         yield 'room at its bounds' => [["UPDATE rooms SET capacity_min = 1, capacity_max = 50000, area_m2 = 50000, height_m = 30, floor_material = 'parquet', capacity_seminar_min = 20, capacity_seminar_max = 20, capacity_concert_max = 50000 WHERE id = '{room}'"]];
+        yield 'room max equals its greatest layout' => [["UPDATE rooms SET capacity_min = 10, capacity_max = 120, capacity_banquet_max = 120, capacity_u_shape_min = 10, capacity_u_shape_max = 30, capacity_block_max = 40 WHERE id = '{room}'"]];
         yield 'photo with a single width in webp and jpg' => [["UPDATE venue_photos SET width = 300, height = 1, dominant_color = '#000000', variants = '{\"widths\": [300], \"formats\": [\"webp\", \"jpg\"]}' WHERE id = '{photo}'"]];
         yield 'content key and hash' => [["UPDATE venues SET content_key = 'testhaus-8999', content_hash = repeat('0f', 32) WHERE id = '{venue}'", "UPDATE venues SET content_key = NULL, content_hash = NULL WHERE id = '{venue}'"]];
         yield 'same room key in two venues' => [["UPDATE rooms SET content_key = 'saal' WHERE id = '{room}'", "INSERT INTO rooms (id, venue_id, position, content_key) VALUES (gen_random_uuid(), '{venue2}', 1, 'saal')"]];

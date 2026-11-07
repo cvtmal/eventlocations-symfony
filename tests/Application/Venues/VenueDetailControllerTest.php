@@ -113,8 +113,10 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertSelectorExists('button[commandfor="room-1-info"]');
         self::assertSelectorExists('button[commandfor="room-1-facts"]');
         self::assertSelectorNotExists('button[commandfor^="room-2-"]');
-        self::assertSelectorTextContains('#room-1-info', 'Theater (sitzend): 60 - 250 Personen');
-        self::assertSelectorTextContains('#room-1-info', 'Seminar (sitzend): 120 Personen');
+        self::assertSelectorTextContains('#room-1-info', 'Konzert/Reihen (sitzend): 60 - 250 Personen');
+        self::assertSelectorTextContains('#room-1-info', 'Seminar/Parlament (sitzend): 120 Personen');
+        self::assertSelectorTextContains('#room-1-info', 'U-Form (sitzend): 40 Personen');
+        self::assertSelectorTextContains('#room-1-info', 'Block (sitzend): 60 - 80 Personen');
         self::assertSelectorTextContains('#room-1-info', 'Der grosse Saal mit Kronleuchtern.');
         self::assertSelectorTextContains('#room-1-facts', 'Fläche: 220 m²');
         self::assertSelectorTextContains('#room-1-facts', 'Raumhöhe: 4 m');

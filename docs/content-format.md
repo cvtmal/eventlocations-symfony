@@ -110,11 +110,11 @@ rooms:                                # in display order
   - key: rittersaal
     translations:
       de: {name: Rittersaal, description: Der grosse Saal mit Kronleuchtern.}   # name ≤ 100
-    capacity: {min: 20, max: 120}     # optional
+    capacity: {min: 20, max: 120}     # optional; ignored once a seating entry states a max
     area_m2: 180                      # optional, 1–50000
     height_m: 6.5                     # optional, > 0 and ≤ 30, at most two decimals
     floor_material: parquet           # optional: various | parquet | carpet | stone | wood
-    seating:                          # optional: seminar | banquet | apero | concert
+    seating:                          # optional: seminar | banquet | apero | concert | u_shape | block
       banquet: {min: 20, max: 100}
       apero: {max: 150}
     photos:                           # files in rooms/rittersaal/photos/
@@ -158,7 +158,7 @@ documents:                            # in display order; files in documents/
 | `main_terms.<setting\|building\|suitable_for>` | one code | Must also be listed under `terms`. |
 | `translations.<locale>` | `summary` ≤ 200 (required), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250, `ambience` ≤ 60, `capacity_note`, `opening_hours` ≤ 250, `region` ≤ 60 | `de` is required; other locales only once the site serves them (today only `de`). |
 | `photos[]` | `file`, `alt.<locale>` ≤ 700 | Order = display order. |
-| `rooms[]` | `key`, `translations.<locale>.name` ≤ 100 (+ `description`), `capacity`, `area_m2` 1–50000, `height_m` (> 0, ≤ 30, two decimals), `floor_material`, `seating`, `photos` | Order = display order. A seating entry needs `min` or `max`. |
+| `rooms[]` | `key`, `translations.<locale>.name` ≤ 100 (+ `description`), `capacity`, `area_m2` 1–50000, `height_m` (> 0, ≤ 30, two decimals), `floor_material`, `seating`, `photos` | Order = display order. A seating entry needs `min` or `max`. Seating codes and labels: `seminar` Seminar/Parlament, `banquet` Bankett, `apero` Apéro/Stehempfang, `concert` Konzert/Reihen, `u_shape` U-Form, `block` Block. Once an entry states a `max`, the room's guest range is the seating's: the greatest `max` and the least `min` of the entries with a `max` (`capacity` is then ignored). |
 | `documents[]` | `file` (`.pdf`), `title.<locale>` ≤ 200 | `title.de` is required. |
 
 The event facts (`price_level`, `capacity.seated`, `capacity.standing`,

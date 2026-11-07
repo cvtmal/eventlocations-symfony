@@ -15,6 +15,7 @@ use App\Venues\Command\ReorderRooms;
 use App\Venues\Exception\StaleEdit;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\ValueObject\Seating;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -51,7 +52,7 @@ final class RoomCommandsTest extends KernelTestCase
         self::assertIsArray($row);
         self::assertSame(2, $row['position']);
         self::assertNull($row['content_key']);
-        self::assertSame([20, 150, 240, '6.20', 'parquet'], [$row['capacity_min'], $row['capacity_max'], $row['area_m2'], $row['height_m'], $row['floor_material']]);
+        self::assertSame([40, 150, 240, '6.20', 'parquet'], [$row['capacity_min'], $row['capacity_max'], $row['area_m2'], $row['height_m'], $row['floor_material']]);
         self::assertSame([40, 120, null, 150, null, null, null, null], [
             $row['capacity_banquet_min'], $row['capacity_banquet_max'], $row['capacity_apero_min'], $row['capacity_apero_max'],
             $row['capacity_seminar_min'], $row['capacity_seminar_max'], $row['capacity_concert_min'], $row['capacity_concert_max'],
@@ -88,7 +89,7 @@ final class RoomCommandsTest extends KernelTestCase
     {
         $venue = VenueFactory::createOne();
         $room = RoomFactory::createOne(['venue' => $venue, 'areaM2' => 100, 'heightM' => '3.50', 'contentKey' => 'saal']);
-        $this->connection->executeStatement('UPDATE rooms SET capacity_seminar_min = 10, capacity_seminar_max = 30 WHERE id = ?', [$room->id()]);
+        $this->connection->executeStatement('UPDATE rooms SET capacity_min = 10, capacity_max = 30, capacity_seminar_min = 10, capacity_seminar_max = 30 WHERE id = ?', [$room->id()]);
         RoomTranslationFactory::createOne(['room' => $room, 'locale' => 'de', 'name' => 'Saal', 'description' => 'Alt']);
         $this->ageRow('rooms', $room->id());
         $this->em->clear();
@@ -102,6 +103,7 @@ final class RoomCommandsTest extends KernelTestCase
         $row = $this->connection->fetchAssociative('SELECT * FROM rooms WHERE id = ?', [$room->id()]);
         self::assertIsArray($row);
         self::assertSame(['saal', 310, '4.75', null, null, 50, 250], [$row['content_key'], $row['area_m2'], $row['height_m'], $row['capacity_seminar_min'], $row['capacity_seminar_max'], $row['capacity_concert_min'], $row['capacity_concert_max']]);
+        self::assertSame([50, 250], [$row['capacity_min'], $row['capacity_max']], 'the layouts give the range, not the stated 200');
         self::assertSame(
             [['name' => 'Grosser Saal', 'description' => null]],
             $this->connection->fetchAllAssociative('SELECT name, description FROM room_translations WHERE room_id = ?', [$room->id()]),
@@ -128,6 +130,26 @@ final class RoomCommandsTest extends KernelTestCase
         $this->dispatch(new ChangeRoom($venue->number(), $room->id(), $token, ['de' => 'Saal'], ['de' => 'Neu mit Bühne.'], null, 80, 100, '3.50', null, self::NO_SEATING));
         self::assertNotSame($token, $this->rowToken('rooms', $room->id()));
         self::assertTrue($this->cmsEdited($venue->number()));
+    }
+
+    public function test_the_layouts_give_the_room_its_range_and_without_them_the_stated_one_returns(): void
+    {
+        $venue = VenueFactory::createOne();
+        $room = RoomFactory::new()->withSeating(Seating::Block, 12, 40)->withSeating(Seating::UShape, null, 24)->create(['venue' => $venue, 'capacityMax' => 500, 'areaM2' => 100, 'heightM' => null, 'floorMaterial' => null]);
+        RoomTranslationFactory::createOne(['room' => $room, 'locale' => 'de', 'name' => 'Saal', 'description' => null]);
+        self::assertSame([12, 40], $this->capacity($room->id()));
+        $this->ageRow('rooms', $room->id());
+        $this->em->clear();
+        $token = $this->rowToken('rooms', $room->id());
+        $layouts = ['block' => ['min' => 12, 'max' => 40], 'u_shape' => ['min' => null, 'max' => 24]];
+
+        $this->dispatch(new ChangeRoom($venue->number(), $room->id(), $token, ['de' => 'Saal'], [], 1, 999, 100, null, null, $layouts));
+        self::assertSame($token, $this->rowToken('rooms', $room->id()), 'a stated range under layouts is no change');
+
+        $this->em->clear();
+        $this->dispatch(new ChangeRoom($venue->number(), $room->id(), $token, ['de' => 'Saal'], [], 1, 999, 100, null, null, self::NO_SEATING));
+        self::assertSame([1, 999], $this->capacity($room->id()));
+        self::assertNotSame($token, $this->rowToken('rooms', $room->id()));
     }
 
     public function test_a_stale_token_and_a_foreign_room_are_refused(): void
@@ -209,6 +231,17 @@ final class RoomCommandsTest extends KernelTestCase
     private function roomPositions(string $venueId): array
     {
         return array_map(intval(...), $this->connection->fetchFirstColumn('SELECT position FROM rooms WHERE venue_id = ? ORDER BY position', [$venueId]));
+    }
+
+    /**
+     * @return array{mixed, mixed}
+     */
+    private function capacity(string $roomId): array
+    {
+        $row = $this->connection->fetchAssociative('SELECT capacity_min, capacity_max FROM rooms WHERE id = ?', [$roomId]);
+        self::assertIsArray($row);
+
+        return [$row['capacity_min'], $row['capacity_max']];
     }
 
     /**

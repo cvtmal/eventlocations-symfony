@@ -19,7 +19,9 @@ use Doctrine\ORM\EntityManagerInterface;
  * - texts are trimmed; for each locale given, an empty name removes the locale's row, a
  *   description needs a name in its locale, and the default locale always keeps a name
  *   (VenueRuleViolation::roomNameRequired(), field `names.<locale>`);
- * - the facts and all four seating ranges are replaced (a type left out is not offered);
+ * - the facts and all seating ranges are replaced (a type left out is not offered); once a layout
+ *   states a maximum, the room's range is the layouts' (Seating::guestRange(), F4), so the stated
+ *   one is ignored, also for the change check;
  * - when anything changed, Room::reshape() moves the room's updated_at, its stale token, also
  *   for a change of texts alone.
  *
@@ -71,6 +73,11 @@ final class RoomFields
         }
         $texts = $this->texts($names, $descriptions, $existing);
 
+        $layoutRange = Seating::guestRange(array_map(static fn (Seating $type): array => $seating[$type->value] ?? ['min' => null, 'max' => null], Seating::cases()));
+        if (null !== $layoutRange) {
+            [$capacityMin, $capacityMax] = [$layoutRange['min'], $layoutRange['max']];
+        }
+
         $changed = $isNew
             || $room->capacityMin() !== $capacityMin
             || $room->capacityMax() !== $capacityMax
@@ -101,11 +108,11 @@ final class RoomFields
             return false;
         }
 
-        $room->reshape($capacityMin, $capacityMax, $areaM2, $heightM, $floor);
         foreach (Seating::cases() as $type) {
             $range = $seating[$type->value] ?? ['min' => null, 'max' => null];
             $room->offerSeating($type, $range['min'], $range['max']);
         }
+        $room->reshape($capacityMin, $capacityMax, $areaM2, $heightM, $floor);
 
         return true;
     }

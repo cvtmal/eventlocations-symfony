@@ -144,7 +144,7 @@ final class VenueMediaTabsTest extends WebTestCase
         self::assertIsArray($props['rooms'][0]);
         self::assertSame([$room->id(), ['de' => 'Seesaal'], '4.20'], [$props['rooms'][0]['id'], $props['rooms'][0]['names'], $props['rooms'][0]['heightM']]);
         self::assertSame(['value' => 'parquet', 'label' => 'Parkett'], self::listItem($props['floorMaterials'], 1));
-        self::assertSame(['value' => 'seminar', 'label' => 'Seminar'], self::listItem($props['seatingTypes'], 0));
+        self::assertSame(['value' => 'seminar', 'label' => 'Seminar/Parlament'], self::listItem($props['seatingTypes'], 0));
         self::assertSame([100, 5000], [$props['nameMax'], $props['descriptionMax']]);
         $api = '/admin/api/cms/venues/'.$number.'/rooms';
         $id = VenueMediaApi::ID_PLACEHOLDER;
