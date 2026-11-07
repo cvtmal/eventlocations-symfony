@@ -244,7 +244,7 @@ final class TierLimitsTest extends KernelTestCase
     public function test_a_venue_that_fell_back_to_free_keeps_its_event_types_may_shorten_them_and_cannot_grow_them(): void
     {
         $venue = $this->venue(KnownTiers::PRO);
-        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party_celebration']], []));
+        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']], []));
         $this->connection->executeStatement('UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = ?) WHERE id = ?', [KnownTiers::FREE, $venue->id()]);
         $this->em->clear();
         $count = fn (): int => (int) $this->connection->fetchOne("SELECT COUNT(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'", [$venue->id()]);
@@ -254,7 +254,7 @@ final class TierLimitsTest extends KernelTestCase
         $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event']], []));
         self::assertSame(4, $count(), 'shortening is allowed');
 
-        $violation = $this->violation(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party_celebration']], []));
+        $violation = $this->violation(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']], []));
 
         self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
         self::assertSame(4, $count(), 'growing past the plan is refused and nothing is written');

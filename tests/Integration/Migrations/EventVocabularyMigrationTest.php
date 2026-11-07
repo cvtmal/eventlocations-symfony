@@ -121,7 +121,7 @@ final class EventVocabularyMigrationTest extends KernelTestCase
 
     public function test_up_a_second_time_changes_nothing(): void
     {
-        $this->connection->executeStatement("INSERT INTO venues (id, name, tier, status, capacity_max) VALUES (?, 'Testhaus Zweimal', 'basic', 'published', 80)", [self::VENUE_WITH_TERMS]);
+        $this->connection->executeStatement("INSERT INTO venues (id, name, status, capacity_max) VALUES (?, 'Testhaus Zweimal', 'published', 80)", [self::VENUE_WITH_TERMS]);
         $this->connection->executeStatement("INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES (?, 'building', 'castle', TRUE), (?, 'suitable_for', 'birthday', FALSE), (?, 'catering', 'buffet', FALSE)", array_fill(0, 3, self::VENUE_WITH_TERMS));
         $before = $this->snapshot();
 
@@ -133,7 +133,7 @@ final class EventVocabularyMigrationTest extends KernelTestCase
 
     public function test_down_on_a_database_with_venues_drops_the_event_terms_and_keeps_the_shared_ones(): void
     {
-        $this->connection->executeStatement("INSERT INTO venues (id, name, tier, status, capacity_max) VALUES (?, 'Testhaus Zurueck', 'basic', 'published', 80)", [self::VENUE_WITH_TERMS]);
+        $this->connection->executeStatement("INSERT INTO venues (id, name, status, capacity_max) VALUES (?, 'Testhaus Zurueck', 'published', 80)", [self::VENUE_WITH_TERMS]);
         $this->connection->executeStatement(
             "INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES (?, 'building', 'castle', TRUE), (?, 'suitable_for', 'birthday', FALSE), (?, 'suitable_for', 'seminar', FALSE), (?, 'technology', 'wifi', FALSE), (?, 'catering', 'buffet', FALSE)",
             array_fill(0, 5, self::VENUE_WITH_TERMS),
@@ -162,7 +162,7 @@ final class EventVocabularyMigrationTest extends KernelTestCase
      */
     private function seedVenues(): void
     {
-        $this->connection->executeStatement("INSERT INTO venues (id, name, tier, status, capacity_max) VALUES (?, 'Testhaus Terme', 'basic', 'published', 100)", [self::VENUE_WITH_TERMS]);
+        $this->connection->executeStatement("INSERT INTO venues (id, name, status, capacity_max) VALUES (?, 'Testhaus Terme', 'published', 100)", [self::VENUE_WITH_TERMS]);
         $this->connection->executeStatement(<<<'SQL'
             INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES
                 (?, 'suitable_for', 'birthday', FALSE), (?, 'building', 'castle', TRUE), (?, 'amenity', 'overnight', FALSE),
@@ -171,7 +171,7 @@ final class EventVocabularyMigrationTest extends KernelTestCase
             SQL, array_fill(0, 9, self::VENUE_WITH_TERMS));
 
         $this->connection->executeStatement(
-            "INSERT INTO venues (id, name, tier, status, capacity_max, party, has_curfew, curfew_at) VALUES (?, 'Testhaus Party', 'basic', 'published', 60, 'limited', TRUE, '02:00')",
+            "INSERT INTO venues (id, name, status, capacity_max, party, has_curfew, curfew_at) VALUES (?, 'Testhaus Party', 'published', 60, 'limited', TRUE, '02:00')",
             [self::VENUE_WITH_PARTY],
         );
         $this->connection->executeStatement(

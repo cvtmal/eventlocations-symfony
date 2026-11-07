@@ -7,10 +7,10 @@ namespace App\Tests\Unit\Cms;
 use App\Cms\Form\ChangedFields;
 use App\Cms\Form\VenueAddressData;
 use App\Cms\Form\VenueBasicsData;
+use App\Cms\Form\VenueEventData;
 use App\Cms\Form\VenueLocaleTextsData;
 use App\Cms\Form\VenueTermsData;
 use App\Cms\Form\VenueTextsData;
-use App\Cms\Form\VenueWeddingData;
 use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
 use PHPUnit\Framework\TestCase;
@@ -32,11 +32,11 @@ final class ChangedFieldsTest extends TestCase
 
     public function test_an_enum_compares_by_value(): void
     {
-        $before = new VenueWeddingData();
+        $before = new VenueEventData();
         $before->priceLevel = PriceLevel::Medium;
-        $after = new VenueWeddingData();
+        $after = new VenueEventData();
         $after->priceLevel = PriceLevel::Exclusive;
-        $same = new VenueWeddingData();
+        $same = new VenueEventData();
         $same->priceLevel = PriceLevel::Medium;
 
         self::assertSame(['priceLevel'], ChangedFields::between($before, $after));
