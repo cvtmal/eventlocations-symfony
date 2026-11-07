@@ -26,6 +26,8 @@
         <div class="home-hero__media">
             {%- if hero_picture %}
             {{ venue_picture(hero_picture, sizes='(min-width: 1024px) 840px, calc(100vw - 48px)', priority=true, widths=[640, 960, 1280], class='home-hero__picture') }}
+            {%- else %}
+            {{ include('components/_photo_placeholder.html.twig', {}, with_context = false) }}
             {%- endif %}
         </div>
     </section>

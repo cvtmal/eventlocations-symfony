@@ -45,8 +45,12 @@ final class AssetBudgetTest extends TestCase
     {
         self::assertLessThanOrEqual(2, substr_count(self::compiledCss(), '@font-face'));
 
-        $layout = (string) file_get_contents(self::root().'/templates/base.html.twig');
-        self::assertLessThanOrEqual(2, preg_match_all('~<link\b[^>]*rel="preload"[^>]*as="font"~', $layout));
+        // The preload moved from base.html.twig into the brand head (F6), which every shell includes.
+        $layout = (string) file_get_contents(self::root().'/templates/base.html.twig')
+            .(string) file_get_contents(self::root().'/templates/layout/_brand_head.html.twig');
+        $preloads = preg_match_all('~<link\b[^>]*rel="preload"[^>]*as="font"~', $layout);
+        self::assertGreaterThanOrEqual(1, $preloads);
+        self::assertLessThanOrEqual(2, $preloads);
     }
 
     public function test_carousel_js_is_within_2_kb_gzip(): void

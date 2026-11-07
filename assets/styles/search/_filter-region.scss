@@ -257,7 +257,7 @@
             fill: var(--c-map-selected);
         }
 
-        // Focus shows pink with a black edge, so Enter visibly turns it dark; black on the dark fill would fail, hence the
+        // Focus shows the accent with a black edge, so Enter visibly turns it dark; black on the dark fill would fail, hence the
         // white edge. Later paths paint over the stroke's outer half, so 3 px leaves 1.5 px at any map width.
         &:focus-visible {
             fill: var(--c-map-hover);

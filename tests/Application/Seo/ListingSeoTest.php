@@ -198,15 +198,17 @@ final class ListingSeoTest extends WebTestCase
         self::assertSame('deine-eventlocation.ch', $crawler->filter('meta[property="og:site_name"]')->attr('content'));
     }
 
-    public function test_without_a_photo_there_is_no_image_and_a_small_card(): void
+    public function test_without_a_photo_the_page_shares_the_brand_card(): void
     {
         $this->venues(1);
 
         $crawler = $this->get('/hochzeitslocations');
 
-        self::assertCount(0, $crawler->filter('meta[property="og:image"]'));
-        self::assertCount(0, $crawler->filter('meta[name="twitter:image"]'));
-        self::assertSame('summary', $crawler->filter('meta[name="twitter:card"]')->attr('content'));
+        self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[property="og:image"]')->attr('content'));
+        self::assertSame('1200', $crawler->filter('meta[property="og:image:width"]')->attr('content'));
+        self::assertSame('630', $crawler->filter('meta[property="og:image:height"]')->attr('content'));
+        self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[name="twitter:image"]')->attr('content'));
+        self::assertSame('summary_large_image', $crawler->filter('meta[name="twitter:card"]')->attr('content'));
     }
 
     public function test_an_indexable_page_lists_its_venues_with_running_positions(): void
@@ -250,6 +252,7 @@ final class ListingSeoTest extends WebTestCase
         self::assertSame(['WebSite', 'Organization'], array_column($graphs[0]['@graph'], '@type'));
         self::assertSame('http://localhost/', $graphs[0]['@graph'][0]['url']);
         self::assertSame('Pick n Roll GmbH', $graphs[0]['@graph'][1]['legalName']);
+        self::assertSame('http://localhost/brand/icon-512.png', $graphs[0]['@graph'][1]['logo']);
         self::assertSame('8006', $graphs[0]['@graph'][1]['address']['postalCode']);
     }
 

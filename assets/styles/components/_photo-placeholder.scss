@@ -1,0 +1,26 @@
+// The stand-in for a venue without a public photo (templates/components/_photo_placeholder.html.twig, F6): the placeholder
+// ground, one soft circle (the overlays' motif) and the event type's icon in the primary. It sets no height: the place it
+// stands in does, and so does its radius (`.card__placeholder` hands its own on).
+.photo-placeholder {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--c-placeholder-ground);
+    color: var(--c-accent-strong);
+
+    &::before {
+        content: '';
+        grid-area: 1 / 1;
+        height: 56%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: var(--c-surface-raised);
+    }
+}
+
+.photo-placeholder__icon {
+    grid-area: 1 / 1;
+    width: auto;
+    height: 25%;
+    aspect-ratio: 1;
+}

@@ -3,7 +3,7 @@
 {% set on_listing = current_route in ['listing', 'listing_landing', 'listing_town'] %}
 <header class="site-header">
     <div class="site-header__inner">
-        <a class="site-header__wordmark" href="{{ path('home') }}"><img src="{{ asset('images/logo-hzl.png') }}" alt="{{ 'layout.logo_alt'|trans }}" width="135" height="30"></a>
+        <a class="site-header__wordmark" href="{{ path('home') }}">{{ include('components/_logo.html.twig', {label: 'layout.logo_alt'|trans}, with_context = false) }}</a>
         <nav class="site-header__actions" aria-label="{{ 'layout.header.menu_label'|trans }}">
             <a class="site-header__link" href="{{ path('listing') }}"{% if on_listing %} aria-current="page"{% endif %}>{{ 'layout.header.locations'|trans }}</a>
             <a class="site-header__link" href="{{ path('home') ~ '#regionen' }}">{{ 'layout.header.regions'|trans }}</a>

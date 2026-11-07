@@ -85,6 +85,11 @@
 .card__placeholder {
     border-radius: inherit;
     background: var(--c-placeholder-ground);
+
+    .photo-placeholder {
+        height: 100%;
+        border-radius: inherit;
+    }
 }
 
 .card__body {

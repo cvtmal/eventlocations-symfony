@@ -5,9 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noindex, nofollow">
         <title>{% block title %}{{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}</title>
-        <link rel="preload" href="{{ asset('fonts/figtree-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+        {{ include('layout/_brand_head.html.twig', {manifest: false}, with_context = false) }}
         <link rel="stylesheet" href="{{ asset('styles/admin.scss') }}">
-        <link rel="icon" href="{{ asset('icons/favicon.svg') }}" type="image/svg+xml">
     </head>
     <body>
         {% block body %}{% endblock %}

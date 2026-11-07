@@ -22,7 +22,7 @@
                         {% if picture %}
                             {{ venue_picture(picture, sizes='(min-width: 1024px) 336px, 258px', widths=[360, 640], class='similar-card__picture') }}
                         {% else %}
-                            <span class="similar-card__placeholder"></span>
+                            {{ include('components/_photo_placeholder.html.twig', {class: 'similar-card__placeholder'}, with_context = false) }}
                         {% endif %}
                         <div class="similar-card__body">
                             {% if venue.tier.value != 'basic' %}{{ include('components/_badge.html.twig', {label: venue.tier|trans}, with_context = false) }}{% endif %}

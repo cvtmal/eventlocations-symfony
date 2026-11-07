@@ -1,0 +1,23 @@
+// The wordmark (templates/components/_logo.html.twig). Its colours are tokens, so a palette change reaches the logo; its size
+// is set where it stands (layout/_header.scss, layout/_footer.scss). BRAND SWAP POINT with the partial (docs/brand.md).
+.logo {
+    display: block;
+    width: auto;
+}
+
+.logo__badge,
+.logo__tld {
+    fill: var(--c-accent-strong);
+}
+
+.logo__pin {
+    fill: var(--c-surface-raised);
+}
+
+.logo__spark {
+    fill: var(--c-accent);
+}
+
+.logo__name {
+    fill: currentColor;
+}

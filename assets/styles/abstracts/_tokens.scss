@@ -1,30 +1,33 @@
-// Design tokens (#35, S15, `docs/reference/public/tokens.json`). The only `:root` in app.css; `@use`d once, from app.scss.
-// Every partial reads these through var(--…). A colour that takes part in a contrast pair is literal hex, aliases
+// BRAND SWAP POINT, colours and type (docs/brand.md). Design tokens (S15). The only `:root` in app.css; `@use`d once, from
+// app.scss. Every partial reads these through var(--…). A colour that takes part in a contrast pair is literal hex, aliases
 // included, because ContrastTokensTest reads the hex from this file; an alias is marked with `= <token>`.
+// Placeholder brand (F6): one primary (indigo, `accent-strong` and its states), one accent (vermilion, `accent`) and cool
+// neutrals. The names stay from #35, so the partials did not change; only the values did. Where a colour must repeat as
+// a literal outside Sass (the mails, `theme-color`, the web manifest, the logo files), MailLiteralsTest and BrandFilesTest say which one.
 @use 'breakpoints' as bp;
 
 :root {
     // —— Colour: surfaces
-    --c-surface: #f8f6ee; // the page ground
+    --c-surface: #f6f7fb; // the page ground
     --c-surface-raised: #fff; // cards, dialogs, footer
-    --c-surface-alt: #f0f1eb; // alternating bands
+    --c-surface-alt: #eceef7; // alternating bands
 
     // —— Colour: text
-    --c-ink: #484848;
+    --c-ink: #262b3f;
     --c-ink-strong: #000;
-    --c-ink-muted: #6b6b66;
+    --c-ink-muted: #5a6078;
 
     // —— Colour: accent. `accent` is never behind text and never text below 24 px.
-    --c-accent: #ff0096;
-    --c-accent-strong: #d1007a; // the only saturated ground behind text
-    --c-accent-strong-hover: #b4006a;
-    --c-accent-strong-active: #96005a;
-    --c-accent-soft: #ffe3f2; // selected; only `--c-ink` on it
+    --c-accent: #e0501a;
+    --c-accent-strong: #3a3fb0; // the primary: the only saturated ground behind text
+    --c-accent-strong-hover: #2d3190;
+    --c-accent-strong-active: #232673;
+    --c-accent-soft: #e6e8fb; // selected; only `--c-ink` on it
     --c-on-accent: #fff;
 
     // —— Colour: lines and focus
-    --c-line: #484848; // = ink; the underline of an input
-    --c-line-soft: #dedfd6; // decorative, carries no information
+    --c-line: #262b3f; // = ink; the underline of an input
+    --c-line-soft: #d8dcec; // decorative, carries no information
     --c-focus: #000; // = ink-strong
 
     // —— Colour: status
@@ -32,26 +35,26 @@
     --c-error-soft: #fbe9e7;
     --c-success: #1b6e45;
     --c-success-soft: #e2f1e8;
-    --c-disabled-ground: #e6e6e0;
-    --c-disabled-ink: #66665f;
+    --c-disabled-ground: #e3e6f0;
+    --c-disabled-ink: #5a5f77;
 
     // —— Colour: badges, overlays, placeholders
-    --c-tier-ground: #ffe3f2; // = accent-soft
-    --c-tag-ground: #f0f1eb; // = surface-alt
-    --c-overlay-ground: #f0f1eb; // = surface-alt
-    --c-overlay-circle: #e6e8df; // muted text only from 24 px (4.33), links in accent-strong-hover (5.39), not accent-strong (4.25)
-    --c-placeholder-ground: #e3e1d6;
+    --c-tier-ground: #e6e8fb; // = accent-soft
+    --c-tag-ground: #eceef7; // = surface-alt
+    --c-overlay-ground: #eceef7; // = surface-alt
+    --c-overlay-circle: #dfe3f3; // `ink-muted` only from 24 px as large text, links in `accent-strong-hover` (ContrastTokensTest)
+    --c-placeholder-ground: #dde1f0; // behind a photo while it loads, and the photo placeholder's ground
 
     // —— Colour: map
     --c-map-land: #fff; // = surface-raised
-    --c-map-line: #8a8a82;
-    --c-map-hover: #ff0096; // = accent
-    --c-map-selected: #700044;
+    --c-map-line: #757b95;
+    --c-map-hover: #e0501a; // = accent
+    --c-map-selected: #1e2160;
     --c-map-lake: #6b8aa0;
-    --c-map-radius: rgb(209 0 122 / .2); // accent-strong at the Region board's opacity
+    --c-map-radius: rgb(58 63 176 / .2); // accent-strong at the Region board's opacity
 
     // —— Font
-    --font-sans: 'Figtree', 'Figtree Fallback', system-ui, sans-serif;
+    --font-sans: 'Hanken Grotesk', 'Hanken Grotesk Fallback', system-ui, sans-serif;
     --fw-regular: 400;
     --fw-semibold: 600;
     --fw-bold: 700;
@@ -94,7 +97,7 @@
     --radius-pill: 999px;
 
     // —— Shadow: floating layers only, cards have none
-    --shadow-float: 0 8px 32px rgb(72 72 72 / .16);
+    --shadow-float: 0 8px 32px rgb(38 43 63 / .16);
 
     // —— Layout
     --header-h: 4.25rem;

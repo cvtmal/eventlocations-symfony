@@ -1,5 +1,5 @@
 {#
-    The footer's "Hochzeitslocations nach Kanton" (#17). It reads the cache item LandingPages writes
+    The footer's canton link list (#17). It reads the cache item LandingPages writes
     and never queries, so the 500 page still renders it during a database outage; a cold pool renders nothing.
 #}
 {% set cantons = footer_landing_cantons() %}

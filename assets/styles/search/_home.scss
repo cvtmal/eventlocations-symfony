@@ -94,6 +94,10 @@
     border-radius: var(--radius-image);
     background: var(--c-placeholder-ground);
 
+    .photo-placeholder {
+        height: 100%;
+    }
+
     @include bp.up(lg) {
         height: 35rem;
         border-radius: var(--radius-card);

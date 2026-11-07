@@ -77,6 +77,7 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertCount(1, $crawler->filter('[fetchpriority="high"]'));
         self::assertCount(1, $crawler->filter('link[rel="preload"][as="font"]'));
         self::assertCount(3, $crawler->filter('#bilder .carousel__slide'));
+        self::assertCount(0, $crawler->filter('.venue-placeholder'));
         // Slides 2+ yield to the LCP slide (#41 F-M1, baseline §8 Fix 1's lever).
         self::assertCount(1, $crawler->filter('#bilder .carousel__slide:first-child img[fetchpriority="high"]'));
         self::assertCount(2, $crawler->filter('#bilder .carousel__slide img[loading="lazy"][fetchpriority="low"]'));
@@ -185,6 +186,9 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertSame(['#beschreibung', '#standort'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
         self::assertSelectorNotExists('#bilder');
         self::assertSelectorNotExists('.venue-hero');
+        // F6: where the hero would stand, the brand's placeholder: no carousel, no link, no text.
+        self::assertSelectorExists('.venue-placeholder > .photo-placeholder[aria-hidden="true"]');
+        self::assertSelectorNotExists('.venue-placeholder a, .venue-placeholder button, .venue-placeholder img');
         self::assertSelectorNotExists('button[commandfor="venue-gallery"]');
         self::assertSelectorNotExists('#venue-gallery');
         self::assertSelectorNotExists('[fetchpriority="high"]');

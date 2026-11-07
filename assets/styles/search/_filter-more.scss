@@ -93,7 +93,7 @@
     }
 }
 
-// The band is white, so the shell's darker pink for the circle is not needed; `:not` leaves the shell's hover standing.
+// The band is white, so the shell's darker circle tone is not needed; `:not` leaves the shell's hover standing.
 .overlay--more .overlay__clear:not(:hover) {
     color: var(--c-accent-strong);
 }

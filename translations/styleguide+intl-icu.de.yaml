@@ -209,6 +209,10 @@ styleguide:
             map-lake: See
     count_badge:
         heading: Zähler der Merkliste
+    brand:
+        heading: Marke
+        logo: Logo
+        placeholder: Fotoplatzhalter
     extras:
         heading: Nicht auf dem Board
         intro: Echte Bausteine und Zustände, die das Board nicht zeichnet. Dialog und Overlays hier öffnen sich wirklich.

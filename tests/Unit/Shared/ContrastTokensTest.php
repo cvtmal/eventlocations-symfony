@@ -8,11 +8,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every text/background, focus/background and line/background pair of the design tokens meets WCAG 2.x AA (S15, #35).
- * A new colour pair gets a row here. Five pairs stay out on purpose. Two as `docs/reference/public/README.md` records:
- * map-land on overlay-ground (the cantons are told apart by map-line) and map-hover on map-lake (by hue and the tooltip).
- * Three from #38: map-hover, map-lake and map-line on overlay-circle (2.98, 2.94, 2.81), where the Region overlay's small
- * circle reaches the map's north-east rim. Each canton's interior is on map-land, and the tooltip names it.
+ * Every text/background, focus/background and line/background pair of the design tokens meets WCAG 2.x AA (S15, #35),
+ * measured on the placeholder brand of F6 (docs/brand.md: a new palette runs this test, and the pairs it fails are the
+ * ones to retune). A new colour pair gets a row here. Three pairs stay out on purpose: map-land on overlay-ground (1.16,
+ * the cantons are told apart by map-line), map-hover on map-lake (1.08, by hue and the tooltip) and map-lake on
+ * overlay-circle (2.85), where the Region overlay's small circle reaches the map's north-east rim. Each canton's interior
+ * is on map-land, and the tooltip names it.
  */
 final class ContrastTokensTest extends TestCase
 {
@@ -24,6 +25,7 @@ final class ContrastTokensTest extends TestCase
         $text = [
             ['ink', 'surface'], ['ink', 'surface-raised'], ['ink', 'surface-alt'], ['ink', 'accent-soft'],
             ['ink', 'overlay-ground'], ['ink', 'overlay-circle'], ['ink', 'tier-ground'], ['ink', 'tag-ground'],
+            ['ink', 'placeholder-ground'], // a photo's loading ground, and the photo placeholder's
             ['ink-muted', 'surface'], ['ink-muted', 'surface-raised'], ['ink-muted', 'surface-alt'], ['ink-muted', 'overlay-ground'],
             ['accent-strong', 'surface'], ['accent-strong', 'surface-raised'], ['accent-strong', 'surface-alt'],
             ['on-accent', 'accent-strong'], ['on-accent', 'accent-strong-hover'], ['on-accent', 'accent-strong-active'],
@@ -38,7 +40,7 @@ final class ContrastTokensTest extends TestCase
             yield "text {$fg} on {$bg}" => [$fg, $bg, 4.5];
         }
 
-        // WCAG 1.4.11: the logo and icon pink, the focus ring and the input underline on the three page grounds.
+        // WCAG 1.4.11: the logo spark and the icon accent, the focus ring and the input underline on the three page grounds.
         foreach (['accent', 'focus', 'line'] as $fg) {
             foreach (['surface', 'surface-raised', 'surface-alt'] as $bg) {
                 yield "{$fg} on {$bg}" => [$fg, $bg, 3.0];
@@ -64,6 +66,8 @@ final class ContrastTokensTest extends TestCase
             ['focus', 'overlay-ground'], ['focus', 'overlay-circle'], ['focus', 'accent-soft'], // the focus ring
             ['focus', 'map-hover'], // a focused canton's stroke
             ['surface-raised', 'map-selected'], // a focused selected canton's stroke, since focus on it is 1.77:1
+            ['map-hover', 'overlay-circle'], ['map-line', 'overlay-circle'], // the Region overlay's small circle (3.08, 3.27)
+            ['accent-strong', 'placeholder-ground'], // the photo placeholder's icon
         ];
         foreach ($overlay as [$fg, $bg]) {
             yield "{$fg} on {$bg}" => [$fg, $bg, 3.0];
@@ -80,9 +84,9 @@ final class ContrastTokensTest extends TestCase
 
     public function test_recorded_ratios_are_reproduced(): void
     {
-        self::assertEqualsWithDelta(5.26, self::ratio('on-accent', 'accent-strong'), 0.01);
-        self::assertEqualsWithDelta(7.63, self::ratio('ink', 'accent-soft'), 0.01);
-        self::assertEqualsWithDelta(4.63, self::ratio('accent-strong', 'surface-alt'), 0.01);
+        self::assertEqualsWithDelta(8.34, self::ratio('on-accent', 'accent-strong'), 0.01);
+        self::assertEqualsWithDelta(11.54, self::ratio('ink', 'accent-soft'), 0.01);
+        self::assertEqualsWithDelta(7.20, self::ratio('accent-strong', 'surface-alt'), 0.01);
     }
 
     private static function ratio(string $foreground, string $background): float
