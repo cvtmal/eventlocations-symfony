@@ -1,29 +1,38 @@
 #!/bin/sh
-# SSH forced command for the GitHub deploy key (#20). Installed ONCE by the owner, outside the
-# app directory, because a deploy replaces everything inside it:
+# SSH forced command for the GitHub deploy key (#20, F15). Installed ONCE by the owner, next to the
+# releases and outside them, so a deploy never replaces it:
 #
-#   /home/djweddin/deploy/hochzeitslocation/deploy-gate        (chmod 700)
+#   /var/www/deine-eventlocation.ch/deploy-gate        (chmod 700, owned by the deploy user)
 #
-# ~/.ssh/authorized_keys (see deploy/authorized_keys.example; authorized_keys does not expand
-# $HOME, so the line carries the absolute path):
+# ~/.ssh/authorized_keys of the deploy user (see deploy/authorized_keys.example):
 #
-#   command="/home/djweddin/deploy/hochzeitslocation/deploy-gate",restrict ssh-ed25519 AAAA… github-deploy
+#   command="/var/www/deine-eventlocation.ch/deploy-gate",restrict ssh-ed25519 AAAA… github-deploy
 #
-# Accepts exactly three commands, anything else is refused with exit 2 and no shell:
+# Accepts exactly four commands, anything else is refused with exit 2 and no shell:
 #   deploy <40-hex sha>   the release tarball (tar.gz) arrives on stdin
 #   purge                 empty the HTTP cache
 #   check                 env guard, sha, PHP version, free disk
+#   rollback              switch current back to the previous release
 #
 # A change to this file needs a manual copy; it is deliberately tiny and delegates everything.
 set -eu
 
-APP="${DEPLOY_APP:-$HOME/www/hochzeitslocation.ch}"
-WORK="${DEPLOY_WORK:-$HOME/deploy/hochzeitslocation}"
+ROOT="${DEPLOY_ROOT:-/var/www/deine-eventlocation.ch}"
+# On the releases' filesystem, so bin/deploy moves the stage into releases/ instead of copying it.
+WORK="${DEPLOY_WORK:-$ROOT/.deploy}"
 MAX_BYTES=300000000
 
 refuse() {
     printf '%s\n' "deploy-gate: $*" >&2
     exit 2
+}
+
+lock() {
+    # mkdir is atomic: a second deploy or rollback while one runs is refused, not queued.
+    mkdir "$WORK/.lock" 2>/dev/null || refuse "another deploy is running (rm -r $WORK/.lock if it died)"
+    trap 'rm -rf "$WORK/.lock" "$WORK/stage"' EXIT
+    # A dropped SSH connection is a HUP; dash runs the EXIT trap only on exit.
+    trap 'exit 1' HUP INT TERM
 }
 
 deploy() {
@@ -33,9 +42,7 @@ deploy() {
     esac
     [ "${#sha}" -eq 40 ] || refuse "deploy needs a 40-character sha"
 
-    # mkdir is atomic: a second deploy while one runs is refused, not queued.
-    mkdir "$WORK/.lock" 2>/dev/null || refuse "another deploy is running (rm -r $WORK/.lock if it died)"
-    trap 'rm -rf "$WORK/.lock" "$WORK/stage"' EXIT
+    lock
 
     rm -rf "$WORK/stage"
     mkdir "$WORK/stage"
@@ -52,8 +59,13 @@ main() {
     cmd="${SSH_ORIGINAL_COMMAND:-}"
     case "$cmd" in
         "deploy "*) deploy "${cmd#deploy }" ;;
-        purge | check) exec sh "$APP/bin/deploy" "$cmd" ;;
-        *) refuse "refused: only 'deploy <sha>', 'purge' and 'check' are allowed" ;;
+        purge | check) exec sh "$ROOT/current/bin/deploy" "$cmd" ;;
+        # Under the deploy lock, so it never races a running install's switch. Not exec: the trap must run.
+        rollback)
+            lock
+            sh "$ROOT/current/bin/deploy" rollback
+            ;;
+        *) refuse "refused: only 'deploy <sha>', 'purge', 'check' and 'rollback' are allowed" ;;
     esac
 }
 

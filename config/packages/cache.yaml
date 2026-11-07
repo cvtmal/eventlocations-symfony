@@ -1,7 +1,9 @@
 framework:
     cache:
-        # Unique name of your app: used to compute stable namespaces for cache keys.
-        #prefix_seed: your_vendor_name/app_name
+        # Unique name of your app: used to compute stable namespaces for cache keys. Fixed, because the
+        # default seeds with kernel.project_dir, which is releases/<sha> in production (F15): every
+        # deploy would start new limiter counters and snapshots, and a rollback would read stale ones.
+        prefix_seed: deine-eventlocation
 
         # The "app" cache stores to the filesystem by default.
         # The data in this cache should persist between deploys.

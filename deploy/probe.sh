@@ -1,5 +1,5 @@
 #!/bin/sh
-# Read-only check of the Hostpoint account, run by hand once (#20, plan Step 0.3):
+# Read-only check of the VPS, run by hand once as the deploy user after the first-time setup (#20, F15):
 #
 #   sh ~/probe/probe.sh | tee probe-cli.txt
 #
@@ -13,10 +13,10 @@
 #   PROBE_DSN='pgsql:host=<ep-id>.eu-central-1.aws.neon.tech;dbname=<db>;user=<user>;password=<pw>;sslmode=require'
 set -eu
 
-PHP="${PROBE_PHP:-/usr/local/php85/bin/php}"
+PHP="${PROBE_PHP:-php}"
 ENV_FILE="${PROBE_ENV_FILE:-$HOME/probe.env}"
-APP_DIR="${PROBE_APP_DIR:-$HOME/www/hochzeitslocation.ch}"
-SMTP_HOST="${PROBE_SMTP_HOST:-asmtp.mail.hostpoint.ch}"
+APP_DIR="${PROBE_APP_DIR:-/var/www/deine-eventlocation.ch}"
+SMTP_HOST="${PROBE_SMTP_HOST:-mail.infomaniak.com}"
 SMTP_PORT="${PROBE_SMTP_PORT:-587}"
 
 run() { # run <number> <title> <function>
@@ -56,8 +56,8 @@ php_version() {
 }
 
 php_paths() {
-    ls -l "$(dirname "$PHP")/"
-    ls -l /usr/local/bin/composer
+    command -v "$PHP"
+    ls -l "$(dirname "$(command -v "$PHP")")"/php*
 }
 
 php_pgsql() {
@@ -82,8 +82,7 @@ host_tools() {
 }
 
 app_dir() {
-    ls -ld "$APP_DIR"
-    printf 'by hand: does the panel accept the docroot named in docs/operations.md before it exists?\n'
+    ls -ld "$APP_DIR" "$APP_DIR/releases" "$APP_DIR/shared"
 }
 
 neon_port() {
@@ -171,7 +170,7 @@ php_limits() {
     "$PHP" -i | grep -E 'memory_limit|realpath_cache_ttl'
     "$PHP" -d memory_limit=512M -r 'echo ini_get("memory_limit"), PHP_EOL;'
     # public/.user.ini never reaches the CLI, so the console has its own values. pm.max_requests and the
-    # worker count belong to php-fpm, which only the web probe can see.
+    # worker count belong to the php-fpm pool (deploy/php-fpm/deine-eventlocation.conf).
     "$PHP" <<'CODE'
 <?php
 foreach (['zend.exception_ignore_args', 'disable_functions'] as $key) {

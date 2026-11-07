@@ -2,14 +2,15 @@
 # Pulls the media from the server to the owner's Mac (#20). The database has its nightly dump in
 # Actions; the originals and variants exist only on the server once staff upload there.
 #
-#   PROD_SSH=user@host BACKUP_DIR=/Volumes/Backup/hochzeitslocation sh bin/pull-media-backup
+#   PROD_SSH=user@host BACKUP_DIR=/Volumes/Backup/deine-eventlocation sh bin/pull-media-backup
 #   PROD_SSH=user@host BACKUP_DIR=… sh bin/pull-media-backup --verify
 #
 # --verify compares checksums without copying and exits 1 if a server file is missing or differs
 # here. Nothing is ever deleted on either side, so the backup keeps what the server has dropped.
 set -eu
 
-REMOTE_APP="${PROD_REMOTE_APP:-www/hochzeitslocation.ch}"
+# The live release; its var/media and public/media are links into shared/ (bin/deploy).
+REMOTE_APP="${PROD_REMOTE_APP:-/var/www/deine-eventlocation.ch/current}"
 
 say() { printf '%s\n' "pull-media-backup: $*"; }
 die() { printf '%s\n' "pull-media-backup: $*" >&2; exit 1; }
