@@ -42,7 +42,7 @@ Before is Phase 0, without HttpCache. After is #19's finished cycle. After R2 is
 
 ## 2. Setup
 
-- **Stack.** `compose.perf.yaml`, Compose project `hochzeitslocation-perf` on :8096 and :5446, next to the dev lane:
+- **Stack.** `compose.perf.yaml`, Compose project `deine-eventlocation-perf` on :8096 and :5446, next to the dev lane:
   - `APP_ENV=prod`, `APP_DEBUG=0`. Composer runs `--no-dev --classmap-authoritative`; `cache:clear`, `sass:build` and `asset-map:compile` run in the container.
   - Xdebug is off. OPcache has `validate_timestamps=0`, so a code change needs `make perf-up`.
   - php-fpm uses a static pool of 10 children.
