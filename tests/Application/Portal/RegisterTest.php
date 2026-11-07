@@ -58,7 +58,7 @@ final class RegisterTest extends WebTestCase
         self::assertInstanceOf(Email::class, $mail);
         self::assertEmailAddressContains($mail, 'To', self::EMAIL);
         self::assertSame('Wähle dein Passwort', $mail->getSubject());
-        self::assertEmailHtmlBodyContains($mail, 'Guten Tag');
+        self::assertEmailHtmlBodyContains($mail, 'Hallo');
         self::assertEmailHtmlBodyContains($mail, '48 Stunden');
         self::assertEmailHtmlBodyContains($mail, 'http://localhost/konto/passwort-neu/');
         self::assertEmailTextBodyContains($mail, '/konto/passwort-neu/');
@@ -80,7 +80,7 @@ final class RegisterTest extends WebTestCase
         self::assertResponseStatusCodeSame(303);
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
-        self::assertEmailHtmlBodyContains($mail, 'Guten Tag');
+        self::assertEmailHtmlBodyContains($mail, 'Hallo');
         self::assertEmailHtmlBodyNotContains($mail, 'evil.example');
         self::assertEmailTextBodyNotContains($mail, 'evil.example');
     }

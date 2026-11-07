@@ -200,7 +200,7 @@ final class EmailTemplatesScreenTest extends WebTestCase
         $this->client->request('POST', self::LIST.'/neu', ['email_template' => ['name' => 'Erstkontakt', 'subject' => 'Ihre Location', 'bodyMarkdown' => 'Hallo'] + $token], server: $server);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('CSRF', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Das Formular konnte nicht geprüft werden.', (string) $this->client->getResponse()->getContent());
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_email_templates'));
     }
 
