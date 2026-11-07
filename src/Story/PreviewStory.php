@@ -7,14 +7,13 @@ namespace App\Story;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueTranslationFactory;
-use App\Geo\ValueObject\Canton;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Zenstruck\Foundry\Story;
 
 /**
- * G5: one prepared draft, "Remise am Bach" (unpublished, canton Zurich, no photos, so the preview shows the
+ * G5: one prepared draft, "Remise am Bach" (unpublished, no place and no photos yet, so the preview shows the
  * placeholder), with an open preview link: its Vorschau-Links tab in /admin shows the address and the QR code.
  * DemoStory adds an open and a revoked link to venue 2, whose ungranted photo the preview hides. Skips when its
  * campaign is already there, so a second `make seed` writes nothing.
@@ -34,7 +33,7 @@ final class PreviewStory extends Story
             return;
         }
 
-        $venue = VenueFactory::new()->withoutLocation(Canton::ZH)->create([
+        $venue = VenueFactory::new()->withoutLocation()->create([
             'name' => 'Remise am Bach',
             'tier' => Tier::Basic,
             'status' => VenueStatus::Unpublished,
