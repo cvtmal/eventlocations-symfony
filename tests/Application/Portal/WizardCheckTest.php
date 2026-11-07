@@ -168,6 +168,115 @@ final class WizardCheckTest extends WebTestCase
         self::assertCount(0, $crawler->filter('form[name="submit_location"]'));
     }
 
+    public function test_the_page_prints_the_declaration_and_offers_the_optional_second_box(): void
+    {
+        $venue = $this->draft($this->logInAsManager());
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter('form[name="submit_location"]');
+        self::assertSame('Bildrechte-Erklärung lesen', $form->filter('details.rights-details > summary')->text());
+        self::assertNotNull($form->filter('details.rights-details')->attr('open'), 'the text is open: nobody ticks a declaration they had to unfold first');
+        $text = $form->filter('details .rights-declaration');
+        self::assertStringContainsString('Mit deiner Bestätigung erklärst du:', $text->text());
+        self::assertCount(4, $text->filter('ol > li'));
+        self::assertSame('Ich darf diese Location vertreten und bestätige die Bildrechte-Erklärung.', $form->filter('label[for="submit_location_rights"]')->text(), 'the box names the declaration it confirms');
+        self::assertSame('Die Fotos dürfen auch für Werbezwecke von deine-eventlocation.ch verwendet werden (z. B. Newsletter, Social Media). Das ist freiwillig.', $form->filter('label[for="submit_location_derivatives"]')->text());
+        self::assertNull($form->filter('#submit_location_derivatives')->attr('required'));
+        self::assertNull($form->filter('#submit_location_derivatives')->attr('checked'));
+    }
+
+    public function test_submit_is_the_declaration_for_the_photos_that_have_no_grant(): void
+    {
+        $manager = $this->logInAsManager();
+        $venue = $this->draft($manager);
+        $waiting = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
+
+        $this->press($venue, derivatives: true);
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        $row = $this->connection->fetchAssociative('SELECT status, rights_confirmed_at FROM portal_submissions WHERE venue_id = ?', [$venue->id()]);
+        self::assertIsArray($row);
+        self::assertSame('submitted', $row['status']);
+        self::assertNotNull($row['rights_confirmed_at'], 'the confirmation of the rights is stored as before');
+        $grant = $this->connection->fetchAssociative('SELECT grantor_type, grantor_ref, evidence, scope_derivatives, policy_version, revoked_at FROM media_rights_grants WHERE venue_photo_id = ?', [$waiting->id()]);
+        self::assertIsArray($grant);
+        self::assertSame(['manager', $manager->id(), 'declaration', true, null], [$grant['grantor_type'], $grant['grantor_ref'], $grant['evidence'], $grant['scope_derivatives'], $grant['revoked_at']]);
+        self::assertNotSame('legacy', $grant['policy_version']);
+        self::assertSame(
+            ['staff_attestation'],
+            $this->connection->fetchFirstColumn('SELECT evidence FROM media_rights_grants WHERE venue_id = ? AND venue_photo_id <> ? AND revoked_at IS NULL', [$venue->id(), $waiting->id()]),
+            'the photo that had a grant keeps it',
+        );
+        $audit = $this->connection->fetchAssociative("SELECT actor_type, portal_user_id, subject_type, subject_id, changes FROM admin_audit_log WHERE command LIKE '%GrantPhotoRights'");
+        self::assertIsArray($audit);
+        self::assertSame(['portal_user', $manager->id(), 'venue', (string) $venue->number()], [$audit['actor_type'], $audit['portal_user_id'], $audit['subject_type'], $audit['subject_id']]);
+        self::assertEquals(['grantor' => 'manager', 'evidence' => 'declaration', 'derivatives' => true, 'photos' => 'all'], json_decode((string) $audit['changes'], true, flags: \JSON_THROW_ON_ERROR));
+    }
+
+    public function test_without_the_second_box_the_grants_record_no_derivatives(): void
+    {
+        $venue = $this->draft($this->logInAsManager());
+        $waiting = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
+
+        $this->press($venue);
+
+        self::assertFalse($this->connection->fetchOne('SELECT scope_derivatives FROM media_rights_grants WHERE venue_photo_id = ?', [$waiting->id()]));
+    }
+
+    public function test_a_resubmit_grants_only_the_photos_without_a_live_grant(): void
+    {
+        $manager = $this->logInAsManager();
+        $venue = $this->venue($manager);
+        SubmissionFactory::new()->accepted()->create(['venue' => $venue]);
+        $old = $this->connection->fetchOne('SELECT id FROM venue_photos WHERE venue_id = ?', [$venue->id()]);
+        $new = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
+        $before = $this->connection->fetchAssociative('SELECT id, evidence, created_at FROM media_rights_grants WHERE venue_photo_id = ?', [$old]);
+
+        $this->press($venue);
+
+        self::assertSame('submitted', $this->submissionStatus($venue));
+        self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_id = ? AND revoked_at IS NULL', [$venue->id()]));
+        self::assertSame($before, $this->connection->fetchAssociative('SELECT id, evidence, created_at FROM media_rights_grants WHERE venue_photo_id = ?', [$old]), 'the earlier grant is not touched');
+        self::assertSame('declaration', $this->connection->fetchOne('SELECT evidence FROM media_rights_grants WHERE venue_photo_id = ?', [$new->id()]));
+    }
+
+    public function test_a_press_with_every_photo_granted_writes_no_grant_row_and_no_audit_row(): void
+    {
+        $venue = $this->draft($this->logInAsManager());
+        $grants = (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_id = ?', [$venue->id()]);
+
+        $this->press($venue);
+
+        self::assertSame('submitted', $this->submissionStatus($venue));
+        self::assertSame($grants, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_id = ?', [$venue->id()]));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE command LIKE '%GrantPhotoRights'"), 'a command that grants nothing would only be noise in the history');
+    }
+
+    public function test_a_refused_press_grants_nothing(): void
+    {
+        $venue = $this->draft($this->logInAsManager(), ['inquiry_email', 'main_building']);
+        $waiting = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 1]);
+
+        $this->press($venue);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSame('draft', $this->submissionStatus($venue));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_photo_id = ?', [$waiting->id()]));
+    }
+
+    public function test_the_unticked_rights_box_grants_nothing(): void
+    {
+        $venue = $this->draft($this->logInAsManager());
+        $waiting = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
+
+        $this->press($venue, rights: false, derivatives: true);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_photo_id = ?', [$waiting->id()]));
+    }
+
     public function test_submit_sends_two_mails_and_fires_the_event(): void
     {
         $manager = $this->logInAsManager();
@@ -285,9 +394,9 @@ final class WizardCheckTest extends WebTestCase
         return $venue;
     }
 
-    private function press(Venue $venue, bool $rights = true): Crawler
+    private function press(Venue $venue, bool $rights = true, bool $derivatives = false): Crawler
     {
-        return $this->client->submit($this->form($venue), $rights ? ['submit_location[rights]' => '1'] : []);
+        return $this->client->submit($this->form($venue), ($rights ? ['submit_location[rights]' => '1'] : []) + ($derivatives ? ['submit_location[derivatives]' => '1'] : []));
     }
 
     private function form(Venue $venue): Form

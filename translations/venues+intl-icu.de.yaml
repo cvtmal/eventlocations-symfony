@@ -304,3 +304,24 @@ detail:
         heading: 'Telefonnummer von {name}'
         call: 'Anrufen: {display}'
         back: 'Zurück zu {name}'
+
+# Rights grants (G1). `rights.declaration.default` is the Markdown text a manager agrees to until staff write
+# their own in the text block `rights.declaration` (Venues\Extension\RightsDeclarationBlock). Whatever text is in force
+# gets a content-addressed version that every grant records, so edit it freely.
+rights:
+    declaration:
+        default: |
+            **Bildrechte-Erklärung**
+
+            Mit deiner Bestätigung erklärst du:
+
+            1. Du darfst diese Location vertreten und ihren Eintrag verwalten.
+            2. Du hast die Rechte an den Fotos, oder die Fotografin bzw. der Fotograf hat dir erlaubt, sie hier zu zeigen. Wir dürfen die Fotos auf der Detailseite und in den Suchergebnissen anzeigen und dafür in kleinere Grössen umrechnen.
+            3. Sind auf den Fotos Personen erkennbar, sind sie damit einverstanden.
+            4. Die Angaben zur Location stimmen nach deinem besten Wissen.
+
+            Du kannst eine Freigabe jederzeit widerrufen. Das Foto wird dann sofort von der Website entfernt. Die Erklärung und der Zeitpunkt bleiben als Nachweis gespeichert.
+blocks:
+    rights_declaration:
+        label: 'Bildrechte-Erklärung'
+        placement: 'Beim Veröffentlichen der Location (Schritt «Prüfen») und im Fotos-Tab des Kontos'

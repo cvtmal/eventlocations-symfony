@@ -283,6 +283,7 @@ history:
         DescribeVenuePhoto: den Alt-Text eines Fotos geändert
         MoveVenuePhotoToRoom: ein Foto verschoben
         RemoveVenuePhoto: ein Foto gelöscht
+        GrantPhotoRights: Fotos freigegeben
         AddRoom: einen Raum hinzugefügt
         ChangeRoom: einen Raum geändert
         ReorderRooms: die Räume neu angeordnet
@@ -379,6 +380,42 @@ photos:
         order_failed: Die Reihenfolge konnte nicht gespeichert werden.
         failed: Das hat nicht geklappt. Bitte nochmals versuchen.
         session_gone: Die Sitzung ist nicht mehr gültig. Bitte wenn nötig neu anmelden und die Seite neu laden.
+    # The "Bildrechte" card (G1), also shown on the Fotos tab of /konto. A photo is public only while it is granted.
+    rights:
+        title: Bildrechte
+        intro: Ein Foto ist nur auf der Website zu sehen, solange es freigegeben ist. Wer eine Freigabe widerruft, entfernt das Foto sofort von der Website.
+        table_label: Bildrechte der Fotos
+        column:
+            photo: Foto
+            status: Status
+        photo: 'Foto {position}'
+        photo_room: 'Foto {position} (Raum {room})'
+        status:
+            granted: Freigegeben
+            ungranted: Nicht freigegeben
+        detail:
+            granted: 'am {date}, Nachweis: {evidence}'
+            derivatives: Auch für Werbezwecke freigegeben.
+            ungranted: nicht öffentlich
+        evidence:
+            declaration: Erklärung
+            upload: Upload
+            staff_attestation: Bestätigung durch das Team
+        revoke:
+            action: Freigabe widerrufen
+            action_for: 'Freigabe widerrufen: {photo}'
+            title: 'Freigabe für {photo} widerrufen?'
+            text: Das Foto wird von der Website entfernt und kann nicht wiederhergestellt werden. Die Freigabe bleibt als Nachweis gespeichert.
+            confirm: Freigabe widerrufen
+            cancel: Abbrechen
+            close: Schliessen
+        grant_all: Alle aktuellen Fotos freigeben
+        grant_all_hint: '{count, plural, one {Du bestätigst damit, dass die Rechte an diesem Foto geklärt sind.} other {Du bestätigst damit, dass die Rechte an diesen # Fotos geklärt sind.}}'
+        flash:
+            granted: '{count, plural, =0 {Kein Foto freigegeben.} one {1 Foto freigegeben.} other {# Fotos freigegeben.}}'
+            nothing: Es gibt keine Fotos, die noch freigegeben werden müssen.
+            revoked: Freigabe widerrufen. Das Foto ist von der Website entfernt.
+            gone: Das Foto ist schon entfernt.
 
 rooms:
     tab: Räume

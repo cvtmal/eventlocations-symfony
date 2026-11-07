@@ -182,7 +182,7 @@ onboarding:
         hint_inquiry: Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Trag sie im Kontakt ein.
         preview: Vorschau
         edit: Angaben ändern
-        rights: Ich darf diese Location vertreten und habe die Rechte an ihren Texten und Fotos.
+        rights: Ich darf diese Location vertreten und bestätige die Bildrechte-Erklärung.
         submit: Veröffentlichen
         resubmit: Wieder veröffentlichen
         in_review: Wird geprüft. Du kannst die Angaben währenddessen weiter bearbeiten.
@@ -377,3 +377,21 @@ invite:
             greeting: Hallo {name}
             intro: Das Team von deine-eventlocation.ch hat dich als Location-Manager für {venue} eingetragen. Du kannst die Location jetzt in deinem Konto verwalten.
             button: Zu meinem Konto
+# The Bildrechte-Erklärung on the Fotos tab and at the submit step (G1). The text itself is `rights.declaration.default`
+# in the venues catalogue, or what staff wrote in the text block `rights.declaration`.
+rights:
+    note:
+        declared: 'Neue Fotos gelten mit deiner Bildrechte-Erklärung vom {date} als freigegeben.'
+        undeclared: Neue Fotos sind erst öffentlich, wenn du die Bildrechte-Erklärung bestätigt hast. Das geht weiter unten, sobald du Fotos hochgeladen und die Seite neu geladen hast.
+    declaration_title: Bildrechte-Erklärung
+    declaration_intro: Diese Fotos sind noch nicht freigegeben und deshalb nicht öffentlich. Mit deiner Bestätigung gibst du alle frei.
+    declaration_label: Ich bestätige die Bildrechte-Erklärung.
+    declaration_submit: Fotos freigeben
+    derivatives: Die Fotos dürfen auch für Werbezwecke von deine-eventlocation.ch verwendet werden (z. B. Newsletter, Social Media). Das ist freiwillig.
+    read: Bildrechte-Erklärung lesen
+    flash:
+        declared: '{count, plural, =0 {Kein Foto freigegeben.} one {1 Foto freigegeben.} other {# Fotos freigegeben.}}'
+        nothing: Alle Fotos sind schon freigegeben.
+        revoked: Freigabe widerrufen. Das Foto ist von der Website entfernt.
+        gone: Das Foto ist schon entfernt.
+        failed: Das hat nicht geklappt. Bitte versuch es noch einmal.

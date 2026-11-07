@@ -25,6 +25,7 @@ use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\DescribeVenuePhoto;
+use App\Venues\Command\GrantPhotoRights;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordVenueCreated;
@@ -38,6 +39,7 @@ use App\Venues\Command\ReorderVenuePhotos;
 use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Translation\TranslatorBagInterface;
@@ -85,11 +87,15 @@ final class CmsTranslationKeysTest extends KernelTestCase
         foreach (TriState::cases() as $state) {
             $keys[] = 'tri_state.'.$state->value;
         }
+        // The "Bildrechte" card names what a grant rests on (G1).
+        foreach (GrantEvidence::cases() as $evidence) {
+            $keys[] = 'photos.rights.evidence.'.$evidence->value;
+        }
         $commands = [
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
             ChangeVenueTerms::class, ChangeVenueEventFacts::class, ChangeVenueContact::class, ChangeVenueCapacity::class, AnswerVenueFaq::class,
             ChangeVenueTier::class, PublishVenue::class, UnpublishVenue::class,
-            AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class,
+            AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class, GrantPhotoRights::class,
             AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,
             AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,
             ChangeVenueGooglePlace::class, AssignVenueGooglePlace::class,

@@ -13,7 +13,9 @@ final class SubmitLocationType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('rights', CheckboxType::class, ['label' => 'onboarding.check.rights']);
+        $builder
+            ->add('rights', CheckboxType::class, ['label' => 'onboarding.check.rights'])
+            ->add('derivatives', CheckboxType::class, ['label' => 'rights.derivatives', 'required' => false]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

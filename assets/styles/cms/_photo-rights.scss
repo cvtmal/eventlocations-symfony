@@ -1,0 +1,105 @@
+// G1: the "Bildrechte" card of the Fotos tab (back office and /konto), and the declaration text beside the upload.
+
+.photo-rights {
+    // The base sets no margin on a paragraph, so the body stacks the intro and the table itself.
+    .card__body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--a-space-4);
+    }
+
+    // The table sits in the card's padded body, so its outer cells give up their own padding and line up with the text above.
+    .table {
+        th:first-child,
+        td:first-child {
+            padding-left: 0;
+            // "Foto 10" stays on one line on a phone; a long room name wraps after it.
+            min-inline-size: 4.5rem;
+        }
+
+        th:last-child,
+        td:last-child {
+            padding-right: 0;
+        }
+
+        // A status that wraps does not centre itself against the name.
+        td {
+            vertical-align: top;
+        }
+    }
+
+    .card__foot {
+        align-items: center;
+    }
+}
+
+// Status and button of one row: side by side, the button under the status when there is no room (390 px).
+.photo-rights__cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--a-space-2) var(--a-space-4);
+}
+
+.photo-rights__status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--a-space-1);
+}
+
+.photo-rights__grant-hint {
+    flex: 1 1 16rem;
+    margin: 0;
+}
+
+// The declaration text a manager agrees to, rendered from Markdown (Venues\RightsPolicy).
+.rights-declaration {
+    padding: var(--a-space-3) var(--a-space-4);
+    border: 1px solid var(--a-line);
+    border-radius: var(--a-r-md);
+    background: var(--a-surface-muted);
+    overflow-wrap: anywhere;
+    // About 70 characters a line, as readable as the text is long.
+    max-inline-size: 70ch;
+
+    p,
+    ol,
+    ul {
+        margin: 0 0 var(--a-space-2);
+    }
+
+    ol,
+    ul {
+        padding-left: var(--a-space-5);
+    }
+
+    > :last-child {
+        margin-bottom: 0;
+    }
+}
+
+// The form that takes the declaration (Fotos tab, submit step): the text, its box and the optional second box stack like
+// the editor's cards.
+.rights-form .card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+}
+
+.rights-details summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.rights-details .rights-declaration {
+    margin-top: var(--a-space-2);
+}
+
+// The photo-manager island mounts after the page is painted, so without a reserved box the card below it jumps down
+// (CLS 0.14 on the /konto Fotos tab). `:empty` holds until Vue has put its first child in; a venue with few photos
+// gives back a part of the box, a smaller move than the whole island's height.
+.venue-media [data-island='photo-manager']:empty {
+    min-block-size: 20rem;
+}

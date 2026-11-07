@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cms\Controller\Api;
 
+use App\Admin\Security\AdminIdentity;
 use App\Cms\Form\PhotoAltData;
 use App\Cms\ReadModel\VenuePhotosQuery;
 use App\Cms\ValueObject\VenueNumber;
@@ -13,6 +14,7 @@ use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\RemoveVenuePhoto;
 use App\Venues\Command\ReorderVenuePhotos;
+use App\Venues\ValueObject\Grantor;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +22,7 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -34,7 +37,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * - `PUT …/photos/{id}/alt` `{"loadedAt": "<token>", "alts": {"<locale>": "<text>"}}`: only the sent
  *   locales change, '' removes one; a stale token is a 409
  * - `PUT …/photos/{id}/room` `{"roomId": null|"<uuid>"}`: null is the gallery
- * - `DELETE …/photos/{id}`
+ * - `DELETE …/photos/{id}`: removes the photo and ends its rights grant, with the staff member as the revoker (G1)
  */
 #[IsGranted('ROLE_EDITOR')]
 #[IsCsrfTokenValid('admin_api', tokenKey: 'X-CSRF-Token', methods: ['POST', 'PUT', 'PATCH', 'DELETE'], tokenSource: IsCsrfTokenValid::SOURCE_HEADER)]
@@ -91,9 +94,9 @@ final class PhotosController extends AbstractController
     }
 
     #[Route('/{id}', name: 'admin_api_cms_photos_remove', methods: ['DELETE'])]
-    public function remove(int $number, string $id): JsonResponse
+    public function remove(int $number, string $id, #[CurrentUser] AdminIdentity $identity): JsonResponse
     {
-        return $this->dispatch($number, new RemoveVenuePhoto($number, $id));
+        return $this->dispatch($number, new RemoveVenuePhoto($number, $id, Grantor::staff($identity->id())));
     }
 
     private function dispatch(int $number, object $command): JsonResponse

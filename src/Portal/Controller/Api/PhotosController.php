@@ -8,11 +8,13 @@ use App\Cms\Form\PhotoAltData;
 use App\Cms\ReadModel\VenuePhotosQuery;
 use App\Cms\ValueObject\VenueNumber;
 use App\Cms\VenueMediaApi;
+use App\Portal\Security\PortalIdentity;
 use App\Portal\Security\PortalVenueVoter;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\Command\RemoveVenuePhoto;
 use App\Venues\Command\ReorderVenuePhotos;
+use App\Venues\ValueObject\Grantor;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +22,7 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -27,7 +30,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 /**
  * A manager's photo writes other than the upload (POR-8), with the bodies and answers of staff's
  * `Cms\Controller\Api\PhotosController`. Rooms stay with staff: `order` works on the gallery whatever the body says,
- * and there is no room action.
+ * and there is no room action. A removal ends the photo's rights grant with the manager as the revoker (G1).
  */
 #[IsGranted(PortalVenueVoter::EDIT, subject: 'number')]
 #[IsCsrfTokenValid('portal_api', tokenKey: 'X-CSRF-Token', methods: ['POST', 'PUT', 'PATCH', 'DELETE'], tokenSource: IsCsrfTokenValid::SOURCE_HEADER)]
@@ -67,9 +70,9 @@ final class PhotosController extends AbstractController
     }
 
     #[Route('/{id}', name: 'portal_api_photos_remove', methods: ['DELETE'])]
-    public function remove(int $number, string $id): JsonResponse
+    public function remove(int $number, string $id, #[CurrentUser] PortalIdentity $identity): JsonResponse
     {
-        return $this->dispatch($number, new RemoveVenuePhoto($number, $id));
+        return $this->dispatch($number, new RemoveVenuePhoto($number, $id, Grantor::manager($identity->id())));
     }
 
     private function dispatch(int $number, object $command): JsonResponse

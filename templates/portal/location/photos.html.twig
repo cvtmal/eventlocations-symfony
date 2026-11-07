@@ -1,19 +1,59 @@
 {#
     The manager's Fotos tab (POR-8): the `photo-manager` island with four endpoints; without `room` it offers no room.
+    Below it the "Bildrechte" card and, while a photo has no grant, the declaration form (G1). Above the island a note
+    says what a new upload is worth: public at once with the declaration of this manager on record (a colleague's does
+    not count), otherwise it waits for one.
     Context from `LocationPhotosController`: what `_photo_manager.html.twig` lists, apart from endpoints and reload_url,
-    plus offline_form.
+    plus rights (`PhotoRightsView`, read for the logged-in manager), declaration_form (FormView) and offline_form.
 #}
 {% extends 'portal/location/_layout.html.twig' %}
 
 {% block location_main %}
     {% set id_route = {number: venue.number, id: id_placeholder} %}
-    {{ include('admin/cms/venue/_photo_manager.html.twig', {
-        endpoints: {
-            upload: path('portal_api_photos_add', {number: venue.number}),
-            order: path('portal_api_photos_order', {number: venue.number}),
-            alt: path('portal_api_photos_alt', id_route),
-            remove: path('portal_api_photos_remove', id_route),
-        },
-        reload_url: path('portal_location_photos', {number: venue.number}),
-    }) }}
+    <div class="venue-media">
+        {% if rights.hasDeclaration %}
+            <p class="muted" id="bildrechte-hinweis">{{ 'rights.note.declared'|trans({date: rights.declaredAt|swiss_date}, 'portal') }}</p>
+        {% else %}
+            <p class="muted" id="bildrechte-hinweis">{{ 'rights.note.undeclared'|trans({}, 'portal') }}</p>
+        {% endif %}
+
+        {{ include('admin/cms/venue/_photo_manager.html.twig', {
+            endpoints: {
+                upload: path('portal_api_photos_add', {number: venue.number}),
+                order: path('portal_api_photos_order', {number: venue.number}),
+                alt: path('portal_api_photos_alt', id_route),
+                remove: path('portal_api_photos_remove', id_route),
+            },
+            reload_url: path('portal_location_photos', {number: venue.number}),
+        }) }}
+
+        {{ include('admin/cms/venue/_photo_rights.html.twig', {
+            rights: rights,
+            number: venue.number,
+            revoke_route: 'portal_location_photos_revoke',
+            csrf: csrf_token('submit'),
+        }, with_context = false) }}
+
+        {% if rights.ungrantedCount > 0 %}
+            {% form_theme declaration_form 'admin/form/theme.html.twig' %}
+            {{ form_start(declaration_form, {attr: {class: 'rights-form', novalidate: 'novalidate'}}) }}
+                {% embed 'admin/components/_card.html.twig' with {
+                    title: 'rights.declaration_title'|trans({}, 'portal'),
+                    id: 'bildrechte-erklaerung',
+                    declaration_form: declaration_form,
+                } only %}
+                    {% block body %}
+                        {{ form_errors(declaration_form) }}
+                        <p class="muted">{{ 'rights.declaration_intro'|trans({}, 'portal') }}</p>
+                        <div class="rights-declaration">{{ rights_declaration() }}</div>
+                        {{ form_row(declaration_form.declaration) }}
+                        {{ form_row(declaration_form.derivatives) }}
+                    {% endblock %}
+                    {% block foot %}
+                        {{ include('admin/components/_button.html.twig', {label: 'rights.declaration_submit'|trans({}, 'portal'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                    {% endblock %}
+                {% endembed %}
+            {{ form_end(declaration_form) }}
+        {% endif %}
+    </div>
 {% endblock %}

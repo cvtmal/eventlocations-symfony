@@ -12,6 +12,7 @@ use App\Media\ImageVariantGenerator;
 use App\Shared\Translation\EnabledLocale;
 use App\Venues\Command\AddVenuePhoto;
 use App\Venues\ValueObject\AddedPhoto;
+use App\Venues\ValueObject\PhotoGrant;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,6 +34,10 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * 201 `{"photo": id, "duplicate": false, "photos": [...]}` for a new photo, 200 with `duplicate: true` for
  * the same file in the same scope (D5); 422 `{"errors": {"file"|"roomId": [...]}}`; 404 for an unknown
  * venue or another venue's room.
+ *
+ * The caller says who vouches for the file (G1), and has to say it even when nobody does: staff pass their
+ * attestation, a manager whose declaration is on record passes the upload grant, and null stores a photo that is
+ * not public until a `GrantPhotoRights` covers it.
  */
 final class VenuePhotoUpload
 {
@@ -65,7 +70,7 @@ final class VenuePhotoUpload
         $this->limits = new PhotoUploadLimits($maxPortraitRatio);
     }
 
-    public function add(int $number, Request $request, bool $roomsAllowed = true): JsonResponse
+    public function add(int $number, Request $request, ?PhotoGrant $grant, bool $roomsAllowed = true): JsonResponse
     {
         if (null === $this->venues->byNumber($number)) {
             return $this->api->notFound();
@@ -110,7 +115,7 @@ final class VenuePhotoUpload
         }
 
         try {
-            $added = $this->commandBus->dispatch(new AddVenuePhoto($number, $roomId, $file->getPathname(), $extension))->last(HandledStamp::class)?->getResult();
+            $added = $this->commandBus->dispatch(new AddVenuePhoto($number, $roomId, $file->getPathname(), $extension, $grant))->last(HandledStamp::class)?->getResult();
         } catch (HandlerFailedException $failure) {
             return $this->api->failure($failure);
         }

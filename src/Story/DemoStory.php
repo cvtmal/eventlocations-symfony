@@ -59,6 +59,9 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  * - Variants are cached in var/demo-media/ per original: the first, cold `make seed` renders
  *   them (10–15 s once), later loads only copy files into public/media/<number>/. Before
  *   publishing, a venue's public/media/<number>/ is emptied (numbers restart after db-fresh).
+ * - Rights (G1): every photo gets a live grant from the factory (system, `staff_attestation`), so the demo site is
+ *   public; the last gallery photo of one venue (UNGRANTED_VENUE) has none, so the "Bildrechte" card of the back
+ *   office shows both states. It is stored and has variants, but no page shows it until it is granted.
  * - Event facts (#31, F3): every second venue (even index) has the event facts of S14, the
  *   others none, so both states of the detail page stay visible. Their share of each fact is
  *   index-based, and the terms (amenity, catering, language) come from a seeded RNG of their
@@ -110,6 +113,8 @@ final class DemoStory extends Story
     private const LIECHTENSTEIN = 53;
     /** Its phone, so the reveal shows the `+423` format in dev. */
     private const LIECHTENSTEIN_PHONE = '+4232345678';
+    /** The venue whose last gallery photo stays ungranted (G1), venue 2 of the list. */
+    private const UNGRANTED_VENUE = 1;
     private const REGION_ONLY = 54;
     private const NO_PLACE = 55;
     private const REGION_TEXT = 'Schweizweit';
@@ -336,7 +341,7 @@ final class DemoStory extends Story
         $originals = array_fill(1, DemoMedia::ORIGINALS, true);
         $gallery = $random->shuffleArray($random->pickArrayKeys($originals, 0 === $i % 10 ? 8 : $random->getInt(3, 8)));
         foreach ($gallery as $index => $original) {
-            $this->createPhoto($random, $name, $venue, null, $index + 1, (int) $original, $number);
+            $this->createPhoto($random, $name, $venue, null, $index + 1, (int) $original, $number, !(self::UNGRANTED_VENUE === $i && array_key_last($gallery) === $index));
         }
         if (0 === $i % 3) {
             foreach ($random->pickArrayKeys($originals, $random->getInt(1, 2)) as $index => $original) {
@@ -345,11 +350,12 @@ final class DemoStory extends Story
         }
     }
 
-    private function createPhoto(Randomizer $random, string $name, Venue $venue, ?Room $room, int $position, int $original, int $number): void
+    private function createPhoto(Randomizer $random, string $name, Venue $venue, ?Room $room, int $position, int $original, int $number, bool $granted = true): void
     {
         \assert($original >= 1 && $original <= DemoMedia::ORIGINALS);
         [$image, $directory] = $this->media->variants($original);
-        $photo = VenuePhotoFactory::createOne([
+        $photos = $granted ? VenuePhotoFactory::new() : VenuePhotoFactory::new()->withoutGrant();
+        $photo = $photos->create([
             'venue' => $venue,
             'room' => $room,
             'position' => $position,

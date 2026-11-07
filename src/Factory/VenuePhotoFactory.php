@@ -8,12 +8,16 @@ use App\Media\ValueObject\GeneratedImage;
 use App\Media\ValueObject\ImageFormat;
 use App\Media\ValueObject\ImageVariants;
 use App\Venues\Entity\VenuePhoto;
+use Zenstruck\Foundry\Object\Instantiator;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 /**
  * A venue-level photo by default (room NULL, position 1), 1600×1067 with widths 360–1280
  * in every format. Rows only: the factory writes no files (DemoStory and
  * `app:media:regenerate` do), so the default path is fictional.
+ *
+ * Every photo gets a live rights grant (G1), so it is public like the photos of the import;
+ * `withoutGrant()` leaves it private, as a fresh upload is.
  *
  * @extends PersistentObjectFactory<VenuePhoto>
  */
@@ -22,6 +26,22 @@ final class VenuePhotoFactory extends PersistentObjectFactory
     public static function class(): string
     {
         return VenuePhoto::class;
+    }
+
+    public function withoutGrant(): self
+    {
+        return $this->with(['granted' => false]);
+    }
+
+    protected function initialize(): static
+    {
+        return $this
+            ->instantiateWith(Instantiator::withConstructor()->allowExtra('granted'))
+            ->afterPersist(static function (VenuePhoto $photo, array $parameters): void {
+                if (false !== ($parameters['granted'] ?? true)) {
+                    MediaRightsGrantFactory::createOne(['photo' => $photo]);
+                }
+            });
     }
 
     /**
