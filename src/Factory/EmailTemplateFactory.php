@@ -28,8 +28,8 @@ final class EmailTemplateFactory extends PersistentObjectFactory
         return [
             'id' => EntityId::generate(),
             'name' => 'Vorlage '.self::faker()->unique()->numberBetween(1, 999999),
-            'subject' => 'Ihre Location {venue.name}',
-            'bodyMarkdown' => "Guten Tag {contact.first_name}\n\nFreundliche Grüsse",
+            'subject' => 'Deine Location {venue.name}',
+            'bodyMarkdown' => "Hallo {contact.first_name}\n\nFreundliche Grüsse",
         ];
     }
 }

@@ -58,7 +58,7 @@ final class PasswordResetTest extends WebTestCase
 
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
-        self::assertEmailHtmlBodyContains($mail, 'Guten Tag');
+        self::assertEmailHtmlBodyContains($mail, 'Hallo');
         self::assertEmailHtmlBodyNotContains($mail, 'evil.example');
         self::assertEmailTextBodyNotContains($mail, 'evil.example');
     }
