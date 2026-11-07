@@ -39,8 +39,8 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(KnownTiers::FREE, $this->tierCode('seehaus-muster'));
         self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', (string) $venue['content_hash']);
         self::assertSame('Zürich', $this->connection->fetchOne('SELECT name FROM towns WHERE id = ?', [$venue['town_id']]));
-        self::assertSame(['+41441234567', 'anfragen@example.ch', '0.9', 'Bahnhof Beispiel', 'allowed', true], [
-            $venue['phone'], $venue['inquiry_email'], $venue['distance_station_km'], $venue['station_name'], $venue['own_catering'], $venue['daylight'],
+        self::assertSame(['+41441234567', 'anfragen@example.ch', '0.9', 'Bahnhof Beispiel', true], [
+            $venue['phone'], $venue['inquiry_email'], $venue['distance_station_km'], $venue['station_name'], $venue['daylight'],
         ]);
         self::assertSame([2, 180, '6.50'], [$venue['room_count'], $venue['largest_room_m2'], $venue['max_room_height_m']]);
 
@@ -346,7 +346,7 @@ final class ImportContentCommandTest extends KernelTestCase
             'address' => ['street' => 'Seestrasse 1', 'zip' => '8001', 'town' => 'Zürich'],
             'distances' => ['station' => ['km' => 0.9, 'name' => 'Bahnhof Beispiel']],
             'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch'],
-            'faq' => ['own_catering' => 'allowed', 'daylight' => true],
+            'faq' => ['daylight' => true],
             'terms' => ['building' => ['castle', 'villa'], 'setting' => ['lake']],
             'main_terms' => ['building' => 'castle'],
             'rooms' => [

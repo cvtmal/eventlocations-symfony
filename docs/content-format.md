@@ -76,7 +76,6 @@ contact:                              # all optional
   contact_person: Anna Muster
   instagram: https://www.instagram.com/schloss.beispiel   # starts with https://
 faq:                                  # optional; null or missing = unknown
-  own_catering: allowed               # allowed | fixed_caterer
   daylight: true
 terms:                                # lists of codes per group (see the table below)
   setting: [lake, countryside]
@@ -154,7 +153,6 @@ documents:                            # in display order; files in documents/
 | `contact.website` | URL ≤ 500 | `http://` or `https://`. |
 | `contact.contact_person` | text ≤ 150 | |
 | `contact.instagram` | URL ≤ 500 | `https://` only. |
-| `faq.own_catering` | `allowed`, `fixed_caterer`, null | |
 | `faq.daylight` | true, false, null | |
 | `terms.<group>` | list of codes | See the vocabulary below. |
 | `main_terms.<setting\|building\|suitable_for>` | one code | Must also be listed under `terms`. |
@@ -303,3 +301,7 @@ the codes of `suitable_for`, `infrastructure`, `furniture`, `technology` and `am
 re-curated for event venues (`wedding_venue` is no `building` code any more; `wedding` stays
 a `suitable_for` code). A `venue.yaml` of version 1 that still names one of them is refused
 with the position of the field, e.g. `/: Unknown properties: party`.
+
+`faq.own_catering` was removed in inquiry-event (F9, D33): who caters is the `catering` terms
+`in_house` and `external_allowed`, the one source the detail page and the inquiry form read. A
+`venue.yaml` that still has it is refused by the schema.

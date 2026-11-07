@@ -162,10 +162,6 @@ price_level:
     medium: Mittel
     exclusive: Exklusiv
 
-own_catering:
-    allowed: Eigenes Catering möglich
-    fixed_caterer: Caterer fix
-
 floor_material:
     various: Diverses
     parquet: Parkett
@@ -269,7 +265,6 @@ detail:
             apero: Apéro/Stehempfang (stehend)
     faq:
         heading: Häufige Fragen
-        own_catering: Eigenes Catering?
         daylight: Tageslicht?
         parking: Parking?
         'yes': Ja

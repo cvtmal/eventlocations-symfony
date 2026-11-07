@@ -12,8 +12,9 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * The inquiry-event migration (F9) against rows it has to carry over: down() brings `occasion` back and drops the event
- * columns, up() maps every wedding occasion onto an event type and marks a row without a date as flexible. Postgres DDL
- * is transactional, so both directions run inside the test's transaction and the rollback restores the schema.
+ * columns, up() maps every wedding occasion onto an event type and marks a row without a date as flexible, and drops
+ * the FAQ answer `venues.own_catering` (D33). Postgres DDL is transactional, so both directions run inside the test's
+ * transaction and the rollback restores the schema.
  */
 final class InquiryEventMigrationTest extends KernelTestCase
 {
@@ -72,17 +73,26 @@ final class InquiryEventMigrationTest extends KernelTestCase
         );
     }
 
+    public function test_up_drops_the_faq_own_catering_and_down_brings_it_back(): void
+    {
+        $this->runMigration('down');
+        self::assertSame(['own_catering'], $this->columns(['own_catering'], 'venues'));
+
+        $this->runMigration('up');
+        self::assertSame([], $this->columns(['own_catering'], 'venues'));
+    }
+
     /**
      * @param list<string> $names
      *
-     * @return list<string> those of `$names` that `inquiries` has, sorted
+     * @return list<string> those of `$names` that `$table` has, sorted
      */
-    private function columns(array $names): array
+    private function columns(array $names, string $table = 'inquiries'): array
     {
         $found = $this->connection->fetchFirstColumn(
-            "SELECT column_name FROM information_schema.columns WHERE table_name = 'inquiries' AND column_name IN (?) ORDER BY column_name",
-            [$names],
-            [\Doctrine\DBAL\ArrayParameterType::STRING],
+            'SELECT column_name FROM information_schema.columns WHERE table_name = ? AND column_name IN (?) ORDER BY column_name',
+            [$table, $names],
+            [\Doctrine\DBAL\ParameterType::STRING, \Doctrine\DBAL\ArrayParameterType::STRING],
         );
 
         return array_map(strval(...), $found);

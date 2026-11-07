@@ -370,7 +370,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         }
         $venue->changeContact($content->phone, $content->inquiryEmail, $content->website, $content->contactPerson);
         $venue->changeDistances($content->stationKm, $content->stationName, $content->highwayKm, $content->highwayName, $content->airportKm, $content->airportName);
-        $venue->answerFaq($content->ownCatering, $content->daylight);
+        $venue->answerFaq($content->daylight);
         $venue->changePriceLevel($content->priceLevel);
         $venue->changeSeatingCapacity($content->capacitySeated, $content->capacityStanding);
         $venue->changeInstagram($content->instagram);

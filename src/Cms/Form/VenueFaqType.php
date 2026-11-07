@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Cms\Form;
 
 use App\Cms\ValueObject\TriState;
-use App\Venues\ValueObject\OwnCatering;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -17,13 +16,6 @@ final class VenueFaqType extends VenueCardType
         parent::buildForm($builder, $options);
 
         $builder
-            ->add('ownCatering', EnumType::class, [
-                'class' => OwnCatering::class,
-                'label' => 'faq.field.own_catering',
-                'required' => false,
-                'expanded' => true,
-                'placeholder' => 'faq.placeholder.unknown',
-            ])
             ->add('daylight', EnumType::class, [
                 'class' => TriState::class,
                 'label' => 'faq.field.daylight',

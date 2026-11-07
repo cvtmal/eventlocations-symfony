@@ -13,8 +13,8 @@ use Symfony\Contracts\Service\ResetInterface;
 /**
  * What the inquiry form offers for "Anlass" and "Catering", read from the venue vocabulary (F3), so an inquiry speaks
  * the words of the detail page and the filters: every `suitable_for` term is an event type, and the catering wish is
- * one of the two "who caters" terms of the `catering` group (the FAQ `own_catering` is not a source). Loaded once per
- * request (the form and the handler both ask); `kernel.reset` by autoconfiguration.
+ * one of the two "who caters" terms of the `catering` group, the one catering source (D33). Loaded once per request
+ * (the form and the handler both ask); `kernel.reset` by autoconfiguration.
  */
 final class InquiryVocabularyQuery implements ResetInterface
 {

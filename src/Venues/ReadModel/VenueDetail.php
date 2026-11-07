@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Venues\ReadModel;
 
 use App\Media\ValueObject\Picture;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\VenuePlace;
 
@@ -48,7 +47,6 @@ final readonly class VenueDetail
         public ?Term $mainBuilding,
         public ?Term $mainSetting,
         public array $factGroups,
-        public ?OwnCatering $ownCatering,
         public ?bool $daylight,
         public ?string $parkingText,
         public array $distances,
@@ -92,7 +90,7 @@ final readonly class VenueDetail
 
     public function hasFaq(): bool
     {
-        return null !== $this->ownCatering || null !== $this->daylight || null !== $this->parkingText;
+        return null !== $this->daylight || null !== $this->parkingText;
     }
 
     /**

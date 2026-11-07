@@ -6,7 +6,6 @@ namespace App\Tests\Unit\Venues;
 
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -29,7 +28,6 @@ final class VocabularyCatalogueTest extends TestCase
     public static function enums(): iterable
     {
         yield 'TermGroup' => [TermGroup::class, 'term_group'];
-        yield 'OwnCatering' => [OwnCatering::class, 'own_catering'];
         yield 'FloorMaterial' => [FloorMaterial::class, 'floor_material'];
         yield 'Seating' => [Seating::class, 'seating'];
         yield 'Access' => [Access::class, 'access'];

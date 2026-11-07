@@ -16,7 +16,6 @@ use App\Venues\ValueObject\GrantorType;
 use App\Venues\ValueObject\ModerationDecision;
 use App\Venues\ValueObject\ModerationKind;
 use App\Venues\ValueObject\ModerationStatus;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\SourceStatus;
 use App\Venues\ValueObject\SourceType;
@@ -39,7 +38,6 @@ final class VocabularyChecksTest extends KernelTestCase
     public static function checks(): iterable
     {
         yield 'status' => ['chk_venues_status', VenueStatus::class];
-        yield 'own catering' => ['chk_venues_own_catering', OwnCatering::class];
         yield 'floor material' => ['chk_rooms_floor_material', FloorMaterial::class];
         yield 'term group' => ['chk_taxonomy_terms_term_group', TermGroup::class];
         yield 'price level' => ['chk_venues_price_level', PriceLevel::class];

@@ -34,7 +34,7 @@ final class ContentSchemaTest extends TestCase
                 'airport' => ['km' => 12.0],
             ],
             'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster', 'instagram' => 'https://www.instagram.com/schloss.beispiel'],
-            'faq' => ['own_catering' => 'allowed', 'daylight' => null],
+            'faq' => ['daylight' => null],
             'terms' => [
                 'setting' => ['lake'], 'building' => ['castle', 'event_venue'], 'suitable_for' => ['corporate_event', 'seminar'], 'infrastructure' => ['air_conditioning'],
                 'furniture' => ['standing_tables'], 'technology' => ['wifi', 'projector_screen'], 'surroundings' => ['garden'],
@@ -101,6 +101,7 @@ final class ContentSchemaTest extends TestCase
         yield 'a main event type that is not an event type' => [$set($full, 'main_terms.suitable_for', 'class_reunion'), '/main_terms/suitable_for: "class_reunion" is not an allowed value'];
         yield 'ambience of 61 characters' => [$set($full, 'translations.de.ambience', str_repeat('a', 61)), '/translations/de/ambience:'];
         yield 'empty opening hours' => [$set($full, 'translations.de.opening_hours', ''), '/translations/de/opening_hours:'];
+        yield 'the FAQ own catering, retired in F9 (D33)' => [$set($full, 'faq.own_catering', 'allowed'), '/faq: Unknown properties: own_catering'];
         yield 'a rating, retired in #53' => [$set($full, 'rating', ['score' => 9.0, 'count' => 47]), '/: Unknown properties: rating'];
         yield 'reviews, retired in #53' => [$set($full, 'reviews', [['first_name' => 'Laura', 'role' => 'visitor_f', 'month' => '2025-06', 'text' => 'Schön.']]), '/: Unknown properties: reviews'];
     }

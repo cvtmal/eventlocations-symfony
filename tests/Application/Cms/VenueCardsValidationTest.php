@@ -74,7 +74,7 @@ final class VenueCardsValidationTest extends WebTestCase
         yield 'instagram handle of 31 characters' => ['venue_contact', ['instagram' => str_repeat('a', 31)], '#venue_contact_instagram'];
         yield 'contact person too long' => ['venue_contact', ['contactPerson' => $long(151)], '#venue_contact_contactPerson'];
 
-        yield 'unknown own catering' => ['venue_faq', ['ownCatering' => 'sometimes'], '#venue_faq_ownCatering_error'];
+        yield 'unknown daylight answer' => ['venue_faq', ['daylight' => 'sometimes'], '#venue_faq_daylight_error'];
     }
 
     /**

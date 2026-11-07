@@ -19,12 +19,15 @@ use Doctrine\Migrations\AbstractMigration;
  * - start_time, company and budget_chf are optional. The budget is whole francs.
  * - There is no production data. The occasion values map onto the event types (wedding, civil wedding, wedding apéro
  *   and other to wedding; engagement to family_celebration), and down() maps back.
+ * - D33: the FAQ answer `venues.own_catering` goes, so who caters has one source, the catering terms in_house and
+ *   external_allowed. Its values are not mapped onto terms ("fixed caterer" is neither of them, and there is no
+ *   production data); down() brings the column back empty.
  */
 final class Version20261107173925 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'F9 inquiry-event: event_type, company, date_flexible, start_time, catering_wish and budget_chf on inquiries; occasion goes';
+        return 'F9 inquiry-event: event_type, company, date_flexible, start_time, catering_wish and budget_chf on inquiries; occasion and venues.own_catering go';
     }
 
     public function up(Schema $schema): void
@@ -51,10 +54,14 @@ final class Version20261107173925 extends AbstractMigration
                 ADD CONSTRAINT chk_inquiries_catering_wish CHECK (catering_wish IN ('in_house', 'external_allowed')),
                 ADD CONSTRAINT chk_inquiries_budget_chf CHECK (budget_chf BETWEEN 1 AND 1000000)
             SQL);
+        $this->addSql('ALTER TABLE venues DROP CONSTRAINT chk_venues_own_catering');
+        $this->addSql('ALTER TABLE venues DROP COLUMN own_catering');
     }
 
     public function down(Schema $schema): void
     {
+        $this->addSql('ALTER TABLE venues ADD COLUMN own_catering VARCHAR(20) DEFAULT NULL');
+        $this->addSql("ALTER TABLE venues ADD CONSTRAINT chk_venues_own_catering CHECK (own_catering IN ('allowed', 'fixed_caterer'))");
         $this->addSql('ALTER TABLE inquiries ADD COLUMN occasion VARCHAR(30) DEFAULT NULL');
         $this->addSql("UPDATE inquiries SET occasion = CASE event_type WHEN 'wedding' THEN 'wedding' WHEN 'family_celebration' THEN 'engagement' ELSE 'other' END");
         $this->addSql('ALTER TABLE inquiries ALTER COLUMN occasion SET NOT NULL');

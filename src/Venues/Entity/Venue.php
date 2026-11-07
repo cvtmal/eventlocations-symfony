@@ -9,7 +9,6 @@ use App\Geo\Entity\Town;
 use App\Shared\Uid\EntityId;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\KnownTiers;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Types\Types;
@@ -137,9 +136,6 @@ class Venue
 
     #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]
     private ?string $contactPerson = null;
-
-    #[ORM\Column(type: Types::STRING, length: 20, nullable: true, enumType: OwnCatering::class)]
-    private ?OwnCatering $ownCatering = null;
 
     #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
     private ?bool $daylight = null;
@@ -335,9 +331,8 @@ class Venue
      * FAQ answers (DP-9); NULL means unknown. The parking answer is translated text on
      * VenueTranslation.
      */
-    public function answerFaq(?OwnCatering $ownCatering, ?bool $daylight): void
+    public function answerFaq(?bool $daylight): void
     {
-        $this->ownCatering = $ownCatering;
         $this->daylight = $daylight;
         $this->touch();
     }
@@ -576,11 +571,6 @@ class Venue
     public function contactPerson(): ?string
     {
         return $this->contactPerson;
-    }
-
-    public function ownCatering(): ?OwnCatering
-    {
-        return $this->ownCatering;
     }
 
     public function daylight(): ?bool

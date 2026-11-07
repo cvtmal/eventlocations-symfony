@@ -25,7 +25,6 @@ use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\KnownTiers;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
@@ -280,7 +279,6 @@ final class VenueDetailQueryTest extends KernelTestCase
         );
 
         self::assertTrue($detail->hasFaq());
-        self::assertSame(OwnCatering::Allowed, $detail->ownCatering);
         self::assertTrue($detail->daylight);
         self::assertSame('100 Parkplätze (kostenlos)', $detail->parkingText);
 

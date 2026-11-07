@@ -6,10 +6,10 @@ namespace App\Venues\Command;
 
 use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
-use App\Venues\ValueObject\OwnCatering;
 
 /**
- * The CMS card "Häufige Fragen" (#24, DP-9): own catering and daylight; NULL means unknown.
+ * The CMS card "Häufige Fragen" (#24, DP-9): daylight; NULL means unknown. Catering is the `catering` term
+ * group (D33).
  * The parking answer is text and belongs to ChangeVenueTexts.
  */
 final readonly class AnswerVenueFaq implements AuditableCommand
@@ -21,7 +21,6 @@ final readonly class AnswerVenueFaq implements AuditableCommand
         public int $venueNumber,
         public string $loadedAt,
         public array $changedFields,
-        public ?OwnCatering $ownCatering,
         public ?bool $daylight,
     ) {
     }

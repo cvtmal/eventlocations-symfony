@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Cms\ReadModel;
 
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 
 /**
@@ -58,7 +57,6 @@ final readonly class VenueEdit
         public ?string $website,
         public ?string $contactPerson,
         public ?string $instagram,
-        public ?OwnCatering $ownCatering,
         public ?bool $daylight,
         public ?PriceLevel $priceLevel,
         public ?int $capacitySeated,

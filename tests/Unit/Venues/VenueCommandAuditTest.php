@@ -45,7 +45,6 @@ use App\Venues\ValueObject\Grantor;
 use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\ModerationDecision;
 use App\Venues\ValueObject\ModerationKind;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -91,7 +90,7 @@ final class VenueCommandAuditTest extends TestCase
         yield 'terms' => [new ChangeVenueTerms(self::NUMBER, '1', $changed, ['building' => ['castle']], ['building' => 'castle'])];
         yield 'event facts' => [new ChangeVenueEventFacts(self::NUMBER, '1', $changed, PriceLevel::Medium, 80, 120, ['de' => ['ambience' => $text, 'capacityNote' => $text, 'openingHours' => $text]], ['catering' => ['buffet']])];
         yield 'contact' => [new ChangeVenueContact(self::NUMBER, '1', $changed, '+41449998877', 'geheim@beispiel.ch', 'https://geheim.example', 'Geheime Person', 'https://geheim.example/insta')];
-        yield 'faq' => [new AnswerVenueFaq(self::NUMBER, '1', $changed, OwnCatering::Allowed, true)];
+        yield 'faq' => [new AnswerVenueFaq(self::NUMBER, '1', $changed, true)];
         yield 'google_place' => [new ChangeVenueGooglePlace(self::NUMBER, '1', ['placeId', 'ratingHidden'], 'ChIJGEHEIM12345', true)];
         yield 'google_place_assign' => [new AssignVenueGooglePlace(self::NUMBER, 'ChIJGEHEIM12345')];
         yield 'created' => [new RecordVenueCreated(self::NUMBER, 'Schloss Muster')];

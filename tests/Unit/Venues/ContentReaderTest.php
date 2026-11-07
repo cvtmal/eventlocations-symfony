@@ -10,7 +10,6 @@ use App\Tests\Support\Media\TestImages;
 use App\Venues\ContentReader;
 use App\Venues\Exception\InvalidContent;
 use App\Venues\ValueObject\FloorMaterial;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\TestCase;
@@ -55,7 +54,7 @@ final class ContentReaderTest extends TestCase
         self::assertSame([VenueStatus::Published, 180, 20], [$venue->status, $venue->capacityMax, $venue->capacityMin]);
         self::assertSame(['8001', 'Zürich', 'zh'], [$venue->zip, $venue->townName, $venue->cantonCode]);
         self::assertSame(['0.9', 'Bahnhof Beispiel', '3.2', 'A1', '12.0', null], [$venue->stationKm, $venue->stationName, $venue->highwayKm, $venue->highwayName, $venue->airportKm, $venue->airportName]);
-        self::assertSame([OwnCatering::Allowed, null], [$venue->ownCatering, $venue->daylight]);
+        self::assertNull($venue->daylight);
         self::assertSame(['castle', 'event_venue'], $venue->terms['building']);
         self::assertSame(['building' => 'castle', 'setting' => 'lake', 'suitable_for' => 'corporate_event'], $venue->mainTerms);
         self::assertSame(['summary' => 'Kurz.', 'description' => 'Lang.', 'metaDescription' => 'Meta.', 'parkingText' => 'Parkplätze.', 'ambience' => 'Festlich am See', 'capacityNote' => 'Mit Bühne 100 Plätze.', 'openingHours' => 'Mai bis Oktober', 'region' => null], $venue->translations['de']);

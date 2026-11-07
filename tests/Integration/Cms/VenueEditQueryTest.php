@@ -19,7 +19,6 @@ use App\Venues\Command\PublishVenue;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\KnownTiers;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\TierLabel;
@@ -74,7 +73,7 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertNull($edit->townCentreHint());
         self::assertSame(['0.9', 'Zürich Stadelhofen', '3.2', null, '12.0', 'Zürich'], [$edit->stationKm, $edit->stationName, $edit->highwayKm, $edit->highwayName, $edit->airportKm, $edit->airportName]);
         self::assertSame([DetailVenues::FULL_PHONE, 'info@seeblick.example', 'https://seeblick.example', 'Anna Muster', 'https://www.instagram.com/schloss.seeblick'], [$edit->phone, $edit->inquiryEmail, $edit->website, $edit->contactPerson, $edit->instagram]);
-        self::assertSame([OwnCatering::Allowed, true], [$edit->ownCatering, $edit->daylight]);
+        self::assertTrue($edit->daylight);
         self::assertSame([PriceLevel::Medium, 1200, 1500], [$edit->priceLevel, $edit->capacitySeated, $edit->capacityStanding]);
         self::assertSame(3, $edit->galleryPhotoCount);
         self::assertSame([null, false], [$edit->googlePlaceId, $edit->googleRatingHidden]);
@@ -127,7 +126,7 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame('3004 Bern', $edit->town);
         self::assertSame('be', $edit->cantonCode);
         self::assertSame([null, null, null], [$edit->capacityMin, $edit->stationKm, $edit->stationName]);
-        self::assertSame([null, null, null], [$edit->phone, $edit->ownCatering, $edit->daylight]);
+        self::assertSame([null, null], [$edit->phone, $edit->daylight]);
         self::assertSame([null, null, null], [$edit->priceLevel, $edit->capacitySeated, $edit->capacityStanding]);
         self::assertSame([], $edit->mainTerms);
         self::assertSame([null, false], [$edit->googlePlaceId, $edit->googleRatingHidden]);
