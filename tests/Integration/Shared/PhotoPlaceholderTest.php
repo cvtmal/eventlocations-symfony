@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Shared;
 use App\Search\ReadModel\ListingCard;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -55,6 +56,21 @@ final class PhotoPlaceholderTest extends KernelTestCase
         ];
         foreach ($pairs as $code => $icon) {
             yield $code => [$code, $icon];
+        }
+    }
+
+    /**
+     * F3 (`event-vocabulary`): the event types are the `suitable_for` terms, and each has its own icon, not the generic one.
+     */
+    public function test_every_event_type_of_the_vocabulary_has_its_own_icon(): void
+    {
+        $connection = self::getContainer()->get(Connection::class);
+        self::assertInstanceOf(Connection::class, $connection);
+        $codes = $connection->fetchFirstColumn("SELECT code FROM taxonomy_terms WHERE term_group = 'suitable_for' ORDER BY position");
+        self::assertNotEmpty($codes);
+
+        foreach ($codes as $code) {
+            self::assertNotSame('sparkles', $this->iconOf($this->placeholder((string) $code)), (string) $code);
         }
     }
 
