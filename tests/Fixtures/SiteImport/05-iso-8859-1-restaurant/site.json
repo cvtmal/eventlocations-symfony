@@ -1,0 +1,56 @@
+{
+  "description": "An old restaurant site: the home page is ISO-8859-1 with the charset in the Content-Type header, /saele is ISO-8859-1 declared only in a meta tag, /kontakt is Windows-1252 with no declaration at all. Address as microdata.",
+  "entry": "https://www.restaurant-schluessel-muster.example/",
+  "routes": {
+    "/": {
+      "file": "index.html",
+      "headers": {
+        "content-type": "text/html; charset=iso-8859-1"
+      }
+    },
+    "/saele": {
+      "file": "saele.html",
+      "headers": {
+        "content-type": "text/html"
+      }
+    },
+    "/kontakt": {
+      "file": "kontakt.html",
+      "headers": {
+        "content-type": "text/html"
+      }
+    }
+  },
+  "expect": {
+    "facts": {
+      "name": "Restaurant Schlüssel Muster",
+      "language": "de",
+      "phone": "+41 44 555 01 23",
+      "address.street": "Beispielgässli 7",
+      "address.postal_code": "8001",
+      "address.locality": "Zürich"
+    },
+    "has_fact_values": {
+      "heading": [
+        "Die Küche",
+        "Unsere Säle",
+        "Das Säli",
+        "Öffnungszeiten",
+        "Der „Gartensaal“ – für 60 Personen"
+      ],
+      "snippet": [
+        "Unsere Säle bieten Platz für 40 bis 120 Gäste.",
+        "Der Zunftsaal im ersten Stock ist 150 m² gross und fasst bis zu 120 Personen.",
+        "Er fasst 60 Personen und liegt direkt am Hof."
+      ]
+    },
+    "min_candidates": 3,
+    "max_candidates": 3,
+    "candidate_urls_contain": [
+      "https://www.restaurant-schluessel-muster.example/bilder/kopf.jpg",
+      "https://www.restaurant-schluessel-muster.example/bilder/gaststube.jpg",
+      "https://www.restaurant-schluessel-muster.example/bilder/zunftsaal.jpg"
+    ],
+    "pages": 3
+  }
+}

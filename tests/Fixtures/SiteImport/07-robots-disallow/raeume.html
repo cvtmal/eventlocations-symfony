@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Räume | Villa Musterwald</title>
+<meta property="og:site_name" content="Villa Musterwald">
+<link rel="stylesheet" href="/css/villa.css">
+<style>
+  body { margin: 0; font-family: "Palatino Linotype", serif; background: #fbf9f4; color: #222; }
+  header, main, footer { max-width: 44rem; margin: 0 auto; padding: 1rem; }
+  nav a { margin-right: 1rem; color: #29402f; }
+  .cookies { background: #222; color: #fff; padding: .7rem 1rem; font-size: .9rem; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="cookies">Mit der Nutzung unserer Seite bist du mit Cookies einverstanden. <button type="button">OK</button></div>
+<header>
+  <nav><a href="/">Start</a> <a href="/raeume">Räume</a> <a href="/kontakt">Kontakt</a></nav>
+</header>
+<main>
+  <h1>Unsere Räume</h1>
+  <article>
+    <h2>Gartensaal</h2>
+    <img src="/media/raeume/gartensaal.jpg" alt="Gartensaal mit Flügeltüren zum Park" width="1200" height="800">
+    <p>Der Gartensaal hat Flügeltüren zum Park und bietet Platz für 90 Personen. Die Fläche beträgt 110 m².</p>
+  </article>
+  <article>
+    <h2>Bibliothek</h2>
+    <img src="/media/raeume/bibliothek.jpg" alt="Bibliothek mit Kamin" width="1200" height="800">
+    <p>In der Bibliothek tagen bis zu 16 Personen am grossen Eichentisch.</p>
+  </article>
+  <article>
+    <h2>Park</h2>
+    <img src="/media/raeume/park.jpg" alt="Park mit Zelt" width="1200" height="800">
+    <p>Im Park lässt sich ein Zelt für 150 Personen aufstellen.</p>
+  </article>
+</main>
+<footer><p>Villa Musterwald · Waldweg 5 · 4051 Basel</p></footer>
+<script>
+  document.querySelectorAll('button').forEach(function (knopf) {
+    knopf.addEventListener('click', function () { knopf.parentNode.remove(); });
+  });
+</script>
+</body>
+</html>

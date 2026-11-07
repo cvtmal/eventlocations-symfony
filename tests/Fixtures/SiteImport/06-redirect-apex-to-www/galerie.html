@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galerie | Kulturhaus Apex Beispiel</title>
+<meta property="og:site_name" content="Kulturhaus Apex Beispiel">
+<link rel="stylesheet" href="/de/css/kulturhaus.css">
+<style>
+  body { margin: 0; font: 16px/1.5 "Segoe UI", sans-serif; background: #f6f3ee; color: #1f1d1a; }
+  header, main, footer { max-width: 48rem; margin: 0 auto; padding: 1rem; }
+  header nav a { margin-left: 1.2rem; color: #7b2d26; text-decoration: none; }
+  .hinweis { background: #ffe9a8; padding: .6rem 1rem; font-size: .9rem; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="hinweis">Wir speichern Cookies, damit du dich auf unserer Website wohlfühlst. <button type="button">Verstanden</button></div>
+<main>
+  <h1>Galerie</h1>
+  <p>Eindrücke aus dem Kulturhaus bei Tag und bei Nacht.</p>
+  <img src="/de/media/galerie/nacht-hof.jpg" alt="Hof bei Nacht" width="1200" height="800">
+  <img src="/de/media/galerie/fabriksaal-konzert.jpg" alt="Konzert im Fabriksaal" width="1200" height="800">
+  <img src="/de/media/galerie/treppenhaus.jpg" alt="Treppenhaus mit Fenstern" width="800" height="1200">
+</main>
+<footer><p>Kulturhaus Apex Beispiel · Kulturweg 21 · 9000 St. Gallen</p></footer>
+<script>
+  document.querySelectorAll('button').forEach(function (knopf) {
+    knopf.addEventListener('click', function () { knopf.parentNode.remove(); });
+  });
+</script>
+</body>
+</html>
