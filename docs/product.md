@@ -53,6 +53,20 @@ Every product decision is settled (D23 to D32 settled the former open questions)
 
 Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults together; the owner has delegated them and is not asked. The owner still holds real-world facts (the operator's identity, the host account, the venue spreadsheet, the contact list) and deploys. Where a fact is missing, the site ships a marked placeholder.
 
+## Cycles at a glance
+
+_Status as of 2026-11-07, kept by the PO after every merge. The cycles themselves are in `docs/rpi-cycles.md`: F-cycles in the overview table and under "Cycles", G-cycles in Wave G §3._
+
+**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved).
+
+**Built, PR open:** F15 `prod-setup` (deploy to Infomaniak + Neon) · G1 `rights-grants` (photo rights records) · F12 `business-model` (Free + Pro as data).
+
+**In a lane:** F5 `filter-event` (event type and guest filters, `/eventlokale…` URLs) · F9 `inquiry-event` (inquiry form with event fields) · F4 `room-layouts` (room layouts with capacities) · F6b `brand-assets` (brand polish, social cards, boards in the new look).
+
+**Launch-critical, not started:** F7b `event-copy-de` (all German texts, legal pages) · F8 `landing-event` (event landing pages, no Hochzeit) · F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G2 `takedown-form` (report a photo or text) · G5 `preview-link` (private preview of a prepared entry) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · G7 `enquiry-quality` (real vs. spam, delivery status) · G9 `subscription-term` (Pro term, expiry, reminders) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G12 `launch-regions` (ZH, AG, ZG, BE first) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
+
+**After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G14 `last-minute-offers` · G15 `video-embed` · G16 `organizer-feedback`.
+
 ## Roadmap (proposed order)
 
 1. Event wording and look: "du" (F7a), brand (F6) and vocabulary (F3) are done; filters and URLs (F5), room layouts (F4), copy (F7b), landing pages (F8) and the brand polish (F6b) follow.
