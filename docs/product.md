@@ -1,85 +1,70 @@
-# Hochzeitslocation: product
+# deine-eventlocation.ch: product
 
-_Last updated: 2026-11-05 (through #53; CRM Locations merge complete (#54-#56)) · Owner of this file: the product owner (the WHAT). The tech lead owns the HOW. Scope, settled decisions, requirements and the cycle log stay in `docs/rpi-cycles.md`; operations in `docs/operations.md`._
+_Last updated: 2026-11-07 · Owner of this file: the product owner (the WHAT). The tech lead owns the HOW. Scope, settled decisions, requirements and the cycle log live in `docs/rpi-cycles.md`; the fork brief is `KICKOFF.md`; the two business requirement documents are `docs/prd/CMO_PRD.md` (go to market) and `docs/prd/CTO_PRD.md` (product blueprint)._
 
 ## What it is
 
-A Swiss wedding-venue listing site at **hochzeitslocation.ch**, run by Pick n Roll GmbH. Couples search venues, save favourites and send inquiries. Venues are sold paid tiers. Venue managers can maintain their own entry. It is live since 2026-11-02 with 249 venues (245 Swiss, 4 in Liechtenstein). Language: German only for now.
+A Swiss listing of **event venues** at **deine-eventlocation.ch**: company events, seminars, birthdays, apéros, Christmas parties, general meetings and weddings. Organizers search venues, save favourites and send an inquiry. Venues get a free entry and can buy a paid tier. Venue managers maintain their own entry. German only, "du" everywhere. It is a separate site from hochzeitslocation.ch, with its own database, back office and venues (E1). The operator is a different company (D6). Status: pre-launch, no production data.
 
-It is not an eventlokale clone: no magazine, no provider listings, no event types, no award.
+It is modelled on eventlokale.ch's features and behaviour. Its texts, photos, venue data and branding are not ours and are never published (D12).
 
 ## Who it serves
 
 | Audience | What they need | Where |
 |---|---|---|
-| Couples | Find a fitting venue, compare, save, ask | Public site |
-| Venue managers | Take over or create their entry, keep it current, see their figures | `/konto` |
-| Our staff (max 2 users) | Edit venues, sell tiers, follow up with venues and inquiries | `/admin` |
-| The owner | Revenue from tiers and paid entries, low maintenance | all of the above |
+| Organizers (corporate, private, planners) | Find a venue that fits event, place and guest number; compare rooms and photos; one clear inquiry | Public site |
+| Venue managers | A prepared entry to check and claim, no new system, inquiries by e-mail, honest figures | Preview link, `/konto` |
+| Our staff (max 2 users) | Edit entries, sell tiers, follow up with venues, handle complaints | `/admin` |
+| The owner | A small recurring revenue: 61 paying venues at CHF 199 a year is about CHF 1,000 a month before costs | all of the above |
 
 ## What the product does today
 
-**Public site**
-- Home page, one listing page with filters (region incl. place/postcode and radius, guests, wedding facts, more), canton landing pages, one detail page per venue with photos, facts and map, similar venues.
-- Guest filter with four size bands (bis 50, bis 100, bis 150, über 150 Gäste), matched against a venue's maximum capacity; a select on the listing overlay and the home search, "Alle Gästezahlen" for none. Old `?guests=N` links fall into their band (#51, `52313d0`).
-- "In der Nähe" page at `/hochzeitslocation-in-meiner-naehe`, linked from the header, phone menu and footer: the visitor shares a location or types a PLZ/Ort and sees venues within 30 km, nearest first, on a Google Maps map; without a location all pins show. The Google Maps key and map ID are set on the server (owner, 2026-11-06) (#52, `13c3b49`).
-- Detail page shows Google's stars and review count (#53) once a venue has a place ID; our own ratings and reviews and the Bewertungen tab are gone. Staff set the place ID in the CMS card "Google-Bewertung".
-- Merkliste (favourites) without login, kept in a cookie.
-- Inquiry form on every venue; the inquiry goes to the venue by e-mail and is stored for the CRM.
-- Ranking by paid tier (Beliebte Location, Empfehlung, Top Premium, Premium, none), shuffled daily within a tier.
-- SEO basics (meta, structured data, sitemap), legal pages, own cookieless statistics.
-- Googlebot is currently blocked in `robots.txt`.
+The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). Wording, filters and vocabulary are still the wedding site's until F3 to F8.
 
-**Back office (`/admin`, staff only, 2FA)**
-- CMS: venues, photos, rooms, documents, landing pages, text blocks.
-- CRM: companies, contacts, deals pipeline, tasks, timeline, e-mail sending, inquiries, customer import, statistics.
+- **Public:** home page, one listing with filters, one detail page per venue with photos, rooms, documents and map, canton landing pages, the Merkliste without login, an inquiry form on every venue, SEO basics, own cookieless statistics.
+- **Back office (`/admin`, staff only, 2FA):** CMS for entries, photos, rooms, documents, landing pages and text blocks; CRM for Locations (prospects and customers), deals, tasks, timeline, e-mail, inquiries; statistics.
+- **Location accounts (`/konto`):** a manager registers, asks access to an entry or creates one in a wizard; the owner accepts the first publication.
+- **Eventlokale crawler:** kept for internal working data (D11, D12).
 
-**Location accounts (`/konto`)**
-- A manager registers (name and e-mail), asks access to an existing venue or creates a new one in a short wizard, and edits it. The first publication and every return from offline are accepted by the owner. New entries are paid; the owner invoices outside the app, and the app writes the CRM task "Rechnung stellen" 30 days after the first publish.
+## What it will do (settled, see `docs/rpi-cycles.md`)
 
-## Open product questions and decisions waiting
+- Event types (Firmenanlass, Seminar, Geburtstag, Apéro, Hochzeit …), catering, technology and guest number as filters; layouts shown on the detail page, no layout filter (D4, E5).
+- **Free + Pro (CHF 199 a year, default, D14).** Free: a basic entry, 6 photos, 1 room, inquiries by e-mail. Pro: more photos, rooms, PDFs and video embeds, ranking above Free, visible contact data, last-minute offers, a detailed monthly report. Invoiced by hand; a lapsed Pro entry falls back to Free and stays online (D2).
+- **Prepared entries.** The platform prepares an entry from the venue's own website; the manager gets a private preview link, claims it, confirms the photos they have rights to, and publishes. No photo is public without a rights record. Until then Google Places photos and a neutral placeholder fill the gap (D12, D16).
+- **One venue per inquiry** at launch; later one brief to up to five named venues (D3, D17).
+- **Honest measurement.** A qualified inquiry is a real, reachable organizer with a plausible event, delivered to the venue. It is not a booking and reports never say so (D19).
+
+## Open product questions
 
 | # | Item | Needs | Status |
 |---|---|---|---|
-| 1 | Security audit triage (2 high, 8 medium, 17 low) | Owner, when they choose to pick it up | Set aside by the owner on 2026-11-05. PO proposal when it returns: H1 guest-copy relay and H2 IPv6 limiter keys first, with M6, M8, M1 |
-| 2 | CRM "Locations" merge | Done 2026-11-05 | #54-#56 live; the keyboard and 390/1440 px walkthrough of the Location record, the list tabs and the contact card is done (owner, 2026-11-06). See "CRM Locations" below |
-| 3 | Q3 pin check: 13 doubtful map pins and 1 venue without a pin | Owner, by hand | In `content/owner/q3-pin-check.md` |
-| 4 | When to let Googlebot in | Owner | Blocked on purpose after launch; no date set |
-| 5 | Price of a self-created entry | Owner | Not set; plays no part in the app |
-| 7 | Place IDs for Google ratings | #57 `google-places-auto` landed (`32d2364`). Owner runs it on production after the next deploy: `places-find`, `places-apply-dry`, `places-apply`, then deletes the server key. Runbook: `docs/operations.md` §Google rating (#53) step 2 | On the Q3 data 168 of 247 venues are confident and are applied automatically; 78 doubtful and 1 not found are set by hand in the CMS card "Google-Bewertung" (the runbook prints the list). Stars show on a detail page only once the venue has a place ID. Cost USD 0 |
-| 8 | Drop our retired rating data (branch `google-rating-drop`, `63683ad`) | Owner runs the read-only SQL in `docs/operations.md` §Google rating (#53) step 3 on production | Not urgent, nothing broken meanwhile. All counts 0: it merges and goes out with the next deploy. Any count above 0: the owner looks at the rows and decides drop, export first, or keep |
-| 9 | Real-key check of the Google box on a detail page (first real render) | Owner, in the #57 runbook | Also settles what a venue with an ID but no Google reviews shows (expected: the place name, no stars). PO preference if that looks odd: show nothing |
+| 1 | Host (D10) | Owner | Blocks F15 only |
+| 2 | Logo, colours, typeface (D5) | Owner | Blocks F6; a placeholder wordmark until then |
+| 3 | Operator name and address, processors for the Datenschutz page | Owner | Blocks F7 and launch |
+| 4 | VAT status of the operator | Owner | Prices shown "zzgl. MwSt" until known |
+| 5 | Spreadsheet for D1(b), consent wording for D1(c) | Owner | Blocks F14 |
+| 6 | Swiss legal review: media terms, claim declaration, outreach and "directory solicitation" wording | Owner (counsel) | Our texts are marked draft until reviewed |
+| 7 | Contact basis of the owner's 5–6k known contacts | Owner | No bulk mail until audited (D20) |
+| 8 | Tier price: CHF 199 confirmed? | Owner | Default in force (D14) |
 
-## CRM "Locations" (decided 2026-11-05)
+Decisions D13–D22 were taken by the PO and the tech lead on 2026-11-07 in the owner's absence; the owner may overturn them.
 
-Research: `.rpi-tracking/research/2026-11-04/crm-locations-merge-options.md`. The owner chose option A (evolve in place) and accepted every default.
+## Roadmap (proposed order)
 
-- The CRM's Firmen and Kontakte become one record, **Location**. A Location may have one Eintrag (venue); without one it is a prospect. Prospects sit in the same list under an "Ohne Eintrag" tab. Staff link a new venue to a prospect by hand; there is no automatic name match.
-- The CMS venue screens are renamed **Einträge** (staff screens only). The public site and `/konto` keep "Location".
-- People become a contact card on the Location, with no page, list or timeline of their own. Removing one deletes the row only. Contacts without a company are erased after a dry run shows the count.
-- Couples leave the CRM and exist only as Anfragen, under the existing 12-month purge. No composer on an Anfrage. Couples already in the CRM are erased at the switch (Anfragen stay, notes blanked, tasks removed).
-- A deal shows its Location's contact card, and its Eintrag comes from the Location. A manager confirmed in `/konto` is copied once onto the card.
-- Cycles, in order: #54 `crm-locations-names` (live: the CRM says "Locations" at `/admin/crm/locations…` with 301s from `/firmen`, the CMS says "Einträge", merge token `{location.name}` with `{company.name}` still working, CSV `locations-YYYY-MM-DD.csv`), then #55 `crm-locations-contacts` (live: each Location has a contact card with add, edit and remove dialogs; the Kontakte menu is gone and `/admin/crm/kontakte/{id}` forwards to the Location; couples live only as Anfragen, a reply is a mailto, and the couple purge cron step is gone), then #56 `crm-locations-one-per-venue` (live: a Location has at most one Eintrag, enforced by the database; deleting a venue keeps the Location; "Eintrag zuordnen / lösen" on the record; the list has the tabs Alle / Mit Eintrag / Ohne Eintrag; a new deal takes the Location's Eintrag). The merge is complete: 1,499 Locations, 249 with an Eintrag (4 in Liechtenstein). The owner gave the go for all three on 2026-11-05.
-
-## New topic: second site (deine-eventlocation.ch)
-
-Raised by the owner on 2026-11-06 through the tech lead; not yet briefed to the PO by the owner. An event-venue listing modelled on eventlokale.ch. Decisions so far: a fork of this repo, German only, fully separate (own database, CMS and CRM), forked once and then left to diverge. Research: `.rpi-tracking/research/2026-11-06/eventlokale-fork-research.md` (about 90 % of the code carries over, about 13 code cycles to launch). Open WHAT questions: the venue source (the biggest risk), tiers, pricing and expiry, one inquiry or a request to several venues, room layout as a filter, brand, du or Sie in the copy. It gets its own product page in the new repository once the owner moves on it.
+1. The "du" flip first (F7a), then F3 to F8: vocabulary, filters, brand, copy and landing pages (event wording and look).
+2. Wave G, launch-critical: rights records and takedown, own-site importer, preview link and claim, enquiry quality, funnel scorecard, tiers with term and expiry, monthly report, outreach tracking, launch regions, Free/Pro page.
+3. F13 reverse match, last-minute offers, video embed, organizer feedback.
+4. F15 production setup, F16 launch verification. Deploys are the owner's.
+5. After launch: the 100-account outreach pilot (CMO §6.5), then the first 10 paying venues as the gate (CMO §11).
 
 ## Parked
 
-- **#50 bridebook-crawler:** Bridebook's Cloudflare challenges our requests. Waits for an export or an allowlist from Bridebook.
-- **Newsletter tool:** the owner's team is discussing it. No build planned.
-
-## Roadmap (proposed order, PO)
-
-1. Security batch (H1, H2, M6, M8, M1) once the owner triages.
-2. CRM Locations merge in three cycles once the owner picks an option: names, contacts, one location per venue.
-3. Remaining security mediums (M2–M5), later M7.
-4. Content quality: facts for the venues without owner data, and the missing pins.
-5. Later, only on demand: more languages (FR, IT, EN), map view, bulk inquiry from the Merkliste, manager extensions (rooms, documents, inquiries). Full list: "Out of scope / proposals" in `docs/rpi-cycles.md`.
+Online payment (Stripe/TWINT), promo-video renderer and social kit, partner syndication, French/Italian/English, reviews of our own, a named-competitor comparison page, passkeys for owners.
 
 ## Principles
 
 - Keep it simple. Two staff users at most, no privacy machinery beyond what the law needs, no extreme-input engineering.
+- Say only what is live. A feature is advertised when its entitlement is on; an unchecked entry is labelled "Noch nicht vom Betreiber bestätigt".
+- No image, text or data from another portal is published. Rights come before reach.
 - The owner decides scope and what goes live. Deploys are the owner's alone.
-- One write path: every change to a venue goes through the same commands, whoever makes it.
+- One write path: every change to an entry goes through the same commands, whoever makes it.

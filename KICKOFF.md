@@ -1,3 +1,5 @@
+Superseded by `docs/rpi-cycles.md` and `CLAUDE.md`; kept for history.
+
 # deine-eventlocation.ch: kickoff
 
 **Read this first, before `CLAUDE.md`.** This folder is a fork of `hochzeitslocation-symfony`, a Swiss wedding-venue site. It was taken on 2026-11-06 at commit `7e96eee`, tagged `fork-point`. Everything else in the repo (`CLAUDE.md`, `docs/`, `.claude/rules/`, the code) still describes the wedding site. Trust those files for **how** things are built: architecture, conventions, tooling, deploy. Do not trust them for **what** this product is. This file wins wherever they disagree, until cycle F0 has rewritten them.
@@ -37,6 +39,37 @@ It is modelled on **eventlokale.ch**'s features and behaviour. Its texts, photos
 6. **Legal and operator:** the Impressum operator (the same company as hochzeitslocation?), the processors for the Datenschutz page.
 7. **Does the site list weddings too?** If it does, it overlaps with hochzeitslocation.ch, with duplicate content on Google and the same venue sold twice by two CRMs.
 
+### 3a. Owner answers: cycle F1 `owner-decisions` (owner, 2026-11-06, via the tech lead)
+
+These are settled. F0 copies them verbatim into `docs/rpi-cycles.md` beside E1–E7; from F0's merge on, the product owner keeps them there.
+
+| # | Decision | Feeds |
+|---|---|---|
+| D1 | **Venues come from three sources.** (a) Managers register themselves in `/konto`, after a mailing and calls by the owner. (b) The owner's own contacts and spreadsheet, imported through `app:venues:import`. (c) hochzeitslocation customers who also host events, **only with their consent**, imported once as new records with new texts. This is a one-time import, not runtime sharing, so E1 holds. | F14 |
+| D2 | **Freemium.** A free basic entry plus 2–3 paid tiers, invoiced by hand; no online payment. When a paid entry expires it falls back to free and never goes offline. Paid tiers unlock more photos, PDFs, a better ranking and visible contact data. Every venue, free ones included, has the inquiry form. | F12 |
+| D3 | **One venue per inquiry** at launch. A request to several venues from the Merkliste (F13) comes after launch. | F9, F13 |
+| D4 | **No room-layout search filter.** Visitors search by guest number only; the layouts show on the detail page. F4 stays small, and F5 has no layout criterion. | F4, F5 |
+| D5 | **The owner supplies the brand:** logo, colours, typeface. F6 implements the brand; it does not design one. | F6 |
+| D6 | **The operator is a different company** from hochzeitslocation's. | F7 |
+| D7 | **Weddings are listed:** "Hochzeit" is one event type among the others. The tech lead had advised against it; the owner overruled. A venue's texts must differ between the two sites. | F3, F8, F14 |
+| D8 | **Git:** teammates may push branches, open PRs and squash-merge to `main` without asking, and resolve conflicts together with the tech lead. No direct pushes to `main`. Deploys stay the owner's. | all |
+| D9 | **Name and contact:** the site is called "deine-eventlocation.ch", and its contact address is `hallo@deine-eventlocation.ch`. | F0, F7 |
+| D10 | **Hosting is not Hostpoint;** the host is not chosen yet. It must offer PHP 8.5, Postgres 18 (or Neon reached from outside), cron and SSH. F0 leaves the deploy scripts as they are, and F15 adapts them once the owner picks a host. | F0, F15 |
+| D11 | **The eventlokale crawler stays** (overrides the "Drop" row in §4). The owner wants eventlokale's venues as a content source; D12 settles how. | F0, F14 |
+| D12 | **Source (d), eventlokale venues.** The crawler fetches all of eventlokale, every category, with facts, texts and photos, as internal working data before launch. The owner was told about the risk under Swiss UWG Art. 5 lit. c and accepted it ("crawl everything, it's only for myself, we're prelaunch"). eventlokale's texts and photos are **never published**; the owner writes new texts. Public photos come from the Google Places API, loaded live: never stored or cached, with the uploader's name on each photo, on the detail page only and never on cards. They show until the venue uploads its own photos in `/konto`. | F14 |
+
+**Owner inputs still needed, and the cycle each one blocks:**
+
+| Input | Needed before |
+|---|---|
+| The host (D10) | F15 |
+| Logo, colours, typeface | F6 |
+| Operator name and address, the processors for the Datenschutz page | F7 |
+| Tier names and prices (2 or 3 paid tiers), and the photo and PDF limits per tier | F12 |
+| The spreadsheet for D1(b), and the consent wording for D1(c) | F14 |
+| D12 follow-up 1: what a **listing card** shows for a venue without its own photos, which at launch is most of them. PO recommendation: a neutral brand placeholder per event type, and the owner's own photos where they have the rights | F6, F14 |
+| D12 follow-up 2: whether the crawled **facts** (address, capacity, rooms, event types) are published as they are, or only once the owner or the venue has checked them. PO recommendation: publish an entry only after the owner has written its text and checked its facts; until then it stays a draft | F14 |
+
 ## 4. What carries over (German only)
 
 Full analysis: `docs/research/fork-research.md`, copied from the wedding repo. Read it, but it was written before E3, so ignore its French and language parts (§3.2, `i18n-core`, `catalogues-fr`).
@@ -46,7 +79,7 @@ Full analysis: `docs/research/fork-research.md`, copied from the wedding repo. R
 | As is | ~50 % | Shared building blocks, Geo, Media, Admin (staff login, TOTP, audit, UI kit, Vue islands), Stats, Favorites (Merkliste), the frontend system, deploy, cron, backup, CI, Docker, Makefile, the test harness, the architecture and convention rules |
 | Adapt | ~40 % | Venues, Search, Seo, Inquiries, Cms, Portal, Crm: wedding wording, routes, filters, the "Hochzeit" fields, tiers |
 | New | ~5–10 % | Event-type search (and layout search if Q4 says so), business-model pieces, the new brand |
-| Drop | small | The Wix, legacy and owner importers (`Venues\…Wix*`, `Legacy*`, `Owner*`), the eventlokale crawler (`Crm\…Eventlokale*`, `app:crm:crawl-eventlokale`), the customer-sheet import (`Crm\…Customer*`), the retired rating entities (`VenueRatingHighlight`, `VenueReview`), the wedding facts (ceremony, vendor, usage, party/curfew) |
+| Drop | small | The Wix, legacy and owner importers (`Venues\…Wix*`, `Legacy*`, `Owner*`), ~~the eventlokale crawler~~ (kept, D11), the customer-sheet import (`Crm\…Customer*`), the retired rating entities (`VenueRatingHighlight`, `VenueReview`), the wedding facts (ceremony, vendor, usage, party/curfew) |
 
 Where "wedding" is baked in (the rename checklist, details in the research §2):
 - route paths `/hochzeitslocation…`;
@@ -64,7 +97,7 @@ The sizes are rough: S about half a day, M one to two days, L three days or more
 
 | # | Slug | Size | Depends on | What |
 |---|---|---|---|---|
-| F0 | `fork-baseline` | M | — | New GitHub repo, then rename the brand and ops strings and strip the importers, crawler, customer import and retired rating entities. Squash the 25 migrations into one hand-written baseline: the new site has no production data. Condense `.claude/rules/module-*.md` to "current state" notes. Write a new `CLAUDE.md`, `docs/rpi-cycles.md` (E1–E7 as settled decisions, keeping the old S1–S17 that still hold) and `docs/product.md`. Turn the du/Sie test around (E4). CI green. |
+| F0 | `fork-baseline` | M | — | New GitHub repo, then rename the brand and ops strings and strip the importers, customer import and retired rating entities (the eventlokale crawler stays, D11). Squash the 25 migrations into one hand-written baseline: the new site has no production data. Condense `.claude/rules/module-*.md` to "current state" notes. Write a new `CLAUDE.md`, `docs/rpi-cycles.md` (E1–E7 as settled decisions, keeping the old S1–S17 that still hold) and `docs/product.md`. Turn the du/Sie test around (E4). CI green. |
 | F1 | `owner-decisions` | – | — | No code: record the answers to §3 as decisions. |
 | F3 | `event-vocabulary` | M | F0, F1 | Event types (re-curate `suitable_for`), catering, technology; the wedding groups out; migration rows, catalogues, content format, DemoStory. |
 | F4 | `room-layouts` | S–M | F3 | Layout list and capacities per room, the CMS room editor, the detail room dialog. |
@@ -86,7 +119,7 @@ The sizes are rough: S about half a day, M one to two days, L three days or more
 
 The order follows the wedding repo's `docs/operations.md` §First-time setup:
 1. Domains `deine-eventlocation.ch` and `deineeventlocation.ch`.
-2. A Hostpoint website with SSH and PHP 8.5, and its docroot.
+2. A web host with SSH, PHP 8.5 and cron, and its docroot. Not Hostpoint; still to be chosen (D10).
 3. A Neon project in Frankfurt on Postgres 18.
 4. A mailbox with SPF, DKIM and DMARC on the new domain.
 5. Sentry: a project, a cron monitor and an uptime monitor.
