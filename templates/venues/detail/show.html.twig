@@ -55,6 +55,7 @@
             {% if venue.hasContact() %}{{ include('venues/detail/_contact.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.documents is not empty %}{{ include('venues/detail/_documents.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             <section id="anfrage" class="venue-inquiry">{% block inquiry %}{{ inquiry_form(venue, inquiry ?? null) }}{% endblock %}</section>
+            <p class="venue-report"><a href="{{ path('venue_report', {location: venue.number}) }}" rel="nofollow">{{ 'report.detail_link'|trans({}, 'venues') }}</a></p>
         </div>
     </div>
     {{ render(controller('App\\Search\\Controller\\SimilarVenuesController', {venueId: venue.id})) }}

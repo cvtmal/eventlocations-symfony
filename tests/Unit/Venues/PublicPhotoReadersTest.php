@@ -25,6 +25,7 @@ final class PublicPhotoReadersTest extends TestCase
         'src/Portal/' => 'the location managers: a manager sees every stored photo of the venues they manage, behind the login',
         'src/Venues/PublicPhotoPolicy.php' => 'the policy itself',
         'src/Venues/ReadModel/PhotoRightsQuery.php' => 'the rights card of staff and managers: every stored photo with its grant',
+        'src/Venues/ReadModel/ModerationCaseQuery.php' => 'the complaints queue of staff (G2): the photos a complaint names, held or not, behind the admin login',
         'src/Venues/CommandHandler/GrantPhotoRightsHandler.php' => 'the write side: it asks which photos have no live grant yet',
         'src/Venues/ReadModel/VenuePublishGaps.php' => 'the publish rule asks whether the gallery has a stored photo, granted or not',
         'src/Venues/Repository/VenueRepository.php' => 'file bookkeeping: the originals only this venue uses',

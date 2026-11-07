@@ -1,0 +1,23 @@
+{#
+    The complainant's receipt (G2, `ModerationMailer::sendReceipt`). Transactional: no opt-out link. It goes to an
+    address nobody proved, so it quotes nothing the visitor typed: the venue is named only as the site knows it.
+    Context: reference, kind (ModerationKind), venue_name (or null), held_photos.
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'report.mail.receipt.preheader'|trans({}, 'venues') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('report.mail.receipt.greeting'|trans({}, 'venues')) }}
+{{ blocks.p('report.mail.receipt.intro'|trans({}, 'venues')) }}
+{{ blocks.facts([
+    {label: 'report.mail.fact.kind'|trans({}, 'venues'), value: ('report.kind.' ~ kind.value)|trans({}, 'venues')},
+]|merge(venue_name is null ? [] : [{label: 'report.mail.fact.venue'|trans({}, 'venues'), value: venue_name}])|merge([
+    {label: 'report.mail.fact.reference'|trans({}, 'venues'), value: reference},
+])) }}
+{% if held_photos > 0 %}{{ blocks.p('report.mail.receipt.held'|trans({count: held_photos}, 'venues')) }}{% endif %}
+{{ blocks.p('report.mail.receipt.next'|trans({}, 'venues')) }}
+{{ blocks.rule() }}
+{{ blocks.note('report.mail.receipt.not_you'|trans({}, 'venues')) }}
+{% endblock %}

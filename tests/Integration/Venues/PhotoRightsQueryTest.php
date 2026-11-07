@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Venues;
 
 use App\Factory\MediaRightsGrantFactory;
+use App\Factory\ModerationCaseFactory;
+use App\Factory\ModerationCasePhotoFactory;
 use App\Factory\RightsPolicyVersionFactory;
 use App\Factory\RoomFactory;
 use App\Factory\RoomTranslationFactory;
@@ -132,6 +134,22 @@ final class PhotoRightsQueryTest extends KernelTestCase
         self::assertTrue($row->derivatives);
         self::assertSame('legacy', $row->policyVersion);
         self::assertSame(0, $view->ungrantedCount);
+    }
+
+    public function test_a_photo_an_open_complaint_names_is_held_until_the_complaint_is_decided(): void
+    {
+        $venue = $this->venue();
+        $held = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $decided = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 3]);
+        ModerationCasePhotoFactory::createOne(['case' => ModerationCaseFactory::createOne(['venue' => $venue, 'venueReference' => null]), 'photo' => $held]);
+        ModerationCasePhotoFactory::createOne(['case' => ModerationCaseFactory::new()->decided()->create(['venue' => $venue, 'venueReference' => null]), 'photo' => $decided]);
+
+        $view = $this->query->forVenue($venue->number(), 'de');
+
+        self::assertNotNull($view);
+        self::assertSame([true, false, false], array_map(static fn (PhotoRightsRow $photo): bool => $photo->held, $view->photos));
+        self::assertSame([true, true, true], array_map(static fn (PhotoRightsRow $photo): bool => $photo->granted, $view->photos), 'a held photo keeps its grant');
     }
 
     public function test_a_photo_without_a_live_grant_is_waiting_and_has_no_facts(): void

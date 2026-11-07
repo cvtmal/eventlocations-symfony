@@ -9,6 +9,8 @@
 'This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.': Die Eingabe ist zu kurz. Bitte gib mindestens {limit} Zeichen ein.
 'This value is too long. It should have {{ limit }} character or less.|This value is too long. It should have {{ limit }} characters or less.': Die Eingabe ist zu lang. Bitte gib höchstens {limit} Zeichen ein.
 cms:
+    moderation:
+        note_too_long: Bitte höchstens {limit} Zeichen eingeben.
     venue:
         loaded_at:
             invalid: Das Formular ist veraltet. Bitte die Seite neu laden.
@@ -167,6 +169,29 @@ inquiry:
         too_long: Die E-Mail-Adresse darf höchstens 254 Zeichen lang sein.
     phone:
         invalid: Bitte gib eine gültige Telefonnummer an.
+report:
+    kind:
+        required: Bitte wähle, worum es geht.
+    photos:
+        invalid: Bitte wähle nur Fotos aus der Liste.
+    venue:
+        required: Bitte gib an, welche Location du meinst.
+        too_long: Bitte höchstens 500 Zeichen eingeben.
+        invalid: Die Angabe enthält ungültige Zeichen.
+    message:
+        required: Bitte beschreib dein Anliegen.
+        too_short: Bitte beschreib dein Anliegen in mindestens {limit} Zeichen.
+        too_long: Die Nachricht darf höchstens 5000 Zeichen lang sein.
+    name:
+        required: Bitte gib deinen Namen an.
+        too_long: Der Name darf höchstens 100 Zeichen lang sein.
+        invalid: Der Name enthält ungültige Zeichen.
+    email:
+        required: Bitte gib deine E-Mail-Adresse an.
+        invalid: Bitte gib eine gültige E-Mail-Adresse an.
+        too_long: Die E-Mail-Adresse darf höchstens 254 Zeichen lang sein.
+    good_faith:
+        required: Bitte bestätige, dass deine Angaben stimmen.
 portal:
     onboarding:
         town_required: Bitte gib PLZ und Ort an.

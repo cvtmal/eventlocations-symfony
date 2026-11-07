@@ -1,0 +1,38 @@
+{#
+    Meldungen (G2, `ModerationListController`): open (list<ModerationCaseRow>, oldest first), decided (the latest).
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'moderation.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'moderation.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'moderation.title'|trans({}, 'cms') }} <span class="muted">{{ open|length|swiss_number }}</span></h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    <div class="moderation">
+        <h2 class="moderation__heading">{{ 'moderation.open.title'|trans({}, 'cms') }}</h2>
+        {{ include('admin/cms/moderation/_table.html.twig', {
+            rows: open,
+            label: 'moderation.open.title'|trans({}, 'cms'),
+            id: 'moderation-open',
+            empty_title: 'moderation.open.empty'|trans({}, 'cms'),
+        }, with_context = false) }}
+        <h2 class="moderation__heading">{{ 'moderation.decided.title'|trans({}, 'cms') }}</h2>
+        {{ include('admin/cms/moderation/_table.html.twig', {
+            rows: decided,
+            label: 'moderation.decided.title'|trans({}, 'cms'),
+            id: 'moderation-decided',
+            empty_title: 'moderation.decided.empty'|trans({}, 'cms'),
+        }, with_context = false) }}
+    </div>
+{% endblock %}

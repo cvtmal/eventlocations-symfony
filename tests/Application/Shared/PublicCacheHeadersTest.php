@@ -99,6 +99,9 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'merkliste toggle' => ['merkliste_toggle', 'POST', '/merkliste/{number}', 303, self::PRIVATE, null];
         yield 'merkliste sync' => ['merkliste_sync', 'POST', '/merkliste', 204, self::PRIVATE, null];
         yield 'inquiry' => ['inquiry_submit', 'POST', self::DETAIL.'/anfrage', 303, self::PRIVATE, null];
+        yield 'complaint form' => ['venue_report', 'GET', '/inhalt-melden', 200, self::PRIVATE, null];
+        yield 'complaint form of a venue' => ['venue_report', 'GET', '/inhalt-melden?location={number}', 200, self::PRIVATE, null];
+        yield 'complaint form, a foreign post' => ['venue_report', 'POST', '/inhalt-melden', 200, self::PRIVATE, null];
         yield 'home' => ['home', 'GET', '/', 200, self::LISTING, null];
         yield 'home, HEAD' => ['home', 'HEAD', '/', 200, self::LISTING, null];
         yield 'health' => ['health', 'GET', '/health', 200, self::PRIVATE, null];

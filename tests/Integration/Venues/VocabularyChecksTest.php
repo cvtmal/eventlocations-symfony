@@ -13,6 +13,9 @@ use App\Venues\ValueObject\CandidateStatus;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\GrantorType;
+use App\Venues\ValueObject\ModerationDecision;
+use App\Venues\ValueObject\ModerationKind;
+use App\Venues\ValueObject\ModerationStatus;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\SourceStatus;
@@ -52,6 +55,9 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'rights grantor type' => ['chk_media_rights_grants_grantor_type', GrantorType::class];
         yield 'rights revoker type' => ['chk_media_rights_grants_revoked_by_type', GrantorType::class];
         yield 'rights evidence' => ['chk_media_rights_grants_evidence', GrantEvidence::class];
+        yield 'complaint kind' => ['chk_moderation_cases_kind', ModerationKind::class];
+        yield 'complaint status' => ['chk_moderation_cases_status', ModerationStatus::class];
+        yield 'complaint decision' => ['chk_moderation_cases_decision', ModerationDecision::class];
     }
 
     /**

@@ -296,6 +296,9 @@ history:
         RemoveVenueDocument: ein Dokument gelöscht
         ChangeVenueGooglePlace: die Google-Bewertung geändert
         AssignVenueGooglePlace: die Google Place ID gesetzt
+        ReportContent: einen Inhalt gemeldet
+        TakeEntryOffline: den Eintrag wegen einer Meldung offline genommen
+        DecideModerationCase: eine Meldung entschieden
         # Retired in #53; old audit rows still name them.
         RateVenue: die Bewertung geändert
         AddVenueReview: eine Bewertung hinzugefügt
@@ -395,6 +398,7 @@ photos:
         status:
             granted: Freigegeben
             ungranted: Nicht freigegeben
+            held: gemeldet (verborgen)
         detail:
             granted: 'am {date}, Nachweis: {evidence}'
             derivatives: Auch für Werbezwecke freigegeben.
@@ -774,3 +778,68 @@ stats:
     widget:
         title: Statistik, letzte 7 Tage
         all: Zur Statistik
+moderation:
+    nav: Meldungen
+    title: Meldungen
+    no_venue: Keine Location angegeben
+    open:
+        title: Offen
+        empty: Keine offenen Meldungen.
+    decided:
+        title: Entschieden
+        empty: Noch keine entschiedenen Meldungen.
+    column:
+        date: Eingegangen
+        kind: Art
+        venue: Location
+        complainant: Von
+        held: Verborgene Fotos
+        status: Status
+    status:
+        open: Offen
+    kind:
+        rights: Bildrechte
+        removal: Eintrag entfernen
+        correction: Angaben korrigieren
+    decision:
+        remove: 'Entschieden: entfernt'
+        keep: 'Entschieden: behalten'
+    case:
+        title: '{kind, select, rights {Bildrechte} removal {Eintrag entfernen} other {Angaben korrigieren}} vom {date}'
+        details: Meldung
+        email: E-Mail
+        source: Gemeldet von der Seite
+        good_faith: Angaben bestätigt
+        good_faith_at: 'am {date}'
+        message: Nachricht
+        none: '–'
+        venue_online: Online
+        venue_offline: Offline
+        photos: Gemeldete Fotos
+        photos_held: Diese Fotos sind auf der Website verborgen, bis die Meldung entschieden ist.
+        photo_held: Verborgen
+        photo_kept: Wieder sichtbar
+        photo_removed: Entfernt
+        offline: Eintrag offline nehmen
+        offline_hint: Nimmt den ganzen Eintrag offline, bis entschieden ist. «Behalten» stellt ihn wieder online.
+        took_offline: Der Eintrag ist wegen dieser Meldung offline. «Behalten» stellt ihn wieder online.
+        took_offline_decided: Der Eintrag wurde wegen dieser Meldung offline genommen.
+        decision: Entscheidung
+        decided_at: Entschieden am
+        decided_by: Entschieden von
+        unknown_staff: Unbekannt
+        note: Notiz
+        decide:
+            title: Entscheiden
+            intro: '«Entfernen» löscht die gemeldeten Fotos endgültig (die Freigabe wird widerrufen); ein offline genommener Eintrag bleibt offline. «Behalten» macht die Fotos wieder sichtbar und stellt einen offline genommenen Eintrag wieder online.'
+            note: Notiz (intern, optional)
+            remove: 'Entscheiden: entfernen'
+            keep: 'Entscheiden: behalten'
+    flash:
+        offline: Der Eintrag ist offline.
+        decided:
+            remove: Die Meldung ist entschieden. Die gemeldeten Fotos sind entfernt.
+            keep: Die Meldung ist entschieden. Die Inhalte sind wieder sichtbar.
+        already_decided: Diese Meldung ist schon entschieden.
+        no_venue: Diese Meldung nennt keine Location der Website.
+        not_publishable: 'Der Eintrag kann nicht wieder online gehen. Es fehlt: {missing}'
