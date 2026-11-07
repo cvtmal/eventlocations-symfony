@@ -26,6 +26,7 @@ use App\Venues\Entity\VenueTerm;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\Exception\InvalidContent;
 use App\Venues\Exception\UnresolvedTown;
+use App\Venues\PhotoGrants;
 use App\Venues\PhotoPipeline;
 use App\Venues\PublishedMedia;
 use App\Venues\Repository\TaxonomyTermRepository;
@@ -35,6 +36,9 @@ use App\Venues\TownResolver;
 use App\Venues\ValueObject\Content\PhotoContent;
 use App\Venues\ValueObject\Content\RoomContent;
 use App\Venues\ValueObject\Content\VenueContent;
+use App\Venues\ValueObject\GrantEvidence;
+use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\PhotoGrant;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\StagedPhoto;
 use App\Venues\ValueObject\TermGroup;
@@ -91,6 +95,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         private readonly EntityManagerInterface $em,
         private readonly VenueSlugs $slugs,
         private readonly PhotoPipeline $photos,
+        private readonly PhotoGrants $grants,
         private readonly DocumentPipeline $documents,
         private readonly MediaPublisher $publisher,
         private readonly MessageBusInterface $commandBus,
@@ -205,6 +210,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
             $roomsByKey = $existing['rooms'];
             $removedRooms = array_diff_key($roomsByKey, array_flip(array_map(static fn (RoomContent $room): string => $room->key, $content->rooms)));
             foreach ($photoPlan['removed'] as $photo) {
+                $this->grants->releasePhoto($photo, Grantor::system('import'));
                 $this->em->remove($photo);
             }
             foreach ($documentPlan['removed'] as $document) {
@@ -265,6 +271,8 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
                     $photo = $photoPlan['retained'][self::photoIdentity($roomKey, $original)] ?? null;
                     if (null === $photo) {
                         $photo = $this->photos->add($venue, null === $roomKey ? null : $rooms[$roomKey], $index + 1, $staged[$original]);
+                        // The folder is the owner's own content: staff attest the rights (G1).
+                        $this->grants->issue($photo, new PhotoGrant(Grantor::system('import'), GrantEvidence::StaffAttestation));
                         $newPhotos[] = [$photo, $staged[$original]];
                     } else {
                         $photo->moveTo($index + 1);

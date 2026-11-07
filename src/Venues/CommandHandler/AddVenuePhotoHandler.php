@@ -12,6 +12,7 @@ use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\PhotoGrants;
 use App\Venues\PhotoPipeline;
 use App\Venues\Positions;
 use App\Venues\PublishedMedia;
@@ -28,8 +29,9 @@ use Doctrine\ORM\EntityManagerInterface;
  *    MAX_PHOTOS (#44), all without a lock;
  * 3. stage(): render the variants and store the original, the CPU-heavy part, outside the
  *    row lock (PF4: doctrine_transaction has already opened the transaction);
- * 4. lock the venue, check room, duplicate and limit again, take the next position, add,
- *    flush, publish the variants (revert() on failure);
+ * 4. lock the venue, check room, duplicate and limit again, take the next position, add (with
+ *    its grant when the command carries one, G1), flush, publish the variants (revert() on
+ *    failure);
  * 5. close(): cms_edited_at, purge the venue, and the listings for a gallery photo (D19).
  *
  * The staging directory goes in every case. A decode failure leaves no new original
@@ -42,6 +44,7 @@ final class AddVenuePhotoHandler implements CommandHandlerInterface
         private readonly VenueRows $rows,
         private readonly Positions $positions,
         private readonly PhotoPipeline $photos,
+        private readonly PhotoGrants $grants,
         private readonly MediaPublisher $publisher,
         private readonly EntityManagerInterface $em,
     ) {
@@ -84,6 +87,9 @@ final class AddVenuePhotoHandler implements CommandHandlerInterface
             $this->assertRoomForPhoto($venue, $room);
 
             $photo = $this->photos->add($venue, $room, $this->positions->nextPhoto($venue, $room), $staged);
+            if (null !== $command->grant) {
+                $this->grants->issue($photo, $command->grant);
+            }
             $this->em->flush();
             $published = new PublishedMedia();
             try {

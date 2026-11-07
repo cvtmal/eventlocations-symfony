@@ -65,6 +65,44 @@ final class SubmissionCommandsTest extends KernelTestCase
         self::assertSame($row['submitted_at'], $row['rights_confirmed_at']);
     }
 
+    public function test_submit_grants_the_photos_that_wait_as_the_managers_declaration(): void
+    {
+        $manager = PortalUserFactory::createOne();
+        $venue = $this->complete();
+        $waiting = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
+        SubmissionFactory::createOne(['venue' => $venue]);
+
+        self::assertTrue($this->answer(new SubmitLocation($manager->id(), $venue->number(), derivatives: true)));
+
+        $grant = $this->connection->fetchAssociative('SELECT grantor_type, grantor_ref, evidence, scope_derivatives, revoked_at FROM media_rights_grants WHERE venue_photo_id = ?', [$waiting->id()]);
+        self::assertIsArray($grant);
+        self::assertSame(['manager', $manager->id(), 'declaration', true, null], [$grant['grantor_type'], $grant['grantor_ref'], $grant['evidence'], $grant['scope_derivatives'], $grant['revoked_at']]);
+        self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_id = ? AND revoked_at IS NULL', [$venue->id()]), 'the photo that had a grant keeps it, nothing else is added');
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE command LIKE '%GrantPhotoRights' AND subject_type = 'venue' AND subject_id = ?", [(string) $venue->number()]));
+    }
+
+    public function test_a_submit_that_starts_no_review_grants_nothing(): void
+    {
+        $venue = $this->complete();
+        $waiting = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
+        SubmissionFactory::new()->submitted()->create(['venue' => $venue]);
+
+        self::assertFalse($this->answer(new SubmitLocation(PortalUserFactory::createOne()->id(), $venue->number())));
+
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_photo_id = ?', [$waiting->id()]));
+    }
+
+    public function test_a_refused_submit_grants_nothing(): void
+    {
+        $venue = VenueFactory::createOne(['status' => VenueStatus::Unpublished]);
+        $waiting = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 1]);
+        SubmissionFactory::createOne(['venue' => $venue]);
+
+        $this->refusal(new SubmitLocation(PortalUserFactory::createOne()->id(), $venue->number()), VenueRuleViolation::class);
+
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_photo_id = ?', [$waiting->id()]));
+    }
+
     public function test_a_second_submit_returns_false_and_changes_nothing(): void
     {
         $venue = $this->complete();

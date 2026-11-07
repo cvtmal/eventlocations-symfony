@@ -6,12 +6,13 @@ namespace App\Search\ReadModel;
 
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\PublicPhotoPolicy;
 use Doctrine\DBAL\Connection;
 
 /**
  * The owner's hero photo (Q18), found by the hash of its original file, which the path ends in.
  * Only a venue-level photo of a published venue qualifies, so unpublishing the venue takes the
- * photo off the page. One query.
+ * photo off the page, and it needs a live rights grant (`PublicPhotoPolicy`). One query.
  */
 final class HomeHeroQuery
 {
@@ -26,6 +27,7 @@ final class HomeHeroQuery
     {
         $published = new ListingSql(SearchCriteria::none(), $this->enabledLocale->default());
         $translation = $this->translationJoin->localized('venue_photo_translations', 'venue_photo_id', 'vp.id', 'pt');
+        $granted = PublicPhotoPolicy::sql('vp');
 
         $row = $this->connection->fetchAssociative(
             <<<SQL
@@ -33,7 +35,7 @@ final class HomeHeroQuery
                 FROM {$published->from}
                 JOIN venue_photos vp ON vp.venue_id = v.id AND vp.room_id IS NULL
                 {$translation}
-                WHERE {$published->where} AND vp.original_path LIKE :path
+                WHERE {$published->where} AND vp.original_path LIKE :path AND {$granted}
                 ORDER BY v.number, vp.position
                 LIMIT 1
                 SQL,

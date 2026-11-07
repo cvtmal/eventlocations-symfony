@@ -13,6 +13,7 @@ use App\Cms\VenueMediaApi;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\Command\AddVenuePhoto;
+use App\Venues\ReadModel\PhotoRightsQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -21,7 +22,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * The Fotos tab (#25, CMS-6): the host page of the `photo-manager` island, which needs JavaScript (S12).
  * The page hands it the photos, the rooms and the endpoint URLs; every write goes through
- * `admin_api_cms_photos_*` and answers the whole list (PF10).
+ * `admin_api_cms_photos_*` and answers the whole list (PF10). Below the island sits the "Bildrechte" card (G1),
+ * a server-rendered list of what is granted, with its two actions in `VenuePhotoRightsController`.
  */
 #[IsGranted('ROLE_EDITOR')]
 #[Route('/admin/locations/{number}', requirements: ['number' => VenueNumber::REQUIREMENT], options: [LocalizedRoutes::UNLOCALIZED => true])]
@@ -30,6 +32,7 @@ final class VenuePhotosController extends AbstractController
     public function __construct(
         private readonly VenueHeaderQuery $headers,
         private readonly VenuePhotosQuery $photos,
+        private readonly PhotoRightsQuery $rights,
         private readonly EnabledLocale $locales,
     ) {
     }
@@ -44,6 +47,8 @@ final class VenuePhotosController extends AbstractController
             'venue' => $venue,
             'photos' => $view->photosArray(),
             'rooms' => $view->roomsArray(),
+            'rights' => $this->rights->forVenue($number, $this->locales->default()) ?? throw $this->createNotFoundException(),
+            'rights_csrf_id' => VenuePhotoRightsController::CSRF_ID,
             'locale_codes' => $this->locales->all(),
             'default_locale' => $this->locales->default(),
             'id_placeholder' => VenueMediaApi::ID_PLACEHOLDER,

@@ -6,6 +6,7 @@ namespace App\Venues\Command;
 
 use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
+use App\Venues\ValueObject\PhotoGrant;
 
 /**
  * Uploads one photo into the gallery (room null) or a room of the venue (#25, CMS-6, D1).
@@ -13,6 +14,10 @@ use App\Shared\Messenger\AuditSubject;
  * type (EXTENSIONS), never from the client's name. The original is stored content-addressed
  * at `cms/<number>/<sha256>.<extension>` under MEDIA_ROOT; the same file again in the same
  * scope returns the existing photo (AddedPhoto::$duplicate).
+ *
+ * `grant` is set by a caller that can vouch for the file (G1): staff (`staff_attestation`) or a
+ * manager whose declaration is on record (`upload`). Without one the photo is stored but not
+ * public until a `GrantPhotoRights` covers it. A duplicate keeps the grant state it has.
  */
 final readonly class AddVenuePhoto implements AuditableCommand
 {
@@ -27,6 +32,7 @@ final readonly class AddVenuePhoto implements AuditableCommand
         public ?string $roomId,
         public string $sourceFile,
         public string $extension,
+        public ?PhotoGrant $grant = null,
     ) {
     }
 
@@ -37,6 +43,8 @@ final readonly class AddVenuePhoto implements AuditableCommand
 
     public function auditSummary(): array
     {
-        return ['room_id' => $this->roomId, 'type' => $this->extension];
+        $summary = ['room_id' => $this->roomId, 'type' => $this->extension];
+
+        return null === $this->grant ? $summary : $summary + ['evidence' => $this->grant->evidence->value];
     }
 }

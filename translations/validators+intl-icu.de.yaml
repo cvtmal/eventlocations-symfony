@@ -171,6 +171,8 @@ portal:
         reason_too_long: Bitte höchstens {limit} Zeichen eingeben.
     photo:
         rate_limited: Du hast in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuch es später noch einmal.
+    rights:
+        declaration_required: Bitte bestätige die Bildrechte-Erklärung, damit wir die Fotos freigeben können.
 shared:
     text:
         invalid: Der Text enthält ungültige Zeichen.

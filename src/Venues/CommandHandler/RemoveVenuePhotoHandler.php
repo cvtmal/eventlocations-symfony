@@ -7,7 +7,9 @@ namespace App\Venues\CommandHandler;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Command\RemoveVenueFiles;
 use App\Venues\Command\RemoveVenuePhoto;
+use App\Venues\PhotoGrants;
 use App\Venues\Positions;
+use App\Venues\ValueObject\Grantor;
 use App\Venues\VenueEditing;
 use App\Venues\VenueRows;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +21,12 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * RemoveVenueFiles deletes the variants and the original, the original only when no photo or
  * document row of any venue uses it (demo venues share originals; one file may sit in the
  * gallery and in a room). The last gallery photo may go, even on a published venue.
+ *
+ * G1: the photo's live grant is revoked first, in the same transaction; the grant row survives
+ * the photo (its FK is SET NULL) as evidence. A gallery photo is on the cards, so its removal purges
+ * the listings. A room photo is on no card, but the sitemap lists it while it has a live grant, and
+ * the sitemap is purged with the listings: so the listings go when the grant that just ended was
+ * live. A room photo nobody had granted was public nowhere, and only its venue is purged.
  */
 final class RemoveVenuePhotoHandler implements CommandHandlerInterface
 {
@@ -26,6 +34,7 @@ final class RemoveVenuePhotoHandler implements CommandHandlerInterface
         private readonly VenueEditing $editing,
         private readonly VenueRows $rows,
         private readonly Positions $positions,
+        private readonly PhotoGrants $grants,
         private readonly EntityManagerInterface $em,
         private readonly MessageBusInterface $commandBus,
     ) {
@@ -39,6 +48,7 @@ final class RemoveVenuePhotoHandler implements CommandHandlerInterface
         $photoId = $photo->id();
         $originalPath = $photo->originalPath();
 
+        $hadLiveGrant = $this->grants->releasePhoto($photo, $command->by ?? Grantor::system('removal')) > 0;
         $this->em->remove($photo);
         $this->em->flush();
         $this->positions->renumber($this->rows->photos($venue, $room));
@@ -47,6 +57,6 @@ final class RemoveVenuePhotoHandler implements CommandHandlerInterface
             new RemoveVenueFiles($command->venueNumber, [$photoId], [], $this->rows->isOriginalUsed($originalPath) ? [] : [$originalPath]),
             [new DispatchAfterCurrentBusStamp()],
         );
-        $this->editing->close($venue, purgeListings: null === $room);
+        $this->editing->close($venue, purgeListings: null === $room || $hadLiveGrant);
     }
 }

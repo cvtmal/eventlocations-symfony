@@ -1,0 +1,105 @@
+{#
+    The "Bildrechte" card (G1), shared by the CMS Fotos tab and the Fotos tab of `/konto`: one row per stored photo with
+    what is granted and on what evidence, and for a granted photo a button that opens a confirm dialog. Revoking removes
+    the photo, so the dialog says so. Include with `with_context = false`:
+      rights (`Venues\ReadModel\PhotoRightsView`), number (the venue's number),
+      revoke_route (a POST route that takes `number` and `id`), csrf (the token of the POST forms),
+      grant_url (optional, staff only: the POST url of "Alle aktuellen Fotos freigeben", shown while a photo waits).
+    A venue without stored photos has no card. The heading carries the id `bildrechte`, the anchor of every redirect.
+    Two columns, so the card fits 390 px: the button sits beside the status and wraps under it when there is no room.
+#}
+{% if rights.photos is not empty %}
+    <div class="photo-rights">
+        {% embed 'admin/components/_card.html.twig' with {
+            title: 'photos.rights.title'|trans({}, 'cms'),
+            id: 'bildrechte',
+            rights: rights,
+            number: number,
+            revoke_route: revoke_route,
+            csrf: csrf,
+            grant_url: grant_url|default(null),
+        } only %}
+            {% block body %}
+                <p class="muted">{{ 'photos.rights.intro'|trans({}, 'cms') }}</p>
+                <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'photos.rights.table_label'|trans({}, 'cms') }}">
+                    <table class="table" id="photo-rights">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ 'photos.rights.column.photo'|trans({}, 'cms') }}</th>
+                                <th scope="col">{{ 'photos.rights.column.status'|trans({}, 'cms') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rights.photos %}
+                                {% set photo_name = row.roomName is null
+                                    ? 'photos.rights.photo'|trans({position: row.position}, 'cms')
+                                    : 'photos.rights.photo_room'|trans({position: row.position, room: row.roomName}, 'cms') %}
+                                <tr>
+                                    <td><strong>{{ photo_name }}</strong></td>
+                                    <td>
+                                        <div class="photo-rights__cell">
+                                            <div class="photo-rights__status">
+                                                {% if row.granted %}
+                                                    {{ include('admin/components/_pill.html.twig', {label: 'photos.rights.status.granted'|trans({}, 'cms'), tone: 'green', dot: true}, with_context = false) }}
+                                                    <span class="muted">{{ 'photos.rights.detail.granted'|trans({date: row.grantedAt|swiss_date, evidence: ('photos.rights.evidence.' ~ row.evidence.value)|trans({}, 'cms')}, 'cms') }}</span>
+                                                    {% if row.derivatives %}<span class="muted">{{ 'photos.rights.detail.derivatives'|trans({}, 'cms') }}</span>{% endif %}
+                                                {% else %}
+                                                    {{ include('admin/components/_pill.html.twig', {label: 'photos.rights.status.ungranted'|trans({}, 'cms'), tone: 'amber', dot: true}, with_context = false) }}
+                                                    <span class="muted">{{ 'photos.rights.detail.ungranted'|trans({}, 'cms') }}</span>
+                                                {% endif %}
+                                            </div>
+                                            {% if row.granted %}
+                                                <div class="photo-rights__action">
+                                                    {{ include('admin/components/_button.html.twig', {
+                                                        label: 'photos.rights.revoke.action'|trans({}, 'cms'),
+                                                        size: 'sm',
+                                                        attributes: {
+                                                            'aria-label': 'photos.rights.revoke.action_for'|trans({photo: photo_name}, 'cms'),
+                                                            commandfor: 'photo-revoke-' ~ row.photoId,
+                                                            command: 'show-modal',
+                                                        },
+                                                    }, with_context = false) }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% for row in rights.photos|filter(row => row.granted) %}
+                    {% set photo_name = row.roomName is null
+                        ? 'photos.rights.photo'|trans({position: row.position}, 'cms')
+                        : 'photos.rights.photo_room'|trans({position: row.position, room: row.roomName}, 'cms') %}
+                    {% embed 'admin/components/_modal.html.twig' with {
+                        id: 'photo-revoke-' ~ row.photoId,
+                        title: 'photos.rights.revoke.title'|trans({photo: photo_name}, 'cms'),
+                        close_label: 'photos.rights.revoke.close'|trans({}, 'cms'),
+                        danger: true,
+                        revoke_url: path(revoke_route, {number: number, id: row.photoId}),
+                        csrf: csrf,
+                    } only %}
+                        {% block body %}<p>{{ 'photos.rights.revoke.text'|trans({}, 'cms') }}</p>{% endblock %}
+                        {% block footer %}
+                            <form method="dialog"><button class="btn" autofocus>{{ 'photos.rights.revoke.cancel'|trans({}, 'cms') }}</button></form>
+                            <form method="post" action="{{ revoke_url }}">
+                                <input type="hidden" name="_token" value="{{ csrf }}">
+                                {{ include('admin/components/_button.html.twig', {label: 'photos.rights.revoke.confirm'|trans({}, 'cms'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                            </form>
+                        {% endblock %}
+                    {% endembed %}
+                {% endfor %}
+            {% endblock %}
+            {% block foot %}
+                {% if grant_url and rights.ungrantedCount > 0 %}
+                    <p class="muted photo-rights__grant-hint">{{ 'photos.rights.grant_all_hint'|trans({count: rights.ungrantedCount}, 'cms') }}</p>
+                    <form method="post" action="{{ grant_url }}">
+                        <input type="hidden" name="_token" value="{{ csrf }}">
+                        {{ include('admin/components/_button.html.twig', {label: 'photos.rights.grant_all'|trans({}, 'cms'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                    </form>
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
+    </div>
+{% endif %}

@@ -11,6 +11,7 @@ use App\Tests\Support\Media\MediaFiles;
 use App\Tests\Support\Media\TestImages;
 use App\Venues\Command\AddVenuePhoto;
 use App\Venues\ValueObject\AddedPhoto;
+use App\Venues\ValueObject\PhotoGrant;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -98,9 +99,9 @@ trait HandlesVenueMedia
         $this->connection->executeStatement(\sprintf("UPDATE %s SET updated_at = updated_at - INTERVAL '1 hour' WHERE id = ?", $table), [$id]);
     }
 
-    private function addPhoto(int $venueNumber, string $source, ?string $roomId = null, string $extension = 'jpg'): AddedPhoto
+    private function addPhoto(int $venueNumber, string $source, ?string $roomId = null, string $extension = 'jpg', ?PhotoGrant $grant = null): AddedPhoto
     {
-        $added = $this->dispatch(new AddVenuePhoto($venueNumber, $roomId, $source, $extension));
+        $added = $this->dispatch(new AddVenuePhoto($venueNumber, $roomId, $source, $extension, $grant));
         self::assertInstanceOf(AddedPhoto::class, $added);
         $this->em->clear();
 
