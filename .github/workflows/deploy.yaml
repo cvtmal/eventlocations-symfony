@@ -1,20 +1,23 @@
 name: Deploy
 
-# Manual only: Actions → Deploy → Run workflow, on main. deploy builds the release from this commit
-# and ships it over the forced-command key; purge empties the HTTP cache on the server.
+# Manual only, and the owner's alone: Actions → Deploy → Run workflow, on main. deploy builds the
+# release from this commit and ships it over the forced-command key to the Infomaniak VPS (F15), where
+# bin/deploy unpacks it into releases/<sha> and switches the current symlink; purge empties the HTTP
+# cache; rollback switches current back to the previous release (migrations stay, docs/operations.md).
 #
-# There is no rollback (one app directory, no old release to go back to). To go back, revert on main
-# and deploy that commit: a run deploys the head of main, and only after CI passed on it.
+# Guards: nothing runs unless the repository variable DEPLOY_ENABLED is 'true' (unset until the owner's
+# first-time setup is done), the run is on main, and for deploy CI passed on that commit. The
+# environment "production" should also require the owner's approval (docs/operations.md).
 #
-# Secrets (GitHub environment "production"): HOSTPOINT_SSH_KEY, HOSTPOINT_KNOWN_HOSTS,
-# HOSTPOINT_SSH_USER, HOSTPOINT_SSH_HOST.
+# Secrets (GitHub environment "production"): DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS,
+# DEPLOY_SSH_USER, DEPLOY_SSH_HOST.
 on:
   workflow_dispatch:
     inputs:
       action:
         description: What to run
         type: choice
-        options: [deploy, purge]
+        options: [deploy, purge, rollback]
         default: deploy
 
 concurrency:
@@ -26,19 +29,19 @@ permissions:
   actions: read
 
 env:
-  SITE: https://hochzeitslocation.ch
+  SITE: https://deine-eventlocation.ch
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main' && inputs.action == 'deploy'
+    if: vars.DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main' && inputs.action == 'deploy'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment:
       name: production
-      url: https://hochzeitslocation.ch
+      url: https://deine-eventlocation.ch
     env:
       CI: true
-      SSH_TARGET: ${{ secrets.HOSTPOINT_SSH_USER }}@${{ secrets.HOSTPOINT_SSH_HOST }}
+      SSH_TARGET: ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}
     steps:
       - name: Require a green CI run for this commit
         env:
@@ -59,8 +62,8 @@ jobs:
 
       - name: Set up SSH
         env:
-          SSH_KEY: ${{ secrets.HOSTPOINT_SSH_KEY }}
-          KNOWN_HOSTS: ${{ secrets.HOSTPOINT_KNOWN_HOSTS }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
           install -m 600 /dev/null ~/.ssh/deploy_key
@@ -101,14 +104,13 @@ jobs:
           curl -fsS --retry 3 --retry-delay 5 -o robots.txt "$SITE/robots.txt"
           grep -qi '^sitemap:' robots.txt
 
-      - name: "Smoke: www and http redirect to the canonical host"
+      - name: "Smoke: www, the second domain and http redirect to the canonical host"
         run: |
-          www=$(curl -sS --retry 3 --retry-delay 5 -o /dev/null -w '%{http_code} %{redirect_url}' \
-            https://www.hochzeitslocation.ch/x)
-          test "$www" = '301 https://hochzeitslocation.ch/x'
-          plain=$(curl -sS --retry 3 --retry-delay 5 -o /dev/null -w '%{http_code} %{redirect_url}' \
-            http://hochzeitslocation.ch/)
-          test "$plain" = '301 https://hochzeitslocation.ch/'
+          for url in https://www.deine-eventlocation.ch https://deineeventlocation.ch \
+            https://www.deineeventlocation.ch http://deine-eventlocation.ch; do
+            got=$(curl -sS --retry 3 --retry-delay 5 -o /dev/null -w '%{http_code} %{redirect_url}' "$url/x")
+            test "$got" = '301 https://deine-eventlocation.ch/x' || { echo "$url/x: $got"; exit 1; }
+          done
 
       - name: "Smoke: the admin login is not cached"
         run: |
@@ -149,19 +151,19 @@ jobs:
           grep -q "sha=$GITHUB_SHA" check.log
 
   purge:
-    if: github.ref == 'refs/heads/main' && inputs.action == 'purge'
+    if: vars.DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main' && inputs.action == 'purge'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     environment:
       name: production
-      url: https://hochzeitslocation.ch
+      url: https://deine-eventlocation.ch
     env:
-      SSH_TARGET: ${{ secrets.HOSTPOINT_SSH_USER }}@${{ secrets.HOSTPOINT_SSH_HOST }}
+      SSH_TARGET: ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}
     steps:
       - name: Set up SSH
         env:
-          SSH_KEY: ${{ secrets.HOSTPOINT_SSH_KEY }}
-          KNOWN_HOSTS: ${{ secrets.HOSTPOINT_KNOWN_HOSTS }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
           install -m 600 /dev/null ~/.ssh/deploy_key
@@ -173,3 +175,34 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$SSH_TARGET" purge
+
+  rollback:
+    if: vars.DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main' && inputs.action == 'rollback'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment:
+      name: production
+      url: https://deine-eventlocation.ch
+    env:
+      SSH_TARGET: ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}
+    steps:
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          install -m 600 /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Switch back to the previous release
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$SSH_TARGET" rollback | tee rollback.log
+          grep -q "DEPLOYED_SHA=" rollback.log
+
+      - name: "Smoke: /health"
+        run: curl -fsS --retry 3 --retry-delay 5 -o /dev/null https://deine-eventlocation.ch/health

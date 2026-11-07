@@ -1,8 +1,9 @@
 name: Backup
 
-# Nightly pg_dump of Neon production, test-restored, kept 7 days as an artifact, reported
-# to the Sentry cron monitor. It runs here because the host's pg_dump 16 cannot dump Neon 18 (C7).
-# The schedule is off until F15 sets up the new host; run it by hand (workflow_dispatch).
+# pg_dump of Neon production, test-restored, kept 7 days as an artifact, reported to the Sentry cron
+# monitor. Neon's point-in-time restore is the first line (docs/operations.md); this dump is the copy
+# outside Neon, and it runs here so the VPS needs no Postgres client of Neon's major.
+# Manual until the owner's first deploy; docs/operations.md says when to add the nightly schedule.
 #
 # Secrets: NEON_BACKUP_URL (the direct string), SENTRY_CRON_URL (optional).
 on:
@@ -53,7 +54,7 @@ jobs:
         env:
           NEON_BACKUP_URL: ${{ secrets.NEON_BACKUP_URL }}
         run: |
-          file="hochzeitslocation-$(date -u +%Y%m%dT%H%M%SZ).dump"
+          file="deine-eventlocation-$(date -u +%Y%m%dT%H%M%SZ).dump"
           docker run --rm -e NEON_BACKUP_URL "$PG_IMAGE" sh -c 'pg_dump -Fc -d "$NEON_BACKUP_URL"' > "$file"
           test -s "$file"
           echo "BACKUP_FILE=$file" >> "$GITHUB_ENV"

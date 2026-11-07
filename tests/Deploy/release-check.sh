@@ -59,7 +59,7 @@ unpack() {
 }
 
 check_contents() {
-    for file in .env public/.htaccess public/.user.ini public/index.php bin/deploy bin/cron-midnight \
+    for file in .env public/.user.ini public/index.php bin/deploy bin/cron-midnight \
         bin/cron-cache-guard bin/cron-daily bin/cron-lock.sh data/geo/towns.csv \
         public/assets/manifest.json public/admin-build/.vite/manifest.json; do
         [ -e "$CHECK/$file" ] || fail "the tarball lacks $file"
@@ -137,7 +137,7 @@ check_config() {
 }
 
 # `php -S … public/index.php` would hand /assets/… to Symfony too, and without a router a path with
-# a dot, such as /robots.txt, is a 404 of the built-in server. Apache's .htaccess does this part.
+# a dot, such as /robots.txt, is a 404 of the built-in server. nginx's try_files does this part.
 serve() {
     cat > "$ROUTER" <<'ROUTER'
 <?php

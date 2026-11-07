@@ -51,12 +51,12 @@ legal:
             text: 'Damit Formular und Telefonnummern nicht automatisiert abgegriffen werden, zählen wir Anfragen pro IP-Adresse. Dafür legen wir zu deiner IP-Adresse einen Zähler im Zwischenspeicher des Servers ab. Er läuft spätestens zwei Stunden nach deiner letzten Anfrage ab, abgelaufene Zähler löschen wir regelmässig. Mit deiner Anfrage speichern wir die IP-Adresse nicht.'
         hosting:
             title: Hosting und Datenbank
-            # TODO owner: confirm Hostpoint's company name, data location and web log retention in #20 (T2).
-            web: Die Website läuft bei der Hostpoint AG, Neue Jonastrasse 60, 8640 Rapperswil-Jona. Die Daten liegen in der Schweiz. Beim Aufruf entstehen technisch nötige Server-Protokolle mit IP-Adresse, Zeitpunkt, Browser-Angaben und der zuvor besuchten Seite. Hostpoint bewahrt die meisten dieser Daten höchstens ein halbes Jahr auf.
-            # TODO owner: name the state once #20 picks Neon's region (nDSG Art. 19 para. 4), and check Neon's data processing terms (T1).
+            # TODO owner: confirm the contracting Infomaniak entity and the 14-day log rotation of deploy/nginx (F15, T2).
+            web: Die Website läuft auf einem Server der Infomaniak Network SA, Rue Eugène-Marziano 25, 1227 Les Acacias (Genf). Die Daten liegen in der Schweiz. Beim Aufruf entstehen technisch nötige Server-Protokolle mit IP-Adresse, Zeitpunkt, Browser-Angaben und der zuvor besuchten Seite. Wir löschen sie nach 14 Tagen.
+            # TODO owner: check Neon's data processing terms (T1); the region is aws-eu-central-1, Frankfurt (F15).
             database: Die Datenbank mit den Anfragen betreibt Neon in einem Rechenzentrum in Frankfurt, Deutschland. Anbieterin ist die Databricks, Inc. (USA), die Muttergesellschaft der Neon, LLC. Für die Übermittlung in die USA gelten das Swiss-US Data Privacy Framework und Standardvertragsklauseln.
-            # TODO owner: confirm the production mail provider in #20 (T3).
-            mail: E-Mails verschicken wir über den Mailserver der Hostpoint AG.
+            # TODO owner: confirm the mailbox hallo@deine-eventlocation.ch at Infomaniak (F15, T3).
+            mail: E-Mails verschicken wir über den Mailserver der Infomaniak Network SA in der Schweiz.
             # TODO owner: delete this key and its template line if Sentry does not ship, and confirm a test event holds no IP address, cookies or form contents (T4).
             errors: Technische Fehler melden wir an Sentry, einen Dienst der Functional Software, Inc. (USA). Die Fehlerberichte liegen in der EU (Frankfurt) und enthalten die aufgerufene Seite, aber weder IP-Adresse noch Cookies noch Formularinhalte. Die Kontodaten unseres Sentry-Zugangs liegen in den USA.
         maps:

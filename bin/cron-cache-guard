@@ -1,14 +1,14 @@
 #!/bin/sh
 # Every 5 minutes, offset from the 00:05 clear: empty the HTTP cache only when it is over its
-# size or file limit (#19 `--if-over-limit`, F-M1). Disk on Hostpoint is a quota, so the store
+# size or file limit (#19 `--if-over-limit`, F-M1). The VPS disk is small, so the store
 # needs a bound. Silent within the limits; a clear prints the store's size, and that mail is the
 # only sign it hit one. Run it as the web user only (#19 F-m5), which is the account the cron runs as.
 #
 # If the lock is held the other run is already clearing: skip, the next tick looks again.
 set -eu
 
-PHP="${DEPLOY_PHP:-/usr/local/php85/bin/php}"
-cd "$(dirname "$0")/.." || exit 1
+PHP="${DEPLOY_PHP:-php}"
+cd -P "$(dirname "$0")/.." || exit 1
 . bin/cron-lock.sh
 
 main() {

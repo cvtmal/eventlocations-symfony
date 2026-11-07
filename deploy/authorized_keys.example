@@ -1,4 +1,4 @@
-# One line in ~/.ssh/authorized_keys for the GitHub deploy key (#20). The path is absolute because
-# authorized_keys does not expand $HOME; the gate sits outside the app directory because a deploy
-# replaces everything inside it. The key can run the gate's three commands and nothing else.
-command="/home/djweddin/deploy/hochzeitslocation/deploy-gate",restrict ssh-ed25519 AAAA… github-deploy
+# One line in ~deploy/.ssh/authorized_keys for the GitHub deploy key (#20, F15). The path is absolute
+# because authorized_keys does not expand $HOME; the gate sits next to the releases, outside them,
+# because a deploy never touches it. The key can run the gate's four commands and nothing else.
+command="/var/www/deine-eventlocation.ch/deploy-gate",restrict ssh-ed25519 AAAA… github-deploy
