@@ -401,7 +401,7 @@ IDs are referenced by the overview and the cycles.
 
 **Listing page (LP)**
 - **LP-1** The listing (`/hochzeitslocations` as forked, renamed by F5 to `/eventlokale`) has a hero band with the h1 (F7b sets the wording; canton pages "… im Kanton Zürich"), "N Resultate", the filter bar, the result list, and pagination "1 - 48 von N Resultaten" with page links: 48 per page, 24 if PERF-1 fails. The filter bar carries the event type (F5).
-- **LP-2** Card content as in `docs/reference/listing-card.png`, which is the record of behaviour only; the look is the board in `docs/reference/public/` (GEN-3):
+- **LP-2** Card content as below (eventlokale's live listing is the record of behaviour only; no screenshot of it is kept, see Reference material); the look is the board in `docs/reference/public/` (GEN-3):
   - photo on the left;
   - top row: capacity "50 - 450" (person icon), town "Ittigen" (pin icon), and "Merken ♡" on the right;
   - tier badge, then the venue name;
@@ -415,7 +415,7 @@ IDs are referenced by the overview and the cycles.
 - **LP-7** _Replaced by F3/F5._ (Wedding only: the card's Preisniveau and Ambiente tags. F3 removes the wedding facts; F5 decides what the card shows of the event vocabulary.)
 
 **Filters (FI)**. The screenshots named below are the record of behaviour only; the look is the boards in `docs/reference/public/` (S15, GEN-3).
-- **FI-1 Region** (`filter-region.jpg`, `filter-region-selected.png`):
+- **FI-1 Region**:
   - full-screen overlay with large decorative circles;
   - h2 "Wo soll dein Event stattfinden?" (the original's wording; F7b confirms it);
   - tabs **Kanton** | **Ort/PLZ** and a large underlined input ("Kanton eingeben") with autocomplete;
@@ -425,7 +425,7 @@ IDs are referenced by the overview and the cycles.
   It behaves like the original and looks as the boards of F6 draw it.
 - **FI-2 Ort/PLZ:** autocomplete over towns and postcodes. Selecting one filters venues in that town or within a radius around it (as built).
 - **FI-3 Guests:** an overlay with the h2 "Wie viele Gäste erwartest du?". As forked it has four radio bubbles on the venue's maximum capacity (`GuestBand`, "bis 50 Gäste" to "über 150 Gäste"). F5 replaces the bands by ones that fit events, or by a number input; D4: the guest number is the only capacity criterion, and there is no layout filter. Same footer buttons as FI-1.
-- **FI-4 Weitere Filter** (`filter-more.jpg`): overlay "Wähle weitere Filter und Möglichkeiten" with a sticky footer ("N Resultate anzeigen", "Filter löschen"). Its sections, in eventlokale's order:
+- **FI-4 Weitere Filter**: overlay "Wähle weitere Filter und Möglichkeiten" with a sticky footer ("N Resultate anzeigen", "Filter löschen"). Its sections, in eventlokale's order:
   1. **Suche eine konkrete Location:** "Name eingeben".
   2. **Lage:** round icon buttons Am Fluss, Am See, Auf dem Land, In den Bergen, In der Stadt.
   3. **Erreichbarkeit:** Nähe Bahnhof, Nähe Autobahn, Nähe Flughafen.
@@ -447,7 +447,7 @@ IDs are referenced by the overview and the cycles.
 - **MK-3** `/merkliste` lists saved venues as cards in saved order, each with a remove button, plus an empty state.
 - **MK-4** A toast "{Name} wurde deiner Merkliste hinzugefügt." with a link to the Merkliste.
 
-**Detail page (DP)**, as in `detail-page-top.jpg` and eventlokale's live detail page for behaviour; the screenshot is the record of behaviour only, and the look is the `docs/reference/public/` board (S15, GEN-3):
+**Detail page (DP)**, with eventlokale's live detail page as the record of behaviour only, and the look is the `docs/reference/public/` board (S15, GEN-3):
 - **DP-1** URL per S5; title pattern "{Name} in {Ort} | {site.name}" (F7b settles the wording).
 - **DP-2** Hero carousel, inset in the page frame as the `Detail` board draws it (BRD-1), with a "Bilder ansehen" button that opens a full-screen gallery (`<dialog>`, keyboard and swipe).
 - **DP-3** Sticky anchor nav: Beschreibung, Bilder, Kontakt, Standort.
@@ -677,7 +677,7 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 ## Reference material
 
 - **Product and plan:** `docs/product.md` (PO), `KICKOFF.md` (superseded fork brief), `docs/research/fork-research.md` (what carries over; written before E3, so ignore its French and language parts), `docs/prd/CMO_PRD.md` and `docs/prd/CTO_PRD.md` (their Next.js, Stripe and BullMQ parts are ignored: we stay on Symfony).
-- **Behaviour of eventlokale** (a record of behaviour only, never of look or content): the screenshots in `docs/reference/*.jpg|png`, and the live listing and detail pages (see **Important** for the visit rules). Its vocabulary is public at `GET https://www.eventlokale.ch/api/guest/location/all-taxonomies`.
+- **Behaviour of eventlokale** (a record of behaviour only, never of look or content): the live listing and detail pages (see **Important** for the visit rules). No screenshot of eventlokale is kept in the repository: it is public, and the seven earlier screenshots were removed from the tree and the history on 2026-11-07. Its vocabulary is public at `GET https://www.eventlokale.ch/api/guest/location/all-taxonomies`.
 - **Back office:** `docs/reference/admin/` (S12). **Public look:** `docs/reference/public/` (the sister site's boards until F6).
 - **Formats and runbooks:** `docs/content-format.md` with its schema, `docs/performance-baseline.md`, `docs/operations.md` (the sister site's runbook until F15).
 - **Cycle history of the sister site:** `git show 7e96eee:docs/rpi-cycles.md` (**History**).
