@@ -95,7 +95,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F0 | `fork-baseline` | M | — | one baseline migration, `Version20261106174839` | — | Done (`4a98cc7`) |
 | F0b | `fork-docs` | S | F0 | — | — | Done |
 | F1 | `owner-decisions` | – | — | — | — | Done (D1 to D12) |
-| – | `rules-condense` | S | `fork-docs` | — | — | Todo |
+| – | `rules-condense` | S | `fork-docs` | — | — | Done |
 | F3 | `event-vocabulary` | M | F0, F1 | `taxonomy_terms`, `venue_terms`; the wedding-fact columns of `venues` and `venue_translations` | — | Done |
 | F4 | `room-layouts` | S–M | F3 | `rooms`, `room_translations` (layout capacities) | — | Todo |
 | F5 | `filter-event` | M | F3 | indexes only | — | Todo |
@@ -589,9 +589,11 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Outcome.** D1 to D12 are recorded above. The inputs they leave open are in **Owner inputs**.
 
-### `rules-condense` (S)
+### `rules-condense` (S, done)
 
 **Depends on** `fork-docs`. **Owns** no schema. **Scope.** Bring `.claude/rules/module-*.md` down to current-state notes: what exists, and the rules for changing it. Remove the build histories, the `#NN` cycle numbers and the "Outcome: `docs/rpi-cycles.md` `### NN.`" pointers. Keep the convention rules (`code-quality`, `cqrs`, `database`, `frontend`, `php-architecture`, `read-model`, `validation`), and correct `i18n.md` to S4. **Done when** no note cites an Outcome that is not in this file, every module note describes the code as it is, and `make lint` is green.
+
+**Outcome.** The 13 module notes and `i18n.md` in `.claude/rules/` are current-state notes: 354,262 bytes (378,728 with the lines `site-import`, `funnel-scorecard`, `brand-design` and `event-vocabulary` appended meanwhile, folded in at the rebase: the duplicated G8 paragraph in `shared` and `venues` collapsed to one, and F3's event vocabulary replaced the wedding facts in place) down to 187,302 (49%). `crm`, `search`, `i18n`, `portal`, `admin` and `venues` sit at 42 to 46%, the other eight at 52 to 67%: a first pass at 43% overall had still cut rules, two independent read-only reviewers compared every old note with its new one and found them (the admin login and session rules, "an `HttpCachePurger` never throws", the `data-overlay-form` and empty similar-venues guards, the inquiry mail context key, the content-block lock, the `bin/deploy` protected paths), and restoring the high and medium findings cost 14 KB. Each note opens with `Append current-state lines for your cycle at the end (last commit).`, keeps its `paths:` frontmatter and its `### <Module>` title (code comments cite `CLAUDE.md ### Admin`), and says what it holds and when to read it by hand. The `#NN` cycle numbers, `docs/rpi-cycles.md ### NN` pointers, FR/IT/EN plans and one-off measurements are gone, and stale claims were corrected against the tree: one baseline migration (plus `site-import`'s), no `app:crm:purge`, no Wix/legacy/owner importers, customer import or `bin/prod-import export`, the public cache TTL is a day (`PublicCache::PAGE_TTL`), not 600 s. `i18n.md` says German only (E3) and that a second language needs an `i18n-core` cycle first; `module-portal.md` and `module-search.md` quote the "du" and "Hallo" wording; `module-cms.md` holds the list of `cms` and `stats` keys that keep "Location" instead of "Eintrag" because `/konto` shares them; `CLAUDE.md` "German copy" lost its "until `rules-condense`" clause; `docs/performance-baseline.md` names the Compose project `deine-eventlocation-perf`. Left for later: S10 says `s-maxage=600` and S12 and CMS-6 say 25 MB per photo (code: a day, 10 MB); `docs/operations.md` and `docs/content-format.md` still describe the removed exporters, the customer-import runbooks and a backup schedule that `backup.yaml` no longer has; `.env` line 51 cites the removed `BATCH_MAX_PIXELS`; `FrenchLocaleProbeTest`, `tests/Fixtures/I18n/FrenchProbeKernel` and the `_locale_tabs` docblock still assert that a language only adds catalogues; `frontend.md` "Back office" overlaps `module-admin.md`.
 
 ### F3 `event-vocabulary` (M, done)
 
