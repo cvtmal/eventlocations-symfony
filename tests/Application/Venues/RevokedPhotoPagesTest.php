@@ -110,8 +110,9 @@ final class RevokedPhotoPagesTest extends WebTestCase
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         $crawler = new Crawler((string) $response->getContent());
         self::assertSame([], $this->galleryIds($response));
-        self::assertCount(0, $crawler->filter('meta[property="og:image"]'));
-        self::assertSame('summary', $crawler->filter('meta[name="twitter:card"]')->attr('content'));
+        // No photo of its own left: the page shares the brand's card, never the revoked file.
+        self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[property="og:image"]')->attr('content'));
+        self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[name="twitter:image"]')->attr('content'));
         self::assertSame([], $this->jsonLdImages($response));
         self::assertSame(0, substr_count((string) $this->through(Request::create(self::SITEMAP))->getContent(), '<image:image>'));
     }
