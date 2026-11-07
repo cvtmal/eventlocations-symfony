@@ -33,7 +33,8 @@ final class LocationPlanQuery
                 SELECT (SELECT count(*) FROM venue_photos WHERE venue_id = :id) AS photos,
                        (SELECT count(*) FROM rooms WHERE venue_id = :id) AS rooms,
                        (SELECT count(*) FROM venue_documents WHERE venue_id = :id) AS documents,
-                       (SELECT price_rappen FROM tiers WHERE code = :pro) AS pro_price_rappen
+                       (SELECT price_rappen FROM tiers WHERE code = :pro) AS pro_price_rappen,
+                       (SELECT vat_line FROM tiers WHERE code = :pro) AS pro_vat_line
                 SQL,
             ['id' => $venueId, 'pro' => KnownTiers::PRO],
         );
@@ -53,6 +54,7 @@ final class LocationPlanQuery
             $entitlements->contactVisible,
             $entitlements->eventTypesMax,
             $row['pro_price_rappen'],
+            true === $row['pro_vat_line'],
         );
     }
 }

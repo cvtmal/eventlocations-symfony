@@ -872,6 +872,7 @@ tiers:
             event_types: Anlassarten
             venues: Einträge
             actions: Aktionen
+        plus_vat: zzgl. MwSt.
         edit: Bearbeiten
         edit_for: 'Tarif «{name}» bearbeiten'
         empty:
@@ -888,6 +889,7 @@ tiers:
         field:
             name: Name
             price: Preis pro Jahr
+            vat_line: «zzgl. MwSt.» zum Preis schreiben
             rank_weight: Rang
             photos_max: Fotos
             rooms_max: Räume
@@ -898,7 +900,8 @@ tiers:
             last_minute_allowed: Last-Minute erlaubt
             detailed_report: Detailbericht
         help:
-            price: 'In Franken ohne MwSt., zum Beispiel «199» oder «199.50». Wir stellen die Rechnung von Hand.'
+            price: 'In Franken, so wie er angezeigt wird, zum Beispiel «199» oder «199.50». Wir stellen die Rechnung von Hand.'
+            vat_line: 'Nur einschalten, wenn wir mehrwertsteuerpflichtig sind. Aus: der Preis gilt als Endpreis, ohne MwSt.-Hinweis.'
             rank_weight: 'Je höher, desto weiter vorne in der Liste. Bei 0 gibt es keinen Vorrang und kein «Top-Eintrag».'
             photos_max: 'So viele Fotos zeigt die Seite einer Location mit diesem Tarif, und so viele lassen sich hochladen. Mehr bleiben gespeichert, aber verborgen.'
             rooms_max: 'So viele Räume zeigt die Seite, und so viele lassen sich anlegen. Mehr bleiben gespeichert, aber verborgen.'

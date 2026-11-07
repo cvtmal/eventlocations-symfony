@@ -28,6 +28,8 @@ final class TierData
     #[Assert\Range(notInRangeMessage: 'cms.tier.price.range', min: 0, max: self::MAX_PRICE_RAPPEN)]
     public ?int $priceRappen = null;
 
+    public bool $vatLine = false;
+
     #[Assert\NotNull(message: 'cms.tier.number.required')]
     #[Assert\Range(notInRangeMessage: 'cms.tier.range', min: 0, max: self::MAX_RANK_WEIGHT)]
     public ?int $rankWeight = null;
@@ -62,6 +64,7 @@ final class TierData
         $data = new self();
         $data->name = $tier->name;
         $data->priceRappen = $tier->priceRappen;
+        $data->vatLine = $tier->vatLine;
         $data->rankWeight = $tier->rankWeight;
         $data->photosMax = $tier->photosMax;
         $data->roomsMax = $tier->roomsMax;
@@ -86,6 +89,7 @@ final class TierData
             $code,
             (string) $this->name,
             $this->priceRappen ?? throw $incomplete(),
+            $this->vatLine,
             $this->rankWeight ?? throw $incomplete(),
             $this->photosMax ?? throw $incomplete(),
             $this->roomsMax ?? throw $incomplete(),

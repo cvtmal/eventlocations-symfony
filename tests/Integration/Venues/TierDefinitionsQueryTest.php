@@ -27,8 +27,8 @@ final class TierDefinitionsQueryTest extends KernelTestCase
 
         self::assertEquals(
             [
-                new TierDefinition('pro', 'Pro', 19900, 10, 60, 20, 5, 5, true, true, true, null, $definitions[0]->venueCount),
-                new TierDefinition('free', 'Free', 0, 0, 6, 1, 1, 1, false, false, false, 3, $definitions[1]->venueCount),
+                new TierDefinition('pro', 'Pro', 19900, false, 10, 60, 20, 5, 5, true, true, true, null, $definitions[0]->venueCount),
+                new TierDefinition('free', 'Free', 0, false, 0, 6, 1, 1, 1, false, false, false, 3, $definitions[1]->venueCount),
             ],
             $definitions,
         );

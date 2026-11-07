@@ -25,7 +25,7 @@
     </ul>
     {% if plan.canRequestPro %}
         {% set francs = plan.proPriceRappen / 100 %}
-        <p class="card__body muted">{{ 'plan.pro.price'|trans({price: francs|swiss_number(plan.proPriceRappen % 100 == 0 ? 0 : 2)}, 'portal') }}</p>
+        <p class="card__body muted">{{ (plan.proVatLine ? 'plan.pro.price_plus_vat' : 'plan.pro.price')|trans({price: francs|swiss_number(plan.proPriceRappen % 100 == 0 ? 0 : 2)}, 'portal') }}</p>
         <div class="card__foot">
             <form method="post" action="{{ path('portal_location_pro_request', {number: number}) }}">
                 <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">

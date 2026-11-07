@@ -15,7 +15,7 @@ use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * The tier form (F12): the name, the price in francs, the rank weight, four limits, three flags and the event types
+ * The tier form (F12): the name, the price in francs and its VAT line, the rank weight, four limits, three flags and the event types
  * a venue may pick. The code (option `code`) is shown by the page and never edited; it is here so that the name check
  * leaves the tier itself out. A name another tier has is a field error before any command is dispatched
  * (`uk_tiers_name`; the handler and the key still decide a race). A whole number that is no number is the field's
@@ -49,6 +49,11 @@ final class TierType extends AbstractType
                 })],
             ])
             ->add('priceRappen', FrancsTextType::class, ['label' => 'tiers.editor.field.price', 'help' => 'tiers.editor.help.price'])
+            ->add('vatLine', CheckboxType::class, [
+                'label' => 'tiers.editor.field.vat_line',
+                'help' => 'tiers.editor.help.vat_line',
+                'required' => false,
+            ])
             ->add('rankWeight', IntegerType::class, [
                 'label' => 'tiers.editor.field.rank_weight',
                 'help' => 'tiers.editor.help.rank_weight',

@@ -136,6 +136,21 @@ final class ReviseTierTest extends KernelTestCase
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'tier'"));
     }
 
+    public function test_the_vat_line_alone_is_a_change_that_clears_the_cache(): void
+    {
+        $purger = $this->purger();
+        $purges = $purger->listings;
+        $data = $this->data(KnownTiers::PRO);
+        self::assertFalse($data->vatLine, 'D24: the seeded price is final, without a VAT line');
+        $data->vatLine = true;
+
+        $this->dispatch($data->toCommand(KnownTiers::PRO, ['vatLine']));
+
+        self::assertTrue($this->connection->fetchOne("SELECT vat_line FROM tiers WHERE code = 'pro'"));
+        self::assertFalse($this->connection->fetchOne("SELECT vat_line FROM tiers WHERE code = 'free'"));
+        self::assertSame($purges + 1, $purger->listings);
+    }
+
     public function test_a_tier_keeps_its_own_name_while_other_values_change(): void
     {
         $data = $this->data(KnownTiers::PRO);

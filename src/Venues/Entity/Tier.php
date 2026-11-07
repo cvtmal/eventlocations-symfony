@@ -14,7 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
  * seeded by the migration; one more row needs no code. The venue points at its tier (`venues.tier_id`, default
  * Free); read the limits that apply to a venue through `EntitlementResolver`, never from here.
  *
- * - `price_rappen` is CHF a year excluding VAT, invoiced by hand (D2).
+ * - `price_rappen` is CHF a year as shown, final (D24, D25), invoiced by hand (D2). `vat_line` adds "zzgl. MwSt."
+ *   after the price wherever it is shown; off by default (the operator is not registered for VAT).
  * - `rank_weight`: higher lists first within a relevance bucket; 0 means no boost and no "Top-Eintrag" label.
  * - `*_max` limits are ceilings; `event_types_max` NULL means every event type.
  * - `code` is stable and never edited. The code names only the fallbacks (`KnownTiers`).
@@ -37,6 +38,9 @@ class Tier
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $priceRappen;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $vatLine;
 
     #[ORM\Column(type: Types::SMALLINT)]
     private int $rankWeight;
@@ -75,6 +79,7 @@ class Tier
         string $code,
         string $name,
         int $priceRappen,
+        bool $vatLine,
         int $rankWeight,
         int $photosMax,
         int $roomsMax,
@@ -89,6 +94,7 @@ class Tier
         $this->code = $code;
         $this->name = $name;
         $this->priceRappen = $priceRappen;
+        $this->vatLine = $vatLine;
         $this->rankWeight = $rankWeight;
         $this->photosMax = $photosMax;
         $this->roomsMax = $roomsMax;
@@ -108,6 +114,7 @@ class Tier
     public function revise(
         string $name,
         int $priceRappen,
+        bool $vatLine,
         int $rankWeight,
         int $photosMax,
         int $roomsMax,
@@ -120,6 +127,7 @@ class Tier
     ): void {
         $this->name = $name;
         $this->priceRappen = $priceRappen;
+        $this->vatLine = $vatLine;
         $this->rankWeight = $rankWeight;
         $this->photosMax = $photosMax;
         $this->roomsMax = $roomsMax;
@@ -152,6 +160,11 @@ class Tier
     public function priceRappen(): int
     {
         return $this->priceRappen;
+    }
+
+    public function vatLine(): bool
+    {
+        return $this->vatLine;
     }
 
     public function rankWeight(): int

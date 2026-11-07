@@ -366,12 +366,12 @@ final class VenueSchemaMigrationTest extends KernelTestCase
 
     public function test_the_migration_seeds_free_and_pro(): void
     {
-        $rows = $this->connection->fetchAllAssociative('SELECT code, name, price_rappen, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max FROM tiers ORDER BY rank_weight, code');
+        $rows = $this->connection->fetchAllAssociative('SELECT code, name, price_rappen, vat_line, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max FROM tiers ORDER BY rank_weight, code');
 
         self::assertSame(
             [
-                ['code' => 'free', 'name' => 'Free', 'price_rappen' => 0, 'rank_weight' => 0, 'photos_max' => 6, 'rooms_max' => 1, 'videos_max' => 1, 'documents_max' => 1, 'contact_visible' => false, 'last_minute_allowed' => false, 'detailed_report' => false, 'event_types_max' => 3],
-                ['code' => 'pro', 'name' => 'Pro', 'price_rappen' => 19900, 'rank_weight' => 10, 'photos_max' => 60, 'rooms_max' => 20, 'videos_max' => 5, 'documents_max' => 5, 'contact_visible' => true, 'last_minute_allowed' => true, 'detailed_report' => true, 'event_types_max' => null],
+                ['code' => 'free', 'name' => 'Free', 'price_rappen' => 0, 'vat_line' => false, 'rank_weight' => 0, 'photos_max' => 6, 'rooms_max' => 1, 'videos_max' => 1, 'documents_max' => 1, 'contact_visible' => false, 'last_minute_allowed' => false, 'detailed_report' => false, 'event_types_max' => 3],
+                ['code' => 'pro', 'name' => 'Pro', 'price_rappen' => 19900, 'vat_line' => false, 'rank_weight' => 10, 'photos_max' => 60, 'rooms_max' => 20, 'videos_max' => 5, 'documents_max' => 5, 'contact_visible' => true, 'last_minute_allowed' => true, 'detailed_report' => true, 'event_types_max' => null],
             ],
             $rows,
         );

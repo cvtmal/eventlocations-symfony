@@ -49,7 +49,7 @@
                             {% if tier.label.promoted %}{{ include('admin/components/_tier_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues'), promoted: true}, with_context = false) }}{% endif %}
                         </td>
                         <td class="muted">{{ tier.code }}</td>
-                        <td>{{ (tier.priceRappen / 100)|swiss_number(tier.priceRappen % 100 == 0 ? 0 : 2) }}</td>
+                        <td>{{ (tier.priceRappen / 100)|swiss_number(tier.priceRappen % 100 == 0 ? 0 : 2) }}{% if tier.vatLine %} {{ 'tiers.list.plus_vat'|trans({}, 'cms') }}{% endif %}</td>
                         <td>{{ tier.rankWeight|swiss_number }}</td>
                         <td>{{ tier.photosMax|swiss_number }}</td>
                         <td>{{ tier.roomsMax|swiss_number }}</td>

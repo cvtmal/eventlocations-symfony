@@ -16,6 +16,7 @@ final readonly class TierDefinition
         public string $code,
         public string $name,
         public int $priceRappen,
+        public bool $vatLine,
         public int $rankWeight,
         public int $photosMax,
         public int $roomsMax,

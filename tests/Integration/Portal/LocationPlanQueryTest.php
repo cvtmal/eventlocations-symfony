@@ -85,6 +85,16 @@ final class LocationPlanQueryTest extends KernelTestCase
         self::assertSame(24950, $this->plan($this->venue(KnownTiers::PRO))->proPriceRappen);
     }
 
+    public function test_the_vat_line_is_the_pro_rows_and_off_by_default(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        self::assertFalse($this->plan($venue)->proVatLine);
+
+        $this->connection->executeStatement("UPDATE tiers SET vat_line = TRUE WHERE code = 'pro'");
+
+        self::assertTrue($this->plan($venue)->proVatLine);
+    }
+
     public function test_a_tier_with_a_rank_weight_is_promoted_and_one_without_is_not(): void
     {
         $venue = $this->venue(KnownTiers::FREE);

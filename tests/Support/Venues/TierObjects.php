@@ -16,11 +16,11 @@ final class TierObjects
 {
     public static function free(): Tier
     {
-        return new Tier(KnownTiers::FREE, 'Free', 0, 0, 6, 1, 1, 1, false, false, false, 3);
+        return new Tier(KnownTiers::FREE, 'Free', 0, false, 0, 6, 1, 1, 1, false, false, false, 3);
     }
 
     public static function pro(): Tier
     {
-        return new Tier(KnownTiers::PRO, 'Pro', 19900, 10, 60, 20, 5, 5, true, true, true, null);
+        return new Tier(KnownTiers::PRO, 'Pro', 19900, false, 10, 60, 20, 5, 5, true, true, true, null);
     }
 }

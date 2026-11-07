@@ -411,7 +411,8 @@ plan:
         event_types: 'Anlassarten: bis zu {max}'
         event_types_all: 'Anlassarten: alle'
     pro:
-        price: 'Pro kostet CHF {price} pro Jahr zzgl. MwSt., wir stellen die Rechnung von Hand.'
+        price: 'Pro kostet CHF {price} pro Jahr, wir stellen die Rechnung von Hand.'
+        price_plus_vat: 'Pro kostet CHF {price} pro Jahr zzgl. MwSt., wir stellen die Rechnung von Hand.'
         request: Pro anfragen
     flash:
         requested: 'Danke! Wir haben deine Anfrage erhalten und melden uns bei dir.'

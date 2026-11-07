@@ -124,6 +124,9 @@ final class TierScreensTest extends WebTestCase
         $contactVisible = $form['tier[contactVisible]'];
         \assert($contactVisible instanceof ChoiceFormField);
         $contactVisible->untick();
+        $vatLine = $form['tier[vatLine]'];
+        \assert($vatLine instanceof ChoiceFormField);
+        $vatLine->tick();
 
         $this->client->submit($form, [
             'tier[name]' => '  Pro Plus ',
@@ -137,13 +140,14 @@ final class TierScreensTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertSame('«Pro Plus» gespeichert.', $crawler->filter('.toast')->text());
         self::assertSame('Pro Plus', $crawler->filter('#tier-list tbody tr')->eq(0)->filter('td a')->first()->text());
+        self::assertSame('249.50 zzgl. MwSt.', $this->cells($crawler->filter('#tier-list tbody tr')->eq(0))[2]);
         self::assertEquals(
-            ['name' => 'Pro Plus', 'price_rappen' => 24950, 'rank_weight' => 10, 'photos_max' => 80, 'rooms_max' => 20, 'videos_max' => 5, 'documents_max' => 5, 'contact_visible' => false, 'last_minute_allowed' => true, 'detailed_report' => true, 'event_types_max' => 8],
-            $this->connection->fetchAssociative("SELECT name, price_rappen, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max FROM tiers WHERE code = 'pro'"),
+            ['name' => 'Pro Plus', 'price_rappen' => 24950, 'vat_line' => true, 'rank_weight' => 10, 'photos_max' => 80, 'rooms_max' => 20, 'videos_max' => 5, 'documents_max' => 5, 'contact_visible' => false, 'last_minute_allowed' => true, 'detailed_report' => true, 'event_types_max' => 8],
+            $this->connection->fetchAssociative("SELECT name, price_rappen, vat_line, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max FROM tiers WHERE code = 'pro'"),
         );
         self::assertSame($purges + 1, $this->purger()->listings);
         self::assertSame(
-            [['command' => ReviseTier::class, 'subject_id' => 'pro', 'changes' => '{"changed": ["name", "priceRappen", "photosMax", "contactVisible", "eventTypesMax"]}', 'actor_type' => 'admin_user']],
+            [['command' => ReviseTier::class, 'subject_id' => 'pro', 'changes' => '{"changed": ["name", "priceRappen", "vatLine", "photosMax", "contactVisible", "eventTypesMax"]}', 'actor_type' => 'admin_user']],
             $this->connection->fetchAllAssociative("SELECT command, subject_id, changes::text AS changes, actor_type FROM admin_audit_log WHERE subject_type = 'tier'"),
         );
     }

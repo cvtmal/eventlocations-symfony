@@ -44,7 +44,7 @@ final class LocationPlanCardTest extends WebTestCase
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
         self::assertCount(0, $crawler->filter('section[aria-labelledby="location-plan"] .card__head .pill'));
-        self::assertSame('Pro kostet CHF 199 pro Jahr zzgl. MwSt., wir stellen die Rechnung von Hand.', $crawler->filter('section[aria-labelledby="location-plan"] p.muted')->text());
+        self::assertSame('Pro kostet CHF 199 pro Jahr, wir stellen die Rechnung von Hand.', $crawler->filter('section[aria-labelledby="location-plan"] p.muted')->text());
         $form = $crawler->filter('form[action="'.$this->url($venue).'/pro-anfragen"]');
         self::assertCount(1, $form);
         self::assertSame('post', strtolower((string) $form->attr('method')));
@@ -116,7 +116,19 @@ final class LocationPlanCardTest extends WebTestCase
             ['Fotos 0 von 9', 'Räume 0 von 1', 'PDFs 0 von 3', 'Telefon und Website: sichtbar', 'Anlassarten: bis zu 5'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
-        self::assertSame('Pro kostet CHF 249.50 pro Jahr zzgl. MwSt., wir stellen die Rechnung von Hand.', $crawler->filter('section[aria-labelledby="location-plan"] p.muted')->text());
+        self::assertSame('Pro kostet CHF 249.50 pro Jahr, wir stellen die Rechnung von Hand.', $crawler->filter('section[aria-labelledby="location-plan"] p.muted')->text());
+    }
+
+    public function test_the_price_reads_final_until_staff_switch_the_vat_line_on(): void
+    {
+        $venue = $this->managedVenue(DetailVenues::minimal());
+        $plan = 'section[aria-labelledby="location-plan"] p.muted';
+
+        self::assertStringNotContainsString('MwSt', $this->client->request('GET', $this->url($venue))->filter($plan)->text(), 'D24: the price is final, without a VAT line');
+
+        $this->connection->executeStatement("UPDATE tiers SET vat_line = TRUE WHERE code = 'pro'");
+
+        self::assertSame('Pro kostet CHF 199 pro Jahr zzgl. MwSt., wir stellen die Rechnung von Hand.', $this->client->request('GET', $this->url($venue))->filter($plan)->text());
     }
 
     public function test_a_renamed_tier_is_named_in_the_heading(): void

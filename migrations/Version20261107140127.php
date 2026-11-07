@@ -11,7 +11,10 @@ use Doctrine\Migrations\AbstractMigration;
  * Tiers as data (F12, D14/D15). The wedding site's five-case tier enum (`venues.tier` with its generated
  * `tier_rank`, `crm_deals.tier`) is replaced by the `tiers` table: a tier is a row of limits and flags, so a
  * staff edit, or one more row, changes what a venue may show without a release. Two rows are seeded, Free
- * and Pro (CHF 199 a year excluding VAT, invoiced by hand).
+ * and Pro (CHF 199 a year, invoiced by hand).
+ *
+ * - `price_rappen` is the price as shown, final (D24, D25). `vat_line` says whether the copy adds "zzgl. MwSt."
+ *   after it; off on both rows, since the operator is not registered for VAT. Registering later is a staff edit.
  *
  * - `venues.tier_id` is NOT NULL and defaults to Free; a venue is never without a tier. `EntitlementResolver`
  *   is the one reader of the limits. G9 (`subscription-term`) adds `subscriptions` beside this and keeps
@@ -39,6 +42,7 @@ final class Version20261107140127 extends AbstractMigration
                 code VARCHAR(30) NOT NULL,
                 name VARCHAR(60) NOT NULL,
                 price_rappen INTEGER NOT NULL,
+                vat_line BOOLEAN DEFAULT FALSE NOT NULL,
                 rank_weight SMALLINT NOT NULL,
                 photos_max INTEGER NOT NULL,
                 rooms_max INTEGER NOT NULL,

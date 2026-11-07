@@ -96,7 +96,7 @@ final class TierDataTest extends TestCase
         $command = $data->toCommand('free', $changed);
 
         self::assertSame(['name', 'priceRappen', 'contactVisible', 'eventTypesMax'], $changed);
-        self::assertEquals(new ReviseTier('free', 'Free Plus', 4950, 0, 6, 1, 1, 1, true, false, false, null, $changed), $command);
+        self::assertEquals(new ReviseTier('free', 'Free Plus', 4950, false, 0, 6, 1, 1, 1, true, false, false, null, $changed), $command);
         self::assertSame(['changed' => $changed], $command->auditSummary());
         self::assertSame('tier', $command->auditSubject()->type);
         self::assertSame('free', $command->auditSubject()->id);
@@ -127,12 +127,12 @@ final class TierDataTest extends TestCase
 
     private static function free(): TierDefinition
     {
-        return new TierDefinition('free', 'Free', 0, 0, 6, 1, 1, 1, false, false, false, 3, 40);
+        return new TierDefinition('free', 'Free', 0, false, 0, 6, 1, 1, 1, false, false, false, 3, 40);
     }
 
     private static function pro(): TierDefinition
     {
-        return new TierDefinition('pro', 'Pro', 19900, 10, 60, 20, 5, 5, true, true, true, null, 12);
+        return new TierDefinition('pro', 'Pro', 19900, false, 10, 60, 20, 5, 5, true, true, true, null, 12);
     }
 
     private static function validator(): ValidatorInterface

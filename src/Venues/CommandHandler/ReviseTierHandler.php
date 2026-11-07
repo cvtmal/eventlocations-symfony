@@ -55,6 +55,7 @@ final class ReviseTierHandler implements CommandHandlerInterface
         $tier->revise(
             $command->name,
             $command->priceRappen,
+            $command->vatLine,
             $command->rankWeight,
             $command->photosMax,
             $command->roomsMax,
@@ -79,6 +80,7 @@ final class ReviseTierHandler implements CommandHandlerInterface
     {
         return $tier->name() !== $command->name
             || $tier->priceRappen() !== $command->priceRappen
+            || $tier->vatLine() !== $command->vatLine
             || $tier->rankWeight() !== $command->rankWeight
             || $tier->photosMax() !== $command->photosMax
             || $tier->roomsMax() !== $command->roomsMax

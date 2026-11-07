@@ -13,7 +13,7 @@ use Doctrine\DBAL\Connection;
 final class TierDefinitionsQuery
 {
     private const string SELECT = <<<'SQL'
-        SELECT t.code, t.name, t.price_rappen, t.rank_weight, t.photos_max, t.rooms_max, t.videos_max, t.documents_max,
+        SELECT t.code, t.name, t.price_rappen, t.vat_line, t.rank_weight, t.photos_max, t.rooms_max, t.videos_max, t.documents_max,
                t.contact_visible, t.last_minute_allowed, t.detailed_report, t.event_types_max,
                (SELECT count(*) FROM venues v WHERE v.tier_id = t.id) AS venue_count
         FROM tiers t
@@ -67,6 +67,7 @@ final class TierDefinitionsQuery
             $row['code'],
             $row['name'],
             $row['price_rappen'],
+            (bool) $row['vat_line'],
             $row['rank_weight'],
             $row['photos_max'],
             $row['rooms_max'],

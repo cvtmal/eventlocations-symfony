@@ -10,7 +10,8 @@ namespace App\Portal\ReadModel;
  * location, hidden ones included, so a location that fell back to a smaller plan reads "8 von 6".
  *
  * `canRequestPro` is false on the Pro tier itself and when there is no Pro row to ask for; `proPriceRappen` is that
- * row's price (CHF a year excluding VAT, invoiced by hand) and null exactly when there is none.
+ * row's price (CHF a year as shown, final, invoiced by hand; D24) and null exactly when there is none. `proVatLine`
+ * is that row's VAT flag: the card adds "zzgl. MwSt." only when it is on (off by default).
  */
 final readonly class LocationPlan
 {
@@ -27,6 +28,7 @@ final readonly class LocationPlan
         public bool $contactVisible,
         public ?int $eventTypesMax,
         public ?int $proPriceRappen,
+        public bool $proVatLine = false,
     ) {
     }
 }
