@@ -17,7 +17,7 @@ The code was forked once from the sister site hochzeitslocation.ch (E1, E2). The
 
 Artifacts land in `.rpi-tracking/{research,plans,changes,reviews}/<date>/<slug>-*.md` (git-ignored). `/rpi <slug>` tells you where you are.
 
-**Owner inputs.** Some cycles wait for an owner input (see **Owner inputs**). An input blocks only the part of a cycle it names; the rest runs with the default given there or in Wave G §7.
+**Owner inputs.** The PO and the tech lead decide; the owner is not asked (2026-11-07). The few facts only the owner holds have placeholders (Wave G §7), so no cycle waits.
 
 ## Important
 
@@ -99,16 +99,16 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F3 | `event-vocabulary` | M | F0, F1 | `taxonomy_terms`, `venue_terms`; the wedding-fact columns of `venues` and `venue_translations` | — | Todo |
 | F4 | `room-layouts` | S–M | F3 | `rooms`, `room_translations` (layout capacities) | — | Todo |
 | F5 | `filter-event` | M | F3 | indexes only | — | Todo |
-| F6 | `brand-design` | L | F1 | — | Logo, colours, typeface; D12 follow-up 1 | Todo |
+| F6 | `brand-design` | L | F1 | — | — (D23, D32) | Todo |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
-| F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator, processors | Todo |
+| F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Todo |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Todo |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
 | F11 | `portal-event` | S–M | F4 | `portal_submissions` (event step) | — | Todo |
 | F12 | `business-model` | M–L | F1 | `venues.tier` and `tier_rank`, `crm_deals.tier`, entitlement data | Tier names and prices | Todo |
 | F13 | `multi-inquiry` | M–L | F9, G7 | `inquiries` (parent and child deliveries) | — | Todo |
-| F14 | `content-onboarding` | M | F3, F4, G5 | — | Spreadsheet, consent wording, D12 follow-ups | Todo |
-| F15 | `prod-setup` | M | F0, owner infra | — | Host (D10) | Todo |
+| F14 | `content-onboarding` | M | F3, F4, G5 | — | Spreadsheet (fixture until it arrives); consent D29, follow-ups D32 | Todo |
+| F15 | `prod-setup` | M | F0 | — | — (host D26) | Todo |
 | F16 | `launch-verification` | S–M | all except F13, G14 to G16 | — | — | Todo |
 
 Sizes: S about half a day, M one to two days, L three days or more. F2 and F10 (languages) are gone with E3 and D13; the numbers are not reused. F7 is split: F7a `du-flip` (done) closed the last gaps of the du flip (E4) and widened the guard test, F7b `event-copy-de` is the rest of the copy. The cycles G1 to G16 are in Wave G §3 at the end of this file; where Wave G changes a dependency, the table above already shows it (F13 after G7, F14 after G5).
@@ -119,17 +119,7 @@ Sizes: S about half a day, M one to two days, L three days or more. F2 and F10 (
 
 ## Owner inputs
 
-Every input below has a default or a placeholder, so no cycle is blocked as a whole; the part it names waits. The PO keeps the defaults in Wave G §7 (for example D14 for the tier prices).
-
-| Input | Needed before |
-|---|---|
-| The host (D10) | F15 |
-| Logo, colours, typeface | F6 |
-| Operator name and address, the processors for the Datenschutz page | F7 |
-| Tier names and prices (default: Free + Pro at CHF 199 a year, D14), and the photo and PDF limits per tier (defaults: D15) | F12 |
-| The spreadsheet for D1(b), and the consent wording for D1(c) | F14 |
-| D12 follow-up 1: what a **listing card** shows for a venue without its own photos, which at launch is most of them. PO recommendation: a neutral brand placeholder per event type, and the owner's own photos where they have the rights | F6, F14 |
-| D12 follow-up 2: whether the crawled **facts** (address, capacity, rooms, event types) are published as they are, or only once the owner or the venue has checked them. PO recommendation: publish an entry only after the owner has written its text and checked its facts; until then it stays a draft | F14 |
+The owner delegated every decision to the PO and the tech lead on 2026-11-07 (D23 to D32 settle the former owner inputs). The owner holds only real-world facts; each has a marked placeholder, so no cycle waits. The list is in Wave G §7.
 
 ## Settled decisions
 
@@ -157,12 +147,12 @@ Section references in these rows (§3, §4) point into `KICKOFF.md`. E4 was star
 | D2 | **Freemium.** A free basic entry plus 2–3 paid tiers, invoiced by hand; no online payment. When a paid entry expires it falls back to free and never goes offline. Paid tiers unlock more photos, PDFs, a better ranking and visible contact data. Every venue, free ones included, has the inquiry form. | F12 |
 | D3 | **One venue per inquiry** at launch. A request to several venues from the Merkliste (F13) comes after launch. | F9, F13 |
 | D4 | **No room-layout search filter.** Visitors search by guest number only; the layouts show on the detail page. F4 stays small, and F5 has no layout criterion. | F4, F5 |
-| D5 | **The owner supplies the brand:** logo, colours, typeface. F6 implements the brand; it does not design one. | F6 |
+| D5 | ~~The owner supplies the brand.~~ **Superseded by D23** (2026-11-07): F6's brand is the brand. | F6 |
 | D6 | **The operator is a different company** from hochzeitslocation's. | F7 |
 | D7 | **Weddings are listed:** "Hochzeit" is one event type among the others. The tech lead had advised against it; the owner overruled. A venue's texts must differ between the two sites. | F3, F8, F14 |
 | D8 | **Git:** teammates may push branches, open PRs and squash-merge to `main` without asking, and resolve conflicts together with the tech lead. No direct pushes to `main`. Deploys stay the owner's. | all |
 | D9 | **Name and contact:** the site is called "deine-eventlocation.ch", and its contact address is `hallo@deine-eventlocation.ch`. | F0, F7 |
-| D10 | **Hosting is not Hostpoint;** the host is not chosen yet. It must offer PHP 8.5, Postgres 18 (or Neon reached from outside), cron and SSH. F0 leaves the deploy scripts as they are, and F15 adapts them once the owner picks a host. | F0, F15 |
+| D10 | **Hosting is not Hostpoint;** the host is not chosen yet. It must offer PHP 8.5, Postgres 18 (or Neon reached from outside), cron and SSH. F0 leaves the deploy scripts as they are, and F15 adapts them once the owner picks a host. **Host chosen in D26.** | F0, F15 |
 | D11 | **The eventlokale crawler stays** (overrides the "Drop" row in §4). The owner wants eventlokale's venues as a content source; D12 settles how. | F0, F14 |
 | D12 | **Source (d), eventlokale venues.** The crawler fetches all of eventlokale, every category, with facts, texts and photos, as internal working data before launch. The owner was told about the risk under Swiss UWG Art. 5 lit. c and accepted it ("crawl everything, it's only for myself, we're prelaunch"). eventlokale's texts and photos are **never published**; the owner writes new texts. Public photos come from the Google Places API, loaded live: never stored or cached, with the uploader's name on each photo, on the detail page only and never on cards. They show until the venue uploads its own photos in `/konto`. | F14 |
 
@@ -247,7 +237,7 @@ The paths below are the sister site's, as forked. **F5 `filter-event` renames ev
 
 ### S6. Ranking (paid attributes)
 
-- `venues.tier` ranks paid above free. Tier names, their number and what each unlocks are F12's (D2); the default for the open owner input is Free + Pro (D14, D15). The sister site's five tiers (`beliebte_location` … `basic`, with a generated `venues.tier_rank`) are in the schema as forked and F12 replaces them.
+- `venues.tier` ranks paid above free. Tier names, their number and what each unlocks are F12's (D2); settled: Free + Pro at CHF 199 a year (D14, D15, D25). The sister site's five tiers (`beliebte_location` … `basic`, with a generated `venues.tier_rank`) are in the schema as forked and F12 replaces them.
 - Within a tier, venues are ordered by `md5(venue_id || seed)`, where the seed is today's date in Europe/Zurich. Every visitor sees the same order for a day, paging is stable, and pages are cacheable.
 - Staff set the tier in the CMS or with "Tier auf Location anwenden" on a won deal (S13). A new location starts on the free tier (S16).
 
@@ -345,7 +335,7 @@ The sister site's owner data (the Wix export and its facts). It does not apply h
 - **One swap point:** all colours and the font family are CSS custom properties in `assets/styles/abstracts/_tokens.scss`; the logo is one file; the typeface is one file with its metrics. Swapping the brand later edits those files and the contrast table, never every component.
 - **Rules that carry over:** the typeface is self-hosted, because the CSP is `font-src 'self'; style-src 'self'` and a Google Fonts request would add a processor to the Datenschutz text; at most two font files on first view (S11); boards are not code (no inline styles, no `/_blob/` images: build from Sass partials and the sprite); no logo on photos; the favicon follows the logo.
 - **The sister site's brand must go:** its pink, cream, Figtree and `logo-hzl.png` are not ours. F6 removes them from `assets/` and `public/`.
-- A listing card for a venue without its own photos shows a neutral brand placeholder per event type (D12 follow-up 1, the PO's recommendation).
+- A listing card for a venue without its own photos shows a neutral brand placeholder per event type (D32).
 - The back office is not redesigned: F6 changes its accent tokens and font only, and `docs/reference/admin/` stays its layout reference.
 
 ### S16. Location-Konten (`/konto`)
@@ -499,7 +489,7 @@ IDs are referenced by the overview and the cycles.
 - **SEO-5** Real status codes: a true 404 for missing venues, 410 for removed ones, 5xx for errors (never the 404 template), 301 for old slugs.
 - **SEO-6** hreflang-ready: the helper exists and renders `de-CH` plus `x-default` now.
 - **SEC-1** Security headers: CSP with nonces (no `unsafe-inline`), `frame-ancestors 'none'`, `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, HSTS one year. Viewport without `user-scalable=no`.
-- **LEG-1** `/impressum` and `/datenschutz` (inquiry data, Merkliste cookie, Google Maps, hosting, mail provider, Sentry), linked in the footer. The operator (D6) and the processors are owner inputs, filled by F7b.
+- **LEG-1** `/impressum` and `/datenschutz` (inquiry data, Merkliste cookie, Google Maps, hosting, mail provider, Sentry), linked in the footer. The operator (D6) is a `TODO(owner)` placeholder until the owner supplies it (D27); the processors are D26's. F7b fills both.
 - **LEG-2** Inquiry data retention: inquiries are deleted after 12 months, and the Datenschutz page documents it.
 
 **Accessibility (A11Y)**
@@ -616,7 +606,7 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 ### F6 `brand-design` (L)
 
-**Depends on** F1 (owner input: logo, colours, typeface). Runs in its own lane beside F3 to F5. **Owns** no schema. **Scope.** S15: new boards in `docs/reference/public/`, tokens, logo (a placeholder wordmark until the owner delivers), favicon, the mail look (`templates/emails/layout.html.twig`, class prefix `hl-`), the contrast table, the home page board, and a neutral card placeholder per event type. The sister site's brand goes. **Done when** every public page and mail runs on the new tokens, no sister-site brand asset is left in `assets/` or `public/`, the contrast table passes, `make perf-check` holds, 390 px and 1440 px screenshots match the boards, and swapping the brand means editing token, font and logo files only.
+**Depends on** F1. Its brand is the brand (D23). Runs in its own lane beside F3 to F5. **Owns** no schema. **Scope.** S15: new boards in `docs/reference/public/`, tokens, logo (the SVG wordmark, D23), favicon, the mail look (`templates/emails/layout.html.twig`, class prefix `hl-`), the contrast table, the home page board, and a neutral card placeholder per event type. The sister site's brand goes. **Done when** every public page and mail runs on the new tokens, no sister-site brand asset is left in `assets/` or `public/`, the contrast table passes, `make perf-check` holds, 390 px and 1440 px screenshots match the boards, and swapping the brand means editing token, font and logo files only.
 
 ### F7a `du-flip` (S, done)
 
@@ -630,7 +620,7 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 ### F8 `landing-event` (M)
 
-**Depends on** F5. **Owns** `content_blocks` rows (landing texts). **Scope.** Landing pages per event type and per event type × canton (`LandingType` gains `event`; `LandingPages`, `LandingPaths` and `LandingPage::keyPrefix()` follow), their CMS texts (CMS-12), the sitemap and the JSON-LD. **Done when** the pages exist, are linked from LP-5 and the sitemap, canton and town pages still work, staff edit intro, title and meta description, tests.
+**Depends on** F5. **Owns** `content_blocks` rows (landing texts). **Scope.** Landing pages per event type and per event type × canton, except Hochzeit (D31) (`LandingType` gains `event`; `LandingPages`, `LandingPaths` and `LandingPage::keyPrefix()` follow), their CMS texts (CMS-12), the sitemap and the JSON-LD. **Done when** the pages exist, are linked from LP-5 and the sitemap, canton and town pages still work, staff edit intro, title and meta description, tests.
 
 ### F9 `inquiry-event` (S–M)
 
@@ -684,22 +674,32 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 _Added by the PO, 2026-11-07, approved by the tech lead the same day. Sources: `docs/prd/CMO_PRD.md` (CMO), `docs/prd/CTO_PRD.md` (CTO), `KICKOFF.md` D1–D12. Slugs F3–F16 are `KICKOFF.md` §5's cycles; G-cycles are new. Status of every row is `Todo` until its Outcome is written. This section is the master; the scratch copy in `docs/prd/wave-g-draft.md` is not kept in sync._
 
-### Wave G §1. Decisions of 2026-11-07 (PO + tech lead, in the owner's absence; the owner may overturn on return)
+### Wave G §1. Decisions of 2026-11-07 (PO + tech lead; the owner delegated all decisions to them the same day)
 
 The PRDs describe a product that is mostly ours already (free listing, paid tier, direct e-mail enquiries, claim flow). Where they conflict with a settled decision, the settled decision wins; where they add something, it goes into a cycle below. Their stack (Next.js, BullMQ, S3, Stripe) is ignored: we stay on Symfony.
 
 | # | Decision | Feeds |
 |---|---|---|
 | D13 | **German only at launch (E3 stands).** The PRD's "Vier Sprachen" is not offered and not advertised. No `i18n-core` cycle. FR/IT/EN stay in Out of scope. | all |
-| D14 | **Tiers: Free + Pro, CHF 199/year excluding VAT, as the default for the open "tier names and prices" input.** Invoiced by hand, no online payment (D2 stands); a tier row can be added later without code. Staff mark a subscription paid in the CRM. Stripe/TWINT is parked until the owner has a payment account. Whether the operator charges VAT is an owner input; the default is "zzgl. MwSt". | F12, G9, G13 |
+| D14 | **Tiers: Free + Pro, CHF 199/year excluding VAT, as the default for the open "tier names and prices" input.** Invoiced by hand, no online payment (D2 stands); a tier row can be added later without code. Staff mark a subscription paid in the CRM. Stripe/TWINT is parked until the owner has a payment account. Price final (D25); VAT shown per D24. | F12, G9, G13 |
 | D15 | **Free limits (data, not code):** 6 photos, 1 room, 1 video embed, 1 PDF, e-mail inquiries, monthly summary mail. **Pro (fair-use ceilings, data):** 60 photos, 20 rooms, 5 video embeds, 5 PDFs, all fitting event types, ranked above Free by tier (S6), shuffled daily within a tier, detailed monthly report, last-minute offers. Where D2 says "visible contact data": Free shows neither phone nor website; Pro shows the website and the phone number behind the click-to-reveal (DP-11: the number is never in the page HTML or the JSON-LD; only the website is in the JSON-LD). PO decision 2026-11-07. | F12, G9, G14 |
 | D16 | **Prepared preview is layered on D12, not instead of it.** The D12 crawl (internal facts, never published) stays. A new importer reads a venue's **own website** (SSRF-safe) and stores facts and image **candidates**, privately, with provenance. No image is public until the claimant confirms the licence (G1). Google Places live photos (D12) cover the gap. | G3, G5, G6 |
 | D17 | **Reverse match is in the run, as F13.** One brief to up to 5 disclosed venues; parent request plus child deliveries; per-venue opt-out and daily cap. D3 holds for the default flow (one venue per inquiry); multi is a second path. | F13 |
 | D18 | **Honesty rules are product rules.** An unclaimed or unchecked entry is labelled "Noch nicht vom Betreiber bestätigt" and never "verified". A feature is advertised only when its entitlement flag is live: the "Features available now" matrix on the site is **derived from the entitlement data**, not typed. No named-competitor comparison page at launch (it needs dated evidence and legal review: parked). No invented counts, ratings or testimonials. | G13 |
 | D19 | **Qualified enquiry** (CMO §9.2, CTO §15): a unique, real, reachable organizer, plausible event type, date and size, within the venue's declared criteria, delivered successfully, not spam, duplicate or test. It is not a booking. Stored as a derived flag plus a staff override (spam / test). Reports say "Anfragen", never "Buchungen". | G7, G8, G10 |
-| D20 | **Outreach basis.** The owner's 5–6k known contacts are not assumed to be marketing-consented. The app supports a suppression list and a contact-basis field per Location; bulk mail is the owner's call after auditing the basis. Order of channels: postal with QR, consented contacts, one-to-one business contact, organic. | G11 |
+| D20 | **Outreach basis.** The owner's 5–6k known contacts are not assumed to be marketing-consented. The app supports a suppression list and a contact-basis field per Location; no bulk mail at launch (D30). Order of channels: postal with QR, consented contacts, one-to-one business contact, organic. | G11 |
 | D21 | **Launch regions:** ZH, AG, ZG, BE get landing pages and seed focus first; other cantons stay listed. A thin or unchecked page is `noindex` and out of the sitemap until it passes a quality gate. | G12 |
 | D22 | **Stack-neutral PRD items dropped:** PostGIS (we have earthdistance), Playwright fallback, perceptual-hash image dedupe, image classifier, DNS TXT verification, passkeys for owners, reply relay. Parked below. | – |
+| D23 | **Brand: F6's brand is the brand** (replaces D5): indigo `#3a3fb0`, vermilion `#e0501a`, Hanken Grotesk, the SVG wordmark (`docs/brand.md`). A follow-up cycle `brand-assets` (tech lead) polishes the logo lockup, OG and social cards, favicon set and mail header within these colours and this typeface. | F6, `brand-assets` |
+| D24 | **Prices are shown as final, without a VAT line:** "CHF 199 pro Jahr". The operator starts far below the CHF 100k VAT threshold, and showing VAT while unregistered creates a tax debt. The VAT line is a data flag on the tier, off; G13 reads it, so registering later needs no code. | F12, G13 |
+| D25 | **Free + Pro at CHF 199 a year is final for launch** (D14 is no longer a default). | F12, G9, G13 |
+| D26 | **Host** (tech lead): an Infomaniak VPS in Switzerland (php-fpm, nginx, cron, SSH, about CHF 15–30 a month), Neon Postgres 18 in `aws-eu-central-1` (Frankfurt), Infomaniak SMTP for mail; under CHF 50 a month in total. F15 targets it: a generic SSH deploy with release directories and cron, nothing Hostpoint-specific. Processors for the Datenschutz page: Infomaniak (hosting, mail), Neon (database), Sentry (EU region), Google (Maps, Places). | F15, F7b |
+| D27 | **Operator facts ship as placeholders** `TODO(owner)` in the Impressum and Datenschutz pages. F16 fails while any `TODO(owner)` is left in rendered public output, and `CheckProductionEnvCommand` refuses to boot production with placeholders. A launch gate, not a question. | F7b, F16 |
+| D28 | **No legal review gate.** Our texts are final, not marked draft. They follow UWG Art. 3 lit. p (an offer for a directory entry states plainly that it is paid, with price and term; the Free entry says it is free) and lit. o (no mass advertising mail without consent). | G1, G6, G11, G13 |
+| D29 | **Consent wording for D1(c)** is the PO's, in `docs/onboarding-consent.md`. Hochzeitslocation sends it one-to-one to its own customers; only those who answer yes are imported, as new records with new texts. | F14 |
+| D30 | **No bulk mail at launch** (tightens D20). Outreach is one-to-one personal mail and calls (the 100-account pilot) and postal mail with a QR code. G11 tracks exactly these. | G11 |
+| D31 | **No Hochzeit landing pages.** "Hochzeit" stays an event type in the filter and on the detail page; F8 builds no landing page for it, alone or × canton, so the site does not compete with hochzeitslocation.ch on Google. | F8, G12 |
+| D32 | **D12 follow-ups settled.** (1) A card without the venue's own photos shows F6's neutral placeholder per event type (`_photo_placeholder`); Google Places photos stay on the detail page only. (2) Crawled facts are never published as they are: an entry goes public only once its text is written and its facts are checked; until then it is a draft (F14). | F6, F14 |
 
 ### Wave G §2. PRD journey → existing module
 
@@ -838,16 +838,13 @@ Critical path to a sellable first Pro: F12 → G9 → G13, in parallel with G1 �
 
 Online payment (Stripe/TWINT), promo-video renderer and social kit, partner syndication, reviews of our own, FR/IT/EN, passkeys for owners, DNS-TXT claim proof, reply relay, Playwright fallback for JavaScript sites, perceptual-hash dedupe and an image classifier, a named-competitor comparison page (needs dated evidence and legal review), PostGIS, a venue-facing mini-CRM, availability calendar sync.
 
-### Wave G §7. Owner inputs still needed (each has a default, so no cycle blocks)
+### Wave G §7. Facts only the owner holds (each has a placeholder, so no cycle blocks)
 
-| Input | Default | Needed before |
+Every former owner decision is settled in D23 to D32. What is left are facts:
+
+| Fact | Until it arrives | Needed before |
 |---|---|---|
-| Host | – (D10) | F15 |
-| Logo, colours, typeface | placeholder wordmark | F6 |
-| Operator name, address, processors | placeholder text marked "TODO" | F7, launch |
-| VAT status of the operator | prices shown "zzgl. MwSt" | G13 |
-| Tier prices (confirm CHF 199) | D14 | F12 |
-| Spreadsheet for D1(b), consent wording for D1(c) | – | F14 |
-| Swiss legal review (media terms, claim declaration, outreach, directory-solicitation wording) | our own texts, marked draft | launch |
-| Contact-basis audit of the 5–6k contacts | no bulk mail | G11 use |
-| Real pilot: 100 outreach accounts (CMO §6.5) | – | after launch |
+| Operator name and address | `TODO(owner)` placeholder; F16 and `CheckProductionEnvCommand` refuse it (D27) | launch |
+| Infomaniak and Neon accounts (D26) | F15 documents the setup | first deploy |
+| Spreadsheet for D1(b) | F14's import path is tested on a fixture | F14 import run |
+| Contact list for the one-to-one pilot (D30) | – | after launch |
