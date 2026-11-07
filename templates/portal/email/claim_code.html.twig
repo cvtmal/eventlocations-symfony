@@ -1,0 +1,17 @@
+{#
+    G6: the code that proves a claimant's address. The address is not proved yet, so the mail greets with a plain
+    "Hallo" and carries no text the visitor typed; the location's name is ours.
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'claim.mail.code.preheader'|trans({}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('claim.mail.code.greeting'|trans({}, 'portal')) }}
+{{ blocks.p('claim.mail.code.intro'|trans({venue: venueName}, 'portal')) }}
+{{ blocks.facts([{label: 'claim.mail.code.label'|trans({}, 'portal'), value: code}]) }}
+{{ blocks.rule() }}
+{{ blocks.note('claim.mail.code.validity'|trans({}, 'portal')) }}
+{{ blocks.note('claim.mail.code.not_you'|trans({}, 'portal')) }}
+{% endblock %}

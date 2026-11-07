@@ -332,8 +332,6 @@ preview:
     intro: Diesen Eintrag haben wir für dich vorbereitet. Übernimm ihn gratis, prüfe die Angaben und bestimme, was erscheint.
     claim: Gratis übernehmen
     correct: Angaben korrigieren
-    claim_subject: 'Eintrag Nr. {number} übernehmen: {name}'
-    correct_subject: 'Angaben korrigieren: Eintrag Nr. {number}, {name}'
     inquiry_note: Anfragen sind möglich, sobald der Eintrag übernommen und veröffentlicht ist.
     not_found:
         title: Vorschau nicht gefunden

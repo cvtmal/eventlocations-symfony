@@ -30,7 +30,8 @@ final class OverviewController extends AbstractController
     #[Route('/konto', name: 'portal_home', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(#[CurrentUser] PortalIdentity $identity): Response
     {
-        $numbers = $this->access->activeNumbers($identity->id());
+        $locations = $this->access->activeLocations($identity->id());
+        $numbers = array_keys($locations);
         if ([] === $numbers && !$this->access->hasAnyRow($identity->id())) {
             return $this->redirectToRoute('portal_locations_new');
         }
@@ -38,6 +39,7 @@ final class OverviewController extends AbstractController
         return $this->render('portal/overview.html.twig', [
             'locations' => $this->venues->byNumbers($numbers),
             'statuses' => $this->submissions->statuses($numbers),
+            'frozen' => array_keys(array_filter($locations)),
         ]);
     }
 }

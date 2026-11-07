@@ -24,9 +24,14 @@
 }
 
 .preview-banner__link {
+    padding: 0;
+    border: 0;
+    background: none;
     color: inherit;
+    font: inherit;
     font-weight: 600;
     text-decoration: underline;
+    cursor: pointer;
 }
 
 // Stands in `#anfrage` in the form's place, so it takes the form's card.

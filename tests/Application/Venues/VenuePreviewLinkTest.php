@@ -72,10 +72,14 @@ final class VenuePreviewLinkTest extends WebTestCase
         self::assertSame('noindex, nofollow', $crawler->filter('meta[name="robots"]')->attr('content'));
         self::assertStringContainsString(self::NAME, $crawler->filter('main h1')->text());
         self::assertSame('Noch nicht vom Betreiber bestätigt', $crawler->filter('.preview-banner__label')->text());
-        $claim = $crawler->filter('.preview-banner__actions a')->eq(0);
-        self::assertSame('Gratis übernehmen', $claim->text());
-        self::assertSame('mailto:hallo@deine-eventlocation.ch?subject='.rawurlencode('Eintrag Nr. '.$venue->number().' übernehmen: '.self::NAME), $claim->attr('href'));
-        self::assertSame('Angaben korrigieren', $crawler->filter('.preview-banner__actions a')->eq(1)->text());
+        // G6: both actions post the token to the claim flow; no URL carries it.
+        $actions = $crawler->filter('form.preview-banner__actions');
+        self::assertSame('/konto/uebernehmen/start', $actions->attr('action'));
+        self::assertSame('post', $actions->attr('method'));
+        self::assertSame(['Gratis übernehmen', 'Angaben korrigieren'], $actions->filter('button')->each(static fn ($button): string => trim($button->text())));
+        self::assertSame(['claim', 'correct'], $actions->filter('button')->each(static fn ($button): ?string => $button->attr('value')));
+        self::assertSame(substr($this->client->getRequest()->getPathInfo(), \strlen('/vorschau/')), $actions->filter('input[name="token"]')->attr('value'));
+        self::assertSelectorNotExists('.preview-banner a[href^="mailto:"]');
 
         $html = (string) $response->getContent();
         self::assertStringNotContainsString('js/stats', $html, 'no stats beacon');

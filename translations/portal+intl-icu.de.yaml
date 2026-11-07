@@ -244,7 +244,11 @@ onboarding:
             preheader: Wir haben {venue} geprüft und veröffentlicht.
             greeting: Hallo {name}
             intro: Wir haben {venue} geprüft und veröffentlicht. Die Location ist jetzt online.
+            public: Eintrag ansehen
+            settings: In deinem Konto änderst du Texte, Fotos und Kontaktangaben.
             button: Zur Location
+            removal: Möchtest du den Eintrag entfernen? Dort findest du auch «Offline nehmen». Oder antworte einfach auf diese E-Mail.
+            removal_button: Eintrag entfernen
         rejected:
             subject: '{venue} ist noch nicht online: bitte Angaben anpassen'
             preheader: Wir konnten {venue} noch nicht veröffentlichen.
@@ -477,3 +481,58 @@ subscription:
             title: Dieser Link gilt nicht mehr
             text: Die Laufzeit ist schon zu Ende oder der Link ist unvollständig. Bei Fragen antworte einfach auf unsere Mail.
             link: Zur Anmeldung
+
+claim:
+    gone:
+        title: Übernahme nicht möglich
+        text: Der Link zur Vorschau ist abgelaufen, zurückgezogen oder die Übernahme ist schon zu lange her. Öffne die Vorschau noch einmal oder schreib uns.
+        link: Zur Anmeldung
+    deactivated:
+        title: Konto deaktiviert
+        text: Das Konto zu dieser E-Mail-Adresse ist deaktiviert. Bitte schreib uns, wenn du den Eintrag übernehmen möchtest.
+    address:
+        title: Eintrag übernehmen
+        heading: '{venue} gratis übernehmen'
+        correct: Damit du die Angaben korrigieren kannst, übernimmst du zuerst den Eintrag. Das ist gratis.
+        intro: Wir schicken dir einen Code an deine E-Mail-Adresse. Gehört die Adresse zur Website der Location, ist der Eintrag gleich deiner. Sonst prüfen wir die Übernahme von Hand.
+        email_help: Am besten die Adresse auf der Website der Location, zum Beispiel info@deine-location.ch.
+        submit: Code schicken
+    code:
+        title: Code eingeben
+        intro: 'Wir haben einen sechsstelligen Code an {email} geschickt. Er gilt 30 Minuten.'
+        domain_note: Keine E-Mail erhalten? Schau im Spam-Ordner nach oder fordere einen neuen Code an.
+        label: Code
+        submit: Bestätigen
+        again: Neuen Code anfordern
+    password:
+        title: Wähle dein Passwort
+        intro: Deine E-Mail-Adresse ist bestätigt. Mit diesem Passwort meldest du dich künftig an.
+        submit: Passwort speichern
+    error:
+        rate_limited: Zu viele Versuche. Bitte warte eine Stunde und versuch es dann noch einmal.
+        wrong_code: '{left, plural, one {Der Code stimmt nicht. Du hast noch einen Versuch.} other {Der Code stimmt nicht. Du hast noch # Versuche.}}'
+        dead_code: Dieser Code gilt nicht mehr. Fordere bitte einen neuen an.
+    flash:
+        granted: Geschafft, der Eintrag gehört jetzt dir.
+        queued: Deine E-Mail-Adresse ist bestätigt. Wir prüfen die Übernahme von Hand und melden uns bei dir.
+        no_photos: Alles klar, wir übernehmen keine Fotos von deiner Website.
+        photos_added: '{added, plural, one {1 Foto übernommen.} other {# Fotos übernommen.}}'
+        photos_failed: '{failed, plural, one {1 Foto konnten wir nicht laden. Lade es bitte unter «Fotos» selbst hoch.} other {# Fotos konnten wir nicht laden. Lade sie bitte unter «Fotos» selbst hoch.}}'
+    overview:
+        frozen: Wir prüfen eine weitere Übernahme
+    photos:
+        title: Fotos von deiner Website
+        heading: Fotos für {venue}
+        intro: 'Diese Fotos haben wir auf deiner Website gefunden. Kreuze an, welche wir veröffentlichen dürfen (höchstens {max} auf einmal). Mit «Ansehen» öffnest du ein Foto auf deiner Website.'
+        label: Fotos
+        view: Ansehen
+        submit: Weiter
+    mail:
+        code:
+            subject: Dein Code für {venue}
+            preheader: Mit diesem Code übernimmst du deinen Eintrag.
+            greeting: Hallo
+            intro: 'Mit diesem Code übernimmst du den Eintrag {venue} auf deine-eventlocation.ch. Gib ihn auf der Seite ein, auf der du ihn angefordert hast.'
+            label: Dein Code
+            validity: Der Code gilt 30 Minuten und funktioniert nur einmal.
+            not_you: Falls du nichts angefordert hast, kannst du diese E-Mail ignorieren.

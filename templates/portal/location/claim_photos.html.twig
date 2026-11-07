@@ -1,0 +1,60 @@
+{#
+    G6 (`LocationClaimPhotosController`): the photos the website import found, as links to the venue's own site (the
+    back-office CSP allows no foreign image, and nothing is fetched before the claimant asks). The claimant ticks
+    the ones to publish and gives the declaration (G1). Context: venue (VenueHeader), form (ClaimPhotosType),
+    candidates (list<PhotoCandidateRow>, in the form's choice order), max (photos per submit).
+#}
+{% extends 'portal/base.html.twig' %}
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'claim.photos.title'|trans({}, 'portal') }} – {{ venue.name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('portal_home') }}">{{ 'overview.title'|trans({}, 'portal') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ venue.name }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <h1>{{ 'claim.photos.title'|trans({}, 'portal') }}</h1>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {{ form_start(form, {attr: {class: 'rights-form', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {
+            title: 'claim.photos.heading'|trans({venue: venue.name}, 'portal'),
+            id: 'website-fotos',
+            form: form,
+            candidates: candidates,
+            max: max,
+        } only %}
+            {% block body %}
+                {{ form_errors(form) }}
+                <p class="muted">{{ 'claim.photos.intro'|trans({max: max}, 'portal') }}</p>
+                {{ form_errors(form.photos) }}
+                <ul class="claim-photos">
+                    {% for child in form.photos %}
+                        {% set candidate = candidates[loop.index0] %}
+                        <li class="claim-photos__item">
+                            {{ form_widget(child) }}
+                            <label for="{{ child.vars.id }}">
+                                {{ candidate.fileName }}
+                                {% if candidate.width and candidate.height %}<span class="muted">({{ candidate.width }} × {{ candidate.height }})</span>{% endif %}
+                                {% if candidate.alt %}<span class="muted">– {{ candidate.alt }}</span>{% endif %}
+                            </label>
+                            <a href="{{ candidate.imageUrl }}" target="_blank" rel="noopener noreferrer">{{ 'claim.photos.view'|trans({}, 'portal') }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="muted">{{ 'rights.declaration_intro'|trans({}, 'portal') }}</p>
+                <div class="rights-declaration">{{ rights_declaration() }}</div>
+                {{ form_row(form.declaration) }}
+                {{ form_row(form.derivatives) }}
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'claim.photos.submit'|trans({}, 'portal'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}

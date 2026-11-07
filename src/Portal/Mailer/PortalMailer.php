@@ -110,12 +110,40 @@ final class PortalMailer
         ]);
     }
 
-    public function sendLocationAccepted(string $email, string $firstName, string $venueName, int $number): bool
+    /**
+     * The proof of publication (G6): the public page, the settings and how to take the entry off again. `$slug` ''
+     * leaves the public link out.
+     */
+    public function sendLocationAccepted(string $email, string $firstName, string $venueName, int $number, string $slug): bool
     {
         return $this->sendLocationMail($email, 'onboarding.mail.accepted.subject', $venueName, 'portal/email/location_accepted.html.twig', [
             'firstName' => $firstName,
             'number' => $number,
+            'slug' => $slug,
         ]);
+    }
+
+    /**
+     * G6: the code that proves a claimant's address. The address is unproved, so the mail greets with a plain
+     * "Hallo" and carries nothing the visitor typed; the code is never logged.
+     */
+    public function sendClaimCode(string $email, string $code, string $venueName): void
+    {
+        try {
+            $this->mailer->send((new TemplatedEmail())
+                ->to($email)
+                ->replyTo($this->contactEmail)
+                ->subject($this->translator->trans('claim.mail.code.subject', ['venue' => $venueName], 'portal'))
+                ->htmlTemplate('portal/email/claim_code.html.twig')
+                ->context(['code' => $code, 'venueName' => $venueName]));
+        } catch (TransportExceptionInterface|RfcComplianceException|HandlerFailedException $exception) {
+            $cause = $exception instanceof HandlerFailedException ? $exception->getPrevious() ?? $exception : $exception;
+            $this->logger->error('The claim code mail failed ({exception_class} at {file}:{line}).', [
+                'exception_class' => $cause::class,
+                'file' => $cause->getFile(),
+                'line' => $cause->getLine(),
+            ]);
+        }
     }
 
     public function sendLocationRejected(string $email, string $firstName, string $venueName, int $number, string $reason): bool

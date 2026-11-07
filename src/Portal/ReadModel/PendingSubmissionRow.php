@@ -20,6 +20,8 @@ final readonly class PendingSubmissionRow
         public ?string $managerLastName,
         public ?string $managerEmail,
         public \DateTimeImmutable $submittedAt,
+        /** The default locale's slug, for the public link in the acceptance mail (G6). */
+        public ?string $slug = null,
     ) {
     }
 }

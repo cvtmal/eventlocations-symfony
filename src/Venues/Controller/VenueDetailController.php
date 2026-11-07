@@ -6,6 +6,7 @@ namespace App\Venues\Controller;
 
 use App\Shared\Http\PublicCache;
 use App\Venues\ReadModel\VenueDetailQuery;
+use App\Venues\VenueClaims;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,6 +26,7 @@ final class VenueDetailController extends AbstractController
 
     public function __construct(
         private readonly VenueDetailQuery $venues,
+        private readonly VenueClaims $claims,
     ) {
     }
 
@@ -46,7 +48,11 @@ final class VenueDetailController extends AbstractController
 
         $detail = $this->venues->detail($match->number, $locale) ?? throw new NotFoundHttpException();
 
-        return self::cached($this->render('venues/detail/show.html.twig', ['venue' => $detail]));
+        return self::cached($this->render('venues/detail/show.html.twig', [
+            'venue' => $detail,
+            // D18: until the operator claims the entry (G6). A claim purges the cached page.
+            'unconfirmed' => !$this->claims->isConfirmed($detail->id),
+        ]));
     }
 
     /**

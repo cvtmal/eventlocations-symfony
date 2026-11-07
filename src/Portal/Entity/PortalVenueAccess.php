@@ -39,6 +39,10 @@ class PortalVenueAccess
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $confirmedAt = null;
 
+    /** G6: a claim's pending row while somebody else already had one; it freezes the venue until staff decide. */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $competing = false;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -89,5 +93,15 @@ class PortalVenueAccess
         $this->status = PortalVenueAccessStatus::Active;
         $this->confirmedAt = $at;
         $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function markCompeting(): void
+    {
+        $this->competing = true;
+    }
+
+    public function isCompeting(): bool
+    {
+        return $this->competing;
     }
 }

@@ -103,3 +103,21 @@
 .venue-media [data-island='photo-manager']:empty {
     min-block-size: 20rem;
 }
+
+// G6: the website's photo candidates on the claim's photo step, one line each: box, name, link to the venue's site.
+.claim-photos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.claim-photos__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--a-space-2);
+    overflow-wrap: anywhere;
+}

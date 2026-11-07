@@ -1,4 +1,4 @@
-{# Head block (DP-5): name + "Top-Eintrag" badge, "PLZ Ort" (else the canton or region text, else nothing), icon row, description. Params: venue. #}
+{# Head block (DP-5): name + "Top-Eintrag" badge, "PLZ Ort" (else the canton or region text, else nothing), icon row, description. Params: venue, unconfirmed (D18, G6: no operator manages the entry yet; the preview's banner says it there). #}
 {% set setting_icons = {river: 'waves', lake: 'sailboat', countryside: 'trees', mountains: 'mountain-snow', city: 'building-2'} %}
 <section id="beschreibung" class="venue-section venue-head" aria-labelledby="venue-name">
     <h1 id="venue-name" class="venue-head__name">
@@ -9,6 +9,9 @@
     <p class="venue-head__place">{{ 'detail.head.place'|trans({zip: venue.zip, town: venue.place.townName}, 'venues') }}</p>
     {% elseif venue.place.isKnown() %}
     <p class="venue-head__place">{{ venue.place|trans }}</p>
+    {% endif %}
+    {% if unconfirmed|default(false) %}
+    <p class="venue-head__unconfirmed">{{ icon('info') }}<span>{{ 'preview.unconfirmed'|trans({}, 'venues') }}</span></p>
     {% endif %}
     <ul class="venue-head__facts" aria-label="{{ 'detail.head.facts_label'|trans({}, 'venues') }}">
         {% if venue.mainBuilding %}<li>{{ icon('house') }}<span>{{ venue.mainBuilding|trans }}</span></li>{% endif %}

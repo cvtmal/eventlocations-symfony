@@ -32,8 +32,11 @@ final class SafeFetcher
     ) {
     }
 
-    public function open(): FetchSession
+    /**
+     * `$limits` replaces the crawl's caps for a session that is no crawl (G6 fetches a handful of photos).
+     */
+    public function open(?FetchLimits $limits = null): FetchSession
     {
-        return new FetchSession($this->httpClient, $this->resolver, $this->clock, $this->userAgent, $this->limits, $this->policy);
+        return new FetchSession($this->httpClient, $this->resolver, $this->clock, $this->userAgent, $limits ?? $this->limits, $this->policy);
     }
 }

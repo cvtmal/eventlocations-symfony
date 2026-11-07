@@ -15,7 +15,7 @@ use Doctrine\DBAL\Connection;
 final readonly class PendingSubmissionQuery
 {
     private const string PENDING = <<<'SQL'
-        SELECT v.id, v.number, v.name, v.canton_code, tw.name AS town_name, t.region,
+        SELECT v.id, v.number, v.name, v.canton_code, tw.name AS town_name, t.region, t.slug,
                u.first_name, u.last_name, u.email, s.submitted_at
         FROM portal_submissions s
         JOIN venues v ON v.id = s.venue_id
@@ -62,6 +62,7 @@ final readonly class PendingSubmissionQuery
             self::string($row['last_name']),
             self::string($row['email']),
             new \DateTimeImmutable((string) $row['submitted_at']),
+            self::string($row['slug']),
         );
     }
 

@@ -218,6 +218,10 @@ portal:
         rate_limited: Du hast in der letzten Stunde sehr viele Dateien hochgeladen. Bitte versuch es später noch einmal.
     rights:
         declaration_required: Bitte bestätige die Bildrechte-Erklärung, damit wir die Fotos freigeben können.
+    claim:
+        code_required: Bitte gib den Code aus der E-Mail ein.
+        code_format: Der Code hat sechs Ziffern.
+        too_many_photos: Bitte wähle höchstens {limit} Fotos auf einmal.
 shared:
     text:
         invalid: Der Text enthält ungültige Zeichen.

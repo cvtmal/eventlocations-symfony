@@ -39,6 +39,10 @@ final class PortalRoutesAreClosedTest extends WebTestCase
         'portal_reset_password',
         // G9: the reminder mail's cancellation link works without a login (a bad token answers 404, a dead one 410).
         'portal_subscription_cancel',
+        'portal_claim_start',
+        'portal_claim',
+        'portal_claim_code',
+        'portal_claim_password',
     ];
 
     public function test_the_open_routes_exist_and_the_closed_ones_are_walked(): void
