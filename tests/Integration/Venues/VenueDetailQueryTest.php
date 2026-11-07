@@ -299,9 +299,10 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame(4.0, $hall->heightM);
         self::assertSame(FloorMaterial::Parquet, $hall->floorMaterial);
         self::assertEquals(
-            [new DetailSeating(Seating::Banquet, 50, 180), new DetailSeating(Seating::Seminar, null, 120), new DetailSeating(Seating::Concert, 60, 250), new DetailSeating(Seating::Apero, 100, 300)],
+            [new DetailSeating(Seating::Banquet, 50, 180), new DetailSeating(Seating::Seminar, null, 120), new DetailSeating(Seating::UShape, null, 40), new DetailSeating(Seating::Block, 60, 80), new DetailSeating(Seating::Concert, 60, 250), new DetailSeating(Seating::Apero, 100, 300)],
             $hall->seatings,
         );
+        self::assertCount(\count(Seating::cases()), $hall->seatings, 'every layout shows, in SEATING_ORDER');
         self::assertTrue($hall->hasInfo());
         self::assertTrue($hall->hasFacts());
         self::assertNotNull($hall->photo);

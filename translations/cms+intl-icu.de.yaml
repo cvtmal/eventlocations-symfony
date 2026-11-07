@@ -457,6 +457,7 @@ rooms:
         seating_max: höchstens
     help:
         height: Zum Beispiel 4.20
+        capacity_from_layouts: Aus der Bestuhlung berechnet. Die grösste Personenzahl gilt.
     remove:
         action: Löschen
         title: Raum löschen?

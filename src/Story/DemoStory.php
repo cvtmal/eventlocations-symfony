@@ -388,9 +388,11 @@ final class DemoStory extends Story
         for ($position = 1; $position <= $count; ++$position) {
             $roomMax = 1 === $position ? $capacityMax : $faker->numberBetween(max(10, intdiv($capacityMax, 5)), $capacityMax);
             $factory = RoomFactory::new();
+            $largestLayout = true; // The first layout a room offers seats its maximum, which the layouts give the room (F4).
             foreach (Seating::cases() as $seating) {
                 if ($faker->boolean(60)) {
-                    $seatingMax = $faker->numberBetween(max(1, intdiv($roomMax, 3)), $roomMax);
+                    $seatingMax = $largestLayout ? $roomMax : $faker->numberBetween(max(1, intdiv($roomMax, 3)), $roomMax);
+                    $largestLayout = false;
                     $factory = $factory->withSeating($seating, $faker->boolean() ? null : $faker->numberBetween(1, $seatingMax), $seatingMax);
                 }
             }

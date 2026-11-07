@@ -15,7 +15,7 @@ function room(id, position, overrides = {}) {
         areaM2: 120,
         heightM: '4.20',
         floorMaterial: 'parquet',
-        seating: { banquet: { min: 10, max: 60 } },
+        seating: { banquet: { min: 20, max: 80 } },
         fromContent: false,
         photoCount: 2,
         token: `token-${id}`,
@@ -106,6 +106,7 @@ describe('RoomEditorIsland', () => {
         await island.get('#room-height').setValue(' 4.20 ');
         await island.get('#room-floor').setValue('parquet');
         await island.get('#room-seating-banquet-max').setValue(60);
+        await island.get('#room-seating-apero-max').setValue(120);
         await island.get('#room-form').trigger('submit');
         await flushPromises();
 
@@ -115,11 +116,11 @@ describe('RoomEditorIsland', () => {
             names: { de: 'Seesaal' },
             descriptions: { de: '' },
             capacityMin: null,
-            capacityMax: 80,
+            capacityMax: 120,
             areaM2: null,
             heightM: '4.20',
             floorMaterial: 'parquet',
-            seating: { banquet: { min: null, max: 60 }, apero: { min: null, max: null } },
+            seating: { banquet: { min: null, max: 60 }, apero: { min: null, max: 120 } },
         });
         expect(island.get('#room-drawer').attributes('open')).toBeUndefined();
         expect(names(island)).toEqual(['Saal a']);
@@ -135,7 +136,7 @@ describe('RoomEditorIsland', () => {
         expect(island.get('#room-drawer-title').text()).toBe('Saal a bearbeiten');
         expect(island.get('#room-name-de').element.value).toBe('Saal a');
         expect(island.get('#room-height').element.value).toBe('4.20');
-        expect(island.get('#room-seating-banquet-max').element.value).toBe('60');
+        expect(island.get('#room-seating-banquet-max').element.value).toBe('80');
         expect(island.get('#room-seating-apero-max').element.value).toBe('');
 
         await island.get('#room-name-de').setValue('Neu');
@@ -146,6 +147,33 @@ describe('RoomEditorIsland', () => {
         expect(fetchMock.mock.calls[0][1].method).toBe('PUT');
         expect(sent(fetchMock)).toMatchObject({ loadedAt: 'token-a', names: { de: 'Neu' }, heightM: '4.20', capacityMin: 20 });
         expect(names(island)).toEqual(['Neu', 'Saal b']);
+    });
+
+    it('takes the guest range from the layouts and locks the room fields while one states a maximum', async () => {
+        const island = mounted([]);
+
+        await island.get('[data-room-add]').trigger('click');
+        await island.get('#room-capacity-min').setValue(5);
+        await island.get('#room-capacity-max').setValue(500);
+
+        expect(island.get('#room-capacity-max').attributes('disabled')).toBeUndefined();
+        expect(island.find('#room-capacity-max-help').exists()).toBe(false);
+
+        await island.get('#room-seating-banquet-min').setValue(40);
+        await island.get('#room-seating-banquet-max').setValue(150);
+        await island.get('#room-seating-apero-min').setValue(30);
+        await island.get('#room-seating-apero-max').setValue(220);
+
+        expect(island.get('#room-capacity-min').element.value).toBe('30');
+        expect(island.get('#room-capacity-max').element.value).toBe('220');
+        expect(island.get('#room-capacity-max').attributes('disabled')).toBeDefined();
+        expect(island.get('#room-capacity-max-help').text()).toBe('capacityFromLayouts');
+
+        await island.get('#room-seating-banquet-max').setValue('');
+        await island.get('#room-seating-apero-max').setValue('');
+
+        expect(island.get('#room-capacity-max').attributes('disabled')).toBeUndefined();
+        expect(island.get('#room-capacity-max').element.value).toBe('220');
     });
 
     it('sends the token of a reorder that landed after the drawer opened', async () => {

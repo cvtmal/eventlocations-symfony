@@ -16,6 +16,10 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * The capacities per seating type are column pairs (capacity_<seating>_min/_max), one per
  * Seating case; read and write them through seatingMin()/seatingMax()/offerSeating().
+ * A room's guest range follows its layouts (F4): once a layout states a maximum, capacity_max is
+ * the greatest layout maximum and capacity_min the least minimum of those layouts (Seating::guestRange(),
+ * chk_rooms_capacity_layouts); without one, the stated range stays. Offer the layouts before
+ * reshape(), so a room whose layouts all went back to the stated range.
  * The height is a decimal string ('4.20') read back as a float. `content_key` is the room's
  * key in venue.yaml (#9); NULL for rooms not written by the import.
  */
@@ -76,6 +80,18 @@ class Room
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $capacityConcertMax = null;
 
+    #[ORM\Column(name: 'capacity_u_shape_min', type: Types::INTEGER, nullable: true)]
+    private ?int $capacityUShapeMin = null;
+
+    #[ORM\Column(name: 'capacity_u_shape_max', type: Types::INTEGER, nullable: true)]
+    private ?int $capacityUShapeMax = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $capacityBlockMin = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $capacityBlockMax = null;
+
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
     private ?string $contentKey;
 
@@ -115,7 +131,8 @@ class Room
     }
 
     /**
-     * Replaces the room's facts; the height is a decimal string ('4.20').
+     * Replaces the room's facts; the height is a decimal string ('4.20'). The stated range gives
+     * way to the layouts' range when a layout states a maximum.
      */
     public function reshape(?int $capacityMin, ?int $capacityMax, ?int $areaM2, ?string $heightM, ?FloorMaterial $floorMaterial): void
     {
@@ -124,6 +141,7 @@ class Room
         $this->areaM2 = $areaM2;
         $this->heightM = $heightM;
         $this->floorMaterial = $floorMaterial;
+        $this->followLayouts();
         $this->updatedAt = new \DateTimeImmutable();
     }
 
@@ -137,7 +155,10 @@ class Room
             Seating::Banquet => [$this->capacityBanquetMin, $this->capacityBanquetMax] = [$min, $max],
             Seating::Apero => [$this->capacityAperoMin, $this->capacityAperoMax] = [$min, $max],
             Seating::Concert => [$this->capacityConcertMin, $this->capacityConcertMax] = [$min, $max],
+            Seating::UShape => [$this->capacityUShapeMin, $this->capacityUShapeMax] = [$min, $max],
+            Seating::Block => [$this->capacityBlockMin, $this->capacityBlockMax] = [$min, $max],
         };
+        $this->followLayouts();
         $this->updatedAt = new \DateTimeImmutable();
     }
 
@@ -148,6 +169,8 @@ class Room
             Seating::Banquet => $this->capacityBanquetMin,
             Seating::Apero => $this->capacityAperoMin,
             Seating::Concert => $this->capacityConcertMin,
+            Seating::UShape => $this->capacityUShapeMin,
+            Seating::Block => $this->capacityBlockMin,
         };
     }
 
@@ -158,7 +181,18 @@ class Room
             Seating::Banquet => $this->capacityBanquetMax,
             Seating::Apero => $this->capacityAperoMax,
             Seating::Concert => $this->capacityConcertMax,
+            Seating::UShape => $this->capacityUShapeMax,
+            Seating::Block => $this->capacityBlockMax,
         };
+    }
+
+    private function followLayouts(): void
+    {
+        $range = Seating::guestRange(array_map(fn (Seating $seating): array => ['min' => $this->seatingMin($seating), 'max' => $this->seatingMax($seating)], Seating::cases()));
+        if (null !== $range) {
+            $this->capacityMin = $range['min'];
+            $this->capacityMax = $range['max'];
+        }
     }
 
     public function id(): string

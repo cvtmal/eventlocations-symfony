@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { ValidationFailed } from '../api.js';
 import CmsField from '../cms/CmsField.vue';
 import { charCount, failureOf, fill } from '../cms/text.js';
@@ -98,6 +98,34 @@ function formOf(room) {
 }
 
 const orNull = (value) => (value === '' ? null : value);
+
+// A room's guest range follows its layouts (F4, Seating::guestRange()): once a layout states a maximum,
+// the room takes the greatest maximum and the least minimum of those layouts, and its own fields lock.
+const layoutRange = computed(() => {
+    if (!form.value) {
+        return null;
+    }
+    let min = null;
+    let max = null;
+    for (const range of Object.values(form.value.seating)) {
+        if (range.max === '' || range.max === null) {
+            continue;
+        }
+        max = max === null ? Number(range.max) : Math.max(max, Number(range.max));
+        if (range.min !== '' && range.min !== null) {
+            min = min === null ? Number(range.min) : Math.min(min, Number(range.min));
+        }
+    }
+
+    return max === null ? null : { min, max };
+});
+
+watch(layoutRange, (range) => {
+    if (range) {
+        form.value.capacityMin = range.min ?? '';
+        form.value.capacityMax = range.max;
+    }
+});
 
 function bodyOf(values) {
     return {
@@ -376,6 +404,7 @@ async function remove() {
               id="room-capacity-min"
               v-model="form.capacityMin"
               type="number"
+              :disabled="layoutRange !== null"
               min="1"
               max="50000"
               :aria-describedby="describedBy"
@@ -386,12 +415,14 @@ async function remove() {
             id="room-capacity-max"
             v-slot="{ describedBy, invalid }"
             :label="labels.capacityMaxField"
+            :help="layoutRange !== null ? labels.capacityFromLayouts : undefined"
             :error="fieldErrors.capacityMax?.[0]"
           >
             <input
               id="room-capacity-max"
               v-model="form.capacityMax"
               type="number"
+              :disabled="layoutRange !== null"
               min="1"
               max="50000"
               :aria-describedby="describedBy"

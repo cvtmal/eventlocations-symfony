@@ -268,6 +268,38 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(1, $this->rows('content_imports WHERE forced AND venues_updated = 1'));
     }
 
+    public function test_the_layouts_give_a_room_its_range_and_without_them_the_file_range_returns(): void
+    {
+        $this->twoVenues();
+        $this->content->edit('schloss-beispiel', static function (array $venue): array {
+            $venue['rooms'][0]['capacity'] = ['min' => 5, 'max' => 400];
+            $venue['rooms'][0]['seating']['block'] = ['min' => 10, 'max' => 120];
+
+            return $venue;
+        });
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+        self::assertSame([10, 120], $this->roomCapacity('rittersaal'), 'the layouts, not the file range');
+
+        $this->content->edit('schloss-beispiel', static function (array $venue): array {
+            unset($venue['rooms'][0]['seating']);
+
+            return $venue;
+        });
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+        self::assertSame([5, 400], $this->roomCapacity('rittersaal'), 'no layout left: the file range');
+    }
+
+    /**
+     * @return array{mixed, mixed}
+     */
+    private function roomCapacity(string $roomKey): array
+    {
+        $row = $this->connection->fetchAssociative('SELECT capacity_min, capacity_max FROM rooms WHERE content_key = ?', [$roomKey]);
+        self::assertIsArray($row);
+
+        return [$row['capacity_min'], $row['capacity_max']];
+    }
+
     private function twoVenues(): void
     {
         $this->content->venue('schloss-beispiel', [

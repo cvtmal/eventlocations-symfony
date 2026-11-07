@@ -96,6 +96,8 @@ final class DetailVenues
         $hall->offerSeating(Seating::Seminar, null, 120);
         $hall->offerSeating(Seating::Concert, 60, 250);
         $hall->offerSeating(Seating::Apero, 100, 300);
+        $hall->offerSeating(Seating::UShape, null, 40);
+        $hall->offerSeating(Seating::Block, 60, 80);
         $em->flush();
         RoomTranslationFactory::createOne(['room' => $hall, 'name' => 'Rittersaal', 'description' => 'Der grosse Saal mit Kronleuchtern.']);
         $cellar = RoomFactory::createOne(['venue' => $venue, 'position' => 2, 'capacityMin' => null, 'capacityMax' => null, 'areaM2' => null, 'heightM' => null, 'floorMaterial' => null]);

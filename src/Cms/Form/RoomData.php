@@ -60,7 +60,9 @@ final class RoomData
     #[Assert\Callback]
     public function validateRules(ExecutionContextInterface $context): void
     {
-        if (null !== $this->capacityMin && null !== $this->capacityMax && $this->capacityMin > $this->capacityMax) {
+        // Once a layout states a maximum, the layouts give the room's range and its own fields are locked (F4).
+        $layoutRange = Seating::guestRange(array_values($this->seatingArray()));
+        if (null === $layoutRange && null !== $this->capacityMin && null !== $this->capacityMax && $this->capacityMin > $this->capacityMax) {
             $context->buildViolation('cms.room.capacity.max_below_min')->atPath('capacityMax')->addViolation();
         }
         if (null !== $this->heightM && 1 === preg_match('/\A\d{1,2}(\.\d{1,2})?\z/', $this->heightM) && ((float) $this->heightM <= 0.0 || (float) $this->heightM > 30.0)) {

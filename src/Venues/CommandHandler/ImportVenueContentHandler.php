@@ -246,13 +246,15 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
                 if (null === $room) {
                     $room = new Room($venue, $index + 1, $roomContent->capacityMin, $roomContent->capacityMax, $roomContent->areaM2, $roomContent->heightM, $roomContent->floorMaterial, $roomContent->key);
                     $this->em->persist($room);
-                } else {
-                    $room->moveTo($index + 1);
-                    $room->reshape($roomContent->capacityMin, $roomContent->capacityMax, $roomContent->areaM2, $roomContent->heightM, $roomContent->floorMaterial);
                 }
                 foreach (Seating::cases() as $seating) {
                     $range = $roomContent->seating[$seating->value] ?? ['min' => null, 'max' => null];
                     $room->offerSeating($seating, $range['min'], $range['max']);
+                }
+                if (isset($roomsByKey[$roomContent->key])) {
+                    // After the layouts, so a room whose layouts all went takes the file's range again (F4).
+                    $room->moveTo($index + 1);
+                    $room->reshape($roomContent->capacityMin, $roomContent->capacityMax, $roomContent->areaM2, $roomContent->heightM, $roomContent->floorMaterial);
                 }
                 foreach ($roomContent->translations as $locale => $text) {
                     $this->em->persist(new RoomTranslation($room, $locale, $text['name'], $text['description']));

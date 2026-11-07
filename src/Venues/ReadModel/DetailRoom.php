@@ -14,7 +14,7 @@ use App\Venues\ValueObject\FloorMaterial;
 final readonly class DetailRoom
 {
     /**
-     * @param list<DetailSeating> $seatings in the order banquet, seminar, concert, apero
+     * @param list<DetailSeating> $seatings in the order banquet, seminar, u_shape, block, concert, apero
      */
     public function __construct(
         public string $id,

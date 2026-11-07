@@ -780,13 +780,15 @@
                     },
                     "seating": {
                         "type": "object",
-                        "description": "Capacity per seating type.",
+                        "description": "Capacity per seating type (layout). Once an entry states a max, the room's guest range is the greatest max and the least min of the entries with a max; capacity is then ignored.",
                         "propertyNames": {
                             "enum": [
                                 "seminar",
                                 "banquet",
                                 "apero",
-                                "concert"
+                                "concert",
+                                "u_shape",
+                                "block"
                             ]
                         },
                         "additionalProperties": {

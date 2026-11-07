@@ -59,7 +59,7 @@ final class RoomApiTest extends WebTestCase
     public static function invalidBodies(): iterable
     {
         yield 'no name' => [['names' => ['de' => '']], 'names.de'];
-        yield 'min above max' => [['capacityMin' => 500], 'capacityMax'];
+        yield 'min above max without layouts' => [['capacityMin' => 500, 'seating' => []], 'capacityMax'];
         yield 'a height of 31 m' => [['heightM' => '31'], 'heightM'];
         yield 'an unknown floor' => [['floorMaterial' => 'marble'], 'floorMaterial'];
         yield 'seating min above max' => [['seating' => ['banquet' => ['min' => 120, 'max' => 100]]], 'seating.banquet.max'];
