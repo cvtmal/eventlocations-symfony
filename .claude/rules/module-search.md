@@ -31,7 +31,7 @@ Holds `SearchCriteria` and its URL codec, the listing and its filters, landing p
 ## Read side
 
 - **`ListingQuery`:** `results()` runs 3 queries (cards, photos, count; 2 on an empty page) and returns a `ListingPage` (`PER_PAGE` 48); `first($limit, $photosPerCard, $locale)` is the home Spotlight; `cardsByNumbers(list<int>, $locale, $photosPerCard = 8)` returns the published venues among the numbers in the given order (`/merkliste`, `nearby`). `CARD_COLUMNS`/`CARD_TOWN_JOIN` serve every card query: change the town join once.
-- **Order (S6):** `tier_rank`, then `md5(id || seed)` (seed = today in Europe/Zurich from `ClockInterface`, `MockClock` in tests), then `id`.
+- **Order (S6):** `tiers.rank_weight DESC` (F12), then `md5(id || seed)` (seed = today in Europe/Zurich from `ClockInterface`, `MockClock` in tests), then `id`.
 - **Cards:** no rating (the Google rating is on the detail page only, `### Venues`); up to 8 venue-level `CardPhoto`s from `to_jsonb(venue_photos)`; `card_picture()` builds a `Picture` only when `hasVariants()`. A venue without a town is a card and counted (`LEFT JOIN towns`; `ListingCard::$place` is a `VenuePlace`, `### Venues`, and `_card_facts` draws the pin only when it is known; `SimilarVenuesQuery` ranks with `(...) IS TRUE`, a NULL canton sorts first under `DESC`).
 - **`ListingSql`:** `new ListingSql(SearchCriteria::none(), ...)` is the one definition of "published" (`status = 'published'` plus a default-locale translation), reused by every other query. Groups AND; inside a group `event`, `setting`, `building` are OR (`ListingSql::OR_GROUPS`), every other term group and `access` AND. Guests ("fits N"): `capacity_max >= :guests AND (capacity_min IS NULL OR capacity_min <= :guests)`. Access thresholds `Access::maxDistanceKm()` (1/10/30 km, NULL = not near) via `ListingSql::accessColumn()`.
 - **Indexes** (`idx_venues_earth` GiST on `ll_to_earth(lat, lng)`, `idx_venues_search_key` GIN trigram on `geo_search_key(name)`): the radius centre must be a joined `MATERIALIZED` CTE (`WITH centre ... CROSS JOIN centre c`) or the planner ignores the GiST; an unknown town or ZIP leaves it empty. Name search folds through `geo_fold_de`/`geo_fold`, guarded by `geo_fold_de(:q) <> ''`.
@@ -92,6 +92,8 @@ Hotspot (fill slots, do not restructure). Include with `only`. Callers: `listing
 ## Tests
 
 The trait `tests/Support/Search/LandingFixtures.php` (`inCanton()`, `inTown()`, `withBuilding()`) builds landing data; `ListingQueryPerformanceTest` (DemoStory x10, heaviest combination under 20 ms) must cover a new filter; the HTML budget tests (`ListingHtmlBudgetTest`, `HomeHtmlBudgetTest`, `NearbyHtmlBudgetTest`, group `budget`) hold 60 KB gzip.
+
+**F12 (`business-model`).** `ListingQuery` orders by `tiers.rank_weight DESC`, then the daily md5 shuffle, then the id; a card carries `promoted` (the «Top-Eintrag» label, `rank_weight > 0`) and at most `photos_max` photos, read through `EntitlementResolver::forVenues()`, which costs one statement per page (`results()` 4, `cardsByNumbers()` 3). `SimilarVenue::$promoted`; the near-me, Merkliste and home Spotlight cards come from `ListingQuery`.
 
 ## F5 `filter-event` (current state)
 
