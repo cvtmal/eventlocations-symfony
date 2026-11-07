@@ -12,8 +12,9 @@ use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A company record page in one statement (D20): the company, its owner's name, its Eintrag (#56) and
- * its contacts as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
+ * A company record page in one statement (D20): the company, its owner's name, its Eintrag (#56), its
+ * contacts as JSON and the names of the tiers, which the timeline needs for a change of tier (F12), so a tier change
+ * costs the page no statement. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
  */
 final class CompanyRecordQuery
 {
@@ -30,6 +31,7 @@ final class CompanyRecordQuery
                    FROM crm_contacts p
                    WHERE p.company_id = c.id
                ), '[]') AS contacts,
+               COALESCE((SELECT jsonb_object_agg(t.code, t.name) FROM tiers t), '{}') AS tier_names,
                EXISTS (
                    SELECT 1 FROM crm_deals d JOIN crm_deal_stages s ON s.code = d.stage_code
                    WHERE d.company_id = c.id AND s.is_won
@@ -87,6 +89,7 @@ final class CompanyRecordQuery
                 self::text($contact['phone']),
             ), self::list($row['contacts'])),
             (bool) $row['stage_derived'],
+            self::names($row['tier_names']),
         );
     }
 
@@ -117,6 +120,18 @@ final class CompanyRecordQuery
         \assert(\is_array($decoded) && array_is_list($decoded));
 
         /* @var list<array<string, mixed>> $decoded */
+        return $decoded;
+    }
+
+    /**
+     * @return array<string, string> tier code => name
+     */
+    private static function names(mixed $json): array
+    {
+        $decoded = json_decode((string) $json, true, flags: \JSON_THROW_ON_ERROR);
+        \assert(\is_array($decoded));
+
+        /* @var array<string, string> $decoded */
         return $decoded;
     }
 }

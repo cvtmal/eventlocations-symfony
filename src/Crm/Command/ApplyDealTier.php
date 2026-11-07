@@ -8,7 +8,7 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
 
 /**
- * "Tier auf Location anwenden" (CRM-8): a won deal's tier goes to its venue. `expected` is the code of the venue's tier
+ * "Tarif anwenden" (CRM-8): a won deal's tier goes to its venue. `expected` is the code of the venue's tier
  * the staff member saw; another one under the lock is stale. The deal's audit row says who applied it, the nested
  * `ChangeVenueTier` writes the venue's: one fact each (D19).
  */

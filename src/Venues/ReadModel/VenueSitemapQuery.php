@@ -10,6 +10,8 @@ use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
 use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
+use App\Venues\ValueObject\Entitlements;
+use App\Venues\ValueObject\PhotoBudget;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Psr\Clock\ClockInterface;
@@ -32,7 +34,7 @@ final class VenueSitemapQuery
         LEFT JOIN LATERAL (
             SELECT max(p.updated_at) AS newest,
                 jsonb_agg(
-                    jsonb_build_object('id', p.id, 'width', p.width, 'height', p.height, 'dominant_color', p.dominant_color, 'variants', p.variants)
+                    jsonb_build_object('id', p.id, 'room_id', p.room_id, 'width', p.width, 'height', p.height, 'dominant_color', p.dominant_color, 'variants', p.variants)
                     ORDER BY p.room_id NULLS FIRST, p.position
                 ) AS photos
             FROM venue_photos p
@@ -88,14 +90,15 @@ final class VenueSitemapQuery
     public function page(int $file, int $perFile = self::PER_FILE): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT v.id, v.number, t.slug, '.self::LASTMOD.' AS lastmod, ph.photos '.self::published().'
+            'SELECT v.id, v.number, t.slug, '.self::LASTMOD.' AS lastmod, ph.photos,
+                    (SELECT jsonb_agg(r.id ORDER BY r.position) FROM rooms r WHERE r.venue_id = v.id) AS room_ids '.self::published().'
              ORDER BY v.number
              LIMIT :limit OFFSET :offset',
             ['default_locale' => $this->enabledLocale->default(), 'limit' => $perFile, 'offset' => ($file - 1) * $perFile],
             ['limit' => ParameterType::INTEGER, 'offset' => ParameterType::INTEGER],
         );
 
-        // Only the photos the venue's plan shows are advertised (F12): the first N in the page's own order.
+        // Only the photos the venue's plan shows are advertised (F12), by the page's own rule (PhotoBudget).
         $ids = [];
         foreach ($rows as $row) {
             \assert(\is_string($row['id']));
@@ -108,8 +111,9 @@ final class VenueSitemapQuery
             \assert(\is_string($row['slug']));
             \assert(\is_string($row['lastmod']));
             \assert(\is_string($row['photos']) || null === $row['photos']);
+            \assert(\is_string($row['room_ids']) || null === $row['room_ids']);
 
-            return new SitemapVenue($row['slug'], new \DateTimeImmutable($row['lastmod']), $this->imageUrls($row['number'], $row['photos'], $entitlements[$row['id']]->photosMax));
+            return new SitemapVenue($row['slug'], new \DateTimeImmutable($row['lastmod']), $this->imageUrls($row['number'], $row['photos'], $row['room_ids'], $entitlements[$row['id']]));
         }, $rows);
     }
 
@@ -195,16 +199,32 @@ final class VenueSitemapQuery
     }
 
     /**
+     * @param ?string $photos  JSON of every photo, gallery first by position, then room photos
+     * @param ?string $roomIds JSON of the room ids in position order
+     *
      * @return list<string>
      */
-    private function imageUrls(int $number, ?string $photos, int $max): array
+    private function imageUrls(int $number, ?string $photos, ?string $roomIds, Entitlements $entitlements): array
     {
         if (null === $photos) {
             return [];
         }
 
-        /** @var list<array{id: string, width: int, height: int, dominant_color: string, variants: array<mixed>}> $rows */
+        /** @var list<array{id: string, room_id: ?string, width: int, height: int, dominant_color: string, variants: array<mixed>}> $rows */
         $rows = json_decode($photos, true, 8, \JSON_THROW_ON_ERROR);
+        /** @var list<string> $rooms */
+        $rooms = null === $roomIds ? [] : json_decode($roomIds, true, 8, \JSON_THROW_ON_ERROR);
+
+        $gallery = [];
+        $roomFirst = [];
+        foreach ($rows as $photo) {
+            if (null === $photo['room_id']) {
+                $gallery[] = $photo;
+            } elseif (!isset($roomFirst[$photo['room_id']])) {
+                $roomFirst[$photo['room_id']] = $photo;
+            }
+        }
+        [$publicGallery, $publicRoomPhotos] = PhotoBudget::cut($gallery, $rooms, $roomFirst, $entitlements->photosMax, $entitlements->roomsMax);
 
         return array_map(
             static fn (array $photo): string => new Picture(
@@ -216,7 +236,7 @@ final class VenueSitemapQuery
                 ImageVariants::fromArray($photo['variants']),
                 '',
             )->shareImage()->url,
-            \array_slice($rows, 0, $max),
+            [...$publicGallery, ...array_values($publicRoomPhotos)],
         );
     }
 }

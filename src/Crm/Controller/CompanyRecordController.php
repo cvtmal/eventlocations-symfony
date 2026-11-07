@@ -72,7 +72,7 @@ final class CompanyRecordController extends AbstractController
         return $this->render('admin/crm/company/show.html.twig', [
             'company' => $company,
             'owners' => OwnerOptionsQuery::selectable($staff, $company->ownerId),
-            'timeline' => $timeline->of(RecordKind::Company, $id, $user->id(), OwnerOptionsQuery::selectable($staff), EmailRecipient::ofCompany($company)),
+            'timeline' => $timeline->of(RecordKind::Company, $id, $user->id(), OwnerOptionsQuery::selectable($staff), EmailRecipient::ofCompany($company), $company->tierNames),
             'tasks' => $tasks->openOf(RecordKind::Company, $id),
             'deals' => $deals->forCompany($id),
             'link_form' => $this->linkForm($id)->createView(),

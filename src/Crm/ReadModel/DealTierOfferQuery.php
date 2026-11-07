@@ -43,8 +43,8 @@ final class DealTierOfferQuery
         return false === $row ? null : new TierOffer(
             $dealId,
             (string) $row['venue_name'],
-            new TierLabel((string) $row['current_code'], (string) $row['current_name'], (int) $row['current_rank_weight'] > 0),
-            new TierLabel((string) $row['offered_code'], (string) $row['offered_name'], (int) $row['offered_rank_weight'] > 0),
+            TierLabel::of((string) $row['current_code'], (string) $row['current_name'], (int) $row['current_rank_weight']),
+            TierLabel::of((string) $row['offered_code'], (string) $row['offered_name'], (int) $row['offered_rank_weight']),
         );
     }
 }

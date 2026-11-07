@@ -151,7 +151,7 @@ final class DetailVenues
      *
      * @param string $tier a tier code (`KnownTiers`)
      */
-    public static function overfull(string $tier, string $slug = self::OVERFULL_SLUG, string $name = 'Haus Überfluss'): Venue
+    public static function overfull(string $tier, string $slug = self::OVERFULL_SLUG, string $name = 'Haus Überfluss', int $gallery = self::OVERFULL_GALLERY): Venue
     {
         $venue = VenueFactory::createOne([
             'name' => $name,
@@ -179,7 +179,7 @@ final class DetailVenues
             RoomTranslationFactory::createOne(['room' => $rooms[$i], 'name' => $roomName]);
         }
         VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $rooms[0], 'position' => 1]);
-        for ($position = self::OVERFULL_GALLERY; $position >= 1; --$position) {
+        for ($position = $gallery; $position >= 1; --$position) {
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
         }
 

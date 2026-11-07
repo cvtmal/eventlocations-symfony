@@ -245,9 +245,7 @@
             <div class="sg-state">
                 <span class="sg-state__label">{{ 'styleguide.badge.tier'|trans({}, 'styleguide') }}</span>
                 <div class="sg-row sg-row--tight">
-                    {% for tier in ['popular', 'top_premium', 'recommended', 'premium'] %}
-                        {{ include('components/_badge.html.twig', {label: ('styleguide.badge.' ~ tier)|trans({}, 'styleguide')}, with_context = false) }}
-                    {% endfor %}
+                    {{ include('components/_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues')}, with_context = false) }}
                 </div>
             </div>
             <div class="sg-state" data-component="tag">
@@ -467,11 +465,11 @@
                 <h3 class="sg-subheading">{{ 'styleguide.extras.grounds'|trans({}, 'styleguide') }}</h3>
                 <div class="sg-row">
                     <div class="sg-row sg-row--tight sg-card">
-                        {{ include('components/_badge.html.twig', {label: 'styleguide.badge.popular'|trans({}, 'styleguide')}, with_context = false) }}
+                        {{ include('components/_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues')}, with_context = false) }}
                         <span class="tag">{{ 'styleguide.badge.tag_sample'|trans({}, 'styleguide') }}</span>
                     </div>
                     <div class="sg-row sg-row--tight sg-surface">
-                        {{ include('components/_badge.html.twig', {label: 'styleguide.badge.popular'|trans({}, 'styleguide')}, with_context = false) }}
+                        {{ include('components/_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues')}, with_context = false) }}
                     </div>
                 </div>
             </div>

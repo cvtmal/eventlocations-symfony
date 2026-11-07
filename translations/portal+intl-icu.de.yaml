@@ -401,8 +401,11 @@ plan:
     title: 'Dein Plan: {tier}'
     limit:
         photos: 'Fotos {used} von {max}'
+        photos_over: 'Fotos {used}, davon {max} sichtbar'
         rooms: 'Räume {used} von {max}'
+        rooms_over: 'Räume {used}, davon {max} sichtbar'
         documents: 'PDFs {used} von {max}'
+        documents_over: 'PDFs {used}, davon {max} sichtbar'
         contact_visible: 'Telefon und Website: sichtbar'
         contact_hidden: 'Telefon und Website: verborgen'
         event_types: 'Anlassarten: bis zu {max}'

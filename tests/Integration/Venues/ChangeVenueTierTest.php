@@ -40,7 +40,7 @@ final class ChangeVenueTierTest extends KernelTestCase
 
         self::assertSame(KnownTiers::PRO, $this->reload($venue)->tier()->code());
         self::assertSame(KnownTiers::PRO, $this->connection->fetchOne('SELECT t.code FROM venues v JOIN tiers t ON t.id = v.tier_id WHERE v.number = ?', [$venue->number()]));
-        self::assertSame('2026-11-01 09:00:00+00', $this->stamp($venue->number()));
+        self::assertNull($this->stamp($venue->number()), 'a tier is not a content edit: the venue stays open to the folder import');
         self::assertSame(
             [['command' => ChangeVenueTier::class, 'changes' => ['tier' => 'pro', 'changed' => ['tier']]]],
             $this->auditRows($venue->number()),

@@ -25,7 +25,7 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * "Tier auf Location anwenden" (D19): two audit rows, purges after the commit, stale when the tier moved, and a failure
+ * "Tarif anwenden" (D19): two audit rows, purges after the commit, stale when the tier moved, and a failure
  * on either side of the nested dispatch leaves nothing behind (Probe 3).
  */
 final class ApplyDealTierTest extends KernelTestCase

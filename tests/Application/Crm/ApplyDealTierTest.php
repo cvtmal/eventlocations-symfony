@@ -18,7 +18,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * "Tier anwenden" through HTTP (CRM-8, D20): the record's action and form, the form the board's prompt posts, its
+ * "Tarif anwenden" through HTTP (CRM-8, D20): the record's action and form, the form the board's prompt posts, its
  * tokens, and what a stale or spent offer says.
  */
 final class ApplyDealTierTest extends WebTestCase
@@ -44,8 +44,8 @@ final class ApplyDealTierTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/crm/deals/'.$deal->id());
 
         self::assertResponseIsSuccessful();
-        self::assertSame('Tier anwenden', $crawler->filter('[commandfor="deal-tier"]')->text());
-        self::assertSame('«Schloss Seeblick» hat heute den Tier Free. Der Deal verkauft Pro.', $crawler->filter('#deal-tier p')->text());
+        self::assertSame('Tarif anwenden', $crawler->filter('[commandfor="deal-tier"]')->text());
+        self::assertSame('«Schloss Seeblick» hat heute den Tarif Free. Der Deal verkauft den Tarif Pro.', $crawler->filter('#deal-tier p')->text());
         self::assertSame('free', $crawler->filter('#deal-tier-form input[name="expected"]')->attr('value'));
         self::assertStringContainsString('Free', $crawler->filter('#location .crm-side__detail')->text());
 
@@ -60,7 +60,7 @@ final class ApplyDealTierTest extends WebTestCase
 
         $crawler = $this->client->followRedirect();
 
-        self::assertSelectorTextContains('.toast', 'Der Tier gilt jetzt auf dem Eintrag.');
+        self::assertSelectorTextContains('.toast', 'Der Tarif gilt jetzt auf dem Eintrag.');
         self::assertCount(0, $crawler->filter('[commandfor="deal-tier"]'));
         self::assertCount(0, $crawler->filter('#deal-tier'));
         // The Eintrag's card reads the tier the venue has now, by its name.
@@ -124,7 +124,7 @@ final class ApplyDealTierTest extends WebTestCase
         self::assertSame(1, $this->auditRows('deal', $deal->id()));
         self::assertSame(1, $this->auditRows('venue', (string) $venue->number()));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'keinen Tier mehr');
+        self::assertSelectorTextContains('.toast', 'keinen Tarif mehr');
     }
 
     public function test_an_unknown_deal_is_a_404(): void

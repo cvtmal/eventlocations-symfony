@@ -20,7 +20,7 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * F12: a manager's "Pro anfragen" as a reminder on the venue's company, due two days on by Zurich's calendar, assigned
- * as the invoice task is, and written once while it is open.
+ * as the renewal task is, and written once while it is open.
  */
 final class CreateProRequestTaskTest extends KernelTestCase
 {

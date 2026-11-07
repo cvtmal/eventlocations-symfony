@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * "Tier auf Location anwenden" (CRM-8, D20), one plain form with PRG: the record's menu posts it, and so does the
+ * "Tarif anwenden" (CRM-8, D20), one plain form with PRG: the record's menu posts it, and so does the
  * board's won prompt. `expected` is the code of the venue's tier the prompt showed, `return_to` goes through
  * `ReturnPath` (P11).
  * A refused command rolled back, so it leaves no audit row.

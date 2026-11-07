@@ -14,6 +14,7 @@ use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\InstagramProfile;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PhotoBudget;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
@@ -192,22 +193,22 @@ final class VenueDetailQuery
         $venueId = $row['id'];
         $entitlements = $this->entitlements->forVenue($venueId, $this->clock->now());
         [$mainBuilding, $mainSetting, $factGroups, $termsByGroup] = $this->terms(self::decode($row['terms']));
-        // The tier's limits (F12): the first N by position are public, the rest stays stored and hidden. A hidden room
-        // takes its photo with it, and the photo budget runs through the gallery first, then the rooms in order.
-        $rooms = \array_slice($this->rooms($venueId, $locale), 0, $entitlements->roomsMax);
-        [$venuePhotos, $roomPhotos] = $this->photos($venueId, $row['number'], $row['name'], $rooms, $locale, $everyPhoto);
-        $venuePhotos = \array_slice($venuePhotos, 0, $entitlements->photosMax);
-        $photoBudget = $entitlements->photosMax - \count($venuePhotos);
+        // The tier's limits (F12), one rule for the page and the sitemap (PhotoBudget): the first N by position are
+        // public and the rest stays stored and hidden. A hidden room takes its photo with it.
+        $allRooms = $this->rooms($venueId, $locale);
+        [$galleryPhotos, $roomFirstPhotos] = $this->photos($venueId, $row['number'], $row['name'], $allRooms, $locale, $everyPhoto);
+        [$venuePhotos, $roomPhotos] = PhotoBudget::cut(
+            $galleryPhotos,
+            array_map(static fn (DetailRoom $room): string => $room->id, $allRooms),
+            $roomFirstPhotos,
+            $entitlements->photosMax,
+            $entitlements->roomsMax,
+        );
         $rooms = array_map(
-            static function (DetailRoom $room) use ($roomPhotos, &$photoBudget): DetailRoom {
-                if (!isset($roomPhotos[$room->id]) || $photoBudget <= 0) {
-                    return $room;
-                }
-                --$photoBudget;
-
-                return new DetailRoom($room->id, $room->name, $room->description, $room->capacityMin, $room->capacityMax, $room->areaM2, $room->heightM, $room->floorMaterial, $room->seatings, $roomPhotos[$room->id]);
-            },
-            $rooms,
+            static fn (DetailRoom $room): DetailRoom => isset($roomPhotos[$room->id])
+                ? new DetailRoom($room->id, $room->name, $room->description, $room->capacityMin, $room->capacityMax, $room->areaM2, $room->heightM, $room->floorMaterial, $room->seatings, $roomPhotos[$room->id])
+                : $room,
+            \array_slice($allRooms, 0, $entitlements->roomsMax),
         );
 
         return new VenueDetail(

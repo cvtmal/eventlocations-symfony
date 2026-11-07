@@ -81,7 +81,7 @@ final class LocationPlanCardTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->url($venue));
 
         self::assertSame(
-            ['Fotos 9 von 6', 'Räume 2 von 1', 'PDFs 2 von 1', 'Telefon und Website: verborgen', 'Anlassarten: bis zu 3'],
+            ['Fotos 9, davon 6 sichtbar', 'Räume 2, davon 1 sichtbar', 'PDFs 2, davon 1 sichtbar', 'Telefon und Website: verborgen', 'Anlassarten: bis zu 3'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
     }

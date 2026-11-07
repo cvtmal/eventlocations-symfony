@@ -17,7 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
 /**
- * Nobody wrote it, so it has no `createdBy`, like the invoice task. It hangs on the company, so no deal owner applies:
+ * Nobody wrote it, so it has no `createdBy`, like the renewal task. It hangs on the company, so no deal owner applies:
  * the assignee is the company's owner, else the oldest admin, and it is due two days on by Zurich's calendar. A company
  * that has an open task of this title already gets no second one, checked under the company's lock: a manager who
  * presses twice is one request. The listener checks first (P1); this is the race's backstop. The answer says whether a

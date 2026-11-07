@@ -11,8 +11,9 @@ use App\Venues\VenueEditing;
 
 /**
  * The tier orders the listings, a card shows its label and the page its limits, so close() purges the venue and the
- * listings (S10). close() stamps `cms_edited_at` on purpose: without it the next import would overwrite a paid tier
- * (D20).
+ * listings (S10). It does not stamp `cms_edited_at`: the import no longer reads a tier, so nothing needs protecting,
+ * and a deal applied, or G9's nightly expiry, must not freeze the venue against every later folder import. Like the
+ * Google place commands, the entity moves `updated_at` itself, so other open forms still go stale.
  */
 final class ChangeVenueTierHandler implements CommandHandlerInterface
 {
@@ -31,6 +32,6 @@ final class ChangeVenueTierHandler implements CommandHandlerInterface
         }
 
         $venue->changeTier($tier);
-        $this->editing->close($venue);
+        $this->editing->close($venue, markCmsEdited: false);
     }
 }

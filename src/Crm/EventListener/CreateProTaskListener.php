@@ -18,7 +18,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 /**
  * A manager's "Pro anfragen" reminds staff to get in touch and invoice (F12), and nothing that goes wrong may reach the
  * manager: the request stands, the failure is logged, with no retry. The task hangs on the venue's company, and a venue
- * made in the CMS usually has none, so one is created first, as for the invoice task; both checks come first because a
+ * made in the CMS usually has none, so one is created first; both checks come first because a
  * command that changes nothing still leaves an audit row (P1). The log names the venue and the class, never the
  * message: a driver message can quote the address.
  */

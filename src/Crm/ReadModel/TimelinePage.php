@@ -19,21 +19,6 @@ final readonly class TimelinePage
     }
 
     /**
-     * Whether an entry of the page names a tier by its code (a change of tier, F12). Only then does the page need the tiers'
-     * names, so only then is the statement for them worth running.
-     */
-    public function holdsTier(): bool
-    {
-        foreach ($this->entries as $entry) {
-            if (null !== $entry->tier) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * The island's first page (P6) and the answer of the timeline endpoints.
      *
      * @param list<string> $composableTypes

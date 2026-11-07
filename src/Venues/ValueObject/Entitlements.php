@@ -62,7 +62,7 @@ final readonly class Entitlements
      */
     public function isPromoted(): bool
     {
-        return $this->rankWeight > 0;
+        return TierLabel::of($this->tierCode, $this->tierName, $this->rankWeight)->promoted;
     }
 
     public function allowsEventTypes(int $count): bool

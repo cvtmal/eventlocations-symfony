@@ -80,7 +80,7 @@ final class DealRecordQuery
                 (string) $row['venue_id'],
                 (int) $row['venue_number'],
                 (string) $row['venue_name'],
-                new TierLabel((string) $row['venue_tier_code'], (string) $row['venue_tier_name'], (int) $row['venue_tier_rank_weight'] > 0),
+                TierLabel::of((string) $row['venue_tier_code'], (string) $row['venue_tier_name'], (int) $row['venue_tier_rank_weight']),
                 VenuePlace::of(self::text($row['venue_town']), self::text($row['venue_canton']), null),
             ),
             TierLabel::tryFromRow($row),

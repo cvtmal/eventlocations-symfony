@@ -126,7 +126,7 @@ function sentMail(status, overrides = {}) {
     });
 }
 
-function island(page = { entries: [], next: null }, email = null, labelOverrides = {}) {
+function island(page = { entries: [], next: null }, email = null) {
     return mount(TimelineIsland, {
         props: {
             kind: 'company',
@@ -137,7 +137,7 @@ function island(page = { entries: [], next: null }, email = null, labelOverrides
             assignees: [{ id: 'u1', name: 'Andrea Keller' }, { id: 'u2', name: 'Marc Widmer' }],
             viewerId: 'u2',
             urls,
-            labels: { ...labels, ...labelOverrides },
+            labels,
             locale: 'de',
             email,
         },
@@ -658,32 +658,17 @@ describe('TimelineIsland', () => {
         expect(document.activeElement).toBe(wrapper.get('.crm-timeline__list').element);
     });
 
-    it('takes the tier names from the older page that holds the change, when the first page held none', async () => {
-        // PHP sends an empty list, not an object, while the first page holds no change of tier.
-        wrapper = island({ entries: [entry('e3', '2026-10-29T14:02')], next: 'token' }, null, { tiers: [] });
+    it('names the tier of an entry from a later page with the names it was given for the first', async () => {
+        wrapper = island({ entries: [entry('e3', '2026-10-29T14:02')], next: 'token' });
         fetch.mockResolvedValueOnce(json({
             entries: [entry('e1', '2026-01-05T09:00', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'pro', actorName: null, body: null })],
             next: null,
-            tiers: { pro: 'Pro', free: 'Free' },
         }));
 
         await button(wrapper, 'Mehr laden').trigger('click');
         await flushPromises();
 
         expect(wrapper.get('.timeline-item--system').text()).toBe('«Schloss Seeblick»: neu Pro · 05.01.2026, 09:00');
-    });
-
-    it('keeps the names it has when an older page brings none', async () => {
-        wrapper = island({
-            entries: [entry('e3', '2026-10-29T14:02', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'pro', actorName: null, body: null })],
-            next: 'token',
-        });
-        fetch.mockResolvedValueOnce(json({ entries: [entry('e1', '2026-01-05T09:00')], next: null }));
-
-        await button(wrapper, 'Mehr laden').trigger('click');
-        await flushPromises();
-
-        expect(wrapper.get('.timeline-item--system').text()).toBe('«Schloss Seeblick»: neu Pro · 29.10.2026, 14:02');
     });
 
     it('leaves an entry older than the loaded ones to "Mehr laden"', async () => {

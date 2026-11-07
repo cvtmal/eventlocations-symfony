@@ -24,9 +24,9 @@ use Doctrine\DBAL\Connection;
 final class EntitlementResolver
 {
     /**
-     * The `tiers` columns `Entitlements::fromRow()` reads, for a query that joins `tiers t` itself.
+     * The `tiers` columns `Entitlements::fromRow()` reads.
      */
-    public const COLUMNS = <<<'SQL'
+    private const COLUMNS = <<<'SQL'
         t.code AS tier_code, t.name AS tier_name, t.rank_weight, t.photos_max, t.rooms_max, t.videos_max,
             t.documents_max, t.contact_visible, t.last_minute_allowed, t.detailed_report, t.event_types_max
         SQL;

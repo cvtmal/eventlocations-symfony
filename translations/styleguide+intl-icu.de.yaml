@@ -112,12 +112,8 @@ styleguide:
         zurich: Zürich
         remove_zurich: Filter Zürich entfernen
     badge:
-        heading: Tier-Badge und Tag
-        tier: Tier-Badge
-        popular: Beliebte Location
-        top_premium: Top Premium
-        recommended: Empfehlung
-        premium: Premium
+        heading: Top-Eintrag-Badge und Tag
+        tier: Top-Eintrag
         tag: Tag
         tag_price: Mittel
         tag_sample: Rustikal

@@ -7,9 +7,8 @@ namespace App\Crm;
 use App\Venues\ReadModel\TierOptionsQuery;
 
 /**
- * The tiers a deal can sell, in the three shapes the CRM asks `TierOptionsQuery` for (F12): the create form's choices,
- * the codes the inline edit checks, and the names the timeline shows for a code. Each call is one statement, so a caller
- * asks only when it needs the answer.
+ * The tiers a deal can sell, in the two shapes the CRM asks `TierOptionsQuery` for (F12): the create form's choices and
+ * the codes the inline edit checks. Each call is one statement, so a caller asks only when it needs the answer.
  */
 final readonly class TierChoices
 {
@@ -33,16 +32,5 @@ final readonly class TierChoices
     public function codes(): array
     {
         return array_values($this->choices());
-    }
-
-    /**
-     * Code to name, for a label; a code that is not among them (a tier long gone from an audit row) is the caller's to
-     * show as it is.
-     *
-     * @return array<string, string>
-     */
-    public function names(): array
-    {
-        return array_flip($this->choices());
     }
 }

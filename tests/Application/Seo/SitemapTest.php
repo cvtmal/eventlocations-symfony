@@ -89,7 +89,7 @@ final class SitemapTest extends WebTestCase
         self::assertContains('http://localhost/eventlokal/'.DetailVenues::FULL_SLUG, $locs);
         self::assertContains('http://localhost/eventlokal/'.DetailVenues::MINIMAL_SLUG, $locs);
         $images = $this->values($xml, 'loc', self::IMAGE_NS);
-        self::assertCount(5, $images);
+        self::assertCount(4, $images, 'three gallery photos and the first photo of the hall: what the page shows (F12)');
         self::assertStringStartsWith('http://localhost/media/', $images[0]);
         $this->assertValid($xml, 'sitemap-with-images.xsd');
     }

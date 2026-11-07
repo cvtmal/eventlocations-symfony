@@ -500,7 +500,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
-        self::assertSame(['pro' => 'Pro', 'free' => 'Free'], $props['labels']['tiers']);
+        self::assertEquals(['pro' => 'Pro', 'free' => 'Free'], $props['labels']['tiers']);
         // The row of a tier no row has any more is shown by its code.
         self::assertSame(
             ['«Schloss Seeblick»: neu Pro · 29.10.2026, 11:48', '«Schloss Seeblick»: neu premium · 01.10.2026, 09:00'],
@@ -508,20 +508,21 @@ final class CompanyRecordTest extends WebTestCase
         );
     }
 
-    public function test_a_page_without_a_change_of_tier_names_no_tier(): void
+    public function test_the_island_has_every_tier_name_whether_or_not_the_page_shows_a_change(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
         $company = CompanyFactory::new()->withVenue($venue)->create();
+        $this->connection->executeStatement("UPDATE tiers SET name = 'Premium' WHERE code = 'pro'");
 
         $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
 
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
-        self::assertSame([], $props['labels']['tiers']);
+        self::assertEquals(['pro' => 'Premium', 'free' => 'Free'], $props['labels']['tiers']);
     }
 
-    public function test_an_older_page_with_a_change_of_tier_brings_the_names(): void
+    public function test_an_older_page_needs_no_names_of_its_own(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
@@ -535,7 +536,7 @@ final class CompanyRecordTest extends WebTestCase
 
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
-        self::assertSame([], $props['labels']['tiers'], 'The first page holds no change of tier.');
+        self::assertEquals(['pro' => 'Pro', 'free' => 'Free'], $props['labels']['tiers'], 'The first page holds no change of tier, and has the names for the older one.');
         self::assertIsString($props['page']['next']);
 
         $this->client->request('GET', '/admin/api/crm/companies/'.$company->id().'/timeline?before='.urlencode($props['page']['next']));
@@ -543,8 +544,8 @@ final class CompanyRecordTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $page = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($page);
-        self::assertSame(['pro' => 'Pro', 'free' => 'Free'], $page['tiers']);
-        self::assertSame(['system:tier_changed'], array_map(static fn (array $entry): string => $entry['kind'].':'.$entry['type'], $page['entries']));
+        self::assertSame(['entries', 'next'], array_keys($page));
+        self::assertSame(['system:tier_changed:pro'], array_map(static fn (array $entry): string => $entry['kind'].':'.$entry['type'].':'.$entry['tier'], $page['entries']));
     }
 
     public function test_an_inquiry_entry_reaches_the_island_and_the_fallback(): void
@@ -723,12 +724,12 @@ final class CompanyRecordTest extends WebTestCase
         // The Location with its Eintrag and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
         // timeline's activities, venue names and audit rows, the composer's mail templates, the Aufgaben card, the Deals
         // card, the access-request badge; with the user's refresh 10 in production (N14's ceiling 10). The address is the
-        // worst case: without one the templates are not read. The tiers' names (F12) are read only when the first page
-        // holds a change of tier: `test_a_change_of_tier_costs_one_statement_for_the_names`.
+        // worst case: without one the templates are not read. The tiers' names (F12) ride in the first statement, with
+        // or without a change of tier: `test_a_change_of_tier_costs_the_page_no_statement`.
         self::assertSame(9, $this->queriesOf('/admin/crm/locations/'.$company->id()));
     }
 
-    public function test_a_change_of_tier_costs_one_statement_for_the_names(): void
+    public function test_a_change_of_tier_costs_the_page_no_statement(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Admin);
         $venue = VenueFactory::new()->withoutLocation(null)->create();
@@ -737,9 +738,9 @@ final class CompanyRecordTest extends WebTestCase
         TaskFactory::createMany(2, ['company' => $company]);
         $this->changeTier($venue, 'pro');
 
-        // The pin's nine, and the names of the tiers (F12): ten in test terms, eleven in production, where N14's ceiling of
-        // ten holds for every page that shows no change of tier.
-        self::assertSame(10, $this->queriesOf('/admin/crm/locations/'.$company->id()));
+        // The pin's nine: the tiers' names for its sentence ride in the Location's own statement (F12), so a change of tier
+        // leaves the page at N14's ceiling of ten in production.
+        self::assertSame(9, $this->queriesOf('/admin/crm/locations/'.$company->id()));
     }
 
     /** The link form's CSRF token, from a Location that still offers the dialog (the token is per form, not per page). */

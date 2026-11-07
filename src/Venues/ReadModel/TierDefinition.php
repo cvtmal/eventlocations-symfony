@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Venues\ReadModel;
 
+use App\Venues\ValueObject\TierLabel;
+
 /**
  * A tier as the staff screen "Tarife" shows and edits it (F12): every column of the row, plus how many venues are on
  * it. What a venue may do comes from `EntitlementResolver`, not from here.
@@ -25,5 +27,10 @@ final readonly class TierDefinition
         public ?int $eventTypesMax,
         public int $venueCount,
     ) {
+    }
+
+    public function label(): TierLabel
+    {
+        return TierLabel::of($this->code, $this->name, $this->rankWeight);
     }
 }

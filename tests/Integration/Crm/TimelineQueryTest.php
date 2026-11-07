@@ -58,7 +58,6 @@ final class TimelineQueryTest extends KernelTestCase
 
         self::assertSame([$call->id(), $published, $note->id()], array_map(static fn (TimelineEntry $entry): string => $entry->id, $page->entries));
         self::assertNull($page->next);
-        self::assertFalse($page->holdsTier(), 'A publish names no tier.');
         $system = $page->entries[1];
         self::assertTrue($system->isSystem());
         self::assertSame(TimelineEntry::EVENT_PUBLISHED, $system->typeCode);
@@ -76,27 +75,10 @@ final class TimelineQueryTest extends KernelTestCase
         $later = $this->audit($venue->number(), ChangeVenueTier::class, '2026-10-23 09:00:00+00', ['tier' => 'exklusiv']);
         $this->em->clear();
 
-        $page = $this->query()->page(RecordKind::Company, $company->id(), null, null);
-        $entries = $page->entries;
+        $entries = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;
 
         self::assertSame([$later, $tier], array_map(static fn (TimelineEntry $entry): string => $entry->id, $entries));
         self::assertSame(['exklusiv', 'pro'], array_map(static fn (TimelineEntry $entry): ?string => $entry->tier, $entries));
-        self::assertTrue($page->holdsTier());
-    }
-
-    public function test_a_page_holds_a_tier_only_when_an_entry_names_one(): void
-    {
-        $company = CompanyFactory::createOne();
-        $venue = $this->linkedVenue($company);
-        ActivityFactory::new()->onCompany($company)->create(['occurredAt' => new \DateTimeImmutable('2026-10-20 10:00:00+00')]);
-        // A basics command that left the tier alone is no entry at all.
-        $this->audit($venue->number(), ChangeVenueBasics::class, '2026-10-21 09:00:00+00', ['changed' => ['name']]);
-        $this->em->clear();
-
-        $page = $this->query()->page(RecordKind::Company, $company->id(), null, null);
-
-        self::assertCount(1, $page->entries);
-        self::assertFalse($page->holdsTier());
     }
 
     public function test_photo_text_and_foreign_events_never_show(): void

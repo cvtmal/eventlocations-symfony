@@ -46,7 +46,7 @@
                     {% block cells %}
                         <td>
                             <a class="table__name" href="{{ path('admin_tiers_edit', {code: tier.code}) }}">{{ tier.name }}</a>
-                            {% if tier.rankWeight > 0 %}{{ include('admin/components/_tier_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues'), promoted: true}, with_context = false) }}{% endif %}
+                            {% if tier.label.promoted %}{{ include('admin/components/_tier_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues'), promoted: true}, with_context = false) }}{% endif %}
                         </td>
                         <td class="muted">{{ tier.code }}</td>
                         <td>{{ (tier.priceRappen / 100)|swiss_number(tier.priceRappen % 100 == 0 ? 0 : 2) }}</td>

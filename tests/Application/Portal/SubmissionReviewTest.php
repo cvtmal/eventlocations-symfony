@@ -181,26 +181,19 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertCount(0, $crawler->filter('#review-submissions form'));
     }
 
-    public function test_the_first_accept_of_a_new_location_writes_the_invoice_task(): void
+    public function test_the_first_accept_of_a_new_location_writes_no_task(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = $this->waiting(new: true);
-        $owner = AdminUserFactory::createOne();
-        $company = $this->companyOf($venue, ['owner' => $owner]);
+        $this->companyOf($venue, ['owner' => AdminUserFactory::createOne()]);
 
-        self::mockTime('2026-11-02 10:00:00 UTC');
         $this->decide($venue);
 
         self::assertResponseRedirects(self::QUEUE, 303);
-        self::assertSame([[
-            'title' => 'Rechnung stellen',
-            'due_on' => '2026-12-02',
-            'assignee_id' => $owner->id(),
-            'company_id' => $company,
-        ]], $this->connection->fetchAllAssociative('SELECT title, due_on, assignee_id, company_id FROM crm_tasks'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'), 'a new entry is Free and not invoiced (F12)');
     }
 
-    public function test_a_claimed_location_writes_no_invoice_task(): void
+    public function test_a_claimed_location_writes_no_task(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = $this->waiting();
@@ -213,28 +206,9 @@ final class SubmissionReviewTest extends WebTestCase
     }
 
     /**
-     * The submit's CRM link failed, so the location has no company: the reminder creates it, as the link would have.
+     * The accept of a new location publishes it, mails its manager once and writes no CRM task (F12: nothing to invoice).
      */
-    public function test_a_new_location_with_no_company_gets_one_with_the_task(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        $admin = AdminUserFactory::createOne(['role' => AdminRole::Admin]);
-        $venue = $this->waiting(new: true);
-
-        $this->decide($venue);
-
-        self::assertResponseRedirects(self::QUEUE, 303);
-        self::assertSame('accepted', $this->submissionStatus($venue));
-        self::assertSame([['title' => 'Rechnung stellen', 'assignee_id' => $admin->id(), 'name' => 'Seehaus']], $this->connection->fetchAllAssociative(
-            'SELECT t.title, t.assignee_id, c.name FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id WHERE c.venue_id = ?',
-            [$venue->id()],
-        ));
-    }
-
-    /**
-     * Only editors are active, so no one can take the task and the real handler fails.
-     */
-    public function test_a_failing_crm_does_not_fail_the_accept(): void
+    public function test_accepting_a_new_location_publishes_it_and_mails_the_manager(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = $this->waiting('Seehaus', $this->manager('Petra', 'Keller', 'petra@example.ch'), new: true);
@@ -251,10 +225,10 @@ final class SubmissionReviewTest extends WebTestCase
     }
 
     /**
-     * Review m2: the event fires in a `finally`, so a mail error PortalMailer does not catch still writes the task. The
-     * request itself ends in a 500, as it did before Q20.
+     * Review m2: the publish is committed before the mail goes out, so a mail error PortalMailer does not catch leaves the
+     * location published. The request itself ends in a 500, as it did before Q20.
      */
-    public function test_a_throwing_accept_mail_still_writes_the_invoice_task(): void
+    public function test_a_throwing_accept_mail_still_publishes_the_location(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = $this->waiting('Seehaus', $this->manager('Petra', 'Keller', 'petra@example.ch'), new: true);
@@ -270,14 +244,13 @@ final class SubmissionReviewTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(500);
         self::assertSame('published', $this->venueStatus($venue));
-        self::assertSame(1, $this->connection->fetchOne("SELECT count(*) FROM crm_tasks WHERE title = 'Rechnung stellen'"));
     }
 
     /**
-     * Review m1, and the owner's rule of 2026-11-02: a new location staff published from the CMS got its task there. The
-     * row stays `submitted`, so after "offline" it is back in the queue, and that accept adds none.
+     * Review m1: a new location staff published from the CMS stays `submitted`, so after "offline" it is back in the
+     * queue and the accept still works. Neither step writes a CRM task (F12: nothing to invoice).
      */
-    public function test_a_new_location_published_from_the_cms_gets_no_second_task_from_a_later_accept(): void
+    public function test_a_new_location_published_from_the_cms_can_still_be_accepted_later_without_a_task(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = $this->waiting(new: true);
@@ -286,7 +259,7 @@ final class SubmissionReviewTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
         $this->client->submit($crawler->filter('form[name="publish"]')->form());
         self::assertSame('published', $this->venueStatus($venue));
-        self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
+        self::assertSame(0, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
 
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
         $this->client->submit($crawler->filter('form[name="unpublish"]')->form());
@@ -296,7 +269,7 @@ final class SubmissionReviewTest extends WebTestCase
         self::assertResponseRedirects(self::QUEUE, 303);
         self::assertSame('published', $this->venueStatus($venue));
         self::assertSame('accepted', $this->submissionStatus($venue));
-        self::assertSame(1, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
+        self::assertSame(0, $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
     }
 
     public function test_accept_with_something_missing_names_it_and_stays_in_the_queue(): void

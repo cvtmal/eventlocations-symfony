@@ -11,9 +11,9 @@
         {% endif %}
     </div>
     <ul class="venue-widget">
-        <li class="venue-widget__row">{{ 'plan.limit.photos'|trans({used: plan.photosUsed|swiss_number, max: plan.photosMax|swiss_number}, 'portal') }}</li>
-        <li class="venue-widget__row">{{ 'plan.limit.rooms'|trans({used: plan.roomsUsed|swiss_number, max: plan.roomsMax|swiss_number}, 'portal') }}</li>
-        <li class="venue-widget__row">{{ 'plan.limit.documents'|trans({used: plan.documentsUsed|swiss_number, max: plan.documentsMax|swiss_number}, 'portal') }}</li>
+        <li class="venue-widget__row">{{ (plan.photosUsed > plan.photosMax ? 'plan.limit.photos_over' : 'plan.limit.photos')|trans({used: plan.photosUsed|swiss_number, max: plan.photosMax|swiss_number}, 'portal') }}</li>
+        <li class="venue-widget__row">{{ (plan.roomsUsed > plan.roomsMax ? 'plan.limit.rooms_over' : 'plan.limit.rooms')|trans({used: plan.roomsUsed|swiss_number, max: plan.roomsMax|swiss_number}, 'portal') }}</li>
+        <li class="venue-widget__row">{{ (plan.documentsUsed > plan.documentsMax ? 'plan.limit.documents_over' : 'plan.limit.documents')|trans({used: plan.documentsUsed|swiss_number, max: plan.documentsMax|swiss_number}, 'portal') }}</li>
         <li class="venue-widget__row">{{ (plan.contactVisible ? 'plan.limit.contact_visible' : 'plan.limit.contact_hidden')|trans({}, 'portal') }}</li>
         <li class="venue-widget__row">
             {%- if plan.eventTypesMax is null -%}

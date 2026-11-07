@@ -24,7 +24,15 @@ final readonly class TierLabel
     {
         \assert(\is_string($row['tier_code']) && \is_string($row['tier_name']) && \is_int($row['tier_rank_weight']));
 
-        return new self($row['tier_code'], $row['tier_name'], $row['tier_rank_weight'] > 0);
+        return self::of($row['tier_code'], $row['tier_name'], $row['tier_rank_weight']);
+    }
+
+    /**
+     * The one place that says which tiers carry the «Top-Eintrag» label: a rank weight above 0 (0 is no boost).
+     */
+    public static function of(string $code, string $name, int $rankWeight): self
+    {
+        return new self($code, $name, $rankWeight > 0);
     }
 
     /**

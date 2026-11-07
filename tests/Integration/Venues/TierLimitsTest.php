@@ -155,6 +155,30 @@ final class TierLimitsTest extends KernelTestCase
         $this->addToAssertionCount(1);
     }
 
+    /**
+     * Review: a venue that holds more event types than its plan allows (imported, or fallen back from Pro) must not be
+     * locked out of saving the rest of the Merkmale card. It may keep its list and shorten it, not grow it.
+     */
+    public function test_a_venue_that_already_holds_more_may_keep_and_shorten_its_list_but_not_grow_it(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        $codes = $this->connection->fetchFirstColumn("SELECT code FROM taxonomy_terms WHERE term_group = 'suitable_for' ORDER BY position LIMIT 5");
+        self::assertCount(5, $codes);
+        foreach ($codes as $code) {
+            $this->connection->executeStatement('INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES (?, ?, ?, FALSE)', [$venue->id(), 'suitable_for', $code]);
+        }
+        $limits = $this->limits();
+
+        $limits->assertEventTypesFit($venue, 5, 'suitable_for');
+        $limits->assertEventTypesFit($venue, 4, 'suitable_for');
+        $limits->assertEventTypesFit($venue, 1, 'suitable_for');
+        $violation = $this->violationOf(static fn () => $limits->assertEventTypesFit($venue, 6, 'suitable_for'));
+
+        self::assertSame('venue.error.too_many_event_types', $violation->translationKey());
+        self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
+        $this->addToAssertionCount(3);
+    }
+
     public function test_the_limits_are_read_from_the_plan_rows_on_every_call(): void
     {
         $venue = $this->venue(KnownTiers::FREE);
@@ -214,21 +238,26 @@ final class TierLimitsTest extends KernelTestCase
     }
 
     /**
-     * A venue that fell back to a smaller plan keeps its list until someone edits it, and then the edit must fit.
+     * A venue that fell back to a smaller plan keeps its list until someone edits it; an edit may shorten the list step
+     * by step but not grow it past the plan.
      */
-    public function test_a_venue_that_fell_back_to_free_keeps_its_event_types_until_the_next_edit(): void
+    public function test_a_venue_that_fell_back_to_free_keeps_its_event_types_may_shorten_them_and_cannot_grow_them(): void
     {
         $venue = $this->venue(KnownTiers::PRO);
-        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'meeting']], []));
+        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party_celebration']], []));
         $this->connection->executeStatement('UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = ?) WHERE id = ?', [KnownTiers::FREE, $venue->id()]);
         $this->em->clear();
+        $count = fn (): int => (int) $this->connection->fetchOne("SELECT COUNT(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'", [$venue->id()]);
 
-        self::assertSame(5, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'", [$venue->id()]));
+        self::assertSame(5, $count());
 
-        $violation = $this->violation(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event']], []));
+        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event']], []));
+        self::assertSame(4, $count(), 'shortening is allowed');
+
+        $violation = $this->violation(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party_celebration']], []));
 
         self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
-        self::assertSame(5, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'", [$venue->id()]));
+        self::assertSame(4, $count(), 'growing past the plan is refused and nothing is written');
     }
 
     private function venue(string $tier): Venue

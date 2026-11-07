@@ -413,15 +413,13 @@ final class TimelineApiTest extends WebTestCase
         self::assertFalse($system[0]['canEdit']);
     }
 
-    public function test_a_page_with_a_change_of_tier_names_the_tiers_and_one_without_does_not(): void
+    public function test_a_page_with_a_change_of_tier_carries_the_code_and_no_names(): void
     {
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
         $venue = VenueFactory::createOne();
         $company->assignVenue($venue);
         $this->entityManager()->flush();
-        $url = $this->timelineUrl('companies', $company->id());
-        self::assertSame(['entries', 'next'], array_keys($this->page($url)));
         $this->connection->insert('admin_audit_log', [
             'id' => EntityId::generate(),
             'actor_type' => 'console',
@@ -432,16 +430,10 @@ final class TimelineApiTest extends WebTestCase
             'created_at' => '2026-10-21 09:00:00+00',
         ]);
 
-        $this->client->request('GET', $url);
+        // The names came with the record page (`labels.tiers`), so the page holds the code only.
+        $page = $this->page($this->timelineUrl('companies', $company->id()));
 
-        self::assertResponseIsSuccessful();
-        $page = $this->answer();
-        self::assertSame(['entries', 'next', 'tiers'], array_keys($page));
-        self::assertSame(['pro' => 'Pro', 'free' => 'Free'], $page['tiers']);
         self::assertSame(['tier_changed', 'pro'], [$page['entries'][0]['type'], $page['entries'][0]['tier']]);
-        // The type filter drops the system events, so it needs no names.
-        $this->client->request('GET', $url.'?type=note');
-        self::assertSame(['entries', 'next'], array_keys($this->answer()));
     }
 
     public function test_an_unknown_type_is_a_422_on_the_type(): void

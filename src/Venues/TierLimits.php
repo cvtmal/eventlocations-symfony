@@ -61,18 +61,28 @@ final class TierLimits
     }
 
     /**
-     * @param int $count how many event types the venue will have after the save
+     * A save that would leave the venue with more event types than its plan allows is refused, unless it does not
+     * grow the list: a venue that holds more already (imported, or fallen back to a smaller plan) keeps its list and
+     * may still save the rest of the card, and may shorten it step by step.
+     *
+     * @param int    $count how many event types the venue will have after the save
+     * @param string $group the term group of the event types, which is also the form child that carries them
      *
      * @throws VenueRuleViolation
      */
-    public function assertEventTypesFit(Venue $venue, int $count, string $field): void
+    public function assertEventTypesFit(Venue $venue, int $count, string $group): void
     {
         $entitlements = $this->entitlements->forVenue($venue->id(), $this->clock->now());
-        if (!$entitlements->allowsEventTypes($count)) {
-            \assert(null !== $entitlements->eventTypesMax);
-
-            throw VenueRuleViolation::tooManyEventTypes($entitlements->eventTypesMax, $entitlements->tierName, $field);
+        if ($entitlements->allowsEventTypes($count)) {
+            return;
         }
+        $stored = (int) $this->connection->fetchOne('SELECT count(*) FROM venue_terms WHERE venue_id = :id AND term_group = :group', ['id' => $venue->id(), 'group' => $group]);
+        if ($count <= $stored) {
+            return;
+        }
+        \assert(null !== $entitlements->eventTypesMax);
+
+        throw VenueRuleViolation::tooManyEventTypes($entitlements->eventTypesMax, $entitlements->tierName, $group);
     }
 
     private function count(string $table, Venue $venue): int

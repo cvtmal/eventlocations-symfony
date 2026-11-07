@@ -24,8 +24,8 @@ const labels = {
     lostConfirm: 'Verschieben',
     lostCancel: 'Abbrechen',
     lostClose: 'Schliessen',
-    tierTitle: 'Tier auf Location anwenden',
-    tierConfirm: 'Tier anwenden',
+    tierTitle: 'Tarif auf Eintrag anwenden',
+    tierConfirm: 'Tarif anwenden',
     tierCancel: 'Nicht jetzt',
     tierClose: 'Schliessen',
     stale: 'Dieser Deal wurde inzwischen verschoben.',
@@ -461,7 +461,7 @@ describe('DealBoardIsland', () => {
     });
 
     it('asks to apply the tier when a won move answers an offer, with a native form', async () => {
-        const tierOffer = { action: '/admin/crm/deals/a/tier', token: 'csrf-token', expected: 'free', text: '«Villa» hat heute den Tier Free.' };
+        const tierOffer = { action: '/admin/crm/deals/a/tier', token: 'csrf-token', expected: 'free', text: '«Villa» hat heute den Tarif Free. Der Deal verkauft den Tarif Pro.' };
         stubFetch(async () => json({ stage: 'won', closedOn: '2026-11-01', tierOffer }));
         const wrapper = island();
 
@@ -470,7 +470,7 @@ describe('DealBoardIsland', () => {
 
         const form = wrapper.get('#deal-tier-form');
         expect(wrapper.get('#deal-tier').attributes('open')).toBeDefined();
-        expect(form.text()).toContain('«Villa» hat heute den Tier Free.');
+        expect(form.text()).toContain('«Villa» hat heute den Tarif Free. Der Deal verkauft den Tarif Pro.');
         expect(form.attributes('method')).toBe('post');
         expect(form.attributes('action')).toBe('/admin/crm/deals/a/tier');
         expect(form.get('[name="_token"]').element.value).toBe('csrf-token');

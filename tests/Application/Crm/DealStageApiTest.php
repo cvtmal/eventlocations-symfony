@@ -65,7 +65,7 @@ final class DealStageApiTest extends WebTestCase
             'action' => '/admin/crm/deals/'.$deal->id().'/tier',
             'token' => 'csrf-token',
             'expected' => 'free',
-            'text' => '«Schloss Seeblick» hat heute den Tier Free. Der Deal verkauft Pro.',
+            'text' => '«Schloss Seeblick» hat heute den Tarif Free. Der Deal verkauft den Tarif Pro.',
         ], $this->answer()['tierOffer']);
     }
 

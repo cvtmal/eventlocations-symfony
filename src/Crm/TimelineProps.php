@@ -19,9 +19,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The props of the `timeline` island (D12): the first page of the record's timeline (P6), the tabs from the registry and
  * the strings, translated once here so a company and a deal pass the same set. They cost one statement beyond
  * `TimelineQuery::page()`, `EmailTemplateQuery::options()`, and only on a record with an address, the one that can send.
- * A tier's name is data (F12), read only when the first page holds a change of tier: `labels.tiers` maps a code to its
- * name, empty otherwise. A later page that holds one brings its own (`TimelineApi`), and the island shows a code it has
- * no name for as it is. `_timeline.html.twig` renders the first page from the same array as its fallback.
+ * A tier's name is data (F12): `labels.tiers` maps a code to its name, for the sentence about a change of tier. A
+ * Location's record brings every name in its own statement (`CompanyRecord::$tierNames`), so a tier change costs nothing
+ * here; a deal's timeline holds none and passes none. The island shows a code it has no name for as it is.
+ * `_timeline.html.twig` renders the first page from the same array as its fallback.
  */
 final readonly class TimelineProps
 {
@@ -90,24 +91,22 @@ final readonly class TimelineProps
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urls,
         private EmailTemplateQuery $templates,
-        private TierChoices $tiers,
     ) {
     }
 
     /**
-     * @param list<OwnerOption>    $assignees  who a new task can go to
-     * @param list<EmailRecipient> $recipients who a mail from this record can go to
+     * @param list<OwnerOption>     $assignees  who a new task can go to
+     * @param list<EmailRecipient>  $recipients who a mail from this record can go to
+     * @param array<string, string> $tierNames  tier code => name
      *
      * @return array<string, mixed>
      */
-    public function of(RecordKind $kind, string $id, string $viewerId, array $assignees, array $recipients = []): array
+    public function of(RecordKind $kind, string $id, string $viewerId, array $assignees, array $recipients = [], array $tierNames = []): array
     {
-        $page = $this->timeline->page($kind, $id, null, null);
-
         return [
             'kind' => $kind->value,
             'recordId' => $id,
-            'page' => $page->toArray($viewerId, $this->types->composableCodes()),
+            'page' => $this->timeline->page($kind, $id, null, null)->toArray($viewerId, $this->types->composableCodes()),
             // Every visible type is a filter tab, so each needs `activity.tab.<code>`, composable or not.
             'types' => array_map(fn (TimelineActivityType $type): array => [
                 'code' => $type->code(),
@@ -124,7 +123,7 @@ final readonly class TimelineProps
                 'tasks' => $this->urls->generate('admin_api_crm_tasks'),
                 'inquiries' => $this->urls->generate('admin_crm_inquiries'),
             ],
-            'labels' => $this->labels($page->holdsTier()),
+            'labels' => $this->labels($tierNames),
             'locale' => $this->translator->getLocale(),
         ];
     }
@@ -173,11 +172,11 @@ final readonly class TimelineProps
     }
 
     /**
-     * @param bool $withTiers whether the first page holds a change of tier, whose sentence names the tier
+     * @param array<string, string> $tierNames
      *
      * @return array<string, mixed>
      */
-    private function labels(bool $withTiers): array
+    private function labels(array $tierNames): array
     {
         $stages = [];
         foreach (self::DEAL_STAGES as $code) {
@@ -194,7 +193,7 @@ final readonly class TimelineProps
             ],
             'dealStageChangedAnonymous' => $this->crm('timeline.system.deal_stage_changed_anonymous', ['deal' => '__deal__', 'stage' => '__stage__']),
             'inquiryEntry' => $this->crm('timeline.inquiry.entry', ['couple' => '__couple__', 'venue' => '__venue__']),
-            'tiers' => $withTiers ? $this->tiers->names() : [],
+            'tiers' => $tierNames,
             'stages' => $stages,
         ];
     }

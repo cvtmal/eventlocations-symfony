@@ -19,9 +19,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * The timeline's answers, one body per kind of record: `{"entries": [...], "next": token|null}` for a page and
- * `{"entry": {...}}` after a write, in `TimelineEntry::toArray()`'s shape. A page that holds a change of tier adds
- * `"tiers": {code: name}` (F12), because the island read the names for its first page only when that held one. A
- * cursor that does not parse is the first page, a type no module registers a 422 on `type`.
+ * `{"entry": {...}}` after a write, in `TimelineEntry::toArray()`'s shape. A cursor that does not parse is the
+ * first page, a type no module registers a 422 on `type`.
  */
 final class TimelineApi
 {
@@ -30,7 +29,6 @@ final class TimelineApi
         private readonly TimelineActivityTypeRegistry $types,
         private readonly ValidatorInterface $validator,
         private readonly CrmApi $api,
-        private readonly TierChoices $tiers,
     ) {
     }
 
@@ -58,11 +56,9 @@ final class TimelineApi
             return $this->api->notFound();
         }
 
-        $page = $this->timeline->page($kind, $id, $type, TimelineCursor::parse(\is_string($before) ? $before : null));
-
         return new JsonResponse(
-            $page->toArray($viewerId, $this->types->composableCodes())
-            + ($page->holdsTier() ? ['tiers' => $this->tiers->names()] : []),
+            $this->timeline->page($kind, $id, $type, TimelineCursor::parse(\is_string($before) ? $before : null))
+                ->toArray($viewerId, $this->types->composableCodes()),
         );
     }
 

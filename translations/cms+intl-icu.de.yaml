@@ -32,7 +32,7 @@ list:
         search: Suchen
         search_placeholder: Name, Ort, PLZ oder Nummer
         tier: Tier
-        all_tiers: Alle Tiers
+        all_tiers: Alle Tarife
         canton: Kanton
         all_cantons: Alle Kantone
         canton_none: Ohne Kanton
@@ -276,7 +276,7 @@ history:
         ChangeVenueEventFacts: die Veranstaltungsangaben geändert
         ChangeVenueContact: den Kontakt geändert
         AnswerVenueFaq: die häufigen Fragen beantwortet
-        ChangeVenueTier: den Tier geändert
+        ChangeVenueTier: den Tarif geändert
         ReviseTier: einen Tarif geändert
         PublishVenue: den Eintrag publiziert
         UnpublishVenue: den Eintrag offline genommen
