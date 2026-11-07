@@ -32,7 +32,7 @@ Target: the boards in `docs/reference/public/` for layout; colour, type and logo
 - **Slots** (fill them, do not restructure `templates/base.html.twig` or `templates/layout/*`):
   - `base.html.twig` blocks: `title`, `meta`, `canonical`, `hreflang`, `stylesheets`, `jsonld`, `body_class`, `hero`, `main`, `scripts`;
   - header link targets in `layout/_header.html.twig`: Locations is `path('listing')`, Regionen `/#regionen` (`path('home') ~ '#regionen'`, #36), the heart `path('merkliste')` (#13);
-  - listing filter bar: `templates/search/filter/_{region,guests,more}.html.twig` (#10, #11, #12; variables `criteria` + `part` `chips|trigger`, render `<li class="filter-bar__item">`s), never `search/_filter_bar.html.twig` itself; `search/filter/_hidden_state.html.twig` (`criteria`, `except`) for their GET forms;
+  - listing filter bar: `templates/search/filter/_{region,event,guests,more}.html.twig` (#10, #11, #12; variables `criteria` + `part` `chips|trigger`, render `<li class="filter-bar__item">`s), never `search/_filter_bar.html.twig` itself; `search/filter/_hidden_state.html.twig` (`criteria`, `except`) for their GET forms;
   - `favorites/_merken_button.html.twig` (`number`, `name`, `label`, `variant` card|detail) and `favorites/_remove_button.html.twig` (`number`, `name`), both owned by #13: POST forms to `merkliste_toggle` with the constant `_token`, taken over by `js/merkliste.js`; `_remove_button` also posts `intent=remove`, so it only ever removes;
   - `layout/_main_menu.html.twig`: append one `<li>` per menu item;
   - header, phone menu and footer carry the near-me link "In der Nähe" (`path('nearby')`, #52);
