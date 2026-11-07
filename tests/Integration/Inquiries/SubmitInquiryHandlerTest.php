@@ -119,6 +119,20 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
         self::assertNull($inquiry->budgetChf());
     }
 
+    public function test_a_flexible_date_in_the_past_is_still_refused(): void
+    {
+        $this->expectException(EventDateInPast::class);
+
+        ($this->handler)($this->command($this->venue()->id(), eventDate: '2020-01-01', dateFlexible: true));
+    }
+
+    public function test_a_start_time_off_its_format_is_a_programming_error(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        ($this->handler)($this->command($this->venue()->id(), startTime: '25:00'));
+    }
+
     public function test_neither_a_date_nor_flexible_is_refused(): void
     {
         $this->expectException(EventDateMissing::class);

@@ -104,9 +104,9 @@ final class InquiryInboxTest extends WebTestCase
 
         $row = $this->client->request('GET', self::LIST)->filter('.crm-inbox__row');
 
-        self::assertSame('Sina Huber', $row->filter('.crm-inbox__name')->text());
+        self::assertSame('Sina Huber, Muster AG', $row->filter('.crm-inbox__name')->text());
         self::assertSame('31.10.2026', $row->filter('.crm-inbox__date')->text(), 'The date is Zurich\'s, and absolute.');
-        self::assertStringContainsString('Schloss Seeblick · Muster AG', $row->text());
+        self::assertStringContainsString('Schloss Seeblick', $row->text());
         self::assertSame('Firmenanlass · 1\'200 Gäste · 12.06.2027', $row->filter('.crm-inbox__facts-line')->text());
         self::assertSame(self::LIST.'/'.$id.'?status=new#anfrage-detail', $row->attr('href'));
         self::assertCount(1, $row->filter('.crm-inbox__dot--new[aria-label="Neu"]'));

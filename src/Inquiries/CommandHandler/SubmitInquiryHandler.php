@@ -99,7 +99,7 @@ final class SubmitInquiryHandler implements CommandHandlerInterface
             $command->guests,
             null === $command->eventDate ? null : new \DateTimeImmutable($command->eventDate),
             $command->dateFlexible,
-            null === $command->startTime ? null : new \DateTimeImmutable('1970-01-01 '.$command->startTime),
+            self::startTime($command->startTime),
             $command->cateringWish,
             $command->budgetChf,
             $command->message,
@@ -113,5 +113,22 @@ final class SubmitInquiryHandler implements CommandHandlerInterface
         $this->inquiries->add($inquiry);
 
         return new SubmittedInquiry($inquiry->id(), false);
+    }
+
+    /**
+     * @throws \InvalidArgumentException when the command breaks its own `H:i` contract (the form never does)
+     */
+    private static function startTime(?string $time): ?\DateTimeImmutable
+    {
+        if (null === $time) {
+            return null;
+        }
+
+        $parsed = \DateTimeImmutable::createFromFormat('!H:i', $time);
+        if (false === $parsed || $parsed->format('H:i') !== $time) {
+            throw new \InvalidArgumentException(\sprintf('"%s" is no start time of the form H:i.', $time));
+        }
+
+        return $parsed;
     }
 }

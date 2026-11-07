@@ -61,9 +61,7 @@ final class InquiryMailer
                 'venue' => $inquiry->venueName(),
                 'name' => $guestName,
                 'event_type' => self::eventType($inquiry)->trans($this->translator, $inquiry->locale()),
-                'date' => null === $inquiry->eventDate()
-                    ? $this->translator->trans('email.date_flexible', [], 'inquiries', $inquiry->locale())
-                    : $this->format->date($inquiry->eventDate()),
+                'date' => $this->date($inquiry),
                 'guests' => $this->format->number($inquiry->guestCount()),
             ], 'inquiries', $inquiry->locale()))
             ->htmlTemplate('inquiries/email/venue.html.twig')
@@ -122,5 +120,20 @@ final class InquiryMailer
     private static function eventType(Inquiry $inquiry): Term
     {
         return new Term(TermGroup::SuitableFor, $inquiry->eventType());
+    }
+
+    /**
+     * The subject's date, as the facts row says it: "flexibel", the date, or "{date} (flexibel)".
+     */
+    private function date(Inquiry $inquiry): string
+    {
+        $date = $inquiry->eventDate();
+        if (null === $date) {
+            return $this->translator->trans('email.date_flexible', [], 'inquiries', $inquiry->locale());
+        }
+
+        return $inquiry->isDateFlexible()
+            ? $this->translator->trans('email.date_and_flexible', ['date' => $this->format->date($date)], 'inquiries', $inquiry->locale())
+            : $this->format->date($date);
     }
 }

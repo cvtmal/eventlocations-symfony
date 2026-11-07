@@ -90,7 +90,7 @@ final class InquiryMailerTest extends KernelTestCase
         self::assertStringNotContainsString('flexibel', $text);
         self::assertStringContainsString("Gäste: 1'200", $text);
         self::assertStringContainsString('Beginn: 18:30 Uhr', $text);
-        self::assertStringContainsString('Catering: Hauseigenes Catering', $text);
+        self::assertStringContainsString('Catering-Wunsch: Hauseigenes Catering', $text);
         self::assertStringContainsString("Budget: CHF 25'000", $text);
         self::assertStringContainsString('Firma: Muster AG', $text);
         self::assertStringContainsString('Ist der Termin frei?', $text);
@@ -112,11 +112,13 @@ final class InquiryMailerTest extends KernelTestCase
 
     public function test_a_date_that_is_flexible_shows_both(): void
     {
-        $this->mailer()->sendToGuest($this->inquiry(['eventDate' => new \DateTimeImmutable('2026-09-12'), 'dateFlexible' => true, 'cateringWish' => 'external_allowed']));
+        $this->mailer()->sendToVenue($this->inquiry(['eventDate' => new \DateTimeImmutable('2026-09-12'), 'dateFlexible' => true, 'cateringWish' => 'external_allowed']));
 
-        $text = (string) $this->sentMail()->getTextBody();
+        $mail = $this->sentMail();
+        self::assertStringContainsString(', 12.09.2026 (flexibel),', (string) $mail->getSubject());
+        $text = (string) $mail->getTextBody();
         self::assertStringContainsString('Wunschtermin: 12.09.2026 (flexibel)', $text);
-        self::assertStringContainsString('Catering: Externes Catering erlaubt', $text);
+        self::assertStringContainsString('Catering-Wunsch: Externes Catering erlaubt', $text);
     }
 
     public function test_free_text_cannot_inject_markup(): void

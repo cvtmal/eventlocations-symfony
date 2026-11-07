@@ -55,11 +55,11 @@
             {{ inquiry.field(form.lastName, 'form.field.last_name'|trans({}, 'inquiries')) }}
         </div>
         <div class="inquiry-form__row">
-            {{ inquiry.field(form.email, 'form.field.email'|trans({}, 'inquiries')) }}
-            {{ inquiry.field(form.phone, 'form.field.phone'|trans({}, 'inquiries'), true) }}
+            {{ inquiry.field(form.company, 'form.field.company'|trans({}, 'inquiries'), true) }}
         </div>
         <div class="inquiry-form__row">
-            {{ inquiry.field(form.company, 'form.field.company'|trans({}, 'inquiries'), true) }}
+            {{ inquiry.field(form.email, 'form.field.email'|trans({}, 'inquiries')) }}
+            {{ inquiry.field(form.phone, 'form.field.phone'|trans({}, 'inquiries'), true) }}
         </div>
         <div class="inquiry-form__trap">
             <label for="{{ form.website.vars.id }}">{{ 'form.field.website'|trans({}, 'inquiries') }}</label>

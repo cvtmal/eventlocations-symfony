@@ -15,10 +15,10 @@
                         <span class="crm-inbox__dot{{ new ? ' crm-inbox__dot--new' }}"{% if new %} role="img" aria-label="{{ row.status|trans }}"{% else %} aria-hidden="true"{% endif %}></span>
                         <span class="crm-inbox__text">
                             <span class="crm-inbox__line">
-                                <strong class="crm-inbox__name">{{ row.organizerName }}</strong>
+                                <strong class="crm-inbox__name">{{ row.organizerName }}{% if row.company %}, {{ row.company }}{% endif %}</strong>
                                 <span class="crm-inbox__date muted">{{ row.receivedAt|swiss_date }}</span>
                             </span>
-                            <span>{{ row.venueName }}{% if row.company %} · {{ row.company }}{% endif %}</span>
+                            <span>{{ row.venueName }}</span>
                             <span class="crm-inbox__facts-line muted">
                                 {{- row.eventType|trans }} · {{ 'inquiry.inbox.guests'|trans({count: row.guestCount|swiss_number}, 'crm') -}}
                                 {%- if row.eventDate %} · {{ row.eventDate|swiss_date }}{% endif -%}
