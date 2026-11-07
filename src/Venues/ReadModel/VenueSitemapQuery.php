@@ -8,6 +8,7 @@ use App\Geo\ValueObject\Canton;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
+use App\Venues\PublicPhotoPolicy;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 
@@ -22,7 +23,8 @@ final class VenueSitemapQuery
 {
     public const int PER_FILE = 1000;
 
-    private const string PUBLISHED = <<<'SQL'
+    /** `{PHOTO_GRANTED}` is `PublicPhotoPolicy::sql('p')`: only photos with a live rights grant reach the sitemap. */
+    private const string PUBLISHED_TEMPLATE = <<<'SQL'
         FROM venues v
         JOIN venue_translations t ON t.venue_id = v.id AND t.locale = :default_locale
         LEFT JOIN LATERAL (
@@ -32,7 +34,7 @@ final class VenueSitemapQuery
                     ORDER BY p.room_id NULLS FIRST, p.position
                 ) AS photos
             FROM venue_photos p
-            WHERE p.venue_id = v.id
+            WHERE p.venue_id = v.id AND {PHOTO_GRANTED}
         ) ph ON TRUE
         WHERE v.status = 'published'
         SQL;
@@ -46,12 +48,20 @@ final class VenueSitemapQuery
     }
 
     /**
+     * The shared FROM and WHERE, with the photo predicate of `PublicPhotoPolicy`.
+     */
+    private static function published(): string
+    {
+        return str_replace('{PHOTO_GRANTED}', PublicPhotoPolicy::sql('p'), self::PUBLISHED_TEMPLATE);
+    }
+
+    /**
      * @return list<SitemapFile>
      */
     public function files(int $perFile = self::PER_FILE): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            'WITH numbered AS (SELECT row_number() OVER (ORDER BY v.number) AS row_no, '.self::LASTMOD.' AS lastmod '.self::PUBLISHED.')
+            'WITH numbered AS (SELECT row_number() OVER (ORDER BY v.number) AS row_no, '.self::LASTMOD.' AS lastmod '.self::published().')
              SELECT (row_no - 1) / :per_file + 1 AS file, max(lastmod) AS lastmod
              FROM numbered
              GROUP BY file
@@ -74,7 +84,7 @@ final class VenueSitemapQuery
     public function page(int $file, int $perFile = self::PER_FILE): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT v.number, t.slug, '.self::LASTMOD.' AS lastmod, ph.photos '.self::PUBLISHED.'
+            'SELECT v.number, t.slug, '.self::LASTMOD.' AS lastmod, ph.photos '.self::published().'
              ORDER BY v.number
              LIMIT :limit OFFSET :offset',
             ['default_locale' => $this->enabledLocale->default(), 'limit' => $perFile, 'offset' => ($file - 1) * $perFile],
@@ -102,7 +112,7 @@ final class VenueSitemapQuery
     {
         $defaultLocale = $this->enabledLocale->default();
         $rows = $this->connection->fetchAllAssociative(
-            'WITH published AS (SELECT v.name, t.slug, v.zip, v.town_id, v.canton_code, v.capacity_max '.self::PUBLISHED.')
+            'WITH published AS (SELECT v.name, t.slug, v.zip, v.town_id, v.canton_code, v.capacity_max '.self::published().')
              SELECT p.name, p.slug, p.zip, tw.name AS town_name, p.canton_code, p.capacity_max
              FROM published p
              LEFT JOIN towns tw ON tw.id = p.town_id',
@@ -136,7 +146,7 @@ final class VenueSitemapQuery
     public function newestChange(): ?\DateTimeImmutable
     {
         $newest = $this->connection->fetchOne(
-            'SELECT max('.self::LASTMOD.') '.self::PUBLISHED,
+            'SELECT max('.self::LASTMOD.') '.self::published(),
             ['default_locale' => $this->enabledLocale->default()],
         );
 
@@ -150,7 +160,7 @@ final class VenueSitemapQuery
     public function newestChangeByGroup(): SitemapChanges
     {
         $rows = $this->connection->fetchAllAssociative(
-            'WITH changed AS (SELECT v.id, v.canton_code, v.town_id, '.self::LASTMOD.' AS lastmod '.self::PUBLISHED.")
+            'WITH changed AS (SELECT v.id, v.canton_code, v.town_id, '.self::LASTMOD.' AS lastmod '.self::published().")
              SELECT 'canton' AS grp, canton_code AS key, max(lastmod) AS lastmod FROM changed WHERE canton_code IS NOT NULL GROUP BY canton_code
              UNION ALL
              SELECT 'town', town_id::text, max(lastmod) FROM changed WHERE town_id IS NOT NULL GROUP BY town_id

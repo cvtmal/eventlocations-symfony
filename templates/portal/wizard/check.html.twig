@@ -1,7 +1,9 @@
 {#
     Step 6 (#45, POR-12), also the way back online. Context from `WizardController`: form, venue (`VenueHeader`),
     state (`?SubmissionState`, null for a location that never went through the wizard), gaps list<{code, step}>,
-    hint_inquiry (bool), contact_anchor. Under review there is no form: "Wird geprüft" replaces it.
+    hint_inquiry (bool), contact_anchor. Under review there is no form: "Wird geprüft" replaces it. The checkbox is also
+    the rights declaration for the photos (G1): the text in force is printed above it, open, and the label names it; the
+    second box is optional.
 #}
 {% extends 'portal/wizard/_layout.html.twig' %}
 
@@ -43,12 +45,17 @@
     </div>
 
     {% if status != 'submitted' %}
-        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {{ form_start(form, {attr: {class: 'rights-form', novalidate: 'novalidate'}}) }}
             {% set submit_label = (status in ['accepted', null] ? 'onboarding.check.resubmit' : 'onboarding.check.submit')|trans({}, 'portal') %}
             {% embed 'admin/components/_card.html.twig' with {title: submit_label, id: 'check-submit', submit_form: form, submit_label: submit_label} only %}
                 {% block body %}
                     {{ form_errors(submit_form) }}
+                    <details class="rights-details" open>
+                        <summary>{{ 'rights.read'|trans({}, 'portal') }}</summary>
+                        <div class="rights-declaration">{{ rights_declaration() }}</div>
+                    </details>
                     {{ form_row(submit_form.rights) }}
+                    {{ form_row(submit_form.derivatives) }}
                 {% endblock %}
                 {% block foot %}
                     {{ include('admin/components/_button.html.twig', {label: submit_label, variant: 'primary', type: 'submit'}, with_context = false) }}

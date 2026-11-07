@@ -1,6 +1,7 @@
 {#
-    The Fotos tab (#25, CMS-6): the `photo-manager` island, with staff's endpoints. Context from `VenuePhotosController`:
-    what `_photo_manager.html.twig` lists, apart from endpoints and reload_url.
+    The Fotos tab (#25, CMS-6): the `photo-manager` island, with staff's endpoints, and below it the "Bildrechte" card (G1).
+    Context from `VenuePhotosController`: what `_photo_manager.html.twig` lists, apart from endpoints and reload_url, plus
+    rights (`PhotoRightsView`) and rights_csrf_id (the token id of the card's POST forms).
 #}
 {% extends 'admin/cms/venue/_layout.html.twig' %}
 
@@ -8,14 +9,23 @@
 
 {% block record_main %}
     {% set id_route = {number: venue.number, id: id_placeholder} %}
-    {{ include('admin/cms/venue/_photo_manager.html.twig', {
-        endpoints: {
-            upload: path('admin_api_cms_photos_add', {number: venue.number}),
-            order: path('admin_api_cms_photos_order', {number: venue.number}),
-            alt: path('admin_api_cms_photos_alt', id_route),
-            room: path('admin_api_cms_photos_room', id_route),
-            remove: path('admin_api_cms_photos_remove', id_route),
-        },
-        reload_url: path('admin_locations_photos', {number: venue.number}),
-    }) }}
+    <div class="venue-media">
+        {{ include('admin/cms/venue/_photo_manager.html.twig', {
+            endpoints: {
+                upload: path('admin_api_cms_photos_add', {number: venue.number}),
+                order: path('admin_api_cms_photos_order', {number: venue.number}),
+                alt: path('admin_api_cms_photos_alt', id_route),
+                room: path('admin_api_cms_photos_room', id_route),
+                remove: path('admin_api_cms_photos_remove', id_route),
+            },
+            reload_url: path('admin_locations_photos', {number: venue.number}),
+        }) }}
+        {{ include('admin/cms/venue/_photo_rights.html.twig', {
+            rights: rights,
+            number: venue.number,
+            revoke_route: 'admin_locations_photos_revoke',
+            csrf: csrf_token(rights_csrf_id),
+            grant_url: path('admin_locations_photos_grant', {number: venue.number}),
+        }, with_context = false) }}
+    </div>
 {% endblock %}

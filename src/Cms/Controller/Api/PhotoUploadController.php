@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace App\Cms\Controller\Api;
 
+use App\Admin\Security\AdminIdentity;
 use App\Cms\ValueObject\VenueNumber;
 use App\Cms\VenuePhotoUpload;
 use App\Shared\Translation\LocalizedRoutes;
+use App\Venues\ValueObject\GrantEvidence;
+use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\PhotoGrant;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * One photo upload for staff (#25, CMS-6): `VenuePhotoUpload` holds the limits and the answers.
+ * One photo upload for staff (#25, CMS-6): `VenuePhotoUpload` holds the limits and the answers. Staff vouch for the
+ * rights of the photos they upload (G1, `staff_attestation`), so the photo is public at once.
  */
 #[IsGranted('ROLE_EDITOR')]
 #[IsCsrfTokenValid('admin_api', tokenKey: 'X-CSRF-Token', methods: ['POST', 'PUT', 'PATCH', 'DELETE'], tokenSource: IsCsrfTokenValid::SOURCE_HEADER)]
@@ -31,8 +37,8 @@ final class PhotoUploadController extends AbstractController
     }
 
     #[Route('/admin/api/cms/venues/{number}/photos', name: 'admin_api_cms_photos_add', requirements: ['number' => VenueNumber::REQUIREMENT], methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    public function __invoke(int $number, Request $request): JsonResponse
+    public function __invoke(int $number, Request $request, #[CurrentUser] AdminIdentity $identity): JsonResponse
     {
-        return $this->upload->add($number, $request);
+        return $this->upload->add($number, $request, new PhotoGrant(Grantor::staff($identity->id()), GrantEvidence::StaffAttestation));
     }
 }

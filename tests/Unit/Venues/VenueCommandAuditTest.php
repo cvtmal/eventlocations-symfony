@@ -21,6 +21,7 @@ use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\DescribeVenuePhoto;
+use App\Venues\Command\GrantPhotoRights;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordVenueCreated;
@@ -33,6 +34,8 @@ use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
 use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Command\UnpublishVenue;
+use App\Venues\ValueObject\GrantEvidence;
+use App\Venues\ValueObject\Grantor;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Tier;
@@ -47,6 +50,8 @@ use PHPUnit\Framework\TestCase;
 final class VenueCommandAuditTest extends TestCase
 {
     private const int NUMBER = 4711;
+    private const string ADMIN = '0199a1b2-0000-7000-8000-0000000000ad';
+    private const string MANAGER = '0199a1b2-0000-7000-8000-0000000000aa';
 
     /** Values that must never reach a summary. */
     private const array SECRETS = [
@@ -90,6 +95,9 @@ final class VenueCommandAuditTest extends TestCase
         yield 'describe photo' => [new DescribeVenuePhoto(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', ['de' => $text])];
         yield 'move photo' => [new MoveVenuePhotoToRoom(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', null)];
         yield 'remove photo' => [new RemoveVenuePhoto(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
+        yield 'remove photo as the revoker of its grant' => [new RemoveVenuePhoto(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', Grantor::staff(self::ADMIN))];
+        yield 'grant photo rights' => [new GrantPhotoRights(self::NUMBER, Grantor::manager(self::MANAGER), GrantEvidence::Declaration, true, ['0199a1b2-0000-7000-8000-000000000001'])];
+        yield 'grant the photo rights of the whole venue' => [new GrantPhotoRights(self::NUMBER, Grantor::staff(self::ADMIN), GrantEvidence::StaffAttestation)];
         yield 'add room' => [new AddRoom(self::NUMBER, ['de' => $text], ['de' => $text], 10, 100, 120, '4.20', 'parquet', ['banquet' => ['min' => 10, 'max' => 80]])];
         yield 'change room' => [new ChangeRoom(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', ['de' => $text], ['de' => $text], 10, 100, 120, '4.20', 'parquet', [])];
         yield 'reorder rooms' => [new ReorderRooms(self::NUMBER, ['0199a1b2-0000-7000-8000-000000000001'])];
@@ -115,6 +123,24 @@ final class VenueCommandAuditTest extends TestCase
         foreach (self::SECRETS as $secret) {
             self::assertStringNotContainsString($secret, $summary);
         }
+    }
+
+    public function test_the_rights_commands_name_the_choice_and_leave_the_people_to_the_audit_row(): void
+    {
+        $photo = '0199a1b2-0000-7000-8000-000000000001';
+
+        // The revoker is the audit row's actor; the summary holds the photo only.
+        self::assertSame(['photo_id' => $photo], new RemoveVenuePhoto(self::NUMBER, $photo, Grantor::staff(self::ADMIN))->auditSummary());
+        self::assertSame(['photo_id' => $photo], new RemoveVenuePhoto(self::NUMBER, $photo)->auditSummary());
+        self::assertSame(
+            ['grantor' => 'manager', 'evidence' => 'declaration', 'derivatives' => true, 'photos' => 1],
+            new GrantPhotoRights(self::NUMBER, Grantor::manager(self::MANAGER), GrantEvidence::Declaration, true, [$photo])->auditSummary(),
+            'the number of photos, never their ids',
+        );
+        self::assertSame(
+            ['grantor' => 'staff', 'evidence' => 'staff_attestation', 'derivatives' => false, 'photos' => 'all'],
+            new GrantPhotoRights(self::NUMBER, Grantor::staff(self::ADMIN), GrantEvidence::StaffAttestation)->auditSummary(),
+        );
     }
 
     public function test_a_form_command_lists_its_changed_fields(): void
