@@ -61,7 +61,7 @@ final class EventFilterTest extends WebTestCase
         self::assertSame('Anlass', $crawler->filter('.filter-bar [popovertarget="filter-event"]:not([popovertargetaction])')->text());
         self::assertCount(1, $crawler->filter('[data-overlay][popover]#filter-event'));
         self::assertSame('Was für einen Anlass planst du?', $crawler->filter('#filter-event h2')->text());
-        self::assertSame(['Geeignet für'], $crawler->filter('#filter-event legend')->each(static fn (Crawler $legend): string => $legend->text()));
+        self::assertSame(['Anlässe'], $crawler->filter('#filter-event legend')->each(static fn (Crawler $legend): string => $legend->text()));
         self::assertSame(['corporate_event', 'apero', 'wedding'], $this->values($crawler));
         self::assertSame(
             ['Firmenanlass', 'Apéro', 'Hochzeit'],

@@ -1,6 +1,6 @@
 {#
     The guests overlay's GET form (F5 `filter-event`, FI-3, D4). Include with `with_context = false`: criteria
-    (SearchCriteria). One number input `guests`: a venue matches when it holds that many guests and states no higher
+    (SearchCriteria). One number input `guests`, written out (the `_text_input` component takes no min/max; F6 owns it): a venue matches when it holds that many guests and states no higher
     minimum (ListingSql). The form holds no submit button: the overlay footer's joins through form="filter-guests-form",
     so Enter in the input and the footer button both apply it, with or without JS. No script of its own:
     js/live-count.js counts while typing, js/overlay-form.js clears. listing_form() gives the action, hidden state and
@@ -9,5 +9,11 @@
 {%- set target = listing_form(criteria, ['guests']) -%}
 <form id="filter-guests-form" class="guests-filter" method="get" action="{{ target.action }}" autocomplete="off" data-live-count data-live-count-url="{{ target.count }}" data-overlay-form>
     {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: target.except}, with_context = false) }}
-    {{ include('components/_text_input.html.twig', {id: 'filter-guests-input', name: 'guests', type: 'number', label: 'filter.guests'|trans({}, 'search'), label_hidden: false, placeholder: 'filter.guests_placeholder'|trans({}, 'search'), value: criteria.guests, icon: 'user'}, with_context = false) }}
+    <div class="text-input text-input--icon">
+        <label class="text-input__label" for="filter-guests-input">{{ 'filter.guests'|trans({}, 'search') }}</label>
+        <div class="text-input__control">
+            {{- icon('user', {class: 'text-input__icon'}) -}}
+            <input class="text-input__field" id="filter-guests-input" name="guests" type="number" min="1" max="{{ constant('App\\Search\\ReadModel\\SearchCriteria::MAX_GUESTS') }}" step="1" inputmode="numeric" value="{{ criteria.guests }}" placeholder="{{ 'filter.guests_placeholder'|trans({}, 'search') }}" autocomplete="off">
+        </div>
+    </div>
 </form>

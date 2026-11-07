@@ -9,6 +9,6 @@
 <form id="filter-event-form" class="filter-more filter-event" method="get" action="{{ target.action }}" autocomplete="off" data-live-count data-live-count-url="{{ target.count }}" data-overlay-form>
     {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: target.except}, with_context = false) }}
     <div class="filter-more__group">
-        {{ include('search/filter/_more_terms.html.twig', {param: 'event', group: group, criteria: criteria}, with_context = false) }}
+        {{ include('search/filter/_more_terms.html.twig', {param: 'event', group: group, criteria: criteria, legend: 'filter.event_legend'|trans({}, 'search')}, with_context = false) }}
     </div>
 </form>

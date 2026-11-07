@@ -54,29 +54,35 @@ final class HomeController extends AbstractController
         $locale = $request->getLocale();
         $cards = $this->listing->first(self::SPOTLIGHT, self::SPOTLIGHT_PHOTOS, $locale);
 
+        // The event types a published venue carries: the Anlass select and the tiles (the filter's hiding rule).
+        $events = $this->filterData->terms(TermGroup::SuitableFor);
+
         $response = $this->render('search/home.html.twig', [
             'cards' => $cards,
             'hero' => $this->hero->photo($this->heroPhoto, $locale) ?? HomeHero::fromCards($cards),
-            'categories' => $this->categories(),
+            'categories' => $this->categories($events),
             'regions' => $this->regions($locale),
-            // The Anlass select: every event type a published venue carries (the filter's hiding rule).
-            'events' => $this->filterData->terms(TermGroup::SuitableFor),
+            'events' => $events,
         ]);
 
         return $response->setCache(PublicCache::listing($now));
     }
 
     /**
+     * The tiles in HomeCategory order, without the event types no published venue carries.
+     *
+     * @param list<string> $events
+     *
      * @return list<array{category: HomeCategory, href: string}>
      */
-    private function categories(): array
+    private function categories(array $events): array
     {
         return array_map(
             fn (HomeCategory $category): array => [
                 'category' => $category,
                 'href' => $this->paths->url(['event' => [$category->value]]),
             ],
-            HomeCategory::cases(),
+            array_values(array_filter(HomeCategory::cases(), static fn (HomeCategory $category): bool => \in_array($category->value, $events, true))),
         );
     }
 

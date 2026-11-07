@@ -12,6 +12,7 @@ filter:
     region: Region
     event: Anlass
     event_title: Was für einen Anlass planst du?
+    event_legend: Anlässe
     guests: Anzahl Gäste
     guests_title: Wie viele Gäste erwartest du?
     guests_placeholder: 'z.B. 80'

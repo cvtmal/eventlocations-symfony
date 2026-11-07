@@ -2,7 +2,8 @@
     The listing's filter bar (LP-1, LP-6). Hotspot owned by #7. Include with `only`: criteria (SearchCriteria).
     Slot contract: each file search/filter/_{region,event,guests,more}.html.twig gets criteria and part (chips|trigger) and
     renders <li class="filter-bar__item">s. All chips come first, then the four triggers, as on the original.
-    #10/#11/#12 replace their own slot file's contents and never edit this file.
+    F5 `filter-event` added the `event` slot ("Anlass"); slot owners replace their own slot file's contents and never edit
+    this file.
 #}
 <nav class="filter-bar" aria-label="{{ 'filter.bar_label'|trans({}, 'search') }}">
     <ul class="filter-bar__list">

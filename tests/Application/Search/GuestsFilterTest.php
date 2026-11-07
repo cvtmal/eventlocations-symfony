@@ -176,6 +176,8 @@ final class GuestsFilterTest extends WebTestCase
         self::assertSame('number', $input->attr('type'));
         self::assertSame('z.B. 80', $input->attr('placeholder'));
         self::assertSame('', $input->attr('value'));
+        // The browser refuses what the codec would drop, so the live count never counts an ignored value.
+        self::assertSame(['1', '50000', '1', 'numeric'], [$input->attr('min'), $input->attr('max'), $input->attr('step'), $input->attr('inputmode')]);
         self::assertSame('Anzahl Gäste', $form->filter('label[for="filter-guests-input"]')->text());
         self::assertCount(0, $form->filter('label[for="filter-guests-input"].visually-hidden'), 'The label is visible.');
         self::assertCount(0, $form->filter('input[type="radio"], select, fieldset'));

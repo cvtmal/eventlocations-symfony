@@ -212,14 +212,18 @@ final class HomePageTest extends WebTestCase
         self::assertSame('guests', $input->attr('name'));
         self::assertSame('number', $input->attr('type'));
         self::assertSame('z.B. 80', $input->attr('placeholder'));
-        self::assertSame('', $input->attr('value'));
+        self::assertNull($input->attr('value'));
+        self::assertSame(['1', '50000', '1', 'numeric'], [$input->attr('min'), $input->attr('max'), $input->attr('step'), $input->attr('inputmode')]);
         self::assertSame('Anzahl Gäste', $crawler->filter('label[for="home-guests"]')->text());
         self::assertCount(0, $crawler->filter('select#home-guests'));
     }
 
     public function test_the_tiles_are_the_six_event_types_and_link_to_the_event_filter(): void
     {
-        $this->withEvent($this->inCanton(Canton::ZH, 5), 'seminar');
+        [$venue] = $this->inCanton(Canton::ZH, 1);
+        foreach (['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'wedding'] as $code) {
+            $this->withEvent([$venue], $code);
+        }
 
         $tiles = $this->get('/')->filter('.home-category');
 
@@ -237,12 +241,28 @@ final class HomePageTest extends WebTestCase
         );
     }
 
+    public function test_a_tile_without_a_venue_behind_it_is_left_out(): void
+    {
+        $this->withEvent($this->inCanton(Canton::ZH, 1), 'apero');
+
+        self::assertSame(['Apéro'], $this->get('/')->filter('.home-category')->each(static fn (Crawler $tile): string => $tile->text()));
+    }
+
+    public function test_without_event_types_the_section_keeps_its_heading_and_has_no_list(): void
+    {
+        $this->inCanton(Canton::ZH, 1);
+
+        $crawler = $this->get('/');
+        self::assertCount(0, $crawler->filter('.home-categories'));
+        self::assertSame('Nach Anlass suchen', $crawler->filter('.home-section--flush .home-section__title')->text());
+    }
+
     public function test_a_tile_leads_to_its_filtered_listing(): void
     {
         [$seminar] = $this->withEvent($this->inCanton(Canton::ZH, 1), 'seminar');
         $this->inCanton(Canton::ZH, 2);
 
-        $crawler = $this->client->click($this->get('/')->filter('.home-category')->eq(1)->link());
+        $crawler = $this->client->click($this->get('/')->filter('.home-category')->eq(0)->link());
 
         self::assertResponseIsSuccessful();
         self::assertSame([$seminar->name()], $crawler->filter('.card__link')->each(static fn (Crawler $link): string => $link->text()));

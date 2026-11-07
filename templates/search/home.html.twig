@@ -37,11 +37,13 @@
             <h2 class="home-section__title">{{ 'home.categories.heading'|trans({}, 'search') }}</h2>
             <a class="home-section__link" href="{{ path('listing') }}">{{ 'home.categories.all'|trans({}, 'search') }}{{ icon('chevron-right') }}</a>
         </div>
+        {%- if categories is not empty %}
         <ul class="home-categories">
             {%- for c in categories %}
             <li><a class="home-category" href="{{ c.href }}">{{ icon(c.category.icon) }}<span>{{ c.category|trans }}</span></a></li>
             {%- endfor %}
         </ul>
+        {%- endif %}
     </section>
 
     <section class="home-band">

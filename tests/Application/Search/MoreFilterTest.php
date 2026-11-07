@@ -317,7 +317,7 @@ final class MoreFilterTest extends WebTestCase
             $crawler->filter('#filter-more legend')->each(static fn (Crawler $legend): string => $legend->text()),
         );
         self::assertSame('Wähle weitere Filter und Möglichkeiten', $crawler->filter('#filter-more-title')->text());
-        self::assertSame(['Geeignet für'], $crawler->filter('#filter-event legend')->each(static fn (Crawler $legend): string => $legend->text()));
+        self::assertSame(['Anlässe'], $crawler->filter('#filter-event legend')->each(static fn (Crawler $legend): string => $legend->text()));
         self::assertCount(0, $crawler->filter('#filter-more input[name="event[]"]'), 'The event type has its own slot.');
         self::assertStringNotContainsString('Karte', $crawler->filter('.filter-bar')->text());
         self::assertCount(0, $crawler->filter('[style]'));
