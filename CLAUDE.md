@@ -1,16 +1,16 @@
-> **Fork notice:** this repository is the fork for **deine-eventlocation.ch** (event venues), taken from hochzeitslocation-symfony on 2026-11-06. Read `KICKOFF.md` first. Until cycle F0 rewrites this file, everything below describes the wedding site: follow it for HOW (architecture, conventions, commands), and `KICKOFF.md` for WHAT.
+# deine-eventlocation.ch
 
-# Hochzeitslocation
+Swiss listing of event venues (company events, seminars, birthdays, apéros, Christmas parties, general meetings, weddings): a home page, a listing with filters, a detail page per venue, a Merkliste without login, an inquiry form, a back office at `/admin` (CMS, CRM, statistics) and an area for venue managers at `/konto`. German only, "du" everywhere. Modelled on eventlokale.ch's features and behaviour; its texts, photos, venue data and branding never enter the repository and are never published (D11, D12).
 
-Swiss wedding-venue listing site: a home page, one listing page with filters, one detail page per venue, and a Merkliste without login. It is modelled on eventlokale.ch's wedding search. Scope, settled decisions, requirements and the cycle order live in `docs/rpi-cycles.md`; read it before starting a cycle. The current product view (what it does today, open product questions, roadmap) is `docs/product.md`, kept by the product owner.
+Forked once from the sister site hochzeitslocation.ch; nothing is shared at runtime. The WHAT lives in `docs/product.md` (kept by the product owner) and `docs/rpi-cycles.md` (settled decisions, requirements, the cycle order, Wave G): read both before starting a cycle. The HOW is this file and `.claude/rules/`. `KICKOFF.md` is the superseded fork brief, kept for history.
 
 ## Tech Stack
 
 - Symfony 7.4 (LTS) on PHP 8.5, served by php-fpm behind nginx
-- PostgreSQL 18 with `pg_trgm`, `unaccent`, `cube` and `earthdistance` (Neon in prod, same major locally and in CI)
+- PostgreSQL 18 with `pg_trgm`, `unaccent`, `cube` and `earthdistance` (Neon is the planned production database, D10; same major locally and in CI)
 - Doctrine ORM 3 / DBAL 4, hand-written SQL migrations
 - Symfony Messenger with one synchronous `command.bus`
-- Twig, Forms, AssetMapper; no Node, no JS framework (S1, S3)
+- Twig, Forms, AssetMapper; no Node and no JS framework on the public site (S1, S3), Vue islands only in the back office (S12)
 - Docker Compose for everything local: `php`, `nginx`, `database`, `mailpit`
 
 ## Commands
@@ -31,18 +31,14 @@ Never run `composer` or `bin/console` on the host. The host has a different PHP 
 | `make cs-fix` / `make cs-check` | Fix / check coding standards |
 | `make phpstan` | PHPStan level 8 + architecture rules |
 | `make lint` | `cs-check` + `phpstan` + `lint-translations` + `admin-lint` (the CI gate) |
-| `make admin-install` | `npm ci` for `admin-ui/` (in the `node` tools service) |
-| `make admin-build` / `make admin-watch` | Build the Vue islands into `public/admin-build/` / rebuild on change. Every `/admin` page reads the Vite manifest, so a fresh worktree or a checkout after a pull needs it (with `make admin-install`); `make init` does it |
+| `make admin-install` / `make admin-build` / `make admin-watch` | `npm ci` for `admin-ui/` / build the Vue islands into `public/admin-build/` / rebuild on change. Every `/admin` page needs the build (and the install) in a fresh worktree or after a pull; `make init` does it |
 | `make admin-test` / `make admin-lint` | Vitest / ESLint on `admin-ui/` |
-| `make lighthouse URL=/path ADMIN=1` / `make validate-html URL=/path ADMIN=1` | The same tools logged in as the dev admin (dev only) |
-| `make lighthouse URL=/konto PORTAL=1` / `make validate-html URL=/konto PORTAL=1` | The same tools logged in as the dev manager (dev only, after `make seed`) |
-| `make perf-check` | Byte budgets of S11 through `phpunit --group budget` (CSS, JS, HTML, fonts, admin); needs no perf stack, runs in CI |
-| `make perf-up` / `make perf-seed [TIMES=10]` / `make perf-run MODE=uncached\|all` / `make perf-lighthouse URL=/path` / `make perf-down` | Prod-mode perf stack on :8096: start and prepare it (rerun after a code change), copy the lane's seeded database (`TIMES=10` for k6, ×1 for Lighthouse), k6 into `var/perf/`, Lighthouse 3×, stop and delete its volumes. Method and figures: `docs/performance-baseline.md` |
-| `make release-check` | Build the release tarball and boot it with `APP_ENV=prod` (CI job `release`) |
-| `make deploy-test` | Run the deploy, cron and import scripts against a throwaway tree, and `public/.htaccess` against Apache |
-| `make workflow-lint` | actionlint on `.github/workflows` |
+| `make lighthouse URL=/path` / `make validate-html URL=/path` | Lighthouse (mobile) / W3C validator on the local app; `ADMIN=1` logs in as the dev admin, `PORTAL=1` as the dev manager (dev only, after `make seed`) |
+| `make perf-check` | Byte budgets of S11 through `phpunit --group budget`; needs no perf stack, runs in CI |
+| `make perf-up` ... `make perf-down` | Prod-mode perf stack on :8096 (one shared Compose project, one lane at a time); method and figures: `docs/performance-baseline.md` |
+| `make release-check` / `make deploy-test` / `make workflow-lint` | Release tarball booted with `APP_ENV=prod` / deploy, cron and import scripts against a throwaway tree / actionlint (CI jobs `release` and `ops-lint`) |
 
-App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http://localhost:8025.
+`make help` lists every target. App: http://localhost:8080 (`/health` returns `{"status":"ok"}`), Mail UI: http://localhost:8025, on the Compose default ports; this project's own ports are under "Local ports and parallel lanes".
 
 ## Testing
 
@@ -54,7 +50,6 @@ App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http:
 | Architecture | `tests/Architecture/*ProbeTest.php` | `PHPUnit\Framework\TestCase` | Proves the phpat rules fire |
 
 - Test classes are `final`; methods are `test_snake_case` (enforced by PHP-CS-Fixer).
-- `make test` creates and migrates the `app_test` database first.
 - PHPUnit fails on deprecations, notices and warnings coming from `src/`.
 - Factories use Foundry (`zenstruck/foundry`).
 - The phpat rule classes in `tests/Architecture/` run inside `make phpstan`, not PHPUnit.
@@ -65,7 +60,7 @@ App: http://localhost:8080 (`/health` returns `{"status":"ok"}`). Mail UI: http:
 Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\<Layer>`.
 
 - Modules: `Geo`, `Media`, `Venues`, `Search`, `Favorites`, `Inquiries`, `Seo`, `Stats`, the back office's `Admin`, `Cms`, `Crm`, the location managers' `Portal`, plus `Shared` for building blocks.
-- Layers inside a module: `Controller`, `Command` (command DTOs), `CommandHandler`, `Entity`, `Repository`, `ReadModel` (DBAL queries returning `final readonly` view objects), `ValueObject`, `Exception`, `Form`, `Console` (console commands), `Twig` (Twig filters and functions), `Mailer` (a module's emails), `EventListener`, `Event` (a module's published events), `Extension` (back-office extension points and their implementations), `Security` (security user, provider, authenticators), `Messenger` (bus middleware).
+- Layers inside a module: `Controller`, `Command`, `CommandHandler`, `Entity`, `Repository`, `ReadModel`, `ValueObject`, `Exception`, `Form`, `Console`, `Twig`, `Mailer`, `EventListener`, `Event`, `Extension` (back-office extension points), `Security`, `Messenger` (bus middleware). Details: `.claude/rules/php-architecture.md`.
 - Allowed module dependencies (everything may use `Shared`; `Shared` uses no module):
 
   | Module | May depend on |
@@ -90,13 +85,7 @@ Module-first modular monolith: `src/<Module>/<Layer>/`, namespace `App\<Module>\
 
 ## Validation strategy
 
-Three layers, each catching what the previous one cannot:
-
-1. **Forms** validate input shape (Symfony Form + Validator on a form data class).
-2. **Handlers** enforce business rules and throw `DomainException` subclasses.
-3. **Database constraints** guarantee uniqueness and integrity under concurrency.
-
-Details: `.claude/rules/validation.md`.
+Three layers, each catching what the previous one cannot: **forms** validate input shape (Symfony Form + Validator on a form data class), **handlers** enforce business rules and throw `DomainException` subclasses, **database constraints** guarantee uniqueness and integrity under concurrency. Details: `.claude/rules/validation.md`.
 
 ## Building blocks (`src/Shared`)
 
@@ -105,31 +94,32 @@ Details: `.claude/rules/validation.md`.
 - `Exception\DomainException`: abstract base for business errors.
 - `Messenger\CommandHandlerInterface`: marker that registers a handler on `command.bus`.
 - `Controller\HealthController`: `GET /health`, checks the database.
-- `/` is `Search\Controller\HomeController` (`home`), see `### Search`.
-- `Mailer\EmailHtmlToTextConverter`: derives every mail's text part (`twig.mailer.html_to_text_converter`). `templates/emails/layout.html.twig` + `_blocks.html.twig` (macros `greeting`, `p`, `button`, `note`, `rule`, `facts`, `quote`, `rich`): the inline-styled mail layout, free of module wording, class prefix `hl-`. Built in #14, reused by #30.
-- `Validator\CleanText` (#24): refuses a NUL and invalid UTF-8 (PDO truncates at a NUL, Postgres answers SQLSTATE 22021) without naming the value, because the `+intl-icu` formatter throws on invalid UTF-8 in a message parameter. `Admin\Form\AdminTextConstraintExtension` adds it to every back-office text field; a JSON DTO puts `#[CleanText]` on its string properties.
+- `Mailer\EmailHtmlToTextConverter`: derives every mail's text part. `templates/emails/layout.html.twig` + `_blocks.html.twig` (macros `greeting`, `p`, `button`, `note`, `rule`, `facts`, `quote`, `rich`): the inline-styled mail layout, free of module wording, class prefix `hl-`.
+- `Validator\CleanText`: refuses a NUL and invalid UTF-8 without naming the value (PDO truncates at a NUL; the `+intl-icu` formatter throws on invalid UTF-8). `Admin\Form\AdminTextConstraintExtension` adds it to every back-office text field; a JSON DTO puts `#[CleanText]` on its string properties.
 
-Languages, catalogues and routes: `.claude/rules/i18n.md`.
+## German copy
+
+Public copy, mails and `/konto` are "du", Swiss "ss", never "ß"; `/konto` mails greet "Hallo {name}". `tests/Unit/Shared/PublicCopyAddressTest.php` scans every public catalogue (all `translations/*+intl-icu.de.yaml` except `admin`, `cms`, `crm`) and all Twig, PHP and `assets/js`; a capitalised "Sie" at a sentence start fails too (write "Die Location …"). Symfony's formal German messages a reader can reach are overridden in `validators+intl-icu.de.yaml` and pinned by `tests/Integration/Shared/Translation/FrameworkMessagesTest.php`. Catalogues and routes: `.claude/rules/i18n.md` (German only, E3; S4 wins where it still promises later languages, until `rules-condense`).
 
 ## Modules
 
 Each module's notes live in `.claude/rules/module-<name>.md`, which load by themselves when a matching file is read. Read one by hand when the work crosses into it. Elsewhere in the repo, `CLAUDE.md` `### <Module>` and `see ### <Module>` mean that file. Each cycle appends to its module's file (hotspot rule, `docs/rpi-cycles.md` §Running cycles in parallel).
 
-| Module | Notes | Holds | Also read it for |
-|---|---|---|---|
-| Shared | `.claude/rules/module-shared.md` | EntityId, translation, design system, security headers, content blocks, HTTP cache, deploy, cron, production settings | any new public route, cache header or nightly job |
-| Geo | `.claude/rules/module-geo.md` | Cantons, towns, place lookup, distances, canton map |  |
-| Media | `.claude/rules/module-media.md` | Image variants, `<picture>`, regeneration |  |
-| Venues | `.claude/rules/module-venues.md` | Venue aggregate, detail page, imports, CMS write side | any venue write from Cms or Crm |
-| Search | `.claude/rules/module-search.md` | `SearchCriteria`, home page, listing, filters, landing pages, similar venues | a change to `search/_card` |
-| Favorites | `.claude/rules/module-favorites.md` | Merkliste cookie, toggle, sync, page |  |
-| Inquiries | `.claude/rules/module-inquiries.md` | Inquiry form, mails, retention, events |  |
-| Seo | `.claude/rules/module-seo.md` | Meta, JSON-LD, sitemap, robots, error pages | any page's `title`, `meta` or `canonical` block |
-| Stats | `.claude/rules/module-stats.md` | Beacon, day-file spool, ingest and rollup, statistics read models | any `data-stats-*` attribute or `stats_page` block |
-| Admin | `.claude/rules/module-admin.md` | Staff login, shell, extension points, audit, UI kit, Vue islands | any back-office work, Cms and Crm included |
-| Cms | `.claude/rules/module-cms.md` | Back-office screens for venues, media, landing pages, text blocks |  |
-| Crm | `.claude/rules/module-crm.md` | Companies, contacts, deals, tasks, activities |  |
-| Portal | `.claude/rules/module-portal.md` | Manager accounts, `/konto` firewall and session cookie, signed links, venue access, staff account list | any `/konto` route or `security.yaml` edit |
+| Module | Holds | Also read it for |
+|---|---|---|
+| Shared | EntityId, translation, design system, security headers, content blocks, HTTP cache, deploy, cron, production settings | any new public route, cache header or nightly job |
+| Geo | Cantons, towns, place lookup, distances, canton map |  |
+| Media | Image variants, `<picture>`, regeneration |  |
+| Venues | Venue aggregate, detail page, imports, CMS write side | any venue write from Cms or Crm |
+| Search | `SearchCriteria`, home page, listing, filters, landing pages, similar venues | a change to `search/_card` |
+| Favorites | Merkliste cookie, toggle, sync, page |  |
+| Inquiries | Inquiry form, mails, retention, events |  |
+| Seo | Meta, JSON-LD, sitemap, robots, error pages | any page's `title`, `meta` or `canonical` block |
+| Stats | Beacon, day-file spool, ingest and rollup, statistics read models | any `data-stats-*` attribute or `stats_page` block |
+| Admin | Staff login, shell, extension points, audit, UI kit, Vue islands | any back-office work, Cms and Crm included |
+| Cms | Back-office screens for venues, media, landing pages, text blocks |  |
+| Crm | Companies, contacts, deals, tasks, activities |  |
+| Portal | Manager accounts, `/konto` firewall and session cookie, signed links, venue access, staff account list | any `/konto` route or `security.yaml` edit |
 
 ## Exception conventions
 
@@ -139,22 +129,26 @@ Each module's notes live in `.claude/rules/module-<name>.md`, which load by them
 
 ## Database & migrations
 
-Hand-written SQL migrations only; never `doctrine:migrations:diff`. Every migration has a `down()`. Name each migration `VersionYYYYMMDDHHMMSS` from the wall clock at the moment it is written; the Schema ownership column of the overview in `docs/rpi-cycles.md` decides which cycle may alter a table. Naming, types and entity mapping rules: `.claude/rules/database.md`.
+Hand-written SQL migrations only; never `doctrine:migrations:diff`. Every migration has a `down()`. The schema starts from one baseline migration (`Version20261106174839`): never edit it or a merged migration. Add at most one migration per cycle, named `VersionYYYYMMDDHHMMSS` from the wall clock at the moment it is written; the Schema ownership column of the overview and of Wave G §3 in `docs/rpi-cycles.md` decides which cycle may alter a table. Naming, types and entity mapping rules: `.claude/rules/database.md`.
+
+## Git
+
+One pull request per cycle, squash-merged with the cycle slug as its title (D8); rework after a merge is a new PR `<slug>-finish`. Never `--amend`, never push to `main` directly, never push tags. Deploys are the owner's alone. The remote `hzl` (the sister site) is fetch-only: port a fix with `git cherry-pick`. Details: `docs/rpi-cycles.md` §Running cycles in parallel.
 
 ## Local ports and parallel lanes
 
-Host ports default to 8080 (nginx), 5432 (Postgres) and 8025 (Mailpit), the main checkout's lane. Each cycle runs in its own git worktree, and each worktree is its own Compose project (own containers, volume and `app_test`). Set the lane's ports per shell:
+Compose defaults are 8080 (nginx), 5432 (Postgres) and 8025 (Mailpit). This project uses its own ports: the main checkout 8090 / 5442 / 8035 on the subnet 10.247.90.0/24, lane N (L1 to L7, worktree `../deine-eventlocation-lN`) 810N / 545N / 811N on 10.247.9N.0/24. Each worktree is its own Compose project (own containers, volume and `app_test`). Put the ports and the pinned subnet (the Docker address pool is exhausted; never run `docker network prune`) into a git-ignored `compose.override.yaml`, or set the ports per shell:
 
 ```sh
-export NGINX_HOST_PORT=8081 DB_HOST_PORT=5433 MAILPIT_HOST_PORT=8026
+export NGINX_HOST_PORT=8101 DB_HOST_PORT=5451 MAILPIT_HOST_PORT=8111
 ```
 
-or in a git-ignored `compose.override.yaml`. The lane table is in `docs/rpi-cycles.md` §Running cycles in parallel.
+The lane table and an example override: `docs/rpi-cycles.md` §Running cycles in parallel.
 
 ## CI
 
-`.github/workflows/ci.yaml` starts the same Compose `php` + `database` services and runs `make vendor`, `make lint`, `make test`. `make lint` passing locally means CI lint passes. Pre-commit (`.pre-commit-config.yaml`) runs `make cs-fix` and `make phpstan`; activate with `brew install pre-commit && pre-commit install`.
+`.github/workflows/ci.yaml` has three jobs. `checks` starts the same Compose `php` + `database` services and runs `make vendor`, `make admin-install`, `make lint`, `make test`, `make perf-check`; `release` runs `make release-check`; `ops-lint` runs ShellCheck, `make workflow-lint` and `make deploy-test`. `make lint` passing locally means CI lint passes. Pre-commit (`.pre-commit-config.yaml`) runs `make cs-fix` and `make phpstan` (`pre-commit install`).
 
 ## Order of work
 
-`make cs-fix` → `make lint` → `make test`. Every UI cycle also runs the checks in S11 of `docs/rpi-cycles.md`. See `.claude/rules/code-quality.md`.
+`make cs-fix` → `make lint` → `make test`; a UI cycle also runs the S11 checks in `docs/rpi-cycles.md`. See `.claude/rules/code-quality.md`.

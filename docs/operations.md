@@ -1,6 +1,6 @@
 # Production operations
 
-> Hostpoint-era runbook; rewritten for the new host in F15.
+> Wedding-site runbook (Hostpoint era), rewritten for the new host by F15 `prod-setup`.
 
 This is the runbook for the live site: Hostpoint runs PHP, Neon runs PostgreSQL, GitHub Actions
 builds and ships every release, and the owner imports content from the Mac. The site has one
