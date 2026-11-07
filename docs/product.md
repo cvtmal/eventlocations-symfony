@@ -19,11 +19,14 @@ It is modelled on eventlokale.ch's features and behaviour. Its texts, photos, ve
 
 ## What the product does today
 
-The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). The look is our own since F6 (indigo and vermilion, Hanken Grotesk, `docs/brand.md`); wording, filters and vocabulary are still the wedding site's until F3, F5, F7b and F8.
+The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). The look is our own since F6 (indigo and vermilion, Hanken Grotesk, `docs/brand.md`), and the vocabulary since F3. Filters, URLs and wording are still the wedding site's until F5, F7b and F8.
 
 - **Public:** home page, one listing with filters, one detail page per venue with photos, rooms, documents and map, canton landing pages, the Merkliste without login, an inquiry form on every venue, SEO basics, own cookieless statistics.
 - **Back office (`/admin`, staff only, 2FA):** CMS for entries, photos, rooms, documents, landing pages and text blocks; CRM for Locations (prospects and customers), deals, tasks, timeline, e-mail, inquiries; statistics.
 - **Location accounts (`/konto`):** a manager registers, asks access to an entry or creates one in a wizard; the owner accepts the first publication.
+- **Event vocabulary (F3):** 17 event types (Firmenanlass, Seminar, Tagung / Konferenz, Workshop, Sitzung / Meeting, Produktpräsentation, Generalversammlung, Teamevent, Weihnachtsfeier, Vereinsanlass, Apéro, Geburtstag, Familienfeier, Hochzeit, Party, Konzert, Ausstellung), catering and technology as their own groups; staff and managers edit them, the detail page shows them under "Geeignet für". Not yet filterable (F5).
+- **Own-site importer (G3, staff only):** reads a venue's own website safely and stores facts and photo candidates privately; nothing reaches a public page.
+- **Funnel scorecard (G8, `/admin`):** counts previews, claims, publications, delivered inquiries and paid venues per campaign and week, with no personal data.
 - **Eventlokale crawler:** kept for internal working data (D11, D12).
 
 ## What it will do (settled, see `docs/rpi-cycles.md`)
@@ -52,7 +55,7 @@ Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults 
 
 ## Roadmap (proposed order)
 
-1. The "du" flip first (F7a), then F3 to F8: vocabulary, filters, brand, copy and landing pages (event wording and look).
+1. Event wording and look: "du" (F7a), brand (F6) and vocabulary (F3) are done; filters and URLs (F5), room layouts (F4), copy (F7b), landing pages (F8) and the brand polish (F6b) follow.
 2. Wave G, launch-critical: rights records and takedown, own-site importer, preview link and claim, enquiry quality, funnel scorecard, tiers with term and expiry, monthly report, outreach tracking, launch regions, Free/Pro page.
 3. F13 reverse match, last-minute offers, video embed, organizer feedback.
 4. F15 production setup, F16 launch verification. Deploys are the owner's.
