@@ -12,8 +12,9 @@ use Doctrine\Migrations\AbstractMigration;
  * (`App\Shared\Funnel\FunnelEvent`), written by `RecordFunnelEventHandler`. No personal data by
  * construction: the only free columns are a UUID and a campaign code that the CHECK holds to letters,
  * digits, `_` and `-` (no `@`, no `.`, no space). `venue_id` has no foreign key, so a row keeps its
- * history when a venue goes (as `stats_events.venues`). Adding a `FunnelEvent` case needs a migration
- * that replaces `chk_funnel_events_event`; `StatsVocabularyChecksTest` fails until it exists.
+ * history when a venue goes (as `stats_events.venues`). The log is append-only, so it has `occurred_at` and no
+ * `created_at` / `updated_at`. Adding a `FunnelEvent` case needs a migration that replaces
+ * `chk_funnel_events_event`; `StatsVocabularyChecksTest` fails until it exists.
  */
 final class Version20261107150513 extends AbstractMigration
 {

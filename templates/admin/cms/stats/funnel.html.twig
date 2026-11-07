@@ -64,7 +64,7 @@
         </div>
         <p class="stats-note muted">{{ 'stats.funnel.note'|trans({}, 'cms') }}</p>
 
-        <section class="stats-section" aria-labelledby="funnel-weeks">
+        <section class="stats-section funnel-table" aria-labelledby="funnel-weeks">
             <h2 id="funnel-weeks">{{ 'stats.funnel.weeks.title'|trans({}, 'cms') }}</h2>
             {% embed 'admin/components/_table.html.twig' with {
                 label: 'stats.funnel.weeks.title'|trans({}, 'cms'),
@@ -89,7 +89,7 @@
             {% endembed %}
         </section>
 
-        <section class="stats-section" aria-labelledby="funnel-campaigns">
+        <section class="stats-section funnel-table" aria-labelledby="funnel-campaigns">
             <h2 id="funnel-campaigns">{{ 'stats.funnel.campaigns.title'|trans({}, 'cms') }}</h2>
             {% embed 'admin/components/_table.html.twig' with {
                 label: 'stats.funnel.campaigns.title'|trans({}, 'cms'),
@@ -120,6 +120,7 @@
 
     <section class="stats-section" aria-labelledby="funnel-paying">
         <h2 id="funnel-paying">{{ 'stats.funnel.paying.title'|trans({}, 'cms') }}</h2>
+        <p class="stats-note muted">{{ 'stats.funnel.paying.scope'|trans({}, 'cms') }}</p>
         <div class="stats-kpis" id="funnel-paying-figures">
             {{ include('admin/components/_kpi.html.twig', {
                 label: 'stats.funnel.paying.paying'|trans({}, 'cms'),

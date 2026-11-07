@@ -153,6 +153,22 @@ final class FunnelScorecardQueryTest extends KernelTestCase
         self::assertSame(1, $none->counts->of(FunnelEvent::InquiryDelivered));
     }
 
+    public function test_what_a_venue_did_before_its_first_campaign_touch_has_no_campaign(): void
+    {
+        $venue = EntityId::generate();
+        $this->event(FunnelEvent::InquiryDelivered, '2026-10-13 09:00', $venue);
+        $this->event(FunnelEvent::PreviewOpened, '2026-10-20 09:00', $venue, 'zh-brief');
+        $this->event(FunnelEvent::InquiryDelivered, '2026-10-27 09:00', $venue);
+
+        [$campaign, $none] = $this->scorecard()->campaigns;
+
+        self::assertSame('zh-brief', $campaign->campaign);
+        self::assertSame(1, $campaign->counts->of(FunnelEvent::PreviewOpened));
+        self::assertSame(1, $campaign->counts->of(FunnelEvent::InquiryDelivered), 'after the touch');
+        self::assertNull($none->campaign);
+        self::assertSame(1, $none->counts->of(FunnelEvent::InquiryDelivered), 'before the touch');
+    }
+
     public function test_the_filter_narrows_weeks_and_totals_but_not_the_campaign_list(): void
     {
         $one = EntityId::generate();
