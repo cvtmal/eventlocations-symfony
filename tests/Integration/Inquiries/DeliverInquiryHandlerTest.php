@@ -24,6 +24,7 @@ use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpKernel\Log\Logger;
 use Symfony\Component\Mailer\Exception\InvalidArgumentException;
 use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -234,12 +235,15 @@ final class DeliverInquiryHandlerTest extends KernelTestCase
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         $format = self::getContainer()->get(SwissFormatExtension::class);
         self::assertInstanceOf(SwissFormatExtension::class, $format);
+        $bus = self::getContainer()->get(MessageBusInterface::class);
+        self::assertInstanceOf(MessageBusInterface::class, $bus);
 
         return new DeliverInquiryHandler(
             $this->inquiries,
             new InquiryMailer($mailer, $translator, $format, 'hallo@deine-eventlocation.ch', $override),
             new MockClock(self::NOW),
             $logger,
+            $bus,
         );
     }
 

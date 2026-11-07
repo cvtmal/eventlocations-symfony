@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Stats;
 
+use App\Shared\Funnel\FunnelEvent;
 use App\Stats\ValueObject\ClickKind;
 use App\Stats\ValueObject\EventType;
 use App\Stats\ValueObject\Metric;
@@ -27,6 +28,7 @@ final class StatsVocabularyChecksTest extends KernelTestCase
         yield 'click kind' => ['chk_stats_events_kind', ClickKind::class];
         yield 'page type' => ['chk_stats_events_page', PageType::class];
         yield 'metric' => ['chk_stats_daily_metric', Metric::class];
+        yield 'funnel event' => ['chk_funnel_events_event', FunnelEvent::class];
     }
 
     /**
