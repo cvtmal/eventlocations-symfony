@@ -11,7 +11,7 @@ use App\Factory\VenueTranslationFactory;
 use App\Tests\Support\Http\ThroughHttpCache;
 use App\Venues\Entity\Venue;
 use App\Venues\PreviewToken;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -243,7 +243,7 @@ final class VenuePreviewLinkTest extends WebTestCase
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create([
             'name' => self::NAME,
-            'tier' => Tier::Basic,
+            'tier' => KnownTiers::FREE,
             'status' => VenueStatus::Unpublished,
             'capacityMin' => null,
             'capacityMax' => 60,

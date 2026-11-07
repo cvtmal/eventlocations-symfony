@@ -43,6 +43,7 @@ use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Command\RevokeVenuePreview;
 use App\Venues\Command\TakeEntryOffline;
 use App\Venues\Command\ReviseTier;
+use App\Venues\Command\RevokeVenuePreview;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\GrantEvidence;

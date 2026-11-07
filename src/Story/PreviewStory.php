@@ -7,7 +7,7 @@ namespace App\Story;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueTranslationFactory;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Zenstruck\Foundry\Story;
@@ -35,7 +35,7 @@ final class PreviewStory extends Story
 
         $venue = VenueFactory::new()->withoutLocation()->create([
             'name' => 'Remise am Bach',
-            'tier' => Tier::Basic,
+            'tier' => KnownTiers::FREE,
             'status' => VenueStatus::Unpublished,
             'capacityMin' => null,
             'capacityMax' => 80,
