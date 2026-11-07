@@ -44,6 +44,7 @@ final class ReportedPhotoPagesTest extends WebTestCase
 
     private const string ADMIN = '019a0000-0000-7000-8000-0000000000ad';
     private const string DETAIL = '/hochzeitslocation/seehaus-meldung';
+    private const string HOME = '/';
     private const string LISTING = '/hochzeitslocations';
     private const string SITEMAP = '/sitemap-venues-1.xml';
 
@@ -72,6 +73,7 @@ final class ReportedPhotoPagesTest extends WebTestCase
         foreach ($this->pages($number) as $page => $request) {
             $this->assertShows([$reported, $other], [], $this->through($request), $page);
         }
+        $this->assertShows([$reported], [$other], $this->through(Request::create(self::HOME)), 'home: hero and card show the first photo');
         $detail = $this->through(Request::create(self::DETAIL));
         self::assertSame('fresh', $detail->headers->get('X-Symfony-Cache'), 'the page comes from the cache before the complaint');
         self::assertSame($reported, $this->shareImage($detail));
@@ -94,6 +96,10 @@ final class ReportedPhotoPagesTest extends WebTestCase
             }
             $this->assertShows([$other], [$reported], $after, $page);
         }
+        $home = $this->through(Request::create(self::HOME));
+        self::assertSame('miss/store', $home->headers->get('X-Symfony-Cache'), 'home: the complaint purged the cached page');
+        $this->assertShows([$other], [$reported], $home, 'home: hero and card move to the next public photo');
+        self::assertSame($other, $this->heroPhoto($home));
         $detail = $this->through(Request::create(self::DETAIL));
         self::assertSame($other, $this->shareImage($detail), 'og:image moves to the next public photo');
         self::assertSame([$other], $this->jsonLdImages($detail));
@@ -110,6 +116,7 @@ final class ReportedPhotoPagesTest extends WebTestCase
         foreach ($this->pages($number) as $page => $request) {
             $this->assertShows([$reported, $other], [], $this->through($request), $page.' after keep');
         }
+        self::assertSame($reported, $this->heroPhoto($this->through(Request::create(self::HOME))), 'home after keep');
         self::assertSame(2, (int) $this->connection->fetchOne("SELECT count(*) FROM admin_audit_log WHERE subject_type = 'moderation_case'"));
 
         $this->report($number, [$reported]);
@@ -167,6 +174,16 @@ final class ReportedPhotoPagesTest extends WebTestCase
             'merkliste' => Request::create('/merkliste', 'GET', [], ['merkliste' => (string) $number]),
             'sitemap' => Request::create(self::SITEMAP),
         ];
+    }
+
+    /**
+     * The photo of the home hero; with no hero photo configured for the test, it is the first card's.
+     */
+    private function heroPhoto(Response $response): ?string
+    {
+        $hero = new Crawler((string) $response->getContent())->filter('.home-hero__media img');
+
+        return 0 < $hero->count() && 1 === preg_match('#/media/\d+/([0-9a-f-]{36})-\d+\.#', (string) $hero->attr('src'), $match) ? $match[1] : null;
     }
 
     private function shareImage(Response $response): ?string

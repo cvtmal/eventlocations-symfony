@@ -55,6 +55,7 @@
                 </div>
                 <h3 class="moderation__subheading">{{ 'moderation.case.message'|trans({}, 'cms') }}</h3>
                 <p class="moderation__message">{{ case.message }}</p>
+                <p class="muted moderation__reply">{{ 'moderation.case.reply'|trans({}, 'cms') }} <a href="mailto:{{ case.complainantEmail }}">{{ 'moderation.case.reply_link'|trans({}, 'cms') }}</a></p>
             {% endblock %}
         {% endembed %}
 

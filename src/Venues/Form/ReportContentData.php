@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Venues\Form;
 
 use App\Shared\Validator\CleanText;
+use App\Venues\Command\ReportContent;
 use App\Venues\ValueObject\ModerationKind;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -33,6 +34,7 @@ final class ReportContentData
     public ?ModerationKind $kind = null;
 
     /** @var list<string> the photo ids a rights complaint names (the form offers the public ones only) */
+    #[Assert\Count(max: ReportContent::MAX_PHOTOS, maxMessage: 'report.photos.too_many')]
     public array $photos = [];
 
     #[Assert\Sequentially([

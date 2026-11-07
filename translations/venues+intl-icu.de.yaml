@@ -382,7 +382,7 @@ report:
         venue_gone: Diese Location gibt es nicht mehr. Bitte gib an, welche Location du meinst.
     sent:
         title: Danke, deine Meldung ist eingegangen.
-        text: Wir prüfen sie so bald wie möglich und melden uns per E-Mail. Gemeldete Fotos bleiben verborgen, bis wir entschieden haben.
+        text: Wir prüfen sie so bald wie möglich und melden uns per E-Mail, falls wir Fragen haben. Gemeldete Fotos bleiben verborgen, bis wir entschieden haben.
     mail:
         fact:
             kind: Art
@@ -398,13 +398,14 @@ report:
             greeting: Hallo
             intro: Danke für deine Meldung. Wir haben sie erhalten und prüfen sie so bald wie möglich.
             held: '{count, plural, one {Das gemeldete Foto ist ab sofort verborgen, bis wir entschieden haben.} other {Die # gemeldeten Fotos sind ab sofort verborgen, bis wir entschieden haben.}}'
-            next: Wir melden uns per E-Mail, sobald wir entschieden haben. Bitte nenn die Referenz, falls du uns schreibst.
+            next: Wir prüfen deine Meldung. Haben wir Fragen dazu, melden wir uns per E-Mail. Bitte nenn die Referenz, falls du uns schreibst.
             not_you: Diese E-Mail ging an deine Adresse, weil sie im Formular «Inhalt melden» angegeben wurde. Warst du das nicht, kannst du sie ignorieren.
         notice:
             subject: '{kind, select, rights {Meldung: Bildrechte} removal {Meldung: Eintrag entfernen} other {Meldung: Angaben korrigieren}} – {venue}'
             preheader: '{kind, select, rights {Neue Meldung zu Bildrechten} removal {Neue Meldung: Eintrag entfernen} other {Neue Meldung: Angaben korrigieren}}'
             greeting: Hallo Team
-            intro: '{kind, select, rights {Über das Formular «Inhalt melden» kam eine Meldung zu Bildrechten. Die genannten Fotos sind verborgen, bis ihr entschieden habt.} removal {Über das Formular «Inhalt melden» kam eine Meldung: Ein Eintrag soll entfernt werden.} other {Über das Formular «Inhalt melden» kam eine Meldung: Angaben sollen korrigiert werden.}}'
+            intro: '{kind, select, rights {Über das Formular «Inhalt melden» kam eine Meldung zu Bildrechten. {held, plural, =0 {Es ist kein Foto verborgen.} one {Das genannte Foto ist verborgen, bis ihr entschieden habt.} other {Die # genannten Fotos sind verborgen, bis ihr entschieden habt.}}} removal {Über das Formular «Inhalt melden» kam eine Meldung: Ein Eintrag soll entfernt werden.} other {Über das Formular «Inhalt melden» kam eine Meldung: Angaben sollen korrigiert werden.}}'
             venue: '{name} (Nr. {number})'
             typed: 'Angegeben: {reference}'
+            hold_limit: 'Tageslimit erreicht: nichts verborgen. Heute haben schon so viele Meldungen Fotos verborgen, dass diese keine mehr verbirgt. Welche Fotos gemeint sind, steht allenfalls in der Nachricht; sonst fragt per E-Mail nach.'
             button: Meldung öffnen

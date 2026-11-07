@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Application\Venues;
 
 use App\Factory\VenuePhotoFactory;
+use App\Shared\Security\ClientIpKey;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\Command\ReportContent;
+use App\Venues\Controller\ReportContentController;
+use App\Venues\Mailer\ModerationMailer;
+use App\Venues\ReadModel\ModerationCaseQuery;
+use App\Venues\ReadModel\ReportableVenueQuery;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,7 +20,12 @@ use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpFoundation\UriSigner;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -192,6 +203,109 @@ final class ReportContentControllerTest extends WebTestCase
         self::assertSame(5, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_cases'));
     }
 
+    public function test_more_than_ten_ticked_photos_are_refused(): void
+    {
+        $venue = DetailVenues::minimal();
+        $ids = [];
+        for ($position = 1; $position <= 11; ++$position) {
+            $ids[] = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position])->id();
+        }
+
+        $crawler = $this->post('/inhalt-melden?location='.$venue->number(), $this->fields(['photos' => $ids]));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Bitte wähle höchstens 10 Fotos aus.', $crawler->filter('.report__error')->text());
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_cases'));
+
+        $this->post('/inhalt-melden?location='.$venue->number(), $this->fields(['photos' => \array_slice($ids, 0, 10)]));
+        self::assertResponseStatusCodeSame(303);
+        self::assertSame(10, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_case_photos'));
+    }
+
+    public function test_when_the_daily_budget_of_holds_is_spent_the_complaint_is_stored_and_mailed_but_hides_nothing(): void
+    {
+        $venue = DetailVenues::minimal();
+        $photo = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1])->id();
+        $limiter = self::getContainer()->get('limiter.content_report_holds');
+        self::assertInstanceOf(RateLimiterFactoryInterface::class, $limiter);
+        self::assertTrue($limiter->create('site')->consume(20)->isAccepted());
+
+        $this->post('/inhalt-melden?location='.$venue->number(), $this->fields(['photos' => [$photo]]));
+
+        self::assertResponseStatusCodeSame(303);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_cases'));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_case_photos'), 'nothing is hidden');
+        self::assertEmailCount(2);
+        $notice = (string) $this->mailTo($this->staffAddress())->getHtmlBody();
+        self::assertStringContainsString('Tageslimit erreicht: nichts verborgen.', $notice);
+        self::assertStringContainsString('Es ist kein Foto verborgen.', $notice);
+        self::assertStringNotContainsString('verborgen, bis', (string) $this->mailTo('anna@example.ch')->getHtmlBody());
+
+        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        self::assertStringContainsString($photo, (string) $this->client->getResponse()->getContent(), 'the photo stays public');
+    }
+
+    public function test_a_complaint_that_names_no_photo_spends_none_of_the_budget_and_the_receipt_promises_no_decision_mail(): void
+    {
+        $limiter = self::getContainer()->get('limiter.content_report_holds');
+        self::assertInstanceOf(RateLimiterFactoryInterface::class, $limiter);
+        self::assertTrue($limiter->create('site')->consume(20)->isAccepted());
+
+        $this->post('/inhalt-melden', $this->fields(['venueReference' => 'Gasthaus zur Linde', 'kind' => 'removal']));
+
+        self::assertResponseStatusCodeSame(303);
+        self::assertStringNotContainsString('Tageslimit', (string) $this->mailTo($this->staffAddress())->getHtmlBody());
+        $receipt = (string) $this->mailTo('anna@example.ch')->getHtmlBody();
+        self::assertStringContainsString('Haben wir Fragen dazu, melden wir uns per E-Mail.', $receipt);
+        self::assertStringNotContainsString('sobald wir entschieden haben', $receipt);
+    }
+
+    public function test_a_venue_deleted_between_the_page_and_the_submit_asks_again_without_it(): void
+    {
+        $venue = DetailVenues::minimal();
+        $number = $venue->number();
+        $container = self::getContainer();
+        $bus = $container->get('command.bus');
+        self::assertInstanceOf(MessageBusInterface::class, $bus);
+        // The venue goes after the controller found it and before the handler locks it: the race the path is for.
+        // The controller is built here with a bus that deletes the venue first (the bus itself is in use already).
+        $racing = new class($bus, $this->connection, $number) implements MessageBusInterface {
+            public function __construct(private readonly MessageBusInterface $bus, private readonly Connection $connection, private readonly int $number)
+            {
+            }
+
+            public function dispatch(object $message, array $stamps = []): Envelope
+            {
+                if ($message instanceof ReportContent) {
+                    $this->connection->executeStatement('DELETE FROM venues WHERE number = ?', [$this->number]);
+                }
+
+                return $this->bus->dispatch($message, $stamps);
+            }
+        };
+        $controller = new ReportContentController(
+            $this->service(ReportableVenueQuery::class),
+            $this->service(ModerationCaseQuery::class),
+            $this->service(ModerationMailer::class),
+            $racing,
+            $this->service(RateLimiterFactoryInterface::class, 'limiter.content_report'),
+            $this->service(RateLimiterFactoryInterface::class, 'limiter.content_report_holds'),
+            $this->service(ClientIpKey::class),
+            $this->service(UriSigner::class),
+            $this->service(TranslatorInterface::class),
+        );
+        $controller->setContainer($container);
+        $container->set(ReportContentController::class, $controller);
+
+        $crawler = $this->post('/inhalt-melden?location='.$number, $this->fields(['kind' => 'correction']));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Diese Location gibt es nicht mehr.', $crawler->filter('.report__summary')->text());
+        self::assertCount(1, $crawler->filter('input[name="report[venueReference]"]'), 'the form asks which location is meant');
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_cases'));
+        self::assertEmailCount(0);
+    }
+
     public function test_the_footer_and_the_detail_page_link_to_the_form(): void
     {
         $venue = DetailVenues::minimal();
@@ -229,6 +343,32 @@ final class ReportContentControllerTest extends WebTestCase
     private function post(string $url, array $fields): Crawler
     {
         return $this->client->request('POST', $url, $fields, [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     *
+     * @return T
+     */
+    private function service(string $class, ?string $id = null): object
+    {
+        $service = self::getContainer()->get($id ?? $class);
+        self::assertInstanceOf($class, $service);
+
+        return $service;
+    }
+
+    private function mailTo(string $address): Email
+    {
+        foreach (self::getMailerMessages() as $message) {
+            if ($message instanceof Email && $message->getTo()[0]->getAddress() === $address) {
+                return $message;
+            }
+        }
+
+        self::fail('No mail to '.$address.'.');
     }
 
     private function staffAddress(): string

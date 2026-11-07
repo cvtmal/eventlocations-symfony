@@ -25,7 +25,8 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * revoke (`RemoveVenuePhoto` per named photo that still exists: grant ended by staff, photo deleted, files after
  * the commit); a held photo is therefore never public between the two. `keep` puts back online an entry this case
  * took offline (`PublishVenue`; its refusal, e.g. no gallery photo left, rolls the whole decision back and comes
- * out unwrapped as the `VenueRuleViolation` it is). Either way the venue and the listings are purged after the
+ * out unwrapped as the `VenueRuleViolation` it is), unless another open case of the venue took it offline too: that
+ * case still wants it offline, and its own `keep` brings it back. Either way the venue and the listings are purged after the
  * commit, so the pages show the outcome.
  *
  * `PublishVenue` records the funnel step `venue_published` for the republish, as it does for every transition to
@@ -64,7 +65,8 @@ final class DecideModerationCaseHandler implements CommandHandlerInterface
             }
         }
 
-        if (ModerationDecision::Keep === $command->decision && $case->tookEntryOffline() && null !== $venue) {
+        if (ModerationDecision::Keep === $command->decision && $case->tookEntryOffline() && null !== $venue
+            && !$this->cases->otherOpenCaseTookEntryOffline($case, $venue)) {
             try {
                 $this->commandBus->dispatch(new PublishVenue($venue->number()));
             } catch (HandlerFailedException $failure) {

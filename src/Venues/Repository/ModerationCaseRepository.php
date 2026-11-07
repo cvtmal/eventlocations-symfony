@@ -6,8 +6,11 @@ namespace App\Venues\Repository;
 
 use App\Venues\Entity\ModerationCase;
 use App\Venues\Entity\ModerationCasePhoto;
+use App\Venues\Entity\Venue;
 use App\Venues\Exception\ModerationCaseNotFound;
+use App\Venues\ValueObject\ModerationStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
 
@@ -24,13 +27,34 @@ class ModerationCaseRepository extends ServiceEntityRepository
     }
 
     /**
+     * The case, locked (`FOR UPDATE`) until the command's transaction ends: of two decisions at once (a double
+     * click, a second tab), the second waits for the first and then finds the case decided.
+     *
      * @throws ModerationCaseNotFound for an unknown id, or one that is no UUID (Postgres would refuse it with a 500)
      */
     public function get(string $id): ModerationCase
     {
-        $case = Uuid::isValid($id) ? $this->find($id) : null;
+        $case = Uuid::isValid($id) ? $this->find($id, LockMode::PESSIMISTIC_WRITE) : null;
 
         return $case ?? throw ModerationCaseNotFound::forId($id);
+    }
+
+    /**
+     * Whether another open case of the venue took the entry offline: then a `keep` of this one leaves it offline.
+     */
+    public function otherOpenCaseTookEntryOffline(ModerationCase $case, Venue $venue): bool
+    {
+        return 0 < (int) $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->where('c.venue = :venue')
+            ->andWhere('c.status = :open')
+            ->andWhere('c.tookEntryOffline = true')
+            ->andWhere('c.id <> :id')
+            ->setParameter('venue', $venue)
+            ->setParameter('open', ModerationStatus::Open)
+            ->setParameter('id', $case->id())
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**

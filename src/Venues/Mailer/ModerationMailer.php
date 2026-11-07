@@ -49,7 +49,11 @@ final class ModerationMailer
             ->context(self::context($case)));
     }
 
-    public function sendNotice(ModerationCaseView $case): bool
+    /**
+     * @param bool $holdLimitReached the complaint named photos, but the site-wide daily budget of holds was spent
+     *                               (`content_report_holds`), so nothing was hidden
+     */
+    public function sendNotice(ModerationCaseView $case, bool $holdLimitReached = false): bool
     {
         return $this->send($case, (new TemplatedEmail())
             ->to($this->contactEmail)
@@ -59,7 +63,7 @@ final class ModerationMailer
                 'venue' => $case->venueName ?? $case->venueReference ?? '',
             ], 'venues'))
             ->htmlTemplate('venues/email/report_notice.html.twig')
-            ->context(self::context($case)));
+            ->context(self::context($case) + ['hold_limit_reached' => $holdLimitReached]));
     }
 
     private function send(ModerationCaseView $case, TemplatedEmail $message): bool

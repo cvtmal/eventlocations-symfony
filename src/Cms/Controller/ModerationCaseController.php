@@ -27,6 +27,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -39,7 +40,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * flashes `flash.action_failed`; `#[IsCsrfTokenValid]` would send a logged-in editor to the login page). The decision
  * is a form (note + one button per decision); an invalid note re-renders the page with 422.
  *
- * A case decided meanwhile (a double click, a second tab) is no error: the page shows the decision, with an info.
+ * A case decided meanwhile (a double click, a second tab) is no error: the page shows the decision, with an info
+ * (the handlers lock the case row, so the second request waits for the first and then finds it decided). An entry
+ * that is offline already is not taken offline by this case: an info, not a success.
  * A `keep` that cannot put the entry back online (e.g. no gallery photo left) changes nothing and names the gaps.
  */
 #[IsGranted('ROLE_EDITOR')]
@@ -75,9 +78,15 @@ final class ModerationCaseController extends AbstractController
         }
 
         try {
-            $this->commandBus->dispatch(new TakeEntryOffline($id, $identity->id()));
+            $envelope = $this->commandBus->dispatch(new TakeEntryOffline($id, $identity->id()));
         } catch (HandlerFailedException $failure) {
             return $this->refused($id, $failure);
+        }
+        if (true !== $envelope->last(HandledStamp::class)?->getResult()) {
+            // The entry was offline already (another case, the CMS): this case did not take it offline.
+            $this->addFlash('info', CmsFlash::message('moderation.flash.already_offline'));
+
+            return $this->back($id);
         }
         $this->addFlash('success', CmsFlash::message('moderation.flash.offline'));
 

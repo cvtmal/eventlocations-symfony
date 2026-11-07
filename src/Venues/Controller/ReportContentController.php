@@ -37,7 +37,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * the complainant and a notice to staff, and answers with a 303 to a signed confirmation of the same page: public
  * pages have no session, so there is no flash. Checks in the inquiry form's order: the honeypot `website` (the same
  * 303, nothing stored, so a bot learns nothing), the form (422), then the limiter `content_report` (5 per hour per
- * client IP, only valid posts count; 429 + `Retry-After`). Never cached, never indexed, no session, no cookie.
+ * client IP, only valid posts count; 429 + `Retry-After`). A complaint that names photos then spends one token of
+ * `content_report_holds` (20 per day, site-wide): when none is left the case is stored and mailed but hides nothing,
+ * and the staff notice says so. Never cached, never indexed, no session, no cookie.
  */
 final class ReportContentController extends AbstractController
 {
@@ -45,12 +47,16 @@ final class ReportContentController extends AbstractController
 
     private const array HEADERS = ['X-Robots-Tag' => 'noindex, nofollow'];
 
+    /** `content_report_holds` counts for the whole site, not per client. */
+    private const string HOLDS_KEY = 'site';
+
     public function __construct(
         private readonly ReportableVenueQuery $venues,
         private readonly ModerationCaseQuery $cases,
         private readonly ModerationMailer $mailer,
         private readonly MessageBusInterface $commandBus,
         private readonly RateLimiterFactoryInterface $contentReportLimiter,
+        private readonly RateLimiterFactoryInterface $contentReportHoldsLimiter,
         private readonly ClientIpKey $clientIpKey,
         private readonly UriSigner $signer,
         private readonly TranslatorInterface $translator,
@@ -94,14 +100,24 @@ final class ReportContentController extends AbstractController
             return $response;
         }
 
+        // Only a complaint that would hide photos spends the site-wide daily budget; over it, nothing is hidden.
+        $namesPhotos = null !== $venue && true === $data->kind?->namesPhotos() && [] !== $data->photos;
+        $hold = !$namesPhotos || $this->contentReportHoldsLimiter->create(self::HOLDS_KEY)->consume()->isAccepted();
+
         $caseId = EntityId::generate();
         try {
-            $this->commandBus->dispatch($this->command($caseId, $data, $venue));
+            $this->commandBus->dispatch($this->command($caseId, $data, $venue, $hold));
         } catch (HandlerFailedException $failure) {
             if ([] === $failure->getWrappedExceptions(VenueNotFound::class)) {
                 throw $failure;
             }
-            // The venue was deleted between the page and the submit: ask again, without it.
+            // The venue was deleted between the page and the submit: ask again, without it. The same answers go into
+            // the form without a venue (no photos to tick, a "Welche Location?" to fill), so nothing typed is lost.
+            $retry = new ReportContentData();
+            $form = $this->createForm(ReportContentType::class, $retry);
+            $answers = $request->request->all($form->getName());
+            unset($answers['photos']);
+            $form->submit($answers);
             $form->addError(new FormError($this->translator->trans('report.error.venue_gone', [], 'venues')));
 
             return $this->page(null, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -110,13 +126,13 @@ final class ReportContentController extends AbstractController
         $case = $this->cases->find($caseId);
         if (null !== $case) {
             $this->mailer->sendReceipt($case);
-            $this->mailer->sendNotice($case);
+            $this->mailer->sendNotice($case, holdLimitReached: !$hold);
         }
 
         return $this->confirmation($venue);
     }
 
-    private function command(string $caseId, ReportContentData $data, ?ReportableVenue $venue): ReportContent
+    private function command(string $caseId, ReportContentData $data, ?ReportableVenue $venue, bool $hold): ReportContent
     {
         \assert(null !== $data->kind && null !== $data->message && null !== $data->name && null !== $data->email);
         $reference = null === $data->venueReference ? null : trim($data->venueReference);
@@ -131,6 +147,7 @@ final class ReportContentController extends AbstractController
             trim($data->email),
             $data->message,
             $data->source,
+            $hold,
         );
     }
 

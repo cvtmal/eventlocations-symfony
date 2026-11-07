@@ -79,6 +79,8 @@ final class ModerationQueueTest extends WebTestCase
         self::assertStringContainsString('Bildrechte vom', $crawler->filter('h1')->text());
         self::assertStringContainsString('Das erste Foto habe ich aufgenommen.', $crawler->filter('.moderation__message')->text());
         self::assertStringContainsString('erika.beispiel@example.ch', $crawler->filter('section[aria-labelledby="meldung"]')->text());
+        self::assertSame('Antwort an die meldende Person: per E-Mail', $crawler->filter('.moderation__reply')->text());
+        self::assertSame('mailto:erika.beispiel@example.ch', $crawler->filter('.moderation__reply a')->attr('href'));
         self::assertCount(1, $crawler->filter('.moderation__photo img'));
         self::assertStringContainsString($photo->id(), (string) $crawler->filter('.moderation__photo img')->attr('src'));
         self::assertStringContainsString('Verborgen', $crawler->filter('.moderation__photo')->text());
@@ -167,6 +169,60 @@ final class ModerationQueueTest extends WebTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM venue_photos WHERE id = ?', [$photo->id()]));
         self::assertStringContainsString('Entfernt', $this->client->getCrawler()->filter('.moderation__photo')->text());
         self::assertSame(ModerationDecision::Remove->value, $this->connection->fetchOne('SELECT decision FROM moderation_cases'));
+    }
+
+    public function test_taking_an_entry_offline_that_is_offline_already_is_an_info(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::minimal();
+        $case = ModerationCaseFactory::createOne(['kind' => ModerationKind::Removal, 'venue' => $venue, 'venueReference' => null]);
+        $form = $this->client->request('GET', '/admin/meldungen/'.$case->id())->filter('.moderation__offline')->form();
+        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished' WHERE id = ?", [$venue->id()]);
+
+        $this->client->submit($form);
+
+        self::assertResponseRedirects('/admin/meldungen/'.$case->id(), 303);
+        $toast = $this->client->followRedirect()->filter('.toast');
+        self::assertSame('Der Eintrag ist schon offline. Diese Meldung hat ihn nicht offline genommen.', $toast->text());
+        self::assertStringContainsString('toast--info', (string) $toast->attr('class'));
+        self::assertFalse((bool) $this->connection->fetchOne('SELECT took_entry_offline FROM moderation_cases'));
+    }
+
+    public function test_taking_the_entry_offline_after_the_case_was_decided_is_an_info(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::minimal();
+        $case = ModerationCaseFactory::createOne(['kind' => ModerationKind::Removal, 'venue' => $venue, 'venueReference' => null]);
+        $crawler = $this->client->request('GET', '/admin/meldungen/'.$case->id());
+        $offline = $crawler->filter('.moderation__offline')->form();
+
+        $this->client->submit($crawler->selectButton('Entscheiden: behalten')->form());
+        self::assertResponseRedirects('/admin/meldungen/'.$case->id(), 303);
+        $this->client->followRedirect();
+        $this->client->submit($offline);
+
+        self::assertResponseRedirects('/admin/meldungen/'.$case->id(), 303);
+        self::assertSame('Diese Meldung ist schon entschieden.', $this->client->followRedirect()->filter('.toast')->text());
+        self::assertSame('published', $this->venueStatus($venue));
+    }
+
+    public function test_keep_that_cannot_put_the_entry_back_online_changes_nothing_and_names_the_gaps(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::minimal();
+        $case = ModerationCaseFactory::createOne(['kind' => ModerationKind::Removal, 'venue' => $venue, 'venueReference' => null]);
+        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished' WHERE id = ?", [$venue->id()]);
+        $this->connection->executeStatement('UPDATE moderation_cases SET took_entry_offline = true WHERE id = ?', [$case->id()]);
+        $crawler = $this->client->request('GET', '/admin/meldungen/'.$case->id());
+
+        $this->client->submit($crawler->selectButton('Entscheiden: behalten')->form());
+
+        self::assertResponseRedirects('/admin/meldungen/'.$case->id(), 303);
+        $toast = $this->client->followRedirect()->filter('.toast')->text();
+        self::assertStringStartsWith('Der Eintrag kann nicht wieder online gehen. Es fehlt: ', $toast);
+        self::assertStringContainsString('Foto', $toast);
+        self::assertSame(['status' => 'open', 'decision' => null], $this->connection->fetchAssociative('SELECT status, decision FROM moderation_cases'), 'the decision is rolled back');
+        self::assertSame('unpublished', $this->venueStatus($venue));
     }
 
     private function rightsCase(Venue $venue): ModerationCase

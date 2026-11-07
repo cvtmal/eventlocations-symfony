@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues\Cms;
 
+use App\Factory\RoomFactory;
+use App\Factory\RoomTranslationFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
@@ -215,6 +217,74 @@ final class ModerationCommandsTest extends KernelTestCase
         $this->dispatch(new ReportContent($caseId, ModerationKind::Removal, null, 'Irgendwo', [], 'Max', 'max@example.ch', 'Bitte entfernen.', null));
 
         self::assertInstanceOf(ModerationCaseWithoutVenue::class, $this->failure(new TakeEntryOffline($caseId, self::ADMIN)));
+    }
+
+    public function test_a_complaint_hides_every_row_of_the_named_file_and_remove_takes_them_all(): void
+    {
+        $venue = $this->venue('Seehaus Doppelt Gespeichert', 'seehaus-doppelt-gespeichert');
+        $number = $venue->number();
+        $room = RoomFactory::createOne(['venue' => $venue, 'position' => 1]);
+        RoomTranslationFactory::createOne(['room' => $room, 'name' => 'Saal']);
+        $source = $this->upload();
+        $grant = new PhotoGrant(Grantor::staff(self::ADMIN), GrantEvidence::StaffAttestation);
+        $gallery = $this->addPhoto($number, $source, grant: $grant)->photoId;
+        $inRoom = $this->addPhoto($number, $source, $room->id(), grant: $grant)->photoId;
+        $other = $this->grantedPhoto($number);
+        self::assertSame([$gallery, $other], $this->seen($number)['detail']);
+        self::assertSame([$inRoom], $this->seen($number)['rooms']);
+
+        $caseId = $this->reportCase($number, [$gallery]);
+
+        self::assertSame([$gallery, $inRoom], $this->linkedPhotos(), 'the room row of the same file is held too');
+        self::assertSame([$other], $this->seen($number)['detail']);
+        self::assertSame([], $this->seen($number)['rooms']);
+
+        $this->dispatch(new DecideModerationCase($caseId, ModerationDecision::Remove, null, self::ADMIN));
+        $this->em->clear();
+
+        self::assertSame([$other], array_map(strval(...), $this->connection->fetchFirstColumn('SELECT id FROM venue_photos WHERE venue_id = ?', [$venue->id()])));
+    }
+
+    public function test_a_complaint_links_at_most_ten_photos_and_none_without_a_hold(): void
+    {
+        $venue = $this->venue('Seehaus Viele', 'seehaus-viele');
+        $number = $venue->number();
+        $photos = [];
+        for ($i = 1; $i <= 11; ++$i) {
+            $photos[] = $this->grantedPhoto($number);
+        }
+
+        self::assertSame(10, $this->report($number, $photos));
+        self::assertSame(\array_slice($photos, 0, 10), $this->linkedPhotos());
+
+        $this->connection->executeStatement('DELETE FROM moderation_cases');
+        $held = $this->dispatch(new ReportContent(EntityId::generate(), ModerationKind::Rights, $number, null, [$photos[10]], 'Erika Beispiel', 'erika@example.ch', 'Dieses Foto habe ich aufgenommen.', null, hold: false));
+
+        self::assertSame(0, $held, 'the daily budget is spent: the case is stored, nothing is hidden');
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_cases'));
+        self::assertSame([], $this->linkedPhotos());
+    }
+
+    public function test_keep_leaves_the_entry_offline_while_another_open_case_took_it_offline(): void
+    {
+        $venue = $this->publishable('Seehaus Zwei Meldungen', 'seehaus-zwei-meldungen');
+        $number = $venue->number();
+        $first = $this->reportCase($number, [], ModerationKind::Removal);
+        self::assertTrue($this->dispatch(new TakeEntryOffline($first, self::ADMIN)));
+        $this->connection->executeStatement("UPDATE venues SET status = 'published' WHERE number = ?", [$number]);
+        $this->em->clear();
+        $second = $this->reportCase($number, [], ModerationKind::Removal);
+        self::assertTrue($this->dispatch(new TakeEntryOffline($second, self::ADMIN)));
+
+        $this->dispatch(new DecideModerationCase($first, ModerationDecision::Keep, null, self::ADMIN));
+        $this->em->clear();
+
+        self::assertFalse($this->reload($number)->isPublished(), 'the second case still wants the entry offline');
+
+        $this->dispatch(new DecideModerationCase($second, ModerationDecision::Keep, null, self::ADMIN));
+        $this->em->clear();
+
+        self::assertTrue($this->reload($number)->isPublished());
     }
 
     /**

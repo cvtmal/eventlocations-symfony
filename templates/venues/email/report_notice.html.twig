@@ -1,7 +1,7 @@
 {#
     The staff notice of a complaint (G2, `ModerationMailer::sendNotice`), to `site.contact_email` with the
     complainant as Reply-To. Context: case_id, reference, kind (ModerationKind), venue_name, venue_number,
-    venue_reference, held_photos, complainant_name, complainant_email, message, source_url.
+    venue_reference, held_photos, complainant_name, complainant_email, message, source_url, hold_limit_reached.
 #}
 {% extends 'emails/layout.html.twig' %}
 {% import 'emails/_blocks.html.twig' as blocks %}
@@ -10,7 +10,8 @@
 
 {% block content %}
 {{ blocks.greeting('report.mail.notice.greeting'|trans({}, 'venues')) }}
-{{ blocks.p('report.mail.notice.intro'|trans({kind: kind.value}, 'venues')) }}
+{{ blocks.p('report.mail.notice.intro'|trans({kind: kind.value, held: held_photos}, 'venues')) }}
+{% if hold_limit_reached %}{{ blocks.p('report.mail.notice.hold_limit'|trans({}, 'venues')) }}{% endif %}
 {% set venue = venue_name is null
     ? ('report.mail.notice.typed'|trans({reference: venue_reference ?? '-'}, 'venues'))
     : ('report.mail.notice.venue'|trans({name: venue_name, number: venue_number ~ ''}, 'venues')) %}

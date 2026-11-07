@@ -18,11 +18,18 @@ use App\Venues\ValueObject\ModerationKind;
  * `venueNumber` is a published venue the form showed; without one, `venueReference` is what the complainant typed.
  * The good-faith confirmation is the time of the submit. The mails go after the commit, from the controller.
  *
+ * At most `MAX_PHOTOS` named ids are linked (the form refuses more). A named photo's file may sit in the venue's
+ * gallery and in a room as two rows: every public row of the venue with the same original is linked too, so the
+ * file is hidden everywhere. `hold` false (the site-wide daily budget of holds is spent, `content_report_holds`)
+ * stores the case without hiding anything; the staff notice says so.
+ *
  * The audit summary names the kind, the venue's number and how many photos were named, never the complainant or
  * the message (an anonymous submit is audited with the `system` actor, like every request without a login).
  */
 final readonly class ReportContent implements AuditableCommand
 {
+    public const int MAX_PHOTOS = 10;
+
     /**
      * @param list<string> $photoIds
      */
@@ -36,6 +43,7 @@ final readonly class ReportContent implements AuditableCommand
         public string $complainantEmail,
         public string $message,
         public ?string $sourceUrl,
+        public bool $hold = true,
     ) {
     }
 

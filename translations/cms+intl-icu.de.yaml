@@ -812,6 +812,8 @@ moderation:
         good_faith: Angaben bestätigt
         good_faith_at: 'am {date}'
         message: Nachricht
+        reply: 'Antwort an die meldende Person:'
+        reply_link: per E-Mail
         none: '–'
         venue_online: Online
         venue_offline: Offline
@@ -837,6 +839,7 @@ moderation:
             keep: 'Entscheiden: behalten'
     flash:
         offline: Der Eintrag ist offline.
+        already_offline: Der Eintrag ist schon offline. Diese Meldung hat ihn nicht offline genommen.
         decided:
             remove: Die Meldung ist entschieden. Die gemeldeten Fotos sind entfernt.
             keep: Die Meldung ist entschieden. Die Inhalte sind wieder sichtbar.
