@@ -30,23 +30,23 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 - Event types (Firmenanlass, Seminar, Geburtstag, Apéro, Hochzeit …), catering, technology and guest number as filters; layouts shown on the detail page, no layout filter (D4, E5).
 - URLs carry the search term "Eventlokale": `/eventlokale` (listing), `/eventlokale/{kanton}` and `/eventlokale/{kanton}/{ort}` (landing pages), `/eventlokal/{venue}` (detail page), `/eventlokal-in-meiner-naehe`. No redirects, since nothing is live yet. The competitor's name, domain and logo never appear in titles, meta, copy or structured data (F5, 2026-11-07).
-- **Free + Pro (CHF 199 a year, default, D14).** Free: a basic entry, 6 photos, 1 room, inquiries by e-mail. Pro: more photos, rooms, PDFs and video embeds, ranking above Free, visible contact data, last-minute offers, a detailed monthly report. Invoiced by hand; a lapsed Pro entry falls back to Free and stays online (D2).
+- **Free + Pro at CHF 199 a year, final, shown without a VAT line (D24, D25).** Free: a basic entry, 6 photos, 1 room, inquiries by e-mail. Pro: more photos, rooms, PDFs and video embeds, ranking above Free, visible contact data, last-minute offers, a detailed monthly report. Invoiced by hand; a lapsed Pro entry falls back to Free and stays online (D2).
 - **Prepared entries.** The platform prepares an entry from the venue's own website; the manager gets a private preview link, claims it, confirms the photos they have rights to, and publishes. No photo is public without a rights record. Until then Google Places photos and a neutral placeholder fill the gap (D12, D16).
+- **Brand:** indigo and vermilion, Hanken Grotesk, an SVG wordmark (D23). Hosted at Infomaniak in Switzerland with a Neon database in Frankfurt (D26).
+- **No Hochzeit landing pages:** Hochzeit is an event type only (D31).
 - **One venue per inquiry** at launch; later one brief to up to five named venues (D3, D17).
 - **Honest measurement.** A qualified inquiry is a real, reachable organizer with a plausible event, delivered to the venue. It is not a booking and reports never say so (D19).
 
-## Open product questions
+## Facts the owner holds
 
-| # | Item | Needs | Status |
-|---|---|---|---|
-| 1 | Host (D10) | Owner | Blocks F15 only |
-| 2 | Logo, colours, typeface (D5) | Owner | Blocks F6; a placeholder wordmark until then |
-| 3 | Operator name and address, processors for the Datenschutz page | Owner | Blocks F7 and launch |
-| 4 | VAT status of the operator | Owner | Prices shown "zzgl. MwSt" until known |
-| 5 | Spreadsheet for D1(b), consent wording for D1(c) | Owner | Blocks F14 |
-| 6 | Swiss legal review: media terms, claim declaration, outreach and "directory solicitation" wording | Owner (counsel) | Our texts are marked draft until reviewed |
-| 7 | Contact basis of the owner's 5–6k known contacts | Owner | No bulk mail until audited (D20) |
-| 8 | Tier price: CHF 199 confirmed? | Owner | Default in force (D14) |
+Every product decision is settled (D23 to D32 settled the former open questions). Only facts are left, each with a placeholder:
+
+| Fact | Until it arrives |
+|---|---|
+| Operator name and address | `TODO(owner)` on the Impressum and Datenschutz pages; launch is refused while it is there (D27) |
+| Infomaniak and Neon accounts | F15 documents the setup |
+| Venue spreadsheet for D1(b) | F14 is built and tested on a fixture |
+| Contact list for the one-to-one pilot | After launch (D30: no bulk mail) |
 
 Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults together; the owner has delegated them and is not asked. The owner still holds real-world facts (the operator's identity, the host account, the venue spreadsheet, the contact list) and deploys. Where a fact is missing, the site ships a marked placeholder.
 
