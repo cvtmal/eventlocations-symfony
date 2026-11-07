@@ -24,7 +24,7 @@ final class PortalMailerOnboardingTest extends KernelTestCase
             static fn (PortalMailer $mailer): bool => $mailer->sendLocationSubmitted('anna@example.ch', 'Anna', 'Seehaus Meilen'),
             'anna@example.ch',
             'Wir prüfen Seehaus Meilen',
-            ['Guten Tag Anna', '/konto'],
+            ['Hallo Anna', '/konto'],
         ];
         yield 'notice' => [
             static fn (PortalMailer $mailer): bool => $mailer->sendLocationNotice('Seehaus Meilen', 'Anna Meier', 'anna@example.ch'),
@@ -42,13 +42,13 @@ final class PortalMailerOnboardingTest extends KernelTestCase
             static fn (PortalMailer $mailer): bool => $mailer->sendLocationAccepted('anna@example.ch', 'Anna', 'Seehaus Meilen', 1234),
             'anna@example.ch',
             'Seehaus Meilen ist online',
-            ['Guten Tag Anna', '/konto/locations/1234'],
+            ['Hallo Anna', '/konto/locations/1234'],
         ];
         yield 'rejected' => [
             static fn (PortalMailer $mailer): bool => $mailer->sendLocationRejected('anna@example.ch', 'Anna', 'Seehaus Meilen', 1234, 'Die Fotos fehlen.'),
             'anna@example.ch',
             'Deine Location Seehaus Meilen',
-            ['Guten Tag Anna', 'Die Fotos fehlen.', '/konto/locations/1234/einrichten/pruefen'],
+            ['Hallo Anna', 'Die Fotos fehlen.', '/konto/locations/1234/einrichten/pruefen'],
         ];
     }
 

@@ -87,7 +87,7 @@ mail:
     register:
         subject: Wähle dein Passwort
         preheader: Noch ein Schritt, dann ist dein Konto bereit.
-        greeting: Guten Tag
+        greeting: Hallo
         intro: Danke für deine Registrierung. Wähle über den Link unten dein Passwort. Damit ist auch deine E-Mail-Adresse bestätigt.
         button: Passwort wählen
         validity: Der Link ist 48 Stunden gültig und funktioniert nur einmal.
@@ -95,7 +95,7 @@ mail:
     reset:
         subject: Dein neues Passwort
         preheader: Mit diesem Link wählst du ein neues Passwort.
-        greeting: Guten Tag
+        greeting: Hallo
         intro: Du hast ein neues Passwort angefordert. Über den Link unten wählst du es.
         button: Neues Passwort wählen
         validity: Der Link ist eine Stunde gültig und funktioniert nur einmal.
@@ -225,7 +225,7 @@ onboarding:
         submitted:
             subject: Wir prüfen {venue}
             preheader: "{venue} ist bei uns eingegangen."
-            greeting: Guten Tag {name}
+            greeting: Hallo {name}
             intro: Danke. {venue} ist bei uns eingegangen. Wir prüfen die Angaben und melden uns per E-Mail.
             button: Zu meinem Konto
             editing: Du kannst die Angaben während der Prüfung weiter bearbeiten.
@@ -240,13 +240,13 @@ onboarding:
         accepted:
             subject: "{venue} ist online"
             preheader: Wir haben {venue} geprüft und veröffentlicht.
-            greeting: Guten Tag {name}
+            greeting: Hallo {name}
             intro: Wir haben {venue} geprüft und veröffentlicht. Die Location ist jetzt online.
             button: Zur Location
         rejected:
             subject: Deine Location {venue}
             preheader: Wir konnten {venue} noch nicht veröffentlichen.
-            greeting: Guten Tag {name}
+            greeting: Hallo {name}
             intro: "Wir konnten {venue} noch nicht veröffentlichen. Das ist der Grund:"
             next: Pass die Angaben an und sende die Location wieder zur Prüfung.
             button: Angaben anpassen
@@ -280,13 +280,13 @@ claims:
         approved:
             subject: Dein Zugriff auf {venue} ist bestätigt
             preheader: Du kannst {venue} jetzt verwalten.
-            greeting: Guten Tag {name}
+            greeting: Hallo {name}
             intro: Wir haben deine Anfrage geprüft. Du kannst {venue} jetzt in deinem Konto verwalten.
             button: Zu meinem Konto
         rejected:
             subject: Deine Anfrage für {venue}
             preheader: Wir konnten deine Anfrage nicht bestätigen.
-            greeting: Guten Tag {name}
+            greeting: Hallo {name}
             intro: Wir konnten deine Anfrage für {venue} nicht bestätigen.
             again: Du kannst den Zugriff jederzeit erneut anfragen.
         notice:
@@ -365,7 +365,7 @@ invite:
         invitation:
             subject: Du bist Location-Manager für {venue}
             preheader: Wähle dein Passwort, dann kannst du {venue} verwalten.
-            greeting: Guten Tag {name}
+            greeting: Hallo {name}
             intro: Das Team von deine-eventlocation.ch hat dich als Location-Manager für {venue} eingetragen und dafür ein Konto für dich angelegt.
             next: Wähle über den Link unten dein Passwort. Danach bist du angemeldet und kannst die Angaben, Fotos und Kontaktdaten von {venue} pflegen.
             button: Passwort wählen
@@ -374,6 +374,6 @@ invite:
         added:
             subject: Du bist Location-Manager für {venue}
             preheader: Du kannst {venue} jetzt in deinem Konto verwalten.
-            greeting: Guten Tag {name}
+            greeting: Hallo {name}
             intro: Das Team von deine-eventlocation.ch hat dich als Location-Manager für {venue} eingetragen. Du kannst die Location jetzt in deinem Konto verwalten.
             button: Zu meinem Konto
