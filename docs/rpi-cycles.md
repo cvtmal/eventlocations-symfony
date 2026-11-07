@@ -97,7 +97,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F1 | `owner-decisions` | – | — | — | — | Done (D1 to D12) |
 | – | `rules-condense` | S | `fork-docs` | — | — | Done |
 | F3 | `event-vocabulary` | M | F0, F1 | `taxonomy_terms`, `venue_terms`; the wedding-fact columns of `venues` and `venue_translations` | — | Done |
-| F4 | `room-layouts` | S–M | F3 | `rooms`, `room_translations` (layout capacities) | — | Todo |
+| F4 | `room-layouts` | S–M | F3 | `rooms`, `room_translations` (layout capacities) | — | Done |
 | F5 | `filter-event` | M | F3 | indexes only | — | Todo |
 | F6 | `brand-design` | L | F1 | — | — (D23, D32) | Done (`98f38d7`) |
 | F6b | `brand-assets` | M | F6 | — | — (D23) | Todo |
@@ -607,9 +607,17 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 - **Not done on purpose.** The inquiry `Occasion` is still the wedding list (F9). `suitable_for` and `catering` have no filter parameter yet (F5). Route paths are untouched (F5). The labels of `setting`, `building`, `infrastructure` and `surroundings` are still the copied ones (F7b or the owner).
 - **Follow-ups.** F11 decides where `suitable_for` is edited (the Merkmale card today) and untangles the two "Ausstattung" labels (wizard step and amenity group). F4, F9 and F11 pick one source for "own catering" (FAQ `own_catering` against `catering.in_house` and `external_allowed`). Fact rows have no `overflow-wrap`, so an unbroken 60-character ambience overflows at 390 px.
 
-### F4 `room-layouts` (S–M)
+### F4 `room-layouts` (S–M, done)
 
 **Depends on** F3. **Owns** `rooms` and `room_translations`. **Scope.** The layout list and the capacities per room (as forked: Seminar, Bankett, Apéro and Konzert as `capacity_<layout>_{min,max}` columns and the `Seating` enum; the research decides whether a `room_capacities` table pays off before more layouts are added), the CMS room editor island, the detail page's room dialog and the content format. D4: layouts show on the detail page only, there is no layout filter, and F5 has no layout criterion, so this cycle stays small. **Done when** staff edit layouts and capacities per room, the room dialog shows them, `RoomSummary` still derives the venue's room facts, the content format and its schema carry them, one migration with `down()`, tests.
+
+**Outcome** (PR `room-layouts`, 2026-11-07).
+
+- **Layouts.** Six `Seating` cases, still column pairs `rooms.capacity_<layout>_{min,max}` (a `room_capacities` table was rejected: D4 means no query reads layouts, every caller already loops `Seating::cases()`): `banquet` Bankett, `seminar` Seminar/Parlament, `u_shape` U-Form, `block` Block, `concert` Konzert/Reihen, `apero` Apéro/Stehempfang (labels `venues` `seating.*`, detail `detail.rooms.seating.*` with sitzend/stehend; detail order in `VenueDetailQuery::SEATING_ORDER`).
+- **Room range follows the layouts.** `Seating::guestRange()`: once a layout states a max, `rooms.capacity_max` = the greatest layout max and `capacity_min` = the least min of the layouts with a max; without one, the stated range stays. `Room` applies it on `offerSeating()` and `reshape()`; callers offer the layouts first, then `reshape()` (`RoomFields`, the import), so removing every layout restores the stated range. `RoomFields` compares against the derived range, so a stated range under layouts is no change. The CMS island locks the room's Personen fields with a hint (`rooms.help.capacity_from_layouts`) while a layout has a max; `RoomData` then skips the room min/max rule.
+- **Migration** `Version20261107184701`, one, with `down()`: four columns, `chk_rooms_capacity_u_shape`, `chk_rooms_capacity_block`, back-fill of the derived range, then `chk_rooms_capacity_layouts` (`GREATEST(maxes) IS NULL OR capacity_max IS NOT DISTINCT FROM GREATEST(maxes)`). A new layout needs a migration that also replaces that CHECK.
+- **Content format** stays version 2: `seating` takes `u_shape` and `block`; with a layout max the file's room `capacity` is ignored (doc and schema say so).
+- **Unchanged on purpose.** `RoomSummary` (count, largest area, tallest height) and the venue's own `capacity_*`/`capacity_seated`/`capacity_standing` (not compared with rooms). No filter (D4). The catering single source (`own_catering` FAQ) is F9's (D33). Portal room editing is F11. `Crm\EventlokaleCsv::ROOM_PAIRS` maps the crawled site's four columns, not `Seating`.
 
 ### F5 `filter-event` (M)
 
