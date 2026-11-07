@@ -47,9 +47,6 @@ cms:
             needs_km: Zu einem Namen gehört die Distanz in km.
         terms:
             main_not_selected: Die Hauptangabe muss oben ausgewählt sein.
-        curfew:
-            needs_yes: Eine Uhrzeit gibt es nur, wenn die Sperrstunde auf «Ja» steht.
-            format: Bitte eine Uhrzeit wie «23:30» eingeben.
         phone:
             invalid: Bitte eine Telefonnummer wie «044 123 45 67» oder «+41 44 123 45 67» eingeben.
         email:

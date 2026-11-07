@@ -255,20 +255,11 @@ final class ListingQueryTest extends KernelTestCase
      */
     public static function andGroups(): iterable
     {
-        yield 'infrastructure' => ['infra', TermGroup::Infrastructure, 'wifi', 'air_conditioning'];
+        yield 'infrastructure' => ['infra', TermGroup::Infrastructure, 'air_conditioning', 'heating_ventilation'];
         yield 'furniture' => ['furniture', TermGroup::Furniture, 'chairs', 'tables'];
-        yield 'technology' => ['tech', TermGroup::Technology, 'sound_system', 'projector_screen'];
+        yield 'technology' => ['tech', TermGroup::Technology, 'wifi', 'projector_screen'];
         yield 'surroundings' => ['surroundings', TermGroup::Surroundings, 'garden', 'terrace'];
-        yield 'ceremony' => ['ceremony', TermGroup::Ceremony, 'chapel', 'free_ceremony'];
         yield 'amenity' => ['amenity', TermGroup::Amenity, 'overnight', 'lake_view'];
-    }
-
-    public function test_usage_filters_on_its_one_code(): void
-    {
-        $this->venue('Exklusiv', terms: [[TermGroup::Usage, 'exclusive']]);
-        $this->venue('Mehrere', terms: [[TermGroup::Usage, 'multiple_weddings']]);
-
-        $this->assertMatches(['Exklusiv'], 'usage[]=exclusive');
     }
 
     public function test_price_levels_combine_with_or(): void
@@ -282,32 +273,24 @@ final class ListingQueryTest extends KernelTestCase
         $this->assertMatches(['Mittel', 'Moderat'], 'price[]=medium&price[]=moderate');
     }
 
-    public function test_no_curfew_means_the_venue_said_so(): void
+    public function test_the_event_filters_combine_with_and(): void
     {
-        $this->venue('Ohne', change: static fn (Venue $venue) => $venue->describePartyRules(null, false, null));
-        $this->venue('Mit', change: static fn (Venue $venue) => $venue->describePartyRules(null, true, null));
-        $this->venue('Unbekannt');
+        $amenities = [[TermGroup::Amenity, 'overnight'], [TermGroup::Amenity, 'dance_floor']];
+        $this->venue('Alles', terms: $amenities, change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
+        $this->venue('Ohne Preis', terms: $amenities);
+        $this->venue('Anderer Preis', terms: $amenities, change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive));
+        $this->venue('Ohne Tanzfläche', terms: [[TermGroup::Amenity, 'overnight']], change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
 
-        $this->assertMatches(['Ohne'], 'curfew=none');
+        $this->assertMatches(['Alles'], 'price[]=medium&amenity[]=overnight&amenity[]=dance_floor');
     }
 
-    public function test_the_wedding_filters_combine_with_and(): void
+    public function test_the_retired_wedding_parameters_filter_nothing(): void
     {
-        $this->venue('Alles', terms: [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight']], change: static function (Venue $venue): void {
-            $venue->changePriceLevel(PriceLevel::Medium);
-            $venue->describePartyRules(null, false, null);
-        });
-        $this->venue('Ohne Preis', terms: [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight']], change: static fn (Venue $venue) => $venue->describePartyRules(null, false, null));
-        $this->venue('Mit Sperrstunde', terms: [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight']], change: static function (Venue $venue): void {
-            $venue->changePriceLevel(PriceLevel::Medium);
-            $venue->describePartyRules(null, true, null);
-        });
-        $this->venue('Ohne Kapelle', terms: [[TermGroup::Amenity, 'overnight']], change: static function (Venue $venue): void {
-            $venue->changePriceLevel(PriceLevel::Medium);
-            $venue->describePartyRules(null, false, null);
-        });
+        $this->venue('Mit Preis', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
+        $this->venue('Ohne Preis');
 
-        $this->assertMatches(['Alles'], 'price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight');
+        $this->assertMatches(['Mit Preis', 'Ohne Preis'], 'curfew=none&ceremony[]=chapel&usage[]=exclusive');
+        $this->assertMatches(['Mit Preis'], 'curfew=none&ceremony[]=chapel&usage[]=exclusive&price[]=medium');
     }
 
     #[DataProvider('accessThresholds')]
@@ -444,7 +427,7 @@ final class ListingQueryTest extends KernelTestCase
             ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive))
             ->create(['name' => 'Schloss Mit Fakten']);
         VenueTranslationFactory::new()
-            ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding('Romantisch', null, null, null))
+            ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeEvent('Romantisch', null, null))
             ->create(['venue' => $venue]);
         $this->venue('Ohne Fakten');
 

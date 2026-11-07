@@ -31,7 +31,7 @@ final class FilterDataQueryTest extends KernelTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const KEYS = ['place', 'town', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height', 'price.moderate', 'price.medium', 'price.exclusive', 'curfew'];
+    private const KEYS = ['place', 'town', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height', 'price.moderate', 'price.medium', 'price.exclusive'];
 
     private EntityManagerInterface $em;
     private Connection $connection;
@@ -124,41 +124,29 @@ final class FilterDataQueryTest extends KernelTestCase
         self::assertFalse($this->query->has('price.exclusive'));
     }
 
-    public function test_curfew_needs_a_venue_that_stated_it_has_none(): void
-    {
-        $this->venue();
-        $this->venue(static fn (Venue $venue) => $venue->describePartyRules(null, true, null));
-        self::assertFalse($this->query->has('curfew'), 'NULL and TRUE are no data.');
-
-        $this->venue(static fn (Venue $venue) => $venue->describePartyRules(null, false, null));
-        $this->query->reset();
-
-        self::assertTrue($this->query->has('curfew'));
-    }
-
     public function test_a_code_outside_filter_codes_never_shows(): void
     {
         $venue = $this->venue();
         foreach (['tent', 'overnight', 'wheelchair_access'] as $code) {
             VenueTermFactory::new()->term(TermGroup::Amenity, $code)->create(['venue' => $venue]);
         }
-        VenueTermFactory::new()->term(TermGroup::Usage, 'multiple_weddings')->create(['venue' => $venue]);
 
         self::assertSame(['overnight', 'wheelchair_access'], $this->query->terms(TermGroup::Amenity));
-        self::assertSame([], $this->query->terms(TermGroup::Usage));
     }
 
     public function test_an_active_listed_code_without_data_is_kept(): void
     {
         self::assertSame(['lake_view'], $this->query->terms(TermGroup::Amenity, ['lake_view']));
-        self::assertSame(['exclusive'], $this->query->terms(TermGroup::Usage, ['exclusive']));
     }
 
-    public function test_usage_offers_only_exclusive(): void
+    public function test_amenities_come_in_vocabulary_order(): void
     {
-        VenueTermFactory::new()->term(TermGroup::Usage, 'exclusive')->create(['venue' => $this->venue()]);
+        $venue = $this->venue();
+        foreach (['wheelchair_access', 'dance_floor', 'overnight', 'panorama'] as $code) {
+            VenueTermFactory::new()->term(TermGroup::Amenity, $code)->create(['venue' => $venue]);
+        }
 
-        self::assertSame(['exclusive'], $this->query->terms(TermGroup::Usage));
+        self::assertSame(['overnight', 'panorama', 'dance_floor', 'wheelchair_access'], $this->query->terms(TermGroup::Amenity));
     }
 
     public function test_filter_codes_exist_in_the_vocabulary(): void
@@ -299,10 +287,15 @@ final class FilterDataQueryTest extends KernelTestCase
 
     public function test_a_group_that_is_no_listing_filter_has_no_terms(): void
     {
-        VenueTermFactory::new()->term(TermGroup::Language, 'de')->create(['venue' => $this->venue()]);
+        $venue = $this->venue();
+        VenueTermFactory::new()->term(TermGroup::Language, 'de')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Catering, 'buffet')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::SuitableFor, 'seminar')->create(['venue' => $venue]);
 
-        self::assertSame([], $this->query->terms(TermGroup::Language));
-        self::assertSame([], $this->query->terms(TermGroup::Language, ['de']));
+        foreach ([[TermGroup::Language, 'de'], [TermGroup::Catering, 'buffet'], [TermGroup::SuitableFor, 'seminar']] as [$group, $code]) {
+            self::assertSame([], $this->query->terms($group), $group->value);
+            self::assertSame([], $this->query->terms($group, [$code]), $group->value);
+        }
     }
 
     public function test_an_unknown_filter_throws(): void

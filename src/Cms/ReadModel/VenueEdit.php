@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Cms\ReadModel;
 
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 
 /**
@@ -15,7 +14,7 @@ use App\Venues\ValueObject\PriceLevel;
  * - `loadedAt` is `EXTRACT(EPOCH FROM updated_at)::bigint` as a string, read from the database because
  *   `updated_at` is `TIMESTAMP(0)` and rounds what PHP set (Probe 7); `VenueEditing::open()` compares it.
  * - Decimals and coordinates are strings as Postgres prints them (`'0.9'`, `'47.3769'`), so an idle save
- *   sends back exactly what was loaded (P5). `curfewAt` is `H:i`.
+ *   sends back exactly what was loaded (P5).
  * - `town` is "8706 Meilen" (`TownText::format()`), null without a town. `cantonCode` is the stored one,
  *   which is the town's when there is a town.
  * - `coordinatesFromTown` (L1): the coordinates are the town centre ("Ortsmitte übernehmen"), so the public
@@ -62,9 +61,6 @@ final readonly class VenueEdit
         public ?PriceLevel $priceLevel,
         public ?int $capacitySeated,
         public ?int $capacityStanding,
-        public ?PartyAllowed $party,
-        public ?bool $hasCurfew,
-        public ?string $curfewAt,
         public array $translations,
         public array $terms,
         public array $mainTerms,

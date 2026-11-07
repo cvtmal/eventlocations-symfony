@@ -43,10 +43,10 @@ final class WizardStepTest extends TestCase
         self::assertSame(WizardStep::Check, WizardStep::derive([]));
     }
 
-    public function test_wedding_is_never_derived(): void
+    public function test_event_is_never_derived(): void
     {
         foreach (self::gaps() as [$missing]) {
-            self::assertNotSame(WizardStep::Wedding, WizardStep::derive($missing));
+            self::assertNotSame(WizardStep::Event, WizardStep::derive($missing));
         }
     }
 
@@ -78,10 +78,10 @@ final class WizardStepTest extends TestCase
         self::assertSame(WizardStep::Check, WizardStep::Check->next());
     }
 
-    public function test_terms_and_wedding_share_a_position(): void
+    public function test_terms_and_event_share_a_position(): void
     {
         self::assertSame(3, WizardStep::Terms->position());
-        self::assertSame(3, WizardStep::Wedding->position());
+        self::assertSame(3, WizardStep::Event->position());
         self::assertSame(
             [2, 3, 3, 4, 5, 6],
             array_map(static fn (WizardStep $step): int => $step->position(), WizardStep::cases()),
@@ -97,11 +97,20 @@ final class WizardStepTest extends TestCase
         );
     }
 
+    public function test_the_event_step_is_the_veranstaltung_page_and_the_wedding_page_is_gone(): void
+    {
+        self::assertSame(WizardStep::Event, WizardStep::from('veranstaltung'));
+        self::assertNotContains('hochzeit', array_map(static fn (WizardStep $step): string => $step->value, WizardStep::cases()));
+        self::assertSame('veranstaltung', LocationCard::Event->anchor());
+        self::assertSame('portal_location_event', LocationCard::Event->route());
+        self::assertSame('venue_event', LocationCard::Event->formName());
+    }
+
     public function test_only_the_card_steps_have_a_card(): void
     {
         self::assertSame(LocationCard::Texts, WizardStep::Texts->card());
         self::assertSame(LocationCard::Terms, WizardStep::Terms->card());
-        self::assertSame(LocationCard::Wedding, WizardStep::Wedding->card());
+        self::assertSame(LocationCard::Event, WizardStep::Event->card());
         self::assertSame(LocationCard::Contact, WizardStep::Contact->card());
         self::assertNull(WizardStep::Photos->card());
         self::assertNull(WizardStep::Check->card());

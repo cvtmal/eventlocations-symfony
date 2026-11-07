@@ -1,7 +1,10 @@
 # Strings of the Venues module. Keys: <context>.<description>.
 # Vocabulary keys are <context>.<case value> (App\Venues\ValueObject\*) and
-# term.<group>.<code> (rows of taxonomy_terms). The labels of the seven filter groups are
-# eventlokale's, copied 1:1 (FI-4); the six groups of #31 use the owner form's wording (S14).
+# term.<group>.<code> (rows of taxonomy_terms, in position order). The ten groups and their
+# terms are the vocabulary of event-vocabulary (F3): seven filter groups, then the event facts
+# amenity, catering and language of the detail page's "Angaben zur Location".
+# The labels of setting, building, infrastructure and surroundings are still the ones copied 1:1 from
+# eventlokale (FI-4); the copy rewrite (F7b) or the owner decides whether to reword them.
 
 term_group:
     setting: Lage
@@ -11,11 +14,8 @@ term_group:
     furniture: Mobiliar
     technology: Technik
     surroundings: Umgebung
-    ceremony: Trauung
     amenity: Ausstattung
-    dining: Essen
-    vendor: Dienstleister
-    usage: Nutzung
+    catering: Catering
     language: Sprachen
 
 term:
@@ -44,7 +44,6 @@ term:
         garden_greenhouse: 'Garten, Treibhaus'
         hangar_shipyard: 'Hangar, Werft'
         historic_site: Historische Stätte
-        wedding_venue: Hochzeitslocation
         cave_fortress: 'Höhle, Festung'
         hotel: 'Hotel, Seminarhotel'
         cinema: Kino
@@ -66,31 +65,25 @@ term:
         tent: 'Zelt, Zirkuszelt'
         guild_hall: Zunfthaus
     suitable_for:
-        wedding: Hochzeit
-        family_celebration: Familienfeier
-        birthday: Geburtstag
-        club_event: Vereinsanlass
-        party_celebration: 'Party, Feier'
-        class_reunion: Klassentreffen
-        private_event: Privatanlass
-        meeting: Meeting
-        conference: Tagung
-        congress: Kongress
         corporate_event: Firmenanlass
-        general_assembly: 'Versammlung, GV'
-        apero: Apéro
+        seminar: Seminar
+        conference: 'Tagung / Konferenz'
+        workshop: Workshop
+        meeting: 'Sitzung / Meeting'
+        product_presentation: Produktpräsentation
+        general_assembly: Generalversammlung
         team_event: Teamevent
         christmas_party: Weihnachtsfeier
-        concert: Konzert
-        theatre: Theater
+        club_event: Vereinsanlass
+        apero: Apéro
+        birthday: Geburtstag
+        family_celebration: Familienfeier
+        wedding: Hochzeit
         party: Party
-        sports_event: Sportanlass
-        trade_fair: Messe
-        public_event: Öffentlicher Anlass
+        concert: Konzert
+        exhibition: Ausstellung
     infrastructure:
-        wifi: 'WLAN / Internet'
         air_conditioning: Klimaanlage
-        stage: Bühne
         shower: Dusche
         cloakroom: Garderobe
         heating_ventilation: 'Heizung & Lüftung'
@@ -98,17 +91,18 @@ term:
         backstage_rooms: Backstage Räume
         lectern: Rednerpult
     furniture:
-        flipchart: Flipchart
-        magnetic_board: Magnetwand
-        moderation_kit: Moderatorenkoffer
         chairs: Stühle
         tables: Tische
+        standing_tables: Stehtische
     technology:
-        sound_system: Tontechnik
         projector_screen: 'Beamer / Leinwand'
+        wifi: WLAN
+        sound_system: 'Mikrofon / Tonanlage'
+        video_conferencing: Videokonferenz
+        stage_lighting: 'Bühne / Licht'
+        flipchart_moderation: 'Flipchart / Moderationsmaterial'
+        tv_screens: 'Bildschirm / TV'
         interpreting_system: Dolmetscheranlage
-        lighting_system: Lichtanlage
-        tv_screens: 'TV / Screens'
     surroundings:
         garden: Garten
         spa_wellness: 'Spa & Wellness'
@@ -116,13 +110,6 @@ term:
         playground: Spielplatz
         barbecue: Grill
         golf: Golf
-    ceremony:
-        civil_ceremony: Zivile Trauung möglich
-        free_ceremony: Freie Trauung möglich
-        church_nearby: Kirche in Gehdistanz
-        rain_alternative: Schlechtwetter-Alternative vorhanden
-        registry_office: Offizielles Standesamt-Lokal
-        chapel: Kapelle
     amenity:
         overnight: Übernachtung
         panorama: Panoramablick
@@ -131,41 +118,22 @@ term:
         kids_room: Kinderraum
         outdoor_dining: Essen im Freien
         parking: Parkplätze
-        parking_area: Parkbereich
-        own_kitchen: Eigene Küche
-        catering_available: Catering möglich
-        external_caterers: Externe Caterer erlaubt
-        corkage: Zapfengeld
         wheelchair_access: Rollstuhlgängig
         public_transport: ÖV-Anbindung
         tent: Zelt
-    dining:
-        vegetarian: Vegetarisch
-        vegan: Vegan
-        gluten_free: Glutenfrei
-        organic: Bio
-        allergy_friendly: Allergiker
-        diabetic: Diabetiker
-        halal: Halal
-        kosher: Koscher
-        kids_menu: Kindermenü
-        wedding_cake: Hochzeitstorte
+    catering:
+        in_house: Hauseigenes Catering
+        external_allowed: Externes Catering erlaubt
+        bar_drinks: 'Getränke / Bar'
+        byo_drinks: Eigene Getränke erlaubt
         buffet: Buffet
-        grill: Grill
-        anything_possible: Alles möglich
-    vendor:
-        flowers_decor: 'Blumen/Deko'
-        photography: Fotografie
-        videography: Videografie
-        officiant: Trauredner
-        dj: DJs
-        musicians: Musiker
-        furniture: Mobiliar
-        wedding_planner: Weddingplanner
-    usage:
-        exclusive: Exklusiv (nur eine Hochzeit)
-        multiple_weddings: Nicht exklusiv (mehrere Veranstaltungen gleichzeitig möglich)
-        wedding_and_regular: Hochzeit + Normalbetrieb
+        finger_food: 'Apéro riche / Fingerfood'
+        coffee_break: 'Kaffeepausen / Pausenverpflegung'
+        grill: 'Grill / BBQ'
+        vegetarian: Vegetarisch möglich
+        vegan: Vegan möglich
+        gluten_free: Glutenfrei möglich
+        allergy_friendly: Allergiker-Menüs möglich
     language:
         de: Deutsch
         en: Englisch
@@ -196,11 +164,6 @@ price_level:
     moderate: Moderat
     medium: Mittel
     exclusive: Exklusiv
-
-party:
-    'yes': Ja
-    limited: Mit Einschränkung
-    'no': Nein
 
 own_catering:
     allowed: Eigenes Catering möglich
@@ -276,17 +239,13 @@ detail:
         link: Bewertungen auf Google Maps ansehen
     facts:
         heading: Ausstattung und Eignung
-    wedding:
-        heading: Hochzeit
+    event:
+        heading: Angaben zur Location
         price_level: Preisniveau
         ambience: Ambiente
         capacity: Sitzplätze und Stehplätze
         seated: '{count} Sitzplätze'
         standing: '{count} Stehplätze'
-        party: Party und Sperrstunde
-        no_curfew: Keine Sperrstunde
-        curfew_at: 'Sperrstunde {time} Uhr'
-        curfew_unknown_time: Sperrstunde vorhanden
         opening_hours: Öffnungszeiten
     rooms:
         heading: Räume

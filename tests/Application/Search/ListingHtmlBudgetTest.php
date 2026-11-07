@@ -32,8 +32,8 @@ use function Zenstruck\Foundry\Persistence\repository;
 /**
  * S11: the listing HTML stays ≤ 60 KB gzip in the worst case, a full page of 48 cards with
  * eight photos (three widths × three formats each), a 200-character summary, both tags (a price
- * level, all three across the page, and a 60-character ambience) and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 90
- * checkboxes (83 terms, 3 access, 3 price, 1 curfew) and 21 options render. All 48 venues sit in
+ * level, all three across the page, and a 60-character ambience) and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 79
+ * checkboxes (73 terms, 3 access, 3 price) and 21 options render. All 48 venues sit in
  * different towns of one canton, so the same page also renders as that canton's landing page
  * (#17: breadcrumb, intro, canton chip, its JSON-LD), which must fit the same budget. Staff
  * texts (#26) are at their maximum: a 600-character listing intro and canton intro, the
@@ -76,10 +76,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
                     ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel($price));
                 if (1 === $i) {
                     $factory = $factory->withRoomFacts(6, 300, '5.0')
-                        ->afterInstantiate(static function (Venue $venue): void {
-                            $venue->changeDistances('0.5', 'Bahnhof', '5.0', null, '20.0', null);
-                            $venue->describePartyRules(null, false, null);
-                        });
+                        ->afterInstantiate(static fn (Venue $venue) => $venue->changeDistances('0.5', 'Bahnhof', '5.0', null, '20.0', null));
                 }
                 $venue = $factory->create([
                     'name' => 'Schlossgut Hohenrain am See '.$i,
@@ -89,7 +86,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
                     'town' => repository(Town::class)->find($towns[$i - 1]),
                 ]);
                 VenueTranslationFactory::new()
-                    ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null))
+                    ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeEvent($ambience, null, null))
                     ->create(['venue' => $venue, 'summary' => mb_substr(str_repeat('Hochzeit am See mit Garten. ', 8), 0, 200)]);
                 for ($position = 1; $position <= 8; ++$position) {
                     VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
@@ -121,7 +118,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
         self::assertCount(ListingQuery::PER_PAGE, $crawler->filter('.card'));
         self::assertCount(ListingQuery::PER_PAGE * 8, $crawler->filter('.listing__results img'));
         self::assertCount(ListingQuery::PER_PAGE * 2, $crawler->filter('.card__tags .tag'));
-        self::assertCount(90, $crawler->filter('#filter-more input[type="checkbox"]'));
+        self::assertCount(79, $crawler->filter('#filter-more input[type="checkbox"]'));
         self::assertCount(21, $crawler->filter('#filter-more option'));
 
         $html = (string) $client->getResponse()->getContent();

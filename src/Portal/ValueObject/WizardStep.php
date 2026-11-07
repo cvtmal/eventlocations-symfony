@@ -6,19 +6,19 @@ namespace App\Portal\ValueObject;
 
 /**
  * The pages of the location wizard (#45), in order, the case's value being the URL segment. There is no wizard table:
- * the step a manager lands on is derived from what the location lacks. `hochzeit` is never derived, because no gap
+ * the step a manager lands on is derived from what the location lacks. `veranstaltung` is never derived, because no gap
  * belongs to it, and it shares its progress position with `ausstattung`.
  */
 enum WizardStep: string
 {
     case Texts = 'texte';
     case Terms = 'ausstattung';
-    case Wedding = 'hochzeit';
+    case Event = 'veranstaltung';
     case Photos = 'fotos';
     case Contact = 'kontakt';
     case Check = 'pruefen';
 
-    public const string REQUIREMENT = 'texte|ausstattung|hochzeit|fotos|kontakt|pruefen';
+    public const string REQUIREMENT = 'texte|ausstattung|veranstaltung|fotos|kontakt|pruefen';
     public const int LAST_POSITION = 6;
 
     /** The gap codes in the wizard's order: the first one missing decides. */
@@ -52,8 +52,8 @@ enum WizardStep: string
     {
         return match ($this) {
             self::Texts => self::Terms,
-            self::Terms => self::Wedding,
-            self::Wedding => self::Photos,
+            self::Terms => self::Event,
+            self::Event => self::Photos,
             self::Photos => self::Contact,
             self::Contact, self::Check => self::Check,
         };
@@ -63,7 +63,7 @@ enum WizardStep: string
     {
         return match ($this) {
             self::Texts => 2,
-            self::Terms, self::Wedding => 3,
+            self::Terms, self::Event => 3,
             self::Photos => 4,
             self::Contact => 5,
             self::Check => 6,
@@ -75,7 +75,7 @@ enum WizardStep: string
         return match ($this) {
             self::Texts => LocationCard::Texts,
             self::Terms => LocationCard::Terms,
-            self::Wedding => LocationCard::Wedding,
+            self::Event => LocationCard::Event,
             self::Contact => LocationCard::Contact,
             self::Photos, self::Check => null,
         };

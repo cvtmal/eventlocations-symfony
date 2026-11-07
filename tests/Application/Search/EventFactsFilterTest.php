@@ -20,11 +20,11 @@ use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * The owner's facts on the listing (#33, FI-7, LP-7): the wedding group of the "weitere Filter"
- * overlay and the card tags. Set up like MoreFilterTest: own venues, the test's connection,
- * rolled back afterwards.
+ * The venue's event facts on the listing (#33, FI-7, LP-7): the price and amenity group of the
+ * "weitere Filter" overlay and the card tags. Set up like MoreFilterTest: own venues, the test's
+ * connection, rolled back afterwards.
  */
-final class WeddingFilterTest extends WebTestCase
+final class EventFactsFilterTest extends WebTestCase
 {
     use Factories;
     use ImportsTownDataset;
@@ -54,20 +54,14 @@ final class WeddingFilterTest extends WebTestCase
     public static function filterParams(): iterable
     {
         yield 'price' => ['price[]=medium', '#filter-more-price-medium[checked]'];
-        yield 'ceremony' => ['ceremony[]=chapel', '#filter-more-ceremony-chapel[checked]'];
         yield 'amenity' => ['amenity[]=overnight', '#filter-more-amenity-overnight[checked]'];
-        yield 'usage' => ['usage[]=exclusive', '#filter-more-usage-exclusive[checked]'];
-        yield 'curfew' => ['curfew=none', '#filter-more-curfew-none[checked]'];
     }
 
     #[DataProvider('filterParams')]
     public function test_each_param_filters_and_renders_its_control_ticked(string $query, string $control): void
     {
-        $this->weddingVenue('Schloss Seeblick');
-        $this->venue(['name' => 'Remise Anderswo'], static function (Venue $venue): void {
-            $venue->changePriceLevel(PriceLevel::Moderate);
-            $venue->describePartyRules(null, true, null);
-        });
+        $this->eventVenue('Schloss Seeblick');
+        $this->venue(['name' => 'Remise Anderswo'], static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Moderate));
 
         $crawler = $this->get('/hochzeitslocations?'.$query);
 
@@ -79,36 +73,44 @@ final class WeddingFilterTest extends WebTestCase
     public function test_values_hide_one_by_one(): void
     {
         $venue = $this->venue([], static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
-        $this->terms($venue, [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight']]);
+        $this->terms($venue, [[TermGroup::Amenity, 'overnight']]);
 
         $crawler = $this->get('/hochzeitslocations');
 
         self::assertSame(['medium'], $this->values($crawler, 'price[]'));
-        self::assertSame(['chapel'], $this->values($crawler, 'ceremony[]'));
         self::assertSame(['overnight'], $this->values($crawler, 'amenity[]'));
-        self::assertSame([], $this->values($crawler, 'usage[]'));
-        self::assertSame([], $this->values($crawler, 'curfew'));
-        self::assertSame(['Preisniveau', 'Trauung', 'Feier und Ausstattung'], $this->legends($crawler->filter('#filter-more')));
+        self::assertSame(['Preisniveau', 'Ausstattung'], $this->legends($crawler->filter('#filter-more')));
     }
 
-    public function test_a_curfew_only_shows_for_a_venue_that_stated_none(): void
+    /**
+     * @return iterable<string, array{PriceLevel|null, list<array{TermGroup, string}>, list<string>}>
+     */
+    public static function oneSection(): iterable
     {
-        $this->venue([], static fn (Venue $venue) => $venue->describePartyRules(null, true, null));
-        $this->venue();
-        self::assertCount(0, $this->get('/hochzeitslocations')->filter('#filter-more-curfew-none'));
+        yield 'a price level only' => [PriceLevel::Medium, [], ['Preisniveau']];
+        yield 'an amenity only' => [null, [[TermGroup::Amenity, 'overnight']], ['Ausstattung']];
+    }
 
-        $this->venue([], static fn (Venue $venue) => $venue->describePartyRules(null, false, null));
+    /**
+     * @param list<array{TermGroup, string}> $terms
+     * @param list<string>                   $legends
+     */
+    #[DataProvider('oneSection')]
+    public function test_a_section_without_values_disappears_with_its_legend(?PriceLevel $price, array $terms, array $legends): void
+    {
+        $venue = $this->venue([], null === $price ? null : static fn (Venue $venue) => $venue->changePriceLevel($price));
+        $this->terms($venue, $terms);
+
         $crawler = $this->get('/hochzeitslocations');
 
-        self::assertCount(1, $crawler->filter('#filter-more-curfew-none'));
-        self::assertSame('Keine Sperrstunde', $crawler->filter('label[for="filter-more-curfew-none"]')->text());
-        self::assertSame(['Feier und Ausstattung'], $this->legends($crawler->filter('#filter-more')));
+        self::assertSame($legends, $this->legends($crawler->filter('#filter-more')));
+        self::assertCount(2, $crawler->filter('.filter-more__group'), 'Name and the event group.');
     }
 
     public function test_without_facts_the_group_is_absent_and_only_the_name_shows(): void
     {
         $venue = $this->venue();
-        $this->terms($venue, [[TermGroup::Amenity, 'tent'], [TermGroup::Usage, 'multiple_weddings'], [TermGroup::Dining, 'vegan']]);
+        $this->terms($venue, [[TermGroup::Amenity, 'tent'], [TermGroup::Catering, 'vegan'], [TermGroup::SuitableFor, 'seminar']]);
 
         $crawler = $this->get('/hochzeitslocations');
 
@@ -121,48 +123,62 @@ final class WeddingFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight');
+        $crawler = $this->get('/hochzeitslocations?price[]=medium&amenity[]=overnight');
 
-        foreach (['price-medium', 'curfew-none', 'ceremony-chapel', 'amenity-overnight'] as $id) {
+        foreach (['price-medium', 'amenity-overnight'] as $id) {
             self::assertCount(1, $crawler->filter('#filter-more-'.$id.'[checked]'), $id);
         }
         self::assertSame([], $this->names($crawler));
         self::assertCount(0, $crawler->filter('#filter-more input[type="hidden"]'));
-        self::assertSame(['weitere Filter (4)'], $this->chips($crawler));
+        self::assertSame(['weitere Filter (2)'], $this->chips($crawler));
     }
 
     public function test_codes_without_a_control_change_neither_results_nor_the_pill(): void
     {
         $venue = $this->venue(['name' => 'Schloss Seeblick']);
-        $this->terms($venue, [[TermGroup::Amenity, 'tent'], [TermGroup::Usage, 'multiple_weddings']]);
+        $this->terms($venue, [[TermGroup::Amenity, 'tent']]);
         $this->venue(['name' => 'Remise Anderswo']);
 
-        $crawler = $this->get('/hochzeitslocations?amenity[]=tent&usage[]=multiple_weddings');
+        $crawler = $this->get('/hochzeitslocations?amenity[]=tent');
 
         self::assertCount(2, $crawler->filter('.card'));
         self::assertSame([], $this->chips($crawler));
-        self::assertCount(0, $crawler->filter('#filter-more-amenity-tent, #filter-more-usage-multiple_weddings'));
+        self::assertCount(0, $crawler->filter('#filter-more-amenity-tent'));
         self::assertSame('/hochzeitslocations', $crawler->filter('#filter-more a[data-overlay-clear]')->attr('href'));
+    }
+
+    public function test_the_retired_wedding_parameters_change_neither_results_nor_the_pill(): void
+    {
+        $this->eventVenue('Schloss Seeblick');
+        $this->venue(['name' => 'Remise Anderswo']);
+
+        $crawler = $this->get('/hochzeitslocations?curfew=none&ceremony[]=chapel&usage[]=exclusive');
+
+        self::assertCount(2, $crawler->filter('.card'));
+        self::assertSame([], $this->chips($crawler));
+        self::assertCount(0, $crawler->filter('#filter-more-curfew-none, #filter-more-ceremony-chapel, #filter-more-usage-exclusive'));
+        self::assertSame([], $this->hiddenState($crawler));
     }
 
     public function test_the_group_comes_first_after_the_name(): void
     {
-        $venue = $this->weddingVenue('Schloss Seeblick');
-        $this->terms($venue, [[TermGroup::Setting, 'lake'], [TermGroup::Infrastructure, 'wifi']]);
+        $venue = $this->eventVenue('Schloss Seeblick');
+        $this->terms($venue, [[TermGroup::Setting, 'lake'], [TermGroup::Infrastructure, 'air_conditioning']]);
 
         $crawler = $this->get('/hochzeitslocations');
 
         $groups = $crawler->filter('.filter-more__group');
         self::assertCount(4, $groups);
         self::assertCount(1, $groups->eq(0)->filter('#filter-more-q'));
-        self::assertSame(['Preisniveau', 'Trauung', 'Feier und Ausstattung'], $this->legends($groups->eq(1)));
+        self::assertSame(['Preisniveau', 'Ausstattung'], $this->legends($groups->eq(1)));
+        self::assertCount(1, $crawler->filter('.filter-more__group--event'));
         self::assertSame(['Lage'], $this->legends($groups->eq(2)));
         self::assertSame(['Infrastruktur'], $this->legends($groups->eq(3)));
     }
 
-    public function test_the_feier_section_orders_curfew_usage_then_amenities(): void
+    public function test_the_amenities_follow_the_vocabulary_order_and_come_after_the_prices(): void
     {
-        $venue = $this->weddingVenue('Schloss Seeblick');
+        $venue = $this->eventVenue('Schloss Seeblick');
         $this->terms($venue, [[TermGroup::Amenity, 'wheelchair_access'], [TermGroup::Amenity, 'dance_floor']]);
         $this->venue([], static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive));
         $this->venue([], static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Moderate));
@@ -170,26 +186,26 @@ final class WeddingFilterTest extends WebTestCase
         $crawler = $this->get('/hochzeitslocations');
 
         self::assertSame(
-            ['curfew=none', 'usage[]=exclusive', 'amenity[]=overnight', 'amenity[]=dance_floor', 'amenity[]=wheelchair_access'],
+            ['amenity[]=overnight', 'amenity[]=dance_floor', 'amenity[]=wheelchair_access'],
             $crawler->filter('#filter-more fieldset')->last()->filter('input')->each(
                 static fn (Crawler $input): string => $input->attr('name').'='.$input->attr('value'),
             ),
         );
-        self::assertSame('Exklusiv (nur eine Hochzeit)', $crawler->filter('label[for="filter-more-usage-exclusive"]')->text());
+        self::assertSame('Übernachtung', $crawler->filter('label[for="filter-more-amenity-overnight"]')->text());
         self::assertSame(['Moderat', 'Mittel', 'Exklusiv'], $crawler->filter('#filter-more input[name="price[]"] + label')->each(
             static fn (Crawler $label): string => $label->text(),
         ));
     }
 
-    public function test_the_pill_counts_params_and_its_links_drop_all_five(): void
+    public function test_the_pill_counts_params_and_its_links_drop_both(): void
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&price[]=medium&price[]=moderate&curfew=none');
-        self::assertSame(['Zürich', 'weitere Filter (2)'], $this->chips($crawler));
+        $crawler = $this->get('/hochzeitslocations?canton=zh&price[]=medium&price[]=moderate');
+        self::assertSame(['Zürich', 'weitere Filter (1)'], $this->chips($crawler));
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight&usage[]=exclusive');
-        self::assertSame(['Zürich', 'weitere Filter (5)'], $this->chips($crawler));
+        $crawler = $this->get('/hochzeitslocations?canton=zh&price[]=medium&amenity[]=overnight');
+        self::assertSame(['Zürich', 'weitere Filter (2)'], $this->chips($crawler));
         self::assertSame('/hochzeitslocations?canton=zh', $crawler->filter('.chip--more a')->attr('href'));
         self::assertSame('/hochzeitslocations?canton=zh', $crawler->filter('#filter-more a[data-overlay-clear]')->attr('href'));
     }
@@ -198,22 +214,17 @@ final class WeddingFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight&usage[]=exclusive');
+        $crawler = $this->get('/hochzeitslocations?price[]=medium&amenity[]=overnight');
 
-        self::assertSame(
-            ['ceremony[]=chapel', 'amenity[]=overnight', 'usage[]=exclusive', 'price[]=medium', 'curfew=none'],
-            $crawler->filter('#filter-region-form input[type="hidden"]:not([data-region-value])')->each(
-                static fn (Crawler $input): string => $input->attr('name').'='.$input->attr('value'),
-            ),
-        );
+        self::assertSame(['amenity[]=overnight', 'price[]=medium'], $this->hiddenState($crawler));
     }
 
     public function test_the_live_count_equals_the_rendered_total(): void
     {
-        $this->weddingVenue('Schloss Seeblick');
-        $this->weddingVenue('Gut Seeblick');
+        $this->eventVenue('Schloss Seeblick');
+        $this->eventVenue('Gut Seeblick');
         $this->venue(['name' => 'Remise Anderswo']);
-        $query = 'price[]=medium&price[]=exclusive&curfew=none&amenity[]=overnight&usage[]=exclusive&ceremony[]=chapel';
+        $query = 'price[]=medium&price[]=exclusive&amenity[]=overnight';
 
         $total = $this->get('/hochzeitslocations?'.$query)->filter('.card')->count();
         $this->client->request('GET', '/_search/count?'.$query);
@@ -229,10 +240,10 @@ final class WeddingFilterTest extends WebTestCase
         $this->venue(
             ['name' => 'Schloss Beides'],
             static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium),
-            static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null),
+            static fn (VenueTranslation $translation) => $translation->describeEvent($ambience, null, null),
         );
         $this->venue(['name' => 'Gut Preis'], static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive));
-        $this->venue(['name' => 'Remise Stimmung'], null, static fn (VenueTranslation $translation) => $translation->describeWedding('Rustikal', null, null, null));
+        $this->venue(['name' => 'Remise Stimmung'], null, static fn (VenueTranslation $translation) => $translation->describeEvent('Rustikal', null, null));
         $this->venue(['name' => 'Scheune Ohne']);
 
         $cards = [];
@@ -301,6 +312,18 @@ final class WeddingFilterTest extends WebTestCase
     }
 
     /**
+     * The region form's hidden inputs that carry the other filters (not its own region values).
+     *
+     * @return list<string>
+     */
+    private function hiddenState(Crawler $crawler): array
+    {
+        return $crawler->filter('#filter-region-form input[type="hidden"]:not([data-region-value])')->each(
+            static fn (Crawler $input): string => $input->attr('name').'='.$input->attr('value'),
+        );
+    }
+
+    /**
      * A published venue with a German translation.
      *
      * @param array<string, mixed>                    $attributes
@@ -318,15 +341,12 @@ final class WeddingFilterTest extends WebTestCase
     }
 
     /**
-     * A venue that matches one value of every new parameter.
+     * A venue that matches one value of every parameter of the group: a medium price and the amenity "overnight".
      */
-    private function weddingVenue(string $name): Venue
+    private function eventVenue(string $name): Venue
     {
-        $venue = $this->venue(['name' => $name], static function (Venue $venue): void {
-            $venue->changePriceLevel(PriceLevel::Medium);
-            $venue->describePartyRules(null, false, null);
-        });
-        $this->terms($venue, [[TermGroup::Ceremony, 'chapel'], [TermGroup::Amenity, 'overnight'], [TermGroup::Usage, 'exclusive']]);
+        $venue = $this->venue(['name' => $name], static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
+        $this->terms($venue, [[TermGroup::Amenity, 'overnight']]);
 
         return $venue;
     }

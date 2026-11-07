@@ -54,7 +54,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * The wizard's short pages (#45, POR-11). No step is stored: the bare URL derives where to go on from what the
  * location lacks, and a save always goes to the next step in fixed order, or a filled step would be jumped over
- * and `hochzeit` would never appear. Any step is open to a manager with access; a published location has left.
+ * and `veranstaltung` would never appear. Any step is open to a manager with access; a published location has left.
  */
 #[IsGranted(PortalVenueVoter::EDIT, subject: 'number')]
 #[Route('/konto/locations/{number}/einrichten', requirements: ['number' => VenueNumber::REQUIREMENT], options: [LocalizedRoutes::UNLOCALIZED => true])]

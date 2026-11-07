@@ -54,9 +54,6 @@ class VenueTranslation
     private ?string $capacityNote = null;
 
     #[ORM\Column(type: Types::STRING, length: 250, nullable: true)]
-    private ?string $partyNote = null;
-
-    #[ORM\Column(type: Types::STRING, length: 250, nullable: true)]
     private ?string $openingHours = null;
 
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true)]
@@ -113,13 +110,13 @@ class VenueTranslation
     }
 
     /**
-     * The owner's wedding texts (#31, S14), kept verbatim; NULL means unknown.
+     * The venue's own texts on the event (#31, S14; event-vocabulary, F3): ambience, capacity
+     * note and opening hours, kept verbatim; NULL means unknown.
      */
-    public function describeWedding(?string $ambience, ?string $capacityNote, ?string $partyNote, ?string $openingHours): void
+    public function describeEvent(?string $ambience, ?string $capacityNote, ?string $openingHours): void
     {
         $this->ambience = $ambience;
         $this->capacityNote = $capacityNote;
-        $this->partyNote = $partyNote;
         $this->openingHours = $openingHours;
         $this->updatedAt = new \DateTimeImmutable();
     }
@@ -183,11 +180,6 @@ class VenueTranslation
     public function capacityNote(): ?string
     {
         return $this->capacityNote;
-    }
-
-    public function partyNote(): ?string
-    {
-        return $this->partyNote;
     }
 
     public function openingHours(): ?string

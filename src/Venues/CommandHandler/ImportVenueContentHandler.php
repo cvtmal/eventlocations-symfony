@@ -362,7 +362,6 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         $venue->answerFaq($content->ownCatering, $content->daylight);
         $venue->changePriceLevel($content->priceLevel);
         $venue->changeSeatingCapacity($content->capacitySeated, $content->capacityStanding);
-        $venue->describePartyRules($content->party, $content->hasCurfew, $content->curfewAt);
         $venue->changeInstagram($content->instagram);
 
         return $venue;
@@ -405,7 +404,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
             } else {
                 $row->revise($slug, $text['summary'], $text['description'], $text['metaDescription'], $text['parkingText']);
             }
-            $row->describeWedding($text['ambience'], $text['capacityNote'], $text['partyNote'], $text['openingHours']);
+            $row->describeEvent($text['ambience'], $text['capacityNote'], $text['openingHours']);
             $row->changeRegion($text['region']);
         }
         foreach (array_diff_key($rows, $content->translations) as $row) {

@@ -99,7 +99,7 @@ final class HomeHtmlBudgetTest extends WebTestCase
                 'town' => $this->town('Stäfa'),
             ]);
         VenueTranslationFactory::new()
-            ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null))
+            ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeEvent($ambience, null, null))
             ->create(['venue' => $venue, 'summary' => mb_substr(str_repeat('Hochzeit am See mit Garten. ', 8), 0, 200)]);
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
     }

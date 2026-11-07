@@ -26,7 +26,7 @@ filter:
     more_name_placeholder: Name eingeben
     more_access: Erreichbarkeit
     more_price: Preisniveau
-    more_wedding: Feier und Ausstattung
+    more_amenity: Ausstattung
     more_buildings_all: Alle Gebäudearten
     more_buildings_close: Gebäudearten schliessen
     more_rooms_title: Raumangebot
@@ -167,10 +167,6 @@ landing:
             slug: historische-staette
             heading: 'Hochzeit an historischen Stätten'
             intro: '{count, plural, one {# Location} other {# Locations}} für deine Hochzeit an historischen Stätten: Vergleiche Fotos und Platz für Gäste und frag direkt an.'
-        wedding_venue:
-            slug: hochzeitslocation
-            heading: 'Reine Hochzeitslocations'
-            intro: '{count, plural, one {# reine Hochzeitslocation} other {# reine Hochzeitslocations}} für deinen grossen Tag: Vergleiche Fotos und Platz für Gäste und frag direkt an.'
         cave_fortress:
             slug: hoehle-festung
             heading: 'Hochzeit in Höhle oder Festung'

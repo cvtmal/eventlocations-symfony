@@ -9,7 +9,6 @@ use App\Geo\Entity\Town;
 use App\Shared\Uid\EntityId;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
@@ -47,9 +46,10 @@ use Doctrine\ORM\Mapping as ORM;
  * - `awaits_first_publish` (Q20) is set by CreateVenue only, the CMS's and the portal's way to
  *   a new venue, and cleared by every publish(), an import's included. An imported or seeded
  *   venue never has it, so only a venue created here can fire NewVenuePublished, and once.
- * - The owner facts (#31, S14) are all nullable, NULL meaning unknown, and the page shows
- *   nothing for them. `capacity_seated` / `capacity_standing` are the owner's numbers and are
- *   not checked against `capacity_max`. Their translated texts live in VenueTranslation.
+ * - The event facts (#31, S14; the party and curfew facts left with event-vocabulary, F3) are
+ *   all nullable, NULL meaning unknown, and the page shows nothing for them. `capacity_seated`
+ *   / `capacity_standing` are the owner's numbers and are not checked against `capacity_max`.
+ *   Their translated texts live in VenueTranslation.
  * - `google_place_id` (#53) is the only Google value we may store (Maps Platform Terms §3.2.3,
  *   Places API policies): Google's own element draws the rating in the browser. It is outside
  *   the content format, so no import writes it. `google_rating_hidden` is staff's switch to hide
@@ -152,15 +152,6 @@ class Venue
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $capacityStanding = null;
-
-    #[ORM\Column(type: Types::STRING, length: 20, nullable: true, enumType: PartyAllowed::class)]
-    private ?PartyAllowed $party = null;
-
-    #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
-    private ?bool $hasCurfew = null;
-
-    #[ORM\Column(type: Types::TIME_IMMUTABLE, nullable: true)]
-    private ?\DateTimeImmutable $curfewAt = null;
 
     #[ORM\Column(type: Types::STRING, length: 500, nullable: true)]
     private ?string $instagram = null;
@@ -361,18 +352,6 @@ class Venue
     {
         $this->capacitySeated = $seated;
         $this->capacityStanding = $standing;
-        $this->touch();
-    }
-
-    /**
-     * NULL means unknown. A curfew time needs $hasCurfew true (chk_venues_curfew_at); read it
-     * only as H:i, its date part means nothing.
-     */
-    public function describePartyRules(?PartyAllowed $party, ?bool $hasCurfew, ?\DateTimeImmutable $curfewAt): void
-    {
-        $this->party = $party;
-        $this->hasCurfew = $hasCurfew;
-        $this->curfewAt = $curfewAt;
         $this->touch();
     }
 
@@ -606,21 +585,6 @@ class Venue
     public function capacityStanding(): ?int
     {
         return $this->capacityStanding;
-    }
-
-    public function party(): ?PartyAllowed
-    {
-        return $this->party;
-    }
-
-    public function hasCurfew(): ?bool
-    {
-        return $this->hasCurfew;
-    }
-
-    public function curfewAt(): ?\DateTimeImmutable
-    {
-        return $this->curfewAt;
     }
 
     public function instagram(): ?string

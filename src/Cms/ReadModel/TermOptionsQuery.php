@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * The vocabulary the Merkmale and Hochzeit cards offer: every `taxonomy_terms` row, per group, in the order
+ * The vocabulary the Merkmale and Veranstaltung cards offer: every `taxonomy_terms` row, per group, in the order
  * of the public filter. Loaded once per request (two cards need it); `kernel.reset` by autoconfiguration.
  */
 final class TermOptionsQuery implements ResetInterface

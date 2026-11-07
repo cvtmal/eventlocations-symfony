@@ -14,9 +14,9 @@ use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\AnswerVenueFaq;
 use App\Venues\Command\ChangeVenueCapacity;
 use App\Venues\Command\ChangeVenueContact;
+use App\Venues\Command\ChangeVenueEventFacts;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
-use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\RelocateVenue;
 use App\Venues\Entity\Venue;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -38,6 +38,7 @@ final class LocationCardsTest extends WebTestCase
     private const string NEW_SUMMARY = 'Ein neuer Kurztext.';
     private const array TEXTS_CHANGE = ['texts' => ['de' => ['summary' => self::NEW_SUMMARY]]];
     private const array CAPACITY_CHANGE = ['capacityMax' => '95'];
+    private const array EVENT_CHANGE = ['capacitySeated' => '60'];
 
     /**
      * @return iterable<string, array{LocationCard, array<string, mixed>, class-string, string}>
@@ -47,7 +48,7 @@ final class LocationCardsTest extends WebTestCase
         yield 'texts' => [LocationCard::Texts, self::TEXTS_CHANGE, ChangeVenueTexts::class, 'texts.de.summary'];
         yield 'address' => [LocationCard::Address, ['street' => 'Seeweg 3'], RelocateVenue::class, 'street'];
         yield 'terms' => [LocationCard::Terms, ['setting' => ['lake']], ChangeVenueTerms::class, 'terms.setting'];
-        yield 'wedding' => [LocationCard::Wedding, ['capacitySeated' => '60'], ChangeVenueWeddingFacts::class, 'capacitySeated'];
+        yield 'event' => [LocationCard::Event, self::EVENT_CHANGE, ChangeVenueEventFacts::class, 'capacitySeated'];
         yield 'contact' => [LocationCard::Contact, ['contactPerson' => 'Anna Muster'], ChangeVenueContact::class, 'contactPerson'];
         yield 'faq' => [LocationCard::Faq, ['daylight' => 'yes'], AnswerVenueFaq::class, 'daylight'];
         yield 'capacity' => [LocationCard::Capacity, self::CAPACITY_CHANGE, ChangeVenueCapacity::class, 'capacityMax'];
@@ -149,6 +150,10 @@ final class LocationCardsTest extends WebTestCase
         yield 'tier' => [LocationCard::Texts, self::TEXTS_CHANGE, ['tier' => 'premium']];
         yield 'the slug of a language' => [LocationCard::Texts, self::TEXTS_CHANGE, ['texts' => ['de' => ['slug' => 'neuer-slug']]]];
         yield 'minimum' => [LocationCard::Capacity, self::CAPACITY_CHANGE, ['capacityMin' => '10']];
+        yield 'the party rule of the old wedding card' => [LocationCard::Event, self::EVENT_CHANGE, ['party' => 'yes']];
+        yield 'the curfew of the old wedding card' => [LocationCard::Event, self::EVENT_CHANGE, ['hasCurfew' => 'yes']];
+        yield 'the curfew time of the old wedding card' => [LocationCard::Event, self::EVENT_CHANGE, ['curfewAt' => '23:00']];
+        yield 'the party note of the old wedding card' => [LocationCard::Event, self::EVENT_CHANGE, ['texts' => ['de' => ['partyNote' => 'Bis 2 Uhr.']]]];
     }
 
     /**
