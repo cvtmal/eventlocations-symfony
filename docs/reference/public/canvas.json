@@ -4,7 +4,7 @@
     "v": 1,
     "at": "2026-10-31T11:00:00Z"
   },
-  "title": "hochzeitslocation.ch – Öffentliche Seiten",
+  "title": "deine-eventlocation.ch – Öffentliche Seiten",
   "launch": {
     "view": "canvas",
     "page": "start"
@@ -365,7 +365,7 @@
   "notes": {},
   "designSystems": [
     {
-      "title": "hochzeitslocation.ch",
+      "title": "deine-eventlocation.ch",
       "namespace": "hochzeitslocation",
       "artifact": "https://claude.ai/artifact/7KTZibKEpKkofJg6Xjwsb2",
       "version": null,
