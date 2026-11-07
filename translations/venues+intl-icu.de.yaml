@@ -349,7 +349,7 @@ preview:
 report:
     title: Inhalt melden
     meta_description: Melde Fotos ohne Bildrechte, einen Eintrag, der entfernt werden soll, oder falsche Angaben zu einer Location.
-    intro: 'Hier meldest du Fotos, an denen du die Rechte hast, einen Eintrag, der entfernt werden soll, oder falsche Angaben. Wir prüfen jede Meldung. Gemeldete Fotos verbergen wir sofort, bis wir entschieden haben.'
+    intro: 'Hier meldest du Fotos, an denen du die Rechte hast, einen Eintrag, der entfernt werden soll, oder falsche Angaben. Wir prüfen jede Meldung. Gemeldete Fotos verbergen wir in der Regel sofort, bis wir entschieden haben.'
     venue_label: 'Deine Meldung betrifft:'
     footer_link: Inhalt melden
     detail_link: Inhalt melden
@@ -382,7 +382,7 @@ report:
         venue_gone: Diese Location gibt es nicht mehr. Bitte gib an, welche Location du meinst.
     sent:
         title: Danke, deine Meldung ist eingegangen.
-        text: Wir prüfen sie so bald wie möglich und melden uns per E-Mail, falls wir Fragen haben. Gemeldete Fotos bleiben verborgen, bis wir entschieden haben.
+        text: Wir prüfen sie so bald wie möglich und melden uns per E-Mail, falls wir Fragen haben. Gemeldete Fotos verbergen wir in der Regel sofort, bis wir entschieden haben.
     mail:
         fact:
             kind: Art

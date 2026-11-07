@@ -142,7 +142,7 @@ final class ReportContentControllerTest extends WebTestCase
         $crawler = $this->client->followRedirect();
         self::assertResponseIsSuccessful();
         self::assertSame('Danke, deine Meldung ist eingegangen.', $crawler->filter('.report__sent h2')->text());
-        self::assertStringContainsString('Gemeldete Fotos bleiben verborgen', $crawler->filter('.report__sent')->text());
+        self::assertStringContainsString('Gemeldete Fotos verbergen wir in der Regel sofort', $crawler->filter('.report__sent')->text());
         self::assertCount(0, $crawler->filter('form.report__form'));
 
         $crawler = $this->client->request('GET', '/inhalt-melden?gesendet=1');
