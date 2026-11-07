@@ -26,5 +26,5 @@ make cs-fix    # fix the coding standards
 - `docs/product.md`: what the product does and where it is going.
 - `docs/rpi-cycles.md`: settled decisions, requirements, the cycle order and Wave G (go to market).
 - `CLAUDE.md` and `.claude/rules/`: how the code is built (commands, architecture, conventions).
-- `docs/operations.md`: the production runbook (the sister site's, until the new host is chosen).
+- `docs/operations.md`: the production runbook (Infomaniak VPS with nginx and php-fpm, Neon, D26).
 - `KICKOFF.md`: the fork brief, superseded and kept for history.

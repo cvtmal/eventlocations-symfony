@@ -132,9 +132,9 @@ release-check: ## Build the release tarball and boot it with APP_ENV=prod (CI jo
 	sh bin/build-release
 	sh tests/Deploy/release-check.sh
 
-deploy-test: ## Run the deploy, cron and import scripts against a throwaway tree, and the .htaccess against Apache
+deploy-test: ## Run the deploy, cron and import scripts against a throwaway tree, and the nginx server block against php-fpm
 	docker compose exec -T php sh tests/Deploy/run.sh
-	sh tests/Deploy/htaccess-check.sh
+	sh tests/Deploy/nginx-check.sh
 
 workflow-lint: ## actionlint on .github/workflows
 	docker run --rm -v "$(CURDIR):/repo" -w /repo $(ACTIONLINT_IMAGE)

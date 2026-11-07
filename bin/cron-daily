@@ -1,11 +1,11 @@
 #!/bin/sh
 # 03:15 Europe/Zurich: the one nightly chain, one Neon wake-up (#20). Every step runs even if an
 # earlier one failed; the script exits non-zero if any did, and prints only on a failure or when
-# report-stuck has something to say, so Hostpoint's cron mail stays silent on a good night.
+# report-stuck has something to say, so the host's cron mail stays silent on a good night.
 set -u
 
-PHP="${DEPLOY_PHP:-/usr/local/php85/bin/php}"
-cd "$(dirname "$0")/.." || exit 1
+PHP="${DEPLOY_PHP:-php}"
+cd -P "$(dirname "$0")/.." || exit 1
 failed=0
 
 step() { # step <label> <command...>
@@ -21,7 +21,7 @@ step() { # step <label> <command...>
 }
 
 main() {
-    # var/ is outside the deploy's sync, so a fresh server has none of the directories the sweeps below read.
+    # bin/deploy links these into shared/ (empty on a fresh server); the stats subdirectories start missing.
     mkdir -p var/import-staging var/sessions var/lock var/stats/spool var/stats/salt
     # --quiet: these two print "0 inquiries deleted." and one line per cache pool on a good night. An error
     # still prints (the exception renderer ignores --quiet) and `step` adds its own "failed" line either way.
@@ -38,14 +38,16 @@ main() {
     # the same job. --quiet: its count line would mail every night; an error still prints.
     step stats-ingest "$PHP" bin/console --no-interaction --quiet app:stats:ingest
     step pool-prune "$PHP" bin/console --no-interaction --quiet cache:pool:prune
+    # The trailing slashes matter: these directories are symlinks into shared/, and find does not follow a
+    # symlink it is given as a start unless the path names the directory behind it.
     # #25: abandoned uploads in the import staging directory, older than a day.
-    step staging-sweep find var/import-staging -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} +
+    step staging-sweep find var/import-staging/ -mindepth 1 -maxdepth 1 -mtime +1 -exec rm -rf {} +
     # Sessions the garbage collector never reaches on this host. 43200 minutes is the 30-day admin idle timeout
     # (IdleTimeoutListener::IDLE_SECONDS); a shorter age would end idle back-office sessions at 03:15.
-    step sessions-sweep find var/sessions -type f -mmin +43200 -delete
+    step sessions-sweep find var/sessions/ -type f -mmin +43200 -delete
     # Limiter locks: FlockStore never unlinks its files, so each client leaves one for ever. The longest
     # limiter window is 60 minutes; deleting a file a process still holds costs at most one count race.
-    step lock-sweep find var/lock -maxdepth 1 -type f -name 'sf.*.lock' -mmin +180 -delete
+    step lock-sweep find var/lock/ -maxdepth 1 -type f -name 'sf.*.lock' -mmin +180 -delete
     exit "$failed"
 }
 

@@ -9,7 +9,7 @@
 # Prints counts only and exits 1 if any page failed.
 set -eu
 
-SITE="${DEPLOY_SITE_URL:-https://hochzeitslocation.ch}"
+SITE="${DEPLOY_SITE_URL:-https://deine-eventlocation.ch}"
 MAX_TIME="${WARM_MAX_TIME:-20}"
 PAUSE="${WARM_PAUSE:-0.2}"
 

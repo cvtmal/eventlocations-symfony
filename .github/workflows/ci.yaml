@@ -59,8 +59,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # shellcheck is preinstalled on ubuntu-24.04, and sh is dash there. --shell=sh: the Hostpoint scripts
-      # run under FreeBSD /bin/sh.
+      # shellcheck is preinstalled on ubuntu-24.04, and sh is dash there. --shell=sh: the deploy scripts
+      # run under the host's /bin/sh.
       - name: ShellCheck and a dash syntax check of the deploy, cron and import scripts
         run: |
           set -- bin/build-release bin/deploy bin/deploy-gate bin/warm-cache bin/cron-lock.sh \
@@ -75,5 +75,5 @@ jobs:
       - name: Start php
         run: docker compose up -d --build --wait php
 
-      - name: Run the scripts against a throwaway tree, and the .htaccess against Apache
+      - name: Run the scripts against a throwaway tree, and the nginx server block against php-fpm
         run: make deploy-test

@@ -4,8 +4,8 @@
 # because this clear must happen; a guard run takes seconds.
 set -eu
 
-PHP="${DEPLOY_PHP:-/usr/local/php85/bin/php}"
-cd "$(dirname "$0")/.." || exit 1
+PHP="${DEPLOY_PHP:-php}"
+cd -P "$(dirname "$0")/.." || exit 1
 . bin/cron-lock.sh
 
 main() {

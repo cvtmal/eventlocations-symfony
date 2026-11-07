@@ -7,8 +7,9 @@
 #   cache_lock_acquire <tries>   0 = got it; 1 = still held after <tries> one-second waits
 #   cache_lock_release
 #
-# A lock older than 10 minutes belongs to a dead run and is taken over.
-LOCK_DIR="${CRON_LOCK_DIR:-var/cache-clear.lock}"
+# A lock older than 10 minutes belongs to a dead run and is taken over. var/lock is shared between
+# releases (bin/deploy), so a run in the old release and one in the new one still exclude each other.
+LOCK_DIR="${CRON_LOCK_DIR:-var/lock/cache-clear.lock}"
 
 cache_lock_acquire() {
     tries="$1"

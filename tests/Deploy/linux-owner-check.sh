@@ -18,8 +18,8 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OVERLAY="${1:-}"
 DIND=docker:29.9.2-dind
 PROJECT="$(basename "$ROOT")"
-IMAGES="$PROJECT-php postgres:18-alpine node:26-alpine httpd:2.4.68-alpine rhysd/actionlint:1.7.12"
-name="hochzeitslocation-owner-check-$$"
+IMAGES="$PROJECT-php postgres:18-alpine node:26-alpine nginx:1.26.3-alpine rhysd/actionlint:1.7.12"
+name="eventlocation-owner-check-$$"
 CHECKOUT="/work/$PROJECT"
 
 cleanup() { docker rm -f -v "$name" >/dev/null 2>&1 || true; }
