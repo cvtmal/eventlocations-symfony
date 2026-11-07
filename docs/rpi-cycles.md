@@ -110,6 +110,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F13 | `multi-inquiry` | M–L | F9, G7 | `inquiries` (parent and child deliveries) | — | Todo |
 | F14 | `content-onboarding` | M | F3, F4, G5 | — | Spreadsheet (fixture until it arrives); consent D29, follow-ups D32 | Todo |
 | F15 | `prod-setup` | M | F0 | — | — (host D26) | Done |
+| F15b | `media-backup` | S | F15 | — | Object Storage credentials (placeholders) | Todo |
 | F16 | `launch-verification` | S–M | all except F13, G14 to G16 | — | — | Todo |
 
 Sizes: S about half a day, M one to two days, L three days or more. F2 and F10 (languages) are gone with E3 and D13; the numbers are not reused. F7 is split: F7a `du-flip` (done) closed the last gaps of the du flip (E4) and widened the guard test, F7b `event-copy-de` is the rest of the copy. The cycles G1 to G16 are in Wave G §3 at the end of this file; where Wave G changes a dependency, the table above already shows it (F13 after G7, F14 after G5).
@@ -400,7 +401,7 @@ IDs are referenced by the overview and the cycles.
 
 **Listing page (LP)**
 - **LP-1** The listing (`/hochzeitslocations` as forked, renamed by F5 to `/eventlokale`) has a hero band with the h1 (F7b sets the wording; canton pages "… im Kanton Zürich"), "N Resultate", the filter bar, the result list, and pagination "1 - 48 von N Resultaten" with page links: 48 per page, 24 if PERF-1 fails. The filter bar carries the event type (F5).
-- **LP-2** Card content as in `docs/reference/listing-card.png`, which is the record of behaviour only; the look is the board in `docs/reference/public/` (GEN-3):
+- **LP-2** Card content as below (eventlokale's live listing is the record of behaviour only; no screenshot of it is kept, see Reference material); the look is the board in `docs/reference/public/` (GEN-3):
   - photo on the left;
   - top row: capacity "50 - 450" (person icon), town "Ittigen" (pin icon), and "Merken ♡" on the right;
   - tier badge, then the venue name;
@@ -414,7 +415,7 @@ IDs are referenced by the overview and the cycles.
 - **LP-7** _Replaced by F3/F5._ (Wedding only: the card's Preisniveau and Ambiente tags. F3 removes the wedding facts; F5 decides what the card shows of the event vocabulary.)
 
 **Filters (FI)**. The screenshots named below are the record of behaviour only; the look is the boards in `docs/reference/public/` (S15, GEN-3).
-- **FI-1 Region** (`filter-region.jpg`, `filter-region-selected.png`):
+- **FI-1 Region**:
   - full-screen overlay with large decorative circles;
   - h2 "Wo soll dein Event stattfinden?" (the original's wording; F7b confirms it);
   - tabs **Kanton** | **Ort/PLZ** and a large underlined input ("Kanton eingeben") with autocomplete;
@@ -424,7 +425,7 @@ IDs are referenced by the overview and the cycles.
   It behaves like the original and looks as the boards of F6 draw it.
 - **FI-2 Ort/PLZ:** autocomplete over towns and postcodes. Selecting one filters venues in that town or within a radius around it (as built).
 - **FI-3 Guests:** an overlay with the h2 "Wie viele Gäste erwartest du?". As forked it has four radio bubbles on the venue's maximum capacity (`GuestBand`, "bis 50 Gäste" to "über 150 Gäste"). F5 replaces the bands by ones that fit events, or by a number input; D4: the guest number is the only capacity criterion, and there is no layout filter. Same footer buttons as FI-1.
-- **FI-4 Weitere Filter** (`filter-more.jpg`): overlay "Wähle weitere Filter und Möglichkeiten" with a sticky footer ("N Resultate anzeigen", "Filter löschen"). Its sections, in eventlokale's order:
+- **FI-4 Weitere Filter**: overlay "Wähle weitere Filter und Möglichkeiten" with a sticky footer ("N Resultate anzeigen", "Filter löschen"). Its sections, in eventlokale's order:
   1. **Suche eine konkrete Location:** "Name eingeben".
   2. **Lage:** round icon buttons Am Fluss, Am See, Auf dem Land, In den Bergen, In der Stadt.
   3. **Erreichbarkeit:** Nähe Bahnhof, Nähe Autobahn, Nähe Flughafen.
@@ -446,7 +447,7 @@ IDs are referenced by the overview and the cycles.
 - **MK-3** `/merkliste` lists saved venues as cards in saved order, each with a remove button, plus an empty state.
 - **MK-4** A toast "{Name} wurde deiner Merkliste hinzugefügt." with a link to the Merkliste.
 
-**Detail page (DP)**, as in `detail-page-top.jpg` and eventlokale's live detail page for behaviour; the screenshot is the record of behaviour only, and the look is the `docs/reference/public/` board (S15, GEN-3):
+**Detail page (DP)**, with eventlokale's live detail page as the record of behaviour only, and the look is the `docs/reference/public/` board (S15, GEN-3):
 - **DP-1** URL per S5; title pattern "{Name} in {Ort} | {site.name}" (F7b settles the wording).
 - **DP-2** Hero carousel, inset in the page frame as the `Detail` board draws it (BRD-1), with a "Bilder ansehen" button that opens a full-screen gallery (`<dialog>`, keyboard and swipe).
 - **DP-3** Sticky anchor nav: Beschreibung, Bilder, Kontakt, Standort.
@@ -665,14 +666,18 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Outcome** (PR `prod-setup`, 2026-11-07). The host is D26's Infomaniak VPS (Debian 13, nginx, php-fpm 8.5 from sury), Neon in `aws-eu-central-1`, Infomaniak SMTP (`mail.infomaniak.com:587`), the `deploy` user's crontab, Sentry EU. **Layout** `/var/www/deine-eventlocation.ch/{releases/<sha>, shared/, current, previous, deploy-gate, .deploy/}`: `bin/deploy install` moves the unpacked tarball into `releases/<sha>`, links `.env.local`, `public/media` and `var/{log,sessions,share,media,stats,lock,import-staging}` into `shared/` (each release keeps its own `var/cache`), runs the env guard, migrations, `cache:warmup` and the towns import in the new directory, then switches `current` with `ln -sfn` + `mv -T` and `previous` to the old one, purges the HTTP cache and keeps the newest three releases plus both links; a failure before the switch deletes the new directory. `bin/deploy rollback` swaps `current` and `previous` (migrations stay, so they must remain additive); the gate (`deploy <sha>`, `purge`, `check`, `rollback`) runs rollback under the deploy lock. `.github/workflows/deploy.yaml` keeps `workflow_dispatch` only, gains `action: rollback` and skips every job unless the repository variable `DEPLOY_ENABLED` is `true`; secrets are `DEPLOY_SSH_*`. **Web:** `public/.htaccess` and `deploy/probe.php` are gone; `deploy/nginx/deine-eventlocation.ch.conf` (all four names to `https://deine-eventlocation.ch` in one hop, unknown hosts 444 / TLS rejected, `$realpath_root` so OPcache follows the switch without a reload, the asset and media cache headers, gzip, `client_max_body_size 26m`, dotfiles 404) and `deploy/php-fpm/deine-eventlocation.conf` (pool as `deploy` on `/run/php/deine-eventlocation.sock`); `public/.user.ini` stays, php-fpm reads it. `tests/Deploy/nginx-check.sh` replaces `htaccess-check.sh` and runs the production file in `nginx:1.26.3-alpine` against the Compose php-fpm, including a release switch. **Cron:** three lines on `/var/www/deine-eventlocation.ch/current/bin/…`, Zurich server time, `MAILTO`; the scripts `cd -P` so a run stays in one release, the cache lock moved to `var/lock/cache-clear.lock` (shared), and `cron-daily`'s sweeps use `dir/` because `find` does not follow a symlinked start. **Cache:** `framework.cache.prefix_seed: deine-eventlocation`, because the default seeds with the per-release project dir (limiter counters and snapshots would reset on every deploy). **Docs:** `docs/operations.md` is the dry-run runbook (first-time setup, deploy, rollback, cron, Neon PITR plus the Actions dump and the media pull, env vars); the privacy page names Infomaniak for web and mail with 14-day logs (TODO owner markers kept). **Follow-ups:** the owner's first setup and first deploy; the nightly `backup.yaml` schedule and the Sentry cron monitor for `cron-daily` once production holds data; the listing path in the smoke tests follows the route rename.
 
+### F15b `media-backup` (S)
+
+**Depends on** F15. **Owns** no schema. Lane: the tech lead's next free lane. **Why.** Venue photos are the one thing we cannot recreate: once managers upload their own, losing the VPS must not lose them. Until now the media were backed up only by hand from the Mac. A launch gate (PO + tech lead, 2026-11-07). **Scope.** A nightly cron script copies the originals in `shared/media` to Infomaniak Object Storage (S3-compatible, data in Switzerland, so D26's processor list does not change), encrypted and with retention (restic or rclone, the tech lead's choice). The script is idempotent, so a second run copies nothing new. It has a line in `deploy/crontab.txt` and a Sentry monitor note in `module-shared.md`. The credentials are owner inputs, with placeholders in the env example. **Done when** a restore drill is written in `docs/operations.md` and `make deploy-test` covers backup, second run and restore against a local MinIO.
+
 ### F16 `launch-verification` (S–M)
 
-**Depends on** all. **Scope.** Lighthouse and the S11 budgets (`make perf-check`, `docs/performance-baseline.md`) on every public page type, a keyboard-only walkthrough, 390 px and 1440 px, the W3C validator, `make release-check`. **Done when** every budget and score holds, and each finding is fixed or listed as a follow-up.
+**Depends on** all. **Scope.** Lighthouse and the S11 budgets (`make perf-check`, `docs/performance-baseline.md`) on every public page type, a keyboard-only walkthrough, 390 px and 1440 px, the W3C validator, `make release-check`; no `TODO(owner)` left in rendered public output (D27); the last media backup (F15b) is less than 26 hours old. **Done when** every budget and score holds, both checks pass, and each finding is fixed or listed as a follow-up.
 
 ## Reference material
 
 - **Product and plan:** `docs/product.md` (PO), `KICKOFF.md` (superseded fork brief), `docs/research/fork-research.md` (what carries over; written before E3, so ignore its French and language parts), `docs/prd/CMO_PRD.md` and `docs/prd/CTO_PRD.md` (their Next.js, Stripe and BullMQ parts are ignored: we stay on Symfony).
-- **Behaviour of eventlokale** (a record of behaviour only, never of look or content): the screenshots in `docs/reference/*.jpg|png`, and the live listing and detail pages (see **Important** for the visit rules). Its vocabulary is public at `GET https://www.eventlokale.ch/api/guest/location/all-taxonomies`.
+- **Behaviour of eventlokale** (a record of behaviour only, never of look or content): the live listing and detail pages (see **Important** for the visit rules). No screenshot of eventlokale is kept in the repository: it is public, and the seven earlier screenshots were removed from the tree and the history on 2026-11-07. Its vocabulary is public at `GET https://www.eventlokale.ch/api/guest/location/all-taxonomies`.
 - **Back office:** `docs/reference/admin/` (S12). **Public look:** `docs/reference/public/` (the sister site's boards until F6).
 - **Formats and runbooks:** `docs/content-format.md` with its schema, `docs/performance-baseline.md`, `docs/operations.md` (the sister site's runbook until F15).
 - **Cycle history of the sister site:** `git show 7e96eee:docs/rpi-cycles.md` (**History**).

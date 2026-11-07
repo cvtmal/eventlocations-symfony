@@ -50,6 +50,7 @@ Every product decision is settled (D23 to D34). Only facts and the owner's own p
 | Operator name and address | `TODO(owner)` on the Impressum and Datenschutz pages; launch is refused while it is there (D27) |
 | Infomaniak and Neon accounts, first setup and first deploy | Runbook in `docs/operations.md` (F15); deploys stay off until the owner sets the repository variable `DEPLOY_ENABLED` |
 | Backup schedule and Sentry cron monitor | Runbook in `docs/operations.md`; the database backup runs by hand until the owner schedules it |
+| Infomaniak Object Storage credentials for the media backup (F15b) | Placeholders; launch is refused without a backup less than 26 hours old |
 | Venue spreadsheet for D1(b) | F14 is built and tested on a fixture |
 | Contact list for the one-to-one pilot | After launch (D30: no bulk mail) |
 
@@ -65,7 +66,7 @@ _Status as of 2026-11-07, kept by the PO after every merge. The cycles themselve
 
 **In a lane:** F5 `filter-event` (event type and guest filters, `/eventlokale…` URLs) · F9 `inquiry-event` (inquiry form with event fields) · F4 `room-layouts` (room layouts with capacities) · F6b `brand-assets` (brand polish, social cards, boards in the new look) · G2 `takedown-form` (report a photo or text) · G5 `preview-link` (private preview of a prepared entry).
 
-**Launch-critical, not started:** F7b `event-copy-de` (all German texts, legal pages) · F8 `landing-event` (event landing pages, no Hochzeit) · F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · G7 `enquiry-quality` (real vs. spam, delivery status) · G9 `subscription-term` (Pro term, expiry, reminders) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G12 `launch-regions` (ZH, AG, ZG, BE first) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
+**Launch-critical, not started:** F15b `media-backup` (nightly off-server copy of venue photos) · F7b `event-copy-de` (all German texts, legal pages) · F8 `landing-event` (event landing pages, no Hochzeit) · F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · G7 `enquiry-quality` (real vs. spam, delivery status) · G9 `subscription-term` (Pro term, expiry, reminders) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G12 `launch-regions` (ZH, AG, ZG, BE first) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
 
 **After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G14 `last-minute-offers` · G15 `video-embed` · G16 `organizer-feedback`.
 
