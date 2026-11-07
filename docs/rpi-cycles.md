@@ -98,10 +98,10 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | – | `rules-condense` | S | `fork-docs` | — | — | Todo |
 | F3 | `event-vocabulary` | M | F0, F1 | `taxonomy_terms`, `venue_terms`; the wedding-fact columns of `venues` and `venue_translations` | — | Todo |
 | F4 | `room-layouts` | S–M | F3 | `rooms`, `room_translations` (layout capacities) | — | Todo |
-| F5 | `filter-event` | M | F3, F4 | indexes only | — | Todo |
+| F5 | `filter-event` | M | F3 | indexes only | — | Todo |
 | F6 | `brand-design` | L | F1 | — | Logo, colours, typeface; D12 follow-up 1 | Todo |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
-| F7b | `event-copy-de` | M | F3, F5, F8, F7a | — | Operator, processors | Todo |
+| F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator, processors | Todo |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Todo |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
 | F11 | `portal-event` | S–M | F4 | `portal_submissions` (event step) | — | Todo |
@@ -111,7 +111,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F15 | `prod-setup` | M | F0, owner infra | — | Host (D10) | Todo |
 | F16 | `launch-verification` | S–M | all except F13, G14 to G16 | — | — | Todo |
 
-Sizes: S about half a day, M one to two days, L three days or more. F2 and F10 (languages) are gone with E3 and D13; the numbers are not reused. F7 is split: F7a `du-flip` (done) closed the last gaps of the du flip (E4) and widened the guard test, F7b `event-copy-de` is the rest of the copy. The cycles G1 to G16 are in Wave G §3 at the end of this file; where Wave G changes a dependency, the table above already shows it (F7b after F8, F13 after G7, F14 after G5).
+Sizes: S about half a day, M one to two days, L three days or more. F2 and F10 (languages) are gone with E3 and D13; the numbers are not reused. F7 is split: F7a `du-flip` (done) closed the last gaps of the du flip (E4) and widened the guard test, F7b `event-copy-de` is the rest of the copy. The cycles G1 to G16 are in Wave G §3 at the end of this file; where Wave G changes a dependency, the table above already shows it (F13 after G7, F14 after G5).
 
 **Order.** F0, F0b, F1 and F7a are done. F3 and F6 run in parallel lanes, then the rest by dependency. Lanes and the critical path are in Wave G §4. F15 is minimal (docs for a generic host), and F16 comes last.
 
@@ -175,7 +175,7 @@ In these rows "F0" is the cycle `fork-baseline`, and the "Drop" row in §4 is th
 - **No Node at runtime and no JS framework or library on the public site:** no Stimulus, Turbo, Swiper or jQuery. Build-time tools in a container are fine, e.g. the dart-sass standalone binary through `symfonycasts/sass-bundle`, or Lighthouse CLI for checks.
 - **The one exception is the back office** (`/admin`, S12): Vue 3 islands, compiled at build time by Vite in a Node tools container. Node never runs on the server, and no public page loads Vue.
 - **Two public exceptions** (owner, 2026-11-05):
-  - **the near-me page** (`/hochzeitslocation-in-meiner-naehe`, renamed by F7b): it loads the Google Maps JavaScript API from Google on page view. Google's script is not ours, not vendored and not served by AssetMapper; our own `near-me.js` loads it, and its CSP and `geolocation=(self)` apply to that route only. No other public page loads a map library.
+  - **the near-me page** (`/hochzeitslocation-in-meiner-naehe`, renamed by F5 to `/eventlokal-in-meiner-naehe`): it loads the Google Maps JavaScript API from Google on page view. Google's script is not ours, not vendored and not served by AssetMapper; our own `near-me.js` loads it, and its CSP and `geolocation=(self)` apply to that route only. No other public page loads a map library.
   - **the Google rating on a venue page:** when the server has `GOOGLE_MAPS_JS_KEY` and the venue a Google place ID that staff did not hide, our own `google-rating.js` loads the same Google script after the page's load event and once the rating box is in view, and builds Google's Places UI Kit element (`gmp-place-details-compact`). The page then carries the `google_places` CSP, set per response, not per route; `geolocation` stays off. Keyless, without a place ID or hidden, the page loads nothing from Google.
 - **PostgreSQL over MariaDB.** No requirement here needs MariaDB, and Postgres gives us:
   - the owner's existing Postgres toolchain and rules;
@@ -233,7 +233,7 @@ The base is a module-first modular monolith, `src/<Module>/<Layer>/` with namesp
 
 ### S5. URLs
 
-The paths below are the sister site's, as forked. **F7b `event-copy-de` renames every `/hochzeitslocation…` path** (and records the new ones in its Outcome); F8 adds the event landing pages. Route names (`home`, `listing`, `venue_show`, …) do not change.
+The paths below are the sister site's, as forked. **F5 `filter-event` renames every `/hochzeitslocation…` path to `/eventlokal…`** (and records the new ones in its Outcome); F8 adds the event landing pages. Route names (`home`, `listing`, `venue_show`, …) do not change.
 
 - `/` is the home page (HP-1), route `home`.
 - `/hochzeitslocations` is the listing; `?page=2` paginates. There are **no seeds in URLs and no redirects** on listing requests.
@@ -408,7 +408,7 @@ IDs are referenced by the overview and the cycles.
 - **HP-6** The long text section is a `ContentBlockDefinition`, so staff can edit it, with catalogue text as the fallback.
 
 **Listing page (LP)**
-- **LP-1** The listing (`/hochzeitslocations` as forked, renamed by F7b) has a hero band with the h1 (F7b sets the wording; canton pages "… im Kanton Zürich"), "N Resultate", the filter bar, the result list, and pagination "1 - 48 von N Resultaten" with page links: 48 per page, 24 if PERF-1 fails. The filter bar carries the event type (F5).
+- **LP-1** The listing (`/hochzeitslocations` as forked, renamed by F5 to `/eventlokale`) has a hero band with the h1 (F7b sets the wording; canton pages "… im Kanton Zürich"), "N Resultate", the filter bar, the result list, and pagination "1 - 48 von N Resultaten" with page links: 48 per page, 24 if PERF-1 fails. The filter bar carries the event type (F5).
 - **LP-2** Card content as in `docs/reference/listing-card.png`, which is the record of behaviour only; the look is the board in `docs/reference/public/` (GEN-3):
   - photo on the left;
   - top row: capacity "50 - 450" (person icon), town "Ittigen" (pin icon), and "Merken ♡" on the right;
@@ -612,7 +612,7 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 ### F5 `filter-event` (M)
 
-**Depends on** F3, F4. **Owns** indexes only. **Scope.** `SearchCriteria` (hotspot) gains the event type (`event[]`, OR inside the group, E5) and a guest number in place of the wedding `GuestBand` bands (D4: the guest number is the only capacity criterion); the home hero search (Kanton, Anlass, Anzahl Gäste), the filter overlays, `FilterDataQuery` and its hiding rule; the wedding filter codes and parameters (`ceremony[]`, `usage`, `price`, `curfew`, the seven wedding `amenity` codes), `_more_wedding.html.twig` and the `HomeCategory` tiles go. **Done when** the listing and the home search filter by event type and guest number, the URL codec stays stable and shareable (FI-6), the live count works, no wedding filter parameter is left, the S11 budgets and an `EXPLAIN` on the demo data ×10 hold, tests in the Integration and Application suites.
+**Depends on** F3 (F4 is not needed: no layout filter, D4). **Owns** indexes only. **Scope.** The route rename (PO decision 2026-11-07, owner-corrected the same day, priority "Event look"): every `/hochzeitslocation…` path becomes an `/eventlokal…` path, because the owner wants to rank for the search term "Eventlokale" (`/eventlokale` listing, `/eventlokale/{canton}` and `/eventlokale/{canton}/{town}` landing pages, `/eventlokal/{venue-slug}` detail page, `/eventlokal-in-meiner-naehe`), without redirects (no production data), route names unchanged. "Eventlokale" is a generic German word, so it is a keyword in the path; the competitor's name, domain and logo do not appear in titles, meta, copy or structured data (CMO §8, §16). `SearchCriteria` (hotspot) gains the event type (`event[]`, OR inside the group, E5) and a guest number in place of the wedding `GuestBand` bands (D4: the guest number is the only capacity criterion); the home hero search (Kanton, Anlass, Anzahl Gäste), the filter overlays, `FilterDataQuery` and its hiding rule; the wedding filter codes and parameters (`ceremony[]`, `usage`, `price`, `curfew`, the seven wedding `amenity` codes), `_more_wedding.html.twig` and the `HomeCategory` tiles go. **Done when** the listing and the home search filter by event type and guest number, the URL codec stays stable and shareable (FI-6), the live count works, no wedding filter parameter is left, the S11 budgets and an `EXPLAIN` on the demo data ×10 hold, tests in the Integration and Application suites.
 
 ### F6 `brand-design` (L)
 
@@ -626,7 +626,7 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 ### F7b `event-copy-de` (M)
 
-**Depends on** F3, F5, F8, F7a. **Owns** no schema. **Scope.** All German public copy for events: the `/hochzeitslocation…` route paths (S5), titles, meta descriptions and JSON-LD wording, landing texts, the home page, the legal pages (the operator D6, the processors, the contact `hallo@deine-eventlocation.ch` D9; placeholder text marked TODO until the owner delivers them), the mails, the Merkliste copy and `llms.txt`. **Done when** no wedding wording is left in public output (a test greps the rendered pages and the public catalogues for "Hochzeit" outside the event type label), the routes are renamed without redirects, titles and meta descriptions are unique, and `PublicCopyAddressTest` is still green.
+**Depends on** F3, F5, F7a (no longer F8: F8 covers the landing pages, F7b the rest). **Owns** no schema. **Scope.** All German public copy for events (the route paths moved to F5): titles, meta descriptions and JSON-LD wording, landing texts, the home page, the legal pages (the operator D6, the processors, the contact `hallo@deine-eventlocation.ch` D9; placeholder text marked TODO until the owner delivers them), the mails, the Merkliste copy and `llms.txt`. **Done when** no wedding wording is left in public output (a test greps the rendered pages and the public catalogues for "Hochzeit" outside the event type label), titles and meta descriptions are unique, and `PublicCopyAddressTest` is still green.
 
 ### F8 `landing-event` (M)
 
@@ -692,7 +692,7 @@ The PRDs describe a product that is mostly ours already (free listing, paid tier
 |---|---|---|
 | D13 | **German only at launch (E3 stands).** The PRD's "Vier Sprachen" is not offered and not advertised. No `i18n-core` cycle. FR/IT/EN stay in Out of scope. | all |
 | D14 | **Tiers: Free + Pro, CHF 199/year excluding VAT, as the default for the open "tier names and prices" input.** Invoiced by hand, no online payment (D2 stands); a tier row can be added later without code. Staff mark a subscription paid in the CRM. Stripe/TWINT is parked until the owner has a payment account. Whether the operator charges VAT is an owner input; the default is "zzgl. MwSt". | F12, G9, G13 |
-| D15 | **Free limits (data, not code):** 6 photos, 1 room, 1 video embed, 1 PDF, e-mail inquiries, monthly summary mail. **Pro (fair-use ceilings, data):** 60 photos, 20 rooms, 5 video embeds, 5 PDFs, all fitting event types, ranking above Free within a relevance bucket, detailed monthly report, last-minute offers. Where D2 says "visible contact data", Free hides phone and website and Pro shows them. | F12, G9, G14 |
+| D15 | **Free limits (data, not code):** 6 photos, 1 room, 1 video embed, 1 PDF, e-mail inquiries, monthly summary mail. **Pro (fair-use ceilings, data):** 60 photos, 20 rooms, 5 video embeds, 5 PDFs, all fitting event types, ranked above Free by tier (S6), shuffled daily within a tier, detailed monthly report, last-minute offers. Where D2 says "visible contact data": Free shows neither phone nor website; Pro shows the website and the phone number behind the click-to-reveal (DP-11: the number is never in the page HTML or the JSON-LD; only the website is in the JSON-LD). PO decision 2026-11-07. | F12, G9, G14 |
 | D16 | **Prepared preview is layered on D12, not instead of it.** The D12 crawl (internal facts, never published) stays. A new importer reads a venue's **own website** (SSRF-safe) and stores facts and image **candidates**, privately, with provenance. No image is public until the claimant confirms the licence (G1). Google Places live photos (D12) cover the gap. | G3, G5, G6 |
 | D17 | **Reverse match is in the run, as F13.** One brief to up to 5 disclosed venues; parent request plus child deliveries; per-venue opt-out and daily cap. D3 holds for the default flow (one venue per inquiry); multi is a second path. | F13 |
 | D18 | **Honesty rules are product rules.** An unclaimed or unchecked entry is labelled "Noch nicht vom Betreiber bestätigt" and never "verified". A feature is advertised only when its entitlement flag is live: the "Features available now" matrix on the site is **derived from the entitlement data**, not typed. No named-competitor comparison page at launch (it needs dated evidence and legal review: parked). No invented counts, ratings or testimonials. | G13 |
@@ -724,13 +724,13 @@ Sizes as in KICKOFF §5.
 
 #### Launch-critical
 
-Tech lead's review, 2026-11-07: dependencies cut so no chain runs longer than three cycles. Lanes are the tech lead's (§4).
+Tech lead's review, 2026-11-07: dependencies cut. Wave G's own chains are at most three cycles (G3 → G5 → G6, F12 → G9 → G10); the longest chains in the file run four cycles (F3 → F5 → F8 → G12, F3 → F9 → G7 → F13, F3 → F4 → F11 → G14). F7b waits only for F3, F5 and F7a. Lanes are the tech lead's (§4).
 
 | # | Slug | Size | Depends on | Lane | Schema (owner of) |
 |---|---|---|---|---|---|
-| F7a | `du-flip` | S | F0 | G | – (flips `PublicCopyAddressTest`; runs first, so every later cycle writes "du") |
+| F7a | `du-flip` | S | F0 | G | – (done, `3c19cad`: the baseline had already flipped the catalogues; F7a hardened `PublicCopyAddressTest`) |
 | – | `rules-condense` | S | fork-docs | A | – (module notes down to current state) |
-| F7b | `event-copy-de` (was F7) | M | F3, F5, F8, F7a | A | – |
+| F7b | `event-copy-de` (was F7) | M | F3, F5, F7a | A | – |
 | G1 | `rights-grants` | M | F0 | E | `media_rights_grants` |
 | G2 | `takedown-form` | S | G1 | E | `moderation_cases` (Venues; queue screen in Cms) |
 | G3 | `site-import` | M | F0 | F | `source_records`, `photo_candidates`; fetcher in `Shared\Http` |
@@ -746,12 +746,12 @@ Tech lead's review, 2026-11-07: dependencies cut so no chain runs longer than th
 
 #### After launch-critical (in the run, last)
 
-| # | Slug | Size | Depends on | Lane |
-|---|---|---|---|---|
-| F13 | `multi-inquiry` (reverse match, D17) | M–L | F9, G7 | G |
-| G14 | `last-minute-offers` | M | F11, G9 | D |
-| G15 | `video-embed` | S | F12 | E |
-| G16 | `organizer-feedback` | S | G7 | G |
+| # | Slug | Size | Depends on | Lane | Schema (owner of) |
+|---|---|---|---|---|---|
+| F13 | `multi-inquiry` (reverse match, D17) | M–L | F9, G7 | G | `inquiries` (parent and child deliveries), per-venue opt-out and cap |
+| G14 | `last-minute-offers` | M | F11, G9 | D | `last_minute_offers` |
+| G15 | `video-embed` | S | F12 | E | `venue_videos` |
+| G16 | `organizer-feedback` | S | G7 | G | `inquiry_feedback` |
 
 F14 `content-onboarding` now follows G5 (lane F). F15 is minimal (docs for a generic host), F16 last.
 
@@ -801,7 +801,7 @@ D business     F12 → G9 → G10 → G14
 E rights/claim G1 → G2 → G6 → G15
 F import       G3 → G5 → F14
 G inquiry      F7a → G8 → F9 → G7 → F11 → G16 → F13 → G11
-Start now: fork-docs, F7a, F3, F6, F12, G1, G3.   F15 minimal, F16 last.
+Status 2026-11-07: done fork-docs, F7a. Running F3, F12, G1, G3, G8. rules-condense next. F6 finished, blocked on a git permission.   F15 minimal, F16 last.
 ```
 
 Critical path to a sellable first Pro: F12 → G9 → G13, in parallel with G1 → G3 → G5 → G6 (claim). G14–G16 and F13 do not block launch. State lives in docs and git (`.rpi-tracking/lead/state.md` in the main checkout), not only in messages.
@@ -809,7 +809,7 @@ Critical path to a sellable first Pro: F12 → G9 → G13, in parallel with G1 �
 ### Wave G §4a. Cross-cutting acceptance (every Wave G cycle; tech lead)
 
 1. An entitlement or tier change (G9 expiry, staff change, downgrade) purges the HTTP and listing cache of that entry (S10).
-2. Free hides phone and website (D15) everywhere: card, detail page, JSON-LD, meta, Merkliste and mails. Tests read the rendered HTML source, not only the template.
+2. Free hides phone and website (D15) everywhere: card, detail page, JSON-LD, meta, Merkliste and mails. Pro shows the website; the phone number stays behind the click-to-reveal and out of the HTML and JSON-LD (DP-11). Tests read the rendered HTML source, not only the template.
 3. Hidden-not-deleted photos: the visible set is deterministic (the first N by sort order); staff keeps the order.
 4. Preview and claim pages: no HTTP cache, no stats beacon, `X-Robots-Tag: noindex`, the token is never logged.
 5. Every new nightly job goes into `deploy/crontab.txt` with a Sentry cron monitor and a note in `module-shared`, and a second run writes nothing.

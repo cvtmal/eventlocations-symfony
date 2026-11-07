@@ -29,6 +29,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 ## What it will do (settled, see `docs/rpi-cycles.md`)
 
 - Event types (Firmenanlass, Seminar, Geburtstag, Apéro, Hochzeit …), catering, technology and guest number as filters; layouts shown on the detail page, no layout filter (D4, E5).
+- URLs carry the search term "Eventlokale": `/eventlokale` (listing), `/eventlokale/{kanton}` and `/eventlokale/{kanton}/{ort}` (landing pages), `/eventlokal/{venue}` (detail page), `/eventlokal-in-meiner-naehe`. No redirects, since nothing is live yet. The competitor's name, domain and logo never appear in titles, meta, copy or structured data (F5, 2026-11-07).
 - **Free + Pro (CHF 199 a year, default, D14).** Free: a basic entry, 6 photos, 1 room, inquiries by e-mail. Pro: more photos, rooms, PDFs and video embeds, ranking above Free, visible contact data, last-minute offers, a detailed monthly report. Invoiced by hand; a lapsed Pro entry falls back to Free and stays online (D2).
 - **Prepared entries.** The platform prepares an entry from the venue's own website; the manager gets a private preview link, claims it, confirms the photos they have rights to, and publishes. No photo is public without a rights record. Until then Google Places photos and a neutral placeholder fill the gap (D12, D16).
 - **One venue per inquiry** at launch; later one brief to up to five named venues (D3, D17).
@@ -47,7 +48,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 | 7 | Contact basis of the owner's 5–6k known contacts | Owner | No bulk mail until audited (D20) |
 | 8 | Tier price: CHF 199 confirmed? | Owner | Default in force (D14) |
 
-Decisions D13–D22 were taken by the PO and the tech lead on 2026-11-07 in the owner's absence; the owner may overturn them.
+Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults together; the owner has delegated them and is not asked. The owner still holds real-world facts (the operator's identity, the host account, the venue spreadsheet, the contact list) and deploys. Where a fact is missing, the site ships a marked placeholder.
 
 ## Roadmap (proposed order)
 
@@ -66,5 +67,5 @@ Online payment (Stripe/TWINT), promo-video renderer and social kit, partner synd
 - Keep it simple. Two staff users at most, no privacy machinery beyond what the law needs, no extreme-input engineering.
 - Say only what is live. A feature is advertised when its entitlement is on; an unchecked entry is labelled "Noch nicht vom Betreiber bestätigt".
 - No image, text or data from another portal is published. Rights come before reach.
-- The owner decides scope and what goes live. Deploys are the owner's alone.
+- The PO and the tech lead decide scope together. Deploys are the owner's alone.
 - One write path: every change to an entry goes through the same commands, whoever makes it.
