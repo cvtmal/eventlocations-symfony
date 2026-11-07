@@ -251,6 +251,8 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
             [self::NAME],
         );
         $this->connection->executeStatement('DELETE FROM inquiries WHERE venue_name = ?', [self::NAME]);
+        // The deliveries committed funnel steps (G8) too; they name the venue, so they go before it.
+        $this->connection->executeStatement('DELETE FROM funnel_events WHERE venue_id IN (SELECT id FROM venues WHERE name = ?)', [self::NAME]);
         $this->connection->executeStatement('DELETE FROM venues WHERE name = ?', [self::NAME]);
     }
 }

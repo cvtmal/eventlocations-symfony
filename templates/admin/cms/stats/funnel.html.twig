@@ -1,0 +1,142 @@
+{#
+    Funnel scorecard (G8). Context from `Cms\Controller\FunnelController::index()`: scorecard (FunnelScorecard),
+    windows list<FunnelWindow>, steps list<FunnelEvent> (the columns, in funnel order).
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'stats.funnel.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('admin_stats') }}">{{ 'stats.title'|trans({}, 'cms') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'stats.funnel.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'stats.funnel.title'|trans({}, 'cms') }}</h1>
+            <p class="stats-note muted">{{ 'stats.funnel.intro'|trans({}, 'cms') }}</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% set filter_value = scorecard.filter.queryValue %}
+    {% set campaign_tabs = [{
+        label: 'stats.funnel.campaign.all'|trans({}, 'cms'),
+        href: path('admin_stats_funnel', {wochen: scorecard.window.value}),
+        active: null is same as filter_value,
+    }] %}
+    {% for row in scorecard.campaigns %}
+        {% set campaign_tabs = campaign_tabs|merge([{
+            label: row.campaign ?? 'stats.funnel.campaign.none'|trans({}, 'cms'),
+            href: path('admin_stats_funnel', {wochen: scorecard.window.value, kampagne: row.campaign ?? '-'}),
+            active: filter_value is same as (row.campaign ?? '-'),
+        }]) %}
+    {% endfor %}
+
+    {{ include('admin/components/_tabs.html.twig', {
+        label: 'stats.funnel.window.label'|trans({}, 'cms'),
+        items: windows|map(option => {
+            label: 'stats.funnel.window.weeks'|trans({weeks: option.value}, 'cms'),
+            href: path('admin_stats_funnel', {wochen: option.value, kampagne: filter_value}),
+            active: option == scorecard.window,
+        }),
+    }, with_context = false) }}
+    {{ include('admin/components/_tabs.html.twig', {label: 'stats.funnel.campaign.label'|trans({}, 'cms'), items: campaign_tabs}, with_context = false) }}
+
+    {% if scorecard.totals.total == 0 and null is same as filter_value %}
+        {{ include('admin/components/_empty.html.twig', {
+            icon: 'chart-column',
+            title: 'stats.funnel.empty.title'|trans({}, 'cms'),
+            text: 'stats.funnel.empty.text'|trans({}, 'cms'),
+        }, with_context = false) }}
+    {% else %}
+        <div class="stats-kpis" id="funnel-steps">
+            {% for step in steps %}
+                {{ include('admin/components/_kpi.html.twig', {label: ('stats.funnel.step.' ~ step.value)|trans({}, 'cms'), value: scorecard.totals.of(step)|swiss_number}, with_context = false) }}
+            {% endfor %}
+            {{ include('admin/components/_kpi.html.twig', {
+                label: 'stats.funnel.qualified.label'|trans({}, 'cms'),
+                value: 'stats.funnel.not_available'|trans({}, 'cms'),
+                detail: 'stats.funnel.qualified.note'|trans({}, 'cms'),
+            }, with_context = false) }}
+        </div>
+        <p class="stats-note muted">{{ 'stats.funnel.note'|trans({}, 'cms') }}</p>
+
+        <section class="stats-section funnel-table" aria-labelledby="funnel-weeks">
+            <h2 id="funnel-weeks">{{ 'stats.funnel.weeks.title'|trans({}, 'cms') }}</h2>
+            {% embed 'admin/components/_table.html.twig' with {
+                label: 'stats.funnel.weeks.title'|trans({}, 'cms'),
+                id: 'funnel-weeks-table',
+                columns: [{label: 'stats.funnel.weeks.column'|trans({}, 'cms')}]|merge(steps|map(step => {label: ('stats.funnel.step.' ~ step.value)|trans({}, 'cms')})),
+                rows: scorecard.weeks,
+                steps: steps,
+            } only %}
+                {% block rows %}
+                    {% for week in rows %}
+                        <tr>
+                            <td>
+                                <strong>{{ 'stats.funnel.weeks.label'|trans({week: week.start|date('W', 'Europe/Zurich')}, 'cms') }}</strong><br>
+                                <span class="muted">{{ week.start|swiss_date }}</span>
+                            </td>
+                            {% for step in steps %}
+                                <td>{{ week.counts.of(step)|swiss_number }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endblock %}
+            {% endembed %}
+        </section>
+
+        <section class="stats-section funnel-table" aria-labelledby="funnel-campaigns">
+            <h2 id="funnel-campaigns">{{ 'stats.funnel.campaigns.title'|trans({}, 'cms') }}</h2>
+            {% embed 'admin/components/_table.html.twig' with {
+                label: 'stats.funnel.campaigns.title'|trans({}, 'cms'),
+                id: 'funnel-campaigns-table',
+                columns: [{label: 'stats.funnel.campaigns.column'|trans({}, 'cms')}]|merge(steps|map(step => {label: ('stats.funnel.step.' ~ step.value)|trans({}, 'cms')})),
+                rows: scorecard.campaigns,
+                steps: steps,
+                window: scorecard.window,
+            } only %}
+                {% block rows %}
+                    {% for row in rows %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('admin_stats_funnel', {wochen: window.value, kampagne: row.campaign ?? '-'}) }}"><strong>{{ row.campaign ?? 'stats.funnel.campaign.none'|trans({}, 'cms') }}</strong></a>
+                            </td>
+                            {% for step in steps %}
+                                <td>{{ row.counts.of(step)|swiss_number }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endblock %}
+                {% block empty %}
+                    {{ include('admin/components/_empty.html.twig', {icon: 'chart-column', title: 'stats.funnel.campaigns.empty'|trans({}, 'cms')}, with_context = false) }}
+                {% endblock %}
+            {% endembed %}
+        </section>
+    {% endif %}
+
+    <section class="stats-section" aria-labelledby="funnel-paying">
+        <h2 id="funnel-paying">{{ 'stats.funnel.paying.title'|trans({}, 'cms') }}</h2>
+        <p class="stats-note muted">{{ 'stats.funnel.paying.scope'|trans({}, 'cms') }}</p>
+        <div class="stats-kpis" id="funnel-paying-figures">
+            {{ include('admin/components/_kpi.html.twig', {
+                label: 'stats.funnel.paying.paying'|trans({}, 'cms'),
+                value: scorecard.paying.paying|swiss_number,
+                detail: 'stats.funnel.paying.paying_note'|trans({}, 'cms'),
+            }, with_context = false) }}
+            {{ include('admin/components/_kpi.html.twig', {
+                label: 'stats.funnel.paying.delivered'|trans({}, 'cms'),
+                value: scorecard.paying.withDeliveredInquiry|swiss_number,
+                detail: scorecard.paying.deliveredPercent is null ? null : 'stats.funnel.paying.percent'|trans({percent: scorecard.paying.deliveredPercent|swiss_number}, 'cms'),
+            }, with_context = false) }}
+            {{ include('admin/components/_kpi.html.twig', {
+                label: 'stats.funnel.paying.qualified'|trans({}, 'cms'),
+                value: scorecard.paying.withQualifiedInquiry is null ? 'stats.funnel.not_available'|trans({}, 'cms') : scorecard.paying.withQualifiedInquiry|swiss_number,
+                detail: 'stats.funnel.qualified.note'|trans({}, 'cms'),
+            }, with_context = false) }}
+        </div>
+    </section>
+{% endblock %}

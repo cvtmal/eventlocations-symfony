@@ -57,6 +57,7 @@ final class SubmitInquiryDeliveryFailureTest extends WebTestCase
             $received[] = $event->inquiryId;
         });
 
+        $funnelBefore = (int) $this->connection->fetchOne('SELECT count(*) FROM funnel_events');
         $crawler = $this->post(DetailVenues::FULL_SLUG, InquiryFormFields::valid(['lastName' => 'Behalten']));
 
         self::assertResponseStatusCodeSame(503);
@@ -71,5 +72,6 @@ final class SubmitInquiryDeliveryFailureTest extends WebTestCase
         self::assertNull($rows[0]['delivered_to']);
         self::assertNull($rows[0]['venue_mail_sent_at']);
         self::assertSame([$rows[0]['id']], $received);
+        self::assertSame($funnelBefore, (int) $this->connection->fetchOne('SELECT count(*) FROM funnel_events'), 'nothing was delivered, so no funnel step (G8)');
     }
 }
