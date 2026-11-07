@@ -11,7 +11,6 @@ use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,7 +27,6 @@ final class ContentSchemaVocabularyTest extends KernelTestCase
      */
     public static function enums(): iterable
     {
-        yield 'tier' => ['properties.tier.enum', Tier::class];
         yield 'status' => ['properties.status.enum', VenueStatus::class];
         yield 'own catering' => ['properties.faq.properties.own_catering.enum', OwnCatering::class];
         yield 'floor material' => ['properties.rooms.items.properties.floor_material.enum', FloorMaterial::class];
@@ -67,6 +65,15 @@ final class ContentSchemaVocabularyTest extends KernelTestCase
         $main = self::at('properties.main_terms.properties');
         self::assertInstanceOf(\stdClass::class, $main);
         self::assertSame(['setting', 'building', 'suitable_for'], array_keys(get_object_vars($main)));
+    }
+
+    public function test_the_schema_has_no_tier(): void
+    {
+        $properties = self::at('properties');
+        self::assertInstanceOf(\stdClass::class, $properties);
+
+        self::assertArrayNotHasKey('tier', get_object_vars($properties));
+        self::assertNotContains('tier', (array) self::at('required'));
     }
 
     public function test_key_patterns_equal_the_php_pattern(): void

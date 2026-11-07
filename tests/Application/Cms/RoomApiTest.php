@@ -11,6 +11,7 @@ use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Tests\Support\Admin\AdminSession;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -81,6 +82,35 @@ final class RoomApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertArrayHasKey($field, $this->errors());
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$venue->id()]));
+    }
+
+    /**
+     * F12: Free holds one room. The second is refused with a message that names the plan (the whole form, so the
+     * key is empty), and nothing is written; the same room on Pro is taken.
+     */
+    public function test_a_second_room_is_refused_on_free_and_taken_on_pro(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $free = self::venue();
+        RoomFactory::createOne(['venue' => $free, 'position' => 1]);
+        $token = $this->csrfToken();
+
+        $this->json('POST', self::url($free), self::body(), $token);
+
+        self::assertResponseStatusCodeSame(422);
+        $errors = $this->errors();
+        self::assertSame([''], array_keys($errors));
+        self::assertStringContainsString('Free', $errors[''][0]);
+        self::assertStringContainsString('1 Raum', $errors[''][0]);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$free->id()]));
+
+        $pro = self::venue(KnownTiers::PRO);
+        RoomFactory::createOne(['venue' => $pro, 'position' => 1]);
+
+        $this->json('POST', self::url($pro), self::body(), $token);
+
+        self::assertResponseStatusCodeSame(201);
+        self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$pro->id()]));
     }
 
     public function test_malformed_json_is_a_422(): void
@@ -184,9 +214,9 @@ final class RoomApiTest extends WebTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$venue->id()]));
     }
 
-    private static function venue(): Venue
+    private static function venue(string $tier = KnownTiers::FREE): Venue
     {
-        return VenueFactory::new()->withoutLocation()->create();
+        return VenueFactory::new()->withoutLocation()->create(['tier' => $tier]);
     }
 
     private static function url(Venue $venue): string

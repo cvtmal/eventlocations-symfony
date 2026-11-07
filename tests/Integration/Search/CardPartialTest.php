@@ -6,7 +6,6 @@ namespace App\Tests\Integration\Search;
 
 use App\Search\ReadModel\CardPhoto;
 use App\Search\ReadModel\ListingCard;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -33,8 +32,17 @@ final class CardPartialTest extends KernelTestCase
 
         self::assertCount(1, $crawler->filter('h3.card__title'));
         self::assertCount(0, $crawler->filter('h2'));
-        self::assertSame('Premium', $crawler->filter('h3.card__title .badge')->text());
+        self::assertSame('Top-Eintrag', $crawler->filter('h3.card__title .badge')->text());
         self::assertSame('Schloss Seeburg', $crawler->filter('h3.card__title .card__link')->text());
+    }
+
+    public function test_only_a_promoted_card_carries_the_label(): void
+    {
+        $unpromoted = new Crawler($this->render(promoted: false));
+
+        self::assertCount(0, $unpromoted->filter('.badge'));
+        self::assertSame('Schloss Seeburg', $unpromoted->filter('h2.card__title .card__link')->text());
+        self::assertCount(1, (new Crawler($this->render(promoted: true)))->filter('h2.card__title .badge'));
     }
 
     public function test_the_default_renders_the_same_html_as_an_explicit_h2(): void
@@ -82,7 +90,7 @@ final class CardPartialTest extends KernelTestCase
     /**
      * @param array<string, string> $context
      */
-    private function render(array $context = [], int $photos = 0): string
+    private function render(array $context = [], int $photos = 0, bool $promoted = true): string
     {
         $twig = self::getContainer()->get('twig');
         self::assertInstanceOf(Environment::class, $twig);
@@ -92,7 +100,7 @@ final class CardPartialTest extends KernelTestCase
             number: 1,
             slug: 'schloss-seeburg',
             name: 'Schloss Seeburg',
-            tier: Tier::Premium,
+            promoted: $promoted,
             capacityMin: 50,
             capacityMax: 450,
             place: new VenuePlace('Stäfa', null, null),

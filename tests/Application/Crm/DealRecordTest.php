@@ -15,7 +15,7 @@ use App\Factory\DealFactory;
 use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\AdminSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -49,7 +49,7 @@ final class DealRecordTest extends WebTestCase
     public function test_the_page_shows_the_deal_with_its_company_venue_and_contacts(): void
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor);
-        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => Tier::Premium]);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => KnownTiers::PRO]);
         $company = CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']);
         ContactFactory::createOne(['firstName' => 'Laura', 'lastName' => 'Meier', 'company' => $company]);
         ContactFactory::createOne(['firstName' => 'Marc', 'lastName' => 'Widmer', 'company' => $company]);
@@ -58,7 +58,7 @@ final class DealRecordTest extends WebTestCase
             'name' => 'Premium 2027',
             'company' => $company,
             'venue' => $venue,
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'amountRappen' => 125050,
             'contractEndOn' => new \DateTimeImmutable('2027-12-31'),
             'owner' => $owner,
@@ -76,9 +76,12 @@ final class DealRecordTest extends WebTestCase
         self::assertCount(0, $crawler->filter('#kontakte a, #kontakte button, #kontakte form'));
         self::assertSame('Schloss Seeblick', $crawler->filter('#location .crm-side__link')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#location .crm-side__link')->attr('href'));
+        self::assertStringStartsWith('Pro', $crawler->filter('#location .crm-side__detail')->text());
         self::assertSame('deal', $this->timelineProps($crawler)['kind']);
         self::assertSame('/admin/api/crm/deals/'.$deal->id().'/timeline', $this->timelineProps($crawler)['urls']['timeline'] ?? null);
         self::assertNull($this->timelineProps($crawler)['email']);
+        // A deal's timeline holds no change of tier, so its labels read no tier names.
+        self::assertSame([], $this->timelineProps($crawler)['labels']['tiers']);
     }
 
     public function test_the_fields_hold_the_stored_value_and_edit_an_amount_as_francs(): void
@@ -86,7 +89,7 @@ final class DealRecordTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $deal = DealFactory::createOne([
             'amountRappen' => 125050,
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'contractStartOn' => new \DateTimeImmutable('2027-01-01'),
         ]);
 
@@ -96,7 +99,9 @@ final class DealRecordTest extends WebTestCase
         self::assertSame(['name', 'amount', 'tier', 'venue', 'contract_start', 'contract_end', 'expected_close', 'owner'], array_keys($fields));
         self::assertSame(['amount', '125050', "CHF 1'250.50", "1'250.50"], [$fields['amount']['type'], $fields['amount']['value'], $fields['amount']['display'], $fields['amount']['draft']]);
         self::assertSame(['date', '2027-01-01', '01.01.2027'], [$fields['contract_start']['type'], $fields['contract_start']['value'], $fields['contract_start']['display']]);
-        self::assertSame(['select', 'premium', 'Premium'], [$fields['tier']['type'], $fields['tier']['value'], $fields['tier']['display']]);
+        self::assertSame(['select', 'pro', 'Pro'], [$fields['tier']['type'], $fields['tier']['value'], $fields['tier']['display']]);
+        // The options are the rows of `tiers`, best first, as value and name.
+        self::assertSame([['value' => 'pro', 'label' => 'Pro'], ['value' => 'free', 'label' => 'Free']], $fields['tier']['options']);
         self::assertNull($fields['contract_end']['value']);
         self::assertSame("CHF 1'250.50", $crawler->filter('.record-properties .property__value')->eq(1)->text());
     }
@@ -339,9 +344,9 @@ final class DealRecordTest extends WebTestCase
         $deal = DealFactory::createOne(['company' => $company, 'venue' => $venue, 'owner' => $owner]);
         TaskFactory::createOne(['deal' => $deal]);
 
-        // The deal with its company, venue and contacts, the owners with the sidebar's badge, the stages, the timeline's
-        // activities, the Aufgaben card, the tier offer, the access-request badge; with the user's refresh 8 in production
-        // (N14's ceiling 9).
+        // The deal with its company, venue, contacts and the tiers the Tier field offers (F12), the owners with the
+        // sidebar's badge, the stages, the timeline's activities, the Aufgaben card, the tier offer, the access-request
+        // badge; with the user's refresh 8 in production (N14's ceiling 9).
         self::assertSame(7, $this->queriesOf($this->url($deal)));
     }
 

@@ -88,7 +88,7 @@ function systemTitle(entry) {
         return fill(label, { actor: entry.actorName, deal: entry.title, stage: props.labels.stages[entry.stage] ?? entry.stage });
     }
 
-    return fill(props.labels.system[entry.type], { venue: entry.venueName ?? '', tier: props.labels.tiers[entry.tier] ?? '' });
+    return fill(props.labels.system[entry.type], { venue: entry.venueName ?? '', tier: props.labels.tiers[entry.tier] ?? entry.tier ?? '' });
 }
 
 // A stage change names its actor in the sentence (Company.dc.html).

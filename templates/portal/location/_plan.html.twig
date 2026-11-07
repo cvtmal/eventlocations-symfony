@@ -1,0 +1,36 @@
+{#
+    The plan card (F12): the location's tier, how much of each limit it uses and, below Pro, "Pro anfragen". Include with
+    `with_context = false`: plan (`Portal\ReadModel\LocationPlan`), number (the location's number).
+    The button posts to `ProRequestController` with the stateless `submit` token, like the claim form.
+#}
+<section class="card" aria-labelledby="location-plan">
+    <div class="card__head">
+        <h2 id="location-plan">{{ 'plan.title'|trans({tier: plan.tierName}, 'portal') }}</h2>
+        {% if plan.promoted %}
+            {{ include('admin/components/_pill.html.twig', {label: 'tier.promoted'|trans({}, 'venues'), tone: 'green'}, with_context = false) }}
+        {% endif %}
+    </div>
+    <ul class="venue-widget">
+        <li class="venue-widget__row">{{ 'plan.limit.photos'|trans({used: plan.photosUsed|swiss_number, max: plan.photosMax|swiss_number}, 'portal') }}</li>
+        <li class="venue-widget__row">{{ 'plan.limit.rooms'|trans({used: plan.roomsUsed|swiss_number, max: plan.roomsMax|swiss_number}, 'portal') }}</li>
+        <li class="venue-widget__row">{{ 'plan.limit.documents'|trans({used: plan.documentsUsed|swiss_number, max: plan.documentsMax|swiss_number}, 'portal') }}</li>
+        <li class="venue-widget__row">{{ (plan.contactVisible ? 'plan.limit.contact_visible' : 'plan.limit.contact_hidden')|trans({}, 'portal') }}</li>
+        <li class="venue-widget__row">
+            {%- if plan.eventTypesMax is null -%}
+                {{ 'plan.limit.event_types_all'|trans({}, 'portal') }}
+            {%- else -%}
+                {{ 'plan.limit.event_types'|trans({max: plan.eventTypesMax|swiss_number}, 'portal') }}
+            {%- endif -%}
+        </li>
+    </ul>
+    {% if plan.canRequestPro %}
+        {% set francs = plan.proPriceRappen / 100 %}
+        <p class="card__body muted">{{ 'plan.pro.price'|trans({price: francs|swiss_number(plan.proPriceRappen % 100 == 0 ? 0 : 2)}, 'portal') }}</p>
+        <div class="card__foot">
+            <form method="post" action="{{ path('portal_location_pro_request', {number: number}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                {{ include('admin/components/_button.html.twig', {label: 'plan.pro.request'|trans({}, 'portal'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            </form>
+        </div>
+    {% endif %}
+</section>

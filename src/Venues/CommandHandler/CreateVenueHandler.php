@@ -11,6 +11,7 @@ use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\Repository\TierRepository;
 use App\Venues\SlugAllocator;
 use App\Venues\ValueObject\VenueStatus;
 use App\Venues\VenueSlugs;
@@ -36,6 +37,7 @@ final class CreateVenueHandler implements CommandHandlerInterface
         private readonly EntityManagerInterface $em,
         private readonly MessageBusInterface $commandBus,
         private readonly ClockInterface $clock,
+        private readonly TierRepository $tiers,
     ) {
     }
 
@@ -47,7 +49,7 @@ final class CreateVenueHandler implements CommandHandlerInterface
         if ('' === SlugAllocator::base($command->name)) {
             throw VenueRuleViolation::slugWithoutLetters();
         }
-        $venue = new Venue($command->name, $command->tier, VenueStatus::Unpublished, $command->capacityMax, null, null, null, null, null, null);
+        $venue = new Venue($command->name, $this->tiers->byCode($command->tierCode), VenueStatus::Unpublished, $command->capacityMax, null, null, null, null, null, null);
         $this->em->persist($venue);
 
         $default = $this->locales->default();

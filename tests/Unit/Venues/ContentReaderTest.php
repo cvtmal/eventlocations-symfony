@@ -12,7 +12,6 @@ use App\Venues\Exception\InvalidContent;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\TestCase;
 
@@ -53,7 +52,7 @@ final class ContentReaderTest extends TestCase
 
         self::assertSame('schloss-beispiel', $venue->key);
         self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $venue->contentHash);
-        self::assertSame([Tier::Premium, VenueStatus::Published, 180, 20], [$venue->tier, $venue->status, $venue->capacityMax, $venue->capacityMin]);
+        self::assertSame([VenueStatus::Published, 180, 20], [$venue->status, $venue->capacityMax, $venue->capacityMin]);
         self::assertSame(['8001', 'Zürich', 'zh'], [$venue->zip, $venue->townName, $venue->cantonCode]);
         self::assertSame(['0.9', 'Bahnhof Beispiel', '3.2', 'A1', '12.0', null], [$venue->stationKm, $venue->stationName, $venue->highwayKm, $venue->highwayName, $venue->airportKm, $venue->airportName]);
         self::assertSame([OwnCatering::Allowed, null], [$venue->ownCatering, $venue->daylight]);

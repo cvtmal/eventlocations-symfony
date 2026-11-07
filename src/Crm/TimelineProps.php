@@ -12,7 +12,6 @@ use App\Crm\ReadModel\OwnerOption;
 use App\Crm\ReadModel\TimelineEntry;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\RecordKind;
-use App\Venues\ValueObject\Tier;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -20,7 +19,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The props of the `timeline` island (D12): the first page of the record's timeline (P6), the tabs from the registry and
  * the strings, translated once here so a company and a deal pass the same set. They cost one statement beyond
  * `TimelineQuery::page()`, `EmailTemplateQuery::options()`, and only on a record with an address, the one that can send.
- * `_timeline.html.twig` renders the first page from the same array as its fallback.
+ * A tier's name is data (F12), read only when the first page holds a change of tier: `labels.tiers` maps a code to its
+ * name, empty otherwise. A later page that holds one brings its own (`TimelineApi`), and the island shows a code it has
+ * no name for as it is. `_timeline.html.twig` renders the first page from the same array as its fallback.
  */
 final readonly class TimelineProps
 {
@@ -89,6 +90,7 @@ final readonly class TimelineProps
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urls,
         private EmailTemplateQuery $templates,
+        private TierChoices $tiers,
     ) {
     }
 
@@ -100,10 +102,12 @@ final readonly class TimelineProps
      */
     public function of(RecordKind $kind, string $id, string $viewerId, array $assignees, array $recipients = []): array
     {
+        $page = $this->timeline->page($kind, $id, null, null);
+
         return [
             'kind' => $kind->value,
             'recordId' => $id,
-            'page' => $this->timeline->page($kind, $id, null, null)->toArray($viewerId, $this->types->composableCodes()),
+            'page' => $page->toArray($viewerId, $this->types->composableCodes()),
             // Every visible type is a filter tab, so each needs `activity.tab.<code>`, composable or not.
             'types' => array_map(fn (TimelineActivityType $type): array => [
                 'code' => $type->code(),
@@ -120,7 +124,7 @@ final readonly class TimelineProps
                 'tasks' => $this->urls->generate('admin_api_crm_tasks'),
                 'inquiries' => $this->urls->generate('admin_crm_inquiries'),
             ],
-            'labels' => $this->labels(),
+            'labels' => $this->labels($page->holdsTier()),
             'locale' => $this->translator->getLocale(),
         ];
     }
@@ -169,15 +173,12 @@ final readonly class TimelineProps
     }
 
     /**
+     * @param bool $withTiers whether the first page holds a change of tier, whose sentence names the tier
+     *
      * @return array<string, mixed>
      */
-    private function labels(): array
+    private function labels(bool $withTiers): array
     {
-        $tiers = [];
-        foreach (Tier::cases() as $tier) {
-            $tiers[$tier->value] = $tier->trans($this->translator);
-        }
-
         $stages = [];
         foreach (self::DEAL_STAGES as $code) {
             $stages[$code] = $this->crm('deal.stage.'.$code);
@@ -193,7 +194,7 @@ final readonly class TimelineProps
             ],
             'dealStageChangedAnonymous' => $this->crm('timeline.system.deal_stage_changed_anonymous', ['deal' => '__deal__', 'stage' => '__stage__']),
             'inquiryEntry' => $this->crm('timeline.inquiry.entry', ['couple' => '__couple__', 'venue' => '__venue__']),
-            'tiers' => $tiers,
+            'tiers' => $withTiers ? $this->tiers->names() : [],
             'stages' => $stages,
         ];
     }

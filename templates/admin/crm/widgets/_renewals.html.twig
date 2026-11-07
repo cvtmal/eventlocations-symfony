@@ -13,7 +13,7 @@
                 <span class="crm-task__text">
                     <a class="renewal-widget__company" href="{{ path('admin_crm_deals_show', {id: row.dealId}) }}">{{ row.companyName }}</a>
                     <span class="crm-list__detail">
-                        {%- if row.tier %}{{ row.tier|trans }} · {% endif -%}
+                        {%- if row.tier %}{{ row.tier.name }} · {% endif -%}
                         {{- 'renewal.widget.ends'|trans({date: row.contractEndOn|swiss_date}, 'crm') -}}
                     </span>
                 </span>

@@ -24,9 +24,6 @@ final readonly class AddVenuePhoto implements AuditableCommand
     /** Detected MIME type → the extension of the stored original. */
     public const array EXTENSIONS = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
 
-    /** Per scope: the gallery, or one room (#44). */
-    public const int MAX_PHOTOS = 30;
-
     public function __construct(
         public int $venueNumber,
         public ?string $roomId,

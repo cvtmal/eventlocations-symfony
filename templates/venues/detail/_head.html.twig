@@ -1,9 +1,9 @@
-{# Head block (DP-5): name + tier badge, "PLZ Ort" (else the canton or region text, else nothing), icon row, description. Params: venue. #}
+{# Head block (DP-5): name + "Top-Eintrag" badge, "PLZ Ort" (else the canton or region text, else nothing), icon row, description. Params: venue. #}
 {% set setting_icons = {river: 'waves', lake: 'sailboat', countryside: 'trees', mountains: 'mountain-snow', city: 'building-2'} %}
 <section id="beschreibung" class="venue-section venue-head" aria-labelledby="venue-name">
     <h1 id="venue-name" class="venue-head__name">
         {{ venue.name }}
-        {% if venue.tier.value != 'basic' %}{{ include('components/_badge.html.twig', {label: venue.tier|trans}, with_context = false) }}{% endif %}
+        {% if venue.promoted %}{{ include('components/_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues')}, with_context = false) }}{% endif %}
     </h1>
     {% if venue.place.townName %}
     <p class="venue-head__place">{{ 'detail.head.place'|trans({zip: venue.zip, town: venue.place.townName}, 'venues') }}</p>

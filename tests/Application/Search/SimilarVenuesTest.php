@@ -8,7 +8,7 @@ use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -104,6 +104,22 @@ final class SimilarVenuesTest extends WebTestCase
         self::assertCount(1, $crawler->filter('.similar-venues__all .icon'));
     }
 
+    public function test_only_a_pro_venue_carries_the_label(): void
+    {
+        $this->venue('ich-selbst', 'Ich Selbst', 'Zürich', 20, 60);
+        $this->venue('bezahlte-location', 'Bezahlte Location', 'Zürich', 50, 100, KnownTiers::PRO);
+        $this->venue('gratis-location', 'Gratis Location', 'Zürich', 50, 100);
+
+        $cards = $this->client->request('GET', '/hochzeitslocation/ich-selbst')->filter('.similar-card');
+
+        self::assertResponseIsSuccessful();
+        $paid = $cards->reduce(static fn (Crawler $card): bool => str_contains($card->text(), 'Bezahlte Location'));
+        $free = $cards->reduce(static fn (Crawler $card): bool => str_contains($card->text(), 'Gratis Location'));
+        self::assertSame('Top-Eintrag', $paid->filter('.badge')->text());
+        self::assertCount(1, $free);
+        self::assertCount(0, $free->filter('.badge'));
+    }
+
     private function detailPage(): Crawler
     {
         $this->venue('ich-selbst', 'Ich Selbst', 'Zürich', 20, 60);
@@ -117,11 +133,11 @@ final class SimilarVenuesTest extends WebTestCase
         return $crawler;
     }
 
-    private function venue(string $slug, string $name, string $town, ?int $min, int $max): void
+    private function venue(string $slug, string $name, string $town, ?int $min, int $max, string $tier = KnownTiers::FREE): void
     {
         $venue = VenueFactory::createOne([
             'name' => $name,
-            'tier' => Tier::Basic,
+            'tier' => $tier,
             'status' => VenueStatus::Published,
             'town' => DetailVenues::town($town),
             'capacityMin' => $min,

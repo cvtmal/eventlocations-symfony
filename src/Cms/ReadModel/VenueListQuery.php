@@ -7,7 +7,7 @@ namespace App\Cms\ReadModel;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\ArrayParameterType;
@@ -36,12 +36,13 @@ final class VenueListQuery
     /** `default_locale` is bound by every statement. */
     private const string FROM = <<<'SQL'
         FROM venues v
+        JOIN tiers tr ON tr.id = v.tier_id
         LEFT JOIN towns tw ON tw.id = v.town_id
         LEFT JOIN venue_translations t ON t.venue_id = v.id AND t.locale = :default_locale
         SQL;
 
     private const string COLUMNS = <<<'SQL'
-        SELECT v.number, v.name, t.slug, tw.name AS town_name, v.canton_code, t.region, v.tier, v.capacity_min, v.capacity_max,
+        SELECT v.number, v.name, t.slug, tw.name AS town_name, v.canton_code, t.region, tr.code AS tier_code, tr.name AS tier_name, tr.rank_weight AS tier_rank_weight, v.capacity_min, v.capacity_max,
                v.status, v.cms_edited_at, v.updated_at, v.content_key,
                (SELECT COUNT(*) FROM venue_photos p WHERE p.venue_id = v.id AND p.room_id IS NULL) AS photo_count,
                thumb.id AS thumb_id, thumb.width AS thumb_width, thumb.height AS thumb_height,
@@ -214,8 +215,8 @@ final class VenueListQuery
             $conditions[] = self::statusCondition($filter->status);
         }
         if (null !== $filter->tier) {
-            $conditions[] = 'v.tier = :tier';
-            $parameters['tier'] = $filter->tier->value;
+            $conditions[] = 'tr.code = :tier';
+            $parameters['tier'] = $filter->tier;
         }
         if (VenueListFilter::CANTON_NONE === $filter->canton) {
             $conditions[] = 'v.canton_code IS NULL';
@@ -288,7 +289,7 @@ final class VenueListQuery
                 null === $row['canton_code'] ? null : (string) $row['canton_code'],
                 null === $row['region'] ? null : (string) $row['region'],
             ),
-            tier: Tier::from((string) $row['tier']),
+            tier: TierLabel::fromRow($row),
             capacityMin: null === $row['capacity_min'] ? null : (int) $row['capacity_min'],
             capacityMax: (int) $row['capacity_max'],
             photoCount: (int) $row['photo_count'],

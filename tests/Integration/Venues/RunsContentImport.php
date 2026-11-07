@@ -109,6 +109,26 @@ trait RunsContentImport
     }
 
     /**
+     * The code of the tier an imported venue is on (F12); the import never sets it.
+     */
+    private function tierCode(string $key): string
+    {
+        $code = $this->connection->fetchOne('SELECT t.code FROM venues v JOIN tiers t ON t.id = v.tier_id WHERE v.content_key = ?', [$key]);
+        self::assertIsString($code, $key.' was not imported');
+
+        return $code;
+    }
+
+    /**
+     * What a won deal does (D18): the venue now points at the tier, by SQL so that `cms_edited_at` stays unset and the
+     * import would apply the folder.
+     */
+    private function setTier(string $key, string $code): void
+    {
+        self::assertSame(1, $this->connection->executeStatement('UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = ?) WHERE content_key = ?', [$code, $key]));
+    }
+
+    /**
      * A small JPEG of its own colour, so photos of one venue never share a hash.
      */
     /**

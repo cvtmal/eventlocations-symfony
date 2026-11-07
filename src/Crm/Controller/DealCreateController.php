@@ -13,6 +13,7 @@ use App\Crm\Form\DealType;
 use App\Crm\Form\ListQueryString;
 use App\Crm\ReadModel\DealFormQuery;
 use App\Crm\ReadModel\OwnerOptionsQuery;
+use App\Crm\TierChoices;
 use App\Crm\ValueObject\CrmFlash;
 use App\Shared\Translation\LocalizedRoutes;
 use App\Shared\Uid\EntityId;
@@ -37,10 +38,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class DealCreateController extends AbstractController
 {
     /** The handler's field names, as `InvalidPropertyValue::$field`, to the form's. */
-    private const array FIELDS = ['name' => 'name', 'owner' => 'owner'];
+    private const array FIELDS = ['name' => 'name', 'owner' => 'owner', 'tier' => 'tier'];
 
     #[Route('/admin/crm/deals/neu', name: 'admin_crm_deals_new', methods: ['GET', 'POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    public function __invoke(Request $request, DealFormQuery $companies, OwnerOptionsQuery $owners, MessageBusInterface $commandBus, FormFactoryInterface $forms, TranslatorInterface $translator): Response
+    public function __invoke(Request $request, DealFormQuery $companies, OwnerOptionsQuery $owners, TierChoices $tiers, MessageBusInterface $commandBus, FormFactoryInterface $forms, TranslatorInterface $translator): Response
     {
         $companyId = ListQueryString::value($request, 'company');
         $company = '' === $companyId ? null : $companies->company($companyId);
@@ -49,7 +50,7 @@ final class DealCreateController extends AbstractController
         }
 
         $data = new DealData();
-        $form = $this->createForm(DealType::class, $data, ['company' => $company, 'owners' => OwnerOptionsQuery::selectable($owners->all())]);
+        $form = $this->createForm(DealType::class, $data, ['company' => $company, 'owners' => OwnerOptionsQuery::selectable($owners->all()), 'tiers' => $tiers->choices()]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

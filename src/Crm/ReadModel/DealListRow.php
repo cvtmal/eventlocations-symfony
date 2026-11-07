@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Crm\ReadModel;
 
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 
 final readonly class DealListRow
 {
@@ -14,7 +14,7 @@ final readonly class DealListRow
         public string $companyId,
         public string $companyName,
         public string $stage,
-        public ?Tier $tier,
+        public ?TierLabel $tier,
         public ?int $amountRappen,
         public ?\DateTimeImmutable $expectedCloseOn,
         public ?string $ownerName,

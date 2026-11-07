@@ -478,6 +478,7 @@ task:
         reopen: '«{title}» wieder öffnen'
     renewal_title: 'Verlängerung: {name}'
     invoice_title: Rechnung stellen
+    pro_request_title: 'Pro-Anfrage: {venue} ({email})'
     object:
         company: Location
         deal: Deal

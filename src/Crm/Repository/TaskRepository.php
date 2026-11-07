@@ -35,4 +35,16 @@ class TaskRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['deal' => $dealId, 'isRenewal' => true]);
     }
+
+    /**
+     * Whether the company has an open task of exactly this title: the Pro request's second press finds the first. Read
+     * under the company's lock, so two presses at once write one task.
+     */
+    public function hasOpenTitled(string $companyId, string $title): bool
+    {
+        return (bool) $this->getEntityManager()->getConnection()->fetchOne(
+            'SELECT EXISTS (SELECT 1 FROM crm_tasks WHERE company_id = ? AND title = ? AND done_at IS NULL)',
+            [$companyId, $title],
+        );
+    }
 }

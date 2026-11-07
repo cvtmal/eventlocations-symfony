@@ -162,8 +162,8 @@ final class AuditLogQueryTest extends KernelTestCase
 
     public function test_for_subjects_cuts_a_command_that_must_name_a_field(): void
     {
-        $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Basics', changes: '{"changed": ["name"], "tier": "basic"}');
-        $kept = $this->entry('2026-10-30 10:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Basics', changes: '{"changed": ["name", "tier"], "tier": "premium"}');
+        $this->entry('2026-10-30 09:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Basics', changes: '{"changed": ["name"], "tier": "free"}');
+        $kept = $this->entry('2026-10-30 10:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Basics', changes: '{"changed": ["name", "tier"], "tier": "pro"}');
         $other = $this->entry('2026-10-30 11:00:00+00', subjectType: 'venue', subjectId: '1', command: 'Published', changes: '{"status": "published"}');
 
         $rows = $this->query()->forSubjects('venue', ['1'], ['Basics', 'Published'], 10, null, ['Basics' => 'tier']);

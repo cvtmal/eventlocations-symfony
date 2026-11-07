@@ -31,7 +31,7 @@ use App\Venues\CommandHandler\ChangeVenueTermsHandler;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -148,7 +148,7 @@ final class VenueCardFormsTest extends KernelTestCase
         $form = $this->card(VenueCard::Basics, $edit);
         $values = self::values($form->createView());
         $values['name'] = 'Schloss Seeblick Neu';
-        $values['tier'] = Tier::TopPremium->value;
+        $values['tier'] = KnownTiers::FREE;
         $form->submit($values);
 
         self::assertTrue($form->isValid(), (string) $form->getErrors(true));
@@ -156,7 +156,7 @@ final class VenueCardFormsTest extends KernelTestCase
         self::assertSame(['name', 'tier'], $changed);
         $command = $form->getData()->toCommand($edit->number(), $edit, $changed);
         self::assertInstanceOf(ChangeVenueBasics::class, $command);
-        self::assertSame(['Schloss Seeblick Neu', null, Tier::TopPremium], [$command->name, $command->newSlug, $command->tier]);
+        self::assertSame(['Schloss Seeblick Neu', null, KnownTiers::FREE], [$command->name, $command->newSlug, $command->tierCode]);
     }
 
     public function test_a_new_slug_is_passed_only_when_it_differs(): void
@@ -426,25 +426,25 @@ final class VenueCardFormsTest extends KernelTestCase
     public function test_the_create_form_builds_its_command(): void
     {
         $form = $this->forms->create(CreateVenueType::class, new CreateVenueData(), ['csrf_protection' => false]);
-        $form->submit(['name' => 'Neue Scheune', 'tier' => 'basic', 'capacityMax' => '120']);
+        $form->submit(['name' => 'Neue Scheune', 'tier' => 'free', 'capacityMax' => '120']);
 
         self::assertTrue($form->isValid(), (string) $form->getErrors(true));
         $command = $form->getData()->toCommand();
         self::assertInstanceOf(CreateVenue::class, $command);
-        self::assertSame(['Neue Scheune', Tier::Basic, 120], [$command->name, $command->tier, $command->capacityMax]);
+        self::assertSame(['Neue Scheune', KnownTiers::FREE, 120], [$command->name, $command->tierCode, $command->capacityMax]);
 
         $refused = $this->forms->create(CreateVenueType::class, new CreateVenueData(), ['csrf_protection' => false]);
-        $refused->submit(['name' => '!!!', 'tier' => 'basic', 'capacityMax' => '120']);
+        $refused->submit(['name' => '!!!', 'tier' => 'free', 'capacityMax' => '120']);
         self::assertFalse($refused->isValid());
     }
 
     public function test_the_filter_form_builds_its_filter(): void
     {
         $form = $this->forms->createNamed('', VenueFilterType::class, new VenueFilterData());
-        $form->submit(['q' => 'zuerich', 'tier' => 'premium', 'canton' => 'none', 'address' => 'missing', 'status' => 'incomplete', 'sort' => 'name'], false);
+        $form->submit(['q' => 'zuerich', 'tier' => 'pro', 'canton' => 'none', 'address' => 'missing', 'status' => 'incomplete', 'sort' => 'name'], false);
 
         self::assertTrue($form->isValid(), (string) $form->getErrors(true));
-        self::assertEquals(new VenueListFilter('zuerich', 'incomplete', Tier::Premium, 'none', true), $form->getData()->toFilter());
+        self::assertEquals(new VenueListFilter('zuerich', 'incomplete', KnownTiers::PRO, 'none', true), $form->getData()->toFilter());
 
         $refused = $this->forms->createNamed('', VenueFilterType::class, new VenueFilterData());
         $refused->submit(['status' => 'deleted', 'canton' => 'xx'], false);

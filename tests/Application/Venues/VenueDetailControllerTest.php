@@ -65,7 +65,7 @@ final class VenueDetailControllerTest extends WebTestCase
         self::assertSame('Schloss Seeblick: Hochzeit am See.', $crawler->filter('meta[name="description"]')->attr('content'));
         self::assertCount(1, $crawler->filter('h1'));
         self::assertStringContainsString('Schloss Seeblick', $crawler->filter('h1')->text());
-        self::assertSelectorTextContains('h1 .badge', 'Premium');
+        self::assertSelectorTextContains('h1 .badge', 'Top-Eintrag');
 
         // Nav: every item points at an existing section.
         $targets = $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href'));

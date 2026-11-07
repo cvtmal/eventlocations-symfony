@@ -79,7 +79,7 @@ final class ContentYamlFileTest extends TestCase
     public function test_broken_yaml_makes_the_file_unreadable(): void
     {
         $file = $this->directory.'/venue.yaml';
-        ContentYamlFile::replace($file, "name: Kaputt\n  tier: basic\n");
+        ContentYamlFile::replace($file, "name: Kaputt\n  status: published\n");
 
         $this->expectException(InvalidContentFolder::class);
 

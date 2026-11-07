@@ -25,4 +25,9 @@ final class NoTaskAssignee extends DomainException
     {
         return new self(\sprintf('Nobody active can take the invoice task of company "%s".', $companyId));
     }
+
+    public static function forProRequest(string $companyId): self
+    {
+        return new self(\sprintf('Nobody active can take the Pro request task of company "%s".', $companyId));
+    }
 }

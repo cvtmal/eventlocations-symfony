@@ -395,3 +395,21 @@ rights:
         revoked: Freigabe widerrufen. Das Foto ist von der Website entfernt.
         gone: Das Foto ist schon entfernt.
         failed: Das hat nicht geklappt. Bitte versuch es noch einmal.
+
+# F12 (business-model): the plan card on a location's page and "Pro anfragen".
+plan:
+    title: 'Dein Plan: {tier}'
+    limit:
+        photos: 'Fotos {used} von {max}'
+        rooms: 'Räume {used} von {max}'
+        documents: 'PDFs {used} von {max}'
+        contact_visible: 'Telefon und Website: sichtbar'
+        contact_hidden: 'Telefon und Website: verborgen'
+        event_types: 'Anlassarten: bis zu {max}'
+        event_types_all: 'Anlassarten: alle'
+    pro:
+        price: 'Pro kostet CHF {price} pro Jahr zzgl. MwSt., wir stellen die Rechnung von Hand.'
+        request: Pro anfragen
+    flash:
+        requested: 'Danke! Wir haben deine Anfrage erhalten und melden uns bei dir.'
+        failed: Das hat nicht geklappt. Bitte lade die Seite neu und versuch es noch einmal.

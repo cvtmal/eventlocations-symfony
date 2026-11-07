@@ -18,7 +18,7 @@ use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Tests\Support\Http\RecordingHttpCachePurger;
 use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\DBAL\Exception\DriverException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -43,15 +43,15 @@ final class ApplyDealTierTest extends KernelTestCase
             self::assertSame(1, \count($this->auditRows('venue', (string) $venue->number())));
         };
 
-        $this->dispatch(new ApplyDealTier($deal->id(), Tier::Basic));
+        $this->dispatch(new ApplyDealTier($deal->id(), KnownTiers::FREE));
 
-        self::assertSame('premium', $this->tierOf($venue));
+        self::assertSame(KnownTiers::PRO, $this->tierOf($venue));
         self::assertSame(
-            [['command' => ApplyDealTier::class, 'changes' => ['expected' => 'basic']]],
+            [['command' => ApplyDealTier::class, 'changes' => ['expected' => 'free']]],
             $this->auditRows('deal', $deal->id()),
         );
         self::assertSame(
-            [['command' => ChangeVenueTier::class, 'changes' => ['tier' => 'premium', 'changed' => ['tier']]]],
+            [['command' => ChangeVenueTier::class, 'changes' => ['tier' => 'pro', 'changed' => ['tier']]]],
             $this->auditRows('venue', (string) $venue->number()),
         );
         self::assertSame([$venue->number()], $purger->venues);
@@ -62,7 +62,7 @@ final class ApplyDealTierTest extends KernelTestCase
     {
         ['deal' => $deal, 'venue' => $venue, 'companyId' => $companyId] = $this->wonDeal();
 
-        $this->dispatch(new ApplyDealTier($deal->id(), Tier::Basic));
+        $this->dispatch(new ApplyDealTier($deal->id(), KnownTiers::FREE));
 
         $timeline = self::getContainer()->get(TimelineQuery::class);
         self::assertInstanceOf(TimelineQuery::class, $timeline);
@@ -72,7 +72,7 @@ final class ApplyDealTierTest extends KernelTestCase
         ));
         self::assertCount(1, $system);
         self::assertSame($venue->name(), $system[0]->venueName);
-        self::assertSame('premium', $system[0]->tier);
+        self::assertSame(KnownTiers::PRO, $system[0]->tier);
     }
 
     public function test_another_tier_than_the_expected_one_is_stale(): void
@@ -80,30 +80,40 @@ final class ApplyDealTierTest extends KernelTestCase
         ['deal' => $deal, 'venue' => $venue] = $this->wonDeal();
         $purger = $this->purger();
 
-        $failure = $this->failure(new ApplyDealTier($deal->id(), Tier::Empfehlung), StaleProperty::class);
+        $failure = $this->failure(new ApplyDealTier($deal->id(), KnownTiers::PRO), StaleProperty::class);
 
         self::assertSame('tier', $failure->field);
-        self::assertSame('basic', $this->tierOf($venue));
+        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
         self::assertSame([], $this->auditRows('deal', $deal->id()));
         self::assertSame([], $purger->venues);
+    }
+
+    public function test_an_expected_code_that_no_tier_has_is_stale(): void
+    {
+        ['deal' => $deal, 'venue' => $venue] = $this->wonDeal();
+
+        $this->failure(new ApplyDealTier($deal->id(), 'gold'), StaleProperty::class);
+
+        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
+        self::assertSame([], $this->auditRows('deal', $deal->id()));
     }
 
     public function test_a_deal_that_is_not_won_applies_nothing(): void
     {
         ['deal' => $deal, 'venue' => $venue] = $this->wonDeal('negotiation');
 
-        $this->failure(new ApplyDealTier($deal->id(), Tier::Basic), DealTierNotApplicable::class);
+        $this->failure(new ApplyDealTier($deal->id(), KnownTiers::FREE), DealTierNotApplicable::class);
 
-        self::assertSame('basic', $this->tierOf($venue));
+        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
     }
 
     public function test_a_deal_without_a_tier_or_a_venue_applies_nothing(): void
     {
         ['deal' => $noTier] = $this->wonDeal(tier: null);
-        $noVenue = DealFactory::new()->inStage('won')->create(['tier' => Tier::Premium]);
+        $noVenue = DealFactory::new()->inStage('won')->create(['tier' => KnownTiers::PRO]);
 
-        $this->failure(new ApplyDealTier($noTier->id(), Tier::Basic), DealTierNotApplicable::class);
-        $this->failure(new ApplyDealTier($noVenue->id(), Tier::Basic), DealTierNotApplicable::class);
+        $this->failure(new ApplyDealTier($noTier->id(), KnownTiers::FREE), DealTierNotApplicable::class);
+        $this->failure(new ApplyDealTier($noVenue->id(), KnownTiers::FREE), DealTierNotApplicable::class);
     }
 
     public function test_a_venue_no_longer_linked_applies_nothing(): void
@@ -111,16 +121,16 @@ final class ApplyDealTierTest extends KernelTestCase
         ['deal' => $deal, 'venue' => $venue] = $this->wonDeal();
         $this->connection->executeStatement('UPDATE crm_companies SET venue_id = NULL');
 
-        $this->failure(new ApplyDealTier($deal->id(), Tier::Basic), DealTierNotApplicable::class);
+        $this->failure(new ApplyDealTier($deal->id(), KnownTiers::FREE), DealTierNotApplicable::class);
 
-        self::assertSame('basic', $this->tierOf($venue));
+        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
     }
 
     public function test_a_tier_already_on_the_venue_applies_nothing(): void
     {
-        ['deal' => $deal, 'venue' => $venue] = $this->wonDeal(venueTier: Tier::Premium);
+        ['deal' => $deal, 'venue' => $venue] = $this->wonDeal(venueTier: KnownTiers::PRO);
 
-        $this->failure(new ApplyDealTier($deal->id(), Tier::Premium), DealTierNotApplicable::class);
+        $this->failure(new ApplyDealTier($deal->id(), KnownTiers::PRO), DealTierNotApplicable::class);
 
         self::assertSame([], $this->auditRows('venue', (string) $venue->number()));
     }
@@ -131,18 +141,18 @@ final class ApplyDealTierTest extends KernelTestCase
         $purger = $this->purger();
         $this->refuse('BEFORE UPDATE ON venues');
 
-        $this->assertDatabaseFailure(new ApplyDealTier($deal->id(), Tier::Basic));
+        $this->assertDatabaseFailure(new ApplyDealTier($deal->id(), KnownTiers::FREE));
 
-        self::assertSame('basic', $this->tierOf($venue));
+        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
         self::assertSame([], $this->auditRows('deal', $deal->id()));
         self::assertSame([], $this->auditRows('venue', (string) $venue->number()));
         self::assertSame([], $purger->venues);
         self::assertSame(0, $purger->listings);
 
         $this->allow('venues');
-        $this->dispatch(new ApplyDealTier($deal->id(), Tier::Basic));
+        $this->dispatch(new ApplyDealTier($deal->id(), KnownTiers::FREE));
 
-        self::assertSame('premium', $this->tierOf($venue));
+        self::assertSame(KnownTiers::PRO, $this->tierOf($venue));
         self::assertSame([$venue->number()], $purger->venues);
     }
 
@@ -153,24 +163,24 @@ final class ApplyDealTierTest extends KernelTestCase
         // The outer audit row is written after the nested command returned: the last step of the transaction.
         $this->refuse("BEFORE INSERT ON admin_audit_log FOR EACH ROW WHEN (NEW.subject_type = 'deal')", 'admin_audit_log');
 
-        $this->assertDatabaseFailure(new ApplyDealTier($deal->id(), Tier::Basic));
+        $this->assertDatabaseFailure(new ApplyDealTier($deal->id(), KnownTiers::FREE));
 
-        self::assertSame('basic', $this->tierOf($venue));
+        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
         self::assertSame([], $this->auditRows('venue', (string) $venue->number()));
         self::assertSame([], $purger->venues);
         self::assertSame(0, $purger->listings);
 
         $this->allow('admin_audit_log');
-        $this->dispatch(new ApplyDealTier($deal->id(), Tier::Basic));
+        $this->dispatch(new ApplyDealTier($deal->id(), KnownTiers::FREE));
 
-        self::assertSame('premium', $this->tierOf($venue));
+        self::assertSame(KnownTiers::PRO, $this->tierOf($venue));
         self::assertSame(1, \count($this->auditRows('deal', $deal->id())));
     }
 
     /**
      * @return array{deal: Deal, venue: Venue, companyId: string}
      */
-    private function wonDeal(string $stage = 'won', ?Tier $tier = Tier::Premium, Tier $venueTier = Tier::Basic): array
+    private function wonDeal(string $stage = 'won', ?string $tier = KnownTiers::PRO, string $venueTier = KnownTiers::FREE): array
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['tier' => $venueTier]);
         $company = CompanyFactory::new()->withVenue($venue)->create();
@@ -210,7 +220,7 @@ final class ApplyDealTierTest extends KernelTestCase
 
     private function tierOf(Venue $venue): string
     {
-        return (string) $this->connection->fetchOne('SELECT tier FROM venues WHERE number = ?', [$venue->number()]);
+        return (string) $this->connection->fetchOne('SELECT t.code FROM venues v JOIN tiers t ON t.id = v.tier_id WHERE v.number = ?', [$venue->number()]);
     }
 
     private function purger(): RecordingHttpCachePurger

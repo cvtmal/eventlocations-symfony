@@ -58,7 +58,7 @@ const labels = {
     },
     dealStageChangedAnonymous: 'Deal «__deal__» auf __stage__ verschoben',
     stages: { negotiation: 'Verhandlung' },
-    tiers: { premium: 'Premium' },
+    tiers: { pro: 'Pro' },
 };
 
 const types = [
@@ -126,7 +126,7 @@ function sentMail(status, overrides = {}) {
     });
 }
 
-function island(page = { entries: [], next: null }, email = null) {
+function island(page = { entries: [], next: null }, email = null, labelOverrides = {}) {
     return mount(TimelineIsland, {
         props: {
             kind: 'company',
@@ -137,7 +137,7 @@ function island(page = { entries: [], next: null }, email = null) {
             assignees: [{ id: 'u1', name: 'Andrea Keller' }, { id: 'u2', name: 'Marc Widmer' }],
             viewerId: 'u2',
             urls,
-            labels,
+            labels: { ...labels, ...labelOverrides },
             locale: 'de',
             email,
         },
@@ -202,7 +202,7 @@ describe('TimelineIsland', () => {
             entries: [
                 entry('e3', '2026-10-29T14:02', { type: 'call', body: 'Will verlängern' }),
                 entry('e2', '2026-10-27T10:30', { kind: 'system', type: 'published', venueName: 'Schloss Seeblick', body: null }),
-                entry('e1', '2026-09-30T09:00', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'premium', actorName: null, body: null }),
+                entry('e1', '2026-09-30T09:00', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'pro', actorName: null, body: null }),
             ],
             next: null,
         });
@@ -213,9 +213,19 @@ describe('TimelineIsland', () => {
         expect(wrapper.get('.timeline-item__icon').classes()).toContain('timeline-item__icon--green');
         expect(wrapper.findAll('.timeline-item--system').map((item) => item.text())).toEqual([
             '«Schloss Seeblick» publiziert · Andrea Keller · 27.10.2026, 10:30',
-            '«Schloss Seeblick»: neu Premium · 30.09.2026, 09:00',
+            '«Schloss Seeblick»: neu Pro · 30.09.2026, 09:00',
         ]);
         expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('shows a tier code it has no name for as it is', () => {
+        // The audit row of a tier that is gone, or of the old enum, still holds its code.
+        wrapper = island({
+            entries: [entry('e1', '2026-10-27T10:30', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'premium', actorName: null, body: null })],
+            next: null,
+        });
+
+        expect(wrapper.get('.timeline-item--system').text()).toBe('«Schloss Seeblick»: neu premium · 27.10.2026, 10:30');
     });
 
     it('writes a stage change as the design\'s sentence, with or without an actor', () => {
@@ -646,6 +656,34 @@ describe('TimelineIsland', () => {
         expect(fetch.mock.calls[1][0]).toBe(`${urls.timeline}?before=token+2`);
         expect(button(wrapper, 'Mehr laden')).toBeUndefined();
         expect(document.activeElement).toBe(wrapper.get('.crm-timeline__list').element);
+    });
+
+    it('takes the tier names from the older page that holds the change, when the first page held none', async () => {
+        // PHP sends an empty list, not an object, while the first page holds no change of tier.
+        wrapper = island({ entries: [entry('e3', '2026-10-29T14:02')], next: 'token' }, null, { tiers: [] });
+        fetch.mockResolvedValueOnce(json({
+            entries: [entry('e1', '2026-01-05T09:00', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'pro', actorName: null, body: null })],
+            next: null,
+            tiers: { pro: 'Pro', free: 'Free' },
+        }));
+
+        await button(wrapper, 'Mehr laden').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('.timeline-item--system').text()).toBe('«Schloss Seeblick»: neu Pro · 05.01.2026, 09:00');
+    });
+
+    it('keeps the names it has when an older page brings none', async () => {
+        wrapper = island({
+            entries: [entry('e3', '2026-10-29T14:02', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'pro', actorName: null, body: null })],
+            next: 'token',
+        });
+        fetch.mockResolvedValueOnce(json({ entries: [entry('e1', '2026-01-05T09:00')], next: null }));
+
+        await button(wrapper, 'Mehr laden').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('.timeline-item--system').text()).toBe('«Schloss Seeblick»: neu Pro · 29.10.2026, 14:02');
     });
 
     it('leaves an entry older than the loaded ones to "Mehr laden"', async () => {

@@ -12,9 +12,9 @@ use App\Geo\Entity\Town;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -55,7 +55,7 @@ final class ListingControllerTest extends WebTestCase
     public function test_renders_hero_cards_and_facts(): void
     {
         $premium = VenueFactory::createOne([
-            'name' => 'Schloss Seeburg', 'tier' => Tier::Premium, 'capacityMin' => 50, 'capacityMax' => 450, 'town' => $this->town('Stäfa'),
+            'name' => 'Schloss Seeburg', 'tier' => KnownTiers::PRO, 'capacityMin' => 50, 'capacityMax' => 450, 'town' => $this->town('Stäfa'),
         ]);
         VenueTranslationFactory::createOne(['venue' => $premium, 'slug' => 'schloss-seeburg']);
         $this->venue(['name' => 'Gasthof Linde'], ['slug' => 'gasthof-linde']);
@@ -71,12 +71,12 @@ final class ListingControllerTest extends WebTestCase
         $card = $this->card($crawler, 'Schloss Seeburg');
         self::assertSame('/eventlokal/schloss-seeburg', $card->filter('.card__link')->attr('href'));
         self::assertSame(['50 - 450', 'Stäfa'], $card->filter('.card-facts__item')->each(static fn (Crawler $item): string => $item->text()));
-        self::assertSame('Premium', $card->filter('.card__title .badge')->text());
+        self::assertSame('Top-Eintrag', $card->filter('.card__title .badge')->text());
         self::assertCount(0, $crawler->filter('.card__rating, .rating-summary__line'), 'No own rating on a card since #53.');
 
-        $basic = $this->card($crawler, 'Gasthof Linde');
-        self::assertSame('/eventlokal/gasthof-linde', $basic->filter('.card__link')->attr('href'));
-        self::assertCount(0, $basic->filter('.badge'));
+        $free = $this->card($crawler, 'Gasthof Linde');
+        self::assertSame('/eventlokal/gasthof-linde', $free->filter('.card__link')->attr('href'));
+        self::assertCount(0, $free->filter('.badge'));
 
         $this->get('/eventlokale?q=Linde');
         self::assertSelectorTextSame('.listing-hero__count', '1 Resultat');
@@ -86,7 +86,7 @@ final class ListingControllerTest extends WebTestCase
     {
         $venue = VenueFactory::new()
             ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium))
-            ->create(['name' => 'Schloss Seeburg', 'tier' => Tier::Premium]);
+            ->create(['name' => 'Schloss Seeburg', 'tier' => KnownTiers::PRO]);
         VenueTranslationFactory::createOne(['venue' => $venue]);
 
         $card = $this->card($this->get('/eventlokale'), 'Schloss Seeburg');
@@ -99,11 +99,11 @@ final class ListingControllerTest extends WebTestCase
     public function test_carousel_and_image_loading(): void
     {
         foreach (['Schloss Seeburg', 'Gasthof Linde', 'Remise Au'] as $name) {
-            $venue = $this->venue(['name' => $name, 'tier' => Tier::Premium]);
+            $venue = $this->venue(['name' => $name, 'tier' => KnownTiers::PRO]);
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
         }
-        $this->venue(['name' => 'Ohne Bilder']); // basic: always last
+        $this->venue(['name' => 'Ohne Bilder']); // Free: always after the Pro venues
 
         $crawler = $this->get('/eventlokale');
 

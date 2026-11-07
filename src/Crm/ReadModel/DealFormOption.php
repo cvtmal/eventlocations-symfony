@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 /**
- * A venue or contact the deal form offers.
+ * An option the deal's selects offer: `id` is the value, a venue's id or a tier's code (F12).
  */
 final readonly class DealFormOption
 {

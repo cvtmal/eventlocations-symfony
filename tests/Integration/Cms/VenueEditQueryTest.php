@@ -18,10 +18,11 @@ use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -96,7 +97,8 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame([], $edit->missingForPublish('de'));
 
         $header = $edit->header;
-        self::assertSame(['Schloss Seeblick', Tier::Premium, VenueStatus::Published, true], [$header->name, $header->tier, $header->status, $header->isPublished]);
+        self::assertSame(['Schloss Seeblick', VenueStatus::Published, true], [$header->name, $header->status, $header->isPublished]);
+        self::assertEquals(new TierLabel(KnownTiers::PRO, 'Pro', true), $header->tier);
         self::assertSame(['Zürich', Canton::ZH, null], [$header->place->townName, $header->place->canton, $header->place->region]);
         self::assertSame(['Seestrasse 1', '8001', DetailVenues::FULL_SLUG, null, null], [$header->street, $header->zip, $header->slug, $header->contentKey, $header->cmsEditedAt]);
         self::assertNotNull($header->cover);

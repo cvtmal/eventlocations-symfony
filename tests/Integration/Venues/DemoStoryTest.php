@@ -76,8 +76,8 @@ final class DemoStoryTest extends KernelTestCase
         self::assertSame(0, $this->rows('SELECT count(*) FROM venues WHERE town_id IS NULL AND (zip IS NOT NULL OR street IS NOT NULL OR lat IS NOT NULL)'));
         self::assertSame(1, $this->rows('SELECT count(*) FROM venue_translations WHERE region IS NOT NULL'));
         self::assertSame(
-            ['beliebte_location' => 3, 'empfehlung' => 6, 'top_premium' => 9, 'premium' => 12, 'basic' => 30],
-            array_map('intval', $this->connection->fetchAllKeyValue('SELECT tier, count(*) FROM venues GROUP BY tier ORDER BY min(tier_rank)')),
+            ['pro' => 15, 'free' => 45],
+            array_map('intval', $this->connection->fetchAllKeyValue('SELECT t.code, count(*) FROM venues v JOIN tiers t ON t.id = v.tier_id GROUP BY t.code ORDER BY min(t.rank_weight) DESC')),
         );
         self::assertSame(DemoStory::VENUES, $this->rows("SELECT count(DISTINCT slug) FROM venue_translations WHERE locale = 'de'"));
         self::assertSame(DemoStory::VENUES, $this->rows('SELECT count(DISTINCT name) FROM venues'));

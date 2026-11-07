@@ -95,7 +95,7 @@ final class DealExportController extends AbstractController
                 $row->venueName,
                 $translator->trans('deal.stage.'.$row->stage, [], 'crm'),
                 $row->lostReason?->trans($translator),
-                $row->tier?->trans($translator),
+                $row->tier?->name,
                 null === $row->amountRappen ? null : Chf::plain($row->amountRappen),
                 $row->contractStartOn?->format('d.m.Y'),
                 $row->contractEndOn?->format('d.m.Y'),

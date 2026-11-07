@@ -21,6 +21,9 @@ final class PropertyConstraintsTest extends TestCase
 {
     private const string UUID = '0192f0a4-7c3e-7d1a-9b2c-3d4e5f607182';
 
+    /** The codes the migration seeds; the controller passes the table's (`TierChoices::codes()`). */
+    private const array TIER_CODES = ['free', 'pro'];
+
     /**
      * @return iterable<string, array{CompanyProperty, ?string, ?string}>
      */
@@ -56,7 +59,7 @@ final class PropertyConstraintsTest extends TestCase
     {
         yield 'name' => [DealProperty::Name, 'Premium 2027', null];
         yield 'venue' => [DealProperty::Venue, self::UUID, '42'];
-        yield 'tier' => [DealProperty::Tier, 'premium', 'gold'];
+        yield 'tier' => [DealProperty::Tier, 'pro', 'gold'];
         yield 'no tier' => [DealProperty::Tier, null, ''];
         yield 'amount' => [DealProperty::Amount, "1'250.50", '12.345'];
         yield 'no amount' => [DealProperty::Amount, null, 'viel'];
@@ -70,8 +73,17 @@ final class PropertyConstraintsTest extends TestCase
     #[DataProvider('dealCases')]
     public function test_a_deal_field_accepts_and_refuses(DealProperty $property, ?string $valid, ?string $invalid): void
     {
-        self::assertSame(0, $this->violations(PropertyConstraints::deal($property), $valid), $property->value.' accepts');
-        self::assertGreaterThan(0, $this->violations(PropertyConstraints::deal($property), $invalid), $property->value.' refuses');
+        self::assertSame(0, $this->violations(PropertyConstraints::deal($property, self::TIER_CODES), $valid), $property->value.' accepts');
+        self::assertGreaterThan(0, $this->violations(PropertyConstraints::deal($property, self::TIER_CODES), $invalid), $property->value.' refuses');
+    }
+
+    public function test_a_deal_tier_is_one_of_the_codes_it_is_given(): void
+    {
+        self::assertSame(0, $this->violations(PropertyConstraints::deal(DealProperty::Tier, ['free', 'pro', 'team']), 'team'));
+        self::assertGreaterThan(0, $this->violations(PropertyConstraints::deal(DealProperty::Tier, self::TIER_CODES), 'team'));
+        // The old enum's codes mean nothing now, and a form that forgot the codes offers no tier at all.
+        self::assertGreaterThan(0, $this->violations(PropertyConstraints::deal(DealProperty::Tier, self::TIER_CODES), 'premium'));
+        self::assertGreaterThan(0, $this->violations(PropertyConstraints::deal(DealProperty::Tier), 'pro'));
     }
 
     #[DataProvider('companyCases')]
@@ -114,7 +126,7 @@ final class PropertyConstraintsTest extends TestCase
             self::assertSame($property->isNullable(), 0 === $this->violations(PropertyConstraints::contact($property), null), $property->value);
         }
         foreach (DealProperty::cases() as $property) {
-            self::assertSame($property->isNullable(), 0 === $this->violations(PropertyConstraints::deal($property), null), $property->value);
+            self::assertSame($property->isNullable(), 0 === $this->violations(PropertyConstraints::deal($property, self::TIER_CODES), null), $property->value);
         }
     }
 

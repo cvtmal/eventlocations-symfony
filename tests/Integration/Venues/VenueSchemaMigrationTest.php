@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues;
 
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -12,18 +12,19 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * The venue migration's constraints, proven against the real schema with raw SQL. Each
- * test seeds one town, two venues and one row in every child table inside a transaction
- * that is rolled back afterwards.
+ * test seeds one town, two venues (Pro and Free) and one row in every child table inside a
+ * transaction that is rolled back afterwards.
  *
- * test_every_constraint_has_a_rejection_case() lists every chk_/uk_/fk_ name of the 11
- * tables, so a new constraint without a case here fails.
+ * test_every_constraint_has_a_rejection_case() lists every chk_/uk_/fk_ name of the 12
+ * tables (the 11 of the venue aggregate and `tiers`, F12), so a new constraint without a case
+ * here fails.
  */
 final class VenueSchemaMigrationTest extends KernelTestCase
 {
     private const TABLES = [
         'venues', 'venue_translations', 'venue_slug_history', 'taxonomy_terms', 'venue_terms',
         'rooms', 'room_translations', 'venue_documents', 'venue_document_translations', 'venue_photos',
-        'venue_photo_translations',
+        'venue_photo_translations', 'tiers',
     ];
 
     private const IDS = [
@@ -44,7 +45,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
 
     private const SEED = [
         "INSERT INTO towns (id, canton_code, zip, name, slug, bfs_number, lat, lng, population) VALUES ('{town}', 'zh', '8999', 'Testdorf Venues', 'testdorf-venues', 9999, 47.3, 8.5, 100)",
-        "INSERT INTO venues (id, name, tier, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES ('{venue}', 'Testhaus', 'premium', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5), ('{venue2}', 'Zweithaus', 'basic', 'published', 50, '8999', '{town}', 'zh', 47.3, 8.5)",
+        "INSERT INTO venues (id, name, tier_id, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES ('{venue}', 'Testhaus', (SELECT id FROM tiers WHERE code = 'pro'), 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5), ('{venue2}', 'Zweithaus', (SELECT id FROM tiers WHERE code = 'free'), 'published', 50, '8999', '{town}', 'zh', 47.3, 8.5)",
         "INSERT INTO venue_translations (id, venue_id, locale, slug, summary) VALUES (gen_random_uuid(), '{venue}', 'de', 'testhaus-venues', 'Kurz.'), (gen_random_uuid(), '{venue2}', 'de', 'zweithaus-venues', 'Kurz.')",
         "INSERT INTO venue_slug_history (id, venue_id, locale, slug) VALUES (gen_random_uuid(), '{venue}', 'de', 'altes-testhaus')",
         "INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES ('{venue}', 'setting', 'lake', TRUE), ('{venue}', 'building', 'castle', TRUE), ('{venue}', 'building', 'villa', FALSE)",
@@ -87,9 +88,8 @@ final class VenueSchemaMigrationTest extends KernelTestCase
     public static function rejections(): iterable
     {
         // venues
-        // The NOT NULL of the generated tier_rank (CASE without ELSE) fires before chk_venues_tier;
-        // either way an unknown tier is rejected. VocabularyChecksTest pins the IN list.
-        yield 'unknown tier' => ['chk_venues_tier', ["UPDATE venues SET tier = 'gold' WHERE id = '{venue}'"], '"tier_rank"'];
+        yield 'unknown tier' => ['fk_venues_tier_id', ["UPDATE venues SET tier_id = '{missing}' WHERE id = '{venue}'"]];
+        yield 'tier of a venue is not deleted' => ['fk_venues_tier_id', ["DELETE FROM tiers WHERE code = 'pro'"]];
         yield 'unknown status' => ['chk_venues_status', ["UPDATE venues SET status = 'draft' WHERE id = '{venue}'"]];
         yield 'capacity above 50000' => ['chk_venues_capacity', ["UPDATE venues SET capacity_max = 50001 WHERE id = '{venue}'"]];
         yield 'capacity zero' => ['chk_venues_capacity', ["UPDATE venues SET capacity_max = 0 WHERE id = '{venue}'"]];
@@ -125,7 +125,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'largest room zero' => ['chk_venues_largest_room_m2', ["UPDATE venues SET largest_room_m2 = 0 WHERE id = '{venue}'"]];
         yield 'tallest room above 30 m' => ['chk_venues_max_room_height_m', ["UPDATE venues SET max_room_height_m = 30.01 WHERE id = '{venue}'"]];
         yield 'tallest room height zero' => ['chk_venues_max_room_height_m', ["UPDATE venues SET max_room_height_m = 0 WHERE id = '{venue}'"]];
-        yield 'duplicate number' => ['uk_venues_number', ["INSERT INTO venues (id, number, name, tier, status, capacity_max, zip, town_id, canton_code, lat, lng) OVERRIDING SYSTEM VALUE SELECT gen_random_uuid(), number, 'Kopie', 'basic', 'published', 10, '8999', '{town}', 'zh', 47.3, 8.5 FROM venues WHERE id = '{venue}'"]];
+        yield 'duplicate number' => ['uk_venues_number', ["INSERT INTO venues (id, number, name, tier_id, status, capacity_max, zip, town_id, canton_code, lat, lng) OVERRIDING SYSTEM VALUE SELECT gen_random_uuid(), number, 'Kopie', tier_id, 'published', 10, '8999', '{town}', 'zh', 47.3, 8.5 FROM venues WHERE id = '{venue}'"]];
         yield 'unknown town' => ['fk_venues_town_id', ["UPDATE venues SET town_id = '{missing}' WHERE id = '{venue}'"]];
         yield 'unknown canton' => ['fk_venues_canton_code', ["UPDATE venues SET canton_code = 'xx' WHERE id = '{venue}'"]];
         yield 'town of a venue is not deleted' => ['fk_venues_town_id', ["DELETE FROM towns WHERE id = '{town}'"]];
@@ -234,6 +234,22 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'second de alt' => ['uk_venue_photo_translations_venue_photo_id_locale', ["INSERT INTO venue_photo_translations (id, venue_photo_id, locale, alt) VALUES (gen_random_uuid(), '{photo}', 'de', 'Garten')"]];
         yield 'alt locale' => ['chk_venue_photo_translations_locale', ["UPDATE venue_photo_translations SET locale = 'De' WHERE venue_photo_id = '{photo}'"]];
         yield 'alt of unknown photo' => ['fk_venue_photo_translations_venue_photo_id', ["INSERT INTO venue_photo_translations (id, venue_photo_id, locale, alt) VALUES (gen_random_uuid(), '{missing}', 'de', 'Garten')"]];
+
+        // tiers (F12)
+        yield 'tier code taken' => ['uk_tiers_code', ["UPDATE tiers SET code = 'pro' WHERE code = 'free'"]];
+        yield 'tier name taken' => ['uk_tiers_name', ["UPDATE tiers SET name = 'Pro' WHERE code = 'free'"]];
+        yield 'tier code in upper case' => ['chk_tiers_code', ["UPDATE tiers SET code = 'Pro' WHERE code = 'pro'"]];
+        yield 'tier code starting with a digit' => ['chk_tiers_code', ["UPDATE tiers SET code = '1pro' WHERE code = 'pro'"]];
+        yield 'tier code with a hyphen' => ['chk_tiers_code', ["UPDATE tiers SET code = 'pro-plus' WHERE code = 'pro'"]];
+        yield 'tier code empty' => ['chk_tiers_code', ["UPDATE tiers SET code = '' WHERE code = 'pro'"]];
+        yield 'tier name blank' => ['chk_tiers_name', ["UPDATE tiers SET name = '   ' WHERE code = 'pro'"]];
+        yield 'negative price' => ['chk_tiers_price', ["UPDATE tiers SET price_rappen = -1 WHERE code = 'pro'"]];
+        yield 'negative rank weight' => ['chk_tiers_rank_weight', ["UPDATE tiers SET rank_weight = -1 WHERE code = 'pro'"]];
+        yield 'negative photo limit' => ['chk_tiers_limits', ["UPDATE tiers SET photos_max = -1 WHERE code = 'pro'"]];
+        yield 'negative room limit' => ['chk_tiers_limits', ["UPDATE tiers SET rooms_max = -1 WHERE code = 'pro'"]];
+        yield 'negative video limit' => ['chk_tiers_limits', ["UPDATE tiers SET videos_max = -1 WHERE code = 'pro'"]];
+        yield 'negative document limit' => ['chk_tiers_limits', ["UPDATE tiers SET documents_max = -1 WHERE code = 'pro'"]];
+        yield 'zero event types' => ['chk_tiers_event_types_max', ["UPDATE tiers SET event_types_max = 0 WHERE code = 'free'"]];
     }
 
     /**
@@ -263,6 +279,8 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'photo with a single width in webp and jpg' => [["UPDATE venue_photos SET width = 300, height = 1, dominant_color = '#000000', variants = '{\"widths\": [300], \"formats\": [\"webp\", \"jpg\"]}' WHERE id = '{photo}'"]];
         yield 'content key and hash' => [["UPDATE venues SET content_key = 'testhaus-8999', content_hash = repeat('0f', 32) WHERE id = '{venue}'", "UPDATE venues SET content_key = NULL, content_hash = NULL WHERE id = '{venue}'"]];
         yield 'same room key in two venues' => [["UPDATE rooms SET content_key = 'saal' WHERE id = '{room}'", "INSERT INTO rooms (id, venue_id, position, content_key) VALUES (gen_random_uuid(), '{venue2}', 1, 'saal')"]];
+        yield 'a tier with every limit at zero and one event type' => [["INSERT INTO tiers (id, code, name, price_rappen, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max) VALUES (gen_random_uuid(), 'grenze_0', 'Grenze', 0, 0, 0, 0, 0, 0, FALSE, FALSE, FALSE, 1)"]];
+        yield 'a tier with every event type' => [["UPDATE tiers SET event_types_max = NULL WHERE code = 'free'"]];
         yield 'second venue photo' => [["INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES (gen_random_uuid(), '{venue}', NULL, 2, 'demo/c.jpg', {photo-vals}), (gen_random_uuid(), '{venue2}', NULL, 1, 'demo/d.jpg', {photo-vals})"]];
     }
 
@@ -314,7 +332,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
         self::assertContains('uk_venue_terms_venue_id_term_group_main', $names);
-        self::assertCount(11, $primaryKeys);
+        self::assertCount(12, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
@@ -346,12 +364,34 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT count(*) FROM venue_photos WHERE venue_id = '".self::IDS['{venue}']."'"));
     }
 
-    public function test_tier_rank_is_generated_from_the_tier(): void
+    public function test_the_migration_seeds_free_and_pro(): void
     {
-        foreach (Tier::cases() as $tier) {
-            $this->sql("UPDATE venues SET tier = '{$tier->value}' WHERE id = '{venue}'");
+        $rows = $this->connection->fetchAllAssociative('SELECT code, name, price_rappen, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max FROM tiers ORDER BY rank_weight, code');
 
-            self::assertSame($tier->rank(), (int) $this->connection->fetchOne("SELECT tier_rank FROM venues WHERE id = '".self::IDS['{venue}']."'"), $tier->value);
+        self::assertSame(
+            [
+                ['code' => 'free', 'name' => 'Free', 'price_rappen' => 0, 'rank_weight' => 0, 'photos_max' => 6, 'rooms_max' => 1, 'videos_max' => 1, 'documents_max' => 1, 'contact_visible' => false, 'last_minute_allowed' => false, 'detailed_report' => false, 'event_types_max' => 3],
+                ['code' => 'pro', 'name' => 'Pro', 'price_rappen' => 19900, 'rank_weight' => 10, 'photos_max' => 60, 'rooms_max' => 20, 'videos_max' => 5, 'documents_max' => 5, 'contact_visible' => true, 'last_minute_allowed' => true, 'detailed_report' => true, 'event_types_max' => null],
+            ],
+            $rows,
+        );
+        self::assertSame(KnownTiers::FREE_ID, $this->connection->fetchOne("SELECT id FROM tiers WHERE code = 'free'"));
+    }
+
+    public function test_a_venue_without_a_tier_is_on_free(): void
+    {
+        $this->sql("INSERT INTO venues (id, name, status, capacity_max) VALUES ('{missing}', 'Ohne Tarif', 'published', 10)");
+
+        self::assertSame(KnownTiers::FREE_ID, $this->connection->fetchOne("SELECT tier_id FROM venues WHERE id = '".self::IDS['{missing}']."'"));
+    }
+
+    public function test_a_venue_needs_a_tier(): void
+    {
+        try {
+            $this->sql("INSERT INTO venues (id, name, tier_id, status, capacity_max) VALUES ('{missing}', 'Ohne Tarif', NULL, 'published', 10)");
+            self::fail('A venue without a tier should be rejected (NOT NULL).');
+        } catch (DriverException $exception) {
+            self::assertStringContainsString('"tier_id"', $exception->getMessage());
         }
     }
 
@@ -362,7 +402,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         self::assertGreaterThan((int) $numbers[0], (int) $numbers[1]);
 
         try {
-            $this->sql("INSERT INTO venues (id, number, name, tier, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES (gen_random_uuid(), 424242, 'Wunschnummer', 'basic', 'published', 10, '8999', '{town}', 'zh', 47.3, 8.5)");
+            $this->sql("INSERT INTO venues (id, number, name, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES (gen_random_uuid(), 424242, 'Wunschnummer', 'published', 10, '8999', '{town}', 'zh', 47.3, 8.5)");
             self::fail('An explicit number should be rejected (GENERATED ALWAYS).');
         } catch (DriverException $exception) {
             self::assertStringContainsString('"number"', $exception->getMessage());

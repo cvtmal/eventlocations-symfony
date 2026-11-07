@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Venues;
 
 use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Command\Command;
 use Zenstruck\Foundry\Test\Factories;
@@ -33,7 +34,9 @@ final class ImportContentCommandTest extends KernelTestCase
 
         $venue = $this->venueRow('schloss-beispiel');
         self::assertIsArray($venue);
-        self::assertSame(['Schloss Beispiel', 'premium', 'published', 180, 20, '8001', 'zh'], [$venue['name'], $venue['tier'], $venue['status'], $venue['capacity_max'], $venue['capacity_min'], $venue['zip'], $venue['canton_code']]);
+        self::assertSame(['Schloss Beispiel', 'published', 180, 20, '8001', 'zh'], [$venue['name'], $venue['status'], $venue['capacity_max'], $venue['capacity_min'], $venue['zip'], $venue['canton_code']]);
+        self::assertSame([KnownTiers::FREE, KnownTiers::FREE_ID], [$this->tierCode('schloss-beispiel'), $venue['tier_id']], 'an imported venue starts on Free; the folder has no tier');
+        self::assertSame(KnownTiers::FREE, $this->tierCode('seehaus-muster'));
         self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', (string) $venue['content_hash']);
         self::assertSame('Zürich', $this->connection->fetchOne('SELECT name FROM towns WHERE id = ?', [$venue['town_id']]));
         self::assertSame(['+41441234567', 'anfragen@example.ch', '0.9', 'Bahnhof Beispiel', 'allowed', true], [
@@ -99,7 +102,6 @@ final class ImportContentCommandTest extends KernelTestCase
         $photoId = $this->connection->fetchOne('SELECT id FROM venue_photos');
 
         $this->content->change('schloss-beispiel', [
-            'tier' => 'top_premium',
             'capacity' => ['max' => 250],
             'translations' => ['de' => ['summary' => 'Neu zusammengefasst.']],
             'terms' => ['building' => ['castle', 'hotel']],
@@ -109,7 +111,7 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertStringContainsString('updated    schloss-beispiel', $this->display());
         $venue = $this->venueRow('schloss-beispiel');
         self::assertIsArray($venue);
-        self::assertSame(['top_premium', 250, $number], [$venue['tier'], $venue['capacity_max'], $venue['number']]);
+        self::assertSame([250, $number], [$venue['capacity_max'], $venue['number']]);
         self::assertSame('Neu zusammengefasst.', $this->connection->fetchOne('SELECT summary FROM venue_translations WHERE venue_id = ?', [$venue['id']]));
         self::assertSame('schloss-beispiel', $this->connection->fetchOne('SELECT slug FROM venue_translations WHERE venue_id = ?', [$venue['id']]));
         self::assertSame(['castle', 'hotel'], $this->connection->fetchFirstColumn("SELECT term_code FROM venue_terms WHERE venue_id = ? AND term_group = 'building' ORDER BY term_code", [$venue['id']]));
@@ -117,6 +119,43 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(0, $this->rows('venue_slug_history'));
         self::assertSame([$number, $this->venueNumber('seehaus-muster'), $number], $this->purger()->venues, 'only the updated venue is purged again');
         self::assertSame(2, $this->purger()->listings);
+    }
+
+    /**
+     * F12: tiers are data that staff and the CRM set. The folder has no tier, so neither an update nor --force
+     * writes one: a venue that moved to Pro stays on Pro.
+     */
+    public function test_a_re_import_never_changes_a_tier_set_later(): void
+    {
+        $this->twoVenues();
+        $this->import();
+        $this->setTier('schloss-beispiel', KnownTiers::PRO);
+        $this->content->change('schloss-beispiel', ['capacity' => ['max' => 250]]);
+
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+
+        self::assertStringContainsString('updated    schloss-beispiel', $this->display());
+        self::assertSame(250, $this->venueRow('schloss-beispiel')['capacity_max'] ?? null);
+        self::assertSame([KnownTiers::PRO, KnownTiers::FREE], [$this->tierCode('schloss-beispiel'), $this->tierCode('seehaus-muster')]);
+
+        self::assertSame(Command::SUCCESS, $this->import(['--force' => true]), $this->display());
+
+        self::assertSame(KnownTiers::PRO, $this->tierCode('schloss-beispiel'));
+    }
+
+    public function test_a_venue_that_comes_back_from_a_removed_folder_keeps_its_tier(): void
+    {
+        $this->twoVenues();
+        $this->import();
+        $this->setTier('seehaus-muster', KnownTiers::PRO);
+        $kept = $this->content->data('seehaus-muster');
+        $this->content->remove('seehaus-muster');
+        self::assertSame(Command::SUCCESS, $this->import(['--prune' => true]), $this->display());
+
+        $this->content->venue('seehaus-muster', $kept);
+        self::assertSame(Command::SUCCESS, $this->import(['--only' => 'seehaus-muster']), $this->display());
+
+        self::assertSame(['published', KnownTiers::PRO], [$this->venueRow('seehaus-muster')['status'] ?? null, $this->tierCode('seehaus-muster')]);
     }
 
     public function test_a_rename_keeps_the_old_slug_in_the_history_and_a_rename_back_takes_it_back(): void
@@ -303,7 +342,6 @@ final class ImportContentCommandTest extends KernelTestCase
     private function twoVenues(): void
     {
         $this->content->venue('schloss-beispiel', [
-            'tier' => 'premium',
             'capacity' => ['min' => 20, 'max' => 180],
             'address' => ['street' => 'Seestrasse 1', 'zip' => '8001', 'town' => 'Zürich'],
             'distances' => ['station' => ['km' => 0.9, 'name' => 'Bahnhof Beispiel']],

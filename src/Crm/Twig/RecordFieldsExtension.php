@@ -11,7 +11,6 @@ use App\Crm\ReadModel\OwnerOption;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
 use App\Crm\ValueObject\DealProperty;
-use App\Venues\ValueObject\Tier;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Attribute\AsTwigFunction;
 
@@ -64,7 +63,7 @@ final readonly class RecordFieldsExtension
     #[AsTwigFunction('crm_deal_fields')]
     public function deal(DealRecord $deal, array $owners): array
     {
-        $tiers = array_map(fn (Tier $tier): array => ['value' => $tier->value, 'label' => $tier->trans($this->translator)], Tier::cases());
+        $tiers = array_map(static fn (DealFormOption $tier): array => ['value' => $tier->id, 'label' => $tier->label], $deal->tierOptions);
         $venues = array_map(static fn (DealFormOption $venue): array => ['value' => $venue->id, 'label' => $venue->label], $deal->companyVenues);
         if (null !== $deal->venue && !\in_array($deal->venue->id, array_column($venues, 'value'), true)) {
             $venues[] = ['value' => $deal->venue->id, 'label' => $deal->venue->name];
@@ -74,7 +73,7 @@ final readonly class RecordFieldsExtension
         return [
             $this->field(DealProperty::Name, 'text', $deal->name, required: true),
             ['draft' => DealProperty::Amount->draft($amount)] + $this->field(DealProperty::Amount, 'amount', $amount, DealProperty::Amount->display($amount)),
-            $this->field(DealProperty::Tier, 'select', $deal->tier?->value, $deal->tier?->trans($this->translator), options: $tiers),
+            $this->field(DealProperty::Tier, 'select', $deal->tier?->code, $deal->tier?->name, options: $tiers),
             $this->field(DealProperty::Venue, 'select', $deal->venue?->id, $deal->venue?->name, options: $venues),
             $this->dateField(DealProperty::ContractStart, $deal->contractStartOn),
             $this->dateField(DealProperty::ContractEnd, $deal->contractEndOn),

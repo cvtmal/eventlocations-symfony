@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Cms\ReadModel;
 
 use App\Media\ValueObject\Picture;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
 
@@ -30,7 +30,7 @@ final readonly class VenueListRow
         public string $name,
         public ?string $slug,
         public VenuePlace $place,
-        public Tier $tier,
+        public TierLabel $tier,
         public ?int $capacityMin,
         public int $capacityMax,
         public int $photoCount,

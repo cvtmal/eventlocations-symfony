@@ -8,14 +8,16 @@ use App\Crm\Entity\Deal;
 use App\Crm\Entity\DealStage;
 use App\Crm\ValueObject\LostReason;
 use App\Shared\Uid\EntityId;
+use App\Venues\Entity\Tier;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 use function Zenstruck\Foundry\lazy;
 use function Zenstruck\Foundry\Persistence\repository;
 
 /**
- * A new deal of a new company, without venue, amount, contract or owner. `inStage()` moves it, so tests name only
- * what they need; `DealStage` rows are migrated, never built here.
+ * A new deal of a new company, without venue, tier, amount, contract or owner. `inStage()` moves it, so tests name only
+ * what they need; `DealStage` rows are migrated, never built here. A `tier` is named by its code ('free', 'pro',
+ * `KnownTiers`) or passed as the entity; the rows come from the migration.
  *
  * @extends PersistentObjectFactory<Deal>
  */
@@ -31,6 +33,18 @@ final class DealFactory extends PersistentObjectFactory
         return $this->afterInstantiate(static function (Deal $deal) use ($code, $at, $reason): void {
             $stage = self::stage($code);
             $deal->moveTo($stage, $reason ?? ($stage->isLost() ? LostReason::Other : null), $at ?? new \DateTimeImmutable());
+        });
+    }
+
+    protected function initialize(): static
+    {
+        return $this->beforeInstantiate(static function (array $attributes): array {
+            $tier = $attributes['tier'] ?? null;
+            if (\is_string($tier)) {
+                $attributes['tier'] = repository(Tier::class)->findOneBy(['code' => $tier]) ?? throw new \LogicException(\sprintf('No tier "%s".', $tier));
+            }
+
+            return $attributes;
         });
     }
 

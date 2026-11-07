@@ -7,6 +7,7 @@ namespace App\Tests\Application\Venues;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -102,6 +103,32 @@ final class VenuePhoneControllerTest extends WebTestCase
 
         $this->get('/eventlokal/'.DetailVenues::MINIMAL_SLUG.'/telefon', '10.0.0.3');
         self::assertResponseStatusCodeSame(404);
+    }
+
+    /**
+     * F12: a plan without contact data hides the phone, and the reveal route answers as it does for a venue that has
+     * none, in both shapes.
+     */
+    public function test_a_venue_on_free_answers_404_even_when_it_holds_a_phone(): void
+    {
+        $uri = '/hochzeitslocation/'.DetailVenues::OVERFULL_SLUG.'/telefon';
+        DetailVenues::overfull(KnownTiers::FREE);
+
+        $this->get($uri, '10.0.0.10');
+        self::assertResponseStatusCodeSame(404);
+
+        $this->get($uri, '10.0.0.10', ['HTTP_ACCEPT' => 'application/json']);
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function test_the_same_venue_on_pro_reveals_its_phone(): void
+    {
+        DetailVenues::overfull(KnownTiers::PRO);
+
+        $this->get('/hochzeitslocation/'.DetailVenues::OVERFULL_SLUG.'/telefon', '10.0.0.11', ['HTTP_ACCEPT' => 'application/json']);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['phone' => DetailVenues::FULL_PHONE, 'display' => '044 123 45 67'], json_decode((string) $this->client->getResponse()->getContent(), true, 512, \JSON_THROW_ON_ERROR));
     }
 
     public function test_gone_for_an_unpublished_venue(): void

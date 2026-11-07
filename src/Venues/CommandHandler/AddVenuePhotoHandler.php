@@ -16,6 +16,7 @@ use App\Venues\PhotoGrants;
 use App\Venues\PhotoPipeline;
 use App\Venues\Positions;
 use App\Venues\PublishedMedia;
+use App\Venues\TierLimits;
 use App\Venues\ValueObject\AddedPhoto;
 use App\Venues\VenueEditing;
 use App\Venues\VenueRows;
@@ -25,8 +26,8 @@ use Doctrine\ORM\EntityManagerInterface;
  * One photo upload (#25, D1, PF3), composed from #9's PhotoPipeline:
  *
  * 1. hash the file, path `cms/<number>/<sha256>.<ext>` (D4);
- * 2. venue and room exist, the scope has no photo of this file yet (D5) and is below
- *    MAX_PHOTOS (#44), all without a lock;
+ * 2. venue and room exist, the scope has no photo of this file yet (D5) and the venue is below
+ *    its plan's photo limit (`TierLimits`, F12), all without a lock;
  * 3. stage(): render the variants and store the original, the CPU-heavy part, outside the
  *    row lock (PF4: doctrine_transaction has already opened the transaction);
  * 4. lock the venue, check room, duplicate and limit again, take the next position, add (with
@@ -47,13 +48,14 @@ final class AddVenuePhotoHandler implements CommandHandlerInterface
         private readonly PhotoGrants $grants,
         private readonly MediaPublisher $publisher,
         private readonly EntityManagerInterface $em,
+        private readonly TierLimits $limits,
     ) {
     }
 
     /**
      * @throws VenueNotFound
      * @throws VenueRowNotFound   when the room is not one of the venue's
-     * @throws VenueRuleViolation when the scope already holds MAX_PHOTOS
+     * @throws VenueRuleViolation when the venue already holds as many photos as its plan allows (TierLimits)
      */
     public function __invoke(AddVenuePhoto $command): AddedPhoto
     {
@@ -72,7 +74,7 @@ final class AddVenuePhotoHandler implements CommandHandlerInterface
         if (null !== $duplicate) {
             return $duplicate;
         }
-        $this->assertRoomForPhoto($venue, $room);
+        $this->limits->assertPhotoFits($venue);
 
         $staging = $this->photos->openStaging();
         try {
@@ -84,7 +86,7 @@ final class AddVenuePhotoHandler implements CommandHandlerInterface
             if (null !== $duplicate) {
                 return $duplicate;
             }
-            $this->assertRoomForPhoto($venue, $room);
+            $this->limits->assertPhotoFits($venue);
 
             $photo = $this->photos->add($venue, $room, $this->positions->nextPhoto($venue, $room), $staged);
             if (null !== $command->grant) {
@@ -118,12 +120,5 @@ final class AddVenuePhotoHandler implements CommandHandlerInterface
         $photo = $this->rows->photoWithOriginal($venue, $room, $originalPath);
 
         return null === $photo ? null : new AddedPhoto($photo->id(), true);
-    }
-
-    private function assertRoomForPhoto(Venue $venue, ?Room $room): void
-    {
-        if (\count($this->rows->photos($venue, $room)) >= AddVenuePhoto::MAX_PHOTOS) {
-            throw VenueRuleViolation::tooManyPhotos();
-        }
     }
 }

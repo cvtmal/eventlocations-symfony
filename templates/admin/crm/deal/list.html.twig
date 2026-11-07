@@ -96,7 +96,7 @@
                         <td>{{ include('admin/components/_pill.html.twig', {label: ('deal.stage.' ~ row.stage)|trans({}, 'crm'), tone: crm_deal_tone(row.stage)}, with_context = false) }}</td>
                         <td>
                             {%- if row.tier -%}
-                                {{- include('admin/components/_tier_badge.html.twig', {tier: row.tier.value, label: row.tier|trans}, with_context = false) -}}
+                                {{- include('admin/components/_tier_badge.html.twig', {label: row.tier.name, promoted: row.tier.promoted}, with_context = false) -}}
                             {%- else -%}
                                 —
                             {%- endif -%}

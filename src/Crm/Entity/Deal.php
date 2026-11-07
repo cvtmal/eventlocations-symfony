@@ -7,8 +7,8 @@ namespace App\Crm\Entity;
 use App\Admin\Entity\AdminUser;
 use App\Crm\Repository\DealRepository;
 use App\Crm\ValueObject\LostReason;
+use App\Venues\Entity\Tier;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -16,7 +16,8 @@ use Doctrine\ORM\Mapping as ORM;
  * A sale to a company (S13, CRM-7): a stage in the pipeline, a venue, a tier, an amount in Rappen and a contract's
  * days. The company never changes, because activities, the venue and the stage sync hang on it: delete and
  * recreate instead. `company` is RESTRICT, so deleting a company never erases contract history; `venue` is SET NULL,
- * because Venues may not know the CRM. `renewedFrom` is unique, so a deal is renewed once.
+ * because Venues may not know the CRM. `tier` is the plan the deal sells (F12), none while undecided; it is RESTRICT
+ * too, so a tier row in use cannot go. `renewedFrom` is unique, so a deal is renewed once.
  *
  * idx_crm_deals_search_key (GIN trigram on geo_search_key(name)) is an expression index and unmapped, like
  * idx_venues_search_key.
@@ -26,6 +27,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_crm_deals_company_id', columns: ['company_id'])]
 #[ORM\Index(name: 'idx_crm_deals_venue_id', columns: ['venue_id'])]
 #[ORM\Index(name: 'idx_crm_deals_stage_code', columns: ['stage_code'])]
+#[ORM\Index(name: 'idx_crm_deals_tier_id', columns: ['tier_id'])]
 #[ORM\Index(name: 'idx_crm_deals_owner_id', columns: ['owner_id'])]
 #[ORM\Index(name: 'idx_crm_deals_contract_end_on', columns: ['contract_end_on'])]
 #[ORM\UniqueConstraint(name: 'uk_crm_deals_renewed_from_id', columns: ['renewed_from_id'])]
@@ -46,7 +48,8 @@ class Deal
     #[ORM\JoinColumn(name: 'venue_id', nullable: true, onDelete: 'SET NULL')]
     private ?Venue $venue;
 
-    #[ORM\Column(type: Types::STRING, length: 20, nullable: true, enumType: Tier::class)]
+    #[ORM\ManyToOne(targetEntity: Tier::class)]
+    #[ORM\JoinColumn(name: 'tier_id', nullable: true, onDelete: 'RESTRICT')]
     private ?Tier $tier;
 
     #[ORM\Column(type: Types::BIGINT, nullable: true)]

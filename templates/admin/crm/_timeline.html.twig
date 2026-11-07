@@ -30,7 +30,7 @@
                         {{ include('admin/components/_timeline_item.html.twig', {
                             variant: 'system',
                             icon: 'history',
-                            title: labels.system[entry.type]|replace({'__venue__': entry.venueName, '__tier__': labels.tiers[entry.tier] ?? ''}),
+                            title: labels.system[entry.type]|replace({'__venue__': entry.venueName, '__tier__': labels.tiers[entry.tier] ?? entry.tier ?? ''}),
                             meta: entry.actorName ? entry.actorName ~ ' · ' ~ when : when,
                         }, with_context = false) }}
                     {%- elseif entry.type == 'inquiry' -%}

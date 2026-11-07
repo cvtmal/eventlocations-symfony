@@ -14,8 +14,8 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -39,7 +39,7 @@ final class VenueListScreenTest extends WebTestCase
     public function test_an_editor_sees_every_venue_with_its_columns(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $seeblick = $this->venue('Schloss Seeblick', town: 'Meilen', tier: Tier::BeliebteLocation, capacityMax: 220);
+        $seeblick = $this->venue('Schloss Seeblick', town: 'Meilen', tier: KnownTiers::PRO, capacityMax: 220);
         $hut = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished, 'capacityMax' => 70]);
 
         $crawler = $this->client->request('GET', '/admin/locations');
@@ -48,7 +48,7 @@ final class VenueListScreenTest extends WebTestCase
         self::assertSame(['Schloss Seeblick', 'Waldhütte Eichholz'], $crawler->filter('#venue-list .venue-list__link')->each(static fn (Crawler $link): string => $link->text()));
         $first = $crawler->filter('#venue-list tbody tr')->eq(0);
         self::assertStringContainsString('Nr. '.$seeblick->number().' · Meilen', $first->text());
-        self::assertStringContainsString('Beliebte Location', $first->text());
+        self::assertSame('Pro', $first->filter('.pill')->first()->text(), 'the plan leads the pills of the row');
         self::assertStringContainsString('Publiziert', $first->text());
         self::assertSame('/admin/locations/'.$seeblick->number(), $first->filter('.venue-list__link')->attr('href'));
         self::assertCount(1, $first->filter('a[href="/eventlokal/schloss-seeblick"]'));
@@ -57,6 +57,7 @@ final class VenueListScreenTest extends WebTestCase
         // A venue without a town is a row of its own; unpublished, so no link to the public page.
         $second = $crawler->filter('#venue-list tbody tr')->eq(1);
         self::assertSame('Nr. '.$hut->number(), $second->filter('.venue-list__name .muted')->text());
+        self::assertSame('Free', $second->filter('.pill')->first()->text());
         self::assertStringContainsString('Unpubliziert', $second->text());
         self::assertStringContainsString('Unvollständig', $second->text());
         self::assertCount(0, $second->filter('a[href^="/eventlokal/"]'));
@@ -84,18 +85,18 @@ final class VenueListScreenTest extends WebTestCase
     public function test_filters_show_chips_whose_links_remove_them(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $this->venue('Schloss Seeblick', town: 'Meilen', tier: Tier::Premium);
+        $this->venue('Schloss Seeblick', town: 'Meilen', tier: KnownTiers::PRO);
         $this->venue('Gasthof Rössli', town: 'Bern');
         VenueFactory::new()->withoutLocation(null)->create(['name' => 'Ohne Alles']);
         VenueFactory::new()->withoutLocation(repository(Canton::class)->find('zh'))->create(['name' => 'Nur Zürich']);
 
-        $crawler = $this->client->request('GET', '/admin/locations?tier=premium&canton=zh');
+        $crawler = $this->client->request('GET', '/admin/locations?tier=pro&canton=zh');
         self::assertResponseIsSuccessful();
         self::assertSame(['Schloss Seeblick'], $this->names($crawler));
-        self::assertSame(['Tier: Premium', 'Kanton: Zürich'], $crawler->filter('.filter-chip')->each(static fn (Crawler $chip): string => $chip->text()));
-        self::assertSame('premium', $crawler->filter('#tier option[selected]')->attr('value'));
+        self::assertSame(['Tier: Pro', 'Kanton: Zürich'], $crawler->filter('.filter-chip')->each(static fn (Crawler $chip): string => $chip->text()));
+        self::assertSame('pro', $crawler->filter('#tier option[selected]')->attr('value'));
         $remove = $crawler->filter('.filter-chip__remove')->eq(0);
-        self::assertSame('Filter «Tier: Premium» entfernen', $remove->attr('aria-label'));
+        self::assertSame('Filter «Tier: Pro» entfernen', $remove->attr('aria-label'));
 
         $crawler = $this->client->request('GET', $remove->attr('href') ?? '');
         self::assertSame(['Nur Zürich', 'Schloss Seeblick'], $this->names($crawler));
@@ -118,7 +119,7 @@ final class VenueListScreenTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $this->venue('Schloss Seeblick');
 
-        foreach (['tier=gold', 'canton=xx', 'status=draft', 'q=a%00b', 'q=%ff', 'q[]=x', 'tier[]=premium'] as $query) {
+        foreach (['tier=gold', 'canton=xx', 'status=draft', 'q=a%00b', 'q=%ff', 'q[]=x', 'tier[]=pro'] as $query) {
             $crawler = $this->client->request('GET', '/admin/locations?'.$query);
 
             self::assertResponseStatusCodeSame(422, $query);
@@ -126,7 +127,7 @@ final class VenueListScreenTest extends WebTestCase
             self::assertCount(0, $crawler->filter('.filter-chip'), $query);
             self::assertSame('Ein Filter war ungültig. Die Liste zeigt alle Einträge.', $crawler->filter('main .form-error[role="alert"]')->text(), $query);
         }
-        $crawler = $this->client->request('GET', '/admin/locations?tier=premium');
+        $crawler = $this->client->request('GET', '/admin/locations?tier=pro');
         self::assertCount(0, $crawler->filter('main .form-error'));
         foreach (['sort[]=x', 'dir[]=x', 'page[]=2', 'sort=nope&dir=up&page=abc'] as $query) {
             $this->client->request('GET', '/admin/locations?'.$query);
@@ -206,7 +207,7 @@ final class VenueListScreenTest extends WebTestCase
     /**
      * A published venue with nothing missing, named in its slug.
      */
-    private function venue(string $name, string $town = 'Bern', Tier $tier = Tier::Basic, int $capacityMax = 120): Venue
+    private function venue(string $name, string $town = 'Bern', string $tier = KnownTiers::FREE, int $capacityMax = 120): Venue
     {
         $venue = VenueFactory::createOne(['name' => $name, 'tier' => $tier, 'status' => VenueStatus::Published, 'capacityMax' => $capacityMax, 'town' => DetailVenues::town($town)]);
         $venue->changeContact(null, 'info@example.ch', null, null);

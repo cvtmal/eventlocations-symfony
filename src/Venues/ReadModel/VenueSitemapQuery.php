@@ -8,9 +8,11 @@ use App\Geo\ValueObject\Canton;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
+use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
+use Psr\Clock\ClockInterface;
 
 /**
  * The published venues of the sitemap and of `/llms.txt`, in the default locale. `lastmod` is the newest of the
@@ -44,6 +46,8 @@ final class VenueSitemapQuery
     public function __construct(
         private readonly Connection $connection,
         private readonly EnabledLocale $enabledLocale,
+        private readonly EntitlementResolver $entitlements,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -84,20 +88,28 @@ final class VenueSitemapQuery
     public function page(int $file, int $perFile = self::PER_FILE): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT v.number, t.slug, '.self::LASTMOD.' AS lastmod, ph.photos '.self::published().'
+            'SELECT v.id, v.number, t.slug, '.self::LASTMOD.' AS lastmod, ph.photos '.self::published().'
              ORDER BY v.number
              LIMIT :limit OFFSET :offset',
             ['default_locale' => $this->enabledLocale->default(), 'limit' => $perFile, 'offset' => ($file - 1) * $perFile],
             ['limit' => ParameterType::INTEGER, 'offset' => ParameterType::INTEGER],
         );
 
-        return array_map(function (array $row): SitemapVenue {
+        // Only the photos the venue's plan shows are advertised (F12): the first N in the page's own order.
+        $ids = [];
+        foreach ($rows as $row) {
+            \assert(\is_string($row['id']));
+            $ids[] = $row['id'];
+        }
+        $entitlements = $this->entitlements->forVenues($ids, $this->clock->now());
+
+        return array_map(function (array $row) use ($entitlements): SitemapVenue {
             \assert(\is_int($row['number']));
             \assert(\is_string($row['slug']));
             \assert(\is_string($row['lastmod']));
             \assert(\is_string($row['photos']) || null === $row['photos']);
 
-            return new SitemapVenue($row['slug'], new \DateTimeImmutable($row['lastmod']), $this->imageUrls($row['number'], $row['photos']));
+            return new SitemapVenue($row['slug'], new \DateTimeImmutable($row['lastmod']), $this->imageUrls($row['number'], $row['photos'], $entitlements[$row['id']]->photosMax));
         }, $rows);
     }
 
@@ -185,7 +197,7 @@ final class VenueSitemapQuery
     /**
      * @return list<string>
      */
-    private function imageUrls(int $number, ?string $photos): array
+    private function imageUrls(int $number, ?string $photos, int $max): array
     {
         if (null === $photos) {
             return [];
@@ -204,7 +216,7 @@ final class VenueSitemapQuery
                 ImageVariants::fromArray($photo['variants']),
                 '',
             )->shareImage()->url,
-            $rows,
+            \array_slice($rows, 0, $max),
         );
     }
 }

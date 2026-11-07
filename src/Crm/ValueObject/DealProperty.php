@@ -10,7 +10,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The inline-editable fields of a deal record (CRM-7): the allow-list of the `field` a PATCH may name. `venue` and
- * `owner` take ids, `tier` a Tier value, `amount` francs as typed, the three dates `Y-m-d`. The company never
+ * `owner` take ids, `tier` a tier's code (`tiers.code`, F12), `amount` francs as typed, the three dates `Y-m-d`. The company never
  * changes (delete and recreate) and `stage` moves only through `MoveDealStage`, so neither is here.
  */
 enum DealProperty: string implements TranslatableInterface

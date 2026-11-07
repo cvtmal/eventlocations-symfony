@@ -21,11 +21,12 @@ use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -41,8 +42,8 @@ use Zenstruck\Foundry\Test\Factories;
 use function Zenstruck\Foundry\Persistence\repository;
 
 /**
- * Every listing filter, the S6 order, paging, photos and the query count against app_test.
- * Each test runs in a rolled-back transaction.
+ * Every listing filter, the S6 order, paging, photos (cut to the venue's plan, F12) and the query count against
+ * app_test. Each test runs in a rolled-back transaction.
  */
 final class ListingQueryTest extends KernelTestCase
 {
@@ -348,19 +349,49 @@ final class ListingQueryTest extends KernelTestCase
         $this->assertMatches(['Publiziert'], '');
     }
 
-    public function test_tier_comes_first(): void
+    /**
+     * F12: the tier's rank weight comes before the daily shuffle, so a Pro entry is listed above a Free one on every
+     * day, whatever md5 does to the venue ids.
+     */
+    public function test_a_pro_venue_comes_before_a_free_one_whatever_the_daily_seed(): void
     {
-        $tiers = Tier::cases();
-        for ($i = 0; $i < 10; ++$i) {
-            $this->venue('Venue '.$i, ['tier' => $tiers[$i % \count($tiers)]]);
+        $this->tenFreeAndTenPro();
+
+        foreach (['2026-10-30 10:00:00', '2026-11-02 10:00:00', '2026-12-24 10:00:00'] as $now) {
+            $promoted = array_map(static fn (ListingCard $card): bool => $card->promoted, $this->query($now)->results(SearchCriteria::none(), 'de')->cards);
+
+            self::assertSame([...array_fill(0, 10, true), ...array_fill(0, 10, false)], $promoted, $now);
         }
+    }
 
-        $ranks = array_map(static fn (ListingCard $card): int => $card->tier->rank(), $this->query()->results(SearchCriteria::none(), 'de')->cards);
+    public function test_within_one_tier_the_order_still_changes_with_the_date(): void
+    {
+        $this->tenFreeAndTenPro();
 
-        self::assertCount(10, $ranks);
-        $sorted = $ranks;
-        sort($sorted);
-        self::assertSame($sorted, $ranks);
+        $order = fn (string $now, bool $promoted): array => array_values(array_map(
+            static fn (ListingCard $card): string => $card->id,
+            array_filter($this->query($now)->results(SearchCriteria::none(), 'de')->cards, static fn (ListingCard $card): bool => $card->promoted === $promoted),
+        ));
+
+        foreach ([true, false] as $promoted) {
+            self::assertCount(10, $order(self::NOW, $promoted));
+            self::assertSame($order('2026-10-30 10:00:00', $promoted), $order('2026-10-30 18:00:00', $promoted), 'stable within a day');
+            self::assertNotSame($order('2026-10-30 10:00:00', $promoted), $order('2026-11-02 10:00:00', $promoted), 'a new day shuffles the tier again');
+        }
+    }
+
+    public function test_a_plan_edit_changes_the_order_at_once(): void
+    {
+        $this->venue('Gratis');
+        $this->venue('Bezahlt', ['tier' => KnownTiers::PRO]);
+        $names = fn (): array => array_map(static fn (ListingCard $card): string => $card->name, $this->query()->results(SearchCriteria::none(), 'de')->cards);
+        self::assertSame(['Bezahlt', 'Gratis'], $names());
+
+        $this->connection->executeStatement("UPDATE tiers SET rank_weight = 0 WHERE code = 'pro'");
+        $this->connection->executeStatement("UPDATE tiers SET rank_weight = 5 WHERE code = 'free'");
+
+        self::assertSame(['Gratis', 'Bezahlt'], $names());
+        self::assertSame([true, false], array_map(static fn (ListingCard $card): bool => $card->promoted, $this->query()->results(SearchCriteria::none(), 'de')->cards), 'the label follows the weight too');
     }
 
     public function test_the_order_is_stable_within_a_zurich_day_and_changes_with_the_date(): void
@@ -437,7 +468,7 @@ final class ListingQueryTest extends KernelTestCase
         $venue = VenueFactory::createOne([
             'name' => 'Seehaus Stäfa',
             'town' => $this->town('Stäfa'),
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'capacityMin' => 20,
             'capacityMax' => 150,
         ]);
@@ -449,7 +480,7 @@ final class ListingQueryTest extends KernelTestCase
         self::assertSame($venue->id(), $card->id);
         self::assertSame($venue->number(), $card->number);
         self::assertSame('seehaus-staefa', $card->slug);
-        self::assertSame(Tier::Premium, $card->tier);
+        self::assertTrue($card->promoted);
         self::assertSame(20, $card->capacityMin);
         self::assertSame(150, $card->capacityMax);
         self::assertSame('Stäfa', $card->place->townName);
@@ -459,7 +490,7 @@ final class ListingQueryTest extends KernelTestCase
 
     public function test_photos_are_the_first_eight_venue_photos(): void
     {
-        $venue = $this->venue('Mit Fotos');
+        $venue = $this->venue('Mit Fotos', ['tier' => KnownTiers::PRO]);
         $photos = [];
         for ($position = 10; $position >= 1; --$position) {
             $photos[$position] = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
@@ -502,11 +533,11 @@ final class ListingQueryTest extends KernelTestCase
     public function test_first_is_the_head_of_the_listing_with_its_own_photo_limit(): void
     {
         for ($i = 0; $i < 6; ++$i) {
-            $venue = $this->venue('Venue '.$i, ['tier' => Tier::Basic]);
+            $venue = $this->venue('Venue '.$i, ['tier' => KnownTiers::FREE]);
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
         }
-        $paid = $this->venue('Bezahlt', ['tier' => Tier::BeliebteLocation]);
+        $paid = $this->venue('Bezahlt', ['tier' => KnownTiers::PRO]);
         for ($position = 1; $position <= 9; ++$position) {
             VenuePhotoFactory::createOne(['venue' => $paid, 'position' => $position]);
         }
@@ -530,7 +561,48 @@ final class ListingQueryTest extends KernelTestCase
         self::assertSame([], $this->query()->first(3, 1, 'de'));
     }
 
-    public function test_results_take_three_queries_and_two_for_an_empty_page(): void
+    /**
+     * F12: a card shows no more photos than the venue's plan, wherever the card is built: the listing, the home
+     * page's Spotlight and the Merkliste.
+     */
+    public function test_a_free_card_shows_at_most_six_photos_and_a_pro_card_eight(): void
+    {
+        $free = $this->venue('Gratis');
+        $pro = $this->venue('Bezahlt', ['tier' => KnownTiers::PRO]);
+        foreach ([$free, $pro] as $venue) {
+            for ($position = 1; $position <= 10; ++$position) {
+                VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+            }
+        }
+        $query = $this->query();
+        $numbers = [$free->number(), $pro->number()];
+
+        $listing = $this->byName($query->results(SearchCriteria::none(), 'de')->cards);
+        $spotlight = $this->byName($query->first(2, 8, 'de'));
+        $merkliste = $this->byName($query->cardsByNumbers($numbers, 'de'));
+
+        foreach ([$listing, $spotlight, $merkliste] as $cards) {
+            self::assertSame(range(1, 6), array_map(static fn ($photo): int => $photo->position, $cards['Gratis']->photos));
+            self::assertSame(range(1, 8), array_map(static fn ($photo): int => $photo->position, $cards['Bezahlt']->photos));
+        }
+    }
+
+    public function test_the_photo_limit_of_the_plan_is_read_on_every_request(): void
+    {
+        $venue = $this->venue('Gratis');
+        for ($position = 1; $position <= 6; ++$position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
+        self::assertCount(6, $this->query()->cardsByNumbers([$venue->number()], 'de')[0]->photos);
+
+        $this->connection->executeStatement("UPDATE tiers SET photos_max = 2 WHERE code = 'free'");
+        self::assertCount(2, $this->query()->cardsByNumbers([$venue->number()], 'de')[0]->photos);
+
+        $this->connection->executeStatement("UPDATE tiers SET photos_max = 0 WHERE code = 'free'");
+        self::assertSame([], $this->query()->cardsByNumbers([$venue->number()], 'de')[0]->photos);
+    }
+
+    public function test_results_take_four_queries_and_two_for_an_empty_page(): void
     {
         $this->venue('Eins');
         $this->venue('Zwei');
@@ -538,10 +610,11 @@ final class ListingQueryTest extends KernelTestCase
         $holder = self::getContainer()->get('doctrine.debug_data_holder');
         self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
 
+        // The cards, their photos, the plans' limits (EntitlementResolver, F12) and the count.
         $holder->reset();
         $page = $query->results(SearchCriteria::none(), 'de');
         self::assertCount(2, $page->cards);
-        self::assertCount(3, $holder->getData()['default'] ?? []);
+        self::assertCount(4, $holder->getData()['default'] ?? []);
 
         $holder->reset();
         $empty = $query->results(SearchCriteria::none()->withPage(2), 'de');
@@ -584,7 +657,7 @@ final class ListingQueryTest extends KernelTestCase
         self::assertCount(0, $holder->getData()['default'] ?? []);
     }
 
-    public function test_cards_by_numbers_take_two_queries(): void
+    public function test_cards_by_numbers_take_three_queries(): void
     {
         $first = $this->venue('Eins');
         $second = $this->venue('Zwei');
@@ -594,7 +667,7 @@ final class ListingQueryTest extends KernelTestCase
 
         $holder->reset();
         self::assertCount(2, $query->cardsByNumbers([$first->number(), $second->number()], 'de'));
-        self::assertCount(2, $holder->getData()['default'] ?? []);
+        self::assertCount(3, $holder->getData()['default'] ?? []);
     }
 
     public function test_cards_by_numbers_carry_their_photos(): void
@@ -619,6 +692,17 @@ final class ListingQueryTest extends KernelTestCase
         $cards = $this->query()->cardsByNumbers([$venue->number()], 'de', 1);
 
         self::assertCount(1, $cards[0]->photos);
+    }
+
+    /**
+     * Ten venues on Free and ten on Pro, created alternately so that no order of creation helps.
+     */
+    private function tenFreeAndTenPro(): void
+    {
+        for ($i = 0; $i < 10; ++$i) {
+            $this->venue('Free '.$i);
+            $this->venue('Pro '.$i, ['tier' => KnownTiers::PRO]);
+        }
     }
 
     /**
@@ -651,7 +735,7 @@ final class ListingQueryTest extends KernelTestCase
     {
         $locale = self::enabledLocale();
 
-        return new ListingQuery($this->connection, new TranslationJoin($locale), $locale, new MockClock($now, 'UTC'));
+        return new ListingQuery($this->connection, new TranslationJoin($locale), $locale, new MockClock($now, 'UTC'), new EntitlementResolver($this->connection));
     }
 
     /**

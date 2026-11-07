@@ -21,7 +21,8 @@ enum VenueSort: string
     {
         return match ($this) {
             self::Name => 'v.name',
-            self::Tier => 'v.tier_rank',
+            // Best first when ascending, as the wedding site's tier rank was: the heaviest rank weight comes first.
+            self::Tier => '-tr.rank_weight',
             self::Capacity => 'v.capacity_max',
             self::Updated => 'v.updated_at',
         };

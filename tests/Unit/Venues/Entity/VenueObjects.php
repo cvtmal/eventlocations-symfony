@@ -6,8 +6,8 @@ namespace App\Tests\Unit\Venues\Entity;
 
 use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
+use App\Tests\Support\Venues\TierObjects;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 
 /**
@@ -29,6 +29,6 @@ final class VenueObjects
     {
         $town ??= self::town();
 
-        return new Venue('Seehaus Mittelwil', Tier::Premium, VenueStatus::Published, 150, 20, $town, $town->zip(), 'Seestrasse 1', $town->lat(), $town->lng(), $contentKey);
+        return new Venue('Seehaus Mittelwil', TierObjects::pro(), VenueStatus::Published, 150, 20, $town, $town->zip(), 'Seestrasse 1', $town->lat(), $town->lng(), $contentKey);
     }
 }

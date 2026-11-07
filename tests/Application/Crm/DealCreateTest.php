@@ -6,6 +6,7 @@ namespace App\Tests\Application\Crm;
 
 use App\Admin\Entity\AdminUser;
 use App\Admin\ValueObject\AdminRole;
+use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\VenueNotLinked;
 use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
@@ -74,7 +75,7 @@ final class DealCreateTest extends WebTestCase
 
         $this->client->submitForm('Erfassen', [
             'deal[name]' => '  Premium 2027 ',
-            'deal[tier]' => 'premium',
+            'deal[tier]' => 'pro',
             'deal[amount]' => "1'250.50",
             'deal[contractStart]' => '2027-01-01',
             'deal[contractEnd]' => '2027-12-31',
@@ -87,14 +88,55 @@ final class DealCreateTest extends WebTestCase
         self::assertIsArray($row);
         self::assertResponseRedirects('/admin/crm/deals/'.$row['id']);
         self::assertSame(
-            ['Premium 2027', $company->id(), $venue->id(), 'premium', 125050, '2027-01-01', '2027-12-31', '2026-11-15', $owner->id(), 'new'],
-            [$row['name'], $row['company_id'], $row['venue_id'], $row['tier'], (int) $row['amount_rappen'], $row['contract_start_on'], $row['contract_end_on'], $row['expected_close_on'], $row['owner_id'], $row['stage_code']],
+            ['Premium 2027', $company->id(), $venue->id(), $this->tierId('pro'), 125050, '2027-01-01', '2027-12-31', '2026-11-15', $owner->id(), 'new'],
+            [$row['name'], $row['company_id'], $row['venue_id'], $row['tier_id'], (int) $row['amount_rappen'], $row['contract_start_on'], $row['contract_end_on'], $row['expected_close_on'], $row['owner_id'], $row['stage_code']],
         );
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT count(*) FROM admin_audit_log WHERE subject_type = 'deal' AND subject_id = ?", [$row['id']]));
 
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Premium 2027');
+    }
+
+    public function test_the_tier_select_offers_the_tiers_of_the_table_by_name_best_first(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        $this->connection->executeStatement("UPDATE tiers SET name = 'Premium' WHERE code = 'pro'");
+
+        $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
+
+        self::assertSame(['', 'pro', 'free'], $crawler->filter('#deal_tier option')->each(static fn (Crawler $option): string => (string) $option->attr('value')));
+        self::assertSame(['Kein Tier', 'Premium', 'Free'], $crawler->filter('#deal_tier option')->each(static fn (Crawler $option): string => $option->text()));
+    }
+
+    public function test_a_tier_no_row_has_is_a_422(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+
+        $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
+        $values = $crawler->selectButton('Erfassen')->form()->getPhpValues();
+        \assert(\is_array($values['deal']));
+        $values['deal']['name'] = 'Premium 2027';
+        $values['deal']['tier'] = 'premium';
+        $this->client->request('POST', self::NEW.'?company='.$company->id(), $values);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_deals'));
+    }
+
+    public function test_a_tier_removed_while_the_form_was_open_is_a_form_error(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+
+        $this->commandsFailWith(InvalidPropertyValue::unknown('tier'));
+        $this->client->request('GET', self::NEW.'?company='.$company->id());
+        $crawler = $this->client->submitForm('Erfassen', ['deal[name]' => 'Premium 2027', 'deal[tier]' => 'pro']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Bitte einen Eintrag aus der Liste wählen.', $crawler->filter('.form')->text());
     }
 
     public function test_a_name_alone_is_enough(): void
@@ -208,5 +250,10 @@ final class DealCreateTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_deals'));
+    }
+
+    private function tierId(string $code): string
+    {
+        return (string) $this->connection->fetchOne('SELECT id FROM tiers WHERE code = ?', [$code]);
     }
 }

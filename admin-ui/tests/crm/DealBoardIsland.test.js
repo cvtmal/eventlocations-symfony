@@ -130,6 +130,32 @@ describe('DealBoardIsland', () => {
         expect(cardOf(wrapper, 'l').text()).toContain('Verloren: Budget');
     });
 
+    it('shows a card\'s tier by its name, green when the tier ranks above the rest and grey when it does not', () => {
+        const wrapper = island({
+            new: {
+                count: 3,
+                cards: [
+                    card('a', { tier: { code: 'pro', label: 'Pro', promoted: true } }),
+                    card('b', { tier: { code: 'free', label: 'Free', promoted: false } }),
+                    card('c', { tier: { code: 'team', label: 'Team', promoted: true } }),
+                ],
+            },
+        });
+
+        const pill = (id) => cardOf(wrapper, id).get('.deal-card__facts .pill');
+        expect([pill('a').text(), pill('a').classes()]).toEqual(['Pro', expect.arrayContaining(['pill--green'])]);
+        expect([pill('b').text(), pill('b').classes()]).toEqual(['Free', expect.arrayContaining(['pill--grey'])]);
+        // A tier the code has never heard of is data too: it is green by its rank, not by its name.
+        expect([pill('c').text(), pill('c').classes()]).toEqual(['Team', expect.arrayContaining(['pill--green'])]);
+    });
+
+    it('shows no tier pill on a card without a tier', () => {
+        const wrapper = island();
+
+        expect(cardOf(wrapper, 'b').find('.deal-card__facts').exists()).toBe(false);
+        expect(cardOf(wrapper, 'a').get('.deal-card__facts').find('.pill').exists()).toBe(false);
+    });
+
     it('links a capped column to the list', () => {
         const wrapper = island({ new: { count: 102 } });
 
@@ -435,7 +461,7 @@ describe('DealBoardIsland', () => {
     });
 
     it('asks to apply the tier when a won move answers an offer, with a native form', async () => {
-        const tierOffer = { action: '/admin/crm/deals/a/tier', token: 'csrf-token', expected: 'basic', text: '«Villa» hat heute den Tier Basic.' };
+        const tierOffer = { action: '/admin/crm/deals/a/tier', token: 'csrf-token', expected: 'free', text: '«Villa» hat heute den Tier Free.' };
         stubFetch(async () => json({ stage: 'won', closedOn: '2026-11-01', tierOffer }));
         const wrapper = island();
 
@@ -444,17 +470,17 @@ describe('DealBoardIsland', () => {
 
         const form = wrapper.get('#deal-tier-form');
         expect(wrapper.get('#deal-tier').attributes('open')).toBeDefined();
-        expect(form.text()).toContain('«Villa» hat heute den Tier Basic.');
+        expect(form.text()).toContain('«Villa» hat heute den Tier Free.');
         expect(form.attributes('method')).toBe('post');
         expect(form.attributes('action')).toBe('/admin/crm/deals/a/tier');
         expect(form.get('[name="_token"]').element.value).toBe('csrf-token');
-        expect(form.get('[name="expected"]').element.value).toBe('basic');
+        expect(form.get('[name="expected"]').element.value).toBe('free');
         expect(form.get('[name="return_to"]').element.value).toBe(window.location.pathname + window.location.search);
         expect(wrapper.get('#deal-tier button[type="submit"]').attributes('form')).toBe('deal-tier-form');
     });
 
     it('closes the tier prompt on Nicht jetzt and leaves the card won', async () => {
-        const tierOffer = { action: '/admin/crm/deals/a/tier', token: 'csrf-token', expected: 'basic', text: 'Text' };
+        const tierOffer = { action: '/admin/crm/deals/a/tier', token: 'csrf-token', expected: 'free', text: 'Text' };
         stubFetch(async () => json({ stage: 'won', closedOn: '2026-11-01', tierOffer }));
         const wrapper = island();
 

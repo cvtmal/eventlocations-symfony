@@ -16,7 +16,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 /**
  * Under the locks, company then deal, with the venue's last in `ChangeVenueTier` (D11). The dispatch is unstamped on
  * purpose, like `CreateVenueHandler`'s: both commands commit together, or neither, and the venue's stamped purges wait
- * for the end of this root dispatch, so they run after the commit (D19).
+ * for the end of this root dispatch, so they run after the commit (D19). Tiers are compared by code, the name a tier
+ * keeps for good (F12).
  */
 final class ApplyDealTierHandler implements CommandHandlerInterface
 {
@@ -38,13 +39,13 @@ final class ApplyDealTierHandler implements CommandHandlerInterface
         if (null === $venue || null === $tier || !$deal->stage()->isWon()) {
             throw DealTierNotApplicable::forDeal($deal->id());
         }
-        if ($tier === $venue->tier() || $company->venue()?->id() !== $venue->id()) {
+        if ($tier->code() === $venue->tier()->code() || $company->venue()?->id() !== $venue->id()) {
             throw DealTierNotApplicable::forDeal($deal->id());
         }
-        if ($command->expected !== $venue->tier()) {
+        if ($command->expected !== $venue->tier()->code()) {
             throw StaleProperty::forField('tier');
         }
 
-        $this->commandBus->dispatch(new ChangeVenueTier($venue->number(), $tier));
+        $this->commandBus->dispatch(new ChangeVenueTier($venue->number(), $tier->code()));
     }
 }

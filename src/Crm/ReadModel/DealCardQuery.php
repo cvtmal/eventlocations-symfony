@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Crm\ReadModel;
 
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 
@@ -17,7 +17,8 @@ final class DealCardQuery
     public const int CARD_ROWS = 5;
 
     private const string COLUMNS = <<<'SQL'
-        SELECT d.id, d.name, d.stage_code, d.tier, d.amount_rappen, d.contract_end_on, v.name AS venue_name
+        SELECT d.id, d.name, d.stage_code, dt.code AS tier_code, dt.name AS tier_name, dt.rank_weight AS tier_rank_weight,
+               d.amount_rappen, d.contract_end_on, v.name AS venue_name
         SQL;
 
     private const string ORDER = ' ORDER BY (s.is_won OR s.is_lost), d.contract_end_on DESC NULLS LAST, lower(d.name), d.id';
@@ -59,7 +60,7 @@ final class DealCardQuery
      */
     private static function from(string $condition): string
     {
-        return 'FROM crm_deals d JOIN crm_deal_stages s ON s.code = d.stage_code LEFT JOIN venues v ON v.id = d.venue_id'.$condition;
+        return 'FROM crm_deals d JOIN crm_deal_stages s ON s.code = d.stage_code LEFT JOIN venues v ON v.id = d.venue_id LEFT JOIN tiers dt ON dt.id = d.tier_id'.$condition;
     }
 
     /**
@@ -71,7 +72,7 @@ final class DealCardQuery
             (string) $row['id'],
             (string) $row['name'],
             (string) $row['stage_code'],
-            null === $row['tier'] ? null : Tier::from((string) $row['tier']),
+            TierLabel::tryFromRow($row),
             null === $row['venue_name'] ? null : (string) $row['venue_name'],
             null === $row['amount_rappen'] ? null : (int) $row['amount_rappen'],
             null === $row['contract_end_on'] ? null : new \DateTimeImmutable((string) $row['contract_end_on']),

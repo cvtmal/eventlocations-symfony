@@ -17,11 +17,11 @@ use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\FloorMaterial;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -30,6 +30,8 @@ use function Zenstruck\Foundry\Persistence\repository;
 /**
  * The venues of the detail-page tests (#8), built with the Foundry factories: a "full" venue
  * with every section of DP-2 to DP-17 and a "minimal" one with only the required fields.
+ * The full venue is on the Pro tier, so every section shows (the Free limits would cut it, F12); the
+ * minimal one and the place-less ones are on Free, the default of a new venue.
  * Callers run inside a rolled-back transaction and use the Factories trait.
  *
  * Some terms are inserted out of position order on purpose, so a test sees the read model sort
@@ -40,12 +42,18 @@ final class DetailVenues
     public const FULL_SLUG = 'schloss-seeblick';
     public const FULL_PHONE = '+41441234567';
     public const MINIMAL_SLUG = 'gartenhaus-minimal';
+    public const OVERFULL_SLUG = 'haus-ueberfluss';
+    public const OVERFULL_ROOMS = ['Rittersaal', 'Gewölbekeller'];
+    public const OVERFULL_DOCUMENTS = ['Preisliste', 'Menüvorschläge'];
+
+    /** Gallery photos of overfull(): two more than Free shows. */
+    public const OVERFULL_GALLERY = 8;
 
     public static function full(EntityManagerInterface $em, string $slug = self::FULL_SLUG, string $name = 'Schloss Seeblick'): Venue
     {
         $venue = VenueFactory::createOne([
             'name' => $name,
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'status' => VenueStatus::Published,
             'town' => self::town('Zürich'),
             'capacityMin' => 50,
@@ -116,11 +124,14 @@ final class DetailVenues
         return $venue;
     }
 
-    public static function minimal(string $slug = self::MINIMAL_SLUG, string $name = 'Gartenhaus Minimal'): Venue
+    /**
+     * @param string $tier a tier code (`KnownTiers`); Free unless a test needs what Pro shows
+     */
+    public static function minimal(string $slug = self::MINIMAL_SLUG, string $name = 'Gartenhaus Minimal', string $tier = KnownTiers::FREE): Venue
     {
         $venue = VenueFactory::createOne([
             'name' => $name,
-            'tier' => Tier::Basic,
+            'tier' => $tier,
             'status' => VenueStatus::Published,
             'town' => self::town('Bern'),
             'capacityMin' => null,
@@ -128,6 +139,49 @@ final class DetailVenues
             'street' => null,
         ]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug, 'summary' => 'Ein kleines Gartenhaus.']);
+
+        return $venue;
+    }
+
+    /**
+     * A published venue on the given tier that holds more than Free shows (F12): eight gallery photos (inserted from
+     * the last position to the first, so only `position` puts them in order), two rooms (the first with a photo), two
+     * PDFs, a phone, a website, an inquiry address, Instagram and a main building. What a page, a card or a feed shows
+     * of it depends on the tier alone.
+     *
+     * @param string $tier a tier code (`KnownTiers`)
+     */
+    public static function overfull(string $tier, string $slug = self::OVERFULL_SLUG, string $name = 'Haus Überfluss'): Venue
+    {
+        $venue = VenueFactory::createOne([
+            'name' => $name,
+            'tier' => $tier,
+            'status' => VenueStatus::Published,
+            'town' => self::town('Bern'),
+            'capacityMin' => null,
+            'capacityMax' => 120,
+            'street' => 'Aarestrasse 4',
+        ]);
+        $venue->changeContact(self::FULL_PHONE, 'anfrage@ueberfluss.example', 'https://ueberfluss.example', 'Beat Muster');
+        $venue->changeInstagram('https://www.instagram.com/haus.ueberfluss');
+        VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug, 'summary' => 'Ein Haus mit mehr, als der kleine Plan zeigt.']);
+        VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
+
+        foreach (self::OVERFULL_DOCUMENTS as $i => $title) {
+            VenueDocumentTranslationFactory::createOne([
+                'document' => VenueDocumentFactory::createOne(['venue' => $venue, 'position' => $i + 1]),
+                'title' => $title,
+            ]);
+        }
+        $rooms = [];
+        foreach (self::OVERFULL_ROOMS as $i => $roomName) {
+            $rooms[$i] = RoomFactory::createOne(['venue' => $venue, 'position' => $i + 1, 'capacityMin' => null, 'capacityMax' => 80, 'areaM2' => 100, 'heightM' => '3.50', 'floorMaterial' => null]);
+            RoomTranslationFactory::createOne(['room' => $rooms[$i], 'name' => $roomName]);
+        }
+        VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $rooms[0], 'position' => 1]);
+        for ($position = self::OVERFULL_GALLERY; $position >= 1; --$position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
 
         return $venue;
     }
@@ -180,7 +234,7 @@ final class DetailVenues
     {
         $venue = VenueFactory::new()->withoutLocation($canton)->create($attributes + [
             'name' => $name,
-            'tier' => Tier::Basic,
+            'tier' => KnownTiers::FREE,
             'status' => VenueStatus::Published,
             'capacityMin' => null,
             'capacityMax' => 80,

@@ -7,6 +7,7 @@ namespace App\Tests\Application\Admin;
 use App\Tests\Support\Admin\AdminSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -89,6 +90,17 @@ final class ComponentStyleguideTest extends WebTestCase
         self::assertSame('-1', $section->filter('#sg-locale-active-tab-de')->attr('tabindex'));
         self::assertSame('true', $section->filter('#sg-locale-active-tab-fr')->attr('aria-selected'));
         self::assertNull($section->filter('#sg-locale-active-tab-fr')->attr('tabindex'));
+    }
+
+    public function test_the_tier_badge_shows_a_grey_free_and_a_green_pro_plan(): void
+    {
+        $this->logInAs();
+
+        $crawler = $this->client->request('GET', '/admin/_styleguide');
+
+        $pills = $crawler->filter('[data-component="tier-badge"] .pill');
+        self::assertSame(['Free', 'Pro'], $pills->each(static fn (Crawler $pill): string => $pill->text()));
+        self::assertSame(['pill pill--grey', 'pill pill--green'], $pills->each(static fn (Crawler $pill): string => (string) $pill->attr('class')));
     }
 
     public function test_the_record_header_has_an_optional_media_slot(): void

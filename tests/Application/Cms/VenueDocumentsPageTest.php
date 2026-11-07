@@ -13,6 +13,7 @@ use App\Tests\Support\Content\ContentFolder;
 use App\Tests\Support\Media\TestImages;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Field\FileFormField;
@@ -107,6 +108,36 @@ final class VenueDocumentsPageTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertSame('Dieses PDF ist bereits bei den Dokumenten.', self::fieldError($crawler, '#document_upload_file'));
         self::assertSame(1, $this->documentCount($venue));
+    }
+
+    /**
+     * F12: the plan decides how many PDFs a location holds. Free holds one, so the second is refused on the file
+     * field with a message that names the plan; Pro takes it.
+     */
+    public function test_a_second_pdf_is_refused_on_free_and_taken_on_pro(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $free = self::venue();
+        self::document($free, 1, 'Erste Liste');
+
+        $form = $this->client->request('GET', self::url($free))->filter('form[name="document_upload"]')->form();
+        self::attach($form, $this->pdf('Zweite Liste'));
+        $crawler = $this->client->submit($form, ['document_upload[titles][de]' => 'Zweite Liste']);
+
+        self::assertResponseStatusCodeSame(422);
+        $message = self::fieldError($crawler, '#document_upload_file');
+        self::assertStringContainsString('Free', $message);
+        self::assertStringContainsString('1 PDF', $message);
+        self::assertSame(1, $this->documentCount($free));
+
+        $pro = self::venue(KnownTiers::PRO);
+        self::document($pro, 1, 'Erste Liste');
+        $form = $this->client->request('GET', self::url($pro))->filter('form[name="document_upload"]')->form();
+        self::attach($form, $this->pdf('Zweite Liste'));
+        $this->client->submit($form, ['document_upload[titles][de]' => 'Zweite Liste']);
+
+        self::assertResponseRedirects(self::url($pro));
+        self::assertSame(2, $this->documentCount($pro));
     }
 
     public function test_titles_are_saved_with_the_row_token(): void
@@ -301,9 +332,9 @@ final class VenueDocumentsPageTest extends WebTestCase
         self::assertResponseRedirects('/admin/login');
     }
 
-    private static function venue(): Venue
+    private static function venue(string $tier = KnownTiers::FREE): Venue
     {
-        return VenueFactory::new()->withoutLocation()->create();
+        return VenueFactory::new()->withoutLocation()->create(['tier' => $tier]);
     }
 
     private static function url(Venue $venue): string

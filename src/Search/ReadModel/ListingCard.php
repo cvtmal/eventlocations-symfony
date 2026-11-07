@@ -5,25 +5,25 @@ declare(strict_types=1);
 namespace App\Search\ReadModel;
 
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 
 /**
  * One venue card of the listing (LP-2): everything the card renders, including its first
- * eight venue-level photos in position order, and the owner's price level and ambience as
- * tags (LP-7, both NULL when not stated).
+ * eight venue-level photos in position order (fewer when the venue's tier allows fewer, F12),
+ * and the owner's price level and ambience as tags (LP-7, both NULL when not stated).
+ * `promoted` is the "Top-Eintrag" label of a venue whose tier ranks above the unboosted ones.
  */
 final readonly class ListingCard
 {
     /**
-     * @param list<CardPhoto> $photos at most 8, in position order
+     * @param list<CardPhoto> $photos at most 8 and at most the tier's photo limit, in position order
      */
     public function __construct(
         public string $id,
         public int $number,
         public string $slug,
         public string $name,
-        public Tier $tier,
+        public bool $promoted,
         public ?int $capacityMin,
         public int $capacityMax,
         public VenuePlace $place,

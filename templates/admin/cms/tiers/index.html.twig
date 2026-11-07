@@ -1,0 +1,79 @@
+{#
+    Tarife (F12): every tier, best first. Context from `TierListController`: rows list<TierDefinition>.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'tiers.list.title'|trans({}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'tiers.list.title'|trans({}, 'cms') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'tiers.list.title'|trans({}, 'cms') }} <span class="muted">{{ rows|length|swiss_number }}</span></h1>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    {% embed 'admin/components/_table.html.twig' with {
+        label: 'tiers.list.table_label'|trans({}, 'cms'),
+        id: 'tier-list',
+        columns: [
+            {label: 'tiers.list.column.name'|trans({}, 'cms')},
+            {label: 'tiers.list.column.code'|trans({}, 'cms')},
+            {label: 'tiers.list.column.price'|trans({}, 'cms')},
+            {label: 'tiers.list.column.rank'|trans({}, 'cms')},
+            {label: 'tiers.list.column.photos'|trans({}, 'cms')},
+            {label: 'tiers.list.column.rooms'|trans({}, 'cms')},
+            {label: 'tiers.list.column.videos'|trans({}, 'cms')},
+            {label: 'tiers.list.column.documents'|trans({}, 'cms')},
+            {label: 'tiers.list.column.contact'|trans({}, 'cms')},
+            {label: 'tiers.list.column.last_minute'|trans({}, 'cms')},
+            {label: 'tiers.list.column.report'|trans({}, 'cms')},
+            {label: 'tiers.list.column.event_types'|trans({}, 'cms')},
+            {label: 'tiers.list.column.venues'|trans({}, 'cms')},
+        ],
+        actions_label: 'tiers.list.column.actions'|trans({}, 'cms'),
+        rows: rows,
+    } only %}
+        {% block rows %}
+            {% for tier in rows %}
+                {% embed 'admin/components/_table_row.html.twig' with {tier: tier, actions_column: true} only %}
+                    {% block cells %}
+                        <td>
+                            <a class="table__name" href="{{ path('admin_tiers_edit', {code: tier.code}) }}">{{ tier.name }}</a>
+                            {% if tier.rankWeight > 0 %}{{ include('admin/components/_tier_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues'), promoted: true}, with_context = false) }}{% endif %}
+                        </td>
+                        <td class="muted">{{ tier.code }}</td>
+                        <td>{{ (tier.priceRappen / 100)|swiss_number(tier.priceRappen % 100 == 0 ? 0 : 2) }}</td>
+                        <td>{{ tier.rankWeight|swiss_number }}</td>
+                        <td>{{ tier.photosMax|swiss_number }}</td>
+                        <td>{{ tier.roomsMax|swiss_number }}</td>
+                        <td>{{ tier.videosMax|swiss_number }}</td>
+                        <td>{{ tier.documentsMax|swiss_number }}</td>
+                        <td>{{ (tier.contactVisible ? 'tiers.value.yes' : 'tiers.value.no')|trans({}, 'cms') }}</td>
+                        <td>{{ (tier.lastMinuteAllowed ? 'tiers.value.yes' : 'tiers.value.no')|trans({}, 'cms') }}</td>
+                        <td>{{ (tier.detailedReport ? 'tiers.value.yes' : 'tiers.value.no')|trans({}, 'cms') }}</td>
+                        <td>{{ tier.eventTypesMax is null ? 'tiers.value.all'|trans({}, 'cms') : tier.eventTypesMax|swiss_number }}</td>
+                        <td>{{ tier.venueCount|swiss_number }}</td>
+                    {% endblock %}
+                    {% block actions %}
+                        {{ include('admin/components/_button.html.twig', {
+                            label: 'tiers.list.edit'|trans({}, 'cms'),
+                            size: 'sm',
+                            href: path('admin_tiers_edit', {code: tier.code}),
+                            attributes: {'aria-label': 'tiers.list.edit_for'|trans({name: tier.name}, 'cms')},
+                        }, with_context = false) }}
+                    {% endblock %}
+                {% endembed %}
+            {% endfor %}
+        {% endblock %}
+        {% block empty %}
+            {{ include('admin/components/_empty.html.twig', {icon: 'sticky-note', title: 'tiers.list.empty.title'|trans({}, 'cms')}, with_context = false) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

@@ -7,7 +7,7 @@ import { formatChf } from './money.js';
 
 // A deal on the board (Pipeline.dc.html). Three ways to move it, one event: drag, "Weiter →", and "Verschieben nach", a
 // native popover with `.dropdown` that `assets/js/admin/dropdown.js` places. It is no `role="menu"`, as `_dropdown`.
-const TIER_TONES = { beliebte_location: 'pink', empfehlung: 'amber', top_premium: 'blue', premium: 'green', basic: 'grey' };
+// The tier is data (F12): its pill is green when the tier ranks above the unboosted ones, grey otherwise, as `_tier_badge`.
 
 const props = defineProps({
     card: { type: Object, required: true },
@@ -74,7 +74,7 @@ function moveTo(event, code) {
       <UiPill
         v-if="card.tier"
         :label="card.tier.label"
-        :tone="TIER_TONES[card.tier.code] ?? 'grey'"
+        :tone="card.tier.promoted ? 'green' : 'grey'"
       />
       <span
         v-if="amount"

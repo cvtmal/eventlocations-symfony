@@ -13,6 +13,7 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\Entity\Room;
 use App\Venues\Entity\RoomTranslation;
 use App\Venues\Entity\TaxonomyTerm;
+use App\Venues\Entity\Tier;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenueDocumentTranslation;
@@ -22,11 +23,11 @@ use App\Venues\Entity\VenueSlugHistory;
 use App\Venues\Entity\VenueTerm;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\FloorMaterial;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -85,7 +86,8 @@ final class VenueMappingTest extends KernelTestCase
     public function test_full_venue_graph_round_trips(): void
     {
         $venue = $this->venue('Testhaus Vier');
-        $venue->changeTier(Tier::TopPremium);
+        self::assertSame(KnownTiers::FREE, $venue->tier()->code());
+        $venue->changeTier($this->tier(KnownTiers::PRO));
         $venue->changeContact('+41441234567', 'info@example.ch', 'https://example.ch', 'Frau Muster');
         $venue->changeDistances('1.5', 'Stäfa', '12.0', 'A3', null, null);
         $venue->answerFaq(OwnCatering::FixedCaterer, true);
@@ -121,14 +123,13 @@ final class VenueMappingTest extends KernelTestCase
             $this->em->persist($entity);
         }
         $this->em->flush();
-        self::assertSame(3, $venue->tierRank());
+        self::assertSame(KnownTiers::PRO, $this->em->getConnection()->fetchOne('SELECT t.code FROM venues v JOIN tiers t ON t.id = v.tier_id WHERE v.id = ?', [$venue->id()]));
         $this->em->clear();
 
         $loaded = $this->em->find(Venue::class, $venue->id());
         self::assertInstanceOf(Venue::class, $loaded);
         self::assertSame($venue->number(), $loaded->number());
-        self::assertSame(Tier::TopPremium, $loaded->tier());
-        self::assertSame(3, $loaded->tierRank());
+        self::assertSame([KnownTiers::PRO, 'Pro'], [$loaded->tier()->code(), $loaded->tier()->name()]);
         self::assertSame(VenueStatus::Published, $loaded->status());
         self::assertSame(OwnCatering::FixedCaterer, $loaded->ownCatering());
         self::assertTrue($loaded->daylight());
@@ -179,8 +180,9 @@ final class VenueMappingTest extends KernelTestCase
     {
         $canton = $this->em->find(Canton::class, 'be');
         self::assertInstanceOf(Canton::class, $canton);
-        $cantonOnly = new Venue('Testhaus Kanton', Tier::Basic, VenueStatus::Published, 80, null, null, null, null, null, null, null, $canton);
-        $nothing = new Venue('Testhaus Nichts', Tier::Basic, VenueStatus::Published, 80, null, null, null, null, null, null);
+        $free = $this->tier(KnownTiers::FREE);
+        $cantonOnly = new Venue('Testhaus Kanton', $free, VenueStatus::Published, 80, null, null, null, null, null, null, null, $canton);
+        $nothing = new Venue('Testhaus Nichts', $free, VenueStatus::Published, 80, null, null, null, null, null, null);
         $translation = new VenueTranslation($nothing, 'de', 'testhaus-nichts', 'Kurz.');
         $translation->changeRegion('Schweizweit');
         foreach ([$cantonOnly, $nothing, $translation] as $entity) {
@@ -228,9 +230,20 @@ final class VenueMappingTest extends KernelTestCase
     {
         $town = $this->em->getRepository(Town::class)->findOneBy(['name' => 'Stäfa']);
         self::assertInstanceOf(Town::class, $town);
-        $venue = new Venue($name, Tier::Premium, VenueStatus::Published, 120, 20, $town, $town->zip(), 'Seestrasse 1', $town->lat(), $town->lng());
+        $venue = new Venue($name, $this->tier(KnownTiers::FREE), VenueStatus::Published, 120, 20, $town, $town->zip(), 'Seestrasse 1', $town->lat(), $town->lng());
         $this->em->persist($venue);
 
         return $venue;
+    }
+
+    /**
+     * One of the seeded rows of the migration, as the entity a venue points at.
+     */
+    private function tier(string $code): Tier
+    {
+        $tier = $this->em->getRepository(Tier::class)->findOneBy(['code' => $code]);
+        self::assertInstanceOf(Tier::class, $tier);
+
+        return $tier;
     }
 }

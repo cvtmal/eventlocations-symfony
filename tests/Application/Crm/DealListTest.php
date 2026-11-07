@@ -9,7 +9,7 @@ use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\DealFactory;
 use App\Tests\Support\Admin\AdminSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
@@ -39,7 +39,7 @@ final class DealListTest extends WebTestCase
         $deal = DealFactory::new()->inStage('offer')->create([
             'name' => 'Premium 2027',
             'company' => $company,
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'amountRappen' => 240050,
             'expectedCloseOn' => new \DateTimeImmutable('2026-11-15'),
             'owner' => $owner,
@@ -54,7 +54,8 @@ final class DealListTest extends WebTestCase
         self::assertSame('/admin/crm/locations/'.$company->id(), $row->filter('.crm-list__detail')->attr('href'));
         self::assertStringContainsString('Seeblick Events', $row->text());
         self::assertStringContainsString('Angebot', $row->text());
-        self::assertStringContainsString('Premium', $row->filter('td')->eq(2)->text());
+        self::assertSame('Pro', $row->filter('td')->eq(2)->text());
+        self::assertCount(1, $row->filter('td')->eq(2)->filter('.pill--green'));
         self::assertSame("CHF 2'400.50", $row->filter('td')->eq(3)->text());
         self::assertSame('15.11.2026', $row->filter('td')->eq(4)->text());
         self::assertSame('Andrea Keller', $row->filter('td')->eq(5)->text());

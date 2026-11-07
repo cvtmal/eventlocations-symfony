@@ -13,10 +13,12 @@ use App\Tests\Support\Http\PublicRouteFixtures;
 use App\Tests\Support\Http\ThroughHttpCache;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\ChangeVenueTexts;
+use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\PurgeListingsCache;
 use App\Venues\Command\PurgeVenueCache;
 use App\Venues\Command\UnpublishVenue;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -90,6 +92,29 @@ final class HttpCachePurgeTest extends WebTestCase
             $this->assertTrace('miss/store', $response, $page);
             self::assertStringContainsString(self::SUMMARY, (string) $response->getContent(), $page);
         }
+    }
+
+    /**
+     * F12: a tier decides what a page shows (the phone, the label), so changing it must reach the visitor at once.
+     * The seeded venue is on Pro; on Free its detail page loses the reveal link and its listing card the label.
+     */
+    public function test_a_tier_change_replaces_the_cached_pages(): void
+    {
+        foreach ([self::DETAIL, self::LISTING] as $page) {
+            $this->assertTrace('miss/store', $this->get($page), $page);
+            $this->assertTrace('fresh', $this->get($page), $page);
+        }
+        self::assertStringContainsString('/telefon', (string) $this->get(self::DETAIL)->getContent());
+        self::assertStringContainsString('Top-Eintrag', (string) $this->get(self::LISTING)->getContent());
+
+        $this->dispatch(new ChangeVenueTier($this->number, KnownTiers::FREE));
+
+        $detail = $this->get(self::DETAIL);
+        $this->assertTrace('miss/store', $detail, self::DETAIL);
+        self::assertStringNotContainsString('/telefon', (string) $detail->getContent());
+        $listing = $this->get(self::LISTING);
+        $this->assertTrace('miss/store', $listing, self::LISTING);
+        self::assertStringNotContainsString('Top-Eintrag', (string) $listing->getContent());
     }
 
     /**

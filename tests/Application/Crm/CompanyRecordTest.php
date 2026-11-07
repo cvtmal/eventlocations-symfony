@@ -19,8 +19,10 @@ use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
+use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\PublishVenue;
-use App\Venues\ValueObject\Tier;
+use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -70,6 +72,8 @@ final class CompanyRecordTest extends WebTestCase
 
         self::assertSame('Eintrag', $crawler->filter('#crm-venues-title')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#locations .crm-side__link')->attr('href'));
+        // The Eintrag's tier, by the name its row has (a new venue is Free).
+        self::assertSame('Free', $crawler->filter('#locations .crm-side__detail')->text());
         self::assertSame('Kontakte (1)', $crawler->filter('#crm-contacts-title')->text());
         // A contact has no page since #55: the name is text, the card's dialogs add and edit (ContactCardTest).
         self::assertSame('Laura Meier', $crawler->filter('#kontakte .crm-side__name')->text());
@@ -483,6 +487,66 @@ final class CompanyRecordTest extends WebTestCase
         self::assertStringNotContainsString('Geheim', (string) $this->client->getResponse()->getContent());
     }
 
+    public function test_a_change_of_tier_is_named_by_the_island_and_the_fallback(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->withVenue($venue)->create();
+        $this->changeTier($venue, 'pro');
+        $this->changeTier($venue, 'premium', '2026-10-01 09:00:00+02');
+
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
+
+        self::assertResponseIsSuccessful();
+        $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        self::assertSame(['pro' => 'Pro', 'free' => 'Free'], $props['labels']['tiers']);
+        // The row of a tier no row has any more is shown by its code.
+        self::assertSame(
+            ['«Schloss Seeblick»: neu Pro · 29.10.2026, 11:48', '«Schloss Seeblick»: neu premium · 01.10.2026, 09:00'],
+            $crawler->filter('[data-island="timeline"] .timeline-item--system')->each(static fn (Crawler $item): string => $item->text()),
+        );
+    }
+
+    public function test_a_page_without_a_change_of_tier_names_no_tier(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->withVenue($venue)->create();
+
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
+
+        $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        self::assertSame([], $props['labels']['tiers']);
+    }
+
+    public function test_an_older_page_with_a_change_of_tier_brings_the_names(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick']);
+        $company = CompanyFactory::new()->withVenue($venue)->create();
+        $this->changeTier($venue, 'pro', '2026-01-05 09:00:00+01');
+        foreach (range(1, TimelineQuery::PER_PAGE) as $day) {
+            ActivityFactory::new()->onCompany($company)->create(['body' => 'Notiz '.$day, 'occurredAt' => (new \DateTimeImmutable('2026-10-01 10:00:00 UTC'))->modify('+'.$day.' days')]);
+        }
+
+        $crawler = $this->client->request('GET', '/admin/crm/locations/'.$company->id());
+
+        $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($props);
+        self::assertSame([], $props['labels']['tiers'], 'The first page holds no change of tier.');
+        self::assertIsString($props['page']['next']);
+
+        $this->client->request('GET', '/admin/api/crm/companies/'.$company->id().'/timeline?before='.urlencode($props['page']['next']));
+
+        self::assertResponseIsSuccessful();
+        $page = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($page);
+        self::assertSame(['pro' => 'Pro', 'free' => 'Free'], $page['tiers']);
+        self::assertSame(['system:tier_changed'], array_map(static fn (array $entry): string => $entry['kind'].':'.$entry['type'], $page['entries']));
+    }
+
     public function test_an_inquiry_entry_reaches_the_island_and_the_fallback(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -547,7 +611,7 @@ final class CompanyRecordTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $company = CompanyFactory::createOne();
-        DealFactory::new()->inStage('offer')->create(['name' => 'Verlängerung 2027', 'company' => $company, 'tier' => Tier::Premium, 'amountRappen' => 480000, 'contractEndOn' => new \DateTimeImmutable('2027-12-31')]);
+        DealFactory::new()->inStage('offer')->create(['name' => 'Verlängerung 2027', 'company' => $company, 'tier' => KnownTiers::PRO, 'amountRappen' => 480000, 'contractEndOn' => new \DateTimeImmutable('2027-12-31')]);
         DealFactory::new()->inStage('won')->many(5)->create(['company' => $company]);
         DealFactory::createOne();
 
@@ -559,7 +623,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertCount(5, $card->filter('.crm-side__item'));
         $first = $card->filter('.crm-side__item')->first();
         self::assertSame('Verlängerung 2027', $first->filter('.crm-side__link')->text());
-        self::assertSame('Premium · bis 31.12.2027', $first->filter('.crm-side__detail')->text());
+        self::assertSame('Pro · bis 31.12.2027', $first->filter('.crm-side__detail')->text());
         self::assertSame('Angebot', $first->filter('.pill')->text());
         self::assertSame("CHF 4'800", $first->filter('.deal-side__amount')->text());
         self::assertSame('/admin/crm/locations/'.$company->id().'/deals', $card->filter('.deal-side__all a')->attr('href'));
@@ -659,8 +723,23 @@ final class CompanyRecordTest extends WebTestCase
         // The Location with its Eintrag and contacts, the owners, which carry the sidebar's badge (`TaskBadge`), the
         // timeline's activities, venue names and audit rows, the composer's mail templates, the Aufgaben card, the Deals
         // card, the access-request badge; with the user's refresh 10 in production (N14's ceiling 10). The address is the
-        // worst case: without one the templates are not read.
+        // worst case: without one the templates are not read. The tiers' names (F12) are read only when the first page
+        // holds a change of tier: `test_a_change_of_tier_costs_one_statement_for_the_names`.
         self::assertSame(9, $this->queriesOf('/admin/crm/locations/'.$company->id()));
+    }
+
+    public function test_a_change_of_tier_costs_one_statement_for_the_names(): void
+    {
+        ['user' => $owner] = $this->logInAs(AdminRole::Admin);
+        $venue = VenueFactory::new()->withoutLocation(null)->create();
+        $company = CompanyFactory::new()->withVenue($venue)->afterInstantiate(static fn (Company $company) => $company->changeEmail('info@seeblick.example'))->create(['owner' => $owner]);
+        ContactFactory::createMany(3, ['company' => $company]);
+        TaskFactory::createMany(2, ['company' => $company]);
+        $this->changeTier($venue, 'pro');
+
+        // The pin's nine, and the names of the tiers (F12): ten in test terms, eleven in production, where N14's ceiling of
+        // ten holds for every page that shows no change of tier.
+        self::assertSame(10, $this->queriesOf('/admin/crm/locations/'.$company->id()));
     }
 
     /** The link form's CSRF token, from a Location that still offers the dialog (the token is per form, not per page). */
@@ -669,6 +748,22 @@ final class CompanyRecordTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/crm/locations/'.CompanyFactory::createOne()->id());
 
         return (string) $crawler->filter('#link-venue-form input[name="link_venue[_token]"]')->attr('value');
+    }
+
+    /**
+     * The audit row of a tier change, as `ChangeVenueTier` writes it; the timeline shows it on the venue's Location.
+     */
+    private function changeTier(Venue $venue, string $tier, string $at = '2026-10-29 11:48:00+01'): void
+    {
+        $this->connection->insert('admin_audit_log', [
+            'id' => EntityId::generate(),
+            'actor_type' => 'console',
+            'command' => ChangeVenueTier::class,
+            'subject_type' => 'venue',
+            'subject_id' => (string) $venue->number(),
+            'changes' => json_encode(['tier' => $tier, 'changed' => ['tier']], \JSON_THROW_ON_ERROR),
+            'created_at' => $at,
+        ]);
     }
 
     private function auditRows(string $companyId): int

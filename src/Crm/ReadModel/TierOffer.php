@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Crm\ReadModel;
 
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 
 /**
  * A won deal's tier that the venue does not have yet: what "Tier anwenden" would change. `current` goes into the form as
@@ -15,8 +15,8 @@ final readonly class TierOffer
     public function __construct(
         public string $dealId,
         public string $venueName,
-        public Tier $current,
-        public Tier $offered,
+        public TierLabel $current,
+        public TierLabel $offered,
     ) {
     }
 }

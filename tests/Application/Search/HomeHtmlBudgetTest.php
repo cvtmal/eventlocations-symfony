@@ -16,8 +16,8 @@ use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -85,7 +85,7 @@ final class HomeHtmlBudgetTest extends WebTestCase
         }
     }
 
-    /** Paid, so the three of them are Spotlight, whatever the day's order does with the cantons' Basic venues. */
+    /** Paid, so the three of them are Spotlight, whatever the day's order does with the cantons' Free venues. */
     private function spotlightVenue(int $i): void
     {
         $ambience = mb_substr(str_repeat('Romantisch und ländlich am See. ', 2), 0, 60);
@@ -93,7 +93,7 @@ final class HomeHtmlBudgetTest extends WebTestCase
             ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::cases()[$i % 3]))
             ->create([
                 'name' => 'Schlossgut Hohenrain am See '.$i,
-                'tier' => Tier::TopPremium,
+                'tier' => KnownTiers::PRO,
                 'capacityMin' => 40,
                 'capacityMax' => 1200,
                 'town' => $this->town('Stäfa'),

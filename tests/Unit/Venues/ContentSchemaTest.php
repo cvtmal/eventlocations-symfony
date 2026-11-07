@@ -23,7 +23,6 @@ final class ContentSchemaTest extends TestCase
     {
         return [
             'name' => 'Schloss Beispiel',
-            'tier' => 'premium',
             'status' => 'published',
             'price_level' => 'medium',
             'capacity' => ['min' => 20, 'max' => 180, 'seated' => 120, 'standing' => 180],
@@ -83,7 +82,7 @@ final class ContentSchemaTest extends TestCase
         };
 
         yield 'unknown term code' => [$set($full, 'terms.building', ['castle', 'palace']), '/terms/building/1: "palace" is not an allowed value'];
-        yield 'unknown tier' => [$set($full, 'tier', 'gold'), '/tier: "gold" is not an allowed value'];
+        yield 'a tier, the folder carries none since F12' => [$set($full, 'tier', 'pro'), '/: Unknown properties: tier'];
         yield 'extra property' => [$set($full, 'slug', 'schloss'), '/: Unknown properties: slug'];
         yield 'unquoted zip' => [$set($full, 'address.zip', 8001), '/address/zip:'];
         yield 'bad phone' => [$set($full, 'contact.phone', '044 123 45 67'), '/contact/phone:'];
@@ -131,7 +130,7 @@ final class ContentSchemaTest extends TestCase
     public function test_several_failures_come_back_together(): void
     {
         $data = self::full();
-        $data['tier'] = 'gold';
+        $data['price_level'] = 'cheap';
         $data['address']['zip'] = '80';
         $data['geo']['lat'] = 1.0;
 
@@ -142,7 +141,6 @@ final class ContentSchemaTest extends TestCase
     {
         $errors = self::schema()->validate(self::object([
             'name' => 'Gasthaus Beispiel',
-            'tier' => 'basic',
             'capacity' => ['max' => 80],
             'translations' => ['de' => ['summary' => 'Kurz.']],
         ]));

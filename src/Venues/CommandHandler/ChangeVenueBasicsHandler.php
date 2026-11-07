@@ -8,6 +8,7 @@ use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Translation\EnabledLocale;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\Repository\TierRepository;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\SlugAllocator;
 use App\Venues\VenueEditing;
@@ -26,6 +27,7 @@ final class ChangeVenueBasicsHandler implements CommandHandlerInterface
     public function __construct(
         private readonly VenueEditing $editing,
         private readonly VenueRepository $venues,
+        private readonly TierRepository $tiers,
         private readonly VenueSlugs $slugs,
         private readonly EnabledLocale $locales,
         private readonly EntityManagerInterface $em,
@@ -56,7 +58,7 @@ final class ChangeVenueBasicsHandler implements CommandHandlerInterface
         if (null !== $command->newSlug && isset($rows[$default])) {
             $this->slugs->change($venue, $rows[$default], $command->newSlug);
         }
-        $venue->changeTier($command->tier);
+        $venue->changeTier($this->tiers->byCode($command->tierCode));
         $venue->changeCapacity($command->capacityMax, $command->capacityMin);
 
         try {

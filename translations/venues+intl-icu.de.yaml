@@ -153,12 +153,9 @@ access:
     highway: Nähe Autobahn
     airport: Nähe Flughafen
 
+# The label of a venue whose tier ranks above the unboosted ones (F12). The tier names themselves are data (`tiers.name`).
 tier:
-    beliebte_location: Beliebte Location
-    empfehlung: Empfehlung
-    top_premium: Top Premium
-    premium: Premium
-    basic: Standard
+    promoted: Top-Eintrag
 
 price_level:
     moderate: Moderat

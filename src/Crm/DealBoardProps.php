@@ -117,7 +117,7 @@ final readonly class DealBoardProps
             'company' => $card->companyName,
             'href' => $this->urls->generate('admin_crm_deals_show', ['id' => $card->id]),
             'stageUrl' => $this->urls->generate('admin_api_crm_deal_stage', ['id' => $card->id]),
-            'tier' => null === $card->tier ? null : ['code' => $card->tier->value, 'label' => $card->tier->trans($this->translator)],
+            'tier' => null === $card->tier ? null : ['code' => $card->tier->code, 'label' => $card->tier->name, 'promoted' => $card->tier->promoted],
             'amountRappen' => $card->amountRappen,
             'expectedCloseOn' => $card->expectedCloseOn,
             'closedOn' => $card->closedOn,

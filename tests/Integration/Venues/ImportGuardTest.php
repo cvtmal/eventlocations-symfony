@@ -13,6 +13,7 @@ use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenuePhoto;
 use App\Venues\Repository\VenueRepository;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\VenueEditing;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -117,6 +118,21 @@ final class ImportGuardTest extends KernelTestCase
         self::assertSame(['Gasthaus Schloss beispiel', 200], [$row['name'], $row['capacity_max']]);
         self::assertNull($row['cms_edited_at']);
         self::assertSame(0, $this->handRowCount(), 'hand-made rows are replaced by the folder');
+    }
+
+    /**
+     * F12: the folder carries no tier, so replacing a CMS edit takes the folder's values and leaves the plan alone.
+     */
+    public function test_overwrite_applies_the_folder_but_keeps_the_tier_staff_set(): void
+    {
+        $this->importedAndEdited();
+        $this->setTier(self::KEY, KnownTiers::PRO);
+        $this->content->change(self::KEY, ['capacity' => ['max' => 200]]);
+
+        self::assertSame(Command::SUCCESS, $this->import(['--overwrite-cms-edits' => true]), $this->display());
+
+        self::assertStringContainsString('updated    '.self::KEY, $this->display());
+        self::assertSame([200, KnownTiers::PRO], [$this->row()['capacity_max'], $this->tierCode(self::KEY)]);
     }
 
     /**
@@ -235,7 +251,7 @@ final class ImportGuardTest extends KernelTestCase
     public function test_a_broken_folder_of_an_edited_venue_still_fails(): void
     {
         $this->importedAndEdited();
-        $this->content->rawYaml(self::KEY, "name: Kaputt\n  tier: basic\n");
+        $this->content->rawYaml(self::KEY, "name: Kaputt\n  status: published\n");
 
         self::assertSame(Command::FAILURE, $this->import(), $this->display());
 

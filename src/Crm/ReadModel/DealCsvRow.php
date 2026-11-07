@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\LostReason;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 
 /**
  * One line of the deal CSV (S13).
@@ -18,7 +18,7 @@ final readonly class DealCsvRow
         public ?string $venueName,
         public string $stage,
         public ?LostReason $lostReason,
-        public ?Tier $tier,
+        public ?TierLabel $tier,
         public ?int $amountRappen,
         public ?\DateTimeImmutable $contractStartOn,
         public ?\DateTimeImmutable $contractEndOn,

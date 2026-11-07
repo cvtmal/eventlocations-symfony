@@ -10,8 +10,8 @@ use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Tests\Application\Cms\SendsVenueMediaRequests;
 use App\Tests\Support\Portal\PortalSession;
-use App\Venues\Command\AddVenuePhoto;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,6 +31,9 @@ final class LocationPhotosApiTest extends WebTestCase
     use SendsVenueMediaRequests;
 
     private const string RATE_LIMITED = 'Du hast in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuch es später noch einmal.';
+
+    /** `photos_max` of the seeded Free plan. */
+    private const int FREE_PHOTOS = 6;
 
     protected function tearDown(): void
     {
@@ -163,18 +166,34 @@ final class LocationPhotosApiTest extends WebTestCase
         self::assertSame([], $this->photoRows($venue));
     }
 
-    public function test_the_upload_after_the_last_allowed_photo_is_refused(): void
+    /**
+     * F12: the limit is the plan's, for the whole location. Free holds six photos, so the seventh is refused with a
+     * message that names the plan and the limit.
+     */
+    public function test_the_upload_after_the_last_photo_of_the_free_plan_is_refused(): void
     {
         $venue = $this->managedVenue();
-        for ($position = 1; $position <= AddVenuePhoto::MAX_PHOTOS; ++$position) {
-            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
-        }
+        $this->fillGallery($venue, self::FREE_PHOTOS);
 
         $this->upload(self::url($venue), $this->photoFile(), token: $this->csrfToken());
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertArrayHasKey('file', $this->errors());
-        self::assertCount(AddVenuePhoto::MAX_PHOTOS, $this->photoRows($venue));
+        $errors = $this->errors();
+        self::assertSame(['file'], array_keys($errors));
+        self::assertStringContainsString('Free', $errors['file'][0]);
+        self::assertStringContainsString('6 Fotos', $errors['file'][0]);
+        self::assertCount(self::FREE_PHOTOS, $this->photoRows($venue));
+    }
+
+    public function test_a_pro_location_takes_the_seventh_photo(): void
+    {
+        $venue = $this->managedVenue(KnownTiers::PRO);
+        $this->fillGallery($venue, self::FREE_PHOTOS);
+
+        $this->upload(self::url($venue), $this->photoFile(), token: $this->csrfToken());
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        self::assertCount(self::FREE_PHOTOS + 1, $this->photoRows($venue));
     }
 
     public function test_the_upload_limit_is_a_plain_422_per_manager(): void
@@ -246,12 +265,19 @@ final class LocationPhotosApiTest extends WebTestCase
         return (string) $crawler->filter('meta[name="csrf-token"]')->attr('content');
     }
 
-    private function managedVenue(): Venue
+    private function managedVenue(string $tier = KnownTiers::FREE): Venue
     {
-        $venue = VenueFactory::new()->withoutLocation()->create();
+        $venue = VenueFactory::new()->withoutLocation()->create(['tier' => $tier]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $this->logInAsManager(), 'venue' => $venue]);
 
         return $venue;
+    }
+
+    private function fillGallery(Venue $venue, int $photos): void
+    {
+        for ($position = 1; $position <= $photos; ++$position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
     }
 
     private function limiter(): RateLimiterFactoryInterface

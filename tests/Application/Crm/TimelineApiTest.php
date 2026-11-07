@@ -17,6 +17,7 @@ use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
+use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\PublishVenue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -410,6 +411,37 @@ final class TimelineApiTest extends WebTestCase
         self::assertSame($venue->name(), $system[0]['venueName']);
         self::assertSame($venue->number(), $system[0]['venueNumber']);
         self::assertFalse($system[0]['canEdit']);
+    }
+
+    public function test_a_page_with_a_change_of_tier_names_the_tiers_and_one_without_does_not(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        $venue = VenueFactory::createOne();
+        $company->assignVenue($venue);
+        $this->entityManager()->flush();
+        $url = $this->timelineUrl('companies', $company->id());
+        self::assertSame(['entries', 'next'], array_keys($this->page($url)));
+        $this->connection->insert('admin_audit_log', [
+            'id' => EntityId::generate(),
+            'actor_type' => 'console',
+            'command' => ChangeVenueTier::class,
+            'subject_type' => 'venue',
+            'subject_id' => (string) $venue->number(),
+            'changes' => '{"tier": "pro", "changed": ["tier"]}',
+            'created_at' => '2026-10-21 09:00:00+00',
+        ]);
+
+        $this->client->request('GET', $url);
+
+        self::assertResponseIsSuccessful();
+        $page = $this->answer();
+        self::assertSame(['entries', 'next', 'tiers'], array_keys($page));
+        self::assertSame(['pro' => 'Pro', 'free' => 'Free'], $page['tiers']);
+        self::assertSame(['tier_changed', 'pro'], [$page['entries'][0]['type'], $page['entries'][0]['tier']]);
+        // The type filter drops the system events, so it needs no names.
+        $this->client->request('GET', $url.'?type=note');
+        self::assertSame(['entries', 'next'], array_keys($this->answer()));
     }
 
     public function test_an_unknown_type_is_a_422_on_the_type(): void

@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { adminFetch } from '../api.js';
 import TimelineComposer from '../crm/TimelineComposer.vue';
 import TimelineList from '../crm/TimelineList.vue';
@@ -26,6 +26,10 @@ const props = defineProps({
 
 const entries = ref(props.page.entries);
 const next = ref(props.page.next);
+// code => name of the tiers. The server reads them when a page holds a change of tier (F12), so the first page's props
+// have them or not, and a later page brings its own.
+const tiers = ref({ ...props.labels.tiers });
+const listLabels = computed(() => ({ ...props.labels, tiers: tiers.value }));
 // The list on screen: set only when its page arrives, so the active tab and the list never disagree.
 const filter = ref(null);
 const loading = ref(false);
@@ -58,6 +62,9 @@ async function load(type, before) {
         const known = new Set(before === null ? [] : entries.value.map((entry) => entry.id));
         entries.value = [...(before === null ? [] : entries.value), ...answer.entries.filter((entry) => !known.has(entry.id))];
         next.value = answer.next;
+        if (answer.tiers) {
+            tiers.value = { ...tiers.value, ...answer.tiers };
+        }
         filter.value = type;
     } catch (error) {
         if (error.name !== 'AbortError') {
@@ -167,7 +174,7 @@ onBeforeUnmount(() => {
       :types="types"
       :activities-url="urls.activities"
       :inquiries-url="urls.inquiries"
-      :labels="labels"
+      :labels="listLabels"
       :locale="locale"
       @changed="place"
       @removed="remove"

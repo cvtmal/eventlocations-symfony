@@ -26,7 +26,7 @@ final readonly class TimelineEntry
      * @param string                                              $typeCode      the activity type, or the event for a system entry
      * @param string|null                                         $actorId       the admin user who wrote an activity
      * @param string|null                                         $venueName     the venue of a system entry
-     * @param string|null                                         $tier          the new tier of a `tier_changed` event
+     * @param string|null                                         $tier          the code of the new tier of a `tier_changed` event, as its audit row holds it
      * @param string|null                                         $stage         the new stage's code of a `deal_stage_changed` event, whose `title` is the deal's name
      * @param string|null                                         $inquiryId     the inquiry of an `inquiry` entry, whose `title` is the venue's name; null once purged or anonymised
      * @param string|null                                         $inquiryCouple the couple's name, read live from that inquiry
