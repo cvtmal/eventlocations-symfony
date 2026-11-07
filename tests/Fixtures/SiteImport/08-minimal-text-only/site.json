@@ -1,0 +1,54 @@
+{
+  "description": "A tiny text-only site: no JSON-LD, no Open Graph, no images. The address is one text line in the footer on the home page and three lines on /kontakt; phone number and e-mail address appear only as text; a PO box must not become an address.",
+  "entry": "https://www.gemeindesaal-beispiel.example/",
+  "routes": {
+    "/": {
+      "file": "index.html"
+    },
+    "/kontakt": {
+      "file": "kontakt.html"
+    }
+  },
+  "expect": {
+    "facts": {
+      "name": "Gemeindesaal Beispiel",
+      "language": "de",
+      "phone": "+41 44 555 01 23",
+      "email": "saal@gemeindesaal-beispiel.example",
+      "address.street": "Musterweg 12",
+      "address.postal_code": "8000",
+      "address.locality": "Zürich"
+    },
+    "has_fact_values": {
+      "snippet": [
+        "Der Saal bietet Platz für bis zu 120 Personen."
+      ],
+      "address": [
+        {
+          "street": "Bahnhofstrasse 5",
+          "postal_code": "6003",
+          "locality": "Luzern",
+          "country": null
+        }
+      ],
+      "phone": [
+        "+41 44 555 01 23",
+        "+41 79 555 01 23",
+        "+41 44 555 01 24"
+      ]
+    },
+    "absent_fact_values": {
+      "address": [
+        {
+          "street": "Postfach 4412",
+          "postal_code": "8022",
+          "locality": "Zürich",
+          "country": null
+        }
+      ]
+    },
+    "min_candidates": 0,
+    "max_candidates": 0,
+    "pages": 2
+  }
+}

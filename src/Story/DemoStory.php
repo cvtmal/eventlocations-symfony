@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Story;
 
+use App\Factory\PhotoCandidateFactory;
 use App\Factory\RoomFactory;
 use App\Factory\RoomTranslationFactory;
+use App\Factory\SourceRecordFactory;
 use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueDocumentTranslationFactory;
 use App\Factory\VenueFactory;
@@ -23,7 +25,9 @@ use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\Repository\TaxonomyTermRepository;
 use App\Venues\Repository\VenueRepository;
+use App\Venues\ValueObject\CandidateOrigin;
 use App\Venues\ValueObject\FloorMaterial;
+use App\Venues\ValueObject\ImageCandidate;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
@@ -159,6 +163,43 @@ final class DemoStory extends Story
         }
 
         flush_after(fn () => $this->createWeddingFacts($created, $terms));
+        flush_after(fn () => $this->createSiteImport($created[0][1]));
+    }
+
+    /**
+     * One private website import (G3) with invented facts, so `make seed` has a source record and photo candidates to
+     * look at in the database: no page reads them.
+     */
+    private function createSiteImport(Venue $venue): void
+    {
+        $url = 'https://www.beispiel-venue.example/';
+        $fact = static fn (string|int|array $value, float $confidence, string $via, string $page = ''): array => ['value' => $value, 'confidence' => $confidence, 'source_url' => $url.$page, 'via' => $via];
+        $record = SourceRecordFactory::createOne([
+            'venue' => $venue,
+            'url' => $url,
+            'facts' => [
+                'name' => [$fact('Beispiel Venue', 0.9, 'json_ld'), $fact('Beispiel Venue - Events und Seminare', 0.4, 'title')],
+                'address' => [$fact(['street' => 'Musterweg 12', 'postal_code' => '8000', 'locality' => 'Zürich', 'country' => 'CH'], 0.9, 'json_ld')],
+                'phone' => [$fact('+41 44 555 01 23', 0.8, 'link', 'kontakt')],
+                'snippet' => [$fact('Der Saal bietet Platz für bis zu 120 Personen.', 0.4, 'text', 'raeume')],
+            ],
+            'report' => [
+                'final_url' => $url,
+                'redirects' => [],
+                'pages' => [['url' => $url, 'status' => 200, 'bytes' => 18200], ['url' => $url.'raeume', 'status' => 200, 'bytes' => 9400]],
+                'refused' => [['url' => $url.'intern', 'reason' => 'robots', 'detail' => '/intern is disallowed by robots.txt']],
+                'skipped_images' => 3,
+                'bytes' => 27600,
+                'seconds' => 3.4,
+            ],
+        ]);
+        foreach ([
+            new ImageCandidate($url.'media/saal.jpg', $url.'raeume', CandidateOrigin::OgImage, 'Der Saal', 'Unsere Räume', 1600, 900),
+            new ImageCandidate($url.'media/terrasse.jpg', $url.'raeume', CandidateOrigin::Srcset, 'Die Terrasse', 'Unsere Räume', 1200, null),
+            new ImageCandidate($url.'media/eingang.jpg', $url, CandidateOrigin::Img),
+        ] as $position => $image) {
+            PhotoCandidateFactory::createOne(['sourceRecord' => $record, 'image' => $image, 'position' => $position + 1]);
+        }
     }
 
     /**

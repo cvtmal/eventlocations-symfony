@@ -12,17 +12,12 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * The baseline's down() removes every object its up() creates, and up() brings them back with
- * the reference rows. Postgres DDL is transactional, so both run inside the test's transaction
- * and the rollback restores the schema.
+ * the reference rows. Later migrations build on the baseline's tables (foreign keys), so they
+ * come off first, newest first, and go on last. Postgres DDL is transactional, so everything
+ * runs inside the test's transaction and the rollback restores the schema.
  */
 final class BaselineMigrationTest extends KernelTestCase
 {
-    /**
-     * Migrations are loaded by path, not autoloaded, so the class is named from the file and
-     * stays out of PHPStan's sight.
-     */
-    private const MIGRATION_FILE = 'migrations/Version20261106174839.php';
-
     private const REFERENCE_ROWS = [
         'cantons' => 27,
         'taxonomy_terms' => 147,
@@ -54,12 +49,12 @@ final class BaselineMigrationTest extends KernelTestCase
         self::assertContains('venues', $tables);
         self::assertSame(['geo_fold', 'geo_fold_de', 'geo_search_key'], $functions);
 
-        $this->runMigration('down');
+        $this->runMigrations('down');
         self::assertSame(['doctrine_migration_versions'], $this->tables());
         self::assertSame([], $this->functions());
         self::assertSame(['plpgsql'], $this->extensions());
 
-        $this->runMigration('up');
+        $this->runMigrations('up');
         self::assertSame($tables, $this->tables());
         self::assertSame($functions, $this->functions());
         self::assertSame($extensions, $this->extensions());
@@ -99,9 +94,22 @@ final class BaselineMigrationTest extends KernelTestCase
         return array_map('strval', $this->connection->fetchFirstColumn('SELECT extname FROM pg_extension ORDER BY 1'));
     }
 
-    private function runMigration(string $direction): void
+    private function runMigrations(string $direction): void
     {
-        $file = \dirname(__DIR__, 3).'/'.self::MIGRATION_FILE;
+        $files = glob(\dirname(__DIR__, 3).'/migrations/Version*.php') ?: [];
+        sort($files);
+
+        foreach ('down' === $direction ? array_reverse($files) : $files as $file) {
+            $this->runMigration($file, $direction);
+        }
+    }
+
+    /**
+     * Migrations are loaded by path, not autoloaded, so the class is named from the file and
+     * stays out of PHPStan's sight.
+     */
+    private function runMigration(string $file, string $direction): void
+    {
         require_once $file;
         $class = 'DoctrineMigrations\\'.basename($file, '.php');
         $migration = new $class($this->connection, new NullLogger());

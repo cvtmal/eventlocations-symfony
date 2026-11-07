@@ -1,0 +1,62 @@
+{
+  "description": "The home page links to javascript:, mailto:, tel:, data:, file:, ftp: URLs, loopback and metadata addresses in several spellings, an off-site page and 14 on-site event pages; images and JSON-LD point at the same hostile targets.",
+  "entry": "https://www.beispiel-events.example/",
+  "routes": {
+    "/": {"file": "index.html"},
+    "/robots.txt": {"file": "robots.txt", "headers": {"content-type": "text/plain"}},
+    "/events/a": {"file": "event-a.html"},
+    "/events/b": {"file": "event-b.html"},
+    "/events/c": {"file": "event-c.html"},
+    "/events/d": {"file": "event-d.html"},
+    "/events/e": {"file": "event-e.html"},
+    "/events/f": {"file": "event-f.html"},
+    "/events/g": {"file": "event-g.html"},
+    "/events/h": {"file": "event-h.html"},
+    "/events/i": {"file": "event-i.html"},
+    "/events/j": {"file": "event-j.html"},
+    "/events/k": {"file": "event-k.html"},
+    "/events/l": {"file": "event-l.html"},
+    "/events/m": {"file": "event-m.html"},
+    "/events/n": {"file": "event-n.html"}
+  },
+  "expect": {
+    "facts": {
+      "name": "Eventlokal Beispiel",
+      "type": "EventVenue",
+      "language": "de",
+      "phone": "+41 44 555 01 23",
+      "address.street": "Musterweg 12",
+      "address.postal_code": "8000",
+      "address.locality": "Zürich"
+    },
+    "min_candidates": 9,
+    "max_candidates": 9,
+    "candidate_urls_contain": [
+      "https://www.beispiel-events.example/media/events-titel.jpg",
+      "https://images.beispiel-cdn.example/events/saal.jpg"
+    ],
+    "candidate_urls_absent": [
+      "http://127.0.0.1/og/titel.jpg",
+      "http://169.254.169.254/latest/meta-data/iam/bild.jpg",
+      "http://169.254.169.254/latest/meta-data/iam/security-credentials/rolle.jpg",
+      "https://127.0.0.1/secret/saal.jpg",
+      "file:///etc/passwd"
+    ],
+    "pages": 8,
+    "no_requests_containing": [
+      "127.0.0.1",
+      "169.254.169.254",
+      "other-site.example",
+      "localhost",
+      "[::1]",
+      "2130706433",
+      "user:pass",
+      "file:",
+      "ftp:",
+      "javascript:",
+      "data:",
+      "mailto:",
+      "tel:"
+    ]
+  }
+}

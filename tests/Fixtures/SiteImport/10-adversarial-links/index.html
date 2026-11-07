@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eventlokal Beispiel | Alle Anlässe im Überblick</title>
+<meta name="description" content="Das Eventlokal Beispiel in Zürich zeigt auf einen Blick, welche Anlässe in den nächsten Monaten stattfinden.">
+<meta property="og:site_name" content="Eventlokal Beispiel">
+<meta property="og:image" content="http://127.0.0.1/og/titel.jpg">
+<link rel="image_src" href="javascript:alert(3)">
+<link rel="stylesheet" href="/css/eventlokal.css">
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #1b1b1b; }
+  .liste a { display: block; padding: .4rem 0; }
+  .cookie { background: #eee; padding: .7rem 1rem; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "EventVenue",
+  "name": "Eventlokal Beispiel",
+  "url": "http://169.254.169.254/",
+  "address": {"@type": "PostalAddress", "streetAddress": "Musterweg 12", "postalCode": "8000", "addressLocality": "Zürich", "addressCountry": "CH"},
+  "image": [
+    "http://169.254.169.254/latest/meta-data/iam/bild.jpg",
+    "file:///etc/passwd",
+    "https://www.beispiel-events.example/media/events-titel.jpg"
+  ]
+}
+</script>
+</head>
+<body>
+<div class="cookie">Wir verwenden Cookies für ein besseres Erlebnis. <button type="button">Verstanden</button></div>
+
+<header>
+  <h1>Eventlokal Beispiel</h1>
+  <p>Jeden Monat ein neuer Anlass: Hier siehst du, was in unserem Lokal läuft.</p>
+</header>
+
+<main>
+  <section class="liste" aria-label="Anlässe">
+    <h2>Unsere Anlässe</h2>
+    <a href="/events/a">Event A: Jubiläumsfeier</a>
+    <a href="/events/b">Event B: Firmenapéro</a>
+    <a href="/events/c">Event C: Weihnachtsessen</a>
+    <a href="/events/d">Event D: Tagung am Morgen</a>
+    <a href="/events/e">Event E: Konzertabend</a>
+    <a href="/events/f">Event F: Hochzeitsmesse</a>
+    <a href="/events/g">Event G: Sommerfest</a>
+    <a href="/events/h">Event H: Weindegustation</a>
+    <a href="/events/i">Event I: Generalversammlung</a>
+    <a href="/events/j">Event J: Neujahrsapéro</a>
+    <a href="/events/k">Event K: Theaterabend</a>
+    <a href="/events/l">Event L: Kochkurs</a>
+    <a href="/events/m">Event M: Vereinsfeier</a>
+    <a href="/events/n">Event N: Silvesterball</a>
+  </section>
+
+  <section class="mehr">
+    <h2>Weitere Links</h2>
+    <a href="javascript:alert(1)">Veranstaltungen verwalten</a>
+    <a href="mailto:events@beispiel-events.example">Veranstaltungen anfragen</a>
+    <a href="mailto:info@beispiel-events.example?subject=Anlass">Kontakt per E-Mail</a>
+    <a href="//127.0.0.1/admin/veranstaltungen">Veranstaltungen (intern)</a>
+    <a href="http://169.254.169.254/latest/meta-data/">Event-Metadaten</a>
+    <a href="file:///etc/passwd">Saal-Liste</a>
+    <a href="https://other-site.example/events">Events der Partnerseite</a>
+    <a href="http://localhost/admin/events">Anlässe verwalten</a>
+    <a href="http://[::1]/events">Events (IPv6)</a>
+    <a href="http://2130706433/events">Events (dezimal)</a>
+    <a href="http://user:pass@127.0.0.1/events">Events mit Login</a>
+    <a href="ftp://files.beispiel-events.example/events.zip">Events als Archiv</a>
+    <a href="data:text/html,<script>alert(2)</script>">Eventvorschau</a>
+    <a href="tel:+41445550123">Jetzt anrufen</a>
+  </section>
+
+  <section class="bilder">
+    <h2>Eindrücke</h2>
+    <img src="/media/events-titel.jpg" alt="Das Lokal bei einem Anlass" width="1200" height="800">
+    <img src="https://images.beispiel-cdn.example/events/saal.jpg" alt="Saal mit Bühne" width="1200" height="800">
+    <img src="http://169.254.169.254/latest/meta-data/iam/security-credentials/rolle.jpg" alt="Bild aus der Cloud" width="800" height="600">
+    <img src="//127.0.0.1/secret/saal.jpg" alt="Bild vom eigenen Rechner" width="800" height="600">
+    <img src="javascript:alert(4)" alt="Skriptbild" width="800" height="600">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/" alt="Eingebettetes Bild" width="800" height="600">
+    <img src="file:///etc/passwd" alt="Datei" width="800" height="600">
+  </section>
+</main>
+
+<footer>
+  <p>Eventlokal Beispiel · Musterweg 12 · 8000 Zürich</p>
+</footer>
+</body>
+</html>

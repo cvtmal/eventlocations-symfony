@@ -1,0 +1,73 @@
+{
+  "description": "The entry URL is the bare domain over http and redirects with 301 to https://www; the home page has a base href, relative links and links in both spellings of the host, and the bare-domain pages redirect to www or answer directly.",
+  "entry": "http://beispiel-apex.example/",
+  "routes": {
+    "/": {
+      "redirect": "https://www.beispiel-apex.example/"
+    },
+    "/robots.txt": {
+      "redirect": "https://www.beispiel-apex.example/robots.txt"
+    },
+    "/de/anlaesse": {
+      "redirect": "https://www.beispiel-apex.example/de/anlaesse"
+    },
+    "https://www.beispiel-apex.example/": {
+      "file": "index.html"
+    },
+    "https://www.beispiel-apex.example/robots.txt": {
+      "file": "robots.txt",
+      "headers": {
+        "content-type": "text/plain"
+      }
+    },
+    "https://www.beispiel-apex.example/de/raeume": {
+      "file": "raeume.html"
+    },
+    "https://www.beispiel-apex.example/de/anlaesse": {
+      "file": "anlaesse.html"
+    },
+    "https://www.beispiel-apex.example/de/galerie": {
+      "file": "galerie.html"
+    },
+    "https://beispiel-apex.example/de/kontakt": {
+      "file": "kontakt.html"
+    }
+  },
+  "expect": {
+    "final_url": "https://www.beispiel-apex.example/",
+    "redirects": [
+      "http://beispiel-apex.example/"
+    ],
+    "facts": {
+      "name": "Kulturhaus Apex Beispiel",
+      "language": "de",
+      "canonical_url": "https://www.beispiel-apex.example/",
+      "phone": "+41 71 555 01 23",
+      "email": "kultur@beispiel-apex.example",
+      "address.street": "Kulturweg 21",
+      "address.postal_code": "9000",
+      "address.locality": "St. Gallen"
+    },
+    "min_candidates": 8,
+    "max_candidates": 8,
+    "candidate_urls_contain": [
+      "https://www.beispiel-apex.example/de/media/og-kulturhaus.jpg",
+      "https://www.beispiel-apex.example/de/media/foyer.jpg",
+      "https://www.beispiel-apex.example/de/media/raeume/fabriksaal.jpg",
+      "https://www.beispiel-apex.example/de/media/anlaesse/hochzeit-hof.jpg",
+      "https://www.beispiel-apex.example/de/media/galerie/nacht-hof.jpg"
+    ],
+    "candidate_urls_absent": [
+      "https://www.beispiel-apex.example/media/foyer.jpg",
+      "https://www.beispiel-apex.example/de/media/wortmarke.png"
+    ],
+    "pages": 5,
+    "page_urls_contain": [
+      "https://www.beispiel-apex.example/",
+      "https://www.beispiel-apex.example/de/raeume",
+      "https://www.beispiel-apex.example/de/anlaesse",
+      "https://www.beispiel-apex.example/de/galerie",
+      "https://beispiel-apex.example/de/kontakt"
+    ]
+  }
+}

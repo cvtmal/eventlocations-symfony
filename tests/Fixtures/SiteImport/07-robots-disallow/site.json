@@ -1,0 +1,75 @@
+{
+  "description": "robots.txt disallows /galerie and /intern (with an Allow for /intern/oeffentlich/ and a Crawl-delay of 2); the home page links to all of them. The disallowed pages exist and must never be requested.",
+  "entry": "https://www.villa-musterwald.example/",
+  "routes": {
+    "/": {
+      "file": "index.html"
+    },
+    "/robots.txt": {
+      "file": "robots.txt",
+      "headers": {
+        "content-type": "text/plain"
+      }
+    },
+    "/raeume": {
+      "file": "raeume.html"
+    },
+    "/kontakt": {
+      "file": "kontakt.html"
+    },
+    "/galerie": {
+      "file": "galerie.html"
+    },
+    "/intern/seminar-preise": {
+      "file": "preise.html"
+    },
+    "/intern/oeffentlich/anlaesse": {
+      "file": "anlaesse.html"
+    }
+  },
+  "expect": {
+    "facts": {
+      "name": "Villa Musterwald",
+      "email": "villa@villa-musterwald.example",
+      "phone": "+41 61 555 01 23",
+      "address.street": "Waldweg 5",
+      "address.postal_code": "4051",
+      "address.locality": "Basel"
+    },
+    "min_candidates": 5,
+    "max_candidates": 5,
+    "candidate_urls_contain": [
+      "https://www.villa-musterwald.example/media/villa-front.jpg",
+      "https://www.villa-musterwald.example/media/raeume/gartensaal.jpg",
+      "https://www.villa-musterwald.example/media/raeume/bibliothek.jpg",
+      "https://www.villa-musterwald.example/media/raeume/park.jpg",
+      "https://www.villa-musterwald.example/media/anlaesse/hauskonzert.jpg"
+    ],
+    "candidate_urls_absent": [
+      "https://www.villa-musterwald.example/media/galerie/titel-archiv.jpg",
+      "https://www.villa-musterwald.example/media/galerie/archiv-01.jpg",
+      "https://www.villa-musterwald.example/media/intern/preisliste.jpg"
+    ],
+    "pages": 4,
+    "page_urls_contain": [
+      "https://www.villa-musterwald.example/",
+      "https://www.villa-musterwald.example/raeume",
+      "https://www.villa-musterwald.example/intern/oeffentlich/anlaesse",
+      "https://www.villa-musterwald.example/kontakt"
+    ],
+    "refused": [
+      {
+        "path": "/galerie",
+        "reason": "robots"
+      },
+      {
+        "path": "/intern/seminar-preise",
+        "reason": "robots"
+      }
+    ],
+    "no_requests_containing": [
+      "/galerie",
+      "/intern/seminar-preise"
+    ]
+  }
+}

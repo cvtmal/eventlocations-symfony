@@ -8,10 +8,14 @@ use App\Admin\ValueObject\AdminRole;
 use App\Admin\ValueObject\AuditActorType;
 use App\Portal\ValueObject\PortalVenueAccessStatus;
 use App\Portal\ValueObject\SubmissionStatus;
+use App\Venues\ValueObject\CandidateOrigin;
+use App\Venues\ValueObject\CandidateStatus;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
+use App\Venues\ValueObject\SourceStatus;
+use App\Venues\ValueObject\SourceType;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
@@ -41,6 +45,10 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'audit actor type' => ['chk_admin_audit_log_actor_type', AuditActorType::class];
         yield 'portal venue access status' => ['chk_portal_venue_access_status', PortalVenueAccessStatus::class];
         yield 'portal submission status' => ['chk_portal_submissions_status', SubmissionStatus::class];
+        yield 'source record type' => ['chk_source_records_source_type', SourceType::class];
+        yield 'source record status' => ['chk_source_records_status', SourceStatus::class];
+        yield 'photo candidate origin' => ['chk_photo_candidates_origin', CandidateOrigin::class];
+        yield 'photo candidate status' => ['chk_photo_candidates_status', CandidateStatus::class];
     }
 
     /**

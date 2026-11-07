@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kontakt und Anfahrt | Schloss Musterburg</title>
+<meta name="description" content="So erreichst du das Schloss Musterburg in Aarau: Adresse, Telefon, E-Mail und Anfahrt.">
+<meta property="og:site_name" content="Schloss Musterburg">
+<link rel="stylesheet" href="/assets/css/schloss.css?v=4.2">
+</head>
+<body class="kontakt">
+<header class="kopf">
+  <a class="marke" href="/"><img src="/media/logo-musterburg.svg" alt="Schloss Musterburg" width="180" height="48"></a>
+  <nav aria-label="Hauptnavigation">
+    <a href="/">Start</a>
+    <a href="/raeume">Räume</a>
+    <a href="/kontakt" aria-current="page">Kontakt</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Kontakt</h1>
+  <p>Wir zeigen dir das Schloss gerne bei einem Rundgang. Melde dich telefonisch oder per E-Mail, am besten schon ein Jahr vor deinem Fest.</p>
+
+  <section>
+    <h2>So erreichst du uns</h2>
+    <p>
+      Schloss Musterburg AG<br>
+      Schlossstrasse 12<br>
+      5000 Aarau
+    </p>
+    <p>
+      Telefon: <a href="tel:+41625550123">062 555 01 23</a><br>
+      E-Mail: <a href="mailto:events@schloss-musterburg.example?subject=Anfrage">events@schloss-musterburg.example</a>
+    </p>
+  </section>
+
+  <section>
+    <h2>Anfahrt</h2>
+    <p>Vom Bahnhof Aarau fährt der Bus Linie 5 bis zur Haltestelle «Schloss». Für Gäste mit dem Auto stehen 60 Parkplätze beim Torhaus bereit.</p>
+    <iframe title="Karte" src="https://maps.beispiel-karten.example/embed?q=Schlossstrasse+12+Aarau" width="600" height="400" loading="lazy"></iframe>
+  </section>
+
+  <form action="/kontakt/senden" method="post">
+    <label>Name <input type="text" name="name"></label>
+    <label>E-Mail <input type="email" name="email"></label>
+    <label>Nachricht <textarea name="nachricht"></textarea></label>
+    <button type="submit">Senden</button>
+  </form>
+</main>
+
+<footer class="fuss">
+  <p>Schloss Musterburg AG · Schlossstrasse 12 · 5000 Aarau</p>
+</footer>
+</body>
+</html>
