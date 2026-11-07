@@ -875,3 +875,20 @@ $color-tokens: 'surface', 'surface-raised', 'surface-alt', 'placeholder-ground',
 .sg-lage h3 {
     margin-bottom: var(--space-16);
 }
+
+// The brand samples (F6): the wordmark at the header's size, and the photo placeholder as a small card photo.
+.sg-logo {
+    padding: var(--space-16);
+    border-radius: var(--radius-small);
+    background: var(--c-surface);
+
+    .logo {
+        height: 1.875rem;
+    }
+}
+
+.sg-placeholder {
+    width: 12rem;
+    height: 8rem;
+    border-radius: var(--radius-image);
+}

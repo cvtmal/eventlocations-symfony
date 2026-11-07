@@ -236,8 +236,8 @@ final class InquiryMailerTest extends KernelTestCase
         $found = preg_match($pattern, (string) $mail->getHtmlBody(), $image);
         self::assertSame(1, $found);
         self::assertStringContainsString('alt="deine-eventlocation.ch"', $image[0]);
-        self::assertStringContainsString('width="126"', $image[0]);
-        self::assertStringContainsString('height="28"', $image[0]);
+        self::assertStringContainsString('width="215"', $image[0]);
+        self::assertStringContainsString('height="24"', $image[0]);
     }
 
     /**

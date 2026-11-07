@@ -52,8 +52,8 @@ run npx --yes svgo@4.1.0 --config svgo.config.mjs -i out/raw-40.svg -o out/svgo-
 
 # 3. Post-process (Python standard library, ElementTree): the root keeps only xmlns and
 #    viewBox; every attribute except id/d is removed from the paths; the groups get
-#      cantons: fill="#e9e4da" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round" fill-rule="evenodd"
-#      lakes:   fill="#bcd6e8" stroke="none"
+#      cantons: fill="#ffffff" stroke="#ffffff" stroke-width="0.8" stroke-linejoin="round" fill-rule="evenodd"
+#      lakes:   fill="#6b8aa0" stroke="none"
 #    and the file is written without an XML prolog → assets/maps/cantons.svg
 ```
 

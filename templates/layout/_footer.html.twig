@@ -2,7 +2,7 @@
     <div class="site-footer__inner">
         <div class="site-footer__columns">
             <div class="site-footer__brand">
-                <img src="{{ asset('images/logo-hzl.png') }}" alt="{{ 'layout.logo_alt'|trans }}" width="126" height="28">
+                {{ include('components/_logo.html.twig', {label: 'layout.logo_alt'|trans, reuse: true}, with_context = false) }}
                 <p class="site-footer__tagline">{{ 'layout.footer.tagline'|trans }}</p>
             </div>
             <div class="site-footer__column">
@@ -17,7 +17,7 @@
                 <a class="site-footer__add-location" href="{{ path('portal_register') }}">{{ 'layout.footer.add_location'|trans }}</a>
             </div>
         </div>
-        {# Slot for #17: "Hochzeitslocations nach Kanton" link list #}
+        {# Slot for #17: the "nach Kanton" link list #}
         {{ include('seo/_footer_cantons.html.twig', ignore_missing = true) }}
         {# Slot for #26: the staff note (content block footer.note), from the snapshot only #}
         {{ include('shared/_footer_note.html.twig', ignore_missing = true) }}

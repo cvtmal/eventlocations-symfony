@@ -30,6 +30,8 @@
     {% if venue.photos is not empty %}
         {{ include('venues/detail/_hero.html.twig', {venue: venue}, with_context = false) }}
         {{ include('venues/detail/_gallery.html.twig', {venue: venue}, with_context = false) }}
+    {% else %}
+        <div class="venue-placeholder">{{ include('components/_photo_placeholder.html.twig', {}, with_context = false) }}</div>
     {% endif %}
 {% endblock %}
 

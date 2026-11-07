@@ -1,7 +1,7 @@
 @use '../abstracts/breakpoints' as bp;
 
-// Pagination (#7, LP-1): "1 - 48 von N Resultaten" and the page circles. The current page is pale pink with
-// a pink edge and `--c-ink` text, the only ink that reads on `--c-accent-soft`. PageLinks::around() can give nine
+// Pagination (#7, LP-1): "1 - 48 von N Resultaten" and the page circles. The current page is the pale accent with
+// an accent edge and `--c-ink` text, the only ink that reads on `--c-accent-soft`. PageLinks::around() can give nine
 // items, 404 px at 2.75rem, wider than the 342 px column at 390, so the list wraps.
 .pagination {
     display: flex;

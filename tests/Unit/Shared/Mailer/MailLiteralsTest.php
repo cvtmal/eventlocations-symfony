@@ -8,35 +8,71 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Finder\Finder;
 
 /**
- * A source read, not a rendered mail: no mail reaches every macro, so only this catches a macro that lands with the
- * old look. `#121212` and `#5f5f5f` stay in the dark block of `layout.html.twig`, so they are barred from `_blocks` alone.
+ * A source read, not a rendered mail: no mail reaches every macro, so only this catches a macro that keeps a colour of
+ * another brand. A mail cannot read CSS variables, so its colours are literal hex; every one of them must be a colour of
+ * `abstracts/_tokens.scss`, white or black, or one of the dark-mode neutrals below, which belong to the mail's dark block
+ * and to no brand. After a palette change this test lists the mail literals to move (docs/brand.md).
  */
 final class MailLiteralsTest extends TestCase
 {
-    private const array OLD_LITERALS = ['#ff5a75', '#ffc1cb', '#2c2c2c', '#f1f1f1', '#dedede'];
+    /** The neutrals of `layout.html.twig`'s `prefers-color-scheme: dark` block, shared by every brand. */
+    private const array DARK_MODE_NEUTRALS = ['121212', '272727', 'ececec', 'c5c5c5', '5f5f5f'];
 
-    private const array OLD_LIGHT_LITERALS = ['#121212', '#5f5f5f'];
+    /** The dark-mode link tint: a light tint of the primary, readable on the dark card (#272727). */
+    private const array DARK_MODE_LINK = ['c7caff'];
 
-    public function test_no_mail_template_holds_an_old_literal(): void
+    public function test_every_colour_of_a_mail_is_a_token_of_the_brand(): void
     {
-        $templates = iterator_to_array($this->mailTemplates());
+        $allowed = [...array_values($this->tokens()), 'ffffff', '000000', ...self::DARK_MODE_NEUTRALS, ...self::DARK_MODE_LINK];
+
+        $templates = iterator_to_array($this->mailTemplates(), false);
         self::assertNotSame([], $templates);
 
         foreach ($templates as $template) {
-            foreach (self::OLD_LITERALS as $literal) {
-                self::assertStringNotContainsStringIgnoringCase($literal, $template->getContents(), $template->getPathname());
+            preg_match_all('/(?<![&\w])#([0-9a-f]{6})\b/i', $template->getContents(), $matches);
+            foreach ($matches[1] as $hex) {
+                self::assertContains(strtolower($hex), $allowed, \sprintf('#%s in %s is not a colour of the brand tokens.', $hex, $template->getPathname()));
             }
         }
     }
 
-    public function test_the_blocks_hold_no_literal_of_the_old_light_look(): void
+    public function test_the_mail_carries_the_primary_and_the_ink_of_the_tokens(): void
+    {
+        $tokens = $this->tokens();
+        $blocks = (string) file_get_contents($this->root().'/templates/emails/_blocks.html.twig');
+        $layout = (string) file_get_contents($this->root().'/templates/emails/layout.html.twig');
+
+        self::assertStringContainsString('#'.$tokens['accent-strong'], $blocks, 'The button and the quote edge are the primary.');
+        self::assertStringContainsString('#'.$tokens['ink'], $blocks, 'The text is the ink.');
+        self::assertStringContainsString('#'.$tokens['surface-alt'], $layout, 'The ground is the alternating surface.');
+        self::assertStringContainsString('#'.$tokens['accent'], $layout, 'The bar under the logo is the accent.');
+    }
+
+    public function test_the_dark_block_stays_out_of_the_blocks(): void
     {
         $blocks = (string) file_get_contents($this->root().'/templates/emails/_blocks.html.twig');
-        self::assertNotSame('', $blocks);
 
-        foreach (self::OLD_LIGHT_LITERALS as $literal) {
-            self::assertStringNotContainsStringIgnoringCase($literal, $blocks);
+        foreach ([...self::DARK_MODE_NEUTRALS, ...self::DARK_MODE_LINK] as $literal) {
+            self::assertStringNotContainsStringIgnoringCase('#'.$literal, $blocks);
         }
+    }
+
+    /**
+     * @return array<string, string> token name without `--c-` => hex without `#`
+     */
+    private function tokens(): array
+    {
+        $scss = (string) file_get_contents($this->root().'/assets/styles/abstracts/_tokens.scss');
+        preg_match_all('/--c-([a-z0-9-]+):\s*#([0-9a-f]{6}|[0-9a-f]{3})\s*;/i', $scss, $matches, \PREG_SET_ORDER);
+
+        $tokens = [];
+        foreach ($matches as $match) {
+            $hex = strtolower($match[2]);
+            $tokens[$match[1]] = 3 === \strlen($hex) ? $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2] : $hex;
+        }
+        self::assertArrayHasKey('accent-strong', $tokens);
+
+        return $tokens;
     }
 
     private function mailTemplates(): Finder

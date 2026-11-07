@@ -14,6 +14,15 @@ final class LoginTest extends WebTestCase
     use AdminSession;
     use Factories;
 
+    public function test_the_login_page_links_the_favicon_but_not_the_web_manifest(): void
+    {
+        $this->client->request('GET', '/admin/login');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('link[rel="icon"][href="/brand/favicon.svg"]');
+        self::assertSelectorNotExists('link[rel="manifest"]');
+    }
+
     public function test_a_valid_password_leads_to_the_code_form(): void
     {
         $staff = $this->createStaff();

@@ -1,24 +1,28 @@
-// Figtree (OFL-1.1, @fontsource-variable/figtree 5.3.0), latin subset, self-hosted. Licence: assets/fonts/Figtree-OFL.txt.
-// One variable file: the boards draw 400, 600 and 700, and it is smaller than a static 400 + 700 pair.
+// BRAND SWAP POINT, typeface (docs/brand.md). Hanken Grotesk (OFL-1.1, @fontsource-variable/hanken-grotesk 5.3.0), latin
+// subset, self-hosted. Licence: assets/fonts/HankenGrotesk-OFL.txt. One variable file covers the 400, 600 and 700 the
+// design uses and keeps S11's two-font-file budget (AssetBudgetTest). To change the typeface: replace the file, the name in
+// `--font-sans` (abstracts/_tokens.scss) and the preload in templates/layout/_brand_head.html.twig, and re-measure the
+// fallback below.
 // url() paths are relative to assets/styles/app.scss (AssetMapper rewrites them to versioned URLs).
 $latin-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 
 @font-face {
-    font-family: 'Figtree';
+    font-family: 'Hanken Grotesk';
     font-style: normal;
-    font-weight: 300 900;
+    font-weight: 100 900;
     font-display: swap;
-    src: url('../fonts/figtree-latin-wght-normal.woff2') format('woff2');
+    src: url('../fonts/hanken-grotesk-latin-wght-normal.woff2') format('woff2');
     unicode-range: $latin-range;
 }
 
-// Arial sized to Figtree 400's metrics, so the swap barely moves the page. One face only:
-// a second one for bold would break the budget of two (AssetBudgetTest), and headlines are short.
+// Arial sized to Hanken Grotesk 400's metrics (average advance of a German sentence, ascent 1.000, descent 0.303 em, no line
+// gap), so the swap barely moves the page. One face only: a second one for bold would break the budget of two
+// (AssetBudgetTest), and headlines are short.
 @font-face {
-    font-family: 'Figtree Fallback';
+    font-family: 'Hanken Grotesk Fallback';
     src: local('Arial'), local('Liberation Sans');
-    size-adjust: 100.12%;
-    ascent-override: 94.88%;
-    descent-override: 24.97%;
+    size-adjust: 100%;
+    ascent-override: 100%;
+    descent-override: 30.3%;
     line-gap-override: 0%;
 }

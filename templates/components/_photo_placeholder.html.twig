@@ -1,0 +1,18 @@
+{#-
+    The neutral stand-in for a venue without a public photo (F6, D12 follow-up 1): the placeholder ground, one soft circle and
+    one icon. Decorative (`aria-hidden`, no alt, no text), so it adds no copy and no landmark. Include with `only`:
+      event_type (string|null): the code of the venue's event type ("seminar", "birthday", ...). The parameter is a plain string, so
+        F3's vocabulary, F5's filter and F7b's cards feed it without a dependency on them; a code the map below does not know,
+        an empty one and null get the generic icon. The map is the one place that pairs a code with an icon of
+        assets/icons/sprite.svg (Lucide, a new one gets a symbol and a line in assets/icons/LICENSES.md).
+      class (string): classes for the place where it stands. It fills no box by itself: the place sets its height and its
+        radius (a card's `.card__placeholder` passes its own on).
+-#}
+{%- set icons = {
+    corporate_event: 'building-2', team_event: 'users', general_assembly: 'users', club_event: 'users', class_reunion: 'users', public_event: 'users',
+    seminar: 'presentation', workshop: 'presentation', meeting: 'presentation', conference: 'presentation', congress: 'presentation', product_presentation: 'presentation',
+    trade_fair: 'landmark', exhibition: 'landmark',
+    birthday: 'cake', family_celebration: 'cake', private_event: 'party-popper', party_celebration: 'party-popper', party: 'party-popper',
+    apero: 'wine', christmas_party: 'tree-pine', wedding: 'heart', concert: 'music', theatre: 'music', sports_event: 'trophy',
+} -%}
+<span class="photo-placeholder{% if class|default('') is not empty %} {{ class }}{% endif %}" aria-hidden="true">{{ icon(icons[event_type|default('')]|default('sparkles'), {class: 'photo-placeholder__icon'}) }}</span>

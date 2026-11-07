@@ -148,8 +148,8 @@ final class VenueSeoTest extends WebTestCase
 
         $crawler = $this->get('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
 
-        self::assertCount(0, $crawler->filter('meta[property="og:image"]'));
-        self::assertSame('summary', $crawler->filter('meta[name="twitter:card"]')->attr('content'));
+        self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[property="og:image"]')->attr('content'));
+        self::assertSame('summary_large_image', $crawler->filter('meta[name="twitter:card"]')->attr('content'));
         self::assertSame('Ein kleines Gartenhaus.', $crawler->filter('meta[name="description"]')->attr('content'));
         $venue = $this->venueNode($crawler);
         self::assertArrayNotHasKey('image', $venue);

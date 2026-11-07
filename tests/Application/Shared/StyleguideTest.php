@@ -21,7 +21,7 @@ final class StyleguideTest extends WebTestCase
      */
     public static function components(): iterable
     {
-        foreach (['colors', 'typography', 'spacing', 'radii-shadows', 'shadow', 'icons', 'buttons', 'button-states', 'round-buttons', 'merken', 'chips', 'tiles', 'badge', 'tag', 'text-input', 'field-states', 'breadcrumb', 'overlays', 'dialog', 'carousel', 'toast', 'focus-ring', 'map', 'tooltip', 'count-badge', 'extras'] as $name) {
+        foreach (['colors', 'typography', 'spacing', 'radii-shadows', 'shadow', 'icons', 'buttons', 'button-states', 'round-buttons', 'merken', 'chips', 'tiles', 'badge', 'tag', 'text-input', 'field-states', 'breadcrumb', 'overlays', 'dialog', 'carousel', 'toast', 'focus-ring', 'map', 'tooltip', 'count-badge', 'brand', 'photo-placeholder', 'extras'] as $name) {
             yield $name => [$name];
         }
     }
@@ -65,7 +65,8 @@ final class StyleguideTest extends WebTestCase
         $crawler = $this->styleguide();
         $ids = self::spriteIds();
 
-        $uses = $crawler->filter('use[href]');
+        // The logo's `<use href="#logo-art">` points at the header's copy in the same page, not at the sprite.
+        $uses = $crawler->filter('use[href]:not([href="#logo-art"])');
         self::assertGreaterThan(36, $uses->count());
         foreach ($uses as $use) {
             \assert($use instanceof \DOMElement);

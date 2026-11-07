@@ -1,4 +1,6 @@
-// The back office's tokens (docs/reference/admin/README.md, Tokens.dc.html). The only hex values of admin.css.
+// The back office's tokens (docs/reference/admin/README.md, Tokens.dc.html). The only hex values of admin.css. The neutrals are
+// the shell's own; the accent, the links and the `brand` tone follow the public brand (docs/brand.md), the typeface is the
+// public site's.
 :root {
     --a-bg: #f6f5f2;
     --a-surface: #fff;
@@ -10,11 +12,11 @@
     --a-line-soft: #f0ede8;
     --a-field: #d6d2cb;
     --a-field-strong: #8c8880;
-    --a-accent: #d1007a;
-    --a-accent-bright: #ff0096;
+    --a-accent: #3a3fb0; // = public --c-accent-strong
+    --a-accent-bright: #9da3ff; // the accent on the dark sidebar and login panel
     --a-on-accent: #fff;
-    --a-link: #d1007a;
-    --a-link-hover: #b4006a;
+    --a-link: #3a3fb0;
+    --a-link-hover: #2d3190;
     --a-danger: #a3261d;
     --a-danger-line: #e9c3bf;
     --a-hover: #f1efeb;
@@ -39,12 +41,12 @@
     --a-green: #17603d;
     --a-amber-bg: #fbefd5;
     --a-amber: #7a4e00;
-    --a-blue-bg: #e6edfa;
-    --a-blue: #1f4c99;
+    --a-blue-bg: #e0f0f7;
+    --a-blue: #0b5878;
     --a-grey-bg: #eeece8;
     --a-grey: #4a4945;
-    --a-pink-bg: #ffe3f2;
-    --a-pink: #96005a;
+    --a-brand-bg: #e6e8fb; // the tone key `pink` of pills and timeline icons (PHP, Twig, Vue) is historical and renders this
+    --a-brand: #2d3190;
     --a-red-bg: #fbe3e1;
 
     --a-space-1: 4px;
@@ -68,5 +70,5 @@
     --a-sh-modal: 0 16px 48px rgb(0 0 0 / 24%);
     --a-scrim: rgb(0 0 0 / 40%);
 
-    --a-font: 'Figtree', 'Figtree Fallback', system-ui, sans-serif;
+    --a-font: 'Hanken Grotesk', 'Hanken Grotesk Fallback', system-ui, sans-serif;
 }
