@@ -1,13 +1,22 @@
-{# The inquiry's facts, the same in both mails: the rows for the facts macro of emails/_blocks.html.twig. #}
-{% macro facts(occasion, guests, event_date, first_name, last_name, guest_email, phone) %}
+{# The inquiry's facts, the same in both mails: the rows for the facts macro of emails/_blocks.html.twig. Pass the mail's _context (InquiryMailer::context()); optional facts show only when given. #}
+{% macro facts(i) %}
 {% import 'emails/_blocks.html.twig' as blocks %}
+{% if i.event_date %}
+    {% set date = i.date_flexible ? 'email.date_and_flexible'|trans({date: i.event_date|swiss_date}, 'inquiries') : i.event_date|swiss_date %}
+{% else %}
+    {% set date = 'email.date_flexible'|trans({}, 'inquiries') %}
+{% endif %}
 {% set rows = [
-    {label: 'email.fact.occasion'|trans({}, 'inquiries'), value: occasion|trans},
-    {label: 'email.fact.guests'|trans({}, 'inquiries'), value: guests|swiss_number},
-    {label: 'email.fact.date'|trans({}, 'inquiries'), value: event_date ? event_date|swiss_date : 'email.date_open'|trans({}, 'inquiries')},
-    {label: 'email.fact.name'|trans({}, 'inquiries'), value: first_name ~ ' ' ~ last_name},
-    {label: 'email.fact.email'|trans({}, 'inquiries'), value: guest_email},
+    {label: 'email.fact.event_type'|trans({}, 'inquiries'), value: i.event_type|trans},
+    {label: 'email.fact.guests'|trans({}, 'inquiries'), value: i.guests|swiss_number},
+    {label: 'email.fact.date'|trans({}, 'inquiries'), value: date},
 ] %}
-{% if phone %}{% set rows = rows|merge([{label: 'email.fact.phone'|trans({}, 'inquiries'), value: phone}]) %}{% endif %}
+{% if i.start_time %}{% set rows = rows|merge([{label: 'email.fact.start_time'|trans({}, 'inquiries'), value: 'email.start_time'|trans({time: i.start_time}, 'inquiries')}]) %}{% endif %}
+{% if i.catering_wish %}{% set rows = rows|merge([{label: 'email.fact.catering'|trans({}, 'inquiries'), value: i.catering_wish|trans}]) %}{% endif %}
+{% if i.budget_chf %}{% set rows = rows|merge([{label: 'email.fact.budget'|trans({}, 'inquiries'), value: 'email.budget'|trans({amount: i.budget_chf|swiss_number}, 'inquiries')}]) %}{% endif %}
+{% set rows = rows|merge([{label: 'email.fact.name'|trans({}, 'inquiries'), value: i.first_name ~ ' ' ~ i.last_name}]) %}
+{% if i.company %}{% set rows = rows|merge([{label: 'email.fact.company'|trans({}, 'inquiries'), value: i.company}]) %}{% endif %}
+{% set rows = rows|merge([{label: 'email.fact.email'|trans({}, 'inquiries'), value: i.guest_email}]) %}
+{% if i.phone %}{% set rows = rows|merge([{label: 'email.fact.phone'|trans({}, 'inquiries'), value: i.phone}]) %}{% endif %}
 {{ blocks.facts(rows) }}
 {% endmacro %}

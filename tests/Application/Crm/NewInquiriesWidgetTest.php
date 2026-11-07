@@ -22,7 +22,7 @@ final class NewInquiriesWidgetTest extends WebTestCase
     use AdminSession;
     use Factories;
 
-    public function test_a_row_shows_the_couple_date_venue_guests_and_status(): void
+    public function test_a_row_shows_the_organizer_date_venue_event_type_guests_and_status(): void
     {
         $this->logInAs(AdminRole::Editor);
         $this->inquiry('2026-10-30 23:30:00', fields: [
@@ -30,6 +30,7 @@ final class NewInquiriesWidgetTest extends WebTestCase
             'lastName' => 'Huber',
             'venue' => VenueFactory::new()->withContact()->create(['name' => 'Schloss Seeblick']),
             'guestCount' => 1200,
+            'eventType' => 'seminar',
         ]);
 
         $widget = $this->widget();
@@ -38,13 +39,14 @@ final class NewInquiriesWidgetTest extends WebTestCase
         self::assertSame('Neue Anfragen, Tabelle', $widget->filter('[role="region"]')->attr('aria-label'), 'Two regions with one name fail axe\'s landmark-unique.');
         self::assertSame('Alle ansehen', $widget->filter('.widget__head-link a')->text());
         self::assertSame('/admin/crm/anfragen', $widget->filter('.widget__head-link a')->attr('href'));
-        self::assertSame(['Paar', 'Eintrag', 'Gäste', 'Status'], $widget->filter('thead th')->each(static fn (Crawler $head): string => $head->text()));
+        self::assertSame(['Veranstalter', 'Eintrag', 'Anlass', 'Gäste', 'Status'], $widget->filter('thead th')->each(static fn (Crawler $head): string => $head->text()));
         $cells = $widget->filter('tbody td');
         self::assertSame('Sina Huber', $cells->eq(0)->filter('strong')->text());
         self::assertSame('31.10.2026', $cells->eq(0)->filter('.crm-list__detail')->text(), 'The date is Zurich\'s, and absolute.');
         self::assertSame('Schloss Seeblick', $cells->eq(1)->text());
-        self::assertSame('1\'200', $cells->eq(2)->text());
-        self::assertSame('Neu', $cells->eq(3)->filter('.pill--pink')->text());
+        self::assertSame('Seminar', $cells->eq(2)->text());
+        self::assertSame('1\'200', $cells->eq(3)->text());
+        self::assertSame('Neu', $cells->eq(4)->filter('.pill--pink')->text());
     }
 
     public function test_it_shows_the_five_newest_whatever_their_status(): void

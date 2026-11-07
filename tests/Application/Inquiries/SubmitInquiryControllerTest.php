@@ -47,7 +47,14 @@ final class SubmitInquiryControllerTest extends WebTestCase
         DetailVenues::full($this->em);
         $received = $this->listen();
 
-        $this->post(self::SLUG, InquiryFormFields::valid(['eventDate' => '2030-06-15']));
+        $this->post(self::SLUG, InquiryFormFields::valid([
+            'eventDate' => '2030-06-15',
+            'dateFlexible' => null,
+            'company' => 'Muster AG',
+            'startTime' => '18:30',
+            'cateringWish' => 'external_allowed',
+            'budgetChf' => '12000',
+        ]));
 
         self::assertResponseStatusCodeSame(303);
         $this->assertPrivate();
@@ -63,9 +70,14 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertSame(self::SLUG, $rows[0]['venue_slug']);
         self::assertSame('info@seeblick.example', $rows[0]['recipient_email']);
         self::assertSame(self::OVERRIDE, $rows[0]['delivered_to']);
-        self::assertSame('wedding', $rows[0]['occasion']);
+        self::assertSame('corporate_event', $rows[0]['event_type']);
+        self::assertSame('Muster AG', $rows[0]['company']);
         self::assertSame(120, $rows[0]['guest_count']);
         self::assertSame('2030-06-15', $rows[0]['event_date']);
+        self::assertFalse($rows[0]['date_flexible']);
+        self::assertSame('18:30:00', $rows[0]['start_time']);
+        self::assertSame('external_allowed', $rows[0]['catering_wish']);
+        self::assertSame(12000, $rows[0]['budget_chf']);
         self::assertSame('Anna', $rows[0]['first_name']);
         self::assertSame('Muster', $rows[0]['last_name']);
         self::assertSame('anna@example.ch', $rows[0]['email']);
@@ -215,8 +227,13 @@ final class SubmitInquiryControllerTest extends WebTestCase
         yield 'NUL in the name' => [['lastName' => "Mus\0ter"]];
         yield 'invalid UTF-8 in the message' => [['message' => "Hallo \xff Team"]];
         yield 'invalid UTF-8 in the name' => [['firstName' => "An\xc3na"]];
-        yield 'unknown occasion' => [['occasion' => 'birthday']];
-        yield 'no occasion' => [['occasion' => '']];
+        yield 'a wedding occasion that is gone' => [['eventType' => 'civil_wedding']];
+        yield 'no event type' => [['eventType' => '']];
+        yield 'a catering term that is no wish' => [['cateringWish' => 'buffet']];
+        yield 'text as start time' => [['startTime' => 'abends']];
+        yield 'text as budget' => [['budgetChf' => 'viel']];
+        yield 'zero budget' => [['budgetChf' => '0']];
+        yield 'neither date nor flexible' => [['dateFlexible' => null]];
         yield 'array as guests' => [['guests' => ['1']]];
         yield 'text as guests' => [['guests' => 'viele']];
         yield 'huge guests' => [['guests' => '99999999999999999999999']];

@@ -22,10 +22,11 @@ final class InquiryFormFields
      */
     public static function valid(array $overrides = []): array
     {
-        return ['inquiry' => array_replace([
-            'occasion' => 'wedding',
+        return ['inquiry' => array_filter(array_replace([
+            'eventType' => 'corporate_event',
             'guests' => '120',
             'eventDate' => '',
+            'dateFlexible' => '1',
             'message' => "Liebes Team\n\nIst der Termin noch frei?",
             'firstName' => 'Anna',
             'lastName' => 'Muster',
@@ -34,7 +35,7 @@ final class InquiryFormFields
             'website' => '',
             'started' => self::tokenFrom('-60 seconds'),
             '_token' => 'csrf-token',
-        ], $overrides)];
+        ], $overrides), static fn (mixed $value): bool => null !== $value)];
     }
 
     public static function tokenFrom(string $time): string

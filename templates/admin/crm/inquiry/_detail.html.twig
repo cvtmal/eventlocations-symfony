@@ -1,13 +1,13 @@
 {#
     One inquiry in full. Include with `with_context = false`: detail (InquiryDetail), return_to (a path under `/admin/`).
-    A venue that is gone stays as a name; "Per E-Mail antworten" writes to the couple's address (#55: a couple is no CRM
-    contact). The forms post to
+    A venue that is gone stays as a name; "Per E-Mail antworten" writes to the organizer's address (S13: an organizer is no
+    CRM contact). The forms post to
     `InquiryStatusController`, the resend form under the pills to `InquiryResendController`.
 #}
 <article class="card crm-inbox__detail" id="anfrage-detail" aria-label="{{ 'inquiry.detail.label'|trans({}, 'crm') }}">
     <div class="crm-inbox__head">
         <div class="crm-inbox__title">
-            <h2>{{ detail.coupleName }}</h2>
+            <h2>{{ detail.organizerName }}</h2>
             <span class="muted">
                 {{- 'inquiry.detail.for'|trans({}, 'crm') }}
                 {% if detail.venueId %}<a href="{{ path('admin_locations_edit', {number: detail.venueNumber}) }}">{{ detail.venueName }}</a>{% else %}{{ detail.venueName }}{% endif %} · {{ detail.receivedAt|swiss_date -}}
@@ -29,12 +29,23 @@
     </div>
 
     <dl class="crm-inbox__facts">
-        <dt>{{ 'inquiry.detail.occasion'|trans({}, 'crm') }}</dt>
-        <dd>{{ detail.occasion|trans }}</dd>
+        <dt>{{ 'inquiry.detail.event_type'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.eventType|trans }}</dd>
+        <dt>{{ 'inquiry.detail.company'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.company ?? '–' }}</dd>
         <dt>{{ 'inquiry.detail.guests'|trans({}, 'crm') }}</dt>
         <dd>{{ detail.guestCount|swiss_number }}</dd>
         <dt>{{ 'inquiry.detail.event_date'|trans({}, 'crm') }}</dt>
-        <dd>{{ detail.eventDate ? detail.eventDate|swiss_date : '–' }}</dd>
+        <dd>
+            {%- if detail.eventDate %}{{ detail.eventDate|swiss_date }}{% if detail.dateFlexible %} ({{ 'inquiry.detail.flexible'|trans({}, 'crm') }}){% endif %}
+            {%- else %}{{ 'inquiry.detail.flexible'|trans({}, 'crm') }}{% endif -%}
+        </dd>
+        <dt>{{ 'inquiry.detail.start_time'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.startTime ?? '–' }}</dd>
+        <dt>{{ 'inquiry.detail.catering_wish'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.cateringWish ? detail.cateringWish|trans : '–' }}</dd>
+        <dt>{{ 'inquiry.detail.budget'|trans({}, 'crm') }}</dt>
+        <dd>{{ detail.budgetChf ? 'inquiry.detail.chf'|trans({amount: detail.budgetChf|swiss_number}, 'crm') : '–' }}</dd>
         <dt>{{ 'inquiry.detail.email'|trans({}, 'crm') }}</dt>
         <dd><a href="mailto:{{ detail.email }}">{{ detail.email }}</a></dd>
         <dt>{{ 'inquiry.detail.phone'|trans({}, 'crm') }}</dt>

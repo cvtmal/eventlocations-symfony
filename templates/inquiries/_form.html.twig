@@ -34,9 +34,20 @@
     {% endif %}
     {{ form_start(form, {attr: {class: 'inquiry-form__form'}}) }}
         <div class="inquiry-form__row inquiry-form__row--three">
-            {{ inquiry.field(form.occasion, 'form.field.occasion'|trans({}, 'inquiries')) }}
+            {{ inquiry.field(form.eventType, 'form.field.event_type'|trans({}, 'inquiries')) }}
             {{ inquiry.field(form.guests, 'form.field.guests'|trans({}, 'inquiries')) }}
-            {{ inquiry.field(form.eventDate, 'form.field.event_date'|trans({}, 'inquiries'), true) }}
+            <div class="inquiry-form__date">
+                {{ inquiry.field(form.eventDate, 'form.field.event_date'|trans({}, 'inquiries')) }}
+                <div class="inquiry-form__check">
+                    {{ form_widget(form.dateFlexible) }}
+                    <label for="{{ form.dateFlexible.vars.id }}">{{ 'form.field.date_flexible'|trans({}, 'inquiries') }}</label>
+                </div>
+            </div>
+        </div>
+        <div class="inquiry-form__row inquiry-form__row--three">
+            {{ inquiry.field(form.startTime, 'form.field.start_time'|trans({}, 'inquiries'), true) }}
+            {{ inquiry.field(form.cateringWish, 'form.field.catering_wish'|trans({}, 'inquiries'), true) }}
+            {{ inquiry.field(form.budgetChf, 'form.field.budget'|trans({}, 'inquiries'), true) }}
         </div>
         {{ inquiry.field(form.message, 'form.field.message'|trans({}, 'inquiries')) }}
         <div class="inquiry-form__row">
@@ -46,6 +57,9 @@
         <div class="inquiry-form__row">
             {{ inquiry.field(form.email, 'form.field.email'|trans({}, 'inquiries')) }}
             {{ inquiry.field(form.phone, 'form.field.phone'|trans({}, 'inquiries'), true) }}
+        </div>
+        <div class="inquiry-form__row">
+            {{ inquiry.field(form.company, 'form.field.company'|trans({}, 'inquiries'), true) }}
         </div>
         <div class="inquiry-form__trap">
             <label for="{{ form.website.vars.id }}">{{ 'form.field.website'|trans({}, 'inquiries') }}</label>

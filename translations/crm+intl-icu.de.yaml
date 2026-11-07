@@ -564,14 +564,15 @@ inquiry:
         title: Neue Anfragen
         table_label: Neue Anfragen, Tabelle
         all: Alle ansehen
-        couple: Paar
+        organizer: Veranstalter
         venue: Eintrag
+        event_type: Anlass
         guests: Gäste
         status: Status
         empty: Noch keine Anfragen.
     inbox:
         title: Anfragen
-        subline: Die Paare schreiben direkt an die Location; hier ist die Kopie fürs CRM.
+        subline: Die Veranstalter schreiben direkt an die Location; hier ist die Kopie fürs CRM.
         tabs_label: Status
         tab_all: Alle
         list_label: Liste
@@ -584,9 +585,15 @@ inquiry:
         for: Anfrage für
         reply: Per E-Mail antworten
         mark_done: Als erledigt markieren
-        occasion: Anlass
+        event_type: Anlass
+        company: Firma
         guests: Anzahl Gäste
         event_date: Wunschtermin
+        flexible: flexibel
+        start_time: Beginn
+        catering_wish: Catering
+        budget: Budget
+        chf: CHF {amount}
         email: E-Mail
         phone: Telefon
         message: Nachricht
@@ -602,10 +609,10 @@ inquiry:
             failed: Zustellung an die Location fehlgeschlagen
             skipped: Nicht an die Location gesendet
         guest:
-            pending: Bestätigung ans Paar ausstehend
-            sent: Bestätigung ans Paar zugestellt
-            failed: Bestätigung ans Paar fehlgeschlagen
-            skipped: Bestätigung ans Paar nicht gesendet
+            pending: Bestätigung an den Veranstalter ausstehend
+            sent: Bestätigung an den Veranstalter zugestellt
+            failed: Bestätigung an den Veranstalter fehlgeschlagen
+            skipped: Bestätigung an den Veranstalter nicht gesendet
     flash:
         status_changed: Status gespeichert.
         gone: Diese Anfrage gibt es nicht mehr.

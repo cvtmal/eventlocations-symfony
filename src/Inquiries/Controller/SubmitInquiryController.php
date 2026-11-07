@@ -7,9 +7,12 @@ namespace App\Inquiries\Controller;
 use App\Inquiries\Command\DeliverInquiry;
 use App\Inquiries\Command\SubmitInquiry;
 use App\Inquiries\Event\InquiryEvents;
+use App\Inquiries\Exception\BudgetOutOfRange;
 use App\Inquiries\Exception\EventDateInPast;
+use App\Inquiries\Exception\EventDateMissing;
 use App\Inquiries\Exception\GuestCountOutOfRange;
 use App\Inquiries\Exception\InquiryNotAccepted;
+use App\Inquiries\Exception\UnknownInquiryTerm;
 use App\Inquiries\Form\FillTimeToken;
 use App\Inquiries\Form\InquiryData;
 use App\Inquiries\Form\InquiryFormFactory;
@@ -144,16 +147,21 @@ final class SubmitInquiryController extends AbstractController
     private function command(mixed $data, VenueDetail $venue, string $locale): SubmitInquiry
     {
         \assert($data instanceof InquiryData);
-        \assert(null !== $data->occasion && null !== $data->guests && null !== $data->message);
+        \assert(null !== $data->eventType && null !== $data->guests && null !== $data->message);
         \assert(null !== $data->firstName && null !== $data->lastName && null !== $data->email);
 
         return new SubmitInquiry(
             $venue->id,
             $venue->slug,
             $locale,
-            $data->occasion->value,
+            $data->eventType,
+            $data->company,
             $data->guests,
             $data->eventDate?->format('Y-m-d'),
+            $data->dateFlexible,
+            $data->startTime?->format('H:i'),
+            $data->cateringWish,
+            $data->budgetChf,
             $data->message,
             $data->firstName,
             $data->lastName,
@@ -172,6 +180,9 @@ final class SubmitInquiryController extends AbstractController
         match (true) {
             $domainException instanceof GuestCountOutOfRange => $form->get('guests')->addError($this->error('form.error.guests_range')),
             $domainException instanceof EventDateInPast => $form->get('eventDate')->addError($this->error('form.error.date_past')),
+            $domainException instanceof EventDateMissing => $form->get('eventDate')->addError($this->error('form.error.date_missing')),
+            $domainException instanceof BudgetOutOfRange => $form->get('budgetChf')->addError($this->error('form.error.budget_range')),
+            $domainException instanceof UnknownInquiryTerm => $form->addError($this->error('form.error.unknown_term')),
             $domainException instanceof InquiryNotAccepted => $form->addError($this->error('form.error.not_accepted')),
             default => throw $exception,
         };

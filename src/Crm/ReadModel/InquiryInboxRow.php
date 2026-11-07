@@ -6,6 +6,7 @@ namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\InquiryStatus;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Venues\ValueObject\Term;
 
 /**
  * An inquiry as a line of the inbox and of the "Neue Anfragen" widget.
@@ -14,8 +15,10 @@ final readonly class InquiryInboxRow
 {
     public function __construct(
         public string $id,
-        public string $coupleName,
+        public string $organizerName,
+        public ?string $company,
         public string $venueName,
+        public Term $eventType,
         public int $guestCount,
         public ?\DateTimeImmutable $eventDate,
         public InquiryStatus $status,

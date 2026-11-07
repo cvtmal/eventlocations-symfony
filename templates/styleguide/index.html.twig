@@ -272,7 +272,7 @@
             <div class="text-input">
                 <label class="text-input__label" for="sg-occasion">{{ 'styleguide.text_input.occasion'|trans({}, 'styleguide') }}</label>
                 <select class="text-input__field" id="sg-occasion" name="occasion">
-                    {% for option in ['wedding', 'civil', 'apero', 'engagement', 'other'] %}
+                    {% for option in ['corporate_event', 'seminar', 'birthday', 'apero', 'wedding'] %}
                         <option>{{ ('styleguide.text_input.occasion_' ~ option)|trans({}, 'styleguide') }}</option>
                     {% endfor %}
                 </select>

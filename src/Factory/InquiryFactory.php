@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Inquiries\Entity\Inquiry;
-use App\Inquiries\ValueObject\Occasion;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
 use function Zenstruck\Foundry\lazy;
@@ -32,9 +31,14 @@ final class InquiryFactory extends PersistentObjectFactory
             'venue' => lazy(static fn () => VenueFactory::new()->withContact()->create()),
             'venueSlug' => self::faker()->unique()->slug(3),
             'locale' => 'de',
-            'occasion' => Occasion::Wedding,
+            'eventType' => 'corporate_event',
+            'company' => null,
             'guestCount' => self::faker()->numberBetween(20, 300),
             'eventDate' => null,
+            'dateFlexible' => true,
+            'startTime' => null,
+            'cateringWish' => null,
+            'budgetChf' => null,
             'message' => self::faker()->realText(200),
             'firstName' => self::faker()->firstName(),
             'lastName' => self::faker()->lastName(),

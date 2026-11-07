@@ -12,9 +12,10 @@ use App\Crm\ValueObject\InquiryStatus;
 use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
 use App\Inquiries\ValueObject\MailStatus;
-use App\Inquiries\ValueObject\Occasion;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
+use App\Venues\ValueObject\Term;
+use App\Venues\ValueObject\TermGroup;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
@@ -134,6 +135,8 @@ final class InquiryInboxQueryTest extends KernelTestCase
             'firstName' => 'Sina',
             'lastName' => 'Huber',
             'guestCount' => 120,
+            'eventType' => 'christmas_party',
+            'company' => 'Muster AG',
             'eventDate' => new \DateTimeImmutable('2027-06-12'),
             'createdAt' => new \DateTimeImmutable('2026-10-30 09:15:00 UTC'),
         ])->id();
@@ -142,8 +145,10 @@ final class InquiryInboxQueryTest extends KernelTestCase
         $row = $this->query()->newest(1)[0];
 
         self::assertSame($id, $row->id);
-        self::assertSame('Sina Huber', $row->coupleName);
+        self::assertSame('Sina Huber', $row->organizerName);
+        self::assertSame('Muster AG', $row->company);
         self::assertSame('Schloss Seeblick', $row->venueName);
+        self::assertEquals(new Term(TermGroup::SuitableFor, 'christmas_party'), $row->eventType);
         self::assertSame(120, $row->guestCount);
         self::assertSame('2027-06-12', $row->eventDate?->format('Y-m-d'));
         self::assertSame(InquiryStatus::New, $row->status);
@@ -179,9 +184,14 @@ final class InquiryInboxQueryTest extends KernelTestCase
             'lastName' => 'Huber',
             'email' => 'sina@example.ch',
             'phone' => '044 123 45 67',
-            'occasion' => Occasion::CivilWedding,
+            'eventType' => 'seminar',
+            'company' => 'Muster AG',
             'guestCount' => 80,
             'eventDate' => new \DateTimeImmutable('2027-06-12'),
+            'dateFlexible' => true,
+            'startTime' => new \DateTimeImmutable('1970-01-01 08:30'),
+            'cateringWish' => 'external_allowed',
+            'budgetChf' => 9000,
             'message' => "Erste Zeile\nZweite Zeile",
         ])->id();
         $this->dispatch(new IngestInquiry($id));
@@ -190,13 +200,18 @@ final class InquiryInboxQueryTest extends KernelTestCase
 
         self::assertNotNull($detail);
         self::assertSame($id, $detail->id);
-        self::assertSame('Sina Huber', $detail->coupleName);
+        self::assertSame('Sina Huber', $detail->organizerName);
+        self::assertSame('Muster AG', $detail->company);
         self::assertSame('Schloss Seeblick', $detail->venueName);
         self::assertSame($venue->id(), $detail->venueId);
         self::assertSame($venue->number(), $detail->venueNumber);
-        self::assertSame(Occasion::CivilWedding, $detail->occasion);
+        self::assertEquals(new Term(TermGroup::SuitableFor, 'seminar'), $detail->eventType);
         self::assertSame(80, $detail->guestCount);
         self::assertSame('2027-06-12', $detail->eventDate?->format('Y-m-d'));
+        self::assertTrue($detail->dateFlexible);
+        self::assertSame('08:30', $detail->startTime);
+        self::assertEquals(new Term(TermGroup::Catering, 'external_allowed'), $detail->cateringWish);
+        self::assertSame(9000, $detail->budgetChf);
         self::assertSame('sina@example.ch', $detail->email);
         self::assertSame('044 123 45 67', $detail->phone);
         self::assertSame("Erste Zeile\nZweite Zeile", $detail->message);

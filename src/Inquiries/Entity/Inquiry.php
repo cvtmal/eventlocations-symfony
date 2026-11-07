@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Inquiries\Entity;
 
 use App\Inquiries\ValueObject\MailStatus;
-use App\Inquiries\ValueObject\Occasion;
 use App\Shared\Uid\EntityId;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Types\Types;
@@ -50,14 +49,31 @@ class Inquiry
     #[ORM\Column(type: Types::STRING, length: 2)]
     private string $locale;
 
-    #[ORM\Column(type: Types::STRING, length: 30, enumType: Occasion::class)]
-    private Occasion $occasion;
+    /** A `suitable_for` term code (F3); `Term(TermGroup::SuitableFor, $eventType)` is its label. */
+    #[ORM\Column(type: Types::STRING, length: 40)]
+    private string $eventType;
+
+    #[ORM\Column(type: Types::STRING, length: 150, nullable: true)]
+    private ?string $company;
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $guestCount;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $eventDate;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $dateFlexible;
+
+    #[ORM\Column(type: Types::TIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $startTime;
+
+    /** A `catering` term code, one of `InquiryVocabularyQuery::CATERING_WISHES`; null is no wish. */
+    #[ORM\Column(type: Types::STRING, length: 40, nullable: true)]
+    private ?string $cateringWish;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $budgetChf;
 
     #[ORM\Column(type: Types::TEXT)]
     private string $message;
@@ -99,9 +115,14 @@ class Inquiry
         Venue $venue,
         string $venueSlug,
         string $locale,
-        Occasion $occasion,
+        string $eventType,
+        ?string $company,
         int $guestCount,
         ?\DateTimeImmutable $eventDate,
+        bool $dateFlexible,
+        ?\DateTimeImmutable $startTime,
+        ?string $cateringWish,
+        ?int $budgetChf,
         string $message,
         string $firstName,
         string $lastName,
@@ -117,9 +138,14 @@ class Inquiry
         $this->venueSlug = $venueSlug;
         $this->recipientEmail = $venue->inquiryEmail() ?? throw new \LogicException('An inquiry needs a venue with an inquiry address.');
         $this->locale = $locale;
-        $this->occasion = $occasion;
+        $this->eventType = $eventType;
+        $this->company = $company;
         $this->guestCount = $guestCount;
         $this->eventDate = $eventDate;
+        $this->dateFlexible = $dateFlexible;
+        $this->startTime = $startTime;
+        $this->cateringWish = $cateringWish;
+        $this->budgetChf = $budgetChf;
         $this->message = $message;
         $this->firstName = $firstName;
         $this->lastName = $lastName;
@@ -192,9 +218,14 @@ class Inquiry
         return $this->locale;
     }
 
-    public function occasion(): Occasion
+    public function eventType(): string
     {
-        return $this->occasion;
+        return $this->eventType;
+    }
+
+    public function company(): ?string
+    {
+        return $this->company;
     }
 
     public function guestCount(): int
@@ -205,6 +236,26 @@ class Inquiry
     public function eventDate(): ?\DateTimeImmutable
     {
         return $this->eventDate;
+    }
+
+    public function isDateFlexible(): bool
+    {
+        return $this->dateFlexible;
+    }
+
+    public function startTime(): ?\DateTimeImmutable
+    {
+        return $this->startTime;
+    }
+
+    public function cateringWish(): ?string
+    {
+        return $this->cateringWish;
+    }
+
+    public function budgetChf(): ?int
+    {
+        return $this->budgetChf;
     }
 
     public function message(): string

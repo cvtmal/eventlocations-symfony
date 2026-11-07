@@ -10,8 +10,9 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">{{ 'inquiry.widget.couple'|trans({}, 'crm') }}</th>
+                    <th scope="col">{{ 'inquiry.widget.organizer'|trans({}, 'crm') }}</th>
                     <th scope="col">{{ 'inquiry.widget.venue'|trans({}, 'crm') }}</th>
+                    <th scope="col">{{ 'inquiry.widget.event_type'|trans({}, 'crm') }}</th>
                     <th scope="col">{{ 'inquiry.widget.guests'|trans({}, 'crm') }}</th>
                     <th scope="col">{{ 'inquiry.widget.status'|trans({}, 'crm') }}</th>
                 </tr>
@@ -20,10 +21,11 @@
                 {% for row in rows %}
                     <tr>
                         <td>
-                            <strong>{{ row.coupleName }}</strong><br>
+                            <strong>{{ row.organizerName }}</strong><br>
                             <span class="crm-list__detail">{{ row.receivedAt|swiss_date }}</span>
                         </td>
                         <td>{{ row.venueName }}</td>
+                        <td>{{ row.eventType|trans }}</td>
                         <td>{{ row.guestCount|swiss_number }}</td>
                         <td>{{ include('admin/components/_pill.html.twig', {label: row.status|trans, tone: crm_tones('inquiry')[row.status.value]}, with_context = false) }}</td>
                     </tr>

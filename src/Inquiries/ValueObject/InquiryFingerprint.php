@@ -27,9 +27,14 @@ final readonly class InquiryFingerprint
     {
         $payload = json_encode([
             $inquiry->venueId,
-            $inquiry->occasion,
+            $inquiry->eventType,
+            self::text($inquiry->company ?? ''),
             $inquiry->guests,
             $inquiry->eventDate,
+            $inquiry->dateFlexible,
+            $inquiry->startTime,
+            $inquiry->cateringWish,
+            $inquiry->budgetChf,
             self::text($inquiry->message),
             self::text($inquiry->firstName),
             self::text($inquiry->lastName),

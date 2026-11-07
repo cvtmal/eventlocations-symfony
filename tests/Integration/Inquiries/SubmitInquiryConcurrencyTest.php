@@ -211,7 +211,7 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
         $fields = InquiryFormFields::valid()['inquiry'];
         self::assertIsString($fields['message']);
 
-        return new SubmitInquiry($this->venueId, self::SLUG, 'de', 'wedding', 120, null, $fields['message'], 'Anna', 'Muster', self::GUEST, '044 123 45 67');
+        return new SubmitInquiry($this->venueId, self::SLUG, 'de', 'corporate_event', null, 120, null, true, null, null, null, $fields['message'], 'Anna', 'Muster', self::GUEST, '044 123 45 67');
     }
 
     private function fingerprint(): string

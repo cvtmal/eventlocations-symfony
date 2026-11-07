@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Inquiries\Form;
 
 use App\Inquiries\Form\InquiryData;
-use App\Inquiries\ValueObject\Occasion;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Validation;
@@ -21,10 +20,30 @@ final class InquiryDataTest extends TestCase
     public function test_optional_fields_may_stay_empty(): void
     {
         $data = self::data();
-        $data->eventDate = null;
         $data->phone = null;
+        $data->company = null;
+        $data->startTime = null;
+        $data->cateringWish = null;
+        $data->budgetChf = null;
 
         self::assertSame([], $this->violations($data));
+    }
+
+    public function test_a_flexible_date_may_stay_empty(): void
+    {
+        $data = self::data();
+        $data->eventDate = null;
+        $data->dateFlexible = true;
+
+        self::assertSame([], $this->violations($data));
+    }
+
+    public function test_a_date_or_flexible_is_required(): void
+    {
+        $data = self::data();
+        $data->eventDate = null;
+
+        self::assertSame(['inquiry.event_date.required'], $this->violations($data));
     }
 
     /**
@@ -32,7 +51,12 @@ final class InquiryDataTest extends TestCase
      */
     public static function invalidValues(): iterable
     {
-        yield 'no occasion' => ['occasion', null, 'inquiry.occasion.required'];
+        yield 'no event type' => ['eventType', null, 'inquiry.event_type.required'];
+        yield 'zero budget' => ['budgetChf', 0, 'inquiry.budget.range'];
+        yield 'budget over a million' => ['budgetChf', 1_000_001, 'inquiry.budget.range'];
+        yield 'long company' => ['company', str_repeat('a', 151), 'inquiry.company.too_long'];
+        yield 'header in the company' => ['company', 'Muster AG
+Bcc: x@example.ch', 'inquiry.company.invalid'];
         yield 'no guests' => ['guests', null, 'inquiry.guests.required'];
         yield 'zero guests' => ['guests', 0, 'inquiry.guests.range'];
         yield '5001 guests' => ['guests', 5001, 'inquiry.guests.range'];
@@ -98,9 +122,13 @@ final class InquiryDataTest extends TestCase
     private static function data(): InquiryData
     {
         $data = new InquiryData();
-        $data->occasion = Occasion::Wedding;
+        $data->eventType = 'corporate_event';
+        $data->company = 'Muster AG';
         $data->guests = 120;
         $data->eventDate = new \DateTimeImmutable('2030-06-01');
+        $data->startTime = new \DateTimeImmutable('1970-01-01 18:00');
+        $data->cateringWish = 'in_house';
+        $data->budgetChf = 5000;
         $data->message = 'Liebes Team';
         $data->firstName = 'Anna';
         $data->lastName = 'Muster';
