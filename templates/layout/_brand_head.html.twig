@@ -1,0 +1,15 @@
+{#-
+    BRAND SWAP POINT (docs/brand.md): the font preload, the favicon set, the web manifest and the browser's theme colour, once
+    for every shell: the public base, the back office, its login and /konto. The icons and the manifest are plain files of
+    `public/brand/`, with no AssetMapper digest, because some clients ask for them by a fixed name. The preload names the
+    font file of assets/styles/base/_fonts.scss; a page adds no font preload of its own (AssetBudgetTest).
+    Include with `only`: manifest (bool, default true). The back office and /konto have no use for the manifest.
+-#}
+<link rel="preload" href="{{ asset('fonts/hanken-grotesk-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="{{ asset('brand/favicon.ico') }}" sizes="48x48">
+<link rel="icon" href="{{ asset('brand/favicon.svg') }}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{ asset('brand/apple-touch-icon.png') }}">
+{% if manifest ?? true -%}
+<link rel="manifest" href="{{ asset('brand/site.webmanifest') }}">
+{% endif -%}
+<meta name="theme-color" content="#f6f7fb">

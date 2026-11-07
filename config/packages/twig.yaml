@@ -1,6 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
-    paths: {'%kernel.project_dir%/assets/images': images}
+    # `@brand/mail-logo.png`: the logo a mail attaches (emails/layout.html.twig). The brand's swap folder, docs/brand.md.
+    paths: {'%kernel.project_dir%/public/brand': brand}
     # Display only: storage and PHP stay UTC.
     date:
         timezone: Europe/Zurich

@@ -21,15 +21,20 @@
     }
 }
 
+// The logo's lockup is 286:32. On a narrow phone it shrinks with the viewport (320 px: 20 px high), so the heart and the menu
+// button keep their place; from 406 px it is 26 px high, from md 24 px (214 px wide, so the nav fits at 768 px) and from lg 30 px.
 .site-header__wordmark {
     display: flex;
     flex: none;
 
-    img {
-        width: auto;
-        height: 1.625rem;
+    .logo {
+        height: clamp(1.25rem, 6.4vw, 1.625rem);
 
         @include bp.up(md) {
+            height: 1.5rem;
+        }
+
+        @include bp.up(lg) {
             height: 1.875rem;
         }
     }
@@ -42,7 +47,11 @@
     margin-left: auto;
 
     @include bp.up(md) {
-        gap: var(--space-8) var(--space-32);
+        gap: var(--space-8) var(--space-16);
+    }
+
+    @include bp.up(lg) {
+        column-gap: var(--space-32);
     }
 }
 

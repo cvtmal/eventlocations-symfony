@@ -46,7 +46,7 @@ Back-office foundation at `/admin` (S12): staff login, shell, extension points, 
 
 **Built in #24.** `Admin\Form\AdminTextConstraintExtension` adds `CleanText` to every `TextType` descendant under the back office (resolved against the main request, so the public inquiry form and the console are untouched); a textarea already submits LF only (Symfony 7.4's `TextareaType`). `ChecksAdminRoutes` fills a parameter with `Cms\ValueObject\VenueNumber::REQUIREMENT` with `1` instead of a UUID, and `assertNotTurnedAway()` also asserts `< 500`. `_record_header` has an optional `media` block and `_locale_tabs` an `active` locale (default the first). `js/dialog.js` returns focus to the owning popover's trigger (else the opener) when a dialog closes with focus on `<body>`, because an opener inside a closed popover cannot take it back.
 
-**Built in #35.** `--a-accent-bright` (#FF0096, `assets/styles/admin/_tokens.scss`) is for icons on dark grounds only (the sidebar's active item, the error toast): `--a-accent` must carry white text and so is too dark there, and one value cannot pass both roles (3.63:1 on #2f2f2f, 4.67:1 on #1b1b1b).
+**Built in #35.** `--a-accent-bright` (#9da3ff since F6, was #FF0096; `assets/styles/admin/_tokens.scss`) is for icons and the login bar on dark grounds only (the sidebar's active item, the error toast): `--a-accent` must carry white text and so is too dark there, and one value cannot pass both roles (5.81:1 on #2f2f2f, 7.48:1 on #1b1b1b).
 
 **Built in #27.** No Admin migration or route.
 
