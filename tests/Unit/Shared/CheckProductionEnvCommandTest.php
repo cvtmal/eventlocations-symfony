@@ -281,7 +281,7 @@ final class CheckProductionEnvCommandTest extends TestCase
             'DATABASE_URL' => self::DATABASE_URL,
             'MAILER_DSN' => 'smtp://fake:fake@mail.example.ch:587',
             'MAILER_FROM' => 'deine-eventlocation.ch <hallo@deine-eventlocation.ch>',
-            'MEDIA_ROOT' => '/home/site/www/hochzeitslocation.ch/var/media',
+            'MEDIA_ROOT' => '/var/www/deine-eventlocation.ch/shared/var/media',
             'MEDIA_PUBLIC_DIR' => '%kernel.project_dir%/public/media',
         ];
     }
@@ -306,9 +306,6 @@ final class CheckProductionEnvCommandTest extends TestCase
             '__NEON_ENDPOINT__' => 'ep-fake-endpoint',
             '__NEON_DATABASE__' => 'site',
             '__MAILER_PASSWORD__' => 'fake-mail-password',
-            // The template still names the Hostpoint-era site; F15 rewrites deploy/ for the new host (F0a leaves it).
-            'DEFAULT_URI=https://hochzeitslocation.ch' => 'DEFAULT_URI=https://deine-eventlocation.ch',
-            'MAILER_FROM="Hochzeitslocation <hallo@hochzeitslocation.ch>"' => 'MAILER_FROM="deine-eventlocation.ch <hallo@deine-eventlocation.ch>"',
         ]);
 
         $values = (new Dotenv())->parse($filled);

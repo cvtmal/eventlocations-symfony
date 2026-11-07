@@ -7,9 +7,9 @@ namespace App\Tests\Unit\Shared;
 use PHPUnit\Framework\TestCase;
 
 /**
- * #20: the files only Hostpoint reads. Dev runs nginx and no cron, so a typo here would first
- * show on the live site. tests/Deploy/htaccess-check.sh runs the .htaccess in a real Apache; this
- * pins what must stay true whatever is proved there.
+ * #20, F15: the files only the production VPS reads. Dev runs its own nginx file and no cron, so a typo
+ * here would first show on the live site. tests/Deploy/nginx-check.sh runs the server block in a real
+ * nginx; this pins what must stay true whatever is proved there.
  */
 final class HostingFilesTest extends TestCase
 {
@@ -55,66 +55,70 @@ final class HostingFilesTest extends TestCase
     public function test_media_is_never_immutable(): void
     {
         // app:media:regenerate rewrites these files under the same URLs.
-        self::assertStringNotContainsString('immutable', self::headerBlock('/media/'));
-        self::assertStringContainsString('max-age=86400', self::headerBlock('/media/'));
+        self::assertStringNotContainsString('immutable', self::location('/media/'));
+        self::assertStringContainsString('max-age=86400', self::location('/media/'));
     }
 
     public function test_hashed_assets_are_immutable(): void
     {
         foreach (['/assets/', '/admin-build/'] as $path) {
-            self::assertStringContainsString('max-age=31536000, immutable', self::headerBlock($path), $path);
+            self::assertStringContainsString('max-age=31536000, immutable', self::location($path), $path);
         }
     }
 
     public function test_assets_and_media_carry_nosniff(): void
     {
         foreach (['/assets/', '/admin-build/', '/media/'] as $path) {
-            self::assertStringContainsString('X-Content-Type-Options "nosniff"', self::headerBlock($path), $path);
+            self::assertStringContainsString('X-Content-Type-Options "nosniff"', self::location($path), $path);
         }
     }
 
-    public function test_user_ini_is_denied(): void
+    public function test_dotfiles_are_not_served(): void
     {
-        self::assertMatchesRegularExpression(
-            '/<FilesMatch "\^\\\\\.\(user\\\\\.ini\|ht\)">\s*Require all denied\s*<\/FilesMatch>/',
-            self::htaccess(),
-        );
+        self::assertMatchesRegularExpression('/location ~ \/\\\. \{\s*return 404;\s*\}/', self::nginx());
     }
 
-    public function test_the_host_rule_comes_before_the_scheme_rule(): void
+    public function test_every_name_lands_on_the_canonical_host(): void
     {
-        $htaccess = self::htaccess();
-        $host = strpos($htaccess, 'RewriteCond %{HTTP_HOST} ^www\.hochzeitslocation\.ch$');
-        $scheme = strpos($htaccess, 'RewriteCond %{HTTPS} !=on');
-
-        self::assertNotFalse($host);
-        self::assertNotFalse($scheme);
-        self::assertLessThan($scheme, $host, 'http://www. must take one hop, not two.');
+        // E7: deineeventlocation.ch redirects to deine-eventlocation.ch, and so do both www names.
+        $nginx = self::nginx();
+        self::assertStringContainsString('server_name deine-eventlocation.ch www.deine-eventlocation.ch deineeventlocation.ch www.deineeventlocation.ch;', $nginx);
+        self::assertStringContainsString('server_name www.deine-eventlocation.ch deineeventlocation.ch www.deineeventlocation.ch;', $nginx);
+        self::assertSame(2, substr_count($nginx, 'return 301 https://deine-eventlocation.ch$request_uri;'));
     }
 
-    public function test_the_scheme_rule_respects_a_proxy_that_ended_tls(): void
+    public function test_php_runs_the_resolved_release(): void
     {
-        self::assertStringContainsString('RewriteCond %{HTTP:X-Forwarded-Proto} !=https', self::htaccess());
+        // current is switched by bin/deploy; OPcache must key on the release path, not on the link.
+        self::assertStringContainsString('fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;', self::nginx());
+        self::assertStringContainsString('root /var/www/deine-eventlocation.ch/current/public;', self::nginx());
     }
 
     public function test_the_php_version_header_is_removed(): void
     {
-        // "always": without it the rule misses headers from php-fpm, and expose_php cannot help.
-        self::assertStringContainsString('Header always unset X-Powered-By', self::htaccess());
+        // expose_php is PHP_INI_SYSTEM, so .user.ini cannot switch it off.
+        self::assertStringContainsString('fastcgi_hide_header X-Powered-By;', self::nginx());
     }
 
-    public function test_the_web_php_is_pinned_to_the_version_of_deploy_cron_and_ci(): void
+    public function test_nginx_takes_the_bodies_php_takes(): void
     {
-        // Anchored, because a commented-out line would unpin the web and still contain the words.
-        self::assertMatchesRegularExpression('/^Use php-fpm php85$/m', self::htaccess());
+        self::assertSame((int) self::userIni()['post_max_size'], (int) self::firstMatch('/client_max_body_size (\d+)m;/', self::nginx()));
+    }
+
+    public function test_nginx_talks_to_the_pool_of_php_8_5(): void
+    {
+        $pool = self::file('deploy/php-fpm/deine-eventlocation.conf');
+        $socket = self::firstMatch('/^listen = (\S+)$/m', $pool);
+        self::assertStringContainsString('fastcgi_pass unix:'.$socket.';', self::nginx());
+        self::assertStringContainsString('/etc/php/8.5/fpm/pool.d/', $pool);
     }
 
     public function test_the_crontab_has_exactly_the_three_jobs(): void
     {
         self::assertSame([
-            '5 0 * * * /bin/sh /home/djweddin/www/hochzeitslocation.ch/bin/cron-midnight',
-            '2-59/5 * * * * /bin/sh /home/djweddin/www/hochzeitslocation.ch/bin/cron-cache-guard',
-            '15 3 * * * /bin/sh /home/djweddin/www/hochzeitslocation.ch/bin/cron-daily',
+            '5 0 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-midnight',
+            '2-59/5 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-cache-guard',
+            '15 3 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-daily',
         ], self::cronJobs());
     }
 
@@ -146,12 +150,12 @@ final class HostingFilesTest extends TestCase
     }
 
     /**
-     * The body of the `<If>` for one path prefix.
+     * The body of the nginx `location` for one path prefix.
      */
-    private static function headerBlock(string $path): string
+    private static function location(string $path): string
     {
-        $pattern = '/<If "%\{REQUEST_URI\} =~ m#\^'.preg_quote($path, '/').'#">(.*?)<\/If>/s';
-        self::assertSame(1, preg_match($pattern, self::htaccess(), $matches), $path);
+        $pattern = '/^    location '.preg_quote($path, '/').' \{(.*?)^    \}/sm';
+        self::assertSame(1, preg_match($pattern, self::nginx(), $matches), $path);
 
         return $matches[1];
     }
@@ -165,12 +169,21 @@ final class HostingFilesTest extends TestCase
     {
         $lines = array_map(trim(...), explode("\n", self::file('deploy/crontab.txt')));
 
-        return array_values(array_filter($lines, static fn (string $line): bool => '' !== $line && !str_starts_with($line, '#')));
+        return array_values(array_filter($lines, static fn (string $line): bool => '' !== $line && !str_starts_with($line, '#') && !str_starts_with($line, 'MAILTO=')));
     }
 
-    private static function htaccess(): string
+    private static function firstMatch(string $pattern, string $subject): string
     {
-        return self::file('public/.htaccess');
+        if (1 !== preg_match($pattern, $subject, $matches)) {
+            self::fail('No match for '.$pattern);
+        }
+
+        return $matches[1];
+    }
+
+    private static function nginx(): string
+    {
+        return self::file('deploy/nginx/deine-eventlocation.ch.conf');
     }
 
     private static function file(string $name): string

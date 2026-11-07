@@ -12,8 +12,9 @@ set -eu
 MEDIA_DIR="${PROD_MEDIA_DIR:-var/prod-media}"
 # compose.yaml mounts the checkout here.
 CONTAINER_ROOT="${PROD_CONTAINER_ROOT:-/var/www/html}"
-REMOTE_APP="${PROD_REMOTE_APP:-www/hochzeitslocation.ch}"
-REMOTE_PHP="${PROD_REMOTE_PHP:-/usr/local/php85/bin/php}"
+# The live release; its var/media and public/media are links into shared/ (bin/deploy).
+REMOTE_APP="${PROD_REMOTE_APP:-/var/www/deine-eventlocation.ch/current}"
+REMOTE_PHP="${PROD_REMOTE_PHP:-php}"
 
 say() { printf '%s\n' "prod-import: $*"; }
 die() { printf '%s\n' "prod-import: $*" >&2; exit 1; }

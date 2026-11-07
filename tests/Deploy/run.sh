@@ -1,8 +1,8 @@
 #!/bin/sh
-# Runs the real deploy, cron and import scripts against a throwaway tree (#20, Step 4.7), through
-# `make deploy-test`, inside the php container. Nothing here needs an account or a network, apart
-# from rsync (below). PHP is a stub that logs "<dir> <console command>", so the order of the calls
-# is what is tested; rsync is the real one, because what survives a deploy is its exclude list.
+# Runs the real deploy, cron and import scripts against a throwaway server tree (#20 Step 4.7, F15),
+# through `make deploy-test`, inside the php container. Nothing here needs an account or a network.
+# PHP is a stub that logs "<dir> <console command>", so the order of the calls is what is tested;
+# the releases/, shared/, current and previous layout is the real one bin/deploy builds.
 #
 # Every case prints "ok - …". The first failure stops the run, prints the log, and exits 1.
 set -eu
@@ -10,20 +10,21 @@ set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SHA=0123456789abcdef0123456789abcdef01234567
 OTHER_SHA=fedcba9876543210fedcba9876543210fedcba98
+THIRD_SHA=3333333333333333333333333333333333333333
+FOURTH_SHA=4444444444444444444444444444444444444444
+FIFTH_SHA=5555555555555555555555555555555555555555
+NEW_SHA=abcdefabcdefabcdefabcdefabcdefabcdefabcd
 PORT=18097
-
-# The image has no rsync and the hosting has; bin/deploy cannot run without it. Added here, not in
-# the Dockerfile, because nothing else needs it and an image rebuild is every lane's cost.
-command -v rsync >/dev/null 2>&1 || apk add --no-cache --quiet rsync
 
 work="$ROOT/var/deploy-test/$$-$(od -An -N4 -tx4 /dev/urandom | tr -d ' ')"
 HOME="$work/home"
-DEPLOY_APP="$HOME/www/hochzeitslocation.ch"
-DEPLOY_WORK="$HOME/deploy/hochzeitslocation"
+DEPLOY_ROOT="$work/srv/deine-eventlocation.ch"
+DEPLOY_WORK="$DEPLOY_ROOT/.deploy"
 DEPLOY_PHP="$work/stub-php"
 STUB_LOG="$work/calls"
-export HOME DEPLOY_APP DEPLOY_WORK DEPLOY_PHP STUB_LOG
-APP="$DEPLOY_APP"
+export HOME DEPLOY_ROOT DEPLOY_WORK DEPLOY_PHP STUB_LOG
+APP="$DEPLOY_ROOT/current"
+SHARED="$DEPLOY_ROOT/shared"
 STAGE="$DEPLOY_WORK/stage"
 server=""
 
@@ -49,7 +50,10 @@ run() {
 }
 
 clear_log() { : > "$STUB_LOG"; }
-calls() { sed "s#$STAGE#stage#; s#$APP#app#; s#$work/checkout#checkout#g" "$STUB_LOG"; }
+# A release directory reads "release", the current link "current" (cron resolves it, purge does not).
+calls() {
+    sed "s#$DEPLOY_ROOT/releases/[0-9a-f]\{40\}#release#; s#$APP#current#; s#$work/checkout#checkout#g" "$STUB_LOG"
+}
 
 expect_calls() { # expect_calls <case> <one call per line>
     [ "$(calls)" = "$2" ] || fail "$1: other calls than expected"
@@ -83,20 +87,41 @@ expect_file() { # expect_file <case> <path> <content>
     ok "$1"
 }
 expect_gone() { # expect_gone <case> <path>
-    [ ! -e "$2" ] || fail "$1: $2 is still there"
+    if [ -e "$2" ] || [ -L "$2" ]; then
+        fail "$1: $2 is still there"
+    fi
     ok "$1"
 }
+expect_link() { # expect_link <case> <link> <target>
+    [ -L "$2" ] || fail "$1: $2 is no symlink"
+    [ "$(readlink "$2")" = "$3" ] || fail "$1: $2 points at $(readlink "$2"), wanted $3"
+    ok "$1"
+}
+expect_live() { # expect_live <case> <sha>
+    expect_link "$1" "$APP" "releases/$2"
+}
+# Everything but the gate's own work directory: links with their targets, files with their sums.
 tree_state() {
-    (cd "$APP" && find . -type f -exec cksum {} + | sort && find . -type l | sort && find . -type d | sort)
+    (
+        cd "$DEPLOY_ROOT"
+        find . -path ./.deploy -prune -o -type f -exec cksum {} + | sort
+        find . -path ./.deploy -prune -o -type l -print | sort | while read -r l; do
+            printf '%s -> %s\n' "$l" "$(readlink "$l")"
+        done
+        find . -path ./.deploy -prune -o -type d -print | sort
+    )
 }
 remember_tree() { tree_before="$(tree_state)"; }
 expect_tree_unchanged() { # expect_tree_unchanged <case>
-    [ "$tree_before" = "$(tree_state)" ] || fail "$1: the live tree changed"
+    [ "$tree_before" = "$(tree_state)" ] || fail "$1: the server tree changed"
     ok "$1"
 }
 expect_clean_gate() { # expect_clean_gate <case>
     [ ! -e "$DEPLOY_WORK/.lock" ] || fail "$1: the lock is left behind"
     [ ! -e "$STAGE" ] || fail "$1: the stage is left behind"
+    if [ -L "$DEPLOY_ROOT/.current.new" ] || [ -L "$DEPLOY_ROOT/.previous.new" ]; then
+        fail "$1: a temporary link is left behind"
+    fi
     ok "$1"
 }
 
@@ -111,9 +136,6 @@ write_stub_php() {
 # print a line, STUB_NO_GUARD and STUB_HTTP_CACHE change `list`, and STUB_HOLD=<file> makes it wait
 # for that file after touching STUB_STARTED. STUB_BROKEN_ENV makes the console die before it runs a
 # command, with a secret in its stderr, as a Dotenv FormatException can.
-#
-# Like the real kernel with debug off, it boots on var/cache/prod/container without looking at the
-# tree: when that file names a path the tree no longer has, every command dies, cache:clear too.
 if [ "$1" = -r ]; then
     echo 8.5.0-stub
     exit 0
@@ -131,10 +153,6 @@ if [ -n "${STUB_BROKEN_ENV:-}" ]; then
     echo 'stub: syntax error in .env.local: APP_SECRET=stub-secret-excerpt' >&2
     exit 1
 fi
-if [ -f var/cache/prod/container ] && [ ! -e "$(cat var/cache/prod/container)" ]; then
-    echo "stub: class in $(cat var/cache/prod/container) not found" >&2
-    exit 255
-fi
 [ -z "${STUB_STARTED:-}" ] || : > "$STUB_STARTED"
 if [ -n "${STUB_HOLD:-}" ]; then
     until [ -e "$STUB_HOLD" ]; do sleep 0.05; done
@@ -146,7 +164,7 @@ fi
 [ "$command" != "${STUB_PRINT:-}" ] || echo "stub: $command says something"
 if [ "$command" = cache:warmup ]; then
     mkdir -p var/cache/prod
-    echo bin/console > var/cache/prod/container
+    pwd -P > var/cache/prod/container
 fi
 if [ "$command" = list ]; then
     [ -n "${STUB_NO_GUARD:-}" ] || echo 'app:prod:check-env   Refuse an unsafe environment'
@@ -162,7 +180,7 @@ STUB
 pack() { tar -C "$1" -czf "$2" .; }
 
 build_release() { # build_release <dir>: what bin/build-release ships, as far as a deploy can tell
-    mkdir -p "$1/bin" "$1/vendor" "$1/public/assets" "$1/public/admin-build/.vite" "$1/src/var" "$1/public/images"
+    mkdir -p "$1/bin" "$1/vendor" "$1/public/assets" "$1/public/admin-build/.vite"
     for script in deploy cron-lock.sh cron-midnight cron-cache-guard cron-daily; do
         cp "$ROOT/bin/$script" "$1/bin/$script"
     done
@@ -171,112 +189,183 @@ build_release() { # build_release <dir>: what bin/build-release ships, as far as
     echo index > "$1/public/index.php"
     echo '{}' > "$1/public/assets/manifest.json"
     echo '{}' > "$1/public/admin-build/.vite/manifest.json"
-    echo new > "$1/new-in-this-release"
-    echo new > "$1/src/var/new"
-    echo new > "$1/public/images/new"
 }
 
-live_tree() {
-    mkdir -p "$APP/var/sessions/prod" "$APP/var/media/content" "$APP/var/share/prod/http_cache" "$APP/public/media/1" \
-        "$APP/public/.well-known/acme-challenge" "$APP/src/var" "$APP/old-dir"
-    echo secrets > "$APP/.env.local"
-    chmod 600 "$APP/.env.local"
-    echo session > "$APP/var/sessions/prod/sess_a"
-    echo original > "$APP/var/media/content/photo.jpg"
-    echo page > "$APP/var/share/prod/http_cache/page"
-    echo variant > "$APP/public/media/1/a-360.jpg"
-    echo token > "$APP/public/.well-known/acme-challenge/t"
-    echo stale > "$APP/old-dir/stale"
-    echo stale > "$APP/stale-file"
-    # Anchored excludes: a same-named path deeper down is no exception.
-    echo stale > "$APP/src/var/stale"
+# What the owner sets up once (docs/operations.md), plus state a live site has collected.
+server_tree() {
+    mkdir -p "$DEPLOY_ROOT/releases" "$SHARED/var/sessions/prod" "$SHARED/var/media/content" \
+        "$SHARED/var/share/prod/http_cache" "$SHARED/public/media/1"
+    echo secrets > "$SHARED/.env.local"
+    chmod 600 "$SHARED/.env.local"
+    echo session > "$SHARED/var/sessions/prod/sess_a"
+    echo original > "$SHARED/var/media/content/photo.jpg"
+    echo page > "$SHARED/var/share/prod/http_cache/page"
+    echo variant > "$SHARED/public/media/1/a-360.jpg"
 }
 
 gate_refusals() {
     remember_tree
     clear_log
-    for command in "deploy abc" "rm -rf /" "" "rollback" "rollback $SHA" "deploy" "deploy " "deploy ${SHA}0" \
-        "deploy ${SHA} ; id" "deploy $(printf '%s' "$SHA" | tr 'a-f' 'A-F')" "purge now" "check; id"; do
+    for command in "deploy abc" "rm -rf /" "" "rollback now" "rollback $SHA" "deploy" "deploy " "deploy ${SHA}0" \
+        "deploy ${SHA} ; id" "deploy $(printf '%s' "$SHA" | tr 'a-f' 'A-F')" "purge now" "check; id" "install $SHA"; do
         run gate /dev/null "$command"
         [ "$rc" = 2 ] || fail "the gate let '$command' through: exit $rc"
     done
-    ok "the gate refuses everything but deploy, purge and check, with exit 2"
+    ok "the gate refuses everything but deploy, purge, check and rollback, with exit 2"
     expect_no_calls "a refused command runs nothing"
     expect_tree_unchanged "a refused command changes nothing"
 }
 
-deploy_ok() {
+deploy_first() {
     clear_log
     run gate "$work/release.tgz" "deploy $SHA"
-    expect_exit "deploy exits 0" 0
+    expect_exit "the first deploy exits 0" 0
     expect_output "deploy prints the sha" "DEPLOYED_SHA=$SHA"
     expect_output "a build without #19 skips the HTTP cache with a note" "no app:http-cache:clear in this build"
-    expect_calls "the calls come in order, stage first, then the app" "stage list --raw
-stage app:prod:check-env
-stage doctrine:migrations:migrate --allow-no-migration
-app cache:warmup
-app app:geo:import-towns
-app list --raw"
+    expect_calls "every step runs in the new release, before the switch" "release list --raw
+release app:prod:check-env
+release doctrine:migrations:migrate --allow-no-migration
+release cache:warmup
+release app:geo:import-towns
+release list --raw"
+    expect_live "current points at the new release" "$SHA"
+    expect_gone "a first deploy has no previous release" "$DEPLOY_ROOT/previous"
 
-    expect_file ".env.local survives" "$APP/.env.local" secrets
-    { [ -f "$APP/.env.local" ] && [ ! -L "$APP/.env.local" ]; } || fail ".env.local became a link"
-    [ "$(stat -c %a "$APP/.env.local")" = 600 ] || fail ".env.local lost its mode"
-    ok ".env.local stays a private file"
-    expect_file "sessions survive" "$APP/var/sessions/prod/sess_a" session
-    expect_file "originals survive" "$APP/var/media/content/photo.jpg" original
-    expect_file "the HTTP cache store survives the sync" "$APP/var/share/prod/http_cache/page" page
-    expect_file "public/media survives" "$APP/public/media/1/a-360.jpg" variant
-    expect_file "public/.well-known survives" "$APP/public/.well-known/acme-challenge/t" token
-    expect_gone "a stale file is gone" "$APP/stale-file"
-    expect_gone "a stale directory is gone" "$APP/old-dir"
-    expect_gone "an exclude does not reach a same-named deeper path" "$APP/src/var/stale"
-    expect_file "new files arrive" "$APP/new-in-this-release" new
-    expect_file "the sha is in .env.prod.local" "$APP/.env.prod.local" "SENTRY_RELEASE=$SHA"
-    expect_clean_gate "a deploy leaves no lock and no stage"
+    release="$DEPLOY_ROOT/releases/$SHA"
+    expect_link ".env.local is a link into shared" "$release/.env.local" "$SHARED/.env.local"
+    { [ -f "$SHARED/.env.local" ] && [ ! -L "$SHARED/.env.local" ]; } || fail "shared/.env.local became a link"
+    [ "$(stat -c %a "$SHARED/.env.local")" = 600 ] || fail "shared/.env.local lost its mode"
+    ok "shared/.env.local stays a private file"
+    for d in log sessions share media stats lock import-staging; do
+        [ "$(readlink "$release/var/$d")" = "$SHARED/var/$d" ] || fail "var/$d is not shared"
+        [ -d "$SHARED/var/$d" ] || fail "shared/var/$d was not created"
+    done
+    ok "every var/ directory but the cache is shared"
+    expect_link "public/media is shared" "$release/public/media" "$SHARED/public/media"
+    { [ -d "$release/var/cache/prod" ] && [ ! -L "$release/var/cache" ]; } || fail "the release has no cache of its own"
+    ok "the release compiles its own cache"
+    expect_file "sessions are seen through current" "$APP/var/sessions/prod/sess_a" session
+    expect_file "originals are seen through current" "$APP/var/media/content/photo.jpg" original
+    expect_file "the HTTP cache store is seen through current" "$APP/var/share/prod/http_cache/page" page
+    expect_file "variants are seen through current" "$APP/public/media/1/a-360.jpg" variant
+    expect_file "the sha is in the release's .env.prod.local" "$release/.env.prod.local" "SENTRY_RELEASE=$SHA"
+    expect_clean_gate "a deploy leaves no lock, no stage and no temporary link"
 }
 
-# rsync -t skips a file of the same size and second, and this run is faster than any real deploy.
-age_the_sha_file() { touch -t 202001010000 "$APP/.env.prod.local"; }
-
-deploy_with_http_cache() {
+deploy_second() {
     clear_log
-    age_the_sha_file
     STUB_HTTP_CACHE=1
     export STUB_HTTP_CACHE
     run gate "$work/release.tgz" "deploy $OTHER_SHA"
     unset STUB_HTTP_CACHE
     expect_exit "a second deploy exits 0" 0
-    expect_calls "a build with the command empties the HTTP cache last" "stage list --raw
-stage app:prod:check-env
-stage doctrine:migrations:migrate --allow-no-migration
-app cache:warmup
-app app:geo:import-towns
-app list --raw
-app app:http-cache:clear"
-    expect_file "the new sha replaces the old one" "$APP/.env.prod.local" "SENTRY_RELEASE=$OTHER_SHA"
-}
+    expect_calls "a build with the command empties the HTTP cache last" "release list --raw
+release app:prod:check-env
+release doctrine:migrations:migrate --allow-no-migration
+release cache:warmup
+release app:geo:import-towns
+release list --raw
+release app:http-cache:clear"
+    expect_live "current points at the second release" "$OTHER_SHA"
+    expect_link "previous points at the first" "$DEPLOY_ROOT/previous" "releases/$SHA"
+    expect_file "the first release keeps its sha" "$DEPLOY_ROOT/releases/$SHA/.env.prod.local" "SENTRY_RELEASE=$SHA"
+    expect_file "the first release keeps its own container" "$DEPLOY_ROOT/releases/$SHA/var/cache/prod/container" \
+        "$DEPLOY_ROOT/releases/$SHA"
+    expect_file "the second release has its own container" "$DEPLOY_ROOT/releases/$OTHER_SHA/var/cache/prod/container" \
+        "$DEPLOY_ROOT/releases/$OTHER_SHA"
+    expect_file "shared state outlives the switch" "$APP/var/sessions/prod/sess_a" session
+    expect_clean_gate "a second deploy cleans up"
 
-# The old container names a bundle the new release no longer ships. rsync deletes the bundle, and the
-# first console command in the app would die on that container (F-M2).
-deploy_that_drops_a_bundle() {
-    mkdir -p "$APP/vendor/dropped-bundle" "$APP/var/cache/prod"
-    echo bundle > "$APP/vendor/dropped-bundle/Bundle.php"
-    echo vendor/dropped-bundle/Bundle.php > "$APP/var/cache/prod/container"
-    mkdir "$APP/var/cache/prod.old"
-    echo left > "$APP/var/cache/prod.old/left-by-a-dead-run"
-    age_the_sha_file
+    remember_tree
+    clear_log
+    run gate "$work/release.tgz" "deploy $OTHER_SHA"
+    expect_failure "deploying the live sha again is refused"
+    expect_output "the refusal says why" "is live already, nothing was changed"
+    expect_no_calls "deploying the live sha again runs nothing"
+    expect_tree_unchanged "deploying the live sha again changes nothing"
+    expect_clean_gate "a refused redeploy cleans up"
+
     clear_log
     run gate "$work/release.tgz" "deploy $SHA"
-    expect_exit "a deploy that drops a bundle exits 0" 0
-    expect_calls "the old container never boots the new code" "stage list --raw
-stage app:prod:check-env
-stage doctrine:migrations:migrate --allow-no-migration
-app cache:warmup
-app app:geo:import-towns
-app list --raw"
-    expect_gone "the bundle is gone" "$APP/vendor/dropped-bundle"
-    expect_gone "a dead run's old cache is gone" "$APP/var/cache/prod.old"
-    expect_file "the app runs on a new container" "$APP/var/cache/prod/container" bin/console
+    expect_failure "deploying the previous sha again is refused"
+    expect_output "the refusal points at rollback" "is the previous release, use rollback"
+    expect_no_calls "deploying the previous sha runs nothing"
+    expect_tree_unchanged "deploying the previous sha keeps the release rollback needs"
+}
+
+rollback_and_forward() {
+    clear_log
+    run gate /dev/null rollback
+    expect_exit "rollback exits 0" 0
+    expect_output "rollback says what it did" "rolled back"
+    expect_output "rollback prints the sha now live" "DEPLOYED_SHA=$SHA"
+    expect_live "rollback makes the previous release current" "$SHA"
+    expect_link "rollback keeps the release it left as previous" "$DEPLOY_ROOT/previous" "releases/$OTHER_SHA"
+    expect_calls "rollback only empties the HTTP cache, in the release it went back to" "release list --raw"
+    expect_clean_gate "rollback leaves no temporary link"
+
+    run gate /dev/null rollback
+    expect_exit "a second rollback goes forward again" 0
+    expect_live "a second rollback makes the newer release current" "$OTHER_SHA"
+    expect_link "and the older one previous" "$DEPLOY_ROOT/previous" "releases/$SHA"
+
+    mkdir "$DEPLOY_WORK/.lock"
+    remember_tree
+    clear_log
+    run gate /dev/null rollback
+    expect_exit "rollback waits for no running deploy: it is refused" 2
+    expect_output "the refusal says why" "another deploy is running"
+    expect_tree_unchanged "a refused rollback changes nothing"
+    [ -d "$DEPLOY_WORK/.lock" ] || fail "the refused rollback took the deploy's lock away"
+    ok "the refused rollback keeps the deploy's lock"
+    rmdir "$DEPLOY_WORK/.lock"
+
+    mv "$DEPLOY_ROOT/previous" "$work/previous.saved"
+    remember_tree
+    clear_log
+    run gate /dev/null rollback
+    expect_failure "rollback without a previous release fails"
+    expect_output "the failure says why" "no previous release"
+    expect_no_calls "a rollback that cannot go anywhere runs nothing"
+    expect_tree_unchanged "a rollback that cannot go anywhere changes nothing"
+    mv "$work/previous.saved" "$DEPLOY_ROOT/previous"
+}
+
+# ls -t orders by the time a release was moved in; these deploys are faster than its resolution.
+age_release() { # age_release <sha> <yyyy>
+    touch -t "${2}01010000" "$DEPLOY_ROOT/releases/$1"
+}
+
+prune() {
+    run gate "$work/release.tgz" "deploy $THIRD_SHA"
+    expect_exit "a third deploy exits 0" 0
+    [ "$(find "$DEPLOY_ROOT/releases" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')" = 3 ] || fail "three releases are no more than KEEP"
+    ok "three releases are all kept"
+
+    age_release "$SHA" 2020
+    age_release "$OTHER_SHA" 2021
+    age_release "$THIRD_SHA" 2022
+    run gate "$work/release.tgz" "deploy $FOURTH_SHA"
+    expect_exit "a fourth deploy exits 0" 0
+    expect_output "the prune says what it removed" "pruned $SHA"
+    expect_gone "the oldest release is pruned" "$DEPLOY_ROOT/releases/$SHA"
+    for sha in "$OTHER_SHA" "$THIRD_SHA" "$FOURTH_SHA"; do
+        [ -d "$DEPLOY_ROOT/releases/$sha" ] || fail "release $sha was pruned"
+    done
+    ok "the newest three stay"
+
+    age_release "$OTHER_SHA" 2021
+    age_release "$THIRD_SHA" 2022
+    age_release "$FOURTH_SHA" 2023
+    run env DEPLOY_KEEP=1 sh -c "SSH_ORIGINAL_COMMAND='deploy $FIFTH_SHA' sh '$ROOT/bin/deploy-gate' < '$work/release.tgz'"
+    expect_exit "a deploy with KEEP=1 exits 0" 0
+    expect_live "the fifth release is live" "$FIFTH_SHA"
+    expect_link "the fourth is previous" "$DEPLOY_ROOT/previous" "releases/$FOURTH_SHA"
+    [ -d "$DEPLOY_ROOT/releases/$FOURTH_SHA" ] || fail "the previous release was pruned"
+    ok "the previous release is never pruned, whatever KEEP says"
+    expect_gone "older releases go" "$DEPLOY_ROOT/releases/$THIRD_SHA"
+    expect_gone "older releases go" "$DEPLOY_ROOT/releases/$OTHER_SHA"
+    expect_file "pruning leaves shared state alone" "$APP/var/media/content/photo.jpg" original
 }
 
 deploy_failures() {
@@ -285,35 +374,38 @@ deploy_failures() {
     clear_log
     STUB_FAIL=app:prod:check-env
     export STUB_FAIL
-    run gate "$work/release.tgz" "deploy $SHA"
+    run gate "$work/release.tgz" "deploy $NEW_SHA"
     expect_failure "a failing env guard fails the deploy"
-    expect_output "the guard's failure says nothing changed" "the env guard refused, nothing was changed"
-    expect_tree_unchanged "a failing env guard leaves the live tree"
-    expect_calls "a failing env guard runs no migration" "stage list --raw
-stage app:prod:check-env"
+    expect_output "the guard's failure says nothing live changed" "the env guard refused, the live release is unchanged"
+    expect_tree_unchanged "a failing env guard leaves the server tree, the new directory included"
+    expect_calls "a failing env guard runs no migration" "release list --raw
+release app:prod:check-env"
     expect_clean_gate "a failing env guard cleans up"
 
-    clear_log
-    STUB_FAIL=doctrine:migrations:migrate
-    run gate "$work/release.tgz" "deploy $SHA"
-    expect_failure "a failing migration fails the deploy"
-    expect_output "the migration's failure says the app is unchanged" "the app is unchanged"
-    expect_tree_unchanged "a failing migration leaves the live tree"
+    for step in doctrine:migrations:migrate cache:warmup app:geo:import-towns; do
+        clear_log
+        STUB_FAIL="$step"
+        run gate "$work/release.tgz" "deploy $NEW_SHA"
+        expect_failure "a failing $step fails the deploy"
+        expect_output "the failure of $step says the live release is unchanged" "the live release is unchanged"
+        expect_tree_unchanged "a failing $step leaves the server tree"
+        expect_clean_gate "a failing $step cleans up"
+    done
     unset STUB_FAIL
 
     clear_log
     STUB_NO_GUARD=1
     export STUB_NO_GUARD
-    run gate "$work/release.tgz" "deploy $SHA"
+    run gate "$work/release.tgz" "deploy $NEW_SHA"
     unset STUB_NO_GUARD
     expect_failure "a release without the env guard is refused"
     expect_output "the refusal names the guard" "app:prod:check-env is missing"
-    expect_tree_unchanged "a release without the env guard leaves the live tree"
+    expect_tree_unchanged "a release without the env guard leaves the server tree"
 
     clear_log
     STUB_BROKEN_ENV=1
     export STUB_BROKEN_ENV
-    run gate "$work/release.tgz" "deploy $SHA"
+    run gate "$work/release.tgz" "deploy $NEW_SHA"
     unset STUB_BROKEN_ENV
     expect_failure "a console that does not boot fails the deploy"
     expect_output "the failure says the console did not boot" "does not boot"
@@ -322,7 +414,7 @@ stage app:prod:check-env"
         *stub-secret-excerpt*) fail "the console's stderr reached the output" ;;
         *) ok "a broken boot is named as such, and its stderr stays out" ;;
     esac
-    expect_tree_unchanged "a console that does not boot leaves the live tree"
+    expect_tree_unchanged "a console that does not boot leaves the server tree"
 
     for file in bin/console vendor/autoload_runtime.php public/index.php public/assets/manifest.json public/admin-build/.vite/manifest.json; do
         rm -rf "$work/broken"
@@ -330,91 +422,61 @@ stage app:prod:check-env"
         rm "$work/broken/$file"
         pack "$work/broken" "$work/broken.tgz"
         clear_log
-        run gate "$work/broken.tgz" "deploy $SHA"
+        run gate "$work/broken.tgz" "deploy $NEW_SHA"
         expect_failure "a tarball without $file is refused"
         expect_output "the refusal names $file" "the tarball lacks $file"
         expect_no_calls "a tarball without $file runs nothing"
     done
-    expect_tree_unchanged "a broken tarball leaves the live tree"
+    expect_tree_unchanged "a broken tarball leaves the server tree"
 
     printf 'this is no tarball' > "$work/garbage"
     clear_log
-    run gate "$work/garbage" "deploy $SHA"
+    run gate "$work/garbage" "deploy $NEW_SHA"
     expect_failure "garbage on stdin fails the deploy"
     expect_no_calls "garbage on stdin runs nothing"
-    expect_tree_unchanged "garbage on stdin leaves the live tree"
+    expect_tree_unchanged "garbage on stdin leaves the server tree"
     expect_clean_gate "garbage on stdin cleans up"
 
     mkdir "$DEPLOY_WORK/.lock"
     clear_log
-    run gate "$work/release.tgz" "deploy $SHA"
+    run gate "$work/release.tgz" "deploy $NEW_SHA"
     expect_exit "a held lock refuses a second deploy" 2
     expect_output "the refusal says why" "another deploy is running"
     expect_no_calls "a held lock runs nothing"
-    expect_tree_unchanged "a held lock leaves the live tree"
+    expect_tree_unchanged "a held lock leaves the server tree"
     [ -d "$DEPLOY_WORK/.lock" ] || fail "the refused deploy took the other run's lock away"
     ok "the refused deploy keeps the other run's lock"
     rmdir "$DEPLOY_WORK/.lock"
 
-    mkdir "$work/no-rsync"
-    for tool in sh mkdir rm head tar gzip ln dirname grep sed printf cat pwd; do
-        path="$(command -v "$tool" || true)"
-        case "$path" in
-            /*) ln -s "$path" "$work/no-rsync/$tool" ;;
-            *) ;;
-        esac
-    done
+    mv "$SHARED/.env.local" "$work/env.local.saved"
+    remember_tree
     clear_log
-    SSH_ORIGINAL_COMMAND="deploy $SHA" run env PATH="$work/no-rsync" "$work/no-rsync/sh" "$ROOT/bin/deploy-gate" < "$work/release.tgz"
-    expect_failure "no rsync fails the deploy"
-    expect_output "the refusal names rsync" "rsync is not installed"
-    expect_no_calls "no rsync runs no migration"
-    expect_tree_unchanged "no rsync leaves the live tree"
-    expect_clean_gate "no rsync cleans up"
-
-    mv "$APP/.env.local" "$work/env.local.saved"
-    clear_log
-    run gate "$work/release.tgz" "deploy $SHA"
-    expect_failure "a server without .env.local is refused"
+    run gate "$work/release.tgz" "deploy $NEW_SHA"
+    expect_failure "a server without shared/.env.local is refused"
     expect_output "the refusal names the file" ".env.local is missing"
     expect_no_calls "a server without .env.local runs nothing"
-    mv "$work/env.local.saved" "$APP/.env.local"
+    expect_tree_unchanged "a server without .env.local is left alone"
+    mv "$work/env.local.saved" "$SHARED/.env.local"
 
-    run sh "$APP/bin/deploy" install "$SHA"
-    expect_failure "install refuses to run from the app itself"
+    run sh "$APP/bin/deploy" install "$NEW_SHA"
+    expect_failure "install refuses to run from a release"
     expect_output "the refusal says where it must run" "must run from the unpacked tarball"
 
     run sh "$work/release/bin/deploy" install abc
     expect_failure "install refuses a short sha on its own too"
 }
 
-deploy_failures_after_the_sync() {
-    age_the_sha_file
+deploy_failure_after_the_switch() {
+    STUB_HTTP_CACHE=1
+    STUB_FAIL=app:http-cache:clear
+    export STUB_HTTP_CACHE STUB_FAIL
     clear_log
-    SSH_ORIGINAL_COMMAND="deploy $SHA" STUB_RSYNC_EXIT=23 run env PATH="$work/tools:$PATH" sh "$ROOT/bin/deploy-gate" < "$work/release.tgz"
-    expect_exit "a failing rsync fails the deploy with its own message" 1
-    expect_output "the failure says the tree may be mixed" "the live tree may be a mix of old and new files"
-    expect_output "the failure says what to do" "then deploy again"
-    expect_clean_gate "a failing rsync cleans up"
-    if grep -q '^/.* cache:warmup' "$STUB_LOG"; then
-        fail "the deploy went on after a failing rsync"
-    fi
-    ok "a failing rsync stops the deploy"
-
-    age_the_sha_file
-    STUB_FAIL=cache:warmup
-    export STUB_FAIL
-    clear_log
-    run gate "$work/release.tgz" "deploy $SHA"
-    expect_failure "a failing cache:warmup fails the deploy"
-    expect_output "the failure says the files are live" "files are live but cache:warmup failed"
-    expect_output "the failure names the command that recovers" "rm -rf var/cache/prod var/cache/prod.old && $DEPLOY_PHP bin/console cache:warmup"
-    STUB_FAIL=app:geo:import-towns
-    clear_log
-    run gate "$work/release.tgz" "deploy $SHA"
-    expect_failure "a failing towns import fails the deploy"
-    expect_output "the failure says the files are live" "files are live but the towns import failed"
-    unset STUB_FAIL
+    run gate "$work/release.tgz" "deploy $NEW_SHA"
+    unset STUB_HTTP_CACHE STUB_FAIL
+    expect_failure "a failing purge after the switch fails the deploy"
+    expect_output "the failure says the release is live" "the release is live but the HTTP cache could not be cleared"
+    expect_live "the new release stays live" "$NEW_SHA"
+    expect_clean_gate "a failing purge cleans up"
 }
 
 broken_boot_never_reads_as_skipped() {
@@ -440,24 +502,26 @@ purge_and_check() {
     run gate /dev/null purge
     expect_exit "purge exits 0" 0
     expect_output "purge without #19 says so" "no app:http-cache:clear in this build"
-    expect_calls "purge runs in the app" "app list --raw"
+    expect_calls "purge runs in current" "current list --raw"
 
     STUB_HTTP_CACHE=1
     export STUB_HTTP_CACHE
     clear_log
     run gate /dev/null purge
     unset STUB_HTTP_CACHE
-    expect_calls "purge runs the clear when the build has it" "app list --raw
-app app:http-cache:clear"
+    expect_calls "purge runs the clear when the build has it" "current list --raw
+current app:http-cache:clear"
 
     clear_log
     run gate /dev/null check
     expect_exit "check exits 0" 0
-    expect_output "check prints the sha" "sha=$SHA"
+    expect_output "check prints the live sha" "sha=$NEW_SHA"
+    expect_output "check prints the previous sha" "previous=$FIFTH_SHA"
+    expect_output "check prints the number of releases" "releases=3"
     expect_output "check prints the PHP version" "php=8.5.0-stub"
     expect_output "check prints the free disk" "free"
-    expect_calls "check runs the guard in the app" "app list --raw
-app app:prod:check-env"
+    expect_calls "check runs the guard in current" "current list --raw
+current app:prod:check-env"
 
     STUB_FAIL=app:prod:check-env
     export STUB_FAIL
@@ -471,8 +535,8 @@ cron_midnight() {
     run sh "$APP/bin/cron-midnight"
     expect_exit "cron-midnight exits 0" 0
     expect_no_output "cron-midnight is silent"
-    expect_calls "cron-midnight runs only the clear" "app app:http-cache:clear"
-    expect_gone "cron-midnight releases the lock" "$APP/var/cache-clear.lock"
+    expect_calls "cron-midnight runs only the clear" "release app:http-cache:clear"
+    expect_gone "cron-midnight releases the lock" "$APP/var/lock/cache-clear.lock"
 
     STUB_PRINT=app:http-cache:clear
     export STUB_PRINT
@@ -488,13 +552,13 @@ cron_midnight() {
     expect_failure "cron-midnight reports a failed clear"
     expect_output "cron-midnight says the clear failed" "cron-midnight: the clear failed"
     expect_output "the clear's own output follows" "stub: app:http-cache:clear failed"
-    expect_gone "a failed clear releases the lock" "$APP/var/cache-clear.lock"
+    expect_gone "a failed clear releases the lock" "$APP/var/lock/cache-clear.lock"
 
     clear_log
     run sh "$APP/bin/cron-cache-guard"
     expect_exit "cron-cache-guard exits 0" 0
-    expect_calls "the guard clears only over the limit" "app app:http-cache:clear --if-over-limit"
-    expect_gone "the guard releases the lock" "$APP/var/cache-clear.lock"
+    expect_calls "the guard clears only over the limit" "release app:http-cache:clear --if-over-limit"
+    expect_gone "the guard releases the lock" "$APP/var/lock/cache-clear.lock"
 }
 
 wait_for_file() { # wait_for_file <path>
@@ -514,7 +578,7 @@ cron_lock() {
     wait_for_file "$work/started"
     run sh "$APP/bin/cron-cache-guard"
     expect_exit "the guard skips a tick quietly" 0
-    expect_calls "the guard does not clear while midnight holds the lock" "app app:http-cache:clear"
+    expect_calls "the guard does not clear while midnight holds the lock" "release app:http-cache:clear"
     : > "$work/go"
     wait "$midnight" || fail "cron-midnight failed behind the guard"
 
@@ -527,29 +591,33 @@ cron_lock() {
     midnight=$!
     # Long enough for a retry of the one-second wait.
     sleep 1.3
-    expect_calls "midnight waits for the guard" "app app:http-cache:clear --if-over-limit"
+    expect_calls "midnight waits for the guard" "release app:http-cache:clear --if-over-limit"
     : > "$work/go"
     wait "$guard" || fail "the guard failed"
     wait "$midnight" || fail "cron-midnight failed after waiting"
-    expect_calls "midnight clears once the guard is done" "app app:http-cache:clear --if-over-limit
-app app:http-cache:clear"
-    expect_gone "both release the lock" "$APP/var/cache-clear.lock"
+    expect_calls "midnight clears once the guard is done" "release app:http-cache:clear --if-over-limit
+release app:http-cache:clear"
+    expect_gone "both release the lock" "$APP/var/lock/cache-clear.lock"
 
-    mkdir "$APP/var/cache-clear.lock"
-    touch -t 202001010000 "$APP/var/cache-clear.lock"
+    mkdir "$APP/var/lock/cache-clear.lock"
+    touch -t 202001010000 "$APP/var/lock/cache-clear.lock"
     clear_log
     run sh "$APP/bin/cron-cache-guard"
-    expect_calls "a stale lock is taken over" "app app:http-cache:clear --if-over-limit"
-    expect_gone "the new owner releases it" "$APP/var/cache-clear.lock"
+    expect_calls "a stale lock is taken over" "release app:http-cache:clear --if-over-limit"
+    expect_gone "the new owner releases it" "$APP/var/lock/cache-clear.lock"
 
-    mkdir "$APP/var/cache-clear.lock"
+    mkdir "$APP/var/lock/cache-clear.lock"
     run sh -c "cd '$APP' && . bin/cron-lock.sh && cache_lock_acquire 2"
     expect_failure "a fresh lock stays busy until the tries run out"
-    rmdir "$APP/var/cache-clear.lock"
+    rmdir "$APP/var/lock/cache-clear.lock"
 }
 
 cron_daily() {
-    rm -rf "$APP/var/import-staging" "$APP/var/sessions" "$APP/var/lock" "$APP/var/stats"
+    # A fresh server: bin/deploy made the shared directories, and they are empty.
+    for d in import-staging sessions lock stats; do
+        rm -rf "${SHARED:?}/var/$d"
+        mkdir "$SHARED/var/$d"
+    done
     clear_log
     run sh "$APP/bin/cron-daily"
     expect_exit "cron-daily exits 0 on a fresh server" 0
@@ -577,13 +645,13 @@ cron_daily() {
     run sh "$APP/bin/cron-daily"
     expect_exit "cron-daily exits 0 on a good night" 0
     expect_no_output "a good night prints nothing"
-    expect_calls "cron-daily runs its seven commands in order" "app app:inquiries:purge
-app app:crm:refresh-stages
-app app:crm:renewal-tasks
-app app:crm:backfill-inquiries
-app app:inquiries:report-stuck
-app app:stats:ingest
-app cache:pool:prune"
+    expect_calls "cron-daily runs its seven commands in order" "release app:inquiries:purge
+release app:crm:refresh-stages
+release app:crm:renewal-tasks
+release app:crm:backfill-inquiries
+release app:inquiries:report-stuck
+release app:stats:ingest
+release cache:pool:prune"
     expect_gone "an abandoned upload is swept" "$APP/var/import-staging/abandoned"
     [ -d "$APP/var/import-staging/young" ] || fail "a young upload was swept"
     ok "a young upload stays"
@@ -606,13 +674,13 @@ app cache:pool:prune"
     expect_failure "a failed step fails cron-daily"
     expect_output "the failed step is named" "cron-daily: inquiries-purge failed"
     expect_output "the step's own output follows" "stub: app:inquiries:purge failed"
-    expect_calls "the other steps still run" "app app:inquiries:purge
-app app:crm:refresh-stages
-app app:crm:renewal-tasks
-app app:crm:backfill-inquiries
-app app:inquiries:report-stuck
-app app:stats:ingest
-app cache:pool:prune"
+    expect_calls "the other steps still run" "release app:inquiries:purge
+release app:crm:refresh-stages
+release app:crm:renewal-tasks
+release app:crm:backfill-inquiries
+release app:inquiries:report-stuck
+release app:stats:ingest
+release cache:pool:prune"
 
     STUB_PRINT=app:inquiries:report-stuck
     export STUB_PRINT
@@ -897,14 +965,14 @@ pull_media_backup() {
     clear_log
     run pull_backup
     expect_exit "a pull exits 0" 0
-    expect_calls "a pull copies both trees, additive" "rsync -rltz site@host.example:www/hochzeitslocation.ch/var/media/ $work/backup/var-media/
-rsync -rltz site@host.example:www/hochzeitslocation.ch/public/media/ $work/backup/public-media/"
+    expect_calls "a pull copies both trees, additive" "rsync -rltz site@host.example:/var/www/deine-eventlocation.ch/current/var/media/ $work/backup/var-media/
+rsync -rltz site@host.example:/var/www/deine-eventlocation.ch/current/public/media/ $work/backup/public-media/"
 
     clear_log
     run pull_backup --verify
     expect_exit "--verify passes when nothing differs" 0
-    expect_calls "--verify compares checksums without copying" "rsync -rlnc --itemize-changes site@host.example:www/hochzeitslocation.ch/var/media/ $work/backup/var-media/
-rsync -rlnc --itemize-changes site@host.example:www/hochzeitslocation.ch/public/media/ $work/backup/public-media/"
+    expect_calls "--verify compares checksums without copying" "rsync -rlnc --itemize-changes site@host.example:/var/www/deine-eventlocation.ch/current/var/media/ $work/backup/var-media/
+rsync -rlnc --itemize-changes site@host.example:/var/www/deine-eventlocation.ch/current/public/media/ $work/backup/public-media/"
 
     STUB_RSYNC_OUTPUT='>fc...... photo.jpg'
     export STUB_RSYNC_OUTPUT
@@ -927,25 +995,26 @@ rsync -rlnc --itemize-changes site@host.example:www/hochzeitslocation.ch/public/
 }
 
 prepare() {
-    mkdir -p "$work" "$APP" "$DEPLOY_WORK" "$work/checkout/bin" "$work/checkout/var/prod-media/originals/content" "$work/checkout/var/prod-media/public" \
+    mkdir -p "$work" "$work/checkout/bin" "$work/checkout/var/prod-media/originals/content" "$work/checkout/var/prod-media/public" \
         "$work/checkout/content/owner"
     clear_log
     write_stub_php
     write_stub_tools
     build_release "$work/release"
     pack "$work/release" "$work/release.tgz"
-    live_tree
+    server_tree
     cp "$ROOT/bin/prod-import" "$work/checkout/bin/prod-import"
 }
 
 main() {
     prepare
     gate_refusals
-    deploy_ok
-    deploy_with_http_cache
-    deploy_that_drops_a_bundle
+    deploy_first
+    deploy_second
+    rollback_and_forward
+    prune
     deploy_failures
-    deploy_failures_after_the_sync
+    deploy_failure_after_the_switch
     broken_boot_never_reads_as_skipped
     purge_and_check
     cron_midnight
