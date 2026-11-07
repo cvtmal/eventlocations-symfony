@@ -99,7 +99,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F3 | `event-vocabulary` | M | F0, F1 | `taxonomy_terms`, `venue_terms`; the wedding-fact columns of `venues` and `venue_translations` | — | Todo |
 | F4 | `room-layouts` | S–M | F3 | `rooms`, `room_translations` (layout capacities) | — | Todo |
 | F5 | `filter-event` | M | F3 | indexes only | — | Todo |
-| F6 | `brand-design` | L | F1 | — | — (D23, D32) | Todo |
+| F6 | `brand-design` | L | F1 | — | — (D23, D32) | Done (`98f38d7`) |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Todo |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Todo |
@@ -113,7 +113,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 
 Sizes: S about half a day, M one to two days, L three days or more. F2 and F10 (languages) are gone with E3 and D13; the numbers are not reused. F7 is split: F7a `du-flip` (done) closed the last gaps of the du flip (E4) and widened the guard test, F7b `event-copy-de` is the rest of the copy. The cycles G1 to G16 are in Wave G §3 at the end of this file; where Wave G changes a dependency, the table above already shows it (F13 after G7, F14 after G5).
 
-**Order.** F0, F0b, F1 and F7a are done. F3 and F6 run in parallel lanes, then the rest by dependency. Lanes and the critical path are in Wave G §4. F15 is minimal (docs for a generic host), and F16 comes last.
+**Order.** F0, F0b, F1, F6 and F7a are done. F3 runs, then the rest by dependency. Lanes and the critical path are in Wave G §4. F15 is minimal (docs for a generic host), and F16 comes last.
 
 **History.** The sister site's cycles #0 to #57 are done and no longer in this file. Their bodies and Outcomes: `git show 7e96eee:docs/rpi-cycles.md` (the tag `fork-point` is local). Mentions such as `#43` in Wave G, in the module notes and in code comments point there.
 
@@ -604,9 +604,11 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Depends on** F3 (F4 is not needed: no layout filter, D4). **Owns** indexes only. **Scope.** The route rename (PO decision 2026-11-07, owner-corrected the same day, priority "Event look"): every `/hochzeitslocation…` path becomes an `/eventlokal…` path, because the owner wants to rank for the search term "Eventlokale" (`/eventlokale` listing, `/eventlokale/{canton}` and `/eventlokale/{canton}/{town}` landing pages, `/eventlokal/{venue-slug}` detail page, `/eventlokal-in-meiner-naehe`), without redirects (no production data), route names unchanged. "Eventlokale" is a generic German word, so it is a keyword in the path; the competitor's name, domain and logo do not appear in titles, meta, copy or structured data (CMO §8, §16). `SearchCriteria` (hotspot) gains the event type (`event[]`, OR inside the group, E5) and a guest number in place of the wedding `GuestBand` bands (D4: the guest number is the only capacity criterion); the home hero search (Kanton, Anlass, Anzahl Gäste), the filter overlays, `FilterDataQuery` and its hiding rule; the wedding filter codes and parameters (`ceremony[]`, `usage`, `price`, `curfew`, the seven wedding `amenity` codes), `_more_wedding.html.twig` and the `HomeCategory` tiles go. **Done when** the listing and the home search filter by event type and guest number, the URL codec stays stable and shareable (FI-6), the live count works, no wedding filter parameter is left, the S11 budgets and an `EXPLAIN` on the demo data ×10 hold, tests in the Integration and Application suites.
 
-### F6 `brand-design` (L)
+### F6 `brand-design` (L, done)
 
 **Depends on** F1. Its brand is the brand (D23). Runs in its own lane beside F3 to F5. **Owns** no schema. **Scope.** S15: new boards in `docs/reference/public/`, tokens, logo (the SVG wordmark, D23), favicon, the mail look (`templates/emails/layout.html.twig`, class prefix `hl-`), the contrast table, the home page board, and a neutral card placeholder per event type. The sister site's brand goes. **Done when** every public page and mail runs on the new tokens, no sister-site brand asset is left in `assets/` or `public/`, the contrast table passes, `make perf-check` holds, 390 px and 1440 px screenshots match the boards, and swapping the brand means editing token, font and logo files only.
+
+**Outcome** (merged as `98f38d7`, 2026-11-07; recorded by the PO from the PR). The wedding brand is gone. Tokens in `assets/styles/abstracts/_tokens.scss` (names unchanged): indigo primary `#3a3fb0`, vermilion accent `#e0501a`, cool neutrals; `ContrastTokensTest` green. Typeface Hanken Grotesk (OFL, one variable woff2), chosen because its widths match Figtree within 1 %, so no line wraps differently. Inline SVG wordmark (`templates/components/_logo.html.twig`), `public/brand/` with favicons, app icons, `og-default.png`, `mail-logo.png`, `site.webmanifest`; mails and the back-office accent follow the tokens. A photo placeholder per event type (`templates/components/_photo_placeholder.html.twig`) on every card, the home hero and detail pages without photos (D32). CSP gained `manifest-src 'self'`. Swap points and every file: `docs/brand.md`; guards `BrandFilesTest`, `PhotoPlaceholderTest`. The design system is also published privately as an artifact (https://claude.ai/artifact/62CFPCBUmi8R7JwJJd4woV). Left for others: `public/.htaccess`, `bin/*` and `deploy/*` still name hochzeitslocation.ch (F15); F3's final event-type codes may need a line in the placeholder's map (F5, F7b); the logo lockup, social cards, favicon set and mail header are polished in `brand-assets` (D23).
 
 ### F7a `du-flip` (S, done)
 

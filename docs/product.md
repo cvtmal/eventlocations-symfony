@@ -19,7 +19,7 @@ It is modelled on eventlokale.ch's features and behaviour. Its texts, photos, ve
 
 ## What the product does today
 
-The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). Wording, filters and vocabulary are still the wedding site's until F3 to F8.
+The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). The look is our own since F6 (indigo and vermilion, Hanken Grotesk, `docs/brand.md`); wording, filters and vocabulary are still the wedding site's until F3, F5, F7b and F8.
 
 - **Public:** home page, one listing with filters, one detail page per venue with photos, rooms, documents and map, canton landing pages, the Merkliste without login, an inquiry form on every venue, SEO basics, own cookieless statistics.
 - **Back office (`/admin`, staff only, 2FA):** CMS for entries, photos, rooms, documents, landing pages and text blocks; CRM for Locations (prospects and customers), deals, tasks, timeline, e-mail, inquiries; statistics.
