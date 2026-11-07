@@ -48,11 +48,15 @@ cache-clear: ## Clear the Symfony cache
 	$(CONSOLE) cache:clear
 
 ## —— Assets ——
-.PHONY: sass sass-watch
+.PHONY: sass sass-watch brand-png
 sass: ## Build the Sass entry points into var/sass/ (needed before rendering any page)
 	$(CONSOLE) sass:build
 sass-watch: ## Rebuild Sass on change
 	$(CONSOLE) sass:build --watch
+
+brand-png: ## Render public/brand/*.png and favicon.ico from the SVG sources (Chromium of the tools image; docs/brand.md)
+	$(EXEC) php bin/console app:brand:og-card --out=var/brand/og-default.svg
+	docker compose --profile tools run --rm --no-deps -v ./:/repo --entrypoint node lighthouse /repo/docker/lighthouse/render-brand.mjs
 
 ## —— Database ——
 db-create: ## Create the database if missing

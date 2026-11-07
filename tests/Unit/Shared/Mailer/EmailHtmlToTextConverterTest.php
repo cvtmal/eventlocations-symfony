@@ -91,8 +91,8 @@ final class EmailHtmlToTextConverterTest extends TestCase
     public function test_a_cell_holding_only_an_image_yields_no_block(): void
     {
         $text = $this->convert($this->card(
-            '<tr><td class="hl-plate"><a href="http://localhost/"><img src="cid:logo" alt="hochzeitslocation.ch" width="126" height="28"></a></td></tr>'
-            .'<tr><td><img src="cid:logo" alt="hochzeitslocation.ch"></td></tr>'
+            '<tr><td class="hl-band"><a href="http://localhost/"><img src="cid:logo" alt="deine-eventlocation.ch" width="215" height="24"></a></td></tr>'
+            .'<tr><td><img src="cid:logo" alt="deine-eventlocation.ch"></td></tr>'
             .'<tr><td class="hl-p">Body</td></tr>',
         ));
 

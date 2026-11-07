@@ -13,7 +13,15 @@
             background: none;
         }
 
-        .site-header,
+        // Only the wordmark stays, in the monochrome variant (components/_logo.scss).
+        .site-header {
+            position: static;
+            background: none;
+        }
+
+        .site-header__actions,
+        .site-header__menu,
+        .main-menu,
         .site-footer,
         .toast-region,
         .skip-link,

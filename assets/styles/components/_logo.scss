@@ -21,3 +21,17 @@
 .logo__name {
     fill: currentColor;
 }
+
+// The monochrome variant (docs/brand.md; public/brand/logo-mono.svg): on paper the logo is black, with the pin in white.
+@media print {
+    .logo__badge,
+    .logo__tld,
+    .logo__spark,
+    .logo__name {
+        fill: var(--c-ink-strong);
+    }
+
+    .logo__pin {
+        fill: var(--c-surface-raised);
+    }
+}

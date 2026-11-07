@@ -22,6 +22,7 @@
 .venue-facts__row {
     display: grid;
     gap: var(--space-4);
+    overflow-wrap: anywhere; // an unbroken word (a long ambience, a URL) wraps instead of widening the page at 390 px
 
     @include bp.up(md) {
         grid-template-columns: 12.5rem minmax(0, 1fr);

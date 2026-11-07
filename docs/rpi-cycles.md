@@ -100,7 +100,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F4 | `room-layouts` | S–M | F3 | `rooms`, `room_translations` (layout capacities) | — | Done |
 | F5 | `filter-event` | M | F3 | indexes only | — | Todo |
 | F6 | `brand-design` | L | F1 | — | — (D23, D32) | Done (`98f38d7`) |
-| F6b | `brand-assets` | M | F6 | — | — (D23) | Todo |
+| F6b | `brand-assets` | M | F6 | — | — (D23) | Done |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Todo |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Todo |
@@ -633,6 +633,20 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 ### F6b `brand-assets` (M)
 
 **Depends on** F6. **Owns** no schema. **Scope.** Polish of the D23 brand, inside its colours and typeface: the logo lockup (wordmark with a mark, horizontal and stacked, light and dark), the OG and social cards (default card plus a per-venue and per-landing template that F7b and F8 can fill), the full favicon and app-icon set, and the mail header. The boards in `docs/reference/public/` (Canton, Detail, DetailDialogs, DetailReal, Error404, Filterbar, Guests and the rest, each at 390 and 1440 px) are rebuilt in the D23 look and replace the wedding boards; event wording on them follows F3's vocabulary. **Done when** no board shows the wedding look or wording, 390 px and 1440 px screenshots of the live pages match the new boards, every new asset is listed in `docs/brand.md` and pinned by `BrandFilesTest`, the contrast table passes, and `make perf-check` holds.
+
+**Outcome** (2026-11-07). The brand's files are complete and the boards are redrawn; `docs/brand.md` is the brand book (usage, clear space, minimum sizes, do and don't, swap checklist).
+
+- **Mark and lockups** (`public/brand/`): `favicon.svg` is the compact mark (the pin at 1.2 times F6's, so it reads at 16 px); `logo.svg`, `logo-dark.svg` (white badge, for the primary or dark grounds), `logo-stacked.svg`, `logo-stacked-dark.svg`, `logo-mono.svg`, `logo-stacked-mono.svg` (black, print). The inline logo draws the same pin; `BrandFilesTest` compares them. The printed venue page shows the header wordmark in mono (`@media print` in `components/_logo.scss`, `venues/detail/_print.scss`).
+- **Icons:** `favicon.ico` (16/32/48), `apple-touch-icon.png` (full indigo ground), `icon-192|512.png`, new `icon-maskable-192|512.png` (the manifest's `maskable` entries, pin in the 80 % safe zone). The back office and `/konto` sidebars show the mark above the wordmark.
+- **Share cards:** `templates/brand/og_card.svg.twig` + `App\Shared\ValueObject\OgCard` (`default`, `venue`, `landing`; wraps the title by characters, ends overflow in "…") + `make sf c="app:brand:og-card --variant=… --title=… --eyebrow=… --facts=… --out=…"`. `og-default.png` is the tagline card. F7b (venue without a photo) and F8 (landing pages) fill the other two; social networks need a PNG, and the server has no rasteriser, so they prerender (tools container) or keep the default card.
+- **`make brand-png`** renders every PNG and the ICO of `public/brand/` from the SVG sources with the tools image's Chromium (`docker/lighthouse/render-brand.mjs`); tooling only.
+- **Mail header:** an indigo band with the dark lockup (`mail-logo.png` is now the dark lockup on indigo, 430 × 48) and a 32 × 3 vermilion bar; the white logo plate and its dark-mode rule are gone (`hl-band`).
+- **Copy:** `layout.footer.tagline` is the approved "Eventlocations in der ganzen Schweiz, direkt bei der Location anfragen." (the default card says the same).
+- **Boards:** all 17 boards × 2 widths in the D23 look and F3's wording, PNGs re-rendered, `tokens.json` = the design system's, `canvas.json` heights synced; `logo-hzl.png` is gone. The README lists the known live differences: copy pending F7b (headings, footer canton list, Anlass list, prefilled message, error pages, Datenschutz), routes and guest/event filters pending F5 (board labels already use `/eventlokale…`).
+- **Fact rows** (`.venue-facts__row`) wrap anywhere: a 60-character word kept the 390 px page 547 px wide before, 390 px after (measured in Chromium).
+- **Checks:** `perf-check` green; Lighthouse (dev) `/` 99/100/100 and detail 100/100/100 (SEO 69 only from the dev `X-Robots-Tag: noindex`); W3C validator clean on `/` and a detail page.
+- **Follow-ups:** F7b writes the live copy the boards already show and may unify the inquiry's prefilled message; F8 decides how landing cards are rendered; venue names in capitals run wider than the card's 22-character line assumes (F7b keeps the normal case).
+- **Design system:** the artifact (https://claude.ai/artifact/62CFPCBUmi8R7JwJJd4woV) is republished with the lockups, the icon set, the new mail header and example venue and landing cards.
 
 ### F7a `du-flip` (S, done)
 
