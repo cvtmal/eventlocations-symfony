@@ -165,7 +165,7 @@ onboarding:
     step:
         texte: Texte
         ausstattung: Ausstattung
-        hochzeit: Hochzeit
+        veranstaltung: Veranstaltung
         fotos: Fotos
         kontakt: Kontakt
         pruefen: Prüfen

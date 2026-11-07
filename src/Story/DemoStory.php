@@ -28,7 +28,6 @@ use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\CandidateOrigin;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\ImageCandidate;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -47,8 +46,8 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  *
  * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town), plus one
  *   Liechtenstein venue (#46), and every tier (3/6/9/12/30, spread over the cantons).
- * - 1–5 rooms, 0–2 documents, terms of every group (one main building and one main setting
- *   each, "Hochzeit" always). No own rating or reviews: #53 retired them.
+ * - 1–5 rooms, 0–2 documents, terms of the seven filter groups (one main building and one main
+ *   setting each, 1–5 event types). No own rating or reviews: #53 retired them.
  * - Deterministic: faker is seeded and the distribution is index-based.
  * - Idempotent: it does nothing when venues exist, because `make seed` appends.
  * - Needs the towns of app:geo:import-towns (make seed runs it first).
@@ -60,9 +59,9 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  * - Variants are cached in var/demo-media/ per original: the first, cold `make seed` renders
  *   them (10–15 s once), later loads only copy files into public/media/<number>/. Before
  *   publishing, a venue's public/media/<number>/ is emptied (numbers restart after db-fresh).
- * - Wedding facts (#31): every second venue (even index) has the owner facts of S14, the
+ * - Event facts (#31, F3): every second venue (even index) has the event facts of S14, the
  *   others none, so both states of the detail page stay visible. Their share of each fact is
- *   index-based, all four curfew states occur, and the terms come from a seeded RNG of their
+ *   index-based, and the terms (amenity, catering, language) come from a seeded RNG of their
  *   own, after the media step, so nothing before it shifts.
  *
  * Names come from the word lists below and texts from faker; nothing is taken from
@@ -96,8 +95,8 @@ final class DemoStory extends Story
         'Eingangsbereich', 'Blick in den Saal', 'Bankett bei Kerzenlicht', 'Lounge am Abend',
     ];
     private const AMBIENCES = [
-        'Romantisch mit Seesicht', 'Rustikal im Grünen', 'Elegant und hell', 'Historisch mit Charme',
-        'Ländlich mit Weitblick', 'Alpin und gemütlich', 'Urban und unkompliziert',
+        'Hell und modern', 'Rustikal im Grünen', 'Elegant und repräsentativ', 'Historisch mit Charme',
+        'Industrial mit viel Platz', 'Alpin und gemütlich', 'Urban und unkompliziert',
     ];
 
     /**
@@ -162,7 +161,7 @@ final class DemoStory extends Story
             flush_after(fn () => $this->createMedia($i, $name, $venue, $rooms, $documents));
         }
 
-        flush_after(fn () => $this->createWeddingFacts($created, $terms));
+        flush_after(fn () => $this->createEventFacts($created, $terms));
         flush_after(fn () => $this->createSiteImport($created[0][1]));
     }
 
@@ -278,12 +277,12 @@ final class DemoStory extends Story
     }
 
     /**
-     * The owner facts of the even-index venues (see the class docblock). All fictional.
+     * The event facts of the even-index venues (see the class docblock). All fictional.
      *
      * @param array<int, array{string, Venue, list<Room>, list<VenueDocument>, VenueTranslation}> $created by index
      * @param array<string, list<TaxonomyTerm>>                                                   $terms
      */
-    private function createWeddingFacts(array $created, array $terms): void
+    private function createEventFacts(array $created, array $terms): void
     {
         foreach ($created as $i => [, $venue, , , $translation]) {
             if (0 !== $i % 2) {
@@ -296,24 +295,17 @@ final class DemoStory extends Story
             if (0 !== $step % 5) {
                 $venue->changeSeatingCapacity(max(1, intdiv($venue->capacityMax() * 2, 3)), $venue->capacityMax());
             }
-            match ($step % 4) {
-                1 => $venue->describePartyRules(PartyAllowed::Yes, false, null),
-                2 => $venue->describePartyRules(PartyAllowed::Limited, true, new \DateTimeImmutable('1970-01-01 02:00:00')),
-                3 => $venue->describePartyRules(PartyAllowed::No, true, null),
-                default => null,
-            };
             if (0 === $step % 3) {
                 $venue->changeInstagram('https://www.instagram.com/demo_location_'.$i);
             }
-            $translation->describeWedding(
+            $translation->describeEvent(
                 self::AMBIENCES[$step % \count(self::AMBIENCES)],
-                0 === $step % 4 ? 'Mit Tanzfläche sind es etwas weniger Sitzplätze.' : null,
-                2 === $step % 4 ? 'Ab Mitternacht nur noch Musik in Zimmerlautstärke.' : null,
+                0 === $step % 4 ? 'Mit Bühne und Leinwand sind es etwas weniger Sitzplätze.' : null,
                 0 === $step % 3 ? 'Mai bis Oktober, täglich ab 10 Uhr' : null,
             );
 
-            foreach ([TermGroup::Ceremony, TermGroup::Amenity, TermGroup::Dining, TermGroup::Vendor, TermGroup::Usage, TermGroup::Language] as $group) {
-                $count = TermGroup::Usage === $group ? 1 : $random->getInt(0, 3);
+            foreach ([TermGroup::Amenity, TermGroup::Catering, TermGroup::Language] as $group) {
+                $count = $random->getInt(0, 3);
                 if (0 === $count) {
                     continue;
                 }
@@ -418,8 +410,9 @@ final class DemoStory extends Story
     }
 
     /**
-     * 1–2 settings and 1–3 buildings (the first of each is the main one), "Hochzeit" plus
-     * 0–4 other occasions, and 0–4 terms of every other group.
+     * 1–2 settings and 1–3 buildings (the first of each is the main one), 1–5 event types (none
+     * of them forced), and 0–4 terms of every other filter group. The event groups (amenity,
+     * catering, language) belong to createEventFacts().
      *
      * @param array<string, list<TaxonomyTerm>> $terms
      */
@@ -428,13 +421,11 @@ final class DemoStory extends Story
         $picks = [
             'setting' => $faker->randomElements($terms['setting'], $faker->numberBetween(1, 2)),
             'building' => $faker->randomElements($terms['building'], $faker->numberBetween(1, 3)),
-            'suitable_for' => [
-                $terms['suitable_for'][0],
-                ...$faker->randomElements(\array_slice($terms['suitable_for'], 1), $faker->numberBetween(0, 4)),
-            ],
+            'suitable_for' => $faker->randomElements($terms['suitable_for'], $faker->numberBetween(1, 5)),
         ];
         foreach (['infrastructure', 'furniture', 'technology', 'surroundings'] as $group) {
-            $picks[$group] = $faker->randomElements($terms[$group], $faker->numberBetween(0, 4));
+            // Furniture has three terms only, and randomElements() refuses to draw more than there are.
+            $picks[$group] = $faker->randomElements($terms[$group], min(\count($terms[$group]), $faker->numberBetween(0, 4)));
         }
 
         foreach ($picks as $group => $groupTerms) {

@@ -123,7 +123,7 @@ final class LandingPageEditorTest extends WebTestCase
         foreach ($codes as $code) {
             VenueTermFactory::new()->term(TermGroup::Building, (string) $code)->create(['venue' => $venue]);
         }
-        $cantons = [Canton::BE, Canton::LU, Canton::UR, Canton::SZ, Canton::OW, Canton::NW, Canton::GL, Canton::ZG, Canton::FR, Canton::SO, Canton::BS];
+        $cantons = [Canton::BE, Canton::LU, Canton::UR, Canton::SZ, Canton::OW, Canton::NW, Canton::GL, Canton::ZG, Canton::FR, Canton::SO, Canton::BS, Canton::BL];
         foreach ($cantons as $canton) {
             $this->inCanton($canton, 1);
         }

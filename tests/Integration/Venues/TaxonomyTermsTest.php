@@ -11,8 +11,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * The 147 taxonomy_terms rows the migrations seed: counts, order, the 11 primary buildings,
- * and a catalogue label for every row (and a row for every label).
+ * The 118 taxonomy_terms rows the migrations seed (event-vocabulary, F3): counts, order, the 11
+ * primary buildings, and a catalogue label for every row (and a row for every label).
  */
 final class TaxonomyTermsTest extends KernelTestCase
 {
@@ -20,22 +20,19 @@ final class TaxonomyTermsTest extends KernelTestCase
 
     private const COUNTS = [
         'setting' => 5,
-        'building' => 39,
-        'suitable_for' => 21,
-        'infrastructure' => 9,
-        'furniture' => 5,
-        'technology' => 5,
+        'building' => 38,
+        'suitable_for' => 17,
+        'infrastructure' => 7,
+        'furniture' => 3,
+        'technology' => 8,
         'surroundings' => 6,
-        'ceremony' => 6,
-        'amenity' => 15,
-        'dining' => 13,
-        'vendor' => 8,
-        'usage' => 3,
+        'amenity' => 10,
+        'catering' => 12,
         'language' => 12,
     ];
 
     private const PRIMARY_BUILDINGS = [
-        'bar_club', 'event_venue', 'wedding_venue', 'hotel', 'party_room', 'restaurant',
+        'bar_club', 'event_venue', 'seminar_room', 'hotel', 'party_room', 'restaurant',
         'castle', 'congress_centre', 'forest_hut', 'farm_barn', 'mountain_hut',
     ];
 
@@ -50,7 +47,7 @@ final class TaxonomyTermsTest extends KernelTestCase
 
     public function test_every_group_has_its_terms_at_positions_one_to_n(): void
     {
-        self::assertSame(147, (int) $this->connection->fetchOne('SELECT count(*) FROM taxonomy_terms'));
+        self::assertSame(118, (int) $this->connection->fetchOne('SELECT count(*) FROM taxonomy_terms'));
         self::assertSame(array_map(static fn (TermGroup $group): string => $group->value, TermGroup::cases()), array_keys(self::COUNTS));
 
         foreach (self::COUNTS as $group => $count) {
@@ -69,9 +66,22 @@ final class TaxonomyTermsTest extends KernelTestCase
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT count(*) FROM taxonomy_terms WHERE primary_position IS NOT NULL AND term_group <> 'building'"));
     }
 
-    public function test_wedding_comes_first_in_suitable_for(): void
+    public function test_corporate_event_comes_first_in_suitable_for(): void
     {
-        self::assertSame('wedding', $this->connection->fetchOne("SELECT code FROM taxonomy_terms WHERE term_group = 'suitable_for' AND position = 1"));
+        self::assertSame('corporate_event', $this->connection->fetchOne("SELECT code FROM taxonomy_terms WHERE term_group = 'suitable_for' AND position = 1"));
+    }
+
+    public function test_the_wedding_only_terms_are_gone_and_wedding_stays_an_event_type(): void
+    {
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT count(*) FROM taxonomy_terms WHERE code IN ('wedding_venue', 'civil_ceremony', 'wedding_cake', 'wedding_planner', 'multiple_weddings')"));
+        self::assertSame(['suitable_for'], $this->connection->fetchFirstColumn("SELECT term_group FROM taxonomy_terms WHERE code = 'wedding'"));
+    }
+
+    public function test_wifi_lives_in_technology_and_the_stage_became_stage_lighting(): void
+    {
+        self::assertSame(['technology'], $this->connection->fetchFirstColumn("SELECT term_group FROM taxonomy_terms WHERE code = 'wifi'"));
+        self::assertSame(['technology'], $this->connection->fetchFirstColumn("SELECT term_group FROM taxonomy_terms WHERE code = 'stage_lighting'"));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT count(*) FROM taxonomy_terms WHERE code = 'stage'"));
     }
 
     public function test_every_row_has_a_label_and_every_label_a_row(): void
@@ -107,6 +117,6 @@ final class TaxonomyTermsTest extends KernelTestCase
         self::assertSame(['river', 'lake', 'countryside', 'mountains', 'city'], array_map(static fn ($term): string => $term->code(), $settings));
         self::assertSame(TermGroup::Setting, $settings[0]->termGroup());
         self::assertSame('term.setting.river', 'term.'.$settings[0]->term()->group->value.'.'.$settings[0]->term()->code);
-        self::assertCount(39, $repository->byGroup(TermGroup::Building));
+        self::assertCount(38, $repository->byGroup(TermGroup::Building));
     }
 }

@@ -12,7 +12,6 @@ use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\InstagramProfile;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
@@ -130,11 +129,10 @@ final class VenueDetailQuery
                     v.distance_airport_km, v.airport_name,
                     v.phone IS NOT NULL AS has_phone, v.inquiry_email, v.website, v.contact_person,
                     v.own_catering, v.daylight,
-                    v.price_level, v.capacity_seated, v.capacity_standing, v.party, v.has_curfew,
-                    to_char(v.curfew_at, 'HH24:MI') AS curfew_at, v.instagram, v.coordinates_from_town,
+                    v.price_level, v.capacity_seated, v.capacity_standing, v.instagram, v.coordinates_from_town,
                     v.google_place_id, v.google_rating_hidden,
                     t.slug, t.summary, t.description, t.meta_description, t.parking_text,
-                    t.ambience, t.capacity_note, t.party_note, t.opening_hours, t.region,
+                    t.ambience, t.capacity_note, t.opening_hours, t.region,
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
                             ORDER BY tt.position), '[]'::jsonb)
                         FROM venue_terms vt
@@ -213,7 +211,7 @@ final class VenueDetailQuery
                 $rooms,
             ),
             $venuePhotos,
-            self::wedding($row, $termsByGroup),
+            self::event($row, $termsByGroup),
             InstagramProfile::fromInput(self::nullableString($row['instagram']))?->url(),
             (bool) $row['coordinates_from_town'],
             self::nullableString($row['google_place_id']),
@@ -272,33 +270,25 @@ final class VenueDetailQuery
     }
 
     /**
-     * The terms of the owner groups are never fact groups: _facts renders every group it gets.
+     * The terms of the event groups (amenity, catering, language) are never fact groups: _facts
+     * renders every group it gets.
      *
      * @param array<string, mixed>      $row
      * @param array<string, list<Term>> $byGroup
      */
-    private static function wedding(array $row, array $byGroup): DetailWedding
+    private static function event(array $row, array $byGroup): DetailEvent
     {
-        \assert(null === $row['has_curfew'] || \is_bool($row['has_curfew']));
         $priceLevel = self::nullableString($row['price_level']);
-        $party = self::nullableString($row['party']);
 
-        return new DetailWedding(
+        return new DetailEvent(
             null === $priceLevel ? null : PriceLevel::from($priceLevel),
             self::nullableString($row['ambience']),
             self::nullableInt($row['capacity_seated']),
             self::nullableInt($row['capacity_standing']),
             self::nullableString($row['capacity_note']),
-            null === $party ? null : PartyAllowed::from($party),
-            $row['has_curfew'],
-            self::nullableString($row['curfew_at']),
-            self::nullableString($row['party_note']),
             self::nullableString($row['opening_hours']),
-            $byGroup[TermGroup::Ceremony->value] ?? [],
             $byGroup[TermGroup::Amenity->value] ?? [],
-            $byGroup[TermGroup::Dining->value] ?? [],
-            $byGroup[TermGroup::Usage->value] ?? [],
-            $byGroup[TermGroup::Vendor->value] ?? [],
+            $byGroup[TermGroup::Catering->value] ?? [],
             $byGroup[TermGroup::Language->value] ?? [],
         );
     }

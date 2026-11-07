@@ -52,11 +52,11 @@ final class VenueTermSetTest extends KernelTestCase
 
     public function test_only_the_listed_groups_change(): void
     {
-        $venue = $this->venue([['building', 'cafe', true], ['setting', 'lake', true], ['ceremony', 'chapel', false]]);
+        $venue = $this->venue([['building', 'cafe', true], ['setting', 'lake', true], ['catering', 'buffet', false]]);
 
-        $this->replace($venue, ['ceremony' => ['civil_ceremony', 'free_ceremony']], []);
+        $this->replace($venue, ['catering' => ['in_house', 'vegan']], []);
 
-        self::assertSame(['building:cafe*', 'ceremony:civil_ceremony', 'ceremony:free_ceremony', 'setting:lake*'], $this->terms($venue));
+        self::assertSame(['building:cafe*', 'catering:in_house', 'catering:vegan', 'setting:lake*'], $this->terms($venue));
     }
 
     public function test_the_main_term_changes(): void

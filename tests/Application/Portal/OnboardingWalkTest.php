@@ -178,10 +178,10 @@ final class OnboardingWalkTest extends WebTestCase
         $form = $crawler->filter('form[name="venue_terms"]')->form();
         $this->tick($form, 'venue_terms[building]', 'castle');
         $this->client->submit($form, ['venue_terms[mainBuilding]' => 'castle']);
-        self::assertResponseRedirects($this->step($number, 'hochzeit'), Response::HTTP_SEE_OTHER);
+        self::assertResponseRedirects($this->step($number, 'veranstaltung'), Response::HTTP_SEE_OTHER);
 
         $crawler = $this->client->followRedirect();
-        $this->client->submit($crawler->filter('form[name="venue_wedding"]')->form(), ['venue_wedding[texts][de][ambience]' => 'Elegant am Wasser']);
+        $this->client->submit($crawler->filter('form[name="venue_event"]')->form(), ['venue_event[texts][de][ambience]' => 'Elegant am Wasser']);
         self::assertResponseRedirects($this->step($number, 'fotos'), Response::HTTP_SEE_OTHER);
 
         // A manager who leaves here comes back to the first step the location lacks.

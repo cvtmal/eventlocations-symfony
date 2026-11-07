@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://hochzeitslocation.ch/schema/content-format-v1.json",
+    "$id": "https://deine-eventlocation.ch/schema/content-format-v2.json",
     "title": "Venue content (venue.yaml)",
-    "description": "One venue of hochzeitslocation.ch, written by hand or by the CSV export (#21, #32) and read by app:venues:import. See docs/content-format.md.",
+    "description": "One venue of deine-eventlocation.ch, written by hand and read by app:venues:import. See docs/content-format.md.",
     "type": "object",
     "additionalProperties": false,
     "required": [
@@ -141,7 +141,7 @@
                 "seated": {
                     "type": "integer",
                     "minimum": 1,
-                    "description": "Seats at a seated dinner (1–50000), the venue's own number.",
+                    "description": "Seats at a seated event (1–50000), the venue's own number.",
                     "maximum": 50000
                 },
                 "standing": {
@@ -320,41 +320,6 @@
                 }
             }
         },
-        "party": {
-            "type": "object",
-            "description": "Party and curfew; null or missing fields mean unknown.",
-            "additionalProperties": false,
-            "properties": {
-                "allowed": {
-                    "description": "Whether a party is allowed: 'yes', limited or 'no' (quote yes and no).",
-                    "enum": [
-                        "yes",
-                        "limited",
-                        "no",
-                        null
-                    ],
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "has_curfew": {
-                    "type": [
-                        "boolean",
-                        "null"
-                    ],
-                    "description": "Whether there is a curfew. false means no curfew."
-                },
-                "curfew_at": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Curfew as HH:MM from 00:00 to 23:59, quoted ('02:00'); midnight is '00:00'. Needs has_curfew: true.",
-                    "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
-                }
-            }
-        },
         "terms": {
             "type": "object",
             "description": "Vocabulary terms per group (lists of codes).",
@@ -400,7 +365,6 @@
                             "garden_greenhouse",
                             "hangar_shipyard",
                             "historic_site",
-                            "wedding_venue",
                             "cave_fortress",
                             "hotel",
                             "cinema",
@@ -427,31 +391,27 @@
                 "suitable_for": {
                     "type": "array",
                     "uniqueItems": true,
-                    "description": "Occasions the venue suits (Geeignet für).",
+                    "description": "Event types the venue suits (Geeignet für).",
                     "items": {
                         "type": "string",
                         "enum": [
-                            "wedding",
-                            "family_celebration",
-                            "birthday",
-                            "club_event",
-                            "party_celebration",
-                            "class_reunion",
-                            "private_event",
-                            "meeting",
-                            "conference",
-                            "congress",
                             "corporate_event",
+                            "seminar",
+                            "conference",
+                            "workshop",
+                            "meeting",
+                            "product_presentation",
                             "general_assembly",
-                            "apero",
                             "team_event",
                             "christmas_party",
-                            "concert",
-                            "theatre",
+                            "club_event",
+                            "apero",
+                            "birthday",
+                            "family_celebration",
+                            "wedding",
                             "party",
-                            "sports_event",
-                            "trade_fair",
-                            "public_event"
+                            "concert",
+                            "exhibition"
                         ]
                     }
                 },
@@ -462,9 +422,7 @@
                     "items": {
                         "type": "string",
                         "enum": [
-                            "wifi",
                             "air_conditioning",
-                            "stage",
                             "shower",
                             "cloakroom",
                             "heating_ventilation",
@@ -481,11 +439,9 @@
                     "items": {
                         "type": "string",
                         "enum": [
-                            "flipchart",
-                            "magnetic_board",
-                            "moderation_kit",
                             "chairs",
-                            "tables"
+                            "tables",
+                            "standing_tables"
                         ]
                     }
                 },
@@ -496,11 +452,14 @@
                     "items": {
                         "type": "string",
                         "enum": [
-                            "sound_system",
                             "projector_screen",
-                            "interpreting_system",
-                            "lighting_system",
-                            "tv_screens"
+                            "wifi",
+                            "sound_system",
+                            "video_conferencing",
+                            "stage_lighting",
+                            "flipchart_moderation",
+                            "tv_screens",
+                            "interpreting_system"
                         ]
                     }
                 },
@@ -520,26 +479,10 @@
                         ]
                     }
                 },
-                "ceremony": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "description": "Wedding ceremony (Trauung).",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "civil_ceremony",
-                            "free_ceremony",
-                            "church_nearby",
-                            "rain_alternative",
-                            "registry_office",
-                            "chapel"
-                        ]
-                    }
-                },
                 "amenity": {
                     "type": "array",
                     "uniqueItems": true,
-                    "description": "Wedding amenities (Ausstattung).",
+                    "description": "Amenities of the venue (Ausstattung).",
                     "items": {
                         "type": "string",
                         "enum": [
@@ -550,68 +493,31 @@
                             "kids_room",
                             "outdoor_dining",
                             "parking",
-                            "parking_area",
-                            "own_kitchen",
-                            "catering_available",
-                            "external_caterers",
-                            "corkage",
                             "wheelchair_access",
                             "public_transport",
                             "tent"
                         ]
                     }
                 },
-                "dining": {
+                "catering": {
                     "type": "array",
                     "uniqueItems": true,
-                    "description": "Food on offer (Essen).",
+                    "description": "Catering on offer or allowed (Catering).",
                     "items": {
                         "type": "string",
                         "enum": [
+                            "in_house",
+                            "external_allowed",
+                            "bar_drinks",
+                            "byo_drinks",
+                            "buffet",
+                            "finger_food",
+                            "coffee_break",
+                            "grill",
                             "vegetarian",
                             "vegan",
                             "gluten_free",
-                            "organic",
-                            "allergy_friendly",
-                            "diabetic",
-                            "halal",
-                            "kosher",
-                            "kids_menu",
-                            "wedding_cake",
-                            "buffet",
-                            "grill",
-                            "anything_possible"
-                        ]
-                    }
-                },
-                "vendor": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "description": "Vendors the venue works with (Dienstleister).",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "flowers_decor",
-                            "photography",
-                            "videography",
-                            "officiant",
-                            "dj",
-                            "musicians",
-                            "furniture",
-                            "wedding_planner"
-                        ]
-                    }
-                },
-                "usage": {
-                    "type": "array",
-                    "uniqueItems": true,
-                    "description": "How the venue is used on the day (Nutzung).",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "exclusive",
-                            "multiple_weddings",
-                            "wedding_and_regular"
+                            "allergy_friendly"
                         ]
                     }
                 },
@@ -676,7 +582,6 @@
                         "garden_greenhouse",
                         "hangar_shipyard",
                         "historic_site",
-                        "wedding_venue",
                         "cave_fortress",
                         "hotel",
                         "cinema",
@@ -703,27 +608,23 @@
                 "suitable_for": {
                     "type": "string",
                     "enum": [
-                        "wedding",
-                        "family_celebration",
-                        "birthday",
-                        "club_event",
-                        "party_celebration",
-                        "class_reunion",
-                        "private_event",
-                        "meeting",
-                        "conference",
-                        "congress",
                         "corporate_event",
+                        "seminar",
+                        "conference",
+                        "workshop",
+                        "meeting",
+                        "product_presentation",
                         "general_assembly",
-                        "apero",
                         "team_event",
                         "christmas_party",
-                        "concert",
-                        "theatre",
+                        "club_event",
+                        "apero",
+                        "birthday",
+                        "family_celebration",
+                        "wedding",
                         "party",
-                        "sports_event",
-                        "trade_fair",
-                        "public_event"
+                        "concert",
+                        "exhibition"
                     ],
                     "description": "Main suitable_for term."
                 }
@@ -774,12 +675,6 @@
                         "type": "string",
                         "minLength": 1,
                         "description": "The venue's own wording on capacities (≤ 250).",
-                        "maxLength": 250
-                    },
-                    "party_note": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "The venue's own wording on party and curfew (≤ 250).",
                         "maxLength": 250
                     },
                     "opening_hours": {

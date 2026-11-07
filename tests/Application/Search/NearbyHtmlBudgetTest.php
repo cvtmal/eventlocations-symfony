@@ -130,7 +130,7 @@ final class NearbyHtmlBudgetTest extends WebTestCase
             ->afterInstantiate(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::cases()[$i % 3]))
             ->create(['name' => $this->venueName($i), 'capacityMin' => 40, 'capacityMax' => 1200, 'town' => $town, 'lat' => $lat, 'lng' => $lng]);
         VenueTranslationFactory::new()
-            ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeWedding($ambience, null, null, null))
+            ->afterInstantiate(static fn (VenueTranslation $translation) => $translation->describeEvent($ambience, null, null))
             ->create(['venue' => $venue, 'summary' => $this->text(200, $i)]);
         foreach ([1, 2] as $position) {
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);

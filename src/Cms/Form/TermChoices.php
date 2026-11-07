@@ -10,7 +10,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 /**
- * The chip group of one term group, shared by the Merkmale and Hochzeit cards: codes in `position` order,
+ * The chip group of one term group, shared by the Merkmale and Veranstaltung cards: codes in `position` order,
  * labels from `venues` (`term.<group>.<code>`), stored under `terms[<group>]` of the data class.
  */
 final class TermChoices

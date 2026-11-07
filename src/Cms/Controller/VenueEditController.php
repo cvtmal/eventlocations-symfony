@@ -78,10 +78,10 @@ final class VenueEditController extends AbstractController
         return $this->save(VenueCard::Terms, $number, $request);
     }
 
-    #[Route('/hochzeit', name: 'admin_locations_wedding', methods: ['POST'])]
-    public function wedding(int $number, Request $request): Response
+    #[Route('/veranstaltung', name: 'admin_locations_event', methods: ['POST'])]
+    public function event(int $number, Request $request): Response
     {
-        return $this->save(VenueCard::Wedding, $number, $request);
+        return $this->save(VenueCard::Event, $number, $request);
     }
 
     #[Route('/kontakt', name: 'admin_locations_contact', methods: ['POST'])]

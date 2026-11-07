@@ -18,7 +18,6 @@ use App\Geo\Entity\Town;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -32,6 +31,9 @@ use function Zenstruck\Foundry\Persistence\repository;
  * The venues of the detail-page tests (#8), built with the Foundry factories: a "full" venue
  * with every section of DP-2 to DP-17 and a "minimal" one with only the required fields.
  * Callers run inside a rolled-back transaction and use the Factories trait.
+ *
+ * Some terms are inserted out of position order on purpose, so a test sees the read model sort
+ * them. The full venue has no technology term: other suites rely on that group being empty.
  */
 final class DetailVenues
 {
@@ -55,7 +57,6 @@ final class DetailVenues
         $venue->answerFaq(OwnCatering::Allowed, true);
         $venue->changePriceLevel(PriceLevel::Medium);
         $venue->changeSeatingCapacity(1200, 1500);
-        $venue->describePartyRules(PartyAllowed::Limited, true, new \DateTimeImmutable('1970-01-01 02:00:00'));
         $venue->changeInstagram('https://www.instagram.com/schloss.seeblick');
         $em->flush();
 
@@ -67,23 +68,21 @@ final class DetailVenues
             'metaDescription' => 'Schloss Seeblick: Hochzeit am See.',
             'parkingText' => '100 Parkplätze (kostenlos)',
         ]);
-        $translation->describeWedding('Romantisch am Wasser', 'Mit Tanzfläche 900 Sitzplätze.', 'Musik im Saal bis 2 Uhr.', 'Mai bis Oktober, täglich ab 10 Uhr');
+        $translation->describeEvent('Romantisch am Wasser', 'Mit Tanzfläche 900 Sitzplätze.', 'Mai bis Oktober, täglich ab 10 Uhr');
         $em->flush();
 
         VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Building, 'villa')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Setting, 'lake')->main()->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::SuitableFor, 'family_celebration')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::SuitableFor, 'wedding')->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Infrastructure, 'stage')->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Infrastructure, 'wifi')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::SuitableFor, 'family_celebration')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::SuitableFor, 'corporate_event')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Infrastructure, 'cloakroom')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Infrastructure, 'air_conditioning')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Surroundings, 'garden')->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Ceremony, 'free_ceremony')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Amenity, 'dance_floor')->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Dining, 'gluten_free')->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Dining, 'vegetarian')->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Vendor, 'dj')->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Usage, 'exclusive')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Catering, 'gluten_free')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Catering, 'vegetarian')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Language, 'de')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Language, 'en')->create(['venue' => $venue]);
 

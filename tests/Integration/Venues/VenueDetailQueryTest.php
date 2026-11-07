@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Venues;
 
 use App\Factory\VenueFactory;
 use App\Factory\VenueSlugHistoryFactory;
+use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\ValueObject\Canton;
 use App\Media\ValueObject\Picture;
@@ -19,7 +20,6 @@ use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
@@ -29,6 +29,7 @@ use App\Venues\ValueObject\VenuePlace;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
@@ -262,8 +263,8 @@ final class VenueDetailQueryTest extends KernelTestCase
             [
                 'building' => ['castle', 'villa'],
                 'setting' => ['lake'],
-                'suitable_for' => ['wedding', 'family_celebration'],
-                'infrastructure' => ['wifi', 'stage'],
+                'suitable_for' => ['corporate_event', 'family_celebration', 'wedding'],
+                'infrastructure' => ['air_conditioning', 'cloakroom'],
                 'surroundings' => ['garden'],
             ],
             array_merge(...array_map(
@@ -346,7 +347,7 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertFalse($detail->hasFacts());
         self::assertFalse($detail->hasFaq());
         self::assertSame([], $detail->distances);
-        self::assertFalse($detail->wedding->hasAny());
+        self::assertFalse($detail->event->hasAny());
         self::assertNull($detail->instagram);
         self::assertFalse($detail->hasPhone);
         self::assertFalse($detail->hasContact());
@@ -355,34 +356,30 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame([], $detail->photos);
     }
 
-    public function test_maps_every_wedding_fact_of_a_full_venue(): void
+    public function test_maps_every_event_fact_of_a_full_venue(): void
     {
         $venue = DetailVenues::full($this->em);
 
         $detail = $this->query->detail($venue->number(), 'de');
 
         self::assertNotNull($detail);
-        $wedding = $detail->wedding;
-        self::assertTrue($wedding->hasAny());
-        self::assertSame([PriceLevel::Medium, 1200, 1500], [$wedding->priceLevel, $wedding->capacitySeated, $wedding->capacityStanding]);
-        self::assertSame([PartyAllowed::Limited, true, '02:00'], [$wedding->party, $wedding->hasCurfew, $wedding->curfewAt]);
+        $event = $detail->event;
+        self::assertTrue($event->hasAny());
+        self::assertSame([PriceLevel::Medium, 1200, 1500], [$event->priceLevel, $event->capacitySeated, $event->capacityStanding]);
         self::assertSame(
-            ['Romantisch am Wasser', 'Mit Tanzfläche 900 Sitzplätze.', 'Musik im Saal bis 2 Uhr.', 'Mai bis Oktober, täglich ab 10 Uhr'],
-            [$wedding->ambience, $wedding->capacityNote, $wedding->partyNote, $wedding->openingHours],
+            ['Romantisch am Wasser', 'Mit Tanzfläche 900 Sitzplätze.', 'Mai bis Oktober, täglich ab 10 Uhr'],
+            [$event->ambience, $event->capacityNote, $event->openingHours],
         );
         $codes = static fn (array $terms): array => array_map(static fn (Term $term): string => $term->code, $terms);
-        self::assertSame(['free_ceremony'], $codes($wedding->ceremony));
-        self::assertSame(['dance_floor'], $codes($wedding->amenities));
-        self::assertSame(['vegetarian', 'gluten_free'], $codes($wedding->dining), 'position order, not insertion order');
-        self::assertSame(['exclusive'], $codes($wedding->usage));
-        self::assertSame(['dj'], $codes($wedding->vendors));
-        self::assertSame(['de', 'en'], $codes($wedding->languages));
+        self::assertSame(['dance_floor'], $codes($event->amenities));
+        self::assertSame(['vegetarian', 'gluten_free'], $codes($event->catering), 'position order, not insertion order');
+        self::assertSame(['de', 'en'], $codes($event->languages));
         self::assertSame('https://www.instagram.com/schloss.seeblick', $detail->instagram);
 
         self::assertSame(
             [TermGroup::Building, TermGroup::Setting, TermGroup::SuitableFor, TermGroup::Infrastructure, TermGroup::Surroundings],
             array_map(static fn (DetailFactGroup $group): TermGroup => $group->group, $detail->factGroups),
-            'the owner groups stay out of the fact lists',
+            'the event groups stay out of the fact lists',
         );
     }
 
@@ -396,20 +393,79 @@ final class VenueDetailQueryTest extends KernelTestCase
 
         self::assertNotNull($detail);
         self::assertTrue($detail->hasContact());
-        self::assertFalse($detail->wedding->hasAny(), 'Instagram belongs to Kontakt');
+        self::assertFalse($detail->event->hasAny(), 'Instagram belongs to Kontakt');
     }
 
-    public function test_no_curfew_alone_is_a_known_fact(): void
+    public function test_a_price_level_alone_is_a_known_fact(): void
     {
         $venue = DetailVenues::minimal();
-        $venue->describePartyRules(null, false, null);
+        $venue->changePriceLevel(PriceLevel::Moderate);
         $this->em->flush();
 
         $detail = $this->query->detail($venue->number(), 'de');
 
         self::assertNotNull($detail);
-        self::assertFalse($detail->wedding->hasCurfew);
-        self::assertTrue($detail->wedding->hasAny());
+        self::assertTrue($detail->event->hasAny());
+        self::assertSame([PriceLevel::Moderate, null, null, null, null, null, [], [], []], array_values(get_object_vars($detail->event)));
+    }
+
+    public function test_a_standing_capacity_alone_is_a_known_fact(): void
+    {
+        $venue = DetailVenues::minimal();
+        $venue->changeSeatingCapacity(null, 60);
+        $this->em->flush();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertTrue($detail->event->hasAny());
+        self::assertSame([null, 60], [$detail->event->capacitySeated, $detail->event->capacityStanding]);
+    }
+
+    /**
+     * @return iterable<string, array{TermGroup, string}>
+     */
+    public static function eventTerms(): iterable
+    {
+        yield 'an amenity' => [TermGroup::Amenity, 'parking'];
+        yield 'a catering term' => [TermGroup::Catering, 'buffet'];
+        yield 'a language' => [TermGroup::Language, 'gsw'];
+    }
+
+    #[DataProvider('eventTerms')]
+    public function test_an_event_term_alone_is_a_known_fact_and_no_fact_list_row(TermGroup $group, string $code): void
+    {
+        $venue = DetailVenues::minimal();
+        VenueTermFactory::new()->term($group, $code)->create(['venue' => $venue]);
+        $this->em->flush();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertTrue($detail->event->hasAny());
+        self::assertSame([], $detail->factGroups);
+    }
+
+    public function test_technology_and_furniture_terms_are_fact_lists_and_no_event_facts(): void
+    {
+        $venue = DetailVenues::minimal();
+        VenueTermFactory::new()->term(TermGroup::Technology, 'wifi')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Technology, 'video_conferencing')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Furniture, 'standing_tables')->create(['venue' => $venue]);
+        $this->em->flush();
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertFalse($detail->event->hasAny());
+        self::assertSame(
+            ['furniture' => ['standing_tables'], 'technology' => ['wifi', 'video_conferencing']],
+            array_merge(...array_map(
+                static fn (DetailFactGroup $group): array => [$group->group->value => array_map(static fn (Term $term): string => $term->code, $group->terms)],
+                $detail->factGroups,
+            )),
+            'DP-7 order: furniture before technology',
+        );
     }
 
     public function test_phone_is_read_separately(): void

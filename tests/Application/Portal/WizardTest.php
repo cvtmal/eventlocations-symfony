@@ -75,17 +75,17 @@ final class WizardTest extends WebTestCase
         self::assertResponseRedirects($this->url($venue, 'ausstattung'), Response::HTTP_SEE_OTHER);
 
         $this->save($venue, 'ausstattung', 'venue_terms');
-        self::assertResponseRedirects($this->url($venue, 'hochzeit'), Response::HTTP_SEE_OTHER);
+        self::assertResponseRedirects($this->url($venue, 'veranstaltung'), Response::HTTP_SEE_OTHER);
 
-        $this->save($venue, 'hochzeit', 'venue_wedding');
+        $this->save($venue, 'veranstaltung', 'venue_event');
         self::assertResponseRedirects($this->url($venue, 'fotos'), Response::HTTP_SEE_OTHER);
     }
 
-    public function test_terms_and_wedding_are_two_pages_at_one_position(): void
+    public function test_terms_and_event_are_two_pages_at_one_position(): void
     {
         $venue = $this->location($this->logInAsManager());
 
-        foreach (['ausstattung' => 'Ausstattung', 'hochzeit' => 'Hochzeit'] as $step => $heading) {
+        foreach (['ausstattung' => 'Ausstattung', 'veranstaltung' => 'Veranstaltung'] as $step => $heading) {
             $crawler = $this->client->request('GET', $this->url($venue, $step));
 
             self::assertResponseIsSuccessful();

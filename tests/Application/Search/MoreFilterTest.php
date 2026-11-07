@@ -37,7 +37,7 @@ final class MoreFilterTest extends WebTestCase
 
     /** FI-4's 11 building chips, in order. */
     private const PRIMARY_BUILDINGS = [
-        'bar_club', 'event_venue', 'wedding_venue', 'hotel', 'party_room', 'restaurant',
+        'bar_club', 'event_venue', 'seminar_room', 'hotel', 'party_room', 'restaurant',
         'castle', 'congress_centre', 'forest_hut', 'farm_barn', 'mountain_hut',
     ];
 
@@ -71,8 +71,8 @@ final class MoreFilterTest extends WebTestCase
         yield 'setting' => ['setting[]=lake', '#filter-more-setting-lake[checked]'];
         yield 'access' => ['access[]=station', '#filter-more-access-station[checked]'];
         yield 'building' => ['building[]=castle', '#filter-more-building-castle[checked]'];
-        yield 'infra' => ['infra[]=wifi', '#filter-more-infra-wifi[checked]'];
-        yield 'furniture' => ['furniture[]=flipchart', '#filter-more-furniture-flipchart[checked]'];
+        yield 'infra' => ['infra[]=air_conditioning', '#filter-more-infra-air_conditioning[checked]'];
+        yield 'furniture' => ['furniture[]=chairs', '#filter-more-furniture-chairs[checked]'];
         yield 'tech' => ['tech[]=sound_system', '#filter-more-tech-sound_system[checked]'];
         yield 'surroundings' => ['surroundings[]=garden', '#filter-more-surroundings-garden[checked]'];
         yield 'rooms' => ['rooms=2', '#filter-more-rooms option[value="2"][selected]'];
@@ -95,14 +95,14 @@ final class MoreFilterTest extends WebTestCase
 
     public function test_values_hide_one_by_one(): void
     {
-        $this->terms($this->venue(), [[TermGroup::Setting, 'lake'], [TermGroup::Infrastructure, 'wifi']]);
+        $this->terms($this->venue(), [[TermGroup::Setting, 'lake'], [TermGroup::Infrastructure, 'air_conditioning']]);
 
         $crawler = $this->get('/hochzeitslocations');
 
         self::assertCount(1, $crawler->filter('#filter-more-setting-lake'));
         self::assertCount(0, $crawler->filter('#filter-more-setting-river'));
-        self::assertCount(1, $crawler->filter('#filter-more-infra-wifi'));
-        self::assertCount(0, $crawler->filter('#filter-more-infra-stage'));
+        self::assertCount(1, $crawler->filter('#filter-more-infra-air_conditioning'));
+        self::assertCount(0, $crawler->filter('#filter-more-infra-shower'));
     }
 
     public function test_access_needs_a_venue_within_the_threshold(): void
@@ -156,7 +156,7 @@ final class MoreFilterTest extends WebTestCase
 
     public function test_a_section_without_data_disappears_with_its_legend(): void
     {
-        $this->terms($this->venue(), [[TermGroup::Infrastructure, 'wifi']]);
+        $this->terms($this->venue(), [[TermGroup::Infrastructure, 'air_conditioning']]);
 
         $crawler = $this->get('/hochzeitslocations');
 
@@ -465,8 +465,8 @@ final class MoreFilterTest extends WebTestCase
         $this->terms($venue, [
             [TermGroup::Setting, 'lake'],
             [TermGroup::Building, 'castle'],
-            [TermGroup::Infrastructure, 'wifi'],
-            [TermGroup::Furniture, 'flipchart'],
+            [TermGroup::Infrastructure, 'air_conditioning'],
+            [TermGroup::Furniture, 'chairs'],
             [TermGroup::Technology, 'sound_system'],
             [TermGroup::Surroundings, 'garden'],
         ]);

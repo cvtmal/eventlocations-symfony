@@ -6,7 +6,7 @@
     Params: venue (VenueDetail).
 #}
 {% autoescape false %}
-{% set wedding = venue.wedding %}
+{% set event = venue.event %}
 # {{ venue.name|md }}
 
 {% if venue.place.townName %}
@@ -35,50 +35,33 @@
 {% endfor %}
 
 {% endif %}
-{% if wedding.hasAny() %}
-## {{ 'detail.wedding.heading'|trans({}, 'venues')|md }}
+{% if event.hasAny() %}
+## {{ 'detail.event.heading'|trans({}, 'venues')|md }}
 
-{% if wedding.priceLevel %}
-- **{{ 'detail.wedding.price_level'|trans({}, 'venues')|md }}:** {{ wedding.priceLevel|trans|md }}
+{% if event.priceLevel %}
+- **{{ 'detail.event.price_level'|trans({}, 'venues')|md }}:** {{ event.priceLevel|trans|md }}
 {% endif %}
-{% if wedding.ambience %}
-- **{{ 'detail.wedding.ambience'|trans({}, 'venues')|md }}:** {{ wedding.ambience|md }}
+{% if event.ambience %}
+- **{{ 'detail.event.ambience'|trans({}, 'venues')|md }}:** {{ event.ambience|md }}
 {% endif %}
-{% if wedding.capacitySeated or wedding.capacityStanding or wedding.capacityNote %}
-- **{{ 'detail.wedding.capacity'|trans({}, 'venues')|md }}:** {{ [
-    wedding.capacitySeated ? 'detail.wedding.seated'|trans({count: wedding.capacitySeated|swiss_number}, 'venues') : null,
-    wedding.capacityStanding ? 'detail.wedding.standing'|trans({count: wedding.capacityStanding|swiss_number}, 'venues') : null,
-    wedding.capacityNote,
+{% if event.capacitySeated or event.capacityStanding or event.capacityNote %}
+- **{{ 'detail.event.capacity'|trans({}, 'venues')|md }}:** {{ [
+    event.capacitySeated ? 'detail.event.seated'|trans({count: event.capacitySeated|swiss_number}, 'venues') : null,
+    event.capacityStanding ? 'detail.event.standing'|trans({count: event.capacityStanding|swiss_number}, 'venues') : null,
+    event.capacityNote,
 ]|filter(part => part)|join('; ')|md }}
 {% endif %}
-{% if wedding.ceremony is not empty %}
-- **{{ 'term_group.ceremony'|trans({}, 'venues')|md }}:** {{ wedding.ceremony|map(term => term|trans)|join(', ')|md }}
+{% if event.amenities is not empty %}
+- **{{ 'term_group.amenity'|trans({}, 'venues')|md }}:** {{ event.amenities|map(term => term|trans)|join(', ')|md }}
 {% endif %}
-{% if wedding.party or wedding.hasCurfew is not null or wedding.partyNote %}
-- **{{ 'detail.wedding.party'|trans({}, 'venues')|md }}:** {{ [
-    wedding.party ? wedding.party|trans : null,
-    wedding.hasCurfew is same as(false) ? 'detail.wedding.no_curfew'|trans({}, 'venues')
-        : (wedding.hasCurfew is same as(true) ? (wedding.curfewAt ? 'detail.wedding.curfew_at'|trans({time: wedding.curfewAt}, 'venues') : 'detail.wedding.curfew_unknown_time'|trans({}, 'venues')) : null),
-    wedding.partyNote,
-]|filter(part => part)|join('; ')|md }}
+{% if event.catering is not empty %}
+- **{{ 'term_group.catering'|trans({}, 'venues')|md }}:** {{ event.catering|map(term => term|trans)|join(', ')|md }}
 {% endif %}
-{% if wedding.amenities is not empty %}
-- **{{ 'term_group.amenity'|trans({}, 'venues')|md }}:** {{ wedding.amenities|map(term => term|trans)|join(', ')|md }}
+{% if event.languages is not empty %}
+- **{{ 'term_group.language'|trans({}, 'venues')|md }}:** {{ event.languages|map(term => term|trans)|join(', ')|md }}
 {% endif %}
-{% if wedding.dining is not empty %}
-- **{{ 'term_group.dining'|trans({}, 'venues')|md }}:** {{ wedding.dining|map(term => term|trans)|join(', ')|md }}
-{% endif %}
-{% if wedding.usage is not empty %}
-- **{{ 'term_group.usage'|trans({}, 'venues')|md }}:** {{ wedding.usage|map(term => term|trans)|join(', ')|md }}
-{% endif %}
-{% if wedding.vendors is not empty %}
-- **{{ 'term_group.vendor'|trans({}, 'venues')|md }}:** {{ wedding.vendors|map(term => term|trans)|join(', ')|md }}
-{% endif %}
-{% if wedding.languages is not empty %}
-- **{{ 'term_group.language'|trans({}, 'venues')|md }}:** {{ wedding.languages|map(term => term|trans)|join(', ')|md }}
-{% endif %}
-{% if wedding.openingHours %}
-- **{{ 'detail.wedding.opening_hours'|trans({}, 'venues')|md }}:** {{ wedding.openingHours|md }}
+{% if event.openingHours %}
+- **{{ 'detail.event.opening_hours'|trans({}, 'venues')|md }}:** {{ event.openingHours|md }}
 {% endif %}
 
 {% endif %}
