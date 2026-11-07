@@ -28,7 +28,7 @@ final class VenueDetailController extends AbstractController
     ) {
     }
 
-    #[Route(path: ['de' => '/hochzeitslocation/{slug}'], name: 'venue_show', requirements: ['slug' => self::SLUG_REQUIREMENT], methods: ['GET'])]
+    #[Route(path: ['de' => '/eventlokal/{slug}'], name: 'venue_show', requirements: ['slug' => self::SLUG_REQUIREMENT], methods: ['GET'])]
     #[Cache(public: true, smaxage: PublicCache::MISSING_TTL)]
     public function __invoke(Request $request, string $slug): Response
     {

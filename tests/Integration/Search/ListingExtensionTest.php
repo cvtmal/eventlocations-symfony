@@ -76,12 +76,12 @@ final class ListingExtensionTest extends KernelTestCase
             $extension = $this->extension();
             $criteria = $this->criteria(['canton' => 'zh', 'guests' => '100']);
 
-            self::assertSame('/hochzeitslocations/zuerich?guests=100', $extension->listingPath($criteria));
-            self::assertSame('/hochzeitslocations/zuerich?guests=100&page=2', $extension->listingPath($criteria, 2), 'Pagination keeps the path.');
-            self::assertSame('/hochzeitslocations?guests=100', $extension->listingPathWithout($criteria, 'canton'));
-            self::assertSame('/hochzeitslocations/zuerich', $extension->listingPathWithout($criteria, 'guests'));
-            self::assertSame('/hochzeitslocations?canton=be', $extension->listingPath($this->criteria(['canton' => 'be'])), 'A thin canton stays in the query.');
-            self::assertSame(['zh' => '/hochzeitslocations/zuerich'], $extension->landingCantonPaths());
+            self::assertSame('/eventlokale/zuerich?guests=100', $extension->listingPath($criteria));
+            self::assertSame('/eventlokale/zuerich?guests=100&page=2', $extension->listingPath($criteria, 2), 'Pagination keeps the path.');
+            self::assertSame('/eventlokale?guests=100', $extension->listingPathWithout($criteria, 'canton'));
+            self::assertSame('/eventlokale/zuerich', $extension->listingPathWithout($criteria, 'guests'));
+            self::assertSame('/eventlokale?canton=be', $extension->listingPath($this->criteria(['canton' => 'be'])), 'A thin canton stays in the query.');
+            self::assertSame(['zh' => '/eventlokale/zuerich'], $extension->landingCantonPaths());
         } finally {
             $em->clear();
             $em->getConnection()->rollBack();
@@ -92,10 +92,10 @@ final class ListingExtensionTest extends KernelTestCase
     {
         $criteria = $this->criteria(['guests' => '120', 'canton' => 'ZH', 'page' => '3']);
 
-        self::assertSame('/hochzeitslocations?canton=zh&guests=150&page=3', $this->extension->listingPath($criteria));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=150&page=2', $this->extension->listingPath($criteria, 2));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=150', $this->extension->listingPath($criteria, 1));
-        self::assertSame('/hochzeitslocations', $this->extension->listingPath(SearchCriteria::none()));
+        self::assertSame('/eventlokale?canton=zh&guests=120&page=3', $this->extension->listingPath($criteria));
+        self::assertSame('/eventlokale?canton=zh&guests=120&page=2', $this->extension->listingPath($criteria, 2));
+        self::assertSame('/eventlokale?canton=zh&guests=120', $this->extension->listingPath($criteria, 1));
+        self::assertSame('/eventlokale', $this->extension->listingPath(SearchCriteria::none()));
     }
 
     public function test_list_params_round_trip_through_the_codec(): void
@@ -103,7 +103,7 @@ final class ListingExtensionTest extends KernelTestCase
         $criteria = $this->criteria(['setting' => ['river', 'lake'], 'access' => 'station']);
         $path = $this->extension->listingPath($criteria);
 
-        self::assertSame('/hochzeitslocations?setting%5B0%5D=lake&setting%5B1%5D=river&access%5B0%5D=station', $path);
+        self::assertSame('/eventlokale?setting%5B0%5D=lake&setting%5B1%5D=river&access%5B0%5D=station', $path);
 
         self::assertSame($criteria->toQuery(), $this->criteria(Request::create($path)->query->all())->toQuery());
     }
@@ -129,36 +129,36 @@ final class ListingExtensionTest extends KernelTestCase
         ]);
 
         self::assertSame(
-            '/hochzeitslocations?place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/eventlokale?place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'canton'),
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=river',
+            '/eventlokale?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=river',
             $this->extension->listingPathWithout($criteria, 'setting', 'lake'),
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/eventlokale?canton=zh&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, ['place', 'radius']),
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100',
+            '/eventlokale?canton=zh&place=8001&radius=10&guests=100',
             $this->extension->listingPathWithout($this->criteria([
                 'canton' => 'zh', 'place' => '8001', 'radius' => '10', 'guests' => '100', 'setting' => ['river'],
             ]), 'setting', 'river'),
             'Removing the last value drops the key.',
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/eventlokale?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'rooms'),
             'An absent param changes nothing but page.',
         );
         self::assertSame(
-            '/hochzeitslocations?place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/eventlokale?place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'canton', 'zh'),
             'A scalar equal to the value is dropped.',
         );
         self::assertSame(
-            '/hochzeitslocations?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
+            '/eventlokale?canton=zh&place=8001&radius=10&guests=100&setting%5B0%5D=lake&setting%5B1%5D=river',
             $this->extension->listingPathWithout($criteria, 'canton', 'be'),
         );
     }
@@ -182,7 +182,7 @@ final class ListingExtensionTest extends KernelTestCase
 
     public function test_venue_path(): void
     {
-        self::assertSame('/hochzeitslocation/schloss-au', $this->extension->venuePath('schloss-au'));
+        self::assertSame('/eventlokal/schloss-au', $this->extension->venuePath('schloss-au'));
     }
 
     public function test_hidden_state_keeps_the_other_groups(): void

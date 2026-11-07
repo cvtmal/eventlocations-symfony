@@ -34,10 +34,10 @@ final class EmailHtmlToTextConverterTest extends TestCase
     public function test_button_becomes_label_and_url(): void
     {
         $text = $this->convert($this->card(
-            '<tr><td><table><tr><td><a href="http://localhost/hochzeitslocation/seeblick" class="hl-btn"> Zur Location </a></td></tr></table></td></tr>',
+            '<tr><td><table><tr><td><a href="http://localhost/eventlokal/seeblick" class="hl-btn"> Zur Location </a></td></tr></table></td></tr>',
         ));
 
-        self::assertSame('Zur Location: http://localhost/hochzeitslocation/seeblick', $text);
+        self::assertSame('Zur Location: http://localhost/eventlokal/seeblick', $text);
     }
 
     public function test_fallback_link_keeps_its_visible_url_once(): void

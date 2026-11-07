@@ -94,7 +94,7 @@ final class LandingPages implements ResetInterface
     }
 
     /**
-     * The page of `/hochzeitslocations/{slug}`: a canton first, then a building type.
+     * The page of `/eventlokale/{slug}`: a canton first, then a building type.
      */
     public function bySlug(string $slug): ?LandingPage
     {

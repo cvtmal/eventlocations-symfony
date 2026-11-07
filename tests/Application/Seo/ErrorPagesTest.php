@@ -54,13 +54,13 @@ final class ErrorPagesTest extends WebTestCase
 
     public function test_an_unknown_venue_is_the_not_found_page(): void
     {
-        $crawler = $this->client->request('GET', '/hochzeitslocation/gibt-es-nicht');
+        $crawler = $this->client->request('GET', '/eventlokal/gibt-es-nicht');
 
         self::assertResponseStatusCodeSame(404);
         self::assertSame('Seite nicht gefunden | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertCount(1, $crawler->filter('h1'));
         self::assertSelectorTextSame('h1', 'Diese Seite gibt es nicht');
-        self::assertSame('/hochzeitslocations', $crawler->filter('.error-page a')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.error-page a')->attr('href'));
         self::assertCount(0, $crawler->filter('link[hreflang]'));
         self::assertCount(0, $crawler->filter('script[type="application/ld+json"]'));
         self::assertSame(self::POLICY, $this->client->getResponse()->headers->get('Content-Security-Policy'));
@@ -77,7 +77,7 @@ final class ErrorPagesTest extends WebTestCase
 
     public function test_a_404_on_a_listing_path_marks_no_header_link_as_current(): void
     {
-        $crawler = $this->client->request('GET', '/hochzeitslocations/gibt-es-nicht');
+        $crawler = $this->client->request('GET', '/eventlokale/gibt-es-nicht');
 
         self::assertResponseStatusCodeSame(404);
         self::assertCount(0, $crawler->filter('.site-header [aria-current]'));
@@ -90,7 +90,7 @@ final class ErrorPagesTest extends WebTestCase
             'slug' => 'abgemeldet',
         ]);
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/abgemeldet');
+        $crawler = $this->client->request('GET', '/eventlokal/abgemeldet');
 
         self::assertResponseStatusCodeSame(410);
         self::assertSelectorTextSame('h1', 'Diese Location ist nicht mehr dabei');
@@ -103,7 +103,7 @@ final class ErrorPagesTest extends WebTestCase
     {
         $this->failEveryController(new \RuntimeException('forced secret'));
 
-        $crawler = $this->client->request('GET', '/hochzeitslocations');
+        $crawler = $this->client->request('GET', '/eventlokale');
 
         self::assertResponseStatusCodeSame(500);
         self::assertSelectorTextSame('h1', 'Da ist etwas schiefgelaufen');
@@ -118,7 +118,7 @@ final class ErrorPagesTest extends WebTestCase
     {
         $this->failEveryController(new AccessDeniedHttpException('forced secret'));
 
-        $crawler = $this->client->request('GET', '/hochzeitslocations');
+        $crawler = $this->client->request('GET', '/eventlokale');
 
         self::assertResponseStatusCodeSame(403);
         self::assertSelectorTextSame('h1', 'Da ist etwas schiefgelaufen');

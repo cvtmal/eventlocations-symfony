@@ -720,14 +720,14 @@ SITEMAP
     cat > "$work/site/sitemap-pages.xml" <<SITEMAP
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>$site/hochzeitslocations</loc></url>
+  <url><loc>$site/eventlokale</loc></url>
   <url><loc>$site/impressum</loc></url>
   <url><loc>$site/x?a=1&amp;b=2</loc></url>
 ${1:+  <url><loc>$site$1</loc></url>}
 </urlset>
 SITEMAP
     # One line on purpose: a sitemap is not always pretty-printed.
-    printf '<urlset><url><loc>%s/hochzeitslocation/a</loc><image:image><image:loc>%s/media/1/a.jpg</image:loc></image:image></url><url><loc>%s/hochzeitslocation/b</loc></url><url><loc>%s/impressum</loc></url></urlset>\n' \
+    printf '<urlset><url><loc>%s/eventlokal/a</loc><image:image><image:loc>%s/media/1/a.jpg</image:loc></image:image></url><url><loc>%s/eventlokal/b</loc></url><url><loc>%s/impressum</loc></url></urlset>\n' \
         "$site" "$site" "$site" "$site" > "$work/site/sitemap-venues-1.xml"
 }
 
@@ -752,11 +752,11 @@ warm_cache() {
     [ "$(cat "$WARM_LOG")" = "/sitemap.xml
 /sitemap-pages.xml
 /sitemap-venues-1.xml
-/hochzeitslocations
+/eventlokale
 /impressum
 /x?a=1&b=2
-/hochzeitslocation/a
-/hochzeitslocation/b" ] || fail "warm-cache requested other pages: $(cat "$WARM_LOG")"
+/eventlokal/a
+/eventlokal/b" ] || fail "warm-cache requested other pages: $(cat "$WARM_LOG")"
     ok "the listing comes first, each page once, no image"
 
     write_site /broken

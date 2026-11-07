@@ -1,0 +1,14 @@
+{#
+    The GET form of the "Anlass" overlay (F5, E5). Include with `with_context = false`: criteria (SearchCriteria). One
+    toggle chip per event type that has data or is active (filter_terms), in vocabulary order; checking several widens
+    the result (OR). listing_form() gives the action, hidden state and count URL (#17), so a landing page keeps its path.
+    No script of its own: js/live-count.js counts, js/overlay-form.js clears.
+#}
+{%- set group = constant('App\\Search\\ReadModel\\SearchCriteria::PARAMS').event -%}
+{%- set target = listing_form(criteria, ['event']) -%}
+<form id="filter-event-form" class="filter-more filter-event" method="get" action="{{ target.action }}" autocomplete="off" data-live-count data-live-count-url="{{ target.count }}" data-overlay-form>
+    {{- include('search/filter/_hidden_state.html.twig', {criteria: criteria, except: target.except}, with_context = false) }}
+    <div class="filter-more__group">
+        {{ include('search/filter/_more_terms.html.twig', {param: 'event', group: group, criteria: criteria}, with_context = false) }}
+    </div>
+</form>

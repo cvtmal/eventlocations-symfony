@@ -53,8 +53,8 @@ final class MerklisteCookieDoesNotVaryTest extends WebTestCase
      */
     public static function cachedPages(): iterable
     {
-        yield 'listing' => ['/hochzeitslocations'];
-        yield 'detail page with its similar venues' => ['/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG];
+        yield 'listing' => ['/eventlokale'];
+        yield 'detail page with its similar venues' => ['/eventlokal/'.DetailVenues::MINIMAL_SLUG];
         yield 'count endpoint' => ['/_search/count'];
     }
 
@@ -87,8 +87,8 @@ final class MerklisteCookieDoesNotVaryTest extends WebTestCase
      */
     public static function cachedHtmlPages(): iterable
     {
-        yield 'listing' => ['/hochzeitslocations'];
-        yield 'detail page' => ['/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG];
+        yield 'listing' => ['/eventlokale'];
+        yield 'detail page' => ['/eventlokal/'.DetailVenues::MINIMAL_SLUG];
     }
 
     #[DataProvider('cachedHtmlPages')]

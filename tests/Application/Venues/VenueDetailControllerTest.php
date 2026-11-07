@@ -59,7 +59,7 @@ final class VenueDetailControllerTest extends WebTestCase
             DetailVenues::minimal('andere-location-'.$i, 'Andere Location '.$i);
         }
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         self::assertSame('Schloss Seeblick in Zürich mieten | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSame('Schloss Seeblick: Hochzeit am See.', $crawler->filter('meta[name="description"]')->attr('content'));
@@ -89,7 +89,7 @@ final class VenueDetailControllerTest extends WebTestCase
         // Actions card.
         self::assertSelectorExists('aside.venue-actions a[href="#anfrage"]');
         self::assertSelectorExists('aside.venue-actions [data-print][hidden]');
-        self::assertSelectorExists('aside.venue-actions [popovertarget="venue-share"][data-share-url="http://localhost/hochzeitslocation/schloss-seeblick"]');
+        self::assertSelectorExists('aside.venue-actions [popovertarget="venue-share"][data-share-url="http://localhost/eventlokal/schloss-seeblick"]');
         self::assertSelectorExists('#venue-share[popover] a[href^="https://wa.me/?text="]');
         // Merken: #7's no-JS form (#13 adds the route and the behaviour).
         self::assertSelectorExists('aside.venue-actions form.merken--detail[method="post"][action="/merkliste/'.$venue->number().'"] button.merken__button');
@@ -138,7 +138,7 @@ final class VenueDetailControllerTest extends WebTestCase
         );
 
         // Kontakt: the reveal link, never the number.
-        self::assertSelectorExists('#kontakt a[data-phone-reveal][rel="nofollow"][href="/hochzeitslocation/schloss-seeblick/telefon"]');
+        self::assertSelectorExists('#kontakt a[data-phone-reveal][rel="nofollow"][href="/eventlokal/schloss-seeblick/telefon"]');
         self::assertSelectorExists('#kontakt a[href="mailto:info@seeblick.example"][data-address="info@seeblick.example"]');
         self::assertSelectorExists('#kontakt a[href="https://seeblick.example"][rel="nofollow noopener"]');
         self::assertSelectorTextContains('#kontakt p.venue-contact__person', 'Anna Muster');
@@ -160,9 +160,9 @@ final class VenueDetailControllerTest extends WebTestCase
         // Ähnliche Locations: 12 cards, linking to the detail pages, and "Alle Locations".
         self::assertSelectorTextContains('.similar-venues h2', 'Ähnliche Locations');
         self::assertCount(12, $crawler->filter('.similar-venues .similar-card'));
-        self::assertSelectorExists('.similar-venues .similar-card a[href^="/hochzeitslocation/andere-location-"]');
+        self::assertSelectorExists('.similar-venues .similar-card a[href^="/eventlokal/andere-location-"]');
         self::assertSelectorTextContains('.similar-venues__all', 'Alle Locations');
-        self::assertSame('/hochzeitslocations', $crawler->filter('.similar-venues__all')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.similar-venues__all')->attr('href'));
         self::assertCount(12, $crawler->filter('.similar-venues .similar-card .card-facts'));
 
         // No empty headings, no inline styles or scripts.
@@ -176,7 +176,7 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::minimal();
 
-        $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         $this->assertPublicCache();
     }
 
@@ -184,7 +184,7 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::minimal();
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertSame(['#beschreibung', '#standort'], $crawler->filter('.venue-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href')));
         self::assertSelectorNotExists('#bilder');
@@ -218,7 +218,7 @@ final class VenueDetailControllerTest extends WebTestCase
         DetailVenues::withoutPlace();
         DetailVenues::minimal();
 
-        $crawler = $this->page('/hochzeitslocation/wiesenhof-ohne-ort');
+        $crawler = $this->page('/eventlokal/wiesenhof-ohne-ort');
 
         self::assertSame('Wiesenhof Ohne Ort | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertCount(0, $crawler->filter('#standort'));
@@ -232,7 +232,7 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::inCantonOnly();
 
-        $crawler = $this->page('/hochzeitslocation/scheune-nur-kanton');
+        $crawler = $this->page('/eventlokal/scheune-nur-kanton');
 
         self::assertSame('Scheune Nur Kanton im Kanton Zürich | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Kanton Zürich');
@@ -244,7 +244,7 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::inCantonOnly('remise-vaduz', 'Remise Vaduz', 'li');
 
-        $crawler = $this->page('/hochzeitslocation/remise-vaduz');
+        $crawler = $this->page('/eventlokal/remise-vaduz');
 
         self::assertSame('Remise Vaduz in Liechtenstein | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Liechtenstein');
@@ -256,7 +256,7 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::inRegionOnly($this->em, 'Schweizweit');
 
-        $crawler = $this->page('/hochzeitslocation/remise-nur-region');
+        $crawler = $this->page('/eventlokal/remise-nur-region');
 
         self::assertSame('Remise Nur Region | deine-eventlocation.ch', $crawler->filter('title')->text());
         self::assertSelectorTextSame('.venue-head__place', 'Schweizweit');
@@ -269,7 +269,7 @@ final class VenueDetailControllerTest extends WebTestCase
         $venue->changeDistances('0.9', 'Bahnhof Beispiel', null, null, null, null);
         $this->em->flush();
 
-        $crawler = $this->page('/hochzeitslocation/wiesenhof-ohne-ort');
+        $crawler = $this->page('/eventlokal/wiesenhof-ohne-ort');
 
         self::assertCount(1, $crawler->filter('#standort'));
         self::assertCount(1, $crawler->filter('.venue-nav a[href="#standort"]'));
@@ -281,7 +281,7 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         self::assertSelectorTextSame('.venue-event h2', 'Angaben zur Location');
         self::assertSame(
@@ -315,7 +315,7 @@ final class VenueDetailControllerTest extends WebTestCase
         $venue->changeSeatingCapacity(null, 80);
         $this->em->flush();
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertSame(['Preisniveau', 'Sitzplätze und Stehplätze'], $crawler->filter('.venue-event dt')->each(static fn (Crawler $dt): string => $dt->text()));
         self::assertSame(['Exklusiv', '80 Stehplätze'], $crawler->filter('.venue-event dd')->each(static fn (Crawler $dd): string => $dd->text()));
@@ -330,7 +330,7 @@ final class VenueDetailControllerTest extends WebTestCase
         VenueTermFactory::new()->term(TermGroup::Catering, 'coffee_break')->create(['venue' => $venue]);
         $this->em->flush();
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertSame(['Technik'], $crawler->filter('.venue-facts dt')->each(static fn (Crawler $dt): string => $dt->text()));
         self::assertSame(['WLAN Videokonferenz'], $crawler->filter('.venue-facts dd')->each(static fn (Crawler $dd): string => $dd->text()));
@@ -342,7 +342,7 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::minimal();
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertCount(0, $crawler->filter('.venue-event'));
         self::assertCount(0, $crawler->filter('a[href*="instagram"]'));
@@ -369,7 +369,7 @@ final class VenueDetailControllerTest extends WebTestCase
         $this->em->flush();
         $this->connection->executeStatement('UPDATE venues SET instagram = ? WHERE id = ?', [$stored, $venue->id()]);
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         $links = $crawler->filter('#kontakt a[data-stats-click="instagram"]')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
         self::assertSame(null === $expected ? [] : [$expected], $links);
@@ -381,10 +381,10 @@ final class VenueDetailControllerTest extends WebTestCase
         $venue = DetailVenues::minimal();
         VenueSlugHistoryFactory::createOne(['venue' => $venue, 'slug' => 'altes-gartenhaus']);
 
-        $this->client->request('GET', '/hochzeitslocation/altes-gartenhaus');
+        $this->client->request('GET', '/eventlokal/altes-gartenhaus');
 
         self::assertResponseStatusCodeSame(301);
-        self::assertResponseRedirects('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG, 301);
+        self::assertResponseRedirects('/eventlokal/'.DetailVenues::MINIMAL_SLUG, 301);
         $this->assertPublicCache();
     }
 
@@ -392,13 +392,13 @@ final class VenueDetailControllerTest extends WebTestCase
     {
         DetailVenues::minimal();
 
-        $this->client->request('GET', '/hochzeitslocation/gibt-es-nicht');
+        $this->client->request('GET', '/eventlokal/gibt-es-nicht');
         self::assertResponseStatusCodeSame(404);
 
-        $this->client->request('GET', '/hochzeitslocation/Foo%20Bar');
+        $this->client->request('GET', '/eventlokal/Foo%20Bar');
         self::assertResponseStatusCodeSame(404);
 
-        $this->client->request('GET', '/hochzeitslocation/-kaputt-');
+        $this->client->request('GET', '/eventlokal/-kaputt-');
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -409,10 +409,10 @@ final class VenueDetailControllerTest extends WebTestCase
         $venue->unpublish();
         $this->em->flush();
 
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertResponseStatusCodeSame(410);
 
-        $this->client->request('GET', '/hochzeitslocation/altes-gartenhaus');
+        $this->client->request('GET', '/eventlokal/altes-gartenhaus');
         self::assertResponseStatusCodeSame(410);
     }
 
@@ -422,7 +422,7 @@ final class VenueDetailControllerTest extends WebTestCase
         $venue = VenueFactory::createOne(['town' => DetailVenues::town('Bern')]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'locale' => 'fr', 'slug' => 'maison-sans-allemand']);
 
-        $this->client->request('GET', '/hochzeitslocation/maison-sans-allemand');
+        $this->client->request('GET', '/eventlokal/maison-sans-allemand');
         self::assertResponseStatusCodeSame(404);
     }
 

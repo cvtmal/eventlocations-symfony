@@ -30,7 +30,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 final class AdminTextExtensionsTest extends KernelTestCase
 {
     private const string ADMIN_PATH = '/admin/locations/1';
-    private const string PUBLIC_PATH = '/hochzeitslocations';
+    private const string PUBLIC_PATH = '/eventlokale';
 
     protected function tearDown(): void
     {

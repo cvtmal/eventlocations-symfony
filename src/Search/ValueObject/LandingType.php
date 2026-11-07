@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Search\ValueObject;
 
 /**
- * The kinds of listing landing page (#17): `/hochzeitslocations/{canton}`,
- * `/hochzeitslocations/{canton}/{town}` and `/hochzeitslocations/{building}`.
+ * The kinds of listing landing page (#17): `/eventlokale/{canton}`,
+ * `/eventlokale/{canton}/{town}` and `/eventlokale/{building}`.
  */
 enum LandingType: string
 {

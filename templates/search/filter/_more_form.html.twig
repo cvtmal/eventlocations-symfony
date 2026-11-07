@@ -15,10 +15,6 @@
 {%- set areas = constant('App\\Search\\ReadModel\\SearchCriteria::AREAS') -%}
 {%- set heights = constant('App\\Search\\ReadModel\\SearchCriteria::HEIGHTS') -%}
 
-{%- set event -%}
-    {{ include('search/filter/_more_event.html.twig', {criteria: criteria}, with_context = false) }}
-{%- endset -%}
-
 {%- set location -%}
     {{ include('search/filter/_more_tiles.html.twig', {
         title: ('term_group.' ~ groups.setting.value)|trans({}, 'venues'),
@@ -39,7 +35,7 @@
 {%- endset -%}
 
 {%- set properties -%}
-    {%- for param in ['infra', 'furniture', 'tech', 'surroundings'] -%}
+    {%- for param in ['catering', 'tech', 'infra', 'furniture', 'surroundings', 'amenity'] -%}
         {{ include('search/filter/_more_terms.html.twig', {param: param, group: groups[param], criteria: criteria}, with_context = false) }}
     {%- endfor -%}
 {%- endset -%}
@@ -81,7 +77,7 @@
     <div class="filter-more__group">
         {{ include('components/_text_input.html.twig', {id: 'filter-more-q', name: 'q', label: 'filter.more_name_title'|trans({}, 'search'), label_hidden: false, placeholder: 'filter.more_name_placeholder'|trans({}, 'search'), value: criteria.q}, with_context = false) }}
     </div>
-    {%- for name, group in {event: event, location: location, buildings: buildings, properties: properties, rooms: rooms} %}
+    {%- for name, group in {location: location, buildings: buildings, properties: properties, rooms: rooms} %}
         {%- if group|trim is not empty %}
     <div class="filter-more__group filter-more__group--{{ name }}">{{ group }}</div>
         {%- endif %}

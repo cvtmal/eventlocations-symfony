@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Seo;
 
 /**
- * Venue text inside the Markdown views (`/llms.txt`, `/hochzeitslocation/{slug}.md`): staff and
+ * Venue text inside the Markdown views (`/llms.txt`, `/eventlokal/{slug}.md`): staff and
  * import text is data, so none of it may become a heading, a list, a link or emphasis. Every
  * character CommonMark could read as syntax gets a backslash, which CommonMark removes again.
  */

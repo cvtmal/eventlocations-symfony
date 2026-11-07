@@ -1,11 +1,8 @@
-@use 'sass:list';
-@use 'sass:math';
 @use '../abstracts/breakpoints' as bp;
-@use '../abstracts/check';
 
-// The guests overlay (#11, #51): `search/filter/_guests_form.html.twig` inside #1's overlay shell, which stays unedited.
+// The guests overlay (#11, F5): `search/filter/_guests_form.html.twig` inside #1's overlay shell, which stays unedited.
 // Below lg a column; from lg a two-column grid in which `display: contents` dissolves the shell's body, so title and the
-// shell's footer share the left column and the form with its four band bubbles fills the right one. Scoped to
+// shell's footer share the left column and the form with its number input fills the right one. Scoped to
 // `:popover-open`, or the closed popover would show.
 .overlay--guests:popover-open {
     display: flex;
@@ -14,7 +11,7 @@
     // A short window scrolls here. At 50 % no stop counts as in view, so each comes to the middle with its ring: Firefox
     // leaves one that shows in part where it is, the others stop flush with the edge. Only on these stops: the close
     // button, which `overlay.js` focuses on opening, must leave the overlay at its top.
-    &:has(.guests-bubbles :focus-visible, .overlay__footer :focus-visible) {
+    &:has(.guests-filter :focus-visible, .overlay__footer :focus-visible) {
         scroll-padding-block: 50%;
     }
 
@@ -29,7 +26,7 @@
     @include bp.up(lg) {
         display: grid;
         grid-template-columns: minmax(0, 21.875rem) minmax(0, 1fr);
-        // The outer flexible rows centre the left column; the bubbles span them, so they never stretch the rows between.
+        // The outer flexible rows centre the left column; the form spans them, so it never stretches the rows between.
         grid-template-rows: 1fr auto auto auto 1fr;
         column-gap: var(--space-40);
         padding: 3rem 4.5rem 0;
@@ -49,6 +46,7 @@
             align-self: safe center;
             justify-self: center;
             width: 100%;
+            max-width: 24rem;
         }
 
         .overlay__footer {
@@ -77,14 +75,6 @@
     }
 }
 
-// The fieldset only groups the radios for assistive technology; it draws nothing.
-.guests-bands {
-    min-inline-size: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-}
-
 @include bp.down(md) {
     .overlay--guests .overlay__title {
         max-width: none;
@@ -100,88 +90,5 @@
         .btn {
             width: 100%;
         }
-    }
-}
-
-// The bubbles: one stage measured on the original at 1440 px (666 × 583 px), every position and size in percent of it,
-// so one map serves every width. Classes, not style attributes, because the CSP (#16) forbids inline styles. Four bands
-// (#51), growing with the band, none overlapping.
-$stage-width: 666;
-$stage-height: 583;
-// value: (left, top, diameter, font size), px in the 1440 px stage
-$bubbles: (
-    50: (40, 60, 170, 24),
-    100: (250, 0, 205, 28),
-    150: (60, 300, 240, 32),
-    151: (340, 250, 290, 36),
-);
-
-.guests-bubbles {
-    position: relative;
-    container-type: inline-size;
-    width: min(100%, #{math.div($stage-width, 16)}rem);
-    margin-inline: auto;
-    aspect-ratio: #{$stage-width} / #{$stage-height};
-}
-
-// A label wrapping its visually hidden radio: the radio is positioned inside the bubble, so a Tab stop scrolls to it.
-.guests-bubble {
-    position: absolute;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    aspect-ratio: 1;
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-pill);
-    background: var(--c-surface-raised);
-    box-shadow: inset 0 0 0 1px var(--c-line-soft); // separates the overlaps
-    color: var(--c-ink);
-    font-weight: var(--fw-semibold);
-    line-height: 1.1;
-    text-align: center;
-    cursor: pointer;
-
-    &:hover {
-        background: var(--c-accent-soft);
-    }
-
-    &:has(:checked) {
-        z-index: 1;
-        background: var(--c-accent-soft);
-        box-shadow: inset 0 0 0 2px var(--c-accent-strong);
-
-        &::after {
-            @include check.mark;
-
-            @include bp.up(lg) {
-                width: .5rem;
-                height: 1rem;
-            }
-        }
-    }
-
-    // A ring is never under a neighbour.
-    &:has(:focus-visible) {
-        z-index: 2;
-        outline: var(--focus-ring);
-        outline-offset: 2px;
-    }
-}
-
-// Every label breaks to two lines: "bis 50" / "Gäste", "über 150" / "Gäste".
-.guests-bubble__label {
-    max-inline-size: 5em;
-    text-wrap: balance;
-}
-
-@each $value, $box in $bubbles {
-    .guests-bubble--#{$value} {
-        top: math.percentage(math.div(list.nth($box, 2), $stage-height));
-        left: math.percentage(math.div(list.nth($box, 1), $stage-width));
-        width: max(2.75rem, #{math.percentage(math.div(list.nth($box, 3), $stage-width))});
-        font-size: max(.9375rem, #{math.div(list.nth($box, 4) * 100, $stage-width)}cqi);
     }
 }

@@ -29,8 +29,8 @@ final class PublicPagesLoadNoAdminAssetsTest extends WebTestCase
      */
     public static function publicPaths(): iterable
     {
-        yield 'listing' => ['/hochzeitslocations'];
-        yield 'detail' => ['/hochzeitslocation/'.DetailVenues::FULL_SLUG];
+        yield 'listing' => ['/eventlokale'];
+        yield 'detail' => ['/eventlokal/'.DetailVenues::FULL_SLUG];
     }
 
     #[DataProvider('publicPaths')]

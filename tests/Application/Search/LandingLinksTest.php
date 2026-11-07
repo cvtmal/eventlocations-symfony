@@ -29,9 +29,9 @@ final class LandingLinksTest extends WebTestCase
 
     /** The top nine after Zürich and Bern: count, then code; VS is the tenth. */
     private const TOP_AFTER_ZH_BE = [
-        '/hochzeitslocations/aargau', '/hochzeitslocations/graubuenden', '/hochzeitslocations/luzern',
-        '/hochzeitslocations/st-gallen', '/hochzeitslocations/solothurn', '/hochzeitslocations/schwyz',
-        '/hochzeitslocations/thurgau',
+        '/eventlokale/aargau', '/eventlokale/graubuenden', '/eventlokale/luzern',
+        '/eventlokale/st-gallen', '/eventlokale/solothurn', '/eventlokale/schwyz',
+        '/eventlokale/thurgau',
     ];
 
     private KernelBrowser $client;
@@ -67,11 +67,11 @@ final class LandingLinksTest extends WebTestCase
 
     public function test_the_listing_links_the_top_nine_cantons_then_the_buildings(): void
     {
-        $links = $this->related($this->get('/hochzeitslocations'));
+        $links = $this->related($this->get('/eventlokale'));
 
         self::assertSame([
-            '/hochzeitslocations/zuerich', '/hochzeitslocations/bern', ...self::TOP_AFTER_ZH_BE,
-            '/hochzeitslocations/hotel', '/hochzeitslocations/schloss',
+            '/eventlokale/zuerich', '/eventlokale/bern', ...self::TOP_AFTER_ZH_BE,
+            '/eventlokale/hotel', '/eventlokale/schloss',
         ], array_column($links, 'href'));
         self::assertSame(
             ['Hochzeit Zürich', 'Hochzeit Bern', 'Hochzeit Aargau', 'Hochzeit Graubünden', 'Hochzeit Luzern', 'Hochzeit St. Gallen', 'Hochzeit Solothurn', 'Hochzeit Schwyz', 'Hochzeit Thurgau', 'Hochzeit im Hotel', 'Hochzeit im Schloss'],
@@ -81,85 +81,85 @@ final class LandingLinksTest extends WebTestCase
 
     public function test_a_canton_page_links_its_towns_first_and_never_itself(): void
     {
-        $links = $this->related($this->get('/hochzeitslocations/zuerich'));
+        $links = $this->related($this->get('/eventlokale/zuerich'));
 
         self::assertSame([
-            '/hochzeitslocations/zuerich/meilen', '/hochzeitslocations/zuerich/staefa',
-            '/hochzeitslocations/bern', ...self::TOP_AFTER_ZH_BE, '/hochzeitslocations/wallis',
-            '/hochzeitslocations/hotel', '/hochzeitslocations/schloss',
+            '/eventlokale/zuerich/meilen', '/eventlokale/zuerich/staefa',
+            '/eventlokale/bern', ...self::TOP_AFTER_ZH_BE, '/eventlokale/wallis',
+            '/eventlokale/hotel', '/eventlokale/schloss',
         ], array_column($links, 'href'));
         self::assertSame(['Hochzeit Meilen', 'Hochzeit Stäfa'], \array_slice(array_column($links, 'label'), 0, 2));
     }
 
     public function test_a_town_page_links_its_siblings_and_its_canton(): void
     {
-        $links = $this->related($this->get('/hochzeitslocations/zuerich/meilen'));
+        $links = $this->related($this->get('/eventlokale/zuerich/meilen'));
 
         self::assertSame([
-            '/hochzeitslocations/zuerich/staefa', '/hochzeitslocations/zuerich',
-            '/hochzeitslocations/bern', ...self::TOP_AFTER_ZH_BE, '/hochzeitslocations/wallis',
-            '/hochzeitslocations/hotel', '/hochzeitslocations/schloss',
+            '/eventlokale/zuerich/staefa', '/eventlokale/zuerich',
+            '/eventlokale/bern', ...self::TOP_AFTER_ZH_BE, '/eventlokale/wallis',
+            '/eventlokale/hotel', '/eventlokale/schloss',
         ], array_column($links, 'href'));
         self::assertSame(['Hochzeit Stäfa', 'Hochzeit Zürich'], \array_slice(array_column($links, 'label'), 0, 2));
     }
 
     public function test_a_building_page_links_the_cantons_and_the_other_buildings(): void
     {
-        $links = $this->related($this->get('/hochzeitslocations/hotel'));
+        $links = $this->related($this->get('/eventlokale/hotel'));
 
         self::assertSame([
-            '/hochzeitslocations/zuerich', '/hochzeitslocations/bern', ...self::TOP_AFTER_ZH_BE,
-            '/hochzeitslocations/schloss',
+            '/eventlokale/zuerich', '/eventlokale/bern', ...self::TOP_AFTER_ZH_BE,
+            '/eventlokale/schloss',
         ], array_column($links, 'href'));
     }
 
     public function test_the_region_map_knows_exactly_the_live_canton_paths(): void
     {
-        $crawler = $this->get('/hochzeitslocations/schloss');
+        $crawler = $this->get('/eventlokale/schloss');
 
         $form = $crawler->filter('form#filter-region-form');
         $paths = json_decode((string) $form->attr('data-landing'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($paths);
         ksort($paths);
         self::assertSame([
-            'ag' => '/hochzeitslocations/aargau', 'be' => '/hochzeitslocations/bern', 'gr' => '/hochzeitslocations/graubuenden',
-            'lu' => '/hochzeitslocations/luzern', 'sg' => '/hochzeitslocations/st-gallen', 'so' => '/hochzeitslocations/solothurn',
-            'sz' => '/hochzeitslocations/schwyz', 'tg' => '/hochzeitslocations/thurgau', 'vs' => '/hochzeitslocations/wallis',
-            'zh' => '/hochzeitslocations/zuerich',
+            'ag' => '/eventlokale/aargau', 'be' => '/eventlokale/bern', 'gr' => '/eventlokale/graubuenden',
+            'lu' => '/eventlokale/luzern', 'sg' => '/eventlokale/st-gallen', 'so' => '/eventlokale/solothurn',
+            'sz' => '/eventlokale/schwyz', 'tg' => '/eventlokale/thurgau', 'vs' => '/eventlokale/wallis',
+            'zh' => '/eventlokale/zuerich',
         ], $paths);
 
         // P1: the region form keeps the plain listing as its action and carries the building page's facet.
-        self::assertSame('/hochzeitslocations', $form->attr('action'));
+        self::assertSame('/eventlokale', $form->attr('action'));
         self::assertSame(['building[]' => ['castle']], $this->hiddenState($crawler, '#filter-region-form'));
     }
 
     public function test_the_more_form_on_a_canton_page_submits_to_its_path_without_the_canton(): void
     {
-        $crawler = $this->get('/hochzeitslocations/zuerich?guests=100&rooms=2');
+        $crawler = $this->get('/eventlokale/zuerich?guests=100&rooms=2');
 
         $form = $crawler->filter('form#filter-more-form');
-        self::assertSame('/hochzeitslocations/zuerich', $form->attr('action'));
+        self::assertSame('/eventlokale/zuerich', $form->attr('action'));
         self::assertSame(['guests' => ['100']], $this->hiddenState($crawler, '#filter-more-form'));
         self::assertSame('/_search/count?canton=zh&', $form->attr('data-live-count-url'));
     }
 
     public function test_the_more_form_on_a_building_page_owns_the_building_and_submits_to_the_listing(): void
     {
-        $crawler = $this->get('/hochzeitslocations/hotel');
+        $crawler = $this->get('/eventlokale/hotel');
 
         $form = $crawler->filter('form#filter-more-form');
-        self::assertSame('/hochzeitslocations', $form->attr('action'));
+        self::assertSame('/eventlokale', $form->attr('action'));
         self::assertSame([], $this->hiddenState($crawler, '#filter-more-form'));
         self::assertCount(1, $form->filter('input[name="building[]"][value="hotel"][checked]'));
     }
 
     public function test_the_canton_chip_on_a_canton_page_removes_the_path(): void
     {
-        $crawler = $this->get('/hochzeitslocations/zuerich?guests=100');
+        $crawler = $this->get('/eventlokale/zuerich?guests=100');
 
         $chip = $crawler->filter('.filter-bar a.chip')->reduce(static fn (Crawler $chip): bool => 'Zürich' === $chip->text());
         self::assertCount(1, $chip);
-        self::assertSame('/hochzeitslocations?guests=100', $chip->attr('href'));
+        self::assertSame('/eventlokale?guests=100', $chip->attr('href'));
     }
 
     private function get(string $uri): Crawler

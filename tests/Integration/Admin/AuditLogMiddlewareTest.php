@@ -71,7 +71,7 @@ final class AuditLogMiddlewareTest extends KernelTestCase
     {
         $requests = self::getContainer()->get(RequestStack::class);
         self::assertInstanceOf(RequestStack::class, $requests);
-        $requests->push(Request::create('/hochzeitslocations'));
+        $requests->push(Request::create('/eventlokale'));
 
         $this->dispatch(new AuditProbeCommand(EntityId::generate()));
 

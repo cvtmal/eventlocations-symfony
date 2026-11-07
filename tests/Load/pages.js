@@ -1,10 +1,10 @@
 // k6 server-time test for PERF-1 (S11, #19; docs/performance-baseline.md) on the five measured pages.
 //
 //   home      /
-//   listing   /hochzeitslocations
-//   filtered  /hochzeitslocations?<FILTERS>      three filters
-//   canton    /hochzeitslocations/<CANTON>       a canton landing page
-//   detail    /hochzeitslocation/<DETAIL_SLUG>   the richest venue (run.sh picks it)
+//   listing   /eventlokale
+//   filtered  /eventlokale?<FILTERS>      three filters
+//   canton    /eventlokale/<CANTON>       a canton landing page
+//   detail    /eventlokal/<DETAIL_SLUG>   the richest venue (run.sh picks it)
 //
 // MODE=uncached: per page a 10 s warm-up, then 60 s at 5 requests/s, pages one after the other. Each
 // request carries k6=<run>-<iteration>, a new HttpCache key that SearchCriteria drops and the home page
@@ -38,10 +38,10 @@ if ('uncached' !== MODE && 'all' !== MODE) {
 
 const PAGES = {
     home: { path: '/', p95: 200 },
-    listing: { path: '/hochzeitslocations', p95: 200 },
-    filtered: { path: `/hochzeitslocations?${FILTERS}`, p95: 200 },
-    canton: { path: `/hochzeitslocations/${CANTON}`, p95: 200 },
-    detail: { path: `/hochzeitslocation/${DETAIL_SLUG}`, p95: 120 },
+    listing: { path: '/eventlokale', p95: 200 },
+    filtered: { path: `/eventlokale?${FILTERS}`, p95: 200 },
+    canton: { path: `/eventlokale/${CANTON}`, p95: 200 },
+    detail: { path: `/eventlokal/${DETAIL_SLUG}`, p95: 120 },
 };
 const WARMUP_S = 10;
 const UNCACHED_S = 60;

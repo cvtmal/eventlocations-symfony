@@ -67,7 +67,7 @@ final class VenueEditorTest extends WebTestCase
 
         self::assertStringStartsWith('Nr. '.$venue->number().' · Seestrasse 1, 8001 Zürich ZH', $crawler->filter('.record-header__subtitle')->text());
         self::assertSame($this->url($venue).'/vorschau', $crawler->filter('.record-header__actions a')->eq(0)->attr('href'));
-        self::assertSame('/hochzeitslocation/schloss-seeblick', $crawler->filter('.record-header__actions a')->eq(1)->attr('href'));
+        self::assertSame('/eventlokal/schloss-seeblick', $crawler->filter('.record-header__actions a')->eq(1)->attr('href'));
         self::assertSame($this->url($venue).'/unpublizieren', $crawler->filter('form[name="unpublish"]')->attr('action'));
         // Delete is for admins, and only for an unpublished venue.
         self::assertSelectorNotExists('#venue-delete');
@@ -100,7 +100,7 @@ final class VenueEditorTest extends WebTestCase
         self::assertSame($this->url($venue).'/loeschen', $crawler->filter('#venue-delete form[name="delete"]')->attr('action'));
         self::assertSame('Abbrechen', $crawler->filter('#venue-delete .modal__footer form[method="dialog"] button[autofocus]')->text());
         self::assertSame('venue-delete', $crawler->filter('button[command="show-modal"]')->attr('commandfor'));
-        self::assertSelectorNotExists('.record-header__actions a[href^="/hochzeitslocation/"]');
+        self::assertSelectorNotExists('.record-header__actions a[href^="/eventlokal/"]');
         self::assertSame('/admin/audit-log?subject_type=venue&subject_id='.$venue->number(), $crawler->filter('section[aria-labelledby="venue-history"]')->filter('a')->attr('href'));
     }
 

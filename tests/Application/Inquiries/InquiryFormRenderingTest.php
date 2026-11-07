@@ -25,7 +25,7 @@ final class InquiryFormRenderingTest extends WebTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const PAGE = '/hochzeitslocation/'.DetailVenues::FULL_SLUG;
+    private const PAGE = '/eventlokal/'.DetailVenues::FULL_SLUG;
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -120,7 +120,7 @@ final class InquiryFormRenderingTest extends WebTestCase
     {
         DetailVenues::minimal();
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertCount(1, $crawler->filter('section#anfrage'));
         self::assertSame('', $crawler->filter('section#anfrage')->html());
@@ -142,7 +142,7 @@ final class InquiryFormRenderingTest extends WebTestCase
         $venue->changeContact('+41441234567', null, null, null);
         $this->em->flush();
 
-        $crawler = $this->page('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertSame('#kontakt', $crawler->filter('.venue-actions__primary')->attr('href'));
         self::assertCount(1, $crawler->filter('#kontakt'));
@@ -194,7 +194,7 @@ final class InquiryFormRenderingTest extends WebTestCase
     public function test_a_flag_signed_for_another_venue_shows_the_form(): void
     {
         DetailVenues::full($this->em);
-        $signed = $this->signed('/hochzeitslocation/andere-location?anfrage=gesendet');
+        $signed = $this->signed('/eventlokal/andere-location?anfrage=gesendet');
         $query = (string) parse_url($signed, \PHP_URL_QUERY);
 
         $this->page(self::PAGE.'?'.$query);

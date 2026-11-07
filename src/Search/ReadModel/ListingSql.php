@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Search\ReadModel;
 
 use App\Venues\ValueObject\Access;
-use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\ParameterType;
@@ -16,9 +15,9 @@ use Doctrine\DBAL\ParameterType;
  *
  * - Published means status published and a translation in the default locale (the card
  *   needs a slug and a summary).
- * - Groups combine with AND; inside a group setting, building and price are OR, the other
- *   term groups and access AND. Guests pick a GuestBand on capacity_max alone (#51);
- *   capacity_min is not read.
+ * - Groups combine with AND; inside a group event type, setting and building are OR, the
+ *   other term groups and access AND. Guests (F5) need a venue that holds that many
+ *   (capacity_max) and states no higher minimum (capacity_min NULL or at most the number).
  * - The radius centre is a joined MATERIALIZED CTE (`centre c`): only that shape lets the
  *   planner use idx_venues_earth. An unknown town or ZIP leaves the CTE empty, so 0 rows.
  *
@@ -27,7 +26,7 @@ use Doctrine\DBAL\ParameterType;
 final readonly class ListingSql
 {
     /** Term groups whose values match any of (OR); every other filtered group needs all (AND). */
-    private const OR_GROUPS = [TermGroup::Setting, TermGroup::Building];
+    private const OR_GROUPS = [TermGroup::SuitableFor, TermGroup::Setting, TermGroup::Building];
 
     /** `WITH centre AS MATERIALIZED (…)` for a radius search, else ''. */
     public string $with;
@@ -77,14 +76,10 @@ final readonly class ListingSql
         }
 
         if (null !== $criteria->guests) {
-            $where[] = 'v.capacity_max >= :guests_min';
-            $params['guests_min'] = $criteria->guests->min();
-            $types['guests_min'] = ParameterType::INTEGER;
-            if (null !== ($max = $criteria->guests->max())) {
-                $where[] = 'v.capacity_max <= :guests_max';
-                $params['guests_max'] = $max;
-                $types['guests_max'] = ParameterType::INTEGER;
-            }
+            $where[] = 'v.capacity_max >= :guests';
+            $where[] = '(v.capacity_min IS NULL OR v.capacity_min <= :guests)';
+            $params['guests'] = $criteria->guests;
+            $types['guests'] = ParameterType::INTEGER;
         }
 
         foreach (SearchCriteria::PARAMS as $group) {
@@ -103,12 +98,6 @@ final readonly class ListingSql
                 $params['n_'.$g] = \count($codes);
                 $types['n_'.$g] = ParameterType::INTEGER;
             }
-        }
-
-        if ([] !== $criteria->prices) {
-            $where[] = 'v.price_level IN (:prices)';
-            $params['prices'] = array_map(static fn (PriceLevel $price): string => $price->value, $criteria->prices);
-            $types['prices'] = ArrayParameterType::STRING;
         }
 
         foreach ($criteria->access as $access) {

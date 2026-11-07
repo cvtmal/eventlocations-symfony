@@ -30,7 +30,7 @@ final class VenueMarkdownController extends AbstractController
     ) {
     }
 
-    #[Route(path: ['de' => '/hochzeitslocation/{slug}.md'], name: 'venue_markdown', requirements: ['slug' => VenueDetailController::SLUG_REQUIREMENT], methods: ['GET'])]
+    #[Route(path: ['de' => '/eventlokal/{slug}.md'], name: 'venue_markdown', requirements: ['slug' => VenueDetailController::SLUG_REQUIREMENT], methods: ['GET'])]
     #[Cache(public: true, smaxage: PublicCache::MISSING_TTL)]
     public function __invoke(Request $request, string $slug): Response
     {

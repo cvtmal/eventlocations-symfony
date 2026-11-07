@@ -39,9 +39,9 @@ final class HttpCachePurgeTest extends WebTestCase
     use ResetsContentBlocks;
     use ThroughHttpCache;
 
-    private const DETAIL = '/hochzeitslocation/'.DetailVenues::FULL_SLUG;
-    private const LISTING = '/hochzeitslocations';
-    private const CANTON = '/hochzeitslocations/zuerich';
+    private const DETAIL = '/eventlokal/'.DetailVenues::FULL_SLUG;
+    private const LISTING = '/eventlokale';
+    private const CANTON = '/eventlokale/zuerich';
     private const HOME = '/';
     private const SUMMARY = 'Ein frischer Satz, den noch kein Cache gesehen hat.';
     private const STAFF_TEXT = 'Ein Text aus dem CMS, den noch kein Cache gesehen hat.';

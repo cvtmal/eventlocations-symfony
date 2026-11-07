@@ -18,7 +18,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * SEO-1 and SEO-4 for the listing and its landing pages (#17), driven by the parsed criteria.
  * The canonical is the path-facet URL of the criteria (LandingPaths), so `?canton=zh`
- * canonicalises to `/hochzeitslocations/zuerich`. A page is filtered, so `noindex, follow` with
+ * canonicalises to `/eventlokale/zuerich`. A page is filtered, so `noindex, follow` with
  * a page-1 canonical, when a parameter besides `page` is left after the path took its facets,
  * or when the facet came from the query rather than the route (P5). An unfiltered page N
  * canonicalises to itself. Unknown parameters and empty values never survive SearchCriteria,

@@ -109,7 +109,7 @@ final class VenueAddressCardTest extends WebTestCase
         self::assertResponseRedirects();
         self::assertSame(['bs', null], array_values((array) $this->connection->fetchAssociative("SELECT v.canton_code, t.region FROM venues v JOIN venue_translations t ON t.venue_id = v.id AND t.locale = 'de' WHERE v.id = ?", [$venue->id()])));
         self::assertCount(0, $this->client->followRedirect()->filter('#venue_address_regions_de'));
-        $card = $this->client->request('GET', '/hochzeitslocations')->filter('.card')->reduce(static fn (Crawler $card): bool => str_contains($card->text(), 'Remise Nur Region'));
+        $card = $this->client->request('GET', '/eventlokale')->filter('.card')->reduce(static fn (Crawler $card): bool => str_contains($card->text(), 'Remise Nur Region'));
         self::assertStringContainsString('Kanton Basel-Stadt', $card->text());
         self::assertStringNotContainsString('Basel ', str_replace('Basel-Stadt', '', $card->text()));
     }
@@ -131,13 +131,13 @@ final class VenueAddressCardTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $venue = DetailVenues::inCantonOnly();
-        $this->client->request('GET', '/hochzeitslocations');
+        $this->client->request('GET', '/eventlokale');
         self::assertSelectorExists('.region-filter--canton-only');
 
         $this->save($venue, ['town' => '8706 Meilen', 'lat' => '47.2695', 'lng' => '8.6437', 'canton' => '']);
 
         self::assertResponseRedirects();
-        $this->client->request('GET', '/hochzeitslocations');
+        $this->client->request('GET', '/eventlokale');
         self::assertSelectorNotExists('.region-filter--canton-only');
     }
 

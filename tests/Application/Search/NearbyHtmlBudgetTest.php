@@ -33,7 +33,7 @@ final class NearbyHtmlBudgetTest extends WebTestCase
     use ImportsTownDataset;
 
     private const int BUDGET_BYTES = 60 * 1024;
-    private const string URL = '/hochzeitslocation-in-meiner-naehe';
+    private const string URL = '/eventlokal-in-meiner-naehe';
 
     /** Words for summaries that do not compress better than real copy would. */
     private const array WORDS = [

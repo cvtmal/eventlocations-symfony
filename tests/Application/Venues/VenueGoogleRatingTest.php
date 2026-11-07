@@ -30,7 +30,7 @@ final class VenueGoogleRatingTest extends WebTestCase
     private const string MAPS_URL = 'https://www.google.com/maps/search/?api=1&query=Schloss%20Seeblick&query_place_id=ChIJN1t_tDeuEmsRUsoyG83frY4';
     private const string SITE_POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-src https://www.google.com; frame-ancestors 'none'";
     private const string PAGE_CACHE = 'public, s-maxage=86400, stale-if-error=86400, stale-while-revalidate=86400';
-    private const string URL = '/hochzeitslocation/'.DetailVenues::FULL_SLUG;
+    private const string URL = '/eventlokal/'.DetailVenues::FULL_SLUG;
 
     private ?KernelBrowser $client = null;
     private EntityManagerInterface $em;

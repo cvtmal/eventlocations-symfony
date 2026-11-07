@@ -21,7 +21,7 @@
     <section class="home-hero">
         <div class="home-hero__intro">
             <h1 class="home-hero__title">{{ 'home.hero.heading'|trans({}, 'search') }}</h1>
-            {{ include('search/_home_search.html.twig', {regions: regions, categories: categories, guest_bands: guest_bands}, with_context = false) }}
+            {{ include('search/_home_search.html.twig', {regions: regions, events: events}, with_context = false) }}
         </div>
         <div class="home-hero__media">
             {%- if hero_picture %}

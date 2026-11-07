@@ -25,7 +25,7 @@ use Zenstruck\Foundry\Test\Factories;
 use function Zenstruck\Foundry\Persistence\repository;
 
 /**
- * The public listing /hochzeitslocations (#7). The client shares the test's connection (no
+ * The public listing /eventlokale (#7). The client shares the test's connection (no
  * reboot), so the venues created here are visible to the request and rolled back afterwards.
  */
 final class ListingControllerTest extends WebTestCase
@@ -61,7 +61,7 @@ final class ListingControllerTest extends WebTestCase
         $this->venue(['name' => 'Gasthof Linde'], ['slug' => 'gasthof-linde']);
         $this->venue(['name' => 'Remise Au']);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSelectorTextSame('h1', 'Hochzeitslocations in der Schweiz');
         self::assertSelectorExists('section.listing-hero[aria-labelledby="listing-title"] h1#listing-title', 'The hero renders before <main>, so its name makes it the landmark that holds the h1 (axe region).');
@@ -69,16 +69,16 @@ final class ListingControllerTest extends WebTestCase
         self::assertCount(3, $crawler->filter('.card'));
 
         $card = $this->card($crawler, 'Schloss Seeburg');
-        self::assertSame('/hochzeitslocation/schloss-seeburg', $card->filter('.card__link')->attr('href'));
+        self::assertSame('/eventlokal/schloss-seeburg', $card->filter('.card__link')->attr('href'));
         self::assertSame(['50 - 450', 'Stäfa'], $card->filter('.card-facts__item')->each(static fn (Crawler $item): string => $item->text()));
         self::assertSame('Premium', $card->filter('.card__title .badge')->text());
         self::assertCount(0, $crawler->filter('.card__rating, .rating-summary__line'), 'No own rating on a card since #53.');
 
         $basic = $this->card($crawler, 'Gasthof Linde');
-        self::assertSame('/hochzeitslocation/gasthof-linde', $basic->filter('.card__link')->attr('href'));
+        self::assertSame('/eventlokal/gasthof-linde', $basic->filter('.card__link')->attr('href'));
         self::assertCount(0, $basic->filter('.badge'));
 
-        $this->get('/hochzeitslocations?q=Linde');
+        $this->get('/eventlokale?q=Linde');
         self::assertSelectorTextSame('.listing-hero__count', '1 Resultat');
     }
 
@@ -89,7 +89,7 @@ final class ListingControllerTest extends WebTestCase
             ->create(['name' => 'Schloss Seeburg', 'tier' => Tier::Premium]);
         VenueTranslationFactory::createOne(['venue' => $venue]);
 
-        $card = $this->card($this->get('/hochzeitslocations'), 'Schloss Seeburg');
+        $card = $this->card($this->get('/eventlokale'), 'Schloss Seeburg');
 
         self::assertCount(1, $card->filter('.card__tags .tag'));
         self::assertCount(0, $card->filter('.card__tags .badge'));
@@ -105,7 +105,7 @@ final class ListingControllerTest extends WebTestCase
         }
         $this->venue(['name' => 'Ohne Bilder']); // basic: always last
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertCount(3, $crawler->filter('[data-carousel]'));
         self::assertCount(3, $crawler->filter('[data-carousel] [data-carousel-counter]'));
@@ -138,7 +138,7 @@ final class ListingControllerTest extends WebTestCase
         foreach (['Schloss Seeburg', 'Gasthof Linde', 'Remise Au'] as $name) {
             $card = $this->card($crawler, $name);
             $href = (string) $card->filter('.card__link')->attr('href');
-            self::assertStringStartsWith('/hochzeitslocation/', $href);
+            self::assertStringStartsWith('/eventlokal/', $href);
             self::assertCount(2, $card->filter('.carousel__slide'));
             self::assertCount(2, $card->filter(\sprintf(
                 '.carousel__slide > a.card__photo-link[href="%s"][tabindex="-1"][aria-hidden="true"] img',
@@ -159,7 +159,7 @@ final class ListingControllerTest extends WebTestCase
         $venue = $this->venue(['name' => 'Schloss Seeburg']);
         $number = $venue->number();
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         $button = $crawler->filter(\sprintf(
             'form.merken.merken--card[method="post"][action="/merkliste/%d"] button[type="submit"][aria-pressed="false"][data-merken="%d"]',
@@ -178,21 +178,21 @@ final class ListingControllerTest extends WebTestCase
             $this->venue([]);
         }
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
         self::assertCount(48, $crawler->filter('.card'));
         self::assertSelectorTextSame('.pagination__count', '1 - 48 von 49 Resultaten');
         self::assertSame('1', $crawler->filter('.pagination [aria-current="page"]')->text());
-        self::assertCount(1, $crawler->filter('.pagination__page[href="/hochzeitslocations?page=2"]'));
-        self::assertCount(1, $crawler->filter('.pagination__arrow[href="/hochzeitslocations?page=2"][aria-label="Nächste Seite"]'));
-        self::assertSame('http://localhost/hochzeitslocations', $crawler->filter('link[rel="canonical"]')->attr('href'));
+        self::assertCount(1, $crawler->filter('.pagination__page[href="/eventlokale?page=2"]'));
+        self::assertCount(1, $crawler->filter('.pagination__arrow[href="/eventlokale?page=2"][aria-label="Nächste Seite"]'));
+        self::assertSame('http://localhost/eventlokale', $crawler->filter('link[rel="canonical"]')->attr('href'));
 
-        $crawler = $this->get('/hochzeitslocations?page=2');
+        $crawler = $this->get('/eventlokale?page=2');
         self::assertCount(1, $crawler->filter('.card'));
         self::assertSelectorTextSame('.pagination__count', '49 - 49 von 49 Resultaten');
         self::assertSame('2', $crawler->filter('.pagination [aria-current="page"]')->text());
-        self::assertCount(1, $crawler->filter('.pagination__arrow[href="/hochzeitslocations"][aria-label="Vorherige Seite"]'));
-        self::assertSame('http://localhost/hochzeitslocations?page=2', $crawler->filter('link[rel="canonical"]')->attr('href'));
-        self::assertSame('http://localhost/hochzeitslocations?page=2', $crawler->filter('link[hreflang="de-CH"]')->attr('href'));
+        self::assertCount(1, $crawler->filter('.pagination__arrow[href="/eventlokale"][aria-label="Vorherige Seite"]'));
+        self::assertSame('http://localhost/eventlokale?page=2', $crawler->filter('link[rel="canonical"]')->attr('href'));
+        self::assertSame('http://localhost/eventlokale?page=2', $crawler->filter('link[hreflang="de-CH"]')->attr('href'));
     }
 
     public function test_query_string_filters_narrow_results_and_render_chips(): void
@@ -203,34 +203,42 @@ final class ListingControllerTest extends WebTestCase
         VenueTermFactory::new()->term(TermGroup::Setting, 'river')->create(['venue' => $river]);
         $this->venue(['name' => 'Landgut Bern', 'town' => $this->town('Bern')]);
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh');
+        $crawler = $this->get('/eventlokale?canton=zh');
         self::assertSame(['Remise Zürich', 'Seehaus Zürich'], $this->names($crawler));
         $chip = $crawler->filter('.filter-bar .chip');
         self::assertCount(1, $chip);
         self::assertSame('Zürich', $chip->text());
-        self::assertSame('/hochzeitslocations', $chip->attr('href'));
+        self::assertSame('/eventlokale', $chip->attr('href'));
         self::assertSame('Filter Zürich entfernen', $chip->attr('aria-label'));
 
-        $crawler = $this->get('/hochzeitslocations?guests=120');
-        self::assertSame(['bis 150 Gäste'], $crawler->filter('.filter-bar .chip')->each(static fn (Crawler $c): string => $c->text()));
+        $crawler = $this->get('/eventlokale?guests=120');
+        self::assertSame(['120 Gäste'], $crawler->filter('.filter-bar .chip')->each(static fn (Crawler $c): string => $c->text()));
+        self::assertSame(["1'500 Gäste"], $this->chips($this->get('/eventlokale?guests=1500')));
 
-        $crawler = $this->get('/hochzeitslocations?setting[]=lake&setting[]=river');
+        VenueTermFactory::new()->term(TermGroup::SuitableFor, 'seminar')->create(['venue' => $lake]);
+        $crawler = $this->get('/eventlokale?event[]=seminar');
+        self::assertSame(['Seehaus Zürich'], $this->names($crawler));
+        self::assertSame(['Seminar'], $this->chips($crawler));
+        self::assertSame('/eventlokale', $crawler->filter('.filter-bar .chip')->attr('href'));
+
+        $crawler = $this->get('/eventlokale?setting[]=lake&setting[]=river');
         self::assertSame(['Remise Zürich', 'Seehaus Zürich'], $this->names($crawler));
         self::assertSame(['weitere Filter (1)'], $crawler->filter('.filter-bar .chip')->each(static fn (Crawler $c): string => $c->text()));
-        self::assertSame('/hochzeitslocations', $crawler->filter('.filter-bar .chip a')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.filter-bar .chip a')->attr('href'));
         self::assertCount(1, $crawler->filter('#filter-more input[name="setting[]"][value="lake"][checked]'));
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=150&setting[]=lake&page=1');
-        self::assertSame('/hochzeitslocations?guests=150&setting%5B0%5D=lake', $crawler->filter('#filter-region .overlay__footer a')->attr('href'));
-        self::assertSame('/hochzeitslocations?canton=zh&setting%5B0%5D=lake', $crawler->filter('#filter-guests .overlay__footer a')->attr('href'));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=150', $crawler->filter('#filter-more .overlay__footer a')->attr('href'));
+        $crawler = $this->get('/eventlokale?canton=zh&guests=150&event[]=seminar&setting[]=lake&page=1');
+        self::assertSame('/eventlokale?guests=150&event%5B0%5D=seminar&setting%5B0%5D=lake', $crawler->filter('#filter-region .overlay__footer a')->attr('href'));
+        self::assertSame('/eventlokale?canton=zh&guests=150&setting%5B0%5D=lake', $crawler->filter('#filter-event .overlay__footer a')->attr('href'));
+        self::assertSame('/eventlokale?canton=zh&event%5B0%5D=seminar&setting%5B0%5D=lake', $crawler->filter('#filter-guests .overlay__footer a')->attr('href'));
+        self::assertSame('/eventlokale?canton=zh&guests=150&event%5B0%5D=seminar', $crawler->filter('#filter-more .overlay__footer a')->attr('href'));
     }
 
     public function test_filter_bar_has_three_triggers_and_overlays(): void
     {
         $this->venue([]);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         foreach (['filter-region' => 'Region', 'filter-guests' => 'Anzahl Gäste', 'filter-more' => 'weitere Filter +'] as $id => $label) {
             self::assertSame($label, $crawler->filter(\sprintf('.filter-bar [popovertarget="%s"]:not([popovertargetaction])', $id))->text());
@@ -252,20 +260,20 @@ final class ListingControllerTest extends WebTestCase
         $this->venue(['name' => 'Seehaus Stäfa', 'town' => $stafa, 'zip' => '8712', 'lat' => $stafa->lat(), 'lng' => $stafa->lng()]);
         $this->venue(['name' => 'Landgut Bern', 'town' => $bern, 'lat' => $bern->lat(), 'lng' => $bern->lng()]);
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh');
+        $crawler = $this->get('/eventlokale?canton=zh');
         self::assertSame(['Remise Zürich', 'Seehaus Stäfa'], $this->names($crawler));
         self::assertSame(['Zürich'], $this->chips($crawler));
 
-        $crawler = $this->get('/hochzeitslocations?place='.$stafa->id().'&radius=0');
+        $crawler = $this->get('/eventlokale?place='.$stafa->id().'&radius=0');
         self::assertSame(['Seehaus Stäfa'], $this->names($crawler));
         self::assertSame(['Stäfa'], $this->chips($crawler));
 
-        $crawler = $this->get('/hochzeitslocations?place='.$stafa->id().'&radius=25');
+        $crawler = $this->get('/eventlokale?place='.$stafa->id().'&radius=25');
         self::assertSame(['Remise Zürich', 'Seehaus Stäfa'], $this->names($crawler));
         self::assertSame(['Stäfa + 25 km'], $this->chips($crawler));
-        self::assertSame('/hochzeitslocations', $crawler->filter('.filter-bar .chip')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.filter-bar .chip')->attr('href'));
 
-        $crawler = $this->get('/hochzeitslocations?place=8712');
+        $crawler = $this->get('/eventlokale?place=8712');
         self::assertSame(['Seehaus Stäfa'], $this->names($crawler));
         self::assertSame(['8712 Stäfa + 5 km'], $this->chips($crawler));
         $place = $crawler->filter('#filter-region-form input[type="hidden"][name="place"]');
@@ -274,25 +282,26 @@ final class ListingControllerTest extends WebTestCase
         self::assertEqualsWithDelta($stafa->lng(), (float) $place->attr('data-lng'), 0.0001);
         self::assertSame('8712 Stäfa', $crawler->filter('#filter-region-place')->attr('data-display'));
 
-        self::assertSame(['9999 + 5 km'], $this->chips($this->get('/hochzeitslocations?place=9999')));
-        self::assertSame(['Ort + 5 km'], $this->chips($this->get('/hochzeitslocations?place=0198a3c4-6b1e-7f3a-9c2d-1e4f5a6b7c8d')));
+        self::assertSame(['9999 + 5 km'], $this->chips($this->get('/eventlokale?place=9999')));
+        self::assertSame(['Ort + 5 km'], $this->chips($this->get('/eventlokale?place=0198a3c4-6b1e-7f3a-9c2d-1e4f5a6b7c8d')));
     }
 
     public function test_region_overlay_is_a_get_form_that_keeps_other_filters(): void
     {
         $this->venue(['town' => $this->town('Zürich')]);
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=100&setting[]=lake');
+        $crawler = $this->get('/eventlokale?canton=zh&guests=100&event[]=apero&setting[]=lake');
         $form = $crawler->filter('#filter-region form#filter-region-form');
 
         self::assertCount(1, $form);
         self::assertSame('get', $form->attr('method'));
-        self::assertSame('/hochzeitslocations', $form->attr('action'));
+        self::assertSame('/eventlokale', $form->attr('action'));
         self::assertSame('/_search/count?', $form->attr('data-live-count-url'));
-        self::assertSame('Wo soll deine Hochzeit stattfinden?', $crawler->filter('#filter-region-title')->text());
+        self::assertSame('Wo soll dein Anlass stattfinden?', $crawler->filter('#filter-region-title')->text());
 
         // The other groups travel as hidden state; this overlay's own fields do not.
         self::assertSame('100', $form->filter('input[type="hidden"][name="guests"]')->attr('value'));
+        self::assertSame('apero', $form->filter('input[type="hidden"][name="event[]"]')->attr('value'));
         self::assertSame('lake', $form->filter('input[type="hidden"][name="setting[]"]')->attr('value'));
         self::assertCount(0, $form->filter('input[type="hidden"][name="radius"]'));
 
@@ -337,7 +346,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inRegionOnly($this->em(), 'Schweizweit');
         DetailVenues::withoutPlace();
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSelectorTextSame('.listing-hero__count', '4 Resultate');
         self::assertSame(['Gasthof Linde', 'Remise Nur Region', 'Scheune Nur Kanton', 'Wiesenhof Ohne Ort'], $this->names($crawler));
@@ -349,7 +358,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inRegionOnly($this->em(), 'Schweizweit');
         DetailVenues::withoutPlace();
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame(['Kanton Zürich'], $this->cardPlace($crawler, 'Scheune Nur Kanton'));
         self::assertSame(['Schweizweit'], $this->cardPlace($crawler, 'Remise Nur Region'));
@@ -361,7 +370,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inCantonOnly();
         DetailVenues::inRegionOnly($this->em(), 'Schweizweit');
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh');
+        $crawler = $this->get('/eventlokale?canton=zh');
 
         self::assertSame(['Scheune Nur Kanton'], $this->names($crawler));
     }
@@ -371,7 +380,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inCantonOnly('remise-vaduz', 'Remise Vaduz', 'li');
         DetailVenues::inCantonOnly('scheune-sankt-gallen', 'Scheune Sankt Gallen', 'sg');
 
-        $crawler = $this->get('/hochzeitslocations?canton=li');
+        $crawler = $this->get('/eventlokale?canton=li');
 
         self::assertSame(['Remise Vaduz'], $this->names($crawler));
         self::assertSame(['Liechtenstein'], $this->cardPlace($crawler, 'Remise Vaduz'), 'no "Kanton" before Liechtenstein (#46)');
@@ -383,7 +392,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inCantonOnly();
         DetailVenues::withoutPlace();
 
-        $crawler = $this->get('/hochzeitslocations?place='.$this->town('Zürich')->id().'&radius=10');
+        $crawler = $this->get('/eventlokale?place='.$this->town('Zürich')->id().'&radius=10');
 
         self::assertSame(['Gasthof Linde'], $this->names($crawler));
     }
@@ -393,7 +402,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inCantonOnly();
         DetailVenues::withoutPlace();
 
-        $form = $this->get('/hochzeitslocations')->filter('#filter-region-form');
+        $form = $this->get('/eventlokale')->filter('#filter-region-form');
 
         self::assertStringContainsString('region-filter--canton-only', (string) $form->attr('class'));
         self::assertNotNull($form->filter('#filter-region-place')->attr('disabled'));
@@ -410,7 +419,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inCantonOnly();
         DetailVenues::inCantonWithPin('47.3769', '8.5417');
 
-        $form = $this->get('/hochzeitslocations')->filter('#filter-region-form');
+        $form = $this->get('/eventlokale')->filter('#filter-region-form');
 
         self::assertStringNotContainsString('region-filter--canton-only', (string) $form->attr('class'));
         self::assertNull($form->filter('#filter-region-place')->attr('disabled'));
@@ -418,14 +427,14 @@ final class ListingControllerTest extends WebTestCase
         // 0 km means "only that town or ZIP", which no town-less venue matches.
         self::assertSame('1', $form->filter('#filter-region-radius')->attr('min'));
 
-        self::assertSame(['Scheune Mit Pin'], $this->names($this->get('/hochzeitslocations?place=8001&radius=5')));
+        self::assertSame(['Scheune Mit Pin'], $this->names($this->get('/eventlokale?place=8001&radius=5')));
     }
 
     public function test_a_bookmarked_radius_zero_without_towns_still_renders(): void
     {
         DetailVenues::inCantonWithPin('47.3769', '8.5417');
 
-        $crawler = $this->get('/hochzeitslocations?place=8001&radius=0');
+        $crawler = $this->get('/eventlokale?place=8001&radius=0');
 
         self::assertSame([], $this->names($crawler));
         self::assertSame('0', $crawler->filter('#filter-region-radius')->attr('value'));
@@ -437,7 +446,7 @@ final class ListingControllerTest extends WebTestCase
         DetailVenues::inCantonOnly();
         $this->venue(['name' => 'Gasthof Linde', 'town' => $this->town('Stäfa')]);
 
-        $form = $this->get('/hochzeitslocations')->filter('#filter-region-form');
+        $form = $this->get('/eventlokale')->filter('#filter-region-form');
 
         self::assertStringNotContainsString('region-filter--canton-only', (string) $form->attr('class'));
         self::assertNull($form->filter('#filter-region-place')->attr('disabled'));
@@ -449,7 +458,7 @@ final class ListingControllerTest extends WebTestCase
     {
         DetailVenues::inCantonOnly();
 
-        $crawler = $this->get('/hochzeitslocations?place=8001');
+        $crawler = $this->get('/eventlokale?place=8001');
 
         $form = $crawler->filter('#filter-region-form');
         self::assertStringNotContainsString('region-filter--canton-only', (string) $form->attr('class'));
@@ -462,7 +471,7 @@ final class ListingControllerTest extends WebTestCase
     {
         DetailVenues::inCantonOnly();
 
-        $this->get('/hochzeitslocations');
+        $this->get('/eventlokale');
 
         $response = $this->client->getResponse();
         self::assertTrue($response->headers->hasCacheControlDirective('public'));
@@ -473,11 +482,11 @@ final class ListingControllerTest extends WebTestCase
     {
         $this->venue([]);
 
-        $crawler = $this->get('/hochzeitslocations?q=zzzzzz');
+        $crawler = $this->get('/eventlokale?q=zzzzzz');
 
         self::assertSelectorTextSame('.listing-hero__count', '0 Resultate');
         self::assertSelectorTextSame('.listing-empty__title', 'Keine Location passt zu deinen Filtern');
-        self::assertSame('/hochzeitslocations', $crawler->filter('.listing-empty a')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.listing-empty a')->attr('href'));
         self::assertSame('Filter löschen', $crawler->filter('.listing-empty a')->text());
         self::assertCount(0, $crawler->filter('.card'));
         self::assertCount(0, $crawler->filter('.pagination'));
@@ -485,17 +494,17 @@ final class ListingControllerTest extends WebTestCase
 
     public function test_page_beyond_last_is_404(): void
     {
-        $this->client->request('GET', '/hochzeitslocations?page=2');
+        $this->client->request('GET', '/eventlokale?page=2');
         self::assertResponseStatusCodeSame(404);
-        $this->get('/hochzeitslocations');
+        $this->get('/eventlokale');
 
         for ($i = 0; $i < 3; ++$i) {
             $this->venue([]);
         }
-        $this->client->request('GET', '/hochzeitslocations?page=2');
+        $this->client->request('GET', '/eventlokale?page=2');
         self::assertResponseStatusCodeSame(404);
 
-        $crawler = $this->get('/hochzeitslocations?page=abc');
+        $crawler = $this->get('/eventlokale?page=abc');
         self::assertCount(3, $crawler->filter('.card'));
     }
 
@@ -503,7 +512,7 @@ final class ListingControllerTest extends WebTestCase
     {
         $this->venue([]);
 
-        $this->get('/hochzeitslocations?canton=zh');
+        $this->get('/eventlokale?canton=zh');
         $response = $this->client->getResponse();
 
         $cacheControl = (string) $response->headers->get('Cache-Control');
@@ -527,19 +536,19 @@ final class ListingControllerTest extends WebTestCase
             }
         }
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSelectorTextSame('.related__title', 'Andere suchten auch nach');
         $links = $crawler->filter('.related__list a');
         self::assertSame(['Hochzeit Zürich', 'Hochzeit Bern'], $links->each(static fn (Crawler $a): string => $a->text()), 'Most venues first; Luzern is under the threshold of 5.');
-        self::assertSame('/hochzeitslocations/zuerich', $links->first()->attr('href'));
+        self::assertSame('/eventlokale/zuerich', $links->first()->attr('href'));
     }
 
     public function test_no_related_searches_without_a_landing_page(): void
     {
         $this->venue(['town' => $this->town('Zürich')]);
 
-        $this->get('/hochzeitslocations');
+        $this->get('/eventlokale');
 
         self::assertSelectorNotExists('.related');
     }
@@ -548,7 +557,7 @@ final class ListingControllerTest extends WebTestCase
     {
         $this->venue([]);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame('Hochzeitslocations in der Schweiz | deine-eventlocation.ch', $crawler->filter('title')->text());
         $description = (string) $crawler->filter('meta[name="description"]')->attr('content');

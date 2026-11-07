@@ -3,7 +3,7 @@
     that have data or are active, and without any the section disappears with its legend. Include with `only`: param (query
     name), group (TermGroup), criteria (SearchCriteria), collapse (default false). With collapse and more than 11 codes,
     the first 11 in vocabulary order stay flat and the rest go into <details>, open when the group is active.
-    `amenity` is not rendered here: it sits beside the price chips in _more_event.html.twig, which has its own chip macro.
+    Also renders the "Anlass" overlay's event types (_event_form.html.twig, param `event`).
 #}
 {%- macro chip(param, group, code, checked) -%}
     <li class="filter-more__chip">

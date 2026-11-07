@@ -47,7 +47,7 @@ final class VenueCreateTest extends WebTestCase
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'venue' AND subject_id = ?", [(string) $row['number']]));
 
         if (\is_string($row['slug'])) {
-            $this->client->request('GET', '/hochzeitslocation/'.$row['slug']);
+            $this->client->request('GET', '/eventlokal/'.$row['slug']);
             self::assertResponseStatusCodeSame(410);
         }
     }

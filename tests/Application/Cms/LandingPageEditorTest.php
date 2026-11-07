@@ -156,10 +156,10 @@ final class LandingPageEditorTest extends WebTestCase
         self::assertStringContainsString('Vergleiche Fotos', (string) $crawler->filter('#landing_texts_locales_de_intro')->attr('placeholder'));
         self::assertSame($title, $crawler->filter('[data-serp-target="title"][data-serp-locale="de"]')->text());
         self::assertSame($description, $crawler->filter('[data-serp-target="description"][data-serp-locale="de"]')->text());
-        self::assertSame('http://localhost/hochzeitslocations/zuerich', $crawler->filter('.serp-preview__url')->text());
+        self::assertSame('http://localhost/eventlokale/zuerich', $crawler->filter('.serp-preview__url')->text());
         self::assertSame('title', $crawler->filter('#landing_texts_locales_de_title')->attr('data-serp-source'));
         self::assertSame('0 / 60', $crawler->filter('#landing_texts_locales_de_title_counter')->text());
-        self::assertSame('http://localhost/hochzeitslocations/zuerich', $crawler->filter('.record-header__actions a')->attr('href'));
+        self::assertSame('http://localhost/eventlokale/zuerich', $crawler->filter('.record-header__actions a')->attr('href'));
         self::assertSame('Landingpages', $crawler->filter('.sidebar__item--active')->text());
     }
 
@@ -205,7 +205,7 @@ final class LandingPageEditorTest extends WebTestCase
             $this->connection->fetchFirstColumn("SELECT changes::text FROM admin_audit_log WHERE subject_type = 'landing_page' AND subject_id = 'canton.zh'"),
         );
 
-        $public = $this->client->request('GET', '/hochzeitslocations/zuerich');
+        $public = $this->client->request('GET', '/eventlokale/zuerich');
         self::assertSame('Heiraten im Kanton Zürich', $public->filter('title')->text());
         self::assertSame('Zürichsee', $public->filter('.listing-hero__intro strong')->text());
     }
@@ -216,7 +216,7 @@ final class LandingPageEditorTest extends WebTestCase
         $this->inTown('Stäfa', 5);
         $town = (string) $this->connection->fetchOne("SELECT id FROM towns WHERE name = 'Stäfa'");
 
-        $public = $this->saveAndOpen('town.'.$town, '/hochzeitslocations/zuerich/staefa');
+        $public = $this->saveAndOpen('town.'.$town, '/eventlokale/zuerich/staefa');
 
         self::assertSame('Heiraten am See', $public->filter('title')->text());
         self::assertSame('Seeufer', $public->filter('.listing-hero__intro strong')->text());
@@ -227,7 +227,7 @@ final class LandingPageEditorTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $this->withBuilding($this->inCanton(Canton::ZH, 5), 'castle');
 
-        $public = $this->saveAndOpen('building.castle', '/hochzeitslocations/schloss');
+        $public = $this->saveAndOpen('building.castle', '/eventlokale/schloss');
 
         self::assertSame('Heiraten am See', $public->filter('title')->text());
         self::assertSame('Seeufer', $public->filter('.listing-hero__intro strong')->text());
@@ -237,9 +237,9 @@ final class LandingPageEditorTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $this->inCanton(Canton::ZH, 5);
-        $default = $this->client->request('GET', '/hochzeitslocations/zuerich')->filter('title')->text();
+        $default = $this->client->request('GET', '/eventlokale/zuerich')->filter('title')->text();
         $this->client->submit($this->form(), ['landing_texts[locales][de][title]' => 'Heiraten im Kanton Zürich', 'landing_texts[locales][de][intro]' => 'Am See.']);
-        self::assertSame('Heiraten im Kanton Zürich', $this->client->request('GET', '/hochzeitslocations/zuerich')->filter('title')->text());
+        self::assertSame('Heiraten im Kanton Zürich', $this->client->request('GET', '/eventlokale/zuerich')->filter('title')->text());
 
         $this->client->submit($this->form(), [
             'landing_texts[locales][de][intro]' => '',
@@ -249,7 +249,7 @@ final class LandingPageEditorTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(303);
         self::assertSame([], $this->bodies());
-        $public = $this->client->request('GET', '/hochzeitslocations/zuerich');
+        $public = $this->client->request('GET', '/eventlokale/zuerich');
         self::assertSame($default, $public->filter('title')->text());
         self::assertStringContainsString('Vergleiche Fotos', $public->filter('.listing-hero__intro')->text());
     }

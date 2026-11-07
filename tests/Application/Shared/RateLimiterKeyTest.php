@@ -119,7 +119,7 @@ final class RateLimiterKeyTest extends WebTestCase
 
     private function reveal(string $ip): void
     {
-        $this->client->request('GET', '/hochzeitslocation/keine-solche-location/telefon', server: ['REMOTE_ADDR' => $ip]);
+        $this->client->request('GET', '/eventlokal/keine-solche-location/telefon', server: ['REMOTE_ADDR' => $ip]);
     }
 
     /**

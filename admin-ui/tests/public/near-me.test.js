@@ -14,7 +14,7 @@ const GEO_FORM = `
     </form>`;
 
 const PINS = [
-    { a: 47.2289, o: 8.6696, v: [{ n: '<b>x</b>', u: '/hochzeitslocation/x', p: 'Stäfa', k: '1 km' }] },
+    { a: 47.2289, o: 8.6696, v: [{ n: '<b>x</b>', u: '/eventlokal/x', p: 'Stäfa', k: '1 km' }] },
     { a: 47.3, o: 8.7, v: [{ n: 'A', u: '/a', p: 'Uster' }, { n: 'B', u: '/b', p: 'Uster' }, { n: 'C', u: '/c', p: 'Uster' }] },
 ];
 
@@ -305,7 +305,7 @@ describe('near-me map (#52)', () => {
         const content = made.infos[0].setContent.mock.calls[0][0];
         expect(content.querySelector('b')).toBeNull();
         expect(content.querySelector('a').textContent).toBe('<b>x</b>');
-        expect(content.querySelector('a').getAttribute('href')).toBe('/hochzeitslocation/x');
+        expect(content.querySelector('a').getAttribute('href')).toBe('/eventlokal/x');
         expect(content.textContent).toContain('Stäfa · 1 km');
         expect(made.infos[0].open).toHaveBeenCalledWith({ map: made.maps[0], anchor: made.markers[0] });
     });

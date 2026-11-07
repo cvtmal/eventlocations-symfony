@@ -27,7 +27,7 @@ final class TrustedHostGuardTest extends TestCase
     {
         $cache = new RecordingCache();
 
-        $response = (new TrustedHostGuard($cache))->handle(Request::create('http://evil.example/hochzeitslocations'));
+        $response = (new TrustedHostGuard($cache))->handle(Request::create('http://evil.example/eventlokale'));
 
         self::assertSame(Response::HTTP_BAD_REQUEST, $response->getStatusCode());
         self::assertSame(0, $cache->handled);
@@ -37,7 +37,7 @@ final class TrustedHostGuardTest extends TestCase
     {
         $cache = new RecordingCache();
 
-        $response = (new TrustedHostGuard($cache))->handle(Request::create('http://hochzeitslocation.ch/hochzeitslocations'));
+        $response = (new TrustedHostGuard($cache))->handle(Request::create('http://hochzeitslocation.ch/eventlokale'));
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertSame(1, $cache->handled);

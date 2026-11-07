@@ -214,7 +214,7 @@ A failure before step 4 deletes the new directory again and leaves the live site
 The workflow then smoke-tests `/health`, the security headers and gzip on the listing, the HTTP
 cache, the sitemap and `robots.txt`, the redirects of `www`, the second domain and `http`, the admin
 login's `no-store`, a media file, and finally `check` on the server. (The listing path in the smoke
-tests, `/hochzeitslocations`, follows the routes: change it in `deploy.yaml` and `bin/warm-cache`
+tests, `/eventlokale`, follows the routes: change it in `deploy.yaml` and `bin/warm-cache`
 when a cycle renames the listing.)
 
 **`purge`** empties the HTTP cache.

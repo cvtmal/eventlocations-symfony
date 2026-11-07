@@ -176,23 +176,23 @@ expect() { # expect <host> <path> <status>
 }
 
 check_pages() {
-    for path in /health /robots.txt /hochzeitslocations /impressum /admin/login /konto/anmelden; do
+    for path in /health /robots.txt /eventlokale /impressum /admin/login /konto/anmelden; do
         expect "$SITE" "$path" 200
     done
 
-    code "$SITE" /hochzeitslocations >/dev/null
+    code "$SITE" /eventlokale >/dev/null
     stylesheet="$(grep -o 'href="/assets/[^"]*\.css"' "$CHECK/var-body" | head -n 1 | sed 's/^href="//; s/"$//')"
     [ -n "$stylesheet" ] || fail "the listing links no stylesheet"
     expect "$SITE" "$stylesheet" 200
 
-    curl -sS -o /dev/null -D "$CHECK/var-headers" --max-time 30 -H "Host: $SITE" "$URL/hochzeitslocations"
+    curl -sS -o /dev/null -D "$CHECK/var-headers" --max-time 30 -H "Host: $SITE" "$URL/eventlokale"
     grep -qi '^x-symfony-cache:.*fresh' "$CHECK/var-headers" || {
         cat "$CHECK/var-headers" >&2
         fail "the listing did not come from the HTTP cache"
     }
     ok "the HTTP cache answers a repeated listing"
 
-    expect evil.example /hochzeitslocations 400
+    expect evil.example /eventlokale 400
 }
 
 main() {

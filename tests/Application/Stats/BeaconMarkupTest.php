@@ -56,9 +56,9 @@ final class BeaconMarkupTest extends WebTestCase
 
         $pages = [
             '/' => ['home', ''],
-            '/hochzeitslocations' => ['listing', ''],
-            '/hochzeitslocations/zuerich' => ['landing', ''],
-            '/hochzeitslocation/'.DetailVenues::FULL_SLUG => ['detail', (string) $venue->number()],
+            '/eventlokale' => ['listing', ''],
+            '/eventlokale/zuerich' => ['landing', ''],
+            '/eventlokal/'.DetailVenues::FULL_SLUG => ['detail', (string) $venue->number()],
             '/merkliste' => ['merkliste', ''],
             '/datenschutz' => ['other', ''],
         ];
@@ -78,7 +78,7 @@ final class BeaconMarkupTest extends WebTestCase
         $numbers = array_map(static fn (Venue $venue): string => (string) $venue->number(), $this->inCanton(Canton::ZH, 5));
         sort($numbers);
 
-        $cards = $this->get('/hochzeitslocations')->filter('article.card');
+        $cards = $this->get('/eventlokale')->filter('article.card');
         $carried = $cards->each(static fn (Crawler $card): string => (string) $card->attr('data-stats-venue'));
         sort($carried);
 
@@ -90,7 +90,7 @@ final class BeaconMarkupTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         self::assertSame(
             ['phone', 'email', 'website', 'instagram'],

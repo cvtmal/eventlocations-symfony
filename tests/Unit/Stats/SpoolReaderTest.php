@@ -128,7 +128,7 @@ final class SpoolReaderTest extends TestCase
 
     private static function view(\DateTimeImmutable $at): SpoolEvent
     {
-        return new SpoolEvent($at, EventType::PageView, null, [46], PageType::Detail, '/hochzeitslocation/x', 'www.google.com', 'Mozilla/5.0', '0123456789abcdef0123456789abcdef', false);
+        return new SpoolEvent($at, EventType::PageView, null, [46], PageType::Detail, '/eventlokal/x', 'www.google.com', 'Mozilla/5.0', '0123456789abcdef0123456789abcdef', false);
     }
 
     /**

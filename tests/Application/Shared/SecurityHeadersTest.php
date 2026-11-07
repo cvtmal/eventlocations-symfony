@@ -71,11 +71,11 @@ final class SecurityHeadersTest extends WebTestCase
             'venue' => VenueFactory::createOne(['status' => VenueStatus::Unpublished, 'town' => DetailVenues::town('Bern')]),
             'slug' => 'abgemeldet',
         ]);
-        $detail = '/hochzeitslocation/'.DetailVenues::FULL_SLUG;
+        $detail = '/eventlokal/'.DetailVenues::FULL_SLUG;
 
         // [url, status, a text/html response, Accept]
         $rows = [
-            ['/hochzeitslocations', 200, true, null],
+            ['/eventlokale', 200, true, null],
             [$detail, 200, true, null],
             [$detail.'/telefon', 200, true, null],
             [$detail.'/telefon', 200, false, 'application/json'],
@@ -83,11 +83,11 @@ final class SecurityHeadersTest extends WebTestCase
             ['/_search/places?q=zu', 200, false, null],
             ['/health', 200, false, null],
             ['/', 200, true, null],
-            ['/hochzeitslocation/alter-name', 301, true, null],
+            ['/eventlokal/alter-name', 301, true, null],
             ['/robots.txt', 200, false, null],
             ['/sitemap.xml', 200, false, null],
-            ['/hochzeitslocation/gibt-es-nicht', 404, true, null],
-            ['/hochzeitslocation/abgemeldet', 410, true, null],
+            ['/eventlokal/gibt-es-nicht', 404, true, null],
+            ['/eventlokal/abgemeldet', 410, true, null],
             ['/admin/login', 200, true, null],
         ];
 
@@ -111,7 +111,7 @@ final class SecurityHeadersTest extends WebTestCase
             }
         });
 
-        $this->client->request('GET', '/hochzeitslocations');
+        $this->client->request('GET', '/eventlokale');
 
         $response = $this->client->getResponse();
         self::assertSame(500, $response->getStatusCode());
@@ -123,7 +123,7 @@ final class SecurityHeadersTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        foreach (['/hochzeitslocations', '/hochzeitslocation/'.DetailVenues::FULL_SLUG] as $url) {
+        foreach (['/eventlokale', '/eventlokal/'.DetailVenues::FULL_SLUG] as $url) {
             $this->client->request('GET', $url);
 
             self::assertSame(self::POLICY, $this->client->getResponse()->headers->get('Content-Security-Policy'), $url);
@@ -133,7 +133,7 @@ final class SecurityHeadersTest extends WebTestCase
 
     public function test_the_near_me_page_carries_the_maps_policy(): void
     {
-        $this->client->request('GET', '/hochzeitslocation-in-meiner-naehe?ort=8712');
+        $this->client->request('GET', '/eventlokal-in-meiner-naehe?ort=8712');
         $response = $this->client->getResponse();
 
         self::assertSame(200, $response->getStatusCode());
@@ -154,7 +154,7 @@ final class SecurityHeadersTest extends WebTestCase
             $this->em->flush();
             $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4' WHERE id = ?", [$venue->id()]);
 
-            $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+            $this->client->request('GET', '/eventlokal/'.DetailVenues::FULL_SLUG);
             $response = $this->client->getResponse();
 
             self::assertSame(200, $response->getStatusCode());
@@ -196,7 +196,7 @@ final class SecurityHeadersTest extends WebTestCase
         self::ensureKernelShutdown();
         $client = self::createClient();
 
-        $client->request('GET', '/hochzeitslocation/gibt-es-nicht');
+        $client->request('GET', '/eventlokal/gibt-es-nicht');
 
         self::assertResponseStatusCodeSame(404);
         self::assertTrue($client->getResponse()->headers->has('X-Debug-Exception'));

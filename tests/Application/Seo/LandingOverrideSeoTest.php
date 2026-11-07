@@ -56,22 +56,22 @@ final class LandingOverrideSeoTest extends WebTestCase
     public function test_a_stored_title_and_description_replace_the_first_pages(): void
     {
         $this->inCanton(Canton::ZH, ListingQuery::PER_PAGE + 1);
-        $before = $this->get('/hochzeitslocations/zuerich');
+        $before = $this->get('/eventlokale/zuerich');
         $defaultTitle = $before->filter('title')->text();
         $defaultDescription = $this->description($before);
-        $pageTwo = $this->get('/hochzeitslocations/zuerich?page=2')->filter('title')->text();
+        $pageTwo = $this->get('/eventlokale/zuerich?page=2')->filter('title')->text();
 
         $this->store(['landing.canton.zh.title' => self::TITLE, 'landing.canton.zh.description' => self::DESCRIPTION]);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich');
+        $crawler = $this->get('/eventlokale/zuerich');
         self::assertSame(self::TITLE, $crawler->filter('title')->text());
         self::assertSame(self::DESCRIPTION, $this->description($crawler));
         self::assertSame(self::TITLE, $crawler->filter('meta[property="og:title"]')->attr('content'));
 
-        $filtered = $this->get('/hochzeitslocations/zuerich?guests=10');
+        $filtered = $this->get('/eventlokale/zuerich?guests=10');
         self::assertSame(self::TITLE, $filtered->filter('title')->text(), 'A filtered page 1 keeps the staff title.');
 
-        $numbered = $this->get('/hochzeitslocations/zuerich?page=2');
+        $numbered = $this->get('/eventlokale/zuerich?page=2');
         self::assertSame($pageTwo, $numbered->filter('title')->text(), 'Page 2 keeps #17\'s numbered title.');
         self::assertStringContainsString('Seite 2', $pageTwo);
         self::assertNotSame(self::DESCRIPTION, $this->description($numbered));
@@ -86,7 +86,7 @@ final class LandingOverrideSeoTest extends WebTestCase
         $long = str_repeat('Feiern am See mit Blick auf die Berge und viel Platz für Gäste. ', 4);
         $this->store(['landing.canton.zh.description' => $long]);
 
-        $description = $this->description($this->get('/hochzeitslocations/zuerich'));
+        $description = $this->description($this->get('/eventlokale/zuerich'));
 
         self::assertLessThanOrEqual(155, mb_strlen($description));
         self::assertStringStartsWith('Feiern am See mit Blick auf die Berge', $description);
@@ -96,15 +96,15 @@ final class LandingOverrideSeoTest extends WebTestCase
     {
         $this->inCanton(Canton::ZH, 5);
         $this->inCanton(Canton::BE, 5);
-        $before = (string) $this->client->request('GET', '/hochzeitslocations/zuerich')->html();
+        $before = (string) $this->client->request('GET', '/eventlokale/zuerich')->html();
 
         // Another page's and another locale's rows change nothing here (P7).
         $this->store(['landing.canton.be.title' => self::TITLE, 'landing.canton.be.intro' => 'Bern.']);
         $this->connection->insert('content_blocks', ['key' => 'landing.canton.zh.title', 'locale' => 'fr', 'body_markdown' => 'Mariage à Zurich', 'updated_at' => '2026-10-31 08:00:00+00']);
         $this->refresh();
 
-        self::assertSame($before, (string) $this->client->request('GET', '/hochzeitslocations/zuerich')->html());
-        self::assertSame(self::TITLE, $this->get('/hochzeitslocations/bern')->filter('title')->text());
+        self::assertSame($before, (string) $this->client->request('GET', '/eventlokale/zuerich')->html());
+        self::assertSame(self::TITLE, $this->get('/eventlokale/bern')->filter('title')->text());
     }
 
     public function test_a_query_driven_landing_carries_the_stored_title_and_stays_noindex(): void
@@ -112,11 +112,11 @@ final class LandingOverrideSeoTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.title' => self::TITLE]);
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh');
+        $crawler = $this->get('/eventlokale?canton=zh');
 
         self::assertSame(self::TITLE, $crawler->filter('title')->text());
         self::assertSame('noindex, follow', $crawler->filter('meta[name="robots"]')->attr('content'));
-        self::assertSame('http://localhost/hochzeitslocations/zuerich', $crawler->filter('link[rel="canonical"]')->attr('href'));
+        self::assertSame('http://localhost/eventlokale/zuerich', $crawler->filter('link[rel="canonical"]')->attr('href'));
     }
 
     /**
@@ -132,13 +132,13 @@ final class LandingOverrideSeoTest extends WebTestCase
     public function test_a_title_or_description_of_unicode_spaces_falls_back_to_the_catalogue(string $blank): void
     {
         $this->inCanton(Canton::ZH, 5);
-        $before = $this->get('/hochzeitslocations/zuerich');
+        $before = $this->get('/eventlokale/zuerich');
         $title = $before->filter('title')->text();
         $description = $this->description($before);
 
         $this->store(['landing.canton.zh.title' => $blank, 'landing.canton.zh.description' => $blank]);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich');
+        $crawler = $this->get('/eventlokale/zuerich');
         self::assertSame($title, $crawler->filter('title')->text());
         self::assertSame($description, $this->description($crawler));
     }

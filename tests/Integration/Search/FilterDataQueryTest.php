@@ -12,7 +12,6 @@ use App\Search\ReadModel\SearchCriteria;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -31,7 +30,7 @@ final class FilterDataQueryTest extends KernelTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const KEYS = ['place', 'town', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height', 'price.moderate', 'price.medium', 'price.exclusive'];
+    private const KEYS = ['place', 'town', 'access.station', 'access.highway', 'access.airport', 'rooms', 'area', 'height'];
 
     private EntityManagerInterface $em;
     private Connection $connection;
@@ -115,15 +114,6 @@ final class FilterDataQueryTest extends KernelTestCase
         self::assertTrue($this->query->has('height'));
     }
 
-    public function test_price_levels_answer_separately(): void
-    {
-        $this->venue(static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
-
-        self::assertTrue($this->query->has('price.medium'));
-        self::assertFalse($this->query->has('price.moderate'));
-        self::assertFalse($this->query->has('price.exclusive'));
-    }
-
     public function test_a_code_outside_filter_codes_never_shows(): void
     {
         $venue = $this->venue();
@@ -136,17 +126,17 @@ final class FilterDataQueryTest extends KernelTestCase
 
     public function test_an_active_listed_code_without_data_is_kept(): void
     {
-        self::assertSame(['lake_view'], $this->query->terms(TermGroup::Amenity, ['lake_view']));
+        self::assertSame(['parking'], $this->query->terms(TermGroup::Amenity, ['parking']));
     }
 
     public function test_amenities_come_in_vocabulary_order(): void
     {
         $venue = $this->venue();
-        foreach (['wheelchair_access', 'dance_floor', 'overnight', 'panorama'] as $code) {
+        foreach (['public_transport', 'wheelchair_access', 'dance_floor', 'overnight', 'parking'] as $code) {
             VenueTermFactory::new()->term(TermGroup::Amenity, $code)->create(['venue' => $venue]);
         }
 
-        self::assertSame(['overnight', 'panorama', 'dance_floor', 'wheelchair_access'], $this->query->terms(TermGroup::Amenity));
+        self::assertSame(['overnight', 'parking', 'wheelchair_access', 'public_transport'], $this->query->terms(TermGroup::Amenity));
     }
 
     public function test_filter_codes_exist_in_the_vocabulary(): void
@@ -287,15 +277,22 @@ final class FilterDataQueryTest extends KernelTestCase
 
     public function test_a_group_that_is_no_listing_filter_has_no_terms(): void
     {
+        VenueTermFactory::new()->term(TermGroup::Language, 'de')->create(['venue' => $this->venue()]);
+
+        self::assertSame([], $this->query->terms(TermGroup::Language));
+        self::assertSame([], $this->query->terms(TermGroup::Language, ['de']));
+    }
+
+    public function test_event_types_and_catering_are_listing_filters(): void
+    {
         $venue = $this->venue();
-        VenueTermFactory::new()->term(TermGroup::Language, 'de')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::Catering, 'buffet')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::SuitableFor, 'wedding')->create(['venue' => $venue]);
         VenueTermFactory::new()->term(TermGroup::SuitableFor, 'seminar')->create(['venue' => $venue]);
 
-        foreach ([[TermGroup::Language, 'de'], [TermGroup::Catering, 'buffet'], [TermGroup::SuitableFor, 'seminar']] as [$group, $code]) {
-            self::assertSame([], $this->query->terms($group), $group->value);
-            self::assertSame([], $this->query->terms($group, [$code]), $group->value);
-        }
+        self::assertSame(['buffet'], $this->query->terms(TermGroup::Catering));
+        self::assertSame(['seminar', 'wedding'], $this->query->terms(TermGroup::SuitableFor), 'vocabulary order');
+        self::assertSame(['seminar', 'apero', 'wedding'], $this->query->terms(TermGroup::SuitableFor, ['apero']), 'an active type without data is kept');
     }
 
     public function test_an_unknown_filter_throws(): void

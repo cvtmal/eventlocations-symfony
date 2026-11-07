@@ -71,19 +71,19 @@ final class LandingPathsTest extends KernelTestCase
 
         self::assertSame(LandingType::Town, $page?->type);
         self::assertSame(['guests' => '100'], $rest);
-        self::assertSame('/hochzeitslocations/zuerich/staefa?guests=100', $this->paths->url($query));
-        self::assertSame('/hochzeitslocations/zuerich/staefa', $this->paths->url($this->query(['canton' => 'zh', 'place' => $this->staefa, 'radius' => '0'])));
+        self::assertSame('/eventlokale/zuerich/staefa?guests=100', $this->paths->url($query));
+        self::assertSame('/eventlokale/zuerich/staefa', $this->paths->url($this->query(['canton' => 'zh', 'place' => $this->staefa, 'radius' => '0'])));
     }
 
     public function test_a_town_with_a_radius_is_no_town_page(): void
     {
         self::assertSame(
-            '/hochzeitslocations?place='.$this->staefa,
+            '/eventlokale?place='.$this->staefa,
             $this->paths->url($this->query(['place' => $this->staefa])),
             'The default radius 5 reaches beyond the town.',
         );
         self::assertSame(
-            '/hochzeitslocations/zuerich?place='.$this->staefa.'&radius=10',
+            '/eventlokale/zuerich?place='.$this->staefa.'&radius=10',
             $this->paths->url($this->query(['canton' => 'zh', 'place' => $this->staefa, 'radius' => '10'])),
         );
     }
@@ -100,21 +100,21 @@ final class LandingPathsTest extends KernelTestCase
 
     public function test_a_live_canton_is_its_canton_page(): void
     {
-        self::assertSame('/hochzeitslocations/zuerich', $this->paths->url($this->query(['canton' => 'zh'])));
-        self::assertSame('/hochzeitslocations/bern?building%5B0%5D=castle', $this->paths->url($this->query(['canton' => 'be', 'building' => ['castle']])), 'The canton wins over the building.');
-        self::assertMatchesRegularExpression('~^http://localhost(:\d+)?/hochzeitslocations/zuerich$~', $this->paths->url($this->query(['canton' => 'zh']), UrlGeneratorInterface::ABSOLUTE_URL));
+        self::assertSame('/eventlokale/zuerich', $this->paths->url($this->query(['canton' => 'zh'])));
+        self::assertSame('/eventlokale/bern?building%5B0%5D=castle', $this->paths->url($this->query(['canton' => 'be', 'building' => ['castle']])), 'The canton wins over the building.');
+        self::assertMatchesRegularExpression('~^http://localhost(:\d+)?/eventlokale/zuerich$~', $this->paths->url($this->query(['canton' => 'zh']), UrlGeneratorInterface::ABSOLUTE_URL));
     }
 
     public function test_a_thin_canton_stays_in_the_query(): void
     {
-        self::assertSame('/hochzeitslocations?canton=ti', $this->paths->url($this->query(['canton' => 'ti'])));
+        self::assertSame('/eventlokale?canton=ti', $this->paths->url($this->query(['canton' => 'ti'])));
     }
 
     public function test_exactly_one_live_building_is_its_building_page(): void
     {
-        self::assertSame('/hochzeitslocations/schloss?guests=100', $this->paths->url($this->query(['guests' => '100', 'building' => ['castle']])));
-        self::assertSame('/hochzeitslocations?building%5B0%5D=castle&building%5B1%5D=hotel', $this->paths->url($this->query(['building' => ['castle', 'hotel']])));
-        self::assertSame('/hochzeitslocations?building%5B0%5D=hotel', $this->paths->url($this->query(['building' => ['hotel']])));
+        self::assertSame('/eventlokale/schloss?guests=100', $this->paths->url($this->query(['guests' => '100', 'building' => ['castle']])));
+        self::assertSame('/eventlokale?building%5B0%5D=castle&building%5B1%5D=hotel', $this->paths->url($this->query(['building' => ['castle', 'hotel']])));
+        self::assertSame('/eventlokale?building%5B0%5D=hotel', $this->paths->url($this->query(['building' => ['hotel']])));
     }
 
     public function test_nothing_live_is_the_plain_listing(): void
@@ -123,18 +123,18 @@ final class LandingPathsTest extends KernelTestCase
 
         self::assertNull($page);
         self::assertSame([], $rest);
-        self::assertSame('/hochzeitslocations', $this->paths->url([]));
+        self::assertSame('/eventlokale', $this->paths->url([]));
     }
 
     public function test_the_remainder_keeps_page_and_the_codec_order(): void
     {
         $query = $this->query([
-            'height' => '3', 'price' => ['medium'], 'amenity' => ['overnight'],
+            'height' => '3', 'catering' => ['vegan'], 'amenity' => ['overnight'], 'event' => ['seminar'],
             'setting' => ['lake'], 'q' => 'see', 'guests' => '100', 'canton' => 'zh', 'page' => '2',
         ]);
         [, $rest] = $this->paths->locate($query);
 
-        self::assertSame(['guests', 'q', 'setting', 'amenity', 'price', 'height', 'page'], array_keys($rest));
+        self::assertSame(['guests', 'q', 'event', 'setting', 'catering', 'amenity', 'height', 'page'], array_keys($rest));
         $without = $query;
         unset($without['canton']);
         self::assertSame($without, $rest);

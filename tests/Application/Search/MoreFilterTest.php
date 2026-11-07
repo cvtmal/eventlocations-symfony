@@ -86,7 +86,7 @@ final class MoreFilterTest extends WebTestCase
         $this->everyFilterVenue('Schloss Seeblick');
         $this->venue(['name' => 'Remise Anderswo']);
 
-        $crawler = $this->get('/hochzeitslocations?'.$query);
+        $crawler = $this->get('/eventlokale?'.$query);
 
         self::assertSame(['Schloss Seeblick'], $this->names($crawler));
         self::assertCount(1, $crawler->filter($control));
@@ -97,7 +97,7 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->terms($this->venue(), [[TermGroup::Setting, 'lake'], [TermGroup::Infrastructure, 'air_conditioning']]);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertCount(1, $crawler->filter('#filter-more-setting-lake'));
         self::assertCount(0, $crawler->filter('#filter-more-setting-river'));
@@ -108,24 +108,24 @@ final class MoreFilterTest extends WebTestCase
     public function test_access_needs_a_venue_within_the_threshold(): void
     {
         $this->venue([], static fn (Venue $venue) => $venue->changeDistances('1.5', 'Bahnhof', null, null, null, null));
-        self::assertCount(0, $this->get('/hochzeitslocations')->filter('#filter-more-access-station'));
+        self::assertCount(0, $this->get('/eventlokale')->filter('#filter-more-access-station'));
 
         $this->venue([], static fn (Venue $venue) => $venue->changeDistances('0.9', 'Bahnhof', null, null, null, null));
-        self::assertCount(1, $this->get('/hochzeitslocations')->filter('#filter-more-access-station'));
+        self::assertCount(1, $this->get('/eventlokale')->filter('#filter-more-access-station'));
     }
 
     public function test_a_venue_without_rooms_shows_no_room_filter(): void
     {
         $this->venue([], static fn (Venue $venue) => $venue->summariseRooms(0, null, null));
 
-        self::assertCount(0, $this->get('/hochzeitslocations')->filter('#filter-more-rooms'));
+        self::assertCount(0, $this->get('/eventlokale')->filter('#filter-more-rooms'));
     }
 
     public function test_room_controls_show_one_by_one(): void
     {
         $this->venue([], static fn (Venue $venue) => $venue->summariseRooms(2, null, null));
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertCount(1, $crawler->filter('#filter-more-rooms'));
         self::assertCount(0, $crawler->filter('#filter-more-area'));
@@ -140,7 +140,7 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->venue([], static fn (Venue $venue) => $venue->summariseRooms(2, 120, '3.5'));
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame(
             ['', '50', '100', '150', '200', '250', '300'],
@@ -158,7 +158,7 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->terms($this->venue(), [[TermGroup::Infrastructure, 'air_conditioning']]);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame(['Infrastruktur'], $crawler->filter('#filter-more legend')->each(static fn (Crawler $legend): string => $legend->text()));
         self::assertCount(2, $crawler->filter('.filter-more__group'), 'A rule never stands alone: Name and one group.');
@@ -168,7 +168,7 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?infra[]=shower');
+        $crawler = $this->get('/eventlokale?infra[]=shower');
 
         self::assertCount(1, $crawler->filter('#filter-more-infra-shower[checked]'));
         self::assertSame(['weitere Filter (1)'], $this->chips($crawler));
@@ -179,7 +179,7 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?rooms=2&access[]=airport');
+        $crawler = $this->get('/eventlokale?rooms=2&access[]=airport');
 
         self::assertCount(1, $crawler->filter('#filter-more-rooms option[value="2"][selected]'));
         self::assertCount(0, $crawler->filter('#filter-more-area'));
@@ -190,29 +190,29 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $this->assertOnlyTheNameField($this->get('/hochzeitslocations'));
+        $this->assertOnlyTheNameField($this->get('/eventlokale'));
     }
 
     public function test_with_no_venues_at_all_only_the_name_field_shows(): void
     {
-        $this->assertOnlyTheNameField($this->get('/hochzeitslocations'));
+        $this->assertOnlyTheNameField($this->get('/eventlokale'));
     }
 
     public function test_a_value_comes_back_when_a_venue_has_it(): void
     {
         $venue = $this->venue();
-        self::assertCount(0, $this->get('/hochzeitslocations')->filter('#filter-more-setting-lake'));
+        self::assertCount(0, $this->get('/eventlokale')->filter('#filter-more-setting-lake'));
 
         $this->terms($venue, [[TermGroup::Setting, 'lake']]);
 
-        self::assertCount(1, $this->get('/hochzeitslocations')->filter('#filter-more-setting-lake'));
+        self::assertCount(1, $this->get('/eventlokale')->filter('#filter-more-setting-lake'));
     }
 
     public function test_eleven_buildings_stay_flat(): void
     {
         $this->buildings(self::PRIMARY_BUILDINGS);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertCount(0, $crawler->filter('#filter-more details'));
         self::assertCount(11, $crawler->filter('#filter-more input[name="building[]"]'));
@@ -222,7 +222,7 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->buildings([...self::PRIMARY_BUILDINGS, 'cafe']);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame(self::PRIMARY_BUILDINGS, $crawler->filter('#filter-more fieldset > .filter-more__chips input[name="building[]"]')->each(static fn (Crawler $input): string => (string) $input->attr('value')));
         self::assertSame(['cafe'], $crawler->filter('#filter-more details input[name="building[]"]')->each(static fn (Crawler $input): string => (string) $input->attr('value')));
@@ -235,7 +235,7 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->buildings([...self::PRIMARY_BUILDINGS, 'cafe']);
 
-        $crawler = $this->get('/hochzeitslocations?building[]=hotel');
+        $crawler = $this->get('/eventlokale?building[]=hotel');
 
         self::assertCount(1, $crawler->filter('#filter-more details[open]'));
     }
@@ -244,22 +244,22 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->everyFilterVenue('Seehaus');
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertCount(2, $crawler->filter('.filter-more__group--location .filter-more__tiles'));
-        self::assertCount(4, $crawler->filter('.filter-more__group--properties .filter-more__chips'));
+        self::assertCount(6, $crawler->filter('.filter-more__group--properties .filter-more__chips'), 'Catering, Technik, Infrastruktur, Mobiliar, Umgebung, Ausstattung.');
     }
 
     public function test_the_pill_counts_params_and_replaces_the_trigger(): void
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?setting[]=lake&setting[]=river&rooms=2');
+        $crawler = $this->get('/eventlokale?setting[]=lake&setting[]=river&rooms=2');
 
         self::assertSame(['weitere Filter (2)'], $this->chips($crawler));
         self::assertSame('weitere Filter (2)', $crawler->filter('.filter-bar .chip button[popovertarget="filter-more"]')->text());
         self::assertCount(1, $crawler->filter('.filter-bar [popovertarget="filter-more"]:not([popovertargetaction])'));
-        self::assertSame('/hochzeitslocations', $crawler->filter('.chip--more a')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.chip--more a')->attr('href'));
         self::assertSame('Weitere Filter entfernen', $crawler->filter('.chip--more a')->attr('aria-label'));
     }
 
@@ -267,23 +267,23 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations?canton=zh&guests=100&setting[]=lake');
+        $crawler = $this->get('/eventlokale?canton=zh&guests=100&event[]=seminar&setting[]=lake');
 
-        self::assertSame(['Zürich', 'bis 100 Gäste', 'weitere Filter (1)'], $this->chips($crawler));
-        self::assertSame('/hochzeitslocations?canton=zh&guests=100', $crawler->filter('.chip--more a')->attr('href'));
+        self::assertSame(['Zürich', 'Seminar', '100 Gäste', 'weitere Filter (1)'], $this->chips($crawler));
+        self::assertSame('/eventlokale?canton=zh&guests=100&event%5B0%5D=seminar', $crawler->filter('.chip--more a')->attr('href'));
     }
 
     public function test_the_form_carries_the_other_slots_and_never_the_page(): void
     {
-        // In band 100 (51–100, #51), so `guests=100&page=2` exists.
+        // All hold 100 guests, so `guests=100&page=2` exists.
         for ($i = 0; $i <= ListingQuery::PER_PAGE; ++$i) {
             $this->venue(['capacityMax' => 100]);
         }
 
-        $crawler = $this->get('/hochzeitslocations?guests=100&setting[]=lake&page=1');
+        $crawler = $this->get('/eventlokale?guests=100&setting[]=lake&page=1');
         self::assertSame(['guests' => '100'], $this->hiddenState($crawler));
 
-        $crawler = $this->get('/hochzeitslocations?guests=100&page=2');
+        $crawler = $this->get('/eventlokale?guests=100&page=2');
         self::assertSame(['guests' => '100'], $this->hiddenState($crawler));
     }
 
@@ -291,12 +291,12 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->venue();
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         $form = $crawler->filter('form#filter-more-form[data-live-count][data-overlay-form]');
         self::assertCount(1, $form);
         self::assertSame('/_search/count?', $form->attr('data-live-count-url'));
-        self::assertSame('/hochzeitslocations', $form->attr('action'));
+        self::assertSame('/eventlokale', $form->attr('action'));
         self::assertSame('off', $form->attr('autocomplete'));
         $button = $crawler->filter('#filter-more .overlay__footer button[form="filter-more-form"][data-live-count-label]');
         self::assertSame('Keine Resultate', $button->attr('data-count-zero'));
@@ -310,13 +310,15 @@ final class MoreFilterTest extends WebTestCase
     {
         $this->everyFilterVenue('Schloss Seeblick');
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame(
-            ['Lage', 'Erreichbarkeit', 'Gebäudeart', 'Infrastruktur', 'Mobiliar', 'Technik', 'Umgebung', 'Raumangebot'],
+            ['Lage', 'Erreichbarkeit', 'Gebäudeart', 'Catering', 'Technik', 'Infrastruktur', 'Mobiliar', 'Umgebung', 'Ausstattung', 'Raumangebot'],
             $crawler->filter('#filter-more legend')->each(static fn (Crawler $legend): string => $legend->text()),
         );
         self::assertSame('Wähle weitere Filter und Möglichkeiten', $crawler->filter('#filter-more-title')->text());
+        self::assertSame(['Geeignet für'], $crawler->filter('#filter-event legend')->each(static fn (Crawler $legend): string => $legend->text()));
+        self::assertCount(0, $crawler->filter('#filter-more input[name="event[]"]'), 'The event type has its own slot.');
         self::assertStringNotContainsString('Karte', $crawler->filter('.filter-bar')->text());
         self::assertCount(0, $crawler->filter('[style]'));
         $response = $this->client->getResponse();
@@ -329,7 +331,7 @@ final class MoreFilterTest extends WebTestCase
         $this->venue();
 
         // Cards, photos, count, known terms, landing pages, filter flags, filter terms.
-        self::assertSame(7, $this->queriesOf('/hochzeitslocations'));
+        self::assertSame(7, $this->queriesOf('/eventlokale'));
     }
 
     public function test_a_cold_content_block_snapshot_adds_its_fill(): void
@@ -340,11 +342,11 @@ final class MoreFilterTest extends WebTestCase
 
         // #26: on an empty pool the first listing or landing hit adds four statements to the seven: begin, try-lock, the SELECT, commit.
         $holder->reset();
-        $this->get('/hochzeitslocations');
+        $this->get('/eventlokale');
         self::assertCount(11, $holder->getData()['default'] ?? []);
 
         $holder->reset();
-        $this->get('/hochzeitslocations');
+        $this->get('/eventlokale');
         self::assertCount(7, $holder->getData()['default'] ?? [], 'The next hit reads the stored snapshot.');
     }
 
@@ -353,14 +355,14 @@ final class MoreFilterTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
 
         // The same seven: the landing pages' one statement also resolves the route.
-        self::assertSame(7, $this->queriesOf('/hochzeitslocations/zuerich'));
+        self::assertSame(7, $this->queriesOf('/eventlokale/zuerich'));
     }
 
     public function test_a_building_page_runs_seven_queries(): void
     {
         $this->withBuilding($this->inCanton(Canton::ZH, 5), 'castle');
 
-        self::assertSame(7, $this->queriesOf('/hochzeitslocations/schloss'));
+        self::assertSame(7, $this->queriesOf('/eventlokale/schloss'));
     }
 
     public function test_a_town_page_runs_eight_queries(): void
@@ -368,7 +370,7 @@ final class MoreFilterTest extends WebTestCase
         $this->inTown('Stäfa', 5);
 
         // The seven, plus selected_place() for the town's `place` (#10's chip and form).
-        self::assertSame(8, $this->queriesOf('/hochzeitslocations/zuerich/staefa'));
+        self::assertSame(8, $this->queriesOf('/eventlokale/zuerich/staefa'));
     }
 
     private function assertOnlyTheNameField(Crawler $crawler): void
@@ -469,6 +471,9 @@ final class MoreFilterTest extends WebTestCase
             [TermGroup::Furniture, 'chairs'],
             [TermGroup::Technology, 'sound_system'],
             [TermGroup::Surroundings, 'garden'],
+            [TermGroup::Catering, 'buffet'],
+            [TermGroup::Amenity, 'parking'],
+            [TermGroup::SuitableFor, 'seminar'],
         ]);
     }
 

@@ -21,7 +21,7 @@ use Zenstruck\Foundry\Test\Factories;
 use function Zenstruck\Foundry\Persistence\repository;
 
 /**
- * The landing pages (#17): `/hochzeitslocations/{canton}`, `…/{canton}/{town}` and `…/{building}`,
+ * The landing pages (#17): `/eventlokale/{canton}`, `…/{canton}/{town}` and `…/{building}`,
  * switched on by data at `%landing.min_venues%` (5 in test). The client shares the test's
  * connection (no reboot), so the venues created here are visible to the request and rolled
  * back afterwards; the kernel resets LandingPages' memo between requests.
@@ -62,7 +62,7 @@ final class LandingPageTest extends WebTestCase
         $zurich = $this->names($this->inCanton(Canton::ZH, 5));
         $this->inCanton(Canton::BE, 5);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich');
+        $crawler = $this->get('/eventlokale/zuerich');
 
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
         self::assertCount(1, $crawler->filter('h1'));
@@ -74,13 +74,13 @@ final class LandingPageTest extends WebTestCase
 
         $items = $crawler->filter('nav.breadcrumb li.breadcrumb__item');
         self::assertSame(['Hochzeitslocations', 'Kanton Zürich'], $items->each(static fn (Crawler $item): string => $item->text()));
-        self::assertSame('http://localhost/hochzeitslocations', $items->eq(0)->filter('a')->attr('href'));
+        self::assertSame('http://localhost/eventlokale', $items->eq(0)->filter('a')->attr('href'));
         self::assertCount(0, $items->eq(1)->filter('a'));
         self::assertSame('page', $items->eq(1)->filter('[aria-current]')->attr('aria-current'));
         self::assertSame('Navigationspfad', $crawler->filter('nav.breadcrumb')->attr('aria-label'));
 
         self::assertSame([
-            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Hochzeitslocations', 'item' => 'http://localhost/hochzeitslocations'],
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Hochzeitslocations', 'item' => 'http://localhost/eventlokale'],
             ['@type' => 'ListItem', 'position' => 2, 'name' => 'Kanton Zürich'],
         ], $this->breadcrumbJsonLd($crawler));
 
@@ -92,7 +92,7 @@ final class LandingPageTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->inCanton(Canton::TI, 4);
 
-        foreach (['/hochzeitslocations/tessin', '/hochzeitslocations/atlantis', '/hochzeitslocations/zuerich?page=2'] as $uri) {
+        foreach (['/eventlokale/tessin', '/eventlokale/atlantis', '/eventlokale/zuerich?page=2'] as $uri) {
             $this->client->request('GET', $uri);
             self::assertResponseStatusCodeSame(404, $uri);
             $this->assertPublicAndCookieFree();
@@ -111,7 +111,7 @@ final class LandingPageTest extends WebTestCase
         $live = array_map(static fn (Canton $canton): string => $canton->value, self::LAUNCH_CANTONS);
         $answered = [];
         foreach ($this->connection->fetchAllKeyValue('SELECT code, slug FROM cantons ORDER BY code') as $code => $slug) {
-            $this->client->request('GET', '/hochzeitslocations/'.$slug);
+            $this->client->request('GET', '/eventlokale/'.$slug);
             $answered[$code] = $this->client->getResponse()->getStatusCode();
         }
         self::assertCount(27, $answered);
@@ -123,7 +123,7 @@ final class LandingPageTest extends WebTestCase
         self::assertCount(13, $pages->cantons());
         self::assertSame([], $pages->towns());
         self::assertSame([], $pages->buildings());
-        foreach (['/hochzeitslocations/schloss', '/hochzeitslocations/hotel', '/hochzeitslocations/zuerich/zuerich', '/hochzeitslocations/bern/bern'] as $uri) {
+        foreach (['/eventlokale/schloss', '/eventlokale/hotel', '/eventlokale/zuerich/zuerich', '/eventlokale/bern/bern'] as $uri) {
             $this->client->request('GET', $uri);
             self::assertResponseStatusCodeSame(404, $uri);
         }
@@ -132,24 +132,24 @@ final class LandingPageTest extends WebTestCase
     public function test_a_fifth_venue_switches_a_canton_page_on(): void
     {
         $this->inCanton(Canton::TI, 4);
-        $this->client->request('GET', '/hochzeitslocations/tessin');
+        $this->client->request('GET', '/eventlokale/tessin');
         self::assertResponseStatusCodeSame(404);
 
         $this->inCanton(Canton::TI, 1);
 
-        $this->get('/hochzeitslocations/tessin');
+        $this->get('/eventlokale/tessin');
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Tessin');
     }
 
     public function test_liechtenstein_gets_its_page_at_five_venues_and_no_kanton(): void
     {
         $this->inCanton(Canton::LI, 4);
-        $this->client->request('GET', '/hochzeitslocations/liechtenstein');
+        $this->client->request('GET', '/eventlokale/liechtenstein');
         self::assertResponseStatusCodeSame(404, 'Four venues stay under the threshold (#46, owner answer C).');
 
         $this->inCanton(Canton::LI, 1);
 
-        $crawler = $this->get('/hochzeitslocations/liechtenstein');
+        $crawler = $this->get('/eventlokale/liechtenstein');
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations in Liechtenstein');
         self::assertStringStartsWith('5 Hochzeitslocations in Liechtenstein: ', $crawler->filter('.listing-hero__intro > p')->text());
         $title = $crawler->filter('title')->text();
@@ -163,13 +163,13 @@ final class LandingPageTest extends WebTestCase
     public function test_five_venues_in_one_town_switch_a_town_page_on(): void
     {
         $this->inTown('Stäfa', 4);
-        $this->client->request('GET', '/hochzeitslocations/zuerich/staefa');
+        $this->client->request('GET', '/eventlokale/zuerich/staefa');
         self::assertResponseStatusCodeSame(404);
 
         $staefa = $this->names($this->inTown('Stäfa', 1));
         $this->inTown('Meilen', 1);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich/staefa');
+        $crawler = $this->get('/eventlokale/zuerich/staefa');
 
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations in Stäfa');
         self::assertStringStartsWith('5 Hochzeitslocations in Stäfa:', $crawler->filter('.listing-hero__intro > p')->text());
@@ -179,7 +179,7 @@ final class LandingPageTest extends WebTestCase
         // Stäfa's five venues make Zürich a canton page too, so the breadcrumb has its step.
         $items = $crawler->filter('nav.breadcrumb li.breadcrumb__item');
         self::assertSame(['Hochzeitslocations', 'Kanton Zürich', 'Stäfa'], $items->each(static fn (Crawler $item): string => $item->text()));
-        self::assertSame('http://localhost/hochzeitslocations/zuerich', $items->eq(1)->filter('a')->attr('href'));
+        self::assertSame('http://localhost/eventlokale/zuerich', $items->eq(1)->filter('a')->attr('href'));
         self::assertSame('page', $items->eq(2)->filter('[aria-current]')->attr('aria-current'));
         self::assertSame(['Hochzeitslocations', 'Kanton Zürich', 'Stäfa'], array_column($this->breadcrumbJsonLd($crawler), 'name'));
 
@@ -190,9 +190,9 @@ final class LandingPageTest extends WebTestCase
     {
         $this->inTown('Stäfa', 5);
 
-        foreach (['/hochzeitslocations/zuerich', '/hochzeitslocations/zuerich/staefa'] as $uri) {
+        foreach (['/eventlokale/zuerich', '/eventlokale/zuerich/staefa'] as $uri) {
             $crawler = $this->get($uri);
-            self::assertSame('/hochzeitslocations', $crawler->filter('.site-header__link[aria-current="page"]')->attr('href'), $uri);
+            self::assertSame('/eventlokale', $crawler->filter('.site-header__link[aria-current="page"]')->attr('href'), $uri);
         }
     }
 
@@ -201,22 +201,22 @@ final class LandingPageTest extends WebTestCase
         $this->inTown('Stäfa', 5);
         $this->inCanton(Canton::BE, 5);
 
-        $this->client->request('GET', '/hochzeitslocations/bern/staefa');
+        $this->client->request('GET', '/eventlokale/bern/staefa');
         self::assertResponseStatusCodeSame(404);
-        $this->client->request('GET', '/hochzeitslocations/staefa');
+        $this->client->request('GET', '/eventlokale/staefa');
         self::assertResponseStatusCodeSame(404, 'A town has no single-segment path.');
     }
 
     public function test_five_castles_switch_the_building_page_on(): void
     {
         $this->withBuilding($this->inCanton(Canton::ZH, 4), 'castle');
-        $this->client->request('GET', '/hochzeitslocations/schloss');
+        $this->client->request('GET', '/eventlokale/schloss');
         self::assertResponseStatusCodeSame(404);
 
         $this->withBuilding($this->inCanton(Canton::BE, 1), 'castle');
         $this->inCanton(Canton::BE, 1);
 
-        $crawler = $this->get('/hochzeitslocations/schloss');
+        $crawler = $this->get('/eventlokale/schloss');
 
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeit im Schloss');
         self::assertSame(
@@ -233,7 +233,7 @@ final class LandingPageTest extends WebTestCase
         $zurich = $this->names($this->inCanton(Canton::ZH, 5));
         $this->inCanton(Canton::BE, 5);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich?canton=be');
+        $crawler = $this->get('/eventlokale/zuerich?canton=be');
 
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
         self::assertSame($zurich, $this->cardNames($crawler));
@@ -241,23 +241,23 @@ final class LandingPageTest extends WebTestCase
 
     public function test_query_filters_narrow_a_canton_page_and_pagination_keeps_its_path(): void
     {
-        // 49 in band 101–150 (the factory's 120), so the filtered page still has a second page (#51).
+        // 49 hold 100 guests (the factory's 120), so the filtered page still has a second page (#51).
         $this->inCanton(Canton::ZH, 49);
         $big = $this->zurichVenue(400);
         $this->inCanton(Canton::BE, 5);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich?guests=300');
+        $crawler = $this->get('/eventlokale/zuerich?guests=300');
         self::assertSame([$big->name()], $this->cardNames($crawler));
         self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
 
-        $crawler = $this->get('/hochzeitslocations/zuerich?guests=150');
+        $crawler = $this->get('/eventlokale/zuerich?guests=100');
         self::assertCount(48, $crawler->filter('article.card'));
         $pages = $crawler->filter('.pagination a.pagination__page')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
-        self::assertSame(['/hochzeitslocations/zuerich?guests=150', '/hochzeitslocations/zuerich?guests=150&page=2'], $pages);
+        self::assertSame(['/eventlokale/zuerich?guests=100', '/eventlokale/zuerich?guests=100&page=2'], $pages);
 
-        $crawler = $this->get('/hochzeitslocations/zuerich?page=2');
+        $crawler = $this->get('/eventlokale/zuerich?page=2');
         self::assertCount(2, $crawler->filter('article.card'));
-        self::assertSame('/hochzeitslocations/zuerich', $crawler->filter('.pagination a.pagination__arrow')->first()->attr('href'));
+        self::assertSame('/eventlokale/zuerich', $crawler->filter('.pagination a.pagination__arrow')->first()->attr('href'));
     }
 
     private function get(string $uri): Crawler

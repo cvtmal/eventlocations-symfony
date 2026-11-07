@@ -53,7 +53,7 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSelectorExists('[popovertarget="main-menu"]');
         self::assertSelectorExists('#main-menu[popover]');
         self::assertSame(
-            ['/hochzeitslocations', '/#regionen', '/hochzeitslocation-in-meiner-naehe', '/merkliste', '/konto/registrieren'],
+            ['/eventlokale', '/#regionen', '/eventlokal-in-meiner-naehe', '/merkliste', '/konto/registrieren'],
             $crawler->filter('.site-header__actions a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
         );
         self::assertCount(0, $crawler->filter('.site-header use[href$="#search"]'));
@@ -65,7 +65,7 @@ final class BaseLayoutTest extends WebTestCase
         $crawler = $this->home();
 
         self::assertSame(
-            ['/', '/hochzeitslocations', '/#regionen', '/merkliste', '/hochzeitslocation-in-meiner-naehe'],
+            ['/', '/eventlokale', '/#regionen', '/merkliste', '/eventlokal-in-meiner-naehe'],
             $crawler->filter('.main-menu__list a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
         );
         self::assertSelectorExists('.main-menu__list [data-merkliste-count][hidden]');
@@ -124,8 +124,8 @@ final class BaseLayoutTest extends WebTestCase
     {
         $crawler = $this->home();
 
-        self::assertSame('/hochzeitslocations', $crawler->filter('.site-header__link[aria-current="page"]')->attr('href'));
-        self::assertSame('/hochzeitslocations', $crawler->filter('.main-menu__list a[aria-current="page"]')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.site-header__link[aria-current="page"]')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.main-menu__list a[aria-current="page"]')->attr('href'));
 
         foreach (['/merkliste', '/impressum'] as $uri) {
             $crawler = $this->client()->request('GET', $uri);
@@ -137,11 +137,11 @@ final class BaseLayoutTest extends WebTestCase
     public function test_in_der_naehe_is_the_current_page_on_the_near_me_page_only(): void
     {
         $this->client = self::createClient();
-        $crawler = $this->client->request('GET', '/hochzeitslocation-in-meiner-naehe');
+        $crawler = $this->client->request('GET', '/eventlokal-in-meiner-naehe');
         self::assertResponseIsSuccessful();
 
-        self::assertSame(['/hochzeitslocation-in-meiner-naehe'], $crawler->filter('.site-header__actions [aria-current="page"]')->each(static fn (Crawler $a): ?string => $a->attr('href')));
-        self::assertSame('/hochzeitslocation-in-meiner-naehe', $crawler->filter('.main-menu__list a[aria-current="page"]')->attr('href'));
+        self::assertSame(['/eventlokal-in-meiner-naehe'], $crawler->filter('.site-header__actions [aria-current="page"]')->each(static fn (Crawler $a): ?string => $a->attr('href')));
+        self::assertSame('/eventlokal-in-meiner-naehe', $crawler->filter('.main-menu__list a[aria-current="page"]')->attr('href'));
     }
 
     public function test_location_eintragen_links_to_the_registration_in_all_three_places(): void
@@ -163,7 +163,7 @@ final class BaseLayoutTest extends WebTestCase
         self::assertCount(0, $crawler->filter('.site-footer__heading a'));
         self::assertSame('mailto:hallo@deine-eventlocation.ch', $crawler->filter('.site-footer__column a[href^="mailto:"]')->attr('href'));
         self::assertSame('/#regionen', $crawler->filter('.site-footer__column a')->eq(1)->attr('href'));
-        self::assertSame('/hochzeitslocation-in-meiner-naehe', $crawler->filter('.site-footer__column a')->eq(2)->attr('href'));
+        self::assertSame('/eventlokal-in-meiner-naehe', $crawler->filter('.site-footer__column a')->eq(2)->attr('href'));
     }
 
     public function test_header_heart_links_to_the_merkliste_and_carries_its_strings(): void
@@ -235,7 +235,7 @@ final class BaseLayoutTest extends WebTestCase
     private function home(): Crawler
     {
         $this->client = self::createClient();
-        $crawler = $this->client->request('GET', '/hochzeitslocations');
+        $crawler = $this->client->request('GET', '/eventlokale');
         self::assertResponseIsSuccessful();
 
         return $crawler;

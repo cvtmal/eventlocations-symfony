@@ -1,0 +1,32 @@
+{#
+    Filter-bar slot "Anlass" (F5 `filter-event`, E5): the event types (`event[]`, taxonomy group suitable_for, OR inside
+    the group). Included twice with `with_context = false`: criteria (SearchCriteria), part: chips|trigger. Renders
+    <li class="filter-bar__item">s: one chip per active event type (part chips), or the trigger plus its overlay (part
+    trigger). Hiding rule (FilterDataQuery): the trigger and its overlay render only when a published venue carries an
+    event type or one is active. The overlay borrows the `more` tone and the "weitere Filter" chip styles; the form lives
+    in search/filter/_event_form.html.twig and the footer's submit button joins it by its `form` attribute.
+#}
+{%- set group = constant('App\\Search\\ReadModel\\SearchCriteria::PARAMS').event -%}
+{%- if part == 'chips' -%}
+    {%- for code in criteria.termCodes(group) -%}
+        {%- set label = ('term.' ~ group.value ~ '.' ~ code)|trans({}, 'venues') -%}
+        <li class="filter-bar__item">{{ include('components/_chip.html.twig', {label: label, href: listing_path_without(criteria, 'event', code), remove_label: 'chip.remove'|trans({label: label}, 'search'), variant: 'active'}, with_context = false) }}</li>
+    {%- endfor -%}
+{%- elseif part == 'trigger' and filter_terms(group, criteria) is not empty -%}
+    <li class="filter-bar__item">
+        {{- include('components/_button.html.twig', {label: 'filter.event'|trans({}, 'search'), variant: 'secondary', attributes: {popovertarget: 'filter-event'}}, with_context = false) -}}
+        {% embed 'components/_overlay.html.twig' with {id: 'filter-event', tone: 'more', title: 'filter.event_title'|trans({}, 'search'), criteria: criteria} only %}
+            {% block overlay_body %}{{ include('search/filter/_event_form.html.twig', {criteria: criteria}, with_context = false) }}{% endblock %}
+            {% block overlay_footer %}
+                {{- include('components/_button.html.twig', {label: 'filter.show_results_plain'|trans({}, 'search'), variant: 'primary', size: 'lg', type: 'submit', attributes: {
+                    form: 'filter-event-form',
+                    'data-live-count-label': '',
+                    'data-count-zero': 'filter.show_results'|trans({count: 0, formatted: '0'}, 'search'),
+                    'data-count-one': 'filter.show_results'|trans({count: 1, formatted: '1'}, 'search'),
+                    'data-count-other': 'filter.show_results'|trans({count: 2, formatted: '%n'}, 'search'),
+                }}, with_context = false) -}}
+                <a class="overlay__clear" href="{{ listing_path_without(criteria, ['event']) }}" data-overlay-clear>{{ 'filter.reset'|trans({}, 'search') }}</a>
+            {%- endblock %}
+        {% endembed %}
+    </li>
+{%- endif -%}

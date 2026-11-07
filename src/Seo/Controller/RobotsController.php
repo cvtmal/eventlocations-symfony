@@ -24,8 +24,8 @@ final class RobotsController extends AbstractController
         '/merkliste',
         '/admin',
         '/konto',
-        '/hochzeitslocation/*/telefon',
-        '/hochzeitslocation/*/anfrage',
+        '/eventlokal/*/telefon',
+        '/eventlokal/*/anfrage',
         // #47: a crawler that renders pages must not send the statistics beacon.
         '/_stats',
     ];

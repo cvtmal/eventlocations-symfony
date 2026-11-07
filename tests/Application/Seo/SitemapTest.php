@@ -86,8 +86,8 @@ final class SitemapTest extends WebTestCase
 
         $locs = $this->values($xml, 'loc', self::SITEMAP_NS);
         self::assertCount(2, $locs);
-        self::assertContains('http://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG, $locs);
-        self::assertContains('http://localhost/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG, $locs);
+        self::assertContains('http://localhost/eventlokal/'.DetailVenues::FULL_SLUG, $locs);
+        self::assertContains('http://localhost/eventlokal/'.DetailVenues::MINIMAL_SLUG, $locs);
         $images = $this->values($xml, 'loc', self::IMAGE_NS);
         self::assertCount(5, $images);
         self::assertStringStartsWith('http://localhost/media/', $images[0]);
@@ -100,7 +100,7 @@ final class SitemapTest extends WebTestCase
 
         $xml = $this->fetch('/sitemap-pages.xml');
 
-        self::assertSame(['http://localhost/', 'http://localhost/hochzeitslocations', 'http://localhost/hochzeitslocation-in-meiner-naehe', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertSame(['http://localhost/', 'http://localhost/eventlokale', 'http://localhost/eventlokal-in-meiner-naehe', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
         self::assertCount(3, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
         $this->assertValid($xml, 'sitemap-with-images.xsd');
     }
@@ -135,12 +135,12 @@ final class SitemapTest extends WebTestCase
         self::assertSame([
             'http://localhost/' => '2026-09-01T10:00:00+00:00',
             'http://localhost/datenschutz' => null,
-            'http://localhost/hochzeitslocation-in-meiner-naehe' => '2026-09-01T10:00:00+00:00',
-            'http://localhost/hochzeitslocations' => '2026-09-01T10:00:00+00:00',
-            'http://localhost/hochzeitslocations/bern' => '2026-02-01T10:00:00+00:00',
-            'http://localhost/hochzeitslocations/schloss' => '2026-02-01T10:00:00+00:00',
-            'http://localhost/hochzeitslocations/zuerich' => '2026-03-01T10:00:00+00:00',
-            'http://localhost/hochzeitslocations/zuerich/staefa' => '2026-03-01T10:00:00+00:00',
+            'http://localhost/eventlokal-in-meiner-naehe' => '2026-09-01T10:00:00+00:00',
+            'http://localhost/eventlokale' => '2026-09-01T10:00:00+00:00',
+            'http://localhost/eventlokale/bern' => '2026-02-01T10:00:00+00:00',
+            'http://localhost/eventlokale/schloss' => '2026-02-01T10:00:00+00:00',
+            'http://localhost/eventlokale/zuerich' => '2026-03-01T10:00:00+00:00',
+            'http://localhost/eventlokale/zuerich/staefa' => '2026-03-01T10:00:00+00:00',
             'http://localhost/impressum' => null,
         ], $lastmods);
         $this->assertValid($xml, 'sitemap-with-images.xsd');
@@ -157,8 +157,8 @@ final class SitemapTest extends WebTestCase
 
         $locations = $this->values($this->fetch('/sitemap-pages.xml'), 'loc', self::SITEMAP_NS);
 
-        self::assertNotContains('http://localhost/hochzeitslocations/liechtenstein', $locations, 'Under the threshold (#46, owner answer C).');
-        self::assertContains('http://localhost/hochzeitslocations', $locations);
+        self::assertNotContains('http://localhost/eventlokale/liechtenstein', $locations, 'Under the threshold (#46, owner answer C).');
+        self::assertContains('http://localhost/eventlokale', $locations);
     }
 
     public function test_without_venues_the_listing_has_no_lastmod(): void

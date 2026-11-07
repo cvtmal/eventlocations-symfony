@@ -34,9 +34,9 @@ final class VenueBasicsCardTest extends WebTestCase
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#stammdaten');
         self::assertSame([$venue->number()], $this->purger()->venues);
         self::assertSame(1, $this->purger()->listings);
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
-        self::assertResponseRedirects('/hochzeitslocation/gartenhaus-am-hang', 301);
-        $this->client->request('GET', '/hochzeitslocation/gartenhaus-am-hang');
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
+        self::assertResponseRedirects('/eventlokal/gartenhaus-am-hang', 301);
+        $this->client->request('GET', '/eventlokal/gartenhaus-am-hang');
         self::assertResponseIsSuccessful();
     }
 
@@ -50,8 +50,8 @@ final class VenueBasicsCardTest extends WebTestCase
         self::assertResponseRedirects();
         $slug = (string) $this->connection->fetchOne("SELECT slug FROM venue_translations WHERE venue_id = ? AND locale = 'de'", [$venue->id()]);
         self::assertStringStartsWith('gartenpavillon-sonnenhang', $slug);
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
-        self::assertResponseRedirects('/hochzeitslocation/'.$slug, 301);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
+        self::assertResponseRedirects('/eventlokal/'.$slug, 301);
         self::assertSame('Gartenpavillon Sonnenhang', $this->client->followRedirect()->filter('main h1')->text());
     }
 

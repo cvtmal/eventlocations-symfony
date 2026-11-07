@@ -29,7 +29,7 @@ final class NearbyPageTest extends WebTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const string URL = '/hochzeitslocation-in-meiner-naehe';
+    private const string URL = '/eventlokal-in-meiner-naehe';
     private const string PAGE_CACHE = 'public, s-maxage=86400, stale-if-error=86400, stale-while-revalidate=86400';
     private const array KEYS = ['GOOGLE_MAPS_JS_KEY', 'GOOGLE_MAPS_MAP_ID'];
     private const string RAW_KEY = 'test-key-"<&';
@@ -144,7 +144,7 @@ final class NearbyPageTest extends WebTestCase
 
         self::assertSame('Keine Location im Umkreis von 30 km.', $crawler->filter('.listing-empty__title')->text());
         $link = $crawler->filter('.listing-empty a');
-        self::assertSame('/hochzeitslocations?place=3920&radius=50', $link->attr('href'));
+        self::assertSame('/eventlokale?place=3920&radius=50', $link->attr('href'));
         self::assertSame('Locations im Umkreis von 50 km ansehen', $link->text());
     }
 
@@ -155,7 +155,7 @@ final class NearbyPageTest extends WebTestCase
 
         $crawler = $this->page(self::URL.'?lat=46.02&lng=7.75');
 
-        self::assertSame('/hochzeitslocations?place='.$this->town('Zermatt')->id().'&radius=50', $crawler->filter('.listing-empty a')->attr('href'));
+        self::assertSame('/eventlokale?place='.$this->town('Zermatt')->id().'&radius=50', $crawler->filter('.listing-empty a')->attr('href'));
     }
 
     public function test_nothing_near_a_position_far_from_any_town_links_to_the_plain_listing(): void
@@ -165,7 +165,7 @@ final class NearbyPageTest extends WebTestCase
 
         $crawler = $this->page(self::URL.'?lat=45.60&lng=7.50');
 
-        self::assertSame('/hochzeitslocations', $crawler->filter('.listing-empty a')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.listing-empty a')->attr('href'));
     }
 
     #[DataProvider('keylessStates')]
@@ -264,7 +264,7 @@ final class NearbyPageTest extends WebTestCase
         self::assertSame('Stäfa am See', $pins[0]['v'][0]['n']);
         self::assertSame('1 km', $pins[0]['v'][0]['k']);
         self::assertSame('Stäfa', $pins[0]['v'][0]['p']);
-        self::assertStringStartsWith('/hochzeitslocation/', $pins[0]['v'][0]['u']);
+        self::assertStringStartsWith('/eventlokal/', $pins[0]['v'][0]['u']);
         self::assertSame('#nearby-results', $crawler->filter('a[data-near-me-skip]:not([hidden])')->attr('href'));
         $this->assertNoGoogleScript($crawler, $html);
     }

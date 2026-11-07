@@ -25,7 +25,7 @@ final class VenuePhoneControllerTest extends WebTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const URL = '/hochzeitslocation/'.DetailVenues::FULL_SLUG.'/telefon';
+    private const URL = '/eventlokal/'.DetailVenues::FULL_SLUG.'/telefon';
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -60,7 +60,7 @@ final class VenuePhoneControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('a[href="tel:+41441234567"]', '044 123 45 67');
-        self::assertSelectorExists('a[href="/hochzeitslocation/'.DetailVenues::FULL_SLUG.'"]');
+        self::assertSelectorExists('a[href="/eventlokal/'.DetailVenues::FULL_SLUG.'"]');
         self::assertSelectorExists('meta[name="robots"][content="noindex, nofollow"]');
         self::assertCount(1, $crawler->filter('h1'));
         $this->assertPrivateNoindex();
@@ -97,10 +97,10 @@ final class VenuePhoneControllerTest extends WebTestCase
     {
         DetailVenues::minimal();
 
-        $this->get('/hochzeitslocation/gibt-es-nicht/telefon', '10.0.0.3');
+        $this->get('/eventlokal/gibt-es-nicht/telefon', '10.0.0.3');
         self::assertResponseStatusCodeSame(404);
 
-        $this->get('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG.'/telefon', '10.0.0.3');
+        $this->get('/eventlokal/'.DetailVenues::MINIMAL_SLUG.'/telefon', '10.0.0.3');
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -120,7 +120,7 @@ final class VenuePhoneControllerTest extends WebTestCase
         $venue = DetailVenues::full($this->em);
         VenueSlugHistoryFactory::createOne(['venue' => $venue, 'slug' => 'altes-schloss']);
 
-        $this->get('/hochzeitslocation/altes-schloss/telefon', '10.0.0.5');
+        $this->get('/eventlokal/altes-schloss/telefon', '10.0.0.5');
 
         self::assertResponseRedirects(self::URL, 301);
         $this->assertPrivateNoindex();

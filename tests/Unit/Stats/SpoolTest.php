@@ -38,7 +38,7 @@ final class SpoolTest extends TestCase
 
         self::assertSame(['2026-11-04.ndjson'], $this->files());
         self::assertSame(
-            ['{"at":"2026-11-04T00:30:00+01:00","type":"page_view","kind":null,"venues":[46],"page":"detail","path":"/hochzeitslocation/x","ref":"www.google.com","ua":"Mozilla/5.0","vh":"0123456789abcdef0123456789abcdef","bot":false}'],
+            ['{"at":"2026-11-04T00:30:00+01:00","type":"page_view","kind":null,"venues":[46],"page":"detail","path":"/eventlokal/x","ref":"www.google.com","ua":"Mozilla/5.0","vh":"0123456789abcdef0123456789abcdef","bot":false}'],
             $this->lines('2026-11-04.ndjson'),
         );
     }
@@ -82,12 +82,12 @@ final class SpoolTest extends TestCase
 
     private static function view(\DateTimeImmutable $at): SpoolEvent
     {
-        return new SpoolEvent($at, EventType::PageView, null, [46], PageType::Detail, '/hochzeitslocation/x', 'www.google.com', 'Mozilla/5.0', '0123456789abcdef0123456789abcdef', false);
+        return new SpoolEvent($at, EventType::PageView, null, [46], PageType::Detail, '/eventlokal/x', 'www.google.com', 'Mozilla/5.0', '0123456789abcdef0123456789abcdef', false);
     }
 
     private static function click(\DateTimeImmutable $at): SpoolEvent
     {
-        return new SpoolEvent($at, EventType::Click, ClickKind::Phone, [46], PageType::Detail, '/hochzeitslocation/x', null, 'Mozilla/5.0', '0123456789abcdef0123456789abcdef', true);
+        return new SpoolEvent($at, EventType::Click, ClickKind::Phone, [46], PageType::Detail, '/eventlokal/x', null, 'Mozilla/5.0', '0123456789abcdef0123456789abcdef', true);
     }
 
     /**

@@ -18,12 +18,12 @@ final class BeaconPayloadTest extends TestCase
 
     public function test_a_view_on_a_detail_page_carries_its_venue(): void
     {
-        [$event] = self::parse(['p' => 'detail', 'v' => '46', 'u' => '/hochzeitslocation/x', 'e' => ['view']]);
+        [$event] = self::parse(['p' => 'detail', 'v' => '46', 'u' => '/eventlokal/x', 'e' => ['view']]);
 
         self::assertSame(EventType::PageView, $event->type);
         self::assertSame([46], $event->venues);
         self::assertSame(PageType::Detail, $event->page);
-        self::assertSame('/hochzeitslocation/x', $event->path);
+        self::assertSame('/eventlokal/x', $event->path);
         self::assertSame('Mozilla/5.0', $event->userAgent);
         self::assertSame(self::HASH, $event->visitorHash);
         self::assertFalse($event->automated);
@@ -95,7 +95,7 @@ final class BeaconPayloadTest extends TestCase
     public function test_the_referrer_is_cut_to_its_host_and_our_own_host_is_none(): void
     {
         self::assertSame('www.google.com', self::parse(['r' => 'https://WWW.Google.com/search?q=hochzeit', 'e' => ['view']])[0]->referrerHost);
-        self::assertNull(self::parse(['r' => 'https://www.hochzeitslocation.ch/hochzeitslocations', 'e' => ['view']])[0]->referrerHost);
+        self::assertNull(self::parse(['r' => 'https://www.hochzeitslocation.ch/eventlokale', 'e' => ['view']])[0]->referrerHost);
         self::assertNull(self::parse(['r' => 'not a url', 'e' => ['view']])[0]->referrerHost);
         self::assertNull(self::parse(['e' => ['view']])[0]->referrerHost);
     }

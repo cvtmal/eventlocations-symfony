@@ -63,15 +63,15 @@ final class LandingContentBlockTest extends WebTestCase
 
         self::assertSame(
             '5 Hochzeitslocations im Kanton Zürich: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
-            $this->intro('/hochzeitslocations/zuerich')->filter('p')->text(),
+            $this->intro('/eventlokale/zuerich')->filter('p')->text(),
         );
         self::assertSame(
             '5 Hochzeitslocations in Stäfa: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
-            $this->intro('/hochzeitslocations/zuerich/staefa')->filter('p')->text(),
+            $this->intro('/eventlokale/zuerich/staefa')->filter('p')->text(),
         );
         self::assertSame(
             '<p>5 Locations für deine Hochzeit im Schloss: Vergleiche Fotos und Platz für Gäste und frag direkt an.</p>',
-            trim($this->intro('/hochzeitslocations/schloss')->html()),
+            trim($this->intro('/eventlokale/schloss')->html()),
         );
         $this->assertPublicAndSessionFree();
     }
@@ -81,7 +81,7 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.intro' => "Am **Zürichsee** feiern.\n\nZweiter Absatz."]);
 
-        $intro = $this->intro('/hochzeitslocations/zuerich');
+        $intro = $this->intro('/eventlokale/zuerich');
 
         self::assertSame(['Am Zürichsee feiern.', 'Zweiter Absatz.'], $intro->filter('p')->each(static fn (Crawler $p): string => $p->text()));
         self::assertSame('Zürichsee', $intro->filter('strong')->text());
@@ -94,7 +94,7 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.intro' => "<script>alert(1)</script>\n\n[Klick](javascript:alert(1)) und <img src=x onerror=alert(1)>"]);
 
-        $html = $this->intro('/hochzeitslocations/zuerich')->html();
+        $html = $this->intro('/eventlokale/zuerich')->html();
 
         self::assertStringNotContainsString('<script', $html);
         self::assertStringNotContainsString('javascript:', $html);
@@ -108,10 +108,10 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::BE, ListingQuery::PER_PAGE + 1);
         $this->store([ListingIntroBlock::KEY => 'Finde die **passende** Location.']);
 
-        self::assertSame('Finde die passende Location.', $this->intro('/hochzeitslocations')->text());
+        self::assertSame('Finde die passende Location.', $this->intro('/eventlokale')->text());
         $this->assertPublicAndSessionFree();
 
-        foreach (['/hochzeitslocations?guests=10', '/hochzeitslocations?page=2', '/hochzeitslocations?canton=be'] as $uri) {
+        foreach (['/eventlokale?guests=10', '/eventlokale?page=2', '/eventlokale?canton=be'] as $uri) {
             $crawler = $this->client->request('GET', $uri);
             self::assertResponseIsSuccessful($uri);
             self::assertCount(0, $crawler->filter('.listing-hero__intro'), $uri);
@@ -122,7 +122,7 @@ final class LandingContentBlockTest extends WebTestCase
     {
         $this->inCanton(Canton::BE, 1);
 
-        $crawler = $this->client->request('GET', '/hochzeitslocations');
+        $crawler = $this->client->request('GET', '/eventlokale');
 
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('.listing-hero__intro'));
@@ -135,7 +135,7 @@ final class LandingContentBlockTest extends WebTestCase
         DetailVenues::minimal();
         $this->store([FooterNoteBlock::KEY => 'Alle Angaben [ohne Gewähr](/datenschutz).']);
 
-        foreach (['/hochzeitslocations/zuerich', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG] as $uri) {
+        foreach (['/eventlokale/zuerich', '/eventlokal/'.DetailVenues::MINIMAL_SLUG] as $uri) {
             $crawler = $this->client->request('GET', $uri);
             self::assertResponseIsSuccessful($uri);
             $note = $crawler->filter('footer.site-footer .site-footer__note');
@@ -151,7 +151,7 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.intro' => "# Am Zürichsee\n\nFeiern."]);
 
-        $intro = $this->intro('/hochzeitslocations/zuerich');
+        $intro = $this->intro('/eventlokale/zuerich');
 
         self::assertSame('Am Zürichsee', $intro->filter('h2')->text());
         self::assertCount(1, $this->client->getCrawler()->filter('h1'));
@@ -163,7 +163,7 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.intro' => "```\n<h1>Titel</h1>\n```"]);
 
-        $intro = $this->intro('/hochzeitslocations/zuerich');
+        $intro = $this->intro('/eventlokale/zuerich');
 
         self::assertSame('<h1>Titel</h1>', $intro->filter('code')->text());
         self::assertCount(1, $this->client->getCrawler()->filter('h1'));
@@ -184,7 +184,7 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.intro' => $body]);
 
-        self::assertStringContainsString('Vergleiche Fotos', $this->intro('/hochzeitslocations/zuerich')->text());
+        self::assertStringContainsString('Vergleiche Fotos', $this->intro('/eventlokale/zuerich')->text());
     }
 
     public function test_public_pages_on_a_cold_pool_stay_public_and_set_no_cookie(): void
@@ -196,7 +196,7 @@ final class LandingContentBlockTest extends WebTestCase
         $pool = self::getContainer()->get('cache.content_blocks');
         self::assertInstanceOf(CacheItemPoolInterface::class, $pool);
 
-        foreach (['/hochzeitslocations' => 'Willkommen.', '/hochzeitslocations/zuerich' => 'Am See.'] as $uri => $intro) {
+        foreach (['/eventlokale' => 'Willkommen.', '/eventlokale/zuerich' => 'Am See.'] as $uri => $intro) {
             $this->resetContentBlocks();
             self::assertFalse($pool->getItem(ContentBlocks::ITEM)->isHit(), $uri);
 
@@ -206,7 +206,7 @@ final class LandingContentBlockTest extends WebTestCase
         }
 
         $this->resetContentBlocks();
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertResponseIsSuccessful();
         $this->assertPublicAndSessionFree();
         self::assertFalse($pool->getItem(ContentBlocks::ITEM)->isHit(), 'A page that only peeks stores nothing.');

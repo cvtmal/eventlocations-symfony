@@ -44,8 +44,8 @@ final class OnboardingWalkTest extends WebTestCase
     private const string TOWN = '8706 Meilen';
     private const string SUMMARY = 'Ein Haus direkt am See.';
     private const string QUEUE = '/admin/pruefung?tab=neu';
-    private const string CANTON_PAGE = '/hochzeitslocations/zuerich';
-    private const string LISTING = '/hochzeitslocations';
+    private const string CANTON_PAGE = '/eventlokale/zuerich';
+    private const string LISTING = '/eventlokale';
     private const string SITEMAP = '/sitemap-venues-1.xml';
     private const string SITEMAP_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9';
 
@@ -112,7 +112,7 @@ final class OnboardingWalkTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $number = $this->walkToTheCheck();
         $this->pressPublish($number, 'Veröffentlichen');
-        $path = '/hochzeitslocation/'.$this->slug($number);
+        $path = '/eventlokal/'.$this->slug($number);
 
         foreach ([self::LISTING, self::CANTON_PAGE] as $page) {
             $links = $this->cardLinks($page);
@@ -296,7 +296,7 @@ final class OnboardingWalkTest extends WebTestCase
 
     private function assertPublicPage(int $number, int $status): void
     {
-        $this->client->request('GET', '/hochzeitslocation/'.$this->slug($number));
+        $this->client->request('GET', '/eventlokal/'.$this->slug($number));
 
         self::assertResponseStatusCodeSame($status);
     }

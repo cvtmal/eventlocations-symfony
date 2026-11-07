@@ -10,16 +10,16 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The HomeCategory enum, its catalogue keys and its icons agree; the order is the board's.
+ * The HomeCategory enum, its catalogue keys and its icons agree; one tile per event type (F5).
  */
 final class HomeCategoryTest extends TestCase
 {
     private const CATALOGUE = __DIR__.'/../../../translations/search+intl-icu.de.yaml';
 
-    public function test_five_cases_in_the_boards_order(): void
+    public function test_six_event_types_in_order(): void
     {
         self::assertSame(
-            ['castle', 'event_hall', 'restaurant', 'brewery_winery', 'hotel'],
+            ['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'wedding'],
             array_map(static fn (HomeCategory $category): string => $category->value, HomeCategory::cases()),
         );
     }
@@ -43,7 +43,7 @@ final class HomeCategoryTest extends TestCase
     public function test_every_case_names_its_icon(): void
     {
         self::assertSame(
-            ['castle', 'warehouse', 'beer', 'grape', 'hotel'],
+            ['briefcase', 'presentation', 'wine', 'gift', 'cake', 'heart'],
             array_map(static fn (HomeCategory $category): string => $category->icon(), HomeCategory::cases()),
         );
     }
@@ -61,7 +61,7 @@ final class HomeCategoryTest extends TestCase
             {
                 $this->calls[] = [$id, $parameters, $domain, $locale];
 
-                return 'Weingut';
+                return 'Apéro';
             }
 
             public function getLocale(): string
@@ -70,7 +70,7 @@ final class HomeCategoryTest extends TestCase
             }
         };
 
-        self::assertSame('Weingut', HomeCategory::Winery->trans($translator, 'de'));
-        self::assertSame([['home.category.brewery_winery', [], 'search', 'de']], $translator->calls);
+        self::assertSame('Apéro', HomeCategory::Apero->trans($translator, 'de'));
+        self::assertSame([['home.category.apero', [], 'search', 'de']], $translator->calls);
     }
 }

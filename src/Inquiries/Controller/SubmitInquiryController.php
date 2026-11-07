@@ -39,7 +39,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * `POST /hochzeitslocation/{slug}/anfrage` (DP-13, IQ-1 to IQ-3). Stores the inquiry, then
+ * `POST /eventlokal/{slug}/anfrage` (DP-13, IQ-1 to IQ-3). Stores the inquiry, then
  * delivers it, each in its own transaction, then publishes `InquirySubmitted`. The guest gets
  * a 303 to a signed, constant confirmation URL on the cached detail page; an error re-renders
  * that page with the values kept. A history slug is accepted: the form may be on a cached copy.
@@ -72,7 +72,7 @@ final class SubmitInquiryController extends AbstractController
     ) {
     }
 
-    #[Route(path: ['de' => '/hochzeitslocation/{slug}/anfrage'], name: 'inquiry_submit', requirements: ['slug' => VenueDetailController::SLUG_REQUIREMENT], methods: ['POST'])]
+    #[Route(path: ['de' => '/eventlokal/{slug}/anfrage'], name: 'inquiry_submit', requirements: ['slug' => VenueDetailController::SLUG_REQUIREMENT], methods: ['POST'])]
     public function __invoke(Request $request, string $slug): Response
     {
         $locale = $request->getLocale();

@@ -63,14 +63,14 @@ final class ImportedRenameRedirectTest extends WebTestCase
     {
         $this->content->venue('schloss-beispiel', name: 'Schloss Beispiel');
         $this->import();
-        $this->client->request('GET', '/hochzeitslocation/schloss-beispiel');
+        $this->client->request('GET', '/eventlokal/schloss-beispiel');
         self::assertResponseIsSuccessful();
 
         $this->content->change('schloss-beispiel', ['name' => 'Schloss Neuheim']);
         $this->import();
 
-        $this->client->request('GET', '/hochzeitslocation/schloss-beispiel');
-        self::assertResponseRedirects('/hochzeitslocation/schloss-neuheim', 301);
+        $this->client->request('GET', '/eventlokal/schloss-beispiel');
+        self::assertResponseRedirects('/eventlokal/schloss-neuheim', 301);
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Schloss Neuheim');
@@ -85,10 +85,10 @@ final class ImportedRenameRedirectTest extends WebTestCase
         $this->content->change('schloss-beispiel', ['name' => 'Schloss Beispiel']);
         $this->import();
 
-        $this->client->request('GET', '/hochzeitslocation/schloss-beispiel');
+        $this->client->request('GET', '/eventlokal/schloss-beispiel');
         self::assertResponseIsSuccessful();
-        $this->client->request('GET', '/hochzeitslocation/schloss-neuheim');
-        self::assertResponseRedirects('/hochzeitslocation/schloss-beispiel', 301);
+        $this->client->request('GET', '/eventlokal/schloss-neuheim');
+        self::assertResponseRedirects('/eventlokal/schloss-beispiel', 301);
     }
 
     private function import(): void

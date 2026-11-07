@@ -90,7 +90,7 @@ final class SimilarVenuesTest extends WebTestCase
         $links = $card->filter('a, button');
         self::assertCount(1, $links);
         self::assertSame('card__link', $links->attr('class'));
-        self::assertSame('/hochzeitslocation/andere-in-zuerich', $links->attr('href'));
+        self::assertSame('/eventlokal/andere-in-zuerich', $links->attr('href'));
         self::assertSame('Andere in Zürich', $links->text());
         self::assertCount(1, $card->filter('.similar-card__picture, .similar-card__placeholder'));
     }
@@ -100,7 +100,7 @@ final class SimilarVenuesTest extends WebTestCase
         $crawler = $this->detailPage();
 
         self::assertSelectorTextContains('.similar-venues__all', 'Alle Locations');
-        self::assertSame('/hochzeitslocations', $crawler->filter('.similar-venues__all')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('.similar-venues__all')->attr('href'));
         self::assertCount(1, $crawler->filter('.similar-venues__all .icon'));
     }
 
@@ -111,7 +111,7 @@ final class SimilarVenuesTest extends WebTestCase
         $this->venue('andere-in-winterthur', 'Andere in Winterthur', 'Winterthur', null, 80);
         DetailVenues::withoutPlace();
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/ich-selbst');
+        $crawler = $this->client->request('GET', '/eventlokal/ich-selbst');
         self::assertResponseIsSuccessful();
 
         return $crawler;

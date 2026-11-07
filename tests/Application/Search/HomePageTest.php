@@ -7,19 +7,20 @@ namespace App\Tests\Application\Search;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenuePhotoTranslationFactory;
+use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\ListingCard;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
-use App\Search\ValueObject\GuestBand;
 use App\Shared\ReadModel\ContentBlocks;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
@@ -80,7 +81,7 @@ final class HomePageTest extends WebTestCase
         self::assertSame(
             [
                 'Hochzeit feiern in den schönsten Locations der Schweiz',
-                'Kategorien durchsuchen',
+                'Nach Anlass suchen',
                 'In vier Schritten zur Traumlocation',
                 'Locations im Spotlight',
                 'Plane deine Hochzeit',
@@ -139,23 +140,23 @@ final class HomePageTest extends WebTestCase
 
     public function test_the_form_submits_to_the_listing_and_all_three_fields_reach_the_criteria(): void
     {
-        $this->withBuilding($this->inCanton(Canton::ZH, 5), 'castle');
+        $this->withEvent($this->inCanton(Canton::ZH, 5), 'seminar');
 
         $crawler = $this->get('/');
         $form = $crawler->filter('form.home-search');
-        self::assertSame('/hochzeitslocations', $form->attr('action'));
+        self::assertSame('/eventlokale', $form->attr('action'));
         self::assertSame('get', $form->attr('method'));
 
-        $this->client->submit($form->form(), ['canton' => 'zh', 'building[0]' => 'castle', 'guests' => '100']);
+        $this->client->submit($form->form(), ['canton' => 'zh', 'event[0]' => 'seminar', 'guests' => '100']);
 
         self::assertResponseIsSuccessful();
-        self::assertSame('/hochzeitslocations', $this->client->getRequest()->getPathInfo());
+        self::assertSame('/eventlokale', $this->client->getRequest()->getPathInfo());
         $terms = self::getContainer()->get(KnownTermsQuery::class);
         self::assertInstanceOf(KnownTermsQuery::class, $terms);
         $criteria = SearchCriteria::fromQuery($this->client->getRequest()->query, $terms->all());
         self::assertSame(Canton::ZH, $criteria->canton);
-        self::assertSame(GuestBand::UpTo100, $criteria->guests);
-        self::assertSame(['building' => ['castle']], $criteria->terms);
+        self::assertSame(100, $criteria->guests);
+        self::assertSame(['suitable_for' => ['seminar']], $criteria->terms);
     }
 
     public function test_the_form_submitted_empty_is_the_unfiltered_listing(): void
@@ -171,12 +172,12 @@ final class HomePageTest extends WebTestCase
         self::assertCount(0, $crawler->filter('meta[name="robots"]'));
     }
 
-    public function test_the_selects_hold_the_live_cantons_by_name_and_the_five_kinds(): void
+    public function test_the_selects_hold_the_live_cantons_by_name_and_the_event_types_with_data(): void
     {
         $this->inCanton(Canton::TI, 5);
         $this->inCanton(Canton::TG, 5);
-        $this->inCanton(Canton::ZH, 5);
-        $this->inCanton(Canton::BE, 4);
+        $this->withEvent($this->inCanton(Canton::ZH, 5), 'wedding');
+        $this->withEvent($this->inCanton(Canton::BE, 4), 'seminar');
 
         $crawler = $this->get('/');
 
@@ -189,31 +190,63 @@ final class HomePageTest extends WebTestCase
             ['', 'ti', 'tg', 'zh'],
             $crawler->filter('#home-canton option')->each(static fn (Crawler $option): string => (string) $option->attr('value')),
         );
-        $kinds = $crawler->filter('#home-type option');
-        self::assertCount(6, $kinds);
-        self::assertSame('Alle Arten', $kinds->first()->text());
+        // Every event type a published venue carries, in vocabulary order; Bern counts though it has no landing page.
+        $events = $crawler->filter('select#home-event[name="event[]"] option');
+        self::assertSame(['', 'seminar', 'wedding'], $events->each(static fn (Crawler $option): string => (string) $option->attr('value')));
+        self::assertSame(['Alle Anlässe', 'Seminar', 'Hochzeit'], $events->each(static fn (Crawler $option): string => $option->text()));
+        self::assertCount(0, $crawler->filter('#home-type'), 'The Location-Art select is gone.');
     }
 
-    public function test_the_guests_select_offers_all_and_the_four_bands(): void
+    public function test_the_event_select_offers_only_all_without_data(): void
     {
-        $options = $this->get('/')->filter('select#home-guests[name="guests"] option');
+        $this->inCanton(Canton::ZH, 5);
 
-        self::assertSame(['', '50', '100', '150', '151'], $options->each(static fn (Crawler $option): string => (string) $option->attr('value')));
+        self::assertSame(['Alle Anlässe'], $this->get('/')->filter('#home-event option')->each(static fn (Crawler $option): string => $option->text()));
+    }
+
+    public function test_the_guests_field_is_a_number_input(): void
+    {
+        $crawler = $this->get('/');
+
+        $input = $crawler->filter('form.home-search input#home-guests');
+        self::assertSame('guests', $input->attr('name'));
+        self::assertSame('number', $input->attr('type'));
+        self::assertSame('z.B. 80', $input->attr('placeholder'));
+        self::assertSame('', $input->attr('value'));
+        self::assertSame('Anzahl Gäste', $crawler->filter('label[for="home-guests"]')->text());
+        self::assertCount(0, $crawler->filter('select#home-guests'));
+    }
+
+    public function test_the_tiles_are_the_six_event_types_and_link_to_the_event_filter(): void
+    {
+        $this->withEvent($this->inCanton(Canton::ZH, 5), 'seminar');
+
+        $tiles = $this->get('/')->filter('.home-category');
+
         self::assertSame(
-            ['Alle Gästezahlen', 'bis 50 Gäste', 'bis 100 Gäste', 'bis 150 Gäste', 'über 150 Gäste'],
-            $options->each(static fn (Crawler $option): string => $option->text()),
+            ['Firmenanlass', 'Seminar & Tagung', 'Apéro', 'Weihnachtsfeier', 'Geburtstag', 'Hochzeit'],
+            $tiles->each(static fn (Crawler $tile): string => $tile->text()),
+        );
+        // No event landing pages exist yet, so every tile is the listing filtered on its type.
+        self::assertSame(
+            array_map(
+                static fn (string $code): string => '/eventlokale?event%5B0%5D='.$code,
+                ['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'wedding'],
+            ),
+            $tiles->each(static fn (Crawler $tile): string => (string) $tile->attr('href')),
         );
     }
 
-    public function test_a_tile_links_to_the_landing_page_over_the_threshold_and_to_the_filter_under_it(): void
+    public function test_a_tile_leads_to_its_filtered_listing(): void
     {
-        $this->withBuilding($this->inCanton(Canton::ZH, 5), 'castle');
+        [$seminar] = $this->withEvent($this->inCanton(Canton::ZH, 1), 'seminar');
+        $this->inCanton(Canton::ZH, 2);
 
-        $links = $this->get('/')->filter('.home-category')->each(static fn (Crawler $tile): string => (string) $tile->attr('href'));
+        $crawler = $this->client->click($this->get('/')->filter('.home-category')->eq(1)->link());
 
-        self::assertCount(5, $links);
-        self::assertContains('/hochzeitslocations/schloss', $links);
-        self::assertContains('/hochzeitslocations?building%5B0%5D=hotel', $links);
+        self::assertResponseIsSuccessful();
+        self::assertSame([$seminar->name()], $crawler->filter('.card__link')->each(static fn (Crawler $link): string => $link->text()));
+        self::assertCount(1, $crawler->filter('.filter-bar .chip')->reduce(static fn (Crawler $chip): bool => 'Seminar' === $chip->text()));
     }
 
     public function test_spotlight_shows_the_head_of_the_listing_with_one_photo_each(): void
@@ -298,9 +331,9 @@ final class HomePageTest extends WebTestCase
 
         self::assertSame(
             [
-                ['Tessin', '/hochzeitslocations/tessin'],
-                ['Thurgau', '/hochzeitslocations/thurgau'],
-                ['Zürich', '/hochzeitslocations/zuerich'],
+                ['Tessin', '/eventlokale/tessin'],
+                ['Thurgau', '/eventlokale/thurgau'],
+                ['Zürich', '/eventlokale/zuerich'],
             ],
             $crawler->filter('#regionen a')->each(static fn (Crawler $chip): array => [$chip->text(), (string) $chip->attr('href')]),
         );
@@ -359,7 +392,7 @@ final class HomePageTest extends WebTestCase
         self::assertCount(0, $crawler->filter('meta[name="robots"]'));
     }
 
-    public function test_the_page_runs_four_queries_warm_and_eight_cold(): void
+    public function test_the_page_runs_five_queries_warm_and_nine_cold(): void
     {
         foreach ($this->inCanton(Canton::ZH, 5) as $venue) {
             $this->photos($venue, 1);
@@ -371,16 +404,17 @@ final class HomePageTest extends WebTestCase
         // #26: on an empty pool the first hit adds four statements: begin, try-lock, the SELECT, commit.
         $holder->reset();
         $this->get('/');
-        self::assertCount(8, $holder->getData()['default'] ?? []);
+        self::assertCount(9, $holder->getData()['default'] ?? []);
 
         $blocks = self::getContainer()->get(ContentBlocks::class);
         self::assertInstanceOf(ContentBlocks::class, $blocks);
         $blocks->refresh();
 
-        // Cards, their photos, the hero's hash and the landing pages' one statement.
+        // Cards, their photos, the hero's hash, the landing pages' one statement and FilterDataQuery's terms
+        // statement for the Anlass select (F5).
         $holder->reset();
         $this->get('/');
-        self::assertCount(4, $holder->getData()['default'] ?? []);
+        self::assertCount(5, $holder->getData()['default'] ?? []);
     }
 
     private function assertOneHeroImage(Crawler $crawler): void
@@ -397,6 +431,20 @@ final class HomePageTest extends WebTestCase
         for ($position = 1; $position <= $count; ++$position) {
             VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
         }
+    }
+
+    /**
+     * @param list<Venue> $venues
+     *
+     * @return list<Venue>
+     */
+    private function withEvent(array $venues, string $code): array
+    {
+        foreach ($venues as $venue) {
+            VenueTermFactory::new()->term(TermGroup::SuitableFor, $code)->create(['venue' => $venue]);
+        }
+
+        return $venues;
     }
 
     private function flush(): void
