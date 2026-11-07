@@ -22,6 +22,7 @@ use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\DescribeVenuePhoto;
 use App\Venues\Command\GrantPhotoRights;
+use App\Venues\Command\IssueVenuePreview;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordVenueCreated;
@@ -33,6 +34,7 @@ use App\Venues\Command\ReorderRooms;
 use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
 use App\Venues\Command\RetitleVenueDocument;
+use App\Venues\Command\RevokeVenuePreview;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
@@ -106,6 +108,8 @@ final class VenueCommandAuditTest extends TestCase
         yield 'retitle document' => [new RetitleVenueDocument(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001', '1', ['de' => $text])];
         yield 'reorder documents' => [new ReorderVenueDocuments(self::NUMBER, ['0199a1b2-0000-7000-8000-000000000001'])];
         yield 'remove document' => [new RemoveVenueDocument(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
+        yield 'issue preview link' => [new IssueVenuePreview(self::NUMBER, 'herbst-2026', 90)];
+        yield 'revoke preview link' => [new RevokeVenuePreview(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
     }
 
     #[DataProvider('commands')]

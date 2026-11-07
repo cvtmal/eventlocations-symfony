@@ -329,3 +329,20 @@ blocks:
     rights_declaration:
         label: 'Bildrechte-Erklärung'
         placement: 'Beim Veröffentlichen der Location (Schritt «Prüfen») und im Fotos-Tab des Kontos'
+preview:
+    title: 'Vorschau: {name}'
+    unconfirmed: Noch nicht vom Betreiber bestätigt
+    intro: Diesen Eintrag haben wir für dich vorbereitet. Übernimm ihn gratis, prüfe die Angaben und bestimme, was erscheint.
+    claim: Gratis übernehmen
+    correct: Angaben korrigieren
+    claim_subject: 'Eintrag Nr. {number} übernehmen: {name}'
+    correct_subject: 'Angaben korrigieren: Eintrag Nr. {number}, {name}'
+    inquiry_note: Anfragen sind möglich, sobald der Eintrag übernommen und veröffentlicht ist.
+    not_found:
+        title: Vorschau nicht gefunden
+        heading: Diese Vorschau gibt es nicht
+        text: 'Der Link ist unvollständig. Kopiere ihn bitte ganz aus der Nachricht oder schreib uns an {email}.'
+    gone:
+        title: Vorschau abgelaufen
+        heading: Dieser Vorschau-Link gilt nicht mehr
+        text: 'Der Link ist abgelaufen oder wurde zurückgezogen. Schreib uns an {email}, dann schicken wir dir einen neuen.'

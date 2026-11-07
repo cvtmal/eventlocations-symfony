@@ -16,7 +16,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * #25's record tabs (Fotos 900, Räume 800, Dokumente 700, after #24's Übersicht, then #47's Statistik 500; #53 retired Bewertungen) and the two
+ * #25's record tabs (Fotos 900, Räume 800, Dokumente 700, after #24's Übersicht, then G5's Vorschau-Links 600 and #47's Statistik 500; #53 retired Bewertungen) and the two
  * island host pages, whose mount points carry what the islands need (Step 8.1, 8.2, 8.5).
  */
 final class VenueMediaTabsTest extends WebTestCase
@@ -28,6 +28,7 @@ final class VenueMediaTabsTest extends WebTestCase
         'fotos' => 'Fotos',
         'raeume' => 'Räume',
         'dokumente' => 'Dokumente',
+        'vorschau-links' => 'Vorschau-Links',
         'statistik' => 'Statistik',
     ];
 

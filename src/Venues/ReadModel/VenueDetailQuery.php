@@ -117,6 +117,21 @@ final class VenueDetailQuery
      */
     public function detail(int $number, string $locale, bool $includeUnpublished = false): ?VenueDetail
     {
+        return $this->load($number, $locale, $includeUnpublished, everyPhoto: $includeUnpublished);
+    }
+
+    /**
+     * The entry behind a preview link (G5): published or not, in the default locale, but with the
+     * public photos only (`PublicPhotoPolicy`), because anybody holding the link can open it. Null
+     * like `detail()`.
+     */
+    public function preview(int $number): ?VenueDetail
+    {
+        return $this->load($number, $this->enabledLocale->default(), includeUnpublished: true, everyPhoto: false);
+    }
+
+    private function load(int $number, string $locale, bool $includeUnpublished, bool $everyPhoto): ?VenueDetail
+    {
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
         $documentTranslation = $this->translationJoin->localized('venue_document_translations', 'venue_document_id', 'd.id', 'dtr');
         $published = $includeUnpublished ? 'TRUE' : self::PUBLISHED;
@@ -175,7 +190,7 @@ final class VenueDetailQuery
         $venueId = $row['id'];
         [$mainBuilding, $mainSetting, $factGroups, $termsByGroup] = $this->terms(self::decode($row['terms']));
         $rooms = $this->rooms($venueId, $locale);
-        [$venuePhotos, $roomPhotos] = $this->photos($venueId, $row['number'], $row['name'], $rooms, $locale, $includeUnpublished);
+        [$venuePhotos, $roomPhotos] = $this->photos($venueId, $row['number'], $row['name'], $rooms, $locale, $everyPhoto);
 
         return new VenueDetail(
             $row['id'],
@@ -347,7 +362,7 @@ final class VenueDetailQuery
     /**
      * All photos of the venue in one query: the venue-level ones in position order, and the
      * lowest-position photo of each room. The public sees only photos with a live rights grant
-     * (`PublicPhotoPolicy`); a preview (`$includeUnpublished`) shows every stored photo.
+     * (`PublicPhotoPolicy`); the staff and manager preview (`$everyPhoto`) shows every stored photo; G5's preview link does not.
      *
      * @param list<DetailRoom> $rooms
      *

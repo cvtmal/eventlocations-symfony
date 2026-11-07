@@ -40,7 +40,10 @@ final class SecurityHeadersListener
         $headers = $event->getResponse()->headers;
         $headers->set('X-Content-Type-Options', 'nosniff');
         // Not no-referrer: #13's no-JS toggle and #14's CSRF fallback read the same-origin Referer.
-        $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        // A page whose URL is a secret (G5's preview link) sets its own and keeps it.
+        if (!$headers->has('Referrer-Policy')) {
+            $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        }
         $headers->set('Permissions-Policy', $maps ? ContentSecurityPolicy::GOOGLE_MAPS_PERMISSIONS : 'camera=(), microphone=(), geolocation=(), payment=()');
 
         if ($event->getRequest()->isSecure()) {

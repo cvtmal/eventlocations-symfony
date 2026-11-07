@@ -1,0 +1,19 @@
+{#
+    A preview link that does not answer (G5): `gone` true for an expired or revoked link (410), false for a token that
+    names no link (404). Private like the preview itself: robots `noindex`, no stats beacon.
+#}
+{% extends 'seo/_error_page.html.twig' %}
+
+{% set key = gone ? 'gone' : 'not_found' %}
+
+{% block error_title %}{{ ('preview.' ~ key ~ '.title')|trans({}, 'venues') }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block stats_beacon %}{% endblock %}
+
+{% block error_icon %}{{ icon('calendar') }}{% endblock %}
+
+{% block error_heading %}{{ ('preview.' ~ key ~ '.heading')|trans({}, 'venues') }}{% endblock %}
+
+{% block error_text %}{{ ('preview.' ~ key ~ '.text')|trans({email: site_contact_email}, 'venues') }}{% endblock %}

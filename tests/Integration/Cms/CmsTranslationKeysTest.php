@@ -26,6 +26,7 @@ use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\DescribeVenuePhoto;
 use App\Venues\Command\GrantPhotoRights;
+use App\Venues\Command\IssueVenuePreview;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordVenueCreated;
@@ -37,6 +38,7 @@ use App\Venues\Command\ReorderRooms;
 use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
 use App\Venues\Command\RetitleVenueDocument;
+use App\Venues\Command\RevokeVenuePreview;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\GrantEvidence;
@@ -99,6 +101,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
             AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,
             AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,
             ChangeVenueGooglePlace::class, AssignVenueGooglePlace::class,
+            IssueVenuePreview::class, RevokeVenuePreview::class,
         ];
         foreach ($commands as $command) {
             $keys[] = 'history.command.'.substr($command, strrpos($command, '\\') + 1);

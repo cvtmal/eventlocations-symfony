@@ -21,7 +21,10 @@
         <div class="toast-region" role="status" aria-live="polite" data-toast-region></div>
         <script type="module" src="{{ asset('js/overlay.js') }}"></script>
         <script type="module" src="{{ asset('js/merkliste.js') }}"></script>
+        {# A private page (G5's preview link) empties this block: no statistics. #}
+        {% block stats_beacon %}
         <script type="module" src="{{ asset('js/stats.js') }}" data-stats-url="{{ path('_stats_collect') }}" data-stats-page="{% block stats_page %}{% set page_type = 'other' %}{{ page_type }}{% endblock %}" data-stats-venue="{% block stats_venue %}{% endblock %}"></script>
+        {% endblock %}
         {% block scripts %}{% endblock %}
     </body>
 </html>

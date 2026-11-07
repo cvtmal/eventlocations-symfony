@@ -42,7 +42,7 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
     private const COOKIE_ROUTES = ['merkliste', 'merkliste_toggle', 'merkliste_sync'];
 
     /** The routes outside the shared cache. Every other 2xx/3xx GET is `public` with an `s-maxage`. */
-    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'health', '_stats_collect'];
+    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'health', '_stats_collect', 'venue_preview'];
 
     public function test_no_public_page_starts_a_session_or_sets_a_cookie(): void
     {
@@ -59,6 +59,7 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
             'listing_town' => [['canton' => 'zuerich', 'town' => $data['town']]],
             'sitemap_venues' => [['n' => 1]],
             'merkliste_toggle' => [['number' => $data['number']]],
+            'venue_preview' => [['token' => $data['preview']]],
         ];
         $posted = ['_token' => 'csrf-token'] + InquiryFormFields::valid(['started' => $data['started']]);
         $router = self::getContainer()->get('router');

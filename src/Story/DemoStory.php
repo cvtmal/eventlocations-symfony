@@ -13,6 +13,7 @@ use App\Factory\VenueDocumentTranslationFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenuePhotoTranslationFactory;
+use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
@@ -168,6 +169,17 @@ final class DemoStory extends Story
 
         flush_after(fn () => $this->createEventFacts($created, $terms));
         flush_after(fn () => $this->createSiteImport($created[0][1]));
+        flush_after(fn () => $this->createPreviewLinks($created[1][1]));
+    }
+
+    /**
+     * G5: an open and a revoked preview link of venue 2, whose last gallery photo has no grant, so the preview (the
+     * entry's Vorschau-Links tab shows the link) hides that photo like the public page does.
+     */
+    private function createPreviewLinks(Venue $venue): void
+    {
+        VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'demo-brief-2026-11']);
+        VenuePreviewFactory::new()->revoked()->create(['venue' => $venue, 'campaignCode' => 'demo-mail-2026-10']);
     }
 
     /**

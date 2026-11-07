@@ -8,6 +8,7 @@ use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenuePhoto;
+use App\Venues\Entity\VenuePreview;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\Repository\VenueRepository;
@@ -71,6 +72,14 @@ final class VenueRows
     public function document(Venue $venue, string $documentId): VenueDocument
     {
         return $this->find(VenueDocument::class, $venue, $documentId) ?? throw VenueRowNotFound::document($venue->number(), $documentId);
+    }
+
+    /**
+     * @throws VenueRowNotFound
+     */
+    public function preview(Venue $venue, string $previewId): VenuePreview
+    {
+        return $this->find(VenuePreview::class, $venue, $previewId) ?? throw VenueRowNotFound::preview($venue->number(), $previewId);
     }
 
     /**
@@ -161,7 +170,7 @@ final class VenueRows
     }
 
     /**
-     * @template T of VenuePhoto|Room|VenueDocument
+     * @template T of VenuePhoto|Room|VenueDocument|VenuePreview
      *
      * @param class-string<T> $class
      *

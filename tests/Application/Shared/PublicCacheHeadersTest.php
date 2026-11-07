@@ -57,7 +57,7 @@ final class PublicCacheHeadersTest extends WebTestCase
     }
 
     /**
-     * The URLs may hold {number}, {gone}, {town} and {building}. The route is null outside the public table.
+     * The URLs may hold {number}, {gone}, {town}, {building}, {preview} and {preview_gone}. The route is null outside the public table.
      *
      * @return iterable<string, array{?string, string, string, int, string, ?string}> route, method, URL, status, Cache-Control, Vary
      */
@@ -92,6 +92,9 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'places' => ['_search_places', 'GET', '/_search/places?q=Zue', 200, self::PLACES, null];
         yield 'phone' => ['venue_phone', 'GET', self::DETAIL.'/telefon', 200, self::PRIVATE, 'Accept'];
         yield 'phone, history slug' => ['venue_phone', 'GET', '/hochzeitslocation/'.self::HISTORY_SLUG.'/telefon', 301, self::PRIVATE, 'Accept'];
+        yield 'preview link' => ['venue_preview', 'GET', '/vorschau/{preview}', 200, self::PRIVATE, null];
+        yield 'preview link, revoked' => ['venue_preview', 'GET', '/vorschau/{preview_gone}', 410, self::PRIVATE, null];
+        yield 'preview link, unknown' => ['venue_preview', 'GET', '/vorschau/'.str_repeat('A', 44), 404, self::PRIVATE, null];
         yield 'merkliste' => ['merkliste', 'GET', '/merkliste', 200, self::PRIVATE, null];
         yield 'merkliste toggle' => ['merkliste_toggle', 'POST', '/merkliste/{number}', 303, self::PRIVATE, null];
         yield 'merkliste sync' => ['merkliste_sync', 'POST', '/merkliste', 204, self::PRIVATE, null];
@@ -112,7 +115,7 @@ final class PublicCacheHeadersTest extends WebTestCase
 
         $this->client->request(
             $method,
-            strtr($url, ['{number}' => (string) $data['number'], '{gone}' => $data['gone'], '{town}' => $data['town'], '{building}' => $data['building']]),
+            strtr($url, ['{number}' => (string) $data['number'], '{gone}' => $data['gone'], '{town}' => $data['town'], '{building}' => $data['building'], '{preview_gone}' => $data['preview_gone'], '{preview}' => $data['preview']]),
             'POST' === $method ? $posted : [],
             [],
             ['HTTP_SEC_FETCH_SITE' => 'same-origin'],
