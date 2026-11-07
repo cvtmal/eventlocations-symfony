@@ -75,11 +75,14 @@ final class InquiryEventMigrationTest extends KernelTestCase
 
     public function test_up_drops_the_faq_own_catering_and_down_brings_it_back(): void
     {
+        $constraint = "SELECT count(*) FROM pg_constraint WHERE conname = 'chk_venues_own_catering'";
         $this->runMigration('down');
         self::assertSame(['own_catering'], $this->columns(['own_catering'], 'venues'));
+        self::assertSame(1, $this->connection->fetchOne($constraint));
 
         $this->runMigration('up');
         self::assertSame([], $this->columns(['own_catering'], 'venues'));
+        self::assertSame(0, $this->connection->fetchOne($constraint));
     }
 
     /**
