@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /warenkorb/
+
+Sitemap: https://www.beispiel-events.example/sitemap.xml

@@ -31,3 +31,6 @@ services:
     -
         class: App\Tests\Architecture\ModuleBoundariesTest
         tags: [phpat.test]
+    -
+        class: App\Tests\Architecture\PrivateImportDataTest
+        tags: [phpat.test]

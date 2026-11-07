@@ -1,1 +1,4 @@
 /data/geo/towns.csv -text
+
+# Legacy encodings on purpose (tests/Fixtures/SiteImport/05): keep git from touching the bytes.
+/tests/Fixtures/SiteImport/05-iso-8859-1-restaurant/*.html -text

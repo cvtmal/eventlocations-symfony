@@ -1,0 +1,7 @@
+# robots.txt des Kulturhauses
+User-agent: *
+Disallow: /wp-admin/
+Disallow: /de/intern/
+Allow: /wp-admin/admin-ajax.php
+
+Sitemap: https://www.beispiel-apex.example/sitemap.xml

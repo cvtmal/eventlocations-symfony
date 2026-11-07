@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kontakt | Villa Musterwald</title>
+<meta property="og:site_name" content="Villa Musterwald">
+<link rel="stylesheet" href="/css/villa.css">
+<style>
+  body { margin: 0; font-family: "Palatino Linotype", serif; background: #fbf9f4; color: #222; }
+  header, main, footer { max-width: 44rem; margin: 0 auto; padding: 1rem; }
+  nav a { margin-right: 1rem; color: #29402f; }
+  .cookies { background: #222; color: #fff; padding: .7rem 1rem; font-size: .9rem; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="cookies">Mit der Nutzung unserer Seite bist du mit Cookies einverstanden. <button type="button">OK</button></div>
+<header>
+  <nav><a href="/">Start</a> <a href="/raeume">Räume</a> <a href="/kontakt">Kontakt</a></nav>
+</header>
+<main>
+  <h1>Kontakt</h1>
+  <p>Die Villa wird ehrenamtlich betreut. Am besten erreichst du uns per E-Mail, wir antworten meistens am gleichen Abend.</p>
+  <p>Villa Musterwald<br>Waldweg 5<br>4051 Basel</p>
+  <p>Telefon: +41 (0)61 555 01 23</p>
+  <p>E-Mail: <a href="mailto:villa@villa-musterwald.example">villa@villa-musterwald.example</a></p>
+  <p>Besichtigungen sind jeweils am ersten Samstag im Monat möglich. Bitte melde dich vorher an, damit wir den Schlüssel bereithalten.</p>
+</main>
+<footer><p>Villa Musterwald · Waldweg 5 · 4051 Basel</p></footer>
+<script>
+  document.querySelectorAll('button').forEach(function (knopf) {
+    knopf.addEventListener('click', function () { knopf.parentNode.remove(); });
+  });
+</script>
+</body>
+</html>

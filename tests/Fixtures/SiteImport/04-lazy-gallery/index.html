@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eventscheune Musterhof | Feiern auf dem Land bei St. Gallen</title>
+<meta name="description" content="Die Eventscheune Musterhof liegt oberhalb von St. Gallen. Hochzeiten, Firmenfeste und Konzerte für bis zu 150 Personen.">
+<meta property="og:site_name" content="Eventscheune Musterhof">
+<link rel="stylesheet" href="/css/scheune.css">
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; color: #2c2a25; }
+  .hero { background: #2c2a25 url('/img/hero-muster.jpg') center / cover; min-height: 60vh; }
+  #cookie-banner { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 1rem; border-top: 1px solid #ddd; }
+</style>
+<script src="/js/lazysizes.min.js" async></script>
+</head>
+<body class="start">
+<div id="cookie-banner" role="dialog" aria-label="Cookies">
+  <p>Wir nutzen Cookies für die Statistik. Du entscheidest, ob wir sie setzen dürfen.</p>
+  <button type="button" id="cookie-ja">Ja, gerne</button>
+  <button type="button" id="cookie-nein">Lieber nicht</button>
+</div>
+
+<header class="kopf">
+  <a href="/"><img src="/img/logo.png" alt="Eventscheune Musterhof" width="200" height="60"></a>
+  <nav>
+    <a href="/">Start</a>
+    <a href="/galerie">Galerie</a>
+    <a href="/preise">Preise</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Eventscheune Musterhof</h1>
+  </section>
+
+  <section>
+    <h2>Feiern, wo früher das Heu lag</h2>
+    <p>Der Musterhof ist ein umgebauter Bauernhof. Die Scheune mit ihrem hohen Dach, den alten Balken und dem grossen Hoftor ist heute ein Ort für Hochzeiten, Firmenfeste und Konzerte.</p>
+    <p><img class="lazyload" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-src="/media/scheune-aussen.jpg" width="1200" height="800" alt="Die Scheune von aussen"></p>
+    <p>Bis zu 150 Personen finden an langen Tischen Platz. Für Hochzeiten gibt es ein Zimmer zum Umziehen und einen Hof für den Apéro.</p>
+  </section>
+</main>
+
+<footer class="fuss">
+  <p>Eventscheune Musterhof · Hofweg 3 · 9000 St. Gallen</p>
+  <p>
+    <a href="https://www.facebook.example/eventscheune"><img src="/img/icon-facebook.png" alt="Facebook" width="32" height="32"></a>
+    <img src="https://stats.beispiel-analytics.example/t.gif?id=4711" alt="" width="1" height="1">
+  </p>
+</footer>
+<script>
+  document.getElementById('cookie-ja').onclick = document.getElementById('cookie-nein').onclick = function () {
+    document.getElementById('cookie-banner').remove();
+  };
+</script>
+</body>
+</html>

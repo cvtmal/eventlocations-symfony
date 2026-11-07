@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Räume | Kulturhaus Apex Beispiel</title>
+<meta property="og:site_name" content="Kulturhaus Apex Beispiel">
+<link rel="stylesheet" href="https://www.beispiel-apex.example/de/css/kulturhaus.css">
+<style>
+  body { margin: 0; font: 16px/1.5 "Segoe UI", sans-serif; background: #f6f3ee; color: #1f1d1a; }
+  header, main, footer { max-width: 48rem; margin: 0 auto; padding: 1rem; }
+  header nav a { margin-left: 1.2rem; color: #7b2d26; text-decoration: none; }
+  .hinweis { background: #ffe9a8; padding: .6rem 1rem; font-size: .9rem; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="hinweis">Wir speichern Cookies, damit du dich auf unserer Website wohlfühlst. <button type="button">Verstanden</button></div>
+<header>
+  <a href="/de/"><img src="/de/media/wortmarke.png" alt="Kulturhaus Apex Beispiel" width="240" height="56"></a>
+  <nav><a href="/de/raeume">Räume</a> <a href="/de/kontakt">Kontakt</a></nav>
+</header>
+<main>
+  <h1>Räume im Kulturhaus</h1>
+  <p>Vier Räume, ein Haus: Du kannst einzelne Räume mieten oder das ganze Kulturhaus für dein Fest übernehmen.</p>
+
+  <section>
+    <h2>Fabriksaal</h2>
+    <img src="/de/media/raeume/fabriksaal.jpg" alt="Fabriksaal mit Bühne" width="1200" height="800">
+    <p>Der Fabriksaal ist 320 m² gross. Hier finden Konzerte, Bankette und Tagungen statt.</p>
+  </section>
+  <section>
+    <h2>Foyer</h2>
+    <img src="/de/media/raeume/foyer-bar.jpg" alt="Foyer mit Bar" width="1200" height="800">
+    <p>Das Foyer eignet sich für Apéros mit bis zu 120 Personen.</p>
+  </section>
+</main>
+<footer><p>Kulturhaus Apex Beispiel · Kulturweg 21 · 9000 St. Gallen</p></footer>
+<script>
+  document.querySelectorAll('button').forEach(function (knopf) {
+    knopf.addEventListener('click', function () { knopf.parentNode.remove(); });
+  });
+</script>
+</body>
+</html>
