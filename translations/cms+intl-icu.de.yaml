@@ -648,8 +648,8 @@ stats:
     funnel:
         link: Funnel
         title: Funnel
-        intro: Von der Vorschau bis zur Pro-Zahlung, pro Woche und Kampagne. Locations zählen pro Woche einmal, Anfragen einzeln.
-        note: Eine Location gehört zur ersten Kampagne, in der sie vorkam. Ereignisse, die keiner Kampagne zugeordnet werden können, stehen unter Ohne Kampagne.
+        intro: Von der Vorschau bis zur Pro-Zahlung, pro Woche und Kampagne. Einträge zählen pro Woche und im ganzen Zeitraum je einmal, Anfragen einzeln.
+        note: Ein Schritt gehört zur Kampagne, die ihm mitgegeben wurde. Fehlt sie, gilt die erste Kampagne seines Eintrags davor. Was keiner Kampagne zugeordnet werden kann, steht unter Ohne Kampagne.
         not_available: n/a
         window:
             label: Zeitraum
@@ -679,15 +679,16 @@ stats:
             column: Kampagne
             empty: Im Zeitraum noch keine Ereignisse.
         paying:
-            title: Zahlende Locations
-            paying: Zahlende Locations
-            paying_note: Pro bezahlt in den letzten 12 Monaten
+            title: Zahlende Einträge
+            scope: Unabhängig von Zeitraum und Kampagne.
+            paying: Zahlende Einträge
+            paying_note: Pro bezahlt in den letzten 12 Monaten, Kündigungen nicht abgezogen
             delivered: Mit zugestellter Anfrage
             percent: '{percent} % seit der ersten Zahlung'
             qualified: Mit qualifizierter Anfrage
         empty:
             title: Im Zeitraum noch keine Ereignisse
-            text: Die Schritte erscheinen hier, sobald eine Vorschau geöffnet, eine Location veröffentlicht oder eine Anfrage zugestellt wird.
+            text: Die Schritte erscheinen hier, sobald eine Vorschau geöffnet, ein Eintrag veröffentlicht oder eine Anfrage zugestellt wird.
     widget:
         title: Statistik, letzte 7 Tage
         all: Zur Statistik

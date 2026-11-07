@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Stats\ValueObject;
 
+use App\Shared\Funnel\CampaignCode;
+
 /**
  * Which campaign the funnel scorecard's weekly table and totals show (G8): all of them, the events no campaign can
  * be given to, or one campaign code. The screen's `?kampagne=` carries it: absent is all, `-` is "without", a plain

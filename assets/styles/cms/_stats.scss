@@ -40,3 +40,8 @@
     grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
     gap: var(--a-space-3);
 }
+
+// The funnel scorecard's tables (G8) have eight step columns: the heads wrap instead of widening the table.
+.funnel-table .table th {
+    white-space: normal;
+}

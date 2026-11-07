@@ -12,10 +12,12 @@ use App\Shared\Funnel\FunnelEvent;
  * RecordFunnelEventHandler` handles it.
  *
  * `venueId` is the venue's UUID (`Venue::id()`), null for a step without one (a brief to several
- * venues). `campaignCode` is the campaign of the outreach that led here (letters, digits, `_`, `-`,
+ * venues). `campaignCode` is the campaign of the outreach that led here (a `CampaignCode`: letters, digits, `_`, `-`,
  * at most 40, starting with a letter or digit), null when the publisher knows none: the scorecard then
- * uses the first campaign recorded for that venue. The time is the handler's clock. Never put personal
- * data in either field; the handler refuses a campaign code that is not a plain code.
+ * uses the first campaign recorded for that venue before the step. The code names a campaign the staff defined; never
+ * take it from a visitor's request. The time is the handler's clock. Never put personal data in either field: the
+ * handler drops (and logs) a venue id that is no UUID and a campaign code that is not a plain code, and records the
+ * step without it.
  *
  * Recording is best effort: the handler never throws. Inside a command handler dispatch with
  * `new DispatchAfterCurrentBusStamp()`, so the row is written after your commit and only if it

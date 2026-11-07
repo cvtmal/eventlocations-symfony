@@ -17,15 +17,17 @@ use Doctrine\DBAL\Connection;
  * - **Counting:** a venue step (preview, claim, publish, payment, cancellation) counts distinct venues per week or
  *   per window, so one venue opening its preview ten times is one preview; an inquiry or a brief counts rows (they
  *   carry no identity of their own). A venue step without a venue counts each row.
- * - **Campaign** of an event: its own code, else the first code ever recorded for that venue (first touch, found
- *   with a LATERAL probe of the `(venue_id, occurred_at)` index), else none ("Ohne Kampagne"). That lets Venues and
- *   Inquiries emit steps without knowing a campaign.
+ * - **Campaign** of an event: its own code, else the first code ever recorded for that venue if that first touch was
+ *   at or before the event (found with a LATERAL probe of the `(venue_id, occurred_at)` index), else none ("Ohne
+ *   Kampagne"). That lets Venues and Inquiries emit steps without knowing a campaign, and leaves what a venue did
+ *   before any campaign reached it unattributed.
  * - **Paying venues:** a `pro_paid` in the last 365 days; of them the ones with a delivered inquiry since their first
  *   payment in that span. The qualified variant is G7's, null here.
  *
  * Query ceiling: the screen reads one bounded time range of `funnel_events` (at most 52 weeks) three times and the
  * `pro_paid` rows of 12 months once; the output is at most 52 weeks x 8 steps plus one row per campaign. The probe
- * runs once per row without an own campaign. Measured figures are in `module-stats.md`.
+ * runs once per venue (the planner memoizes it) for the rows without an own campaign. Measured figures are in
+ * `module-stats.md`.
  */
 final class FunnelScorecardQuery
 {
@@ -47,10 +49,11 @@ final class FunnelScorecardQuery
      * Every event of the window with its campaign.
      */
     private const string SCOPED = <<<'SQL'
-        SELECT e.id, e.event, e.venue_id, e.occurred_at, COALESCE(e.campaign_code, fc.campaign_code) AS campaign
+        SELECT e.id, e.event, e.venue_id, e.occurred_at,
+               COALESCE(e.campaign_code, CASE WHEN fc.touched_at <= e.occurred_at THEN fc.campaign_code END) AS campaign
           FROM funnel_events e
           LEFT JOIN LATERAL (
-              SELECT f.campaign_code
+              SELECT f.campaign_code, f.occurred_at AS touched_at
                 FROM funnel_events f
                WHERE e.campaign_code IS NULL AND f.venue_id = e.venue_id AND f.campaign_code IS NOT NULL
                ORDER BY f.occurred_at, f.id
@@ -94,7 +97,7 @@ final class FunnelScorecardQuery
 
         $byWeek = [];
         foreach ($this->connection->fetchAllAssociative(
-            "SELECT date_trunc('week', s.occurred_at AT TIME ZONE '".self::ZONE."')::date AS week, s.event, COUNT(DISTINCT ".self::unit().") AS n FROM {$scoped} WHERE {$where} GROUP BY 1, 2",
+            "SELECT date_trunc('week', s.occurred_at AT TIME ZONE '".self::ZONE."')::date AS week, s.event, ".self::figure()." AS n FROM {$scoped} WHERE {$where} GROUP BY 1, 2",
             $range + $filterParams,
         ) as $row) {
             $byWeek[(string) $row['week']][(string) $row['event']] = (int) $row['n'];
@@ -102,7 +105,7 @@ final class FunnelScorecardQuery
 
         $totals = [];
         foreach ($this->connection->fetchAllAssociative(
-            'SELECT s.event, COUNT(DISTINCT '.self::unit()." ) AS n FROM {$scoped} WHERE {$where} GROUP BY 1",
+            'SELECT s.event, '.self::figure()." AS n FROM {$scoped} WHERE {$where} GROUP BY 1",
             $range + $filterParams,
         ) as $row) {
             $totals[(string) $row['event']] = (int) $row['n'];
@@ -110,7 +113,7 @@ final class FunnelScorecardQuery
 
         $byCampaign = [];
         foreach ($this->connection->fetchAllAssociative(
-            'SELECT s.campaign, s.event, COUNT(DISTINCT '.self::unit().") AS n FROM {$scoped} GROUP BY 1, 2",
+            'SELECT s.campaign, s.event, '.self::figure()." AS n FROM {$scoped} GROUP BY 1, 2",
             $range,
         ) as $row) {
             $byCampaign[null === $row['campaign'] ? '' : (string) $row['campaign']][(string) $row['event']] = (int) $row['n'];
@@ -175,12 +178,13 @@ final class FunnelScorecardQuery
     }
 
     /**
-     * What one count is made of: the venue for a venue step, else the row.
+     * The count of one (group, step): distinct venues for a venue step (a row without a venue counts for itself),
+     * rows for the others. Uses the grouped `s.event`, so it belongs in a query that groups by the step.
      */
-    private static function unit(): string
+    private static function figure(): string
     {
         $steps = implode(', ', array_map(static fn (FunnelEvent $event): string => "'".$event->value."'", self::VENUE_STEPS));
 
-        return "CASE WHEN s.event IN ({$steps}) AND s.venue_id IS NOT NULL THEN s.venue_id::text ELSE s.id::text END";
+        return "CASE WHEN s.event IN ({$steps}) THEN COUNT(DISTINCT s.venue_id) + COUNT(*) FILTER (WHERE s.venue_id IS NULL) ELSE COUNT(*) END";
     }
 }

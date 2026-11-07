@@ -13,8 +13,9 @@ use Zenstruck\Foundry\Story;
  * A fictional funnel for the dev scorecard (G8, `/admin/statistik/funnel`): 24 demo venues over the last ten weeks,
  * two outreach campaigns (12 and 8 venues with a preview each) and 4 venues no campaign touched. Later steps carry no
  * campaign on purpose, the scorecard attributes them to the venue's first one. Two venues paid for Pro; one of them got
- * an inquiry after paying, the other only before. Relative to the current week, so a seed always shows ten weeks.
- * Skips when the log has rows, because `make seed` appends.
+ * an inquiry after paying, the other only before. Relative to the current week, so a seed always shows ten weeks, and
+ * never later than now. Skips when its campaigns are already in the log, because `make seed` appends; needs the 24
+ * published venues of `DemoStory` and says so when they are missing.
  */
 final class FunnelStory extends Story
 {
@@ -29,21 +30,22 @@ final class FunnelStory extends Story
 
     public function build(): void
     {
-        if (false !== $this->connection->fetchOne('SELECT 1 FROM funnel_events LIMIT 1')) {
+        if (false !== $this->connection->fetchOne('SELECT 1 FROM funnel_events WHERE campaign_code IN (?, ?) LIMIT 1', [self::LETTER_ZH, self::MAIL_AG])) {
             return;
         }
 
         /** @var list<string> $venues */
         $venues = $this->connection->fetchFirstColumn("SELECT id FROM venues WHERE status = 'published' ORDER BY number LIMIT 24");
         if (\count($venues) < 24) {
-            return;
+            throw new \LogicException('FunnelStory needs 24 published venues: load DemoStory first.');
         }
 
+        $now = new \DateTimeImmutable();
         $monday = new \DateTimeImmutable('monday this week 00:00', new \DateTimeZone(self::ZONE));
-        $record = static function (Step $step, ?string $venue, int $weeksAgo, int $day, int $hour, ?string $campaign = null) use ($monday): void {
+        $record = static function (Step $step, ?string $venue, int $weeksAgo, int $day, int $hour, ?string $campaign = null) use ($monday, $now): void {
             RecordedFunnelEventFactory::createOne([
                 'event' => $step,
-                'occurredAt' => $monday->modify(\sprintf('-%d weeks +%d days +%d hours', $weeksAgo, $day, $hour)),
+                'occurredAt' => min($now, $monday->modify(\sprintf('-%d weeks +%d days +%d hours', $weeksAgo, $day, $hour))),
                 'venueId' => $venue,
                 'campaignCode' => $campaign,
             ]);
