@@ -10,7 +10,7 @@ venue:
         coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
         not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
         still_published: 'Ein veröffentlichter Eintrag kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
-        too_many_photos: 'Eine Location zeigt höchstens 30 Fotos. Entfernen Sie zuerst ein Foto.'
+        too_many_photos: 'Eine Location zeigt höchstens 30 Fotos. Entferne zuerst ein Foto.'
 
 nav:
     section: CMS

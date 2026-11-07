@@ -1,5 +1,13 @@
 # Constraint messages of the application's forms (the validator translates them in this domain).
 # Keys: <form>.<field>.<rule>.
+#
+# Four messages of Symfony's own forms and constraints reach a reader, and Symfony's German text says "Sie" (E4). They
+# are replaced here, keyed by their English source text; FrameworkMessagesTest reads the sources from the framework, so
+# it fails when Symfony renames one. The two `Length` ids are the singular|plural pair of its defaults.
+'The uploaded file was too large. Please try to upload a smaller file.': Die Datei ist zu gross. Bitte lade eine kleinere Datei hoch.
+'The CSRF token is invalid. Please try to resubmit the form.': Das Formular konnte nicht geprüft werden. Bitte lade die Seite neu und sende es noch einmal ab.
+'This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.': Die Eingabe ist zu kurz. Bitte gib mindestens {limit} Zeichen ein.
+'This value is too long. It should have {{ limit }} character or less.|This value is too long. It should have {{ limit }} characters or less.': Die Eingabe ist zu lang. Bitte gib höchstens {limit} Zeichen ein.
 cms:
     venue:
         loaded_at:

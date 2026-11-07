@@ -376,7 +376,7 @@ final class MoreFilterTest extends WebTestCase
         self::assertCount(0, $crawler->filter('#filter-more fieldset'));
         self::assertCount(1, $crawler->filter('.filter-more__group'), 'No rule renders.');
         self::assertCount(1, $crawler->filter('#filter-more-q[placeholder="Name eingeben"]'));
-        self::assertSame('Suchst du eine konkrete Location', $crawler->filter('label[for="filter-more-q"]:not(.visually-hidden)')->text());
+        self::assertSame('Suche eine konkrete Location', $crawler->filter('label[for="filter-more-q"]:not(.visually-hidden)')->text());
         self::assertSame('weitere Filter +', $crawler->filter('.filter-bar [popovertarget="filter-more"]:not([popovertargetaction])')->text());
         self::assertCount(1, $crawler->filter('#filter-more .overlay__footer button[form="filter-more-form"]'));
         self::assertCount(1, $crawler->filter('#filter-more a[data-overlay-clear]'));

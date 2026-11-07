@@ -61,7 +61,7 @@ final class ManagerInviteTest extends WebTestCase
         self::assertInstanceOf(Email::class, $mail);
         self::assertEmailAddressContains($mail, 'To', self::EMAIL);
         self::assertStringContainsString(self::VENUE, (string) $mail->getSubject());
-        self::assertEmailHtmlBodyContains($mail, 'Guten Tag Nina');
+        self::assertEmailHtmlBodyContains($mail, 'Hallo Nina');
         $link = 1 === preg_match('~href="(http://localhost/konto/passwort-neu/[^"]+)"~', (string) $mail->getHtmlBody(), $match) ? html_entity_decode($match[1]) : '';
         self::assertNotSame('', $link, 'The link is absolute: scheme, host and path from the router.');
         self::assertGreaterThan(time() + PortalLinkSigner::INVITATION_LIFETIME - 60, (int) explode('.', basename($link))[1], 'The mail promises 7 days.');
@@ -131,7 +131,7 @@ final class ManagerInviteTest extends WebTestCase
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
         self::assertStringContainsString(self::VENUE, (string) $mail->getSubject());
-        self::assertEmailHtmlBodyContains($mail, 'Guten Tag Petra');
+        self::assertEmailHtmlBodyContains($mail, 'Hallo Petra');
         self::assertEmailHtmlBodyContains($mail, 'http://localhost/konto"');
         self::assertEmailHtmlBodyNotContains($mail, 'passwort-neu');
         self::assertSame('active', $this->accessStatus($manager->id(), $venue));

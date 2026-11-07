@@ -96,7 +96,7 @@ final class CompanyCreateTest extends WebTestCase
         $this->client->request('POST', '/admin/crm/locations/neu', ['company' => ['name' => 'Seeblick Events'] + $token], server: $server);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('CSRF', (string) $this->client->getResponse()->getContent());
+        self::assertStringContainsString('Das Formular konnte nicht geprüft werden.', (string) $this->client->getResponse()->getContent());
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM crm_companies'));
     }
 

@@ -22,7 +22,7 @@ filter:
     more_title: Wähle weitere Filter und Möglichkeiten
     more_active: 'weitere Filter ({count})'
     more_remove: Weitere Filter entfernen
-    more_name_title: Suchst du eine konkrete Location
+    more_name_title: Suche eine konkrete Location
     more_name_placeholder: Name eingeben
     more_access: Erreichbarkeit
     more_price: Preisniveau
