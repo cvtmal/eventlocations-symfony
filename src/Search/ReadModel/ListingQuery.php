@@ -6,6 +6,7 @@ namespace App\Search\ReadModel;
 
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
@@ -198,6 +199,7 @@ final class ListingQuery
     private function photos(array $numbers, string $locale, int $limit): array
     {
         $translation = $this->translationJoin->localized('venue_photo_translations', 'venue_photo_id', 'p.id', 'pt');
+        $granted = PublicPhotoPolicy::sql('vp');
 
         $rows = $this->connection->fetchAllAssociative(
             <<<SQL
@@ -205,7 +207,7 @@ final class ListingQuery
                 FROM unnest(ARRAY[:ids]::uuid[]) AS ids(venue_id)
                 CROSS JOIN LATERAL (
                     SELECT vp.* FROM venue_photos vp
-                    WHERE vp.venue_id = ids.venue_id AND vp.room_id IS NULL
+                    WHERE vp.venue_id = ids.venue_id AND vp.room_id IS NULL AND {$granted}
                     ORDER BY vp.position
                     LIMIT {$limit}
                 ) p

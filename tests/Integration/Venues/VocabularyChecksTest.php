@@ -11,6 +11,8 @@ use App\Portal\ValueObject\SubmissionStatus;
 use App\Venues\ValueObject\CandidateOrigin;
 use App\Venues\ValueObject\CandidateStatus;
 use App\Venues\ValueObject\FloorMaterial;
+use App\Venues\ValueObject\GrantEvidence;
+use App\Venues\ValueObject\GrantorType;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\SourceStatus;
@@ -47,6 +49,9 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'source record status' => ['chk_source_records_status', SourceStatus::class];
         yield 'photo candidate origin' => ['chk_photo_candidates_origin', CandidateOrigin::class];
         yield 'photo candidate status' => ['chk_photo_candidates_status', CandidateStatus::class];
+        yield 'rights grantor type' => ['chk_media_rights_grants_grantor_type', GrantorType::class];
+        yield 'rights revoker type' => ['chk_media_rights_grants_revoked_by_type', GrantorType::class];
+        yield 'rights evidence' => ['chk_media_rights_grants_evidence', GrantEvidence::class];
     }
 
     /**

@@ -366,6 +366,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
 
         // Photos only through the factory or a column-agnostic clone of a factory row, so the
         // media cycle's NOT NULL columns are filled in either merge order.
+        $this->connection->executeStatement('DELETE FROM media_rights_grants');
         $this->connection->executeStatement('DELETE FROM venue_photos');
         $venue = repository(Venue::class)->first();
         self::assertInstanceOf(Venue::class, $venue);
@@ -392,11 +393,34 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             ['photos' => self::PHOTOS_PER_VENUE, 'template' => $template->id()],
         );
 
-        $this->connection->executeStatement('ANALYZE venues, venue_translations, venue_terms, venue_photos');
+        // A photo is public only with a live grant (G1, Venues\PublicPhotoPolicy): each clone gets a copy of the
+        // template's, or the photo query would measure a predicate that hides every photo.
+        $grantColumns = $this->columns('media_rights_grants');
+        $this->connection->executeStatement(
+            \sprintf(
+                <<<'SQL'
+                    INSERT INTO media_rights_grants (%s)
+                    SELECT %s
+                    FROM venue_photos p
+                    JOIN media_rights_grants tpl ON tpl.venue_photo_id = :template AND tpl.revoked_at IS NULL
+                    CROSS JOIN LATERAL jsonb_populate_record(
+                        NULL::media_rights_grants,
+                        to_jsonb(tpl) || jsonb_build_object('id', uuidv7(), 'venue_id', p.venue_id, 'venue_photo_id', p.id)
+                    ) r
+                    WHERE p.id <> :template
+                    SQL,
+                implode(', ', $grantColumns),
+                implode(', ', array_map(static fn (string $column): string => 'r.'.$column, $grantColumns)),
+            ),
+            ['template' => $template->id()],
+        );
+
+        $this->connection->executeStatement('ANALYZE venues, venue_translations, venue_terms, venue_photos, media_rights_grants');
 
         $venueCount = DemoStory::VENUES * (self::COPIES + 1);
         self::assertSame($venueCount, (int) $this->connection->fetchOne('SELECT count(*) FROM venues'));
         self::assertSame($venueCount * self::PHOTOS_PER_VENUE, (int) $this->connection->fetchOne('SELECT count(*) FROM venue_photos'));
+        self::assertSame($venueCount * self::PHOTOS_PER_VENUE, (int) $this->connection->fetchOne('SELECT count(*) FROM media_rights_grants WHERE venue_photo_id IS NOT NULL AND revoked_at IS NULL'));
     }
 
     /**

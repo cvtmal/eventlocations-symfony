@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Portal;
 
+use App\Factory\MediaRightsGrantFactory;
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\SubmissionFactory;
 use App\Factory\VenueFactory;
@@ -14,6 +15,8 @@ use App\Tests\Support\Media\TestImages;
 use App\Tests\Support\Portal\PortalSession;
 use App\Venues\Command\AddVenuePhoto;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\GrantEvidence;
+use App\Venues\ValueObject\Grantor;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -81,6 +84,34 @@ final class WizardPhotosTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame('1 Foto', $crawler->filter('noscript p.muted')->text());
+    }
+
+    public function test_the_noscript_upload_waits_for_the_declaration(): void
+    {
+        $venue = $this->location($this->logInAsManager());
+
+        $this->uploadThroughForm($venue, $this->photoFile());
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        self::assertSame(1, $this->photoCount($venue));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM media_rights_grants WHERE venue_id = ?', [$venue->id()]), 'stored, not public: the declaration of the submit step grants it');
+    }
+
+    public function test_the_noscript_upload_is_granted_when_a_declaration_is_on_record(): void
+    {
+        $manager = $this->logInAsManager();
+        $venue = $this->location($manager);
+        $declared = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 1]);
+        MediaRightsGrantFactory::createOne(['photo' => $declared, 'grantor' => Grantor::manager($manager->id()), 'evidence' => GrantEvidence::Declaration]);
+
+        $this->uploadThroughForm($venue, $this->photoFile());
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        $grant = $this->connection->fetchAssociative(
+            'SELECT g.grantor_type, g.grantor_ref, g.evidence FROM media_rights_grants g JOIN venue_photos p ON p.id = g.venue_photo_id WHERE g.venue_id = ? AND p.id <> ?',
+            [$venue->id(), $declared->id()],
+        );
+        self::assertSame(['manager', $manager->id(), 'upload'], $grant ? array_values($grant) : null);
     }
 
     public function test_a_bad_file_is_a_field_error_with_422(): void

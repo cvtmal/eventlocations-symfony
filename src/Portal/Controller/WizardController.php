@@ -22,6 +22,7 @@ use App\Portal\Form\SubmitLocationType;
 use App\Portal\Form\WizardForms;
 use App\Portal\Form\WizardPhotoType;
 use App\Portal\Mailer\PortalMailer;
+use App\Portal\ManagerUploadGrant;
 use App\Portal\ReadModel\PortalProfileQuery;
 use App\Portal\ReadModel\SubmissionQuery;
 use App\Portal\ReadModel\SubmissionState;
@@ -75,6 +76,7 @@ final class WizardController extends AbstractController
         private readonly PortalEvents $events,
         private readonly MessageBusInterface $commandBus,
         private readonly RateLimiterFactoryInterface $portalUploadLimiter,
+        private readonly ManagerUploadGrant $grants,
     ) {
     }
 
@@ -153,7 +155,7 @@ final class WizardController extends AbstractController
         }
 
         try {
-            $this->commandBus->dispatch(new AddVenuePhoto($edit->number(), null, $file->getPathname(), $extension));
+            $this->commandBus->dispatch(new AddVenuePhoto($edit->number(), null, $file->getPathname(), $extension, $this->grants->forUpload($identity->id(), $edit->number())));
         } catch (HandlerFailedException $failure) {
             return $this->refusePhoto($edit, $form, $this->photoFailure($failure));
         }
@@ -202,8 +204,10 @@ final class WizardController extends AbstractController
             return $this->renderCheck($edit, $state, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        $data = $form->getData();
+        \assert($data instanceof SubmitLocationData);
         try {
-            $started = $this->commandBus->dispatch(new SubmitLocation($identity->id(), $edit->number()))->last(HandledStamp::class)?->getResult();
+            $started = $this->commandBus->dispatch(new SubmitLocation($identity->id(), $edit->number(), $data->derivatives))->last(HandledStamp::class)?->getResult();
         } catch (HandlerFailedException $failure) {
             $form->addError(new FormError($this->refusal(VenueRuleViolation::unwrap($failure))));
 

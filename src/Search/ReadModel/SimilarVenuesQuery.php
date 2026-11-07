@@ -6,6 +6,7 @@ namespace App\Search\ReadModel;
 
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
@@ -41,6 +42,7 @@ final class SimilarVenuesQuery
         $published = new ListingSql(SearchCriteria::none(), $this->enabledLocale->default());
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
         $photoTranslation = $this->translationJoin->localized('venue_photo_translations', 'venue_photo_id', 'ph.id', 'pt');
+        $granted = PublicPhotoPolicy::sql('vp');
         $limit = self::LIMIT;
 
         $rows = $this->connection->fetchAllAssociative(
@@ -57,7 +59,7 @@ final class SimilarVenuesQuery
                 {$translation}
                 LEFT JOIN LATERAL (
                     SELECT to_jsonb(vp) AS photo, vp.id FROM venue_photos vp
-                    WHERE vp.venue_id = v.id AND vp.room_id IS NULL
+                    WHERE vp.venue_id = v.id AND vp.room_id IS NULL AND {$granted}
                     ORDER BY vp.position
                     LIMIT 1
                 ) ph ON TRUE

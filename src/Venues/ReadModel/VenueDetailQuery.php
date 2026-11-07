@@ -8,6 +8,7 @@ use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\InstagramProfile;
@@ -174,7 +175,7 @@ final class VenueDetailQuery
         $venueId = $row['id'];
         [$mainBuilding, $mainSetting, $factGroups, $termsByGroup] = $this->terms(self::decode($row['terms']));
         $rooms = $this->rooms($venueId, $locale);
-        [$venuePhotos, $roomPhotos] = $this->photos($venueId, $row['number'], $row['name'], $rooms, $locale);
+        [$venuePhotos, $roomPhotos] = $this->photos($venueId, $row['number'], $row['name'], $rooms, $locale, $includeUnpublished);
 
         return new VenueDetail(
             $row['id'],
@@ -344,22 +345,24 @@ final class VenueDetailQuery
 
     /**
      * All photos of the venue in one query: the venue-level ones in position order, and the
-     * lowest-position photo of each room.
+     * lowest-position photo of each room. The public sees only photos with a live rights grant
+     * (`PublicPhotoPolicy`); a preview (`$includeUnpublished`) shows every stored photo.
      *
      * @param list<DetailRoom> $rooms
      *
      * @return array{list<Picture>, array<string, Picture>}
      */
-    private function photos(string $venueId, int $venueNumber, string $venueName, array $rooms, string $locale): array
+    private function photos(string $venueId, int $venueNumber, string $venueName, array $rooms, string $locale, bool $everyPhoto): array
     {
         $translation = $this->translationJoin->localized('venue_photo_translations', 'venue_photo_id', 'p.id', 'pt');
+        $granted = $everyPhoto ? 'TRUE' : PublicPhotoPolicy::sql('p');
 
         $rows = $this->connection->fetchAllAssociative(
             <<<SQL
                 SELECT p.id, p.room_id, p.position, p.width, p.height, p.dominant_color, p.variants, pt.alt
                 FROM venue_photos p
                 {$translation}
-                WHERE p.venue_id = :id
+                WHERE p.venue_id = :id AND {$granted}
                 ORDER BY p.room_id NULLS FIRST, p.position
                 SQL,
             ['id' => $venueId] + $this->translationJoin->parameters($locale),
