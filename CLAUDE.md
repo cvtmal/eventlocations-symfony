@@ -99,7 +99,7 @@ Three layers, each catching what the previous one cannot: **forms** validate inp
 
 ## German copy
 
-Public copy, mails and `/konto` are "du", Swiss "ss", never "ß"; `/konto` mails greet "Hallo {name}". `tests/Unit/Shared/PublicCopyAddressTest.php` scans every public catalogue (all `translations/*+intl-icu.de.yaml` except `admin`, `cms`, `crm`) and all Twig, PHP and `assets/js`; a capitalised "Sie" at a sentence start fails too (write "Die Location …"). Symfony's formal German messages a reader can reach are overridden in `validators+intl-icu.de.yaml` and pinned by `tests/Integration/Shared/Translation/FrameworkMessagesTest.php`. Catalogues and routes: `.claude/rules/i18n.md` (German only, E3; S4 wins where it still promises later languages, until `rules-condense`).
+Public copy, mails and `/konto` are "du", Swiss "ss", never "ß"; `/konto` mails greet "Hallo {name}". `tests/Unit/Shared/PublicCopyAddressTest.php` scans every public catalogue (all `translations/*+intl-icu.de.yaml` except `admin`, `cms`, `crm`) and all Twig, PHP and `assets/js`; a capitalised "Sie" at a sentence start fails too (write "Die Location …"). Symfony's formal German messages a reader can reach are overridden in `validators+intl-icu.de.yaml` and pinned by `tests/Integration/Shared/Translation/FrameworkMessagesTest.php`. Catalogues and routes: `.claude/rules/i18n.md` (German only, E3; a second language needs an `i18n-core` cycle first, S4).
 
 ## Modules
 
