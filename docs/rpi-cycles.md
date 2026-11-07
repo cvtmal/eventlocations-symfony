@@ -631,7 +631,7 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 ### F7b `event-copy-de` (M)
 
-**Depends on** F3, F5, F7a (no longer F8: F8 covers the landing pages, F7b the rest). **Owns** no schema. **Scope.** All German public copy for events (the route paths moved to F5): titles, meta descriptions and JSON-LD wording, landing texts, the home page, the legal pages (the operator D6, the processors, the contact `hallo@deine-eventlocation.ch` D9; placeholder text marked TODO until the owner delivers them), the mails, the Merkliste copy and `llms.txt`. **Done when** no wedding wording is left in public output (a test greps the rendered pages and the public catalogues for "Hochzeit" outside the event type label), titles and meta descriptions are unique, and `PublicCopyAddressTest` is still green.
+**Depends on** F3, F5, F7a (no longer F8: F8 covers the landing pages, F7b the rest). **Owns** no schema. **Scope.** All German public copy for events (the route paths moved to F5): the labels of the `setting`, `building`, `infrastructure` and `surroundings` taxonomy groups (still the sister site's after F3; PO decision 2026-11-07: F7b writes them), titles, meta descriptions and JSON-LD wording, landing texts, the home page, the legal pages (the operator D6, the processors, the contact `hallo@deine-eventlocation.ch` D9; placeholder text marked TODO until the owner delivers them), the mails, the Merkliste copy and `llms.txt`. **Done when** no wedding wording is left in public output (a test greps the rendered pages and the public catalogues for "Hochzeit" outside the event type label), titles and meta descriptions are unique, and `PublicCopyAddressTest` is still green.
 
 ### F8 `landing-event` (M)
 
