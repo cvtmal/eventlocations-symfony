@@ -26,11 +26,10 @@ use Symfony\Component\Uid\Uuid;
  * - `q`: name search, trimmed, whitespace collapsed, at most 100 characters, needs a letter
  *   or digit.
  * - `setting[]`, `building[]` (OR inside the group), `infra[]`, `furniture[]`, `tech[]`,
- *   `surroundings[]`, `ceremony[]`, `amenity[]`, `usage[]` (AND inside the group): known codes
- *   of the matching TermGroup; `amenity[]` and `usage[]` only those of FILTER_CODES.
+ *   `surroundings[]`, `amenity[]` (AND inside the group): known codes of the matching
+ *   TermGroup; `amenity[]` only those of FILTER_CODES.
  * - `access[]`: Access values (AND).
  * - `price[]`: PriceLevel values (OR, a venue has one).
- * - `curfew`: exactly `none`, the venue stated it has no curfew.
  * - `rooms` 1–6, `area` one of AREAS, `height` one of HEIGHTS (all "at least").
  * - `page`: 1–1000, default 1.
  *
@@ -48,9 +47,7 @@ final readonly class SearchCriteria
         'furniture' => TermGroup::Furniture,
         'tech' => TermGroup::Technology,
         'surroundings' => TermGroup::Surroundings,
-        'ceremony' => TermGroup::Ceremony,
         'amenity' => TermGroup::Amenity,
-        'usage' => TermGroup::Usage,
     ];
     /**
      * TermGroup value → the only codes that filter (FI-7). A group that is not listed filters on
@@ -58,8 +55,7 @@ final readonly class SearchCriteria
      * shows would narrow the results invisibly.
      */
     public const FILTER_CODES = [
-        'amenity' => ['overnight', 'dance_floor', 'lake_view', 'panorama', 'outdoor_dining', 'external_caterers', 'wheelchair_access'],
-        'usage' => ['exclusive'],
+        'amenity' => ['overnight', 'dance_floor', 'lake_view', 'panorama', 'outdoor_dining', 'wheelchair_access'],
     ];
     public const DEFAULT_RADIUS = 5;
     public const MAX_RADIUS = 50;
@@ -85,7 +81,6 @@ final readonly class SearchCriteria
         public array $terms,
         public array $access,
         public array $prices,
-        public bool $noCurfew,
         public ?int $rooms,
         public ?int $area,
         public ?float $height,
@@ -95,7 +90,7 @@ final readonly class SearchCriteria
 
     public static function none(): self
     {
-        return new self(null, null, null, null, null, [], [], [], false, null, null, null, 1);
+        return new self(null, null, null, null, null, [], [], [], null, null, null, 1);
     }
 
     /**
@@ -163,7 +158,6 @@ final readonly class SearchCriteria
             $terms,
             array_values($access),
             array_values($prices),
-            'none' === ($raw['curfew'] ?? null),
             self::int($raw['rooms'] ?? null, 1, self::MAX_ROOMS),
             null !== $area && \in_array($area, self::AREAS, true) ? $area : null,
             self::height($raw['height'] ?? null),
@@ -175,7 +169,7 @@ final readonly class SearchCriteria
     {
         return new self(
             $this->canton, $this->place, $this->radius, $this->guests, $this->q, $this->terms, $this->access,
-            $this->prices, $this->noCurfew, $this->rooms, $this->area, $this->height, max(1, min(self::MAX_PAGE, $page)),
+            $this->prices, $this->rooms, $this->area, $this->height, max(1, min(self::MAX_PAGE, $page)),
         );
     }
 
@@ -183,7 +177,7 @@ final readonly class SearchCriteria
     {
         return new self(
             $canton, $this->place, $this->radius, $this->guests, $this->q, $this->terms, $this->access,
-            $this->prices, $this->noCurfew, $this->rooms, $this->area, $this->height, $this->page,
+            $this->prices, $this->rooms, $this->area, $this->height, $this->page,
         );
     }
 
@@ -231,9 +225,6 @@ final readonly class SearchCriteria
         }
         if ([] !== $this->prices) {
             $query['price'] = array_map(static fn (PriceLevel $price): string => $price->value, $this->prices);
-        }
-        if ($this->noCurfew) {
-            $query['curfew'] = 'none';
         }
         if (null !== $this->rooms) {
             $query['rooms'] = (string) $this->rooms;

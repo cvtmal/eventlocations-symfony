@@ -18,8 +18,7 @@ use Doctrine\DBAL\ParameterType;
  *   needs a slug and a summary).
  * - Groups combine with AND; inside a group setting, building and price are OR, the other
  *   term groups and access AND. Guests pick a GuestBand on capacity_max alone (#51);
- *   capacity_min is not read. No curfew means the venue stated it: has_curfew NULL is unknown
- *   and never matches.
+ *   capacity_min is not read.
  * - The radius centre is a joined MATERIALIZED CTE (`centre c`): only that shape lets the
  *   planner use idx_venues_earth. An unknown town or ZIP leaves the CTE empty, so 0 rows.
  *
@@ -110,9 +109,6 @@ final readonly class ListingSql
             $where[] = 'v.price_level IN (:prices)';
             $params['prices'] = array_map(static fn (PriceLevel $price): string => $price->value, $criteria->prices);
             $types['prices'] = ArrayParameterType::STRING;
-        }
-        if ($criteria->noCurfew) {
-            $where[] = 'v.has_curfew = FALSE';
         }
 
         foreach ($criteria->access as $access) {

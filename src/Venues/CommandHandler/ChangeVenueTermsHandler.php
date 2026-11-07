@@ -11,7 +11,7 @@ use App\Venues\VenueEditing;
 use App\Venues\VenueTermSet;
 
 /**
- * Replaces the seven filter groups; the six wedding groups stay as they are.
+ * Replaces the seven filter groups; the three event groups stay as they are.
  */
 final class ChangeVenueTermsHandler implements CommandHandlerInterface
 {

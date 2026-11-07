@@ -13,7 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Replaces a venue's terms group by group (#24, D16). Only the listed groups change, so the
- * CMS cards that own different groups (Merkmale, Hochzeit) never wipe each other.
+ * CMS cards that own different groups (Merkmale, Veranstaltung) never wipe each other.
  *
  * VenueTerm has no mutator, so a change is a delete and an insert, in the order the import
  * uses (DQL DELETE now, the inserts at the caller's flush). The caller checks the codes and

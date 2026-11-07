@@ -26,13 +26,11 @@ final class SearchCriteriaTest extends TestCase
         $this->known = KnownTerms::of([
             'setting' => ['city', 'lake', 'countryside'],
             'building' => ['castle', 'farm'],
-            'infrastructure' => ['wifi', 'air_conditioning'],
+            'infrastructure' => ['air_conditioning', 'heating_ventilation'],
             'furniture' => ['chairs'],
-            'technology' => ['projector_screen'],
+            'technology' => ['projector_screen', 'wifi'],
             'surroundings' => ['garden', 'spa_wellness'],
-            'ceremony' => ['chapel', 'free_ceremony'],
-            'amenity' => ['overnight', 'lake_view', 'tent'],
-            'usage' => ['exclusive', 'multiple_weddings'],
+            'amenity' => ['overnight', 'lake_view', 'tent', 'parking'],
         ]);
     }
 
@@ -41,7 +39,7 @@ final class SearchCriteriaTest extends TestCase
         $criteria = $this->fromUrl(
             'canton=zh&place='.self::TOWN.'&radius=12&guests=100&q=Gasthof%20M%C3%BCller'
             .'&setting[]=lake&setting[]=countryside&access[]=station&access[]=airport&building[]=farm'
-            .'&infra[]=wifi&infra[]=air_conditioning&furniture[]=chairs&tech[]=projector_screen&surroundings[]=garden'
+            .'&infra[]=heating_ventilation&infra[]=air_conditioning&furniture[]=chairs&tech[]=wifi&tech[]=projector_screen&surroundings[]=garden'
             .'&rooms=2&area=100&height=3.5&page=3',
         );
 
@@ -52,6 +50,8 @@ final class SearchCriteriaTest extends TestCase
         self::assertSame('Gasthof Müller', $criteria->q);
         self::assertSame(['countryside', 'lake'], $criteria->termCodes(TermGroup::Setting));
         self::assertSame([Access::Airport, Access::Station], $criteria->access);
+        self::assertSame(['air_conditioning', 'heating_ventilation'], $criteria->termCodes(TermGroup::Infrastructure));
+        self::assertSame(['projector_screen', 'wifi'], $criteria->termCodes(TermGroup::Technology));
         self::assertSame(2, $criteria->rooms);
         self::assertSame(100, $criteria->area);
         self::assertSame(3.5, $criteria->height);
@@ -66,20 +66,17 @@ final class SearchCriteriaTest extends TestCase
         );
     }
 
-    public function test_the_wedding_filters_survive_the_url_round_trip_in_canonical_order(): void
+    public function test_the_event_filters_survive_the_url_round_trip_in_canonical_order(): void
     {
         $criteria = $this->fromUrl(
-            'page=2&curfew=none&price[]=medium&price[]=exclusive&usage[]=exclusive&rooms=2'
-            .'&amenity[]=overnight&amenity[]=lake_view&ceremony[]=free_ceremony&ceremony[]=chapel&surroundings[]=garden',
+            'page=2&price[]=medium&price[]=exclusive&rooms=2'
+            .'&amenity[]=overnight&amenity[]=lake_view&surroundings[]=garden',
         );
 
-        self::assertSame(['chapel', 'free_ceremony'], $criteria->termCodes(TermGroup::Ceremony));
         self::assertSame(['lake_view', 'overnight'], $criteria->termCodes(TermGroup::Amenity));
-        self::assertSame(['exclusive'], $criteria->termCodes(TermGroup::Usage));
         self::assertSame([PriceLevel::Exclusive, PriceLevel::Medium], $criteria->prices);
-        self::assertTrue($criteria->noCurfew);
         self::assertSame(
-            ['surroundings', 'ceremony', 'amenity', 'usage', 'price', 'curfew', 'rooms', 'page'],
+            ['surroundings', 'amenity', 'price', 'rooms', 'page'],
             array_keys($criteria->toQuery()),
         );
 
@@ -88,19 +85,19 @@ final class SearchCriteriaTest extends TestCase
         self::assertSame($criteria->toQuery(), $again->toQuery());
     }
 
-    public function test_a_url_without_the_wedding_filters_keeps_its_query(): void
+    public function test_a_url_without_the_event_filters_keeps_its_query(): void
     {
         $query = 'canton=zh&place=8712&radius=12&guests=100&q=See&setting%5B0%5D=lake&access%5B0%5D=station&building%5B0%5D=farm'
-            .'&infra%5B0%5D=wifi&furniture%5B0%5D=chairs&tech%5B0%5D=projector_screen&surroundings%5B0%5D=garden'
+            .'&infra%5B0%5D=air_conditioning&furniture%5B0%5D=chairs&tech%5B0%5D=projector_screen&surroundings%5B0%5D=garden'
             .'&rooms=2&area=100&height=3.5&page=3';
 
         self::assertSame($query, http_build_query($this->fromUrl($query)->toQuery()));
     }
 
-    public function test_with_page_and_with_canton_keep_the_wedding_filters(): void
+    public function test_with_page_and_with_canton_keep_the_event_filters(): void
     {
-        $criteria = $this->fromUrl('price[]=medium&curfew=none');
-        $expected = ['price' => ['medium'], 'curfew' => 'none'];
+        $criteria = $this->fromUrl('price[]=medium&amenity[]=overnight');
+        $expected = ['amenity' => ['overnight'], 'price' => ['medium']];
 
         self::assertSame($expected + ['page' => '2'], $criteria->withPage(2)->toQuery());
         self::assertSame(['canton' => 'zh'] + $expected, $criteria->withCanton(Canton::ZH)->toQuery());
@@ -120,31 +117,27 @@ final class SearchCriteriaTest extends TestCase
         self::assertSame([PriceLevel::Medium], $this->fromUrl('price=medium')->prices);
     }
 
-    public function test_curfew_takes_only_the_scalar_none(): void
-    {
-        self::assertTrue($this->fromUrl('curfew=none')->noCurfew);
-        foreach (['curfew[]=none', 'curfew=None', 'curfew=x', 'curfew=', 'curfew[a]=none'] as $url) {
-            self::assertFalse($this->fromUrl($url)->noCurfew, $url);
-            self::assertSame([], $this->fromUrl($url)->toQuery(), $url);
-        }
-        self::assertFalse(SearchCriteria::none()->noCurfew);
-    }
-
     public function test_only_the_codes_of_filter_codes_filter(): void
     {
-        $criteria = $this->fromUrl('amenity[]=tent&amenity[]=overnight&usage[]=multiple_weddings&usage[]=exclusive');
+        $criteria = $this->fromUrl('amenity[]=tent&amenity[]=overnight&amenity[]=parking');
 
-        self::assertSame(['amenity' => ['overnight'], 'usage' => ['exclusive']], $criteria->toQuery());
+        self::assertSame(['amenity' => ['overnight']], $criteria->toQuery());
     }
 
     public function test_offers_narrows_only_the_groups_of_filter_codes(): void
     {
         self::assertTrue(SearchCriteria::offers(TermGroup::Amenity, 'overnight'));
+        self::assertTrue(SearchCriteria::offers(TermGroup::Amenity, 'wheelchair_access'));
         self::assertFalse(SearchCriteria::offers(TermGroup::Amenity, 'tent'));
-        self::assertTrue(SearchCriteria::offers(TermGroup::Usage, 'exclusive'));
-        self::assertFalse(SearchCriteria::offers(TermGroup::Usage, 'multiple_weddings'));
-        self::assertTrue(SearchCriteria::offers(TermGroup::Ceremony, 'chapel'));
         self::assertTrue(SearchCriteria::offers(TermGroup::Setting, 'anything'));
+        self::assertTrue(SearchCriteria::offers(TermGroup::Technology, 'anything'));
+    }
+
+    public function test_a_bookmarked_wedding_url_keeps_its_valid_filters_and_loses_the_retired_ones(): void
+    {
+        $criteria = $this->fromUrl('canton=zh&curfew=none&ceremony[]=chapel&usage[]=exclusive&amenity[]=overnight&price[]=medium');
+
+        self::assertSame(['canton' => 'zh', 'amenity' => ['overnight'], 'price' => ['medium']], $criteria->toQuery());
     }
 
     public function test_the_query_bag_round_trip_without_a_url(): void
@@ -227,14 +220,14 @@ final class SearchCriteriaTest extends TestCase
         yield 'suitable_for is no filter' => ['suitable_for[]=wedding'];
         yield 'access moon' => ['access[]=moon'];
         yield 'access upper case' => ['access[]=STATION'];
-        yield 'ceremony unknown' => ['ceremony[]=nope'];
         yield 'amenity unknown' => ['amenity[]=nope'];
         yield 'amenity outside FILTER_CODES' => ['amenity[]=tent'];
-        yield 'usage outside FILTER_CODES' => ['usage[]=multiple_weddings'];
         yield 'price unknown' => ['price[]=cheap'];
         yield 'price upper case' => ['price[]=MEDIUM'];
         yield 'price nested' => ['price[][]=medium'];
-        yield 'curfew unknown' => ['curfew=late'];
+        yield 'retired ceremony parameter' => ['ceremony[]=chapel'];
+        yield 'retired usage parameter' => ['usage[]=exclusive'];
+        yield 'retired curfew parameter' => ['curfew=none'];
         yield 'rooms=7' => ['rooms=7'];
         yield 'rooms=0' => ['rooms=0'];
         yield 'rooms[]' => ['rooms[]=2'];
@@ -309,11 +302,11 @@ final class SearchCriteriaTest extends TestCase
 
     public function test_parameter_names_differ_from_group_values_for_infra_and_tech(): void
     {
-        $criteria = $this->fromUrl('infra[]=wifi&tech[]=projector_screen&infrastructure[]=air_conditioning&technology[]=projector_screen');
+        $criteria = $this->fromUrl('infra[]=heating_ventilation&tech[]=projector_screen&infrastructure[]=air_conditioning&technology[]=wifi');
 
-        self::assertSame(['wifi'], $criteria->termCodes(TermGroup::Infrastructure));
+        self::assertSame(['heating_ventilation'], $criteria->termCodes(TermGroup::Infrastructure));
         self::assertSame(['projector_screen'], $criteria->termCodes(TermGroup::Technology));
-        self::assertSame(['infra' => ['wifi'], 'tech' => ['projector_screen']], $criteria->toQuery());
+        self::assertSame(['infra' => ['heating_ventilation'], 'tech' => ['projector_screen']], $criteria->toQuery());
     }
 
     public function test_with_page_is_clamped(): void

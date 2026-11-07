@@ -16,9 +16,9 @@ use App\Venues\Command\AnswerVenueFaq;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Command\ChangeVenueCapacity;
 use App\Venues\Command\ChangeVenueContact;
+use App\Venues\Command\ChangeVenueEventFacts;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
-use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\CreateVenue;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordVenueCreated;
@@ -30,7 +30,6 @@ use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\SlugAllocator;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
@@ -188,63 +187,68 @@ final class VenueWriteCommandsTest extends KernelTestCase
         self::assertSame(['changed' => ['summary', 'description']], $this->auditRows($venue->number())[0]['changes']);
     }
 
-    public function test_terms_set_and_change_the_main_building_and_setting_and_leave_the_wedding_groups(): void
+    public function test_terms_set_and_change_the_main_building_and_setting_and_leave_the_event_groups(): void
     {
         $venue = $this->venueWithSlug('merkmale');
         VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
-        VenueTermFactory::new()->term(TermGroup::Ceremony, 'chapel')->create(['venue' => $venue]);
+        VenueTermFactory::new()->term(TermGroup::Catering, 'buffet')->create(['venue' => $venue]);
 
         $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], [
             'building' => ['castle', 'villa'],
             'setting' => ['lake'],
         ], ['building' => 'villa', 'setting' => 'lake']));
 
-        self::assertSame(['building:castle', 'building:villa*', 'ceremony:chapel', 'setting:lake*'], $this->terms($venue));
+        self::assertSame(['building:castle', 'building:villa*', 'catering:buffet', 'setting:lake*'], $this->terms($venue));
 
         $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['building' => ['castle']], ['building' => 'castle', 'setting' => null]));
 
-        self::assertSame(['building:castle*', 'ceremony:chapel'], $this->terms($venue));
+        self::assertSame(['building:castle*', 'catering:buffet'], $this->terms($venue));
         self::assertNotNull($this->reload($venue)->cmsEditedAt());
     }
 
-    public function test_wedding_facts_round_trip_and_leave_the_filter_groups(): void
+    public function test_event_facts_round_trip_and_leave_the_filter_groups(): void
     {
-        $venue = $this->venueWithSlug('hochzeit');
+        $venue = $this->venueWithSlug('veranstaltung');
         VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
 
-        $this->dispatch(new ChangeVenueWeddingFacts(
+        $this->dispatch(new ChangeVenueEventFacts(
             $venue->number(),
             $this->token($venue),
-            ['priceLevel', 'party'],
+            ['priceLevel', 'capacitySeated'],
             PriceLevel::Exclusive,
             120,
             200,
-            PartyAllowed::Limited,
-            true,
-            '00:30',
-            ['de' => ['ambience' => 'Romantisch', 'capacityNote' => 'Mit Tanzfläche.', 'partyNote' => 'Bis halb eins.', 'openingHours' => 'Mai bis Oktober']],
-            ['ceremony' => ['chapel', 'free_ceremony'], 'language' => ['de', 'en'], 'usage' => ['exclusive']],
+            ['de' => ['ambience' => 'Festlich', 'capacityNote' => 'Mit Bühne.', 'openingHours' => 'Mai bis Oktober']],
+            ['amenity' => ['parking', 'overnight'], 'catering' => ['buffet', 'vegan'], 'language' => ['de', 'en']],
         ));
 
         $saved = $this->reload($venue);
         self::assertSame(PriceLevel::Exclusive, $saved->priceLevel());
         self::assertSame(120, $saved->capacitySeated());
         self::assertSame(200, $saved->capacityStanding());
-        self::assertSame(PartyAllowed::Limited, $saved->party());
-        self::assertTrue($saved->hasCurfew());
-        self::assertSame('00:30', $saved->curfewAt()?->format('H:i'));
         self::assertSame(
-            ['ambience' => 'Romantisch', 'capacity_note' => 'Mit Tanzfläche.', 'party_note' => 'Bis halb eins.', 'opening_hours' => 'Mai bis Oktober'],
-            $this->connection->fetchAssociative('SELECT ambience, capacity_note, party_note, opening_hours FROM venue_translations WHERE venue_id = ?', [$venue->id()]),
+            ['ambience' => 'Festlich', 'capacity_note' => 'Mit Bühne.', 'opening_hours' => 'Mai bis Oktober'],
+            $this->connection->fetchAssociative('SELECT ambience, capacity_note, opening_hours FROM venue_translations WHERE venue_id = ?', [$venue->id()]),
         );
-        self::assertSame(['building:castle*', 'ceremony:chapel', 'ceremony:free_ceremony', 'language:de', 'language:en', 'usage:exclusive'], $this->terms($venue));
+        self::assertSame(
+            ['amenity:overnight', 'amenity:parking', 'building:castle*', 'catering:buffet', 'catering:vegan', 'language:de', 'language:en'],
+            $this->terms($venue),
+        );
+        self::assertEquals(
+            [['command' => ChangeVenueEventFacts::class, 'changes' => ['changed' => ['priceLevel', 'capacitySeated']]]],
+            $this->auditRows($venue->number()),
+        );
 
-        $this->dispatch(new ChangeVenueWeddingFacts($venue->number(), $this->token($venue), ['priceLevel'], null, null, null, null, null, null, ['de' => ['ambience' => null, 'capacityNote' => null, 'partyNote' => null, 'openingHours' => null]], []));
+        $this->dispatch(new ChangeVenueEventFacts($venue->number(), $this->token($venue), ['priceLevel'], null, null, null, ['de' => ['ambience' => null, 'capacityNote' => null, 'openingHours' => null]], []));
 
         $cleared = $this->reload($venue);
         self::assertNull($cleared->priceLevel());
-        self::assertNull($cleared->hasCurfew());
-        self::assertNull($cleared->curfewAt());
+        self::assertNull($cleared->capacitySeated());
+        self::assertNull($cleared->capacityStanding());
+        self::assertSame(
+            ['ambience' => null, 'capacity_note' => null, 'opening_hours' => null],
+            $this->connection->fetchAssociative('SELECT ambience, capacity_note, opening_hours FROM venue_translations WHERE venue_id = ?', [$venue->id()]),
+        );
         self::assertSame(['building:castle*'], $this->terms($venue));
     }
 

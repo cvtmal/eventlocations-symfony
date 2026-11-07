@@ -15,8 +15,8 @@
 {%- set areas = constant('App\\Search\\ReadModel\\SearchCriteria::AREAS') -%}
 {%- set heights = constant('App\\Search\\ReadModel\\SearchCriteria::HEIGHTS') -%}
 
-{%- set wedding -%}
-    {{ include('search/filter/_more_wedding.html.twig', {criteria: criteria}, with_context = false) }}
+{%- set event -%}
+    {{ include('search/filter/_more_event.html.twig', {criteria: criteria}, with_context = false) }}
 {%- endset -%}
 
 {%- set location -%}
@@ -81,7 +81,7 @@
     <div class="filter-more__group">
         {{ include('components/_text_input.html.twig', {id: 'filter-more-q', name: 'q', label: 'filter.more_name_title'|trans({}, 'search'), label_hidden: false, placeholder: 'filter.more_name_placeholder'|trans({}, 'search'), value: criteria.q}, with_context = false) }}
     </div>
-    {%- for name, group in {wedding: wedding, location: location, buildings: buildings, properties: properties, rooms: rooms} %}
+    {%- for name, group in {event: event, location: location, buildings: buildings, properties: properties, rooms: rooms} %}
         {%- if group|trim is not empty %}
     <div class="filter-more__group filter-more__group--{{ name }}">{{ group }}</div>
         {%- endif %}

@@ -32,7 +32,6 @@ final class FilterDataQuery implements ResetInterface
         'rooms' => 'v.room_count >= 1',
         'area' => 'v.largest_room_m2 IS NOT NULL',
         'height' => 'v.max_room_height_m IS NOT NULL',
-        'curfew' => 'v.has_curfew = FALSE',
     ];
 
     /** @var array<string, bool>|null */

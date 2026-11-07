@@ -216,12 +216,12 @@ final class GuestsFilterTest extends WebTestCase
         self::assertSame(['canton=zh', 'setting[]=lake'], $this->hiddenState($crawler, '#filter-guests-form'));
     }
 
-    public function test_the_form_carries_the_wedding_filters(): void
+    public function test_the_form_carries_the_event_filters(): void
     {
-        $crawler = $this->get('/hochzeitslocations?price[]=medium&curfew=none&ceremony[]=chapel&amenity[]=overnight&usage[]=exclusive&guests=100');
+        $crawler = $this->get('/hochzeitslocations?price[]=medium&amenity[]=overnight&guests=100');
 
         self::assertSame(
-            ['ceremony[]=chapel', 'amenity[]=overnight', 'usage[]=exclusive', 'price[]=medium', 'curfew=none'],
+            ['amenity[]=overnight', 'price[]=medium'],
             $this->hiddenState($crawler, '#filter-guests-form'),
         );
     }

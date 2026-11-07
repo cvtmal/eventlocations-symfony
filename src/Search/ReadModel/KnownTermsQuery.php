@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Loads the taxonomy vocabulary (146 rows) once per request for the search codec.
+ * Loads the taxonomy vocabulary (118 rows) once per request for the search codec.
  * Tagged kernel.reset by autoconfiguration, so a long-running worker reloads it.
  */
 final class KnownTermsQuery implements ResetInterface

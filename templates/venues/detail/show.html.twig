@@ -43,7 +43,7 @@
             {{ include('venues/detail/_head.html.twig', {venue: venue}, with_context = false) }}
             {% block google_rating %}{{ venue_google_rating(venue) }}{% endblock %}
             {% if venue.hasFacts() %}{{ include('venues/detail/_facts.html.twig', {venue: venue}, with_context = false) }}{% endif %}
-            {% if venue.wedding.hasAny() %}{{ include('venues/detail/_wedding.html.twig', {venue: venue}, with_context = false) }}{% endif %}
+            {% if venue.event.hasAny() %}{{ include('venues/detail/_event.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.rooms is not empty %}{{ include('venues/detail/_rooms.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.hasFaq() %}{{ include('venues/detail/_faq.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.hasLocation() %}

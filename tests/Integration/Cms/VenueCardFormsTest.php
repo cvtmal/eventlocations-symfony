@@ -8,10 +8,10 @@ use App\Cms\Form\ChangedFields;
 use App\Cms\Form\CreateVenueData;
 use App\Cms\Form\CreateVenueType;
 use App\Cms\Form\VenueAddressData;
+use App\Cms\Form\VenueEventData;
 use App\Cms\Form\VenueFilterData;
 use App\Cms\Form\VenueFilterType;
 use App\Cms\Form\VenueTermsData;
-use App\Cms\Form\VenueWeddingData;
 use App\Cms\ReadModel\VenueEdit;
 use App\Cms\ReadModel\VenueEditQuery;
 use App\Cms\ReadModel\VenueHeaderQuery;
@@ -21,14 +21,16 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\ChangeVenueBasics;
+use App\Venues\Command\ChangeVenueEventFacts;
 use App\Venues\Command\ChangeVenueGooglePlace;
 use App\Venues\Command\ChangeVenueTexts;
-use App\Venues\Command\ChangeVenueWeddingFacts;
 use App\Venues\Command\CreateVenue;
 use App\Venues\Command\RelocateVenue;
+use App\Venues\CommandHandler\ChangeVenueEventFactsHandler;
 use App\Venues\CommandHandler\ChangeVenueTermsHandler;
-use App\Venues\CommandHandler\ChangeVenueWeddingFactsHandler;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\PriceLevel;
+use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -202,13 +204,13 @@ final class VenueCardFormsTest extends KernelTestCase
         yield 'distance name without km' => [VenueCard::Address, ['highwayKm' => '', 'highwayName' => 'A3'], 'highwayKm'];
         yield 'unknown term' => [VenueCard::Terms, ['building' => ['palace-on-the-moon']], 'building'];
         yield 'main building not selected' => [VenueCard::Terms, ['building' => [], 'mainBuilding' => 'castle'], 'mainBuilding'];
-        yield 'seated 0' => [VenueCard::Wedding, ['capacitySeated' => '0'], 'capacitySeated'];
-        yield 'standing 50001' => [VenueCard::Wedding, ['capacityStanding' => '50001'], 'capacityStanding'];
-        yield 'curfew time without Ja' => [VenueCard::Wedding, ['hasCurfew' => 'unknown', 'curfewAt' => '23:00'], 'curfewAt'];
-        yield 'curfew 24:00' => [VenueCard::Wedding, ['hasCurfew' => 'yes', 'curfewAt' => '24:00'], 'curfewAt'];
-        yield 'curfew of invalid UTF-8' => [VenueCard::Wedding, ['hasCurfew' => 'yes', 'curfewAt' => "23:\xff"], 'curfewAt'];
-        yield 'unknown party value' => [VenueCard::Wedding, ['party' => 'always'], 'party'];
-        yield 'ambience too long' => [VenueCard::Wedding, ['texts' => ['de' => ['ambience' => str_repeat('a', 61)]]], 'texts'];
+        yield 'seated 0' => [VenueCard::Event, ['capacitySeated' => '0'], 'capacitySeated'];
+        yield 'standing 50001' => [VenueCard::Event, ['capacityStanding' => '50001'], 'capacityStanding'];
+        yield 'unknown price level' => [VenueCard::Event, ['priceLevel' => 'cheap'], 'priceLevel'];
+        yield 'ambience too long' => [VenueCard::Event, ['texts' => ['de' => ['ambience' => str_repeat('a', 61)]]], 'texts'];
+        yield 'capacity note with a NUL' => [VenueCard::Event, ['texts' => ['de' => ['capacityNote' => "a\0b"]]], 'texts'];
+        yield 'unknown catering term' => [VenueCard::Event, ['catering' => ['palace-on-the-moon']], 'catering'];
+        yield 'a code of another group' => [VenueCard::Event, ['amenity' => ['castle']], 'amenity'];
         yield 'phone of letters' => [VenueCard::Contact, ['phone' => 'Telefon'], 'phone'];
         yield 'phone of invalid UTF-8' => [VenueCard::Contact, ['phone' => "044 123 45 6\xff"], 'phone'];
         yield 'website of invalid UTF-8' => [VenueCard::Contact, ['website' => "https://exa\xffmple.ch"], 'website'];
@@ -368,25 +370,57 @@ final class VenueCardFormsTest extends KernelTestCase
         self::assertSame("Erster Absatz.\n\nZweiter Absatz.", $command->texts['de']['description']);
     }
 
-    public function test_the_curfew_time_reads_and_writes_h_i(): void
+    public function test_the_event_card_has_the_event_fields_and_no_party_or_curfew(): void
     {
         $edit = $this->edit(DetailVenues::full($this->em));
-        $form = $this->card(VenueCard::Wedding, $edit);
+        $view = $this->card(VenueCard::Event, $edit)->createView();
+
+        self::assertSame(
+            ['loadedAt', 'priceLevel', 'capacitySeated', 'capacityStanding', 'texts', 'amenity', 'catering', 'language'],
+            array_keys($view->children),
+        );
+        self::assertSame(['de'], array_keys($view['texts']->children));
+        self::assertSame(['ambience', 'capacityNote', 'openingHours'], array_keys($view['texts']['de']->children));
+    }
+
+    public function test_the_event_card_builds_its_command(): void
+    {
+        $edit = $this->edit(DetailVenues::full($this->em));
+        $form = $this->card(VenueCard::Event, $edit);
         $values = self::values($form->createView());
-        $values['hasCurfew'] = 'yes';
-        $values['curfewAt'] = '00:30';
+        $values['priceLevel'] = PriceLevel::Exclusive->value;
+        $values['capacitySeated'] = '640';
+        $values['texts']['de']['openingHours'] = 'Täglich ab 9 Uhr';
+        $values['catering'] = ['vegan', 'buffet'];
         $form->submit($values);
 
         self::assertTrue($form->isValid(), (string) $form->getErrors(true));
-        $command = $form->getData()->toCommand($edit->number(), $edit, []);
-        self::assertInstanceOf(ChangeVenueWeddingFacts::class, $command);
-        self::assertSame([true, '00:30'], [$command->hasCurfew, $command->curfewAt]);
+        $changed = ChangedFields::between(VenueEventData::from($edit), $form->getData());
+        self::assertSame(['priceLevel', 'capacitySeated', 'texts.de.openingHours', 'terms.catering'], $changed);
+        $command = $form->getData()->toCommand($edit->number(), $edit, $changed);
+        self::assertInstanceOf(ChangeVenueEventFacts::class, $command);
+        self::assertSame([PriceLevel::Exclusive, 640, 1500], [$command->priceLevel, $command->capacitySeated, $command->capacityStanding]);
+        self::assertSame('Täglich ab 9 Uhr', $command->texts['de']['openingHours']);
+        self::assertSame('Romantisch am Wasser', $command->texts['de']['ambience']);
+        self::assertEqualsCanonicalizing(['vegan', 'buffet'], $command->terms['catering']);
+        self::assertSame(array_map(static fn (TermGroup $group): string => $group->value, VenueEventData::GROUPS), array_keys($command->terms));
     }
 
     public function test_the_cards_own_the_groups_their_handlers_replace(): void
     {
         self::assertSame(ChangeVenueTermsHandler::GROUPS, VenueTermsData::GROUPS);
-        self::assertSame(ChangeVenueWeddingFactsHandler::GROUPS, VenueWeddingData::GROUPS);
+        self::assertSame(ChangeVenueEventFactsHandler::GROUPS, VenueEventData::GROUPS);
+    }
+
+    public function test_every_term_group_is_edited_by_exactly_one_card(): void
+    {
+        $value = static fn (TermGroup $group): string => $group->value;
+        $owned = array_map($value, [...VenueTermsData::GROUPS, ...VenueEventData::GROUPS]);
+        $all = array_map($value, TermGroup::cases());
+        sort($owned);
+        sort($all);
+
+        self::assertSame($all, $owned);
     }
 
     public function test_the_create_form_builds_its_command(): void

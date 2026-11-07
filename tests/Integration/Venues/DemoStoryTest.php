@@ -89,7 +89,7 @@ final class DemoStoryTest extends KernelTestCase
                 (SELECT count(*) FROM venue_documents d WHERE d.venue_id = v.id) AS documents,
                 (SELECT count(*) FROM venue_terms t WHERE t.venue_id = v.id AND t.term_group = 'building' AND t.is_main) AS main_buildings,
                 (SELECT count(*) FROM venue_terms t WHERE t.venue_id = v.id AND t.term_group = 'setting' AND t.is_main) AS main_settings,
-                (SELECT count(*) FROM venue_terms t WHERE t.venue_id = v.id AND t.term_group = 'suitable_for' AND t.term_code = 'wedding') AS wedding,
+                (SELECT count(*) FROM venue_terms t WHERE t.venue_id = v.id AND t.term_group = 'suitable_for') AS event_types,
                 (SELECT max(r.capacity_max) FROM rooms r WHERE r.venue_id = v.id) AS largest_room_capacity,
                 v.capacity_max
             FROM venues v
@@ -101,11 +101,13 @@ final class DemoStoryTest extends KernelTestCase
             self::assertLessThanOrEqual(2, (int) $venue['documents']);
             self::assertSame(1, (int) $venue['main_buildings']);
             self::assertSame(1, (int) $venue['main_settings']);
-            self::assertSame(1, (int) $venue['wedding']);
+            self::assertGreaterThanOrEqual(1, (int) $venue['event_types']);
+            self::assertLessThanOrEqual(5, (int) $venue['event_types']);
             self::assertSame((int) $venue['capacity_max'], (int) $venue['largest_room_capacity']);
         }
 
-        $this->assertWeddingFacts();
+        $this->assertEventTypes();
+        $this->assertEventFacts();
         $this->assertPhotos();
         $this->assertDocuments();
 
@@ -123,24 +125,37 @@ final class DemoStoryTest extends KernelTestCase
         $this->story()->build();
     }
 
-    private function assertWeddingFacts(): void
+    /**
+     * 1–5 random event types per venue and none forced: the types spread over the vocabulary, and the
+     * first one in position order is missing from some venues.
+     */
+    private function assertEventTypes(): void
+    {
+        self::assertGreaterThanOrEqual(10, $this->rows("SELECT count(DISTINCT term_code) FROM venue_terms WHERE term_group = 'suitable_for'"));
+        self::assertGreaterThan(0, $this->rows("SELECT count(*) FROM venues v WHERE NOT EXISTS (SELECT 1 FROM venue_terms t WHERE t.venue_id = v.id AND t.term_group = 'suitable_for' AND t.term_code = 'corporate_event')"));
+    }
+
+    private function assertEventFacts(): void
     {
         self::assertSame(30, $this->rows('SELECT count(*) FROM venues WHERE price_level IS NOT NULL'));
         self::assertSame(0, $this->rows(<<<'SQL'
             SELECT count(*) FROM venues v
             JOIN venue_translations t ON t.venue_id = v.id
             WHERE v.price_level IS NULL AND (
-                v.capacity_seated IS NOT NULL OR v.capacity_standing IS NOT NULL OR v.party IS NOT NULL
-                OR v.has_curfew IS NOT NULL OR v.curfew_at IS NOT NULL OR v.instagram IS NOT NULL
-                OR t.ambience IS NOT NULL OR t.capacity_note IS NOT NULL OR t.party_note IS NOT NULL OR t.opening_hours IS NOT NULL
-                OR EXISTS (SELECT 1 FROM venue_terms vt WHERE vt.venue_id = v.id AND vt.term_group IN ('ceremony', 'amenity', 'dining', 'vendor', 'usage', 'language'))
+                v.capacity_seated IS NOT NULL OR v.capacity_standing IS NOT NULL OR v.instagram IS NOT NULL
+                OR t.ambience IS NOT NULL OR t.capacity_note IS NOT NULL OR t.opening_hours IS NOT NULL
+                OR EXISTS (SELECT 1 FROM venue_terms vt WHERE vt.venue_id = v.id AND vt.term_group IN ('amenity', 'catering', 'language'))
             )
             SQL));
-        self::assertSame(30, $this->rows("SELECT count(*) FROM venue_terms WHERE term_group = 'usage'"));
-        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE has_curfew IS FALSE'));
-        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE has_curfew AND curfew_at IS NOT NULL'));
-        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE has_curfew AND curfew_at IS NULL'));
-        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE price_level IS NOT NULL AND has_curfew IS NULL'));
+        foreach (['amenity', 'catering', 'language'] as $group) {
+            self::assertGreaterThan(0, $this->rows("SELECT count(*) FROM venue_terms WHERE term_group = '{$group}'"), $group);
+        }
+        // Both states of a fact stay visible on the venues that have facts.
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE price_level IS NOT NULL AND capacity_seated IS NULL'));
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venues WHERE capacity_seated IS NOT NULL AND instagram IS NOT NULL'));
+        self::assertSame(30, $this->rows('SELECT count(*) FROM venue_translations WHERE ambience IS NOT NULL'));
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venue_translations WHERE capacity_note IS NOT NULL'));
+        self::assertGreaterThan(0, $this->rows('SELECT count(*) FROM venue_translations WHERE opening_hours IS NOT NULL'));
     }
 
     private function assertPhotos(): void

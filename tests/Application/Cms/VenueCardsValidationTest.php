@@ -59,13 +59,12 @@ final class VenueCardsValidationTest extends WebTestCase
         yield 'distance name without km' => ['venue_address', ['stationKm' => ''], '#venue_address_stationKm'];
         yield 'distance name too long' => ['venue_address', ['airportName' => $long(151)], '#venue_address_airportName'];
 
-        yield 'seated capacity 0' => ['venue_wedding', ['capacitySeated' => '0'], '#venue_wedding_capacitySeated'];
-        yield 'standing capacity 50001' => ['venue_wedding', ['capacityStanding' => '50001'], '#venue_wedding_capacityStanding'];
-        yield 'unknown price level' => ['venue_wedding', ['priceLevel' => 'cheap'], '#venue_wedding_priceLevel_error'];
-        yield 'unknown party rule' => ['venue_wedding', ['party' => 'always'], '#venue_wedding_party_error'];
-        yield 'curfew time without a curfew' => ['venue_wedding', ['hasCurfew' => 'no'], '#venue_wedding_curfewAt'];
-        yield 'ambience too long' => ['venue_wedding', ['texts][de][ambience' => $long(61)], '#venue_wedding_texts_de_ambience'];
-        yield 'opening hours too long' => ['venue_wedding', ['texts][de][openingHours' => $long(251)], '#venue_wedding_texts_de_openingHours'];
+        yield 'seated capacity 0' => ['venue_event', ['capacitySeated' => '0'], '#venue_event_capacitySeated'];
+        yield 'standing capacity 50001' => ['venue_event', ['capacityStanding' => '50001'], '#venue_event_capacityStanding'];
+        yield 'unknown price level' => ['venue_event', ['priceLevel' => 'cheap'], '#venue_event_priceLevel_error'];
+        yield 'ambience too long' => ['venue_event', ['texts][de][ambience' => $long(61)], '#venue_event_texts_de_ambience'];
+        yield 'capacity note too long' => ['venue_event', ['texts][de][capacityNote' => $long(251)], '#venue_event_texts_de_capacityNote'];
+        yield 'opening hours too long' => ['venue_event', ['texts][de][openingHours' => $long(251)], '#venue_event_texts_de_openingHours'];
 
         yield 'phone of letters' => ['venue_contact', ['phone' => 'abc'], '#venue_contact_phone'];
         yield 'e-mail without a dot in the domain' => ['venue_contact', ['inquiryEmail' => 'info@seeblick'], '#venue_contact_inquiryEmail'];
@@ -109,7 +108,7 @@ final class VenueCardsValidationTest extends WebTestCase
         yield 'texts' => ['venue_texts', ['texts][de][summary' => 'Ein Schloss am Zürichsee.'], "SELECT summary FROM venue_translations WHERE venue_id = ? AND locale = 'de'", 'Ein Schloss am Zürichsee.', '#venue_texts_texts_de_summary'];
         yield 'address' => ['venue_address', ['stationKm' => '1,4'], 'SELECT distance_station_km::text FROM venues WHERE id = ?', '1.4', '#venue_address_stationKm'];
         yield 'terms' => ['venue_terms', ['mainBuilding' => ''], "SELECT COUNT(*)::text FROM venue_terms WHERE venue_id = ? AND term_group = 'building' AND is_main", '0', '#venue_terms_mainBuilding'];
-        yield 'wedding' => ['venue_wedding', ['capacitySeated' => '1100'], 'SELECT capacity_seated::text FROM venues WHERE id = ?', '1100', '#venue_wedding_capacitySeated'];
+        yield 'event' => ['venue_event', ['capacitySeated' => '1100'], 'SELECT capacity_seated::text FROM venues WHERE id = ?', '1100', '#venue_event_capacitySeated'];
         yield 'contact' => ['venue_contact', ['website' => 'https://neu.seeblick.example'], 'SELECT website FROM venues WHERE id = ?', 'https://neu.seeblick.example', '#venue_contact_website'];
         yield 'faq' => ['venue_faq', ['daylight' => 'no'], 'SELECT daylight::text FROM venues WHERE id = ?', 'false', '#venue_faq_daylight_1'];
     }

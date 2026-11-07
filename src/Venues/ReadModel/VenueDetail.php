@@ -57,7 +57,7 @@ final readonly class VenueDetail
         public array $documents,
         public array $rooms,
         public array $photos,
-        public DetailWedding $wedding,
+        public DetailEvent $event,
         public ?string $instagram,
         public bool $coordinatesFromTown,
         public ?string $googlePlaceId,

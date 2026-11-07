@@ -10,14 +10,14 @@ use App\Cms\Form\VenueCardData;
 use App\Cms\Form\VenueCardType;
 use App\Cms\Form\VenueContactData;
 use App\Cms\Form\VenueContactType;
+use App\Cms\Form\VenueEventData;
+use App\Cms\Form\VenueEventType;
 use App\Cms\Form\VenueFaqData;
 use App\Cms\Form\VenueFaqType;
 use App\Cms\Form\VenueTermsData;
 use App\Cms\Form\VenueTermsType;
 use App\Cms\Form\VenueTextsData;
 use App\Cms\Form\VenueTextsType;
-use App\Cms\Form\VenueWeddingData;
-use App\Cms\Form\VenueWeddingType;
 use App\Portal\Form\VenueCapacityData;
 use App\Portal\Form\VenueCapacityType;
 
@@ -31,7 +31,7 @@ enum LocationCard: string
     case Texts = 'texts';
     case Address = 'address';
     case Terms = 'terms';
-    case Wedding = 'wedding';
+    case Event = 'event';
     case Contact = 'contact';
     case Faq = 'faq';
     case Capacity = 'capacity';
@@ -58,7 +58,7 @@ enum LocationCard: string
             self::Texts => 'texte',
             self::Address => 'adresse',
             self::Terms => 'merkmale',
-            self::Wedding => 'hochzeit',
+            self::Event => 'veranstaltung',
             self::Contact => 'kontakt',
             self::Faq => 'faq',
             self::Capacity => 'gaeste',
@@ -82,7 +82,7 @@ enum LocationCard: string
             self::Texts => VenueTextsType::class,
             self::Address => VenueAddressType::class,
             self::Terms => VenueTermsType::class,
-            self::Wedding => VenueWeddingType::class,
+            self::Event => VenueEventType::class,
             self::Contact => VenueContactType::class,
             self::Faq => VenueFaqType::class,
             self::Capacity => VenueCapacityType::class,
@@ -98,7 +98,7 @@ enum LocationCard: string
             self::Texts => VenueTextsData::class,
             self::Address => VenueAddressData::class,
             self::Terms => VenueTermsData::class,
-            self::Wedding => VenueWeddingData::class,
+            self::Event => VenueEventData::class,
             self::Contact => VenueContactData::class,
             self::Faq => VenueFaqData::class,
             self::Capacity => VenueCapacityData::class,

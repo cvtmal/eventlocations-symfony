@@ -1,5 +1,5 @@
 {#
-    Card "Hochzeit" (S14's owner facts). Include with `with_context = false`: form, card, number, stale, locales.
+    Card "Veranstaltung" (the event facts). Include with `with_context = false`: form, card, number, stale, locales.
     The texts have a tab per locale with a translation row; after a 422 the first locale with an error is open (L2).
 #}
 {% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, locales: locales, submit_label: submit_label|default(null)} only %}
@@ -9,11 +9,6 @@
             {{ form_row(form.capacitySeated) }}
             {{ form_row(form.capacityStanding) }}
         </div>
-        {{ form_row(form.party) }}
-        <div class="field-row">
-            {{ form_row(form.hasCurfew) }}
-            {{ form_row(form.curfewAt) }}
-        </div>
         {% set text_locales = locales|filter(locale => form.texts[locale.code] is defined) %}
         {% if text_locales is not empty %}
             {% set panels = {} %}
@@ -22,13 +17,12 @@
                 {% set panel %}
                     {{ form_row(texts.ambience) }}
                     {{ form_row(texts.capacityNote) }}
-                    {{ form_row(texts.partyNote) }}
                     {{ form_row(texts.openingHours) }}
                 {% endset %}
                 {% set panels = panels|merge({(locale.code): panel}) %}
             {% endfor %}
             {{ include('admin/components/_locale_tabs.html.twig', {
-                id: 'venue-wedding',
+                id: 'venue-event',
                 label: 'editor.locales_label'|trans({}, 'cms'),
                 locales: text_locales,
                 panels: panels,
@@ -36,7 +30,7 @@
             }, with_context = false) }}
         {% endif %}
         {% do form.texts.setRendered() %}
-        {% for group in constant('App\\Cms\\Form\\VenueWeddingData::GROUPS')|map(group => group.value) %}
+        {% for group in constant('App\\Cms\\Form\\VenueEventData::GROUPS')|map(group => group.value) %}
             {{ form_row(form[group]) }}
         {% endfor %}
     {% endblock %}

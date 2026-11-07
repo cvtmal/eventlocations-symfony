@@ -18,9 +18,13 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  */
 final class BaselineMigrationTest extends KernelTestCase
 {
+    /**
+     * Row counts after the whole chain: the baseline seeds 147 taxonomy terms, event-vocabulary (F3)
+     * re-curates them to 118.
+     */
     private const REFERENCE_ROWS = [
         'cantons' => 27,
-        'taxonomy_terms' => 147,
+        'taxonomy_terms' => 118,
         'crm_activity_types' => 7,
         'crm_deal_stages' => 6,
     ];
@@ -46,6 +50,7 @@ final class BaselineMigrationTest extends KernelTestCase
         $tables = $this->tables();
         $functions = $this->functions();
         $extensions = $this->extensions();
+        $referenceRows = array_map($this->rows(...), array_keys(self::REFERENCE_ROWS));
         self::assertContains('venues', $tables);
         self::assertSame(['geo_fold', 'geo_fold_de', 'geo_search_key'], $functions);
 
@@ -58,6 +63,7 @@ final class BaselineMigrationTest extends KernelTestCase
         self::assertSame($tables, $this->tables());
         self::assertSame($functions, $this->functions());
         self::assertSame($extensions, $this->extensions());
+        self::assertSame($referenceRows, array_map($this->rows(...), array_keys(self::REFERENCE_ROWS)));
         foreach (self::REFERENCE_ROWS as $table => $rows) {
             self::assertSame($rows, (int) $this->connection->fetchOne('SELECT count(*) FROM '.$table), $table);
         }
@@ -69,6 +75,17 @@ final class BaselineMigrationTest extends KernelTestCase
     private function tables(): array
     {
         return array_map('strval', $this->connection->fetchFirstColumn("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY 1"));
+    }
+
+    /**
+     * Every row of a reference table without its timestamps, in a stable order, so the round trip compares
+     * content and not only counts.
+     *
+     * @return list<string>
+     */
+    private function rows(string $table): array
+    {
+        return array_map('strval', $this->connection->fetchFirstColumn(\sprintf("SELECT (to_jsonb(t) - 'created_at' - 'updated_at')::text FROM %s t ORDER BY 1", $table)));
     }
 
     /**

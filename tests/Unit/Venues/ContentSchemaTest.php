@@ -36,15 +36,15 @@ final class ContentSchemaTest extends TestCase
             ],
             'contact' => ['phone' => '+41441234567', 'inquiry_email' => 'anfragen@example.ch', 'website' => 'https://example.ch', 'contact_person' => 'Anna Muster', 'instagram' => 'https://www.instagram.com/schloss.beispiel'],
             'faq' => ['own_catering' => 'allowed', 'daylight' => null],
-            'party' => ['allowed' => 'limited', 'has_curfew' => true, 'curfew_at' => '02:00'],
             'terms' => [
-                'setting' => ['lake'], 'building' => ['castle', 'event_venue'], 'suitable_for' => ['wedding'], 'surroundings' => ['garden'],
-                'ceremony' => ['free_ceremony'], 'amenity' => ['overnight', 'dance_floor'], 'dining' => ['vegan'], 'vendor' => ['dj'], 'usage' => ['exclusive'], 'language' => ['de', 'gsw'],
+                'setting' => ['lake'], 'building' => ['castle', 'event_venue'], 'suitable_for' => ['corporate_event', 'seminar'], 'infrastructure' => ['air_conditioning'],
+                'furniture' => ['standing_tables'], 'technology' => ['wifi', 'projector_screen'], 'surroundings' => ['garden'],
+                'amenity' => ['overnight', 'dance_floor'], 'catering' => ['in_house', 'vegan'], 'language' => ['de', 'gsw'],
             ],
-            'main_terms' => ['building' => 'castle', 'setting' => 'lake'],
+            'main_terms' => ['building' => 'castle', 'setting' => 'lake', 'suitable_for' => 'corporate_event'],
             'translations' => ['de' => [
                 'summary' => 'Kurz.', 'description' => 'Lang.', 'meta_description' => 'Meta.', 'parking_text' => 'Parkplätze.',
-                'ambience' => 'Romantisch am See', 'capacity_note' => 'Mit Tanzfläche 100 Plätze.', 'party_note' => 'Musik bis 2 Uhr.', 'opening_hours' => 'Mai bis Oktober',
+                'ambience' => 'Festlich am See', 'capacity_note' => 'Mit Bühne 100 Plätze.', 'opening_hours' => 'Mai bis Oktober',
             ]],
             'photos' => [['file' => 'aussen.jpg', 'alt' => ['de' => 'Schloss am See']], ['file' => 'innen.PNG']],
             'rooms' => [[
@@ -92,11 +92,14 @@ final class ContentSchemaTest extends TestCase
         yield 'gif photo' => [$set($full, 'photos.0.file', 'a.gif'), '/photos/0/file:'];
         yield 'photo in a sub folder' => [$set($full, 'photos.0.file', 'sub/a.jpg'), '/photos/0/file:'];
         yield 'unknown price level' => [$set($full, 'price_level', 'cheap'), '/price_level: "cheap" is not an allowed value'];
-        yield 'curfew at 24:00' => [$set($full, 'party.curfew_at', '24:00'), '/party/curfew_at:'];
-        yield 'curfew without a leading zero' => [$set($full, 'party.curfew_at', '2:00'), '/party/curfew_at:'];
         yield 'instagram over http' => [$set($full, 'contact.instagram', 'http://www.instagram.com/beispiel'), '/contact/instagram:'];
         yield 'seated capacity zero' => [$set($full, 'capacity.seated', 0), '/capacity/seated:'];
-        yield 'unknown party value' => [$set($full, 'party.allowed', 'maybe'), '/party/allowed: "maybe" is not an allowed value'];
+        yield 'the party section, retired in F3' => [$set($full, 'party', ['allowed' => 'limited', 'has_curfew' => true, 'curfew_at' => '02:00']), '/: Unknown properties: party'];
+        yield 'the party note, retired in F3' => [$set($full, 'translations.de.party_note', 'Musik bis 2 Uhr.'), '/translations/de: Unknown properties: party_note'];
+        yield 'the ceremony group, retired in F3' => [$set($full, 'terms.ceremony', ['chapel']), '/terms: Unknown properties: ceremony'];
+        yield 'a building code, retired in F3' => [$set($full, 'terms.building', ['castle', 'wedding_venue']), '/terms/building/1: "wedding_venue" is not an allowed value'];
+        yield 'wifi is no infrastructure code since F3' => [$set($full, 'terms.infrastructure', ['wifi']), '/terms/infrastructure/0: "wifi" is not an allowed value'];
+        yield 'a main event type that is not an event type' => [$set($full, 'main_terms.suitable_for', 'class_reunion'), '/main_terms/suitable_for: "class_reunion" is not an allowed value'];
         yield 'ambience of 61 characters' => [$set($full, 'translations.de.ambience', str_repeat('a', 61)), '/translations/de/ambience:'];
         yield 'empty opening hours' => [$set($full, 'translations.de.opening_hours', ''), '/translations/de/opening_hours:'];
         yield 'a rating, retired in #53' => [$set($full, 'rating', ['score' => 9.0, 'count' => 47]), '/: Unknown properties: rating'];

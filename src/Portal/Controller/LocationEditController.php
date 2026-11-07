@@ -68,10 +68,10 @@ final class LocationEditController extends AbstractController
         return $this->save(LocationCard::Terms, $number, $request);
     }
 
-    #[Route('/hochzeit', name: 'portal_location_wedding', methods: ['POST'])]
-    public function wedding(int $number, Request $request): Response
+    #[Route('/veranstaltung', name: 'portal_location_event', methods: ['POST'])]
+    public function event(int $number, Request $request): Response
     {
-        return $this->save(LocationCard::Wedding, $number, $request);
+        return $this->save(LocationCard::Event, $number, $request);
     }
 
     #[Route('/kontakt', name: 'portal_location_contact', methods: ['POST'])]

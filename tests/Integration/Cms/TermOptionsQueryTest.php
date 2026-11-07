@@ -28,7 +28,7 @@ final class TermOptionsQueryTest extends KernelTestCase
         $byGroup = $this->query->byGroup();
 
         self::assertSame(array_map(static fn (TermGroup $group): string => $group->value, TermGroup::cases()), array_keys($byGroup));
-        self::assertSame(147, array_sum(array_map(\count(...), $byGroup)));
+        self::assertSame(118, array_sum(array_map(\count(...), $byGroup)));
     }
 
     public function test_each_group_is_in_position_order(): void
