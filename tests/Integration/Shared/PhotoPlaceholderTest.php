@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Shared;
 
 use App\Search\ReadModel\ListingCard;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -160,7 +159,7 @@ final class PhotoPlaceholderTest extends KernelTestCase
             number: 1,
             slug: 'schloss-seeburg',
             name: 'Schloss Seeburg',
-            tier: Tier::Premium,
+            promoted: false,
             capacityMin: 50,
             capacityMax: 450,
             place: new VenuePlace('Stäfa', null, null),
