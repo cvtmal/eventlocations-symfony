@@ -102,6 +102,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F6 | `brand-design` | L | F1 | — | — (D23, D32) | Done (`98f38d7`) |
 | F6b | `brand-assets` | M | F6 | — | — (D23) | Done |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
+| F5b | `guests-rooms` | S | F4, F5 | indexes only | — | Todo |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Todo |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Todo |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
@@ -653,6 +654,10 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 **Depends on** F0. **Owns** no schema. **Scope.** The baseline (F0) had already moved the public catalogues to "du" and turned `PublicCopyAddressTest` around (E4); F7a closed the gaps and made the guard see more than catalogues. No new copy (F7b). **Done when** no formal "Sie", "Ihr" or "Ihnen" is left in public catalogues, templates, PHP, JavaScript or the framework messages a reader can reach, the guard pins one trigger per rule, `make lint` and `make test` are green.
 
 **Outcome** (merged as `3c19cad`, 2026-11-07). `PublicCopyAddressTest` reads every `translations/*+intl-icu.de.yaml` except `admin`, `cms` and `crm` (a new public catalogue needs no list entry), all Twig, PHP and `assets/js` as text, and the staff catalogues for a formal form inside a sentence. Formal Sie/Ihr*/Ihnen/"Sehr geehrte", plural euch/euer/"könnt ihr" and "ß" fail, and so does a capitalised "Sie" at a sentence start (write "Die Location …"); lower-case sie/ihr (she, they) and `deine-eventlocation.ch` pass. Symfony's German CSRF, upload-limit and `Length` messages say "Sie": they are overridden in `validators+intl-icu.de.yaml`, keyed by the English source text, and `tests/Integration/Shared/Translation/FrameworkMessagesTest.php` reads the sources from the framework, so a new reachable formal message needs a line there. `/konto` mails greet "Hallo {name}". Left for F7b: mixed imperative stems inside one sentence (the 41 landing intros, `home.cta.text`) and the portal rejection mail subject.
+
+### F5b `guests-rooms` (S)
+
+(Placed here, not after F5, so it does not touch the lines of open cycles.) **Depends on** F4, F5. **Owns** indexes only. Lane: the tech lead's next free lane. **Why.** F5's guest filter reads only the venue's own `capacity_min`/`capacity_max`, and F4 does not compare those with the rooms. A venue with a 300-person hall would be hidden by a stale venue figure of 120. **Rule (PO + tech lead, 2026-11-07).** A venue matches "N Gäste" when its own range or at least one of its rooms' layout-derived ranges (F4's `Seating::guestRange()`) holds N. The card's capacity line follows the same rule and shows the overall maximum. **Scope.** An `EXISTS` over `rooms` in the guest criterion of `ListingQuery` and the live count, the card's capacity line, an index if the plan needs one. **Done when** a venue whose own range is below N but whose room holds N is listed, the card shows the room's maximum, the URL codec is unchanged, an `EXPLAIN` on the demo data ×10 holds, the S11 budgets hold, and there are Integration and Application tests.
 
 ### F7b `event-copy-de` (M)
 
