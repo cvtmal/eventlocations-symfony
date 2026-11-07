@@ -9,8 +9,8 @@ use App\Shared\Messenger\AuditSubject;
 
 /**
  * The CMS card "Merkmale" (#24, D16): the seven filter groups (setting … surroundings) with
- * the main building and the main setting. A group missing from `terms` is emptied; the six
- * wedding groups are ChangeVenueWeddingFacts'.
+ * the main building and the main setting. A group missing from `terms` is emptied; the three
+ * event groups (amenity, catering, language) are ChangeVenueEventFacts'.
  */
 final readonly class ChangeVenueTerms implements AuditableCommand
 {

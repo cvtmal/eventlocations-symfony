@@ -129,12 +129,12 @@ final class LandingPathsTest extends KernelTestCase
     public function test_the_remainder_keeps_page_and_the_codec_order(): void
     {
         $query = $this->query([
-            'height' => '3', 'curfew' => 'none', 'price' => ['medium'], 'usage' => ['exclusive'],
+            'height' => '3', 'price' => ['medium'], 'amenity' => ['overnight'],
             'setting' => ['lake'], 'q' => 'see', 'guests' => '100', 'canton' => 'zh', 'page' => '2',
         ]);
         [, $rest] = $this->paths->locate($query);
 
-        self::assertSame(['guests', 'q', 'setting', 'usage', 'price', 'curfew', 'height', 'page'], array_keys($rest));
+        self::assertSame(['guests', 'q', 'setting', 'amenity', 'price', 'height', 'page'], array_keys($rest));
         $without = $query;
         unset($without['canton']);
         self::assertSame($without, $rest);

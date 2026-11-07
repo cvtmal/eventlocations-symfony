@@ -67,10 +67,19 @@ final class VenueMarkdownTest extends WebTestCase
         self::assertStringEndsWith("\n---\n\nSeite der Location: ".self::HTML_URL."\n", $body);
         self::assertStringNotContainsString("\n\n\n", $body);
         self::assertSame(
-            ['## Ausstattung und Eignung', '## Hochzeit', '## Räume', '## Häufige Fragen', '## Standort', '## Kontakt', '## Dokumente'],
+            ['## Ausstattung und Eignung', '## Angaben zur Location', '## Räume', '## Häufige Fragen', '## Standort', '## Kontakt', '## Dokumente'],
             array_values(preg_grep('/^## /', explode("\n", $body)) ?: []),
         );
         self::assertStringContainsString("\n- 50 - 300 Personen\n\nErster Absatz über das Schloss.\n\nZweiter Absatz mit dem Park.\n", $body);
+        self::assertStringContainsString("\n- **Geeignet für:** Firmenanlass, Familienfeier, Hochzeit\n", $body);
+        self::assertStringContainsString("\n- **Preisniveau:** Mittel\n- **Ambiente:** Romantisch am Wasser\n", $body);
+        self::assertStringContainsString("\n- **Sitzplätze und Stehplätze:** 1'200 Sitzplätze; 1'500 Stehplätze; Mit Tanzfläche 900 Sitzplätze.\n", $body);
+        self::assertStringContainsString("\n- **Ausstattung:** Tanzfläche\n- **Catering:** Vegetarisch möglich, Glutenfrei möglich\n- **Sprachen:** Deutsch, Englisch\n", $body);
+        self::assertStringContainsString("\n- **Öffnungszeiten:** Mai bis Oktober, täglich ab 10 Uhr\n", $body);
+        // Removed with the wedding facts (F3): no party, curfew, ceremony or vendor line.
+        self::assertStringNotContainsString('Sperrstunde', $body);
+        self::assertStringNotContainsString('Trauung', $body);
+        self::assertStringNotContainsString('Dienstleister', $body);
         self::assertStringContainsString("\n### Rittersaal\n\n", $body);
         self::assertStringContainsString("\n- Bankett (sitzend): 50 - 180 Personen\n", $body);
         self::assertStringContainsString("\n- Seestrasse 1, ", $body);

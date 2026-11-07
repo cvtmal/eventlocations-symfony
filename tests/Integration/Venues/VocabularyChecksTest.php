@@ -12,7 +12,6 @@ use App\Venues\ValueObject\CandidateOrigin;
 use App\Venues\ValueObject\CandidateStatus;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\SourceStatus;
 use App\Venues\ValueObject\SourceType;
@@ -40,7 +39,6 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'floor material' => ['chk_rooms_floor_material', FloorMaterial::class];
         yield 'term group' => ['chk_taxonomy_terms_term_group', TermGroup::class];
         yield 'price level' => ['chk_venues_price_level', PriceLevel::class];
-        yield 'party' => ['chk_venues_party', PartyAllowed::class];
         yield 'admin role' => ['chk_admin_users_role', AdminRole::class];
         yield 'audit actor type' => ['chk_admin_audit_log_actor_type', AuditActorType::class];
         yield 'portal venue access status' => ['chk_portal_venue_access_status', PortalVenueAccessStatus::class];

@@ -26,14 +26,14 @@ final class ContentYamlFileTest extends TestCase
     public function test_setting_null_removes_the_field_and_an_emptied_section(): void
     {
         $document = new \stdClass();
-        ContentYamlFile::set($document, 'party', 'allowed', 'yes');
-        ContentYamlFile::set($document, 'party', 'has_curfew', false);
+        ContentYamlFile::set($document, 'faq', 'own_catering', 'allowed');
+        ContentYamlFile::set($document, 'faq', 'daylight', false);
 
-        ContentYamlFile::set($document, 'party', 'allowed', null);
-        self::assertSame(['has_curfew' => false], get_object_vars($document->party));
+        ContentYamlFile::set($document, 'faq', 'own_catering', null);
+        self::assertSame(['daylight' => false], get_object_vars($document->faq));
 
-        ContentYamlFile::set($document, 'party', 'has_curfew', null);
-        self::assertObjectNotHasProperty('party', $document);
+        ContentYamlFile::set($document, 'faq', 'daylight', null);
+        self::assertObjectNotHasProperty('faq', $document);
 
         ContentYamlFile::set($document, 'absent', 'field', null);
         self::assertSame([], get_object_vars($document));
@@ -44,9 +44,9 @@ final class ContentYamlFileTest extends TestCase
         $file = $this->directory.'/venue/venue.yaml';
         $document = new \stdClass();
         $document->name = 'Beispielhof';
-        ContentYamlFile::set($document, 'terms', 'dining', ['vegan', 'vegetarian']);
-        ContentYamlFile::set($document, 'party', 'curfew_at', '00:00');
-        ContentYamlFile::set($document, 'terms', 'usage', []);
+        ContentYamlFile::set($document, 'terms', 'catering', ['vegan', 'vegetarian']);
+        ContentYamlFile::set($document, 'address', 'zip', '8001');
+        ContentYamlFile::set($document, 'terms', 'amenity', []);
         $document->description = "Zeile eins\nZeile zwei";
 
         ContentYamlFile::replace($file, ContentYamlFile::dump($document));
@@ -54,7 +54,7 @@ final class ContentYamlFileTest extends TestCase
 
         self::assertNotNull($read);
         self::assertSame((string) file_get_contents($file), ContentYamlFile::dump($read));
-        self::assertStringContainsString("curfew_at: '00:00'", (string) file_get_contents($file));
+        self::assertStringContainsString("zip: '8001'", (string) file_get_contents($file));
         self::assertSame(['venue.yaml'], array_values(array_diff((array) scandir(\dirname($file)), ['.', '..'])));
     }
 

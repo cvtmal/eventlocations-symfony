@@ -138,7 +138,7 @@ final class LandingTitleTest extends KernelTestCase
     public function test_every_building_title_fits_at_any_count_and_page(): void
     {
         $codes = $this->buildingCodes();
-        self::assertCount(39, $codes);
+        self::assertCount(38, $codes);
 
         foreach ([5, 52, 999] as $count) {
             [$pages, $meta] = $this->landing(array_map(static fn (string $code): array => self::buildingRow($code, $count), $codes));

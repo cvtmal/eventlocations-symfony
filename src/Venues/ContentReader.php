@@ -12,7 +12,6 @@ use App\Venues\ValueObject\Content\RoomContent;
 use App\Venues\ValueObject\Content\VenueContent;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
@@ -133,11 +132,6 @@ final class ContentReader
         }
         if (isset($data->address->street) && !isset($data->address->zip, $data->address->town)) {
             $errors[] = '/address/street: needs zip and town';
-        }
-
-        // chk_venues_curfew_at would catch this at the flush, without naming the field.
-        if (isset($data->party->curfew_at) && true !== ($data->party->has_curfew ?? null)) {
-            $errors[] = '/party/curfew_at: needs has_curfew: true';
         }
 
         $errors = [...$errors, ...$this->localeErrors('/translations', $data->translations)];
@@ -307,7 +301,6 @@ final class ContentReader
                 'parkingText' => $text->parking_text ?? null,
                 'ambience' => $text->ambience ?? null,
                 'capacityNote' => $text->capacity_note ?? null,
-                'partyNote' => $text->party_note ?? null,
                 'openingHours' => $text->opening_hours ?? null,
                 'region' => $text->region ?? null,
             ];
@@ -317,11 +310,6 @@ final class ContentReader
             $terms[$group] = array_values($codes);
         }
         $distance = static fn (string $name): ?\stdClass => $data->distances->{$name} ?? null;
-        $curfewAt = null;
-        if (isset($data->party->curfew_at)) {
-            $curfewAt = \DateTimeImmutable::createFromFormat('!H:i', $data->party->curfew_at);
-            \assert(false !== $curfewAt);
-        }
 
         return new VenueContent(
             key: $key,
@@ -352,9 +340,6 @@ final class ContentReader
             priceLevel: isset($data->price_level) ? PriceLevel::from($data->price_level) : null,
             capacitySeated: $data->capacity->seated ?? null,
             capacityStanding: $data->capacity->standing ?? null,
-            party: isset($data->party->allowed) ? PartyAllowed::from($data->party->allowed) : null,
-            hasCurfew: $data->party->has_curfew ?? null,
-            curfewAt: $curfewAt,
             instagram: $data->contact->instagram ?? null,
             terms: $terms,
             mainTerms: self::strings($data->main_terms ?? null),

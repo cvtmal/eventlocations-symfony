@@ -1,0 +1,55 @@
+{#
+    Angaben zur Location (DP-17, S14; event-vocabulary, F3): the event facts, after the fact lists. Every row has its own
+    condition, so an unknown fact shows nothing. Rendered only when venue.event.hasAny(). Instagram is in Kontakt. Params: venue.
+#}
+{% macro term_row(label, terms) %}
+    {% if terms is not empty %}
+        <div class="venue-facts__row">
+            <dt>{{ label }}</dt>
+            <dd>
+                <ul class="venue-facts__values">
+                    {% for term in terms %}
+                        <li>{{ icon('check') }}<span>{{ term|trans }}</span></li>
+                    {% endfor %}
+                </ul>
+            </dd>
+        </div>
+    {% endif %}
+{% endmacro %}
+{% set event = venue.event %}
+<section class="venue-section venue-event" aria-labelledby="venue-event-title">
+    <h2 id="venue-event-title" class="venue-section__title">{{ 'detail.event.heading'|trans({}, 'venues') }}</h2>
+    <dl class="venue-facts__list">
+        {% if event.priceLevel %}
+            <div class="venue-facts__row">
+                <dt>{{ 'detail.event.price_level'|trans({}, 'venues') }}</dt>
+                <dd>{{ event.priceLevel|trans }}</dd>
+            </div>
+        {% endif %}
+        {% if event.ambience %}
+            <div class="venue-facts__row">
+                <dt>{{ 'detail.event.ambience'|trans({}, 'venues') }}</dt>
+                <dd>{{ event.ambience }}</dd>
+            </div>
+        {% endif %}
+        {% if event.capacitySeated or event.capacityStanding or event.capacityNote %}
+            <div class="venue-facts__row">
+                <dt>{{ 'detail.event.capacity'|trans({}, 'venues') }}</dt>
+                <dd>
+                    {% if event.capacitySeated %}<div>{{ 'detail.event.seated'|trans({count: event.capacitySeated|swiss_number}, 'venues') }}</div>{% endif %}
+                    {% if event.capacityStanding %}<div>{{ 'detail.event.standing'|trans({count: event.capacityStanding|swiss_number}, 'venues') }}</div>{% endif %}
+                    {% if event.capacityNote %}<div>{{ event.capacityNote }}</div>{% endif %}
+                </dd>
+            </div>
+        {% endif %}
+        {{ _self.term_row('term_group.amenity'|trans({}, 'venues'), event.amenities) }}
+        {{ _self.term_row('term_group.catering'|trans({}, 'venues'), event.catering) }}
+        {{ _self.term_row('term_group.language'|trans({}, 'venues'), event.languages) }}
+        {% if event.openingHours %}
+            <div class="venue-facts__row">
+                <dt>{{ 'detail.event.opening_hours'|trans({}, 'venues') }}</dt>
+                <dd>{{ event.openingHours }}</dd>
+            </div>
+        {% endif %}
+    </dl>
+</section>

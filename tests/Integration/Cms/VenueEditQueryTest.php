@@ -19,7 +19,6 @@ use App\Venues\Command\PublishVenue;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\Tier;
@@ -75,7 +74,7 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame(['0.9', 'Zürich Stadelhofen', '3.2', null, '12.0', 'Zürich'], [$edit->stationKm, $edit->stationName, $edit->highwayKm, $edit->highwayName, $edit->airportKm, $edit->airportName]);
         self::assertSame([DetailVenues::FULL_PHONE, 'info@seeblick.example', 'https://seeblick.example', 'Anna Muster', 'https://www.instagram.com/schloss.seeblick'], [$edit->phone, $edit->inquiryEmail, $edit->website, $edit->contactPerson, $edit->instagram]);
         self::assertSame([OwnCatering::Allowed, true], [$edit->ownCatering, $edit->daylight]);
-        self::assertSame([PriceLevel::Medium, 1200, 1500, PartyAllowed::Limited, true, '02:00'], [$edit->priceLevel, $edit->capacitySeated, $edit->capacityStanding, $edit->party, $edit->hasCurfew, $edit->curfewAt]);
+        self::assertSame([PriceLevel::Medium, 1200, 1500], [$edit->priceLevel, $edit->capacitySeated, $edit->capacityStanding]);
         self::assertSame(3, $edit->galleryPhotoCount);
         self::assertSame([null, false], [$edit->googlePlaceId, $edit->googleRatingHidden]);
 
@@ -85,7 +84,7 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame('Ein Schloss am See.', $de->summary);
         self::assertSame("Erster Absatz über das Schloss.\n\nZweiter Absatz mit dem Park.", $de->description);
         self::assertSame(['Schloss Seeblick: Hochzeit am See.', '100 Parkplätze (kostenlos)', null], [$de->metaDescription, $de->parkingText, $de->region]);
-        self::assertSame(['Romantisch am Wasser', 'Mit Tanzfläche 900 Sitzplätze.', 'Musik im Saal bis 2 Uhr.', 'Mai bis Oktober, täglich ab 10 Uhr'], [$de->ambience, $de->capacityNote, $de->partyNote, $de->openingHours]);
+        self::assertSame(['Romantisch am Wasser', 'Mit Tanzfläche 900 Sitzplätze.', 'Mai bis Oktober, täglich ab 10 Uhr'], [$de->ambience, $de->capacityNote, $de->openingHours]);
         self::assertNull($edit->translation('fr'));
 
         self::assertSame(array_map(static fn (TermGroup $group): string => $group->value, TermGroup::cases()), array_keys($edit->terms));
@@ -127,7 +126,7 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame('be', $edit->cantonCode);
         self::assertSame([null, null, null], [$edit->capacityMin, $edit->stationKm, $edit->stationName]);
         self::assertSame([null, null, null], [$edit->phone, $edit->ownCatering, $edit->daylight]);
-        self::assertSame([null, null, null], [$edit->priceLevel, $edit->hasCurfew, $edit->curfewAt]);
+        self::assertSame([null, null, null], [$edit->priceLevel, $edit->capacitySeated, $edit->capacityStanding]);
         self::assertSame([], $edit->mainTerms);
         self::assertSame([null, false], [$edit->googlePlaceId, $edit->googleRatingHidden]);
         self::assertSame(0, $edit->galleryPhotoCount);

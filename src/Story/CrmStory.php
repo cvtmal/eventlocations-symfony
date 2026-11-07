@@ -44,7 +44,7 @@ use function Zenstruck\Foundry\faker;
 final class CrmStory extends Story
 {
     private const LINKED_VENUES = 8;
-    private const MANUAL_COMPANIES = ['Hochzeitswerk GmbH', 'Seeland Events AG', 'Alpenblick Hotels', 'Gastro Kollektiv'];
+    private const MANUAL_COMPANIES = ['Eventwerk GmbH', 'Seeland Events AG', 'Alpenblick Hotels', 'Gastro Kollektiv'];
     /** A stage, and for a won deal its contract's end in days from today: one ended, one renewal due within 60 days, one running. */
     private const DEALS = [
         ['new', null], ['contacted', null], ['offer', null], ['negotiation', null], ['won', -30], ['lost', null], ['new', null],
@@ -73,7 +73,7 @@ final class CrmStory extends Story
             "Hallo {contact.first_name}\n\n"
             ."Für den Eintrag von {venue.name} bei {location.name} hätten wir gerne neue Bilder. Könntest du uns bis Ende Monat Folgendes senden?\n\n"
             ."- fünf bis zehn Fotos im Querformat\n"
-            ."- ein Foto des Festsaals, gedeckt für ein Hochzeitsessen\n"
+            ."- ein Foto des Festsaals, gedeckt für ein Galadinner\n"
             ."- ein Foto der Aussenansicht\n\n"
             .'Herzlichen Dank und freundliche Grüsse',
         ],

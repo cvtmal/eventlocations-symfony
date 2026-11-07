@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Cms\ReadModel;
 
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\PartyAllowed;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\TownText;
@@ -40,8 +39,7 @@ final class VenueEditQuery
                        v.distance_airport_km::text AS airport_km, v.airport_name,
                        v.phone, v.inquiry_email, v.website, v.contact_person, v.instagram,
                        v.own_catering, v.daylight,
-                       v.price_level, v.capacity_seated, v.capacity_standing, v.party, v.has_curfew,
-                       to_char(v.curfew_at, 'HH24:MI') AS curfew_at,
+                       v.price_level, v.capacity_seated, v.capacity_standing,
                        v.google_place_id, v.google_rating_hidden,
                        (SELECT COUNT(*) FROM venue_photos p WHERE p.venue_id = v.id AND p.room_id IS NULL) AS gallery_photo_count,
                        (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
@@ -52,7 +50,7 @@ final class VenueEditQuery
                        (SELECT COALESCE(jsonb_agg(jsonb_build_object(
                                    'locale', t.locale, 'slug', t.slug, 'summary', t.summary, 'description', t.description,
                                    'meta_description', t.meta_description, 'parking_text', t.parking_text, 'region', t.region,
-                                   'ambience', t.ambience, 'capacity_note', t.capacity_note, 'party_note', t.party_note,
+                                   'ambience', t.ambience, 'capacity_note', t.capacity_note,
                                    'opening_hours', t.opening_hours) ORDER BY t.locale), '[]')
                         FROM venue_translations t WHERE t.venue_id = v.id) AS translations
                 FROM venues v
@@ -93,9 +91,6 @@ final class VenueEditQuery
             priceLevel: null === $row['price_level'] ? null : PriceLevel::from((string) $row['price_level']),
             capacitySeated: self::int($row['capacity_seated']),
             capacityStanding: self::int($row['capacity_standing']),
-            party: null === $row['party'] ? null : PartyAllowed::from((string) $row['party']),
-            hasCurfew: self::bool($row['has_curfew']),
-            curfewAt: self::string($row['curfew_at']),
             translations: self::translations((string) $row['translations']),
             terms: $terms,
             mainTerms: $mainTerms,
@@ -142,7 +137,6 @@ final class VenueEditQuery
                 region: self::string($row['region']),
                 ambience: self::string($row['ambience']),
                 capacityNote: self::string($row['capacity_note']),
-                partyNote: self::string($row['party_note']),
                 openingHours: self::string($row['opening_hours']),
             );
         }

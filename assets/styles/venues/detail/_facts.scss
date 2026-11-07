@@ -1,7 +1,7 @@
 @use '../../abstracts/breakpoints' as bp;
 @use 'shared';
 
-// Fact lists (DP-7): a label column beside values that wrap; stacked below md. `_wedding` reuses the rows.
+// Fact lists (DP-7): a label column beside values that wrap; stacked below md. `_event` reuses the rows.
 .venue-facts {
     display: flex;
     flex-direction: column;
@@ -59,6 +59,6 @@
     }
 }
 
-.venue-wedding {
+.venue-event {
     @include shared.card;
 }

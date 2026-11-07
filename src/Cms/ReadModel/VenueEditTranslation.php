@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Cms\ReadModel;
 
 /**
- * One `venue_translations` row as the Texte, Adresse (region) and Hochzeit cards load it, verbatim.
+ * One `venue_translations` row as the Texte, Adresse (region) and Veranstaltung cards load it, verbatim.
  */
 final readonly class VenueEditTranslation
 {
@@ -19,7 +19,6 @@ final readonly class VenueEditTranslation
         public ?string $region,
         public ?string $ambience,
         public ?string $capacityNote,
-        public ?string $partyNote,
         public ?string $openingHours,
     ) {
     }

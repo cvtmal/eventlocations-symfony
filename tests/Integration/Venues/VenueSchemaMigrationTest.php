@@ -117,9 +117,6 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'seated capacity above 50000' => ['chk_venues_capacity_seated', ["UPDATE venues SET capacity_seated = 50001 WHERE id = '{venue}'"]];
         yield 'standing capacity zero' => ['chk_venues_capacity_standing', ["UPDATE venues SET capacity_standing = 0 WHERE id = '{venue}'"]];
         yield 'standing capacity above 50000' => ['chk_venues_capacity_standing', ["UPDATE venues SET capacity_standing = 50001 WHERE id = '{venue}'"]];
-        yield 'unknown party' => ['chk_venues_party', ["UPDATE venues SET party = 'maybe' WHERE id = '{venue}'"]];
-        yield 'curfew time with has_curfew NULL' => ['chk_venues_curfew_at', ["UPDATE venues SET curfew_at = '02:00' WHERE id = '{venue}'"]];
-        yield 'curfew time with has_curfew false' => ['chk_venues_curfew_at', ["UPDATE venues SET has_curfew = FALSE, curfew_at = '02:00' WHERE id = '{venue}'"]];
         yield 'instagram over http' => ['chk_venues_instagram', ["UPDATE venues SET instagram = 'http://www.instagram.com/testhaus' WHERE id = '{venue}'"]];
         yield 'google place ID with a space' => ['chk_venues_google_place_id', ["UPDATE venues SET google_place_id = 'ChIJN1t tDeuEmsRU' WHERE id = '{venue}'"]];
         yield 'google place ID of 9 characters' => ['chk_venues_google_place_id', ["UPDATE venues SET google_place_id = 'ChIJN1t_t' WHERE id = '{venue}'"]];
@@ -253,7 +250,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'contact fields' => [["UPDATE venues SET phone = '+41441234567', inquiry_email = 'info@example.ch', website = 'https://example.ch', contact_person = 'Frau Muster' WHERE id = '{venue}'"]];
         yield 'room facts at their bounds' => [["UPDATE venues SET room_count = 0, largest_room_m2 = 50000, max_room_height_m = 30 WHERE id = '{venue}'"]];
         yield 'FAQ answers' => [["UPDATE venues SET own_catering = 'fixed_caterer', daylight = FALSE WHERE id = '{venue}'"]];
-        yield 'wedding facts at their bounds' => [["UPDATE venues SET price_level = 'exclusive', capacity_seated = 1, capacity_standing = 50000, party = 'limited', has_curfew = TRUE, curfew_at = '00:00', instagram = 'https://www.instagram.com/testhaus' WHERE id = '{venue}'"]];
+        yield 'event facts at their bounds' => [["UPDATE venues SET price_level = 'exclusive', capacity_seated = 1, capacity_standing = 50000, instagram = 'https://www.instagram.com/testhaus' WHERE id = '{venue}'"]];
         yield 'same slug in another locale' => [["INSERT INTO venue_translations (id, venue_id, locale, slug, summary) VALUES (gen_random_uuid(), '{venue2}', 'fr', 'testhaus-venues', 'Court.')"]];
         yield 'many terms without primary position' => [["INSERT INTO taxonomy_terms (term_group, code, position) VALUES ('building', 'igloo', 40), ('building', 'treehouse', 41)"]];
         yield 'main setting and main building, other venue main building' => [["INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES ('{venue2}', 'building', 'castle', TRUE), ('{venue2}', 'setting', 'lake', TRUE), ('{venue2}', 'setting', 'city', FALSE)"]];
