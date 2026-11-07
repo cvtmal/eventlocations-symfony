@@ -1,0 +1,29 @@
+{#-
+    The Open Graph card (1200 × 630) as SVG, from an App\Shared\ValueObject\OgCard (docs/brand.md, "Share cards"). The default
+    card is public/brand/og-default.png; F7b fills the venue card for a venue without a photo, F8 the landing card. `make brand-png`
+    turns an SVG into the PNG that `og:image` names (social networks do not take SVG). The colours are tokens: the primary as the
+    ground, white text, the accent bar; the lockup and the mark are public/brand/logo-dark.svg, so a new logo reaches the cards.
+    Include with `only`: card (OgCard).
+-#}
+{% autoescape 'html' %}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" font-family="'Hanken Grotesk', Arial, sans-serif">
+<rect width="1200" height="630" fill="#3a3fb0"/>
+<circle cx="1130" cy="40" r="300" fill="#ffffff" fill-opacity=".06"/>
+<circle cx="60" cy="650" r="230" fill="#ffffff" fill-opacity=".06"/>
+<g transform="translate(80 72) scale(1.25)">{{ source('@brand/logo-dark.svg')|raw }}</g>
+{% if card.variant == 'default' %}
+<rect x="80" y="252" width="56" height="6" rx="3" fill="#e0501a"/>
+{% for line in card.title %}
+<text x="80" y="{{ 346 + loop.index0 * 80 }}" font-size="66" font-weight="700" fill="#ffffff">{{ line }}</text>
+{% endfor %}
+{% else %}
+<svg x="900" y="235" width="220" height="220" viewBox="0 0 32 32">{{ source('@brand/logo-dark.svg')|raw }}</svg>
+<rect x="80" y="214" width="56" height="6" rx="3" fill="#e0501a"/>
+<text x="80" y="280" font-size="30" font-weight="600" fill="#ffffff" fill-opacity=".78">{{ card.eyebrow }}</text>
+{% for line in card.title %}
+<text x="80" y="{{ 362 + loop.index0 * 76 }}" font-size="64" font-weight="700" fill="#ffffff">{{ line }}</text>
+{% endfor %}
+<text x="80" y="{{ 362 + (card.title|length - 1) * 76 + 70 }}" font-size="30" fill="#ffffff" fill-opacity=".78">{{ card.facts }}</text>
+{% endif %}
+</svg>
+{% endautoescape %}

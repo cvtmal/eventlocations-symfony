@@ -40,7 +40,7 @@
       "x": 0,
       "y": 0,
       "w": 1440,
-      "h": 7235,
+      "h": 7449,
       "title": "Tokens und Komponenten · 1440",
       "page": "grundlagen",
       "expand": "fill"
@@ -49,7 +49,7 @@
       "x": 1520,
       "y": 0,
       "w": 390,
-      "h": 11975,
+      "h": 12271,
       "title": "Tokens und Komponenten · 390",
       "page": "grundlagen"
     },
@@ -57,7 +57,7 @@
       "x": 2150,
       "y": 0,
       "w": 1440,
-      "h": 2211,
+      "h": 2247,
       "title": "Header und Menü · 1440",
       "page": "grundlagen",
       "expand": "fill"
@@ -66,7 +66,7 @@
       "x": 3670,
       "y": 0,
       "w": 390,
-      "h": 2405,
+      "h": 2453,
       "title": "Header und Menü · 390",
       "page": "grundlagen"
     },
@@ -74,7 +74,7 @@
       "x": 0,
       "y": 0,
       "w": 1440,
-      "h": 3403,
+      "h": 3469,
       "title": "Startseite · 1440",
       "page": "start",
       "expand": "fill"
@@ -83,7 +83,7 @@
       "x": 1520,
       "y": 0,
       "w": 390,
-      "h": 6583,
+      "h": 6701,
       "title": "Startseite · 390",
       "page": "start"
     },
@@ -91,7 +91,7 @@
       "x": 0,
       "y": 0,
       "w": 1440,
-      "h": 3655,
+      "h": 3691,
       "title": "Listing · 1440",
       "page": "listing",
       "expand": "fill"
@@ -100,7 +100,7 @@
       "x": 1520,
       "y": 0,
       "w": 390,
-      "h": 5725,
+      "h": 5825,
       "title": "Listing · 390",
       "page": "listing"
     },
@@ -108,7 +108,7 @@
       "x": 2150,
       "y": 0,
       "w": 1440,
-      "h": 2183,
+      "h": 2219,
       "title": "Kantonsseite · 1440",
       "page": "listing",
       "expand": "fill"
@@ -117,7 +117,7 @@
       "x": 3670,
       "y": 0,
       "w": 390,
-      "h": 3458,
+      "h": 3584,
       "title": "Kantonsseite · 390",
       "page": "listing"
     },
@@ -142,7 +142,7 @@
       "x": 6450,
       "y": 0,
       "w": 1440,
-      "h": 3209,
+      "h": 3245,
       "title": "Merkliste · 1440",
       "page": "listing",
       "expand": "fill"
@@ -151,7 +151,7 @@
       "x": 7970,
       "y": 0,
       "w": 390,
-      "h": 4390,
+      "h": 4438,
       "title": "Merkliste · 390",
       "page": "listing"
     },
@@ -185,7 +185,7 @@
       "x": 3670,
       "y": 0,
       "w": 390,
-      "h": 2034,
+      "h": 2056,
       "title": "Filter Gäste · 390",
       "page": "filter"
     },
@@ -193,7 +193,7 @@
       "x": 4300,
       "y": 0,
       "w": 1440,
-      "h": 4664,
+      "h": 4346,
       "title": "Weitere Filter · 1440",
       "page": "filter",
       "expand": "fill"
@@ -202,7 +202,7 @@
       "x": 5820,
       "y": 0,
       "w": 390,
-      "h": 8008,
+      "h": 6702,
       "title": "Weitere Filter · 390",
       "page": "filter"
     },
@@ -210,7 +210,7 @@
       "x": 0,
       "y": 0,
       "w": 1440,
-      "h": 4117,
+      "h": 3921,
       "title": "Detail, echte Daten · 1440",
       "page": "detail",
       "expand": "fill"
@@ -219,7 +219,7 @@
       "x": 1520,
       "y": 0,
       "w": 390,
-      "h": 5564,
+      "h": 5242,
       "title": "Detail, echte Daten · 390",
       "page": "detail"
     },
@@ -227,7 +227,7 @@
       "x": 2150,
       "y": 0,
       "w": 1440,
-      "h": 6643,
+      "h": 5749,
       "title": "Detail, volle Daten · 1440",
       "page": "detail",
       "expand": "fill"
@@ -236,7 +236,7 @@
       "x": 3670,
       "y": 0,
       "w": 390,
-      "h": 8545,
+      "h": 7443,
       "title": "Detail, volle Daten · 390",
       "page": "detail"
     },
@@ -253,7 +253,7 @@
       "x": 5820,
       "y": 0,
       "w": 390,
-      "h": 2482,
+      "h": 2456,
       "title": "Detail, Dialoge · 390",
       "page": "detail"
     },
@@ -261,7 +261,7 @@
       "x": 6450,
       "y": 0,
       "w": 1440,
-      "h": 3131,
+      "h": 3109,
       "title": "Anfrage · 1440",
       "page": "detail",
       "expand": "fill"
@@ -270,7 +270,7 @@
       "x": 7970,
       "y": 0,
       "w": 390,
-      "h": 4669,
+      "h": 4603,
       "title": "Anfrage · 390",
       "page": "detail"
     },
@@ -278,7 +278,7 @@
       "x": 0,
       "y": 0,
       "w": 1440,
-      "h": 3017,
+      "h": 4089,
       "title": "Rechtliches · 1440",
       "page": "rest",
       "expand": "fill"
@@ -287,7 +287,7 @@
       "x": 1520,
       "y": 0,
       "w": 390,
-      "h": 4413,
+      "h": 6159,
       "title": "Rechtliches · 390",
       "page": "rest"
     },
@@ -295,7 +295,7 @@
       "x": 2150,
       "y": 0,
       "w": 1440,
-      "h": 1363,
+      "h": 1563,
       "title": "Fehlerseite · 1440",
       "page": "rest",
       "expand": "fill"
@@ -304,7 +304,7 @@
       "x": 3670,
       "y": 0,
       "w": 390,
-      "h": 2057,
+      "h": 2391,
       "title": "Fehlerseite · 390",
       "page": "rest"
     },
@@ -312,7 +312,7 @@
       "x": 4300,
       "y": 0,
       "w": 1440,
-      "h": 2077,
+      "h": 2093,
       "title": "E-Mail · 1440",
       "page": "rest",
       "expand": "fill"
@@ -321,7 +321,7 @@
       "x": 5820,
       "y": 0,
       "w": 390,
-      "h": 3041,
+      "h": 3099,
       "title": "E-Mail · 390",
       "page": "rest"
     }
@@ -366,7 +366,7 @@
   "designSystems": [
     {
       "title": "deine-eventlocation.ch",
-      "namespace": "hochzeitslocation",
+      "namespace": "deine-eventlocation",
       "artifact": "https://claude.ai/artifact/7KTZibKEpKkofJg6Xjwsb2",
       "version": null,
       "copiedAt": "2026-10-31T11:00:00Z"
