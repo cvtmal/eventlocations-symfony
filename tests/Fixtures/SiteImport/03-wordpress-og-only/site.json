@@ -1,0 +1,67 @@
+{
+  "description": "WordPress page without JSON-LD: Open Graph and meta description, an address element in the footer, an /impressum page with address lines, tel and mailto links, and resized photo-300x200.jpg files next to photo.jpg.",
+  "entry": "https://www.gasthof-linde-beispiel.example/",
+  "routes": {
+    "/": {
+      "file": "index.html"
+    },
+    "/impressum/": {
+      "file": "impressum.html"
+    }
+  },
+  "expect": {
+    "facts": {
+      "name": "Gasthof Linde Beispiel",
+      "description": "Familienfeiern im Saal, Sommerabende im Garten und eine Küche, die Bern schmeckt.",
+      "phone": "+41 31 555 01 23",
+      "email": "info@gasthof-linde-beispiel.example",
+      "address.street": "Lindenweg 4",
+      "address.postal_code": "3011",
+      "address.locality": "Bern",
+      "language": "de",
+      "canonical_url": "https://www.gasthof-linde-beispiel.example/"
+    },
+    "absent_fact_values": {
+      "type": [
+        "Organization",
+        "LocalBusiness",
+        "Restaurant"
+      ]
+    },
+    "has_fact_values": {
+      "heading": [
+        "Unser Saal",
+        "So findest du uns",
+        "Betreiberin der Website"
+      ],
+      "snippet": [
+        "Die Terrasse ist neu bestuhlt und bietet Platz für 60 Gäste."
+      ]
+    },
+    "min_candidates": 4,
+    "max_candidates": 4,
+    "candidate_urls_contain": [
+      "https://www.gasthof-linde-beispiel.example/wp-content/uploads/2024/06/saal.jpg",
+      "https://www.gasthof-linde-beispiel.example/wp-content/uploads/2024/06/stube-300x200.jpg"
+    ],
+    "candidate_urls_absent": [
+      "https://www.gasthof-linde-beispiel.example/wp-content/uploads/2024/06/saal-300x200.jpg",
+      "https://www.gasthof-linde-beispiel.example/wp-content/uploads/2024/06/saal-768x512.jpg"
+    ],
+    "candidates_matching": [
+      {
+        "pattern": "~/gartenfest~",
+        "count": 1
+      },
+      {
+        "pattern": "~/saal~",
+        "count": 1
+      },
+      {
+        "pattern": "~/stube~",
+        "count": 1
+      }
+    ],
+    "pages": 2
+  }
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anlässe | Kulturhaus Apex Beispiel</title>
+<meta property="og:site_name" content="Kulturhaus Apex Beispiel">
+<link rel="stylesheet" href="/de/css/kulturhaus.css">
+<style>
+  body { margin: 0; font: 16px/1.5 "Segoe UI", sans-serif; background: #f6f3ee; color: #1f1d1a; }
+  header, main, footer { max-width: 48rem; margin: 0 auto; padding: 1rem; }
+  header nav a { margin-left: 1.2rem; color: #7b2d26; text-decoration: none; }
+  .hinweis { background: #ffe9a8; padding: .6rem 1rem; font-size: .9rem; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="hinweis">Wir speichern Cookies, damit du dich auf unserer Website wohlfühlst. <button type="button">Verstanden</button></div>
+<header>
+  <a href="/de/"><img src="/de/media/wortmarke.png" alt="Kulturhaus Apex Beispiel" width="240" height="56"></a>
+</header>
+<main>
+  <h1>Anlässe und Formate</h1>
+  <p>Hochzeiten, Firmenfeste, Konzerte und Märkte: Wir kennen die Abläufe und helfen dir bei der Planung.</p>
+  <h2>Hochzeiten</h2>
+  <img src="/de/media/anlaesse/hochzeit-hof.jpg" alt="Hochzeitsgesellschaft im Hof" width="1000" height="667">
+  <p>Die Trauung findet im Hof statt, das Essen im Fabriksaal. Für die Nacht stehen sechs Zimmer im Nachbarhaus bereit.</p>
+  <h2>Firmenfeste</h2>
+  <p>Bis zu 300 Personen feiern bei uns Jubiläen, Weihnachtsessen und Produktpräsentationen.</p>
+</main>
+<footer><p>Kulturhaus Apex Beispiel · Kulturweg 21 · 9000 St. Gallen</p></footer>
+<script>
+  document.querySelectorAll('button').forEach(function (knopf) {
+    knopf.addEventListener('click', function () { knopf.parentNode.remove(); });
+  });
+</script>
+</body>
+</html>

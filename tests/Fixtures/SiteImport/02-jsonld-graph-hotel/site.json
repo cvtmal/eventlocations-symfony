@@ -1,0 +1,62 @@
+{
+  "description": "JSON-LD @graph with Organization, WebSite, BreadcrumbList and a Hotel node; seminar page linked as /seminare; hero image from og:image; a broken /impressum link.",
+  "entry": "https://www.hotel-seeblick-beispiel.example/",
+  "routes": {
+    "/": {"file": "index.html"},
+    "/seminare": {"file": "seminare.html"}
+  },
+  "expect": {
+    "facts": {
+      "name": "Hotel Seeblick Beispiel",
+      "description": "Seminar- und Ferienhotel direkt am See mit 48 Zimmern, drei Seminarräumen und Terrasse.",
+      "phone": "+41 41 555 01 23",
+      "email": "seminare@hotel-seeblick-beispiel.example",
+      "address.street": "Seestrasse 18",
+      "address.postal_code": "6003",
+      "address.locality": "Luzern",
+      "address.country": "CH",
+      "geo.lat": 47.0502,
+      "geo.lng": 8.3093,
+      "capacity": 120,
+      "language": "de",
+      "canonical_url": "https://www.hotel-seeblick-beispiel.example/",
+      "website": "https://www.hotel-seeblick-beispiel.example/"
+    },
+    "has_fact_values": {
+      "type": ["Organization", "Hotel", "LocalBusiness"],
+      "heading": ["Willkommen am See", "Seminarraum Bellevue", "Auditorium"],
+      "snippet": [
+        "Der Seminarraum Bellevue bietet Platz für 60 Personen und ist 85 m² gross.",
+        "Das Auditorium fasst bis zu 120 Personen in Reihenbestuhlung."
+      ]
+    },
+    "absent_fact_values": {
+      "name": [
+        "Startseite",
+        "Startseite des Seminarhotels am Vierwaldstättersee",
+        "Seminar-Wochenende am See",
+        "Veranstalter Muster GmbH"
+      ],
+      "type": ["WebSite", "BreadcrumbList", "Event"]
+    },
+    "min_candidates": 5,
+    "max_candidates": 5,
+    "candidate_urls_contain": [
+      "https://www.hotel-seeblick-beispiel.example/media/hero-seeblick.jpg",
+      "https://www.hotel-seeblick-beispiel.example/media/terrasse-abend.jpg",
+      "https://www.hotel-seeblick-beispiel.example/media/zimmer-seeseite.jpg",
+      "https://www.hotel-seeblick-beispiel.example/media/seminar-bellevue.jpg",
+      "https://www.hotel-seeblick-beispiel.example/media/auditorium.jpg"
+    ],
+    "candidate_urls_absent": ["https://www.hotel-seeblick-beispiel.example/media/logo-seeblick.png"],
+    "candidate_origins": {
+      "https://www.hotel-seeblick-beispiel.example/media/hero-seeblick.jpg": "og_image",
+      "https://www.hotel-seeblick-beispiel.example/media/terrasse-abend.jpg": "json_ld",
+      "https://www.hotel-seeblick-beispiel.example/media/seminar-bellevue.jpg": "og_image",
+      "https://www.hotel-seeblick-beispiel.example/media/auditorium.jpg": "img"
+    },
+    "min_skipped_images": 2,
+    "pages": 2,
+    "refused": [{"path": "/impressum", "reason": "http_status"}]
+  }
+}

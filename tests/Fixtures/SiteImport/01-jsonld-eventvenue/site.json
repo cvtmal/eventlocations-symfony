@@ -1,0 +1,83 @@
+{
+  "description": "EventVenue JSON-LD with address, geo, capacity and an image list, Open Graph tags, a picture element with source srcset and an img srcset, over three pages.",
+  "entry": "https://www.schloss-musterburg.example/",
+  "routes": {
+    "/": {
+      "file": "index.html"
+    },
+    "/raeume": {
+      "file": "raeume.html"
+    },
+    "/kontakt": {
+      "file": "kontakt.html"
+    }
+  },
+  "expect": {
+    "facts": {
+      "name": "Schloss Musterburg",
+      "type": "EventVenue",
+      "description": "Historisches Schloss in Aarau mit Festsaal, Rittersaal und Schlosspark für Hochzeiten, Firmenanlässe und Konzerte.",
+      "phone": "+41 62 555 01 23",
+      "email": "events@schloss-musterburg.example",
+      "address.street": "Schlossstrasse 12",
+      "address.postal_code": "5000",
+      "address.locality": "Aarau",
+      "address.country": "CH",
+      "geo.lat": 47.3912,
+      "geo.lng": 8.0451,
+      "capacity": 220,
+      "language": "de",
+      "canonical_url": "https://www.schloss-musterburg.example/",
+      "website": "https://www.schloss-musterburg.example/"
+    },
+    "has_fact_values": {
+      "heading": [
+        "Schloss Musterburg",
+        "Der Rittersaal",
+        "Unsere Räume",
+        "Festsaal",
+        "Schlosspark",
+        "So erreichst du uns"
+      ],
+      "snippet": [
+        "Er bietet Platz für bis zu 180 Personen bei Bankettbestuhlung.",
+        "Im Rittersaal feiern bis zu 80 Gäste an einer langen Tafel."
+      ]
+    },
+    "min_candidates": 9,
+    "max_candidates": 9,
+    "candidate_urls_contain": [
+      "https://www.schloss-musterburg.example/media/og/schloss-teaser.jpg",
+      "https://www.schloss-musterburg.example/media/schloss-aussen.jpg",
+      "https://www.schloss-musterburg.example/media/festsaal.jpg",
+      "https://images.beispiel-cdn.example/musterburg/park.jpg",
+      "https://www.schloss-musterburg.example/media/raeume/festsaal-bankett.jpg",
+      "https://www.schloss-musterburg.example/media/raeume/rittersaal-tafel.jpg",
+      "https://www.schloss-musterburg.example/media/raeume/schlosspark-wiese.jpg",
+      "https://www.schloss-musterburg.example/media/schlosspark-1200.jpg"
+    ],
+    "candidate_urls_absent": [
+      "https://www.schloss-musterburg.example/media/logo-musterburg.svg",
+      "https://www.schloss-musterburg.example/media/icon-facebook.png",
+      "https://www.schloss-musterburg.example/media/rittersaal-480.avif",
+      "https://www.schloss-musterburg.example/media/rittersaal-480.webp",
+      "https://www.schloss-musterburg.example/media/rittersaal-480.jpg",
+      "https://www.schloss-musterburg.example/media/schlosspark-480.jpg"
+    ],
+    "candidate_origins": {
+      "https://www.schloss-musterburg.example/media/og/schloss-teaser.jpg": "og_image",
+      "https://www.schloss-musterburg.example/media/schloss-aussen.jpg": "json_ld",
+      "https://images.beispiel-cdn.example/musterburg/park.jpg": "json_ld",
+      "https://www.schloss-musterburg.example/media/raeume/festsaal-bankett.jpg": "img",
+      "https://www.schloss-musterburg.example/media/schlosspark-1200.jpg": "srcset"
+    },
+    "candidates_matching": [
+      {
+        "pattern": "~/media/rittersaal-~",
+        "count": 1
+      }
+    ],
+    "min_skipped_images": 4,
+    "pages": 3
+  }
+}

@@ -1,0 +1,13 @@
+includes:
+    - ../../../vendor/phpat/phpat/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - PrivateImportData
+    tmpDir: ../../../var/cache/phpstan-private-import-data
+
+services:
+    -
+        class: App\Tests\Architecture\PrivateImportDataTest
+        tags: [phpat.test]

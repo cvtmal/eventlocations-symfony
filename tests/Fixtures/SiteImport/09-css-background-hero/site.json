@@ -1,0 +1,61 @@
+{
+  "description": "Images from inline background styles, twitter:image, link rel image_src, relative ../ paths, an extensionless CDN URL, a srcset whose URLs contain commas, and svg files that must be skipped. The entry page lives in a sub-folder.",
+  "entry": "https://www.eventhalle-beispiel.example/de/start/",
+  "routes": {
+    "/de/start/": {
+      "file": "index.html"
+    },
+    "/de/anlaesse/": {
+      "file": "anlaesse.html"
+    }
+  },
+  "expect": {
+    "facts": {
+      "name": "Eventhalle Beispiel",
+      "language": "de",
+      "address.street": "Hallenweg 8",
+      "address.postal_code": "6300",
+      "address.locality": "Zug"
+    },
+    "min_candidates": 10,
+    "max_candidates": 10,
+    "candidate_urls_contain": [
+      "https://www.eventhalle-beispiel.example/media/og-halle.jpg",
+      "https://images.beispiel-cdn.example/p/1234?w=1200",
+      "https://www.eventhalle-beispiel.example/media/share-halle.jpg",
+      "https://www.eventhalle-beispiel.example/media/hero.jpg",
+      "https://www.eventhalle-beispiel.example/de/media/band-textur.jpg",
+      "https://www.eventhalle-beispiel.example/de/media/halle-innen.jpg",
+      "https://images.beispiel-cdn.example/p/5678",
+      "https://www.eventhalle-beispiel.example/media/anlaesse/konzert-halle.jpg",
+      "https://www.eventhalle-beispiel.example/media/anlaesse/messe-bg.jpg"
+    ],
+    "candidate_urls_absent": [
+      "https://www.eventhalle-beispiel.example/media/grundriss.svg",
+      "https://www.eventhalle-beispiel.example/media/logo-halle.svg",
+      "https://www.eventhalle-beispiel.example/de/media/logo-halle.svg",
+      "https://images.beispiel-cdn.example/c/w_400,h_300/halle.jpg"
+    ],
+    "candidate_origins": {
+      "https://www.eventhalle-beispiel.example/media/og-halle.jpg": "og_image",
+      "https://images.beispiel-cdn.example/p/1234?w=1200": "twitter_image",
+      "https://www.eventhalle-beispiel.example/media/share-halle.jpg": "link_rel",
+      "https://www.eventhalle-beispiel.example/media/hero.jpg": "css_background",
+      "https://www.eventhalle-beispiel.example/de/media/band-textur.jpg": "css_background",
+      "https://www.eventhalle-beispiel.example/de/media/halle-innen.jpg": "img",
+      "https://www.eventhalle-beispiel.example/media/anlaesse/messe-bg.jpg": "css_background"
+    },
+    "candidates_matching": [
+      {
+        "pattern": "~^https://images\\.beispiel-cdn\\.example/c/w_1200,h_800/halle\\.jpg$~",
+        "count": 1
+      },
+      {
+        "pattern": "~/de/start/h_800/~",
+        "count": 0
+      }
+    ],
+    "min_skipped_images": 3,
+    "pages": 2
+  }
+}

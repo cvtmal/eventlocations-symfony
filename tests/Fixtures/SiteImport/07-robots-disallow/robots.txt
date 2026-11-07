@@ -1,0 +1,13 @@
+# robots.txt der Villa Musterwald
+# Das Bildarchiv und der interne Bereich sind nicht für Suchmaschinen gedacht.
+
+User-agent: SchlimmerBot
+Disallow: /
+
+User-agent: *
+Disallow: /galerie
+Disallow: /intern
+Allow: /intern/oeffentlich/
+Crawl-delay: 2
+
+Sitemap: https://www.villa-musterwald.example/sitemap.xml

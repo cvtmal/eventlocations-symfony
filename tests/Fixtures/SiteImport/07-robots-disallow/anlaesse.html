@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anlässe | Villa Musterwald</title>
+<meta property="og:site_name" content="Villa Musterwald">
+<style>
+  body { margin: 0; font-family: "Palatino Linotype", serif; background: #fbf9f4; color: #222; }
+  header, main, footer { max-width: 44rem; margin: 0 auto; padding: 1rem; }
+  nav a { margin-right: 1rem; color: #29402f; }
+  .cookies { background: #222; color: #fff; padding: .7rem 1rem; font-size: .9rem; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="cookies">Mit der Nutzung unserer Seite bist du mit Cookies einverstanden. <button type="button">OK</button></div>
+<main>
+  <h1>Öffentliche Anlässe</h1>
+  <p>Mehrmals im Jahr öffnet die Villa ihre Türen: Gartenfest im Juni, Weihnachtsmarkt im Dezember und die Hauskonzerte im Herbst.</p>
+  <h2>Hauskonzerte</h2>
+  <img src="/media/anlaesse/hauskonzert.jpg" alt="Hauskonzert in der Bibliothek" width="1000" height="667">
+  <p>Zu den Hauskonzerten kommen jeweils 40 Personen. Der Eintritt ist frei, die Kollekte geht an die Musikerinnen und Musiker.</p>
+</main>
+<footer><p>Villa Musterwald · Waldweg 5 · 4051 Basel</p></footer>
+<script>
+  document.querySelectorAll('button').forEach(function (knopf) {
+    knopf.addEventListener('click', function () { knopf.parentNode.remove(); });
+  });
+</script>
+</body>
+</html>

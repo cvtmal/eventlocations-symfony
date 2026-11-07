@@ -1,0 +1,60 @@
+{
+  "description": "A gallery page with 43 lazy-loaded images (data-src, data-srcset, data-lazy-src, data-original, a data: placeholder in src and in srcset) plus logo, social icon, sprite, tracking pixel and a 100x60 preview that are not photos.",
+  "entry": "https://www.eventscheune-musterhof.example/",
+  "routes": {
+    "/": {
+      "file": "index.html"
+    },
+    "/galerie": {
+      "file": "galerie.html"
+    }
+  },
+  "expect": {
+    "facts": {
+      "name": "Eventscheune Musterhof",
+      "language": "de"
+    },
+    "has_fact_values": {
+      "heading": [
+        "Galerie",
+        "Neu im Herbst"
+      ]
+    },
+    "min_candidates": 30,
+    "max_candidates": 60,
+    "candidates_matching": [
+      {
+        "pattern": "~/galerie/scheune-\\d{2}\\.jpg$~",
+        "count": 40
+      },
+      {
+        "pattern": "~/galerie/neu/herbst-\\d-1200\\.jpg$~",
+        "count": 3
+      },
+      {
+        "pattern": "~R0lGOD~",
+        "count": 0
+      }
+    ],
+    "candidate_urls_contain": [
+      "https://www.eventscheune-musterhof.example/media/scheune-aussen.jpg",
+      "https://www.eventscheune-musterhof.example/galerie/titelbild.jpg",
+      "https://www.eventscheune-musterhof.example/galerie/scheune-01.jpg",
+      "https://www.eventscheune-musterhof.example/galerie/scheune-26.jpg",
+      "https://www.eventscheune-musterhof.example/galerie/scheune-35.jpg",
+      "https://www.eventscheune-musterhof.example/galerie/scheune-40.jpg"
+    ],
+    "candidate_urls_absent": [
+      "https://www.eventscheune-musterhof.example/img/logo.png",
+      "https://www.eventscheune-musterhof.example/img/icon-facebook.png",
+      "https://www.eventscheune-musterhof.example/img/sprite.png",
+      "https://www.eventscheune-musterhof.example/img/pixel.png",
+      "https://www.eventscheune-musterhof.example/galerie/vorschau-klein.jpg",
+      "https://stats.beispiel-analytics.example/t.gif?id=4711",
+      "https://www.eventscheune-musterhof.example/galerie/scheune-26-400.jpg",
+      "https://www.eventscheune-musterhof.example/galerie/neu/herbst-1-480.jpg"
+    ],
+    "min_skipped_images": 8,
+    "pages": 2
+  }
+}
