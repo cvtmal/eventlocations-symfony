@@ -84,25 +84,36 @@ final class BaseLayoutTest extends WebTestCase
         self::assertNotSame($header, $menu);
     }
 
-    public function test_the_logos_state_their_size_so_nothing_shifts_when_they_load(): void
+    public function test_the_logos_are_inline_svgs_that_state_their_size_so_nothing_shifts(): void
     {
         $crawler = $this->home();
 
-        foreach (['.site-header__wordmark img' => ['135', '30'], '.site-footer__brand img' => ['126', '28']] as $selector => [$width, $height]) {
+        foreach (['.site-header__wordmark svg.logo', '.site-footer__brand svg.logo'] as $selector) {
             $logo = $crawler->filter($selector);
-            self::assertStringStartsWith('/assets/images/logo-hzl-', (string) $logo->attr('src'));
-            self::assertNotSame('', (string) $logo->attr('alt'));
-            self::assertSame($width, $logo->attr('width'));
-            self::assertSame($height, $logo->attr('height'));
+            self::assertCount(1, $logo, $selector);
+            self::assertSame('img', $logo->attr('role'), $selector);
+            self::assertNotSame('', (string) $logo->attr('aria-label'), $selector);
+            self::assertSame('286', $logo->attr('width'), $selector);
+            self::assertSame('32', $logo->attr('height'), $selector);
         }
+    }
+
+    public function test_the_header_prints_the_logo_art_once_and_the_footer_reuses_it(): void
+    {
+        $crawler = $this->home();
+
+        self::assertCount(1, $crawler->filter('#logo-art'));
+        self::assertCount(1, $crawler->filter('.site-header__wordmark #logo-art'));
+        self::assertSame('#logo-art', $crawler->filter('.site-footer__brand svg.logo use')->attr('href'));
+        self::assertCount(0, $crawler->filter('.site-footer__brand svg.logo path'));
     }
 
     public function test_the_logos_and_the_copyright_line_name_the_domain_with_the_current_year(): void
     {
         $crawler = $this->home();
 
-        foreach (['.site-header__wordmark img', '.site-footer__brand img'] as $selector) {
-            self::assertSame('deine-eventlocation.ch', $crawler->filter($selector)->attr('alt'));
+        foreach (['.site-header__wordmark svg.logo', '.site-footer__brand svg.logo'] as $selector) {
+            self::assertSame('deine-eventlocation.ch', $crawler->filter($selector)->attr('aria-label'));
         }
 
         $year = (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Zurich')))->format('Y');
@@ -192,7 +203,18 @@ final class BaseLayoutTest extends WebTestCase
         $this->home();
 
         self::assertSelectorExists('link[rel="stylesheet"][href^="/assets/styles/app-"][href$=".css"]');
-        self::assertSelectorExists('link[rel="preload"][as="font"][type="font/woff2"][crossorigin][href^="/assets/fonts/figtree-latin-wght-normal-"]');
+        self::assertSelectorExists('link[rel="preload"][as="font"][type="font/woff2"][crossorigin][href^="/assets/fonts/hanken-grotesk-latin-wght-normal-"]');
+    }
+
+    public function test_the_brand_head_links_the_icons_the_manifest_and_the_theme_colour(): void
+    {
+        $this->home();
+
+        self::assertSelectorExists('link[rel="icon"][href="/brand/favicon.svg"][type="image/svg+xml"]');
+        self::assertSelectorExists('link[rel="icon"][href="/brand/favicon.ico"][sizes="48x48"]');
+        self::assertSelectorExists('link[rel="apple-touch-icon"][href="/brand/apple-touch-icon.png"]');
+        self::assertSelectorExists('link[rel="manifest"][href="/brand/site.webmanifest"]');
+        self::assertSelectorExists('meta[name="theme-color"][content="#f6f7fb"]');
     }
 
     public function test_page_has_no_inline_styles_or_scripts(): void

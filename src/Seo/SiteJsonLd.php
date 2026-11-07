@@ -8,8 +8,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * SEO-2: WebSite and Organization, on every page through base.html.twig. No database. No `logo`
- * until the brand design (Q1).
+ * SEO-2: WebSite and Organization, on every page through base.html.twig. No database. The Organization's `logo` is the
+ * square app icon of the brand (`public/brand/icon-512.png`, docs/brand.md), 512 × 512 px.
  */
 final class SiteJsonLd
 {
@@ -54,6 +54,7 @@ final class SiteJsonLd
                     'name' => $this->name,
                     'legalName' => $this->operatorName,
                     'url' => $home,
+                    'logo' => $home.'brand/icon-512.png',
                     'email' => $this->contactEmail,
                     'address' => [
                         '@type' => 'PostalAddress',

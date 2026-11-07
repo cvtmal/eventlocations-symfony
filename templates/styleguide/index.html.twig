@@ -22,11 +22,11 @@
 {% block main %}
 {# [label on the board, token, hex]. The notes are `styleguide.colors.notes.<label>`. #}
 {% set color_groups = [
-    {key: 'surfaces', colors: [['surface', 'surface', '#F8F6EE'], ['surface-raised', 'surface-raised', '#FFFFFF'], ['surface-alt', 'surface-alt', '#F0F1EB'], ['placeholder', 'placeholder-ground', '#E3E1D6']]},
-    {key: 'text', colors: [['ink', 'ink', '#484848'], ['ink-strong', 'ink-strong', '#000000'], ['muted', 'ink-muted', '#6B6B66'], ['line', 'line', '#484848'], ['line-soft', 'line-soft', '#DEDFD6']]},
-    {key: 'accent', colors: [['accent', 'accent', '#FF0096'], ['accent-strong', 'accent-strong', '#D1007A'], ['accent-strong-hover', 'accent-strong-hover', '#B4006A'], ['accent-strong-active', 'accent-strong-active', '#96005A'], ['accent-soft', 'accent-soft', '#FFE3F2'], ['on-accent', 'on-accent', '#FFFFFF']]},
-    {key: 'states', colors: [['focus', 'focus', '#000000'], ['error', 'error', '#B3261E'], ['error-soft', 'error-soft', '#FBE9E7'], ['success', 'success', '#1B6E45'], ['success-soft', 'success-soft', '#E2F1E8'], ['disabled', 'disabled-ground', '#E6E6E0'], ['disabled-ink', 'disabled-ink', '#66665F']]},
-    {key: 'overlay', colors: [['overlay', 'overlay-ground', '#F0F1EB'], ['overlay-circle', 'overlay-circle', '#E6E8DF']]},
+    {key: 'surfaces', colors: [['surface', 'surface', '#F6F7FB'], ['surface-raised', 'surface-raised', '#FFFFFF'], ['surface-alt', 'surface-alt', '#ECEEF7'], ['placeholder', 'placeholder-ground', '#DDE1F0']]},
+    {key: 'text', colors: [['ink', 'ink', '#262B3F'], ['ink-strong', 'ink-strong', '#000000'], ['muted', 'ink-muted', '#5A6078'], ['line', 'line', '#262B3F'], ['line-soft', 'line-soft', '#D8DCEC']]},
+    {key: 'accent', colors: [['accent', 'accent', '#E0501A'], ['accent-strong', 'accent-strong', '#3A3FB0'], ['accent-strong-hover', 'accent-strong-hover', '#2D3190'], ['accent-strong-active', 'accent-strong-active', '#232673'], ['accent-soft', 'accent-soft', '#E6E8FB'], ['on-accent', 'on-accent', '#FFFFFF']]},
+    {key: 'states', colors: [['focus', 'focus', '#000000'], ['error', 'error', '#B3261E'], ['error-soft', 'error-soft', '#FBE9E7'], ['success', 'success', '#1B6E45'], ['success-soft', 'success-soft', '#E2F1E8'], ['disabled', 'disabled-ground', '#E3E6F0'], ['disabled-ink', 'disabled-ink', '#5A5F77']]},
+    {key: 'overlay', colors: [['overlay', 'overlay-ground', '#ECEEF7'], ['overlay-circle', 'overlay-circle', '#DFE3F3']]},
 ] %}
 {# [role, desktop, phone] #}
 {% set type_roles = [
@@ -377,7 +377,7 @@
             {{ include('styleguide/_canton_map.html.twig', ignore_missing = true) }}
             <div class="sg-map-side">
                 <ul class="sg-legend">
-                    {% for item in [['map-land', '#FFFFFF'], ['map-line', '#8A8A82'], ['map-hover', '#FF0096'], ['map-selected', '#700044'], ['map-lake', '#6B8AA0']] %}
+                    {% for item in [['map-land', '#FFFFFF'], ['map-line', '#757B95'], ['map-hover', '#E0501A'], ['map-selected', '#1E2160'], ['map-lake', '#6B8AA0']] %}
                         <li><span class="sg-legend__dot sg-swatch--{{ item[0] }}"></span><span><strong>{{ item[0] }}</strong> {{ [item[1], ('styleguide.map.legend.' ~ item[0])|trans({}, 'styleguide')]|join(', ') }}</span></li>
                     {% endfor %}
                 </ul>
@@ -415,6 +415,24 @@
             <div class="sg-group" data-component="count-badge">
                 <h3 class="sg-subheading">{{ 'styleguide.count_badge.heading'|trans({}, 'styleguide') }}</h3>
                 <div class="sg-row"><span class="btn btn--icon site-header__favorites">{{ icon('heart') }}<span class="count-badge">3</span></span></div>
+            </div>
+            <div class="sg-group" data-component="brand">
+                <h3 class="sg-subheading">{{ 'styleguide.brand.heading'|trans({}, 'styleguide') }}</h3>
+                <div class="sg-row">
+                    <div class="sg-state">
+                        <span class="sg-state__label">{{ 'styleguide.brand.logo'|trans({}, 'styleguide') }}</span>
+                        {#- The page's header already prints the art once, so the sample reuses it. -#}
+                        <div class="sg-logo">{{ include('components/_logo.html.twig', {label: 'layout.logo_alt'|trans, reuse: true}, with_context = false) }}</div>
+                    </div>
+                </div>
+                <div class="sg-row" data-component="photo-placeholder">
+                    {% for code in [null, 'seminar', 'birthday', 'apero', 'christmas_party', 'wedding', 'concert', 'corporate_event'] %}
+                        <div class="sg-state">
+                            <span class="sg-state__label">{{ code ?? 'styleguide.brand.placeholder'|trans({}, 'styleguide') }}</span>
+                            {{ include('components/_photo_placeholder.html.twig', {event_type: code, class: 'sg-placeholder'}, with_context = false) }}
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
             <div class="sg-group">
                 <h3 class="sg-subheading">{{ 'styleguide.extras.variants'|trans({}, 'styleguide') }}</h3>

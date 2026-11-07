@@ -74,3 +74,23 @@
         box-shadow: 0 0 0 6px var(--c-surface-raised);
     }
 }
+
+// No public photo (F6): a short band with the brand's placeholder where the hero would stand, inset like the hero. It is
+// no carousel and no link, so the page has nothing to open.
+.venue-placeholder {
+    padding-inline: var(--space-16);
+
+    @include bp.up(md) {
+        padding-inline: var(--space-24);
+    }
+
+    .photo-placeholder {
+        height: 9.5rem;
+        border-radius: var(--radius-image);
+
+        @include bp.up(md) {
+            height: 12rem;
+            border-radius: var(--radius-card);
+        }
+    }
+}

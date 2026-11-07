@@ -315,8 +315,9 @@ final class HomePageTest extends WebTestCase
         self::assertCount(0, $crawler->filter('.home-spotlight'));
         self::assertCount(1, $crawler->filter('.home-hero__media'));
         self::assertCount(0, $crawler->filter('.home-hero__media img'));
+        self::assertCount(1, $crawler->filter('.home-hero__media > .photo-placeholder'));
         self::assertCount(0, $crawler->filter('[fetchpriority]'));
-        self::assertCount(0, $crawler->filter('meta[property="og:image"]'));
+        self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[property="og:image"]')->attr('content'));
         self::assertCount(1, $crawler->filter('form.home-search'));
         self::assertCount(2, $crawler->filter('.home-about__text p'));
     }

@@ -36,6 +36,13 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-16);
+
+    // Reuses the header's art (`reuse`), so it stands in the footer's own colour: ink. `align-self`, because the column would
+    // stretch an auto-width svg over its whole width and centre the art in it.
+    .logo {
+        align-self: flex-start;
+        height: 1.75rem;
+    }
 }
 
 .site-footer__tagline {

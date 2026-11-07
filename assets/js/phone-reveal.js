@@ -1,4 +1,4 @@
-// Phone reveal (#8, DP-11): "Telefonnummer anzeigen" is a plain link to /hochzeitslocation/{slug}/telefon.
+// Phone reveal (#8, DP-11): "Telefonnummer anzeigen" is a plain link to the venue's phone route (`venue_phone`).
 // With JS it fetches the number as JSON and swaps in a tel: link; on any failure it follows the link.
 // Self-contained: no imports, no globals.
 (() => {
