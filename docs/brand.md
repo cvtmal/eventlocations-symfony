@@ -27,14 +27,14 @@ privately as an artifact (https://claude.ai/artifact/62CFPCBUmi8R7JwJJd4woV).
 - **Typeface:** Hanken Grotesk (OFL-1.1), one variable file, self-hosted. Its average advance is within 1 % of the former typeface at 400 and
   700, so no line wraps differently. The logo's letters are outlines of its Bold, so the logo never waits for the font.
 - **Back office:** keeps its own neutrals (`assets/styles/admin/_tokens.scss`); its accent, its links and the tint of the `pink` tone (the tone
-  key is historical, it renders `--a-brand-bg`) follow the brand. Its sidebar (and the one of `/konto`) shows the mark beside the wordmark.
+  key is historical, it renders `--a-brand-bg`) follow the brand. Its sidebar (and the one of `/konto`) shows the mark above the wordmark.
 
 ## The mark and the lockups
 
 **The mark** is an indigo rounded square (32 units, radius 8) with a white location pin and a vermilion four-point spark in the pin's head.
 The pin is drawn at 1.2 times the Lucide `map-pin` (`translate(16 15.8) scale(1.2) translate(-12 -11.95)`), so it still reads as a pin at
 16 px; the spark is a dot there and a spark from 32 px. `public/brand/favicon.svg` is the mark; every lockup and the inline logo draw the same
-pin (`BrandFilesTest` compares them).
+pin and spark (`BrandFilesTest` compares the transform and both paths).
 
 | File | Lockup | Ground | Use |
 |---|---|---|---|
@@ -61,7 +61,7 @@ Below the minimum of a lockup use the mark alone.
 **Do**
 
 - Use the files as they are, scaled proportionally, on the ground their row names.
-- Use the mark alone where the name is already there (favicon, app icon, sidebar beside a text wordmark).
+- Use the mark alone where the name is already there (favicon, app icon, the sidebar above a text wordmark).
 - Use the mono variant whenever only one ink is available.
 
 **Don't**
@@ -94,11 +94,11 @@ an `App\Shared\ValueObject\OgCard` on the primary, with `logo-dark.svg` top left
 | Shape | Built by | Text | Who fills it |
 |---|---|---|---|
 | default | `OgCard::default($tagline)` | the tagline, up to three lines | done: `og-default.png` |
-| venue | `OgCard::venue($name, $place, $facts)` | place above, name in up to two lines, facts below (e.g. "20–120 Personen · Seminar, Apéro"); the mark on the right | F7b, for a venue without a photo |
+| venue | `OgCard::venue($place, $name, $facts)` | place above, name in up to two lines, facts below (e.g. "20–120 Personen · Seminar, Apéro"); the mark on the right | F7b, for a venue without a photo |
 | landing | `OgCard::landing($eyebrow, $heading, $facts)` | e.g. "Eventlokale", "Seminarräume im Kanton Zürich", "48 Locations"; the mark on the right | F8 |
 
 SVG does not wrap text, so `OgCard` breaks the title by characters (22 a line at 64 px, the default card 26) and ends an overflow in "…";
-eyebrow and facts are one line of at most 44 characters. `bin/console app:brand:og-card --variant=venue --title=… --eyebrow=… --facts=… --out=var/brand/x.svg`
+eyebrow and facts are one line of at most 44 characters. `make sf c="app:brand:og-card --variant=venue --eyebrow=… --title=… --facts=… --out=var/brand/x.svg"`
 writes one card. Social networks do not take SVG, so a card needs a PNG render: `make brand-png` does it for the default card. Rendering
 per venue or per landing page at runtime would need a rasteriser the server does not have (GD only, no Chromium); F7b and F8 choose between
 prerendering a fixed set (the landing pages are a finite list) in the tools container and keeping `og-default.png`.
@@ -106,8 +106,9 @@ prerendering a fixed set (the landing pages are a finite list) in the tools cont
 ## Mail header
 
 `templates/emails/layout.html.twig`: the card starts with an indigo band (`#3a3fb0`, radius 24 at the top, none below 620 px) holding
-`mail-logo.png` (the dark lockup at twice the displayed 215 × 24 px) and a 32 × 3 px vermilion bar. The band keeps its colour in dark mode, so
-the logo needs no white plate. The image's alt text is white, so a mail with images blocked still shows the name on the band.
+`mail-logo.png` (the dark lockup at twice the displayed 215 × 24 px, on an indigo ground of its own) and a 32 × 3 px vermilion bar. The
+layout gives the band no dark-mode override, and the PNG carries its own indigo, so the logo needs no white plate even where a client
+recolours backgrounds. The image's alt text is white, so a mail with images blocked still shows the name on the band.
 
 ## Rendering the PNGs
 

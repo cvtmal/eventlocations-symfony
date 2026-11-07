@@ -25,8 +25,9 @@ const jobs = {
     // Maskable: a full ground, the pin inside the central 80 % circle that every mask keeps.
     'icon-maskable-192.png': img('favicon.svg', 192, PRIMARY, 19.2),
     'icon-maskable-512.png': img('favicon.svg', 512, PRIMARY, 51.2),
-    // Mails do not show SVG: the dark lockup at twice its 215 × 24 px, for the primary band of the mail header.
-    'mail-logo.png': [430, 48, null, `<img src="file://${BRAND}/logo-dark.svg" style="position:absolute;left:0;top:0;width:430px;height:48px">`],
+    // Mails do not show SVG: the dark lockup at twice its 215 × 24 px, on the primary of the mail header's band, so a client that
+    // recolours the band's ground still shows white on indigo.
+    'mail-logo.png': [430, 48, PRIMARY, `<img src="file://${BRAND}/logo-dark.svg" style="position:absolute;left:0;top:0;width:430px;height:48px">`],
     'og-default.png': [1200, 630, PRIMARY, fs.readFileSync('/repo/var/brand/og-default.svg', 'utf8')],
 };
 

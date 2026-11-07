@@ -11,7 +11,7 @@ final class OgCardTest extends TestCase
 {
     public function test_a_short_title_stays_on_one_line(): void
     {
-        self::assertSame(['Forum Lindenhof'], OgCard::venue('Forum Lindenhof', 'Zürich', '20–120 Personen')->title);
+        self::assertSame(['Forum Lindenhof'], OgCard::venue('Zürich', 'Forum Lindenhof', '20–120 Personen')->title);
     }
 
     public function test_a_title_wraps_at_word_boundaries_within_the_line_width(): void
@@ -23,12 +23,29 @@ final class OgCardTest extends TestCase
 
     public function test_a_title_beyond_its_lines_ends_in_an_ellipsis(): void
     {
-        $lines = OgCard::venue('Gasthof Felsenau am Hallwilersee mit Seeterrasse und Bootssteg', 'Reinach BL', '')->title;
+        $lines = OgCard::venue('Reinach BL', 'Gasthof Felsenau am Hallwilersee mit Seeterrasse und Bootssteg', '')->title;
 
         self::assertCount(2, $lines);
         self::assertStringEndsWith('…', $lines[1]);
         foreach ($lines as $line) {
             self::assertLessThanOrEqual(22, mb_strlen($line));
+        }
+    }
+
+    public function test_the_ellipsis_follows_the_last_whole_word(): void
+    {
+        self::assertSame(['Gasthof Felsenau am', 'Hallwilersee mit…'], OgCard::wrap('Gasthof Felsenau am Hallwilersee mit Seeterrasse', 22, 2));
+    }
+
+    public function test_the_cut_never_splits_a_multibyte_letter(): void
+    {
+        foreach (['Ó', 'À', 'ü', '–'] as $letter) {
+            $lines = OgCard::wrap('Schloss Wartensee am Bodensee '.$letter.' '.$letter.' '.str_repeat('X', 21).$letter.'XXXX', 22, 2);
+
+            foreach ($lines as $line) {
+                self::assertTrue(mb_check_encoding($line, 'UTF-8'), $letter);
+            }
+            self::assertStringEndsWith('…', $lines[1], $letter);
         }
     }
 

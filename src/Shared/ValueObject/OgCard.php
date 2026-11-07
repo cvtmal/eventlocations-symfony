@@ -7,7 +7,8 @@ namespace App\Shared\ValueObject;
 /**
  * The text of one Open Graph card (1200 × 630, `templates/brand/og_card.svg.twig`, docs/brand.md). SVG does not wrap text, so the
  * card breaks its title here, by characters: Hanken Grotesk Bold at the card's 64 px averages about 34 px a character, and the text
- * column is 760 px wide. A title longer than its lines ends in "…", so a long venue name never runs into the mark.
+ * column is 760 px wide (all capitals run wider: about 42 px, so a 22-character line of capitals reaches the mark). A title longer
+ * than its lines ends in "…" after its last whole word, so a long venue name never runs into the mark.
  *
  * Three shapes: the default card (the tagline, every page without a photo), a venue card (F7b: a venue without a photo) and a
  * landing card (F8: canton, town and event-type pages).
@@ -37,10 +38,12 @@ final readonly class OgCard
     }
 
     /**
+     * The same order as the card reads, and as landing(): eyebrow, title, facts.
+     *
      * @param string $place e.g. "Reinach BL"
      * @param string $facts e.g. "20–120 Personen · Seminar, Apéro"
      */
-    public static function venue(string $name, string $place, string $facts): self
+    public static function venue(string $place, string $name, string $facts): self
     {
         return new self('venue', self::line($place), self::wrap($name, self::TITLE_WIDTH, 2), self::line($facts));
     }
@@ -92,7 +95,14 @@ final readonly class OgCard
 
         $kept = \array_slice($result, 0, $lines);
         $last = (string) array_pop($kept);
-        $kept[] = rtrim(mb_substr($last, 0, $width - 1), ' ,.-–·').'…';
+        if (mb_strlen($last) > $width - 1) { // room for the "…": end on a whole word, or cut a single long one
+            $last = mb_substr($last, 0, $width - 1);
+            $space = mb_strrpos($last, ' ');
+            if (false !== $space && $space > 0) {
+                $last = mb_substr($last, 0, $space);
+            }
+        }
+        $kept[] = (preg_replace('/[\s,.\-–·]+$/u', '', $last) ?? $last).'…';
 
         return $kept;
     }

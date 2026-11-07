@@ -41,7 +41,7 @@ final class RenderOgCardCommand
     ): int {
         $card = match ($variant) {
             'default' => OgCard::default('' !== $title ? $title : $this->translator->trans('layout.footer.tagline')),
-            'venue' => OgCard::venue($title, $eyebrow, $facts),
+            'venue' => OgCard::venue($eyebrow, $title, $facts),
             'landing' => OgCard::landing($eyebrow, $title, $facts),
             default => null,
         };
@@ -62,7 +62,11 @@ final class RenderOgCardCommand
 
             return Command::FAILURE;
         }
-        file_put_contents($out, $this->twig->render('brand/og_card.svg.twig', ['card' => $card]));
+        if (false === @file_put_contents($out, $this->twig->render('brand/og_card.svg.twig', ['card' => $card]))) {
+            $io->error(\sprintf('%s cannot be written.', $out));
+
+            return Command::FAILURE;
+        }
         $io->writeln(\sprintf('Wrote %s', $out));
 
         return Command::SUCCESS;

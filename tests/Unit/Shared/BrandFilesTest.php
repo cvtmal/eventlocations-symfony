@@ -185,12 +185,39 @@ final class BrandFilesTest extends TestCase
         if (1 !== preg_match('/<g transform="(translate\(16 [^"]+)">/', $favicon, $m)) {
             self::fail('favicon.svg is the compact mark.');
         }
-        $pin = $m[1];
+        preg_match_all('/ d="([^"]+)"/', $favicon, $paths);
+        self::assertCount(2, $paths[1], 'favicon.svg draws the pin and the spark.');
+        $mark = [$m[1], ...$paths[1]]; // the pin's transform, the pin's path, the spark's path
 
-        foreach (self::LOCKUPS as $file) {
-            self::assertStringContainsString($pin, (string) file_get_contents($this->root().'/public/brand/'.$file), $file);
+        $files = [...array_map(fn (string $file): string => $this->root().'/public/brand/'.$file, self::LOCKUPS), $this->root().'/templates/components/_logo.html.twig'];
+        foreach ($files as $file) {
+            $svg = (string) file_get_contents($file);
+            foreach ($mark as $part) {
+                self::assertStringContainsString($part, $svg, basename($file).' draws the mark of favicon.svg.');
+            }
         }
-        self::assertStringContainsString($pin, (string) file_get_contents($this->root().'/templates/components/_logo.html.twig'));
+    }
+
+    public function test_the_maskable_and_apple_icons_are_opaque_and_named_for_their_purpose(): void
+    {
+        $manifest = json_decode((string) file_get_contents($this->root().'/public/brand/site.webmanifest'), true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($manifest);
+        self::assertIsArray($manifest['icons']);
+        $opaque = ['apple-touch-icon.png'];
+        foreach ($manifest['icons'] as $icon) {
+            self::assertIsArray($icon);
+            if ('maskable' === $icon['purpose']) {
+                self::assertStringStartsWith('/brand/icon-maskable-', (string) $icon['src'], 'A maskable icon needs a full ground and the safe zone.');
+                $opaque[] = basename((string) $icon['src']);
+            }
+        }
+        self::assertCount(3, $opaque);
+
+        foreach ($opaque as $file) {
+            $image = imagecreatefrompng($this->root().'/public/brand/'.$file);
+            self::assertNotFalse($image, $file);
+            self::assertSame(0, imagecolorat($image, 0, 0) >> 24 & 0x7F, $file.' has an opaque corner (no transparency).');
+        }
     }
 
     public function test_the_mono_lockups_have_one_colour_on_white(): void
