@@ -14,6 +14,8 @@ when@prod:
             # bin/deploy writes the deployed commit to .env.prod.local.
             release: '%env(default::SENTRY_RELEASE)%'
             environment: production
+            # G5: a preview link's token never reaches a report (Wave G §4a.4).
+            before_send: 'App\Shared\Http\SensitiveUrlScrubber'
             # Matched with is_a(), so subclasses count. Expected client errors would use up the
             # quota. Plain HttpException is not listed, because that would also drop 5xx.
             ignore_exceptions:

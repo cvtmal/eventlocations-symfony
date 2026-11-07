@@ -1,0 +1,38 @@
+// G5: the Vorschau-Links tab of an entry. The address field takes the row's width; QR code, download and
+// "Zurückziehen" sit under it and wrap at 390 px.
+
+.preview-links {
+    td {
+        vertical-align: top;
+    }
+}
+
+.preview-links__meta {
+    display: block;
+    margin-top: var(--a-space-1);
+    font-size: 13px;
+}
+
+.preview-links__link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-2);
+    min-inline-size: 16rem;
+}
+
+.preview-links__url {
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+}
+
+.preview-links__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-2);
+    align-items: center;
+}
+
+.preview-links__qr {
+    border: 1px solid var(--a-line);
+    background: var(--a-surface);
+}

@@ -36,3 +36,32 @@
     margin: 0;
     color: var(--c-ink);
 }
+
+// G5's private preview link (`venues/preview/show.html.twig`): a light banner a venue manager reads first, with the two
+// actions beside the text and under it below md.
+.preview-banner--public {
+    border-block-end: 1px solid var(--c-line);
+    background: var(--c-accent-soft);
+    color: var(--c-ink-strong);
+    font-size: var(--fs-body);
+}
+
+.preview-banner__body {
+    display: grid;
+    flex: 1 1 28rem;
+    gap: var(--space-4);
+}
+
+.preview-banner__label {
+    display: flex;
+    gap: var(--space-8);
+    align-items: center;
+    margin: 0;
+}
+
+.preview-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8) var(--space-16);
+    align-items: center;
+}

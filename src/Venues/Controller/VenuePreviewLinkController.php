@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Venues\Controller;
+
+use App\Shared\Command\RecordFunnelEvent;
+use App\Shared\Funnel\FunnelEvent;
+use App\Venues\PreviewToken;
+use App\Venues\ReadModel\VenueDetailQuery;
+use App\Venues\ReadModel\VenuePreviewQuery;
+use Psr\Clock\ClockInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Routing\Attribute\Route;
+
+/**
+ * The private preview of an entry (G5): whoever holds a link staff issued sees the entry as it would
+ * look, without an account, with the banner "Noch nicht vom Betreiber bestätigt" and the photos the
+ * public may see (`VenueDetailQuery::preview()`). A wrong token is a 404, an expired or revoked link a
+ * 410.
+ *
+ * Every answer is private (`no-store`), `noindex` and sent with `Referrer-Policy: no-referrer`, so the
+ * token reaches no shared cache, no search engine and no Referer of the page's own asset requests.
+ * The 404 and 410 are rendered here, not thrown: nothing goes through the error logger. The token is
+ * never logged (nginx skips `/vorschau/` in its access log, Sentry's event URL is scrubbed by
+ * `Shared\Http\SensitiveUrlScrubber`). A GET that shows the entry records `preview_opened` with the
+ * link's campaign (G8); a HEAD records nothing.
+ */
+final class VenuePreviewLinkController extends AbstractController
+{
+    private const array HEADERS = ['X-Robots-Tag' => 'noindex, nofollow', 'Referrer-Policy' => 'no-referrer'];
+
+    public function __construct(
+        private readonly PreviewToken $tokens,
+        private readonly VenuePreviewQuery $previews,
+        private readonly VenueDetailQuery $venues,
+        private readonly MessageBusInterface $commandBus,
+        private readonly ClockInterface $clock,
+    ) {
+    }
+
+    /**
+     * Any segment and any method: a near miss (a token with a full stop from a plain-text mail, a POST)
+     * must get this private page too, not the generic error page, which is cacheable and sends the stats
+     * beacon with the path.
+     */
+    #[Route(path: ['de' => '/vorschau/{token}'], name: 'venue_preview', requirements: ['token' => '[^/]+'])]
+    public function __invoke(Request $request, string $token): Response
+    {
+        if (!$request->isMethod('GET') && !$request->isMethod('HEAD')) {
+            $response = $this->unavailable(Response::HTTP_METHOD_NOT_ALLOWED);
+            $response->headers->set('Allow', 'GET, HEAD');
+
+            return $response;
+        }
+
+        $id = $this->tokens->idFrom($token);
+        $link = null === $id ? null : $this->previews->find($id);
+        if (null === $link) {
+            return $this->unavailable(Response::HTTP_NOT_FOUND);
+        }
+        if (!$link->isOpen($this->clock->now())) {
+            return $this->unavailable(Response::HTTP_GONE);
+        }
+
+        $venue = $this->venues->preview($link->venueNumber);
+        if (null === $venue) {
+            return $this->unavailable(Response::HTTP_NOT_FOUND);
+        }
+
+        if ($request->isMethod('GET')) {
+            $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::PreviewOpened, $link->venueId, $link->campaignCode));
+        }
+
+        return self::private($this->render('venues/preview/show.html.twig', ['venue' => $venue]));
+    }
+
+    private function unavailable(int $status): Response
+    {
+        return self::private($this->render('venues/preview/unavailable.html.twig', ['gone' => Response::HTTP_GONE === $status], new Response(status: $status)));
+    }
+
+    private static function private(Response $response): Response
+    {
+        $response->headers->add(self::HEADERS);
+        $response->setPrivate();
+        $response->headers->addCacheControlDirective('no-store');
+
+        return $response;
+    }
+}

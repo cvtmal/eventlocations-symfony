@@ -70,6 +70,7 @@ final class SiteImportIsPrivateTest extends WebTestCase
             'listing_town' => [['canton' => 'zuerich', 'town' => $data['town']]],
             'sitemap_venues' => [['n' => 1]],
             'merkliste_toggle' => [['number' => $data['number']]],
+            'venue_preview' => [['token' => $data['preview']]],
         ];
         $router = self::getContainer()->get('router');
         self::assertInstanceOf(RouterInterface::class, $router);

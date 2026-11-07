@@ -107,6 +107,12 @@ cms:
             failed: Die Datei kam nicht vollständig an. Bitte noch einmal versuchen.
         title:
             required: Bitte einen Titel eingeben.
+    preview_link:
+        campaign:
+            required: Bitte einen Kampagnencode eingeben.
+            invalid: 'Nur Buchstaben, Ziffern, «-» und «_», höchstens 40 Zeichen, am Anfang ein Buchstabe oder eine Ziffer.'
+        lifetime:
+            invalid: Bitte eine Gültigkeit wählen.
 crm:
     property:
         unknown_field: Dieses Feld lässt sich nicht bearbeiten.

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Support\Http;
 
+use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Geo\ValueObject\Canton;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Inquiries\InquiryFormFields;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\PreviewToken;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -30,7 +32,7 @@ trait PublicRouteFixtures
     private const HISTORY_SLUG = 'altes-schloss-seeblick';
 
     /**
-     * @return array{number: int, gone: string, town: string, building: string, started: string}
+     * @return array{number: int, gone: string, town: string, building: string, started: string, preview: string, preview_gone: string}
      */
     private function seedPublicRoutes(): array
     {
@@ -42,6 +44,12 @@ trait PublicRouteFixtures
         $this->withBuilding($this->inCanton(Canton::ZH, 5), 'castle');
         $this->inTown('Stäfa', 5);
         $gone = $this->inCanton(Canton::BE, 1, VenueStatus::Unpublished)[0];
+
+        // G5: an open preview link of the full venue and a revoked one.
+        $tokens = self::getContainer()->get(PreviewToken::class);
+        self::assertInstanceOf(PreviewToken::class, $tokens);
+        $preview = $tokens->forId(VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'fixture'])->id());
+        $previewGone = $tokens->forId(VenuePreviewFactory::new()->revoked()->create(['venue' => $venue, 'campaignCode' => 'fixture'])->id());
 
         foreach (['cache.phone_reveal', 'cache.inquiry_submit'] as $name) {
             $pool = self::getContainer()->get($name);
@@ -58,6 +66,8 @@ trait PublicRouteFixtures
             'town' => $this->town('Stäfa')->slug(),
             'building' => $translator->trans('landing.building.castle.slug', [], 'search'),
             'started' => InquiryFormFields::tokenFrom(self::FILL_STARTED),
+            'preview' => $preview,
+            'preview_gone' => $previewGone,
         ];
     }
 }

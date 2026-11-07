@@ -17,5 +17,6 @@ final class AppStory extends Story
         PortalStory::load();
         CrmStory::load();
         FunnelStory::load();
+        PreviewStory::load();
     }
 }

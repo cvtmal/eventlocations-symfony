@@ -284,6 +284,8 @@ history:
         MoveVenuePhotoToRoom: ein Foto verschoben
         RemoveVenuePhoto: ein Foto gelöscht
         GrantPhotoRights: Fotos freigegeben
+        IssueVenuePreview: einen Vorschau-Link erstellt
+        RevokeVenuePreview: einen Vorschau-Link zurückgezogen
         AddRoom: einen Raum hinzugefügt
         ChangeRoom: einen Raum geändert
         ReorderRooms: die Räume neu angeordnet
@@ -620,6 +622,52 @@ text:
     error:
         stale: Diese Texte wurden inzwischen geändert. Bitte neu laden; die Eingaben auf dieser Seite gehen dabei verloren.
         stale_reload: Seite neu laden
+
+# G5: the entry's private preview links.
+preview_links:
+    tab: Vorschau-Links
+    intro: 'Ein Vorschau-Link zeigt den Eintrag so, wie er erscheinen würde, ohne Login und mit dem Hinweis «Noch nicht vom Betreiber bestätigt». Fotos ohne Bildrechte bleiben verborgen. Suchmaschinen sehen die Seite nicht. Jedes Öffnen zählt im Funnel unter der Kampagne; zum Prüfen nimm deshalb «Vorschau» oben.'
+    new: Neuer Vorschau-Link
+    submit: Link erstellen
+    list: Vorschau-Links
+    empty: Noch kein Vorschau-Link.
+    table_label: Vorschau-Links dieses Eintrags
+    field:
+        campaign: Kampagne
+        campaign_help: 'Zum Beispiel «brief-2026-11». Nur Buchstaben, Ziffern, «-» und «_».'
+        lifetime: Gültig für
+        link: 'Link für {campaign}'
+    lifetime:
+        30: 30 Tage
+        90: 90 Tage
+        180: 180 Tage
+    column:
+        campaign: Kampagne
+        status: Status
+        link: Link
+    state:
+        open: Aktiv
+        expired: Abgelaufen
+        revoked: Zurückgezogen
+    detail:
+        open: 'gültig bis {date}'
+        expired: 'abgelaufen am {date}'
+        revoked: 'zurückgezogen am {date}'
+        created: 'erstellt am {date}'
+    qr: QR-Code
+    qr_alt: 'QR-Code des Vorschau-Links für {campaign}'
+    qr_download: QR-Code herunterladen (SVG)
+    revoke:
+        action: Zurückziehen
+        action_for: 'Vorschau-Link {campaign} zurückziehen'
+        title: 'Vorschau-Link {campaign} zurückziehen?'
+        text: Wer den Link öffnet, sieht danach nur noch den Hinweis, dass er nicht mehr gilt. Das lässt sich nicht rückgängig machen; erstelle bei Bedarf einen neuen Link.
+        cancel: Abbrechen
+        confirm: Zurückziehen
+        close: Schliessen
+    flash:
+        issued: Vorschau-Link erstellt.
+        revoked: Vorschau-Link zurückgezogen.
 
 # #47: the staff statistics, the media kit and the dashboard widget.
 stats:
