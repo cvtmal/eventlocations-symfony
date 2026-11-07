@@ -102,6 +102,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F6 | `brand-design` | L | F1 | — | — (D23, D32) | Done (`98f38d7`) |
 | F6b | `brand-assets` | M | F6 | — | — (D23) | Done |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
+| F5b | `guests-rooms` | S | F4, F5 | indexes only | — | Todo |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Todo |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Todo |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
@@ -654,6 +655,10 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Outcome** (merged as `3c19cad`, 2026-11-07). `PublicCopyAddressTest` reads every `translations/*+intl-icu.de.yaml` except `admin`, `cms` and `crm` (a new public catalogue needs no list entry), all Twig, PHP and `assets/js` as text, and the staff catalogues for a formal form inside a sentence. Formal Sie/Ihr*/Ihnen/"Sehr geehrte", plural euch/euer/"könnt ihr" and "ß" fail, and so does a capitalised "Sie" at a sentence start (write "Die Location …"); lower-case sie/ihr (she, they) and `deine-eventlocation.ch` pass. Symfony's German CSRF, upload-limit and `Length` messages say "Sie": they are overridden in `validators+intl-icu.de.yaml`, keyed by the English source text, and `tests/Integration/Shared/Translation/FrameworkMessagesTest.php` reads the sources from the framework, so a new reachable formal message needs a line there. `/konto` mails greet "Hallo {name}". Left for F7b: mixed imperative stems inside one sentence (the 41 landing intros, `home.cta.text`) and the portal rejection mail subject.
 
+### F5b `guests-rooms` (S)
+
+(Placed here, not after F5, so it does not touch the lines of open cycles.) **Depends on** F4, F5. **Owns** indexes only. Lane: the tech lead's next free lane. **Why.** F5's guest filter reads only the venue's own `capacity_min`/`capacity_max`, and F4 does not compare those with the rooms. A venue with a 300-person hall would be hidden by a stale venue figure of 120. **Rule (PO + tech lead, 2026-11-07).** A venue matches "N Gäste" when its own range or at least one of its rooms' layout-derived ranges (F4's `Seating::guestRange()`) holds N. The card's capacity line follows the same rule and shows the overall maximum. **Scope.** An `EXISTS` over `rooms` in the guest criterion of `ListingQuery` and the live count, the card's capacity line, an index if the plan needs one. **Done when** a venue whose own range is below N but whose room holds N is listed, the card shows the room's maximum, the URL codec is unchanged, an `EXPLAIN` on the demo data ×10 holds, the S11 budgets hold, and there are Integration and Application tests.
+
 ### F7b `event-copy-de` (M)
 
 **Depends on** F3, F5, F7a (no longer F8: F8 covers the landing pages, F7b the rest). **Owns** no schema. **Scope.** All German public copy for events (the route paths moved to F5): the labels of the `setting`, `building`, `infrastructure` and `surroundings` taxonomy groups (still the sister site's after F3; PO decision 2026-11-07: F7b writes them), titles, meta descriptions and JSON-LD wording, landing texts, the home page, the legal pages (the operator D6, the processors, the contact `hallo@deine-eventlocation.ch` D9; placeholder text marked TODO until the owner delivers them), the mails, the Merkliste copy and `llms.txt`. **Done when** no wedding wording is left in public output (a test greps the rendered pages and the public catalogues for "Hochzeit" outside the event type label), titles and meta descriptions are unique, and `PublicCopyAddressTest` is still green.
@@ -748,6 +753,7 @@ The PRDs describe a product that is mostly ours already (free listing, paid tier
 | D32 | **D12 follow-ups settled.** (1) A card without the venue's own photos shows F6's neutral placeholder per event type (`_photo_placeholder`); Google Places photos stay on the detail page only. (2) Crawled facts are never published as they are: an entry goes public only once its text is written and its facts are checked; until then it is a draft (F14). | F6, F14 |
 | D33 | **Catering has one source:** the `catering` terms (`in_house`, `external_allowed`, …). The FAQ question `own_catering` goes, so the fact is not asked twice and cannot contradict itself. F9 removes it; F4 and F11 leave it alone. | F9 |
 | D34 | **No "founder minutes" field.** The G8 scorecard does without the manual minutes per claim (CMO §9.1): with two staff users, time spent is known without a form. Parked. | G8, G10 |
+| D35 | **Share images at launch:** a venue page uses its first public photo, and without one the default card `og-default.png`; landing pages use the default card. No per-page prerendered cards at launch: the server cannot rasterise, and a generic card costs no reach while there is no traffic. F6b's `OgCard` templates and `app:brand:og-card` stay for later. | F7b, F8 |
 
 ### Wave G §2. PRD journey → existing module
 
