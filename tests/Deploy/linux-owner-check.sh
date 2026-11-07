@@ -71,7 +71,7 @@ ops_lint_job() {
     in_dind "docker compose -f $CHECKOUT/compose.yaml --project-directory $CHECKOUT down -v >/dev/null 2>&1 || true; rm -rf $CHECKOUT"
     checkout
     as_runner 'set -- bin/build-release bin/deploy bin/deploy-gate bin/warm-cache bin/cron-lock.sh \
-        bin/cron-midnight bin/cron-cache-guard bin/cron-daily bin/prod-import bin/pull-media-backup \
+        bin/cron-midnight bin/cron-cache-guard bin/cron-daily bin/cron-media-backup bin/prod-import bin/pull-media-backup \
         deploy/probe.sh tests/Deploy/*.sh
         shellcheck --shell=sh -x "$@"
         for script in "$@"; do dash -n "$script"; done'

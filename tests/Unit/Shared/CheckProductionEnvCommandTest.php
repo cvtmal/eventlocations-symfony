@@ -306,6 +306,10 @@ final class CheckProductionEnvCommandTest extends TestCase
             '__NEON_ENDPOINT__' => 'ep-fake-endpoint',
             '__NEON_DATABASE__' => 'site',
             '__MAILER_PASSWORD__' => 'fake-mail-password',
+            '__MEDIA_BACKUP_BUCKET__' => 'fake-bucket',
+            '__MEDIA_BACKUP_PASSWORD__' => 'fake-backup-password',
+            '__MEDIA_BACKUP_ACCESS_KEY_ID__' => 'fake-backup-key',
+            '__MEDIA_BACKUP_SECRET_ACCESS_KEY__' => 'fake-backup-secret',
         ]);
 
         $values = (new Dotenv())->parse($filled);

@@ -113,12 +113,13 @@ final class HostingFilesTest extends TestCase
         self::assertStringContainsString('/etc/php/8.5/fpm/pool.d/', $pool);
     }
 
-    public function test_the_crontab_has_exactly_the_three_jobs(): void
+    public function test_the_crontab_has_exactly_the_four_jobs(): void
     {
         self::assertSame([
             '5 0 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-midnight',
             '2-59/5 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-cache-guard',
             '15 3 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-daily',
+            '30 4 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-media-backup',
         ], self::cronJobs());
     }
 
@@ -136,6 +137,32 @@ final class HostingFilesTest extends TestCase
         foreach (['app:inquiries:purge', 'app:crm:refresh-stages', 'app:crm:renewal-tasks', 'app:inquiries:report-stuck', 'app:stats:ingest', 'cache:pool:prune'] as $command) {
             self::assertStringContainsString($command, $cron);
         }
+    }
+
+    /**
+     * F15b: tests/Deploy/media-backup-check.sh writes its own .env.local, so only this ties the script's
+     * names to the template the owner fills.
+     */
+    public function test_the_media_backup_reads_the_names_the_template_sets(): void
+    {
+        preg_match_all('/env_value (MEDIA_BACKUP_[A-Z_]+)/', self::file('bin/cron-media-backup'), $read);
+        preg_match_all('/^(MEDIA_BACKUP_[A-Z_]+)=/m', self::file('deploy/env.local.example'), $set);
+
+        self::assertSame(['MEDIA_BACKUP_ACCESS_KEY_ID', 'MEDIA_BACKUP_PASSWORD', 'MEDIA_BACKUP_REGION', 'MEDIA_BACKUP_REPOSITORY', 'MEDIA_BACKUP_SECRET_ACCESS_KEY'], self::sorted($read[1]));
+        self::assertSame(self::sorted($read[1]), self::sorted($set[1]));
+    }
+
+    /**
+     * @param list<string> $names
+     *
+     * @return list<string>
+     */
+    private static function sorted(array $names): array
+    {
+        $names = array_values(array_unique($names));
+        sort($names);
+
+        return $names;
     }
 
     /**
