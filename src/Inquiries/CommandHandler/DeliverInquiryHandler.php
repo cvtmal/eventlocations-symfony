@@ -9,11 +9,15 @@ use App\Inquiries\Mailer\InquiryMailer;
 use App\Inquiries\Repository\InquiryRepository;
 use App\Inquiries\ValueObject\DeliveryOutcome;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Shared\Command\RecordFunnelEvent;
+use App\Shared\Funnel\FunnelEvent;
 use App\Shared\Messenger\CommandHandlerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
 use Symfony\Component\Mime\Exception\RfcComplianceException;
 
 /**
@@ -39,6 +43,9 @@ use Symfony\Component\Mime\Exception\RfcComplianceException;
  * Log text carries the mail, the id and where the cause was raised, never its message, which can
  * quote an address. The values go into placeholders, because the default logger prints nothing
  * else of the context.
+ *
+ * The first successful venue mail is the funnel step `inquiry_delivered` (G8), recorded once per inquiry (a
+ * `sent` row returns above) and after the commit, so it can neither undo the record nor fail the guest.
  */
 final class DeliverInquiryHandler implements CommandHandlerInterface
 {
@@ -47,6 +54,7 @@ final class DeliverInquiryHandler implements CommandHandlerInterface
         private readonly InquiryMailer $mailer,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
+        private readonly MessageBusInterface $commandBus,
     ) {
     }
 
@@ -69,6 +77,7 @@ final class DeliverInquiryHandler implements CommandHandlerInterface
         }
 
         $inquiry->recordVenueMailSent($deliveredTo, $this->clock->now());
+        $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::InquiryDelivered, $inquiry->venue()?->id()), [new DispatchAfterCurrentBusStamp()]);
 
         try {
             $this->mailer->sendToGuest($inquiry);

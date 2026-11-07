@@ -10,8 +10,9 @@ use Symfony\Component\Process\Process;
 /**
  * Proves the module rules actually fire. A mis-wired rule set (a wrong MODULES regex, a rule class
  * missing from phpstan.neon.dist) would pass `make phpstan` silently. This runs PHPStan with
- * ModuleBoundariesTest against probe modules under Fixtures/ModuleBoundaries: the allowed edge
- * Venues → Geo must stay clean, the forbidden edges Geo → Venues, Cms → Crm and Portal → Search must be the only errors.
+ * ModuleBoundariesTest against probe modules under Fixtures/ModuleBoundaries: the allowed edges
+ * Venues → Geo and Crm → Shared / Portal → Shared (both dispatch the funnel command of G8) must stay clean,
+ * the forbidden edges Geo → Venues, Cms → Crm and Portal → Search must be the only errors.
  */
 final class ModuleBoundariesProbeTest extends TestCase
 {
