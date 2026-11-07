@@ -1,7 +1,7 @@
 # Public design reference
 
 The target look of the public site (`docs/rpi-cycles.md` S15). Every public UI cycle compares its pages with these boards at 390 and 1440 px.
-`docs/reference/*.jpg` stays only as the record of behaviour. The back office keeps `docs/reference/admin/`.
+The back office keeps `docs/reference/admin/`.
 
 - **Status:** the sister site drew these boards (approved 2026-10-31). F6b `brand-assets` (2026-11-07) redrew every board in the D23 look
   (`docs/brand.md`: indigo, vermilion, cool neutrals, Hanken Grotesk, the SVG lockup) with F3's event vocabulary, and checked them against the
