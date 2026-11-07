@@ -718,6 +718,7 @@ The PRDs describe a product that is mostly ours already (free listing, paid tier
 | D31 | **No Hochzeit landing pages.** "Hochzeit" stays an event type in the filter and on the detail page; F8 builds no landing page for it, alone or × canton, so the site does not compete with hochzeitslocation.ch on Google. | F8, G12 |
 | D32 | **D12 follow-ups settled.** (1) A card without the venue's own photos shows F6's neutral placeholder per event type (`_photo_placeholder`); Google Places photos stay on the detail page only. (2) Crawled facts are never published as they are: an entry goes public only once its text is written and its facts are checked; until then it is a draft (F14). | F6, F14 |
 | D33 | **Catering has one source:** the `catering` terms (`in_house`, `external_allowed`, …). The FAQ question `own_catering` goes, so the fact is not asked twice and cannot contradict itself. F9 removes it; F4 and F11 leave it alone. | F9 |
+| D34 | **No "founder minutes" field.** The G8 scorecard does without the manual minutes per claim (CMO §9.1): with two staff users, time spent is known without a form. Parked. | G8, G10 |
 
 ### Wave G §2. PRD journey → existing module
 

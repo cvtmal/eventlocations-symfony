@@ -26,6 +26,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 - **Location accounts (`/konto`):** a manager registers, asks access to an entry or creates one in a wizard; the owner accepts the first publication.
 - **Event vocabulary (F3):** 17 event types (Firmenanlass, Seminar, Tagung / Konferenz, Workshop, Sitzung / Meeting, Produktpräsentation, Generalversammlung, Teamevent, Weihnachtsfeier, Vereinsanlass, Apéro, Geburtstag, Familienfeier, Hochzeit, Party, Konzert, Ausstellung), catering and technology as their own groups; staff and managers edit them, the detail page shows them under "Geeignet für". Not yet filterable (F5).
 - **Own-site importer (G3, staff only):** reads a venue's own website safely and stores facts and photo candidates privately; nothing reaches a public page.
+- **Photo rights (G1):** a photo is public only with a rights record. Staff uploads and imports are granted at once; a manager's photos wait until the manager accepts the rights declaration in `/konto`. Revoking deletes the photo everywhere.
 - **Funnel scorecard (G8, `/admin`):** counts previews, claims, publications, delivered inquiries and paid venues per campaign and week, with no personal data.
 - **Eventlokale crawler:** kept for internal working data (D11, D12).
 
@@ -57,13 +58,13 @@ Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults 
 
 _Status as of 2026-11-07, kept by the PO after every merge. The cycles themselves are in `docs/rpi-cycles.md`: F-cycles in the overview table and under "Cycles", G-cycles in Wave G §3._
 
-**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved).
+**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved) · G1 `rights-grants` (no photo public without a rights record).
 
-**Built, PR open:** F15 `prod-setup` (deploy to Infomaniak + Neon) · G1 `rights-grants` (photo rights records) · F12 `business-model` (Free + Pro as data).
+**Built, PR open:** F15 `prod-setup` (deploy to Infomaniak + Neon) · F12 `business-model` (Free + Pro as data).
 
-**In a lane:** F5 `filter-event` (event type and guest filters, `/eventlokale…` URLs) · F9 `inquiry-event` (inquiry form with event fields) · F4 `room-layouts` (room layouts with capacities) · F6b `brand-assets` (brand polish, social cards, boards in the new look).
+**In a lane:** F5 `filter-event` (event type and guest filters, `/eventlokale…` URLs) · F9 `inquiry-event` (inquiry form with event fields) · F4 `room-layouts` (room layouts with capacities) · F6b `brand-assets` (brand polish, social cards, boards in the new look) · G2 `takedown-form` (report a photo or text).
 
-**Launch-critical, not started:** F7b `event-copy-de` (all German texts, legal pages) · F8 `landing-event` (event landing pages, no Hochzeit) · F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G2 `takedown-form` (report a photo or text) · G5 `preview-link` (private preview of a prepared entry) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · G7 `enquiry-quality` (real vs. spam, delivery status) · G9 `subscription-term` (Pro term, expiry, reminders) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G12 `launch-regions` (ZH, AG, ZG, BE first) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
+**Launch-critical, not started:** F7b `event-copy-de` (all German texts, legal pages) · F8 `landing-event` (event landing pages, no Hochzeit) · F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G5 `preview-link` (private preview of a prepared entry) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · G7 `enquiry-quality` (real vs. spam, delivery status) · G9 `subscription-term` (Pro term, expiry, reminders) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G12 `launch-regions` (ZH, AG, ZG, BE first) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
 
 **After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G14 `last-minute-offers` · G15 `video-embed` · G16 `organizer-feedback`.
 
