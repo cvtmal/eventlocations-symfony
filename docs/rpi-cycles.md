@@ -106,7 +106,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | – | `places-photos` | S–M | F3, G5, F7b | — (cap counter in the cache pool or a small table, the teammate decides) | — (D12, D47) | Todo |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Done |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Done |
-| F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
+| F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Done |
 | F11 | `portal-event` | S–M | F4 | `portal_submissions` (event step) | — | Done |
 | F12 | `business-model` | M–L | F1 | `tiers`, `venues.tier_id`, `crm_deals.tier_id` | Tier names and prices | Done |
 | F13 | `multi-inquiry` | M–L | F9, G7 | `inquiries` (parent and child deliveries) | — | Todo |
@@ -464,7 +464,7 @@ IDs are referenced by the overview and the cycles.
 - **DP-6 Bewertung:** the Google rating via the Places UI Kit (stars, count and Google's attribution, below the head), when the server has the key and staff did not hide it. The sister site's own rating, labels and highlights are retired.
 - **DP-7** Labelled lists: Gebäudeart, Lage, Geeignet für, Infrastruktur, Mobiliar, Technik, Umgebung.
 - **DP-8 Räume:** a horizontal card carousel, each card with photo, name, capacity, "Rauminfos" (text dialog) and "Eckdaten" (dialog with area m², height m, floor material and capacities per seating type).
-- **DP-9 Häufige Fragen:** Eigenes Catering? · Tageslicht? · Parking?
+- **DP-9 Häufige Fragen:** Tageslicht? · Parking? (who caters is the `catering` terms, D33)
 - **DP-10 Standort:** address, then distances with names ("0.9 km bis Bahnhof Papiermühle", "3.2 km bis Autobahn A6", "102 km bis Flughafen Basel-Mulhouse"), then a Google map.
 - **DP-11 Kontakt:** "Telefonnummer anzeigen" (click to reveal), E-Mail, website, contact person; Free entries hide phone and website (D15, F12).
 - **DP-12 Dokumente:** PDF links with titles.
@@ -701,9 +701,18 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 - **Seed:** DemoStory forces `seminar` on the three Zurich venues, so `make seed` shows `/eventlokale/zuerich/seminar` beside the national event pages.
 - **Follow-ups:** F7b still owns `related.canton`/`related.town` ("Hochzeit {canton}") and `breadcrumb.listing` ("Hochzeitslocations"), which also show on event pages until F7b merges. A town slug equal to an event slug in the same canton would hide that event page; `LandingCatalogueTest` checks the imported towns.
 
-### F9 `inquiry-event` (S–M)
+### F9 `inquiry-event` (S–M, done)
 
 **Depends on** F3. **Owns** the new event columns of `inquiries`. **Scope.** Event fields on the inquiry (company, event type in place of `Occasion`, layout, date and time, catering, budget), the form on the detail page (DP-13), the venue and guest mails, the "Liebes {Name}-Team" preview, the CRM inbox columns (the organizer is not a contact, S13). D3: one venue per inquiry. **Done when** an inquiry carries the event fields from form to row, mail and CRM inbox, no wedding occasion value is left, retention is unchanged, tests.
+
+**Outcome** (PR `inquiry-event`, 2026-11-07).
+
+- **Columns** (migration `Version20261107173925`, one, with `down()`): `inquiries.event_type VARCHAR(40) NOT NULL` (a `suitable_for` code, F3's vocabulary is the one source; no foreign key, an inquiry is a 12-month snapshot; CHECK on the code shape only), `company VARCHAR(150)`, `date_flexible BOOLEAN NOT NULL DEFAULT false` (CHECK `event_date IS NOT NULL OR date_flexible`: a date, "flexibel", or both), `start_time TIME(0)`, `catering_wish VARCHAR(40)` (CHECK `in_house` or `external_allowed`, NULL = no wish), `budget_chf INTEGER` (1 to 1,000,000 whole francs). `occasion` and `chk_inquiries_occasion` are gone; the migration maps the wedding occasions to `wedding` and `engagement` to `family_celebration`, `down()` maps back. Retention is unchanged.
+- **Occasion → event type.** The `Occasion` enum and its `occasion.*` keys are deleted. `Inquiries\ReadModel\InquiryVocabularyQuery` (`eventTypes()`, `cateringWishes()`, labels via `Venues\ValueObject\Term`, reset per request) feeds the form and the handler; `SubmitInquiryHandler` refuses an unknown code (`UnknownInquiryTerm`), a missing date without "flexibel" (`EventDateMissing`) and a budget out of range (`BudgetOutOfRange`). The form (DP-13) asks Anlass (no default), Gäste, Wunschtermin + "Datum ist flexibel", Beginn, Catering, Budget in CHF, Nachricht (prefilled "Liebes {Name}-Team, …", `form.message_default`), Vorname, Nachname, Firma, E-Mail, Telefon. `InquiryFingerprint` covers the new fields.
+- **D33: catering has one source.** The FAQ question `own_catering` is gone: `OwnCatering`, `venues.own_catering` with its CHECK (dropped in the same migration, values not mapped onto terms), `AnswerVenueFaq` and the FAQ card (CMS and `/konto`) now carry daylight only, the detail page and `venue.md` drop the row, the content format drops `faq.own_catering` (a `venue.yaml` that still has it is refused by the schema; `ContentFormat::VERSION` unchanged). Who caters is the `catering` terms `in_house` and `external_allowed`, which the inquiry's catering wish reads.
+- **Mails.** Both share `inquiries/email/_facts.html.twig`: Anlass, Gäste, Wunschtermin ("10.12.2027 (flexibel)" or "flexibel"), Beginn ("18:30 Uhr"), Catering-Wunsch, Budget ("CHF 8'000"), Name, Firma, E-Mail, Telefon; Beginn, Catering-Wunsch, Budget, Firma and Telefon only when given. Venue subject: "Neue Anfrage für {venue}: {name}, {event_type}, {date}, {guests} Gäste". Checked in Mailpit: "du", "ss", no wedding words, the F6 logo. `inquiry_delivered` stays emitted once, by `DeliverInquiryHandler` (G8).
+- **CRM.** `InquiryInboxRow` and `InquiryDetail`: `coupleName` → `organizerName`, plus `company`, `eventType` (`Term`), and on the detail `dateFlexible`, `startTime` (`H:i`), `cateringWish`, `budgetChf`. The inbox line shows "Name, Firma" and "Anlass · n Gäste"; staff copy says "Veranstalter", not "Paar". The organizer stays no CRM contact (S13). `CrmStory` seeds varied event inquiries.
+- **Not done on purpose.** Layout (DP-13 mentions it) is not asked: D4 keeps layouts as detail-page information and F4 still changes the list; a follow-up if the PO wants it. The route path `/hochzeitslocation/{slug}/anfrage` and the dev/test addresses `*@hochzeitslocation.test` in `.env*` stay for F5/F15. F13 can move the event columns to a parent row.
 
 ### F11 `portal-event` (S–M, done)
 
