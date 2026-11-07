@@ -43,8 +43,8 @@ final class RevokedPhotoPagesTest extends WebTestCase
     use ThroughHttpCache;
 
     private const string ADMIN = '019a0000-0000-7000-8000-0000000000ad';
-    private const string DETAIL = '/hochzeitslocation/seehaus-html';
-    private const string LISTING = '/hochzeitslocations';
+    private const string DETAIL = '/eventlokal/seehaus-html';
+    private const string LISTING = '/eventlokale';
     private const string SITEMAP = '/sitemap-venues-1.xml';
 
     protected function setUp(): void

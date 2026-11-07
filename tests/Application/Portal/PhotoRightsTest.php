@@ -381,7 +381,7 @@ final class PhotoRightsTest extends WebTestCase
      */
     private function publicPage(): string
     {
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertResponseIsSuccessful();
 
         return (string) $this->client->getResponse()->getContent();
