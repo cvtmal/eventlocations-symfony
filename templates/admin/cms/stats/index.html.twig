@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block page_actions %}
+    {{ include('admin/components/_button.html.twig', {label: 'stats.funnel.link'|trans({}, 'cms'), icon: 'square-kanban', href: path('admin_stats_funnel')}, with_context = false) }}
     {{ include('admin/components/_button.html.twig', {label: 'stats.media_kit.link'|trans({}, 'cms'), icon: 'file-text', href: path('admin_stats_media_kit')}, with_context = false) }}
     <form class="stats-refresh" method="post" action="{{ path('admin_stats_refresh', {zeitraum: period.value}) }}">
         <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
