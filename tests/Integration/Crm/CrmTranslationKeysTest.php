@@ -5,15 +5,20 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Crm;
 
 use App\Crm\Entity\ActivityType;
+use App\Crm\ReadModel\CohortFunnelQuery;
 use App\Crm\ReadModel\TaskView;
 use App\Crm\TimelineProps;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyProperty;
 use App\Crm\ValueObject\CompanyStage;
+use App\Crm\ValueObject\ContactBasis;
+use App\Crm\ValueObject\ContactChannel;
 use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Crm\ValueObject\LostReason;
+use App\Crm\ValueObject\OutreachCohort;
+use App\Crm\ValueObject\SuppressionReason;
 use App\Crm\ValueObject\TaskDue;
 use App\Inquiries\ValueObject\MailStatus;
 use Doctrine\DBAL\Connection;
@@ -91,6 +96,25 @@ final class CrmTranslationKeysTest extends KernelTestCase
             $keys[] = 'task.list.tab.'.$case->value;
             $keys[] = 'task.list.empty.'.$case->value.'.title';
             $keys[] = 'task.list.empty.'.$case->value.'.text';
+        }
+        // G11
+        foreach (OutreachCohort::cases() as $case) {
+            $keys[] = 'outreach.cohort.'.$case->value;
+        }
+        foreach (ContactChannel::cases() as $case) {
+            $keys[] = 'outreach.channel.'.$case->value;
+        }
+        foreach (ContactBasis::cases() as $case) {
+            $keys[] = 'outreach.basis.'.$case->value;
+        }
+        foreach (SuppressionReason::cases() as $case) {
+            $keys[] = 'suppression.reason.'.$case->value;
+        }
+        foreach (CohortFunnelQuery::STEPS as $step) {
+            $keys[] = 'outreach.funnel.step.'.$step->value;
+        }
+        foreach (['company', 'contact', 'address', 'venue', 'street', 'zip', 'town', 'cohort', 'short_link', 'link', 'valid_until'] as $column) {
+            $keys[] = 'outreach.print.column.'.$column;
         }
         foreach ([ActivityType::NOTE, ActivityType::EMAIL_LOGGED, ActivityType::CALL, ActivityType::MEETING] as $code) {
             $keys[] = 'activity.type.'.$code;

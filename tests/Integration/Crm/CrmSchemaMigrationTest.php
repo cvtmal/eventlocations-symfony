@@ -23,7 +23,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
     private const TABLES = [
         'crm_companies', 'crm_contacts', 'crm_activity_types', 'crm_activities',
         'crm_activity_companies', 'crm_tasks', 'crm_deal_stages', 'crm_deals', 'crm_activity_deals',
-        'crm_inquiry_links', 'crm_email_templates',
+        'crm_inquiry_links', 'crm_email_templates', 'suppressions',
     ];
 
     private const IDS = [
@@ -96,6 +96,33 @@ final class CrmSchemaMigrationTest extends KernelTestCase
             'DELETE FROM crm_activities',
             "DELETE FROM admin_users WHERE id = '{admin}'",
         ]];
+
+        // G11: the outreach fields of crm_companies
+        yield 'campaign code with an address' => ['chk_crm_companies_campaign_code', ["UPDATE crm_companies SET campaign_code = 'mia@example.ch' WHERE id = '{company}'"]];
+        yield 'unknown cohort' => ['chk_crm_companies_cohort', ["UPDATE crm_companies SET cohort = 'E' WHERE id = '{company}'"]];
+        yield 'unknown contact channel' => ['chk_crm_companies_contact_channel', ["UPDATE crm_companies SET contact_channel = 'fax' WHERE id = '{company}'"]];
+        yield 'unknown contact basis' => ['chk_crm_companies_contact_basis', ["UPDATE crm_companies SET contact_basis = 'bought_list' WHERE id = '{company}'"]];
+
+        // suppressions (G11)
+        yield 'suppression of an unknown Location' => ['fk_suppressions_company_id', ["INSERT INTO suppressions (id, company_id, reason) VALUES (gen_random_uuid(), '{missing}', 'opt_out')"]];
+        yield 'a suppressed Location is not deleted' => ['fk_suppressions_company_id', [
+            "INSERT INTO suppressions (id, company_id, reason) VALUES (gen_random_uuid(), '{company2}', 'objection')",
+            'DELETE FROM crm_deals',
+            "DELETE FROM crm_companies WHERE id = '{company2}'",
+        ]];
+        yield 'a Location suppressed twice' => ['uk_suppressions_company_id', [
+            "INSERT INTO suppressions (id, company_id, reason) VALUES (gen_random_uuid(), '{company}', 'objection')",
+            "INSERT INTO suppressions (id, company_id, reason) VALUES (gen_random_uuid(), '{company}', 'opt_out')",
+        ]];
+        yield 'an address suppressed twice' => ['uk_suppressions_email', [
+            "INSERT INTO suppressions (id, email, reason) VALUES (gen_random_uuid(), 'anna@example.test', 'objection')",
+            "INSERT INTO suppressions (id, email, reason) VALUES (gen_random_uuid(), 'anna@example.test', 'opt_out')",
+        ]];
+        yield 'unknown suppression reason' => ['chk_suppressions_reason', ["INSERT INTO suppressions (id, email, reason) VALUES (gen_random_uuid(), 'anna@example.test', 'bounce')"]];
+        yield 'suppression of nothing' => ['chk_suppressions_target', ["INSERT INTO suppressions (id, reason) VALUES (gen_random_uuid(), 'opt_out')"]];
+        yield 'suppression of a Location and an address' => ['chk_suppressions_target', ["INSERT INTO suppressions (id, company_id, email, reason) VALUES (gen_random_uuid(), '{company}', 'anna@example.test', 'opt_out')"]];
+        yield 'suppressed address in capitals' => ['chk_suppressions_email', ["INSERT INTO suppressions (id, email, reason) VALUES (gen_random_uuid(), 'Anna@example.test', 'opt_out')"]];
+        yield 'suppressed address without an at sign' => ['chk_suppressions_email', ["INSERT INTO suppressions (id, email, reason) VALUES (gen_random_uuid(), 'anna', 'opt_out')"]];
 
         // crm_contacts
         yield 'blank last name' => ['chk_crm_contacts_last_name', ["UPDATE crm_contacts SET last_name = '' WHERE id = '{contact}'"]];
@@ -249,6 +276,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'one-day contract' => [["UPDATE crm_deals SET contract_start_on = '2027-01-01', contract_end_on = '2027-01-01' WHERE id = '{deal}'"]];
         yield 'free deal' => [["UPDATE crm_deals SET amount_rappen = 0 WHERE id = '{deal}'"]];
         yield 'deal without a tier, and with one' => [["UPDATE crm_deals SET tier_id = (SELECT id FROM tiers WHERE code = 'free') WHERE id = '{deal}'", "UPDATE crm_deals SET tier_id = NULL WHERE id = '{deal}'"]];
+        yield 'outreach fields' => [["UPDATE crm_companies SET campaign_code = 'brief-2026-11', cohort = 'A', contact_channel = 'postal', contact_basis = 'none', outreach_sent_on = '2026-11-10', mail_returned_on = '2026-11-14' WHERE id = '{company}'"]];
         yield 'template names differ by case' => [[
             "INSERT INTO crm_email_templates (id, name, subject, body_markdown) VALUES (gen_random_uuid(), 'Vorlage', 'Betreff', 'Text')",
             "INSERT INTO crm_email_templates (id, name, subject, body_markdown) VALUES (gen_random_uuid(), 'vorlage', 'Betreff', 'Text')",
@@ -277,7 +305,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         );
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
-        self::assertCount(11, $primaryKeys);
+        self::assertCount(12, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }

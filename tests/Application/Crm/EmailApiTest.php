@@ -14,6 +14,7 @@ use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -137,7 +138,7 @@ final class EmailApiTest extends WebTestCase
         self::assertSame([], $mail->getCc());
         self::assertSame(self::CONTACT_ADDRESS.', '.self::CC, $mail->getHeaders()->getHeaderBody(CrmMailer::ORIGINAL_RECIPIENT_HEADER));
         self::assertSame(self::SUBJECT, $mail->getSubject());
-        self::assertSame(self::BODY, $mail->getTextBody());
+        self::assertStringStartsWith(self::BODY."\n\n-- \n", (string) $mail->getTextBody());
         self::assertSame(['to' => self::CONTACT_ADDRESS, 'cc' => self::CC, 'status' => 'sent'], $this->entry()['email']);
     }
 
@@ -201,6 +202,21 @@ final class EmailApiTest extends WebTestCase
             self::assertResponseStatusCodeSame(422);
             self::assertSame(['contactId' => ['Für diesen Empfänger ist keine E-Mail-Adresse hinterlegt.']], $this->errors());
         }
+        $this->assertNothingHappened();
+    }
+
+    public function test_a_suppressed_location_is_a_422_on_the_contact_field_and_gets_no_mail(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $target = $this->toContact();
+        $connection = self::getContainer()->get(Connection::class);
+        self::assertInstanceOf(Connection::class, $connection);
+        $connection->insert('suppressions', ['id' => EntityId::generate(), 'company_id' => $target['recordId'], 'reason' => 'opt_out']);
+
+        $this->mail($target);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(['contactId' => ['Diese Adresse oder Location steht auf der Sperrliste und bekommt keine Mails von uns.']], $this->errors());
         $this->assertNothingHappened();
     }
 

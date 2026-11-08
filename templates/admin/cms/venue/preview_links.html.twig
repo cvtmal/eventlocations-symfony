@@ -67,7 +67,7 @@
                                                 <input class="field__input preview-links__url" id="link-url-{{ link.id }}" type="text" readonly value="{{ row.url }}">
                                                 {% if row.short_url %}
                                                     <label class="visually-hidden" for="link-short-{{ link.id }}">{{ 'preview_links.field.short'|trans({campaign: campaign}, 'cms') }}</label>
-                                                    <input class="field__input preview-links__url" id="link-short-{{ link.id }}" type="text" readonly value="{{ row.short_url }}">
+                                                    <input class="field__input preview-links__url preview-links__short" id="link-short-{{ link.id }}" type="text" readonly value="{{ row.short_url }}">
                                                 {% endif %}
                                                 <div class="preview-links__actions">
                                                     {% set qr_url = path('admin_locations_preview_links_qr', {number: number, id: link.id}) %}

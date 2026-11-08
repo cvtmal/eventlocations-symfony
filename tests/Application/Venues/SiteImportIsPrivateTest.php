@@ -71,6 +71,8 @@ final class SiteImportIsPrivateTest extends WebTestCase
             'sitemap_venues' => [['n' => 1]],
             'merkliste_toggle' => [['number' => $data['number']]],
             'venue_preview' => [['token' => $data['preview']]],
+            'venue_preview_short' => [['code' => $data['preview_short']]],
+            'crm_opt_out' => [['token' => $data['opt_out']]],
         ];
         $router = self::getContainer()->get('router');
         self::assertInstanceOf(RouterInterface::class, $router);

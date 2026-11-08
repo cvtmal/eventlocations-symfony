@@ -74,6 +74,27 @@ final class VenuePreviewLinksPageTest extends WebTestCase
         );
     }
 
+    public function test_a_link_for_an_e_mail_has_no_campaign_and_the_qr_code_encodes_the_short_link(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = self::draft();
+        $crawler = $this->client->request('GET', self::url($venue));
+
+        $this->client->submit($crawler->filter('form[name="preview_link"]')->form(), ['preview_link[campaignCode]' => '']);
+
+        self::assertResponseStatusCodeSame(303);
+        $row = $this->client->followRedirect()->filter('table.preview-links tbody tr');
+        self::assertStringContainsString('Ohne Kampagne (E-Mail)', $row->text());
+        self::assertNull($this->connection->fetchOne('SELECT campaign_code FROM venue_previews WHERE venue_id = ?', [$venue->id()]));
+        $short = (string) $row->filter('input.preview-links__short')->attr('value');
+        self::assertMatchesRegularExpression('#^http://localhost/v/[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{10}$#', $short);
+        self::assertEquals(['campaign' => null, 'days' => 90], json_decode((string) $this->connection->fetchOne("SELECT changes::text FROM admin_audit_log WHERE subject_type = 'venue' AND subject_id = ?", [(string) $venue->number()]), true));
+
+        $this->client->request('GET', (string) $row->filter('img.preview-links__qr')->attr('src'));
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('filename="vorschau-'.$venue->number().'-email.svg"', (string) $this->client->getResponse()->headers->get('Content-Disposition'));
+    }
+
     public function test_a_campaign_that_is_no_plain_code_is_refused(): void
     {
         $this->logInAs(AdminRole::Editor);
