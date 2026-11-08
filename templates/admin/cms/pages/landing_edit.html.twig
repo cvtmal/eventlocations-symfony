@@ -26,8 +26,8 @@
         {% block meta %}
             {{ include('admin/components/_pill.html.twig', {label: ('landing.type.' ~ entry.type)|trans({}, 'cms')}, with_context = false) }}
             {{ include('admin/components/_pill.html.twig', {
-                label: (entry.passesThreshold ? 'landing.threshold.online' : 'landing.threshold.below')|trans({}, 'cms'),
-                tone: entry.passesThreshold ? 'green' : 'grey',
+                label: (not entry.passesThreshold ? 'landing.threshold.below' : (entry.indexable ? 'landing.threshold.online' : 'landing.threshold.noindex'))|trans({}, 'cms'),
+                tone: not entry.passesThreshold ? 'grey' : (entry.indexable ? 'green' : 'amber'),
                 dot: true,
             }, with_context = false) }}
         {% endblock %}

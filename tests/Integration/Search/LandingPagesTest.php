@@ -14,6 +14,7 @@ use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ValueObject\LandingType;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Integration\Seo\LandingQualityGateTest;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\ValueObject\TermGroup;
@@ -59,7 +60,7 @@ final class LandingPagesTest extends KernelTestCase
         self::assertIsInt($minVenues);
         $this->pool = new ArrayAdapter();
         $this->footer = new LandingFooter($this->pool);
-        $this->pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, $this->footer, new LandingQualityGate($minVenues), $minVenues);
+        $this->pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, $this->footer, new LandingQualityGate($minVenues, LandingQualityGateTest::LAUNCH_CANTONS), $minVenues);
     }
 
     protected function tearDown(): void
@@ -216,7 +217,7 @@ final class LandingPagesTest extends KernelTestCase
 
         $translator = self::getContainer()->get('translator');
         self::assertInstanceOf(TranslatorInterface::class, $translator);
-        $strict = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, $this->footer, new LandingQualityGate(7), 5);
+        $strict = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, $this->footer, new LandingQualityGate(7, LandingQualityGateTest::LAUNCH_CANTONS), 5);
         self::assertFalse($strict->event('apero')?->indexable);
         self::assertFalse($strict->canton(Canton::ZH)?->indexable);
         self::assertNotNull($strict->event('apero', Canton::ZH), 'A page that fails the gate is still live.');

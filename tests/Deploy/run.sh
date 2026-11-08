@@ -645,8 +645,9 @@ cron_daily() {
     run sh "$APP/bin/cron-daily"
     expect_exit "cron-daily exits 0 on a good night" 0
     expect_no_output "a good night prints nothing"
-    expect_calls "cron-daily runs its ten commands in order" "release app:inquiries:purge
+    expect_calls "cron-daily runs its eleven commands in order" "release app:inquiries:purge
 release app:venues:erase-complainants
+release app:stats:purge-search-misses
 release app:crm:refresh-stages
 release app:crm:renewal-tasks
 release app:subscriptions:expire
@@ -679,6 +680,7 @@ release cache:pool:prune"
     expect_output "the step's own output follows" "stub: app:inquiries:purge failed"
     expect_calls "the other steps still run" "release app:inquiries:purge
 release app:venues:erase-complainants
+release app:stats:purge-search-misses
 release app:crm:refresh-stages
 release app:crm:renewal-tasks
 release app:subscriptions:expire

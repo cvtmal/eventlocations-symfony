@@ -54,9 +54,11 @@ use function Zenstruck\Foundry\Persistence\repository;
 /**
  * 60 fictional demo venues (S8), loaded by `make seed` through AppStory.
  *
- * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town), plus one
- *   Liechtenstein venue (#46), and both tiers (15 Pro, 45 Free, spread over the cantons). Every Pro venue has a paid
- *   term (G9); three end within 60 days (one cancelled), see createTerms().
+ * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town; 56-59 in the launch regions
+ *   BE, ZG, AG, ZH, G12), plus one Liechtenstein venue (#46), and both tiers (15 Pro, 45 Free, spread over the cantons).
+ *   Every Pro venue has a paid term (G9); three end within 60 days (one cancelled), see createTerms().
+ * - Index gate (G12): every fifth venue has unchecked facts and every odd one no description, so about two in five
+ *   entries are indexed and the launch regions show indexable and noindex landing pages in dev.
  * - 1–5 rooms, 0–2 documents, terms of the seven filter groups (one main building and one main
  *   setting each, 1–5 event types). No own rating or reviews: #53 retired them.
  * - Deterministic: faker is seeded and the distribution is index-based.
@@ -135,6 +137,13 @@ final class DemoStory extends Story
     /** The venue whose first gallery photo an open rights complaint hides (G2), and the one of a decided `keep`. */
     private const HELD_VENUE = 2;
     private const KEPT_VENUE = 3;
+    /**
+     * G12 seed focus (D21): the third venues 56-59 (else of SZ, OW, NW, GL, which keep two) go to the launch regions,
+     * so ZH has four venues and BE, ZG and AG three each.
+     */
+    private const LAUNCH_FOCUS = [56 => Canton::BE, 57 => Canton::ZG, 58 => Canton::AG, 59 => Canton::ZH];
+    /** G12: venue i has unchecked facts when i % 5 is this (not indexed; odd venues also lack a description). */
+    private const UNCHECKED = 4;
     private const REGION_ONLY = 54;
     private const NO_PLACE = 55;
     private const REGION_TEXT = 'Schweizweit';
@@ -170,8 +179,8 @@ final class DemoStory extends Story
         }
 
         for ($i = 0; $i < self::VENUES; ++$i) {
-            // The rotation covers the 26 cantons only; Liechtenstein gets venue 53 alone.
-            $canton = self::LIECHTENSTEIN === $i ? Canton::LI : Canton::cases()[$i % 26];
+            // The rotation covers the 26 cantons only; Liechtenstein gets venue 53 alone; 56-59 go to the launch regions (G12).
+            $canton = self::LIECHTENSTEIN === $i ? Canton::LI : (self::LAUNCH_FOCUS[$i] ?? Canton::cases()[$i % 26]);
             $towns = $this->towns->findBy(['canton' => $canton->value], ['population' => 'DESC', 'name' => 'ASC'], 3);
             $town = $towns[intdiv($i, 26)] ?? $towns[0] ?? throw new \LogicException(\sprintf('No town in canton %s.', $canton->value));
             $name = self::PREFIXES[$i % 12].' '.self::SUFFIXES[$i % 15];
@@ -334,6 +343,10 @@ final class DemoStory extends Story
         }
         if (0 !== $i % 3) {
             $factory = $factory->withDistances();
+        }
+        if (self::UNCHECKED === $i % 5) {
+            // G12: every fifth entry's facts are unchecked, so the CMS and the noindex gate show both states.
+            $factory = $factory->withUncheckedFacts();
         }
         $hasAddress = !\in_array($i, [...self::CANTON_ONLY, self::REGION_ONLY, self::NO_PLACE], true);
         if (!$hasAddress) {

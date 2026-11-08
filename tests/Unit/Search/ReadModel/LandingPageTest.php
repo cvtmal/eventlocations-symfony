@@ -64,11 +64,31 @@ final class LandingPageTest extends TestCase
         self::assertEquals($page, $gated->withIndexable(true));
     }
 
-    public function test_the_quality_gate_counts_venues(): void
+    public function test_the_quality_gate_counts_the_entries_that_pass_the_index_gate(): void
     {
-        $gate = new LandingQualityGate(6);
+        $gate = new LandingQualityGate(6, ['zh', 'be']);
+        $zurich = new LandingPage(LandingType::Canton, 'zuerich', 9, Canton::ZH, 'zuerich');
 
-        self::assertFalse($gate->passes(new LandingPage(LandingType::Canton, 'zuerich', 5, Canton::ZH, 'zuerich')));
-        self::assertTrue($gate->passes(new LandingPage(LandingType::Canton, 'zuerich', 6, Canton::ZH, 'zuerich')));
+        self::assertFalse($gate->passes($zurich, 5), 'nine listed, five indexable');
+        self::assertTrue($gate->passes($zurich, 6));
+    }
+
+    public function test_the_quality_gate_indexes_a_page_in_a_canton_only_in_a_launch_region(): void
+    {
+        $gate = new LandingQualityGate(6, ['zh', 'be']);
+
+        self::assertFalse($gate->passes(new LandingPage(LandingType::Canton, 'tessin', 20, Canton::TI, 'tessin'), 20));
+        self::assertFalse($gate->passes(new LandingPage(LandingType::Town, 'lugano', 20, Canton::TI, 'tessin', 'id', 'Lugano'), 20));
+        self::assertFalse($gate->passes(new LandingPage(LandingType::Event, 'seminar', 20, Canton::TI, 'tessin', event: 'seminar'), 20));
+        self::assertTrue($gate->passes(new LandingPage(LandingType::Event, 'seminar', 20, Canton::BE, 'bern', event: 'seminar'), 20));
+        self::assertTrue($gate->passes(new LandingPage(LandingType::Event, 'seminar', 20, event: 'seminar'), 20), 'a national page has no canton');
+        self::assertTrue($gate->passes(new LandingPage(LandingType::Building, 'schloss', 20, building: 'castle'), 20));
+    }
+
+    public function test_an_unknown_launch_canton_fails_at_boot(): void
+    {
+        $this->expectException(\ValueError::class);
+
+        new LandingQualityGate(6, ['xx']);
     }
 }

@@ -17,6 +17,8 @@ final class VenueTranslationFactory extends PersistentObjectFactory
         return VenueTranslation::class;
     }
 
+    public const string DESCRIPTION = 'Ein heller Saal für Seminare und Firmenanlässe, mit Foyer für den Apéro und Technik für Präsentationen.';
+
     /**
      * @return array<string, mixed>
      */
@@ -27,6 +29,9 @@ final class VenueTranslationFactory extends PersistentObjectFactory
             'locale' => 'de',
             'slug' => self::faker()->unique()->slug(3),
             'summary' => self::faker()->realText(190),
+            // G12: a written description, so a factory entry passes VenueIndexGate; pass null for one without text.
+            // A constant, not faker: DemoStory's data must not shift with the shared faker.
+            'description' => self::DESCRIPTION,
         ];
     }
 }

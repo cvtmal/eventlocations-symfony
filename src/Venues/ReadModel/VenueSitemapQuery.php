@@ -13,6 +13,7 @@ use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Entitlements;
 use App\Venues\ValueObject\PhotoBudget;
 use App\Venues\VenueCapacity;
+use App\Venues\VenueIndexGate;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Psr\Clock\ClockInterface;
@@ -55,11 +56,12 @@ final class VenueSitemapQuery
     }
 
     /**
-     * The shared FROM and WHERE, with the photo predicate of `PublicPhotoPolicy`.
+     * The shared FROM and WHERE, with the photo predicate of `PublicPhotoPolicy` and the index gate of `VenueIndexGate`.
      */
     private static function published(): string
     {
-        return str_replace('{PHOTO_GRANTED}', PublicPhotoPolicy::sql('p'), self::PUBLISHED_TEMPLATE);
+        // G12: only entries that pass VenueIndexGate; the others are online but noindex.
+        return str_replace('{PHOTO_GRANTED}', PublicPhotoPolicy::sql('p'), self::PUBLISHED_TEMPLATE).' AND '.VenueIndexGate::sql('v', 't');
     }
 
     /**
@@ -119,7 +121,7 @@ final class VenueSitemapQuery
     }
 
     /**
-     * Every published venue for `/llms.txt`, on the sitemap's own definition of published, so the
+     * Every published venue that passes VenueIndexGate for `/llms.txt`, on the sitemap's own definition of published, so the
      * two lists cannot drift apart. `PUBLISHED` ends in its WHERE, so the venues are a CTE and the
      * optional town joins it. Sorted by name with the default locale's collation.
      *

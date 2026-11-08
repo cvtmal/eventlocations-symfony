@@ -29,6 +29,8 @@ final readonly class VenueEdit
     public const string MISSING_SUMMARY = 'summary';
     public const string MISSING_MAIN_BUILDING = 'main_building';
     public const string MISSING_PHOTO = 'photo';
+    public const string MISSING_FACTS = 'facts';
+    public const string MISSING_DESCRIPTION = 'description';
 
     /**
      * @param array<string, VenueEditTranslation> $translations
@@ -67,7 +69,29 @@ final readonly class VenueEdit
         public int $galleryPhotoCount,
         public ?string $googlePlaceId,
         public bool $googleRatingHidden,
+        /** G12: when staff confirmed the facts, null = unchecked. */
+        public ?\DateTimeImmutable $factsCheckedAt = null,
     ) {
+    }
+
+    /**
+     * What keeps the entry out of the index (G12, `Venues\VenueIndexGate`), in the aside card's order: `facts` (not
+     * checked by staff) and `description` (no default-locale description). Empty: a published entry is indexed.
+     *
+     * @return list<string>
+     */
+    public function missingForIndex(string $defaultLocale): array
+    {
+        $missing = [];
+        if (null === $this->factsCheckedAt) {
+            $missing[] = self::MISSING_FACTS;
+        }
+        // The ASCII whitespace of the SQL gate's `[[:space:]]`, so the card and VenueIndexGate agree.
+        if (1 !== preg_match('/[^ \t\n\v\f\r]/', $this->translation($defaultLocale)->description ?? '')) {
+            $missing[] = self::MISSING_DESCRIPTION;
+        }
+
+        return $missing;
     }
 
     public function number(): int

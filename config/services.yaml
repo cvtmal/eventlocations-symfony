@@ -40,9 +40,12 @@ parameters:
     inquiries.retention_months: 12
     # #17: a canton, town or building landing page exists from this many published venues, below it 404 (one rule, #26 reads it).
     landing.min_venues: 5
-    # F8, G12 hook: a live landing page is indexable (sitemap, llms.txt, no noindex) from this many
-    # published venues (LandingQualityGate). Equal to landing.min_venues until G12 sets its gate.
-    landing.index_min_venues: '%landing.min_venues%'
+    # G12 (D21): a live landing page is indexable (sitemap, llms.txt, no noindex) from this many entries that
+    # pass Venues\VenueIndexGate (facts checked, description written), and in a canton only in a launch region
+    # (LandingQualityGate). Below it the page answers 200 with `noindex, follow`.
+    landing.index_min_venues: 8
+    # G12 (D21): the launch regions. Canton, town and event-in-canton pages elsewhere stay live but noindex.
+    landing.launch_cantons: [zh, ag, zg, be]
     # Q18, #36: the home page's hero, the SHA-256 of the original file of a venue photo. No published
     # photo with this hash: the hero is the first Spotlight card's photo (HomeHero::fromCards).
     home.hero_photo: cfbf9375b66ff088996ab8a64d99552e0caac0dcd0ca86189a54e4858c8b96d1
@@ -85,6 +88,8 @@ when@dev:
     parameters:
         # DemoStory's 60 venues give a handful of canton pages at 3 (S11 checks on the dev site).
         landing.min_venues: 3
+        # G12: DemoStory checks most entries, so a few launch-region pages are indexable and others show the gate.
+        landing.index_min_venues: 2
 
 when@test:
     parameters:
@@ -92,6 +97,8 @@ when@test:
         app.media_public_dir: '%kernel.project_dir%/var/test-media/public'
         # tests/bootstrap.php wipes var/cache/test, so every run starts with an empty spool.
         stats.dir: '%kernel.cache_dir%/stats'
+        # G12: the landing fixtures build pages of landing.min_venues (5) entries; the gate's own tests set 8.
+        landing.index_min_venues: 5
 
     services:
         # Tests assert the Venues handlers' purges (S10, #9 P24) through the real container;

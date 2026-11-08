@@ -34,7 +34,7 @@ final class VenueHeaderQuery
 
         $row = $this->connection->fetchAssociative(
             <<<'SQL'
-                SELECT v.id, v.number, v.name, tr.code AS tier_code, tr.name AS tier_name, tr.rank_weight AS tier_rank_weight, v.status, v.street, v.zip, v.content_key, v.cms_edited_at, v.updated_at,
+                SELECT v.id, v.number, v.name, tr.code AS tier_code, tr.name AS tier_name, tr.rank_weight AS tier_rank_weight, v.status, v.street, v.zip, v.content_key, v.cms_edited_at, v.updated_at, v.facts_checked_at IS NOT NULL AS facts_checked,
                        v.canton_code, tw.name AS town_name, t.slug, t.region,
                        cover.id AS cover_id, cover.width AS cover_width, cover.height AS cover_height,
                        cover.dominant_color AS cover_color, cover.variants AS cover_variants,
@@ -104,6 +104,7 @@ final class VenueHeaderQuery
             updatedAt: new \DateTimeImmutable((string) $row['updated_at']),
             lastEditor: null === $row['edited_at'] ? null : new VenueLastEditor(self::string($row['editor_name']), new \DateTimeImmutable((string) $row['edited_at'])),
             cover: $cover,
+            factsChecked: (bool) $row['facts_checked'],
         );
     }
 

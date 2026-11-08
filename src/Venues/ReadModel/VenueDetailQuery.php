@@ -21,6 +21,7 @@ use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\VenueCapacity;
+use App\Venues\VenueIndexGate;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
@@ -140,6 +141,7 @@ final class VenueDetailQuery
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
         $documentTranslation = $this->translationJoin->localized('venue_document_translations', 'venue_document_id', 'd.id', 'dtr');
         $published = $includeUnpublished ? 'TRUE' : self::PUBLISHED;
+        $indexable = VenueIndexGate::sql('v', 't');
         $params = ['number' => $number] + $this->translationJoin->parameters($locale);
         // The capacity the listing card shows (VenueCapacity): the head, the JSON-LD and the markdown view read it.
         $capacityMin = VenueCapacity::minSql('v');
@@ -154,7 +156,7 @@ final class VenueDetailQuery
                     v.phone IS NOT NULL AS has_phone, v.inquiry_email, v.website, v.contact_person,
                     v.own_catering, v.daylight,
                     v.price_level, v.capacity_seated, v.capacity_standing, v.instagram, v.coordinates_from_town,
-                    v.google_place_id, v.google_rating_hidden,
+                    v.google_place_id, v.google_rating_hidden, {$indexable} AS indexable,
                     t.slug, t.summary, t.description, t.meta_description, t.parking_text,
                     t.ambience, t.capacity_note, t.opening_hours, t.region,
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
@@ -250,6 +252,7 @@ final class VenueDetailQuery
             (bool) $row['coordinates_from_town'],
             self::nullableString($row['google_place_id']),
             (bool) $row['google_rating_hidden'],
+            (bool) $row['indexable'],
         );
     }
 

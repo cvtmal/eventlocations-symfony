@@ -40,7 +40,7 @@ final class VenueEditQuery
                        v.phone, v.inquiry_email, v.website, v.contact_person, v.instagram,
                        v.own_catering, v.daylight,
                        v.price_level, v.capacity_seated, v.capacity_standing,
-                       v.google_place_id, v.google_rating_hidden,
+                       v.google_place_id, v.google_rating_hidden, v.facts_checked_at,
                        (SELECT COUNT(*) FROM venue_photos p WHERE p.venue_id = v.id AND p.room_id IS NULL) AS gallery_photo_count,
                        (SELECT COALESCE(jsonb_agg(jsonb_build_object('group', vt.term_group, 'code', vt.term_code, 'main', vt.is_main)
                                                   ORDER BY vt.term_group, tt.position), '[]')
@@ -97,6 +97,7 @@ final class VenueEditQuery
             galleryPhotoCount: (int) $row['gallery_photo_count'],
             googlePlaceId: self::string($row['google_place_id']),
             googleRatingHidden: (bool) $row['google_rating_hidden'],
+            factsCheckedAt: \is_string($row['facts_checked_at']) ? new \DateTimeImmutable($row['facts_checked_at']) : null,
         );
     }
 

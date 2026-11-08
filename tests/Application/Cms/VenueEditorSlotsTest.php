@@ -51,7 +51,7 @@ final class VenueEditorSlotsTest extends WebTestCase
         self::assertSame('/admin/_probe/datensatz/'.$venue->number(), $tab->attr('href'));
         self::assertSame('Panel '.$venue->number(), $crawler->filter('aside .fake-panel')->text());
         // The panels sit between the checklist and Verlauf: CRM's (#27), the managers' (#43), then the fake one.
-        self::assertSame(['venue-checklist', 'crm', 'portal-managers', null, 'venue-history'], $crawler->filter('aside.shell__aside > section, aside.shell__aside > .fake-panel')->each(
+        self::assertSame(['venue-checklist', 'venue-indexing', 'crm', 'portal-managers', null, 'venue-history'], $crawler->filter('aside.shell__aside > section, aside.shell__aside > .fake-panel')->each(
             static fn ($node): ?string => $node->attr('aria-labelledby'),
         ));
     }

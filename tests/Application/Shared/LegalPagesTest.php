@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Application\Shared;
 
 use App\Favorites\ValueObject\MerklisteCookie;
+use App\Search\SearchMissFilter;
 use App\Shared\Controller\LegalController;
+use App\Stats\Command\PurgeSearchMisses;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\EraseModerationComplainants;
@@ -166,6 +168,18 @@ final class LegalPagesTest extends WebTestCase
         self::assertSame(12, $months);
 
         self::assertStringContainsString('löschen sie 12 Monate nach dem Eingang', $this->page('/datenschutz')->filter('main')->text());
+    }
+
+    public function test_the_search_miss_log_follows_its_cap_filter_and_purge(): void
+    {
+        self::assertSame(100, SearchMissFilter::MAX_TEXT);
+        self::assertSame(6, SearchMissFilter::MIN_DIGITS, '«sechs oder mehr Ziffern»');
+        self::assertSame(12, PurgeSearchMisses::RETENTION_MONTHS);
+
+        self::assertStringContainsString(
+            'Findet eine Suche keine Location, zählen wir Suchtext und Filter pro Woche, ohne Angaben zu dir, damit wir sehen, welche Locations fehlen. Vom Suchtext speichern wir höchstens 100 Zeichen. Enthält er ein @ oder eine Folge von sechs oder mehr Ziffern, etwa eine Telefonnummer, zählen wir die Suche nicht. Diese Zählung löschen wir nach höchstens 12 Monaten.',
+            $this->page('/datenschutz')->filter('main')->text(),
+        );
     }
 
     public function test_the_datenschutz_page_explains_content_reports_word_for_word(): void

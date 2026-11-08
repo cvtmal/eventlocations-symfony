@@ -182,7 +182,9 @@ final class VenueDetailControllerTest extends WebTestCase
 
     public function test_a_minimal_venue_hides_its_empty_sections(): void
     {
-        DetailVenues::minimal();
+        $venue = DetailVenues::minimal();
+        // Without the factory's description (G12 gives every factory entry one).
+        $this->connection->executeStatement('UPDATE venue_translations SET description = NULL WHERE venue_id = ?', [$venue->id()]);
 
         $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 

@@ -13,6 +13,7 @@ use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\ValueObject\LandingType;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Integration\Seo\LandingQualityGateTest;
 use App\Tests\Support\Search\LandingFixtures;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -54,7 +55,7 @@ final class LandingPathsTest extends KernelTestCase
         $urls = self::getContainer()->get('router');
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         self::assertInstanceOf(UrlGeneratorInterface::class, $urls);
-        $pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5), 5);
+        $pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5, LandingQualityGateTest::LAUNCH_CANTONS), 5);
         $this->paths = new LandingPaths($pages, $urls);
     }
 

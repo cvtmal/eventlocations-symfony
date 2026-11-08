@@ -9,6 +9,8 @@ use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
+use App\Search\SearchMissFilter;
+use App\Shared\Command\RecordSearchMiss;
 use App\Shared\Http\PublicCache;
 use App\Shared\ValueObject\PageLinks;
 use Psr\Clock\ClockInterface;
@@ -17,6 +19,7 @@ use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\Cache;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -36,6 +39,7 @@ final class ListingController extends AbstractController
         private readonly KnownTermsQuery $knownTerms,
         private readonly LandingPages $landings,
         private readonly ClockInterface $clock,
+        private readonly MessageBusInterface $commandBus,
     ) {
     }
 
@@ -80,6 +84,21 @@ final class ListingController extends AbstractController
             'page_links' => PageLinks::around($page->page, $page->lastPage),
             'landing' => $landing,
         ]);
+
+        if (0 === $page->total && [] !== $criteria->toQuery() && $request->isMethod('GET')) {
+            // G12: a search without results is counted for the staff scorecard (text and filters, no person), except
+            // under Global Privacy Control, as the stats beacon (/datenschutz). Such a page is not stored by a shared
+            // cache (private, max-age 0; s-maxage 0 so the route's #[Cache] adds none), so every search counts, not
+            // only the first of a day. Page 1 only: a later page of nothing is a 404.
+            // The scorecard's "Ansehen" link carries `staff=1` (no criterion), so looking at a miss adds none.
+            // SearchMissFilter caps the text and drops a search whose text looks like contact data (D46).
+            if ('1' !== $request->headers->get('Sec-GPC') && !$request->query->has('staff')
+                && null !== $logged = SearchMissFilter::query($criteria->toQuery(), $request->query->all()['q'] ?? null)) {
+                $this->commandBus->dispatch(new RecordSearchMiss($logged));
+            }
+
+            return $response->setSharedMaxAge(0)->setPrivate()->setMaxAge(0);
+        }
 
         return $response->setCache(PublicCache::listing($now));
     }

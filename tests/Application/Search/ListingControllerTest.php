@@ -510,7 +510,8 @@ final class ListingControllerTest extends WebTestCase
 
     public function test_public_cache_headers_and_no_cookie(): void
     {
-        $this->venue([]);
+        // In Zurich: a search without results is private (G12, SearchMissLogTest).
+        $this->venue(['town' => $this->town('Zürich')]);
 
         $this->get('/eventlokale?canton=zh');
         $response = $this->client->getResponse();

@@ -11,6 +11,7 @@ use App\Cms\Twig\VenueActionsExtension;
 use App\Cms\ValueObject\CmsFlash;
 use App\Cms\ValueObject\VenueNumber;
 use App\Shared\Translation\LocalizedRoutes;
+use App\Venues\Command\CheckVenueFacts;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\UnpublishVenue;
@@ -83,6 +84,21 @@ final class VenueStatusController extends AbstractController
         return $this->redirectToRoute('admin_locations_edit', ['number' => $number]);
     }
 
+    /**
+     * G12: staff confirm that the entry's facts are checked (with a description, it is then indexed) or withdraw it.
+     */
+    #[Route('/fakten-geprueft', name: 'admin_locations_check_facts', methods: ['POST'])]
+    public function checkFacts(int $number, Request $request): Response
+    {
+        return $this->factsChecked(true, $number, $request);
+    }
+
+    #[Route('/fakten-offen', name: 'admin_locations_uncheck_facts', methods: ['POST'])]
+    public function uncheckFacts(int $number, Request $request): Response
+    {
+        return $this->factsChecked(false, $number, $request);
+    }
+
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/loeschen', name: 'admin_locations_delete', methods: ['POST'])]
     public function delete(int $number, Request $request): Response
@@ -95,6 +111,18 @@ final class VenueStatusController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_locations_edit', ['number' => $number]);
+    }
+
+    private function factsChecked(bool $checked, int $number, Request $request): Response
+    {
+        $venue = $this->venue($number);
+        // Already in the asked state (a double click, another tab): no dispatch, so no second audit row.
+        if ($this->confirmed($checked ? 'check_facts' : 'uncheck_facts', $number, $request)
+            && ($venue->factsChecked === $checked || null !== $this->tryDispatch(new CheckVenueFacts($number, $checked)))) {
+            $this->addFlash('success', CmsFlash::message($checked ? 'indexing.flash.checked' : 'indexing.flash.unchecked', ['name' => $venue->name]));
+        }
+
+        return $this->redirect($this->generateUrl('admin_locations_edit', ['number' => $number]).'#venue-indexing');
     }
 
     private function venue(int $number): VenueHeader

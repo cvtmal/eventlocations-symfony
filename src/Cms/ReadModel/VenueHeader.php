@@ -32,6 +32,8 @@ final readonly class VenueHeader
         public \DateTimeImmutable $updatedAt,
         public ?VenueLastEditor $lastEditor,
         public ?Picture $cover,
+        /** G12: staff checked the facts (`venues.facts_checked_at`). */
+        public bool $factsChecked = false,
     ) {
     }
 }
