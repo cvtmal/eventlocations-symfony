@@ -9,6 +9,7 @@ use App\Shared\Translation\TranslationJoin;
 use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\VenuePlace;
+use App\Venues\VenueCapacity;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
@@ -46,6 +47,8 @@ final class SimilarVenuesQuery
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
         $photoTranslation = $this->translationJoin->localized('venue_photo_translations', 'venue_photo_id', 'ph.id', 'pt');
         $granted = PublicPhotoPolicy::sql('vp');
+        $capacityMin = VenueCapacity::minSql('v');
+        $capacityMax = VenueCapacity::maxSql('v');
         $limit = self::LIMIT;
 
         $rows = $this->connection->fetchAllAssociative(
@@ -54,7 +57,7 @@ final class SimilarVenuesQuery
                     SELECT id, canton_code, capacity_min, capacity_max, ll_to_earth(lat, lng) AS e
                     FROM venues WHERE id = :id
                 )
-                SELECT v.id, v.number, v.name, v.capacity_min, v.capacity_max,
+                SELECT v.id, v.number, v.name, {$capacityMin} AS capacity_min, {$capacityMax} AS capacity_max,
                     tw.name AS town_name, v.canton_code, t.region, t.slug, ph.photo, pt.alt
                 FROM me
                 JOIN venues v ON v.id <> me.id

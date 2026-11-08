@@ -12,6 +12,7 @@ use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Entitlements;
 use App\Venues\ValueObject\PhotoBudget;
+use App\Venues\VenueCapacity;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Psr\Clock\ClockInterface;
@@ -128,7 +129,7 @@ final class VenueSitemapQuery
     {
         $defaultLocale = $this->enabledLocale->default();
         $rows = $this->connection->fetchAllAssociative(
-            'WITH published AS (SELECT v.name, t.slug, v.zip, v.town_id, v.canton_code, v.capacity_max '.self::published().')
+            'WITH published AS (SELECT v.name, t.slug, v.zip, v.town_id, v.canton_code, '.VenueCapacity::maxSql('v').' AS capacity_max '.self::published().')
              SELECT p.name, p.slug, p.zip, tw.name AS town_name, p.canton_code, p.capacity_max
              FROM published p
              LEFT JOIN towns tw ON tw.id = p.town_id',
