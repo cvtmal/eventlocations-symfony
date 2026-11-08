@@ -34,7 +34,7 @@ final class DealRecordQueryTest extends KernelTestCase
         $record = $this->query()->find($deal->id());
 
         self::assertNotNull($record);
-        self::assertEquals(new TierLabel('free', 'Free', false), $record->tier);
+        self::assertEquals(new TierLabel('free', 'Gratis', false), $record->tier);
         self::assertEquals(new TierLabel('pro', 'Pro', true), $record->venue?->tier);
     }
 

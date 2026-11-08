@@ -99,7 +99,7 @@ final class ComponentStyleguideTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/_styleguide');
 
         $pills = $crawler->filter('[data-component="tier-badge"] .pill');
-        self::assertSame(['Free', 'Pro'], $pills->each(static fn (Crawler $pill): string => $pill->text()));
+        self::assertSame(['Gratis', 'Pro'], $pills->each(static fn (Crawler $pill): string => $pill->text()));
         self::assertSame(['pill pill--grey', 'pill pill--green'], $pills->each(static fn (Crawler $pill): string => (string) $pill->attr('class')));
     }
 

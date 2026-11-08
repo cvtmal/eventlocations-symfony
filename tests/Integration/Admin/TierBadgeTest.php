@@ -35,11 +35,11 @@ final class TierBadgeTest extends KernelTestCase
 
     public function test_it_takes_a_tier_label_as_the_read_models_build_it(): void
     {
-        $free = new TierLabel('free', 'Free', false);
+        $free = new TierLabel('free', 'Gratis', false);
         $pro = new TierLabel('pro', 'Pro', true);
 
         self::assertStringContainsString('pill--grey', $this->render($free->name, $free->promoted));
-        self::assertStringContainsString('>Free<', $this->render($free->name, $free->promoted));
+        self::assertStringContainsString('>Gratis<', $this->render($free->name, $free->promoted));
         self::assertStringContainsString('pill--green', $this->render($pro->name, $pro->promoted));
         self::assertStringContainsString('>Pro<', $this->render($pro->name, $pro->promoted));
     }

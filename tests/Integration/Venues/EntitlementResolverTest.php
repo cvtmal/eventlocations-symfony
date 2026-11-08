@@ -198,7 +198,7 @@ final class EntitlementResolverTest extends KernelTestCase
 
     private static function free(): Entitlements
     {
-        return new Entitlements('free', 'Free', 0, 6, 1, 1, 1, false, false, false, 3);
+        return new Entitlements('free', 'Gratis', 0, 6, 1, 1, 1, false, false, false, 3);
     }
 
     private static function pro(): Entitlements

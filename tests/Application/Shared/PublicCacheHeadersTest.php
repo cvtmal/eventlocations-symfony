@@ -81,6 +81,7 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'detail, unpublished' => ['venue_show', 'GET', '/eventlokal/{gone}', 410, self::MISSING, null];
         yield 'impressum' => ['impressum', 'GET', '/impressum', 200, self::PAGE, null];
         yield 'datenschutz' => ['datenschutz', 'GET', '/datenschutz', 200, self::PAGE, null];
+        yield 'tier page' => ['tier_page', 'GET', '/location-eintragen', 200, self::PAGE, null];
         yield 'near me' => ['nearby', 'GET', '/eventlokal-in-meiner-naehe', 200, self::PAGE, null];
         yield 'near me with a place' => ['nearby', 'GET', '/eventlokal-in-meiner-naehe?ort=8001', 200, self::PAGE, null];
         yield 'kurzfristig frei' => ['last_minute', 'GET', '/kurzfristig-frei', 200, self::LISTING, null];

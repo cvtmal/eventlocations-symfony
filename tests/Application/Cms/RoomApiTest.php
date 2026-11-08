@@ -100,7 +100,7 @@ final class RoomApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         $errors = $this->errors();
         self::assertSame([''], array_keys($errors));
-        self::assertStringContainsString('Free', $errors[''][0]);
+        self::assertStringContainsString('Gratis', $errors[''][0]);
         self::assertStringContainsString('1 Raum', $errors[''][0]);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$free->id()]));
 

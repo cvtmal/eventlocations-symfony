@@ -38,7 +38,7 @@ final class EventTypeLimitTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame(
-            'Mit dem Plan Free sind höchstens 3 Anlassarten möglich. Wähle weniger aus; mehr gibt es mit einem grösseren Plan.',
+            'Mit dem Plan «Gratis» sind höchstens 3 Anlassarten möglich. Wähle weniger aus; mehr gibt es mit einem grösseren Plan.',
             trim($crawler->filter('#venue_event_suitable_for_error')->text()),
             'the message sits on the chip group',
         );

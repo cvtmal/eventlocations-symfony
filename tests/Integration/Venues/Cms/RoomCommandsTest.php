@@ -82,7 +82,7 @@ final class RoomCommandsTest extends KernelTestCase
 
         self::assertSame('rooms.error.too_many', $violation->translationKey());
         self::assertNull($violation->field);
-        self::assertSame(['max' => 1, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 1, 'tier' => 'Gratis'], $violation->parameters);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$venue->id()]));
         self::assertFalse($this->cmsEdited($venue->number()));
         self::assertSame([], $this->purger()->venues);

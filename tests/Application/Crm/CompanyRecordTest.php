@@ -73,7 +73,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertSame('Eintrag', $crawler->filter('#crm-venues-title')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $crawler->filter('#locations .crm-side__link')->attr('href'));
         // The Eintrag's tier, by the name its row has (a new venue is Free).
-        self::assertSame('Free', $crawler->filter('#locations .crm-side__detail')->text());
+        self::assertSame('Gratis', $crawler->filter('#locations .crm-side__detail')->text());
         self::assertSame('Kontakte (1)', $crawler->filter('#crm-contacts-title')->text());
         // A contact has no page since #55: the name is text, the card's dialogs add and edit (ContactCardTest).
         self::assertSame('Laura Meier', $crawler->filter('#kontakte .crm-side__name')->text());
@@ -500,7 +500,7 @@ final class CompanyRecordTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
-        self::assertEquals(['pro' => 'Pro', 'free' => 'Free'], $props['labels']['tiers']);
+        self::assertEquals(['pro' => 'Pro', 'free' => 'Gratis'], $props['labels']['tiers']);
         // The row of a tier no row has any more is shown by its code.
         self::assertSame(
             ['«Schloss Seeblick»: neu Pro · 29.10.2026, 11:48', '«Schloss Seeblick»: neu premium · 01.10.2026, 09:00'],
@@ -519,7 +519,7 @@ final class CompanyRecordTest extends WebTestCase
 
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
-        self::assertEquals(['pro' => 'Premium', 'free' => 'Free'], $props['labels']['tiers']);
+        self::assertEquals(['pro' => 'Premium', 'free' => 'Gratis'], $props['labels']['tiers']);
     }
 
     public function test_an_older_page_needs_no_names_of_its_own(): void
@@ -536,7 +536,7 @@ final class CompanyRecordTest extends WebTestCase
 
         $props = json_decode((string) $crawler->filter('.crm-record__center [data-island="timeline"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
-        self::assertEquals(['pro' => 'Pro', 'free' => 'Free'], $props['labels']['tiers'], 'The first page holds no change of tier, and has the names for the older one.');
+        self::assertEquals(['pro' => 'Pro', 'free' => 'Gratis'], $props['labels']['tiers'], 'The first page holds no change of tier, and has the names for the older one.');
         self::assertIsString($props['page']['next']);
 
         $this->client->request('GET', '/admin/api/crm/companies/'.$company->id().'/timeline?before='.urlencode($props['page']['next']));

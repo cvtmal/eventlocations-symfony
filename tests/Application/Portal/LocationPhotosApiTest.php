@@ -204,7 +204,7 @@ final class LocationPhotosApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $errors = $this->errors();
         self::assertSame(['file'], array_keys($errors));
-        self::assertStringContainsString('Free', $errors['file'][0]);
+        self::assertStringContainsString('Gratis', $errors['file'][0]);
         self::assertStringContainsString('6 Fotos', $errors['file'][0]);
         self::assertCount(self::FREE_PHOTOS, $this->photoRows($venue));
     }

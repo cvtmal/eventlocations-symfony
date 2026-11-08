@@ -10,7 +10,7 @@
             <a class="site-header__link" href="{{ path('nearby') }}"{% if current_route == 'nearby' %} aria-current="page"{% endif %}>{{ 'nearby.nav'|trans({}, 'search') }}</a>
             {# merkliste.js fills and unhides the badge; these strings stand in for 48 repeated attributes on the cards. data-sync-token is the constant of the stateless check, so cached HTML stays identical #}
             <a class="btn btn--icon site-header__favorites" href="{{ path('merkliste') }}" data-merkliste-link data-sync-token="{{ csrf_token('submit') }}" data-toast-added="{{ 'toast.added'|trans({name: '__name__'}, 'favorites') }}" data-toast-removed="{{ 'toast.removed'|trans({name: '__name__'}, 'favorites') }}" data-toast-full="{{ 'toast.full'|trans({}, 'favorites') }}" data-toast-link="{{ 'toast.link'|trans({}, 'favorites') }}">{{ icon('heart') }}<span class="visually-hidden">{{ 'layout.header.favorites'|trans }} </span><span class="count-badge" data-merkliste-count hidden></span></a>
-            {% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, href: path('portal_register')} only %}
+            {% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, href: path('tier_page')} only %}
         </nav>
         <button type="button" class="btn btn--icon site-header__menu" popovertarget="main-menu" aria-label="{{ 'layout.header.menu_open'|trans }}">{{ icon('menu') }}</button>
     </div>
@@ -18,7 +18,7 @@
         <nav class="main-menu__nav" aria-label="{{ 'layout.header.phone_menu_label'|trans }}">
             <button type="button" class="btn btn--close main-menu__close" popovertarget="main-menu" popovertargetaction="hide" aria-label="{{ 'layout.close'|trans }}">{{ icon('x') }}</button>
             <ul class="main-menu__list">{{ include('layout/_main_menu.html.twig') }}</ul>
-            <div class="main-menu__add-location">{% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, size: 'lg', href: path('portal_register')} only %}</div>
+            <div class="main-menu__add-location">{% include 'components/_button.html.twig' with {label: 'layout.header.add_location'|trans, size: 'lg', href: path('tier_page')} only %}</div>
         </nav>
     </div>
 </header>

@@ -200,7 +200,7 @@ final class AddVenuePhotoTest extends KernelTestCase
         self::assertInstanceOf(VenueRuleViolation::class, $failure);
         self::assertSame('venue.error.too_many_photos', $failure->translationKey());
         self::assertSame('file', $failure->field);
-        self::assertSame(['max' => 6, 'tier' => 'Free'], $failure->parameters);
+        self::assertSame(['max' => 6, 'tier' => 'Gratis'], $failure->parameters);
         self::assertCount(self::FREE_PHOTOS, $this->scope($venue->id()));
         self::assertFileDoesNotExist($this->paths->original('cms/'.$venue->number().'/'.hash_file('sha256', $source).'.jpg'));
         self::assertSame($stagingBefore, $this->stagingEntries());

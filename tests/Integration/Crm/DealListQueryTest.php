@@ -58,7 +58,7 @@ final class DealListQueryTest extends KernelTestCase
         $rows = $this->query()->search(new DealFilter(), DealSort::Name, SortDirection::Asc, 1)->rows;
 
         self::assertSame(['Gratis', 'Ohne'], array_map(static fn ($row): string => $row->name, $rows));
-        self::assertEquals(new TierLabel('free', 'Free', false), $rows[0]->tier);
+        self::assertEquals(new TierLabel('free', 'Gratis', false), $rows[0]->tier);
         self::assertNull($rows[1]->tier);
     }
 

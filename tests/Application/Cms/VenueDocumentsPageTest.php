@@ -126,7 +126,7 @@ final class VenueDocumentsPageTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         $message = self::fieldError($crawler, '#document_upload_file');
-        self::assertStringContainsString('Free', $message);
+        self::assertStringContainsString('Gratis', $message);
         self::assertStringContainsString('1 PDF', $message);
         self::assertSame(1, $this->documentCount($free));
 

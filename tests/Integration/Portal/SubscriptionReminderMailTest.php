@@ -49,9 +49,9 @@ final class SubscriptionReminderMailTest extends KernelTestCase
 
         self::assertSame([
             'Hallo Anna',
-            'Dein Tarif Pro für «Seehaus Meilen» läuft bis am 1. Dezember 2026.',
+            'Dein Tarif «Pro» für «Seehaus Meilen» läuft bis am 1. Dezember 2026.',
             'Wenn du nichts tust, schicken wir dir die Rechnung für ein weiteres Jahr Pro: CHF 199 pro Jahr. Sobald sie bezahlt ist, läuft dein Tarif ohne Unterbruch weiter.',
-            'Ohne Verlängerung bleibt dein Eintrag online, im Tarif Free. Das ändert sich:',
+            'Ohne Verlängerung bleibt dein Eintrag online, im Tarif Gratis. Das ändert sich:',
             'facts: Fotos | Räume | PDFs | Videos | Anlassarten | Telefon und Website | Listen',
             'Möchtest du nicht verlängern? Dann sag es uns über den Link unten. Dein Tarif läuft trotzdem bis am 1. Dezember 2026.',
             'button: Nicht verlängern',
@@ -69,9 +69,9 @@ final class SubscriptionReminderMailTest extends KernelTestCase
 
         self::assertSame([
             'Hallo Anna',
-            'Dein kostenloser Tarif Pro für «Seehaus Meilen» läuft bis am 1. Dezember 2026.',
+            'Dein kostenloser Tarif «Pro» für «Seehaus Meilen» läuft bis am 1. Dezember 2026.',
             'Möchtest du Pro danach behalten? Antworte einfach auf diese Mail, dann schicken wir dir die Rechnung für ein Jahr. Sonst musst du nichts tun.',
-            'Ohne Verlängerung bleibt dein Eintrag online, im Tarif Free. Das ändert sich:',
+            'Ohne Verlängerung bleibt dein Eintrag online, im Tarif Gratis. Das ändert sich:',
             'facts: Fotos | Räume | PDFs | Videos | Anlassarten | Telefon und Website | Listen',
             'Diese Nachricht gehört zu deinem Vertrag mit uns. Fragen? Antworte einfach auf diese Mail.',
         ], $this->sections($mail));

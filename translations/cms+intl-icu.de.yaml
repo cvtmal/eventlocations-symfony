@@ -10,8 +10,8 @@ venue:
         coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
         not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
         still_published: 'Ein veröffentlichter Eintrag kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
-        too_many_photos: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Foto} other {# Fotos}} möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.'
-        too_many_event_types: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Anlassart} other {# Anlassarten}} möglich. Wähle weniger aus; mehr gibt es mit einem grösseren Plan.'
+        too_many_photos: 'Mit dem Plan «{tier}» sind höchstens {max, plural, one {# Foto} other {# Fotos}} möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.'
+        too_many_event_types: 'Mit dem Plan «{tier}» sind höchstens {max, plural, one {# Anlassart} other {# Anlassarten}} möglich. Wähle weniger aus; mehr gibt es mit einem grösseren Plan.'
 
 nav:
     section: CMS
@@ -501,7 +501,7 @@ rooms:
         session_gone: Die Sitzung ist nicht mehr gültig. Bitte wenn nötig neu anmelden und die Seite neu laden.
     error:
         name_required: Der Raum braucht einen Namen.
-        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # Raum} other {sind höchstens # Räume}} möglich. Entferne zuerst einen Raum; mehr gibt es mit einem grösseren Plan.'
+        too_many: 'Mit dem Plan «{tier}» {max, plural, one {ist höchstens # Raum} other {sind höchstens # Räume}} möglich. Entferne zuerst einen Raum; mehr gibt es mit einem grösseren Plan.'
 
 documents:
     tab: Dokumente
@@ -543,7 +543,7 @@ documents:
         file: PDF, bis 15 MB
     error:
         already_uploaded: Dieses PDF ist bereits bei den Dokumenten.
-        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # PDF} other {sind höchstens # PDFs}} möglich. Entferne zuerst ein PDF; mehr gibt es mit einem grösseren Plan.'
+        too_many: 'Mit dem Plan «{tier}» {max, plural, one {ist höchstens # PDF} other {sind höchstens # PDFs}} möglich. Entferne zuerst ein PDF; mehr gibt es mit einem grösseren Plan.'
         title_required: Das Dokument braucht einen Titel.
 
 # G15: the Videos tab of the CMS and of /konto (Cms\VenueVideoPages, templates/admin/cms/venue/_videos.html.twig).

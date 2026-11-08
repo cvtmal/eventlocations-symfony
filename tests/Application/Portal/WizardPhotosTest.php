@@ -168,7 +168,7 @@ final class WizardPhotosTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $message = $crawler->filter('#wizard_photo_file_error')->text();
-        self::assertStringContainsString('Free', $message);
+        self::assertStringContainsString('Gratis', $message);
         self::assertStringContainsString('6 Fotos', $message);
         self::assertSame(self::FREE_PHOTOS, $this->photoCount($venue));
     }

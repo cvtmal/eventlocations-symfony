@@ -116,7 +116,7 @@ final class WizardTest extends WebTestCase
         self::assertGreaterThan(0, $crawler->filter('[name="venue_event[catering][]"]')->count());
         self::assertGreaterThan(0, $crawler->filter('[name="venue_event[technology][]"]')->count());
         self::assertSame(['Geeignet für', 'Catering', 'Technik', 'Preisniveau', 'Ausstattung', 'Sprachen'], $crawler->filter('.venue-card legend.field__label')->each(static fn (Crawler $legend): string => $legend->text()));
-        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen.', $crawler->filter('#event-types-limit')->text());
+        self::assertSame('Mit deinem Plan «Gratis» kannst du bis zu 3 Anlassarten wählen.', $crawler->filter('#event-types-limit')->text());
 
         $form = $crawler->filter('form[name="venue_event"]')->form();
         self::tick($form, ['seminar', 'apero', 'birthday']);
@@ -124,14 +124,14 @@ final class WizardTest extends WebTestCase
         self::assertResponseRedirects($this->url($venue, 'fotos'), Response::HTTP_SEE_OTHER);
 
         $crawler = $this->client->request('GET', $this->url($venue, 'veranstaltung'));
-        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen. Mehr Anlassarten gibt es mit Pro. Pro anfragen', $crawler->filter('#event-types-limit')->text());
+        self::assertSame('Mit deinem Plan «Gratis» kannst du bis zu 3 Anlassarten wählen. Mehr Anlassarten gibt es mit Pro. Pro anfragen', $crawler->filter('#event-types-limit')->text());
         self::assertSame('/konto/locations/'.$venue->number().'#location-plan', $crawler->filter('#event-types-limit a')->attr('href'));
 
         $form = $crawler->filter('form[name="venue_event"]')->form();
         self::tick($form, ['seminar', 'apero', 'birthday', 'party']);
         $crawler = $this->client->submit($form);
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertStringContainsString('Mit dem Plan Free sind höchstens 3 Anlassarten möglich.', $crawler->filter('#venue_event_suitable_for_error')->text());
+        self::assertStringContainsString('Mit dem Plan «Gratis» sind höchstens 3 Anlassarten möglich.', $crawler->filter('#venue_event_suitable_for_error')->text());
     }
 
     public function test_a_pro_location_sees_no_event_type_limit_on_the_step_or_the_editor(): void

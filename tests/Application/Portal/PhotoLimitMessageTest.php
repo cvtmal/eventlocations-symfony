@@ -34,8 +34,8 @@ final class PhotoLimitMessageTest extends WebTestCase
     }
     use SendsVenueMediaRequests;
 
-    private const string FREE_MESSAGE = 'Mit dem Plan Free sind höchstens 6 Fotos möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.';
-    private const string PRO_MESSAGE = 'Mit dem Plan Pro sind höchstens 60 Fotos möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.';
+    private const string FREE_MESSAGE = 'Mit dem Plan «Gratis» sind höchstens 6 Fotos möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.';
+    private const string PRO_MESSAGE = 'Mit dem Plan «Pro» sind höchstens 60 Fotos möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.';
 
     protected function tearDown(): void
     {
@@ -103,7 +103,7 @@ final class PhotoLimitMessageTest extends WebTestCase
 
         $this->upload('/konto/api/locations/'.$venue->number().'/photos', $this->photoFile(), token: $this->csrfToken());
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertSame(['file' => ['Mit dem Plan Starter sind höchstens 7 Fotos möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.']], $this->errors());
+        self::assertSame(['file' => ['Mit dem Plan «Starter» sind höchstens 7 Fotos möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.']], $this->errors());
     }
 
     public function test_the_wizard_form_shows_the_same_message_beside_the_file(): void

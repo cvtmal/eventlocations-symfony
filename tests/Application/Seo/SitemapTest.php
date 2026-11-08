@@ -102,7 +102,7 @@ final class SitemapTest extends WebTestCase
 
         $xml = $this->fetch('/sitemap-pages.xml');
 
-        self::assertSame(['http://localhost/', 'http://localhost/eventlokale', 'http://localhost/eventlokal-in-meiner-naehe', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertSame(['http://localhost/', 'http://localhost/eventlokale', 'http://localhost/eventlokal-in-meiner-naehe', 'http://localhost/location-eintragen', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
         self::assertCount(3, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
         $this->assertValid($xml, 'sitemap-with-images.xsd');
     }
@@ -161,6 +161,7 @@ final class SitemapTest extends WebTestCase
             'http://localhost/eventlokale/zuerich' => '2026-03-01T10:00:00+00:00',
             'http://localhost/eventlokale/zuerich/staefa' => '2026-03-01T10:00:00+00:00',
             'http://localhost/impressum' => null,
+            'http://localhost/location-eintragen' => null,
         ], $lastmods);
         $this->assertValid($xml, 'sitemap-with-images.xsd');
 

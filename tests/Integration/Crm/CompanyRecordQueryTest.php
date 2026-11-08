@@ -46,7 +46,7 @@ final class CompanyRecordQueryTest extends KernelTestCase
         $company = CompanyFactory::createOne();
 
         // With or without an Eintrag: the names do not hang on the venue.
-        self::assertEquals(['pro' => 'Premium', 'free' => 'Free', 'team' => 'Team'], $this->query()->find($company->id())?->tierNames);
+        self::assertEquals(['pro' => 'Premium', 'free' => 'Gratis', 'team' => 'Team'], $this->query()->find($company->id())?->tierNames);
     }
 
     private function query(): CompanyRecordQuery

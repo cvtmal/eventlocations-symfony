@@ -304,7 +304,7 @@ deal:
     payment:
         action: Zahlung erfassen
         title: Zahlung erfassen
-        text: 'Die Rechnung ist bezahlt: «{venue}» erhält den Tarif {tier} vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy}.'
+        text: 'Die Rechnung ist bezahlt: «{venue}» erhält den Tarif «{tier}» vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy}.'
         invoice_ref: Rechnungsnummer
         invoice_ref_help: Freiwillig, höchstens 60 Zeichen.
         amount: Betrag (CHF)
@@ -328,8 +328,8 @@ deal:
     void:
         action: Zahlung stornieren
         title: Zahlung stornieren
-        text: 'Die Zahlung für den Tarif {tier} von «{venue}» vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy} wird gelöscht und zählt nicht mehr als Zahlung. Deckt kein anderer Zeitraum den heutigen Tag ab, wechselt der Eintrag sofort in den Tarif Free. Das lässt sich nicht rückgängig machen.'
-        text_free: 'Der kostenlose Zeitraum im Tarif {tier} von «{venue}» vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy} wird gelöscht. Deckt kein anderer Zeitraum den heutigen Tag ab, wechselt der Eintrag sofort in den Tarif Free. Das lässt sich nicht rückgängig machen.'
+        text: 'Die Zahlung für den Tarif «{tier}» von «{venue}» vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy} wird gelöscht und zählt nicht mehr als Zahlung. Deckt kein anderer Zeitraum den heutigen Tag ab, wechselt der Eintrag sofort in den Tarif Gratis. Das lässt sich nicht rückgängig machen.'
+        text_free: 'Der kostenlose Zeitraum im Tarif «{tier}» von «{venue}» vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy} wird gelöscht. Deckt kein anderer Zeitraum den heutigen Tag ab, wechselt der Eintrag sofort in den Tarif Gratis. Das lässt sich nicht rückgängig machen.'
         confirm: Stornieren
         cancel: Nicht jetzt
         close: Schliessen

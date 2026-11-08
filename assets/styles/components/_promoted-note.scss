@@ -1,0 +1,18 @@
+// The «Top-Eintrag» footnote (G13, D40): one line under a list, a carousel or a detail head that shows the badge,
+// linking to its explanation on /location-eintragen.
+.promoted-note {
+    margin: var(--space-16) 0 0;
+    color: var(--c-ink-muted);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    a {
+        color: var(--c-accent-strong);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+
+        &:hover {
+            color: var(--c-ink);
+        }
+    }
+}

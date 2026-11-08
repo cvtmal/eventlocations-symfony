@@ -25,11 +25,11 @@ final class EntitlementsTest extends TestCase
     public function test_a_free_row_keeps_its_ceilings_and_hides_the_contact_data(): void
     {
         $entitlements = Entitlements::fromRow(self::row([
-            'tier_code' => 'free', 'tier_name' => 'Free', 'rank_weight' => 0, 'photos_max' => 6, 'rooms_max' => 1, 'videos_max' => 1, 'documents_max' => 1,
+            'tier_code' => 'free', 'tier_name' => 'Gratis', 'rank_weight' => 0, 'photos_max' => 6, 'rooms_max' => 1, 'videos_max' => 1, 'documents_max' => 1,
             'contact_visible' => false, 'last_minute_allowed' => false, 'detailed_report' => false, 'event_types_max' => 3,
         ]));
 
-        self::assertEquals(new Entitlements('free', 'Free', 0, 6, 1, 1, 1, false, false, false, 3), $entitlements);
+        self::assertEquals(new Entitlements('free', 'Gratis', 0, 6, 1, 1, 1, false, false, false, 3), $entitlements);
         self::assertSame(3, $entitlements->eventTypesMax);
     }
 

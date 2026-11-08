@@ -53,7 +53,7 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSelectorExists('[popovertarget="main-menu"]');
         self::assertSelectorExists('#main-menu[popover]');
         self::assertSame(
-            ['/eventlokale', '/#regionen', '/eventlokal-in-meiner-naehe', '/merkliste', '/konto/registrieren'],
+            ['/eventlokale', '/#regionen', '/eventlokal-in-meiner-naehe', '/merkliste', '/location-eintragen'],
             $crawler->filter('.site-header__actions a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
         );
         self::assertCount(0, $crawler->filter('.site-header use[href$="#search"]'));
@@ -144,14 +144,14 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSame('/eventlokal-in-meiner-naehe', $crawler->filter('.main-menu__list a[aria-current="page"]')->attr('href'));
     }
 
-    public function test_location_eintragen_links_to_the_registration_in_all_three_places(): void
+    public function test_location_eintragen_links_to_the_tier_page_in_all_three_places(): void
     {
         $crawler = $this->home();
 
         foreach (['.site-header__actions a.btn--primary', '.main-menu__add-location a.btn', 'a.site-footer__add-location'] as $selector) {
             $entry = $crawler->filter($selector);
             self::assertCount(1, $entry, $selector);
-            self::assertSame('/konto/registrieren', $entry->attr('href'), $selector);
+            self::assertSame('/location-eintragen', $entry->attr('href'), $selector);
         }
     }
 

@@ -109,7 +109,7 @@ final class DealBoardTest extends WebTestCase
 
         self::assertSame([
             'Bezahlt' => ['code' => 'pro', 'label' => 'Premium', 'promoted' => true],
-            'Gratis' => ['code' => 'free', 'label' => 'Free', 'promoted' => false],
+            'Gratis' => ['code' => 'free', 'label' => 'Gratis', 'promoted' => false],
             'Unentschieden' => null,
         ], $cards);
     }

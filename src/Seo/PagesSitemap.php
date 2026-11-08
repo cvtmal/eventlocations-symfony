@@ -21,11 +21,12 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * Landing pages (#17) follow the listing: every live and indexable one, page 1, unfiltered, with the newest
  * change among its venues. The near-me page (#52) follows the landing pages with the listing's
  * `lastmod`, since it shows venues; «Kurzfristig frei» (G14) follows, without `lastmod`, while it lists an offer.
- * The legal pages (#18) come last, without `lastmod`: their text changes only with a deploy, and no date of it is
- * stored.
+ * «Location eintragen» (G13) and then the legal pages (#18) come last, without `lastmod`: their text changes with a
+ * deploy or a staff edit, and no date of it is stored.
  */
 final class PagesSitemap
 {
+    private const array INFO_ROUTES = ['tier_page'];
     private const array LEGAL_ROUTES = ['impressum', 'datenschutz'];
 
     public function __construct(
@@ -66,7 +67,7 @@ final class PagesSitemap
             $urls[] = new SitemapUrl($this->urls->generate('last_minute', [], UrlGeneratorInterface::ABSOLUTE_URL), null);
         }
 
-        foreach (self::LEGAL_ROUTES as $route) {
+        foreach ([...self::INFO_ROUTES, ...self::LEGAL_ROUTES] as $route) {
             $urls[] = new SitemapUrl($this->urls->generate($route, [], UrlGeneratorInterface::ABSOLUTE_URL), null);
         }
 

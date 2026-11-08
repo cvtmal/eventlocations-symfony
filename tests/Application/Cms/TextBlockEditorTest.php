@@ -68,6 +68,7 @@ final class TextBlockEditorTest extends WebTestCase
                 ['Text der Startseite', 'Auf der Startseite, über den Regionen', 'leer'],
                 ['Einleitung der Suchseite', 'Unter dem Titel der Suchseite ohne Filter, nur auf Seite 1', 'leer'],
                 ['Bildrechte-Erklärung', 'Beim Veröffentlichen der Location (Schritt «Prüfen») und im Fotos-Tab des Kontos', 'leer'],
+                ['Location eintragen: Häufige Fragen', 'Seite «Location eintragen» (/location-eintragen), Abschnitt «Häufige Fragen». Preise nicht abtippen: die Tabelle zeigt sie aus den Tarifen.', 'leer'],
             ],
             $crawler->filter('#block-list tbody tr')->each(static fn (Crawler $row): array => \array_slice($row->filter('td')->each(static fn (Crawler $cell): string => $cell->text()), 0, 3)),
         );

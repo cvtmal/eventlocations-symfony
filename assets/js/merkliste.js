@@ -206,6 +206,11 @@
         total.hidden = left === 0;
         document.querySelector('[data-merkliste-full]').hidden = read().length < MAX_ENTRIES;
         document.querySelector('[data-merkliste-empty]').hidden = left > 0;
+        // The «Top-Eintrag» footnote explains a badge; it goes with the last card that has one (G13).
+        const note = document.querySelector('[data-merkliste-promoted-note]');
+        if (note) {
+            note.hidden = !document.querySelector('[data-merkliste-item] .badge');
+        }
     };
 
     // In place, because a reload would jump to the top of a list of up to 100 cards.

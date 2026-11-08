@@ -59,7 +59,7 @@ final class TierScreensTest extends WebTestCase
         self::assertSame(
             [
                 ['Pro', 'pro', '199', '10', '60', '20', '5', '5', 'Ja', 'Ja', 'Ja', 'alle', (string) $this->venuesOn('pro'), 'Bearbeiten'],
-                ['Free', 'free', '0', '0', '6', '1', '1', '1', 'Nein', 'Nein', 'Nein', '3', (string) $this->venuesOn('free'), 'Bearbeiten'],
+                ['Gratis', 'free', '0', '0', '6', '1', '1', '1', 'Nein', 'Nein', 'Nein', '3', (string) $this->venuesOn('free'), 'Bearbeiten'],
             ],
             $crawler->filter('#tier-list tbody tr')->each(fn (Crawler $row): array => $this->cells($row)),
         );
@@ -213,7 +213,7 @@ final class TierScreensTest extends WebTestCase
         yield 'zero event types' => [['tier[eventTypesMax]' => '0'], 'tier_eventTypesMax', 'Bitte eine Zahl zwischen 1 und 1000 eingeben.'];
         yield 'event types that are no number' => [['tier[eventTypesMax]' => 'alle'], 'tier_eventTypesMax', 'Bitte eine ganze Zahl eingeben.'];
         yield 'a NUL in the name' => [['tier[name]' => "Pr\0o"], 'tier_name', 'Der Text enthält ungültige Zeichen.'];
-        yield 'the name of another tier' => [['tier[name]' => 'Free'], 'tier_name', 'Diesen Namen hat schon ein anderer Tarif.'];
+        yield 'the name of another tier' => [['tier[name]' => 'Gratis'], 'tier_name', 'Diesen Namen hat schon ein anderer Tarif.'];
     }
 
     /**
@@ -264,7 +264,7 @@ final class TierScreensTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertSame('Diesen Namen hat schon ein anderer Tarif.', $crawler->filter('#tier_name_error')->text());
         self::assertSame('Race', $crawler->filter('#tier_name')->attr('value'));
-        self::assertSame(['Free', 'Pro'], $this->connection->fetchFirstColumn('SELECT name FROM tiers ORDER BY code'));
+        self::assertSame(['Gratis', 'Pro'], $this->connection->fetchFirstColumn('SELECT name FROM tiers ORDER BY code'));
         self::assertSame($purges, $this->purger()->listings);
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'tier'"));
     }

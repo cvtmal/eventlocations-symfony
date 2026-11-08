@@ -46,9 +46,9 @@ final class DealPaymentTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame('Zahlung erfassen', $crawler->filter('[commandfor="deal-payment"]')->text());
-        self::assertStringContainsString('«Schloss Seeblick» erhält den Tarif Pro vom', $crawler->filter('#deal-payment p')->first()->text());
+        self::assertStringContainsString('«Schloss Seeblick» erhält den Tarif «Pro» vom', $crawler->filter('#deal-payment p')->first()->text());
         self::assertSame('', $crawler->filter('#deal-payment-form input[name="expected"]')->attr('value'));
-        self::assertStringContainsString('Free', $crawler->filter('#location .crm-side__detail')->text());
+        self::assertStringContainsString('Gratis', $crawler->filter('#location .crm-side__detail')->text());
 
         $this->client->submit($crawler->filter('#deal-payment-form')->form(), ['invoice_ref' => ' RE-2026-17 '], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 

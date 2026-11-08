@@ -24,6 +24,9 @@
             <li class="listing__item" data-merkliste-item>{{ include('search/_card.html.twig', {card: card, index: loop.index0, action: 'remove'}, with_context = false) }}</li>
             {%- endfor %}
         </ol>
+        {%- if cards|filter(c => c.promoted)|length > 0 %}
+        {% include 'components/_promoted_note.html.twig' with {attributes: {'data-merkliste-promoted-note': ''}} only %}
+        {%- endif %}
         {%- endif %}
         <div class="listing-empty" data-merkliste-empty{% if cards is not empty %} hidden{% endif %}>
             <span class="listing-empty__disc" aria-hidden="true">{{ icon('heart') }}</span>
