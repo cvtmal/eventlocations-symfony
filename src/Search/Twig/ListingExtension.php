@@ -8,6 +8,7 @@ use App\Geo\ReadModel\PlaceResolver;
 use App\Geo\ReadModel\ResolvedPlace;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
+use App\Search\LandingCopy;
 use App\Search\LandingPaths;
 use App\Search\ReadModel\CardPhoto;
 use App\Search\ReadModel\FilterDataQuery;
@@ -31,7 +32,9 @@ use Twig\Attribute\AsTwigFunction;
  * - `listing_form(criteria, params)`: an overlay GET form's `action` (the landing path of the
  *   other filters), the `except` list for `_hidden_state` (its params plus the path's facets)
  *   and its live `count` URL, which carries those facets and ends in `?` or `&` (live-count.js).
- * - `landing_canton_paths()`: canton code → path of every live canton page (the region form's map).
+ * - `landing_canton_paths(criteria?)`: canton code → path of every live canton page (the region form's map),
+ *   or of the canton's event page when the criteria hold exactly one event type with one there (F8).
+ * - `landing_heading(landing)`, `landing_intro(landing)`: a landing page's h1 and catalogue intro (LandingCopy).
  * - `landing_links(landing)`: "Andere suchten auch nach", live landing pages only.
  * - `landing_breadcrumb(landing)`: a landing page's breadcrumb items, absolute URLs, the last without one.
  * - `card_picture(photo, venueName)`: the CardPhoto → Picture recipe of #6, null without variants.
@@ -52,7 +55,20 @@ final class ListingExtension
         private readonly FilterDataQuery $filterData,
         private readonly LandingPages $landings,
         private readonly LandingPaths $paths,
+        private readonly LandingCopy $copy,
     ) {
+    }
+
+    #[AsTwigFunction('landing_heading')]
+    public function landingHeading(LandingPage $landing): string
+    {
+        return $this->copy->heading($landing);
+    }
+
+    #[AsTwigFunction('landing_intro')]
+    public function landingIntro(LandingPage $landing): string
+    {
+        return $this->copy->intro($landing);
     }
 
     #[AsTwigFunction('listing_path')]
@@ -118,29 +134,38 @@ final class ListingExtension
      * @return array<string, string>
      */
     #[AsTwigFunction('landing_canton_paths')]
-    public function landingCantonPaths(): array
+    public function landingCantonPaths(?SearchCriteria $criteria = null): array
     {
+        // F8: with exactly one event type chosen, a canton goes to its event page in that canton.
+        $events = $criteria?->termCodes(TermGroup::SuitableFor) ?? [];
         $paths = [];
         foreach ($this->landings->cantons() as $landing) {
-            $paths[(string) $landing->canton?->value] = $this->paths->path($landing);
+            $event = 1 === \count($events) && null !== $landing->canton ? $this->landings->event($events[0], $landing->canton) : null;
+            $paths[(string) $landing->canton?->value] = $this->paths->path($event ?? $landing);
         }
 
         return $paths;
     }
 
     /**
-     * Listing and building pages: the top canton pages, then the building pages. A canton page
-     * puts its town pages first, a town page its sibling towns and its canton. The current page
-     * is never linked.
+     * Pages related to the current one first, then the top canton pages, the event type pages and
+     * the building pages (LP-5). A canton page puts its town and event pages first, a town page its
+     * sibling towns, its canton and the canton's event pages, an event page its cantons, an event
+     * page in a canton the canton's other event pages, the event page without canton and the
+     * canton page. Each page once, the current page never.
      *
      * @return list<array{label: string, href: string}>
      */
     #[AsTwigFunction('landing_links')]
     public function landingLinks(?LandingPage $current = null): array
     {
+        $canton = null === $current?->canton ? null : $this->landings->canton($current->canton);
         $first = match ($current?->type) {
-            LandingType::Canton => $this->landings->towns($current->canton),
-            LandingType::Town => [...$this->landings->towns($current->canton), ...array_filter([$current->canton ? $this->landings->canton($current->canton) : null])],
+            LandingType::Canton => [...$this->landings->towns($current->canton), ...$this->landings->eventCantons($current->canton)],
+            LandingType::Town => [...$this->landings->towns($current->canton), $canton, ...$this->landings->eventCantons($current->canton)],
+            LandingType::Event => null === $current->canton
+                ? array_filter($this->landings->eventCantons(), static fn (LandingPage $page): bool => $page->event === $current->event)
+                : [...$this->landings->eventCantons($current->canton), $this->landings->event((string) $current->event), $canton],
             default => [],
         };
         $cantons = \array_slice(array_values(array_filter(
@@ -149,9 +174,11 @@ final class ListingExtension
         )), 0, self::RELATED_CANTONS);
 
         $links = [];
-        foreach ([...$first, ...$cantons, ...$this->landings->buildings()] as $page) {
-            if ($page !== $current) {
-                $links[] = ['label' => $this->landingLabel($page, 'related'), 'href' => $this->paths->path($page)];
+        $seen = [];
+        foreach ([...$first, ...$cantons, ...$this->landings->events(), ...$this->landings->buildings()] as $page) {
+            if (null !== $page && $page !== $current && !\in_array($page, $seen, true)) {
+                $seen[] = $page;
+                $links[] = ['label' => $this->copy->related($page), 'href' => $this->paths->path($page)];
             }
         }
 
@@ -168,10 +195,10 @@ final class ListingExtension
             return [];
         }
         $items = [['name' => $this->translator->trans('breadcrumb.listing', [], 'seo'), 'url' => $this->paths->path(null, [], UrlGeneratorInterface::ABSOLUTE_URL)]];
-        if (LandingType::Town === $landing->type && null !== $landing->canton && null !== $canton = $this->landings->canton($landing->canton)) {
-            $items[] = ['name' => $this->landingLabel($canton, 'breadcrumb'), 'url' => $this->paths->path($canton, [], UrlGeneratorInterface::ABSOLUTE_URL)];
+        if (\in_array($landing->type, [LandingType::Town, LandingType::Event], true) && null !== $landing->canton && null !== $canton = $this->landings->canton($landing->canton)) {
+            $items[] = ['name' => $this->copy->breadcrumb($canton), 'url' => $this->paths->path($canton, [], UrlGeneratorInterface::ABSOLUTE_URL)];
         }
-        $items[] = ['name' => $this->landingLabel($landing, 'breadcrumb')];
+        $items[] = ['name' => $this->copy->breadcrumb($landing)];
 
         return $items;
     }
@@ -220,22 +247,5 @@ final class ListingExtension
     public function filterTerms(TermGroup $group, SearchCriteria $criteria): array
     {
         return $this->filterData->terms($group, $criteria->termCodes($group));
-    }
-
-    /**
-     * A landing page's link text: `related` for "Andere suchten auch nach", `breadcrumb` for
-     * its breadcrumb step. A building page is its heading in both.
-     */
-    private function landingLabel(LandingPage $page, string $context): string
-    {
-        return match ($page->type) {
-            LandingType::Canton => 'related' === $context
-                ? $this->translator->trans('related.canton', ['canton' => $page->canton?->trans($this->translator)], 'search')
-                : $this->translator->trans('breadcrumb.canton', ['canton' => $page->canton?->trans($this->translator), 'canton_code' => $page->canton?->value], 'seo'),
-            LandingType::Town => 'related' === $context
-                ? $this->translator->trans('related.town', ['town' => $page->townName], 'search')
-                : (string) $page->townName,
-            LandingType::Building => $this->translator->trans('landing.building.'.$page->building.'.heading', [], 'search'),
-        };
     }
 }

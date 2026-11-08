@@ -20,7 +20,7 @@
 {%- set canton_only = criteria.place is null and not filter_has_data('place') -%}
 <form id="filter-region-form" class="region-filter{% if canton_only %} region-filter--canton-only{% endif %}" method="get" action="{{ path('listing') }}" autocomplete="off"
       data-live-count data-live-count-url="{{ path('_search_count') }}?"
-      data-region-filter data-places-url="{{ path('_search_places') }}" data-landing="{{ landing_canton_paths()|json_encode }}"
+      data-region-filter data-places-url="{{ path('_search_places') }}" data-landing="{{ landing_canton_paths(criteria)|json_encode }}"
       data-no-places="{{ 'filter.no_places'|trans({}, 'search') }}"
       data-radius-zero="{{ 'filter.radius_value'|trans({radius: 0, formatted: '0'}, 'search') }}"
       data-radius-other="{{ 'filter.radius_value'|trans({radius: 2, formatted: '%n'}, 'search') }}">

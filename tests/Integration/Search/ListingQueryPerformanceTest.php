@@ -10,6 +10,7 @@ use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\LandingFooter;
 use App\Search\ReadModel\LandingPages;
+use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\ReadModel\SqlStatement;
@@ -95,7 +96,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $filterData = new FilterDataQuery($this->connection, ListingQueryTest::enabledLocale());
         $timings['filter data, flags'] = $this->executionMs($filterData->flagsStatement());
         $timings['filter data, terms'] = $this->executionMs($filterData->termsStatement());
-        $landingPages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), new IdentityTranslator(), new LandingFooter(new ArrayAdapter()), 5);
+        $landingPages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), new IdentityTranslator(), new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5), 5);
         $timings['landing pages'] = $this->executionMs($landingPages->statement());
         foreach ($timings as $what => $ms) {
             $this->report($what, $ms);

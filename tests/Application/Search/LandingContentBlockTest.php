@@ -62,15 +62,15 @@ final class LandingContentBlockTest extends WebTestCase
         $this->withBuilding($this->inTown('Stäfa', 5), 'castle');
 
         self::assertSame(
-            '5 Hochzeitslocations im Kanton Zürich: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
+            '5 Eventlokale im Kanton Zürich: Hier vergleichst du Fotos und Platz für Gäste und fragst direkt bei der Location an.',
             $this->intro('/eventlokale/zuerich')->filter('p')->text(),
         );
         self::assertSame(
-            '5 Hochzeitslocations in Stäfa: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
+            '5 Eventlokale in Stäfa: Hier vergleichst du Fotos und Platz für Gäste und fragst direkt bei der Location an.',
             $this->intro('/eventlokale/zuerich/staefa')->filter('p')->text(),
         );
         self::assertSame(
-            '<p>5 Locations für deine Hochzeit im Schloss: Vergleiche Fotos und Platz für Gäste und frag direkt an.</p>',
+            '<p>5 Eventlokale im Schloss: Hier vergleichst du Fotos und Platz für Gäste und fragst direkt bei der Location an.</p>',
             trim($this->intro('/eventlokale/schloss')->html()),
         );
         $this->assertPublicAndSessionFree();
@@ -85,7 +85,7 @@ final class LandingContentBlockTest extends WebTestCase
 
         self::assertSame(['Am Zürichsee feiern.', 'Zweiter Absatz.'], $intro->filter('p')->each(static fn (Crawler $p): string => $p->text()));
         self::assertSame('Zürichsee', $intro->filter('strong')->text());
-        self::assertStringNotContainsString('Vergleiche Fotos', $intro->text());
+        self::assertStringNotContainsString('Hier vergleichst du Fotos', $intro->text());
         $this->assertPublicAndSessionFree();
     }
 
@@ -155,7 +155,7 @@ final class LandingContentBlockTest extends WebTestCase
 
         self::assertSame('Am Zürichsee', $intro->filter('h2')->text());
         self::assertCount(1, $this->client->getCrawler()->filter('h1'));
-        self::assertSame('Hochzeitslocations im Kanton Zürich', $this->client->getCrawler()->filter('h1')->text());
+        self::assertSame('Eventlokale im Kanton Zürich', $this->client->getCrawler()->filter('h1')->text());
     }
 
     public function test_a_code_block_showing_an_h1_stays_text(): void
@@ -184,7 +184,7 @@ final class LandingContentBlockTest extends WebTestCase
         $this->inCanton(Canton::ZH, 5);
         $this->store(['landing.canton.zh.intro' => $body]);
 
-        self::assertStringContainsString('Vergleiche Fotos', $this->intro('/eventlokale/zuerich')->text());
+        self::assertStringContainsString('Hier vergleichst du Fotos', $this->intro('/eventlokale/zuerich')->text());
     }
 
     public function test_public_pages_on_a_cold_pool_stay_public_and_set_no_cookie(): void

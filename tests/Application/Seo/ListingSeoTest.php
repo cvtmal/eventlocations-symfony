@@ -34,11 +34,11 @@ final class ListingSeoTest extends WebTestCase
     private const string TITLE = 'Hochzeitslocations in der Schweiz | deine-eventlocation.ch';
     private const string PAGE_2_TITLE = 'Hochzeitslocations Schweiz – Seite 2';
     private const string ZURICH = 'http://localhost/eventlokale/zuerich';
-    private const string ZURICH_TITLE = 'Hochzeitslocations im Kanton Zürich | deine-eventlocation.ch';
+    private const string ZURICH_TITLE = '49 Eventlokale im Kanton Zürich | deine-eventlocation.ch';
     private const string TOWN = 'http://localhost/eventlokale/zuerich/zuerich';
-    private const string TOWN_TITLE = '49 Hochzeitslocations in Zürich | deine-eventlocation.ch';
+    private const string TOWN_TITLE = '49 Eventlokale in Zürich | deine-eventlocation.ch';
     private const string CASTLE = 'http://localhost/eventlokale/schloss';
-    private const string CASTLE_TITLE = 'Hochzeit im Schloss: 49 Locations | deine-eventlocation.ch';
+    private const string CASTLE_TITLE = 'Events im Schloss: 49 Locations | deine-eventlocation.ch';
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -99,7 +99,7 @@ final class ListingSeoTest extends WebTestCase
             ['/eventlokale/zuerich', self::ZURICH, false, 2, self::ZURICH_TITLE],
             ['/eventlokale/zuerich?page=1', self::ZURICH, false, 2, self::ZURICH_TITLE],
             ['/eventlokale/zuerich?utm_source=x', self::ZURICH, false, 2, self::ZURICH_TITLE],
-            ['/eventlokale/zuerich?page=2', self::ZURICH.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
+            ['/eventlokale/zuerich?page=2', self::ZURICH.'?page=2', false, 2, 'Eventlokale Zürich – Seite 2 | deine-eventlocation.ch'],
             ['/eventlokale/zuerich?guests=100', self::ZURICH, true, 0, self::ZURICH_TITLE],
             ['/eventlokale/zuerich?building[]=castle', self::ZURICH, true, 0, self::ZURICH_TITLE],
             // The path wins over the query (P3), so this is the clean canton page.
@@ -107,13 +107,13 @@ final class ListingSeoTest extends WebTestCase
             ['/eventlokale?canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
 
             ['/eventlokale/zuerich/zuerich', self::TOWN, false, 2, self::TOWN_TITLE],
-            ['/eventlokale/zuerich/zuerich?page=2', self::TOWN.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
+            ['/eventlokale/zuerich/zuerich?page=2', self::TOWN.'?page=2', false, 2, 'Eventlokale in Zürich – Seite 2 | deine-eventlocation.ch'],
             ['/eventlokale/zuerich/zuerich?guests=100', self::TOWN, true, 0, self::TOWN_TITLE],
             ['/eventlokale?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
             ['/eventlokale/zuerich?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
 
             ['/eventlokale/schloss', self::CASTLE, false, 2, self::CASTLE_TITLE],
-            ['/eventlokale/schloss?page=2', self::CASTLE.'?page=2', false, 2, 'Hochzeit im Schloss – Seite 2 | deine-eventlocation.ch'],
+            ['/eventlokale/schloss?page=2', self::CASTLE.'?page=2', false, 2, 'Events im Schloss – Seite 2 | deine-eventlocation.ch'],
             ['/eventlokale/schloss?guests=100', self::CASTLE, true, 0, self::CASTLE_TITLE],
             ['/eventlokale?building[]=castle', self::CASTLE, true, 0, self::CASTLE_TITLE],
             // A canton outranks a building: the facet the canton page cannot hold stays in the query.

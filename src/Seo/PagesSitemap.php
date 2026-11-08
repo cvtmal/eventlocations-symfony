@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * Every URL of the sitemap that is not a venue. The one place #17 and #18 add their pages to.
  * The home page (#36) comes first, so `bin/warm-cache` reaches it right after the listing; it
  * shows venues, so it shares the listing's `lastmod`.
- * Landing pages (#17) follow the listing: every live one, page 1, unfiltered, with the newest
+ * Landing pages (#17) follow the listing: every live and indexable one, page 1, unfiltered, with the newest
  * change among its venues. The near-me page (#52) follows the landing pages with the listing's
  * `lastmod`, since it shows venues. The legal pages (#18) come last, without `lastmod`: their text changes
  * only with a deploy, and no date of it is stored.
@@ -45,7 +45,8 @@ final class PagesSitemap
             new SitemapUrl($this->urls->generate('listing', [], UrlGeneratorInterface::ABSOLUTE_URL), $newest),
         ];
 
-        $landings = $this->landingPages->all();
+        // G12: a page that fails LandingQualityGate stays out (it is noindex).
+        $landings = array_filter($this->landingPages->all(), static fn (LandingPage $page): bool => $page->indexable);
         if ([] !== $landings) {
             $changes = $this->venues->newestChangeByGroup();
             foreach ($landings as $page) {
@@ -71,6 +72,9 @@ final class PagesSitemap
             LandingType::Canton => $changes->cantons[$page->canton->value ?? ''] ?? null,
             LandingType::Town => $changes->towns[$page->townId ?? ''] ?? null,
             LandingType::Building => $changes->buildings[$page->building ?? ''] ?? null,
+            LandingType::Event => null === $page->canton
+                ? $changes->events[$page->event ?? ''] ?? null
+                : $changes->eventCantons[$page->event.'.'.$page->canton->value] ?? null,
         };
     }
 }

@@ -14,10 +14,12 @@ use Symfony\Contracts\Service\ResetInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The live landing pages (#17): every canton, town and building type with at least
- * `%landing.min_venues%` published venues, by ListingSql's definition of published. One
- * threshold for every type, so a page switches on and off with the data and never needs code.
- * Under the threshold a page does not exist (404), which keeps thin pages out of the index.
+ * The live landing pages (#17): every canton, town, building type, event type and event type
+ * in a canton (F8) with at least `%landing.min_venues%` published venues, by ListingSql's
+ * definition of published. One threshold for every type, so a page switches on and off with the
+ * data and never needs code. Under the threshold a page does not exist (404), which keeps thin
+ * pages out of the index. Hochzeit gets no page at all (D31: the sister site's search term).
+ * LandingQualityGate marks each page indexable or not (G12).
  *
  * One statement per request however many methods run (it also feeds #7's "Andere suchten auch nach",
  * so the listing stays at 7 queries); tagged kernel.reset by autoconfiguration. Filling the
@@ -25,7 +27,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class LandingPages implements ResetInterface
 {
-    /** @var list<LandingPage>|null cantons, towns, buildings; each by count desc, then town name or code */
+    /** `suitable_for` codes without a landing page, alone or in a canton (D31). */
+    public const array NO_PAGE_EVENTS = ['wedding'];
+
+    /** @var list<LandingPage>|null by count desc, then town name, code and canton */
     private ?array $pages = null;
 
     public function __construct(
@@ -33,6 +38,7 @@ final class LandingPages implements ResetInterface
         private readonly EnabledLocale $enabledLocale,
         private readonly TranslatorInterface $translator,
         private readonly LandingFooter $footer,
+        private readonly LandingQualityGate $gate,
         #[Autowire('%landing.min_venues%')]
         private readonly int $minVenues,
     ) {
@@ -78,6 +84,34 @@ final class LandingPages implements ResetInterface
         return $this->ofType(LandingType::Building);
     }
 
+    /**
+     * The event type pages without a canton (F8).
+     *
+     * @return list<LandingPage>
+     */
+    public function events(): array
+    {
+        return array_values(array_filter($this->ofType(LandingType::Event), static fn (LandingPage $page): bool => null === $page->canton));
+    }
+
+    /**
+     * The event type pages in a canton (F8): in `$in`, or in any canton when null.
+     *
+     * @return list<LandingPage>
+     */
+    public function eventCantons(?Canton $in = null): array
+    {
+        return array_values(array_filter(
+            $this->ofType(LandingType::Event),
+            static fn (LandingPage $page): bool => null !== $page->canton && (null === $in || $page->canton === $in),
+        ));
+    }
+
+    public function event(string $code, ?Canton $canton = null): ?LandingPage
+    {
+        return $this->first(static fn (LandingPage $page): bool => LandingType::Event === $page->type && $page->event === $code && $page->canton === $canton);
+    }
+
     public function canton(Canton $canton): ?LandingPage
     {
         return $this->first(static fn (LandingPage $page): bool => LandingType::Canton === $page->type && $page->canton === $canton);
@@ -94,21 +128,26 @@ final class LandingPages implements ResetInterface
     }
 
     /**
-     * The page of `/eventlokale/{slug}`: a canton first, then a building type.
+     * The page of `/eventlokale/{slug}`: a canton first, then a building type, then an event type.
      */
     public function bySlug(string $slug): ?LandingPage
     {
         return $this->first(static fn (LandingPage $page): bool => LandingType::Canton === $page->type && $page->slug === $slug)
-            ?? $this->first(static fn (LandingPage $page): bool => LandingType::Building === $page->type && $page->slug === $slug);
-    }
-
-    public function byTown(string $cantonSlug, string $townSlug): ?LandingPage
-    {
-        return $this->first(static fn (LandingPage $page): bool => LandingType::Town === $page->type && $page->cantonSlug === $cantonSlug && $page->slug === $townSlug);
+            ?? $this->first(static fn (LandingPage $page): bool => LandingType::Building === $page->type && $page->slug === $slug)
+            ?? $this->first(static fn (LandingPage $page): bool => LandingType::Event === $page->type && null === $page->canton && $page->slug === $slug);
     }
 
     /**
-     * Every canton, town and building type with at least one published venue, with its count,
+     * The page of `/eventlokale/{canton}/{slug}`: a town first, then an event type in that canton.
+     */
+    public function byTown(string $cantonSlug, string $townSlug): ?LandingPage
+    {
+        return $this->first(static fn (LandingPage $page): bool => LandingType::Town === $page->type && $page->cantonSlug === $cantonSlug && $page->slug === $townSlug)
+            ?? $this->first(static fn (LandingPage $page): bool => LandingType::Event === $page->type && null !== $page->canton && $page->cantonSlug === $cantonSlug && $page->slug === $townSlug);
+    }
+
+    /**
+     * Every canton, town, building type and event page with at least one published venue, with its count,
      * for the back office's landing-page list (#26): the same statement as `all()` with the
      * threshold at 1, so there is one counting SQL. Not memoized and never touches the footer.
      *
@@ -132,6 +171,7 @@ final class LandingPages implements ResetInterface
     private function statementFor(int $min): SqlStatement
     {
         $published = new ListingSql(SearchCriteria::none(), $this->enabledLocale->default());
+        $noPage = implode(', ', array_map(static fn (string $code): string => "'".$code."'", self::NO_PAGE_EVENTS));
 
         return new SqlStatement(
             <<<SQL
@@ -153,7 +193,20 @@ final class LandingPages implements ResetInterface
                 WHERE {$published->where}
                 GROUP BY x.term_code
                 HAVING count(*) >= :min
-                ORDER BY venues DESC, town_name, code
+                UNION ALL
+                SELECT 'event', e.term_code, NULL, NULL, NULL, NULL, count(*)
+                FROM {$published->from} JOIN venue_terms e ON e.venue_id = v.id AND e.term_group = 'suitable_for' AND e.term_code NOT IN ({$noPage})
+                WHERE {$published->where}
+                GROUP BY e.term_code
+                HAVING count(*) >= :min
+                UNION ALL
+                SELECT 'event', e.term_code, NULL, c.slug, v.canton_code, NULL, count(*)
+                FROM {$published->from} JOIN venue_terms e ON e.venue_id = v.id AND e.term_group = 'suitable_for' AND e.term_code NOT IN ({$noPage})
+                JOIN cantons c ON c.code = v.canton_code
+                WHERE {$published->where}
+                GROUP BY e.term_code, v.canton_code, c.slug
+                HAVING count(*) >= :min
+                ORDER BY venues DESC, town_name, code, canton NULLS FIRST
                 SQL,
             $published->params + ['min' => $min],
             $published->types + ['min' => ParameterType::INTEGER],
@@ -193,7 +246,7 @@ final class LandingPages implements ResetInterface
             $canton = \is_string($row['canton']) ? Canton::from($row['canton']) : null;
             $cantonSlug = \is_string($row['canton_slug']) ? $row['canton_slug'] : null;
 
-            return match ($type) {
+            $page = match ($type) {
                 LandingType::Canton => new LandingPage($type, (string) $cantonSlug, $row['venues'], $canton, $cantonSlug),
                 LandingType::Town => new LandingPage($type, (string) $row['slug'], $row['venues'], $canton, $cantonSlug, $row['code'], (string) $row['town_name']),
                 LandingType::Building => new LandingPage(
@@ -202,7 +255,17 @@ final class LandingPages implements ResetInterface
                     $row['venues'],
                     building: $row['code'],
                 ),
+                LandingType::Event => new LandingPage(
+                    $type,
+                    $this->translator->trans('landing.event.'.$row['code'].'.slug', [], 'search'),
+                    $row['venues'],
+                    $canton,
+                    $cantonSlug,
+                    event: $row['code'],
+                ),
             };
+
+            return $page->withIndexable($this->gate->passes($page));
         }, $this->connection->fetchAllAssociative($statement->sql, $statement->params, $statement->types));
     }
 }

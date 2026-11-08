@@ -1,19 +1,9 @@
 {% extends 'base.html.twig' %}
 
 {% set seo = listing_seo(criteria, page, landing) %}
-{#- #17: a landing page has its own h1, intro and breadcrumb; the plain listing keeps listing.heading. -#}
-{% set count = {count: landing.venues ?? 0} %}
-{% if landing is null %}
-    {% set heading = 'listing.heading'|trans({}, 'search') %}
-    {% set intro = null %}
-{% elseif landing.type.value == 'building' %}
-    {% set heading = ('landing.building.' ~ landing.building ~ '.heading')|trans({}, 'search') %}
-    {% set intro = ('landing.building.' ~ landing.building ~ '.intro')|trans(count, 'search') %}
-{% else %}
-    {% set place = {canton: landing.canton ? landing.canton|trans : '', canton_code: landing.canton.value ?? '', town: landing.townName ?? ''} %}
-    {% set heading = ('landing.' ~ landing.type.value ~ '.heading')|trans(place, 'search') %}
-    {% set intro = ('landing.' ~ landing.type.value ~ '.intro')|trans(place|merge(count), 'search') %}
-{% endif %}
+{#- #17, F8: a landing page has its own h1, intro and breadcrumb (LandingCopy); the plain listing keeps listing.heading. -#}
+{% set heading = landing ? landing_heading(landing) : 'listing.heading'|trans({}, 'search') %}
+{% set intro = landing ? landing_intro(landing) : null %}
 {#- #26: staff text replaces the intro (Markdown); without one #17's sentence stays. The plain listing's own block shows on its clean page 1 only (P12). -#}
 {#- A captured set is Markup when it is not empty, so the safe HTML survives the include unescaped; empty it is ''. -#}
 {% set intro_html -%}
@@ -24,11 +14,12 @@
     {%- endif -%}
 {%- endset %}
 {% set breadcrumb = landing_breadcrumb(landing) %}
-{% set share_photo = page.cards[0].photos[0] ?? null %}
-{% set share_picture = share_photo ? card_picture(share_photo, page.cards[0].name) : null %}
 
 {% block title %}{{ seo.title }}{% endblock %}
 
+{#- D35: a landing page shares the default card; the plain listing its first card's photo. -#}
+{% set share_photo = landing ? null : page.cards[0].photos[0] ?? null %}
+{% set share_picture = share_photo ? card_picture(share_photo, page.cards[0].name) : null %}
 {% block meta %}{{ include('seo/_meta.html.twig', {seo: seo, picture: share_picture}, with_context = false) }}{% endblock %}
 
 {% block canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endblock %}

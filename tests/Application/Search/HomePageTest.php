@@ -221,21 +221,22 @@ final class HomePageTest extends WebTestCase
     public function test_the_tiles_are_the_six_event_types_and_link_to_the_event_filter(): void
     {
         [$venue] = $this->inCanton(Canton::ZH, 1);
-        foreach (['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'wedding'] as $code) {
+        foreach (['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'general_assembly', 'wedding'] as $code) {
             $this->withEvent([$venue], $code);
         }
 
         $tiles = $this->get('/')->filter('.home-category');
 
         self::assertSame(
-            ['Firmenanlass', 'Seminar & Tagung', 'Apéro', 'Weihnachtsfeier', 'Geburtstag', 'Hochzeit'],
+            ['Firmenanlass', 'Seminar & Tagung', 'Apéro', 'Weihnachtsfeier', 'Geburtstag', 'Generalversammlung'],
             $tiles->each(static fn (Crawler $tile): string => $tile->text()),
         );
-        // No event landing pages exist yet, so every tile is the listing filtered on its type.
+        // One venue is below the landing threshold, so every tile is the listing filtered on its type;
+        // Hochzeit has no tile (D31, D39).
         self::assertSame(
             array_map(
                 static fn (string $code): string => '/eventlokale?event%5B0%5D='.$code,
-                ['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'wedding'],
+                ['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'general_assembly'],
             ),
             $tiles->each(static fn (Crawler $tile): string => (string) $tile->attr('href')),
         );

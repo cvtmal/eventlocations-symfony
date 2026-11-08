@@ -71,6 +71,20 @@ trait LandingFixtures
         return $venues;
     }
 
+    /**
+     * @param list<Venue> $venues
+     *
+     * @return list<Venue>
+     */
+    private function withEventType(array $venues, string $code): array
+    {
+        foreach ($venues as $venue) {
+            VenueTermFactory::new()->term(TermGroup::SuitableFor, $code)->create(['venue' => $venue]);
+        }
+
+        return $venues;
+    }
+
     private function town(string $name): Town
     {
         $town = repository(Town::class)->findOneBy(['name' => $name]);

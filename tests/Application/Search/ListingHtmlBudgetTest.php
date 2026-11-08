@@ -20,6 +20,7 @@ use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
+use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -93,6 +94,13 @@ final class ListingHtmlBudgetTest extends WebTestCase
                 }
                 if (1 === $i) {
                     $this->giveEveryTerm($connection, $venue);
+                } else {
+                    // F8: every event type on every venue, so each has its page and its Zurich page,
+                    // the longest "Andere suchten auch nach" an event page can have.
+                    foreach ($connection->fetchFirstColumn("SELECT code FROM taxonomy_terms WHERE term_group = 'suitable_for'") as $code) {
+                        self::assertIsString($code);
+                        VenueTermFactory::new()->term(TermGroup::SuitableFor, $code)->create(['venue' => $venue]);
+                    }
                 }
             }
 
@@ -102,9 +110,14 @@ final class ListingHtmlBudgetTest extends WebTestCase
             self::assertCount(1, $crawler->filter('.listing-hero__intro strong'), 'The listing intro renders.');
 
             $crawler = $this->assertWithinBudget($client, '/eventlokale/zuerich', 'Canton page');
-            self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
+            self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale im Kanton Zürich');
             self::assertCount(1, $crawler->filter('nav.breadcrumb'));
             self::assertCount(1, $crawler->filter('.listing-hero__intro strong'), 'The canton intro renders.');
+
+            $crawler = $this->assertWithinBudget($client, '/eventlokale/seminar', 'Event page');
+            self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale für Seminare');
+            $crawler = $this->assertWithinBudget($client, '/eventlokale/zuerich/seminar', 'Event page in a canton');
+            self::assertGreaterThan(15, $crawler->filter('.related__list a')->count());
         } finally {
             $connection->rollBack();
             $this->resetContentBlocks();

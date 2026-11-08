@@ -19,7 +19,7 @@ final class HomeCategoryTest extends TestCase
     public function test_six_event_types_in_order(): void
     {
         self::assertSame(
-            ['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'wedding'],
+            ['corporate_event', 'seminar', 'apero', 'christmas_party', 'birthday', 'general_assembly'],
             array_map(static fn (HomeCategory $category): string => $category->value, HomeCategory::cases()),
         );
     }
@@ -43,7 +43,7 @@ final class HomeCategoryTest extends TestCase
     public function test_every_case_names_its_icon(): void
     {
         self::assertSame(
-            ['briefcase', 'presentation', 'wine', 'gift', 'cake', 'heart'],
+            ['briefcase', 'presentation', 'wine', 'gift', 'cake', 'users'],
             array_map(static fn (HomeCategory $category): string => $category->icon(), HomeCategory::cases()),
         );
     }

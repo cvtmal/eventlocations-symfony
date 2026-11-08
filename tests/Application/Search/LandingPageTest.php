@@ -64,10 +64,10 @@ final class LandingPageTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale/zuerich');
 
-        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
+        self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale im Kanton Zürich');
         self::assertCount(1, $crawler->filter('h1'));
         self::assertSame(
-            '5 Hochzeitslocations im Kanton Zürich: Vergleiche Fotos und Platz für Gäste und frag direkt bei der Location an.',
+            '5 Eventlokale im Kanton Zürich: Hier vergleichst du Fotos und Platz für Gäste und fragst direkt bei der Location an.',
             $crawler->filter('.listing-hero__intro > p')->text(),
         );
         self::assertSame($zurich, $this->cardNames($crawler));
@@ -138,7 +138,7 @@ final class LandingPageTest extends WebTestCase
         $this->inCanton(Canton::TI, 1);
 
         $this->get('/eventlokale/tessin');
-        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Tessin');
+        self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale im Kanton Tessin');
     }
 
     public function test_liechtenstein_gets_its_page_at_five_venues_and_no_kanton(): void
@@ -150,12 +150,12 @@ final class LandingPageTest extends WebTestCase
         $this->inCanton(Canton::LI, 1);
 
         $crawler = $this->get('/eventlokale/liechtenstein');
-        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations in Liechtenstein');
-        self::assertStringStartsWith('5 Hochzeitslocations in Liechtenstein: ', $crawler->filter('.listing-hero__intro > p')->text());
+        self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale in Liechtenstein');
+        self::assertStringStartsWith('5 Eventlokale in Liechtenstein: ', $crawler->filter('.listing-hero__intro > p')->text());
         $title = $crawler->filter('title')->text();
         self::assertStringContainsString('in Liechtenstein', $title);
         self::assertStringNotContainsString('Kanton', $title);
-        self::assertStringStartsWith('Hochzeitslocations in Liechtenstein: ', (string) $crawler->filter('meta[name="description"]')->attr('content'));
+        self::assertStringStartsWith('Eventlokale in Liechtenstein: ', (string) $crawler->filter('meta[name="description"]')->attr('content'));
         self::assertSame(['Hochzeitslocations', 'Liechtenstein'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
         self::assertSame(['Hochzeitslocations', 'Liechtenstein'], array_column($this->breadcrumbJsonLd($crawler), 'name'));
     }
@@ -171,8 +171,8 @@ final class LandingPageTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale/zuerich/staefa');
 
-        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations in Stäfa');
-        self::assertStringStartsWith('5 Hochzeitslocations in Stäfa:', $crawler->filter('.listing-hero__intro > p')->text());
+        self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale in Stäfa');
+        self::assertStringStartsWith('5 Eventlokale in Stäfa:', $crawler->filter('.listing-hero__intro > p')->text());
         self::assertCount(5, $crawler->filter('article.card'));
         self::assertContains($staefa[0], $this->cardNames($crawler));
 
@@ -218,13 +218,13 @@ final class LandingPageTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale/schloss');
 
-        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeit im Schloss');
+        self::assertSelectorTextSame('.listing-hero__title', 'Events im Schloss');
         self::assertSame(
-            '5 Locations für deine Hochzeit im Schloss: Vergleiche Fotos und Platz für Gäste und frag direkt an.',
+            '5 Eventlokale im Schloss: Hier vergleichst du Fotos und Platz für Gäste und fragst direkt bei der Location an.',
             $crawler->filter('.listing-hero__intro > p')->text(),
         );
         self::assertCount(5, $crawler->filter('article.card'));
-        self::assertSame(['Hochzeitslocations', 'Hochzeit im Schloss'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['Hochzeitslocations', 'Events im Schloss'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
         $this->assertPublicAndCookieFree();
     }
 
@@ -235,7 +235,7 @@ final class LandingPageTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale/zuerich?canton=be');
 
-        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
+        self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale im Kanton Zürich');
         self::assertSame($zurich, $this->cardNames($crawler));
     }
 
@@ -248,7 +248,7 @@ final class LandingPageTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale/zuerich?guests=300');
         self::assertSame([$big->name()], $this->cardNames($crawler));
-        self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
+        self::assertSelectorTextSame('.listing-hero__title', 'Eventlokale im Kanton Zürich');
 
         $crawler = $this->get('/eventlokale/zuerich?guests=100');
         self::assertCount(48, $crawler->filter('article.card'));

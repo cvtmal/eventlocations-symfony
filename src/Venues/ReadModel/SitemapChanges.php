@@ -14,11 +14,15 @@ final readonly class SitemapChanges
      * @param array<string, \DateTimeImmutable> $cantons
      * @param array<string, \DateTimeImmutable> $towns
      * @param array<string, \DateTimeImmutable> $buildings
+     * @param array<string, \DateTimeImmutable> $events       by `suitable_for` code
+     * @param array<string, \DateTimeImmutable> $eventCantons by `<suitable_for code>.<canton code>`
      */
     public function __construct(
         public array $cantons,
         public array $towns,
         public array $buildings,
+        public array $events = [],
+        public array $eventCantons = [],
     ) {
     }
 }

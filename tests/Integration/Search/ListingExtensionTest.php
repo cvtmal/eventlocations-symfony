@@ -7,12 +7,14 @@ namespace App\Tests\Integration\Search;
 use App\Geo\ReadModel\PlaceResolver;
 use App\Geo\ValueObject\Canton;
 use App\Media\ValueObject\ImageFormat;
+use App\Search\LandingCopy;
 use App\Search\LandingPaths;
 use App\Search\ReadModel\CardPhoto;
 use App\Search\ReadModel\FilterDataQuery;
 use App\Search\ReadModel\KnownTerms;
 use App\Search\ReadModel\LandingFooter;
 use App\Search\ReadModel\LandingPages;
+use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\Twig\ListingExtension;
 use App\Tests\Integration\Geo\ImportsTownDataset;
@@ -61,9 +63,9 @@ final class ListingExtensionTest extends KernelTestCase
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         $connection = self::getContainer()->get(Connection::class);
         self::assertInstanceOf(Connection::class, $connection);
-        $landings = new LandingPages($connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), 5);
+        $landings = new LandingPages($connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5), 5);
 
-        return new ListingExtension($urls, $translator, new PlaceResolver($connection), new FilterDataQuery($connection, ListingQueryTest::enabledLocale()), $landings, new LandingPaths($landings, $urls));
+        return new ListingExtension($urls, $translator, new PlaceResolver($connection), new FilterDataQuery($connection, ListingQueryTest::enabledLocale()), $landings, new LandingPaths($landings, $urls), new LandingCopy($translator));
     }
 
     public function test_listing_paths_take_the_landing_path_of_a_live_canton(): void
@@ -82,6 +84,25 @@ final class ListingExtensionTest extends KernelTestCase
             self::assertSame('/eventlokale/zuerich', $extension->listingPathWithout($criteria, 'guests'));
             self::assertSame('/eventlokale?canton=be', $extension->listingPath($this->criteria(['canton' => 'be'])), 'A thin canton stays in the query.');
             self::assertSame(['zh' => '/eventlokale/zuerich'], $extension->landingCantonPaths());
+        } finally {
+            $em->clear();
+            $em->getConnection()->rollBack();
+        }
+    }
+
+    public function test_the_region_map_sends_a_canton_to_its_event_page_when_one_event_type_is_chosen(): void
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+        $em->getConnection()->beginTransaction();
+        try {
+            $this->withEventType($this->inCanton(Canton::ZH, 5), 'apero');
+            $this->inCanton(Canton::BE, 5);
+            $extension = $this->extension();
+
+            self::assertSame(['be' => '/eventlokale/bern', 'zh' => '/eventlokale/zuerich'], $extension->landingCantonPaths());
+            self::assertSame(['be' => '/eventlokale/bern', 'zh' => '/eventlokale/zuerich/apero'], $extension->landingCantonPaths($this->criteria(['event' => ['apero']])));
+            self::assertSame(['be' => '/eventlokale/bern', 'zh' => '/eventlokale/zuerich'], $extension->landingCantonPaths($this->criteria(['event' => ['apero', 'seminar']])));
         } finally {
             $em->clear();
             $em->getConnection()->rollBack();
@@ -211,7 +232,7 @@ final class ListingExtensionTest extends KernelTestCase
         /** @var InputBag<string> $bag the shape Request::$query has */
         $bag = new InputBag($query);
 
-        return SearchCriteria::fromQuery($bag, KnownTerms::of(['setting' => ['lake', 'river', 'city']]));
+        return SearchCriteria::fromQuery($bag, KnownTerms::of(['setting' => ['lake', 'river', 'city'], 'suitable_for' => ['apero', 'seminar']]));
     }
 
     /**

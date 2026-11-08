@@ -31,6 +31,9 @@ parameters:
     inquiries.retention_months: 12
     # #17: a canton, town or building landing page exists from this many published venues, below it 404 (one rule, #26 reads it).
     landing.min_venues: 5
+    # F8, G12 hook: a live landing page is indexable (sitemap, llms.txt, no noindex) from this many
+    # published venues (LandingQualityGate). Equal to landing.min_venues until G12 sets its gate.
+    landing.index_min_venues: '%landing.min_venues%'
     # Q18, #36: the home page's hero, the SHA-256 of the original file of a venue photo. No published
     # photo with this hash: the hero is the first Spotlight card's photo (HomeHero::fromCards).
     home.hero_photo: cfbf9375b66ff088996ab8a64d99552e0caac0dcd0ca86189a54e4858c8b96d1

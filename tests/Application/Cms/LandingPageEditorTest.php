@@ -148,12 +148,12 @@ final class LandingPageEditorTest extends WebTestCase
         $crawler = $this->client->request('GET', self::EDITOR);
 
         self::assertResponseIsSuccessful();
-        self::assertSame('Hochzeitslocations im Kanton Zürich', $crawler->filter('.record-header h1')->text());
+        self::assertSame('Eventlokale im Kanton Zürich', $crawler->filter('.record-header h1')->text());
         $title = (string) $crawler->filter('#landing_texts_locales_de_title')->attr('placeholder');
         $description = (string) $crawler->filter('#landing_texts_locales_de_description')->attr('placeholder');
         self::assertStringContainsString('Zürich', $title);
         self::assertNotSame('', $description);
-        self::assertStringContainsString('Vergleiche Fotos', (string) $crawler->filter('#landing_texts_locales_de_intro')->attr('placeholder'));
+        self::assertStringContainsString('Hier vergleichst du Fotos', (string) $crawler->filter('#landing_texts_locales_de_intro')->attr('placeholder'));
         self::assertSame($title, $crawler->filter('[data-serp-target="title"][data-serp-locale="de"]')->text());
         self::assertSame($description, $crawler->filter('[data-serp-target="description"][data-serp-locale="de"]')->text());
         self::assertSame('http://localhost/eventlokale/zuerich', $crawler->filter('.serp-preview__url')->text());
@@ -184,18 +184,18 @@ final class LandingPageEditorTest extends WebTestCase
         $this->client->submit($this->form(), [
             'landing_texts[locales][de][intro]' => "Am **Zürichsee** feiern.\r\n\r\nZweiter Absatz.",
             'landing_texts[locales][de][title]' => '  Heiraten im Kanton Zürich ',
-            'landing_texts[locales][de][description]' => 'Schlösser, Zunfthäuser und Seeufer: Hochzeitslocations im Kanton Zürich.',
+            'landing_texts[locales][de][description]' => 'Schlösser, Zunfthäuser und Seeufer: Eventlokale im Kanton Zürich.',
         ]);
 
         self::assertResponseStatusCodeSame(303);
         self::assertResponseRedirects(self::EDITOR);
         $crawler = $this->client->followRedirect();
-        self::assertSame('Texte von «Hochzeitslocations im Kanton Zürich» gespeichert.', $crawler->filter('.toast')->text());
+        self::assertSame('Texte von «Eventlokale im Kanton Zürich» gespeichert.', $crawler->filter('.toast')->text());
         self::assertSame('Heiraten im Kanton Zürich', $crawler->filter('#landing_texts_locales_de_title')->attr('value'));
         self::assertSame('Heiraten im Kanton Zürich', $crawler->filter('[data-serp-target="title"]')->text());
         self::assertStringContainsString('zuletzt bearbeitet von Andrea Keller', $crawler->filter('.record-header__subtitle')->text());
         self::assertSame([
-            'landing.canton.zh.description' => 'Schlösser, Zunfthäuser und Seeufer: Hochzeitslocations im Kanton Zürich.',
+            'landing.canton.zh.description' => 'Schlösser, Zunfthäuser und Seeufer: Eventlokale im Kanton Zürich.',
             'landing.canton.zh.intro' => "Am **Zürichsee** feiern.\n\nZweiter Absatz.",
             'landing.canton.zh.title' => 'Heiraten im Kanton Zürich',
         ], $this->bodies());
@@ -233,6 +233,32 @@ final class LandingPageEditorTest extends WebTestCase
         self::assertSame('Seeufer', $public->filter('.listing-hero__intro strong')->text());
     }
 
+    public function test_a_save_reaches_the_public_page_of_an_event_type_alone_and_in_a_canton(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $this->withEventType($this->inCanton(Canton::ZH, 5), 'seminar');
+
+        $list = $this->client->request('GET', '/admin/landingpages?typ=event');
+        self::assertResponseIsSuccessful();
+        self::assertSame(['event.seminar', 'event.seminar.zh'], $this->prefixes($list));
+
+        $editor = $this->client->request('GET', '/admin/landingpages/event.seminar.zh');
+        self::assertResponseIsSuccessful();
+        self::assertSame('Eventlokale für Seminare im Kanton Zürich', $editor->filter('.record-header h1')->text());
+        self::assertSame('http://localhost/eventlokale/zuerich/seminar', $editor->filter('.serp-preview__url')->text());
+
+        $public = $this->saveAndOpen('event.seminar.zh', '/eventlokale/zuerich/seminar');
+        self::assertSame('Heiraten am See', $public->filter('title')->text());
+        self::assertSame('Seeufer', $public->filter('.listing-hero__intro strong')->text());
+        self::assertSame('Am **Seeufer** feiern.', $this->connection->fetchOne("SELECT body_markdown FROM content_blocks WHERE key = 'landing.event.seminar.zh.intro' AND locale = 'de'"));
+
+        $national = $this->saveAndOpen('event.seminar', '/eventlokale/seminar');
+        self::assertSame('Seeufer', $national->filter('.listing-hero__intro strong')->text());
+
+        $this->client->request('GET', '/admin/landingpages/event.wedding');
+        self::assertResponseStatusCodeSame(404);
+    }
+
     public function test_clearing_every_field_deletes_the_rows_and_brings_the_default_back(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -251,7 +277,7 @@ final class LandingPageEditorTest extends WebTestCase
         self::assertSame([], $this->bodies());
         $public = $this->client->request('GET', '/eventlokale/zuerich');
         self::assertSame($default, $public->filter('title')->text());
-        self::assertStringContainsString('Vergleiche Fotos', $public->filter('.listing-hero__intro')->text());
+        self::assertStringContainsString('Hier vergleichst du Fotos', $public->filter('.listing-hero__intro')->text());
     }
 
     public function test_a_title_of_sixty_one_characters_is_refused_on_its_field(): void
@@ -369,7 +395,7 @@ final class LandingPageEditorTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(303);
         $crawler = $this->client->followRedirect();
-        self::assertSame('Keine Änderungen an «Hochzeitslocations im Kanton Zürich».', $crawler->filter('.toast')->text());
+        self::assertSame('Keine Änderungen an «Eventlokale im Kanton Zürich».', $crawler->filter('.toast')->text());
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'landing_page'"));
         self::assertSame($purges, $this->purger()->listings);
     }
