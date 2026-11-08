@@ -53,7 +53,7 @@ final class OptOutController extends AbstractController
 
         // Only a row naming the Location itself counts as done: a Location suppressed through one address alone would
         // lose that suppression when the address leaves it.
-        $whole = $this->suppressions->stateOf($companyId)?->whole ?? false;
+        $whole = true === $this->suppressions->stateOf($companyId)?->whole;
         if ($request->isMethod('POST')) {
             if (!$whole) {
                 $this->commandBus->dispatch(new SuppressCompany($companyId, SuppressionReason::OptOut));

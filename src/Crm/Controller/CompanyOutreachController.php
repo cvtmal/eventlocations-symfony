@@ -75,7 +75,7 @@ final class CompanyOutreachController extends AbstractController
         $token = $request->request->all()['_token'] ?? null;
         if (!\is_string($token) || !$this->isCsrfTokenValid(self::OBJECTION_TOKEN, $token)) {
             $this->addFlash('error', CrmFlash::message('flash.action_failed'));
-        } elseif ($this->suppressions->stateOf($id)?->whole ?? false) {
+        } elseif (true === $this->suppressions->stateOf($id)?->whole) {
             $this->addFlash('success', CrmFlash::message('outreach.flash.already_suppressed'));
         } else {
             $this->commandBus->dispatch(new SuppressCompany($id, SuppressionReason::Objection));
