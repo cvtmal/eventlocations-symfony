@@ -599,7 +599,7 @@ final class InquiryInboxTest extends WebTestCase
     public function test_the_list_stays_within_its_statements(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $this->inquiry();
+        $this->qualified($this->inquiry());
         $this->inquiry();
 
         self::assertSame(5, $this->queriesOf(self::LIST));
@@ -610,6 +610,7 @@ final class InquiryInboxTest extends WebTestCase
     {
         $this->logInAs(AdminRole::Editor);
         $id = $this->inquiry();
+        $this->qualified($id);
         $this->inquiry();
 
         self::assertSame(5, $this->queriesOf(self::LIST.'/'.$id));
@@ -626,6 +627,17 @@ final class InquiryInboxTest extends WebTestCase
         $this->connection->executeStatement('UPDATE crm_inquiry_links SET status = ? WHERE inquiry_id = ?', [$status->value, $id]);
 
         return $id;
+    }
+
+    /**
+     * Qualified and marked (G7), so the ceilings hold with the pills of the qualification on the page.
+     */
+    private function qualified(string $id): void
+    {
+        $this->connection->executeStatement(
+            "UPDATE inquiries SET qualification = 'unqualified', qualification_reason = 'duplicate', qualification_override = 'test' WHERE id = ?",
+            [$id],
+        );
     }
 
     private function mailStatus(string $id, string $venue, string $guest): void

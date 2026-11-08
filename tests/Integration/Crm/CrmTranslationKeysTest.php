@@ -20,7 +20,10 @@ use App\Crm\ValueObject\LostReason;
 use App\Crm\ValueObject\OutreachCohort;
 use App\Crm\ValueObject\SuppressionReason;
 use App\Crm\ValueObject\TaskDue;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\Qualification;
+use App\Inquiries\ValueObject\QualificationReason;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Translation\TranslatorBagInterface;
@@ -116,6 +119,18 @@ final class CrmTranslationKeysTest extends KernelTestCase
         foreach (['company', 'contact', 'address', 'venue', 'street', 'zip', 'town', 'cohort', 'short_link', 'link', 'valid_until'] as $column) {
             $keys[] = 'outreach.print.column.'.$column;
         }
+        // G7: the inbox pills and InquiryMarkController's flashes.
+        foreach (Qualification::cases() as $case) {
+            $keys[] = 'inquiry.qualification.'.$case->value;
+        }
+        foreach (QualificationReason::cases() as $case) {
+            $keys[] = 'inquiry.qualification.reason.'.$case->value;
+        }
+        foreach (InquiryOverride::cases() as $case) {
+            $keys[] = 'inquiry.override.'.$case->value;
+        }
+        $keys[] = 'inquiry.flash.marked';
+        $keys[] = 'inquiry.flash.unmarked';
         foreach ([ActivityType::NOTE, ActivityType::EMAIL_LOGGED, ActivityType::CALL, ActivityType::MEETING] as $code) {
             $keys[] = 'activity.type.'.$code;
             $keys[] = 'activity.tab.'.$code;

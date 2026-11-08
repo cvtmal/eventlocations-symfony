@@ -60,7 +60,7 @@ unpack() {
 
 check_contents() {
     for file in .env public/.user.ini public/index.php bin/deploy bin/cron-midnight \
-        bin/cron-cache-guard bin/cron-daily bin/cron-lock.sh data/geo/towns.csv \
+        bin/cron-cache-guard bin/cron-daily bin/cron-hourly bin/cron-lock.sh data/geo/towns.csv \
         public/assets/manifest.json public/admin-build/.vite/manifest.json; do
         [ -e "$CHECK/$file" ] || fail "the tarball lacks $file"
     done

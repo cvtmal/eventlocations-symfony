@@ -24,6 +24,7 @@ use App\Shared\Security\ClientIpKey;
 use App\Venues\Controller\VenueDetailController;
 use App\Venues\ReadModel\VenueDetail;
 use App\Venues\ReadModel\VenueDetailQuery;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
@@ -52,6 +53,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * answers with the real outcome: the 303 if the mail went out, the 503 if it did not. Only a new
  * row is published.
  *
+ * The 503 (G7, D56) says the inquiry is stored and staff deliver it, without the form: the row stays
+ * `failed` or `pending`, so the hourly staff alert reports it. An unexpected error in the delivery
+ * answers the same, because the row is stored by then; it is logged without its message.
+ *
  * A filled honeypot gets the same 303 with nothing stored, so a bot learns nothing. The limiter
  * counts only what passed validation and the fill time, so typos cost a person nothing.
  *
@@ -72,6 +77,7 @@ final class SubmitInquiryController extends AbstractController
         private readonly InquiryEvents $events,
         private readonly UriSigner $signer,
         private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -129,6 +135,15 @@ final class SubmitInquiryController extends AbstractController
         try {
             $outcome = $this->commandBus->dispatch(new DeliverInquiry($inquiry->id))->last(HandledStamp::class)?->getResult();
             \assert($outcome instanceof DeliveryOutcome);
+        } catch (\Throwable $exception) {
+            $cause = $exception instanceof HandlerFailedException ? $exception->getPrevious() ?? $exception : $exception;
+            $this->logger->error('Inquiry {inquiry}: delivery ended unexpectedly ({exception_class} at {file}:{line}).', [
+                'inquiry' => $inquiry->id,
+                'exception_class' => $cause::class,
+                'file' => $cause->getFile(),
+                'line' => $cause->getLine(),
+            ]);
+            $outcome = new DeliveryOutcome(false);
         } finally {
             if (!$inquiry->isRepeat) {
                 $this->events->submitted($inquiry->id);
@@ -136,9 +151,7 @@ final class SubmitInquiryController extends AbstractController
         }
 
         if (!$outcome->venueMailSent) {
-            $form->addError($this->error('form.error.delivery_failed'));
-
-            return $this->page($venue, $form, Response::HTTP_SERVICE_UNAVAILABLE);
+            return $this->page($venue, $form, Response::HTTP_SERVICE_UNAVAILABLE, undelivered: true);
         }
 
         return $this->confirmation($venue);
@@ -193,11 +206,12 @@ final class SubmitInquiryController extends AbstractController
         return new FormError($this->translator->trans($key, [], 'inquiries'));
     }
 
-    private function page(VenueDetail $venue, FormInterface $form, int $status): Response
+    private function page(VenueDetail $venue, FormInterface $form, int $status, bool $undelivered = false): Response
     {
         return self::private($this->render('venues/detail/show.html.twig', [
             'venue' => $venue,
             'inquiry' => $form->createView(),
+            'inquiry_undelivered' => $undelivered,
         ], new Response(status: $status)));
     }
 

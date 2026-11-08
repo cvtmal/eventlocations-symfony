@@ -11,7 +11,10 @@ use App\Crm\ReadModel\InquiryInboxRow;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\Qualification;
+use App\Inquiries\ValueObject\QualificationReason;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\ValueObject\Term;
@@ -254,6 +257,42 @@ final class InquiryInboxQueryTest extends KernelTestCase
         $done = $this->inquiry('2026-10-03 10:00:00', InquiryStatus::Done);
 
         self::assertSame([$done, $seen], $this->ids($this->query()->newest(2)));
+    }
+
+    public function test_page_and_detail_carry_the_qualification_and_the_mark(): void
+    {
+        $id = $this->inquiry();
+        $before = $this->query()->detail($id);
+        self::assertNotNull($before);
+        self::assertNull($before->qualification);
+        self::assertNull($before->qualificationReason);
+        self::assertNull($before->override);
+
+        $this->connection->executeStatement(
+            "UPDATE inquiries SET qualification = 'unqualified', qualification_reason = 'duplicate', qualification_override = 'test' WHERE id = ?",
+            [$id],
+        );
+
+        $row = $this->query()->page(null, 1, $this->query()->counts())->rows[0];
+        $detail = $this->query()->detail($id);
+        self::assertNotNull($detail);
+        foreach ([$row, $detail] as $read) {
+            self::assertSame(Qualification::Unqualified, $read->qualification);
+            self::assertSame(QualificationReason::Duplicate, $read->qualificationReason);
+            self::assertSame(InquiryOverride::Test, $read->override);
+        }
+    }
+
+    public function test_newest_leaves_out_a_marked_inquiry(): void
+    {
+        $kept = $this->inquiry('2026-10-01 10:00:00');
+        $spam = $this->inquiry('2026-10-02 10:00:00');
+        $test = $this->inquiry('2026-10-03 10:00:00');
+        $this->connection->executeStatement("UPDATE inquiries SET qualification_override = 'spam' WHERE id = ?", [$spam]);
+        $this->connection->executeStatement("UPDATE inquiries SET qualification_override = 'test' WHERE id = ?", [$test]);
+
+        self::assertSame([$kept], $this->ids($this->query()->newest(5)));
+        self::assertSame(3, $this->query()->counts()->all);
     }
 
     public function test_the_fingerprint_is_never_read(): void

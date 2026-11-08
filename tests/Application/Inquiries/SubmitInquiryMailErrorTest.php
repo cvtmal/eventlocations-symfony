@@ -12,7 +12,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Mailer\Event\MessageEvent;
-use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Mime\Email;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -86,7 +85,8 @@ final class SubmitInquiryMailErrorTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(503);
         $this->assertPrivate();
-        self::assertSame('Behalten', $crawler->filter('#inquiry_lastName')->attr('value'));
+        self::assertStringStartsWith('Deine Anfrage ist bei uns gespeichert', $crawler->filter('#anfrage [role="alert"]')->text());
+        self::assertCount(0, $crawler->filter('#anfrage form'));
         $rows = $this->rows();
         self::assertCount(1, $rows);
         self::assertSame('failed', $rows[0]['venue_mail_status']);
@@ -97,8 +97,8 @@ final class SubmitInquiryMailErrorTest extends WebTestCase
     }
 
     /**
-     * R3: the error bubbles, nothing has left, and the stored inquiry is still published. The
-     * client rethrows it so that the test can see it pass through the controller's `finally`.
+     * R3, G7 (D56): nothing has left and the stored inquiry is still published. The error no longer
+     * bubbles: the row is stored, so the guest gets the "stored, we deliver it" state, not a 500.
      */
     public function test_an_unexpected_error_before_the_venue_mail_still_publishes(): void
     {
@@ -107,13 +107,11 @@ final class SubmitInquiryMailErrorTest extends WebTestCase
         $this->failMailTo(self::OVERRIDE, self::BEFORE_THE_BUS);
         $this->client->catchExceptions(false);
 
-        try {
-            $this->post(self::SLUG, InquiryFormFields::valid());
-            self::fail('The error should have left the controller.');
-        } catch (HandlerFailedException $exception) {
-            self::assertStringContainsString('A mail error.', $exception->getMessage());
-        }
+        $crawler = $this->post(self::SLUG, InquiryFormFields::valid());
 
+        self::assertResponseStatusCodeSame(503);
+        $this->assertPrivate();
+        self::assertStringStartsWith('Deine Anfrage ist bei uns gespeichert', $crawler->filter('#anfrage [role="alert"]')->text());
         $rows = $this->rows();
         self::assertCount(1, $rows);
         self::assertSame('pending', $rows[0]['venue_mail_status']);
@@ -153,7 +151,7 @@ final class SubmitInquiryMailErrorTest extends WebTestCase
         $this->failMailTo(self::OVERRIDE, self::BEFORE_THE_BUS, once: true);
 
         $this->post(self::SLUG, InquiryFormFields::valid());
-        self::assertResponseStatusCodeSame(500);
+        self::assertResponseStatusCodeSame(503);
 
         $this->post(self::SLUG, InquiryFormFields::valid());
 

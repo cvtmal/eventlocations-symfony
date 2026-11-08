@@ -59,7 +59,7 @@
             {% endfor %}
             {{ include('admin/components/_kpi.html.twig', {
                 label: 'stats.funnel.qualified.label'|trans({}, 'cms'),
-                value: 'stats.funnel.not_available'|trans({}, 'cms'),
+                value: scorecard.qualifiedInquiries|swiss_number,
                 detail: 'stats.funnel.qualified.note'|trans({}, 'cms'),
             }, with_context = false) }}
         </div>
@@ -135,8 +135,8 @@
             }, with_context = false) }}
             {{ include('admin/components/_kpi.html.twig', {
                 label: 'stats.funnel.paying.qualified'|trans({}, 'cms'),
-                value: scorecard.paying.withQualifiedInquiry is null ? 'stats.funnel.not_available'|trans({}, 'cms') : scorecard.paying.withQualifiedInquiry|swiss_number,
-                detail: 'stats.funnel.qualified.note'|trans({}, 'cms'),
+                value: scorecard.paying.withQualifiedInquiry|swiss_number,
+                detail: scorecard.paying.qualifiedPercent is null ? null : 'stats.funnel.paying.percent'|trans({percent: scorecard.paying.qualifiedPercent|swiss_number}, 'cms'),
             }, with_context = false) }}
         </div>
     </section>

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\InquiryStatus;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\Qualification;
+use App\Inquiries\ValueObject\QualificationReason;
 use App\Venues\ValueObject\Term;
 
 /**
@@ -36,6 +39,9 @@ final readonly class InquiryDetail
         public MailStatus $venueMail,
         public MailStatus $guestMail,
         public \DateTimeImmutable $receivedAt,
+        public ?Qualification $qualification,
+        public ?QualificationReason $qualificationReason,
+        public ?InquiryOverride $override,
     ) {
     }
 }

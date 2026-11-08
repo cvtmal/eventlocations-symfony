@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\InquiryStatus;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\Qualification;
+use App\Inquiries\ValueObject\QualificationReason;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
@@ -22,7 +25,7 @@ final class InquiryInboxQuery
     private const string FROM = 'FROM crm_inquiry_links l JOIN inquiries i ON i.id = l.inquiry_id';
 
     private const string COLUMNS = 'SELECT i.id, i.first_name, i.last_name, i.company, i.venue_name, i.event_type, i.guest_count, i.event_date,'
-        .' l.status, i.venue_mail_status, i.created_at';
+        .' l.status, i.venue_mail_status, i.created_at, i.qualification, i.qualification_reason, i.qualification_override';
 
     private const string NEWEST_FIRST = 'ORDER BY i.created_at DESC, i.id DESC';
 
@@ -66,7 +69,8 @@ final class InquiryInboxQuery
         $row = $this->connection->fetchAssociative(
             'SELECT i.id, i.first_name, i.last_name, i.company, i.venue_name, i.venue_id, i.venue_number, i.event_type, i.guest_count,'
             .' i.event_date, i.date_flexible, i.start_time, i.catering_wish, i.budget_chf,'
-            .' i.email, i.phone, i.message, l.status, i.venue_mail_status, i.guest_mail_status, i.created_at '
+            .' i.email, i.phone, i.message, l.status, i.venue_mail_status, i.guest_mail_status, i.created_at,'
+            .' i.qualification, i.qualification_reason, i.qualification_override '
             .self::FROM.' WHERE l.inquiry_id = :id',
             ['id' => $id],
         );
@@ -95,6 +99,7 @@ final class InquiryInboxQuery
             MailStatus::from((string) $row['venue_mail_status']),
             MailStatus::from((string) $row['guest_mail_status']),
             new \DateTimeImmutable((string) $row['created_at']),
+            ...self::qualification($row),
         );
     }
 
@@ -109,14 +114,14 @@ final class InquiryInboxQuery
     }
 
     /**
-     * The latest inquiries, whatever their status.
+     * The latest inquiries, whatever their status, except those staff marked spam or test (G7, D56).
      *
      * @return list<InquiryInboxRow>
      */
     public function newest(int $limit): array
     {
         return $this->inboxRows(
-            self::COLUMNS.' '.self::FROM.' '.self::NEWEST_FIRST.' LIMIT :limit',
+            self::COLUMNS.' '.self::FROM.' WHERE i.qualification_override IS NULL '.self::NEWEST_FIRST.' LIMIT :limit',
             ['limit' => $limit],
             ['limit' => ParameterType::INTEGER],
         );
@@ -173,7 +178,22 @@ final class InquiryInboxQuery
             InquiryStatus::from((string) $row['status']),
             MailStatus::from((string) $row['venue_mail_status']),
             new \DateTimeImmutable((string) $row['created_at']),
+            ...self::qualification($row),
         ), $this->connection->fetchAllAssociative($sql, $parameters, $types));
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array{?Qualification, ?QualificationReason, ?InquiryOverride}
+     */
+    private static function qualification(array $row): array
+    {
+        return [
+            null === $row['qualification'] ? null : Qualification::from((string) $row['qualification']),
+            null === $row['qualification_reason'] ? null : QualificationReason::from((string) $row['qualification_reason']),
+            null === $row['qualification_override'] ? null : InquiryOverride::from((string) $row['qualification_override']),
+        ];
     }
 
     /**

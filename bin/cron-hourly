@@ -1,0 +1,21 @@
+#!/bin/sh
+# Every hour at :40 Europe/Zurich (G7, D56): mail staff the inquiries whose venue mail failed or is stuck, each
+# once (stuck_alerted_at). One short Neon wake-up per hour; no lock, as a run takes seconds and is an hour from the
+# next. Silent when the alert mail went out or nothing was due; it prints only when that mail itself
+# failed (the rows then stay unmarked and the next hour tries again), or when the command failed.
+set -u
+
+PHP="${DEPLOY_PHP:-php}"
+cd -P "$(dirname "$0")/.." || exit 1
+
+main() {
+    # No --quiet: when the staff mail fails, the stuck rows it prints are the point of this cron mail.
+    out="$("$PHP" bin/console --no-interaction app:inquiries:report-stuck 2>&1)" || {
+        printf 'cron-hourly: inquiries-stuck failed\n'
+        [ -z "$out" ] || printf '%s\n' "$out"
+        exit 1
+    }
+    [ -z "$out" ] || printf '%s\n' "$out"
+}
+
+main "$@"

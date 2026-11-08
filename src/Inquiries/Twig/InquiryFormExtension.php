@@ -13,10 +13,11 @@ use Twig\Attribute\AsTwigFunction;
 use Twig\Environment;
 
 /**
- * `{{ inquiry_form(venue, form = null) }}` fills #8's `{% block inquiry %}`. It adds no query and
+ * `{{ inquiry_form(venue, form = null, undelivered = false) }}` fills #8's `{% block inquiry %}`. It adds no query and
  * no session, and renders the same for every visitor, so the detail page stays cacheable (S10):
  *
  * - nothing for a venue without an inquiry address, so `.venue-inquiry:empty` hides the section;
+ * - the "stored, we deliver it" state when the POST passes `undelivered` (G7, D56): the venue mail did not go out;
  * - the confirmation on a signed `?anfrage=gesendet` (an unsigned or tampered flag gets the form);
  * - else the form: the bound one the POST passes in, or a fresh one.
  *
@@ -36,10 +37,14 @@ final class InquiryFormExtension
     }
 
     #[AsTwigFunction('inquiry_form', isSafe: ['html'])]
-    public function inquiryForm(Environment $twig, VenueDetail $venue, ?FormView $form = null): string
+    public function inquiryForm(Environment $twig, VenueDetail $venue, ?FormView $form = null, bool $undelivered = false): string
     {
         if (null === $venue->inquiryEmail) {
             return '';
+        }
+
+        if ($undelivered) {
+            return $twig->render('inquiries/_undelivered.html.twig', ['venue' => $venue]);
         }
 
         if ($this->isConfirmation()) {

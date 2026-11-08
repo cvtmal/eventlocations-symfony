@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Inquiries;
 
 use App\Inquiries\ReadModel\InquiryVocabularyQuery;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\Qualification;
+use App\Inquiries\ValueObject\QualificationReason;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -24,6 +27,9 @@ final class InquiryVocabularyChecksTest extends KernelTestCase
     {
         yield 'venue mail status' => ['chk_inquiries_venue_mail_status', MailStatus::class];
         yield 'guest mail status' => ['chk_inquiries_guest_mail_status', MailStatus::class];
+        yield 'qualification' => ['chk_inquiries_qualification', Qualification::class];
+        yield 'qualification reason' => ['chk_inquiries_qualification_reason', QualificationReason::class];
+        yield 'qualification override' => ['chk_inquiries_qualification_override', InquiryOverride::class];
     }
 
     /**

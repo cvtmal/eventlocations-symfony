@@ -2,7 +2,8 @@
     One inquiry in full. Include with `with_context = false`: detail (InquiryDetail), return_to (a path under `/admin/`).
     A venue that is gone stays as a name; "Per E-Mail antworten" writes to the organizer's address (S13: an organizer is no
     CRM contact). The forms post to
-    `InquiryStatusController`, the resend form under the pills to `InquiryResendController`.
+    `InquiryStatusController`, the resend form under the pills to `InquiryResendController`, the spam / test marks under
+    "Qualifizierung" to `InquiryMarkController` (G7).
 #}
 <article class="card crm-inbox__detail" id="anfrage-detail" aria-label="{{ 'inquiry.detail.label'|trans({}, 'crm') }}">
     <div class="crm-inbox__head">
@@ -70,6 +71,28 @@
                 {{ include('admin/components/_button.html.twig', {label: 'inquiry.detail.resend'|trans({}, 'crm'), type: 'submit'}, with_context = false) }}
             </form>
         {% endif %}
+    </div>
+
+    <div class="crm-inbox__block">
+        <h3>{{ 'inquiry.detail.qualification'|trans({}, 'crm') }}</h3>
+        <div class="crm-inbox__mails">
+            {% if detail.override %}
+                {{ include('admin/components/_pill.html.twig', {label: ('inquiry.override.' ~ detail.override.value)|trans({}, 'crm'), tone: crm_override_tone(detail.override)}, with_context = false) }}
+            {% endif %}
+            {% if detail.qualification %}
+                {{ include('admin/components/_pill.html.twig', {label: ('inquiry.qualification.' ~ detail.qualification.value)|trans({reason: detail.qualificationReason ? ('inquiry.qualification.reason.' ~ detail.qualificationReason.value)|trans({}, 'crm') : ''}, 'crm'), tone: crm_qualification_tone(detail.qualification)}, with_context = false) }}
+            {% endif %}
+        </div>
+        <div class="crm-inbox__mails">
+            {% for override, label in detail.override ? {'': 'inquiry.detail.unmark'} : {spam: 'inquiry.detail.mark_spam', test: 'inquiry.detail.mark_test'} %}
+                <form method="post" action="{{ path('admin_crm_inquiries_mark', {id: detail.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                    <input type="hidden" name="override" value="{{ override }}">
+                    <input type="hidden" name="return_to" value="{{ return_to }}">
+                    {{ include('admin/components/_button.html.twig', {label: label|trans({}, 'crm'), type: 'submit'}, with_context = false) }}
+                </form>
+            {% endfor %}
+        </div>
     </div>
 
     <form class="crm-inbox__status" method="post" action="{{ path('admin_crm_inquiries_status', {id: detail.id}) }}">

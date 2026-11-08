@@ -71,6 +71,12 @@ final class InquirySchemaMigrationTest extends KernelTestCase
         yield 'fingerprint not hex' => ['chk_inquiries_fingerprint', "UPDATE inquiries SET fingerprint = repeat('g', 64)"];
         yield 'unknown venue mail status' => ['chk_inquiries_venue_mail_status', "UPDATE inquiries SET venue_mail_status = 'queued'"];
         yield 'unknown guest mail status' => ['chk_inquiries_guest_mail_status', "UPDATE inquiries SET guest_mail_status = 'queued'"];
+        yield 'unknown qualification' => ['chk_inquiries_qualification', "UPDATE inquiries SET qualification = 'maybe'"];
+        yield 'unknown qualification reason' => ['chk_inquiries_qualification_reason', "UPDATE inquiries SET qualification = 'unqualified', qualification_reason = 'too_cheap'"];
+        yield 'unknown override' => ['chk_inquiries_qualification_override', "UPDATE inquiries SET qualification_override = 'fraud'"];
+        yield 'qualified with a reason' => ['chk_inquiries_qualification_reason_pair', "UPDATE inquiries SET qualification = 'qualified', qualification_reason = 'duplicate'"];
+        yield 'unqualified without a reason' => ['chk_inquiries_qualification_reason_pair', "UPDATE inquiries SET qualification = 'unqualified', qualification_reason = NULL"];
+        yield 'a reason without a qualification' => ['chk_inquiries_qualification_reason_pair', "UPDATE inquiries SET qualification = NULL, qualification_reason = 'duplicate'"];
         yield 'unknown venue' => ['fk_inquiries_venue_id', "UPDATE inquiries SET venue_id = '{missing}'"];
     }
 
@@ -102,6 +108,9 @@ final class InquirySchemaMigrationTest extends KernelTestCase
         yield 'a date, not flexible' => ["UPDATE inquiries SET event_date = '2030-06-15', date_flexible = false"];
         yield 'every event field' => ["UPDATE inquiries SET company = 'Muster AG', start_time = '18:30', catering_wish = 'external_allowed', budget_chf = 1000000"];
         yield 'smallest budget, in-house catering' => ["UPDATE inquiries SET budget_chf = 1, catering_wish = 'in_house'"];
+        yield 'unqualified duplicate, marked test' => ["UPDATE inquiries SET qualification = 'unqualified', qualification_reason = 'duplicate', qualification_override = 'test'"];
+        yield 'qualified, marked spam' => ["UPDATE inquiries SET qualification = 'qualified', qualification_reason = NULL, qualification_override = 'spam'"];
+        yield 'stuck alert sent' => ['UPDATE inquiries SET stuck_alerted_at = now()'];
     }
 
     #[DataProvider('acceptances')]
@@ -124,9 +133,18 @@ final class InquirySchemaMigrationTest extends KernelTestCase
 
     public function test_new_rows_start_pending(): void
     {
-        $row = $this->connection->fetchAssociative('SELECT venue_mail_status, guest_mail_status, delivered_to, venue_mail_sent_at FROM inquiries');
+        $row = $this->connection->fetchAssociative('SELECT venue_mail_status, guest_mail_status, delivered_to, venue_mail_sent_at, qualification, qualification_reason, qualification_override, stuck_alerted_at FROM inquiries');
 
-        self::assertSame(['venue_mail_status' => 'pending', 'guest_mail_status' => 'pending', 'delivered_to' => null, 'venue_mail_sent_at' => null], $row);
+        self::assertSame([
+            'venue_mail_status' => 'pending',
+            'guest_mail_status' => 'pending',
+            'delivered_to' => null,
+            'venue_mail_sent_at' => null,
+            'qualification' => null,
+            'qualification_reason' => null,
+            'qualification_override' => null,
+            'stuck_alerted_at' => null,
+        ], $row);
     }
 
     public function test_deleting_the_venue_keeps_the_inquiry_and_its_snapshot(): void

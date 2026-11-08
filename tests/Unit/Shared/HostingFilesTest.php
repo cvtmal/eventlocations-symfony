@@ -113,12 +113,13 @@ final class HostingFilesTest extends TestCase
         self::assertStringContainsString('/etc/php/8.5/fpm/pool.d/', $pool);
     }
 
-    public function test_the_crontab_has_exactly_the_four_jobs(): void
+    public function test_the_crontab_has_exactly_the_five_jobs(): void
     {
         self::assertSame([
             '5 0 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-midnight',
             '2-59/5 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-cache-guard',
             '15 3 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-daily',
+            '40 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-hourly',
             '30 4 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-media-backup',
         ], self::cronJobs());
     }
@@ -134,9 +135,15 @@ final class HostingFilesTest extends TestCase
     {
         $cron = self::file('bin/cron-daily');
 
-        foreach (['app:inquiries:purge', 'app:venues:erase-complainants', 'app:stats:purge-search-misses', 'app:crm:refresh-stages', 'app:crm:renewal-tasks', 'app:subscriptions:expire', 'app:subscriptions:remind', 'app:last-minute:expire', 'app:inquiries:report-stuck', 'app:stats:ingest', 'cache:pool:prune'] as $command) {
+        foreach (['app:inquiries:purge', 'app:venues:erase-complainants', 'app:stats:purge-search-misses', 'app:crm:refresh-stages', 'app:crm:renewal-tasks', 'app:subscriptions:expire', 'app:subscriptions:remind', 'app:last-minute:expire', 'app:stats:ingest', 'cache:pool:prune'] as $command) {
             self::assertStringContainsString($command, $cron);
         }
+        self::assertStringNotContainsString('app:inquiries:report-stuck', $cron, 'the stuck-inquiry alert runs hourly (G7)');
+    }
+
+    public function test_the_hourly_job_names_its_command(): void
+    {
+        self::assertStringContainsString('app:inquiries:report-stuck', self::file('bin/cron-hourly'));
     }
 
     /**

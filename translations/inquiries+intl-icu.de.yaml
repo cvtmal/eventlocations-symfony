@@ -27,13 +27,13 @@ form:
     submit: Anfragen
     privacy: Deine Angaben gehen direkt an {name}.
     privacy_link: Datenschutz
+    undelivered: Deine Anfrage ist bei uns gespeichert, konnte aber gerade nicht an {name} zugestellt werden. Wir kümmern uns darum und stellen sie so bald wie möglich zu. Du musst nichts weiter tun.
     message_default: "Liebes {name}-Team,\n\nwir planen einen Anlass und interessieren uns für {name}. Ist unser Wunschtermin noch frei?\n\nHerzliche Grüsse"
     error:
         summary: Bitte prüfe deine Angaben.
         too_fast: Das ging sehr schnell. Bitte sende das Formular noch einmal ab.
         rate_limited: Du hast gerade mehrere Anfragen gesendet. Bitte versuch es später noch einmal.
         not_accepted: Diese Location nimmt gerade keine Anfragen entgegen.
-        delivery_failed: Deine Anfrage konnte nicht zugestellt werden. Bitte versuch es noch einmal oder nimm direkt Kontakt mit der Location auf.
         date_past: Der Wunschtermin liegt in der Vergangenheit.
         date_missing: Bitte gib einen Wunschtermin an oder wähle «Datum ist flexibel».
         budget_range: Bitte gib ein Budget zwischen 1 Franken und 1 Million Franken an.
@@ -72,3 +72,13 @@ email:
         intro: Deine Anfrage ist an {venue} gegangen. Das hast du gesendet.
         answer_note: '{venue} antwortet dir direkt.'
         button: Zur Location
+    stuck:
+        subject: 'Anfragen nicht zugestellt: {count}'
+        greeting: Hallo
+        intro: Diese Anfragen haben ihre Location nicht erreicht. Öffne sie im CRM und sende sie erneut.
+        status:
+            failed: Zustellung fehlgeschlagen
+            pending: Zustellung ausstehend
+        line: '{venue} (Nr. {number}), eingegangen {date}'
+        open: Im CRM öffnen
+        note: Jede Anfrage erscheint nur einmal in dieser Meldung.

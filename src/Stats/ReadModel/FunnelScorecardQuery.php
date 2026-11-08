@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Stats\ReadModel;
 
+use App\Inquiries\ReadModel\QualifiedInquirySql;
 use App\Shared\Funnel\FunnelEvent;
 use App\Stats\ValueObject\FunnelFilter;
 use App\Stats\ValueObject\FunnelWindow;
 use Doctrine\DBAL\Connection;
 
 /**
- * The staff funnel scorecard (G8, CMO 9.1) from `funnel_events`, four statements per screen.
+ * The staff funnel scorecard (G8, CMO 9.1) from `funnel_events` and `inquiries`, five statements per screen.
  *
  * - **Weeks** are ISO weeks (Monday 00:00 to Monday 00:00, Europe/Zurich); the window is the last 4, 12, 26 or 52
  *   weeks, the current one included, and every week is listed, empty ones as zeros.
@@ -21,13 +22,16 @@ use Doctrine\DBAL\Connection;
  *   at or before the event (found with a LATERAL probe of the `(venue_id, occurred_at)` index), else none ("Ohne
  *   Kampagne"). That lets Venues and Inquiries emit steps without knowing a campaign, and leaves what a venue did
  *   before any campaign reached it unattributed.
+ * - **Qualified inquiries** (G7, D56): the inquiries of the window, by the week of their venue mail, that count as
+ *   qualified (`QualifiedInquirySql`: qualified at the latest delivery, not marked spam or test). They come from
+ *   `inquiries`, which carry no campaign, so the figure ignores the campaign filter (the screen says so).
  * - **Paying venues:** a `pro_paid` in the last 365 days; of them the ones with a delivered inquiry since their first
- *   payment in that span. The qualified variant is G7's, null here.
+ *   payment in that span, and the ones with a counted qualified inquiry (venue mail sent) since then.
  *
- * Query ceiling: the screen reads one bounded time range of `funnel_events` (at most 52 weeks) three times and the
- * `pro_paid` rows of 12 months once; the output is at most 52 weeks x 8 steps plus one row per campaign. The probe
- * runs once per venue (the planner memoizes it) for the rows without an own campaign. Measured figures are in
- * `module-stats.md`.
+ * Query ceiling: the screen reads one bounded time range of `funnel_events` (at most 52 weeks) three times, the
+ * `pro_paid` rows of 12 months once, and one bounded time range of `inquiries` once (plus one probe per paying venue);
+ * the output is at most 52 weeks x 8 steps plus one row per campaign. The campaign probe runs once per venue (the
+ * planner memoizes it) for the rows without an own campaign. Measured figures are in `module-stats.md`.
  */
 final class FunnelScorecardQuery
 {
@@ -73,8 +77,18 @@ final class FunnelScorecardQuery
                COUNT(*) FILTER (WHERE EXISTS (
                    SELECT 1 FROM funnel_events i
                     WHERE i.event = 'inquiry_delivered' AND i.venue_id = paid.venue_id AND i.occurred_at >= paid.paid_at
-               )) AS with_inquiry
+               )) AS with_inquiry,
+               COUNT(*) FILTER (WHERE EXISTS (
+                   SELECT 1 FROM inquiries q
+                    WHERE q.venue_id = paid.venue_id AND %s AND q.venue_mail_sent_at >= paid.paid_at
+               )) AS with_qualified
           FROM paid
+        SQL;
+
+    private const string QUALIFIED = <<<'SQL'
+        SELECT COUNT(*) FROM inquiries q
+         WHERE %s
+           AND q.venue_mail_sent_at >= CAST(:from AS TIMESTAMPTZ) AND q.venue_mail_sent_at < CAST(:to AS TIMESTAMPTZ)
         SQL;
 
     public function __construct(
@@ -129,6 +143,7 @@ final class FunnelScorecardQuery
             )),
             self::campaignRows($byCampaign),
             $this->paying($now),
+            (int) $this->connection->fetchOne(\sprintf(self::QUALIFIED, QualifiedInquirySql::where('q')), $range),
         );
     }
 
@@ -157,9 +172,12 @@ final class FunnelScorecardQuery
 
     private function paying(\DateTimeImmutable $now): FunnelPaying
     {
-        $row = $this->connection->fetchAssociative(self::PAYING, ['since' => $now->modify('-365 days')->format(\DATE_ATOM)]);
+        $row = $this->connection->fetchAssociative(
+            \sprintf(self::PAYING, QualifiedInquirySql::where('q')),
+            ['since' => $now->modify('-365 days')->format(\DATE_ATOM)],
+        );
 
-        return new FunnelPaying((int) ($row['paying'] ?? 0), (int) ($row['with_inquiry'] ?? 0));
+        return new FunnelPaying((int) ($row['paying'] ?? 0), (int) ($row['with_inquiry'] ?? 0), (int) ($row['with_qualified'] ?? 0));
     }
 
     /**

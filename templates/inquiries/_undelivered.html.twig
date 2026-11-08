@@ -1,0 +1,10 @@
+{# The POST answer when the venue mail did not go out (G7, D56): the inquiry is stored and staff get the hourly alert, so the guest has nothing more to do and gets no form (a resubmit would only duplicate it). Params: venue. #}
+<div class="inquiry-form venue-section">
+    <h2 class="venue-section__title">{{ 'form.heading'|trans({name: venue.name}, 'inquiries') }}</h2>
+    <div class="inquiry-form__summary" role="alert">
+        {{ icon('info') }}
+        <div>
+            <p>{{ 'form.undelivered'|trans({name: venue.name}, 'inquiries') }}</p>
+        </div>
+    </div>
+</div>
