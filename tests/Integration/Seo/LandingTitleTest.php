@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Seo;
 
 use App\Geo\ValueObject\Canton;
+use App\Search\LandingCopy;
 use App\Search\LandingPaths;
 use App\Search\ReadModel\KnownTerms;
 use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\LandingFooter;
 use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\LandingPages;
+use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ReadModel\ListingPage;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
@@ -104,22 +106,22 @@ final class LandingTitleTest extends KernelTestCase
             $titles[$code] = $meta->for($this->criteria($page, 1), $this->listingPage($page->venues, 1), $page)->title;
         }
 
-        // C2, with the 22-character site name: no canton keeps its count; six take the second pattern,
-        // Thurgau, Solothurn, Obwalden and Nidwalden the third, St. Gallen, Graubünden and Schaffhausen the fourth.
+        // C2, with the 22-character site name and "Eventlokale" (F8): every canton but Schaffhausen keeps
+        // its count; Schaffhausen takes the second pattern.
         self::assertSame([
-            'zh' => 'Hochzeitslocations im Kanton Zürich | deine-eventlocation.ch',
-            'be' => 'Hochzeitslocations im Kanton Bern | deine-eventlocation.ch',
-            'lu' => 'Hochzeitslocations im Kanton Luzern | deine-eventlocation.ch',
-            'sg' => 'Hochzeitslocations St. Gallen | deine-eventlocation.ch',
-            'tg' => 'Hochzeitslocations Kanton Thurgau | deine-eventlocation.ch',
-            'ag' => 'Hochzeitslocations im Kanton Aargau | deine-eventlocation.ch',
-            'sz' => 'Hochzeitslocations im Kanton Schwyz | deine-eventlocation.ch',
-            'vs' => 'Hochzeitslocations im Kanton Wallis | deine-eventlocation.ch',
-            'so' => 'Hochzeitslocations Kanton Solothurn | deine-eventlocation.ch',
-            'gr' => 'Hochzeitslocations Graubünden | deine-eventlocation.ch',
-            'ow' => 'Hochzeitslocations Kanton Obwalden | deine-eventlocation.ch',
-            'nw' => 'Hochzeitslocations Kanton Nidwalden | deine-eventlocation.ch',
-            'sh' => 'Hochzeitslocations Schaffhausen | deine-eventlocation.ch',
+            'zh' => '52 Eventlokale im Kanton Zürich | deine-eventlocation.ch',
+            'be' => '34 Eventlokale im Kanton Bern | deine-eventlocation.ch',
+            'lu' => '31 Eventlokale im Kanton Luzern | deine-eventlocation.ch',
+            'sg' => '19 Eventlokale im Kanton St. Gallen | deine-eventlocation.ch',
+            'tg' => '14 Eventlokale im Kanton Thurgau | deine-eventlocation.ch',
+            'ag' => '13 Eventlokale im Kanton Aargau | deine-eventlocation.ch',
+            'sz' => '9 Eventlokale im Kanton Schwyz | deine-eventlocation.ch',
+            'vs' => '8 Eventlokale im Kanton Wallis | deine-eventlocation.ch',
+            'so' => '8 Eventlokale im Kanton Solothurn | deine-eventlocation.ch',
+            'gr' => '8 Eventlokale im Kanton Graubünden | deine-eventlocation.ch',
+            'ow' => '7 Eventlokale im Kanton Obwalden | deine-eventlocation.ch',
+            'nw' => '6 Eventlokale im Kanton Nidwalden | deine-eventlocation.ch',
+            'sh' => 'Eventlokale im Kanton Schaffhausen | deine-eventlocation.ch',
         ], $titles);
     }
 
@@ -130,7 +132,7 @@ final class LandingTitleTest extends KernelTestCase
         self::assertNotNull($page);
 
         self::assertSame(
-            'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch',
+            'Eventlokale Zürich – Seite 2 | deine-eventlocation.ch',
             $meta->for($this->criteria($page, 2), $this->listingPage(52, 2), $page)->title,
         );
     }
@@ -151,6 +153,50 @@ final class LandingTitleTest extends KernelTestCase
                     $this->assertFits($meta->for($this->criteria($page, $number), $this->listingPage($count, $number), $page), $code.' '.$count.' p'.$number);
                 }
             }
+        }
+    }
+
+    public function test_every_event_title_fits_alone_and_in_every_canton_at_any_count_and_page(): void
+    {
+        $codes = array_values(array_diff($this->eventCodes(), LandingPages::NO_PAGE_EVENTS));
+        self::assertCount(16, $codes);
+
+        foreach ([5, 52, 999] as $count) {
+            $rows = [];
+            foreach ($codes as $code) {
+                $rows[] = self::eventRow($code, null, $count);
+                foreach (Canton::cases() as $canton) {
+                    $rows[] = self::eventRow($code, $canton, $count);
+                }
+            }
+            [$pages, $meta] = $this->landing($rows);
+            $lastPage = (int) ceil($count / ListingQuery::PER_PAGE);
+
+            foreach ($codes as $code) {
+                foreach ([null, ...Canton::cases()] as $canton) {
+                    $page = $pages->event($code, $canton);
+                    self::assertNotNull($page, $code);
+                    foreach (array_unique([1, 2, $lastPage]) as $number) {
+                        $case = $code.' '.($canton->value ?? 'ch').' '.$count.' p'.$number;
+                        $seo = $meta->for($this->criteria($page, $number), $this->listingPage($count, $number), $page);
+                        $this->assertFits($seo, $case);
+                        self::assertFalse($seo->noindex, $case);
+                    }
+                }
+            }
+        }
+    }
+
+    public function test_a_page_that_fails_the_quality_gate_is_noindex_with_its_own_canonical(): void
+    {
+        [$pages, $meta] = $this->landing([self::cantonRow(Canton::ZH, 6), self::eventRow('seminar', null, 6)], 7);
+
+        foreach ([$pages->canton(Canton::ZH), $pages->event('seminar')] as $page) {
+            self::assertNotNull($page);
+            self::assertFalse($page->indexable);
+            $seo = $meta->for($this->criteria($page, 1), $this->listingPage(6, 1), $page);
+            self::assertTrue($seo->noindex, $page->keyPrefix());
+            self::assertStringEndsWith('/eventlokale/'.$page->slug, $seo->canonical);
         }
     }
 
@@ -189,18 +235,18 @@ final class LandingTitleTest extends KernelTestCase
      *
      * @return array{LandingPages, ListingMeta}
      */
-    private function landing(array $rows): array
+    private function landing(array $rows, int $indexMinVenues = 5): array
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchAllAssociative')->willReturn($rows);
-        $pages = new LandingPages($connection, ListingQueryTest::enabledLocale(), $this->translator, new LandingFooter(new ArrayAdapter()), 5);
+        $pages = new LandingPages($connection, ListingQueryTest::enabledLocale(), $this->translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate($indexMinVenues), 5);
 
         // An empty, warm content-block snapshot (#26): no staff text, and no read of the stub.
         $clock = new MockClock();
         $blocks = new ArrayAdapter();
         $blocks->save($blocks->getItem(ContentBlocks::ITEM)->set(['built_at' => $clock->now()->getTimestamp(), 'blocks' => []]));
 
-        return [$pages, new ListingMeta($this->translator, new LandingPaths($pages, $this->urls), $this->titles, new ContentBlocks($connection, $blocks, new MarkdownRenderer(), $clock), $this->site)];
+        return [$pages, new ListingMeta($this->translator, new LandingPaths($pages, $this->urls), $this->titles, new ContentBlocks($connection, $blocks, new MarkdownRenderer(), $clock), new LandingCopy($this->translator), $this->site)];
     }
 
     /**
@@ -209,6 +255,27 @@ final class LandingTitleTest extends KernelTestCase
     private static function cantonRow(Canton $canton, int $venues): array
     {
         return ['type' => 'canton', 'code' => $canton->value, 'slug' => 'kanton-'.$canton->value, 'canton_slug' => 'kanton-'.$canton->value, 'canton' => $canton->value, 'town_name' => null, 'venues' => $venues];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function eventRow(string $code, ?Canton $canton, int $venues): array
+    {
+        return ['type' => 'event', 'code' => $code, 'slug' => null, 'canton_slug' => null === $canton ? null : 'kanton-'.$canton->value, 'canton' => $canton?->value, 'town_name' => null, 'venues' => $venues];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function eventCodes(): array
+    {
+        $connection = self::getContainer()->get(Connection::class);
+        self::assertInstanceOf(Connection::class, $connection);
+        /** @var list<string> $codes */
+        $codes = $connection->fetchFirstColumn("SELECT code FROM taxonomy_terms WHERE term_group = 'suitable_for' ORDER BY code");
+
+        return $codes;
     }
 
     /**

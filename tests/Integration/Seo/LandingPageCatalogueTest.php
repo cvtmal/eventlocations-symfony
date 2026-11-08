@@ -77,13 +77,13 @@ final class LandingPageCatalogueTest extends KernelTestCase
         $zh = $this->catalogue()->page('canton.zh');
         self::assertNotNull($zh);
         self::assertSame('canton', $zh->type);
-        self::assertSame('Hochzeitslocations im Kanton Zürich', $zh->name);
+        self::assertSame('Eventlokale im Kanton Zürich', $zh->name);
         self::assertSame(5, $zh->venueCount);
         self::assertTrue($zh->passesThreshold);
         self::assertNotNull($zh->url);
         self::assertStringEndsWith('/eventlokale/zuerich', $zh->url);
         self::assertStringStartsWith('http', $zh->url);
-        self::assertStringStartsWith('5 Hochzeitslocations im Kanton Zürich:', $zh->defaultIntro);
+        self::assertStringStartsWith('5 Eventlokale im Kanton Zürich:', $zh->defaultIntro);
         self::assertSame('landing.canton.zh.title', $zh->blockKey('title'));
 
         $page = $this->service(LandingPages::class)->canton(Canton::ZH);
@@ -106,10 +106,10 @@ final class LandingPageCatalogueTest extends KernelTestCase
 
         $li = $this->catalogue()->page('canton.li');
         self::assertNotNull($li);
-        self::assertSame('Hochzeitslocations in Liechtenstein', $li->name);
-        self::assertStringStartsWith('2 Hochzeitslocations in Liechtenstein:', $li->defaultIntro);
-        self::assertSame('Hochzeitslocations in Liechtenstein | deine-eventlocation.ch', $li->defaultTitle);
-        self::assertStringStartsWith('Hochzeitslocations in Liechtenstein:', $li->defaultDescription);
+        self::assertSame('Eventlokale in Liechtenstein', $li->name);
+        self::assertStringStartsWith('2 Eventlokale in Liechtenstein:', $li->defaultIntro);
+        self::assertSame('2 Eventlokale in Liechtenstein | deine-eventlocation.ch', $li->defaultTitle);
+        self::assertStringStartsWith('Eventlokale in Liechtenstein:', $li->defaultDescription);
     }
 
     public function test_a_page_with_one_venue_reads_in_the_singular(): void
@@ -118,11 +118,11 @@ final class LandingPageCatalogueTest extends KernelTestCase
         // Zürich's counted title no longer fits 60 characters with the site name; Zug's still does.
         $this->inCanton(Canton::ZG, 1);
 
-        self::assertSame('1 Hochzeitslocation im Kanton Zug | deine-eventlocation.ch', $this->catalogue()->page('canton.zg')?->defaultTitle);
-        self::assertSame('Hochzeit im Schloss: 1 Location | deine-eventlocation.ch', $this->catalogue()->page('building.castle')?->defaultTitle);
+        self::assertSame('1 Eventlokal im Kanton Zug | deine-eventlocation.ch', $this->catalogue()->page('canton.zg')?->defaultTitle);
+        self::assertSame('Events im Schloss: 1 Location | deine-eventlocation.ch', $this->catalogue()->page('building.castle')?->defaultTitle);
         $town = array_values(array_filter($this->catalogue()->pages(), static fn (LandingPageEntry $entry): bool => 'town' === $entry->type));
         self::assertCount(1, $town);
-        self::assertSame('1 Hochzeitslocation in Stäfa | deine-eventlocation.ch', $town[0]->defaultTitle);
+        self::assertSame('1 Eventlokal in Stäfa | deine-eventlocation.ch', $town[0]->defaultTitle);
     }
 
     public function test_two_venues_keep_the_plural(): void
@@ -130,11 +130,11 @@ final class LandingPageCatalogueTest extends KernelTestCase
         $this->withBuilding($this->inTown('Stäfa', 2), 'castle');
         $this->inCanton(Canton::ZG, 2);
 
-        self::assertSame('2 Hochzeitslocations im Kanton Zug | deine-eventlocation.ch', $this->catalogue()->page('canton.zg')?->defaultTitle);
-        self::assertSame('Hochzeit im Schloss: 2 Locations | deine-eventlocation.ch', $this->catalogue()->page('building.castle')?->defaultTitle);
+        self::assertSame('2 Eventlokale im Kanton Zug | deine-eventlocation.ch', $this->catalogue()->page('canton.zg')?->defaultTitle);
+        self::assertSame('Events im Schloss: 2 Locations | deine-eventlocation.ch', $this->catalogue()->page('building.castle')?->defaultTitle);
         $town = array_values(array_filter($this->catalogue()->pages(), static fn (LandingPageEntry $entry): bool => 'town' === $entry->type));
         self::assertCount(1, $town);
-        self::assertSame('2 Hochzeitslocations in Stäfa | deine-eventlocation.ch', $town[0]->defaultTitle);
+        self::assertSame('2 Eventlokale in Stäfa | deine-eventlocation.ch', $town[0]->defaultTitle);
     }
 
     public function test_an_unknown_prefix_has_no_entry(): void
@@ -153,7 +153,7 @@ final class LandingPageCatalogueTest extends KernelTestCase
         $this->inTown('Bern', 1);
 
         self::assertSame(
-            ['canton:Hochzeitslocations im Kanton Bern', 'canton:Hochzeitslocations im Kanton Zürich', 'town:Hochzeitslocations in Bern', 'town:Hochzeitslocations in Stäfa', 'building:Hochzeit im Schloss'],
+            ['canton:Eventlokale im Kanton Bern', 'canton:Eventlokale im Kanton Zürich', 'town:Eventlokale in Bern', 'town:Eventlokale in Stäfa', 'building:Events im Schloss'],
             array_map(static fn (LandingPageEntry $entry): string => $entry->type.':'.$entry->name, $this->catalogue()->pages()),
         );
     }

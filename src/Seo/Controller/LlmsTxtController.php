@@ -39,7 +39,7 @@ final class LlmsTxtController extends AbstractController
     {
         $live = array_values(array_filter(
             $this->landingPages->pages(),
-            static fn (LandingPageEntry $entry): bool => $entry->passesThreshold && null !== $entry->url,
+            static fn (LandingPageEntry $entry): bool => $entry->passesThreshold && $entry->indexable && null !== $entry->url,
         ));
 
         $body = $this->renderView('seo/llms.txt.twig', [
@@ -47,6 +47,7 @@ final class LlmsTxtController extends AbstractController
             'cantons' => self::ofType($live, LandingType::Canton),
             'towns' => self::ofType($live, LandingType::Town),
             'buildings' => self::ofType($live, LandingType::Building),
+            'events' => self::ofType($live, LandingType::Event),
             'venues' => $this->venues->index(),
         ]);
 

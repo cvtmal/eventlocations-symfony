@@ -9,6 +9,7 @@ use App\Search\LandingPaths;
 use App\Search\ReadModel\KnownTermsQuery;
 use App\Search\ReadModel\LandingFooter;
 use App\Search\ReadModel\LandingPages;
+use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\ValueObject\LandingType;
 use App\Tests\Integration\Geo\ImportsTownDataset;
@@ -53,7 +54,7 @@ final class LandingPathsTest extends KernelTestCase
         $urls = self::getContainer()->get('router');
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         self::assertInstanceOf(UrlGeneratorInterface::class, $urls);
-        $pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), 5);
+        $pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5), 5);
         $this->paths = new LandingPaths($pages, $urls);
     }
 
@@ -115,6 +116,22 @@ final class LandingPathsTest extends KernelTestCase
         self::assertSame('/eventlokale/schloss?guests=100', $this->paths->url($this->query(['guests' => '100', 'building' => ['castle']])));
         self::assertSame('/eventlokale?building%5B0%5D=castle&building%5B1%5D=hotel', $this->paths->url($this->query(['building' => ['castle', 'hotel']])));
         self::assertSame('/eventlokale?building%5B0%5D=hotel', $this->paths->url($this->query(['building' => ['hotel']])));
+    }
+
+    public function test_exactly_one_event_type_is_its_event_page_in_the_canton_or_without_one(): void
+    {
+        $this->withEventType($this->inCanton(Canton::BE, 5), 'seminar');
+        $this->withEventType($this->inCanton(Canton::BE, 5), 'wedding');
+
+        self::assertSame('/eventlokale/seminar', $this->paths->url($this->query(['event' => ['seminar']])));
+        self::assertSame('/eventlokale/bern/seminar?guests=100', $this->paths->url($this->query(['canton' => 'be', 'event' => ['seminar'], 'guests' => '100'])));
+        self::assertSame('/eventlokale/bern/seminar?building%5B0%5D=castle', $this->paths->url($this->query(['canton' => 'be', 'event' => ['seminar'], 'building' => ['castle']])), 'The event page in the canton wins over canton and building.');
+        self::assertSame('/eventlokale/seminar?building%5B0%5D=castle', $this->paths->url($this->query(['event' => ['seminar'], 'building' => ['castle']])), 'The event page wins over the building.');
+        self::assertSame('/eventlokale/zuerich?event%5B0%5D=seminar', $this->paths->url($this->query(['canton' => 'zh', 'event' => ['seminar']])), 'Zurich has no seminar page: the canton page keeps the event.');
+        self::assertSame('/eventlokale/zuerich/staefa?event%5B0%5D=seminar', $this->paths->url($this->query(['place' => $this->staefa, 'radius' => '0', 'event' => ['seminar']])), 'The town page wins.');
+        self::assertSame('/eventlokale?event%5B0%5D=seminar&event%5B1%5D=wedding', $this->paths->url($this->query(['event' => ['seminar', 'wedding']])));
+        self::assertSame('/eventlokale/bern?event%5B0%5D=wedding', $this->paths->url($this->query(['canton' => 'be', 'event' => ['wedding']])), 'Hochzeit has no page (D31).');
+        self::assertSame('/eventlokale?event%5B0%5D=wedding', $this->paths->url($this->query(['event' => ['wedding']])));
     }
 
     public function test_nothing_live_is_the_plain_listing(): void

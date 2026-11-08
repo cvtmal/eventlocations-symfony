@@ -24,7 +24,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class LandingPageListController extends AbstractController
 {
     public const int PER_PAGE = 50;
-    public const array TYPES = ['canton', 'town', 'building'];
+    public const array TYPES = ['canton', 'town', 'building', 'event'];
 
     #[Route('/admin/landingpages', name: 'admin_landing_pages', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(Request $request, LandingPageSource $landingPages, ContentBlockStatusQuery $status): Response

@@ -19,7 +19,8 @@ enum HomeCategory: string implements TranslatableInterface
     case Apero = 'apero';
     case ChristmasParty = 'christmas_party';
     case Birthday = 'birthday';
-    case Wedding = 'wedding';
+    // D39: Generalversammlung in place of Hochzeit, which gets no landing page and no push (D31).
+    case GeneralAssembly = 'general_assembly';
 
     public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
@@ -34,7 +35,7 @@ enum HomeCategory: string implements TranslatableInterface
             self::Apero => 'wine',
             self::ChristmasParty => 'gift',
             self::Birthday => 'cake',
-            self::Wedding => 'heart',
+            self::GeneralAssembly => 'users',
         };
     }
 }

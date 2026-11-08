@@ -10,34 +10,54 @@ home:
     title: 'Hochzeitslocations in der Schweiz finden | {site}'
     title_short: 'Hochzeitslocations Schweiz finden | {site}'
     description: 'Finde die passende Hochzeitslocation in der Schweiz: nach Region, Location-Art und Gästezahl suchen und direkt bei der Location anfragen.'
-# Landing pages (#17), first fit wins (TitleChain), the h1 cut as the last resort:
-# canton and town title_count, title, title_short, title_name, numbered title_page, title_page_short, title_page_bare;
-# building title_count, title, numbered title_page, title_page_bare. A bare title drops {site}, so a numbered page keeps its number. {heading} is the building page's h1 (search catalogue).
+# Landing pages (#17, F8), first fit wins (TitleChain), the h1 cut as the last resort:
+# canton, town, event and event_canton title_count, title, title_short, title_name, numbered title_page,
+# title_page_short, title_page_bare; building title_count, title, numbered title_page, title_page_bare.
+# A bare title drops {site}, so a numbered page keeps its number. {heading} is the building page's h1,
+# {event} the event type's plural name (search catalogue). event_canton is an event page in a canton.
 landing:
     canton:
-        title_count: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} {canton_code, select, li {in} other {im Kanton}} {canton} | {site}'
-        title: 'Hochzeitslocations {canton_code, select, li {in} other {im Kanton}} {canton} | {site}'
-        title_short: 'Hochzeitslocations {canton_code, select, li {} other {Kanton }}{canton} | {site}'
-        title_name: 'Hochzeitslocations {canton} | {site}'
-        title_page: 'Hochzeitslocations {canton_code, select, li {in} other {im Kanton}} {canton} – Seite {page} | {site}'
-        title_page_short: 'Hochzeitslocations {canton} – Seite {page} | {site}'
-        title_page_bare: 'Hochzeitslocations {canton} – Seite {page}'
-        description: 'Hochzeitslocations {canton_code, select, li {in} other {im Kanton}} {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
+        title_count: '{count, plural, one {# Eventlokal} other {# Eventlokale}} {canton_code, select, li {in} other {im Kanton}} {canton} | {site}'
+        title: 'Eventlokale {canton_code, select, li {in} other {im Kanton}} {canton} | {site}'
+        title_short: 'Eventlokale {canton_code, select, li {} other {Kanton }}{canton} | {site}'
+        title_name: 'Eventlokale {canton} | {site}'
+        title_page: 'Eventlokale {canton_code, select, li {in} other {im Kanton}} {canton} – Seite {page} | {site}'
+        title_page_short: 'Eventlokale {canton} – Seite {page} | {site}'
+        title_page_bare: 'Eventlokale {canton} – Seite {page}'
+        description: 'Eventlokale {canton_code, select, li {in} other {im Kanton}} {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
     town:
-        title_count: '{count, plural, one {# Hochzeitslocation} other {# Hochzeitslocations}} in {town} | {site}'
-        title: 'Hochzeitslocations in {town} | {site}'
-        title_short: 'Hochzeitslocations {town} | {site}'
-        title_name: 'Hochzeit {town} | {site}'
-        title_page: 'Hochzeitslocations in {town} – Seite {page} | {site}'
-        title_page_short: 'Hochzeitslocations {town} – Seite {page} | {site}'
-        title_page_bare: 'Hochzeit {town} – Seite {page}'
-        description: 'Hochzeitslocations in {town}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
+        title_count: '{count, plural, one {# Eventlokal} other {# Eventlokale}} in {town} | {site}'
+        title: 'Eventlokale in {town} | {site}'
+        title_short: 'Eventlokale {town} | {site}'
+        title_name: 'Events {town} | {site}'
+        title_page: 'Eventlokale in {town} – Seite {page} | {site}'
+        title_page_short: 'Eventlokale {town} – Seite {page} | {site}'
+        title_page_bare: 'Events {town} – Seite {page}'
+        description: 'Eventlokale in {town}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
     building:
         title_count: '{heading}: {count, plural, one {# Location} other {# Locations}} | {site}'
         title: '{heading} | {site}'
         title_page: '{heading} – Seite {page} | {site}'
         title_page_bare: '{heading} – Seite {page}'
         description: '{heading}: {count, plural, one {# Location} other {# Locations}} in der Schweiz mit Fotos, Platz für Gäste und Lage im Vergleich.'
+    event:
+        title_count: '{count, plural, one {# Eventlokal} other {# Eventlokale}} für {event} | {site}'
+        title: 'Eventlokale für {event} | {site}'
+        title_short: '{event}: Eventlokale | {site}'
+        title_name: '{event} | {site}'
+        title_page: 'Eventlokale für {event} – Seite {page} | {site}'
+        title_page_short: '{event} – Seite {page} | {site}'
+        title_page_bare: '{event} – Seite {page}'
+        description: 'Eventlokale für {event} in der ganzen Schweiz: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
+    event_canton:
+        title_count: '{count, plural, one {# Eventlokal} other {# Eventlokale}} für {event} {canton_code, select, li {in} other {im Kanton}} {canton} | {site}'
+        title: 'Eventlokale für {event} {canton_code, select, li {in} other {im Kanton}} {canton} | {site}'
+        title_short: '{event} {canton_code, select, li {in} other {im Kanton}} {canton} | {site}'
+        title_name: '{event} {canton} | {site}'
+        title_page: 'Eventlokale für {event} {canton_code, select, li {in} other {im Kanton}} {canton} – Seite {page} | {site}'
+        title_page_short: '{event} {canton} – Seite {page} | {site}'
+        title_page_bare: '{event} {canton} – Seite {page}'
+        description: 'Eventlokale für {event} {canton_code, select, li {in} other {im Kanton}} {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
 # /llms.txt and the venues' Markdown views (seo-llms-txt). Numbers arrive pre-formatted ({formatted}, {count} in capacity).
 llms:
     summary: 'Hochzeitslocations in der ganzen Schweiz: Schlösser, Scheunen, Restaurants und Locations am See mit Platz für Gäste, Lage und Ausstattung.'
@@ -48,6 +68,7 @@ llms:
         cantons: Kantone
         towns: Orte
         buildings: Location-Arten
+        events: Anlässe
         venues: Locations
         optional: Optional
     home: Startseite

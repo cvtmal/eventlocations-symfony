@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Seo\Extension;
 
+use App\Search\LandingCopy;
 use App\Search\LandingPaths;
 use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\LandingPages;
@@ -20,12 +21,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The landing pages the back office writes texts for (#26, P3): every candidate of #17's
  * LandingPages (one counting SQL, threshold 1), with what the public page shows without a
  * staff text. Seo implements it because the default title and description are ListingMeta's,
- * and Search may not depend on Seo. Ordered by type (canton, town, building), then by name.
+ * and Search may not depend on Seo. Ordered by type (canton, town, building, event), then by name.
  * Memoized per request; tagged kernel.reset by autoconfiguration.
  */
 final class LandingPageCatalogue implements LandingPageSource, ResetInterface
 {
-    private const array TYPE_ORDER = [LandingType::Canton->value => 0, LandingType::Town->value => 1, LandingType::Building->value => 2];
+    private const array TYPE_ORDER = [LandingType::Canton->value => 0, LandingType::Town->value => 1, LandingType::Building->value => 2, LandingType::Event->value => 3];
 
     /** @var array<string, LandingPageEntry>|null by key prefix */
     private ?array $entries = null;
@@ -35,6 +36,7 @@ final class LandingPageCatalogue implements LandingPageSource, ResetInterface
         private readonly LandingPaths $paths,
         private readonly ListingMeta $meta,
         private readonly TranslatorInterface $translator,
+        private readonly LandingCopy $copy,
         #[Autowire('%landing.min_venues%')]
         private readonly int $minVenues,
     ) {
@@ -85,37 +87,14 @@ final class LandingPageCatalogue implements LandingPageSource, ResetInterface
         return new LandingPageEntry(
             $page->keyPrefix(),
             $page->type->value,
-            $this->heading($page),
+            $this->copy->heading($page),
             $page->venues,
             $passes,
             $passes ? $this->paths->path($page, [], UrlGeneratorInterface::ABSOLUTE_URL) : null,
-            $this->intro($page),
+            $this->copy->intro($page),
             $defaults['title'],
             $defaults['description'],
+            $passes && $page->indexable,
         );
-    }
-
-    /** The page's h1, as `search/listing.html.twig` builds it. */
-    private function heading(LandingPage $page): string
-    {
-        return LandingType::Building === $page->type
-            ? $this->translator->trans('landing.building.'.$page->building.'.heading', [], 'search')
-            : $this->translator->trans('landing.'.$page->type->value.'.heading', $this->place($page), 'search');
-    }
-
-    /** #17's intro sentence with its count, as `search/listing.html.twig` builds it. */
-    private function intro(LandingPage $page): string
-    {
-        return LandingType::Building === $page->type
-            ? $this->translator->trans('landing.building.'.$page->building.'.intro', ['count' => $page->venues], 'search')
-            : $this->translator->trans('landing.'.$page->type->value.'.intro', $this->place($page) + ['count' => $page->venues], 'search');
-    }
-
-    /**
-     * @return array{canton: string, canton_code: string, town: string}
-     */
-    private function place(LandingPage $page): array
-    {
-        return ['canton' => (string) $page->canton?->trans($this->translator), 'canton_code' => (string) $page->canton?->value, 'town' => (string) $page->townName];
     }
 }

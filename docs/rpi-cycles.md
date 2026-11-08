@@ -104,7 +104,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
 | F5b | `guests-rooms` | S | F4, F5 | indexes only | — | Todo |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Todo |
-| F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Todo |
+| F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Done |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
 | F11 | `portal-event` | S–M | F4 | `portal_submissions` (event step) | — | Todo |
 | F12 | `business-model` | M–L | F1 | `tiers`, `venues.tier_id`, `crm_deals.tier_id` | Tier names and prices | Done |
@@ -672,9 +672,22 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Depends on** F3, F5, F7a (no longer F8: F8 covers the landing pages, F7b the rest). **Owns** no schema. **Scope.** All German public copy for events (the route paths moved to F5): the labels of the `setting`, `building`, `infrastructure` and `surroundings` taxonomy groups (still the sister site's after F3; PO decision 2026-11-07: F7b writes them), titles, meta descriptions and JSON-LD wording, landing texts, the home page, the legal pages (the operator D6, the processors, the contact `hallo@deine-eventlocation.ch` D9; placeholder text marked TODO until the owner delivers them), the mails, the Merkliste copy and `llms.txt`. **Done when** no wedding wording is left in public output (a test greps the rendered pages and the public catalogues for "Hochzeit" outside the event type label), titles and meta descriptions are unique, and `PublicCopyAddressTest` is still green.
 
-### F8 `landing-event` (M)
+### F8 `landing-event` (M, done)
 
 **Depends on** F5. **Owns** `content_blocks` rows (landing texts). **Scope.** Landing pages per event type and per event type × canton, except Hochzeit (D31) (`LandingType` gains `event`; `LandingPages`, `LandingPaths` and `LandingPage::keyPrefix()` follow), their CMS texts (CMS-12), the sitemap and the JSON-LD. **Done when** the pages exist, are linked from LP-5 and the sitemap, canton and town pages still work, staff edit intro, title and meta description, tests.
+
+**Outcome** (PR `landing-event`, 2026-11-08).
+
+- **URLs** (no new route, no redirect, no migration): an event type page is `listing_landing` `/eventlokale/{event-slug}` (resolved after a canton and a building slug), an event type × canton page `listing_town` `/eventlokale/{canton-slug}/{event-slug}` (resolved after a town). Slugs (`landing.event.<code>.slug`): `firmenanlass, seminar, tagung-konferenz, workshop, sitzung-meeting, produktpraesentation, generalversammlung, teamevent, weihnachtsfeier, vereinsanlass, apero, geburtstag, familienfeier, party, konzert, ausstellung`; `LandingCatalogueTest` pins them unique and disjoint from canton and building slugs. **No page for `wedding`** (`LandingPages::NO_PAGE_EVENTS`, D31): `/eventlokale/hochzeit` is a 404, `?event[]=wedding` a filtered `noindex` listing.
+- **Search:** `LandingType::Event`; `LandingPage` gains `event` (code) and `indexable`, a canton is optional on an event page; `keyPrefix()` `event.<code>` or `event.<code>.<canton>` (content_blocks `landing.event.seminar.zh.intro`). `LandingPages` adds two branches to its one `UNION ALL` statement (same threshold `%landing.min_venues%`) and `events()`, `eventCantons(?Canton)`, `event(code, ?Canton)`. `LandingPaths::locate()` order: town, event × canton (exactly one `event` code + `canton`), canton, event (exactly one code), building. `Search\LandingCopy` is the one reader of the `landing.*` search keys (h1, intro, LP-5 label, breadcrumb label, title parameters); Twig `landing_heading()`, `landing_intro()`. LP-5: a canton page links its towns and event pages first, an event page its cantons, an event × canton page the canton's other event pages, the national event page and the canton page; then the top 9 cantons, the event pages and the building pages.
+- **G12 hook:** `Search\ReadModel\LandingQualityGate::passes(LandingPage)` sets `LandingPage::$indexable` (and `LandingPageEntry::$indexable`); today the venue count against `%landing.index_min_venues%` (= `%landing.min_venues%`, so every live page passes). A failing page still answers 200 but is `noindex, follow` (`ListingMeta`), and `PagesSitemap` and llms.txt skip it. G12 puts its rules (facts checked, text written, a higher count) into that one class.
+- **Seo:** titles `seo` `landing.event.*` and `landing.event_canton.*` (TitleChain, all 16 × 27 fit 60 at any count and page, `LandingTitleTest`); sitemap `lastmod` from `SitemapChanges::$events` / `$eventCantons`; llms.txt section "Anlässe"; JSON-LD stays ItemList + BreadcrumbList (no count, no rating). **D35:** a landing page's `og:image` is always `og-default.png`; the plain listing keeps its first card's photo.
+- **Copy (du):** every `landing.*` key of the `search` and `seo` catalogues says "Eventlokale …" (canton, town, 39 building headings and intros, 16 event types) and speaks declaratively ("Hier vergleichst du … und fragst direkt … an"); `LandingCatalogueTest` refuses "Hochzeit" and the imperatives there. Keys outside `landing.*` (`related.*`, `breadcrumb.*`, `listing.*`, `llms.*` except `llms.section.events`) stay F7b's.
+- **CMS:** `LandingKey::REQUIREMENT` accepts `event.<code>[.<canton>]`, the list has an "Anlässe" tab (`LandingPageListController::TYPES`); staff edit intro, title and description of every event page.
+- **Home (D39):** the `wedding` tile became `general_assembly` "Generalversammlung" (icon `users`).
+- **Region overlay:** `landing_canton_paths(criteria)` maps a canton to its event page when exactly one event type is chosen, so Zürich on `/eventlokale/apero` goes to `/eventlokale/zuerich/apero` (the hidden `event[]` rides along; the path wins and the page stays indexable with a clean canonical).
+- **Seed:** DemoStory forces `seminar` on the three Zurich venues, so `make seed` shows `/eventlokale/zuerich/seminar` beside the national event pages.
+- **Follow-ups:** F7b still owns `related.canton`/`related.town` ("Hochzeit {canton}") and `breadcrumb.listing` ("Hochzeitslocations"), which also show on event pages until F7b merges. A town slug equal to an event slug in the same canton would hide that event page; `LandingCatalogueTest` checks the imported towns.
 
 ### F9 `inquiry-event` (S–M)
 

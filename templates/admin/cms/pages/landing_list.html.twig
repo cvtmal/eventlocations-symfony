@@ -22,7 +22,7 @@
 
 {% block main %}
     {% set tab_items = [{label: 'landing.list.tabs.all'|trans({}, 'cms'), href: admin_query_path({typ: null}), count: counts.all, active: type is null}] %}
-    {% for tab_type in ['canton', 'town', 'building'] %}
+    {% for tab_type in constant('App\\Cms\\Controller\\LandingPageListController::TYPES') %}
         {% set tab_items = tab_items|merge([{
             label: ('landing.list.tabs.' ~ tab_type)|trans({}, 'cms'),
             href: admin_query_path({typ: tab_type}),

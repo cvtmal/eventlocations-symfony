@@ -183,11 +183,20 @@ final class VenueSitemapQuery
              UNION ALL
              SELECT 'building', vt.term_code, max(c.lastmod) FROM changed c
              JOIN venue_terms vt ON vt.venue_id = c.id AND vt.term_group = 'building'
-             GROUP BY vt.term_code",
+             GROUP BY vt.term_code
+             UNION ALL
+             SELECT 'event', vt.term_code, max(c.lastmod) FROM changed c
+             JOIN venue_terms vt ON vt.venue_id = c.id AND vt.term_group = 'suitable_for'
+             GROUP BY vt.term_code
+             UNION ALL
+             SELECT 'event_canton', vt.term_code || '.' || c.canton_code, max(c.lastmod) FROM changed c
+             JOIN venue_terms vt ON vt.venue_id = c.id AND vt.term_group = 'suitable_for'
+             WHERE c.canton_code IS NOT NULL
+             GROUP BY vt.term_code, c.canton_code",
             ['default_locale' => $this->enabledLocale->default()],
         );
 
-        $groups = ['canton' => [], 'town' => [], 'building' => []];
+        $groups = ['canton' => [], 'town' => [], 'building' => [], 'event' => [], 'event_canton' => []];
         foreach ($rows as $row) {
             \assert(\is_string($row['grp']) && isset($groups[$row['grp']]));
             \assert(\is_string($row['key']));
@@ -195,7 +204,7 @@ final class VenueSitemapQuery
             $groups[$row['grp']][$row['key']] = new \DateTimeImmutable($row['lastmod']);
         }
 
-        return new SitemapChanges($groups['canton'], $groups['town'], $groups['building']);
+        return new SitemapChanges($groups['canton'], $groups['town'], $groups['building'], $groups['event'], $groups['event_canton']);
     }
 
     /**

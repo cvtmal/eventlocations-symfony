@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Search\ReadModel;
 
 use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\LandingPage;
+use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ValueObject\LandingType;
 use PHPUnit\Framework\TestCase;
 
@@ -39,5 +40,35 @@ final class LandingPageTest extends TestCase
 
         self::assertSame('building.brewery_winery', $page->keyPrefix());
         self::assertSame('landing.building.brewery_winery.description', $page->blockKey('description'));
+    }
+
+    public function test_an_event_page_is_keyed_by_its_code_and_in_a_canton_by_code_and_canton(): void
+    {
+        $page = new LandingPage(LandingType::Event, 'seminar', 5, event: 'seminar');
+        $zurich = new LandingPage(LandingType::Event, 'seminar', 5, Canton::ZH, 'zuerich', event: 'seminar');
+
+        self::assertSame('event.seminar', $page->keyPrefix());
+        self::assertSame(['event' => ['seminar']], $page->facetQuery());
+        self::assertSame('landing.event.seminar.zh.intro', $zurich->blockKey('intro'));
+        self::assertSame(['canton' => 'zh', 'event' => ['seminar']], $zurich->facetQuery());
+        self::assertSame(['canton', 'event'], $zurich->consumes());
+    }
+
+    public function test_with_indexable_keeps_every_other_field(): void
+    {
+        $page = new LandingPage(LandingType::Event, 'seminar', 7, Canton::ZH, 'zuerich', event: 'seminar');
+        $gated = $page->withIndexable(false);
+
+        self::assertTrue($page->indexable);
+        self::assertFalse($gated->indexable);
+        self::assertEquals($page, $gated->withIndexable(true));
+    }
+
+    public function test_the_quality_gate_counts_venues(): void
+    {
+        $gate = new LandingQualityGate(6);
+
+        self::assertFalse($gate->passes(new LandingPage(LandingType::Canton, 'zuerich', 5, Canton::ZH, 'zuerich')));
+        self::assertTrue($gate->passes(new LandingPage(LandingType::Canton, 'zuerich', 6, Canton::ZH, 'zuerich')));
     }
 }

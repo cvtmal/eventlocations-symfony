@@ -11,6 +11,7 @@ use App\Geo\ValueObject\Canton;
 use App\Search\ReadModel\LandingFooter;
 use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\LandingPages;
+use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ValueObject\LandingType;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Search\LandingFixtures;
@@ -58,7 +59,7 @@ final class LandingPagesTest extends KernelTestCase
         self::assertIsInt($minVenues);
         $this->pool = new ArrayAdapter();
         $this->footer = new LandingFooter($this->pool);
-        $this->pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, $this->footer, $minVenues);
+        $this->pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, $this->footer, new LandingQualityGate($minVenues), $minVenues);
     }
 
     protected function tearDown(): void
@@ -164,6 +165,63 @@ final class LandingPagesTest extends KernelTestCase
         self::assertSame([$page], $this->pages->buildings());
     }
 
+    public function test_an_event_page_needs_five_venues_with_the_event_type_and_its_canton_page_five_in_the_canton(): void
+    {
+        $this->withEventType($this->inCanton(Canton::ZH, 4), 'seminar');
+        $this->withEventType($this->inCanton(Canton::BE, 1), 'seminar');
+
+        $page = $this->pages->event('seminar');
+        self::assertNotNull($page);
+        self::assertSame(LandingType::Event, $page->type);
+        self::assertSame('seminar', $page->slug);
+        self::assertNull($page->canton);
+        self::assertSame(5, $page->venues);
+        self::assertSame($page, $this->pages->bySlug('seminar'));
+        self::assertSame(['event' => ['seminar']], $page->facetQuery());
+        self::assertSame('event.seminar', $page->keyPrefix());
+        self::assertSame([$page], $this->pages->events());
+        self::assertSame([], $this->pages->eventCantons(), 'Four venues in Zurich are no event page in the canton.');
+
+        $this->withEventType($this->inCanton(Canton::ZH, 1), 'seminar');
+        $this->pages->reset();
+
+        $zurich = $this->pages->event('seminar', Canton::ZH);
+        self::assertNotNull($zurich);
+        self::assertSame(Canton::ZH, $zurich->canton);
+        self::assertSame('zuerich', $zurich->cantonSlug);
+        self::assertSame('seminar', $zurich->slug);
+        self::assertSame($zurich, $this->pages->byTown('zuerich', 'seminar'));
+        self::assertNull($this->pages->byTown('bern', 'seminar'));
+        self::assertSame(['canton' => 'zh', 'event' => ['seminar']], $zurich->facetQuery());
+        self::assertSame('event.seminar.zh', $zurich->keyPrefix());
+        self::assertSame([$zurich], $this->pages->eventCantons(Canton::ZH));
+        self::assertSame([], $this->pages->eventCantons(Canton::BE));
+    }
+
+    public function test_hochzeit_gets_no_event_page_alone_or_in_a_canton(): void
+    {
+        $this->withEventType($this->inCanton(Canton::ZH, 6), 'wedding');
+
+        self::assertNull($this->pages->event('wedding'));
+        self::assertNull($this->pages->event('wedding', Canton::ZH));
+        self::assertNull($this->pages->bySlug('hochzeit'));
+        self::assertSame([], array_values(array_filter($this->pages->candidates(), static fn (LandingPage $page): bool => LandingType::Event === $page->type)));
+        self::assertNotNull($this->pages->canton(Canton::ZH), 'The venues still count for their canton.');
+    }
+
+    public function test_the_quality_gate_marks_each_page_indexable(): void
+    {
+        $this->withEventType($this->inCanton(Canton::ZH, 6), 'apero');
+        self::assertTrue($this->pages->event('apero')?->indexable, 'Until G12 every live page passes.');
+
+        $translator = self::getContainer()->get('translator');
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+        $strict = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, $this->footer, new LandingQualityGate(7), 5);
+        self::assertFalse($strict->event('apero')?->indexable);
+        self::assertFalse($strict->canton(Canton::ZH)?->indexable);
+        self::assertNotNull($strict->event('apero', Canton::ZH), 'A page that fails the gate is still live.');
+    }
+
     public function test_an_unknown_or_thin_slug_has_no_page(): void
     {
         $this->inCanton(Canton::ZH, 5);
@@ -186,6 +244,9 @@ final class LandingPagesTest extends KernelTestCase
         $this->pages->byTown('zuerich', 'staefa');
         $this->pages->canton(Canton::ZH);
         $this->pages->building('castle');
+        $this->pages->events();
+        $this->pages->eventCantons(Canton::ZH);
+        $this->pages->event('seminar', Canton::ZH);
         self::assertCount(1, $holder->getData()['default'] ?? []);
 
         $this->inCanton(Canton::BE, 5);

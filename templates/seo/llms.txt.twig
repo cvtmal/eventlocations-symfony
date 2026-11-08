@@ -2,7 +2,7 @@
     /llms.txt (llmstxt.org): the site in one Markdown file for language models. H1, summary quote, a short note,
     then H2 sections of `- [name](url): note`; "Optional" last, as the format reserves it for links a reader may skip.
     Autoescape is off (Markdown, not HTML): every text value goes through `md`; URLs come from the router.
-    Params: site_name, cantons, towns, buildings (list<LandingPageEntry>, live pages only), venues (list<IndexedVenue>).
+    Params: site_name, cantons, towns, buildings, events (list<LandingPageEntry>, live pages only), venues (list<IndexedVenue>).
 #}
 {% macro landings(heading, entries) %}
 {% if entries is not empty %}
@@ -30,6 +30,7 @@
 {{ _self.landings('llms.section.cantons'|trans({}, 'seo'), cantons) }}
 {{ _self.landings('llms.section.towns'|trans({}, 'seo'), towns) }}
 {{ _self.landings('llms.section.buildings'|trans({}, 'seo'), buildings) }}
+{{ _self.landings('llms.section.events'|trans({}, 'seo'), events) }}
 {% if venues is not empty %}
 ## {{ 'llms.section.venues'|trans({}, 'seo')|md }}
 

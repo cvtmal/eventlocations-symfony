@@ -14,8 +14,9 @@ final readonly class LandingPageEntry
     public const array FIELDS = ['intro', 'title', 'description'];
 
     /**
-     * @param 'canton'|'town'|'building' $type
-     * @param string|null                $url  absolute public URL, only for a page that passes the threshold
+     * @param 'canton'|'town'|'building'|'event' $type
+     * @param string|null                        $url       absolute public URL, only for a page that passes the threshold
+     * @param bool                               $indexable whether the page passes the landing quality gate (G12)
      */
     public function __construct(
         public string $keyPrefix,
@@ -27,6 +28,7 @@ final readonly class LandingPageEntry
         public string $defaultIntro,
         public string $defaultTitle,
         public string $defaultDescription,
+        public bool $indexable = true,
     ) {
     }
 

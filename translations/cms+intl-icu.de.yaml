@@ -543,6 +543,7 @@ landing:
             canton: Kantone
             town: Orte
             building: Gebäudearten
+            event: Anlässe
         filter:
             search: Seite suchen
             search_placeholder: Name der Seite
@@ -570,6 +571,7 @@ landing:
         canton: Kanton
         town: Ort
         building: Gebäudeart
+        event: Anlass
     threshold:
         online: online
         below: unter Schwelle

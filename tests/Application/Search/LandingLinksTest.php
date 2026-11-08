@@ -74,7 +74,7 @@ final class LandingLinksTest extends WebTestCase
             '/eventlokale/hotel', '/eventlokale/schloss',
         ], array_column($links, 'href'));
         self::assertSame(
-            ['Hochzeit Zürich', 'Hochzeit Bern', 'Hochzeit Aargau', 'Hochzeit Graubünden', 'Hochzeit Luzern', 'Hochzeit St. Gallen', 'Hochzeit Solothurn', 'Hochzeit Schwyz', 'Hochzeit Thurgau', 'Hochzeit im Hotel', 'Hochzeit im Schloss'],
+            ['Hochzeit Zürich', 'Hochzeit Bern', 'Hochzeit Aargau', 'Hochzeit Graubünden', 'Hochzeit Luzern', 'Hochzeit St. Gallen', 'Hochzeit Solothurn', 'Hochzeit Schwyz', 'Hochzeit Thurgau', 'Events im Hotel', 'Events im Schloss'],
             array_column($links, 'label'),
         );
     }

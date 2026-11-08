@@ -6,13 +6,13 @@ namespace App\Cms\ValueObject;
 
 /**
  * A landing page as the back office names it (#26, P11): the key prefix of its content_blocks
- * rows (`canton.zh`, `town.<uuid>`, `building.brewery_winery`), and the limits of its three
+ * rows (`canton.zh`, `town.<uuid>`, `building.brewery_winery`, `event.seminar`, `event.seminar.zh`), and the limits of its three
  * texts. The limits are #16's: a title of at most 60 and a description of at most 155 code
  * points, counted on the trimmed text, as the editor's counter does.
  */
 final readonly class LandingKey
 {
-    public const string REQUIREMENT = '(?:canton|town|building)\.[a-z0-9_-]+';
+    public const string REQUIREMENT = '(?:(?:canton|town|building)\.[a-z0-9_-]+|event\.[a-z0-9_]+(?:\.[a-z]{2})?)';
 
     public const int INTRO_MAX_LENGTH = 600;
     public const int TITLE_MAX_LENGTH = 60;

@@ -319,7 +319,7 @@ final class DemoStory extends Story
         }
 
         $rooms = $this->createRooms($faker, $venue, $capacityMax);
-        $this->assignTerms($faker, $venue, $terms);
+        $this->assignTerms($faker, $venue, $terms, 0 === $i % 26);
 
         $documents = [];
         for ($position = 1, $count = $faker->numberBetween(0, 2); $position <= $count; ++$position) {
@@ -478,19 +478,27 @@ final class DemoStory extends Story
     }
 
     /**
-     * 1–2 settings and 1–3 buildings (the first of each is the main one), 1–5 event types (none
-     * of them forced), and 0–4 terms of every other filter group. The event groups (amenity,
+     * 1–2 settings and 1–3 buildings (the first of each is the main one), 1–5 event types (only
+     * `seminar` is forced, on the three Zurich venues, so `/eventlokale/zuerich/seminar` is a live
+     * event page in a canton at the dev threshold, F8), and 0–4 terms of every other filter group. The event groups (amenity,
      * catering, language) belong to createEventFacts().
      *
      * @param array<string, list<TaxonomyTerm>> $terms
      */
-    private function assignTerms(Generator $faker, Venue $venue, array $terms): void
+    private function assignTerms(Generator $faker, Venue $venue, array $terms, bool $seminar): void
     {
         $picks = [
             'setting' => $faker->randomElements($terms['setting'], $faker->numberBetween(1, 2)),
             'building' => $faker->randomElements($terms['building'], $faker->numberBetween(1, 3)),
             'suitable_for' => $faker->randomElements($terms['suitable_for'], $faker->numberBetween(1, 5)),
         ];
+        if ($seminar) {
+            $isSeminar = static fn (TaxonomyTerm $term): bool => 'seminar' === $term->code();
+            $picks['suitable_for'] = [
+                ...array_filter($terms['suitable_for'], $isSeminar),
+                ...array_filter($picks['suitable_for'], static fn (TaxonomyTerm $term): bool => !$isSeminar($term)),
+            ];
+        }
         foreach (['infrastructure', 'furniture', 'technology', 'surroundings'] as $group) {
             // Furniture has three terms only, and randomElements() refuses to draw more than there are.
             $picks[$group] = $faker->randomElements($terms[$group], min(\count($terms[$group]), $faker->numberBetween(0, 4)));

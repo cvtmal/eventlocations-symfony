@@ -57,7 +57,7 @@ final class LlmsTxtTest extends WebTestCase
         );
         self::assertStringContainsString("\n- [Startseite](http://localhost/): ", $body);
         self::assertStringContainsString("\n- [Alle Hochzeitslocations](http://localhost/eventlokale): ", $body);
-        self::assertStringContainsString("\n- [Hochzeitslocations im Kanton Zürich](http://localhost/eventlokale/zuerich): 11 Locations\n", $body);
+        self::assertStringContainsString("\n- [Eventlokale im Kanton Zürich](http://localhost/eventlokale/zuerich): 11 Locations\n", $body);
         self::assertStringContainsString('](http://localhost/eventlokale/zuerich/'.$data['town'].'): 5 Locations', $body);
         self::assertStringContainsString('](http://localhost/eventlokale/'.$data['building'].'): 6 Locations', $body);
         self::assertMatchesRegularExpression(
