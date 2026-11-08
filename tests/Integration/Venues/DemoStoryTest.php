@@ -93,8 +93,10 @@ final class DemoStoryTest extends KernelTestCase
                 (SELECT max(r.capacity_max) FROM rooms r WHERE r.venue_id = v.id) AS largest_room_capacity,
                 v.capacity_max
             FROM venues v
+            ORDER BY v.number
             SQL);
-        foreach ($perVenue as $venue) {
+        $stale = [];
+        foreach ($perVenue as $index => $venue) {
             self::assertSame((int) $venue['rooms'], (int) $venue['room_count']);
             self::assertGreaterThanOrEqual(1, (int) $venue['rooms']);
             self::assertLessThanOrEqual(5, (int) $venue['rooms']);
@@ -103,8 +105,14 @@ final class DemoStoryTest extends KernelTestCase
             self::assertSame(1, (int) $venue['main_settings']);
             self::assertGreaterThanOrEqual(1, (int) $venue['event_types']);
             self::assertLessThanOrEqual(5, (int) $venue['event_types']);
-            self::assertSame((int) $venue['capacity_max'], (int) $venue['largest_room_capacity']);
+            // The first room holds the venue's capacity, except where F5b's stale figure is a third of it.
+            $largest = (int) $venue['largest_room_capacity'];
+            if ((int) $venue['capacity_max'] !== $largest) {
+                self::assertSame(max(10, intdiv($largest, 3)), (int) $venue['capacity_max']);
+                $stale[] = $index;
+            }
         }
+        self::assertSame([4, 14, 24, 34, 44, 54], $stale, 'The venues of index 4, 14, ..., 54 state a stale capacity (F5b).');
 
         $this->assertEventTypes();
         $this->assertEventFacts();

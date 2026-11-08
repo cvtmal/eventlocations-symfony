@@ -154,6 +154,22 @@ final class EventFilterTest extends WebTestCase
         self::assertCount(5, $this->get('/eventlokale')->filter('.card'));
     }
 
+    public function test_a_card_without_photos_shows_the_placeholder_of_its_first_event_type(): void
+    {
+        $this->eventVenue('Saal Zwei', 'wedding', 'seminar');
+        $this->eventVenue('Saal Apéro', 'apero');
+        $this->venue('Saal Ohne');
+
+        $icons = [];
+        $this->get('/eventlokale')->filter('.card')->each(static function (Crawler $card) use (&$icons): void {
+            $href = (string) $card->filter('.card__placeholder svg.photo-placeholder__icon use')->attr('href');
+            $icons[$card->filter('.card__link')->text()] = substr((string) strstr($href, '#'), 1);
+        });
+        ksort($icons);
+
+        self::assertSame(['Saal Apéro' => 'wine', 'Saal Ohne' => 'sparkles', 'Saal Zwei' => 'presentation'], $icons);
+    }
+
     public function test_unknown_codes_are_dropped(): void
     {
         $this->eventVenue('Saal Seminar', 'seminar');

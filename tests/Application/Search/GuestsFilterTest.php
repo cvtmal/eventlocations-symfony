@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Search;
 
+use App\Factory\RoomFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\ValueObject\Canton;
@@ -20,8 +21,8 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * The guests overlay (#11, FI-3; F5 `filter-event`): one live-count form with a number input, the chip and the filter
- * itself. A venue matches guests=N when it holds N (capacity_max) and states no higher minimum (capacity_min). Own
- * venues on the test's connection, rolled back afterwards.
+ * itself. A venue matches guests=N when it holds N (capacity_max) and states no higher minimum (capacity_min), or
+ * when one of its rooms does (F5b). Own venues on the test's connection, rolled back afterwards.
  */
 final class GuestsFilterTest extends WebTestCase
 {
@@ -82,6 +83,20 @@ final class GuestsFilterTest extends WebTestCase
 
         self::assertSame(1, $total);
         self::assertSame(['count' => 1], json_decode((string) $this->client->getResponse()->getContent(), true));
+    }
+
+    public function test_a_room_that_fits_lists_the_venue_and_its_card_shows_the_room_maximum(): void
+    {
+        RoomFactory::createOne(['venue' => $this->venue('Halle Mit Saal', 20, 120), 'capacityMin' => null, 'capacityMax' => 300]);
+        RoomFactory::createOne(['venue' => $this->venue('Stube Mit Zimmer', 10, 40), 'capacityMin' => 200, 'capacityMax' => 260]);
+        $this->venue('Saal Ohne Raum', null, 120);
+
+        $crawler = $this->get('/eventlokale?guests=250');
+        $this->client->request('GET', '/_search/count?guests=250');
+
+        self::assertSame(['Halle Mit Saal', 'Stube Mit Zimmer'], $this->sortedNames($crawler));
+        self::assertSame(['count' => 2], json_decode((string) $this->client->getResponse()->getContent(), true));
+        self::assertSame(['Halle Mit Saal' => '300', 'Stube Mit Zimmer' => '10 - 260'], $this->capacities($crawler));
     }
 
     /**
@@ -318,6 +333,22 @@ final class GuestsFilterTest extends WebTestCase
         return $crawler->filter($form.' input[type="hidden"]')->each(
             static fn (Crawler $input): string => $input->attr('name').'='.$input->attr('value'),
         );
+    }
+
+    /**
+     * The first facts item (the capacity line) per card name, sorted by name.
+     *
+     * @return array<string, string>
+     */
+    private function capacities(Crawler $crawler): array
+    {
+        $capacities = [];
+        $crawler->filter('.card')->each(static function (Crawler $card) use (&$capacities): void {
+            $capacities[$card->filter('.card__link')->text()] = $card->filter('.card-facts__item')->first()->text();
+        });
+        ksort($capacities);
+
+        return $capacities;
     }
 
     private function setGuests(Form $form, string $value): void

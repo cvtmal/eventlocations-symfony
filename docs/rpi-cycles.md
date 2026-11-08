@@ -102,7 +102,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F6 | `brand-design` | L | F1 | — | — (D23, D32) | Done (`98f38d7`) |
 | F6b | `brand-assets` | M | F6 | — | — (D23) | Done |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
-| F5b | `guests-rooms` | S | F4, F5 | indexes only | — | Todo |
+| F5b | `guests-rooms` | S | F4, F5 | indexes only | — | Done |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Done |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Done |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
@@ -664,9 +664,18 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Outcome** (merged as `3c19cad`, 2026-11-07). `PublicCopyAddressTest` reads every `translations/*+intl-icu.de.yaml` except `admin`, `cms` and `crm` (a new public catalogue needs no list entry), all Twig, PHP and `assets/js` as text, and the staff catalogues for a formal form inside a sentence. Formal Sie/Ihr*/Ihnen/"Sehr geehrte", plural euch/euer/"könnt ihr" and "ß" fail, and so does a capitalised "Sie" at a sentence start (write "Die Location …"); lower-case sie/ihr (she, they) and `deine-eventlocation.ch` pass. Symfony's German CSRF, upload-limit and `Length` messages say "Sie": they are overridden in `validators+intl-icu.de.yaml`, keyed by the English source text, and `tests/Integration/Shared/Translation/FrameworkMessagesTest.php` reads the sources from the framework, so a new reachable formal message needs a line there. `/konto` mails greet "Hallo {name}". Left for F7b: mixed imperative stems inside one sentence (the 41 landing intros, `home.cta.text`) and the portal rejection mail subject.
 
-### F5b `guests-rooms` (S)
+### F5b `guests-rooms` (S, done)
 
 (Placed here, not after F5, so it does not touch the lines of open cycles.) **Depends on** F4, F5. **Owns** indexes only. Lane: the tech lead's next free lane. **Why.** F5's guest filter reads only the venue's own `capacity_min`/`capacity_max`, and F4 does not compare those with the rooms. A venue with a 300-person hall would be hidden by a stale venue figure of 120. **Rule (PO + tech lead, 2026-11-07).** A venue matches "N Gäste" when its own range or at least one of its rooms' layout-derived ranges (F4's `Seating::guestRange()`) holds N. The card's capacity line follows the same rule and shows the overall maximum. **Scope.** An `EXISTS` over `rooms` in the guest criterion of `ListingQuery` and the live count, the card's capacity line, an index if the plan needs one. **Done when** a venue whose own range is below N but whose room holds N is listed, the card shows the room's maximum, the URL codec is unchanged, an `EXPLAIN` on the demo data ×10 holds, the S11 budgets hold, and there are Integration and Application tests.
+
+**Outcome** (PR `guests-rooms`, 2026-11-08).
+
+- **Guest criterion** (`ListingSql`, cards and the live count): the venue's own range fits N, OR `EXISTS` a room whose `rooms.capacity_{min,max}` fits N the same way (`capacity_max >= N AND (capacity_min IS NULL OR capacity_min <= N)`). That column pair is F4's layout-derived range, so no layout column is read; a room without a maximum fits nobody. URL codec and `SearchCriteria` unchanged.
+- **One capacity rule** (PO addition 2026-11-08): `Venues\VenueCapacity::minSql($venueAlias)`/`maxSql($venueAlias)` is the only definition. The range spans the venue's and every room range with a maximum; the maximum is the greatest, the minimum the least, NULL once one of them states none (the card then prints the maximum alone). Decision: a hull, so a venue listed for N always shows a range holding N. Read by every card (`ListingQuery::cardColumns()`: listing, landing pages, `/merkliste`, nearby, the home Spotlight), the detail page (`VenueDetailQuery`: head, JSON-LD `maximumAttendeeCapacity`, the markdown view), the similar-venues band (`SimilarVenuesQuery`, display only; its ranking still compares the venues' own figures) and `/llms.txt` (`VenueSitemapQuery::index()`). `tests/Application/Search/OneCapacityTest.php` pins a stale venue's room maximum on all six.
+- **Card event type** (PO addition D32): `ListingCard::$eventType` (last argument, default null) = the venue's first `suitable_for` code in vocabulary order (`primary_position NULLS LAST, position`); `search/_card` feeds it to `components/_photo_placeholder` (an explicit `event_type` still wins), so a card without photos shows its event type's icon.
+- **No index, no migration.** The `EXISTS` uses `idx_rooms_venue_id`. `ListingQuery::statementFor()` now cuts the page in an inner query and computes the card columns for its 48 rows only (the subqueries had made page 11 four times slower). DemoStory x10, rooms now cloned too: `guests=300` cards 2.3 ms, count 0.4 ms, unfiltered page 11 3.5 ms, heaviest 1.3 ms.
+- **Demo:** DemoStory venues 5, 15, ..., 55 (index 4, 14, ..., 54) state a stale capacity (a third of the first room's maximum, no minimum).
+- **Note:** the card's range is a hull: a venue at 40-120 with a room at 200-260 shows "40 - 260" although 150 guests do not list it.
 
 ### F7b `event-copy-de` (M)
 

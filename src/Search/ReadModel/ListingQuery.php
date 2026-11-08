@@ -10,7 +10,9 @@ use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Entitlements;
 use App\Venues\ValueObject\PriceLevel;
+use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenuePlace;
+use App\Venues\VenueCapacity;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
@@ -27,16 +29,38 @@ final class ListingQuery
 {
     public const PER_PAGE = 48;
     private const PHOTOS_PER_CARD = 8;
+    /** The join to a card's town, shared by every card query. The town is optional (#21), hence the LEFT JOIN. */
+    private const CARD_TOWN_JOIN = 'LEFT JOIN towns tw ON tw.id = v.town_id';
 
     /**
-     * The columns of a card and the join to its town, shared by every card query so that they
-     * cannot drift. The town is optional (#21), hence the LEFT JOIN, in one place for both.
+     * The columns of a card, shared by every card query so that they cannot drift.
+     *
+     * The capacity is `VenueCapacity`'s (F5b): the range spans the venue's own range and every
+     * room range with a maximum, so a venue listed for N guests shows a range holding N, and the
+     * detail page, its JSON-LD and the similar-venues band show the same. The event type (F5b,
+     * for the photo placeholder) is the venue's first suitable_for code in vocabulary order,
+     * NULL without one.
      */
-    private const CARD_COLUMNS = <<<'SQL'
-        v.id, v.number, v.name, v.capacity_min, v.capacity_max,
-            tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary, v.price_level, t.ambience
-        SQL;
-    private const CARD_TOWN_JOIN = 'LEFT JOIN towns tw ON tw.id = v.town_id';
+    private static function cardColumns(): string
+    {
+        $capacityMin = VenueCapacity::minSql('v');
+        $capacityMax = VenueCapacity::maxSql('v');
+        $suitableFor = TermGroup::SuitableFor->value;
+
+        return <<<SQL
+            v.id, v.number, v.name,
+                {$capacityMin} AS capacity_min,
+                {$capacityMax} AS capacity_max,
+                (
+                    SELECT x.term_code FROM venue_terms x
+                    JOIN taxonomy_terms tt ON tt.term_group = x.term_group AND tt.code = x.term_code
+                    WHERE x.venue_id = v.id AND x.term_group = '{$suitableFor}'
+                    ORDER BY tt.primary_position NULLS LAST, tt.position
+                    LIMIT 1
+                ) AS event_type,
+                tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary, v.price_level, t.ambience
+            SQL;
+    }
 
     public function __construct(
         private readonly Connection $connection,
@@ -86,7 +110,7 @@ final class ListingQuery
 
         $filter = new ListingSql(SearchCriteria::none(), $this->enabledLocale->default());
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
-        $columns = self::CARD_COLUMNS;
+        $columns = self::cardColumns();
         $townJoin = self::CARD_TOWN_JOIN;
 
         $rows = $this->connection->fetchAllAssociative(
@@ -129,19 +153,25 @@ final class ListingQuery
     {
         $filter = new ListingSql($criteria, $this->enabledLocale->default());
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
-        $columns = self::CARD_COLUMNS;
+        $columns = self::cardColumns();
         $townJoin = self::CARD_TOWN_JOIN;
 
+        // The page is cut first and the card columns (translation, town, the room and event
+        // subqueries) are computed for its rows only: on the outer level they would run for every
+        // row up to the offset, which made page 11 four times slower once F5b added subqueries.
         $sql = <<<SQL
             {$filter->with}
             SELECT {$columns}
-            FROM {$filter->from}
-            JOIN tiers rank_tier ON rank_tier.id = v.tier_id
+            FROM (
+                SELECT v.*, rank_tier.rank_weight FROM {$filter->from}
+                JOIN tiers rank_tier ON rank_tier.id = v.tier_id
+                WHERE {$filter->where}
+                ORDER BY rank_tier.rank_weight DESC, md5(v.id::text || :seed), v.id
+                LIMIT :limit OFFSET :offset
+            ) v
             {$townJoin}
             {$translation}
-            WHERE {$filter->where}
-            ORDER BY rank_tier.rank_weight DESC, md5(v.id::text || :seed), v.id
-            LIMIT :limit OFFSET :offset
+            ORDER BY v.rank_weight DESC, md5(v.id::text || :seed), v.id
             SQL;
 
         return new SqlStatement(
@@ -255,6 +285,7 @@ final class ListingQuery
         \assert(\is_string($row['summary']));
         \assert(null === $row['price_level'] || \is_string($row['price_level']));
         \assert(null === $row['ambience'] || \is_string($row['ambience']));
+        \assert(null === $row['event_type'] || \is_string($row['event_type']));
 
         return new ListingCard(
             $row['id'],
@@ -269,6 +300,7 @@ final class ListingQuery
             null === $row['price_level'] ? null : PriceLevel::from($row['price_level']),
             $row['ambience'],
             \array_slice($photos[$row['id']] ?? [], 0, $entitlements[$row['id']]->photosMax),
+            $row['event_type'],
         );
     }
 }

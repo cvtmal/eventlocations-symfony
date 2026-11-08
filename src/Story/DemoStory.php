@@ -71,7 +71,9 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  * - Event facts (#31, F3): every second venue (even index) has the event facts of S14, the
  *   others none, so both states of the detail page stay visible. Their share of each fact is
  *   index-based, and the terms (amenity, catering, language) come from a seeded RNG of their
- *   own, after the media step, so nothing before it shifts.
+ *   own, after the media step, so nothing before it shifts. Every fifth of them from the
+ *   third on (index 4, 14, ..., 54) states a stale capacity, a third of its first room's maximum
+ *   and no minimum (F5b), so the guest filter and the card capacity follow the room.
  *
  * - Complaints (G2): an open rights complaint about venue 3 (index 2) hides its first gallery photo, a decided
  *   `keep` complaint about venue 4 names its first gallery photo (shown again), and an open correction names a
@@ -366,6 +368,10 @@ final class DemoStory extends Story
             $step = intdiv($i, 2);
 
             $venue->changePriceLevel(PriceLevel::cases()[$step % 3]);
+            if (2 === $step % 5) {
+                // A stale venue figure under its first room's range (F5b): the guest filter and the card follow the room.
+                $venue->changeCapacity(max(10, intdiv($venue->capacityMax(), 3)), null);
+            }
             if (0 !== $step % 5) {
                 $venue->changeSeatingCapacity(max(1, intdiv($venue->capacityMax() * 2, 3)), $venue->capacityMax());
             }

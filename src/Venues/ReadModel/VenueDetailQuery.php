@@ -20,6 +20,7 @@ use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenuePlace;
+use App\Venues\VenueCapacity;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
@@ -140,10 +141,13 @@ final class VenueDetailQuery
         $documentTranslation = $this->translationJoin->localized('venue_document_translations', 'venue_document_id', 'd.id', 'dtr');
         $published = $includeUnpublished ? 'TRUE' : self::PUBLISHED;
         $params = ['number' => $number] + $this->translationJoin->parameters($locale);
+        // The capacity the listing card shows (VenueCapacity): the head, the JSON-LD and the markdown view read it.
+        $capacityMin = VenueCapacity::minSql('v');
+        $capacityMax = VenueCapacity::maxSql('v');
 
         $row = $this->connection->fetchAssociative(
             <<<SQL
-                SELECT v.id, v.number, v.name, v.capacity_min, v.capacity_max, v.street, v.zip,
+                SELECT v.id, v.number, v.name, {$capacityMin} AS capacity_min, {$capacityMax} AS capacity_max, v.street, v.zip,
                     tw.name AS town_name, v.canton_code, v.lat, v.lng,
                     v.distance_station_km, v.station_name, v.distance_highway_km, v.highway_name,
                     v.distance_airport_km, v.airport_name,

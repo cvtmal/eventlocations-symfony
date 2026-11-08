@@ -12,6 +12,10 @@ use App\Venues\ValueObject\VenuePlace;
  * eight venue-level photos in position order (fewer when the venue's tier allows fewer, F12),
  * and the owner's price level and ambience as tags (LP-7, both NULL when not stated).
  * `promoted` is the "Top-Eintrag" label of a venue whose tier ranks above the unboosted ones.
+ *
+ * The capacity range spans the venue's and its rooms' ranges (F5b, see ListingQuery); the
+ * event type is the venue's first `suitable_for` code in vocabulary order, NULL without one,
+ * and picks the photo placeholder's icon (F5b).
  */
 final readonly class ListingCard
 {
@@ -31,6 +35,7 @@ final readonly class ListingCard
         public ?PriceLevel $priceLevel,
         public ?string $ambience,
         public array $photos,
+        public ?string $eventType = null,
     ) {
     }
 }
