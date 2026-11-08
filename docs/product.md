@@ -56,6 +56,7 @@ Every product decision is settled (D23 to D40). Only facts and the owner's own p
 | Infomaniak and Neon accounts, first setup and first deploy | Runbook in `docs/operations.md` (F15); deploys stay off until the owner sets the repository variable `DEPLOY_ENABLED` |
 | Backup schedule and Sentry cron monitor | Runbook in `docs/operations.md`; the database backup runs by hand until the owner schedules it |
 | Infomaniak Object Storage credentials for the media backup (F15b) | Placeholders; launch is refused without a backup less than 26 hours old |
+| Once a year: delete the report mails (G2) older than three years in the contact mailbox (D36) | Note in `docs/operations.md` |
 | Venue spreadsheet for D1(b) | F14 is built and tested on a fixture |
 | Contact list for the one-to-one pilot | After launch (D30: no bulk mail) |
 
