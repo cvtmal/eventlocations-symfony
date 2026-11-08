@@ -129,7 +129,7 @@ final class InquiryMailerTest extends KernelTestCase
         self::assertStringContainsString('Danke, Anna!', (string) $mail->getTextBody());
         self::assertStringContainsString('Ist der Termin frei?', (string) $mail->getTextBody());
         self::assertStringContainsString('Zur Location: http', (string) $mail->getTextBody());
-        self::assertStringContainsString('/hochzeitslocation/schloss-seeblick', (string) $mail->getTextBody());
+        self::assertStringContainsString('/eventlokal/schloss-seeblick', (string) $mail->getTextBody());
     }
 
     public function test_venue_mail_goes_to_the_venue_without_an_override(): void

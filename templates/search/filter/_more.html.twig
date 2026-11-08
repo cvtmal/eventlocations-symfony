@@ -3,10 +3,10 @@
     `with_context = false`: criteria (SearchCriteria), part: chips|trigger. Renders nothing for `chips`; for `trigger` one
     <li class="filter-bar__item"> with the overlay and either the trigger or, with an active filter here, the pill
     "weitere Filter (N)", where N counts params, not values, as on the original.
-    `params` drives the pill's N, its × link, the reset link and _hidden_state; #33's are the last two.
+    `params` drives the pill's N, its × link, the reset link and _hidden_state. The event type has its own slot (_event).
     The form lives in search/filter/_more_form.html.twig; the footer's submit button joins it by its `form` attribute.
 #}
-{%- set params = ['q', 'setting', 'access', 'building', 'infra', 'furniture', 'tech', 'surroundings', 'rooms', 'area', 'height', 'price', 'amenity'] -%}
+{%- set params = ['q', 'setting', 'access', 'building', 'infra', 'furniture', 'tech', 'surroundings', 'catering', 'amenity', 'rooms', 'area', 'height'] -%}
 {%- if part == 'trigger' -%}
     {%- set query = criteria.toQuery() -%}
     {%- set active = params|filter(param => query[param] is defined)|length -%}

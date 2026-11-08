@@ -51,7 +51,7 @@ final class VenueListScreenTest extends WebTestCase
         self::assertStringContainsString('Beliebte Location', $first->text());
         self::assertStringContainsString('Publiziert', $first->text());
         self::assertSame('/admin/locations/'.$seeblick->number(), $first->filter('.venue-list__link')->attr('href'));
-        self::assertCount(1, $first->filter('a[href="/hochzeitslocation/schloss-seeblick"]'));
+        self::assertCount(1, $first->filter('a[href="/eventlokal/schloss-seeblick"]'));
         self::assertCount(1, $first->filter('a[href="/admin/locations/'.$seeblick->number().'/vorschau"]'));
 
         // A venue without a town is a row of its own; unpublished, so no link to the public page.
@@ -59,7 +59,7 @@ final class VenueListScreenTest extends WebTestCase
         self::assertSame('Nr. '.$hut->number(), $second->filter('.venue-list__name .muted')->text());
         self::assertStringContainsString('Unpubliziert', $second->text());
         self::assertStringContainsString('Unvollständig', $second->text());
-        self::assertCount(0, $second->filter('a[href^="/hochzeitslocation/"]'));
+        self::assertCount(0, $second->filter('a[href^="/eventlokal/"]'));
         // Every row has as many cells as the header.
         self::assertSame(7, $crawler->filter('#venue-list thead th')->count());
         self::assertSame(7, $second->filter('td')->count());

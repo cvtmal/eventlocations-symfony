@@ -161,7 +161,7 @@ final class MerklisteSyncControllerTest extends WebTestCase
     {
         $this->seed('1,2,');
 
-        $this->sync(self::SAME_ORIGIN + ['HTTP_REFERER' => 'http://localhost/hochzeitslocations']);
+        $this->sync(self::SAME_ORIGIN + ['HTTP_REFERER' => 'http://localhost/eventlokale']);
 
         $headers = $this->client->getResponse()->headers;
         self::assertFalse($headers->has('Location'));

@@ -37,7 +37,7 @@ collect() { # collect <work dir>: writes <work dir>/urls, listing first, each UR
         locs < "$1/child.xml" >> "$1/pages"
     done < "$1/children"
 
-    listing="$SITE/hochzeitslocations"
+    listing="$SITE/eventlokale"
     printf '%s\n' "$listing" > "$1/urls"
     awk -v listing="$listing" '$0 != listing && !seen[$0]++' "$1/pages" >> "$1/urls"
 }

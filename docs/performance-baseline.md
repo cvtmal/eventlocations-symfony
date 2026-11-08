@@ -166,7 +166,7 @@ These run a little higher than the baseline because each asset now carries a `Ca
 
 ### After R1 (#41)
 
-Demo ×10 `MODE=all` (15:33 to 15:42) exit 0: uncached p95 34.3 to 61.3 ms (detail 55.6 ms against 120), cached 6.7 to 8.6 ms against 20, 0 `server_errors`, 0 `short_bodies`. Real ×1 `MODE=uncached` (`FILTERS='canton=zh&guests=80&price[]=medium' CANTON=zuerich`) exit 0: p95 28.1 to 50.3 ms. R1 changed `src/Media/Twig/MediaExtension.php`, hence the k6 re-run (D15).
+Demo ×10 `MODE=all` (15:33 to 15:42) exit 0: uncached p95 34.3 to 61.3 ms (detail 55.6 ms against 120), cached 6.7 to 8.6 ms against 20, 0 `server_errors`, 0 `short_bodies`. Real ×1 `MODE=uncached` (`FILTERS='canton=zh&guests=80&event[]=corporate_event' CANTON=zuerich`) exit 0: p95 28.1 to 50.3 ms. R1 changed `src/Media/Twig/MediaExtension.php`, hence the k6 re-run (D15).
 
 ### After R2 (#41), F6 (history)
 
@@ -342,7 +342,7 @@ Real data, once the lane holds it (#41). `perf-seed` copies the lane's active da
 make perf-up
 make perf-seed                         # real ×1, for Lighthouse and k6
 make perf-lighthouse URL="$(sed -n 2p var/shots/real-urls.txt)" NAME=real-listing > var/perf/real-listing.log 2>&1
-FILTERS='canton=zh&guests=80&price[]=medium' CANTON=zuerich make perf-run MODE=uncached > var/perf/real-k6.log 2>&1
+FILTERS='canton=zh&guests=80&event[]=corporate_event' CANTON=zuerich make perf-run MODE=uncached > var/perf/real-k6.log 2>&1
 ```
 
 Run all five real pages in one session, because the day seed moves the first card at midnight Zurich. k6 budgets stay on demo ×10; real ×1 is recorded beside them, and a k6 miss counts only at load average under 4. `make perf-up` can leave nginx stopped under load: its `restart php nginx` races, and nginx exits on `host not found in upstream "php"`. Run it again.

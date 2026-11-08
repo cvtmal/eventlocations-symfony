@@ -24,8 +24,8 @@ final class VenueMarkdownTest extends WebTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const string MD = '/hochzeitslocation/'.DetailVenues::FULL_SLUG.'.md';
-    private const string HTML_URL = 'http://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG;
+    private const string MD = '/eventlokal/'.DetailVenues::FULL_SLUG.'.md';
+    private const string HTML_URL = 'http://localhost/eventlokal/'.DetailVenues::FULL_SLUG;
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -131,7 +131,7 @@ final class VenueMarkdownTest extends WebTestCase
             ['text' => "# Kein Titel\n- keine Liste\n<b>kein HTML</b>", 'id' => $venue->id()],
         );
 
-        $this->client->request('GET', '/hochzeitslocation/markdown-probe.md');
+        $this->client->request('GET', '/eventlokal/markdown-probe.md');
 
         $body = (string) $this->client->getResponse()->getContent();
         self::assertStringStartsWith("# \\*Fett\\* \\[Link\\](https://evil.example)\n", $body);
@@ -142,7 +142,7 @@ final class VenueMarkdownTest extends WebTestCase
     {
         VenueTranslationFactory::createOne(['venue' => \App\Factory\VenueFactory::createOne(['town' => DetailVenues::town('Vaduz')]), 'slug' => 'remise-vaduz']);
 
-        $this->client->request('GET', '/hochzeitslocation/remise-vaduz.md');
+        $this->client->request('GET', '/eventlokal/remise-vaduz.md');
 
         self::assertResponseIsSuccessful();
         self::assertStringContainsString("\n9490 Vaduz, Liechtenstein\n", (string) $this->client->getResponse()->getContent());
@@ -153,7 +153,7 @@ final class VenueMarkdownTest extends WebTestCase
         $venue = DetailVenues::full($this->em);
         VenueSlugHistoryFactory::createOne(['venue' => $venue, 'slug' => 'altes-schloss']);
 
-        $this->client->request('GET', '/hochzeitslocation/altes-schloss.md');
+        $this->client->request('GET', '/eventlokal/altes-schloss.md');
 
         self::assertResponseStatusCodeSame(301);
         self::assertSame(self::MD, $this->client->getResponse()->headers->get('Location'));
@@ -166,10 +166,10 @@ final class VenueMarkdownTest extends WebTestCase
             'slug' => 'entwurf',
         ]);
 
-        $this->client->request('GET', '/hochzeitslocation/entwurf.md');
+        $this->client->request('GET', '/eventlokal/entwurf.md');
         self::assertResponseStatusCodeSame(410);
 
-        $this->client->request('GET', '/hochzeitslocation/unbekannt.md');
+        $this->client->request('GET', '/eventlokal/unbekannt.md');
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -177,7 +177,7 @@ final class VenueMarkdownTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.DetailVenues::FULL_SLUG);
 
         self::assertResponseIsSuccessful();
         self::assertSame(self::HTML_URL.'.md', $crawler->filter('link[rel="alternate"][type="text/markdown"]')->attr('href'));

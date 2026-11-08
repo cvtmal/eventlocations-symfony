@@ -103,7 +103,7 @@ final class LegalPagesTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        foreach (['/hochzeitslocations', '/hochzeitslocation/'.DetailVenues::FULL_SLUG, ...self::PAGES] as $path) {
+        foreach (['/eventlokale', '/eventlokal/'.DetailVenues::FULL_SLUG, ...self::PAGES] as $path) {
             $crawler = $this->page($path);
 
             $links = $crawler->filter('footer nav.footer-legal a')->each(static fn (Crawler $a): string => $a->text().' '.$a->attr('href'));

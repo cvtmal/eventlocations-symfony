@@ -10,14 +10,14 @@ listing:
 filter:
     bar_label: Filter
     region: Region
+    event: Anlass
+    event_title: Was für einen Anlass planst du?
+    event_legend: Anlässe
     guests: Anzahl Gäste
     guests_title: Wie viele Gäste erwartest du?
-    # #51: GuestBand's labels, keyed by its case value (the canonical `guests` parameter).
-    guests_band:
-        50: 'bis 50 Gäste'
-        100: 'bis 100 Gäste'
-        150: 'bis 150 Gäste'
-        151: 'über 150 Gäste'
+    guests_placeholder: 'z.B. 80'
+    # formatted = count|swiss_number
+    guests_chip: '{count, plural, one {1 Gast} other {{formatted} Gäste}}'
     more: weitere Filter +
     more_title: Wähle weitere Filter und Möglichkeiten
     more_active: 'weitere Filter ({count})'
@@ -25,8 +25,6 @@ filter:
     more_name_title: Suche eine konkrete Location
     more_name_placeholder: Name eingeben
     more_access: Erreichbarkeit
-    more_price: Preisniveau
-    more_amenity: Ausstattung
     more_buildings_all: Alle Gebäudearten
     more_buildings_close: Gebäudearten schliessen
     more_rooms_title: Raumangebot
@@ -42,7 +40,7 @@ filter:
     more_height_max: '≥ {height} m'
     reset: Filter löschen
     merkliste: Merkliste
-    region_title: Wo soll deine Hochzeit stattfinden?
+    region_title: Wo soll dein Anlass stattfinden?
     region_tab_canton: Kanton
     region_tab_place: Ort/PLZ
     canton_placeholder: Kanton eingeben
@@ -83,7 +81,7 @@ similar:
     label: Ähnliche Locations
     facts: '{place} · {capacity} Personen'
     facts_no_place: '{capacity} Personen'
-# Landing pages (#17): headings and intros of /hochzeitslocations/{canton}, …/{canton}/{town}
+# Landing pages (#17): headings and intros of /eventlokale/{canton}, …/{canton}/{town}
 # and …/{building}. Building slugs are path segments: unique, disjoint from cantons.slug, pinned
 # with the headings (≤ 36 characters) by LandingCatalogueTest for every taxonomy building code.
 landing:
@@ -247,7 +245,7 @@ landing:
             slug: zunfthaus
             heading: 'Hochzeit im Zunfthaus'
             intro: '{count, plural, one {# Location} other {# Locations}} für deine Hochzeit im Zunfthaus: Vergleiche Fotos und Platz für Gäste und frag direkt an.'
-# #36: the home page, in "du". The category tiles' labels are HomeCategory's, keyed by its case value.
+# #36: the home page, in "du". The category tiles' labels are HomeCategory's (event types, F5), keyed by its case value.
 home:
     hero:
         heading: 'Hochzeit feiern in den schönsten Locations der Schweiz'
@@ -255,19 +253,20 @@ home:
         label: 'Location suchen'
         canton: Kanton
         canton_all: 'Alle Kantone'
-        type: Location-Art
-        type_all: 'Alle Arten'
+        event: Anlass
+        event_all: 'Alle Anlässe'
         guests: 'Anzahl Gäste'
-        guests_all: 'Alle Gästezahlen'
+        guests_placeholder: 'z.B. 80'
         submit: Suche
     category:
-        castle: 'Burg & Schloss'
-        event_hall: 'Eventhalle & Saal'
-        restaurant: 'Restaurant & Gasthof'
-        brewery_winery: Weingut
-        hotel: Hotel
+        corporate_event: Firmenanlass
+        seminar: 'Seminar & Tagung'
+        apero: Apéro
+        christmas_party: Weihnachtsfeier
+        birthday: Geburtstag
+        wedding: Hochzeit
     categories:
-        heading: 'Kategorien durchsuchen'
+        heading: 'Nach Anlass suchen'
         all: 'Alle Locations'
     steps:
         heading: 'In vier Schritten zur Traumlocation'

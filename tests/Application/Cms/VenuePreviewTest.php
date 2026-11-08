@@ -48,7 +48,7 @@ final class VenuePreviewTest extends WebTestCase
         self::assertStringContainsString('no-store', $cacheControl);
         self::assertStringContainsString('private', $cacheControl);
         // The public page itself stays gone.
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::FULL_SLUG);
         self::assertResponseStatusCodeSame(410);
     }
 

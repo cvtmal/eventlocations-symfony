@@ -1,8 +1,8 @@
-# Rate limiters (#8 venue-detail-page). `phone_reveal` guards GET /hochzeitslocation/{slug}/telefon
+# Rate limiters (#8 venue-detail-page). `phone_reveal` guards GET /eventlokal/{slug}/telefon
 # (DP-11): 20 reveals per 10 minutes per client IP. The `lock_factory: auto` default picks up
 # lock.factory (lock.yaml, #20), so consumption is serialised per key and parallel requests cannot
 # all read the same count; the state lives in its own cache pool.
-# `inquiry_submit` (#14, IQ-3) guards POST /hochzeitslocation/{slug}/anfrage: 5 inquiries per hour
+# `inquiry_submit` (#14, IQ-3) guards POST /eventlokal/{slug}/anfrage: 5 inquiries per hour
 # per client IP, consumed only after the form is valid and the fill time has passed.
 # `portal_register` (#42) guards every /konto form that can send a mail (register, forgot):
 # 5 per hour per client IP, one budget across the three, consumed only after the form is valid.

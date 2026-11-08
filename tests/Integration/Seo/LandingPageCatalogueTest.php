@@ -81,7 +81,7 @@ final class LandingPageCatalogueTest extends KernelTestCase
         self::assertSame(5, $zh->venueCount);
         self::assertTrue($zh->passesThreshold);
         self::assertNotNull($zh->url);
-        self::assertStringEndsWith('/hochzeitslocations/zuerich', $zh->url);
+        self::assertStringEndsWith('/eventlokale/zuerich', $zh->url);
         self::assertStringStartsWith('http', $zh->url);
         self::assertStringStartsWith('5 Hochzeitslocations im Kanton Zürich:', $zh->defaultIntro);
         self::assertSame('landing.canton.zh.title', $zh->blockKey('title'));

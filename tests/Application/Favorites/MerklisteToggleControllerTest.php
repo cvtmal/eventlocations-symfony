@@ -150,7 +150,7 @@ final class MerklisteToggleControllerTest extends WebTestCase
 
     public function test_redirects_to_the_own_referer_with_its_query_string(): void
     {
-        $referer = 'http://localhost/hochzeitslocations?canton=zh&page=2';
+        $referer = 'http://localhost/eventlokale?canton=zh&page=2';
 
         $this->toggle(5, self::SAME_ORIGIN + ['HTTP_REFERER' => $referer]);
 
@@ -236,7 +236,7 @@ final class MerklisteToggleControllerTest extends WebTestCase
         $full = implode(',', range(1, 100));
         $this->seed($full);
 
-        $this->toggle(101, self::SAME_ORIGIN + ['HTTP_REFERER' => 'http://localhost/hochzeitslocations']);
+        $this->toggle(101, self::SAME_ORIGIN + ['HTTP_REFERER' => 'http://localhost/eventlokale']);
 
         self::assertResponseRedirects('/merkliste', 303);
         self::assertSame([], $this->client->getResponse()->headers->getCookies());

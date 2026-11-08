@@ -164,13 +164,13 @@ final class ListingQueryTest extends KernelTestCase
     /**
      * @param list<string> $expected
      */
-    #[DataProvider('guestBands')]
-    public function test_a_guest_band_matches_capacity_max_inside_its_bounds(string $guests, array $expected): void
+    #[DataProvider('guestNumbers')]
+    public function test_a_guest_number_matches_the_venues_that_fit_it(string $guests, array $expected): void
     {
-        foreach ([50, 51, 100, 101, 150, 151, 500] as $max) {
+        foreach ([50, 100, 150, 500] as $max) {
             $this->venue(\sprintf('Max %03d', $max), ['capacityMax' => $max, 'capacityMin' => null]);
         }
-        $this->venue('Max 100 Min 90', ['capacityMax' => 100, 'capacityMin' => 90]);
+        $this->venue('Max 500 Min 120', ['capacityMax' => 500, 'capacityMin' => 120]);
 
         $this->assertMatches($expected, 'guests='.$guests);
     }
@@ -178,20 +178,35 @@ final class ListingQueryTest extends KernelTestCase
     /**
      * @return iterable<string, array{string, list<string>}>
      */
-    public static function guestBands(): iterable
+    public static function guestNumbers(): iterable
     {
-        yield 'bis 50' => ['50', ['Max 050']];
-        yield 'bis 100' => ['100', ['Max 051', 'Max 100', 'Max 100 Min 90']];
-        yield 'bis 150' => ['150', ['Max 101', 'Max 150']];
-        yield 'über 150' => ['151', ['Max 151', 'Max 500']];
+        yield '1 fits all but the minimum' => ['1', ['Max 050', 'Max 100', 'Max 150', 'Max 500']];
+        yield 'capacity_max is inclusive' => ['50', ['Max 050', 'Max 100', 'Max 150', 'Max 500']];
+        yield 'one above a maximum' => ['51', ['Max 100', 'Max 150', 'Max 500']];
+        yield 'capacity_min is inclusive' => ['120', ['Max 150', 'Max 500', 'Max 500 Min 120']];
+        yield 'above every maximum but one' => ['151', ['Max 500', 'Max 500 Min 120']];
+        yield 'nobody fits' => ['501', []];
     }
 
-    public function test_capacity_min_is_ignored_by_the_band(): void
+    public function test_event_types_combine_with_or(): void
     {
-        $this->venue('Gross', ['capacityMax' => 300, 'capacityMin' => 250]);
+        $this->venue('Seminar', terms: [[TermGroup::SuitableFor, 'seminar']]);
+        $this->venue('Hochzeit', terms: [[TermGroup::SuitableFor, 'wedding']]);
+        $this->venue('Beides', terms: [[TermGroup::SuitableFor, 'seminar'], [TermGroup::SuitableFor, 'wedding']]);
+        $this->venue('Apero', terms: [[TermGroup::SuitableFor, 'apero']]);
+        $this->venue('Keiner');
 
-        $this->assertMatches(['Gross'], 'guests=151');
-        $this->assertMatches(['Gross'], 'guests=200');
+        $this->assertMatches(['Beides', 'Seminar'], 'event[]=seminar');
+        $this->assertMatches(['Beides', 'Hochzeit', 'Seminar'], 'event[]=seminar&event[]=wedding');
+    }
+
+    public function test_event_type_and_guest_number_combine_with_and(): void
+    {
+        $this->venue('Seminar gross', ['capacityMax' => 200, 'capacityMin' => null], terms: [[TermGroup::SuitableFor, 'seminar']]);
+        $this->venue('Seminar klein', ['capacityMax' => 30, 'capacityMin' => null], terms: [[TermGroup::SuitableFor, 'seminar']]);
+        $this->venue('Apero gross', ['capacityMax' => 200, 'capacityMin' => null], terms: [[TermGroup::SuitableFor, 'apero']]);
+
+        $this->assertMatches(['Seminar gross'], 'event[]=seminar&guests=80');
     }
 
     #[DataProvider('nameQueries')]
@@ -259,38 +274,16 @@ final class ListingQueryTest extends KernelTestCase
         yield 'furniture' => ['furniture', TermGroup::Furniture, 'chairs', 'tables'];
         yield 'technology' => ['tech', TermGroup::Technology, 'wifi', 'projector_screen'];
         yield 'surroundings' => ['surroundings', TermGroup::Surroundings, 'garden', 'terrace'];
-        yield 'amenity' => ['amenity', TermGroup::Amenity, 'overnight', 'lake_view'];
-    }
-
-    public function test_price_levels_combine_with_or(): void
-    {
-        $this->venue('Moderat', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Moderate));
-        $this->venue('Mittel', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
-        $this->venue('Exklusiv', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive));
-        $this->venue('Unbekannt');
-
-        $this->assertMatches(['Mittel'], 'price[]=medium');
-        $this->assertMatches(['Mittel', 'Moderat'], 'price[]=medium&price[]=moderate');
-    }
-
-    public function test_the_event_filters_combine_with_and(): void
-    {
-        $amenities = [[TermGroup::Amenity, 'overnight'], [TermGroup::Amenity, 'dance_floor']];
-        $this->venue('Alles', terms: $amenities, change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
-        $this->venue('Ohne Preis', terms: $amenities);
-        $this->venue('Anderer Preis', terms: $amenities, change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Exclusive));
-        $this->venue('Ohne Tanzfläche', terms: [[TermGroup::Amenity, 'overnight']], change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
-
-        $this->assertMatches(['Alles'], 'price[]=medium&amenity[]=overnight&amenity[]=dance_floor');
+        yield 'catering' => ['catering', TermGroup::Catering, 'in_house', 'vegan'];
+        yield 'amenity' => ['amenity', TermGroup::Amenity, 'overnight', 'parking'];
     }
 
     public function test_the_retired_wedding_parameters_filter_nothing(): void
     {
-        $this->venue('Mit Preis', change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
+        $this->venue('Mit Preis', terms: [[TermGroup::Amenity, 'dance_floor']], change: static fn (Venue $venue) => $venue->changePriceLevel(PriceLevel::Medium));
         $this->venue('Ohne Preis');
 
-        $this->assertMatches(['Mit Preis', 'Ohne Preis'], 'curfew=none&ceremony[]=chapel&usage[]=exclusive');
-        $this->assertMatches(['Mit Preis'], 'curfew=none&ceremony[]=chapel&usage[]=exclusive&price[]=medium');
+        $this->assertMatches(['Mit Preis', 'Ohne Preis'], 'curfew=none&ceremony[]=chapel&usage[]=exclusive&price[]=medium&amenity[]=dance_floor');
     }
 
     #[DataProvider('accessThresholds')]

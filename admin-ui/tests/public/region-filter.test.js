@@ -6,12 +6,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 // the overlay itself (#10) is checked in a browser.
 const SCRIPT = readFileSync(`${import.meta.dirname}/../../../assets/js/region-filter.js`, 'utf8');
 const ORIGIN = location.origin;
-const BASE = `${ORIGIN}/hochzeitslocations`;
+const BASE = `${ORIGIN}/eventlokale`;
 
-function page(landing = { zh: '/hochzeitslocations/zuerich' }) {
+function page(landing = { zh: '/eventlokale/zuerich' }) {
     document.body.innerHTML = `
         <div popover>
-            <form data-region-filter action="/hochzeitslocations" method="get" ${landing ? `data-landing='${JSON.stringify(landing)}'` : ''}
+            <form data-region-filter action="/eventlokale" method="get" ${landing ? `data-landing='${JSON.stringify(landing)}'` : ''}
                 data-places-url="/_search/places" data-no-places="—" data-radius-zero="nur" data-radius-other="%n km">
                 <div data-region-tabs hidden>
                     <button type="button" role="tab" data-tab="canton"></button>
@@ -61,7 +61,7 @@ describe('region filter submit (#17)', () => {
         pick('zh');
         submit(form);
 
-        expect(form.action).toBe(`${ORIGIN}/hochzeitslocations/zuerich`);
+        expect(form.action).toBe(`${ORIGIN}/eventlokale/zuerich`);
         expect(canton().disabled).toBe(true);
     });
 

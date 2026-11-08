@@ -119,6 +119,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             'radius → GiST' => [['idx_venues_earth'], 'place='.$this->zurich()->id().'&radius=50'],
             'name search → trigram' => [['idx_venues_search_key'], 'q=hof'],
             'term filter → term index' => [['idx_venue_terms_term_group_term_code', 'pk_venue_terms'], 'setting[]='.$this->topCodes('setting', 1)[0]],
+            'event type → term index' => [['idx_venue_terms_term_group_term_code', 'pk_venue_terms'], 'event[]='.$this->topCodes('suitable_for', 1)[0].'&guests=80'],
         ];
         $misses = [];
         foreach ($cases as $case => [$anyOfIndexes, $queryString]) {
@@ -175,12 +176,10 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             'rooms=2',
             'area=100',
             'height=2.5',
-            'price[]=medium',
-            'price[]=moderate',
             'amenity[]=overnight',
         ];
-        $groups = ['setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'surroundings' => 1];
-        $values = ['infra' => 'infrastructure', 'tech' => 'technology'];
+        $groups = ['event' => 2, 'setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'catering' => 1, 'surroundings' => 1];
+        $values = ['event' => 'suitable_for', 'infra' => 'infrastructure', 'tech' => 'technology'];
         foreach ($groups as $param => $n) {
             foreach ($this->topCodes($values[$param] ?? $param, $n) as $code) {
                 $parts[] = $param.'[]='.$code;
@@ -197,7 +196,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
     private function matchingHeaviestQuery(): string
     {
         $venue = $this->connection->fetchAssociative(<<<'SQL'
-            SELECT v.id, v.name, v.capacity_max, v.room_count, v.largest_room_m2, v.price_level,
+            SELECT v.id, v.name, v.capacity_max, v.room_count, v.largest_room_m2,
                 v.distance_station_km <= 1 AS station, v.distance_highway_km <= 10 AS highway, v.distance_airport_km <= 30 AS airport
             FROM venues v, towns z
             WHERE z.name = 'Zürich'
@@ -220,7 +219,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $parts = [
             'place='.$this->zurich()->id(),
             'radius=50',
-            // The codec buckets the venue's own maximum into its band, which the venue matches.
+            // The venue's own maximum fits it: capacity_min is at most capacity_max.
             'guests='.$venue['capacity_max'],
             'q='.rawurlencode(mb_strtolower(mb_substr($venue['name'], 0, 3))),
             'access[]='.$access,
@@ -228,18 +227,15 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             'area='.($venue['largest_room_m2'] >= 100 ? 100 : 50),
             'height=2.5',
         ];
-        if (\is_string($venue['price_level'])) {
-            $parts[] = 'price[]='.$venue['price_level'];
-        }
-        $groups = ['setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'surroundings' => 1];
-        $values = ['infra' => 'infrastructure', 'tech' => 'technology'];
+        $groups = ['event' => 2, 'setting' => 3, 'building' => 4, 'infra' => 1, 'furniture' => 1, 'tech' => 1, 'catering' => 1, 'surroundings' => 1];
+        $values = ['event' => 'suitable_for', 'infra' => 'infrastructure', 'tech' => 'technology'];
         foreach ($groups as $param => $n) {
             $group = $values[$param] ?? $param;
             $codes = $this->connection->fetchFirstColumn(
                 'SELECT term_code FROM venue_terms WHERE venue_id = :id AND term_group = :g ORDER BY term_code LIMIT :n',
                 ['id' => $venue['id'], 'g' => $group, 'n' => $n],
             );
-            if (\in_array($param, ['setting', 'building'], true)) {
+            if (\in_array($param, ['event', 'setting', 'building'], true)) {
                 // OR groups: fill up with the most used codes.
                 $codes = \array_slice(array_values(array_unique([...$codes, ...$this->topCodes($group, $n)])), 0, $n);
             }

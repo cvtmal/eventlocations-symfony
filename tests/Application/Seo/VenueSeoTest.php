@@ -22,7 +22,7 @@ final class VenueSeoTest extends WebTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const string FULL_URL = 'http://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG;
+    private const string FULL_URL = 'http://localhost/eventlokal/'.DetailVenues::FULL_SLUG;
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -61,7 +61,7 @@ final class VenueSeoTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG.$query);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::FULL_SLUG.$query);
 
         self::assertSame(self::FULL_URL, $crawler->filter('link[rel="canonical"]')->attr('href'));
         self::assertSame(self::FULL_URL, $crawler->filter('meta[property="og:url"]')->attr('content'));
@@ -72,7 +72,7 @@ final class VenueSeoTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         self::assertSame('place', $crawler->filter('meta[property="og:type"]')->attr('content'));
         self::assertNotEmpty($crawler->filter('meta[property="place:location:latitude"]')->attr('content'));
@@ -86,7 +86,7 @@ final class VenueSeoTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         $venue = $this->venueNode($crawler);
         self::assertSame(['EventVenue', 'LocalBusiness'], $venue['@type']);
@@ -117,12 +117,12 @@ final class VenueSeoTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         $lists = $this->nodes($crawler, 'BreadcrumbList');
         self::assertCount(1, $lists);
         self::assertSame([
-            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Hochzeitslocations', 'item' => 'http://localhost/hochzeitslocations'],
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Hochzeitslocations', 'item' => 'http://localhost/eventlokale'],
             ['@type' => 'ListItem', 'position' => 2, 'name' => 'Schloss Seeblick'],
         ], $lists[0]['itemListElement']);
     }
@@ -131,7 +131,7 @@ final class VenueSeoTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         $venue = $this->venueNode($crawler);
         self::assertArrayNotHasKey('telephone', $venue);
@@ -146,7 +146,7 @@ final class VenueSeoTest extends WebTestCase
     {
         DetailVenues::minimal();
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[property="og:image"]')->attr('content'));
         self::assertSame('summary_large_image', $crawler->filter('meta[name="twitter:card"]')->attr('content'));
@@ -161,7 +161,7 @@ final class VenueSeoTest extends WebTestCase
     {
         DetailVenues::inCantonOnly();
 
-        $crawler = $this->get('/hochzeitslocation/scheune-nur-kanton');
+        $crawler = $this->get('/eventlokal/scheune-nur-kanton');
 
         self::assertSame('Scheune Nur Kanton im Kanton Zürich | deine-eventlocation.ch', $crawler->filter('title')->text());
         $venue = $this->venueNode($crawler);
@@ -177,7 +177,7 @@ final class VenueSeoTest extends WebTestCase
         $venue->relocate($venue->town(), $venue->zip(), $venue->street(), $venue->lat(), $venue->lng(), coordinatesFromTown: true);
         $this->em->flush();
 
-        $crawler = $this->get('/hochzeitslocation/'.DetailVenues::FULL_SLUG);
+        $crawler = $this->get('/eventlokal/'.DetailVenues::FULL_SLUG);
 
         self::assertSame('website', $crawler->filter('meta[property="og:type"]')->attr('content'));
         self::assertCount(0, $crawler->filter('meta[property="place:location:latitude"]'));

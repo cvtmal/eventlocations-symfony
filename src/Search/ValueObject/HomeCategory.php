@@ -8,16 +8,18 @@ use Symfony\Contracts\Translation\TranslatableInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * The home page's category tiles (HP-3, S15) in the board's order. The value is a building code
- * of the listing filter; the label is the home page's own, not the filter's.
+ * The home page's category tiles (HP-3), one per event type (F5 `filter-event`, E5). The value
+ * is a `suitable_for` code of the listing's `event[]` filter; the label is the home page's own,
+ * not the filter's.
  */
 enum HomeCategory: string implements TranslatableInterface
 {
-    case Castle = 'castle';
-    case EventHall = 'event_hall';
-    case Restaurant = 'restaurant';
-    case Winery = 'brewery_winery';
-    case Hotel = 'hotel';
+    case CorporateEvent = 'corporate_event';
+    case Seminar = 'seminar';
+    case Apero = 'apero';
+    case ChristmasParty = 'christmas_party';
+    case Birthday = 'birthday';
+    case Wedding = 'wedding';
 
     public function trans(TranslatorInterface $translator, ?string $locale = null): string
     {
@@ -27,11 +29,12 @@ enum HomeCategory: string implements TranslatableInterface
     public function icon(): string
     {
         return match ($this) {
-            self::Castle => 'castle',
-            self::EventHall => 'warehouse',
-            self::Restaurant => 'beer',
-            self::Winery => 'grape',
-            self::Hotel => 'hotel',
+            self::CorporateEvent => 'briefcase',
+            self::Seminar => 'presentation',
+            self::Apero => 'wine',
+            self::ChristmasParty => 'gift',
+            self::Birthday => 'cake',
+            self::Wedding => 'heart',
         };
     }
 }

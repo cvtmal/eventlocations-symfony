@@ -59,7 +59,7 @@ final class PhotoRightsTest extends WebTestCase
         self::assertNotSame('legacy', $grant['policy_version'], 'the grant names the declaration text in force');
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rights_policy_versions WHERE version = ?', [$grant['policy_version']]));
 
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertResponseIsSuccessful();
         self::assertStringContainsString($photo, (string) $this->client->getResponse()->getContent(), 'the photo is on the public page');
     }
@@ -157,7 +157,7 @@ final class PhotoRightsTest extends WebTestCase
         $inRoom = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'room' => $room, 'position' => 1]);
         $uploaded = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
         MediaRightsGrantFactory::createOne(['photo' => $uploaded, 'grantor' => Grantor::manager(self::MANAGER), 'evidence' => GrantEvidence::Upload]);
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertStringNotContainsString($gallery->id(), (string) $this->client->getResponse()->getContent(), 'the photo waits: it is on no public page');
         $crawler = $this->client->request('GET', $this->fotos($venue));
         $purger = $this->purger();
@@ -184,7 +184,7 @@ final class PhotoRightsTest extends WebTestCase
         $audit = $this->connection->fetchAssociative("SELECT actor_id, subject_type, subject_id FROM admin_audit_log WHERE command LIKE '%GrantPhotoRights'");
         self::assertSame([$staff['user']->id(), 'venue', (string) $venue->number()], $audit ? array_values($audit) : null);
 
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertStringContainsString($gallery->id(), (string) $this->client->getResponse()->getContent(), 'the granted photo is public now');
         $crawler = $this->client->request('GET', $this->fotos($venue));
         self::assertCount(0, $crawler->filter('form[action$="/fotos/freigeben"]'), 'nothing waits any more');
@@ -215,7 +215,7 @@ final class PhotoRightsTest extends WebTestCase
         $venue = DetailVenues::minimal();
         $first = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
         $second = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         $before = (string) $this->client->getResponse()->getContent();
         self::assertStringContainsString($first->id(), $before);
         self::assertStringContainsString($second->id(), $before);
@@ -232,7 +232,7 @@ final class PhotoRightsTest extends WebTestCase
         self::assertSame(['staff', $staff['user']->id()], [$revoked['revoked_by_type'], $revoked['revoked_by_ref']]);
         self::assertNotSame('', $revoked['original_path'], 'the evidence still names the file');
 
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         $after = (string) $this->client->getResponse()->getContent();
         self::assertStringNotContainsString($first->id(), $after, 'the revoked photo is on no public page');
         self::assertStringContainsString($second->id(), $after);

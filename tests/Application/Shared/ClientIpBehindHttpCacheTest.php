@@ -26,7 +26,7 @@ final class ClientIpBehindHttpCacheTest extends WebTestCase
     use ImportsTownDataset;
     use ThroughHttpCache;
 
-    private const PHONE = '/hochzeitslocation/'.DetailVenues::FULL_SLUG.'/telefon';
+    private const PHONE = '/eventlokal/'.DetailVenues::FULL_SLUG.'/telefon';
 
     private Connection $connection;
     private EntityManagerInterface $em;
@@ -67,7 +67,7 @@ final class ClientIpBehindHttpCacheTest extends WebTestCase
 
     public function test_https_still_sends_hsts(): void
     {
-        $response = $this->through(Request::create('https://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG));
+        $response = $this->through(Request::create('https://localhost/eventlokal/'.DetailVenues::FULL_SLUG));
 
         self::assertSame(Response::HTTP_OK, $response->getStatusCode());
         self::assertTrue($response->headers->has('Strict-Transport-Security'));

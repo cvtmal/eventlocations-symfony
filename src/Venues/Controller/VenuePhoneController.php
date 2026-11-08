@@ -18,7 +18,7 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * The phone reveal of the detail page (DP-11): `GET /hochzeitslocation/{slug}/telefon`. A plain
+ * The phone reveal of the detail page (DP-11): `GET /eventlokal/{slug}/telefon`. A plain
  * link without JS (an HTML page with the `tel:` link), JSON `{"phone", "display"}` for
  * `phone-reveal.js` (`Accept: application/json`). Rate-limited per client IP (`phone_reveal`,
  * config/packages/rate_limiter.yaml) before anything else, so it also blocks slug enumeration.
@@ -35,7 +35,7 @@ final class VenuePhoneController extends AbstractController
     ) {
     }
 
-    #[Route(path: ['de' => '/hochzeitslocation/{slug}/telefon'], name: 'venue_phone', requirements: ['slug' => VenueDetailController::SLUG_REQUIREMENT], methods: ['GET'])]
+    #[Route(path: ['de' => '/eventlokal/{slug}/telefon'], name: 'venue_phone', requirements: ['slug' => VenueDetailController::SLUG_REQUIREMENT], methods: ['GET'])]
     public function __invoke(Request $request, string $slug): Response
     {
         $limit = $this->phoneRevealLimiter->create($this->clientIpKey->of($request))->consume();

@@ -49,7 +49,7 @@ final class CollectControllerTest extends WebTestCase
         $this->post([
             'p' => 'detail',
             'v' => '46',
-            'u' => '/hochzeitslocation/x',
+            'u' => '/eventlokal/x',
             'r' => 'https://www.google.com/search?q=hochzeit',
             'e' => ['view', 'click:website'],
         ]);
@@ -72,7 +72,7 @@ final class CollectControllerTest extends WebTestCase
             'kind' => null,
             'venues' => [46],
             'page' => 'detail',
-            'path' => '/hochzeitslocation/x',
+            'path' => '/eventlokal/x',
             'ref' => 'www.google.com',
             'ua' => 'Symfony BrowserKit',
             'vh' => $view['vh'],

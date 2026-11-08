@@ -56,12 +56,12 @@ final class LlmsTxtTest extends WebTestCase
             array_values(preg_grep('/^## /', explode("\n", $body)) ?: []),
         );
         self::assertStringContainsString("\n- [Startseite](http://localhost/): ", $body);
-        self::assertStringContainsString("\n- [Alle Hochzeitslocations](http://localhost/hochzeitslocations): ", $body);
-        self::assertStringContainsString("\n- [Hochzeitslocations im Kanton Zürich](http://localhost/hochzeitslocations/zuerich): 11 Locations\n", $body);
-        self::assertStringContainsString('](http://localhost/hochzeitslocations/zuerich/'.$data['town'].'): 5 Locations', $body);
-        self::assertStringContainsString('](http://localhost/hochzeitslocations/'.$data['building'].'): 6 Locations', $body);
+        self::assertStringContainsString("\n- [Alle Hochzeitslocations](http://localhost/eventlokale): ", $body);
+        self::assertStringContainsString("\n- [Hochzeitslocations im Kanton Zürich](http://localhost/eventlokale/zuerich): 11 Locations\n", $body);
+        self::assertStringContainsString('](http://localhost/eventlokale/zuerich/'.$data['town'].'): 5 Locations', $body);
+        self::assertStringContainsString('](http://localhost/eventlokale/'.$data['building'].'): 6 Locations', $body);
         self::assertMatchesRegularExpression(
-            '~\n- \[Schloss Seeblick\]\(http://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG.'\.md\): \d{4} Zürich, Kanton Zürich, bis 300 Personen\n~',
+            '~\n- \[Schloss Seeblick\]\(http://localhost/eventlokal/'.DetailVenues::FULL_SLUG.'\.md\): \d{4} Zürich, Kanton Zürich, bis 300 Personen\n~',
             $body,
         );
         self::assertStringContainsString("\n- [Sitemap](http://localhost/sitemap.xml): ", $body);
@@ -80,7 +80,7 @@ final class LlmsTxtTest extends WebTestCase
         $body = $this->llmsTxt();
 
         self::assertStringNotContainsString($data['gone'], $body);
-        $this->client->request('GET', '/hochzeitslocation/'.$data['gone'].'.md');
+        $this->client->request('GET', '/eventlokal/'.$data['gone'].'.md');
         self::assertResponseStatusCodeSame(410);
 
         preg_match_all('~\]\((http://localhost[^)]*)\)~', $body, $links);
@@ -97,7 +97,7 @@ final class LlmsTxtTest extends WebTestCase
     {
         $this->seedPublicRoutes();
 
-        preg_match_all('~^- \[(.+)\]\(http://localhost/hochzeitslocation/~m', $this->llmsTxt(), $names);
+        preg_match_all('~^- \[(.+)\]\(http://localhost/eventlokal/~m', $this->llmsTxt(), $names);
         $sorted = $names[1];
         $collator = new \Collator('de');
         usort($sorted, static fn (string $a, string $b): int => (int) $collator->compare($a, $b));
@@ -114,7 +114,7 @@ final class LlmsTxtTest extends WebTestCase
         $body = $this->llmsTxt();
 
         self::assertStringNotContainsString('http://', $body);
-        self::assertStringContainsString('](https://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG.'.md)', $body);
+        self::assertStringContainsString('](https://localhost/eventlokal/'.DetailVenues::FULL_SLUG.'.md)', $body);
     }
 
     private function llmsTxt(): string

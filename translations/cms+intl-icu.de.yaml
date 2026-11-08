@@ -130,7 +130,7 @@ basics:
         capacity_max: Gäste max.
     help:
         slug: Ändert sich die Adresse, leitet die alte mit 301 weiter.
-    slug_prefix: deine-eventlocation.ch/hochzeitslocation/
+    slug_prefix: deine-eventlocation.ch/eventlokal/
 
 texts:
     field:

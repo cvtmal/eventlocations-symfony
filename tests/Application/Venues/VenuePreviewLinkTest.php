@@ -229,7 +229,7 @@ final class VenuePreviewLinkTest extends WebTestCase
         $published = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Scheune Online']);
         VenueTranslationFactory::createOne(['venue' => $published, 'slug' => 'scheune-online', 'summary' => 'Eine Scheune.']);
 
-        foreach (['/sitemap.xml', '/sitemap-venues-1.xml', '/hochzeitslocations', '/llms.txt', '/_search/count'] as $page) {
+        foreach (['/sitemap.xml', '/sitemap-venues-1.xml', '/eventlokale', '/llms.txt', '/_search/count'] as $page) {
             $this->client->request('GET', $page);
             self::assertResponseIsSuccessful($page);
             $content = (string) $this->client->getResponse()->getContent();

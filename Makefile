@@ -215,7 +215,7 @@ perf-run: ## k6 against the perf stack: MODE=uncached|all; results in var/perf/
 # Warms the URL twice, then 3 Lighthouse runs through the perf nginx (network_mode service:nginx).
 # The store key holds the host, so the warm-up must send Lighthouse's: every run is then a hit.
 perf-lighthouse: ## Lighthouse (mobile) 3 times against the perf stack's URL=/path [NAME=…]; reports in var/lighthouse/
-	@test -n "$(URL)" || { echo 'Usage: make perf-lighthouse URL=/hochzeitslocations [NAME=listing]'; exit 1; }
+	@test -n "$(URL)" || { echo 'Usage: make perf-lighthouse URL=/eventlokale [NAME=listing]'; exit 1; }
 	@mkdir -p var/lighthouse
 	$(PERF_PHP) curl -s -o /dev/null -H 'Host: localhost' 'http://nginx$(URL)'
 	$(PERF_PHP) curl -s -o /dev/null -H 'Host: localhost' 'http://nginx$(URL)'

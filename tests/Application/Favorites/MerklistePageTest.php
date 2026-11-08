@@ -54,7 +54,7 @@ final class MerklistePageTest extends WebTestCase
         self::assertSelectorTextSame('.merkliste__head h1[data-merkliste-title]', 'Deine Merkliste');
         self::assertSelectorNotExists('[data-merkliste-empty][hidden]');
         self::assertSelectorTextContains('[data-merkliste-empty]', 'Deine Merkliste ist noch leer.');
-        self::assertSame('/hochzeitslocations', $crawler->filter('[data-merkliste-empty] a')->attr('href'));
+        self::assertSame('/eventlokale', $crawler->filter('[data-merkliste-empty] a')->attr('href'));
         self::assertSelectorExists('[data-merkliste-empty] .listing-empty__disc');
         self::assertSelectorExists('[data-merkliste-total][hidden]');
         self::assertCount(0, $crawler->filter('.card'));

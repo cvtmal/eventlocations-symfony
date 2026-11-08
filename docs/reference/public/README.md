@@ -47,9 +47,9 @@ later cycles:
   region overlay; the inquiry's Anlass list and prefilled message are the wedding ones; the Datenschutz text names the old operator and
   processors. The boards show event wording and "du".
 - **Routes (F5):** board labels use `/eventlokale`, `/eventlokale/{kanton}`, `/eventlokale/{kanton}/{ort}`, `/eventlokal/{slug}` and
-  `/eventlokal-in-meiner-naehe`; the live app still has the `/hochzeitslocation…` paths.
-- **Filters (F5):** the guest filter is drawn as today's four bands and the bar has no "Anlass" trigger yet; F5 brings the event type and the
-  guest number and redraws `Guests` and `Filterbar`.
+  `/eventlokal-in-meiner-naehe`; the live app has them since F5.
+- **Filters (F5):** live, the bar has an "Anlass" trigger (chips per event type) and the guest filter is one number input; the `Guests` and
+  `Filterbar` boards still draw the four bands and no "Anlass" trigger. Redrawing them is open (F5 did not touch the boards).
 - **Content:** the boards keep curated fictional venues; the demo data is lorem-like. The Detail board draws a Google rating box, which the live
   page shows only with a Maps key. Wunschtermin is the browser's native date input live.
 

@@ -76,7 +76,7 @@ final class IngestStatsHandlerTest extends KernelTestCase
     public function test_events_reach_stats_events_with_every_column(): void
     {
         $this->spool->append([
-            new SpoolEvent(self::at('2026-11-03T10:15:30'), EventType::Click, ClickKind::Website, [$this->a], PageType::Detail, '/hochzeitslocation/a', 'www.google.com', 'Mozilla/5.0', self::H1, true),
+            new SpoolEvent(self::at('2026-11-03T10:15:30'), EventType::Click, ClickKind::Website, [$this->a], PageType::Detail, '/eventlokal/a', 'www.google.com', 'Mozilla/5.0', self::H1, true),
             new SpoolEvent(self::at('2026-11-03T10:16:00'), EventType::PageView, null, null, PageType::Home, '/', null, null, null, false),
         ]);
         file_put_contents($this->paths->spoolDir().'/2026-11-03.ndjson', "{\"broken\n", \FILE_APPEND);
@@ -90,7 +90,7 @@ final class IngestStatsHandlerTest extends KernelTestCase
                 'kind' => 'website',
                 'page' => 'detail',
                 'venues' => '['.$this->a.']',
-                'path' => '/hochzeitslocation/a',
+                'path' => '/eventlokal/a',
                 'referrer_host' => 'www.google.com',
                 'user_agent' => 'Mozilla/5.0',
                 'visitor_hash' => self::H1,
@@ -218,9 +218,9 @@ final class IngestStatsHandlerTest extends KernelTestCase
             self::view('2026-11-03T09:00:00', PageType::Home, null, self::H1),
             self::view('2026-11-03T09:01:00', PageType::Detail, [$this->a], self::H1),
             self::view('2026-11-03T09:02:00', PageType::Listing, null, self::H2),
-            new SpoolEvent(self::at('2026-11-03T09:02:05'), EventType::Impression, null, [$this->a, $this->b, self::UNKNOWN], PageType::Listing, '/hochzeitslocations', null, 'UA', self::H2, false),
+            new SpoolEvent(self::at('2026-11-03T09:02:05'), EventType::Impression, null, [$this->a, $this->b, self::UNKNOWN], PageType::Listing, '/eventlokale', null, 'UA', self::H2, false),
             new SpoolEvent(self::at('2026-11-03T09:03:00'), EventType::Click, ClickKind::Website, [$this->a], PageType::Detail, '/x', null, 'UA', self::H1, false),
-            new SpoolEvent(self::at('2026-11-03T09:04:00'), EventType::MerklisteAdd, null, [$this->b], PageType::Listing, '/hochzeitslocations', null, 'UA', self::H2, false),
+            new SpoolEvent(self::at('2026-11-03T09:04:00'), EventType::MerklisteAdd, null, [$this->b], PageType::Listing, '/eventlokale', null, 'UA', self::H2, false),
             SpoolEvent::inquiry(self::at('2026-11-03T09:05:00'), $this->a),
             new SpoolEvent(self::at('2026-11-03T09:06:00'), EventType::PageView, null, [$this->b], PageType::Detail, '/y', null, 'HeadlessChrome', self::H3, true),
             new SpoolEvent(self::at('2026-11-03T09:07:00'), EventType::Click, ClickKind::Phone, [$this->b], PageType::Detail, '/y', null, 'HeadlessChrome', self::H3, true),

@@ -118,7 +118,7 @@ final class HomeHtmlBudgetTest extends WebTestCase
     /** Two paragraphs with bold text and a link, at most $length code points. */
     private function markdown(int $length, int $seed): string
     {
-        $head = '**'.$this->text(30, $seed).'** [Mehr](/hochzeitslocations) ';
+        $head = '**'.$this->text(30, $seed).'** [Mehr](/eventlokale) ';
         $tail = "\n\n".$this->text(40, $seed + 10);
 
         return $head.$this->text($length - mb_strlen($head) - mb_strlen($tail), $seed + 20).$tail;

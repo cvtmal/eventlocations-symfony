@@ -70,7 +70,7 @@ final class VenueMetaTest extends KernelTestCase
     {
         $meta = $this->meta();
 
-        self::assertSame('https://example.ch/hochzeitslocation/schloss-au', $meta->canonical);
+        self::assertSame('https://example.ch/eventlokal/schloss-au', $meta->canonical);
         self::assertSame('Ein Schloss. Mit Park.', $meta->description);
         self::assertFalse($meta->noindex);
     }
@@ -87,7 +87,7 @@ final class VenueMetaTest extends KernelTestCase
 
         return $meta->for(new VenueFacts(
             $name,
-            'https://example.ch/hochzeitslocation/schloss-au',
+            'https://example.ch/eventlokal/schloss-au',
             "Ein Schloss.\nMit Park.",
             100,
             null,

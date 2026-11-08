@@ -18,7 +18,7 @@ use Symfony\Component\HttpKernel\Log\Logger;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * POST /hochzeitslocation/{slug}/anfrage. A dead SMTP server has its own class,
+ * POST /eventlokal/{slug}/anfrage. A dead SMTP server has its own class,
  * `SubmitInquiryDeliveryFailureTest`: it needs another DSN before the kernel boots. Mail errors
  * other than a transport error are in `SubmitInquiryMailErrorTest`.
  */
@@ -52,7 +52,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(303);
         $this->assertPrivate();
         $location = (string) $this->client->getResponse()->headers->get('Location');
-        self::assertStringContainsString('/hochzeitslocation/'.self::SLUG.'?', $location);
+        self::assertStringContainsString('/eventlokal/'.self::SLUG.'?', $location);
         self::assertStringContainsString('anfrage=gesendet', $location);
         self::assertStringContainsString('_hash=', $location);
         self::assertStringEndsWith('#anfrage', $location);
@@ -414,7 +414,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
         $this->post('altes-schloss', InquiryFormFields::valid());
 
         self::assertResponseStatusCodeSame(303);
-        self::assertStringContainsString('/hochzeitslocation/'.self::SLUG.'?', (string) $this->client->getResponse()->headers->get('Location'));
+        self::assertStringContainsString('/eventlokal/'.self::SLUG.'?', (string) $this->client->getResponse()->headers->get('Location'));
         self::assertSame(self::SLUG, $this->rows()[0]['venue_slug']);
     }
 
@@ -422,7 +422,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
     {
         DetailVenues::full($this->em);
 
-        $this->client->request('GET', '/hochzeitslocation/'.self::SLUG.'/anfrage');
+        $this->client->request('GET', '/eventlokal/'.self::SLUG.'/anfrage');
 
         self::assertResponseStatusCodeSame(405);
     }

@@ -45,7 +45,7 @@ final class InquiryRerenderSeoTest extends WebTestCase
         self::assertStringContainsString("frame-ancestors 'none'", $policy);
         self::assertCount(0, $crawler->filter('link[hreflang]'));
         self::assertSame(
-            'http://localhost/hochzeitslocation/'.DetailVenues::FULL_SLUG,
+            'http://localhost/eventlokal/'.DetailVenues::FULL_SLUG,
             $crawler->filter('link[rel="canonical"]')->attr('href'),
         );
         self::assertStringContainsString('noindex', (string) $headers->get('X-Robots-Tag'));

@@ -27,8 +27,8 @@ final class RobotsTxtTest extends WebTestCase
             Disallow: /merkliste
             Disallow: /admin
             Disallow: /konto
-            Disallow: /hochzeitslocation/*/telefon
-            Disallow: /hochzeitslocation/*/anfrage
+            Disallow: /eventlokal/*/telefon
+            Disallow: /eventlokal/*/anfrage
             Disallow: /_stats
 
             Sitemap: http://localhost/sitemap.xml

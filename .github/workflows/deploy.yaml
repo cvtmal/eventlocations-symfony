@@ -85,7 +85,7 @@ jobs:
       - name: "Smoke: security headers and gzip on the listing"
         run: |
           curl -fsS --retry 3 --retry-delay 5 -H 'Accept-Encoding: gzip' -D listing.headers -o /dev/null \
-            "$SITE/hochzeitslocations"
+            "$SITE/eventlokale"
           for header in '^strict-transport-security:' '^content-security-policy:' \
             '^x-content-type-options: *nosniff' '^content-encoding: *gzip'; do
             grep -qi "$header" listing.headers || { echo "missing: $header"; exit 1; }
@@ -94,7 +94,7 @@ jobs:
       # The deploy emptied the store, so the listing above was the miss that filled it (#19).
       - name: "Smoke: the HTTP cache answers the listing"
         run: |
-          curl -fsS --retry 3 --retry-delay 5 -D cache.headers -o /dev/null "$SITE/hochzeitslocations"
+          curl -fsS --retry 3 --retry-delay 5 -D cache.headers -o /dev/null "$SITE/eventlokale"
           grep -qi '^x-symfony-cache:.*fresh' cache.headers || { cat cache.headers; exit 1; }
 
       - name: "Smoke: sitemap index and robots.txt"

@@ -99,7 +99,7 @@ final class TextBlockEditorTest extends WebTestCase
             $this->connection->fetchFirstColumn("SELECT changes::text FROM admin_audit_log WHERE subject_type = 'content_block' AND subject_id = 'listing.intro'"),
         );
 
-        $intro = $this->client->request('GET', '/hochzeitslocations')->filter('.listing-hero__intro');
+        $intro = $this->client->request('GET', '/eventlokale')->filter('.listing-hero__intro');
         self::assertSame('passende', $intro->filter('strong')->text());
         self::assertStringNotContainsString('<script', $intro->html());
         self::assertStringContainsString('&lt;script&gt;', $intro->html());
@@ -112,13 +112,13 @@ final class TextBlockEditorTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $this->inCanton(Canton::BE, 1);
         $this->client->submit($this->form(), ['text_block[locales][de][body]' => 'Willkommen.']);
-        self::assertCount(1, $this->client->request('GET', '/hochzeitslocations')->filter('.listing-hero__intro'));
+        self::assertCount(1, $this->client->request('GET', '/eventlokale')->filter('.listing-hero__intro'));
 
         $this->client->submit($this->form(), ['text_block[locales][de][body]' => "  \r\n "]);
 
         self::assertResponseStatusCodeSame(303);
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM content_blocks WHERE key = 'listing.intro'"));
-        self::assertCount(0, $this->client->request('GET', '/hochzeitslocations')->filter('.listing-hero__intro'));
+        self::assertCount(0, $this->client->request('GET', '/eventlokale')->filter('.listing-hero__intro'));
     }
 
     public function test_a_body_over_the_block_limit_is_refused(): void

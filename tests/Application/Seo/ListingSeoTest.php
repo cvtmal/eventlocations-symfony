@@ -30,14 +30,14 @@ final class ListingSeoTest extends WebTestCase
     use ImportsTownDataset;
     use LandingFixtures;
 
-    private const string CLEAN = 'http://localhost/hochzeitslocations';
+    private const string CLEAN = 'http://localhost/eventlokale';
     private const string TITLE = 'Hochzeitslocations in der Schweiz | deine-eventlocation.ch';
     private const string PAGE_2_TITLE = 'Hochzeitslocations Schweiz – Seite 2';
-    private const string ZURICH = 'http://localhost/hochzeitslocations/zuerich';
+    private const string ZURICH = 'http://localhost/eventlokale/zuerich';
     private const string ZURICH_TITLE = 'Hochzeitslocations im Kanton Zürich | deine-eventlocation.ch';
-    private const string TOWN = 'http://localhost/hochzeitslocations/zuerich/zuerich';
+    private const string TOWN = 'http://localhost/eventlokale/zuerich/zuerich';
     private const string TOWN_TITLE = '49 Hochzeitslocations in Zürich | deine-eventlocation.ch';
-    private const string CASTLE = 'http://localhost/hochzeitslocations/schloss';
+    private const string CASTLE = 'http://localhost/eventlokale/schloss';
     private const string CASTLE_TITLE = 'Hochzeit im Schloss: 49 Locations | deine-eventlocation.ch';
 
     private KernelBrowser $client;
@@ -66,26 +66,26 @@ final class ListingSeoTest extends WebTestCase
 
         // [url, canonical, noindex, hreflang links, title]
         $shapes = [
-            ['/hochzeitslocations', self::CLEAN, false, 2, self::TITLE],
-            ['/hochzeitslocations?', self::CLEAN, false, 2, self::TITLE],
-            ['/hochzeitslocations?canton=&place=&radius=5', self::CLEAN, false, 2, self::TITLE],
-            ['/hochzeitslocations?page=1', self::CLEAN, false, 2, self::TITLE],
-            ['/hochzeitslocations?page=abc', self::CLEAN, false, 2, self::TITLE],
-            ['/hochzeitslocations?utm_source=x', self::CLEAN, false, 2, self::TITLE],
-            ['/hochzeitslocations?page=2', self::CLEAN.'?page=2', false, 2, self::PAGE_2_TITLE],
+            ['/eventlokale', self::CLEAN, false, 2, self::TITLE],
+            ['/eventlokale?', self::CLEAN, false, 2, self::TITLE],
+            ['/eventlokale?canton=&place=&radius=5', self::CLEAN, false, 2, self::TITLE],
+            ['/eventlokale?page=1', self::CLEAN, false, 2, self::TITLE],
+            ['/eventlokale?page=abc', self::CLEAN, false, 2, self::TITLE],
+            ['/eventlokale?utm_source=x', self::CLEAN, false, 2, self::TITLE],
+            ['/eventlokale?page=2', self::CLEAN.'?page=2', false, 2, self::PAGE_2_TITLE],
             // A radius other than 0 is no town page, and no canton is named: the plain listing.
-            ['/hochzeitslocations?place='.$town.'&radius=5', self::CLEAN, true, 0, self::TITLE],
+            ['/eventlokale?place='.$town.'&radius=5', self::CLEAN, true, 0, self::TITLE],
             // A live canton in the query belongs on its landing page (P5): noindex, canonical there.
-            ['/hochzeitslocations?guests=100&canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
-            ['/hochzeitslocations?setting[]=lake', self::CLEAN, true, 0, self::TITLE],
-            ['/hochzeitslocations?canton=zh&page=2', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/eventlokale?guests=100&canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/eventlokale?setting[]=lake', self::CLEAN, true, 0, self::TITLE],
+            ['/eventlokale?canton=zh&page=2', self::ZURICH, true, 0, self::ZURICH_TITLE],
         ];
 
         foreach ($shapes as [$url, $canonical, $noindex, $hreflang, $title]) {
             $this->assertShape($url, $canonical, $noindex, $hreflang, $title);
         }
 
-        $this->client->request('GET', '/hochzeitslocations?page=99');
+        $this->client->request('GET', '/eventlokale?page=99');
         self::assertResponseStatusCodeSame(404);
     }
 
@@ -96,28 +96,28 @@ final class ListingSeoTest extends WebTestCase
 
         // [url, canonical, noindex, hreflang links, title]
         $shapes = [
-            ['/hochzeitslocations/zuerich', self::ZURICH, false, 2, self::ZURICH_TITLE],
-            ['/hochzeitslocations/zuerich?page=1', self::ZURICH, false, 2, self::ZURICH_TITLE],
-            ['/hochzeitslocations/zuerich?utm_source=x', self::ZURICH, false, 2, self::ZURICH_TITLE],
-            ['/hochzeitslocations/zuerich?page=2', self::ZURICH.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
-            ['/hochzeitslocations/zuerich?guests=100', self::ZURICH, true, 0, self::ZURICH_TITLE],
-            ['/hochzeitslocations/zuerich?building[]=castle', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/eventlokale/zuerich', self::ZURICH, false, 2, self::ZURICH_TITLE],
+            ['/eventlokale/zuerich?page=1', self::ZURICH, false, 2, self::ZURICH_TITLE],
+            ['/eventlokale/zuerich?utm_source=x', self::ZURICH, false, 2, self::ZURICH_TITLE],
+            ['/eventlokale/zuerich?page=2', self::ZURICH.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
+            ['/eventlokale/zuerich?guests=100', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/eventlokale/zuerich?building[]=castle', self::ZURICH, true, 0, self::ZURICH_TITLE],
             // The path wins over the query (P3), so this is the clean canton page.
-            ['/hochzeitslocations/zuerich?canton=be', self::ZURICH, false, 2, self::ZURICH_TITLE],
-            ['/hochzeitslocations?canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/eventlokale/zuerich?canton=be', self::ZURICH, false, 2, self::ZURICH_TITLE],
+            ['/eventlokale?canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
 
-            ['/hochzeitslocations/zuerich/zuerich', self::TOWN, false, 2, self::TOWN_TITLE],
-            ['/hochzeitslocations/zuerich/zuerich?page=2', self::TOWN.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
-            ['/hochzeitslocations/zuerich/zuerich?guests=100', self::TOWN, true, 0, self::TOWN_TITLE],
-            ['/hochzeitslocations?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
-            ['/hochzeitslocations/zuerich?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
+            ['/eventlokale/zuerich/zuerich', self::TOWN, false, 2, self::TOWN_TITLE],
+            ['/eventlokale/zuerich/zuerich?page=2', self::TOWN.'?page=2', false, 2, 'Hochzeitslocations Zürich – Seite 2 | deine-eventlocation.ch'],
+            ['/eventlokale/zuerich/zuerich?guests=100', self::TOWN, true, 0, self::TOWN_TITLE],
+            ['/eventlokale?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
+            ['/eventlokale/zuerich?place='.$town.'&radius=0', self::TOWN, true, 0, self::TOWN_TITLE],
 
-            ['/hochzeitslocations/schloss', self::CASTLE, false, 2, self::CASTLE_TITLE],
-            ['/hochzeitslocations/schloss?page=2', self::CASTLE.'?page=2', false, 2, 'Hochzeit im Schloss – Seite 2 | deine-eventlocation.ch'],
-            ['/hochzeitslocations/schloss?guests=100', self::CASTLE, true, 0, self::CASTLE_TITLE],
-            ['/hochzeitslocations?building[]=castle', self::CASTLE, true, 0, self::CASTLE_TITLE],
+            ['/eventlokale/schloss', self::CASTLE, false, 2, self::CASTLE_TITLE],
+            ['/eventlokale/schloss?page=2', self::CASTLE.'?page=2', false, 2, 'Hochzeit im Schloss – Seite 2 | deine-eventlocation.ch'],
+            ['/eventlokale/schloss?guests=100', self::CASTLE, true, 0, self::CASTLE_TITLE],
+            ['/eventlokale?building[]=castle', self::CASTLE, true, 0, self::CASTLE_TITLE],
             // A canton outranks a building: the facet the canton page cannot hold stays in the query.
-            ['/hochzeitslocations/schloss?canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
+            ['/eventlokale/schloss?canton=zh', self::ZURICH, true, 0, self::ZURICH_TITLE],
         ];
 
         foreach ($shapes as [$url, $canonical, $noindex, $hreflang, $title]) {
@@ -129,14 +129,14 @@ final class ListingSeoTest extends WebTestCase
     {
         $this->withBuilding($this->venues(49), 'castle');
 
-        foreach (['/hochzeitslocations/zuerich', '/hochzeitslocations/zuerich/zuerich', '/hochzeitslocations/schloss'] as $url) {
+        foreach (['/eventlokale/zuerich', '/eventlokale/zuerich/zuerich', '/eventlokale/schloss'] as $url) {
             $items = $this->itemList($this->get($url));
             self::assertCount(48, $items, $url);
             self::assertSame(range(1, 48), array_column($items, 'position'), $url);
             self::assertSame([49], array_column($this->itemList($this->get($url.'?page=2')), 'position'), $url);
         }
 
-        foreach (['/hochzeitslocations/zuerich?guests=100', '/hochzeitslocations?canton=zh', '/hochzeitslocations/zuerich/zuerich?guests=100', '/hochzeitslocations/schloss?guests=100'] as $url) {
+        foreach (['/eventlokale/zuerich?guests=100', '/eventlokale?canton=zh', '/eventlokale/zuerich/zuerich?guests=100', '/eventlokale/schloss?guests=100'] as $url) {
             self::assertSame([], $this->blocks($this->get($url), 'ItemList'), $url);
         }
     }
@@ -145,7 +145,7 @@ final class ListingSeoTest extends WebTestCase
     {
         $this->withBuilding($this->venues(49), 'castle');
 
-        foreach (['/hochzeitslocations/zuerich', '/hochzeitslocations/zuerich/zuerich', '/hochzeitslocations/schloss'] as $url) {
+        foreach (['/eventlokale/zuerich', '/eventlokale/zuerich/zuerich', '/eventlokale/schloss'] as $url) {
             $first = $this->get($url);
             $second = $this->get($url.'?page=2');
 
@@ -164,8 +164,8 @@ final class ListingSeoTest extends WebTestCase
     {
         $this->venues(49);
 
-        $first = $this->get('/hochzeitslocations');
-        $second = $this->get('/hochzeitslocations?page=2');
+        $first = $this->get('/eventlokale');
+        $second = $this->get('/eventlokale?page=2');
 
         self::assertNotSame($first->filter('title')->text(), $second->filter('title')->text());
         self::assertNotSame(
@@ -184,7 +184,7 @@ final class ListingSeoTest extends WebTestCase
         $venue = $this->venues(1)[0];
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame('website', $crawler->filter('meta[property="og:type"]')->attr('content'));
         self::assertMatchesRegularExpression('#^http://localhost/media/\d+/[0-9a-f-]+-1280\.jpg$#', (string) $crawler->filter('meta[property="og:image"]')->attr('content'));
@@ -202,7 +202,7 @@ final class ListingSeoTest extends WebTestCase
     {
         $this->venues(1);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         self::assertSame('http://localhost/brand/og-default.png', $crawler->filter('meta[property="og:image"]')->attr('content'));
         self::assertSame('1200', $crawler->filter('meta[property="og:image:width"]')->attr('content'));
@@ -215,12 +215,12 @@ final class ListingSeoTest extends WebTestCase
     {
         $this->venues(49);
 
-        $first = $this->itemList($this->get('/hochzeitslocations'));
-        $second = $this->itemList($this->get('/hochzeitslocations?page=2'));
+        $first = $this->itemList($this->get('/eventlokale'));
+        $second = $this->itemList($this->get('/eventlokale?page=2'));
 
         self::assertCount(48, $first);
         self::assertSame(range(1, 48), array_column($first, 'position'));
-        self::assertStringStartsWith('http://localhost/hochzeitslocation/', $first[0]['url']);
+        self::assertStringStartsWith('http://localhost/eventlokal/', $first[0]['url']);
         self::assertNotSame('', $first[0]['name']);
         self::assertSame([49], array_column($second, 'position'));
     }
@@ -229,19 +229,19 @@ final class ListingSeoTest extends WebTestCase
     {
         $this->venues(1);
 
-        self::assertSame([], $this->blocks($this->get('/hochzeitslocations?canton=zh'), 'ItemList'));
+        self::assertSame([], $this->blocks($this->get('/eventlokale?canton=zh'), 'ItemList'));
     }
 
     public function test_an_empty_listing_has_no_item_list(): void
     {
-        self::assertSame([], $this->blocks($this->get('/hochzeitslocations'), 'ItemList'));
+        self::assertSame([], $this->blocks($this->get('/eventlokale'), 'ItemList'));
     }
 
     public function test_every_page_has_one_site_graph(): void
     {
         $this->venues(1);
 
-        $crawler = $this->get('/hochzeitslocations');
+        $crawler = $this->get('/eventlokale');
 
         $graphs = array_values(array_filter(
             $this->jsonLd($crawler),

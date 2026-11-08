@@ -47,7 +47,7 @@ final class NearbyController extends AbstractController
     }
 
     #[Route(
-        path: ['de' => '/hochzeitslocation-in-meiner-naehe'],
+        path: ['de' => '/eventlokal-in-meiner-naehe'],
         name: 'nearby',
         defaults: [ContentSecurityPolicy::ROUTE_ATTRIBUTE => ContentSecurityPolicy::GOOGLE_MAPS],
         methods: ['GET'],

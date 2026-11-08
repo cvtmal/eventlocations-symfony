@@ -32,8 +32,8 @@ use function Zenstruck\Foundry\Persistence\repository;
 /**
  * S11: the listing HTML stays ≤ 60 KB gzip in the worst case, a full page of 48 cards with
  * eight photos (three widths × three formats each), a 200-character summary, both tags (a price
- * level, all three across the page, and a 60-character ambience) and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 79
- * checkboxes (73 terms, 3 access, 3 price) and 21 options render. All 48 venues sit in
+ * level, all three across the page, and a 60-character ambience) and a badge, with the "weitere Filter" overlay full: one venue carries every value, so 86
+ * checkboxes (83 terms, 3 access) and 21 options render, and the "Anlass" overlay with all 17 event types (F5). All 48 venues sit in
  * different towns of one canton, so the same page also renders as that canton's landing page
  * (#17: breadcrumb, intro, canton chip, its JSON-LD), which must fit the same budget. Staff
  * texts (#26) are at their maximum: a 600-character listing intro and canton intro, the
@@ -98,10 +98,10 @@ final class ListingHtmlBudgetTest extends WebTestCase
 
             $this->storeMaximalBlocks($connection);
 
-            $crawler = $this->assertWithinBudget($client, '/hochzeitslocations', 'Listing');
+            $crawler = $this->assertWithinBudget($client, '/eventlokale', 'Listing');
             self::assertCount(1, $crawler->filter('.listing-hero__intro strong'), 'The listing intro renders.');
 
-            $crawler = $this->assertWithinBudget($client, '/hochzeitslocations/zuerich', 'Canton page');
+            $crawler = $this->assertWithinBudget($client, '/eventlokale/zuerich', 'Canton page');
             self::assertSelectorTextSame('.listing-hero__title', 'Hochzeitslocations im Kanton Zürich');
             self::assertCount(1, $crawler->filter('nav.breadcrumb'));
             self::assertCount(1, $crawler->filter('.listing-hero__intro strong'), 'The canton intro renders.');
@@ -118,8 +118,10 @@ final class ListingHtmlBudgetTest extends WebTestCase
         self::assertCount(ListingQuery::PER_PAGE, $crawler->filter('.card'));
         self::assertCount(ListingQuery::PER_PAGE * 8, $crawler->filter('.listing__results img'));
         self::assertCount(ListingQuery::PER_PAGE * 2, $crawler->filter('.card__tags .tag'));
-        self::assertCount(79, $crawler->filter('#filter-more input[type="checkbox"]'));
+        self::assertCount(86, $crawler->filter('#filter-more input[type="checkbox"]'));
         self::assertCount(21, $crawler->filter('#filter-more option'));
+        self::assertCount(17, $crawler->filter('#filter-event input[type="checkbox"]'));
+        self::assertCount(1, $crawler->filter('#filter-guests-input'));
 
         $html = (string) $client->getResponse()->getContent();
         // The web debug toolbar is injected in dev only; the test env renders the page alone.
@@ -153,7 +155,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
     /** Two paragraphs with bold text and a link, at most $length code points. */
     private function markdown(int $length, int $seed): string
     {
-        $head = '**'.$this->text(30, $seed).'** [Mehr](/hochzeitslocations) ';
+        $head = '**'.$this->text(30, $seed).'** [Mehr](/eventlokale) ';
         $tail = "\n\n".$this->text(40, $seed + 10);
 
         return $head.$this->text($length - mb_strlen($head) - mb_strlen($tail), $seed + 20).$tail;

@@ -19,8 +19,8 @@ final class IconSpriteTest extends TestCase
         'building-2', 'mountain-snow', 'sailboat', 'trees', 'waves',
         // Highlights
         'binoculars', 'coins', 'landmark', 'music', 'route', 'smile', 'sofa', 'sparkles', 'utensils',
-        // Home categories
-        'beer', 'castle', 'grape', 'hotel', 'warehouse',
+        // Home event tiles (F5)
+        'briefcase', 'cake', 'gift', 'presentation', 'wine',
     ];
 
     private const array PRESENTATION_ATTRIBUTES = ['stroke', 'fill', 'stroke-width'];

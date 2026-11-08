@@ -18,7 +18,7 @@ $body = json_decode($argv[2] ?? '', true, flags: \JSON_THROW_ON_ERROR);
 assert(is_array($body));
 
 $kernel = new Kernel('test', true);
-$request = Request::create('/hochzeitslocation/'.$slug.'/anfrage', 'POST', $body, server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+$request = Request::create('/eventlokal/'.$slug.'/anfrage', 'POST', $body, server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 $response = $kernel->handle($request);
 fwrite(\STDOUT, (string) $response->getStatusCode());
 $kernel->terminate($request, $response);

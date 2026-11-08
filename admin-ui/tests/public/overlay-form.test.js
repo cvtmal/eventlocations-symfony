@@ -8,14 +8,14 @@ const SCRIPT = readFileSync(`${import.meta.dirname}/../../../assets/js/overlay-f
 function page() {
     document.body.innerHTML = `
         <div popover>
-            <form data-overlay-form action="/hochzeitslocations" method="get">
+            <form data-overlay-form action="/eventlokale" method="get">
                 <input type="hidden" name="canton" value="zh">
                 <input type="radio" name="guests" value="50">
                 <input type="radio" name="guests" value="150" checked>
                 <input type="checkbox" name="setting[]" value="lake" checked>
                 <input type="text" name="q" value="See">
             </form>
-            <a href="/hochzeitslocations?canton=zh" data-overlay-clear>Filter löschen</a>
+            <a href="/eventlokale?canton=zh" data-overlay-clear>Filter löschen</a>
         </div>`;
     new Function(SCRIPT)();
 

@@ -5,31 +5,29 @@ declare(strict_types=1);
 namespace App\Search\ReadModel;
 
 use App\Geo\ValueObject\Canton;
-use App\Search\ValueObject\GuestBand;
 use App\Venues\ValueObject\Access;
-use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * The listing's filter state and its URL codec (S4). This class owns the query parameter
- * names; filter UIs only render it (hotspot owned by #6).
+ * names; filter UIs only render it (hotspot owned by F5 `filter-event`, which restructured it
+ * once for the event search: event types, a guest number, catering; the wedding filters gone).
  *
  * Grammar (anything else is dropped silently, never a 4xx/5xx):
  *
  * - `canton`: one canton code (`zh`, case-insensitive).
  * - `place` + `radius`: a town UUID or a 4-digit ZIP; radius 0–50 km, default 5, kept only
  *   with a place (0 = the town or ZIP itself).
- * - `guests`: a guest count 1–50000, bucketed into a GuestBand (≤ 50, ≤ 100, ≤ 150, more);
- *   canonical 50|100|150|151, so a legacy count keeps working.
+ * - `guests`: the number of guests 1–50000; a venue matches when it holds that many
+ *   (capacity_max) and states no higher minimum (capacity_min). The only capacity criterion (D4).
  * - `q`: name search, trimmed, whitespace collapsed, at most 100 characters, needs a letter
  *   or digit.
- * - `setting[]`, `building[]` (OR inside the group), `infra[]`, `furniture[]`, `tech[]`,
- *   `surroundings[]`, `amenity[]` (AND inside the group): known codes of the matching
- *   TermGroup; `amenity[]` only those of FILTER_CODES.
+ * - `event[]` (suitable_for), `setting[]`, `building[]` (OR inside the group), `catering[]`,
+ *   `infra[]`, `furniture[]`, `tech[]`, `surroundings[]`, `amenity[]` (AND inside the group):
+ *   known codes of the matching TermGroup; `amenity[]` only those of FILTER_CODES.
  * - `access[]`: Access values (AND).
- * - `price[]`: PriceLevel values (OR, a venue has one).
  * - `rooms` 1–6, `area` one of AREAS, `height` one of HEIGHTS (all "at least").
  * - `page`: 1–1000, default 1.
  *
@@ -41,21 +39,23 @@ final readonly class SearchCriteria
 {
     /** Query parameter → term group, in toQuery() order. */
     public const PARAMS = [
+        'event' => TermGroup::SuitableFor,
         'setting' => TermGroup::Setting,
         'building' => TermGroup::Building,
         'infra' => TermGroup::Infrastructure,
         'furniture' => TermGroup::Furniture,
         'tech' => TermGroup::Technology,
+        'catering' => TermGroup::Catering,
         'surroundings' => TermGroup::Surroundings,
         'amenity' => TermGroup::Amenity,
     ];
     /**
-     * TermGroup value → the only codes that filter (FI-7). A group that is not listed filters on
+     * TermGroup value → the only codes that filter (F5: the amenities an event asks for). A group that is not listed filters on
      * all its codes. Here and not in a template, because a code the URL accepts but no control
      * shows would narrow the results invisibly.
      */
     public const FILTER_CODES = [
-        'amenity' => ['overnight', 'dance_floor', 'lake_view', 'panorama', 'outdoor_dining', 'wheelchair_access'],
+        'amenity' => ['parking', 'public_transport', 'wheelchair_access', 'overnight'],
     ];
     public const DEFAULT_RADIUS = 5;
     public const MAX_RADIUS = 50;
@@ -70,17 +70,15 @@ final readonly class SearchCriteria
     /**
      * @param array<string, list<string>> $terms  TermGroup value → sorted, deduplicated codes; only non-empty groups
      * @param list<Access>                $access sorted by value, deduplicated
-     * @param list<PriceLevel>            $prices sorted by value, deduplicated
      */
     private function __construct(
         public ?Canton $canton,
         public ?string $place,
         public ?int $radius,
-        public ?GuestBand $guests,
+        public ?int $guests,
         public ?string $q,
         public array $terms,
         public array $access,
-        public array $prices,
         public ?int $rooms,
         public ?int $area,
         public ?float $height,
@@ -90,7 +88,7 @@ final readonly class SearchCriteria
 
     public static function none(): self
     {
-        return new self(null, null, null, null, null, [], [], [], null, null, null, 1);
+        return new self(null, null, null, null, null, [], [], null, null, null, 1);
     }
 
     /**
@@ -137,27 +135,16 @@ final readonly class SearchCriteria
         }
         ksort($access, \SORT_STRING);
 
-        $prices = [];
-        foreach (self::strings($raw['price'] ?? null) as $value) {
-            $case = PriceLevel::tryFrom($value);
-            if (null !== $case) {
-                $prices[$case->value] = $case;
-            }
-        }
-        ksort($prices, \SORT_STRING);
-
         $area = self::int($raw['area'] ?? null, 1, max(self::AREAS));
-        $guests = self::int($raw['guests'] ?? null, 1, self::MAX_GUESTS);
 
         return new self(
             \is_string($raw['canton'] ?? null) ? Canton::tryFrom(strtolower($raw['canton'])) : null,
             $place,
             $radius,
-            null === $guests ? null : GuestBand::fromGuests($guests),
+            self::int($raw['guests'] ?? null, 1, self::MAX_GUESTS),
             self::q($raw['q'] ?? null),
             $terms,
             array_values($access),
-            array_values($prices),
             self::int($raw['rooms'] ?? null, 1, self::MAX_ROOMS),
             null !== $area && \in_array($area, self::AREAS, true) ? $area : null,
             self::height($raw['height'] ?? null),
@@ -169,7 +156,7 @@ final readonly class SearchCriteria
     {
         return new self(
             $this->canton, $this->place, $this->radius, $this->guests, $this->q, $this->terms, $this->access,
-            $this->prices, $this->rooms, $this->area, $this->height, max(1, min(self::MAX_PAGE, $page)),
+            $this->rooms, $this->area, $this->height, max(1, min(self::MAX_PAGE, $page)),
         );
     }
 
@@ -177,7 +164,7 @@ final readonly class SearchCriteria
     {
         return new self(
             $canton, $this->place, $this->radius, $this->guests, $this->q, $this->terms, $this->access,
-            $this->prices, $this->rooms, $this->area, $this->height, $this->page,
+            $this->rooms, $this->area, $this->height, $this->page,
         );
     }
 
@@ -210,7 +197,7 @@ final readonly class SearchCriteria
             }
         }
         if (null !== $this->guests) {
-            $query['guests'] = (string) $this->guests->value;
+            $query['guests'] = (string) $this->guests;
         }
         if (null !== $this->q) {
             $query['q'] = $this->q;
@@ -222,9 +209,6 @@ final readonly class SearchCriteria
             if ('setting' === $param && [] !== $this->access) {
                 $query['access'] = array_map(static fn (Access $access): string => $access->value, $this->access);
             }
-        }
-        if ([] !== $this->prices) {
-            $query['price'] = array_map(static fn (PriceLevel $price): string => $price->value, $this->prices);
         }
         if (null !== $this->rooms) {
             $query['rooms'] = (string) $this->rooms;

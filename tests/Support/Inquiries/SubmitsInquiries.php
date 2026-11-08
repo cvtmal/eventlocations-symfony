@@ -49,7 +49,7 @@ trait SubmitsInquiries
      */
     private function post(string $slug, array $fields, array $server = []): Crawler
     {
-        return $this->client->request('POST', '/hochzeitslocation/'.$slug.'/anfrage', $fields, [], $server + ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+        return $this->client->request('POST', '/eventlokal/'.$slug.'/anfrage', $fields, [], $server + ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
     }
 
     /**

@@ -1,9 +1,9 @@
 {#
     One section of toggle chips in the "weitere Filter" overlay, with the hiding rule inside: filter_terms() returns the codes
     that have data or are active, and without any the section disappears with its legend. Include with `only`: param (query
-    name), group (TermGroup), criteria (SearchCriteria), collapse (default false). With collapse and more than 11 codes,
+    name), group (TermGroup), criteria (SearchCriteria), collapse (default false), legend (translated; default the group's label). With collapse and more than 11 codes,
     the first 11 in vocabulary order stay flat and the rest go into <details>, open when the group is active.
-    `amenity` is not rendered here: it sits beside the price chips in _more_event.html.twig, which has its own chip macro.
+    Also renders the "Anlass" overlay's event types (_event_form.html.twig, param `event`).
 #}
 {%- macro chip(param, group, code, checked) -%}
     <li class="filter-more__chip">
@@ -17,7 +17,7 @@
     {%- set active = criteria.termCodes(group) -%}
     {%- set split = collapse|default(false) and terms|length > 11 -%}
 <fieldset class="filter-more__section">
-    <legend class="filter-more__title">{{ ('term_group.' ~ group.value)|trans({}, 'venues') }}</legend>
+    <legend class="filter-more__title">{{ legend|default(('term_group.' ~ group.value)|trans({}, 'venues')) }}</legend>
     <ul class="filter-more__chips">
         {%- for code in split ? terms|slice(0, 11) : terms %}
         {{ more.chip(param, group, code, code in active) }}

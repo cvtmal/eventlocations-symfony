@@ -172,6 +172,13 @@
             grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
+        // F5: with catering and amenity, up to six sections; three columns from lg once there are five or more.
+        @include bp.up(lg) {
+            &:has(> :nth-child(5)) {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
         .filter-more__section {
             margin-top: 0;
         }

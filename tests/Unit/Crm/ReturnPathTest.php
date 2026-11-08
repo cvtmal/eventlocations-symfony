@@ -43,7 +43,7 @@ final class ReturnPathTest extends TestCase
         yield 'protocol relative' => ['//evil.example/admin/'];
         yield 'protocol relative inside' => ['/admin//evil.example'];
         yield 'a backslash' => ['/admin/\\evil.example'];
-        yield 'a public page' => ['/hochzeitslocations'];
+        yield 'a public page' => ['/eventlokale'];
         yield 'only a prefix' => ['/administrator/x'];
         yield 'a line break' => ["/admin/x\r\nSet-Cookie: a=b"];
         yield 'invalid UTF-8' => ["/admin/\xC3\x28"];

@@ -27,7 +27,7 @@ final class NearbyPinsTest extends TestCase
         self::assertSame(8.6696, $pins[0]['o']);
         self::assertSame(['Erste', 'Zweite'], array_column($pins[0]['v'], 'n'));
         self::assertSame(['Dritte'], array_column($pins[1]['v'], 'n'));
-        self::assertSame('/hochzeitslocation/venue-1', $pins[0]['v'][0]['u']);
+        self::assertSame('/eventlokal/venue-1', $pins[0]['v'][0]['u']);
         self::assertSame('Stäfa', $pins[0]['v'][0]['p']);
         self::assertSame('4 km', $pins[0]['v'][0]['k']);
         self::assertSame('13 km', $pins[1]['v'][0]['k']);
@@ -80,7 +80,7 @@ final class NearbyPinsTest extends TestCase
     {
         $urls = self::createStub(UrlGeneratorInterface::class);
         $urls->method('generate')->willReturnCallback(
-            static fn (string $name, array $parameters): string => '/hochzeitslocation/'.$parameters['slug'],
+            static fn (string $name, array $parameters): string => '/eventlokal/'.$parameters['slug'],
         );
         $translator = self::createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(

@@ -220,7 +220,7 @@ final class VenueMapTest extends WebTestCase
     private function html(string $slug): string
     {
         \assert(null !== $this->client);
-        $this->client->request('GET', '/hochzeitslocation/'.$slug);
+        $this->client->request('GET', '/eventlokal/'.$slug);
         self::assertResponseIsSuccessful();
 
         return (string) $this->client->getResponse()->getContent();

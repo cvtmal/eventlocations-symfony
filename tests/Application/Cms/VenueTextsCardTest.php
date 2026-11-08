@@ -32,7 +32,7 @@ final class VenueTextsCardTest extends WebTestCase
 
         self::assertResponseRedirects('/admin/locations/'.$venue->number().'#texte');
         self::assertSame("Erster Absatz im Garten.\n\nZweiter Absatz am Teich.", $this->connection->fetchOne("SELECT description FROM venue_translations WHERE venue_id = ? AND locale = 'de'", [$venue->id()]));
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertSame(
             ['Erster Absatz im Garten.', 'Zweiter Absatz am Teich.'],
             $crawler->filter('p')->reduce(static fn ($p): bool => str_contains($p->text(), 'Absatz'))->each(static fn ($p): string => $p->text()),
