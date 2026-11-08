@@ -6,14 +6,16 @@ namespace App\Venues;
 
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\ValueObject\LastMinuteLimits;
+use App\Venues\ValueObject\TermDay;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
 
 /**
- * The write side of the entitlements (F12): a handler asks here before it adds a photo, a room, a document or a video (G15), or sets
- * the event types, and gets a `VenueRuleViolation` with a message that names the plan and the limit. The read side
- * cuts the same limits when a page is rendered (a venue that fell back to a smaller plan keeps its rows, hidden), so a
- * limit is never a reason to delete anything.
+ * The write side of the entitlements (F12): a handler asks here before it adds a photo, a room, a document, a video
+ * (G15) or an offer «Kurzfristig frei» (G14), or sets the event types, and gets a `VenueRuleViolation` with a message
+ * that names the plan and the limit. The read side cuts the same limits when a page is rendered (a venue that fell
+ * back to a smaller plan keeps its rows, hidden), so a limit is never a reason to delete anything.
  *
  * The count is the venue's total: photos of the gallery and of its rooms together. Limits come from the
  * `EntitlementResolver` only. The import does not ask here; it writes what staff put in a folder.
@@ -94,6 +96,29 @@ final class TierLimits
         \assert(null !== $entitlements->eventTypesMax);
 
         throw VenueRuleViolation::tooManyEventTypes($entitlements->eventTypesMax, $entitlements->tierName, $group);
+    }
+
+    /**
+     * An offer «Kurzfristig frei» needs a plan that allows it (G14, D15: Pro), and the venue may hold at most
+     * `LastMinuteLimits::MAX_LIVE` live offers (last day today or later; an expired one waits for the nightly job and
+     * no longer counts).
+     *
+     * @throws VenueRuleViolation
+     */
+    public function assertLastMinuteOfferFits(Venue $venue): void
+    {
+        $now = $this->clock->now();
+        $entitlements = $this->entitlements->forVenue($venue->id(), $now);
+        if (!$entitlements->lastMinuteAllowed) {
+            throw VenueRuleViolation::lastMinuteNotInPlan($entitlements->tierName);
+        }
+        $live = (int) $this->connection->fetchOne(
+            'SELECT count(*) FROM last_minute_offers WHERE venue_id = :id AND ends_on >= :today',
+            ['id' => $venue->id(), 'today' => TermDay::sql($now)],
+        );
+        if ($live >= LastMinuteLimits::MAX_LIVE) {
+            throw VenueRuleViolation::tooManyLastMinuteOffers(LastMinuteLimits::MAX_LIVE);
+        }
     }
 
     private function count(string $table, Venue $venue): int

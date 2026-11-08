@@ -60,12 +60,12 @@ final class BaseLayoutTest extends WebTestCase
         self::assertSelectorExists('.site-header__favorites [data-merkliste-count][hidden]');
     }
 
-    public function test_the_menu_has_its_five_links_and_a_second_badge_but_no_second_merkliste_link(): void
+    public function test_the_menu_has_its_six_links_and_a_second_badge_but_no_second_merkliste_link(): void
     {
         $crawler = $this->home();
 
         self::assertSame(
-            ['/', '/eventlokale', '/#regionen', '/merkliste', '/eventlokal-in-meiner-naehe'],
+            ['/', '/eventlokale', '/#regionen', '/merkliste', '/eventlokal-in-meiner-naehe', '/kurzfristig-frei'],
             $crawler->filter('.main-menu__list a')->each(static fn (Crawler $a): ?string => $a->attr('href')),
         );
         self::assertSelectorExists('.main-menu__list [data-merkliste-count][hidden]');

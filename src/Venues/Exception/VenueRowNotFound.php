@@ -41,6 +41,11 @@ final class VenueRowNotFound extends DomainException
         return new self($venueNumber, 'video', $videoId);
     }
 
+    public static function lastMinuteOffer(int $venueNumber, string $offerId): self
+    {
+        return new self($venueNumber, 'offer', $offerId);
+    }
+
     public static function preview(int $venueNumber, string $previewId): self
     {
         return new self($venueNumber, 'preview', $previewId);

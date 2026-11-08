@@ -7,9 +7,11 @@ namespace App\Search\ReadModel;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Venues\EntitlementResolver;
+use App\Venues\LastMinuteOfferPolicy;
 use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Entitlements;
 use App\Venues\ValueObject\PriceLevel;
+use App\Venues\ValueObject\TermDay;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\VenueCapacity;
@@ -39,13 +41,15 @@ final class ListingQuery
      * room range with a maximum, so a venue listed for N guests shows a range holding N, and the
      * detail page, its JSON-LD and the similar-venues band show the same. The event type (F5b,
      * for the photo placeholder) is the venue's first suitable_for code in vocabulary order,
-     * NULL without one.
+     * NULL without one. `has_last_minute` (G14) is the date half of `LastMinuteOfferPolicy`, so every statement
+     * that selects these columns binds `lm_today` (`lastMinuteParams()`); card() adds the plan half.
      */
     private static function cardColumns(): string
     {
         $capacityMin = VenueCapacity::minSql('v');
         $capacityMax = VenueCapacity::maxSql('v');
         $suitableFor = TermGroup::SuitableFor->value;
+        $lastMinute = LastMinuteOfferPolicy::dateSql('lmo', 'lm_today');
 
         return <<<SQL
             v.id, v.number, v.name,
@@ -58,7 +62,8 @@ final class ListingQuery
                     ORDER BY tt.primary_position NULLS LAST, tt.position
                     LIMIT 1
                 ) AS event_type,
-                tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary, v.price_level, t.ambience
+                tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary, v.price_level, t.ambience,
+                EXISTS (SELECT 1 FROM last_minute_offers lmo WHERE lmo.venue_id = v.id AND {$lastMinute}) AS has_last_minute
             SQL;
     }
 
@@ -121,7 +126,7 @@ final class ListingQuery
                 {$translation}
                 WHERE {$filter->where} AND v.number IN (:numbers)
                 SQL,
-            $filter->params + $this->translationJoin->parameters($locale) + ['numbers' => $numbers],
+            $filter->params + $this->translationJoin->parameters($locale) + $this->lastMinuteParams() + ['numbers' => $numbers],
             $filter->types + ['numbers' => ArrayParameterType::INTEGER],
         );
 
@@ -176,7 +181,7 @@ final class ListingQuery
 
         return new SqlStatement(
             $sql,
-            $filter->params + $this->translationJoin->parameters($locale) + [
+            $filter->params + $this->translationJoin->parameters($locale) + $this->lastMinuteParams() + [
                 'seed' => $this->seed(),
                 'limit' => $limit,
                 'offset' => ($criteria->page - 1) * self::PER_PAGE,
@@ -198,6 +203,14 @@ final class ListingQuery
             $filter->params,
             $filter->types,
         );
+    }
+
+    /**
+     * @return array{lm_today: string}
+     */
+    private function lastMinuteParams(): array
+    {
+        return ['lm_today' => TermDay::sql($this->clock->now())];
     }
 
     private function seed(): string
@@ -301,6 +314,7 @@ final class ListingQuery
             $row['ambience'],
             \array_slice($photos[$row['id']] ?? [], 0, $entitlements[$row['id']]->photosMax),
             $row['event_type'],
+            (bool) $row['has_last_minute'] && $entitlements[$row['id']]->lastMinuteAllowed,
         );
     }
 }

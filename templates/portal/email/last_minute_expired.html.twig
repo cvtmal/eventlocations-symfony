@@ -1,0 +1,12 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'last_minute.mail.expired.preheader'|trans({venue: venueName}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('last_minute.mail.expired.greeting'|trans({name: firstName}, 'portal')) }}
+{% set dates = startsOn == endsOn ? startsOn|swiss_date : 'last_minute.period'|trans({start: startsOn|swiss_date, end: endsOn|swiss_date}, 'venues') %}
+{{ blocks.p('last_minute.mail.expired.intro'|trans({venue: venueName, dates: dates}, 'portal')) }}
+{{ blocks.p('last_minute.mail.expired.next'|trans({}, 'portal')) }}
+{{ blocks.button('last_minute.mail.expired.button'|trans({}, 'portal'), tabUrl) }}
+{% endblock %}

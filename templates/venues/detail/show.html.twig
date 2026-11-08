@@ -44,6 +44,7 @@
             {{ include('venues/detail/_head.html.twig', {venue: venue, unconfirmed: unconfirmed|default(false)}, with_context = false) }}
             {% block google_rating %}{{ venue_google_rating(venue) }}{% endblock %}
             {% if venue.hasFacts() %}{{ include('venues/detail/_facts.html.twig', {venue: venue}, with_context = false) }}{% endif %}
+            {% if venue.hasLastMinuteOffers() %}{{ include('venues/detail/_last_minute.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.event.hasAny() %}{{ include('venues/detail/_event.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.rooms is not empty %}{{ include('venues/detail/_rooms.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.videos is not empty %}{{ include('venues/detail/_videos.html.twig', {venue: venue}, with_context = false) }}{% endif %}

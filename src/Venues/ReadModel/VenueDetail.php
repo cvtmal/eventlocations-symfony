@@ -21,13 +21,14 @@ use App\Venues\ValueObject\VenuePlace;
 final readonly class VenueDetail
 {
     /**
-     * @param list<DetailFactGroup> $factGroups in DP-7 order, empty groups dropped
-     * @param list<DetailDistance>  $distances  station, highway, airport (those with a distance)
-     * @param list<DetailDocument>  $documents  in position order
-     * @param list<DetailVideo>     $videos     in position order
-     * @param list<DetailRoom>      $rooms      in position order
-     * @param list<Picture>         $photos     venue-level photos in position order
-     * @param ?string               $instagram  `https://www.instagram.com/<handle>`, null when the stored value names no profile (`InstagramProfile`)
+     * @param list<DetailFactGroup>     $factGroups       in DP-7 order, empty groups dropped
+     * @param list<DetailDistance>      $distances        station, highway, airport (those with a distance)
+     * @param list<DetailDocument>      $documents        in position order
+     * @param list<DetailVideo>         $videos           in position order
+     * @param list<DetailRoom>          $rooms            in position order
+     * @param list<Picture>             $photos           venue-level photos in position order
+     * @param ?string                   $instagram        `https://www.instagram.com/<handle>`, null when the stored value names no profile (`InstagramProfile`)
+     * @param list<LastMinuteOfferView> $lastMinuteOffers G14: the live offers «Kurzfristig frei», soonest first; empty unless the plan allows them
      */
     public function __construct(
         public string $id,
@@ -66,7 +67,13 @@ final readonly class VenueDetail
         public bool $googleRatingHidden,
         /** G12: whether the entry passes `VenueIndexGate` (facts checked, description written); else the page is noindex. */
         public bool $indexable,
+        public array $lastMinuteOffers = [],
     ) {
+    }
+
+    public function hasLastMinuteOffers(): bool
+    {
+        return [] !== $this->lastMinuteOffers;
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Search\LandingPaths;
 use App\Search\ReadModel\LandingFooter;
 use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\LandingQualityGate;
+use App\Search\ReadModel\LastMinutePageQuery;
 use App\Seo\Extension\LandingPageCatalogue;
 use App\Seo\ListingMeta;
 use App\Seo\PagesSitemap;
@@ -68,7 +69,7 @@ final class LandingQualityGateTest extends KernelTestCase
         $pages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate(7, self::LAUNCH_CANTONS), 5);
         $paths = new LandingPaths($pages, $urls);
 
-        $sitemap = new PagesSitemap($urls, $this->service(VenueSitemapQuery::class), $pages, $paths);
+        $sitemap = new PagesSitemap($urls, $this->service(VenueSitemapQuery::class), $pages, $paths, $this->service(LastMinutePageQuery::class));
         $locs = array_map(static fn (SitemapUrl $url): string => (string) parse_url($url->loc, \PHP_URL_PATH), $sitemap->urls());
         self::assertContains('/eventlokale/bern', $locs);
         self::assertNotContains('/eventlokale/zuerich', $locs);

@@ -56,7 +56,7 @@ final class LocationStatsControllerTest extends WebTestCase
 
         $crawler = $this->client->request('GET', $this->url($venue));
 
-        self::assertSame(['Angaben', 'Fotos', 'Räume', 'Dokumente', 'Videos', 'Statistik'], $crawler->filter('nav.tabs--record a')->each(static fn (Crawler $tab): string => $tab->text()));
+        self::assertSame(['Angaben', 'Fotos', 'Räume', 'Dokumente', 'Videos', 'Statistik', 'Kurzfristig frei'], $crawler->filter('nav.tabs--record a')->each(static fn (Crawler $tab): string => $tab->text()));
         self::assertSame('Statistik', $crawler->filter('nav.tabs--record .tab--active')->text());
         self::assertCount(1, $crawler->filter('#location-offline form[name="offline"]'));
     }

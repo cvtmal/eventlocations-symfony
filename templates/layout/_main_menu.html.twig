@@ -4,3 +4,4 @@
 <li><a href="{{ path('home') ~ '#regionen' }}">{{ 'layout.header.regions'|trans }}</a></li>
 <li><a href="{{ path('merkliste') }}">{{ 'layout.header.favorites'|trans }}<span class="count-badge count-badge--menu" data-merkliste-count hidden></span></a></li>
 <li><a href="{{ path('nearby') }}"{% if current_route == 'nearby' %} aria-current="page"{% endif %}>{{ 'nearby.nav'|trans({}, 'search') }}</a></li>
+<li><a href="{{ path('last_minute') }}"{% if current_route == 'last_minute' %} aria-current="page"{% endif %}>{{ 'last_minute.nav'|trans({}, 'search') }}</a></li>

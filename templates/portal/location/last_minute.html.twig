@@ -1,0 +1,79 @@
+{#
+    The manager's tab «Kurzfristig frei» (G14, D55). Context from `LocationLastMinuteController`: venue, submission,
+    offline_form, plan (for `_layout`), offers (list<Venues\ReadModel\LastMinuteOfferView>, the live ones, soonest
+    first), offer_form, max_live, csrf_id. With Pro: the list with «Beenden» and the form; below Pro: the upsell (the
+    plan card in the aside carries «Pro anfragen») and any offers it still holds, marked hidden.
+#}
+{% extends 'portal/location/_layout.html.twig' %}
+
+{% form_theme offer_form 'admin/form/theme.html.twig' %}
+
+{% block location_main %}
+    {% embed 'admin/components/_card.html.twig' with {title: 'last_minute.title'|trans({}, 'portal'), id: 'last-minute', plan: plan, max_live: max_live, horizon_days: horizon_days} only %}
+        {% block body %}
+            <p>{{ 'last_minute.intro'|trans({}, 'portal') }}</p>
+            {% if plan.lastMinuteAllowed %}
+                <p class="muted">{{ 'last_minute.rules'|trans({max: max_live, days: horizon_days}, 'portal') }}</p>
+            {% else %}
+                <p><strong>{{ 'last_minute.upsell'|trans({}, 'portal') }}</strong></p>
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'admin/components/_card.html.twig' with {title: 'last_minute.current'|trans({}, 'portal'), id: 'last-minute-current', offers: offers, venue: venue, csrf_id: csrf_id} only %}
+        {% block body %}
+            {% if offers is empty %}
+                <p class="muted">{{ 'last_minute.none'|trans({}, 'portal') }}</p>
+            {% else %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ 'last_minute.dates'|trans({}, 'venues') }}</th>
+                            <th scope="col">{{ 'last_minute.room'|trans({}, 'venues') }}</th>
+                            <th scope="col">{{ 'last_minute.price'|trans({}, 'venues') }}</th>
+                            <th scope="col"><span class="visually-hidden">{{ 'last_minute.end'|trans({}, 'portal') }}</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for offer in offers %}
+                            <tr>
+                                <td>
+                                    {{ offer.isOneDay() ? offer.startsOn|swiss_date : 'last_minute.period'|trans({start: offer.startsOn|swiss_date, end: offer.endsOn|swiss_date}, 'venues') }}
+                                    {% if not offer.visible %}
+                                        {{ include('admin/components/_pill.html.twig', {label: 'last_minute.hidden'|trans({}, 'portal'), tone: 'grey'}, with_context = false) }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ offer.roomName ?? 'last_minute.whole_location'|trans({}, 'venues') }}</td>
+                                <td>
+                                    {{ offer.priceText }}
+                                    {% if offer.minGuests is not null %}<br><span class="muted">{{ 'last_minute.min_guests'|trans({count: offer.minGuests}, 'venues') }}</span>{% endif %}
+                                    {% if offer.eventTypes is not empty %}<br><span class="muted">{% for term in offer.eventTypes %}{{ term|trans }}{{ not loop.last ? ', ' }}{% endfor %}</span>{% endif %}
+                                    {% if offer.terms is not null %}<br><span class="muted">{{ offer.terms }}</span>{% endif %}
+                                </td>
+                                <td>
+                                    <form method="post" action="{{ path('portal_location_last_minute_end', {number: venue.number, id: offer.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+                                        <button class="btn btn--sm" type="submit" aria-label="{{ 'last_minute.end_label'|trans({date: offer.startsOn|swiss_date}, 'portal') }}">{{ 'last_minute.end'|trans({}, 'portal') }}</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+
+    {% if plan.lastMinuteAllowed or offer_form.vars.submitted %}
+        {% embed 'admin/components/_card.html.twig' with {title: 'last_minute.new'|trans({}, 'portal'), id: 'last-minute-new', offer_form: offer_form} only %}
+            {% block body %}
+                {{ form_start(offer_form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+                    {{ form_errors(offer_form) }}
+                    {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                    {{ form_rest(offer_form) }}
+                    <div><button class="btn btn--primary" type="submit">{{ 'last_minute.submit'|trans({}, 'portal') }}</button></div>
+                {{ form_end(offer_form) }}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+{% endblock %}

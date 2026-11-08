@@ -64,6 +64,7 @@ editor:
         documents: Dokumente
         videos: Videos
         stats: Statistik
+        last_minute: Kurzfristig frei
     offline:
         action: Offline nehmen
         title: Location offline nehmen?
@@ -419,6 +420,8 @@ plan:
         contact_hidden: 'Telefon und Website: verborgen'
         event_types: 'Anlassarten: bis zu {max}'
         event_types_all: 'Anlassarten: alle'
+        last_minute_yes: 'Kurzfristig frei: ja'
+        last_minute_no: 'Kurzfristig frei: nein'
     term:
         paid_until: 'Bezahlt bis {end, date, ::dMMMMy}'
         free_until: 'Kostenlos bis {end, date, ::dMMMMy}'
@@ -539,3 +542,40 @@ claim:
             label: Dein Code
             validity: Der Code gilt 30 Minuten und funktioniert nur einmal.
             not_you: Falls du nichts angefordert hast, kannst du diese E-Mail ignorieren.
+# G14 «Kurzfristig frei» (D55): the /konto tab, its form and the mail after an offer's last day.
+last_minute:
+    title: Kurzfristig frei
+    intro: 'Hast du kurzfristig ein Datum frei? Erfasse es hier. Es erscheint auf deiner Seite, mit dem Hinweis «Kurzfristig frei» in der Suche und auf der Seite «Kurzfristig frei», bis zu seinem letzten Tag.'
+    rules: 'Höchstens {max, plural, one {# Angebot} other {# Angebote}} gleichzeitig, ab heute bis {days} Tage im Voraus. Ändern geht nicht: Beende ein Angebot und erfasse ein neues.'
+    upsell: Kurzfristig-frei-Angebote gibt es mit Pro.
+    current: Deine Angebote
+    none: Du hast gerade kein Angebot «Kurzfristig frei».
+    hidden: 'Verborgen: nur mit Pro sichtbar'
+    end: Beenden
+    end_label: 'Angebot vom {date} beenden'
+    new: Neues Angebot
+    submit: Veröffentlichen
+    form:
+        starts_on: Erstes Datum
+        ends_on: Letztes Datum
+        ends_on_help: 'Leer lassen für einen einzelnen Tag. Ein Zeitraum ist höchstens {days} Tage lang.'
+        room: Raum
+        whole_location: Ganze Location
+        event_types: Geeignet für
+        price_text: Preis oder Paket
+        price_text_help: 'Zum Beispiel: Seminarpauschale ab CHF 89 pro Person'
+        min_guests: Mindestens Personen
+        terms: Bedingungen
+        terms_help: 'Zum Beispiel: Nur werktags, Anfrage bis 3 Tage vorher.'
+    flash:
+        published: Dein Angebot «Kurzfristig frei» ist online.
+        ended: Das Angebot ist beendet.
+        failed: Das hat nicht geklappt. Bitte versuche es noch einmal.
+    mail:
+        expired:
+            subject: 'Dein Angebot «Kurzfristig frei» für {venue} ist abgelaufen'
+            preheader: 'Hast du wieder ein Datum frei? Erfasse ein neues Angebot für {venue}.'
+            greeting: 'Hallo {name}'
+            intro: 'Dein Angebot «Kurzfristig frei» für {venue} vom {dates} ist abgelaufen und nicht mehr zu sehen.'
+            next: 'Hast du wieder kurzfristig ein Datum frei? Erfasse in deinem Konto ein neues Angebot.'
+            button: Neues Angebot erfassen

@@ -28,9 +28,11 @@ use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\CheckVenueFacts;
 use App\Venues\Command\DecideModerationCase;
 use App\Venues\Command\DescribeVenuePhoto;
+use App\Venues\Command\EndLastMinuteOffer;
 use App\Venues\Command\GrantPhotoRights;
 use App\Venues\Command\IssueVenuePreview;
 use App\Venues\Command\MoveVenuePhotoToRoom;
+use App\Venues\Command\PublishLastMinuteOffer;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordSubscriptionPayment;
 use App\Venues\Command\RecordVenueCreated;
@@ -48,6 +50,7 @@ use App\Venues\Command\RevokeVenuePreview;
 use App\Venues\Command\TakeEntryOffline;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\Command\VoidSubscription;
+use App\Venues\Exception\LastMinuteOfferRefused;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\ModerationDecision;
@@ -77,6 +80,9 @@ final class CmsTranslationKeysTest extends KernelTestCase
         ];
         foreach (VenueRuleViolation::all() as $violation) {
             $keys[] = $violation->translationKey();
+        }
+        foreach (LastMinuteOfferRefused::all() as $refusal) {
+            $keys[] = $refusal->translationKey();
         }
         foreach (VenueCard::cases() as $card) {
             $keys[] = 'editor.card.'.$card->value;
@@ -121,6 +127,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
             IssueVenuePreview::class, RevokeVenuePreview::class,
             ReportContent::class, TakeEntryOffline::class, DecideModerationCase::class,
             CheckVenueFacts::class,
+            PublishLastMinuteOffer::class, EndLastMinuteOffer::class,
         ];
         foreach ($commands as $command) {
             $keys[] = 'history.command.'.substr($command, strrpos($command, '\\') + 1);

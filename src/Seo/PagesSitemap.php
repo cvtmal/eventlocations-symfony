@@ -7,6 +7,7 @@ namespace App\Seo;
 use App\Search\LandingPaths;
 use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\LandingPages;
+use App\Search\ReadModel\LastMinutePageQuery;
 use App\Search\ValueObject\LandingType;
 use App\Seo\ValueObject\SitemapUrl;
 use App\Venues\ReadModel\SitemapChanges;
@@ -19,8 +20,9 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * shows venues, so it shares the listing's `lastmod`.
  * Landing pages (#17) follow the listing: every live and indexable one, page 1, unfiltered, with the newest
  * change among its venues. The near-me page (#52) follows the landing pages with the listing's
- * `lastmod`, since it shows venues. The legal pages (#18) come last, without `lastmod`: their text changes
- * only with a deploy, and no date of it is stored.
+ * `lastmod`, since it shows venues; «Kurzfristig frei» (G14) follows, without `lastmod`, while it lists an offer.
+ * The legal pages (#18) come last, without `lastmod`: their text changes only with a deploy, and no date of it is
+ * stored.
  */
 final class PagesSitemap
 {
@@ -31,6 +33,7 @@ final class PagesSitemap
         private readonly VenueSitemapQuery $venues,
         private readonly LandingPages $landingPages,
         private readonly LandingPaths $landingPaths,
+        private readonly LastMinutePageQuery $lastMinute,
     ) {
     }
 
@@ -58,6 +61,10 @@ final class PagesSitemap
         }
 
         $urls[] = new SitemapUrl($this->urls->generate('nearby', [], UrlGeneratorInterface::ABSOLUTE_URL), $newest);
+        // G14: «Kurzfristig frei» only while it lists an offer (empty, it is noindex), without lastmod.
+        if ($this->lastMinute->hasAny()) {
+            $urls[] = new SitemapUrl($this->urls->generate('last_minute', [], UrlGeneratorInterface::ABSOLUTE_URL), null);
+        }
 
         foreach (self::LEGAL_ROUTES as $route) {
             $urls[] = new SitemapUrl($this->urls->generate($route, [], UrlGeneratorInterface::ABSOLUTE_URL), null);

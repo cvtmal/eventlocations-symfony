@@ -9,6 +9,7 @@ use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Venues\EntitlementResolver;
+use App\Venues\LastMinuteOfferPolicy;
 use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
@@ -17,6 +18,7 @@ use App\Venues\ValueObject\PhotoBudget;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
+use App\Venues\ValueObject\TermDay;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VideoProvider;
@@ -31,8 +33,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The venue detail page (`venue_show`, #8): which venue a slug points at, everything the page
  * renders, and — separately, for the phone reveal only — the phone number.
  *
- * The page costs four queries: resolveSlug() (1) and detail() (3: the venue with its terms, videos and
- * documents as `jsonb_agg` sub-selects; the rooms; all photos).
+ * The page costs four queries: resolveSlug() (1) and detail() (3: the venue with its terms, videos,
+ * documents and live offers «Kurzfristig frei» (G14) as `jsonb_agg` sub-selects; the rooms; all photos).
  */
 final class VenueDetailQuery
 {
@@ -142,7 +144,9 @@ final class VenueDetailQuery
         $documentTranslation = $this->translationJoin->localized('venue_document_translations', 'venue_document_id', 'd.id', 'dtr');
         $published = $includeUnpublished ? 'TRUE' : self::PUBLISHED;
         $indexable = VenueIndexGate::sql('v', 't');
-        $params = ['number' => $number] + $this->translationJoin->parameters($locale);
+        // G14: the date half of `LastMinuteOfferPolicy` here, the plan half from the resolver below.
+        $lastMinuteDate = LastMinuteOfferPolicy::dateSql('o', 'lm_today');
+        $params = ['number' => $number, 'lm_today' => TermDay::sql($this->clock->now())] + $this->translationJoin->parameters($locale);
         // The capacity the listing card shows (VenueCapacity): the head, the JSON-LD and the markdown view read it.
         $capacityMin = VenueCapacity::minSql('v');
         $capacityMax = VenueCapacity::maxSql('v');
@@ -170,7 +174,12 @@ final class VenueDetailQuery
                         WHERE d.venue_id = v.id AND dtr.title IS NOT NULL) AS documents,
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('provider', vv.provider, 'video_id', vv.video_id) ORDER BY vv.position), '[]'::jsonb)
                         FROM venue_videos vv
-                        WHERE vv.venue_id = v.id) AS videos
+                        WHERE vv.venue_id = v.id) AS videos,
+                    (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', o.id, 'room_id', o.room_id, 'starts_on', o.starts_on, 'ends_on', o.ends_on,
+                            'event_types', o.event_types, 'price_text', o.price_text, 'min_guests', o.min_guests, 'terms', o.terms)
+                            ORDER BY o.starts_on, o.ends_on, o.id), '[]'::jsonb)
+                        FROM last_minute_offers o
+                        WHERE o.venue_id = v.id AND {$lastMinuteDate}) AS last_minute_offers
                 FROM venues v
                 LEFT JOIN towns tw ON tw.id = v.town_id
                 {$translation}
@@ -198,6 +207,7 @@ final class VenueDetailQuery
         \assert(\is_string($row['terms']));
         \assert(\is_string($row['documents']));
         \assert(\is_string($row['videos']));
+        \assert(\is_string($row['last_minute_offers']));
 
         $venueId = $row['id'];
         $entitlements = $this->entitlements->forVenue($venueId, $this->clock->now());
@@ -256,6 +266,7 @@ final class VenueDetailQuery
             self::nullableString($row['google_place_id']),
             (bool) $row['google_rating_hidden'],
             (bool) $row['indexable'],
+            $entitlements->lastMinuteAllowed ? self::lastMinuteOffers(self::decode($row['last_minute_offers']), $rooms) : [],
         );
     }
 
@@ -492,6 +503,34 @@ final class VenueDetailQuery
 
             return new DetailVideo(VideoProvider::from($item['provider']), $item['video_id']);
         }, $videos);
+    }
+
+    /**
+     * The offers of a room the page does not show (the plan's room limit) are left out with it.
+     *
+     * @param list<mixed>      $offers
+     * @param list<DetailRoom> $rooms  the public rooms
+     *
+     * @return list<LastMinuteOfferView>
+     */
+    private static function lastMinuteOffers(array $offers, array $rooms): array
+    {
+        $names = [];
+        foreach ($rooms as $room) {
+            $names[$room->id] = $room->name;
+        }
+        $views = [];
+        foreach ($offers as $offer) {
+            \assert(\is_array($offer));
+            $roomId = $offer['room_id'];
+            \assert(null === $roomId || \is_string($roomId));
+            if (null !== $roomId && !isset($names[$roomId])) {
+                continue;
+            }
+            $views[] = LastMinuteOfferView::fromRow($offer, null === $roomId ? null : $names[$roomId]);
+        }
+
+        return $views;
     }
 
     /**

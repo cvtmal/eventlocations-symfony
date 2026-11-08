@@ -20,7 +20,8 @@ use App\Venues\ValueObject\VenuePlace;
 final readonly class ListingCard
 {
     /**
-     * @param list<CardPhoto> $photos at most 8 and at most the tier's photo limit, in position order
+     * @param list<CardPhoto> $photos     at most 8 and at most the tier's photo limit, in position order
+     * @param bool            $lastMinute G14: a live offer «Kurzfristig frei» the plan shows (`LastMinuteOfferPolicy`)
      */
     public function __construct(
         public string $id,
@@ -36,6 +37,7 @@ final readonly class ListingCard
         public ?string $ambience,
         public array $photos,
         public ?string $eventType = null,
+        public bool $lastMinute = false,
     ) {
     }
 }

@@ -64,4 +64,26 @@ final class VenueManagersQuery
             (bool) $row['invited'],
         );
     }
+
+    /**
+     * Who gets a service mail about the venue (G14, D52): the managers with active access on an active account, no
+     * fallback to the inquiry address.
+     *
+     * @return list<array{email: string, name: string}>
+     */
+    public function mailRecipients(string $venueId): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            <<<'SQL'
+                SELECT u.email, u.first_name
+                FROM portal_venue_access a
+                JOIN portal_users u ON u.id = a.portal_user_id
+                WHERE a.venue_id = :venue AND a.status = :active AND u.is_active
+                ORDER BY u.email
+                SQL,
+            ['venue' => $venueId, 'active' => PortalVenueAccessStatus::Active->value],
+        );
+
+        return array_map(static fn (array $row): array => ['email' => (string) $row['email'], 'name' => (string) $row['first_name']], $rows);
+    }
 }

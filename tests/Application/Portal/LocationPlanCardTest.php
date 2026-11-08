@@ -40,7 +40,7 @@ final class LocationPlanCardTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame('Dein Plan: Free', $crawler->filter('#location-plan')->text());
         self::assertSame(
-            ['Fotos 4 von 6', 'Räume 1 von 1', 'PDFs 0 von 1', 'Videos 0 von 1', 'Telefon und Website: verborgen', 'Anlassarten: bis zu 3'],
+            ['Fotos 4 von 6', 'Räume 1 von 1', 'PDFs 0 von 1', 'Videos 0 von 1', 'Telefon und Website: verborgen', 'Anlassarten: bis zu 3', 'Kurzfristig frei: nein'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
         self::assertCount(0, $crawler->filter('section[aria-labelledby="location-plan"] .card__head .pill'));
@@ -81,7 +81,7 @@ final class LocationPlanCardTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->url($venue));
 
         self::assertSame(
-            ['Fotos 9, davon 6 sichtbar', 'Räume 2, davon 1 sichtbar', 'PDFs 2, davon 1 sichtbar', 'Videos 0 von 1', 'Telefon und Website: verborgen', 'Anlassarten: bis zu 3'],
+            ['Fotos 9, davon 6 sichtbar', 'Räume 2, davon 1 sichtbar', 'PDFs 2, davon 1 sichtbar', 'Videos 0 von 1', 'Telefon und Website: verborgen', 'Anlassarten: bis zu 3', 'Kurzfristig frei: nein'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
     }
@@ -96,7 +96,7 @@ final class LocationPlanCardTest extends WebTestCase
         self::assertSame('Dein Plan: Pro', $crawler->filter('#location-plan')->text());
         self::assertSame('Top-Eintrag', $crawler->filter('section[aria-labelledby="location-plan"] .card__head .pill')->text());
         self::assertSame(
-            ['Bezahlt bis 31. Dezember 2099', 'Fotos 0 von 60', 'Räume 0 von 20', 'PDFs 0 von 5', 'Videos 0 von 5', 'Telefon und Website: sichtbar', 'Anlassarten: alle'],
+            ['Bezahlt bis 31. Dezember 2099', 'Fotos 0 von 60', 'Räume 0 von 20', 'PDFs 0 von 5', 'Videos 0 von 5', 'Telefon und Website: sichtbar', 'Anlassarten: alle', 'Kurzfristig frei: ja'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
         self::assertCount(0, $crawler->filter('form[action$="/pro-anfragen"]'));
@@ -113,7 +113,7 @@ final class LocationPlanCardTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->url($venue));
 
         self::assertSame(
-            ['Fotos 0 von 9', 'Räume 0 von 1', 'PDFs 0 von 3', 'Videos 0 von 1', 'Telefon und Website: sichtbar', 'Anlassarten: bis zu 5'],
+            ['Fotos 0 von 9', 'Räume 0 von 1', 'PDFs 0 von 3', 'Videos 0 von 1', 'Telefon und Website: sichtbar', 'Anlassarten: bis zu 5', 'Kurzfristig frei: nein'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
         self::assertSame('Pro kostet CHF 249.50 pro Jahr, wir stellen die Rechnung von Hand.', $crawler->filter('section[aria-labelledby="location-plan"] p.muted')->text());
@@ -160,7 +160,7 @@ final class LocationPlanCardTest extends WebTestCase
     {
         $venue = $this->managedVenue(DetailVenues::minimal());
 
-        foreach (['/fotos' => 1, '/raeume' => 1, '/dokumente' => 1, '/statistik' => 0] as $tab => $cards) {
+        foreach (['/fotos' => 1, '/raeume' => 1, '/dokumente' => 1, '/kurzfristig-frei' => 1, '/statistik' => 0] as $tab => $cards) {
             $crawler = $this->client->request('GET', $this->url($venue).$tab);
 
             self::assertResponseIsSuccessful();

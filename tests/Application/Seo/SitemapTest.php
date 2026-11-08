@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Seo;
 
+use App\Factory\LastMinuteOfferFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenueTranslationFactory;
@@ -11,6 +12,7 @@ use App\Geo\ValueObject\Canton;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -103,6 +105,23 @@ final class SitemapTest extends WebTestCase
         self::assertSame(['http://localhost/', 'http://localhost/eventlokale', 'http://localhost/eventlokal-in-meiner-naehe', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
         self::assertCount(3, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
         $this->assertValid($xml, 'sitemap-with-images.xsd');
+    }
+
+    /**
+     * G14: «Kurzfristig frei» joins the pages file after the near-me page, without lastmod, only while it lists an offer.
+     */
+    public function test_the_pages_file_lists_kurzfristig_frei_only_while_it_lists_an_offer(): void
+    {
+        $venue = DetailVenues::minimal(tier: KnownTiers::PRO);
+        $offer = LastMinuteOfferFactory::createOne(['venue' => $venue]);
+
+        $xml = $this->fetch('/sitemap-pages.xml');
+
+        self::assertSame(['http://localhost/', 'http://localhost/eventlokale', 'http://localhost/eventlokal-in-meiner-naehe', 'http://localhost/kurzfristig-frei', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertCount(3, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
+
+        $this->connection->executeStatement('DELETE FROM last_minute_offers WHERE id = ?', [$offer->id()]);
+        self::assertNotContains('http://localhost/kurzfristig-frei', $this->values($this->fetch('/sitemap-pages.xml'), 'loc', self::SITEMAP_NS));
     }
 
     public function test_the_pages_file_lists_every_live_landing_page_once_with_its_newest_change(): void

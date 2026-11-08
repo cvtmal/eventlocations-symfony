@@ -1,0 +1,37 @@
+{#
+    One offer «Kurzfristig frei» (G14, D55) as a description list: dates, room (or the whole location), event types,
+    price or package, minimum guests, terms. Include with `with_context = false`: offer (`Venues\ReadModel\LastMinuteOfferView`).
+    Used by the detail section, the page «Kurzfristig frei» and the /konto tab.
+#}
+<dl class="last-minute-offer">
+    <div class="last-minute-offer__row last-minute-offer__row--dates">
+        <dt>{{ 'last_minute.dates'|trans({}, 'venues') }}</dt>
+        <dd>{{ offer.isOneDay() ? offer.startsOn|swiss_date : 'last_minute.period'|trans({start: offer.startsOn|swiss_date, end: offer.endsOn|swiss_date}, 'venues') }}</dd>
+    </div>
+    <div class="last-minute-offer__row">
+        <dt>{{ 'last_minute.room'|trans({}, 'venues') }}</dt>
+        <dd>{{ offer.roomName ?? 'last_minute.whole_location'|trans({}, 'venues') }}</dd>
+    </div>
+    {%- if offer.eventTypes is not empty %}
+    <div class="last-minute-offer__row">
+        <dt>{{ 'last_minute.event_types'|trans({}, 'venues') }}</dt>
+        <dd>{% for term in offer.eventTypes %}{{ term|trans }}{{ not loop.last ? ', ' }}{% endfor %}</dd>
+    </div>
+    {%- endif %}
+    <div class="last-minute-offer__row">
+        <dt>{{ 'last_minute.price'|trans({}, 'venues') }}</dt>
+        <dd>{{ offer.priceText }}</dd>
+    </div>
+    {%- if offer.minGuests is not null %}
+    <div class="last-minute-offer__row">
+        <dt>{{ 'last_minute.guests'|trans({}, 'venues') }}</dt>
+        <dd>{{ 'last_minute.min_guests'|trans({count: offer.minGuests}, 'venues') }}</dd>
+    </div>
+    {%- endif %}
+    {%- if offer.terms is not null %}
+    <div class="last-minute-offer__row">
+        <dt>{{ 'last_minute.terms'|trans({}, 'venues') }}</dt>
+        <dd>{{ offer.terms }}</dd>
+    </div>
+    {%- endif %}
+</dl>

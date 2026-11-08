@@ -1,0 +1,12 @@
+{# Kurzfristig frei (G14, D55): the venue's live offers, the disclaimer and a link to the inquiry form. Rendered only with offers. Params: venue. #}
+<section id="kurzfristig-frei" class="venue-section venue-last-minute" aria-labelledby="venue-last-minute-title">
+    <h2 id="venue-last-minute-title" class="venue-section__title">{{ 'detail.last_minute.heading'|trans({}, 'venues') }}</h2>
+    <p>{{ 'detail.last_minute.intro'|trans({}, 'venues') }}</p>
+    <ul class="venue-last-minute__list">
+        {%- for offer in venue.lastMinuteOffers %}
+        <li>{{ include('venues/_last_minute_offer.html.twig', {offer: offer}, with_context = false) }}</li>
+        {%- endfor %}
+    </ul>
+    <p class="venue-last-minute__disclaimer">{{ icon('info') }}<span>{{ 'detail.last_minute.disclaimer'|trans({}, 'venues') }}</span></p>
+    <a class="btn btn--secondary" href="#anfrage">{{ 'detail.last_minute.inquire'|trans({}, 'venues') }}</a>
+</section>

@@ -1,0 +1,44 @@
+{#
+    The page «Kurzfristig frei» (route `last_minute`, G14, D55). Variables from LastMinuteController:
+      entries (list<Search\ReadModel\LastMinuteEntry>: a venue's card and its live offers, the soonest first).
+    Empty, the page says so, links to the listing and is noindex (the sitemap leaves it out then too).
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'last_minute.head_title'|trans({}, 'search') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}{% if entries is empty %}<meta name="robots" content="noindex, follow">{% endif %}<meta name="description" content="{{ 'last_minute.meta_description'|trans({}, 'search') }}">{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ url('last_minute') }}">{% endblock %}
+
+{% block main %}
+    <div class="listing container last-minute">
+        <h1 class="last-minute__title">{{ 'last_minute.title'|trans({}, 'search') }}</h1>
+        <p class="last-minute__intro">{{ 'last_minute.intro'|trans({}, 'search') }}</p>
+        {%- if entries is not empty %}
+        <p class="last-minute__disclaimer">{{ icon('info') }}<span>{{ 'last_minute.disclaimer'|trans({}, 'search') }}</span></p>
+        <ol class="last-minute__results" aria-label="{{ 'last_minute.results_label'|trans({}, 'search') }}">
+            {%- for entry in entries %}
+            <li class="last-minute__entry">
+                {{ include('search/_card.html.twig', {card: entry.card, index: loop.index0, heading: 'h2'}, with_context = false) }}
+                <div class="last-minute__offers">
+                    <ul class="venue-last-minute__list">
+                        {%- for offer in entry.offers %}
+                        <li>{{ include('venues/_last_minute_offer.html.twig', {offer: offer}, with_context = false) }}</li>
+                        {%- endfor %}
+                    </ul>
+                    <a class="btn btn--secondary" href="{{ path('venue_show', {slug: entry.card.slug}) }}#anfrage">{{ 'last_minute.inquire'|trans({}, 'search') }}<span class="visually-hidden"> {{ 'last_minute.inquire_at'|trans({name: entry.card.name}, 'search') }}</span></a>
+                </div>
+            </li>
+            {%- endfor %}
+        </ol>
+        {%- else %}
+        <div class="listing-empty">
+            <span class="listing-empty__disc" aria-hidden="true">{{ icon('calendar') }}</span>
+            <p class="listing-empty__title">{{ 'last_minute.empty.title'|trans({}, 'search') }}</p>
+            <p>{{ 'last_minute.empty.text'|trans({}, 'search') }}</p>
+            {{ include('components/_button.html.twig', {href: path('listing'), label: 'last_minute.empty.link'|trans({}, 'search'), size: 'lg'}, with_context = false) }}
+        </div>
+        {%- endif %}
+    </div>
+{% endblock %}
