@@ -96,9 +96,10 @@ final class ModerationCaseQuery
             venueName: null === $case['venue_name'] ? null : (string) $case['venue_name'],
             venuePublished: true === $case['venue_published'],
             venueReference: null === $case['venue_reference'] ? null : (string) $case['venue_reference'],
-            complainantName: (string) $case['complainant_name'],
-            complainantEmail: (string) $case['complainant_email'],
-            message: (string) $case['message'],
+            complainantName: null === $case['complainant_name'] ? null : (string) $case['complainant_name'],
+            complainantEmail: null === $case['complainant_email'] ? null : (string) $case['complainant_email'],
+            message: null === $case['message'] ? null : (string) $case['message'],
+            complainantErasedAt: null === $case['complainant_erased_at'] ? null : new \DateTimeImmutable((string) $case['complainant_erased_at']),
             goodFaithAt: new \DateTimeImmutable((string) $case['good_faith_at']),
             sourceUrl: null === $case['source_url'] ? null : (string) $case['source_url'],
             createdAt: new \DateTimeImmutable((string) $case['created_at']),
@@ -129,7 +130,7 @@ final class ModerationCaseQuery
             venueNumber: null === $row['venue_number'] ? null : (int) $row['venue_number'],
             venueName: null === $row['venue_name'] ? null : (string) $row['venue_name'],
             venueReference: null === $row['venue_reference'] ? null : (string) $row['venue_reference'],
-            complainantName: (string) $row['complainant_name'],
+            complainantName: null === $row['complainant_name'] ? null : (string) $row['complainant_name'],
             heldPhotos: (int) $row['held_photos'],
         );
     }

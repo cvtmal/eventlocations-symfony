@@ -12,7 +12,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A complaint of the public form (G2): rights, removal or correction, with who sent it, the good-faith
- * confirmation and the page it came from, and staff's decision. It is never deleted; it outlives its venue
+ * confirmation and the page it came from, and staff's decision. It is never deleted (D36 erases only the
+ * complainant, `eraseComplainant()`); it outlives its venue
  * (`venue_id` SET NULL). The photos it names are `ModerationCasePhoto` rows; while the case is open they are
  * hidden (`Venues\PublicPhotoPolicy`).
  *
@@ -41,14 +42,14 @@ class ModerationCase
     #[ORM\Column(type: Types::STRING, length: 10, enumType: ModerationStatus::class)]
     private ModerationStatus $status = ModerationStatus::Open;
 
-    #[ORM\Column(type: Types::STRING, length: 100)]
-    private string $complainantName;
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private ?string $complainantName;
 
-    #[ORM\Column(type: Types::STRING, length: 254)]
-    private string $complainantEmail;
+    #[ORM\Column(type: Types::STRING, length: 254, nullable: true)]
+    private ?string $complainantEmail;
 
-    #[ORM\Column(type: Types::TEXT)]
-    private string $message;
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $message;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $goodFaithAt;
@@ -70,6 +71,12 @@ class ModerationCase
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $tookEntryOffline = false;
+
+    /**
+     * When D36's retention erased name, e-mail and message (all three NULL from then on).
+     */
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $complainantErasedAt = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
@@ -149,19 +156,43 @@ class ModerationCase
         return $this->kind;
     }
 
-    public function complainantName(): string
+    /**
+     * D36: three years after the decision the complainant's name, e-mail address and message go; the case, its
+     * decision and its photo links stay as evidence. A second call changes nothing.
+     */
+    public function eraseComplainant(\DateTimeImmutable $at): void
+    {
+        \assert(!$this->isOpen());
+
+        if (null !== $this->complainantErasedAt) {
+            return;
+        }
+
+        $this->complainantName = null;
+        $this->complainantEmail = null;
+        $this->message = null;
+        $this->complainantErasedAt = $at;
+        $this->updatedAt = $at;
+    }
+
+    public function complainantName(): ?string
     {
         return $this->complainantName;
     }
 
-    public function complainantEmail(): string
+    public function complainantEmail(): ?string
     {
         return $this->complainantEmail;
     }
 
-    public function message(): string
+    public function message(): ?string
     {
         return $this->message;
+    }
+
+    public function complainantErasedAt(): ?\DateTimeImmutable
+    {
+        return $this->complainantErasedAt;
     }
 
     public function goodFaithAt(): \DateTimeImmutable

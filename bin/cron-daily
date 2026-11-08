@@ -26,6 +26,9 @@ main() {
     # --quiet: these two print "0 inquiries deleted." and one line per cache pool on a good night. An error
     # still prints (the exception renderer ignores --quiet) and `step` adds its own "failed" line either way.
     step inquiries-purge "$PHP" bin/console --no-interaction --quiet app:inquiries:purge
+    # D36: three years after the decision, a complaint's name, e-mail and message go (the case stays). --quiet:
+    # its count line would mail every night.
+    step moderation-erase "$PHP" bin/console --no-interaction --quiet app:venues:erase-complainants
     # #28: a contract's end flips the company stage and writes its renewal task. Counts stay at normal
     # verbosity, a failure line prints under --quiet.
     step crm-refresh-stages "$PHP" bin/console --no-interaction --quiet app:crm:refresh-stages

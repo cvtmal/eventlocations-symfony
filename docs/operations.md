@@ -326,8 +326,13 @@ step 2), so the times below are Zurich times. `php` on cron's PATH is 8.5 throug
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), CRM stage refresh and renewal tasks, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
 | `30 4 * * *` | `bin/cron-media-backup` | The media originals to Object Storage, encrypted, with retention ([Media backup](#media-backup)); no database |
+
+`moderation-erase` (D36) erases the complainant of a report three years after the decision in the
+database only. The staff notices ("Meldung: …") in the `site.contact_email` mailbox and the replies
+quote the complainant too: delete those older than three years by hand, once a year, so the privacy
+text stays true.
 
 The cache jobs share the lock `var/lock/cache-clear.lock` (in `shared/`, so it holds across a
 switch). A good night prints nothing, and cron mails a job's output to `MAILTO`, so every mail is
@@ -335,7 +340,7 @@ worth reading:
 
 | The mail says | Meaning | What to do |
 |---|---|---|
-| `cron-daily: inquiries-purge failed`, or `pool-prune` | The retention promise in the privacy text is at risk; often the database was unreachable | Run `sh <root>/current/bin/cron-daily`; read the error if it fails again |
+| `cron-daily: inquiries-purge failed`, `moderation-erase`, or `pool-prune` | The retention promise in the privacy text is at risk; often the database was unreachable | Run `sh <root>/current/bin/cron-daily`; read the error if it fails again |
 | `cron-daily: staging-sweep failed`, `sessions-sweep`, `lock-sweep` | A sweep could not delete | Read the step's output in the mail, fix, rerun `sh bin/cron-daily` |
 | `cron-daily: crm-backfill failed`, with `<id>: <class>` | One inquiry could not be ingested | The next night retries; if the id returns, check that row. A count-only line is a repaired inquiry, not an error |
 | `cron-daily: stats-ingest failed` | Day files not loaded; nothing lost, they stay in `var/stats/spool` | The next night or the Statistik button loads them |

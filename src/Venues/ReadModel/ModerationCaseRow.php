@@ -25,7 +25,7 @@ final readonly class ModerationCaseRow
         public ?int $venueNumber,
         public ?string $venueName,
         public ?string $venueReference,
-        public string $complainantName,
+        public ?string $complainantName,
         public int $heldPhotos,
     ) {
     }

@@ -11,6 +11,7 @@ use App\Venues\Exception\ModerationCaseNotFound;
 use App\Venues\ValueObject\ModerationStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Uuid;
 
@@ -55,6 +56,29 @@ class ModerationCaseRepository extends ServiceEntityRepository
             ->setParameter('id', $case->id())
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * D36: the decided cases decided on or before `$cutoff` (three years ago less a day) whose complainant is still
+     * stored. A handful per year on this site, so they are loaded, not bulk-updated.
+     *
+     * @return list<ModerationCase>
+     */
+    public function complainantsDueForErasure(\DateTimeImmutable $cutoff): array
+    {
+        /** @var list<ModerationCase> $cases */
+        $cases = $this->createQueryBuilder('c')
+            ->where('c.status = :decided')
+            ->andWhere('c.decidedAt <= :cutoff')
+            ->andWhere('c.complainantErasedAt IS NULL')
+            ->orderBy('c.decidedAt')
+            ->addOrderBy('c.id')
+            ->setParameter('decided', ModerationStatus::Decided)
+            ->setParameter('cutoff', $cutoff, Types::DATETIMETZ_IMMUTABLE)
+            ->getQuery()
+            ->getResult();
+
+        return $cases;
     }
 
     /**

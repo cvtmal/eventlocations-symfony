@@ -786,6 +786,7 @@ moderation:
     nav: Meldungen
     title: Meldungen
     no_venue: Keine Location angegeben
+    erased: Gelöscht
     open:
         title: Offen
         empty: Keine offenen Meldungen.
@@ -819,6 +820,8 @@ moderation:
         reply: 'Antwort an die meldende Person:'
         reply_link: per E-Mail
         none: '–'
+        erased_at: 'Gelöscht am {date}'
+        erased: Name, E-Mail-Adresse und Nachricht wurden drei Jahre nach dem Entscheid gelöscht. Der Fall und der Entscheid bleiben als Beleg.
         venue_online: Online
         venue_offline: Offline
         photos: Gemeldete Fotos
