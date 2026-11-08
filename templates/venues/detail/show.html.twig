@@ -46,6 +46,7 @@
             {% if venue.hasFacts() %}{{ include('venues/detail/_facts.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.event.hasAny() %}{{ include('venues/detail/_event.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.rooms is not empty %}{{ include('venues/detail/_rooms.html.twig', {venue: venue}, with_context = false) }}{% endif %}
+            {% if venue.videos is not empty %}{{ include('venues/detail/_videos.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.hasFaq() %}{{ include('venues/detail/_faq.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.hasLocation() %}
             <section id="standort" class="venue-section venue-location" aria-labelledby="standort-title">
@@ -69,6 +70,7 @@
     <script type="module" src="{{ asset('js/print.js') }}"></script>
     <script type="module" src="{{ asset('js/phone-reveal.js') }}"></script>
     <script type="module" src="{{ asset('js/venue-map.js') }}"></script>
+    {% if venue.videos is not empty %}<script type="module" src="{{ asset('js/venue-video.js') }}"></script>{% endif %}
     <script type="module" src="{{ asset('js/google-rating.js') }}"></script>
     <script type="module" src="{{ asset('js/google-photos.js') }}"></script>
 {% endblock %}

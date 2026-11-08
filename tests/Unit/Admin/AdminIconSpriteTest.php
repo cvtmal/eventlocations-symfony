@@ -18,7 +18,7 @@ final class AdminIconSpriteTest extends TestCase
 {
     private const array REQUIRED = [
         'arrow-down', 'arrow-up', 'bell', 'building-2', 'calendar', 'chart-column', 'check', 'chevron-down', 'chevron-left', 'chevron-right', 'chevrons-up-down', 'download',
-        'ellipsis', 'external-link', 'eye', 'file-text', 'grip-vertical', 'history', 'inbox', 'landmark', 'layout-dashboard', 'log-out', 'mail', 'phone', 'plus', 'search', 'shield',
+        'ellipsis', 'external-link', 'eye', 'file-text', 'grip-vertical', 'history', 'inbox', 'landmark', 'layout-dashboard', 'log-out', 'mail', 'phone', 'play', 'plus', 'search', 'shield',
         'square-check-big', 'square-kanban', 'sticky-note', 'type', 'upload', 'users', 'x',
     ];
 

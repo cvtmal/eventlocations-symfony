@@ -144,3 +144,7 @@ An Infomaniak VPS (D26: Debian 13, nginx, php-fpm 8.5 as the `deploy` user), Neo
 ## G12 `launch-regions` (current state)
 
 - The listing's answer to a search without results is `max-age=0, private, s-maxage=0` (pinned in `PublicCacheHeadersTest`): it is counted per request (`### Search`, `### Stats`), so HttpCache must not store it.
+
+## Videos (G15 `video-embed`)
+
+- `frame-src` of the site policy and of `GOOGLE_PLACES_POLICY` adds `https://www.youtube-nocookie.com https://player.vimeo.com` (the near-me policy keeps Google alone); the five literal copies in tests follow. The Datenschutz page has the section «Videos von YouTube und Vimeo» (quotes `detail.videos.load`/`open`, pinned by `LegalPagesTest`), Google's processor line names YouTube and `site.processors` lists `vimeo` (Vimeo.com, Inc., USA; a `TODO owner` comment asks to check both controllers before go-live).

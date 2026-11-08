@@ -1,0 +1,10 @@
+{#
+    The Videos tab (G15). Context from `VenueVideoPages`: what `_videos.html.twig` lists.
+#}
+{% extends 'admin/cms/venue/_layout.html.twig' %}
+
+{% set record_crumb = 'videos.tab'|trans({}, 'cms') %}
+
+{% block record_main %}
+    {{ include('admin/cms/venue/_videos.html.twig') }}
+{% endblock %}

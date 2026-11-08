@@ -19,6 +19,7 @@ use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenuePlace;
+use App\Venues\ValueObject\VideoProvider;
 use App\Venues\VenueCapacity;
 use App\Venues\VenueIndexGate;
 use Doctrine\DBAL\Connection;
@@ -30,7 +31,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The venue detail page (`venue_show`, #8): which venue a slug points at, everything the page
  * renders, and — separately, for the phone reveal only — the phone number.
  *
- * The page costs four queries: resolveSlug() (1) and detail() (3: the venue with its terms,
+ * The page costs four queries: resolveSlug() (1) and detail() (3: the venue with its terms, videos and
  * documents as `jsonb_agg` sub-selects; the rooms; all photos).
  */
 final class VenueDetailQuery
@@ -166,7 +167,10 @@ final class VenueDetailQuery
                     (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', d.id, 'title', dtr.title) ORDER BY d.position), '[]'::jsonb)
                         FROM venue_documents d
                         {$documentTranslation}
-                        WHERE d.venue_id = v.id AND dtr.title IS NOT NULL) AS documents
+                        WHERE d.venue_id = v.id AND dtr.title IS NOT NULL) AS documents,
+                    (SELECT COALESCE(jsonb_agg(jsonb_build_object('provider', vv.provider, 'video_id', vv.video_id) ORDER BY vv.position), '[]'::jsonb)
+                        FROM venue_videos vv
+                        WHERE vv.venue_id = v.id) AS videos
                 FROM venues v
                 LEFT JOIN towns tw ON tw.id = v.town_id
                 {$translation}
@@ -193,6 +197,7 @@ final class VenueDetailQuery
         \assert(null === $row['daylight'] || \is_bool($row['daylight']));
         \assert(\is_string($row['terms']));
         \assert(\is_string($row['documents']));
+        \assert(\is_string($row['videos']));
 
         $venueId = $row['id'];
         $entitlements = $this->entitlements->forVenue($venueId, $this->clock->now());
@@ -242,6 +247,7 @@ final class VenueDetailQuery
             $entitlements->contactVisible ? self::nullableString($row['website']) : null,
             self::nullableString($row['contact_person']),
             \array_slice(self::documents(self::decode($row['documents'])), 0, $entitlements->documentsMax),
+            \array_slice(self::videos(self::decode($row['videos'])), 0, $entitlements->videosMax),
             $rooms,
             $venuePhotos,
             self::event($row, $termsByGroup),
@@ -472,6 +478,20 @@ final class VenueDetailQuery
 
             return new DetailDocument($item['id'], $item['title']);
         }, $documents);
+    }
+
+    /**
+     * @param list<mixed> $videos
+     *
+     * @return list<DetailVideo>
+     */
+    private static function videos(array $videos): array
+    {
+        return array_map(static function (mixed $item): DetailVideo {
+            \assert(\is_array($item) && \is_string($item['provider']) && \is_string($item['video_id']));
+
+            return new DetailVideo(VideoProvider::from($item['provider']), $item['video_id']);
+        }, $videos);
     }
 
     /**

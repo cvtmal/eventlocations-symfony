@@ -1,0 +1,102 @@
+{#
+    The Videos cards (G15), shared by staff's tab and the manager's. Context from `VenueVideoPages`: venue (VenueHeader),
+    videos (list<ManagedVideo>, by position), videos_max and tier_name (the plan's limit, F12), form (the link form),
+    csrf_id (the token id of the move and remove forms), videos_route (the list route; `_up`, `_down` and `_remove`
+    follow it). The back office never embeds a player: each row links to the video at its provider.
+#}
+<div class="venue-media">
+    {% embed 'admin/components/_card.html.twig' with {
+        title: 'videos.list.title'|trans({}, 'cms'),
+        id: 'venue-videos',
+        videos: videos,
+        videos_max: videos_max,
+        tier_name: tier_name,
+        number: venue.number,
+        csrf_id: csrf_id,
+        videos_route: videos_route,
+    } only %}
+        {% block body %}
+            <p class="muted">{{ 'videos.list.limit'|trans({tier: tier_name, max: videos_max}, 'cms') }}</p>
+            {% if videos is empty %}
+                {{ include('admin/components/_empty.html.twig', {
+                    icon: 'play',
+                    title: 'videos.empty.title'|trans({}, 'cms'),
+                    text: 'videos.empty.text'|trans({}, 'cms'),
+                }, with_context = false) }}
+            {% else %}
+                {% set items = [] %}
+                {% for video in videos %}
+                    {% set label = 'videos.item'|trans({position: loop.index, provider: video.provider.label()}, 'cms') %}
+                    {% set route = {number: number, id: video.id} %}
+                    {% set actions %}
+                        {{ include('admin/components/_button.html.twig', {
+                            label: 'videos.open'|trans({position: loop.index, provider: video.provider.label()}, 'cms'),
+                            size: 'sm', variant: 'ghost', icon: 'external-link', icon_only: true,
+                            href: video.watchUrl,
+                            attributes: {target: '_blank', rel: 'noopener'},
+                        }, with_context = false) }}
+                        {{ include('admin/components/_button.html.twig', {
+                            label: 'videos.remove.action'|trans({}, 'cms'),
+                            size: 'sm', variant: 'ghost',
+                            attributes: {'aria-label': 'videos.remove.action_for'|trans({position: loop.index}, 'cms'), commandfor: 'video-remove-' ~ video.id, command: 'show-modal'},
+                        }, with_context = false) }}
+                    {% endset %}
+                    {% set items = items|merge([{
+                        id: video.id,
+                        label: label,
+                        detail: loop.index > videos_max ? 'videos.list.hidden'|trans({}, 'cms') : video.videoId,
+                        actions: actions,
+                        move_up_url: path(videos_route ~ '_up', route),
+                        move_down_url: path(videos_route ~ '_down', route),
+                    }]) %}
+                {% endfor %}
+                <p class="muted">{{ 'videos.list.hint'|trans({}, 'cms') }}</p>
+                {{ include('admin/components/_sortable.html.twig', {
+                    label: 'videos.list.title'|trans({}, 'cms'),
+                    up_label: 'videos.move_up'|trans({}, 'cms'),
+                    down_label: 'videos.move_down'|trans({}, 'cms'),
+                    csrf_token: csrf_token(csrf_id),
+                    items: items,
+                }, with_context = false) }}
+                {% for video in videos %}
+                    {% embed 'admin/components/_modal.html.twig' with {
+                        id: 'video-remove-' ~ video.id,
+                        title: 'videos.remove.title'|trans({}, 'cms'),
+                        close_label: 'videos.remove.close'|trans({}, 'cms'),
+                        danger: true,
+                        position: loop.index,
+                        remove_url: path(videos_route ~ '_remove', {number: number, id: video.id}),
+                        csrf_id: csrf_id,
+                    } only %}
+                        {% block body %}<p>{{ 'videos.remove.text'|trans({position: position}, 'cms') }}</p>{% endblock %}
+                        {% block footer %}
+                            <form method="dialog"><button class="btn" autofocus>{{ 'videos.remove.cancel'|trans({}, 'cms') }}</button></form>
+                            <form method="post" action="{{ remove_url }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+                                {{ include('admin/components/_button.html.twig', {label: 'videos.remove.confirm'|trans({}, 'cms'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                            </form>
+                        {% endblock %}
+                    {% endembed %}
+                {% endfor %}
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+
+    {% form_theme form 'admin/form/theme.html.twig' %}
+    {{ form_start(form, {attr: {id: 'video-hinzufuegen', class: 'venue-media__form', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {
+            title: 'videos.add.title'|trans({}, 'cms'),
+            id: 'venue-videos-add',
+            add: form,
+        } only %}
+            {% block body %}
+                {{ form_errors(add) }}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(add.url) }}
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'videos.add.submit'|trans({}, 'cms'), variant: 'primary', icon: 'plus', type: 'submit'}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+</div>

@@ -84,7 +84,8 @@ legal:
             neon: Datenbank mit Anfragen und Kontakten
             sentry: Meldungen technischer Fehler
             # D48: names the rating and the photos only while their switch is on (`shows`, datenschutz.html.twig).
-            google: '{shows, select, both {Karten, Bewertungen und Fotos von Google Maps} rating {Karten und Bewertungen von Google Maps} photos {Karten und Fotos von Google Maps} other {Karten von Google Maps}}'
+            google: '{shows, select, both {Karten, Bewertungen und Fotos von Google Maps} rating {Karten und Bewertungen von Google Maps} photos {Karten und Fotos von Google Maps} other {Karten von Google Maps}}, Videos von YouTube'
+            vimeo: Videos von Vimeo
         hosting:
             title: Hosting und Datenbank
             # TODO owner: confirm the contracting Infomaniak entity and the 14-day log rotation of deploy/nginx (F15, T2).
@@ -108,9 +109,18 @@ legal:
             photos: 'Hat eine Location noch keine eigenen Fotos, kann ihre Seite Fotos von Google Maps zeigen, jedes mit dem Namen der Person, die es hochgeladen hat. Diese Fotos ruft unser Server bei Google ab und reicht sie direkt an deinen Browser weiter; dein Browser verbindet sich dafür nicht mit Google. Google erhält die Anfragen von unserem Server, nicht von deinem Browser, und damit weder deine IP-Adresse noch die Adresse der Seite, die du ansiehst; Google erfährt nur, zu welcher Location wir Fotos abrufen. Wir speichern die Fotos nicht. Erst wenn du bei einem Foto auf «Google Maps» oder auf den Namen klickst, öffnet sich Google Maps; ab dann gelten die Datenschutzbestimmungen von Google.'
             policy: 'Es gelten die Datenschutzbestimmungen von Google:'
             policy_link: policies.google.com/privacy
+        # G15: the detail page's video facade; quotes the button and link labels (detail.videos.*), pinned by LegalPagesTest.
+        videos:
+            title: Videos von YouTube und Vimeo
+            # TODO owner: check both controllers and addresses against policies.google.com/privacy and vimeo.com/privacy before go-live (G15).
+            text: 'Auf der Seite einer Location können Videos erscheinen, die bei YouTube oder Vimeo liegen. YouTube ist ein Dienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland; Vimeo ist ein Dienst der Vimeo.com, Inc., 330 West 34th Street, 5th Floor, New York, NY 10001, USA. Ein Video laden wir erst, wenn du auf «Video laden» klickst; vorher wird für das Video nichts an YouTube oder Vimeo übertragen, auch kein Vorschaubild. Mit dem Klick ruft dein Browser das Video direkt beim Anbieter ab; dabei erhält der Anbieter deine IP-Adresse und die Adresse unserer Website, und er kann Cookies oder ähnliche Techniken einsetzen. Bei Vimeo können diese Daten in den USA bearbeitet werden.'
+            modes: 'Videos von YouTube binden wir im erweiterten Datenschutzmodus über youtube-nocookie.com ein, Videos von Vimeo mit der Einstellung «Do Not Track». Wir speichern von einem Video nur, bei welchem Anbieter es liegt und welche Nummer es dort hat.'
+            policy: 'Es gelten die Datenschutzbestimmungen der Anbieter:'
+            policy_youtube: policies.google.com/privacy
+            policy_vimeo: vimeo.com/privacy
         links:
             title: Links zu anderen Anbietern
-            text: 'Die Seiten der Locations verlinken auf deren Websites und Instagram-Profile, das Teilen über WhatsApp führt zu WhatsApp. Der Link «Auf Google Maps öffnen» auf der Seite einer Location führt zu Google Maps. Diese Dienste werden erst geladen, wenn du den Link anklickst; ab dann gelten ihre Datenschutzbestimmungen.'
+            text: 'Die Seiten der Locations verlinken auf deren Websites und Instagram-Profile, das Teilen über WhatsApp führt zu WhatsApp. Der Link «Auf Google Maps öffnen» auf der Seite einer Location führt zu Google Maps, die Links «Auf YouTube ansehen» und «Auf Vimeo ansehen» führen zu YouTube und Vimeo. Diese Dienste werden erst geladen, wenn du den Link anklickst; ab dann gelten ihre Datenschutzbestimmungen.'
         staff:
             title: Interner Bereich
             text: Unser interner Bereich ist nur für unsere Mitarbeitenden. Nur dort und im Konto für Locations gibt es eine Anmeldung und ein Sitzungs-Cookie.

@@ -99,6 +99,24 @@ final class VenueRuleViolation extends DomainException
     /**
      * The PDF is already one of the venue's documents (#25: same bytes, same path).
      */
+    public static function tooManyVideos(int $max, string $tier): self
+    {
+        return new self('videos.error.too_many', 'url', ['max' => $max, 'tier' => $tier]);
+    }
+
+    /**
+     * G15: the link is not one of `VideoEmbed`'s YouTube or Vimeo forms.
+     */
+    public static function videoUrlNotAllowed(): self
+    {
+        return new self('videos.error.not_allowed', 'url');
+    }
+
+    public static function videoAlreadyAdded(): self
+    {
+        return new self('videos.error.already_added', 'url');
+    }
+
     public static function documentAlreadyUploaded(): self
     {
         return new self('documents.error.already_uploaded', 'file');
@@ -150,6 +168,9 @@ final class VenueRuleViolation extends DomainException
             self::tooManyRooms(1, 'Free'),
             self::tooManyDocuments(1, 'Free'),
             self::tooManyEventTypes(3, 'Free', 'suitableFor'),
+            self::tooManyVideos(1, 'Free'),
+            self::videoUrlNotAllowed(),
+            self::videoAlreadyAdded(),
             self::documentAlreadyUploaded(),
             self::documentTitleRequired('de'),
             self::roomNameRequired('de'),

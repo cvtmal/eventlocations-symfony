@@ -2,20 +2,20 @@
 
 ## Source
 
-- `sprite.svg`: 48 icons, all from [`lucide-static` 1.57.0](https://cdn.jsdelivr.net/npm/lucide-static@1.57.0/) (`icons/<name>.svg`), the inner elements copied unchanged into `<symbol id="<name>" viewBox="0 0 24 24">`. The presentation attributes (`stroke`, `fill`, `stroke-width`, …) of the Lucide root were dropped; `.icon` in `assets/styles/components/_icon.scss` sets them. F5 replaced the sister site's five category icons (`beer`, `castle`, `grape`, `hotel`, `warehouse`) with the event tiles' icons.
-- `admin-sprite.svg`: 33 icons for the back office (#22, #23, #24, #27b), same source and treatment. A separate file, so public pages never download them.
+- `sprite.svg`: 49 icons, all from [`lucide-static` 1.57.0](https://cdn.jsdelivr.net/npm/lucide-static@1.57.0/) (`icons/<name>.svg`), the inner elements copied unchanged into `<symbol id="<name>" viewBox="0 0 24 24">`. The presentation attributes (`stroke`, `fill`, `stroke-width`, …) of the Lucide root were dropped; `.icon` in `assets/styles/components/_icon.scss` sets them. F5 replaced the sister site's five category icons (`beer`, `castle`, `grape`, `hotel`, `warehouse`) with the event tiles' icons.
+- `admin-sprite.svg`: 35 icons for the back office (#22, #23, #24, #27b, G15), same source and treatment. A separate file, so public pages never download them.
 - The logo, favicon and app icons are not here and not from Lucide: they are the placeholder brand in `public/brand/` (`docs/brand.md`).
 - Nothing in this directory is copied from eventlokale.
 
 ## Icons
 
-- **UI:** calendar, camera (#31, Instagram), car, check (#8, detail fact lists), chevron-down, chevron-left, chevron-right, file-text, globe, heart (also the filled heart via `.icon--filled`), house (#8, building type on the detail page), info, mail, map-pin, maximize, menu, phone, plane, printer, search, share-2, thumbs-up, train-front, user, x.
+- **UI:** calendar, camera (#31, Instagram), car, check (#8, detail fact lists), chevron-down, chevron-left, chevron-right, file-text, globe, heart (also the filled heart via `.icon--filled`), house (#8, building type on the detail page), info, mail, map-pin, maximize, menu, phone, plane, play (G15, the video facade), printer, search, share-2, thumbs-up, train-front, user, x.
 - **Lage** (taxonomy key → icon): `am_fluss` → `waves`, `am_see` → `sailboat`, `auf_dem_land` → `trees`, `in_den_bergen` → `mountain-snow`, `in_der_stadt` → `building-2`.
 - **Highlights** (rating category → icon): `architektur` → `landmark`, `stil_atmosphare` → `sparkles`, `ausstattung` → `sofa`, `lage_aussicht` → `binoculars`, `erreichbarkeit` → `route`, `kulinarik` → `utensils`, `programm` → `music`, `freundlichkeit` → `smile`, `preis_leistung` → `coins`.
 - **Home event tiles** (F5, event type → icon): Firmenanlass → `briefcase`, Seminar → `presentation`, Apéro → `wine`, Weihnachtsfeier → `gift`, Geburtstag → `cake`, Hochzeit → `heart`.
 - **Photo placeholder** (F6, event type code → icon, `templates/components/_photo_placeholder.html.twig`): `cake`, `party-popper`, `presentation`, `tree-pine`, `trophy`, `users` and `wine` are new, with `building-2`, `heart`, `landmark` and `music` from above; the generic icon is `sparkles`.
 
-- **Back office (`admin-sprite.svg`, used through `admin_icon()`):** arrow-down, arrow-up, bell, building-2, calendar, check, chevron-down, chevron-left, chevron-right, chevrons-up-down, download, ellipsis, external-link, eye, file-text, grip-vertical, history, inbox, landmark, layout-dashboard, log-out, mail, phone, plus, search, shield, square-check-big, square-kanban, sticky-note, type, upload, users, x.
+- **Back office (`admin-sprite.svg`, used through `admin_icon()`):** arrow-down, arrow-up, bell, building-2, calendar, check, chevron-down, chevron-left, chevron-right, chevrons-up-down, download, ellipsis, external-link, eye, file-text, grip-vertical, history, inbox, landmark, layout-dashboard, log-out, mail, phone, play, plus, search, shield, square-check-big, square-kanban, sticky-note, type, upload, users, x.
 
 A new icon is a `<symbol>` added to `sprite.svg` (sorted by id, no presentation attributes) plus its name in the list above.
 

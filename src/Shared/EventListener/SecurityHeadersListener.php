@@ -17,12 +17,14 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * debug branch here, and a page re-rendered at 422 keeps its CSP.
  *
  * One route (`nearby`, #52) opts in through its `_csp` default; the detail page's rating (#53) sets
- * `google_places` per response; everything else keeps `POLICY`.
+ * `google_places` per response; everything else keeps `POLICY`. `frame-src` names the Maps embed (#15) and the two
+ * video players of G15 (`youtube-nocookie.com`, `player.vimeo.com`), each loaded only on the visitor's click; the
+ * near-me policy has no video and keeps Google alone.
  */
 #[AsEventListener(event: KernelEvents::RESPONSE, priority: -10)]
 final class SecurityHeadersListener
 {
-    private const string POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-src https://www.google.com; frame-ancestors 'none'";
+    private const string POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-src https://www.google.com https://www.youtube-nocookie.com https://player.vimeo.com; frame-ancestors 'none'";
 
     public function __construct(
         private readonly CspNonce $nonce,

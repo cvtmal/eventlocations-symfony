@@ -9,6 +9,7 @@ use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenuePhoto;
 use App\Venues\Entity\VenuePreview;
+use App\Venues\Entity\VenueVideo;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\Repository\VenueRepository;
@@ -72,6 +73,14 @@ final class VenueRows
     public function document(Venue $venue, string $documentId): VenueDocument
     {
         return $this->find(VenueDocument::class, $venue, $documentId) ?? throw VenueRowNotFound::document($venue->number(), $documentId);
+    }
+
+    /**
+     * @throws VenueRowNotFound
+     */
+    public function video(Venue $venue, string $videoId): VenueVideo
+    {
+        return $this->find(VenueVideo::class, $venue, $videoId) ?? throw VenueRowNotFound::video($venue->number(), $videoId);
     }
 
     /**
@@ -170,7 +179,18 @@ final class VenueRows
     }
 
     /**
-     * @template T of VenuePhoto|Room|VenueDocument|VenuePreview
+     * @return list<VenueVideo>
+     */
+    public function videos(Venue $venue): array
+    {
+        /** @var list<VenueVideo> $videos */
+        $videos = $this->em->getRepository(VenueVideo::class)->findBy(['venue' => $venue], ['position' => 'ASC']);
+
+        return $videos;
+    }
+
+    /**
+     * @template T of VenuePhoto|Room|VenueDocument|VenueVideo|VenuePreview
      *
      * @param class-string<T> $class
      *

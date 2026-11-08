@@ -1,0 +1,77 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// Videos (G15): the facade and the player share one 16:9 box, so loading a video shifts nothing.
+.venue-videos__list {
+    display: grid;
+    gap: var(--space-24);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.up(md) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.venue-videos__list:has(> :only-child) {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.venue-video__facade,
+.venue-video__frame {
+    display: block;
+    inline-size: 100%;
+    min-block-size: 13rem;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    border-radius: var(--radius-card);
+}
+
+.venue-video__facade {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--space-12);
+    padding: var(--space-16);
+    text-align: center;
+    background: var(--c-surface-alt);
+    color: var(--c-ink);
+}
+
+.venue-video__icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0.875rem;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-raised);
+    color: var(--c-accent-strong);
+}
+
+.venue-video__caption,
+.venue-video__notice {
+    margin: 0;
+}
+
+.venue-video__notice {
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+}
+
+.venue-video__loader {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-8);
+
+    &[hidden] {
+        display: none;
+    }
+}
+
+// The loader's button carries the play icon, so the disc goes and the box keeps its height on a phone.
+.venue-video__facade:has(.venue-video__loader:not([hidden])) .venue-video__icon {
+    display: none;
+}
+
+.venue-video__link {
+    background: var(--c-surface-raised);
+}

@@ -36,6 +36,8 @@ parameters:
         - { key: neon, name: 'Neon (Databricks, Inc.)', location: 'Frankfurt, Deutschland' }  # aws-eu-central-1
         - { key: sentry, name: 'Sentry (Functional Software, Inc.)', location: 'Frankfurt, Deutschland' }
         - { key: google, name: 'Google Ireland Limited', location: 'Irland' }
+        # G15: a venue's Vimeo videos, loaded on the visitor's click only (YouTube is Google's, above).
+        - { key: vimeo, name: 'Vimeo.com, Inc.', location: 'USA' }
     # LEG-2: app:inquiries:purge deletes inquiries older than this (#18 documents it).
     inquiries.retention_months: 12
     # #17: a canton, town or building landing page exists from this many published venues, below it 404 (one rule, #26 reads it).

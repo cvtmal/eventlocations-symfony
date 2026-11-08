@@ -544,6 +544,45 @@ documents:
         too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # PDF} other {sind höchstens # PDFs}} möglich. Entferne zuerst ein PDF; mehr gibt es mit einem grösseren Plan.'
         title_required: Das Dokument braucht einen Titel.
 
+# G15: the Videos tab of the CMS and of /konto (Cms\VenueVideoPages, templates/admin/cms/venue/_videos.html.twig).
+videos:
+    tab: Videos
+    list:
+        title: Videos
+        hint: Die Reihenfolge hier ist die Reihenfolge auf der Website. Die Seite lädt ein Video erst, wenn jemand auf «Video laden» klickt.
+        limit: 'Mit dem Plan {tier} {max, plural, =0 {zeigt die Website keine Videos} one {zeigt die Website # Video} other {zeigt die Website bis zu # Videos}}.'
+        hidden: Nicht sichtbar (Plan)
+    empty:
+        title: Noch keine Videos
+        text: Füge unten den Link zum ersten Video ein.
+    item: 'Video {position} auf {provider}'
+    open: 'Video {position} auf {provider} öffnen'
+    move_up: Nach oben
+    move_down: Nach unten
+    add:
+        title: Video hinzufügen
+        submit: Hinzufügen
+    remove:
+        action: Löschen
+        action_for: 'Löschen: Video {position}'
+        title: Video löschen?
+        text: 'Video {position} wird gelöscht und verschwindet von der Website.'
+        confirm: Löschen
+        cancel: Abbrechen
+        close: Schliessen
+    flash:
+        added: Video hinzugefügt.
+        moved: 'Video {from} ist jetzt an Position {position}.'
+        removed: 'Video {position} gelöscht.'
+    field:
+        url: Link zum Video
+    help:
+        url: 'Ein Link zu YouTube (youtube.com, youtu.be) oder Vimeo (vimeo.com), zum Beispiel https://youtu.be/… Gespeichert werden nur Anbieter und Nummer des Videos.'
+    error:
+        not_allowed: Diesen Link können wir nicht einbinden. Möglich sind öffentliche Videos auf YouTube (youtube.com, youtu.be) und Vimeo (vimeo.com).
+        already_added: Dieses Video ist bereits bei den Videos.
+        too_many: 'Mit dem Plan {tier} {max, plural, =0 {sind keine Videos} one {ist höchstens # Video} other {sind höchstens # Videos}} möglich. Entferne zuerst ein Video oder wechsle auf einen grösseren Plan.'
+
 error:
     not_found: Diese Location oder dieser Eintrag existiert nicht mehr. Bitte die Seite neu laden.
     stale: Diese Location wurde inzwischen geändert. Bitte neu laden; die Eingaben in diesem Abschnitt gehen dabei verloren.

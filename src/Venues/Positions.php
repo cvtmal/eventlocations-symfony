@@ -8,6 +8,7 @@ use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenuePhoto;
+use App\Venues\Entity\VenueVideo;
 use App\Venues\Exception\StaleEdit;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -38,7 +39,7 @@ final class Positions
      * whole scope (rows of other scopes are not looked at). Rows already in place keep their
      * position and updated_at.
      *
-     * @param list<VenuePhoto>|list<Room>|list<VenueDocument> $rowsInOrder
+     * @param list<VenuePhoto>|list<Room>|list<VenueDocument>|list<VenueVideo> $rowsInOrder
      */
     public function renumber(array $rowsInOrder): void
     {
@@ -66,7 +67,7 @@ final class Positions
      * The rows of a scope in the order an island or a page sent (D11): null when that is their
      * order already. The ids must be exactly the scope's, else the sender showed an older set.
      *
-     * @template T of VenuePhoto|Room|VenueDocument
+     * @template T of VenuePhoto|Room|VenueDocument|VenueVideo
      *
      * @param list<T>      $rows the whole scope, by position
      * @param list<string> $ids
@@ -128,8 +129,13 @@ final class Positions
         return $this->next(VenueDocument::class, $venue);
     }
 
+    public function nextVideo(Venue $venue): int
+    {
+        return $this->next(VenueVideo::class, $venue);
+    }
+
     /**
-     * @param class-string<Room|VenueDocument> $class
+     * @param class-string<Room|VenueDocument|VenueVideo> $class
      */
     private function next(string $class, Venue $venue): int
     {
