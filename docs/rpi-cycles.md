@@ -103,7 +103,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F6b | `brand-assets` | M | F6 | — | — (D23) | Done |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
 | F5b | `guests-rooms` | S | F4, F5 | indexes only | — | Done |
-| – | `places-photos` | S–M | F7b | — | — (D12, D47) | Todo |
+| – | `places-photos` | S–M | F3, G5, F7b | — (cap counter in the cache pool or a small table, the teammate decides) | — (D12, D47) | Todo |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Done |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Done |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
