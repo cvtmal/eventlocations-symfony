@@ -8,7 +8,8 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
 
 /**
- * Removes one video of the venue (G15); the others close the gap. Only the venue is purged.
+ * Removes one video of the venue (G15) by its row id (`venue_videos.id`); the others close the gap. Only the venue is
+ * purged.
  */
 final readonly class RemoveVenueVideo implements AuditableCommand
 {
@@ -25,6 +26,6 @@ final readonly class RemoveVenueVideo implements AuditableCommand
 
     public function auditSummary(): array
     {
-        return ['video_id' => $this->videoId];
+        return ['row_id' => $this->videoId];
     }
 }

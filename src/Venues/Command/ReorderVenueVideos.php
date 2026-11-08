@@ -29,6 +29,6 @@ final readonly class ReorderVenueVideos implements AuditableCommand
 
     public function auditSummary(): array
     {
-        return ['video_ids' => $this->videoIds];
+        return ['row_ids' => $this->videoIds];
     }
 }

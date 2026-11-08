@@ -66,6 +66,8 @@ final class VideoEmbedTest extends TestCase
         yield 'id as an array' => ['https://www.youtube.com/watch?v[]=aB3_dE-fGh1'];
         yield 'channel' => ['https://www.youtube.com/@somechannel'];
         yield 'playlist' => ['https://www.youtube.com/playlist?list=PL1234567890'];
+        yield 'playlist embed' => ['https://www.youtube.com/embed/videoseries?list=PL1234567890'];
+        yield 'playlist embed nocookie' => ['https://www.youtube-nocookie.com/embed/videoseries?list=PL1234567890'];
         yield 'embed html' => ['<iframe src="https://www.youtube.com/embed/aB3_dE-fGh1"></iframe>'];
         yield 'vimeo unlisted' => ['https://vimeo.com/76979871/abcdef1234'];
         yield 'vimeo player unlisted' => ['https://player.vimeo.com/video/76979871?h=abcdef1234'];

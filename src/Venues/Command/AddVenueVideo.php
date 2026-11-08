@@ -6,6 +6,7 @@ namespace App\Venues\Command;
 
 use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
+use App\Venues\ValueObject\VideoEmbed;
 
 /**
  * Adds a YouTube or Vimeo video behind the venue's last one (G15); the handler returns its id. `url` is the link as
@@ -28,6 +29,10 @@ final readonly class AddVenueVideo implements AuditableCommand
 
     public function auditSummary(): array
     {
-        return ['url' => mb_substr($this->url, 0, 200)];
+        // Never the pasted link: a shared link carries tracking parameters (YouTube's `si`), and only provider and id
+        // are kept anywhere. A refused link writes no audit row, so the parse succeeds here.
+        $embed = VideoEmbed::fromUrl($this->url);
+
+        return ['provider' => $embed?->provider->value, 'provider_video_id' => $embed?->videoId];
     }
 }

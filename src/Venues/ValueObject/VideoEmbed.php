@@ -21,6 +21,8 @@ final readonly class VideoEmbed
     private const array NOCOOKIE_HOSTS = ['youtube-nocookie.com', 'www.youtube-nocookie.com'];
     private const array VIMEO_HOSTS = ['vimeo.com', 'www.vimeo.com'];
     private const int MAX_LENGTH = 500;
+    /** `/embed/videoseries?list=…` is a playlist, though the word fits YouTube's id shape. */
+    private const string PLAYLIST = 'videoseries';
 
     private function __construct(
         public VideoProvider $provider,
@@ -30,6 +32,10 @@ final readonly class VideoEmbed
 
     public static function of(VideoProvider $provider, string $videoId): ?self
     {
+        if (VideoProvider::YouTube === $provider && self::PLAYLIST === $videoId) {
+            return null;
+        }
+
         return $provider->isValidId($videoId) ? new self($provider, $videoId) : null;
     }
 

@@ -240,7 +240,7 @@ final class DemoStory extends Story
     private function createVideos(Venue $first, Venue $third): void
     {
         VenueVideoFactory::createOne(['venue' => $first, 'position' => 1, 'embed' => VenueVideoFactory::youtube('demoVideo01')]);
-        VenueVideoFactory::createOne(['venue' => $first, 'position' => 2, 'embed' => VenueVideoFactory::vimeo('100000001')]);
+        VenueVideoFactory::createOne(['venue' => $first, 'position' => 2, 'embed' => VenueVideoFactory::vimeo('999999999999')]);
         VenueVideoFactory::createOne(['venue' => $third, 'position' => 1, 'embed' => VenueVideoFactory::youtube('demoVideo03')]);
     }
 

@@ -997,7 +997,7 @@ tiers:
             rank_weight: 'Je höher, desto weiter vorne in der Liste. Bei 0 gibt es keinen Vorrang und kein «Top-Eintrag».'
             photos_max: 'So viele Fotos zeigt die Seite einer Location mit diesem Tarif, und so viele lassen sich hochladen. Mehr bleiben gespeichert, aber verborgen.'
             rooms_max: 'So viele Räume zeigt die Seite, und so viele lassen sich anlegen. Mehr bleiben gespeichert, aber verborgen.'
-            videos_max: 'Reserviert für Videos, die später kommen.'
+            videos_max: 'So viele Videos zeigt die Seite einer Location; weitere bleiben gespeichert und verborgen.'
             documents_max: 'So viele PDFs zeigt die Seite, und so viele lassen sich hochladen. Mehr bleiben gespeichert, aber verborgen.'
             event_types_max: 'Wie viele Anlassarten eine Location wählen darf. Leer: alle.'
             contact_visible: 'Telefon und Website der Location sind öffentlich. Anfrageformular und Adresse sind es immer.'

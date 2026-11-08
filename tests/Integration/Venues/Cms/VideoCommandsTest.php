@@ -46,6 +46,9 @@ final class VideoCommandsTest extends KernelTestCase
         self::assertNotNull($this->connection->fetchOne('SELECT cms_edited_at FROM venues WHERE id = ?', [$venue->id()]));
         self::assertSame([$venue->number()], $this->purger()->venues);
         self::assertSame(0, $this->purger()->listings);
+        // The audit keeps provider and id, never the pasted link with its tracking parameters.
+        $audit = $this->auditRows($venue->number());
+        self::assertSame(['provider' => 'vimeo', 'provider_video_id' => '76979871'], end($audit)['changes'] ?? null);
     }
 
     public function test_a_link_outside_the_allowlist_is_refused_and_writes_nothing(): void

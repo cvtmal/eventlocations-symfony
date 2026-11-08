@@ -97,7 +97,7 @@ final class VenueRuleViolation extends DomainException
     }
 
     /**
-     * The PDF is already one of the venue's documents (#25: same bytes, same path).
+     * G15: the plan's `videos_max` is reached.
      */
     public static function tooManyVideos(int $max, string $tier): self
     {
@@ -112,11 +112,17 @@ final class VenueRuleViolation extends DomainException
         return new self('videos.error.not_allowed', 'url');
     }
 
+    /**
+     * G15: the venue has this provider's video already, whatever link form was pasted.
+     */
     public static function videoAlreadyAdded(): self
     {
         return new self('videos.error.already_added', 'url');
     }
 
+    /**
+     * The PDF is already one of the venue's documents (#25: same bytes, same path).
+     */
     public static function documentAlreadyUploaded(): self
     {
         return new self('documents.error.already_uploaded', 'file');

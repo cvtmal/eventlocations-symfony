@@ -9,8 +9,8 @@ namespace App\Venues\ValueObject;
  * only by `EntitlementResolver` (G9 changes where the tier comes from, not this shape), read by every consumer:
  * detail page, cards, Merkliste, JSON-LD, mails, upload checks, ranking label.
  *
- * - `photosMax`, `roomsMax`, `documentsMax`: the first N by sort order are public, the rest stay stored and hidden.
- * - `videosMax`: reserved for the video embeds of G15.
+ * - `photosMax`, `roomsMax`, `documentsMax`, `videosMax` (G15): the first N by sort order are public, the rest stay
+ *   stored and hidden.
  * - `contactVisible`: the venue's phone and website; the inquiry form and the address are always public.
  * - `eventTypesMax`: NULL means every event type. It is checked when staff or managers write the types, never
  *   when a page is read, so a venue that fell back to Free keeps its list until someone edits it.
