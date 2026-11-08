@@ -7,7 +7,9 @@ namespace App\Search\ReadModel;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Venues\EntitlementResolver;
+use App\Venues\LastMinuteOfferPolicy;
 use App\Venues\PublicPhotoPolicy;
+use App\Venues\ValueObject\TermDay;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\VenueCapacity;
 use Doctrine\DBAL\Connection;
@@ -19,7 +21,8 @@ use Symfony\Component\Uid\Uuid;
  * whose capacity range overlaps, then the nearest. Overlap ranks, it does not filter, so
  * the result is always full when enough venues are published. `IS TRUE` because a NULL
  * canton would otherwise sort first under DESC; without coordinates the distance is NULL,
- * which sorts last, and the id decides.
+ * which sorts last, and the id decides. `has_last_minute` (G14) is the date half of `LastMinuteOfferPolicy`, like
+ * `ListingQuery`'s card column; the plan half comes from the entitlements resolved for the photo cap.
  */
 final class SimilarVenuesQuery
 {
@@ -49,7 +52,9 @@ final class SimilarVenuesQuery
         $granted = PublicPhotoPolicy::sql('vp');
         $capacityMin = VenueCapacity::minSql('v');
         $capacityMax = VenueCapacity::maxSql('v');
+        $lastMinute = LastMinuteOfferPolicy::dateSql('lmo', 'lm_today');
         $limit = self::LIMIT;
+        $now = $this->clock->now();
 
         $rows = $this->connection->fetchAllAssociative(
             <<<SQL
@@ -58,7 +63,8 @@ final class SimilarVenuesQuery
                     FROM venues WHERE id = :id
                 )
                 SELECT v.id, v.number, v.name, {$capacityMin} AS capacity_min, {$capacityMax} AS capacity_max,
-                    tw.name AS town_name, v.canton_code, t.region, t.slug, ph.photo, pt.alt
+                    tw.name AS town_name, v.canton_code, t.region, t.slug, ph.photo, pt.alt,
+                    EXISTS (SELECT 1 FROM last_minute_offers lmo WHERE lmo.venue_id = v.id AND {$lastMinute}) AS has_last_minute
                 FROM me
                 JOIN venues v ON v.id <> me.id
                 LEFT JOIN towns tw ON tw.id = v.town_id
@@ -77,7 +83,7 @@ final class SimilarVenuesQuery
                     v.id
                 LIMIT {$limit}
                 SQL,
-            ['id' => $venueId] + $published->params + $this->translationJoin->parameters($locale),
+            ['id' => $venueId, 'lm_today' => TermDay::sql($now)] + $published->params + $this->translationJoin->parameters($locale),
             $published->types,
         );
 
@@ -86,7 +92,7 @@ final class SimilarVenuesQuery
             \assert(\is_string($row['id']));
             $ids[] = $row['id'];
         }
-        $entitlements = $this->entitlements->forVenues($ids, $this->clock->now());
+        $entitlements = $this->entitlements->forVenues($ids, $now);
 
         return array_map(static function (array $row) use ($entitlements): SimilarVenue {
             \assert(\is_int($row['number']));
@@ -117,6 +123,7 @@ final class SimilarVenuesQuery
                 $row['capacity_min'],
                 $row['capacity_max'],
                 $photo,
+                (bool) $row['has_last_minute'] && $entitlements[$row['id']]->lastMinuteAllowed,
             );
         }, $rows);
     }

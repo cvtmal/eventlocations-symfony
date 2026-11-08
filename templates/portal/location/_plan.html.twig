@@ -1,7 +1,7 @@
 {#
     The plan card (F12): the location's tier, how much of each limit it uses and, below Pro, "Pro anfragen". Include with
     `with_context = false`: plan (`Portal\ReadModel\LocationPlan`), number (the location's number), optional back (the
-    route of the tab to return to after «Pro anfragen»; `ProRequestController` takes Fotos, Räume and Dokumente).
+    route of the tab to return to after «Pro anfragen»; `ProRequestController` takes Fotos, Räume, Dokumente and Kurzfristig frei).
     The button posts to `ProRequestController` with the stateless `submit` token, like the claim form.
 #}
 <section class="card" aria-labelledby="location-plan">
@@ -27,6 +27,7 @@
                 {{ 'plan.limit.event_types'|trans({max: plan.eventTypesMax|swiss_number}, 'portal') }}
             {%- endif -%}
         </li>
+        <li class="venue-widget__row">{{ (plan.lastMinuteAllowed ? 'plan.limit.last_minute_yes' : 'plan.limit.last_minute_no')|trans({}, 'portal') }}</li>
     </ul>
     {% if plan.canRequestPro %}
         {% set francs = plan.proPriceRappen / 100 %}

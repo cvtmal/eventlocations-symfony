@@ -319,6 +319,8 @@ history:
         TakeEntryOffline: den Eintrag wegen einer Meldung offline genommen
         DecideModerationCase: eine Meldung entschieden
         CheckVenueFacts: die Prüfung der Fakten geändert
+        PublishLastMinuteOffer: 'ein Angebot «Kurzfristig frei» veröffentlicht'
+        EndLastMinuteOffer: 'ein Angebot «Kurzfristig frei» beendet'
         # Retired in #53; old audit rows still name them.
         RateVenue: die Bewertung geändert
         AddVenueReview: eine Bewertung hinzugefügt
@@ -1007,3 +1009,15 @@ tiers:
     flash:
         saved: '«{name}» gespeichert.'
         unchanged: 'Keine Änderungen an «{name}».'
+
+# G14 «Kurzfristig frei» (D55): the refusals of PublishLastMinuteOffer, shown in /konto (du).
+last_minute:
+    error:
+        not_in_plan: 'Mit dem Plan {tier} gibt es keine Angebote «Kurzfristig frei». Die gibt es mit Pro.'
+        too_many: 'Es sind höchstens {max, plural, one {# Angebot} other {# Angebote}} gleichzeitig möglich. Beende zuerst ein Angebot.'
+        start_in_past: Das erste Datum liegt in der Vergangenheit. Wähle heute oder ein späteres Datum.
+        too_far_ahead: 'Das erste Datum darf höchstens {days} Tage in der Zukunft liegen.'
+        end_before_start: Das letzte Datum liegt vor dem ersten.
+        period_too_long: 'Ein Zeitraum darf höchstens {days} Tage lang sein.'
+        foreign_room: Diesen Raum gibt es auf deiner Seite nicht.
+        event_type_not_offered: Wähle nur Anlassarten, die deine Location unter «Geeignet für» angibt.

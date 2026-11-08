@@ -59,3 +59,7 @@ The 12 messages that print "Kanton {canton}" (`CantonWordingTest::messages()` li
 
 - **Venue pages:** `VenueMeta` sets `noindex` (`noindex, follow`, canonical kept) when `VenueFacts::$indexable` is false, i.e. `VenueDetail::$indexable` (`Venues\VenueIndexGate`: facts checked and a description written). The venue sitemap, llms.txt and the landing `lastmod` skip such entries through `VenueSitemapQuery`'s published template.
 - **Landing pages:** `ListingMeta`, `PagesSitemap` and llms.txt read `LandingPage::$indexable` as before; the rules are `LandingQualityGate`'s (`### Search`). Lighthouse SEO on dev scores below 100 only for `is-crawlable` while `seo.robots_block_google` is true.
+
+## G14 `last-minute-offers` (current state)
+
+- `PagesSitemap` lists `last_minute` after `nearby`, without `lastmod`, only while `LastMinutePageQuery::hasAny()`; the empty page is `noindex, follow`.

@@ -65,6 +65,7 @@ final class LocationPlanQuery
             \is_string($row['paid_until']) ? new \DateTimeImmutable($row['paid_until']) : null,
             true === $row['cancelled'],
             true === $row['free_of_charge'],
+            $entitlements->lastMinuteAllowed,
         );
     }
 }

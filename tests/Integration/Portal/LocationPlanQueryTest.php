@@ -52,7 +52,7 @@ final class LocationPlanQueryTest extends KernelTestCase
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
 
         self::assertEquals(
-            new LocationPlan('Pro', true, false, 1, 60, 0, 20, 0, 5, 0, 5, true, null, 19900, false, new \DateTimeImmutable(VenueFactory::TERM_TO), false),
+            new LocationPlan('Pro', true, false, 1, 60, 0, 20, 0, 5, 0, 5, true, null, 19900, false, new \DateTimeImmutable(VenueFactory::TERM_TO), false, false, true),
             $this->plan($venue),
         );
     }

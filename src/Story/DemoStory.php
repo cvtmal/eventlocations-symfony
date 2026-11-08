@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Story;
 
+use App\Factory\LastMinuteOfferFactory;
 use App\Factory\ModerationCaseFactory;
 use App\Factory\ModerationCasePhotoFactory;
 use App\Factory\PhotoCandidateFactory;
@@ -29,6 +30,7 @@ use App\Venues\Entity\TaxonomyTerm;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
 use App\Venues\Entity\VenuePhoto;
+use App\Venues\Entity\VenueTerm;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\Repository\TaxonomyTermRepository;
 use App\Venues\Repository\VenueRepository;
@@ -82,6 +84,10 @@ use function Zenstruck\Foundry\Persistence\repository;
  *   own, after the media step, so nothing before it shifts. Every fifth of them from the
  *   third on (index 4, 14, ..., 54) states a stale capacity, a third of its first room's maximum
  *   and no minimum (F5b), so the guest filter and the card capacity follow the room.
+ *
+ * - «Kurzfristig frei» (G14): offers on four Pro venues (a period in a named room with event types, a day next week, a
+ *   day whose last day is today, a period with terms) and one on a Free venue that no page shows; see
+ *   createLastMinuteOffers(). PortalStory gives the dev manager's Pro location one more.
  *
  * - Complaints (G2): an open rights complaint about venue 3 (index 2) hides its first gallery photo, a decided
  *   `keep` complaint about venue 4 names its first gallery photo (shown again), and an open correction names a
@@ -202,6 +208,49 @@ final class DemoStory extends Story
         flush_after(fn () => $this->createModerationCases($created[self::HELD_VENUE][1], $created[self::KEPT_VENUE][1]));
         flush_after(fn () => $this->createTerms(array_column($created, 1)));
         flush_after(fn () => $this->createVideos($created[0][1], $created[2][1]));
+        flush_after(fn () => $this->createLastMinuteOffers($created));
+    }
+
+    /**
+     * G14: offers relative to today, on the second to fifth Pro venue by index (the first is the dev manager's, see
+     * PortalStory), and one on the first Free venue, hidden by its plan.
+     *
+     * @param array<int, array{string, Venue, list<Room>, list<VenueDocument>}> $created
+     */
+    private function createLastMinuteOffers(array $created): void
+    {
+        $today = new \DateTimeImmutable('today');
+        $pro = array_values(array_filter($created, static fn (array $row): bool => KnownTiers::PRO === $row[1]->tier()->code()));
+        $free = array_values(array_filter($created, static fn (array $row): bool => KnownTiers::FREE === $row[1]->tier()->code()));
+        $suitableFor = static fn (Venue $venue): array => array_map(
+            static fn (VenueTerm $term): string => $term->termCode(),
+            repository(VenueTerm::class)->findBy(['venue' => $venue, 'termGroup' => TermGroup::SuitableFor]),
+        );
+
+        if (isset($pro[1])) {
+            [, $venue, $rooms] = $pro[1];
+            LastMinuteOfferFactory::createOne([
+                'venue' => $venue,
+                'room' => $rooms[0] ?? null,
+                'startsOn' => $today->modify('+3 days'),
+                'endsOn' => $today->modify('+5 days'),
+                'eventTypes' => \array_slice($suitableFor($venue), 0, 2),
+                'priceText' => 'Seminarpauschale ab CHF 89 pro Person',
+                'minGuests' => 20,
+            ]);
+        }
+        if (isset($pro[2])) {
+            LastMinuteOfferFactory::createOne(['venue' => $pro[2][1], 'startsOn' => $today->modify('+7 days'), 'endsOn' => $today->modify('+7 days'), 'priceText' => 'Apéro-Paket für CHF 1500']);
+        }
+        if (isset($pro[3])) {
+            LastMinuteOfferFactory::createOne(['venue' => $pro[3][1], 'startsOn' => $today, 'endsOn' => $today, 'priceText' => 'Saalmiete CHF 800 statt CHF 1200', 'terms' => 'Nur heute, ab 18 Uhr.']);
+        }
+        if (isset($pro[4])) {
+            LastMinuteOfferFactory::createOne(['venue' => $pro[4][1], 'startsOn' => $today->modify('+10 days'), 'endsOn' => $today->modify('+16 days'), 'priceText' => 'Ganze Location ab CHF 2500 pro Tag', 'minGuests' => 40, 'terms' => 'Mindestens zwei Tage.']);
+        }
+        if (isset($free[0])) {
+            LastMinuteOfferFactory::createOne(['venue' => $free[0][1], 'startsOn' => $today->modify('+4 days'), 'endsOn' => $today->modify('+4 days'), 'priceText' => 'Nur mit Pro sichtbar']);
+        }
     }
 
     /**

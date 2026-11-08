@@ -312,6 +312,11 @@ detail:
         new_tab: ' (öffnet in neuem Tab)'
         notice: 'Beim Laden des Videos werden Daten an {provider} in den USA übertragen.'
         frame_title: 'Video {position} von {name}'
+    last_minute:
+        heading: Kurzfristig frei
+        intro: Diese Daten hat die Location kurzfristig noch frei.
+        disclaimer: 'Ohne Gewähr: Ob das Datum noch frei ist, bestätigt dir die Location erst auf deine Anfrage.'
+        inquire: Verfügbarkeit anfragen
     phone:
         title: 'Telefonnummer von {name}'
         heading: 'Telefonnummer von {name}'
@@ -416,3 +421,15 @@ report:
             typed: 'Angegeben: {reference}'
             hold_limit: 'Tageslimit erreicht: nichts verborgen. Heute haben schon so viele Meldungen Fotos verborgen, dass diese keine mehr verbirgt. Welche Fotos gemeint sind, steht allenfalls in der Nachricht; sonst fragt per E-Mail nach.'
             button: Meldung öffnen
+
+# G14 «Kurzfristig frei» (D55): one offer's lines, on the detail page, the page «Kurzfristig frei» and in /konto.
+last_minute:
+    period: '{start} bis {end}'
+    dates: Datum
+    room: Raum
+    whole_location: Ganze Location
+    event_types: Geeignet für
+    price: Preis oder Paket
+    min_guests: 'ab {count, plural, one {# Person} other {# Personen}}'
+    guests: Personen
+    terms: Bedingungen

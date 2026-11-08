@@ -54,6 +54,9 @@
             {%- if card.promoted -%}
                 {{ include('components/_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues')}, with_context = false) }}
             {%- endif -%}
+            {%- if card.lastMinute -%}
+                {{ include('components/_badge.html.twig', {label: 'card.last_minute'|trans({}, 'search')}, with_context = false) }}
+            {%- endif -%}
             <a class="card__link" href="{{ href }}">{{ card.name }}</a>
         </h{{ level }}>
         <p class="card__summary">{{ card.summary }}</p>

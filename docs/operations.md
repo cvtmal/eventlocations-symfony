@@ -344,8 +344,14 @@ step 2), so the times below are Zurich times. `php` on cron's PATH is 8.5 throug
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D46), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D46), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, deletion of expired «Kurzfristig frei» offers with a mail to the managers, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
 | `30 4 * * *` | `bin/cron-media-backup` | The media originals to Object Storage, encrypted, with retention ([Media backup](#media-backup)); no database |
+
+`last-minute-expire` (`app:last-minute:expire`, G14) deletes the offers «Kurzfristig frei» whose
+last day (Zurich) has passed and mails each active manager of a venue that still has Pro, once per
+offer, with a link to the `/konto` tab. The pages already hide such offers from midnight, so the job
+only tidies the rows. A second run deletes and sends nothing, a missed night is caught up by the
+next, and `--dry-run` prints how many would go.
 
 `moderation-erase` (D36) erases the complainant of a report three years after the decision in the
 database only. The staff notices ("Meldung: …") in the `site.contact_email` mailbox and the replies
@@ -363,6 +369,7 @@ worth reading:
 | `cron-daily: crm-backfill failed`, with `<id>: <class>` | One inquiry could not be ingested | The next night retries; if the id returns, check that row. A count-only line is a repaired inquiry, not an error |
 | `cron-daily: subscriptions-expire failed`, with `<number>: <reason>` | One venue's lapsed term was not handled; its pages already show Free (the entitlements read the dates), only the listing order waits | The next night retries; if the number returns, open the venue's CRM deal and its terms |
 | `cron-daily: subscriptions-remind failed`, with `<id>: <reason>` | One reminder mail could not be prepared; a mail that did not go out is logged as an error and retried the next night | The next night retries; if it repeats, check the mail settings (`MAILER_DSN`) |
+| `cron-daily: last-minute-expire failed`, with `Expiring the offers failed: <reason>` | Nothing public is wrong: every page filters offers by date, so expired ones stay hidden; only the deletion and the mails wait | Check the database connection, then run `<root>/current/bin/console app:last-minute:expire` (safe to repeat). A mail that fails is logged ("The portal mail portal/email/last_minute_expired.html.twig failed") and not resent; the offer is deleted anyway |
 | `cron-daily: stats-ingest failed` | Day files not loaded; nothing lost, they stay in `var/stats/spool` | The next night or the Statistik button loads them |
 | `<id> venue <n> since <time> UTC` | An inquiry stayed `pending`; the venue may have no mail | Open `/admin/crm/anfragen/<id>` and press Erneut senden |
 | `cron-midnight: the cache lock stayed busy for 60 s` | A guard run held the lock | Nothing if the next night is clean |

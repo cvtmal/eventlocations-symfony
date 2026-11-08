@@ -129,6 +129,22 @@ final class VenueRuleViolation extends DomainException
     }
 
     /**
+     * The venue's plan has no offers «Kurzfristig frei» (G14, D15: Pro only).
+     */
+    public static function lastMinuteNotInPlan(string $tier): self
+    {
+        return new self('last_minute.error.not_in_plan', null, ['tier' => $tier]);
+    }
+
+    /**
+     * The venue already has as many live offers «Kurzfristig frei» as allowed (G14).
+     */
+    public static function tooManyLastMinuteOffers(int $max): self
+    {
+        return new self('last_minute.error.too_many', null, ['max' => $max]);
+    }
+
+    /**
      * The PDF is already one of the venue's documents (#25: same bytes, same path).
      */
     public static function documentAlreadyUploaded(): self
@@ -186,6 +202,8 @@ final class VenueRuleViolation extends DomainException
             self::videoUrlNotAllowed(),
             self::videoNotPublic(),
             self::videoAlreadyAdded(),
+            self::lastMinuteNotInPlan('Free'),
+            self::tooManyLastMinuteOffers(3),
             self::documentAlreadyUploaded(),
             self::documentTitleRequired('de'),
             self::roomNameRequired('de'),

@@ -65,6 +65,8 @@ card:
     # Visually hidden before the price tag, so "Mittel" is not read alone.
     price_level: 'Preisniveau:'
     photos_label: 'Bilder von {name}'
+    # G14 (D55): the badge of a venue with a live offer.
+    last_minute: Kurzfristig frei
 pagination:
     label: Seiten
     range: '{from} - {to} von {total} Resultaten'
@@ -424,6 +426,21 @@ nearby:
         you: 'Dein Standort'
         group: '{count, plural, other {{formatted} Locations}}'
         error: 'Die Karte kann gerade nicht angezeigt werden.'
+# G14 «Kurzfristig frei» (D55): the public page of the live offers.
+last_minute:
+    nav: Kurzfristig frei
+    title: Kurzfristig frei
+    head_title: 'Kurzfristig frei: Eventlocations mit freien Daten'
+    meta_description: 'Eventlocations mit kurzfristig freien Daten: Datum, Raum, Preis oder Paket direkt von den Locations. Frag die Verfügbarkeit gleich an.'
+    intro: 'Diese Locations haben kurzfristig noch Daten frei. Die Angaben stammen von den Locations selbst.'
+    disclaimer: 'Ohne Gewähr: Ob das Datum noch frei ist, bestätigt dir die Location erst auf deine Anfrage.'
+    results_label: Angebote «Kurzfristig frei»
+    inquire: Verfügbarkeit anfragen
+    inquire_at: 'bei {name}'
+    empty:
+        title: 'Gerade sind keine kurzfristigen Daten frei.'
+        text: 'Schau bald wieder vorbei oder finde deine Location in der Suche.'
+        link: Alle Eventlocations
 # #26: labels of the Search module's text blocks in the back office's text-block list.
 blocks:
     home_text:

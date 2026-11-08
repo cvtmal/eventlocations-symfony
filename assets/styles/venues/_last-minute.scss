@@ -1,0 +1,55 @@
+@use '../abstracts/breakpoints' as bp;
+
+// «Kurzfristig frei» (G14): one offer's lines (`venues/_last_minute_offer.html.twig`) on the detail page and the page
+// «Kurzfristig frei», and the detail section around them (`venues/detail/_last_minute.html.twig`).
+.last-minute-offer {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: var(--space-16);
+    border-radius: var(--radius-image);
+    background: var(--c-surface-raised);
+
+    dt {
+        color: var(--c-ink-muted);
+    }
+
+    dd {
+        margin: 0;
+    }
+}
+
+.last-minute-offer__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+
+    @include bp.up(sm) {
+        grid-template-columns: 9rem minmax(0, 1fr);
+        gap: var(--space-12);
+    }
+}
+
+.last-minute-offer__row--dates dd {
+    font-weight: var(--fw-semibold);
+}
+
+.venue-last-minute__list {
+    display: grid;
+    gap: var(--space-12);
+    margin: var(--space-16) 0;
+    padding: 0;
+    list-style: none;
+}
+
+.venue-last-minute__disclaimer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-8);
+
+    .icon {
+        flex: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--c-accent-strong);
+    }
+}

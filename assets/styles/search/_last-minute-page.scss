@@ -1,0 +1,65 @@
+@use '../abstracts/breakpoints' as bp;
+
+// The page «Kurzfristig frei» (G14, search/last_minute.html.twig): title, intro and disclaimer, then one entry per
+// venue, its card above its offers, beside them from xl. Two classes, so it beats `.listing.container`, which it comes after.
+.listing.last-minute {
+    gap: var(--space-24);
+    padding-top: var(--space-16);
+
+    @include bp.up(md) {
+        padding-top: var(--space-40);
+    }
+}
+
+.last-minute__title {
+    margin: 0;
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+}
+
+.last-minute__intro {
+    max-width: 40rem;
+    margin: 0;
+}
+
+.last-minute__disclaimer {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-8);
+    max-width: 40rem;
+    margin: 0;
+
+    .icon {
+        flex: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        color: var(--c-accent-strong);
+    }
+}
+
+.last-minute__results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-40);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.last-minute__entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-16);
+
+    // The card is a row from md (photo 20 to 25rem), so the offers go beside it only where the card keeps room for
+    // its text: at xl the container is 1248px and two thirds hold the row.
+    @include bp.up(xl) {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        align-items: start;
+        gap: var(--space-24);
+    }
+}
+
+.last-minute__offers .venue-last-minute__list {
+    margin-top: 0;
+}

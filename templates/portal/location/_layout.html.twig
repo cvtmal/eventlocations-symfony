@@ -52,7 +52,7 @@
         {% block tabs %}
             {# A card POST re-rendered at 422 runs on its own route and keeps Angaben marked. #}
             {% set route = app.request.attributes.get('_route') %}
-            {% set current_route = route in ['portal_location_photos', 'portal_location_rooms', 'portal_location_documents', 'portal_location_videos', 'portal_location_stats'] ? route : (route starts with 'portal_location_documents' ? 'portal_location_documents' : 'portal_location') %}
+            {% set current_route = route in ['portal_location_photos', 'portal_location_rooms', 'portal_location_documents', 'portal_location_videos', 'portal_location_stats', 'portal_location_last_minute'] ? route : (route starts with 'portal_location_documents' ? 'portal_location_documents' : 'portal_location') %}
             {{ include('admin/components/_record_tabs.html.twig', {
                 label: 'editor.tabs.label'|trans({}, 'portal'),
                 tabs: [
@@ -62,6 +62,7 @@
                     {label: t('editor.tabs.documents', {}, 'portal'), route: 'portal_location_documents', routeParameters: {number: venue.number}},
                     {label: t('editor.tabs.videos', {}, 'portal'), route: 'portal_location_videos', routeParameters: {number: venue.number}},
                     {label: t('editor.tabs.stats', {}, 'portal'), route: 'portal_location_stats', routeParameters: {number: venue.number}},
+                    {label: t('editor.tabs.last_minute', {}, 'portal'), route: 'portal_location_last_minute', routeParameters: {number: venue.number}},
                 ],
                 current_route: current_route,
             }, with_context = false) }}

@@ -40,6 +40,9 @@ main() {
     # days before a term ends. Both write nothing on a second run; a failure line prints under --quiet.
     step subscriptions-expire "$PHP" bin/console --no-interaction --quiet app:subscriptions:expire
     step subscriptions-remind "$PHP" bin/console --no-interaction --quiet app:subscriptions:remind
+    # G14: offers «Kurzfristig frei» past their last day are deleted and their managers mailed. The pages hid them at
+    # midnight already. A second run writes nothing; a failure line prints under --quiet.
+    step last-minute-expire "$PHP" bin/console --no-interaction --quiet app:last-minute:expire
     # No --quiet: a repaired inquiry is worth the mail, and a good night prints nothing anyway.
     step crm-backfill "$PHP" bin/console --no-interaction app:crm:backfill-inquiries
     # No --quiet: its output (the stuck rows) is the point of this step.

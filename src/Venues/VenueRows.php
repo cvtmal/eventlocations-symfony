@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues;
 
+use App\Venues\Entity\LastMinuteOffer;
 use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
@@ -81,6 +82,14 @@ final class VenueRows
     public function video(Venue $venue, string $videoId): VenueVideo
     {
         return $this->find(VenueVideo::class, $venue, $videoId) ?? throw VenueRowNotFound::video($venue->number(), $videoId);
+    }
+
+    /**
+     * @throws VenueRowNotFound
+     */
+    public function lastMinuteOffer(Venue $venue, string $offerId): LastMinuteOffer
+    {
+        return $this->find(LastMinuteOffer::class, $venue, $offerId) ?? throw VenueRowNotFound::lastMinuteOffer($venue->number(), $offerId);
     }
 
     /**
@@ -190,7 +199,7 @@ final class VenueRows
     }
 
     /**
-     * @template T of VenuePhoto|Room|VenueDocument|VenueVideo|VenuePreview
+     * @template T of VenuePhoto|Room|VenueDocument|VenueVideo|VenuePreview|LastMinuteOffer
      *
      * @param class-string<T> $class
      *

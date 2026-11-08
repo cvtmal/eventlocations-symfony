@@ -23,9 +23,11 @@ use App\Venues\Command\CheckVenueFacts;
 use App\Venues\Command\DecideModerationCase;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\DescribeVenuePhoto;
+use App\Venues\Command\EndLastMinuteOffer;
 use App\Venues\Command\GrantPhotoRights;
 use App\Venues\Command\IssueVenuePreview;
 use App\Venues\Command\MoveVenuePhotoToRoom;
+use App\Venues\Command\PublishLastMinuteOffer;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Command\RelocateVenue;
@@ -118,6 +120,8 @@ final class VenueCommandAuditTest extends TestCase
         yield 'remove document' => [new RemoveVenueDocument(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
         yield 'issue preview link' => [new IssueVenuePreview(self::NUMBER, 'herbst-2026', 90)];
         yield 'revoke preview link' => [new RevokeVenuePreview(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
+        yield 'publish last-minute offer' => [new PublishLastMinuteOffer(self::NUMBER, new \DateTimeImmutable('2026-11-20'), null, '0199a1b2-0000-7000-8000-000000000001', ['seminar'], $text, 20, $text)];
+        yield 'end last-minute offer' => [new EndLastMinuteOffer(self::NUMBER, '0199a1b2-0000-7000-8000-000000000001')];
     }
 
     #[DataProvider('commands')]

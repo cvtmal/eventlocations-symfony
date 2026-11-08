@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Favorites;
 
+use App\Factory\LastMinuteOfferFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -115,6 +117,20 @@ final class MerklistePageTest extends WebTestCase
         self::assertSame('Schloss Seeburg', $button->attr('data-merken-name'));
         self::assertSame('Entfernen', $button->text());
         self::assertCount(0, $crawler->filter('.card [data-merken]'));
+    }
+
+    /**
+     * G14: the badge «Kurzfristig frei» sits on every card surface, the Merkliste's `cardsByNumbers()` included.
+     */
+    public function test_a_pro_venue_with_a_live_offer_carries_the_last_minute_badge(): void
+    {
+        $venue = $this->venue('Schloss Seeburg', ['tier' => KnownTiers::PRO]);
+        LastMinuteOfferFactory::createOne(['venue' => $venue]);
+        $this->seed((string) $venue->number());
+
+        $crawler = $this->get();
+
+        self::assertSame(['Top-Eintrag', 'Kurzfristig frei'], $crawler->filter('.card .badge')->each(static fn (Crawler $badge): string => $badge->text()));
     }
 
     public function test_the_strings_for_the_script_are_on_the_page(): void

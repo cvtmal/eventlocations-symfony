@@ -195,6 +195,20 @@ final class PortalMailer
         }
     }
 
+    /**
+     * G14: an offer «Kurzfristig frei» passed its last day. A service mail about the manager's own content, so no
+     * opt-out; the button opens the tab (the login sends the manager back there).
+     */
+    public function sendLastMinuteExpired(string $email, string $firstName, string $venueName, \DateTimeImmutable $startsOn, \DateTimeImmutable $endsOn, string $tabUrl): bool
+    {
+        return $this->sendLocationMail($email, 'last_minute.mail.expired.subject', $venueName, 'portal/email/last_minute_expired.html.twig', [
+            'firstName' => $firstName,
+            'startsOn' => $startsOn,
+            'endsOn' => $endsOn,
+            'tabUrl' => $tabUrl,
+        ]);
+    }
+
     private function sendAccessMail(string $email, string $firstName, string $venueName, string $subjectKey, string $template): bool
     {
         return $this->sendLocationMail($email, $subjectKey, $venueName, $template, ['firstName' => $firstName]);
@@ -204,7 +218,7 @@ final class PortalMailer
      * These mails greet by name: creating a location needs a login, so the address is proved. They answer whether the
      * mail went, so a controller can tell staff when it did not.
      *
-     * @param array<string, int|string> $context
+     * @param array<string, int|string|\DateTimeImmutable> $context
      */
     private function sendLocationMail(string $to, string $subjectKey, string $venueName, string $template, array $context): bool
     {
