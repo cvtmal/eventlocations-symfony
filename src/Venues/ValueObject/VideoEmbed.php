@@ -13,7 +13,7 @@ namespace App\Venues\ValueObject;
  * `youtu.be/<id>`, `youtube-nocookie.com/embed/<id>`, `vimeo.com/<number>` and `player.vimeo.com/video/<number>`. The
  * scheme may be missing (`https` is assumed), `http` and `https` only, no user, password or port. An unlisted Vimeo
  * link (`vimeo.com/<number>/<hash>`, `player.vimeo.com/video/<number>?h=<hash>`) is refused: its hash is a secret we
- * would have to store as well.
+ * would have to store as well. isUnlistedVimeo() tells that case apart, so the form can say what to do about it.
  */
 final readonly class VideoEmbed
 {
@@ -41,27 +41,14 @@ final readonly class VideoEmbed
 
     public static function fromUrl(string $input): ?self
     {
-        $input = trim($input);
-        if ('' === $input || \strlen($input) > self::MAX_LENGTH || 1 === preg_match('/\s/', $input)) {
+        $link = self::parse($input);
+        if (null === $link) {
             return null;
         }
-        if (1 !== preg_match('#^[a-z][a-z0-9+.-]*://#i', $input)) {
-            $input = 'https://'.$input;
-        }
-        $parts = parse_url($input);
-        if (false === $parts || !isset($parts['scheme'], $parts['host']) || isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])) {
-            return null;
-        }
-        if (!\in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
-            return null;
-        }
-        $host = strtolower($parts['host']);
-        $segments = array_values(array_filter(explode('/', $parts['path'] ?? ''), static fn (string $segment): bool => '' !== $segment));
+        [$host, $segments, $query] = $link;
 
         if (\in_array($host, self::YOUTUBE_HOSTS, true)) {
             if (['watch'] === $segments) {
-                parse_str($parts['query'] ?? '', $query);
-
                 return \is_string($query['v'] ?? null) ? self::of(VideoProvider::YouTube, $query['v']) : null;
             }
 
@@ -77,12 +64,64 @@ final readonly class VideoEmbed
             return 1 === \count($segments) ? self::of(VideoProvider::Vimeo, $segments[0]) : null;
         }
         if ('player.vimeo.com' === $host) {
-            parse_str($parts['query'] ?? '', $query);
-
             return 2 === \count($segments) && 'video' === $segments[0] && !isset($query['h']) ? self::of(VideoProvider::Vimeo, $segments[1]) : null;
         }
 
         return null;
+    }
+
+    /**
+     * True for a Vimeo video set to "unlisted" (`vimeo.com/<number>/<hash>`, `player.vimeo.com/video/<number>?h=<hash>`):
+     * fromUrl() refuses it, and the manager can fix it by making the video public.
+     */
+    public static function isUnlistedVimeo(string $input): bool
+    {
+        $link = self::parse($input);
+        if (null === $link) {
+            return false;
+        }
+        [$host, $segments, $query] = $link;
+
+        if (\in_array($host, self::VIMEO_HOSTS, true)) {
+            return 2 === \count($segments) && VideoProvider::Vimeo->isValidId($segments[0]) && self::isUnlistedHash($segments[1]);
+        }
+        if ('player.vimeo.com' === $host) {
+            return 2 === \count($segments) && 'video' === $segments[0] && VideoProvider::Vimeo->isValidId($segments[1])
+                && \is_string($query['h'] ?? null) && self::isUnlistedHash($query['h']);
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array{string, list<string>, array<mixed>}|null host (lower case), the non-empty path segments and the query
+     */
+    private static function parse(string $input): ?array
+    {
+        $input = trim($input);
+        if ('' === $input || \strlen($input) > self::MAX_LENGTH || 1 === preg_match('/\s/', $input)) {
+            return null;
+        }
+        if (1 !== preg_match('#^[a-z][a-z0-9+.-]*://#i', $input)) {
+            $input = 'https://'.$input;
+        }
+        $parts = parse_url($input);
+        if (false === $parts || !isset($parts['scheme'], $parts['host']) || isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])) {
+            return null;
+        }
+        if (!\in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return null;
+        }
+        $segments = array_values(array_filter(explode('/', $parts['path'] ?? ''), static fn (string $segment): bool => '' !== $segment));
+        parse_str($parts['query'] ?? '', $query);
+
+        return [strtolower($parts['host']), $segments, $query];
+    }
+
+    /** Vimeo's privacy hash: hex digits, ten of them today. */
+    private static function isUnlistedHash(string $hash): bool
+    {
+        return 1 === preg_match('/^[0-9a-f]{6,32}$/Di', $hash);
     }
 
     public function embedUrl(): string

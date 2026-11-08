@@ -61,7 +61,11 @@ final class VenueVideosTest extends WebTestCase
             ['https://www.youtube.com/watch?v=aB3_dE-fGh1', 'https://vimeo.com/76979871'],
             $crawler->filter('.venue-video__link')->each(static fn (Crawler $a): string => (string) $a->attr('href')),
         );
-        self::assertCount(2, $crawler->filter('[data-venue-video-loader][hidden] button[data-venue-video-load]'));
+        self::assertSame(
+            ['Video laden (YouTube)', 'Video laden (Vimeo)'],
+            $crawler->filter('[data-venue-video-loader][hidden] button[data-venue-video-load]')->each(static fn (Crawler $b): string => $b->text()),
+        );
+        self::assertCount(2, $crawler->filter('.venue-video__facade svg.venue-video__icon'));
         preg_match_all('~<template data-venue-video-frame>(.*?)</template>~s', $html, $templates);
         self::assertCount(2, $templates[1]);
         self::assertStringContainsString('src="https://www.youtube-nocookie.com/embed/aB3_dE-fGh1?autoplay=1"', $templates[1][0]);
@@ -87,10 +91,13 @@ final class VenueVideosTest extends WebTestCase
         foreach (['youtube-nocookie', 'player.vimeo', 'ytimg', 'vimeocdn', 'youtube.com/iframe_api', 'youtube.com/embed'] as $host) {
             self::assertStringNotContainsString($host, $outside, $host);
         }
-        foreach ($crawler->filter('[src], link[href]') as $element) {
+        foreach ($crawler->filter('[src], [srcset], [poster], [data], link[href], [style]') as $element) {
             \assert($element instanceof \DOMElement);
-            $url = $element->getAttribute('src') ?: $element->getAttribute('href');
-            self::assertDoesNotMatchRegularExpression('~youtu|vimeo~i', $url, 'loads by itself: '.$url);
+            foreach (['src', 'srcset', 'poster', 'data', 'href', 'style'] as $attribute) {
+                if ('href' !== $attribute || 'link' === $element->tagName) {
+                    self::assertDoesNotMatchRegularExpression('~youtu|vimeo~i', $element->getAttribute($attribute), 'loads by itself: '.$attribute);
+                }
+            }
         }
         self::assertSame(2, preg_match_all('~youtube\.com|vimeo\.com~', $outside));
     }

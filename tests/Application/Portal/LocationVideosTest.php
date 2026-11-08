@@ -55,6 +55,30 @@ final class LocationVideosTest extends WebTestCase
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM venue_videos WHERE venue_id = ?', [$venue->id()]));
     }
 
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function refusedLinks(): iterable
+    {
+        yield 'unlisted Vimeo' => ['https://player.vimeo.com/video/76979871?h=abcdef1234', 'Dieses Vimeo-Video ist nicht öffentlich. Stell es bei Vimeo auf «öffentlich» oder nimm einen YouTube-Link.', 'Diesen Link können wir nicht einbinden.'];
+        yield 'another site' => ['https://example.com/video.mp4', 'Diesen Link können wir nicht einbinden.', 'Vimeo-Video ist nicht öffentlich'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('refusedLinks')]
+    public function test_a_refused_link_tells_the_manager_why(string $url, string $message, string $notShown): void
+    {
+        $venue = $this->managedVenue(DetailVenues::minimal(tier: KnownTiers::PRO));
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+        $crawler = $this->client->submit($crawler->filter('form[name="video_url"]')->form(), ['video_url[url]' => $url]);
+
+        self::assertResponseStatusCodeSame(422);
+        $form = $crawler->filter('form[name="video_url"]')->text();
+        self::assertStringContainsString($message, $form);
+        self::assertStringNotContainsString($notShown, $form);
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM venue_videos WHERE venue_id = ?', [$venue->id()]));
+    }
+
     private function managedVenue(Venue $venue): Venue
     {
         PortalVenueAccessFactory::new()->active()->create(['user' => $this->logInAsManager(), 'venue' => $venue]);

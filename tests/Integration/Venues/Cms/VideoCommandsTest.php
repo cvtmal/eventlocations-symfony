@@ -64,6 +64,18 @@ final class VideoCommandsTest extends KernelTestCase
         self::assertSame([], $this->purger()->venues);
     }
 
+    public function test_an_unlisted_vimeo_link_is_refused_as_not_public(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO]);
+
+        foreach (['https://vimeo.com/76979871/abcdef1234', 'https://player.vimeo.com/video/76979871?h=abcdef1234'] as $url) {
+            $violation = $this->violation(new AddVenueVideo($venue->number(), $url));
+            self::assertSame('videos.error.not_public', $violation->translationKey());
+            self::assertSame('url', $violation->field);
+        }
+        self::assertSame(0, $this->videoCount($venue->id()));
+    }
+
     public function test_the_same_video_again_is_refused_in_any_link_form(): void
     {
         $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO]);

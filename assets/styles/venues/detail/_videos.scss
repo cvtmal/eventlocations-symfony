@@ -5,6 +5,9 @@
 // phone, and a taller facade than the player would shift the page on the click.
 .venue-videos__list {
     display: grid;
+    // An explicit column: an implicit auto one would take the facade's min height through its aspect ratio
+    // (15 rem x 16 / 9, about 427 px) as its minimum width and overflow a phone.
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-24);
     margin: 0;
     padding: 0;

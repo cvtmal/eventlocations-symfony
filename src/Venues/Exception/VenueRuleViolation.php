@@ -113,6 +113,14 @@ final class VenueRuleViolation extends DomainException
     }
 
     /**
+     * G15: a Vimeo video set to "unlisted"; its hash would be a secret to store, so the video must be public.
+     */
+    public static function videoNotPublic(): self
+    {
+        return new self('videos.error.not_public', 'url');
+    }
+
+    /**
      * G15: the venue has this provider's video already, whatever link form was pasted.
      */
     public static function videoAlreadyAdded(): self
@@ -176,6 +184,7 @@ final class VenueRuleViolation extends DomainException
             self::tooManyEventTypes(3, 'Free', 'suitableFor'),
             self::tooManyVideos(1, 'Free'),
             self::videoUrlNotAllowed(),
+            self::videoNotPublic(),
             self::videoAlreadyAdded(),
             self::documentAlreadyUploaded(),
             self::documentTitleRequired('de'),

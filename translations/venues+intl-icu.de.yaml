@@ -307,10 +307,10 @@ detail:
     videos:
         heading: Videos
         caption: 'Video {position} auf {provider}'
-        load: Video laden
+        load: 'Video laden ({provider})'
         open: 'Auf {provider} ansehen'
         new_tab: ' (öffnet in neuem Tab)'
-        notice: 'Beim Laden des Videos werden Daten an {provider} übertragen.'
+        notice: 'Beim Laden des Videos werden Daten an {provider} in den USA übertragen.'
         frame_title: 'Video {position} von {name}'
     phone:
         title: 'Telefonnummer von {name}'

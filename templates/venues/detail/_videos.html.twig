@@ -1,6 +1,6 @@
 {#
     Videos (G15): one click-to-load facade per video, the same way as the Standort map (#15). Params: venue.
-    The player iframe waits inert inside <template>, so nothing reaches YouTube or Vimeo before "Video laden" clones it
+    The player iframe waits inert inside <template>, so nothing reaches YouTube or Vimeo before "Video laden (YouTube)" clones it
     (assets/js/venue-video.js); the loader is hidden until that script runs, and the provider link works without it.
     No thumbnail: a preview image would come from the provider before the click.
 #}
@@ -14,7 +14,7 @@
                     {{ icon('play', {class: 'venue-video__icon'}) }}
                     <p class="venue-video__caption">{{ 'detail.videos.caption'|trans({position: loop.index, provider: provider}, 'venues') }}</p>
                     <div class="venue-video__loader" data-venue-video-loader hidden>
-                        <button type="button" class="btn btn--primary" data-venue-video-load>{{ icon('play') }}<span>{{ 'detail.videos.load'|trans({}, 'venues') }}</span></button>
+                        <button type="button" class="btn btn--primary" data-venue-video-load>{{ icon('play') }}<span>{{ 'detail.videos.load'|trans({provider: provider}, 'venues') }}</span></button>
                         <p class="venue-video__notice">{{ 'detail.videos.notice'|trans({provider: provider}, 'venues') }}</p>
                     </div>
                     <a class="btn btn--secondary venue-video__link" href="{{ video.watchUrl }}" target="_blank" rel="noopener">{{ 'detail.videos.open'|trans({provider: provider}, 'venues') }}<span class="visually-hidden">{{ 'detail.videos.new_tab'|trans({}, 'venues') }}</span></a>

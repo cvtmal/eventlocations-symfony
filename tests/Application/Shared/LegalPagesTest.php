@@ -251,9 +251,11 @@ final class LegalPagesTest extends WebTestCase
         $text = $this->page('/datenschutz')->filter('main')->text();
         $translator = self::getContainer()->get(TranslatorInterface::class);
         self::assertInstanceOf(TranslatorInterface::class, $translator);
-        $load = $translator->trans('detail.videos.load', [], 'venues', 'de');
+        $load = static fn (string $provider): string => $translator->trans('detail.videos.load', ['provider' => $provider], 'venues', 'de');
 
-        self::assertStringContainsString('erst, wenn du auf «'.$load.'» klickst', $text);
+        self::assertStringContainsString('Erst wenn du auf «'.$load('YouTube').'» oder «'.$load('Vimeo').'» klickst', $text);
+        self::assertStringContainsString('Bevor du klickst, lädt die Seite nichts von YouTube oder Vimeo', $text);
+        self::assertStringContainsString('Dabei gehen Daten in die USA zu YouTube (Google) oder Vimeo, mindestens deine IP-Adresse', $text);
         foreach (['YouTube', 'Vimeo'] as $provider) {
             self::assertStringContainsString('«'.$translator->trans('detail.videos.open', ['provider' => $provider], 'venues', 'de').'»', $text);
         }

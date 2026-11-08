@@ -17,9 +17,10 @@ use App\Venues\VenueRows;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * One video (G15): the link must be on `VideoEmbed`'s allowlist, then lock, the same video again is
- * videoAlreadyAdded(), the plan's `videos_max` (F12, `TierLimits`), add at the next position, close() without the
- * listings purge (videos are not on the cards). uk_venue_videos_venue_id_provider_video_id backs the duplicate check.
+ * One video (G15): the link must be on `VideoEmbed`'s allowlist (an unlisted Vimeo link is videoNotPublic()), then
+ * lock, the same video again is videoAlreadyAdded(), the plan's `videos_max` (F12, `TierLimits`), add at the next
+ * position, close() without the listings purge (videos are not on the cards).
+ * uk_venue_videos_venue_id_provider_video_id backs the duplicate check.
  */
 final class AddVenueVideoHandler implements CommandHandlerInterface
 {
@@ -40,7 +41,10 @@ final class AddVenueVideoHandler implements CommandHandlerInterface
      */
     public function __invoke(AddVenueVideo $command): string
     {
-        $embed = VideoEmbed::fromUrl($command->url) ?? throw VenueRuleViolation::videoUrlNotAllowed();
+        $embed = VideoEmbed::fromUrl($command->url);
+        if (null === $embed) {
+            throw VideoEmbed::isUnlistedVimeo($command->url) ? VenueRuleViolation::videoNotPublic() : VenueRuleViolation::videoUrlNotAllowed();
+        }
         $venue = $this->editing->lock($command->venueNumber);
         foreach ($this->rows->videos($venue) as $video) {
             if ($video->provider() === $embed->provider && $video->videoId() === $embed->videoId) {

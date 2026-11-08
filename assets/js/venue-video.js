@@ -1,4 +1,4 @@
-// Videos (G15): each player iframe waits inert in a <template> until its "Video laden" is clicked, so nothing reaches
+// Videos (G15): each player iframe waits inert in a <template> until its "Video laden (YouTube|Vimeo)" is clicked, so nothing reaches
 // YouTube or Vimeo before the click. The button is hidden without JS; the provider link works everywhere.
 // Self-contained: no imports, no globals. Loaded only on a detail page that shows videos.
 (() => {

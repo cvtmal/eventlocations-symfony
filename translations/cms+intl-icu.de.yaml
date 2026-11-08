@@ -549,7 +549,7 @@ videos:
     tab: Videos
     list:
         title: Videos
-        hint: Die Reihenfolge hier ist die Reihenfolge auf der Website. Die Seite lädt ein Video erst, wenn jemand auf «Video laden» klickt.
+        hint: Die Reihenfolge hier ist die Reihenfolge auf der Website. Die Seite lädt ein Video erst, wenn jemand auf «Video laden (YouTube)» oder «Video laden (Vimeo)» klickt.
         limit: 'Mit dem Plan {tier} {max, plural, =0 {zeigt die Website keine Videos} one {zeigt die Website # Video} other {zeigt die Website bis zu # Videos}}.'
         hidden: Nicht sichtbar (Plan)
     empty:
@@ -580,6 +580,7 @@ videos:
         url: 'Ein Link zu YouTube (youtube.com, youtu.be) oder Vimeo (vimeo.com), zum Beispiel https://youtu.be/… Gespeichert werden nur Anbieter und Nummer des Videos.'
     error:
         not_allowed: Diesen Link können wir nicht einbinden. Möglich sind öffentliche Videos auf YouTube (youtube.com, youtu.be) und Vimeo (vimeo.com).
+        not_public: 'Dieses Vimeo-Video ist nicht öffentlich. Stell es bei Vimeo auf «öffentlich» oder nimm einen YouTube-Link.'
         already_added: Dieses Video ist bereits bei den Videos.
         too_many: 'Mit dem Plan {tier} {max, plural, =0 {sind keine Videos} one {ist höchstens # Video} other {sind höchstens # Videos}} möglich. Entferne zuerst ein Video oder wechsle auf einen grösseren Plan.'
 

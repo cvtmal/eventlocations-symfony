@@ -83,6 +83,33 @@ final class VideoEmbedTest extends TestCase
         self::assertNull(VideoEmbed::fromUrl($url));
     }
 
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function unlisted(): iterable
+    {
+        yield 'vimeo unlisted' => ['https://vimeo.com/76979871/abcdef1234', true];
+        yield 'vimeo unlisted with share parameter' => ['vimeo.com/76979871/ABCDEF1234?share=copy', true];
+        yield 'vimeo player unlisted' => ['https://player.vimeo.com/video/76979871?h=abcdef1234&autoplay=1', true];
+        yield 'vimeo public' => ['https://vimeo.com/76979871', false];
+        yield 'vimeo player public' => ['https://player.vimeo.com/video/76979871', false];
+        yield 'vimeo channel' => ['https://vimeo.com/channels/staffpicks/76979871', false];
+        yield 'vimeo second segment not a hash' => ['https://vimeo.com/76979871/likes', false];
+        yield 'vimeo player hash not a hash' => ['https://player.vimeo.com/video/76979871?h=<script>', false];
+        yield 'lookalike host' => ['https://vimeo.com.example.com/76979871/abcdef1234', false];
+        yield 'youtube' => ['https://youtu.be/aB3_dE-fGh1', false];
+        yield 'not a link' => ['', false];
+    }
+
+    #[DataProvider('unlisted')]
+    public function test_an_unlisted_vimeo_link_is_told_apart_from_other_refusals(string $url, bool $unlisted): void
+    {
+        self::assertSame($unlisted, VideoEmbed::isUnlistedVimeo($url));
+        if ($unlisted) {
+            self::assertNull(VideoEmbed::fromUrl($url));
+        }
+    }
+
     public function test_the_player_is_youtube_nocookie_or_vimeo_without_tracking(): void
     {
         $youtube = VideoEmbed::fromUrl('https://youtu.be/aB3_dE-fGh1');
