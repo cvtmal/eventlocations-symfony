@@ -91,6 +91,11 @@ final class ListingQueryPerformanceTest extends KernelTestCase
             $timings["heaviest ({$variant}), count"] = $this->executionMs($this->query->countStatement($criteria));
             $this->report("heaviest ({$variant}) matches", (float) $this->query->count($criteria), 'venues');
         }
+        // F5b: the guest criterion with its rooms EXISTS (most matches still fit by their own range; the stale demo venues fit by a room).
+        $roomGuests = $this->criteria('guests=300');
+        $timings['guests via rooms, cards'] = $this->executionMs($this->query->cardStatement($roomGuests, 'de'));
+        $timings['guests via rooms, count'] = $this->executionMs($this->query->countStatement($roomGuests));
+        $this->report('guests via rooms matches', (float) $this->query->count($roomGuests), 'venues');
         $timings['unfiltered page 11, cards'] = $this->executionMs($this->query->cardStatement(SearchCriteria::none()->withPage(11), 'de'));
         $timings['unfiltered, count'] = $this->executionMs($this->query->countStatement(SearchCriteria::none()));
         $filterData = new FilterDataQuery($this->connection, ListingQueryTest::enabledLocale());
@@ -361,6 +366,8 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $this->cloneTable('venues', 'v.id', ['id' => 'm.id', 'name' => "v.name || ' ' || m.n"]);
         $this->cloneTable('venue_translations', 'v.venue_id', ['id' => 'gen_random_uuid()', 'venue_id' => 'm.id', 'slug' => "v.slug || '-' || m.n"]);
         $this->cloneTable('venue_terms', 'v.venue_id', ['venue_id' => 'm.id']);
+        // The guest filter and the card's capacity read rooms (F5b); room translations are not read by the listing.
+        $this->cloneTable('rooms', 'v.venue_id', ['id' => 'gen_random_uuid()', 'venue_id' => 'm.id']);
 
         // Photos only through the factory or a column-agnostic clone of a factory row, so the
         // media cycle's NOT NULL columns are filled in either merge order.

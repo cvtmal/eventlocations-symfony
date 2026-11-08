@@ -26,6 +26,7 @@ use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
+use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
@@ -208,6 +209,70 @@ final class ListingQueryTest extends KernelTestCase
         $this->venue('Apero gross', ['capacityMax' => 200, 'capacityMin' => null], terms: [[TermGroup::SuitableFor, 'apero']]);
 
         $this->assertMatches(['Seminar gross'], 'event[]=seminar&guests=80');
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('roomGuestNumbers')]
+    public function test_a_guest_number_also_matches_a_venue_whose_room_fits_it(string $guests, array $expected): void
+    {
+        RoomFactory::createOne(['venue' => $this->venue('Halle 300', ['capacityMax' => 120, 'capacityMin' => null]), 'capacityMin' => null, 'capacityMax' => 300]);
+        RoomFactory::createOne(['venue' => $this->venue('Saal ab 200', ['capacityMax' => 50, 'capacityMin' => 20]), 'capacityMin' => 200, 'capacityMax' => 400]);
+        RoomFactory::new()->withSeating(Seating::Banquet, null, 250)
+            ->create(['venue' => $this->venue('Bankett 250', ['capacityMax' => 100, 'capacityMin' => 60]), 'capacityMin' => null, 'capacityMax' => null]);
+        RoomFactory::createOne(['venue' => $this->venue('Raum ohne Max', ['capacityMax' => 100, 'capacityMin' => null]), 'capacityMin' => 500, 'capacityMax' => null]);
+        $this->venue('Ohne Raum', ['capacityMax' => 100, 'capacityMin' => null]);
+
+        $this->assertMatches($expected, 'guests='.$guests);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function roomGuestNumbers(): iterable
+    {
+        yield 'the venue range fits' => ['30', ['Bankett 250', 'Halle 300', 'Ohne Raum', 'Raum ohne Max', 'Saal ab 200']];
+        yield 'under a room minimum, above the venue maximum' => ['150', ['Bankett 250', 'Halle 300']];
+        yield 'a room maximum is inclusive' => ['300', ['Halle 300', 'Saal ab 200']];
+        yield 'a room minimum is inclusive' => ['200', ['Bankett 250', 'Halle 300', 'Saal ab 200']];
+        yield 'a room without a maximum fits nobody' => ['500', []];
+    }
+
+    public function test_the_card_capacity_spans_the_venue_and_its_rooms(): void
+    {
+        RoomFactory::createOne(['venue' => $this->venue('Halle', ['capacityMax' => 120, 'capacityMin' => 40]), 'capacityMin' => 10, 'capacityMax' => 300]);
+        RoomFactory::createOne(['venue' => $this->venue('Offen', ['capacityMax' => 120, 'capacityMin' => 40]), 'capacityMin' => null, 'capacityMax' => 80]);
+        RoomFactory::createOne(['venue' => $this->venue('Klein', ['capacityMax' => 120, 'capacityMin' => 40]), 'capacityMin' => 60, 'capacityMax' => 90]);
+        RoomFactory::createOne(['venue' => $this->venue('Ohne Max', ['capacityMax' => 120, 'capacityMin' => 40]), 'capacityMin' => 5, 'capacityMax' => null]);
+        $this->venue('Ohne Raum', ['capacityMax' => 120, 'capacityMin' => null]);
+
+        $cards = $this->byName($this->query()->results(SearchCriteria::none(), 'de')->cards);
+        $ranges = array_map(static fn (ListingCard $card): array => [$card->capacityMin, $card->capacityMax], $cards);
+        ksort($ranges);
+
+        self::assertSame([
+            'Halle' => [10, 300],
+            'Klein' => [40, 120],
+            'Offen' => [null, 120],
+            'Ohne Max' => [40, 120],
+            'Ohne Raum' => [null, 120],
+        ], $ranges);
+        $byNumber = $this->query()->cardsByNumbers([$cards['Halle']->number], 'de')[0];
+        self::assertSame([10, 300], [$byNumber->capacityMin, $byNumber->capacityMax], 'cardsByNumbers reads the same columns');
+    }
+
+    public function test_a_card_carries_its_first_event_type_in_vocabulary_order(): void
+    {
+        $this->venue('Zwei Anlaesse', terms: [[TermGroup::SuitableFor, 'wedding'], [TermGroup::SuitableFor, 'seminar']]);
+        $this->venue('Nur Setting', terms: [[TermGroup::Setting, 'lake']]);
+        $this->venue('Keiner');
+
+        $cards = $this->byName($this->query()->results(SearchCriteria::none(), 'de')->cards);
+
+        self::assertSame('seminar', $cards['Zwei Anlaesse']->eventType);
+        self::assertNull($cards['Nur Setting']->eventType);
+        self::assertNull($cards['Keiner']->eventType);
     }
 
     #[DataProvider('nameQueries')]

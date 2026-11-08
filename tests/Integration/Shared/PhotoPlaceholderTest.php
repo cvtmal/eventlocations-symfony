@@ -128,6 +128,20 @@ final class PhotoPlaceholderTest extends KernelTestCase
         self::assertCount(0, $crawler->filter('.carousel'));
     }
 
+    public function test_a_card_without_photos_shows_the_placeholder_of_its_own_event_type(): void
+    {
+        $crawler = new Crawler($this->card(eventType: 'seminar'));
+
+        self::assertSame('presentation', $this->iconOf($crawler->filter('.card__placeholder')->html()));
+    }
+
+    public function test_an_event_type_passed_to_the_card_wins_over_its_own(): void
+    {
+        $crawler = new Crawler($this->card(['event_type' => 'birthday'], 'seminar'));
+
+        self::assertSame('cake', $this->iconOf($crawler->filter('.card__placeholder')->html()));
+    }
+
     public function test_the_card_of_the_merkliste_shows_it_too(): void
     {
         $crawler = new Crawler($this->card(['action' => 'remove']));
@@ -152,7 +166,7 @@ final class PhotoPlaceholderTest extends KernelTestCase
     /**
      * @param array<string, mixed> $context
      */
-    private function card(array $context = []): string
+    private function card(array $context = [], ?string $eventType = null): string
     {
         $card = new ListingCard(
             id: '0190b7a0-0000-7000-8000-000000000001',
@@ -167,6 +181,7 @@ final class PhotoPlaceholderTest extends KernelTestCase
             priceLevel: null,
             ambience: null,
             photos: [],
+            eventType: $eventType,
         );
 
         return $this->render('search/_card.html.twig', ['card' => $card] + $context);

@@ -1,12 +1,13 @@
 {#
     One venue card (LP-2, LP-3). Owned by #7; #13 reuses it on /merkliste. Include with `only`:
       card (a ListingCard, or anything with its public properties: number, slug, name, promoted, capacityMin, capacityMax,
-      place, summary, priceLevel, ambience, photos),
+      place, summary, priceLevel, ambience, photos; eventType optional),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
       action: merken|remove|none (default merken),
       heading: the title's element, h1 to h6 (default h2; a page with its own h2 above the cards passes h3),
       distance: an already-translated distance ("4 km") for the facts line (#52), default none,
-      event_type: the code that picks the icon of the photo placeholder of a card without photos (components/_photo_placeholder), default none (F6).
+      event_type: the code that picks the icon of the photo placeholder of a card without photos (components/_photo_placeholder), default
+        card.eventType (F5b: the venue's first event type), else none (F6).
     The title link stretches over the card (.card__link::after) and is the card's one accessible link. The photo column
     sits above that overlay so the carousel can be swiped and its arrows clicked; each slide therefore carries its own
     link to the detail page (tabindex="-1", aria-hidden="true": no extra tab stop or screen-reader link), the placeholder
@@ -37,7 +38,7 @@
             {% endblock %}
         {% endembed %}
         {%- else %}
-        <a class="card__photo-link card__placeholder" href="{{ href }}" tabindex="-1" aria-hidden="true">{{ include('components/_photo_placeholder.html.twig', {event_type: event_type|default(null)}, with_context = false) }}</a>
+        <a class="card__photo-link card__placeholder" href="{{ href }}" tabindex="-1" aria-hidden="true">{{ include('components/_photo_placeholder.html.twig', {event_type: event_type ?? card.eventType ?? null}, with_context = false) }}</a>
         {%- endif %}
     </div>
     <div class="card__body">

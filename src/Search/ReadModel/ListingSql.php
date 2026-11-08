@@ -16,8 +16,10 @@ use Doctrine\DBAL\ParameterType;
  * - Published means status published and a translation in the default locale (the card
  *   needs a slug and a summary).
  * - Groups combine with AND; inside a group event type, setting and building are OR, the
- *   other term groups and access AND. Guests (F5) need a venue that holds that many
- *   (capacity_max) and states no higher minimum (capacity_min NULL or at most the number).
+ *   other term groups and access AND. Guests (F5, F5b) need a venue whose own range or one of
+ *   whose rooms' ranges fits the number: holds that many (capacity_max) and states no higher
+ *   minimum (capacity_min NULL or at most the number). A room's range is the one F4 derives
+ *   from its layouts (`Seating::guestRange()`), so `rooms.capacity_{min,max}` is read as is.
  * - The radius centre is a joined MATERIALIZED CTE (`centre c`): only that shape lets the
  *   planner use idx_venues_earth. An unknown town or ZIP leaves the CTE empty, so 0 rows.
  *
@@ -76,8 +78,8 @@ final readonly class ListingSql
         }
 
         if (null !== $criteria->guests) {
-            $where[] = 'v.capacity_max >= :guests';
-            $where[] = '(v.capacity_min IS NULL OR v.capacity_min <= :guests)';
+            $where[] = '((v.capacity_max >= :guests AND (v.capacity_min IS NULL OR v.capacity_min <= :guests))'
+                .' OR EXISTS (SELECT 1 FROM rooms r WHERE r.venue_id = v.id AND r.capacity_max >= :guests AND (r.capacity_min IS NULL OR r.capacity_min <= :guests)))';
             $params['guests'] = $criteria->guests;
             $types['guests'] = ParameterType::INTEGER;
         }
