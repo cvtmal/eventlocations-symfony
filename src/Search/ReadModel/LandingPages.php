@@ -7,6 +7,7 @@ namespace App\Search\ReadModel;
 use App\Geo\ValueObject\Canton;
 use App\Search\ValueObject\LandingType;
 use App\Shared\Translation\EnabledLocale;
+use App\Venues\VenueIndexGate;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -172,36 +173,39 @@ final class LandingPages implements ResetInterface
     {
         $published = new ListingSql(SearchCriteria::none(), $this->enabledLocale->default());
         $noPage = implode(', ', array_map(static fn (string $code): string => "'".$code."'", self::NO_PAGE_EVENTS));
+        // G12: `indexed` counts the entries that pass VenueIndexGate; published already means a default-locale row.
+        $text = 'JOIN venue_translations ix ON ix.venue_id = v.id AND ix.locale = :default_locale';
+        $indexable = VenueIndexGate::sql('v', 'ix');
 
         return new SqlStatement(
             <<<SQL
                 {$published->with}
-                SELECT 'canton' AS type, v.canton_code AS code, c.slug, c.slug AS canton_slug, v.canton_code AS canton, NULL AS town_name, count(*) AS venues
-                FROM {$published->from} JOIN cantons c ON c.code = v.canton_code
+                SELECT 'canton' AS type, v.canton_code AS code, c.slug, c.slug AS canton_slug, v.canton_code AS canton, NULL AS town_name, count(*) AS venues, count(*) FILTER (WHERE {$indexable}) AS indexed
+                FROM {$published->from} {$text} JOIN cantons c ON c.code = v.canton_code
                 WHERE {$published->where}
                 GROUP BY v.canton_code, c.slug
                 HAVING count(*) >= :min
                 UNION ALL
-                SELECT 'town', v.town_id::text, tw.slug, c.slug, tw.canton_code, tw.name, count(*)
-                FROM {$published->from} JOIN towns tw ON tw.id = v.town_id JOIN cantons c ON c.code = tw.canton_code
+                SELECT 'town', v.town_id::text, tw.slug, c.slug, tw.canton_code, tw.name, count(*), count(*) FILTER (WHERE {$indexable})
+                FROM {$published->from} {$text} JOIN towns tw ON tw.id = v.town_id JOIN cantons c ON c.code = tw.canton_code
                 WHERE {$published->where}
                 GROUP BY v.town_id, tw.slug, c.slug, tw.canton_code, tw.name
                 HAVING count(*) >= :min
                 UNION ALL
-                SELECT 'building', x.term_code, NULL, NULL, NULL, NULL, count(*)
-                FROM {$published->from} JOIN venue_terms x ON x.venue_id = v.id AND x.term_group = 'building'
+                SELECT 'building', x.term_code, NULL, NULL, NULL, NULL, count(*), count(*) FILTER (WHERE {$indexable})
+                FROM {$published->from} {$text} JOIN venue_terms x ON x.venue_id = v.id AND x.term_group = 'building'
                 WHERE {$published->where}
                 GROUP BY x.term_code
                 HAVING count(*) >= :min
                 UNION ALL
-                SELECT 'event', e.term_code, NULL, NULL, NULL, NULL, count(*)
-                FROM {$published->from} JOIN venue_terms e ON e.venue_id = v.id AND e.term_group = 'suitable_for' AND e.term_code NOT IN ({$noPage})
+                SELECT 'event', e.term_code, NULL, NULL, NULL, NULL, count(*), count(*) FILTER (WHERE {$indexable})
+                FROM {$published->from} {$text} JOIN venue_terms e ON e.venue_id = v.id AND e.term_group = 'suitable_for' AND e.term_code NOT IN ({$noPage})
                 WHERE {$published->where}
                 GROUP BY e.term_code
                 HAVING count(*) >= :min
                 UNION ALL
-                SELECT 'event', e.term_code, NULL, c.slug, v.canton_code, NULL, count(*)
-                FROM {$published->from} JOIN venue_terms e ON e.venue_id = v.id AND e.term_group = 'suitable_for' AND e.term_code NOT IN ({$noPage})
+                SELECT 'event', e.term_code, NULL, c.slug, v.canton_code, NULL, count(*), count(*) FILTER (WHERE {$indexable})
+                FROM {$published->from} {$text} JOIN venue_terms e ON e.venue_id = v.id AND e.term_group = 'suitable_for' AND e.term_code NOT IN ({$noPage})
                 JOIN cantons c ON c.code = v.canton_code
                 WHERE {$published->where}
                 GROUP BY e.term_code, v.canton_code, c.slug
@@ -241,7 +245,7 @@ final class LandingPages implements ResetInterface
     private function load(SqlStatement $statement): array
     {
         return array_map(function (array $row): LandingPage {
-            \assert(\is_string($row['type']) && \is_string($row['code']) && \is_int($row['venues']));
+            \assert(\is_string($row['type']) && \is_string($row['code']) && \is_int($row['venues']) && \is_int($row['indexed']));
             $type = LandingType::from($row['type']);
             $canton = \is_string($row['canton']) ? Canton::from($row['canton']) : null;
             $cantonSlug = \is_string($row['canton_slug']) ? $row['canton_slug'] : null;
@@ -265,7 +269,7 @@ final class LandingPages implements ResetInterface
                 ),
             };
 
-            return $page->withIndexable($this->gate->passes($page));
+            return $page->withIndexable($this->gate->passes($page, $row['indexed']));
         }, $this->connection->fetchAllAssociative($statement->sql, $statement->params, $statement->types));
     }
 }

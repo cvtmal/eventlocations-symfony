@@ -18,6 +18,7 @@ use App\Search\ReadModel\LandingQualityGate;
 use App\Search\ReadModel\SearchCriteria;
 use App\Search\Twig\ListingExtension;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Integration\Seo\LandingQualityGateTest;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
@@ -63,7 +64,7 @@ final class ListingExtensionTest extends KernelTestCase
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         $connection = self::getContainer()->get(Connection::class);
         self::assertInstanceOf(Connection::class, $connection);
-        $landings = new LandingPages($connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5), 5);
+        $landings = new LandingPages($connection, ListingQueryTest::enabledLocale(), $translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5, LandingQualityGateTest::LAUNCH_CANTONS), 5);
 
         return new ListingExtension($urls, $translator, new PlaceResolver($connection), new FilterDataQuery($connection, ListingQueryTest::enabledLocale()), $landings, new LandingPaths($landings, $urls), new LandingCopy($translator));
     }

@@ -2,7 +2,8 @@
     The venue editor (CMS-2): one card per `Cms\ValueObject\VenueCard`, each its own form. Context from
     `VenueEditController`: venue (VenueHeader), edit (VenueEdit), forms (card value → FormView), bound_card, stale,
     locales list<{code, label}>, missing (codes of `VenueEdit::missingForPublish()`), history list<{actor, action, at}>,
-    cards (the VenueCard cases), google_check_url (the Maps link of the loaded place ID, null without one).
+    cards (the VenueCard cases), google_check_url (the Maps link of the loaded place ID, null without one), index_missing
+    (codes of `VenueEdit::missingForIndex()`, G12).
 #}
 {% extends 'admin/cms/venue/_layout.html.twig' %}
 
@@ -39,6 +40,30 @@
                     </li>
                 {% endfor %}
             </ul>
+        {% endblock %}
+    {% endembed %}
+    {% embed 'admin/components/_card.html.twig' with {title: 'indexing.title'|trans({}, 'cms'), id: 'venue-indexing', missing: index_missing, number: venue.number, published: venue.isPublished} only %}
+        {% block body %}
+            <ul class="venue-checklist">
+                {% for item in ['facts', 'description'] %}
+                    {% set done = item not in missing %}
+                    <li class="venue-checklist__item{{ done ? ' venue-checklist__item--done' }}">
+                        {{ admin_icon(done ? 'check' : 'x') }}
+                        <span>{{ ('indexing.item.' ~ item)|trans({}, 'cms') }}</span>
+                        <span class="visually-hidden">{{ (done ? 'editor.checklist.done' : 'editor.checklist.missing')|trans({}, 'cms') }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+            <p class="muted">{{ (not published ? 'indexing.state.offline' : (missing is empty ? 'indexing.state.indexed' : 'indexing.state.noindex'))|trans({}, 'cms') }}</p>
+            {% set checked = 'facts' not in missing %}
+            {% set facts_form = cms_venue_action_form(checked ? 'uncheck_facts' : 'check_facts', number) %}
+            {{ form_start(facts_form) }}
+                {{ include('admin/components/_button.html.twig', {
+                    label: (checked ? 'indexing.action.uncheck' : 'indexing.action.check')|trans({}, 'cms'),
+                    variant: checked ? 'secondary' : 'primary',
+                    type: 'submit',
+                }, with_context = false) }}
+            {{ form_end(facts_form) }}
         {% endblock %}
     {% endembed %}
 {% endblock %}

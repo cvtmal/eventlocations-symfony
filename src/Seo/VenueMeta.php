@@ -27,7 +27,8 @@ final class VenueMeta
             $this->titles->fit($this->patterns($facts), $facts->name),
             MetaDescription::fit($facts->description),
             $facts->url,
-            false,
+            // G12: an entry that fails VenueIndexGate is online but `noindex, follow`, and is not in the sitemap.
+            !$facts->indexable,
             $place ? 'place' : 'website',
             $place ? $facts->lat : null,
             $place ? $facts->lng : null,

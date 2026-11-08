@@ -22,6 +22,8 @@ final readonly class VenueActionsExtension
         'publish' => 'admin_locations_publish',
         'unpublish' => 'admin_locations_unpublish',
         'delete' => 'admin_locations_delete',
+        'check_facts' => 'admin_locations_check_facts',
+        'uncheck_facts' => 'admin_locations_uncheck_facts',
     ];
 
     public function __construct(

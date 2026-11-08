@@ -64,6 +64,8 @@ final class PublicCacheHeadersTest extends WebTestCase
     public static function headers(): iterable
     {
         yield 'listing' => ['listing', 'GET', '/eventlokale', 200, self::LISTING, null];
+        // G12: a search without results is counted, so no shared cache may answer it (SearchMissLogTest).
+        yield 'listing without results' => ['listing', 'GET', '/eventlokale?guests=9000', 200, 'max-age=0, private, s-maxage=0', null];
         yield 'listing past the last page' => ['listing', 'GET', '/eventlokale?page=2', 404, self::MISSING, null];
         yield 'canton page' => ['listing_landing', 'GET', '/eventlokale/zuerich', 200, self::LISTING, null];
         yield 'building page' => ['listing_landing', 'GET', '/eventlokale/{building}', 200, self::LISTING, null];

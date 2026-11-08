@@ -64,6 +64,8 @@ final readonly class VenueDetail
         public bool $coordinatesFromTown,
         public ?string $googlePlaceId,
         public bool $googleRatingHidden,
+        /** G12: whether the entry passes `VenueIndexGate` (facts checked, description written); else the page is noindex. */
+        public bool $indexable,
     ) {
     }
 

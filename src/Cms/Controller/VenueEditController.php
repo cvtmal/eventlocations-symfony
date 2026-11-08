@@ -168,6 +168,7 @@ final class VenueEditController extends AbstractController
             'stale' => $stale,
             'locales' => $locales,
             'missing' => $edit->missingForPublish($this->locales->default()),
+            'index_missing' => $edit->missingForIndex($this->locales->default()),
             'history' => $this->history($edit->number()),
             'cards' => VenueCard::cases(),
             'google_check_url' => null === $edit->googlePlaceId ? null : GooglePlaceId::mapsUrl($edit->header->name, $edit->googlePlaceId),

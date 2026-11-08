@@ -138,6 +138,13 @@ final class OnboardingWalkTest extends WebTestCase
             self::assertCount(6, $links, $page);
             self::assertContains($path, $links, $page);
         }
+        // G12: online, but out of the sitemap until a description is written and staff check the facts (VenueIndexGate).
+        // The wizard asks for no description, so staff write one in the Texte card (here straight into the row).
+        self::assertCount(5, $this->sitemapLocs());
+        $this->connection->executeStatement("UPDATE venue_translations SET description = 'Ein Saal am See.' WHERE venue_id = (SELECT id FROM venues WHERE number = ?)", [$number]);
+        self::assertCount(5, $this->sitemapLocs());
+        $crawler = $this->client->request('GET', '/admin/locations/'.$number);
+        $this->client->submit($crawler->filter('form[name="check_facts"]')->form());
         $locs = $this->sitemapLocs();
         self::assertCount(6, $locs);
         self::assertContains('http://localhost'.$path, $locs);

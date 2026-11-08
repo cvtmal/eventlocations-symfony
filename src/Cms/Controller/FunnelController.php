@@ -7,6 +7,7 @@ namespace App\Cms\Controller;
 use App\Shared\Funnel\FunnelEvent;
 use App\Shared\Translation\LocalizedRoutes;
 use App\Stats\ReadModel\FunnelScorecardQuery;
+use App\Stats\ReadModel\SearchMissQuery;
 use App\Stats\ValueObject\FunnelFilter;
 use App\Stats\ValueObject\FunnelWindow;
 use Psr\Clock\ClockInterface;
@@ -27,6 +28,7 @@ final class FunnelController extends AbstractController
 {
     public function __construct(
         private readonly FunnelScorecardQuery $funnel,
+        private readonly SearchMissQuery $misses,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -35,15 +37,16 @@ final class FunnelController extends AbstractController
     public function index(Request $request): Response
     {
         $query = $request->query->all();
-        $window = $query['wochen'] ?? null;
+        $weeks = $query['wochen'] ?? null;
         $campaign = $query['kampagne'] ?? null;
+        $window = FunnelWindow::fromQuery(\is_string($weeks) ? $weeks : null);
+        $now = $this->clock->now();
 
         return $this->render('admin/cms/stats/funnel.html.twig', [
-            'scorecard' => $this->funnel->scorecard(
-                FunnelWindow::fromQuery(\is_string($window) ? $window : null),
-                FunnelFilter::fromQuery(\is_string($campaign) ? $campaign : null),
-                $this->clock->now(),
-            ),
+            'scorecard' => $this->funnel->scorecard($window, FunnelFilter::fromQuery(\is_string($campaign) ? $campaign : null), $now),
+            // G12: the zero-result searches of the same window, week by week.
+            'misses' => $this->misses->weeks($window, $now),
+            'misses_top' => SearchMissQuery::TOP,
             'windows' => FunnelWindow::cases(),
             'steps' => FunnelEvent::cases(),
         ]);

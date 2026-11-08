@@ -239,7 +239,7 @@ final class LandingTitleTest extends KernelTestCase
     {
         $connection = $this->createStub(Connection::class);
         $connection->method('fetchAllAssociative')->willReturn($rows);
-        $pages = new LandingPages($connection, ListingQueryTest::enabledLocale(), $this->translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate($indexMinVenues), 5);
+        $pages = new LandingPages($connection, ListingQueryTest::enabledLocale(), $this->translator, new LandingFooter(new ArrayAdapter()), new LandingQualityGate($indexMinVenues, array_map(static fn (Canton $canton): string => $canton->value, Canton::cases())), 5);
 
         // An empty, warm content-block snapshot (#26): no staff text, and no read of the stub.
         $clock = new MockClock();
@@ -254,7 +254,7 @@ final class LandingTitleTest extends KernelTestCase
      */
     private static function cantonRow(Canton $canton, int $venues): array
     {
-        return ['type' => 'canton', 'code' => $canton->value, 'slug' => 'kanton-'.$canton->value, 'canton_slug' => 'kanton-'.$canton->value, 'canton' => $canton->value, 'town_name' => null, 'venues' => $venues];
+        return ['type' => 'canton', 'code' => $canton->value, 'slug' => 'kanton-'.$canton->value, 'canton_slug' => 'kanton-'.$canton->value, 'canton' => $canton->value, 'town_name' => null, 'venues' => $venues, 'indexed' => $venues];
     }
 
     /**
@@ -262,7 +262,7 @@ final class LandingTitleTest extends KernelTestCase
      */
     private static function eventRow(string $code, ?Canton $canton, int $venues): array
     {
-        return ['type' => 'event', 'code' => $code, 'slug' => null, 'canton_slug' => null === $canton ? null : 'kanton-'.$canton->value, 'canton' => $canton?->value, 'town_name' => null, 'venues' => $venues];
+        return ['type' => 'event', 'code' => $code, 'slug' => null, 'canton_slug' => null === $canton ? null : 'kanton-'.$canton->value, 'canton' => $canton?->value, 'town_name' => null, 'venues' => $venues, 'indexed' => $venues];
     }
 
     /**
@@ -283,7 +283,7 @@ final class LandingTitleTest extends KernelTestCase
      */
     private static function buildingRow(string $code, int $venues): array
     {
-        return ['type' => 'building', 'code' => $code, 'slug' => null, 'canton_slug' => null, 'canton' => null, 'town_name' => null, 'venues' => $venues];
+        return ['type' => 'building', 'code' => $code, 'slug' => null, 'canton_slug' => null, 'canton' => null, 'town_name' => null, 'venues' => $venues, 'indexed' => $venues];
     }
 
     private function criteria(LandingPage $page, int $number): SearchCriteria

@@ -237,6 +237,22 @@ publish:
     error:
         missing: 'Noch nicht publizierbar. Es fehlt: {missing}.'
 
+indexing:
+    title: Suchmaschinen
+    item:
+        facts: Fakten geprüft
+        description: Beschreibung geschrieben
+    state:
+        indexed: Wird indexiert und steht in der Sitemap.
+        noindex: 'Online, aber noindex und nicht in der Sitemap, bis beides erledigt ist.'
+        offline: Offline. Publiziert wird der Eintrag erst indexiert, wenn beides erledigt ist.
+    action:
+        check: Fakten als geprüft markieren
+        uncheck: Prüfung zurücknehmen
+    flash:
+        checked: 'Die Fakten von «{name}» sind als geprüft markiert.'
+        unchecked: 'Die Prüfung von «{name}» ist zurückgenommen.'
+
 delete:
     action: Löschen
     title: Eintrag löschen?
@@ -303,6 +319,7 @@ history:
         ReportContent: einen Inhalt gemeldet
         TakeEntryOffline: den Eintrag wegen einer Meldung offline genommen
         DecideModerationCase: eine Meldung entschieden
+        CheckVenueFacts: die Prüfung der Fakten geändert
         # Retired in #53; old audit rows still name them.
         RateVenue: die Bewertung geändert
         AddVenueReview: eine Bewertung hinzugefügt
@@ -576,6 +593,7 @@ landing:
         event: Anlass
     threshold:
         online: online
+        noindex: online, noindex
         below: unter Schwelle
     texts:
         custom: eigener Text
@@ -783,6 +801,33 @@ stats:
         empty:
             title: Im Zeitraum noch keine Ereignisse
             text: Die Schritte erscheinen hier, sobald eine Vorschau geöffnet, ein Eintrag veröffentlicht oder eine Anfrage zugestellt wird.
+        misses:
+            title: Suchen ohne Treffer
+            scope: 'Pro Woche die {top} häufigsten Suchen mit Text und Filtern, die keinen Eintrag fanden; ohne Angaben zur Person. Unabhängig von der Kampagne.'
+            week: 'KW {week}: {searches, plural, one {# Suche} other {# Suchen}}, {queries} verschiedene'
+            column_search: Suche
+            column_count: Anzahl
+            open: Ansehen
+            empty: Im Zeitraum fand jede Suche mindestens einen Eintrag.
+            param:
+                q: Suchtext
+                canton: Kanton
+                place: Ort
+                radius: Umkreis (km)
+                guests: Gäste
+                event: Anlass
+                setting: Lage
+                building: Gebäude
+                infra: Infrastruktur
+                furniture: Mobiliar
+                tech: Technik
+                catering: Catering
+                surroundings: Umgebung
+                amenity: Ausstattung
+                access: Erreichbarkeit
+                rooms: Räume
+                area: Fläche (m²)
+                height: Raumhöhe (m)
     widget:
         title: Statistik, letzte 7 Tage
         all: Zur Statistik

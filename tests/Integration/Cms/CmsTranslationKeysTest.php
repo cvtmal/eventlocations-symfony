@@ -25,6 +25,7 @@ use App\Venues\Command\ChangeVenueGooglePlace;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
+use App\Venues\Command\CheckVenueFacts;
 use App\Venues\Command\DecideModerationCase;
 use App\Venues\Command\DescribeVenuePhoto;
 use App\Venues\Command\GrantPhotoRights;
@@ -119,6 +120,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
             ChangeVenueGooglePlace::class, AssignVenueGooglePlace::class,
             IssueVenuePreview::class, RevokeVenuePreview::class,
             ReportContent::class, TakeEntryOffline::class, DecideModerationCase::class,
+            CheckVenueFacts::class,
         ];
         foreach ($commands as $command) {
             $keys[] = 'history.command.'.substr($command, strrpos($command, '\\') + 1);

@@ -186,6 +186,10 @@ class Venue
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $googleRatingHidden = false;
 
+    /** G12: when staff confirmed the facts; null = unchecked, so the entry is not indexed (VenueIndexGate). */
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $factsCheckedAt = null;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -406,6 +410,26 @@ class Venue
         $this->contentHash = $hash;
         $this->cmsEditedAt = null;
         $this->touch();
+    }
+
+    /**
+     * G12: staff confirm (true) or withdraw (false) that the facts are checked. False when nothing changes, so a
+     * double click writes nothing; a new confirmation keeps the first date.
+     */
+    public function confirmFacts(bool $checked, \DateTimeImmutable $at): bool
+    {
+        if ($checked === (null !== $this->factsCheckedAt)) {
+            return false;
+        }
+        $this->factsCheckedAt = $checked ? $at : null;
+        $this->touch();
+
+        return true;
+    }
+
+    public function factsCheckedAt(): ?\DateTimeImmutable
+    {
+        return $this->factsCheckedAt;
     }
 
     /**

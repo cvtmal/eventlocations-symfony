@@ -17,6 +17,7 @@ use App\Search\ReadModel\SqlStatement;
 use App\Shared\Translation\TranslationJoin;
 use App\Story\DemoStory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Tests\Integration\Seo\LandingQualityGateTest;
 use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Connection;
@@ -101,7 +102,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $filterData = new FilterDataQuery($this->connection, ListingQueryTest::enabledLocale());
         $timings['filter data, flags'] = $this->executionMs($filterData->flagsStatement());
         $timings['filter data, terms'] = $this->executionMs($filterData->termsStatement());
-        $landingPages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), new IdentityTranslator(), new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5), 5);
+        $landingPages = new LandingPages($this->connection, ListingQueryTest::enabledLocale(), new IdentityTranslator(), new LandingFooter(new ArrayAdapter()), new LandingQualityGate(5, LandingQualityGateTest::LAUNCH_CANTONS), 5);
         $timings['landing pages'] = $this->executionMs($landingPages->statement());
         foreach ($timings as $what => $ms) {
             $this->report($what, $ms);

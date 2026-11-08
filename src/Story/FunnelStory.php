@@ -6,6 +6,7 @@ namespace App\Story;
 
 use App\Factory\RecordedFunnelEventFactory;
 use App\Shared\Funnel\FunnelEvent as Step;
+use App\Shared\Uid\EntityId;
 use Doctrine\DBAL\Connection;
 use Zenstruck\Foundry\Story;
 
@@ -15,7 +16,7 @@ use Zenstruck\Foundry\Story;
  * campaign on purpose, the scorecard attributes them to the venue's first one. Two venues paid for Pro; one of them got
  * an inquiry after paying, the other only before. Relative to the current week, so a seed always shows ten weeks, and
  * never later than now. Skips when its campaigns are already in the log, because `make seed` appends; needs the 24
- * published venues of `DemoStory` and says so when they are missing.
+ * published venues of `DemoStory` and says so when they are missing. Also seven searches without results (G12).
  */
 final class FunnelStory extends Story
 {
@@ -98,5 +99,37 @@ final class FunnelStory extends Story
         // One brief to several venues, and one this week.
         $record(Step::BriefSent, null, 1, 3, 17);
         $record(Step::BriefSent, null, 0, 0, 8);
+
+        $this->searchMisses($monday, $now);
+    }
+
+    /**
+     * G12: searches without results over the last three weeks (the scorecard's "Suchen ohne Treffer"), with text,
+     * filters and one town, so the labelled parts and the town lookup show in dev.
+     */
+    private function searchMisses(\DateTimeImmutable $monday, \DateTimeImmutable $now): void
+    {
+        $town = $this->connection->fetchOne("SELECT id::text FROM towns WHERE canton_code = 'zh' ORDER BY population DESC, name LIMIT 1");
+        $misses = [
+            [0, 'canton=zh&guests=900&event%5B0%5D=seminar', 4],
+            [0, 'q=Turnhalle', 2],
+            [0, 'canton=zg&event%5B0%5D=christmas_party&catering%5B0%5D=in_house', 1],
+            [1, 'q=Bootshaus&canton=be', 3],
+            [1, 'guests=40&event%5B0%5D=birthday&access%5B0%5D=station', 1],
+            [2, 'canton=ag&event%5B0%5D=general_assembly&guests=600', 2],
+        ];
+        if (\is_string($town)) {
+            $misses[] = [2, 'place='.$town.'&radius=0&event%5B0%5D=team_event', 1];
+        }
+        foreach ($misses as [$weeksAgo, $query, $searches]) {
+            $week = $monday->modify(\sprintf('-%d weeks', $weeksAgo));
+            $this->connection->insert('search_misses', [
+                'id' => EntityId::generate(),
+                'week_start' => $week->format('Y-m-d'),
+                'query' => $query,
+                'searches' => $searches,
+                'last_searched_at' => min($now, $week->modify('+1 day 10:00'))->format(\DATE_ATOM),
+            ]);
+        }
     }
 }

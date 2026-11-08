@@ -1,6 +1,7 @@
 {#
     Funnel scorecard (G8). Context from `Cms\Controller\FunnelController::index()`: scorecard (FunnelScorecard),
-    windows list<FunnelWindow>, steps list<FunnelEvent> (the columns, in funnel order).
+    windows list<FunnelWindow>, steps list<FunnelEvent> (the columns, in funnel order), misses list<SearchMissWeek>
+    (G12: the window's searches without results, newest week first, only weeks with one), misses_top (queries per week).
 #}
 {% extends 'admin/base.html.twig' %}
 
@@ -138,5 +139,40 @@
                 detail: 'stats.funnel.qualified.note'|trans({}, 'cms'),
             }, with_context = false) }}
         </div>
+    </section>
+
+    <section class="stats-section funnel-table" aria-labelledby="funnel-misses">
+        <h2 id="funnel-misses">{{ 'stats.funnel.misses.title'|trans({}, 'cms') }}</h2>
+        <p class="stats-note muted">{{ 'stats.funnel.misses.scope'|trans({top: misses_top}, 'cms') }}</p>
+        {% embed 'admin/components/_table.html.twig' with {
+            label: 'stats.funnel.misses.title'|trans({}, 'cms'),
+            id: 'funnel-misses-table',
+            columns: [
+                {label: 'stats.funnel.weeks.column'|trans({}, 'cms')},
+                {label: 'stats.funnel.misses.column_search'|trans({}, 'cms')},
+                {label: 'stats.funnel.misses.column_count'|trans({}, 'cms')},
+            ],
+            rows: misses,
+        } only %}
+            {% block rows %}
+                {% for week in rows %}
+                    {% for miss in week.top %}
+                        <tr>
+                            {% if loop.first %}
+                                <th scope="row" rowspan="{{ week.top|length }}">
+                                    <strong>{{ 'stats.funnel.misses.week'|trans({week: week.start|date('W', 'Europe/Zurich'), searches: week.searches, queries: week.queries}, 'cms') }}</strong><br>
+                                    <span class="muted">{{ week.start|swiss_date }}</span>
+                                </th>
+                            {% endif %}
+                            <td>{{ miss.parts|join(' · ') }} <a href="{{ path('listing') ~ '?' ~ miss.query ~ '&staff=1' }}" target="_blank" rel="noopener">{{ 'stats.funnel.misses.open'|trans({}, 'cms') }}</a></td>
+                            <td>{{ miss.searches|swiss_number }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% endblock %}
+            {% block empty %}
+                {{ include('admin/components/_empty.html.twig', {icon: 'search', title: 'stats.funnel.misses.empty'|trans({}, 'cms')}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
     </section>
 {% endblock %}

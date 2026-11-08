@@ -34,11 +34,40 @@ final class FunnelControllerTest extends WebTestCase
         $this->startSession();
         self::mockTime(self::NOW);
         $this->connection->executeStatement('DELETE FROM funnel_events');
+        $this->connection->executeStatement('DELETE FROM search_misses');
     }
 
     protected function tearDown(): void
     {
         $this->endSession();
+    }
+
+    public function test_the_searches_without_results_render_week_by_week(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-11-02', 'query' => 'canton=zh&guests=900', 'searches' => 3, 'last_searched_at' => '2026-11-03 10:00:00+01']);
+        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-11-02', 'query' => 'q=Turnhalle', 'searches' => 1, 'last_searched_at' => '2026-11-03 11:00:00+01']);
+        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-10-26', 'query' => 'q=Scheune', 'searches' => 2, 'last_searched_at' => '2026-10-27 11:00:00+01']);
+
+        $crawler = $this->client->request('GET', '/admin/statistik/funnel');
+
+        self::assertResponseIsSuccessful();
+        $rows = $crawler->filter('#funnel-misses-table tbody tr');
+        self::assertCount(3, $rows);
+        self::assertStringContainsString('KW 45: 4 Suchen, 2 verschiedene', $rows->eq(0)->text());
+        self::assertStringContainsString('Kanton: ZH · Gäste: 900', $rows->eq(0)->text());
+        self::assertSame('/eventlokale?canton=zh&guests=900&staff=1', $rows->eq(0)->filter('a')->attr('href'));
+        self::assertStringContainsString('Suchtext: Turnhalle', $rows->eq(1)->text());
+        self::assertStringContainsString('KW 44: 2 Suchen, 1 verschiedene', $rows->eq(2)->text());
+    }
+
+    public function test_no_search_without_results_shows_the_empty_state(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+
+        $crawler = $this->client->request('GET', '/admin/statistik/funnel');
+
+        self::assertStringContainsString('Im Zeitraum fand jede Suche mindestens einen Eintrag.', $crawler->filter('#funnel-misses-table')->text());
     }
 
     public function test_the_login_is_required(): void

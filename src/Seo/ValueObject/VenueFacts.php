@@ -31,6 +31,8 @@ final readonly class VenueFacts
         public ?float $lng,
         public array $imageUrls,
         public array $sameAs,
+        /** G12: false when the entry fails the index gate (facts unchecked or no description): the page is noindex. */
+        public bool $indexable = true,
     ) {
     }
 
@@ -57,6 +59,7 @@ final readonly class VenueFacts
             $venue->coordinatesFromTown ? null : $venue->lng,
             $imageUrls,
             array_values(array_filter([$venue->website, $venue->instagram], static fn (?string $url): bool => null !== $url)),
+            $venue->indexable,
         );
     }
 
