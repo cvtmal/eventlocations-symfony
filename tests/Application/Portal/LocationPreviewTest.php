@@ -37,8 +37,11 @@ final class LocationPreviewTest extends WebTestCase
 
     public function test_a_google_place_shows_the_note_and_loads_nothing_from_google(): void
     {
+        // D48: the rating switched on, so the preview's own override is what keeps Google out.
         $saved = [$_SERVER['GOOGLE_MAPS_JS_KEY'] ?? null, $_ENV['GOOGLE_MAPS_JS_KEY'] ?? null];
+        $savedSwitch = [$_SERVER['GOOGLE_RATING_ENABLED'] ?? null, $_ENV['GOOGLE_RATING_ENABLED'] ?? null];
         $_SERVER['GOOGLE_MAPS_JS_KEY'] = $_ENV['GOOGLE_MAPS_JS_KEY'] = 'test-key';
+        $_SERVER['GOOGLE_RATING_ENABLED'] = $_ENV['GOOGLE_RATING_ENABLED'] = '1';
         try {
             $venue = $this->managedVenue();
             $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4' WHERE id = ?", [$venue->id()]);
@@ -48,10 +51,14 @@ final class LocationPreviewTest extends WebTestCase
             self::assertResponseIsSuccessful();
             self::assertSame('Hier zeigt die Website die Google-Bewertung. Die Vorschau lädt sie nicht.', $crawler->filter('.venue-content > .preview-banner__note')->text());
             self::assertSelectorNotExists('[data-google-rating]');
+            // D12, places-photos: no Google photos either, though the key is set in the test env.
+            self::assertSelectorNotExists('[data-google-photos]');
+            self::assertStringNotContainsString('google-fotos', (string) $this->client->getResponse()->getContent());
             self::assertStringNotContainsString('data-maps-key', (string) $this->client->getResponse()->getContent());
             self::assertStringNotContainsString('googleapis', (string) $this->client->getResponse()->headers->get('Content-Security-Policy'));
         } finally {
             [$_SERVER['GOOGLE_MAPS_JS_KEY'], $_ENV['GOOGLE_MAPS_JS_KEY']] = $saved;
+            [$_SERVER['GOOGLE_RATING_ENABLED'], $_ENV['GOOGLE_RATING_ENABLED']] = $savedSwitch;
         }
     }
 

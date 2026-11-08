@@ -26,6 +26,8 @@ final class RobotsController extends AbstractController
         '/konto',
         '/eventlokal/*/telefon',
         '/eventlokal/*/anfrage',
+        // D12, places-photos: every fetch of Google's photos is a billed call against the daily cap.
+        '/eventlokal/*/google-fotos',
         // #47: a crawler that renders pages must not send the statistics beacon.
         '/_stats',
     ];

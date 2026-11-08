@@ -39,6 +39,14 @@ final class WixImageResponses
     }
 
     /**
+     * Answers GET of this absolute URL with these responses in turn (places-photos: Google's Places API).
+     */
+    public function url(string $url, MockResponse ...$responses): void
+    {
+        $this->responses[$url] = array_values($responses);
+    }
+
+    /**
      * @param array<string, mixed> $options
      */
     public function __invoke(string $method, string $url, array $options = []): ResponseInterface

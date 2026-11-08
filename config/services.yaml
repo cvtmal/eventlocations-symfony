@@ -53,6 +53,10 @@ parameters:
     # crawler (the LLM ones included) keeps the normal rules (Seo\Controller\RobotsController).
     # Set to false at launch and drop the Googlebot group from RobotsTxtTest::test_the_exact_body.
     seo.robots_block_google: true
+    # D12, places-photos: Google Places calls per day, site-wide (limiter `google_places`). A page view of a
+    # venue without own photos costs one Place Details call plus one media call per photo shown (at most
+    # GooglePlacesPhotos::MAX_PHOTOS, 4), so 300 serve about 60 such views a day. Raise it with the Places budget.
+    google_places.daily_requests: 300
     # #47: the beacon's day files and the visitor-hash salts (Stats\StatsPaths). var/ survives a deploy.
     stats.dir: '%kernel.project_dir%/var/stats'
 
@@ -124,4 +128,16 @@ when@test:
             public: true
         # The transport of every HTTP client in tests (framework.yaml, when@test, #32 PD10).
         App\Tests\Support\Http\WixImageResponses:
+            public: true
+        # D12, places-photos: Google's hosts resolve to a public stub address, so no test asks DNS.
+        App\Tests\Support\Http\StubHostResolver:
+            calls:
+                - [byDefault, ['93.184.216.34']]
+        App\Venues\GooglePlacesPhotos:
+            autowire: true
+            arguments:
+                $resolver: '@App\Tests\Support\Http\StubHostResolver'
+        # VenueGooglePhotosTest uses up the daily cap without 300 requests.
+        test.limiter.google_places:
+            alias: limiter.google_places
             public: true

@@ -269,6 +269,8 @@ preview:
     inquiry_note: In der Vorschau ist das Anfrageformular ausgeschaltet.
     google_rating: Hier zeigt die Website die Google-Bewertung. Die Vorschau lädt sie nicht.
     google_rating_hidden: Die Google-Bewertung ist für diese Location ausgeblendet.
+    # D48: GOOGLE_RATING_ENABLED is off, so no venue shows the rating.
+    google_rating_off: Die Google-Bewertung ist auf der Website ausgeschaltet.
 
 history:
     title: Verlauf

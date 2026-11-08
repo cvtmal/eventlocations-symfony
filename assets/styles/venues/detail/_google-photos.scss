@@ -1,0 +1,81 @@
+@use '../../abstracts/breakpoints' as bp;
+
+// Google Places photos (D12, places-photos): a strip in the placeholder's band, at the placeholder's height, so the
+// swap shifts nothing. google-photos.js adds `--google` once the fragment is in; until then the box is empty.
+.venue-google-photos:empty {
+    display: none;
+}
+
+.venue-placeholder--google .photo-placeholder {
+    display: none;
+}
+
+.google-photos__list {
+    display: flex;
+    gap: var(--space-8);
+    height: 9.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+
+    @include bp.up(md) {
+        height: 12rem;
+    }
+}
+
+.google-photos__item {
+    flex: 0 0 auto;
+    height: 100%;
+    scroll-snap-align: start;
+}
+
+.google-photos__figure {
+    position: relative;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    border-radius: var(--radius-image);
+    background: var(--c-placeholder-ground);
+
+    @include bp.up(md) {
+        border-radius: var(--radius-card);
+    }
+}
+
+.google-photos__img {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: 100%;
+}
+
+// The uploader's name and "Google Maps" on every photo (Places policies), on an opaque ink band so the text stays
+// legible on any photo: the preview banner's pair, `surface-raised` on `ink` (ContrastTokensTest). The bottom and
+// side padding keep the last line clear of the figure's rounded corners (1.5 rem, 2.5 rem from md), which would
+// otherwise clip a wrapped name.
+.google-photos__caption {
+    position: absolute;
+    inset: auto 0 0;
+    padding: var(--space-4) var(--space-12) var(--space-8);
+    background: var(--c-ink);
+    color: var(--c-surface-raised);
+    font-size: var(--fs-small);
+    line-height: 1.3;
+
+    @include bp.up(md) {
+        padding: var(--space-8) var(--space-16) var(--space-12);
+    }
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
+
+    a:focus-visible {
+        outline: 2px solid var(--c-surface-raised);
+        outline-offset: 1px;
+    }
+}

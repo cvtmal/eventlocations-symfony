@@ -607,4 +607,50 @@ final class SafeFetcherTest extends TestCase
         $relaxed = new SafeFetcher($client, $resolver, $this->clock, 'agent', policy: FetchPolicy::unsafeForLocalFixtures());
         self::assertSame('<p>ok</p>', $relaxed->open()->get('http://fixtures.example:8099/')->body);
     }
+
+    public function test_a_resource_is_fetched_without_robots_txt_and_with_the_callers_headers(): void
+    {
+        $fetcher = $this->fetcher(['https://api.example.ch/v1/thing' => [200, '{"a":1}', ['content-type' => 'application/json; charset=utf-8']]]);
+
+        $result = $fetcher->open()->resource('https://api.example.ch/v1/thing', ['application/json'], ['X-Api-Key' => 'secret']);
+
+        self::assertSame('{"a":1}', $result->body);
+        self::assertSame('application/json', $result->contentType);
+        self::assertSame(['https://api.example.ch/v1/thing'], $this->requestedUrls(), 'no robots.txt for an API');
+        $options = $this->requests[0]['options'];
+        self::assertSame(['X-Api-Key: secret'], $options['normalized_headers']['x-api-key']);
+        self::assertSame(['Accept: application/json'], $options['normalized_headers']['accept']);
+        self::assertSame(['api.example.ch' => self::PUBLIC], $options['resolve'], 'pinned like a page');
+    }
+
+    public function test_a_redirect_of_a_resource_drops_the_callers_headers(): void
+    {
+        $fetcher = $this->fetcher([
+            'https://api.example.ch/photo' => self::redirect('https://images.example.net/p.jpg'),
+            'https://images.example.net/p.jpg' => [200, 'JPEG', ['content-type' => 'image/jpeg']],
+        ]);
+
+        $result = $fetcher->open()->resource('https://api.example.ch/photo', ['image/jpeg'], ['X-Api-Key' => 'secret']);
+
+        self::assertSame('JPEG', $result->body);
+        self::assertSame(['https://api.example.ch/photo', 'https://images.example.net/p.jpg'], $this->requestedUrls(), 'another host is fine, robots.txt is not asked');
+        self::assertArrayHasKey('x-api-key', $this->requests[0]['options']['normalized_headers']);
+        self::assertArrayNotHasKey('x-api-key', $this->requests[1]['options']['normalized_headers'], 'the key never follows a redirect');
+    }
+
+    public function test_a_resource_keeps_the_address_checks_type_list_and_request_cap(): void
+    {
+        $resolver = (new StubHostResolver())->byDefault(self::PUBLIC)->host('internal.example', ['10.0.0.5']);
+        $fetcher = $this->fetcher([
+            'https://api.example.ch/html' => self::page(),
+            'https://api.example.ch/ok' => [200, '{}', ['content-type' => 'application/json']],
+        ], $resolver, new FetchLimits(maxPages: 1));
+
+        $this->assertRefused(RefusalReason::BlockedAddress, fn () => $this->fetcher([], $resolver)->open()->resource('https://internal.example/x', ['application/json']));
+        $this->assertRefused(RefusalReason::ContentType, fn () => $this->fetcher(['https://api.example.ch/html' => self::page()])->open()->resource('https://api.example.ch/html', ['application/json']));
+
+        $session = $fetcher->open();
+        $session->resource('https://api.example.ch/ok', ['application/json']);
+        $this->assertRefused(RefusalReason::PageLimit, static fn () => $session->resource('https://api.example.ch/ok', ['application/json']));
+    }
 }

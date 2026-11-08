@@ -265,6 +265,8 @@ links to it. A deploy never writes it, and `bin/deploy` changes nothing live whi
 | `MEDIA_ROOT` | `/var/www/deine-eventlocation.ch/shared/var/media`, absolute, in `shared/` so every release sees it |
 | `MEDIA_MAX_PIXELS`, `MEDIA_MAX_PORTRAIT_RATIO` | `20000000` and `2`. Raise the pixels only together with `memory_limit` in `public/.user.ini`. |
 | `GOOGLE_MAPS_EMBED_KEY`, `GOOGLE_MAPS_JS_KEY`, `GOOGLE_MAPS_MAP_ID`, `GOOGLE_PLACES_API_KEY` | Optional; empty means no request goes to Google and the link to Google Maps remains. Restrict each key to its API and the referrers `https://deine-eventlocation.ch/*` and `https://www.deine-eventlocation.ch/*`. `GOOGLE_MAPS_MAP_ID` must not be `DEMO_MAP_ID` once the JS key is set. After a key change run `sh bin/prod-import purge`. |
+| `GOOGLE_RATING_ENABLED` | `0` (the default) until the owner has checked the terms (D48, see [Google rating and photos](#google-rating-and-photos)). `1` shows the Google rating on venue pages with a place ID that staff did not hide: with `GOOGLE_MAPS_JS_KEY` Google's element, else only the link to the reviews; `/datenschutz` then explains it. `0`: no rating, no request to Google, no rating paragraph on `/datenschutz`; the place IDs and the CMS card "Google-Bewertung" stay. After a change run `sh bin/prod-import purge`. |
+| `GOOGLE_PLACES_PHOTOS_KEY` | Empty until the owner has checked the terms (D48, see [Google rating and photos](#google-rating-and-photos)). Optional server key for the Google photos of a venue without own photos (D12): our server fetches them and passes the bytes on, `no-store`. Restrict it to the Places API (New) and the server's IP address, never a referrer; it never reaches a page. Empty means no photo section, no request and no photo paragraph on `/datenschutz`. The daily cap is the parameter `google_places.daily_requests` (default 300 billed calls); set a quota and a quota alert on the key in the Google Cloud console as well (the app logs the cap only below error level, so production's stderr log does not show it). nginx lets at most 4 requests to these routes run at once (`limit_conn google_photos`); the rest get 503 and the page keeps the placeholder. After setting or emptying the key run `sh bin/prod-import purge`, so cached venue pages and `/datenschutz` follow. |
 | `SENTRY_DSN` | Optional. Empty: no error reports. |
 | `MEDIA_BACKUP_REPOSITORY`, `MEDIA_BACKUP_PASSWORD`, `MEDIA_BACKUP_ACCESS_KEY_ID`, `MEDIA_BACKUP_SECRET_ACCESS_KEY` | The media backup's bucket, encryption password and S3 keys; read only by `bin/cron-media-backup`, which refuses an empty value or a placeholder. Single quotes. The password also goes into the password manager: without it the backup is unreadable. `MEDIA_BACKUP_REGION` stays empty unless restic cannot find the region. See [Media backup](#media-backup). |
 | `SYMFONY_TRUSTED_PROXIES` | Unset: nginx faces the visitor. Only if a proxy is ever put in front; its exact address, never `REMOTE_ADDR` |
@@ -291,6 +293,22 @@ inquiry and phone limiter counters start again.
 **Losing `ADMIN_TOTP_KEY`.** Without it nobody passes the second login step. Set a new key and run
 `php bin/console app:admin:reset-2fa <e-mail>` for every staff member. A forgotten password is
 `app:admin:reset-password <e-mail>`.
+
+### Google rating and photos
+
+Both ship dormant (D48): Google's Maps Platform Terms, section 3.2.3(d)(iii), restrict the use of Places content in a
+"listings or directory service", which this site is. Switching either on is an **owner step**, taken only after the
+owner has checked the current terms (or has Google's written OK) for this use:
+
+1. Rating: set `GOOGLE_RATING_ENABLED=1` in `.env.local` (and `GOOGLE_MAPS_JS_KEY`, if Google's element should
+   render rather than only the link). Photos: set `GOOGLE_PLACES_PHOTOS_KEY` as in the table above.
+2. Run `sh bin/prod-import purge`: venue pages and `/datenschutz` are cached for a day, and `/datenschutz`
+   explains each feature only while it is on, so the cached copies must go.
+3. Check a venue with a place ID and no photos of its own, and the section "Karten ... von Google Maps" on
+   `/datenschutz`, which now names the feature.
+
+Switching off is the same in reverse (`0` or an empty key, then the purge). The place IDs and the CMS card
+"Google-Bewertung" stay in either state.
 
 ## Content
 

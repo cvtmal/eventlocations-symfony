@@ -94,6 +94,9 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'places' => ['_search_places', 'GET', '/_search/places?q=Zue', 200, self::PLACES, null];
         yield 'phone' => ['venue_phone', 'GET', self::DETAIL.'/telefon', 200, self::PRIVATE, 'Accept'];
         yield 'phone, history slug' => ['venue_phone', 'GET', '/eventlokal/'.self::HISTORY_SLUG.'/telefon', 301, self::PRIVATE, 'Accept'];
+        // D12, places-photos: the venue has own photos, so both answer 204 without asking Google.
+        yield 'google photos' => ['venue_google_photos', 'GET', self::DETAIL.'/google-fotos', 204, self::PRIVATE, null];
+        yield 'google photo' => ['venue_google_photo', 'GET', self::DETAIL.'/google-fotos/REF_one', 204, self::PRIVATE, null];
         yield 'preview link' => ['venue_preview', 'GET', '/vorschau/{preview}', 200, self::PRIVATE, null];
         yield 'preview link, revoked' => ['venue_preview', 'GET', '/vorschau/{preview_gone}', 410, self::PRIVATE, null];
         yield 'preview link, unknown' => ['venue_preview', 'GET', '/vorschau/'.str_repeat('A', 44), 404, self::PRIVATE, null];

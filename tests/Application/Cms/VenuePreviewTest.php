@@ -55,7 +55,9 @@ final class VenuePreviewTest extends WebTestCase
     public function test_a_google_place_shows_a_note_and_loads_nothing_from_google(): void
     {
         $saved = [$_SERVER['GOOGLE_MAPS_JS_KEY'] ?? null, $_ENV['GOOGLE_MAPS_JS_KEY'] ?? null];
+        $savedSwitch = [$_SERVER['GOOGLE_RATING_ENABLED'] ?? null, $_ENV['GOOGLE_RATING_ENABLED'] ?? null];
         $_SERVER['GOOGLE_MAPS_JS_KEY'] = $_ENV['GOOGLE_MAPS_JS_KEY'] = 'test-key';
+        $_SERVER['GOOGLE_RATING_ENABLED'] = $_ENV['GOOGLE_RATING_ENABLED'] = '1';
         try {
             $this->logInAs(AdminRole::Editor);
             $venue = DetailVenues::full($this->em());
@@ -79,7 +81,26 @@ final class VenuePreviewTest extends WebTestCase
             self::assertSame('Die Google-Bewertung ist für diese Location ausgeblendet.', $crawler->filter('.venue-content > .preview-banner__note')->text());
         } finally {
             [$_SERVER['GOOGLE_MAPS_JS_KEY'], $_ENV['GOOGLE_MAPS_JS_KEY']] = $saved;
+            [$_SERVER['GOOGLE_RATING_ENABLED'], $_ENV['GOOGLE_RATING_ENABLED']] = $savedSwitch;
         }
+    }
+
+    public function test_with_the_rating_switched_off_the_note_says_so(): void
+    {
+        // D48: GOOGLE_RATING_ENABLED is off in .env and .env.test; the stored place ID stays editable.
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::full($this->em());
+        $this->em()->flush();
+        $this->connection->executeStatement("UPDATE venues SET google_place_id = 'ChIJN1t_tDeuEmsRUsoyG83frY4' WHERE id = ?", [$venue->id()]);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(
+            ['Die Google-Bewertung ist auf der Website ausgeschaltet.'],
+            $crawler->filter('.venue-content > .preview-banner__note')->each(static fn (Crawler $note): string => $note->text()),
+        );
+        self::assertSelectorNotExists('[data-google-rating]');
     }
 
     public function test_without_a_google_place_the_preview_has_no_rating_note(): void

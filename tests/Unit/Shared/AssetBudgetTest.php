@@ -68,6 +68,12 @@ final class AssetBudgetTest extends TestCase
         self::assertLessThanOrEqual(2048, self::gzipSize((string) file_get_contents(self::root().'/assets/js/google-rating.js')));
     }
 
+    public function test_google_photos_js_is_within_1_kb_gzip(): void
+    {
+        // D12, places-photos: it fetches our own fragment; no Google script is involved.
+        self::assertLessThanOrEqual(1024, self::gzipSize((string) file_get_contents(self::root().'/assets/js/google-photos.js')));
+    }
+
     public function test_region_overlay_javascript_is_within_6_kb_gzip(): void
     {
         $total = 0;

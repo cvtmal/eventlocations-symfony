@@ -146,9 +146,12 @@ final class SecurityHeadersTest extends WebTestCase
 
     public function test_a_venue_with_a_google_place_carries_the_places_policy(): void
     {
-        // #53: the policy is set per response by venue_google_rating(), not by a route default.
+        // #53: the policy is set per response by venue_google_rating(), not by a route default; D48: only while
+        // GOOGLE_RATING_ENABLED is on.
         $saved = [$_SERVER['GOOGLE_MAPS_JS_KEY'] ?? null, $_ENV['GOOGLE_MAPS_JS_KEY'] ?? null];
+        $savedSwitch = [$_SERVER['GOOGLE_RATING_ENABLED'] ?? null, $_ENV['GOOGLE_RATING_ENABLED'] ?? null];
         $_SERVER['GOOGLE_MAPS_JS_KEY'] = $_ENV['GOOGLE_MAPS_JS_KEY'] = 'test-key';
+        $_SERVER['GOOGLE_RATING_ENABLED'] = $_ENV['GOOGLE_RATING_ENABLED'] = '1';
         try {
             $venue = DetailVenues::full($this->em);
             $this->em->flush();
@@ -163,6 +166,7 @@ final class SecurityHeadersTest extends WebTestCase
             self::assertStringNotContainsString('nonce=', (string) $response->getContent());
         } finally {
             [$_SERVER['GOOGLE_MAPS_JS_KEY'], $_ENV['GOOGLE_MAPS_JS_KEY']] = $saved;
+            [$_SERVER['GOOGLE_RATING_ENABLED'], $_ENV['GOOGLE_RATING_ENABLED']] = $savedSwitch;
         }
     }
 

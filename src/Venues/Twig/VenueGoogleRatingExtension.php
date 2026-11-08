@@ -15,7 +15,9 @@ use Twig\Environment;
 /**
  * `{{ venue_google_rating(venue) }}` fills the detail page's `{% block google_rating %}` (#53, D1, D9):
  *
- * - nothing without a place ID or when staff hid the rating;
+ * - nothing while `GOOGLE_RATING_ENABLED` is off (D48, the default: Google's Maps Platform terms 3.2.3(d)(iii)
+ *   restrict Places content in a directory, so the owner switches it on after checking them), without a place ID,
+ *   or when staff hid the rating;
  * - with an empty or unset `GOOGLE_MAPS_JS_KEY`, only the link to the venue's Google reviews;
  * - with a key, also the box `google-rating.js` fills with Google's compact Place Details element.
  *
@@ -30,13 +32,22 @@ final class VenueGoogleRatingExtension
         #[Autowire('%env(default::GOOGLE_MAPS_JS_KEY)%')]
         private readonly ?string $mapsKey,
         private readonly RequestStack $requests,
+        #[Autowire('%env(bool:default::GOOGLE_RATING_ENABLED)%')]
+        private readonly bool $enabled,
     ) {
+    }
+
+    /** D48: whether the detail page may show the rating at all; /datenschutz explains it only then. */
+    #[AsTwigFunction('venue_google_rating_enabled')]
+    public function enabled(): bool
+    {
+        return $this->enabled;
     }
 
     #[AsTwigFunction('venue_google_rating', isSafe: ['html'])]
     public function venueGoogleRating(Environment $twig, VenueDetail $venue): string
     {
-        if (!$venue->showsGoogleRating() || null === $venue->googlePlaceId) {
+        if (!$this->enabled || !$venue->showsGoogleRating() || null === $venue->googlePlaceId) {
             return '';
         }
 

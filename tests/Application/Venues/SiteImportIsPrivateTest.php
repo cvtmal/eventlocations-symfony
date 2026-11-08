@@ -65,6 +65,8 @@ final class SiteImportIsPrivateTest extends WebTestCase
             'venue_show' => [['slug' => DetailVenues::FULL_SLUG], ['slug' => self::HISTORY_SLUG]],
             'venue_markdown' => [['slug' => DetailVenues::FULL_SLUG], ['slug' => self::HISTORY_SLUG]],
             'venue_phone' => [['slug' => DetailVenues::FULL_SLUG]],
+            'venue_google_photos' => [['slug' => DetailVenues::FULL_SLUG]],
+            'venue_google_photo' => [['slug' => DetailVenues::FULL_SLUG, 'reference' => 'REF_one']],
             'inquiry_submit' => [['slug' => DetailVenues::FULL_SLUG]],
             'listing_landing' => [['slug' => 'zuerich'], ['slug' => $data['building']]],
             'listing_town' => [['canton' => 'zuerich', 'town' => $data['town']]],
