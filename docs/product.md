@@ -48,7 +48,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 ## Facts the owner holds
 
-Every product decision is settled (D23 to D47). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
+Every product decision is settled (D23 to D49). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
 
 | Fact | Until it arrives |
 |---|---|
@@ -58,7 +58,8 @@ Every product decision is settled (D23 to D47). Only facts and the owner's own p
 | Infomaniak Object Storage credentials for the media backup (F15b) | Placeholders; launch is refused without a backup less than 26 hours old |
 | Once a year: delete the report mails (G2) older than three years in the contact mailbox (D36) | Note in `docs/operations.md` |
 | Venue spreadsheet for D1(b) | F14 is built and tested on a fixture |
-| Contact list for the one-to-one pilot | After launch (D30: no bulk mail) |
+| Contact list for the one-to-one pilot | After launch (D30: no bulk mail); F14 builds the import |
+| Google photos and rating: check Google's terms, then switch them on | Both off; the placeholder shows (D48) |
 
 Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults together; the owner has delegated them and is not asked. The owner still holds real-world facts (the operator's identity, the host account, the venue spreadsheet, the contact list) and deploys. Where a fact is missing, the site ships a marked placeholder.
 
@@ -66,13 +67,13 @@ Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults 
 
 _Status as of 2026-11-08, kept by the PO after every merge. The cycles themselves are in `docs/rpi-cycles.md`: F-cycles in the overview table and under "Cycles", G-cycles in Wave G §3._
 
-**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved) · G1 `rights-grants` (no photo public without a rights record) · F15 `prod-setup` (deploy to an Infomaniak VPS + Neon, off until the owner enables it) · F4 `room-layouts` (six seating layouts per room) · F6b `brand-assets` (logo lockups, icons, share-card templates, 34 boards in the new look) · G5 `preview-link` (private preview link with QR, issued and revoked in the CMS) · F5 `filter-event` (event-type and guest filters, `/eventlokale…` URLs) · G2 `takedown-form` (report a photo or entry; reported photos hidden until decided) · F15b `media-backup` (nightly encrypted copy of the photos to Infomaniak Object Storage) · F12 `business-model` (Free + Pro as data, limits enforced) · `takedown-form-finish` (privacy paragraph on reports, D36 deletion job) · F8 `landing-event` (event and event × canton landing pages, no Hochzeit) · F7b `event-copy-de` (all German copy, legal pages with the processors, operator as placeholder) · F5b `guests-rooms` (one capacity everywhere: venue or rooms; card placeholder per event type) · F11 `portal-event` (`/konto` with rooms, PDFs and event types, Free limits with «Pro anfragen»).
+**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved) · G1 `rights-grants` (no photo public without a rights record) · F15 `prod-setup` (deploy to an Infomaniak VPS + Neon, off until the owner enables it) · F4 `room-layouts` (six seating layouts per room) · F6b `brand-assets` (logo lockups, icons, share-card templates, 34 boards in the new look) · G5 `preview-link` (private preview link with QR, issued and revoked in the CMS) · F5 `filter-event` (event-type and guest filters, `/eventlokale…` URLs) · G2 `takedown-form` (report a photo or entry; reported photos hidden until decided) · F15b `media-backup` (nightly encrypted copy of the photos to Infomaniak Object Storage) · F12 `business-model` (Free + Pro as data, limits enforced) · `takedown-form-finish` (privacy paragraph on reports, D36 deletion job) · F8 `landing-event` (event and event × canton landing pages, no Hochzeit) · F7b `event-copy-de` (all German copy, legal pages with the processors, operator as placeholder) · F5b `guests-rooms` (one capacity everywhere: venue or rooms; card placeholder per event type) · F11 `portal-event` (`/konto` with rooms, PDFs and event types, Free limits with «Pro anfragen») · G9 `subscription-term` (Pro terms with expiry and reminders, free pilot terms, voiding a payment).
 
-**Built, PR open:** G12 `launch-regions` (ZH, AG, ZG, BE first; thin and unchecked pages stay out of Google) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · F9 `inquiry-event` (inquiry form with event fields) · G9 `subscription-term` (Pro terms, expiry, reminders, free term, void).
+**Built, PR open:** G12 `launch-regions` (ZH, AG, ZG, BE first; thin and unchecked pages stay out of Google) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · F9 `inquiry-event` (inquiry form with event fields) · G11 `outreach-tracking` (personal and postal contacts, opt-out page) · `places-photos` (Google photos and rating, built but off, D48).
 
-**In a lane:** `places-photos` (Google Places photos on detail pages, through our server) · G11 `outreach-tracking` (personal and postal contacts) · G15 `video-embed` (click-to-load videos).
+**In a lane:** G13 `tier-pages` ("Eintragen / Preise") · G15 `video-embed` (click-to-load videos).
 
-**Launch-critical, not started:** F14 `content-onboarding` (venues in, as drafts) · G7 `enquiry-quality` (real vs. spam, delivery status) · G10 `owner-report` (monthly report) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
+**Launch-critical, not started:** F14 `content-onboarding` (venues in, as drafts) · G7 `enquiry-quality` (real vs. spam, delivery status) · G10 `owner-report` (monthly report) · F16 `launch-verification` (final check).
 
 **After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G14 `last-minute-offers` · G16 `organizer-feedback`.
 
