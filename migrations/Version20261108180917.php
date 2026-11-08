@@ -11,8 +11,8 @@ use Doctrine\Migrations\AbstractMigration;
  * G7 `enquiry-quality` (D19, D56): what an inquiry is worth.
  *
  * `qualification` and `qualification_reason` are the derived D19 flag, written by `DeliverInquiryHandler` at each
- * delivery: `qualified` without a reason, or `unqualified` with exactly one reason; both null while the inquiry has
- * not been delivered yet. The pair CHECK is written so it never evaluates to NULL (a NULL CHECK passes).
+ * delivery: `qualified` without a reason, or `unqualified` with exactly one reason; a row created after this migration
+ * keeps both null until its first delivery attempt (existing rows are backfilled, see below). The pair CHECK is written so it never evaluates to NULL (a NULL CHECK passes).
  * `qualification_override` is the staff mark (`spam`, `test`), kept apart so an unmark restores the derived value. `stuck_alerted_at` marks an inquiry already reported to staff by the hourly alert.
  *
  * Existing rows are backfilled from their venue mail: `sent` is qualified, everything else unqualified with

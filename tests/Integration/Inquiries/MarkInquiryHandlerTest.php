@@ -14,6 +14,7 @@ use App\Tests\Integration\Crm\DispatchesCrmCommands;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Entity\Venue;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -22,6 +23,7 @@ use Zenstruck\Foundry\Test\Factories;
  */
 final class MarkInquiryHandlerTest extends KernelTestCase
 {
+    use ClockSensitiveTrait;
     use DispatchesCrmCommands;
     use Factories;
     use RollsBackDatabase;
@@ -72,6 +74,46 @@ final class MarkInquiryHandlerTest extends KernelTestCase
         $this->dispatch(new MarkInquiry($id, null));
 
         self::assertSame(1, $this->steps($venue));
+    }
+
+    /**
+     * F-M1: the unmark puts the step back at the venue mail, so each later mark finds it, however long after.
+     */
+    public function test_mark_unmark_mark_unmark_hours_apart_leaves_one_step_at_the_venue_mail(): void
+    {
+        $clock = self::mockTime('2026-11-03 09:00:00 UTC');
+        $venue = VenueFactory::new()->withContact()->create();
+        $id = $this->delivered($venue);
+        $this->step($venue, '2026-11-02 14:00:00+00');
+
+        foreach ([InquiryOverride::Spam, null, InquiryOverride::Test, null] as $override) {
+            $this->dispatch(new MarkInquiry($id, $override));
+            $clock->sleep(7200);
+        }
+
+        self::assertSame(
+            ['2026-11-02 10:00:00+00', '2026-11-02 14:00:00+00'],
+            $this->connection->fetchFirstColumn(
+                "SELECT to_char(occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') || '+00' FROM funnel_events WHERE event = 'inquiry_delivered' AND venue_id = ? ORDER BY occurred_at",
+                [$venue->id()],
+            ),
+        );
+    }
+
+    public function test_mark_unmark_mark_hours_apart_leaves_no_step_of_that_inquiry(): void
+    {
+        $clock = self::mockTime('2026-11-03 09:00:00 UTC');
+        $venue = VenueFactory::new()->withContact()->create();
+        $id = $this->delivered($venue);
+        $this->step($venue, '2026-11-02 14:00:00+00');
+
+        foreach ([InquiryOverride::Spam, null, InquiryOverride::Test] as $override) {
+            $this->dispatch(new MarkInquiry($id, $override));
+            $clock->sleep(7200);
+        }
+
+        self::assertSame(1, $this->steps($venue));
+        self::assertSame(1, $this->rows("SELECT count(*) FROM funnel_events WHERE event = 'inquiry_delivered' AND venue_id = ? AND occurred_at = '2026-11-02 14:00:00+00'", $venue->id()));
     }
 
     public function test_spam_to_test_touches_no_step(): void

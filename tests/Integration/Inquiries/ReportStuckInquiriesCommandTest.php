@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Inquiries;
 
 use App\Factory\InquiryFactory;
+use App\Inquiries\Command\DeliverInquiry;
 use App\Inquiries\Entity\Inquiry;
+use App\Inquiries\ValueObject\DeliveryOutcome;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,6 +15,8 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Mime\Email;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -142,6 +146,31 @@ final class ReportStuckInquiriesCommandTest extends KernelTestCase
             self::assertStringNotContainsString($personal, $display);
         }
         self::assertSame(0, $this->alerted(), 'nothing is marked, so the next run reports them again');
+    }
+
+    /**
+     * The marker is never reset: staff caused the resend and saw its flash, so a resend that fails again is not
+     * reported a second time.
+     */
+    public function test_a_resend_that_fails_again_after_the_alert_is_not_alerted_again(): void
+    {
+        $this->bootWithDeadSmtp();
+        $inquiry = $this->stuck('2026-06-01 10:00:00 UTC', failed: true);
+        $this->connection->executeStatement("UPDATE inquiries SET stuck_alerted_at = '2026-06-01 10:40:00+00' WHERE id = ?", [$inquiry->id()]);
+        $this->em->clear();
+
+        $bus = self::getContainer()->get(MessageBusInterface::class);
+        self::assertInstanceOf(MessageBusInterface::class, $bus);
+        $outcome = $bus->dispatch(new DeliverInquiry($inquiry->id()))->last(HandledStamp::class)?->getResult();
+        self::assertInstanceOf(DeliveryOutcome::class, $outcome);
+        self::assertFalse($outcome->venueMailSent);
+        self::assertSame('failed', $this->connection->fetchOne('SELECT venue_mail_status FROM inquiries WHERE id = ?', [$inquiry->id()]));
+
+        $tester = $this->runCommand([]);
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertSame('', $tester->getDisplay(), 'nothing due, so not even the failing staff mail is tried');
+        self::assertSame(1, $this->alerted());
     }
 
     private function begin(): void

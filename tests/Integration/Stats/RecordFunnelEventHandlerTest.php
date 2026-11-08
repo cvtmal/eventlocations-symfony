@@ -46,6 +46,17 @@ final class RecordFunnelEventHandlerTest extends KernelTestCase
         self::assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/', (string) $rows[0]['id']);
     }
 
+    public function test_an_explicit_time_is_recorded_instead_of_the_clock(): void
+    {
+        self::mockTime(self::NOW);
+        $this->connection->executeStatement('DELETE FROM funnel_events');
+        $at = new \DateTimeImmutable('2026-10-28 09:15:00 UTC');
+
+        $this->bus()->dispatch(new RecordFunnelEvent(FunnelEvent::InquiryDelivered, EntityId::generate(), occurredAt: $at));
+
+        self::assertSame($at->getTimestamp(), (new \DateTimeImmutable((string) $this->connection->fetchOne('SELECT occurred_at FROM funnel_events')))->getTimestamp());
+    }
+
     public function test_venue_and_campaign_are_optional(): void
     {
         $this->connection->executeStatement('DELETE FROM funnel_events');
