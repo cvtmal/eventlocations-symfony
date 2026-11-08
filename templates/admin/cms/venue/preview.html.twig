@@ -32,7 +32,7 @@
 {% endblock %}
 
 {# Google's element never loads here (#53): the preview keeps the site CSP and names where the rating would be. #}
-{% block google_rating %}{% if venue.googlePlaceId %}<p class="preview-banner__note">{{ (venue.googleRatingHidden ? 'preview.google_rating_hidden' : 'preview.google_rating')|trans({}, 'cms') }}</p>{% endif %}{% endblock %}
+{% block google_rating %}{% if venue.googlePlaceId %}<p class="preview-banner__note">{{ (not venue_google_rating_enabled() ? 'preview.google_rating_off' : (venue.googleRatingHidden ? 'preview.google_rating_hidden' : 'preview.google_rating'))|trans({}, 'cms') }}</p>{% endif %}{% endblock %}
 
 {# D12, places-photos: no Google call behind a login (/admin, /konto); the public page shows the photos. #}
 {% block google_photos %}{% endblock %}

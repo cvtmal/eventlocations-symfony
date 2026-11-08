@@ -53,15 +53,21 @@
 }
 
 // The uploader's name and "Google Maps" on every photo (Places policies), on an opaque ink band so the text stays
-// legible on any photo: the preview banner's pair, `surface-raised` on `ink` (ContrastTokensTest).
+// legible on any photo: the preview banner's pair, `surface-raised` on `ink` (ContrastTokensTest). The bottom and
+// side padding keep the last line clear of the figure's rounded corners (1.5 rem, 2.5 rem from md), which would
+// otherwise clip a wrapped name.
 .google-photos__caption {
     position: absolute;
     inset: auto 0 0;
-    padding: var(--space-4) var(--space-8);
+    padding: var(--space-4) var(--space-12) var(--space-8);
     background: var(--c-ink);
     color: var(--c-surface-raised);
     font-size: var(--fs-small);
     line-height: 1.3;
+
+    @include bp.up(md) {
+        padding: var(--space-8) var(--space-16) var(--space-12);
+    }
 
     a {
         color: inherit;

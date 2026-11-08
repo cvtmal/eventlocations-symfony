@@ -23,6 +23,13 @@ final class VenueGooglePhotosExtension
     ) {
     }
 
+    /** D48: whether the photo section can render at all (a key is set); /datenschutz explains it only then. */
+    #[AsTwigFunction('venue_google_photos_enabled')]
+    public function enabled(): bool
+    {
+        return $this->google->enabled();
+    }
+
     #[AsTwigFunction('venue_google_photos', isSafe: ['html'])]
     public function venueGooglePhotos(Environment $twig, VenueDetail $venue): string
     {

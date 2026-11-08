@@ -41,9 +41,15 @@ final class LegalPagesTest extends WebTestCase
     private KernelBrowser $client;
     private Connection $connection;
     private EntityManagerInterface $em;
+    /** @var array{mixed, mixed} */
+    private array $savedRatingSwitch;
 
     protected function setUp(): void
     {
+        // D48: the full text, so the Google rating is switched on (the photos are, by .env.test's key);
+        // DatenschutzGoogleSwitchesTest covers each switch off.
+        $this->savedRatingSwitch = [$_SERVER['GOOGLE_RATING_ENABLED'] ?? null, $_ENV['GOOGLE_RATING_ENABLED'] ?? null];
+        $_SERVER['GOOGLE_RATING_ENABLED'] = $_ENV['GOOGLE_RATING_ENABLED'] = '1';
         $this->client = self::createClient();
         $this->client->disableReboot();
         $em = self::getContainer()->get(EntityManagerInterface::class);
@@ -58,6 +64,7 @@ final class LegalPagesTest extends WebTestCase
         $this->em->clear();
         $this->connection->rollBack();
         parent::tearDown();
+        [$_SERVER['GOOGLE_RATING_ENABLED'], $_ENV['GOOGLE_RATING_ENABLED']] = $this->savedRatingSwitch;
     }
 
     public function test_the_impressum_shows_the_operator_placeholders(): void
