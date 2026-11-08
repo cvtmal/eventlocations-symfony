@@ -41,7 +41,7 @@ final class VenueDetailQuery
      */
     private const PUBLISHED = "v.status = 'published' AND EXISTS (SELECT 1 FROM venue_translations dt WHERE dt.venue_id = v.id AND dt.locale = :default_locale)";
 
-    /** DP-7: Gebäudeart, Lage, Geeignet für │ Infrastruktur, Mobiliar, Technik, Umgebung. */
+    /** DP-7: Art der Location, Lage, Geeignet für │ Räume und Infrastruktur, Mobiliar, Technik, Rund um die Location. */
     private const FACT_GROUP_ORDER = [
         TermGroup::Building,
         TermGroup::Setting,

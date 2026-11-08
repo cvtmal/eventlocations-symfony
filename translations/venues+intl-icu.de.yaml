@@ -3,55 +3,55 @@
 # term.<group>.<code> (rows of taxonomy_terms, in position order). The ten groups and their
 # terms are the vocabulary of event-vocabulary (F3): seven filter groups, then the event facts
 # amenity, catering and language of the detail page's "Angaben zur Location".
-# The labels of setting, building, infrastructure and surroundings are still the ones copied 1:1 from
-# eventlokale (FI-4); the copy rewrite (F7b) or the owner decides whether to reword them.
+# The labels of setting, building, infrastructure and surroundings are our own wording (F7b): FI-4 had copied them 1:1
+# from eventlokale, which D11 rules out. A label is free text; the code is the key and never changes.
 
 term_group:
     setting: Lage
-    building: Gebäudeart
+    building: Art der Location
     suitable_for: Geeignet für
-    infrastructure: Infrastruktur
+    infrastructure: Räume und Infrastruktur
     furniture: Mobiliar
     technology: Technik
-    surroundings: Umgebung
+    surroundings: Rund um die Location
     amenity: Ausstattung
     catering: Catering
     language: Sprachen
 
 term:
     setting:
-        river: Am Fluss
-        lake: Am See
-        countryside: Auf dem Land
+        river: Am Flussufer
+        lake: Am Seeufer
+        countryside: Im Grünen
         mountains: In den Bergen
-        city: In der Stadt
+        city: Mitten in der Stadt
     building:
-        bar_club: 'Bar, Club'
-        farm_barn: 'Bauernhof, Scheune'
-        mountain_hut: 'Berghütte, Alphütte'
-        brewery_winery: 'Brauerei, Weingut'
+        bar_club: Bar oder Club
+        farm_barn: Bauernhof oder Scheune
+        mountain_hut: Berg- oder Alphütte
+        brewery_winery: Brauerei oder Weingut
         medieval_castle: Burg
         cafe: Café
         casino: Casino
-        digital_venue: Digitale Location
-        experience_creative: 'Erlebnis, Kreatives'
+        digital_venue: Digital oder hybrid
+        experience_creative: Erlebnis und Workshop
         event_hall: Eventhalle
-        event_venue: Eventlocation
-        factory_hall: Fabrikhalle
-        mobile_venue: Fahrbare Location
+        event_venue: Eventraum
+        factory_hall: Industriehalle
+        mobile_venue: Mobile Location
         leisure_facility: Freizeitanlage
-        gallery_studio: 'Galerie, Atelier'
-        garden_greenhouse: 'Garten, Treibhaus'
-        hangar_shipyard: 'Hangar, Werft'
-        historic_site: Historische Stätte
-        cave_fortress: 'Höhle, Festung'
-        hotel: 'Hotel, Seminarhotel'
+        gallery_studio: Galerie oder Atelier
+        garden_greenhouse: Garten oder Gewächshaus
+        hangar_shipyard: Hangar oder Werft
+        historic_site: Historisches Gebäude
+        cave_fortress: Höhle oder Festung
+        hotel: Hotel
         cinema: Kino
         congress_centre: Kongresszentrum
         cultural_centre: Kulturzentrum
         exhibition_hall: Messehalle
         museum: Museum
-        open_air: 'Openair, Outdoor'
+        open_air: Im Freien
         party_room: Partyraum
         restaurant: Restaurant
         ship: Schiff
@@ -59,10 +59,10 @@ term:
         seminar_room: Seminarraum
         meeting_room: Sitzungszimmer
         theatre: Theater
-        tram_train_bus: 'Tram, Bahn, Bus'
+        tram_train_bus: Tram, Zug oder Bus
         villa: Villa
         forest_hut: Waldhütte
-        tent: 'Zelt, Zirkuszelt'
+        tent: Zelt
         guild_hall: Zunfthaus
     suitable_for:
         corporate_event: Firmenanlass
@@ -84,11 +84,11 @@ term:
         exhibition: Ausstellung
     infrastructure:
         air_conditioning: Klimaanlage
-        shower: Dusche
+        shower: Duschen
         cloakroom: Garderobe
-        heating_ventilation: 'Heizung & Lüftung'
-        kitchen: Küche zur Nutzung
-        backstage_rooms: Backstage Räume
+        heating_ventilation: Heizung und Lüftung
+        kitchen: Küche zum Mitbenutzen
+        backstage_rooms: Backstage-Raum
         lectern: Rednerpult
     furniture:
         chairs: Stühle
@@ -105,11 +105,11 @@ term:
         interpreting_system: Dolmetscheranlage
     surroundings:
         garden: Garten
-        spa_wellness: 'Spa & Wellness'
+        spa_wellness: Spa und Wellness
         terrace: Terrasse
         playground: Spielplatz
-        barbecue: Grill
-        golf: Golf
+        barbecue: Grillstelle
+        golf: Golfplatz
     amenity:
         overnight: Übernachtung
         panorama: Panoramablick

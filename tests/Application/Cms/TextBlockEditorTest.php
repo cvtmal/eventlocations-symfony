@@ -211,8 +211,8 @@ final class TextBlockEditorTest extends WebTestCase
         self::assertStringNotContainsString('erscheint an dieser Stelle nichts', $crawler->filter('#text-block-form')->text());
         $hint = $crawler->filter('#text-block-default p')->each(static fn (Crawler $paragraph): string => $paragraph->text());
         self::assertSame('Ohne eigenen Text erscheinen diese 2 Absätze:', array_shift($hint));
-        self::assertStringStartsWith('«Jede Hochzeit ist einzigartig, genau wie ihr Ort.', $hint[0]);
-        self::assertStringStartsWith('«Mit unseren Filtern grenzt du die Auswahl', $hint[1]);
+        self::assertStringStartsWith('«Ob Firmenanlass, Seminar, Apéro, Weihnachtsfeier oder Geburtstag:', $hint[0]);
+        self::assertStringStartsWith('«Mit den Filtern grenzt du die Auswahl', $hint[1]);
 
         $home = $this->client->request('GET', '/')->filter('.home-about__text > p')->each(static fn (Crawler $paragraph): string => '«'.$paragraph->text().'»');
         self::assertSame($home, $hint);

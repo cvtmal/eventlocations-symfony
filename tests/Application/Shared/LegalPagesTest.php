@@ -27,6 +27,14 @@ final class LegalPagesTest extends WebTestCase
     use ImportsTownDataset;
 
     private const array PAGES = ['/impressum', '/datenschutz'];
+    /** D27: the `site.operator_*` values until the owner supplies them. */
+    private const array OPERATOR_PLACEHOLDERS = [
+        'TODO(owner): Name der Betreiberin',
+        'TODO(owner): Strasse und Nummer',
+        'TODO(owner): PLZ',
+        'TODO(owner): Ort',
+        'TODO(owner): UID-Nummer',
+    ];
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -50,12 +58,19 @@ final class LegalPagesTest extends WebTestCase
         parent::tearDown();
     }
 
-    public function test_the_impressum_shows_the_operator_exactly(): void
+    public function test_the_impressum_shows_the_operator_placeholders(): void
     {
+        // D27: the owner supplies name, address and UID; app:prod:check-env refuses production until then.
         $crawler = $this->page('/impressum');
 
         $text = $crawler->filter('main')->text();
-        foreach (['Pick n Roll GmbH', 'Sonneggstrasse 61', '8006 Zürich', 'UID-Nr.: CHE-134.034.546 MWST', 'hallo@deine-eventlocation.ch'] as $fact) {
+        foreach ([
+            'TODO(owner): Name der Betreiberin',
+            'TODO(owner): Strasse und Nummer',
+            'TODO(owner): PLZ TODO(owner): Ort',
+            'UID-Nr.: TODO(owner): UID-Nummer',
+            'hallo@deine-eventlocation.ch',
+        ] as $fact) {
             self::assertStringContainsString($fact, $text);
         }
         self::assertCount(1, $crawler->filter('main a[href="mailto:hallo@deine-eventlocation.ch"]'));
@@ -74,13 +89,26 @@ final class LegalPagesTest extends WebTestCase
             'Merkliste und Cookie',
             'Statistik',
             'Schutz vor Missbrauch',
+            'Dienstleister, die Daten für uns bearbeiten',
             'Hosting und Datenbank',
             'Karten und Bewertungen von Google Maps',
             'Links zu anderen Anbietern',
             'Interner Bereich',
             'Deine Rechte',
         ], $crawler->filter('main h2')->each(static fn (Crawler $h2): string => $h2->text()));
-        self::assertStringContainsString('Pick n Roll GmbH', $crawler->filter('main address')->text());
+        self::assertStringContainsString('TODO(owner): Name der Betreiberin', $crawler->filter('main address')->text());
+    }
+
+    public function test_the_datenschutz_page_lists_the_processors_of_the_parameter(): void
+    {
+        $crawler = $this->page('/datenschutz');
+
+        self::assertSame([
+            'Infomaniak Network SA: Hosting der Website und Versand der E-Mails (Schweiz)',
+            'Neon (Databricks, Inc.): Datenbank mit Anfragen und Kontakten (Frankfurt, Deutschland)',
+            'Sentry (Functional Software, Inc.): Meldungen technischer Fehler (Frankfurt, Deutschland)',
+            'Google Ireland Limited: Karten und Bewertungen von Google Maps (Irland)',
+        ], $crawler->filter('.legal__processors li')->each(static fn (Crawler $item): string => $item->text()));
     }
 
     public function test_both_pages_are_cacheable_indexable_and_set_no_cookie(): void
@@ -169,7 +197,8 @@ final class LegalPagesTest extends WebTestCase
     public function test_no_page_names_a_service_the_site_does_not_use_or_shows_a_marker(): void
     {
         foreach (self::PAGES as $path) {
-            $html = (string) $this->page($path)->html();
+            // D27's operator placeholders are the one allowed marker: app:prod:check-env refuses production while they stay.
+            $html = str_replace(self::OPERATOR_PLACEHOLDERS, '', (string) $this->page($path)->html());
 
             foreach (['Google Analytics', 'Google Fonts', 'Mailchimp', 'TODO'] as $word) {
                 self::assertStringNotContainsString($word, $html, $path.': '.$word);

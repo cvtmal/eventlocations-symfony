@@ -1,6 +1,6 @@
 @use '../abstracts/breakpoints' as bp;
 
-// The listing's filter bar (#7, LP-6; drawn by #37 from the `Filterbar` boards): active-filter chips, then the three
+// The listing's filter bar (#7, LP-6; drawn by #37 from the `Filterbar` boards): active-filter chips, then the four
 // triggers, in one white pill that scrolls sideways, and the round Merkliste button beside it.
 .filter-bar {
     display: flex;
@@ -47,6 +47,48 @@
     .overlay {
         text-align: start;
         white-space: normal;
+    }
+}
+
+// F7b: below md the guests and more triggers show only "Gäste" and "Filter +", so the four triggers fit at 390 px. Their first
+// word stays in the accessibility tree (hidden as .visually-hidden does), so the accessible name is the whole label.
+.filter-bar__wide {
+    @include bp.down(md) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+}
+
+// Active chips come first, so they can still push triggers past the pill's end: while the list can scroll on, its end
+// fades out as a hint (a scroll-driven animation; without support the pill simply scrolls, as before).
+@property --filter-bar-fade {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+}
+
+@keyframes filter-bar-fade {
+    from {
+        --filter-bar-fade: 2rem;
+    }
+
+    to {
+        --filter-bar-fade: 0px;
+    }
+}
+
+@supports (animation-timeline: scroll()) {
+    .filter-bar__list {
+        mask-image: linear-gradient(to left, transparent, #000 var(--filter-bar-fade));
+        animation: filter-bar-fade linear both;
+        animation-timeline: scroll(self inline);
     }
 }
 

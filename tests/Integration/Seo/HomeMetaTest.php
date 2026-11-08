@@ -20,7 +20,7 @@ final class HomeMetaTest extends KernelTestCase
 
         $title = $this->meta()->title;
 
-        self::assertSame('Hochzeitslocations Schweiz finden | deine-eventlocation.ch', $title);
+        self::assertSame('Eventlokale in der Schweiz finden | deine-eventlocation.ch', $title);
         self::assertLessThanOrEqual(TitleChain::MAX, mb_strlen($title));
         self::assertNotSame($translator->trans('listing.title', ['site' => 'deine-eventlocation.ch'], 'seo'), $title);
     }
@@ -29,7 +29,7 @@ final class HomeMetaTest extends KernelTestCase
     {
         $description = $this->meta()->description;
 
-        self::assertStringStartsWith('Finde die passende Hochzeitslocation', $description);
+        self::assertStringStartsWith('Finde das passende Eventlokal', $description);
         self::assertLessThanOrEqual(MetaDescription::MAX, mb_strlen($description));
     }
 

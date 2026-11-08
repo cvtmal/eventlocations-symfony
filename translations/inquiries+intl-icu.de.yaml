@@ -19,7 +19,7 @@ form:
     submit: Anfragen
     privacy: Deine Angaben gehen direkt an {name}.
     privacy_link: Datenschutz
-    message_default: "Liebes {name}-Team,\n\nwir planen unsere Hochzeit und interessieren uns für {name}. Ist unser Wunschtermin noch frei?\n\nHerzliche Grüsse"
+    message_default: "Liebes {name}-Team,\n\nwir planen einen Anlass und interessieren uns für {name}. Ist unser Wunschtermin noch frei?\n\nHerzliche Grüsse"
     error:
         summary: Bitte prüfe deine Angaben.
         too_fast: Das ging sehr schnell. Bitte sende das Formular noch einmal ab.

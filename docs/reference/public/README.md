@@ -25,10 +25,10 @@ The back office keeps `docs/reference/admin/`.
 | `Main` / `Home-390` | Home page |
 | `Listing` | Listing with real-data and rich cards, pagination, related links, empty state |
 | `Canton` | Canton landing page |
-| `Filterbar` | Bar, active chips, "weitere Filter (N)" pill |
+| `Filterbar` | Bar with four triggers (Region, Anlass, Anzahl Gäste, weitere Filter; "Gäste" and "Filter +" at 390), active chips with the fading end at 390, "weitere Filter (N)" pill, the Anlass overlay |
 | `Region` | Region overlay: tabs, list, radius and pin; map states |
-| `Guests` | Guest overlay with today's four bands |
-| `More` | "Weitere Filter" with F3's groups (Gebäudeart, Lage, Infrastruktur, Mobiliar, Technik, Ausstattung ...), sticky footer |
+| `Guests` | Guest overlay with one number input ("z.B. 80"), filled and focused |
+| `More` | "Weitere Filter" with F3's groups (Art der Location, Lage, Räume und Infrastruktur, Mobiliar, Technik, Ausstattung ...; the board still draws the labels before F7b), sticky footer |
 | `DetailReal` | The shape of most real venues |
 | `Detail` | Every section (facts, "Angaben zur Location", Räume, Häufige Fragen, Standort, Kontakt, Dokumente), action card, mobile bar |
 | `DetailDialogs` | Gallery, room dialogs, share fallback, phone page |
@@ -43,13 +43,12 @@ The back office keeps `docs/reference/admin/`.
 The boards show the target. Layout, colour, type and logo match the live pages at both widths; these differences are known and belong to
 later cycles:
 
-- **Copy (F7b):** the live pages still say "Hochzeitslocations" in headings, the footer's canton list, the home copy, the error pages and the
-  region overlay; the inquiry's Anlass list and prefilled message are the wedding ones; the Datenschutz text names the old operator and
-  processors. The boards show event wording and "du".
+- **Copy (F7b done, F8 and F9 open):** F7b replaced the wedding wording of headings, footer, home, error pages and Datenschutz (operator facts
+  are `TODO(owner)` placeholders, D27; processors per D26). Still open: the canton, town and building landing headings and intros (F8) and
+  the inquiry's Anlass list (F9). The `More` and `Detail` boards still draw the taxonomy labels from before F7b ("Gebäudeart",
+  "Infrastruktur", "Umgebung"; live: "Art der Location", "Räume und Infrastruktur", "Rund um die Location").
 - **Routes (F5):** board labels use `/eventlokale`, `/eventlokale/{kanton}`, `/eventlokale/{kanton}/{ort}`, `/eventlokal/{slug}` and
   `/eventlokal-in-meiner-naehe`; the live app has them since F5.
-- **Filters (F5):** live, the bar has an "Anlass" trigger (chips per event type) and the guest filter is one number input; the `Guests` and
-  `Filterbar` boards still draw the four bands and no "Anlass" trigger. Redrawing them is open (F5 did not touch the boards).
 - **Content:** the boards keep curated fictional venues; the demo data is lorem-like. The Detail board draws a Google rating box, which the live
   page shows only with a Maps key. Wunschtermin is the browser's native date input live.
 
@@ -66,7 +65,7 @@ later cycles:
 ## Decisions that carry over from the sister site's boards
 
 - **Selected state**, one language everywhere: `accent-soft` ground, 2 px `accent-strong` edge, `ink` text, a check or ×. It applies to chips,
-  tiles and the pressed guest band.
+  tiles and the selected event chip.
 - **No saturated colour behind text** except the primary button and the count badge in `accent-strong`; `accent` (vermilion) never behind text.
 - **Overlays:** one ground, `overlay-ground`, with circles in `overlay-circle`. In Weitere Filter each group is a white card.
 - **Canton map:** `map-line` separates land from the ground. `map-hover` (the accent) and `map-lake` differ by hue; lakes are not interactive,

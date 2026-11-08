@@ -24,10 +24,23 @@ final class CheckProductionEnvCommand
     private const string MEDIA_PUBLIC_DIR_DEFAULT = '%kernel.project_dir%/public/media';
     private const array COMPOSE_DATABASE_HOSTS = ['database', 'localhost'];
     private const array DATABASE_URL_DEAD_OPTIONS = ['connect_timeout', 'channel_binding'];
+    /** D27: the marker of an operator fact the owner has not supplied yet (`config/services.yaml`). */
+    public const string PLACEHOLDER = 'TODO(owner)';
 
+    /**
+     * @param array<string, string> $operatorFacts parameter name => value, the `site.operator_*` facts of D27
+     */
     public function __construct(
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
+        #[Autowire([
+            'site.operator_name' => '%site.operator_name%',
+            'site.operator_street' => '%site.operator_street%',
+            'site.operator_postcode' => '%site.operator_postcode%',
+            'site.operator_city' => '%site.operator_city%',
+            'site.operator_uid' => '%site.operator_uid%',
+        ])]
+        private readonly array $operatorFacts,
     ) {
     }
 
@@ -39,7 +52,10 @@ final class CheckProductionEnvCommand
         }
 
         // What Dotenv::bootEnv() filled, so the check sees the values the app will run with.
-        $problems = self::problems($_SERVER + $_ENV, (new Dotenv())->parse($dotenv, '.env')['ADMIN_TOTP_KEY'] ?? '');
+        $problems = [
+            ...self::problems($_SERVER + $_ENV, (new Dotenv())->parse($dotenv, '.env')['ADMIN_TOTP_KEY'] ?? ''),
+            ...self::placeholderProblems($this->operatorFacts),
+        ];
 
         if ([] === $problems) {
             $io->writeln('OK');
@@ -120,6 +136,26 @@ final class CheckProductionEnvCommand
         $mapId = $value('GOOGLE_MAPS_MAP_ID');
         if ('' !== $value('GOOGLE_MAPS_JS_KEY') && ('' === $mapId || 'DEMO_MAP_ID' === $mapId)) {
             $problems[] = 'GOOGLE_MAPS_MAP_ID must be the production Map ID when GOOGLE_MAPS_JS_KEY is set, not empty and not DEMO_MAP_ID.';
+        }
+
+        return $problems;
+    }
+
+    /**
+     * D27: production must not publish an operator placeholder in the Impressum, the Datenschutz page or the JSON-LD.
+     * A parameter is no secret, so the line names it, and still not its value.
+     *
+     * @param array<string, string> $facts parameter name => value
+     *
+     * @return list<string> one line per parameter that still holds the placeholder
+     */
+    public static function placeholderProblems(array $facts): array
+    {
+        $problems = [];
+        foreach ($facts as $parameter => $value) {
+            if (str_contains($value, self::PLACEHOLDER)) {
+                $problems[] = \sprintf('%s in config/services.yaml must be the operator\'s fact, not a %s placeholder (D27).', $parameter, self::PLACEHOLDER);
+            }
         }
 
         return $problems;

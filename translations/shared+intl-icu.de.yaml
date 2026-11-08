@@ -7,7 +7,7 @@ legal:
         link: Impressum
         title: Impressum
         page_title: Impressum | deine-eventlocation.ch
-        meta_description: Impressum von deine-eventlocation.ch, betrieben von der Pick n Roll GmbH in Zürich.
+        meta_description: Impressum von deine-eventlocation.ch, mit Betreiberin und Kontakt.
         operator: Betreiberin
         uid: 'UID-Nr.: {uid}'
         contact: Kontakt
@@ -57,6 +57,14 @@ legal:
             title: Schutz vor Missbrauch
             # TODO owner: #20 must schedule cache:pool:prune, or expired counters stay on the server (T10).
             text: 'Damit Formular und Telefonnummern nicht automatisiert abgegriffen werden, zählen wir Anfragen pro IP-Adresse. Dafür legen wir zu deiner IP-Adresse einen Zähler im Zwischenspeicher des Servers ab. Er läuft spätestens zwei Stunden nach deiner letzten Anfrage ab, abgelaufene Zähler löschen wir regelmässig. Mit deiner Anfrage speichern wir die IP-Adresse nicht.'
+        # D26: one line per entry of the site.processors parameter, keyed by its key; LegalPagesTest checks that every key has one.
+        processors:
+            title: Dienstleister, die Daten für uns bearbeiten
+            intro: 'Diese Anbieter bearbeiten Personendaten in unserem Auftrag. Was sie genau erhalten, steht in den Abschnitten darunter.'
+            infomaniak: Hosting der Website und Versand der E-Mails
+            neon: Datenbank mit Anfragen und Kontakten
+            sentry: Meldungen technischer Fehler
+            google: Karten und Bewertungen von Google Maps
         hosting:
             title: Hosting und Datenbank
             # TODO owner: confirm the contracting Infomaniak entity and the 14-day log rotation of deploy/nginx (F15, T2).

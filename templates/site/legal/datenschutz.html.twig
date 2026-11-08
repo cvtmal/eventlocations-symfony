@@ -1,7 +1,8 @@
 {#
     /datenschutz (#18). A draft for the owner's review, not legal advice. Every sentence is a literal key in
     `shared` (`legal.privacy.*`); the variable facts come from the controller.
-    Variables: site (as /impressum), retention_months (%inquiries.retention_months%), merkliste_days (LegalController::MERKLISTE_DAYS).
+    Variables: site (as /impressum), retention_months (%inquiries.retention_months%), merkliste_days (LegalController::MERKLISTE_DAYS),
+    processors (%site.processors%, D26: key, name, location; the purpose is `legal.privacy.processors.<key>`).
 #}
 {% extends 'base.html.twig' %}
 
@@ -55,6 +56,15 @@
         <section class="legal__section">
             <h2>{{ 'legal.privacy.abuse.title'|trans({}, 'shared') }}</h2>
             <p>{{ 'legal.privacy.abuse.text'|trans({}, 'shared') }}</p>
+        </section>
+        <section class="legal__section">
+            <h2>{{ 'legal.privacy.processors.title'|trans({}, 'shared') }}</h2>
+            <p>{{ 'legal.privacy.processors.intro'|trans({}, 'shared') }}</p>
+            <ul class="legal__processors">
+                {%- for processor in processors %}
+                <li><strong>{{ processor.name }}</strong>: {{ ('legal.privacy.processors.' ~ processor.key)|trans({}, 'shared') }} ({{ processor.location }})</li>
+                {%- endfor %}
+            </ul>
         </section>
         <section class="legal__section">
             <h2>{{ 'legal.privacy.hosting.title'|trans({}, 'shared') }}</h2>

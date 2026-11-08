@@ -12,8 +12,9 @@ use Symfony\Component\HttpKernel\Attribute\Cache;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Impressum and Datenschutz (#18). The company facts come from the `site.*` parameters and the
- * retention from the purge's own parameter, so the pages cannot drift from what the code does.
+ * Impressum and Datenschutz (#18). The company facts (D27 placeholders until the owner supplies them) and the processors
+ * (D26) come from the `site.*` parameters and the retention from the purge's own parameter, so the pages cannot drift
+ * from what the code does.
  */
 final class LegalController extends AbstractController
 {
@@ -38,6 +39,9 @@ final class LegalController extends AbstractController
         private readonly string $contactEmail,
         #[Autowire('%inquiries.retention_months%')]
         private readonly int $retentionMonths,
+        /** @var list<array{key: string, name: string, location: string}> D26's processors, in the page's order */
+        #[Autowire('%site.processors%')]
+        private readonly array $processors,
     ) {
     }
 
@@ -58,6 +62,7 @@ final class LegalController extends AbstractController
             'site' => $this->site(),
             'retention_months' => $this->retentionMonths,
             'merkliste_days' => self::MERKLISTE_DAYS,
+            'processors' => $this->processors,
         ]);
     }
 

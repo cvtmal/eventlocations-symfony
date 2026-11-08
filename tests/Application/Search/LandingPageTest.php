@@ -73,14 +73,14 @@ final class LandingPageTest extends WebTestCase
         self::assertSame($zurich, $this->cardNames($crawler));
 
         $items = $crawler->filter('nav.breadcrumb li.breadcrumb__item');
-        self::assertSame(['Hochzeitslocations', 'Kanton Zürich'], $items->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['Eventlokale', 'Kanton Zürich'], $items->each(static fn (Crawler $item): string => $item->text()));
         self::assertSame('http://localhost/eventlokale', $items->eq(0)->filter('a')->attr('href'));
         self::assertCount(0, $items->eq(1)->filter('a'));
         self::assertSame('page', $items->eq(1)->filter('[aria-current]')->attr('aria-current'));
         self::assertSame('Navigationspfad', $crawler->filter('nav.breadcrumb')->attr('aria-label'));
 
         self::assertSame([
-            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Hochzeitslocations', 'item' => 'http://localhost/eventlokale'],
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Eventlokale', 'item' => 'http://localhost/eventlokale'],
             ['@type' => 'ListItem', 'position' => 2, 'name' => 'Kanton Zürich'],
         ], $this->breadcrumbJsonLd($crawler));
 
@@ -156,8 +156,8 @@ final class LandingPageTest extends WebTestCase
         self::assertStringContainsString('in Liechtenstein', $title);
         self::assertStringNotContainsString('Kanton', $title);
         self::assertStringStartsWith('Eventlokale in Liechtenstein: ', (string) $crawler->filter('meta[name="description"]')->attr('content'));
-        self::assertSame(['Hochzeitslocations', 'Liechtenstein'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
-        self::assertSame(['Hochzeitslocations', 'Liechtenstein'], array_column($this->breadcrumbJsonLd($crawler), 'name'));
+        self::assertSame(['Eventlokale', 'Liechtenstein'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['Eventlokale', 'Liechtenstein'], array_column($this->breadcrumbJsonLd($crawler), 'name'));
     }
 
     public function test_five_venues_in_one_town_switch_a_town_page_on(): void
@@ -178,10 +178,10 @@ final class LandingPageTest extends WebTestCase
 
         // Stäfa's five venues make Zürich a canton page too, so the breadcrumb has its step.
         $items = $crawler->filter('nav.breadcrumb li.breadcrumb__item');
-        self::assertSame(['Hochzeitslocations', 'Kanton Zürich', 'Stäfa'], $items->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['Eventlokale', 'Kanton Zürich', 'Stäfa'], $items->each(static fn (Crawler $item): string => $item->text()));
         self::assertSame('http://localhost/eventlokale/zuerich', $items->eq(1)->filter('a')->attr('href'));
         self::assertSame('page', $items->eq(2)->filter('[aria-current]')->attr('aria-current'));
-        self::assertSame(['Hochzeitslocations', 'Kanton Zürich', 'Stäfa'], array_column($this->breadcrumbJsonLd($crawler), 'name'));
+        self::assertSame(['Eventlokale', 'Kanton Zürich', 'Stäfa'], array_column($this->breadcrumbJsonLd($crawler), 'name'));
 
         $this->assertPublicAndCookieFree();
     }
@@ -224,7 +224,7 @@ final class LandingPageTest extends WebTestCase
             $crawler->filter('.listing-hero__intro > p')->text(),
         );
         self::assertCount(5, $crawler->filter('article.card'));
-        self::assertSame(['Hochzeitslocations', 'Events im Schloss'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['Eventlokale', 'Events im Schloss'], $crawler->filter('nav.breadcrumb li.breadcrumb__item')->each(static fn (Crawler $item): string => $item->text()));
         $this->assertPublicAndCookieFree();
     }
 

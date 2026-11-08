@@ -12,9 +12,11 @@
     {%- set active = params|filter(param => query[param] is defined)|length -%}
     <li class="filter-bar__item">
         {%- if active > 0 -%}
-            <span class="chip chip--more"><button type="button" class="chip__open" popovertarget="filter-more">{{ 'filter.more_active'|trans({count: active}, 'search') }}</button><a class="chip__remove" href="{{ listing_path_without(criteria, params) }}" aria-label="{{ 'filter.more_remove'|trans({}, 'search') }}">{{ icon('x', {class: 'icon--sm'}) }}</a></span>
+            <span class="chip chip--more">{%- set words = 'filter.more_active'|trans({count: active}, 'search')|split(' ', 2) -%}<button type="button" class="chip__open" popovertarget="filter-more">{% if words|length > 1 %}<span class="filter-bar__wide">{{ words[0] }} </span>{{ words[1] }}{% else %}{{ words[0] }}{% endif %}</button><a class="chip__remove" href="{{ listing_path_without(criteria, params) }}" aria-label="{{ 'filter.more_remove'|trans({}, 'search') }}">{{ icon('x', {class: 'icon--sm'}) }}</a></span>
         {%- else -%}
-            {{- include('components/_button.html.twig', {label: 'filter.more'|trans({}, 'search'), variant: 'secondary', attributes: {popovertarget: 'filter-more'}}, with_context = false) -}}
+            {#- Below md the first word hides, as on the guests trigger (F7b). -#}
+            {%- set words = 'filter.more'|trans({}, 'search')|split(' ', 2) -%}
+            <button type="button" class="btn btn--secondary" popovertarget="filter-more"><span>{% if words|length > 1 %}<span class="filter-bar__wide">{{ words[0] }} </span>{{ words[1] }}{% else %}{{ words[0] }}{% endif %}</span></button>
         {%- endif -%}
         {% embed 'components/_overlay.html.twig' with {id: 'filter-more', tone: 'more', title: 'filter.more_title'|trans({}, 'search'), criteria: criteria, params: params} only %}
             {% block overlay_body %}{{ include('search/filter/_more_form.html.twig', {criteria: criteria, params: params}, with_context = false) }}{% endblock %}

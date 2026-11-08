@@ -31,8 +31,8 @@ final class ListingSeoTest extends WebTestCase
     use LandingFixtures;
 
     private const string CLEAN = 'http://localhost/eventlokale';
-    private const string TITLE = 'Hochzeitslocations in der Schweiz | deine-eventlocation.ch';
-    private const string PAGE_2_TITLE = 'Hochzeitslocations Schweiz – Seite 2';
+    private const string TITLE = 'Eventlokale in der Schweiz | deine-eventlocation.ch';
+    private const string PAGE_2_TITLE = 'Eventlokale Schweiz – Seite 2 | deine-eventlocation.ch';
     private const string ZURICH = 'http://localhost/eventlokale/zuerich';
     private const string ZURICH_TITLE = '49 Eventlokale im Kanton Zürich | deine-eventlocation.ch';
     private const string TOWN = 'http://localhost/eventlokale/zuerich/zuerich';
@@ -251,9 +251,9 @@ final class ListingSeoTest extends WebTestCase
         self::assertIsArray($graphs[0]['@graph']);
         self::assertSame(['WebSite', 'Organization'], array_column($graphs[0]['@graph'], '@type'));
         self::assertSame('http://localhost/', $graphs[0]['@graph'][0]['url']);
-        self::assertSame('Pick n Roll GmbH', $graphs[0]['@graph'][1]['legalName']);
+        self::assertSame('TODO(owner): Name der Betreiberin', $graphs[0]['@graph'][1]['legalName']);
         self::assertSame('http://localhost/brand/icon-512.png', $graphs[0]['@graph'][1]['logo']);
-        self::assertSame('8006', $graphs[0]['@graph'][1]['address']['postalCode']);
+        self::assertSame('TODO(owner): PLZ', $graphs[0]['@graph'][1]['address']['postalCode']);
     }
 
     private function assertShape(string $url, string $canonical, bool $noindex, int $hreflang, string $title): void

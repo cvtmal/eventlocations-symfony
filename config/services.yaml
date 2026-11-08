@@ -21,12 +21,21 @@ parameters:
     site.contact_email: 'hallo@deine-eventlocation.ch'
     # Site and operator (Q5): JSON-LD, title suffix; #18's legal pages reuse them.
     site.name: 'deine-eventlocation.ch'
-    site.operator_name: 'Pick n Roll GmbH'
-    site.operator_street: 'Sonneggstrasse 61'
-    site.operator_postcode: '8006'
-    site.operator_city: 'Zürich'
+    # D27: the operator's facts are placeholders until the owner supplies them. app:prod:check-env refuses production while
+    # any of them still contains TODO(owner) (CheckProductionEnvCommand::PLACEHOLDER, F7b); replace each value whole.
+    site.operator_name: 'TODO(owner): Name der Betreiberin'
+    site.operator_street: 'TODO(owner): Strasse und Nummer'
+    site.operator_postcode: 'TODO(owner): PLZ'
+    site.operator_city: 'TODO(owner): Ort'
     # Q5: the Impressum's UID line (#18).
-    site.operator_uid: 'CHE-134.034.546 MWST'
+    site.operator_uid: 'TODO(owner): UID-Nummer'
+    # D26: the processors the Datenschutz page lists, in this order (F7b). Each needs a `legal.privacy.processors.<key>` purpose
+    # in the shared catalogue (LegalPagesTest); the prose sections below the list give the details.
+    site.processors:
+        - { key: infomaniak, name: 'Infomaniak Network SA', location: 'Schweiz' }
+        - { key: neon, name: 'Neon (Databricks, Inc.)', location: 'Frankfurt, Deutschland' }  # aws-eu-central-1
+        - { key: sentry, name: 'Sentry (Functional Software, Inc.)', location: 'Frankfurt, Deutschland' }
+        - { key: google, name: 'Google Ireland Limited', location: 'Irland' }
     # LEG-2: app:inquiries:purge deletes inquiries older than this (#18 documents it).
     inquiries.retention_months: 12
     # #17: a canton, town or building landing page exists from this many published venues, below it 404 (one rule, #26 reads it).

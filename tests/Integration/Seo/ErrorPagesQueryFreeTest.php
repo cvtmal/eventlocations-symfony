@@ -93,7 +93,7 @@ final class ErrorPagesQueryFreeTest extends KernelTestCase
         $html = $this->renderWithoutQuery($template, $status);
 
         self::assertStringContainsString($heading, $html);
-        self::assertStringContainsString('Hochzeitslocations nach Kanton', $html);
+        self::assertStringContainsString('Eventlokale nach Kanton', $html);
         self::assertMatchesRegularExpression('#href="/eventlokale/bern">Bern</a>.*href="/eventlokale/zuerich">Zürich</a>#s', $html);
         $this->pool()->clear();
     }

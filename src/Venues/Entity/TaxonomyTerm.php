@@ -11,13 +11,13 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * One term of a taxonomy group (Lage, Gebäudeart, …). Code-keyed vocabulary row (S4): the
+ * One term of a taxonomy group (Lage, Art der Location, …). Code-keyed vocabulary row (S4): the
  * primary key is the natural key (term_group, code), a documented exception to EntityId
  * like Geo\Entity\Canton. The 118 rows are seeded by the migrations; the label is
  * `term.<group>.<code>` in the `venues` catalogue (see term()).
  *
  * `position` orders the terms of a group; `primary_position` orders the building chips
- * shown before "Alle Gebäudearten" (FI-4) and is NULL for every other term.
+ * shown before "Alle Location-Arten" (FI-4) and is NULL for every other term.
  */
 #[ORM\Entity(repositoryClass: TaxonomyTermRepository::class)]
 #[ORM\Table(name: 'taxonomy_terms')]

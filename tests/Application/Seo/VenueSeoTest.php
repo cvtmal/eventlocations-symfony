@@ -122,7 +122,7 @@ final class VenueSeoTest extends WebTestCase
         $lists = $this->nodes($crawler, 'BreadcrumbList');
         self::assertCount(1, $lists);
         self::assertSame([
-            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Hochzeitslocations', 'item' => 'http://localhost/eventlokale'],
+            ['@type' => 'ListItem', 'position' => 1, 'name' => 'Eventlokale', 'item' => 'http://localhost/eventlokale'],
             ['@type' => 'ListItem', 'position' => 2, 'name' => 'Schloss Seeblick'],
         ], $lists[0]['itemListElement']);
     }

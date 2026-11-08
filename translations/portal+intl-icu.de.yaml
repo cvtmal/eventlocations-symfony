@@ -244,7 +244,7 @@ onboarding:
             intro: Wir haben {venue} geprüft und veröffentlicht. Die Location ist jetzt online.
             button: Zur Location
         rejected:
-            subject: Deine Location {venue}
+            subject: '{venue} ist noch nicht online: bitte Angaben anpassen'
             preheader: Wir konnten {venue} noch nicht veröffentlichen.
             greeting: Hallo {name}
             intro: "Wir konnten {venue} noch nicht veröffentlichen. Das ist der Grund:"
@@ -284,7 +284,7 @@ claims:
             intro: Wir haben deine Anfrage geprüft. Du kannst {venue} jetzt in deinem Konto verwalten.
             button: Zu meinem Konto
         rejected:
-            subject: Deine Anfrage für {venue}
+            subject: Dein Zugriff auf {venue} ist nicht bestätigt
             preheader: Wir konnten deine Anfrage nicht bestätigen.
             greeting: Hallo {name}
             intro: Wir konnten deine Anfrage für {venue} nicht bestätigen.

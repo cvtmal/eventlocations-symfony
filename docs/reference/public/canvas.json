@@ -125,7 +125,7 @@
       "x": 4300,
       "y": 0,
       "w": 1440,
-      "h": 1328,
+      "h": 2336,
       "title": "Filterleiste · 1440",
       "page": "listing",
       "expand": "fill"
@@ -134,7 +134,7 @@
       "x": 5820,
       "y": 0,
       "w": 390,
-      "h": 1040,
+      "h": 2206,
       "title": "Filterleiste · 390",
       "page": "listing"
     },
@@ -176,7 +176,7 @@
       "x": 2150,
       "y": 0,
       "w": 1440,
-      "h": 2118,
+      "h": 2166,
       "title": "Filter Gäste · 1440",
       "page": "filter",
       "expand": "fill"
@@ -185,7 +185,7 @@
       "x": 3670,
       "y": 0,
       "w": 390,
-      "h": 2056,
+      "h": 2122,
       "title": "Filter Gäste · 390",
       "page": "filter"
     },
