@@ -19,7 +19,7 @@ It is modelled on eventlokale.ch's features and behaviour. Its texts, photos, ve
 
 ## What the product does today
 
-The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). The look is our own since F6 (indigo and vermilion, Hanken Grotesk, `docs/brand.md`), and the vocabulary since F3. Filters, URLs and wording are still the wedding site's until F5, F7b and F8.
+The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). Since F3 to F8 it is an event site in look, vocabulary, filters, URLs and wording; no wedding wording is left in public output (`NoWeddingCopyTest`). The operator's name, address and UID are `TODO(owner)` placeholders, and production refuses to boot while any remain (D27).
 
 - **Public:** home page with a search by canton, event type and guest number; the listing at `/eventlokale` with filters for event type, guests, catering and more; one detail page per venue with photos, rooms, documents and map, landing pages per canton, town, event type and event type × canton (`/eventlokale/{kanton}`, `/eventlokale/{anlass}`, `/eventlokale/{kanton}/{anlass}`; none for Hochzeit), the Merkliste without login, an inquiry form on every venue, SEO basics, own cookieless statistics.
 - **Back office (`/admin`, staff only, 2FA):** CMS for entries, photos, rooms, documents, landing pages and text blocks; CRM for Locations (prospects and customers), deals, tasks, timeline, e-mail, inquiries; statistics.
@@ -48,7 +48,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 ## Facts the owner holds
 
-Every product decision is settled (D23 to D40). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
+Every product decision is settled (D23 to D43). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
 
 | Fact | Until it arrives |
 |---|---|
@@ -66,11 +66,11 @@ Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults 
 
 _Status as of 2026-11-08, kept by the PO after every merge. The cycles themselves are in `docs/rpi-cycles.md`: F-cycles in the overview table and under "Cycles", G-cycles in Wave G §3._
 
-**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved) · G1 `rights-grants` (no photo public without a rights record) · F15 `prod-setup` (deploy to an Infomaniak VPS + Neon, off until the owner enables it) · F4 `room-layouts` (six seating layouts per room) · F6b `brand-assets` (logo lockups, icons, share-card templates, 34 boards in the new look) · G5 `preview-link` (private preview link with QR, issued and revoked in the CMS) · F5 `filter-event` (event-type and guest filters, `/eventlokale…` URLs) · G2 `takedown-form` (report a photo or entry; reported photos hidden until decided) · F15b `media-backup` (nightly encrypted copy of the photos to Infomaniak Object Storage) · F12 `business-model` (Free + Pro as data, limits enforced) · `takedown-form-finish` (privacy paragraph on reports, D36 deletion job) · F8 `landing-event` (event and event × canton landing pages, no Hochzeit).
+**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved) · G1 `rights-grants` (no photo public without a rights record) · F15 `prod-setup` (deploy to an Infomaniak VPS + Neon, off until the owner enables it) · F4 `room-layouts` (six seating layouts per room) · F6b `brand-assets` (logo lockups, icons, share-card templates, 34 boards in the new look) · G5 `preview-link` (private preview link with QR, issued and revoked in the CMS) · F5 `filter-event` (event-type and guest filters, `/eventlokale…` URLs) · G2 `takedown-form` (report a photo or entry; reported photos hidden until decided) · F15b `media-backup` (nightly encrypted copy of the photos to Infomaniak Object Storage) · F12 `business-model` (Free + Pro as data, limits enforced) · `takedown-form-finish` (privacy paragraph on reports, D36 deletion job) · F8 `landing-event` (event and event × canton landing pages, no Hochzeit) · F7b `event-copy-de` (all German copy, legal pages with the processors, operator as placeholder).
 
-**Built, PR open:** F5b `guests-rooms` (guest filter and card also count the rooms; placeholder per event type) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · F9 `inquiry-event` (inquiry form with event fields) · F7b `event-copy-de` (all German texts, legal pages).
+**Built, PR open:** F5b `guests-rooms` (guest filter and card also count the rooms; placeholder per event type) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · F9 `inquiry-event` (inquiry form with event fields) · G9 `subscription-term` (Pro terms, expiry, reminders, free term, void).
 
-**In a lane:** G12 `launch-regions` (ZH, AG, ZG, BE first; thin pages stay out of Google) · G9 `subscription-term` (Pro term, expiry, reminders).
+**In a lane:** G12 `launch-regions` (ZH, AG, ZG, BE first; thin pages stay out of Google).
 
 **Launch-critical, not started:** F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G7 `enquiry-quality` (real vs. spam, delivery status) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
 
