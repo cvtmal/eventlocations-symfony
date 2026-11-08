@@ -7,6 +7,7 @@ namespace App\Venues;
 use App\Venues\Exception\TierNotFound;
 use App\Venues\ValueObject\Entitlements;
 use App\Venues\ValueObject\KnownTiers;
+use App\Venues\ValueObject\TermDay;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
@@ -14,10 +15,11 @@ use Doctrine\DBAL\Connection;
  * The one answer to "which entitlements apply to this venue at `$now`" (F12). Every consumer asks here; nothing
  * copies a limit or a flag into a venue row, a card or a template.
  *
- * Today the answer is the venue's tier (`venues.tier_id`), whatever `$now` is. G9 (`subscription-term`) swaps the
- * source to the paid term: a Pro subscription that covers `$now` gives Pro, a lapsed or missing one gives Free.
- * The signature already carries the instant, so no consumer changes then. Callers pass the instant (a
- * `ClockInterface`), the resolver has no clock of its own.
+ * The answer is the paid term (G9): the tier of the `subscriptions` row that covers the Zurich day of `$now`
+ * (`TermDay`), and Free without one, so a lapsed term falls back to Free at local midnight and the venue stays online.
+ * `venues.tier_id` is not read: it is the tier the listings order by, kept in step by every term write and by the
+ * nightly `app:subscriptions:expire`. Callers pass the instant (a `ClockInterface`), the resolver has no clock of
+ * its own. Should two terms ever cover one day, the higher-ranked tier wins.
  *
  * Reads only through DBAL, so read models may use it. Use forVenues() for a list: one query for all venues.
  */
@@ -65,10 +67,18 @@ final class EntitlementResolver
             <<<SQL
                 SELECT v.id AS venue_id, {$columns}
                 FROM venues v
-                JOIN tiers t ON t.id = v.tier_id
+                LEFT JOIN LATERAL (
+                    SELECT s.tier_id
+                    FROM subscriptions s
+                    JOIN tiers st ON st.id = s.tier_id
+                    WHERE s.venue_id = v.id AND s.starts_on <= :today AND s.ends_on >= :today
+                    ORDER BY st.rank_weight DESC, s.starts_on
+                    LIMIT 1
+                ) term ON TRUE
+                JOIN tiers t ON t.id = COALESCE(term.tier_id, :free)
                 WHERE v.id IN (:ids)
                 SQL,
-            ['ids' => $venueIds],
+            ['ids' => $venueIds, 'today' => TermDay::sql($now), 'free' => KnownTiers::FREE_ID],
             ['ids' => ArrayParameterType::STRING],
         );
 

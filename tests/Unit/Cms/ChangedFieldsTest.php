@@ -11,7 +11,6 @@ use App\Cms\Form\VenueEventData;
 use App\Cms\Form\VenueLocaleTextsData;
 use App\Cms\Form\VenueTermsData;
 use App\Cms\Form\VenueTextsData;
-use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
 use PHPUnit\Framework\TestCase;
 
@@ -41,15 +40,6 @@ final class ChangedFieldsTest extends TestCase
 
         self::assertSame(['priceLevel'], ChangedFields::between($before, $after));
         self::assertSame([], ChangedFields::between($before, $same));
-    }
-
-    public function test_a_tier_is_a_code_and_a_new_code_is_named(): void
-    {
-        $after = self::basics();
-        $after->tier = KnownTiers::PRO;
-
-        self::assertSame(['tier'], ChangedFields::between(self::basics(), $after));
-        self::assertSame([], ChangedFields::between(self::basics(), self::basics()));
     }
 
     public function test_crlf_and_cr_equal_lf(): void
@@ -134,7 +124,6 @@ final class ChangedFieldsTest extends TestCase
         $data->loadedAt = '1700000000';
         $data->name = 'Schloss Seeblick';
         $data->slug = 'schloss-seeblick';
-        $data->tier = KnownTiers::FREE;
         $data->capacityMin = 50;
         $data->capacityMax = 300;
 

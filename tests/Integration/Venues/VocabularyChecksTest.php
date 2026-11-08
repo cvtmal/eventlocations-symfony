@@ -20,6 +20,7 @@ use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\SourceStatus;
 use App\Venues\ValueObject\SourceType;
+use App\Venues\ValueObject\SubscriptionStatus;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
@@ -56,6 +57,7 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'complaint kind' => ['chk_moderation_cases_kind', ModerationKind::class];
         yield 'complaint status' => ['chk_moderation_cases_status', ModerationStatus::class];
         yield 'complaint decision' => ['chk_moderation_cases_decision', ModerationDecision::class];
+        yield 'subscription status' => ['chk_subscriptions_status', SubscriptionStatus::class];
     }
 
     /**

@@ -12,7 +12,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * Stammdaten (D15, D17): name, slug of the default locale, tier, capacity.
+ * Stammdaten (D15, D17): name, slug of the default locale, capacity. The tier is not edited
+ * here: it follows the paid terms (G9), recorded in the CRM.
  */
 final class VenueBasicsData implements VenueCardData
 {
@@ -25,9 +26,6 @@ final class VenueBasicsData implements VenueCardData
     #[Assert\Length(max: 160, maxMessage: 'cms.venue.too_long')]
     #[Assert\Regex(pattern: '/\A'.VenueDetailController::SLUG_REQUIREMENT.'\z/', message: 'cms.venue.slug.format', normalizer: 'mb_scrub')]
     public ?string $slug = null;
-
-    #[Assert\NotNull(message: 'cms.venue.tier.required')]
-    public ?string $tier = null;
 
     #[Assert\Range(notInRangeMessage: 'cms.venue.capacity.range', min: 1, max: 50000)]
     public ?int $capacityMin = null;
@@ -46,7 +44,6 @@ final class VenueBasicsData implements VenueCardData
         $data->name = $edit->header->name;
         $data->slug = $edit->header->slug;
         $data->loadedSlug = $edit->header->slug;
-        $data->tier = $edit->header->tier->code;
         $data->capacityMin = $edit->capacityMin;
         $data->capacityMax = $edit->capacityMax;
 
@@ -63,7 +60,6 @@ final class VenueBasicsData implements VenueCardData
             $changedFields,
             (string) $this->name,
             null === $edit->header->slug ? null : $slug,
-            $this->tier ?? throw new \LogicException('Validate the form before building its command.'),
             $this->capacityMin,
             $this->capacityMax ?? throw new \LogicException('Validate the form before building its command.'),
         );

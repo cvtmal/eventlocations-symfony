@@ -297,17 +297,41 @@ deal:
         session_gone: Sitzung abgelaufen. Bitte die Seite neu laden.
         forbidden: Sitzung abgelaufen. Bitte die Seite neu laden.
         error: Verschieben nicht möglich. Bitte erneut versuchen.
-    tier:
-        action: Tarif anwenden
-        title: Tarif auf Eintrag anwenden
-        text: '«{venue}» hat heute den Tarif {current}. Der Deal verkauft den Tarif {offered}.'
-        confirm: Tarif anwenden
+    payment:
+        action: Zahlung erfassen
+        title: Zahlung erfassen
+        text: 'Die Rechnung ist bezahlt: «{venue}» erhält den Tarif {tier} vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy}.'
+        invoice_ref: Rechnungsnummer
+        invoice_ref_help: Freiwillig, höchstens 60 Zeichen.
+        amount: Betrag (CHF)
+        amount_help: 'Was bezahlt wurde. 0 für einen kostenlosen Zeitraum (z. B. Pilot): zählt nicht als Zahlung und braucht eine Notiz.'
+        note: Notiz
+        note_help: Pflicht bei Betrag 0, höchstens 200 Zeichen.
+        paid_until: Bezahlt bis
+        free_until: Kostenlos bis
+        cancelled: 'gekündigt am {on}'
+        confirm: Zahlung erfassen
         cancel: Nicht jetzt
         close: Schliessen
         flash:
-            applied: Der Tarif gilt jetzt auf dem Eintrag.
-            stale: Der Tarif dieses Eintrags wurde inzwischen geändert. Bitte noch einmal prüfen.
-            gone: Für diesen Deal gibt es keinen Tarif mehr anzuwenden.
+            recorded: Zahlung erfasst. Der Tarif gilt für die bezahlte Laufzeit.
+            stale: Für diesen Eintrag wurde inzwischen eine Zahlung erfasst. Bitte noch einmal prüfen.
+            gone: Für diesen Deal gibt es keine Zahlung mehr zu erfassen.
+            overlap: Diese Laufzeit überschneidet sich mit einer schon bezahlten. Bitte die Vertragsdaten des Deals prüfen.
+            past: Diese Laufzeit ist schon vorbei. Bitte die Vertragsdaten des Deals prüfen.
+            note: 'Ein kostenloser Zeitraum braucht eine Notiz, z. B. «Pilot».'
+            amount: 'Der Betrag ist zu hoch: höchstens CHF 99 999.99. Bitte im Dialog den bezahlten Betrag eintragen.'
+    void:
+        action: Zahlung stornieren
+        title: Zahlung stornieren
+        text: 'Die Zahlung für den Tarif {tier} von «{venue}» vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy} wird gelöscht und zählt nicht mehr als Zahlung. Deckt kein anderer Zeitraum den heutigen Tag ab, wechselt der Eintrag sofort in den Tarif Free. Das lässt sich nicht rückgängig machen.'
+        text_free: 'Der kostenlose Zeitraum im Tarif {tier} von «{venue}» vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy} wird gelöscht. Deckt kein anderer Zeitraum den heutigen Tag ab, wechselt der Eintrag sofort in den Tarif Free. Das lässt sich nicht rückgängig machen.'
+        confirm: Stornieren
+        cancel: Nicht jetzt
+        close: Schliessen
+        flash:
+            voided: Zahlung storniert. Der Tarif richtet sich jetzt nach den übrigen Zeiträumen.
+            stale: Diese Zahlung lässt sich nicht mehr stornieren. Bitte die Seite neu laden und noch einmal prüfen.
     renew:
         action: Verlängern
         title: Deal verlängern

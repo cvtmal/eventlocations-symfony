@@ -412,6 +412,10 @@ plan:
         contact_hidden: 'Telefon und Website: verborgen'
         event_types: 'Anlassarten: bis zu {max}'
         event_types_all: 'Anlassarten: alle'
+    term:
+        paid_until: 'Bezahlt bis {end, date, ::dMMMMy}'
+        free_until: 'Kostenlos bis {end, date, ::dMMMMy}'
+        cancelled: 'Gekündigt: dein Tarif läuft bis {end, date, ::dMMMMy}, danach gilt Free'
     pro:
         price: 'Pro kostet CHF {price} pro Jahr, wir stellen die Rechnung von Hand.'
         price_plus_vat: 'Pro kostet CHF {price} pro Jahr zzgl. MwSt., wir stellen die Rechnung von Hand.'
@@ -424,3 +428,52 @@ plan:
         limit: 'Mit deinem Plan {tier} kannst du bis zu {max, plural, one {# Anlassart} other {# Anlassarten}} wählen.'
         full: Mehr Anlassarten gibt es mit Pro.
         link: Pro anfragen
+
+# G9 (subscription-term): the reminder mail before a paid term ends and its cancellation link.
+subscription:
+    mail:
+        subject_30: 'Dein Tarif {tier} für «{venue}» läuft am {end, date, ::dMMMMy} ab'
+        subject_7: 'Dein Tarif {tier} für «{venue}» endet am {end, date, ::dMMMMy}'
+        preheader: 'Dein Tarif {tier} für «{venue}» läuft bis am {end, date, ::dMMMMy}.'
+        greeting: 'Hallo {name}'
+        greeting_plain: Hallo
+        intro: 'Dein Tarif {tier} für «{venue}» läuft bis am {end, date, ::dMMMMy}.'
+        renewal: 'Wenn du nichts tust, schicken wir dir die Rechnung für ein weiteres Jahr {tier}: CHF {price} pro Jahr. Sobald sie bezahlt ist, läuft dein Tarif ohne Unterbruch weiter.'
+        renewal_plus_vat: 'Wenn du nichts tust, schicken wir dir die Rechnung für ein weiteres Jahr {tier}: CHF {price} pro Jahr zzgl. MwSt. Sobald sie bezahlt ist, läuft dein Tarif ohne Unterbruch weiter.'
+        intro_free: 'Dein kostenloser Tarif {tier} für «{venue}» läuft bis am {end, date, ::dMMMMy}.'
+        renewal_free: 'Möchtest du {tier} danach behalten? Antworte einfach auf diese Mail, dann schicken wir dir die Rechnung für ein Jahr. Sonst musst du nichts tun.'
+        free_intro: 'Ohne Verlängerung bleibt dein Eintrag online, im Tarif Free. Das ändert sich:'
+        fact:
+            photos: Fotos
+            photos_value: '{free} statt {paid} sichtbar, die übrigen bleiben gespeichert'
+            rooms: Räume
+            documents: PDFs
+            videos: Videos
+            event_types: Anlassarten
+            event_types_value: 'bis zu {free} statt {paid}'
+            event_types_all_value: 'bis zu {free} statt alle'
+            limit_value: '{free} statt {paid} sichtbar'
+            contact: Telefon und Website
+            contact_value: werden nicht mehr angezeigt
+            ranking: Listen
+            ranking_value: kein Top-Eintrag mehr, dein Eintrag erscheint nach den Top-Einträgen
+        cancel: 'Möchtest du nicht verlängern? Dann sag es uns über den Link unten. Dein Tarif läuft trotzdem bis am {end, date, ::dMMMMy}.'
+        button: Nicht verlängern
+        note: Diese Nachricht gehört zu deinem Vertrag mit uns. Fragen? Antworte einfach auf diese Mail.
+    cancel:
+        title: Nicht verlängern
+        intro: 'Dein Tarif {tier} für «{venue}» läuft bis am {end, date, ::dMMMMy}. Möchtest du ihn danach nicht verlängern?'
+        after: Dein Eintrag bleibt online und wechselt nach dem letzten Tag in den Tarif Free. Fotos über dem Free-Limit werden ausgeblendet, nicht gelöscht.
+        submit: Nicht verlängern
+        failed: Das hat nicht geklappt. Bitte lade die Seite neu und versuch es noch einmal.
+        done:
+            title: Verlängerung gekündigt
+            text: 'Wir verlängern deinen Tarif {tier} für «{venue}» nicht. Er läuft bis am {end, date, ::dMMMMy}, danach gilt Free.'
+            link: Zu deinem Konto
+        renewed:
+            title: Schon verlängert
+            text: 'Dein Tarif {tier} für «{venue}» ist schon über den {end, date, ::dMMMMy} hinaus bezahlt. Möchtest du nicht mehr verlängern? Antworte einfach auf unsere Mail.'
+        invalid:
+            title: Dieser Link gilt nicht mehr
+            text: Die Laufzeit ist schon zu Ende oder der Link ist unvollständig. Bei Fragen antworte einfach auf unsere Mail.
+            link: Zur Anmeldung

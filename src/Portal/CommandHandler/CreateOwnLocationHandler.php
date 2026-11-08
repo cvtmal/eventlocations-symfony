@@ -17,7 +17,6 @@ use App\Venues\Command\RelocateVenue;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRuleViolation;
-use App\Venues\ValueObject\KnownTiers;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -54,7 +53,7 @@ final class CreateOwnLocationHandler implements CommandHandlerInterface
         }
 
         try {
-            $number = (int) $this->commandBus->dispatch(new CreateVenue($command->name, KnownTiers::FREE, $command->capacityMax))->last(HandledStamp::class)?->getResult();
+            $number = (int) $this->commandBus->dispatch(new CreateVenue($command->name, $command->capacityMax))->last(HandledStamp::class)?->getResult();
             $edit = $this->edits->find($number) ?? throw VenueNotFound::forNumber($number);
             $this->commandBus->dispatch(new RelocateVenue($number, $edit->loadedAt, ['town'], $command->town, $command->cantonCode, null, null, null, null, null, null, null, null, null, [], useTownCentre: true));
         } catch (HandlerFailedException $failure) {

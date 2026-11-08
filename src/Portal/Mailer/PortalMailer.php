@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Portal\Mailer;
 
 use App\Portal\Entity\PortalUser;
+use App\Portal\ReadModel\SubscriptionReminderRow;
 use App\Portal\Security\PortalLinkSigner;
+use App\Venues\ValueObject\Entitlements;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -123,6 +125,46 @@ final class PortalMailer
             'number' => $number,
             'reason' => $reason,
         ]);
+    }
+
+    /**
+     * The reminder before a paid term ends (G9), 30 or 7 days ahead: the price of the next year, the cancellation
+     * link and what stops on Free. A contract mail, so it carries no opt-out link (Wave G §4a.6); cancelling stops
+     * the reminders. `$name` is null when it goes to the location's inquiry address.
+     */
+    public function sendSubscriptionReminder(string $to, ?string $name, SubscriptionReminderRow $reminder, int $daysBefore, string $cancelUrl, Entitlements $paid, Entitlements $free): bool
+    {
+        $template = 'portal/email/subscription_reminder.html.twig';
+        try {
+            $this->mailer->send((new TemplatedEmail())
+                ->to($to)
+                ->replyTo($this->contactEmail)
+                ->subject($this->translator->trans(7 === $daysBefore ? 'subscription.mail.subject_7' : 'subscription.mail.subject_30', [
+                    'venue' => $reminder->venueName,
+                    'tier' => $reminder->tierName,
+                    'end' => $reminder->endsOn,
+                ], 'portal'))
+                ->htmlTemplate($template)
+                ->context([
+                    'name' => $name,
+                    'reminder' => $reminder,
+                    'cancelUrl' => $cancelUrl,
+                    'paid' => $paid,
+                    'free' => $free,
+                ]));
+
+            return true;
+        } catch (TransportExceptionInterface|RfcComplianceException|HandlerFailedException $exception) {
+            $cause = $exception instanceof HandlerFailedException ? $exception->getPrevious() ?? $exception : $exception;
+            $this->logger->error('The portal mail {template} failed ({exception_class} at {file}:{line}).', [
+                'template' => $template,
+                'exception_class' => $cause::class,
+                'file' => $cause->getFile(),
+                'line' => $cause->getLine(),
+            ]);
+
+            return false;
+        }
     }
 
     private function sendAccessMail(string $email, string $firstName, string $venueName, string $subjectKey, string $template): bool

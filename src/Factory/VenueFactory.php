@@ -19,12 +19,16 @@ use function Zenstruck\Foundry\Persistence\repository;
  * Needs imported towns (app:geo:import-towns): without a `town` attribute it picks a random
  * one and takes zip, lat and lng from it; `withoutLocation()` makes a venue with none of
  * them. The name is fictional; uniqueness is not required (the slug on VenueTranslation is
- * unique per locale).
+ * unique per locale). A paid `tier` also gets a paid term from 2000 to 2099 (G9).
  *
  * @extends PersistentObjectFactory<Venue>
  */
 final class VenueFactory extends PersistentObjectFactory
 {
+    /** The term a venue created on a paid tier gets. */
+    public const string TERM_FROM = '2000-01-01';
+    public const string TERM_TO = '2099-12-31';
+
     private const NAME_PREFIXES = ['Landgut', 'Seehaus', 'Gasthof', 'Schlossgut', 'Waldhaus', 'Villa', 'Remise', 'Gutshof'];
 
     public static function class(): string
@@ -77,7 +81,18 @@ final class VenueFactory extends PersistentObjectFactory
 
     protected function initialize(): static
     {
-        return $this->beforeInstantiate(static function (array $attributes): array {
+        return $this->afterPersist(static function (Venue $venue): void {
+            // A paid tier comes with a paid term (G9): the entitlements read the term, not the tier. This one covers
+            // every date a test mocks; a test about terms writes its own (SubscriptionFactory) or removes this one.
+            if ($venue->tier()->priceRappen() > 0) {
+                SubscriptionFactory::createOne([
+                    'venue' => $venue,
+                    'tier' => $venue->tier(),
+                    'startsOn' => new \DateTimeImmutable(self::TERM_FROM),
+                    'endsOn' => new \DateTimeImmutable(self::TERM_TO),
+                ]);
+            }
+        })->beforeInstantiate(static function (array $attributes): array {
             // A tier is named by its code ('free', 'pro', KnownTiers) or passed as the entity; the seeded rows come from the migration.
             $tier = $attributes['tier'] ?? KnownTiers::FREE;
             if (\is_string($tier)) {

@@ -15,7 +15,7 @@ use Sentry\EventHint;
 final class SensitiveUrlScrubber
 {
     /** A path prefix whose next segment is a secret. */
-    private const array SECRET_SEGMENT_AFTER = ['/vorschau/'];
+    private const array SECRET_SEGMENT_AFTER = ['/vorschau/', '/konto/abo-kuendigen/'];
 
     public const string FILTERED = '[Filtered]';
 

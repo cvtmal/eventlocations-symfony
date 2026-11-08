@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues;
 
+use App\Factory\SubscriptionFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\EntitlementResolver;
@@ -147,16 +148,18 @@ final class EntitlementResolverTest extends KernelTestCase
         self::assertSame(60, $resolver->forTier(KnownTiers::PRO)->photosMax, 'the other row stays as it was');
     }
 
-    public function test_a_venue_that_changes_tier_gets_the_new_entitlements(): void
+    public function test_the_term_not_the_venue_s_tier_decides(): void
     {
         $venue = $this->venue(KnownTiers::FREE);
         $resolver = $this->resolver();
         $now = new MockClock(self::TODAY)->now();
-        self::assertSame(KnownTiers::FREE, $resolver->forVenue($venue->id(), $now)->tierCode);
 
         $this->connection->executeStatement("UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = 'pro') WHERE id = ?", [$venue->id()]);
+        self::assertEquals(self::free(), $resolver->forVenue($venue->id(), $now), 'venues.tier_id is no entitlement (G9)');
 
+        SubscriptionFactory::createOne(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2026-11-01'), 'endsOn' => new \DateTimeImmutable('2027-10-31')]);
         self::assertEquals(self::pro(), $resolver->forVenue($venue->id(), $now));
+        self::assertEquals(self::free(), $resolver->forVenue($venue->id(), new MockClock(self::LATER)->now()), 'a lapsed term gives Free');
     }
 
     /**

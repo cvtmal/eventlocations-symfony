@@ -88,6 +88,8 @@ security:
         - { path: ^/admin(/|$), roles: ROLE_EDITOR }
         - { path: ^/konto/(anmelden|abmelden|registrieren|passwort-vergessen)$, roles: PUBLIC_ACCESS }
         - { path: ^/konto/passwort-neu/[^/]+$, roles: PUBLIC_ACCESS }
+        # G9: the cancellation link of the reminder mail works without a login.
+        - { path: ^/konto/abo-kuendigen/[^/]+$, roles: PUBLIC_ACCESS }
         - { path: ^/konto/api/, roles: ROLE_PORTAL_USER }
         - { path: ^/konto(/|$), roles: ROLE_PORTAL_USER }
 

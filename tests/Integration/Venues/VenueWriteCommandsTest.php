@@ -26,9 +26,7 @@ use App\Venues\Command\UnpublishVenue;
 use App\Venues\CommandHandler\ChangeVenueBasicsHandler;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\StaleEdit;
-use App\Venues\Exception\TierNotFound;
 use App\Venues\Exception\VenueRuleViolation;
-use App\Venues\Repository\TierRepository;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\SlugAllocator;
 use App\Venues\ValueObject\KnownTiers;
@@ -62,11 +60,11 @@ final class VenueWriteCommandsTest extends KernelTestCase
         $this->ageVenue($venue);
         $token = $this->token($venue);
 
-        $this->dispatch(new ChangeVenueBasics($venue->number(), $token, ['name', 'tier', 'capacityMin', 'capacityMax'], 'Schloss Neuname', null, KnownTiers::PRO, 20, 200));
+        $this->dispatch(new ChangeVenueBasics($venue->number(), $token, ['name', 'capacityMin', 'capacityMax'], 'Schloss Neuname', null, 20, 200));
 
         $saved = $this->reload($venue);
         self::assertSame('Schloss Neuname', $saved->name());
-        self::assertSame(KnownTiers::PRO, $saved->tier()->code());
+        self::assertSame(KnownTiers::FREE, $saved->tier()->code(), 'The tier follows the paid terms (G9), not the Stammdaten.');
         self::assertSame(20, $saved->capacityMin());
         self::assertSame(200, $saved->capacityMax());
         self::assertSame('schloss-neuname', $this->slug($venue));
@@ -76,47 +74,27 @@ final class VenueWriteCommandsTest extends KernelTestCase
         self::assertSame([$venue->number()], $this->purger()->venues);
         self::assertSame(1, $this->purger()->listings);
         self::assertEquals(
-            [['command' => ChangeVenueBasics::class, 'changes' => ['changed' => ['name', 'tier', 'capacityMin', 'capacityMax'], 'tier' => 'pro']]],
+            [['command' => ChangeVenueBasics::class, 'changes' => ['changed' => ['name', 'capacityMin', 'capacityMax']]]],
             $this->auditRows($venue->number()),
         );
-    }
-
-    public function test_an_unknown_tier_code_is_refused_and_the_venue_stays_as_it_was(): void
-    {
-        $venue = $this->venueWithSlug('alter-name');
-        $token = $this->token($venue);
-
-        try {
-            $this->dispatch(new ChangeVenueBasics($venue->number(), $token, ['name', 'tier'], 'Schloss Neuname', null, 'gold', null, 100));
-            self::fail('An unknown tier should fail.');
-        } catch (HandlerFailedException $failure) {
-            self::assertCount(1, $failure->getWrappedExceptions(TierNotFound::class));
-        }
-
-        $saved = $this->reload($venue);
-        self::assertSame(KnownTiers::FREE, $saved->tier()->code());
-        self::assertNotSame('Schloss Neuname', $saved->name());
-        self::assertSame($token, $this->token($venue));
-        self::assertSame([], $this->auditRows($venue->number()));
-        self::assertSame([], $this->purger()->venues);
     }
 
     public function test_a_slug_typed_by_hand(): void
     {
         $venue = $this->venueWithSlug('alter-name');
 
-        $this->dispatch(new ChangeVenueBasics($venue->number(), $this->token($venue), ['slug'], $venue->name(), 'eigener-slug', $venue->tier()->code(), $venue->capacityMin(), $venue->capacityMax()));
+        $this->dispatch(new ChangeVenueBasics($venue->number(), $this->token($venue), ['slug'], $venue->name(), 'eigener-slug', $venue->capacityMin(), $venue->capacityMax()));
 
         self::assertSame('eigener-slug', $this->slug($venue));
         self::assertSame(['alter-name'], $this->history($venue));
-        self::assertEquals(['changed' => ['slug'], 'tier' => 'free', 'slug' => 'eigener-slug'], $this->auditRows($venue->number())[0]['changes']);
+        self::assertEquals(['changed' => ['slug'], 'slug' => 'eigener-slug'], $this->auditRows($venue->number())[0]['changes']);
     }
 
     public function test_a_rename_and_a_typed_slug_at_once_keep_the_typed_slug(): void
     {
         $venue = $this->venueWithSlug('alter-name');
 
-        $this->dispatch(new ChangeVenueBasics($venue->number(), $this->token($venue), ['name', 'slug'], 'Ganz Anders', 'mein-slug', $venue->tier()->code(), null, 100));
+        $this->dispatch(new ChangeVenueBasics($venue->number(), $this->token($venue), ['name', 'slug'], 'Ganz Anders', 'mein-slug', null, 100));
 
         self::assertSame('Ganz Anders', $this->reload($venue)->name());
         self::assertSame('mein-slug', $this->slug($venue));
@@ -128,7 +106,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
         $this->venueWithSlug('besetzt');
         $venue = $this->venueWithSlug('alter-name');
 
-        $violation = $this->violation(new ChangeVenueBasics($venue->number(), $this->token($venue), ['slug'], $venue->name(), 'besetzt', $venue->tier()->code(), null, 100));
+        $violation = $this->violation(new ChangeVenueBasics($venue->number(), $this->token($venue), ['slug'], $venue->name(), 'besetzt', null, 100));
 
         self::assertSame('venue.error.slug_taken', $violation->translationKey());
         self::assertSame('slug', $violation->field);
@@ -141,7 +119,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
     {
         $venue = $this->venueWithSlug('alter-name');
 
-        $violation = $this->violation(new ChangeVenueBasics($venue->number(), $this->token($venue), ['name'], '–––', null, $venue->tier()->code(), null, 100));
+        $violation = $this->violation(new ChangeVenueBasics($venue->number(), $this->token($venue), ['name'], '–––', null, null, 100));
 
         self::assertSame('venue.error.slug_without_letters', $violation->translationKey());
     }
@@ -161,16 +139,14 @@ final class VenueWriteCommandsTest extends KernelTestCase
         };
         $editing = self::getContainer()->get(VenueEditing::class);
         $venues = self::getContainer()->get(VenueRepository::class);
-        $tiers = self::getContainer()->get(TierRepository::class);
         $locales = self::getContainer()->get(EnabledLocale::class);
         self::assertInstanceOf(VenueEditing::class, $editing);
         self::assertInstanceOf(VenueRepository::class, $venues);
-        self::assertInstanceOf(TierRepository::class, $tiers);
         self::assertInstanceOf(EnabledLocale::class, $locales);
-        $handler = new ChangeVenueBasicsHandler($editing, $venues, $tiers, new VenueSlugs(new SlugAllocator($blind), $this->em), $locales, $this->em);
+        $handler = new ChangeVenueBasicsHandler($editing, $venues, new VenueSlugs(new SlugAllocator($blind), $this->em), $locales, $this->em);
 
         try {
-            $handler(new ChangeVenueBasics($venue->number(), $token, ['slug'], $venue->name(), 'besetzt', $venue->tier()->code(), null, 100));
+            $handler(new ChangeVenueBasics($venue->number(), $token, ['slug'], $venue->name(), 'besetzt', null, 100));
             self::fail('The unique index should have refused the slug.');
         } catch (VenueRuleViolation $violation) {
             self::assertSame('venue.error.slug_taken', $violation->translationKey());
@@ -183,7 +159,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
         $stale = (string) ((int) $this->token($venue) - 60);
 
         try {
-            $this->dispatch(new ChangeVenueBasics($venue->number(), $stale, ['name'], 'Neu', null, $venue->tier()->code(), null, 100));
+            $this->dispatch(new ChangeVenueBasics($venue->number(), $stale, ['name'], 'Neu', null, null, 100));
             self::fail('A stale token should fail.');
         } catch (HandlerFailedException $failure) {
             self::assertCount(1, $failure->getWrappedExceptions(StaleEdit::class));
@@ -380,13 +356,13 @@ final class VenueWriteCommandsTest extends KernelTestCase
 
     public function test_create_writes_an_unpublished_cms_venue_and_one_audit_row(): void
     {
-        $number = $this->dispatch(new CreateVenue('Neue Scheune', KnownTiers::PRO, 150));
+        $number = $this->dispatch(new CreateVenue('Neue Scheune', 150));
 
         self::assertIsInt($number);
         $venue = $this->reload($number);
         self::assertSame('Neue Scheune', $venue->name());
         self::assertSame(VenueStatus::Unpublished, $venue->status());
-        self::assertSame(KnownTiers::PRO, $venue->tier()->code());
+        self::assertSame(KnownTiers::FREE, $venue->tier()->code());
         self::assertSame(150, $venue->capacityMax());
         self::assertNull($venue->town());
         self::assertNull($venue->canton());
@@ -401,25 +377,10 @@ final class VenueWriteCommandsTest extends KernelTestCase
     {
         $this->venueWithSlug('schloss-au');
 
-        $number = $this->dispatch(new CreateVenue('Schloss Au', KnownTiers::FREE, 80));
+        $number = $this->dispatch(new CreateVenue('Schloss Au', 80));
 
         self::assertIsInt($number);
         self::assertSame('schloss-au-2', $this->slug($number));
-    }
-
-    public function test_create_with_an_unknown_tier_writes_nothing(): void
-    {
-        $before = (int) $this->connection->fetchOne('SELECT count(*) FROM venues');
-
-        try {
-            $this->dispatch(new CreateVenue('Neue Scheune', 'gold', 80));
-            self::fail('An unknown tier should fail.');
-        } catch (HandlerFailedException $failure) {
-            self::assertCount(1, $failure->getWrappedExceptions(TierNotFound::class));
-        }
-
-        self::assertSame($before, (int) $this->connection->fetchOne('SELECT count(*) FROM venues'));
-        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM admin_audit_log WHERE command = ?', [RecordVenueCreated::class]));
     }
 
     public function test_a_failed_create_leaves_neither_the_venue_nor_the_audit_row(): void
@@ -428,7 +389,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
         $before = (int) $this->connection->fetchOne('SELECT count(*) FROM venues');
 
         try {
-            $this->dispatch(new CreateVenue($name, KnownTiers::FREE, 80));
+            $this->dispatch(new CreateVenue($name, 80));
             self::fail('The insert should have failed.');
         } catch (HandlerFailedException) {
         }
@@ -509,7 +470,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
      */
     public function test_publish_answers_true_only_for_the_first_publish_of_a_created_venue(): void
     {
-        $number = $this->dispatch(new CreateVenue('Neue Scheune', KnownTiers::FREE, 80));
+        $number = $this->dispatch(new CreateVenue('Neue Scheune', 80));
         self::assertIsInt($number);
         self::assertTrue($this->reload($number)->awaitsFirstPublish());
         $venue = $this->reload($number);

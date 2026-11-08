@@ -10,9 +10,9 @@ use App\Crm\Command\DeleteDeal;
 use App\Crm\Exception\DealNotFound;
 use App\Crm\Form\DealStageData;
 use App\Crm\Form\DealStageType;
+use App\Crm\ReadModel\DealPaymentOfferQuery;
 use App\Crm\ReadModel\DealRecordQuery;
 use App\Crm\ReadModel\DealStageQuery;
-use App\Crm\ReadModel\DealTierOfferQuery;
 use App\Crm\ReadModel\OwnerOptionsQuery;
 use App\Crm\ReadModel\TaskListQuery;
 use App\Crm\TimelineProps;
@@ -49,7 +49,7 @@ final class DealRecordController extends AbstractController
     }
 
     #[Route('', name: 'admin_crm_deals_show', methods: ['GET'])]
-    public function show(string $id, OwnerOptionsQuery $owners, DealStageQuery $stages, DealTierOfferQuery $offers, TimelineProps $timeline, TaskListQuery $tasks, #[CurrentUser] AdminIdentity $user): Response
+    public function show(string $id, OwnerOptionsQuery $owners, DealStageQuery $stages, DealPaymentOfferQuery $offers, TimelineProps $timeline, TaskListQuery $tasks, #[CurrentUser] AdminIdentity $user): Response
     {
         $deal = $this->deals->find($id) ?? throw $this->createNotFoundException();
         $staff = $owners->all();
@@ -69,7 +69,7 @@ final class DealRecordController extends AbstractController
                 'stages' => $stages->codes(),
             ])->createView(),
             'delete_form' => $this->isGranted('ROLE_ADMIN') ? $this->deleteForm($id)->createView() : null,
-            'tier_offer' => $offers->forDeal($id),
+            'payment' => $offers->forDeal($id),
         ]);
     }
 

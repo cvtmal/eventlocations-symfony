@@ -49,7 +49,7 @@ final class CreateVenueHandler implements CommandHandlerInterface
         if ('' === SlugAllocator::base($command->name)) {
             throw VenueRuleViolation::slugWithoutLetters();
         }
-        $venue = new Venue($command->name, $this->tiers->byCode($command->tierCode), VenueStatus::Unpublished, $command->capacityMax, null, null, null, null, null, null);
+        $venue = new Venue($command->name, $this->tiers->free(), VenueStatus::Unpublished, $command->capacityMax, null, null, null, null, null, null);
         $this->em->persist($venue);
 
         $default = $this->locales->default();

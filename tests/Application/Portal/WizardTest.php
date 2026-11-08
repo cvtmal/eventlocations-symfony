@@ -6,6 +6,7 @@ namespace App\Tests\Application\Portal;
 
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\SubmissionFactory;
+use App\Factory\SubscriptionFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenueTermFactory;
@@ -136,6 +137,8 @@ final class WizardTest extends WebTestCase
     public function test_a_pro_location_sees_no_event_type_limit_on_the_step_or_the_editor(): void
     {
         $venue = $this->location($this->logInAsManager());
+        // The entitlements read the paid term (G9); venues.tier_id follows it.
+        SubscriptionFactory::createOne(['venue' => $venue]);
         $this->connection->executeStatement("UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = 'pro') WHERE id = ?", [$venue->id()]);
 
         $this->client->request('GET', $this->url($venue, 'veranstaltung'));

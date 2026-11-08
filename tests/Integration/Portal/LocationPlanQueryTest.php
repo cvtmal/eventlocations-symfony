@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Portal;
 
 use App\Factory\RoomFactory;
+use App\Factory\SubscriptionFactory;
 use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
@@ -48,9 +49,38 @@ final class LocationPlanQueryTest extends KernelTestCase
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
 
         self::assertEquals(
-            new LocationPlan('Pro', true, false, 1, 60, 0, 20, 0, 5, true, null, 19900),
+            new LocationPlan('Pro', true, false, 1, 60, 0, 20, 0, 5, true, null, 19900, false, new \DateTimeImmutable(VenueFactory::TERM_TO), false),
             $this->plan($venue),
         );
+    }
+
+    public function test_the_card_names_the_last_paid_day_and_a_cancellation(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        SubscriptionFactory::createOne(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2026-01-01'), 'endsOn' => new \DateTimeImmutable('2026-12-31')]);
+        SubscriptionFactory::new()->cancelled()->create(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2027-01-01'), 'endsOn' => new \DateTimeImmutable('2027-12-31')]);
+
+        $plan = $this->plan($venue);
+
+        self::assertSame(['Pro', '2027-12-31', true, false], [$plan->tierName, $plan->paidUntil?->format('Y-m-d'), $plan->cancelled, $plan->freeOfCharge]);
+    }
+
+    public function test_a_term_free_of_charge_says_so(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        SubscriptionFactory::new()->freeOfCharge()->create(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2026-01-01'), 'endsOn' => new \DateTimeImmutable('2026-12-31')]);
+
+        $plan = $this->plan($venue);
+
+        self::assertSame(['Pro', '2026-12-31', true], [$plan->tierName, $plan->paidUntil?->format('Y-m-d'), $plan->freeOfCharge]);
+    }
+
+    public function test_a_lapsed_term_names_no_day(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        SubscriptionFactory::createOne(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2025-01-01'), 'endsOn' => new \DateTimeImmutable('2025-12-31')]);
+
+        self::assertSame(['Free', null], [$this->plan($venue)->tierName, $this->plan($venue)->paidUntil]);
     }
 
     public function test_only_the_locations_own_rows_are_counted(): void

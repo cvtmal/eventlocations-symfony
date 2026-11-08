@@ -7,9 +7,11 @@ namespace App\Tests\Application\Venues;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Venues\DispatchesVenueCommands;
 use App\Tests\Support\Venues\DetailVenues;
-use App\Venues\Command\ChangeVenueTier;
+use App\Venues\Command\RecordSubscriptionPayment;
+use App\Venues\Command\RefreshVenueSubscription;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\KnownTiers;
+use App\Venues\ValueObject\TermDay;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -252,7 +254,8 @@ final class TierEntitlementsRenderingTest extends WebTestCase
         $purger = $this->purger();
         self::assertSame([[], 0], [$purger->venues, $purger->listings], 'rendering purges nothing');
 
-        $this->dispatch(new ChangeVenueTier($venue->number(), KnownTiers::PRO));
+        $today = new \DateTimeImmutable('today');
+        $this->dispatch(new RecordSubscriptionPayment($venue->number(), KnownTiers::PRO, $today, TermDay::oneYearFrom($today)));
 
         self::assertSame([$venue->number()], $purger->venues);
         self::assertSame(1, $purger->listings);
@@ -274,7 +277,9 @@ final class TierEntitlementsRenderingTest extends WebTestCase
         $this->client->request('GET', '/eventlokal/'.self::PRO_SLUG);
         self::assertCount(self::GALLERY + 1, $this->photoIds($this->html(), $venue));
 
-        $this->dispatch(new ChangeVenueTier($venue->number(), KnownTiers::FREE));
+        // The term lapsed yesterday; the nightly refresh drops the venue to Free.
+        $this->connection->executeStatement("UPDATE subscriptions SET starts_on = DATE '2000-01-01', ends_on = CURRENT_DATE - 2 WHERE venue_id = ?", [$venue->id()]);
+        $this->dispatch(new RefreshVenueSubscription($venue->number()));
 
         $crawler = $this->client->request('GET', '/eventlokal/'.self::PRO_SLUG);
         self::assertCount(self::FREE_PHOTOS, $this->photoIds($this->html(), $venue));

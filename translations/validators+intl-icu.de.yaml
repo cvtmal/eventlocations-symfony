@@ -23,8 +23,6 @@ cms:
         slug:
             required: Bitte einen Slug eingeben.
             format: Nur Kleinbuchstaben, Ziffern und einzelne Bindestriche, zum Beispiel «schloss-seeblick».
-        tier:
-            required: Bitte ein Tier wählen.
         capacity:
             range: Bitte eine Zahl zwischen {min} und {max} eingeben.
             max_required: Bitte die maximale Anzahl Gäste eingeben.
