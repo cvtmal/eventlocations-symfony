@@ -72,7 +72,9 @@ final class CancelSubscriptionTest extends WebTestCase
             'startsOn' => new \DateTimeImmutable('-400 days'),
             'endsOn' => new \DateTimeImmutable('-2 days'),
         ]);
-        $forged = substr($this->token($this->term()), 0, 43).'A';
+        $token = $this->token($this->term());
+        // Change one character in the middle (the last one may carry only padding bits, or already be the new one).
+        $forged = substr($token, 0, 20).('A' === $token[20] ? 'B' : 'A').substr($token, 21);
 
         foreach ([$this->url($ended), '/konto/abo-kuendigen/'.$forged, '/konto/abo-kuendigen/'.$this->tokens()->forId('019a0000-0000-7000-8000-000000000000')] as $url) {
             $this->client->request('GET', $url);

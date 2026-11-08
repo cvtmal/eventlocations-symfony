@@ -64,4 +64,15 @@ class SubscriptionRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Whether the venue has a term starting after this one (a renewal).
+     */
+    public function laterThan(Subscription $subscription): bool
+    {
+        return (bool) $this->getEntityManager()->getConnection()->fetchOne(
+            'SELECT EXISTS (SELECT 1 FROM subscriptions WHERE venue_id = ? AND starts_on > ?)',
+            [$subscription->venue()->id(), $subscription->startsOn()->format('Y-m-d')],
+        );
+    }
 }

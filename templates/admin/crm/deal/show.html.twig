@@ -32,7 +32,7 @@
     {% endif %}
     {% if payment.paidUntil %}
         {% set paid_until = payment.paidUntil|swiss_date ~ (payment.cancelRequestedAt ? ' · ' ~ 'deal.payment.cancelled'|trans({on: payment.cancelRequestedAt|swiss_date}, 'crm') : '') %}
-        {{ include('admin/components/_property.html.twig', {label: 'deal.payment.paid_until'|trans({}, 'crm'), value: paid_until}, with_context = false) }}
+        {{ include('admin/components/_property.html.twig', {label: (payment.freeOfCharge ? 'deal.payment.free_until' : 'deal.payment.paid_until')|trans({}, 'crm'), value: paid_until}, with_context = false) }}
     {% endif %}
     {{ include('admin/components/_property.html.twig', {label: 'record.created'|trans({}, 'crm'), value: deal.createdAt|swiss_date}, with_context = false) }}
 {% endblock %}
@@ -40,6 +40,9 @@
 {% block record_actions %}
     {%- if payment.offer -%}
         <li><button class="dropdown__item" type="button" commandfor="deal-payment" command="show-modal">{{ 'deal.payment.action'|trans({}, 'crm') }}</button></li>
+    {%- endif -%}
+    {%- if payment.void -%}
+        <li><button class="dropdown__item dropdown__item--danger" type="button" commandfor="deal-void" command="show-modal">{{ 'deal.void.action'|trans({}, 'crm') }}</button></li>
     {%- endif -%}
     {%- if deal.renewable -%}
         <li><button class="dropdown__item" type="button" commandfor="deal-renew" command="show-modal">{{ 'deal.renew.action'|trans({}, 'crm') }}</button></li>
@@ -65,6 +68,16 @@
                     <input type="hidden" name="return_to" value="{{ path('admin_crm_deals_show', {id: deal.id}) }}">
                     <p>{{ 'deal.payment.text'|trans({venue: offer.venueName, tier: offer.tier.name, start: offer.startsOn, end: offer.endsOn}, 'crm') }}</p>
                     <div class="field">
+                        <div class="field__label-row"><label for="deal-payment-amount">{{ 'deal.payment.amount'|trans({}, 'crm') }}</label></div>
+                        <input id="deal-payment-amount" type="text" name="amount" inputmode="decimal" maxlength="8" value="{{ (offer.amountRappen / 100)|number_format(offer.amountRappen % 100 == 0 ? 0 : 2, '.', '') }}" aria-describedby="deal-payment-amount-help">
+                        <p class="field__help" id="deal-payment-amount-help">{{ 'deal.payment.amount_help'|trans({}, 'crm') }}</p>
+                    </div>
+                    <div class="field">
+                        <div class="field__label-row"><label for="deal-payment-note">{{ 'deal.payment.note'|trans({}, 'crm') }}</label></div>
+                        <input id="deal-payment-note" type="text" name="note" maxlength="200" aria-describedby="deal-payment-note-help">
+                        <p class="field__help" id="deal-payment-note-help">{{ 'deal.payment.note_help'|trans({}, 'crm') }}</p>
+                    </div>
+                    <div class="field">
                         <div class="field__label-row"><label for="deal-payment-invoice-ref">{{ 'deal.payment.invoice_ref'|trans({}, 'crm') }}</label></div>
                         <input id="deal-payment-invoice-ref" type="text" name="invoice_ref" maxlength="60" aria-describedby="deal-payment-invoice-ref-help">
                         <p class="field__help" id="deal-payment-invoice-ref-help">{{ 'deal.payment.invoice_ref_help'|trans({}, 'crm') }}</p>
@@ -74,6 +87,28 @@
             {% block footer %}
                 <form method="dialog"><button class="btn">{{ 'deal.payment.cancel'|trans({}, 'crm') }}</button></form>
                 {{ include('admin/components/_button.html.twig', {label: 'deal.payment.confirm'|trans({}, 'crm'), variant: 'primary', type: 'submit', attributes: {form: 'deal-payment-form'}}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+    {% if payment.void %}
+        {% embed 'admin/components/_modal.html.twig' with {
+            id: 'deal-void',
+            title: 'deal.void.title'|trans({}, 'crm'),
+            close_label: 'deal.void.close'|trans({}, 'crm'),
+            danger: true,
+            deal: deal,
+            void: payment.void,
+        } only %}
+            {% block body %}
+                <form id="deal-void-form" method="post" action="{{ path('admin_crm_deals_void_payment', {id: deal.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                    <input type="hidden" name="subscription" value="{{ void.subscriptionId }}">
+                    <p>{{ (void.freeOfCharge ? 'deal.void.text_free' : 'deal.void.text')|trans({venue: void.venueName, tier: void.tier.name, start: void.startsOn, end: void.endsOn}, 'crm') }}</p>
+                </form>
+            {% endblock %}
+            {% block footer %}
+                <form method="dialog"><button class="btn" autofocus>{{ 'deal.void.cancel'|trans({}, 'crm') }}</button></form>
+                {{ include('admin/components/_button.html.twig', {label: 'deal.void.confirm'|trans({}, 'crm'), variant: 'danger', type: 'submit', attributes: {form: 'deal-void-form'}}, with_context = false) }}
             {% endblock %}
         {% endembed %}
     {% endif %}

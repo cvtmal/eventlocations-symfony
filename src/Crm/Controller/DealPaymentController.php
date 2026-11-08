@@ -25,7 +25,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * «Zahlung erfassen» (G9, D20), one plain form with PRG: the record's menu posts it, and so does the board's won
  * prompt. `expected` is the venue's paid-until day the prompt showed ('' when it never paid), `invoice_ref` the
- * optional invoice number (the board sends none), `return_to` goes through `ReturnPath` (P11). A refused command
+ * optional invoice number (the board sends none), `return_to` goes through `ReturnPath` (P11). `amount` is the amount
+ * paid in francs (`199`, `199.50` or `199,50`; empty or absent = the deal's amount, else the tier's price, which is
+ * what the board sends) and `note` the note a term free of charge (amount 0, a pilot) needs. A refused command
  * rolled back, so it leaves no audit row.
  */
 #[IsGranted('ROLE_EDITOR')]
@@ -36,6 +38,9 @@ final class DealPaymentController extends AbstractController
 
     private const string DAY_SHAPE = '/\A(\d{4}-\d{2}-\d{2})?\z/';
 
+    /** Francs with at most two decimals, up to CHF 99'999.99: a hand-written invoice, not a bank transfer. */
+    private const string AMOUNT_SHAPE = '/\A(\d{1,5})(?:[.,](\d{1,2}))?\z/';
+
     #[Route('/admin/crm/deals/{id}/zahlung', name: 'admin_crm_deals_mark_paid', requirements: ['id' => Requirement::UUID], methods: ['POST'], options: [LocalizedRoutes::UNLOCALIZED => true])]
     public function __invoke(string $id, Request $request, MessageBusInterface $commandBus): Response
     {
@@ -44,15 +49,17 @@ final class DealPaymentController extends AbstractController
         $token = $input['_token'] ?? null;
         $expected = \is_string($input['expected'] ?? null) && 1 === preg_match(self::DAY_SHAPE, $input['expected']) ? $input['expected'] : null;
         $invoiceRef = \is_string($input['invoice_ref'] ?? null) ? trim($input['invoice_ref']) : '';
-        $invoiceRefValid = mb_check_encoding($invoiceRef, 'UTF-8') && !str_contains($invoiceRef, "\0") && mb_strlen($invoiceRef) <= Subscription::INVOICE_REF_MAX;
-        if (!\is_string($token) || !$this->isCsrfTokenValid(self::TOKEN, $token) || null === $expected || !$invoiceRefValid) {
+        $note = \is_string($input['note'] ?? null) ? trim($input['note']) : '';
+        $amount = self::rappen($input['amount'] ?? null);
+        if (!\is_string($token) || !$this->isCsrfTokenValid(self::TOKEN, $token) || null === $expected || false === $amount
+            || !self::text($invoiceRef, Subscription::INVOICE_REF_MAX) || !self::text($note, Subscription::NOTE_MAX)) {
             $this->addFlash('error', CrmFlash::message('flash.action_failed'));
 
             return $this->redirect($back, Response::HTTP_SEE_OTHER);
         }
 
         try {
-            $commandBus->dispatch(new MarkDealPaid($id, $expected, '' === $invoiceRef ? null : $invoiceRef));
+            $commandBus->dispatch(new MarkDealPaid($id, $expected, '' === $invoiceRef ? null : $invoiceRef, $amount, '' === $note ? null : $note));
             $this->addFlash('success', CrmFlash::message('deal.payment.flash.recorded'));
         } catch (HandlerFailedException $failure) {
             $this->addFlash('error', CrmFlash::message(match (true) {
@@ -71,6 +78,31 @@ final class DealPaymentController extends AbstractController
     {
         $refused = array_values($failure->getWrappedExceptions(SubscriptionRefused::class, true))[0] ?? null;
 
-        return $refused instanceof SubscriptionRefused && SubscriptionRefused::PAST === $refused->reason ? 'deal.payment.flash.past' : 'deal.payment.flash.overlap';
+        return match ($refused instanceof SubscriptionRefused ? $refused->reason : null) {
+            SubscriptionRefused::PAST => 'deal.payment.flash.past',
+            SubscriptionRefused::NOTE => 'deal.payment.flash.note',
+            SubscriptionRefused::AMOUNT => 'deal.payment.flash.amount',
+            default => 'deal.payment.flash.overlap',
+        };
+    }
+
+    /**
+     * @return int|false|null the amount in Rappen, null when none was given, false when it is malformed
+     */
+    private static function rappen(mixed $value): int|false|null
+    {
+        if (null === $value || (\is_string($value) && '' === trim($value))) {
+            return null;
+        }
+        if (!\is_string($value) || 1 !== preg_match(self::AMOUNT_SHAPE, trim($value), $match)) {
+            return false;
+        }
+
+        return (int) $match[1] * 100 + (int) str_pad($match[2] ?? '0', 2, '0');
+    }
+
+    private static function text(string $value, int $max): bool
+    {
+        return mb_check_encoding($value, 'UTF-8') && !str_contains($value, "\0") && mb_strlen($value) <= $max;
     }
 }

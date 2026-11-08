@@ -37,7 +37,8 @@ final class LocationPlanQuery
                        (SELECT price_rappen FROM tiers WHERE code = :pro) AS pro_price_rappen,
                        (SELECT vat_line FROM tiers WHERE code = :pro) AS pro_vat_line,
                        (SELECT max(ends_on) FROM subscriptions WHERE venue_id = :id AND ends_on >= :today) AS paid_until,
-                       (SELECT cancel_requested_at IS NOT NULL FROM subscriptions WHERE venue_id = :id ORDER BY ends_on DESC LIMIT 1) AS cancelled
+                       (SELECT cancel_requested_at IS NOT NULL FROM subscriptions WHERE venue_id = :id ORDER BY ends_on DESC LIMIT 1) AS cancelled,
+                       (SELECT amount_rappen = 0 FROM subscriptions WHERE venue_id = :id ORDER BY ends_on DESC LIMIT 1) AS free_of_charge
                 SQL,
             ['id' => $venueId, 'pro' => KnownTiers::PRO, 'today' => TermDay::sql($now)],
         );
@@ -60,6 +61,7 @@ final class LocationPlanQuery
             true === $row['pro_vat_line'],
             \is_string($row['paid_until']) ? new \DateTimeImmutable($row['paid_until']) : null,
             true === $row['cancelled'],
+            true === $row['free_of_charge'],
         );
     }
 }

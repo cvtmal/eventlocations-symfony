@@ -15,6 +15,7 @@ use App\Venues\Entity\Venue;
 use App\Venues\Exception\SubscriptionNotFound;
 use App\Venues\Exception\SubscriptionRefused;
 use App\Venues\ValueObject\KnownTiers;
+use Doctrine\DBAL\Exception\DriverException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
@@ -95,6 +96,52 @@ final class SubscriptionTermsTest extends KernelTestCase
         // The day after the end is free to start the next term.
         $this->dispatch(new RecordSubscriptionPayment($venue->number(), KnownTiers::PRO, new \DateTimeImmutable('2027-01-01'), new \DateTimeImmutable('2027-12-31')));
         self::assertSame(2, (int) $this->connection->fetchOne('SELECT count(*) FROM subscriptions WHERE venue_id = ?', [$venue->id()]));
+    }
+
+    public function test_a_term_free_of_charge_lifts_the_tier_but_records_no_pro_paid(): void
+    {
+        $venue = VenueFactory::new()->withoutLocation()->create(['tier' => KnownTiers::FREE]);
+
+        self::assertSame(SubscriptionRefused::NOTE, $this->refusal(new RecordSubscriptionPayment($venue->number(), KnownTiers::PRO, new \DateTimeImmutable('2026-11-08'), new \DateTimeImmutable('2027-11-07'), amountRappen: 0, note: ' ')));
+        $id = $this->dispatch(new RecordSubscriptionPayment($venue->number(), KnownTiers::PRO, new \DateTimeImmutable('2026-11-08'), new \DateTimeImmutable('2027-11-07'), amountRappen: 0, note: ' Pilot '));
+
+        self::assertSame(KnownTiers::PRO, $this->tierOf($venue));
+        self::assertSame([0, 'Pilot'], array_values((array) $this->connection->fetchAssociative('SELECT amount_rappen, note FROM subscriptions WHERE id = ?', [$id])));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT count(*) FROM funnel_events WHERE event = 'pro_paid' AND venue_id = ?", [$venue->id()]), 'D18: no inflated paying venues');
+    }
+
+    public function test_the_database_refuses_a_free_term_without_a_note_and_a_negative_amount(): void
+    {
+        $venue = VenueFactory::new()->withoutLocation()->create(['tier' => KnownTiers::FREE]);
+        $insert = "INSERT INTO subscriptions (id, venue_id, tier_id, starts_on, ends_on, amount_rappen, note, paid_at)
+            VALUES (uuidv7(), ?, (SELECT id FROM tiers WHERE code = 'pro'), '2026-11-08', '2027-11-07', ?, ?, now())";
+
+        foreach ([
+            'chk_subscriptions_free_note' => [0, null],
+            'chk_subscriptions_amount_rappen' => [-1, 'Pilot'],
+            'chk_subscriptions_note' => [0, ' '],
+        ] as $constraint => [$amount, $note]) {
+            $this->connection->createSavepoint('refused');
+            try {
+                $this->connection->executeStatement($insert, [$venue->id(), $amount, $note]);
+                self::fail($constraint.' should have refused the row.');
+            } catch (DriverException $refused) {
+                self::assertStringContainsString($constraint, $refused->getMessage());
+            } finally {
+                $this->connection->rollbackSavepoint('refused');
+            }
+        }
+        $this->connection->executeStatement($insert, [$venue->id(), 0, 'Pilot']);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM subscriptions WHERE venue_id = ?', [$venue->id()]));
+    }
+
+    public function test_a_payment_without_an_amount_costs_the_tier_s_price(): void
+    {
+        $venue = VenueFactory::new()->withoutLocation()->create(['tier' => KnownTiers::FREE]);
+
+        $id = $this->dispatch(new RecordSubscriptionPayment($venue->number(), KnownTiers::PRO, new \DateTimeImmutable('2026-11-08'), new \DateTimeImmutable('2027-11-07')));
+
+        self::assertSame(19900, (int) $this->connection->fetchOne('SELECT amount_rappen FROM subscriptions WHERE id = ?', [$id]));
     }
 
     public function test_a_cancellation_keeps_the_tier_to_the_end_and_counts_once(): void

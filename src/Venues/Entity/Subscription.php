@@ -16,6 +16,9 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * `cancelRequestedAt` is the manager's "do not invoice the next term" (the link of the reminder mail): the term
  * still runs to its end. `status` turns `Expired` once the nightly job has handled the end.
+ *
+ * `amountRappen` is what was paid for the term. A term granted free of charge (0, a pilot) is a normal term with expiry
+ * and reminders, but it needs a `note` saying why and is no payment: no `pro_paid`, no «Zahlende Locations» (D18).
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'subscriptions')]
@@ -26,6 +29,9 @@ use Doctrine\ORM\Mapping as ORM;
 class Subscription
 {
     public const int INVOICE_REF_MAX = 60;
+    public const int NOTE_MAX = 200;
+    /** CHF 99'999.99: a year of a listing, invoiced by hand; anything above is a typo. */
+    public const int AMOUNT_MAX = 9_999_999;
 
     #[ORM\Id]
     #[ORM\Column(type: Types::GUID)]
@@ -51,8 +57,14 @@ class Subscription
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     private \DateTimeImmutable $paidAt;
 
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $amountRappen;
+
     #[ORM\Column(type: Types::STRING, length: self::INVOICE_REF_MAX, nullable: true)]
     private ?string $invoiceRef;
+
+    #[ORM\Column(type: Types::STRING, length: self::NOTE_MAX, nullable: true)]
+    private ?string $note;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $cancelRequestedAt = null;
@@ -63,17 +75,28 @@ class Subscription
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $updatedAt;
 
-    public function __construct(Venue $venue, Tier $tier, \DateTimeImmutable $startsOn, \DateTimeImmutable $endsOn, ?string $invoiceRef, \DateTimeImmutable $paidAt)
+    public function __construct(Venue $venue, Tier $tier, \DateTimeImmutable $startsOn, \DateTimeImmutable $endsOn, int $amountRappen, ?string $invoiceRef, ?string $note, \DateTimeImmutable $paidAt)
     {
         if ($endsOn < $startsOn) {
             throw new \InvalidArgumentException('A term cannot end before it starts.');
+        }
+        if ($amountRappen < 0 || $amountRappen > self::AMOUNT_MAX) {
+            throw new \InvalidArgumentException('A term costs between nothing and AMOUNT_MAX.');
+        }
+        if (null !== $note && mb_strlen($note) > self::NOTE_MAX) {
+            throw new \InvalidArgumentException('A note holds at most NOTE_MAX characters.');
+        }
+        if (0 === $amountRappen && (null === $note || '' === trim($note))) {
+            throw new \InvalidArgumentException('A term free of charge needs a note.');
         }
         $this->id = EntityId::generate();
         $this->venue = $venue;
         $this->tier = $tier;
         $this->startsOn = $startsOn->setTime(0, 0);
         $this->endsOn = $endsOn->setTime(0, 0);
+        $this->amountRappen = $amountRappen;
         $this->invoiceRef = $invoiceRef;
+        $this->note = $note;
         $this->paidAt = $paidAt;
         $this->createdAt = $paidAt;
         $this->updatedAt = $paidAt;
@@ -134,6 +157,24 @@ class Subscription
     public function paidAt(): \DateTimeImmutable
     {
         return $this->paidAt;
+    }
+
+    public function amountRappen(): int
+    {
+        return $this->amountRappen;
+    }
+
+    /**
+     * A pilot or other term granted without payment: it counts nowhere as a paying venue (D18).
+     */
+    public function isFreeOfCharge(): bool
+    {
+        return 0 === $this->amountRappen;
+    }
+
+    public function note(): ?string
+    {
+        return $this->note;
     }
 
     public function invoiceRef(): ?string

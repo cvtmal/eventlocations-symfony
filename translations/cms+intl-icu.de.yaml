@@ -278,6 +278,7 @@ history:
         ChangeVenueTier: den Tarif geändert
         RecordSubscriptionPayment: eine Zahlung erfasst
         CancelSubscription: die Verlängerung gekündigt
+        VoidSubscription: eine Zahlung storniert
         ReviseTier: einen Tarif geändert
         PublishVenue: den Eintrag publiziert
         UnpublishVenue: den Eintrag offline genommen

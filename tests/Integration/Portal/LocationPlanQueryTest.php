@@ -62,7 +62,17 @@ final class LocationPlanQueryTest extends KernelTestCase
 
         $plan = $this->plan($venue);
 
-        self::assertSame(['Pro', '2027-12-31', true], [$plan->tierName, $plan->paidUntil?->format('Y-m-d'), $plan->cancelled]);
+        self::assertSame(['Pro', '2027-12-31', true, false], [$plan->tierName, $plan->paidUntil?->format('Y-m-d'), $plan->cancelled, $plan->freeOfCharge]);
+    }
+
+    public function test_a_term_free_of_charge_says_so(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        SubscriptionFactory::new()->freeOfCharge()->create(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2026-01-01'), 'endsOn' => new \DateTimeImmutable('2026-12-31')]);
+
+        $plan = $this->plan($venue);
+
+        self::assertSame(['Pro', '2026-12-31', true], [$plan->tierName, $plan->paidUntil?->format('Y-m-d'), $plan->freeOfCharge]);
     }
 
     public function test_a_lapsed_term_names_no_day(): void

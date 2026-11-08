@@ -9,7 +9,7 @@ use App\Venues\ValueObject\TierLabel;
 /**
  * A won deal whose paid tier the venue has not been paid through yet: what «Zahlung erfassen» would record (G9).
  * `expected` (the venue's paid-until day, '' when it never paid) goes into the form, so a payment recorded while the
- * form was open is a conflict.
+ * form was open is a conflict. `amountRappen` prefills the amount: the deal's, else the tier's price.
  */
 final readonly class PaymentOffer
 {
@@ -20,6 +20,7 @@ final readonly class PaymentOffer
         public \DateTimeImmutable $startsOn,
         public \DateTimeImmutable $endsOn,
         public string $expected,
+        public int $amountRappen = 0,
     ) {
     }
 }

@@ -414,6 +414,7 @@ plan:
         event_types_all: 'Anlassarten: alle'
     term:
         paid_until: 'Bezahlt bis {end, date, ::dMMMMy}'
+        free_until: 'Kostenlos bis {end, date, ::dMMMMy}'
         cancelled: 'Gekündigt: dein Tarif läuft bis {end, date, ::dMMMMy}, danach gilt Free'
     pro:
         price: 'Pro kostet CHF {price} pro Jahr, wir stellen die Rechnung von Hand.'
@@ -439,6 +440,8 @@ subscription:
         intro: 'Dein Tarif {tier} für «{venue}» läuft bis am {end, date, ::dMMMMy}.'
         renewal: 'Wenn du nichts tust, schicken wir dir die Rechnung für ein weiteres Jahr {tier}: CHF {price} pro Jahr. Sobald sie bezahlt ist, läuft dein Tarif ohne Unterbruch weiter.'
         renewal_plus_vat: 'Wenn du nichts tust, schicken wir dir die Rechnung für ein weiteres Jahr {tier}: CHF {price} pro Jahr zzgl. MwSt. Sobald sie bezahlt ist, läuft dein Tarif ohne Unterbruch weiter.'
+        intro_free: 'Dein kostenloser Tarif {tier} für «{venue}» läuft bis am {end, date, ::dMMMMy}.'
+        renewal_free: 'Möchtest du {tier} danach behalten? Antworte einfach auf diese Mail, dann schicken wir dir die Rechnung für ein Jahr. Sonst musst du nichts tun.'
         free_intro: 'Ohne Verlängerung bleibt dein Eintrag online, im Tarif Free. Das ändert sich:'
         fact:
             photos: Fotos

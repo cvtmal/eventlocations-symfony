@@ -195,8 +195,8 @@ final class DemoStory extends Story
 
     /**
      * G9: the factory gives every Pro venue a term to 2099; the first three Pro venues by index get real ones instead,
-     * so `app:subscriptions:remind` has a 30-day reminder (the dev manager's Pro location, see PortalStory), a 7-day one
-     * and a cancelled term to skip, and the CRM and `/konto` show a paid-until day that means something.
+     * so `app:subscriptions:remind` has a 30-day reminder (the dev manager's Pro location, see PortalStory), a 7-day
+     * one of a pilot term free of charge (its mail names no price) and a cancelled term to skip, and the CRM and `/konto` show a paid-until day that means something.
      *
      * @param list<Venue> $venues in index order
      */
@@ -212,7 +212,11 @@ final class DemoStory extends Story
                 delete($term);
             }
             $end = $today->modify(\sprintf('+%d days', $daysLeft));
-            $factory = 2 === $k ? SubscriptionFactory::new()->cancelled() : SubscriptionFactory::new();
+            $factory = match ($k) {
+                1 => SubscriptionFactory::new()->freeOfCharge('Pilot'),
+                2 => SubscriptionFactory::new()->cancelled(),
+                default => SubscriptionFactory::new(),
+            };
             $factory->create(['venue' => $pro[$k], 'startsOn' => $end->modify('-1 year')->modify('+1 day'), 'endsOn' => $end, 'invoiceRef' => \sprintf('RE-DEMO-%d', $k + 1)]);
         }
     }

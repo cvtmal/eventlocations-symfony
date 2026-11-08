@@ -25,6 +25,14 @@ final class SubscriptionFactory extends PersistentObjectFactory
         return Subscription::class;
     }
 
+    /**
+     * A term granted free of charge (a pilot): amount 0 with its note.
+     */
+    public function freeOfCharge(string $note = 'Pilot'): self
+    {
+        return $this->with(['amountRappen' => 0, 'note' => $note]);
+    }
+
     public function cancelled(): self
     {
         return $this->afterInstantiate(static function (Subscription $subscription): void {
@@ -40,6 +48,7 @@ final class SubscriptionFactory extends PersistentObjectFactory
                 $tier = repository(Tier::class)->findOneBy(['code' => $tier]) ?? throw new \LogicException(\sprintf('No tier "%s".', $tier));
             }
             $attributes['tier'] = $tier;
+            $attributes['amountRappen'] ??= $tier->priceRappen();
 
             return $attributes;
         });
@@ -57,6 +66,7 @@ final class SubscriptionFactory extends PersistentObjectFactory
             'startsOn' => $today,
             'endsOn' => $today->modify('+1 year')->modify('-1 day'),
             'invoiceRef' => null,
+            'note' => null,
             'paidAt' => new \DateTimeImmutable('@'.time()),
         ];
     }

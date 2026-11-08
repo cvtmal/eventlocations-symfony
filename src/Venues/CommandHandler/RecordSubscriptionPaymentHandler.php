@@ -24,7 +24,7 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * Under the venue's lock, so two clicks cannot store two overlapping terms (at most two staff users; the unique
  * `(venue_id, starts_on)` is the backstop for the same start). The tier follows at once when the term covers today
  * (`SubscriptionTiers`, which purges); a term paid in advance moves the tier on its first day, in the nightly job.
- * `pro_paid` is recorded after the commit (G8).
+ * `pro_paid` is recorded after the commit (G8), and only for a term that was paid: a term free of charge is no payment (D18).
  */
 final class RecordSubscriptionPaymentHandler implements CommandHandlerInterface
 {
@@ -59,14 +59,29 @@ final class RecordSubscriptionPaymentHandler implements CommandHandlerInterface
         if ($this->subscriptions->overlaps($venue, $command->startsOn, $command->endsOn)) {
             throw SubscriptionRefused::overlaps($venue->number(), $command->startsOn, $command->endsOn);
         }
-        $invoiceRef = null === $command->invoiceRef || '' === trim($command->invoiceRef) ? null : trim($command->invoiceRef);
-        $subscription = new Subscription($venue, $tier, $command->startsOn, $command->endsOn, $invoiceRef, $now);
+        $invoiceRef = self::trimmed($command->invoiceRef);
+        $note = self::trimmed($command->note);
+        $amount = $command->amountRappen ?? $tier->priceRappen();
+        if ($amount < 0 || $amount > Subscription::AMOUNT_MAX) {
+            throw SubscriptionRefused::amountOutOfRange($venue->number(), $amount);
+        }
+        if (0 === $amount && null === $note) {
+            throw SubscriptionRefused::freeWithoutNote($venue->number());
+        }
+        $subscription = new Subscription($venue, $tier, $command->startsOn, $command->endsOn, $amount, $invoiceRef, $note, $now);
         $this->em->persist($subscription);
         $this->em->flush();
 
         $this->subscriptionTiers->sync($venue, $now);
-        $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::ProPaid, $venue->id()), [new DispatchAfterCurrentBusStamp()]);
+        if (!$subscription->isFreeOfCharge()) {
+            $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::ProPaid, $venue->id()), [new DispatchAfterCurrentBusStamp()]);
+        }
 
         return $subscription->id();
+    }
+
+    private static function trimmed(?string $value): ?string
+    {
+        return null === $value || '' === trim($value) ? null : trim($value);
     }
 }

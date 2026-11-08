@@ -52,7 +52,7 @@ final class MarkDealPaidHandler implements CommandHandlerInterface
         }
         $term = PaidTerm::forDeal($deal->contractStartOn(), $deal->contractEndOn(), $paidUntil, TermDay::of($this->clock->now()));
 
-        $this->commandBus->dispatch(new RecordSubscriptionPayment($venue->number(), $tier->code(), $term->startsOn, $term->endsOn, $command->invoiceRef));
+        $this->commandBus->dispatch(new RecordSubscriptionPayment($venue->number(), $tier->code(), $term->startsOn, $term->endsOn, $command->invoiceRef, $command->amountRappen ?? $deal->amountRappen() ?? $tier->priceRappen(), $command->note));
 
         if (null === $deal->contractStartOn()) {
             $deal->changeContractStart($term->startsOn);

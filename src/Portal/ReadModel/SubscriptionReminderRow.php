@@ -6,7 +6,8 @@ namespace App\Portal\ReadModel;
 
 /**
  * One reminder mail's facts (G9). `recipients` are the location's active managers, or its inquiry address when it has
- * none (then `name` is null and the mail greets without a name).
+ * none (then `name` is null and the mail greets without a name). `freeOfCharge` is a term granted without payment (a
+ * pilot): its mail names no price and offers the paid renewal instead of announcing an invoice.
  */
 final readonly class SubscriptionReminderRow
 {
@@ -22,6 +23,7 @@ final readonly class SubscriptionReminderRow
         public bool $vatLine,
         public \DateTimeImmutable $endsOn,
         public array $recipients,
+        public bool $freeOfCharge = false,
     ) {
     }
 }

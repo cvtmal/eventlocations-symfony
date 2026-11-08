@@ -14,11 +14,13 @@ use Doctrine\Migrations\AbstractMigration;
  *   days). `EntitlementResolver` gives a venue the tier of the term that covers the day and Free without one;
  *   `venues.tier_id` stays the tier the listings join, kept in step by every term write and the nightly
  *   `app:subscriptions:expire`. `status` is `active` until that job has seen the term end (`expired`).
- *   `cancel_requested_at` means "do not invoice the next term"; the term itself runs to its end.
+ *   `cancel_requested_at` means "do not invoice the next term"; the term itself runs to its end. `amount_rappen` is what
+ *   was paid; 0 is a term granted free of charge (a pilot), which needs a `note` and is no payment in the funnel (D18).
  * - `portal_subscription_reminders` (Portal): one marker row per term and reminder (30 or 7 days before the end),
  *   written once the mail went out, so the second run of `app:subscriptions:remind` sends nothing.
  *
- * Every venue whose tier is not Free gets a one-year term from today (the Zurich day), so no paid entry drops to Free.
+ * Every venue whose tier is not Free gets a one-year term from today (the Zurich day) at its tier's price, so no paid
+ * entry drops to Free.
  */
 final class Version20261108090603 extends AbstractMigration
 {
@@ -40,7 +42,9 @@ final class Version20261108090603 extends AbstractMigration
                 ends_on DATE NOT NULL,
                 status VARCHAR(20) DEFAULT 'active' NOT NULL,
                 paid_at TIMESTAMP(0) WITH TIME ZONE NOT NULL,
+                amount_rappen INTEGER NOT NULL,
                 invoice_ref VARCHAR(60) DEFAULT NULL,
+                note VARCHAR(200) DEFAULT NULL,
                 cancel_requested_at TIMESTAMP(0) WITH TIME ZONE DEFAULT NULL,
                 created_at TIMESTAMP(0) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
                 updated_at TIMESTAMP(0) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -50,7 +54,10 @@ final class Version20261108090603 extends AbstractMigration
                 CONSTRAINT uk_subscriptions_venue_id_starts_on UNIQUE (venue_id, starts_on),
                 CONSTRAINT chk_subscriptions_status CHECK (status IN ('active', 'expired')),
                 CONSTRAINT chk_subscriptions_term CHECK (ends_on >= starts_on),
-                CONSTRAINT chk_subscriptions_invoice_ref CHECK (invoice_ref IS NULL OR btrim(invoice_ref) <> '')
+                CONSTRAINT chk_subscriptions_invoice_ref CHECK (invoice_ref IS NULL OR btrim(invoice_ref) <> ''),
+                CONSTRAINT chk_subscriptions_amount_rappen CHECK (amount_rappen >= 0),
+                CONSTRAINT chk_subscriptions_note CHECK (note IS NULL OR btrim(note) <> ''),
+                CONSTRAINT chk_subscriptions_free_note CHECK (amount_rappen > 0 OR note IS NOT NULL)
             )
             SQL);
         $this->addSql('CREATE INDEX idx_subscriptions_venue_id ON subscriptions (venue_id)');
@@ -74,9 +81,11 @@ final class Version20261108090603 extends AbstractMigration
         $this->addSql('CREATE INDEX idx_portal_subscription_reminders_subscription_id ON portal_subscription_reminders (subscription_id)');
 
         $this->addSql(\sprintf(<<<'SQL'
-            INSERT INTO subscriptions (id, venue_id, tier_id, starts_on, ends_on, paid_at)
-            SELECT uuidv7(), v.id, v.tier_id, d.today, (d.today + INTERVAL '1 year' - INTERVAL '1 day')::date, CURRENT_TIMESTAMP
+            INSERT INTO subscriptions (id, venue_id, tier_id, starts_on, ends_on, amount_rappen, note, paid_at)
+            SELECT uuidv7(), v.id, v.tier_id, d.today, (d.today + INTERVAL '1 year' - INTERVAL '1 day')::date, t.price_rappen,
+                   CASE WHEN t.price_rappen = 0 THEN 'Übernahme beim Start der Laufzeiten' END, CURRENT_TIMESTAMP
             FROM venues v
+            JOIN tiers t ON t.id = v.tier_id
             CROSS JOIN (SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Zurich')::date AS today) d
             WHERE v.tier_id <> '%s'
             SQL, self::FREE_ID));

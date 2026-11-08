@@ -56,7 +56,7 @@ final class SubscriptionReminderQuery
         }
         $row = $this->connection->fetchAssociative(
             'SELECT s.id, s.venue_id, v.number, v.name AS venue_name, v.inquiry_email, t.code AS tier_code, t.name AS tier_name,
-                    t.price_rappen, t.vat_line, s.ends_on '.self::DUE.' AND s.id = :id AND k.days_before = :days',
+                    t.price_rappen, t.vat_line, s.ends_on, s.amount_rappen = 0 AS free_of_charge '.self::DUE.' AND s.id = :id AND k.days_before = :days',
             ['today' => TermDay::sql($now), 'active' => SubscriptionStatus::Active->value, 'id' => $subscriptionId, 'days' => $daysBefore],
         );
         if (false === $row) {
@@ -87,6 +87,7 @@ final class SubscriptionReminderQuery
             true === $row['vat_line'],
             new \DateTimeImmutable($row['ends_on']),
             $recipients,
+            true === $row['free_of_charge'],
         );
     }
 }

@@ -46,6 +46,7 @@ use App\Venues\Command\ReviseTier;
 use App\Venues\Command\RevokeVenuePreview;
 use App\Venues\Command\TakeEntryOffline;
 use App\Venues\Command\UnpublishVenue;
+use App\Venues\Command\VoidSubscription;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\ModerationDecision;
@@ -111,7 +112,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
         $commands = [
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
             ChangeVenueTerms::class, ChangeVenueEventFacts::class, ChangeVenueContact::class, ChangeVenueCapacity::class, AnswerVenueFaq::class,
-            ChangeVenueTier::class, RecordSubscriptionPayment::class, CancelSubscription::class, ReviseTier::class, PublishVenue::class, UnpublishVenue::class,
+            ChangeVenueTier::class, RecordSubscriptionPayment::class, CancelSubscription::class, VoidSubscription::class, ReviseTier::class, PublishVenue::class, UnpublishVenue::class,
             AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class, GrantPhotoRights::class,
             AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,
             AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,

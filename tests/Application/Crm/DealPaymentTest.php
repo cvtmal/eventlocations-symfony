@@ -130,6 +130,46 @@ final class DealPaymentTest extends WebTestCase
         self::assertSame(0, $this->auditRows('deal', $deal->id()));
     }
 
+    public function test_the_dialog_prefills_the_price_and_a_free_term_with_a_note_records_no_payment(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        ['deal' => $deal, 'venue' => $venue] = $this->won();
+
+        $crawler = $this->client->request('GET', '/admin/crm/deals/'.$deal->id());
+        self::assertSame('199', $crawler->filter('#deal-payment-amount')->attr('value'));
+        $this->client->submit($crawler->filter('#deal-payment-form')->form(), ['amount' => '0', 'note' => ' Pilot '], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+
+        self::assertSame(KnownTiers::PRO, $this->tierOf($venue));
+        self::assertSame([0, 'Pilot'], array_values((array) $this->connection->fetchAssociative('SELECT amount_rappen, note FROM subscriptions WHERE venue_id = ?', [$venue->id()])));
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT count(*) FROM funnel_events WHERE event = 'pro_paid' AND venue_id = ?", [$venue->id()]), 'D18: a free term is no payment');
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('Kostenlos bis', $crawler->filter('.crm-record')->text());
+    }
+
+    public function test_a_paid_amount_in_francs_is_kept_in_rappen(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        ['deal' => $deal, 'venue' => $venue] = $this->won();
+
+        $this->post($deal, ['amount' => '149,50']);
+
+        self::assertSame(14950, (int) $this->connection->fetchOne('SELECT amount_rappen FROM subscriptions WHERE venue_id = ?', [$venue->id()]));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT count(*) FROM funnel_events WHERE event = 'pro_paid' AND venue_id = ?", [$venue->id()]));
+    }
+
+    public function test_a_free_term_without_a_note_says_so_and_records_nothing(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        ['deal' => $deal, 'venue' => $venue] = $this->won();
+
+        $this->post($deal, ['amount' => '0', 'note' => '  ']);
+
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.toast', 'braucht eine Notiz');
+        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
+        self::assertSame(0, $this->auditRows('deal', $deal->id()));
+    }
+
     public function test_an_unknown_deal_is_a_404(): void
     {
         $this->logInAs(AdminRole::Editor);
@@ -148,6 +188,12 @@ final class DealPaymentTest extends WebTestCase
         yield 'a word' => [['expected' => 'free']];
         yield 'an invoice number over 60 characters' => [['invoice_ref' => str_repeat('R', 61)]];
         yield 'an invoice number with a NUL' => [['invoice_ref' => "RE\0-17"]];
+        yield 'a negative amount' => [['amount' => '-1']];
+        yield 'an amount with three decimals' => [['amount' => '199.005']];
+        yield 'an amount over CHF 99999.99' => [['amount' => '100000']];
+        yield 'an amount in words' => [['amount' => 'gratis']];
+        yield 'a note over 200 characters' => [['amount' => '0', 'note' => str_repeat('P', 201)]];
+        yield 'a note with a NUL' => [['amount' => '0', 'note' => "Pi\0lot"]];
     }
 
     /**

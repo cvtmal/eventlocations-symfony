@@ -33,6 +33,8 @@ final readonly class LocationPlan
         public ?\DateTimeImmutable $paidUntil = null,
         /** The manager asked not to renew: the tier runs to `paidUntil` and then falls back to Free. */
         public bool $cancelled = false,
+        /** The latest term was granted free of charge (a pilot): the card says «Kostenlos bis», not «Bezahlt bis». */
+        public bool $freeOfCharge = false,
     ) {
     }
 }
