@@ -34,9 +34,9 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * two claims at once one sees the other.
  *
  * Access comes at once only for an address on the website's domain (`ClaimDomain`) on a venue nobody else manages
- * or asked for; then every open preview link ends and the facts count as checked (D45). Anything else is a pending request in #43's queue; one that met
- * somebody else's row is `competing`, and while it waits nobody on the venue can edit (`PortalVenueAccessQuery`),
- * so staff decide between them.
+ * or asked for; then every open preview link ends and the facts count as checked (D45). Anything else is a pending
+ * request in #43's queue; one that met somebody else's row is `competing`, and while it waits nobody on the venue can
+ * edit (`PortalVenueAccessQuery`), so staff decide between them.
  */
 final class VerifyClaimHandler implements CommandHandlerInterface
 {

@@ -229,7 +229,7 @@ final class ClaimCommandsTest extends KernelTestCase
         $this->dispatch(new GrantVenueAccess($result->portalUserId, $venue->id(), GrantVenueAccess::VIA_REVIEW));
 
         self::assertSame('2026-11-07 10:00:00+00', $this->factsCheckedAt($venue));
-        self::assertCount(1, $this->factsAudit($venue));
+        self::assertEquals([['facts_checked' => true, 'via' => 'claim']], $this->factsAudit($venue));
         self::assertContains($venue->number(), $purger->venues);
         self::assertGreaterThan(0, $purger->listings);
     }
