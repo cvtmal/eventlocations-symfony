@@ -650,7 +650,7 @@ final class CompanyRecordTest extends WebTestCase
         DealFactory::createOne(['name' => 'Fremd']);
 
         $crawler = $this->client->request('GET', $url);
-        self::assertSame(['Übersicht', 'Deals'], $crawler->filter('.tabs--record .tab')->each(static fn (Crawler $tab): string => $tab->text()));
+        self::assertSame(['Übersicht', 'Deals', 'Akquise'], $crawler->filter('.tabs--record .tab')->each(static fn (Crawler $tab): string => $tab->text()));
         self::assertSame('Übersicht', $crawler->filter('.tabs--record .tab--active')->text());
 
         $crawler = $this->client->request('GET', $url.'/deals');

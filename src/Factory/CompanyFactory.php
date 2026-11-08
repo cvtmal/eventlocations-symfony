@@ -7,6 +7,7 @@ namespace App\Factory;
 use App\Crm\Entity\Company;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
+use App\Crm\ValueObject\Outreach;
 use App\Shared\Uid\EntityId;
 use App\Venues\Entity\Venue;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
@@ -51,6 +52,16 @@ final class CompanyFactory extends PersistentObjectFactory
     /**
      * @return array<string, mixed>
      */
+    /**
+     * G11: the Location's outreach fields.
+     */
+    public function withOutreach(Outreach $outreach): self
+    {
+        return $this->afterInstantiate(static function (Company $company) use ($outreach): void {
+            $company->changeOutreach($outreach);
+        });
+    }
+
     protected function defaults(): array
     {
         return [

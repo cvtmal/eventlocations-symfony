@@ -8,6 +8,10 @@ use App\Admin\Entity\AdminUser;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
+use App\Crm\ValueObject\ContactBasis;
+use App\Crm\ValueObject\ContactChannel;
+use App\Crm\ValueObject\Outreach;
+use App\Crm\ValueObject\OutreachCohort;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,6 +22,8 @@ use Doctrine\ORM\Mapping as ORM;
  * Its Eintrag is `venue` (0..1, `uk_crm_companies_venue_id`; deleting the venue sets it NULL, #56).
  * `stage` is set by hand until #28 derives it.
  * Values arrive canonical (trimmed, empty = null) from the handlers.
+ * The outreach fields (G11) change together through `changeOutreach()`; the campaign code follows the plain-code rule
+ * (`chk_crm_companies_campaign_code`).
  *
  * idx_crm_companies_search_key (GIN trigram on geo_search_key(name)) is an expression index
  * that exists in the database only, as on Venue.
@@ -25,6 +31,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 #[ORM\Table(name: 'crm_companies')]
 #[ORM\Index(name: 'idx_crm_companies_owner_id', columns: ['owner_id'])]
+#[ORM\Index(name: 'idx_crm_companies_campaign_code', columns: ['campaign_code'])]
+#[ORM\Index(name: 'idx_crm_companies_cohort', columns: ['cohort'])]
 #[ORM\UniqueConstraint(name: 'uk_crm_companies_venue_id', columns: ['venue_id'])]
 class Company
 {
@@ -67,6 +75,24 @@ class Company
 
     #[ORM\Column(type: Types::STRING, length: 10, enumType: CompanyOrigin::class)]
     private CompanyOrigin $origin;
+
+    #[ORM\Column(type: Types::STRING, length: 40, nullable: true)]
+    private ?string $campaignCode = null;
+
+    #[ORM\Column(type: Types::STRING, length: 1, nullable: true, enumType: OutreachCohort::class)]
+    private ?OutreachCohort $cohort = null;
+
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true, enumType: ContactChannel::class)]
+    private ?ContactChannel $contactChannel = null;
+
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true, enumType: ContactBasis::class)]
+    private ?ContactBasis $contactBasis = null;
+
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $outreachSentOn = null;
+
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $mailReturnedOn = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
@@ -204,6 +230,22 @@ class Company
     public function notes(): ?string
     {
         return $this->notes;
+    }
+
+    public function changeOutreach(Outreach $outreach): void
+    {
+        $this->campaignCode = $outreach->campaignCode;
+        $this->cohort = $outreach->cohort;
+        $this->contactChannel = $outreach->channel;
+        $this->contactBasis = $outreach->basis;
+        $this->outreachSentOn = $outreach->sentOn;
+        $this->mailReturnedOn = $outreach->returnedOn;
+        $this->touch();
+    }
+
+    public function outreach(): Outreach
+    {
+        return new Outreach($this->campaignCode, $this->cohort, $this->contactChannel, $this->contactBasis, $this->outreachSentOn, $this->mailReturnedOn);
     }
 
     public function origin(): CompanyOrigin

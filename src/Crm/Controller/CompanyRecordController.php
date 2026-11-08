@@ -12,6 +12,7 @@ use App\Crm\Command\UnlinkVenue;
 use App\Crm\Exception\CompanyHasDeals;
 use App\Crm\Exception\CompanyHasVenue;
 use App\Crm\Exception\CompanyNotFound;
+use App\Crm\Exception\CompanySuppressed;
 use App\Crm\Exception\VenueAlreadyLinked;
 use App\Crm\Exception\VenueNotFound;
 use App\Crm\Form\ContactData;
@@ -143,6 +144,11 @@ final class CompanyRecordController extends AbstractController
         } catch (HandlerFailedException $failure) {
             if ([] !== $failure->getWrappedExceptions(CompanyHasDeals::class)) {
                 $this->addFlash('error', CrmFlash::message('record.delete.has_deals'));
+
+                return $this->redirectToRoute('admin_crm_companies_show', ['id' => $id], status: Response::HTTP_SEE_OTHER);
+            }
+            if ([] !== $failure->getWrappedExceptions(CompanySuppressed::class)) {
+                $this->addFlash('error', CrmFlash::message('record.delete.suppressed'));
 
                 return $this->redirectToRoute('admin_crm_companies_show', ['id' => $id], status: Response::HTTP_SEE_OTHER);
             }

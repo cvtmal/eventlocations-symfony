@@ -109,7 +109,6 @@ cms:
             required: Bitte einen Titel eingeben.
     preview_link:
         campaign:
-            required: Bitte einen Kampagnencode eingeben.
             invalid: 'Nur Buchstaben, Ziffern, «-» und «_», höchstens 40 Zeichen, am Anfang ein Buchstabe oder eine Ziffer.'
         lifetime:
             invalid: Bitte eine Gültigkeit wählen.
@@ -153,6 +152,10 @@ crm:
         assignee: Bitte jemanden aus der Liste wählen.
     email:
         subject_line: Der Betreff darf nur eine Zeile haben.
+    outreach:
+        campaign_code: 'Nur Buchstaben, Ziffern, «-» und «_», höchstens 40 Zeichen, am Anfang ein Buchstabe oder eine Ziffer.'
+        returned_before_sent: Die Retoure kann nicht vor dem Versand liegen.
+        campaign_not_postal: Eine Kampagne gibt es nur für Briefe. Bitte den Kanal «Brief» wählen oder die Kampagne leeren.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.

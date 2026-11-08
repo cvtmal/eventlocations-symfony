@@ -17,6 +17,7 @@ use App\Crm\Exception\DealNotFound;
 use App\Crm\Exception\InvalidPropertyValue;
 use App\Crm\Exception\LostReasonRequired;
 use App\Crm\Exception\NoEmailAddress;
+use App\Crm\Exception\RecipientSuppressed;
 use App\Crm\Exception\StaleProperty;
 use App\Crm\Exception\UnknownDealStage;
 use App\Crm\Exception\VenueNotLinked;
@@ -292,6 +293,7 @@ final class CrmApi
                 $exception instanceof UnknownDealStage => $this->error('stage', 'api.unknown_choice', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof LostReasonRequired => $this->error('lostReason', 'api.lost_reason_required', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof NoEmailAddress => $this->error('contactId', 'api.no_email_address', Response::HTTP_UNPROCESSABLE_ENTITY),
+                $exception instanceof RecipientSuppressed => $this->error($exception->field, 'api.recipient_suppressed', Response::HTTP_UNPROCESSABLE_ENTITY),
                 $exception instanceof ActivityNotYours => $this->error('', 'api.not_yours', Response::HTTP_FORBIDDEN),
                 $exception instanceof ActivityReadOnly => $this->error('', 'api.read_only', Response::HTTP_FORBIDDEN),
                 $exception instanceof CompanyNotFound, $exception instanceof ContactNotFound, $exception instanceof ActivityNotFound, $exception instanceof DealNotFound => $this->notFound(),

@@ -6,8 +6,12 @@ namespace App\Tests\Integration\Crm;
 
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
+use App\Crm\ValueObject\ContactBasis;
+use App\Crm\ValueObject\ContactChannel;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Crm\ValueObject\LostReason;
+use App\Crm\ValueObject\OutreachCohort;
+use App\Crm\ValueObject\SuppressionReason;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -27,6 +31,10 @@ final class CrmVocabularyChecksTest extends KernelTestCase
         yield 'company origin' => ['chk_crm_companies_origin', CompanyOrigin::class];
         yield 'lost reason' => ['chk_crm_deals_lost_reason', LostReason::class];
         yield 'inquiry status' => ['chk_crm_inquiry_links_status', InquiryStatus::class];
+        yield 'outreach cohort' => ['chk_crm_companies_cohort', OutreachCohort::class];
+        yield 'contact channel' => ['chk_crm_companies_contact_channel', ContactChannel::class];
+        yield 'contact basis' => ['chk_crm_companies_contact_basis', ContactBasis::class];
+        yield 'suppression reason' => ['chk_suppressions_reason', SuppressionReason::class];
     }
 
     /**

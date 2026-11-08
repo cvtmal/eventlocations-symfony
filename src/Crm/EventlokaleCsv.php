@@ -95,10 +95,17 @@ final class EventlokaleCsv
     /** Room key prefix => label of a min-max pair. */
     private const array ROOM_PAIRS = ['banquet' => 'Bankett', 'apero' => 'Apéro', 'concert' => 'Konzert', 'seminar' => 'Seminar'];
 
+    /** The person and contact cells a suppressed address empties (G11). */
+    private const array CONTACT_COLUMNS = ['contact_salutation', 'contact_first_name', 'contact_last_name', 'contact_function', 'phone', 'mobile', 'email'];
+
     /**
+     * @param list<string> $suppressed the suppression list's addresses (`SuppressionQuery::addresses()`): a row with one
+     *                                 of them keeps its venue facts but loses its person and contact cells (G11), so
+     *                                 the list cannot carry an opted-out address into a letter or a mail
+     *
      * @return array{rows: int, emptyColumns: list<string>}
      */
-    public function write(string $root): array
+    public function write(string $root, array $suppressed = []): array
     {
         $cache = new EventlokaleCache($root);
         $termNames = self::termNames($cache->readTaxonomies());
@@ -110,6 +117,7 @@ final class EventlokaleCsv
             $id = self::int($item['id'] ?? null);
             $rows[] = $this->row($item, $cache->readDetail($id), $cache->isGone($id), $cache->detailMtime($id), $termNames);
         }
+        $rows = self::withoutSuppressed($rows, $suppressed);
 
         $stream = fopen('php://temp', 'w+');
         if (false === $stream) {
@@ -127,6 +135,33 @@ final class EventlokaleCsv
         ));
 
         return ['rows' => \count($rows), 'emptyColumns' => $empty];
+    }
+
+    /**
+     * @param list<list<string|null>> $rows
+     * @param list<string>            $suppressed
+     *
+     * @return list<list<string|null>>
+     */
+    private static function withoutSuppressed(array $rows, array $suppressed): array
+    {
+        if ([] === $suppressed) {
+            return $rows;
+        }
+        $suppressed = array_flip($suppressed);
+        $email = (int) array_search('email', self::HEADER, true);
+        $blank = array_map(static fn (string $column): int => (int) array_search($column, self::HEADER, true), self::CONTACT_COLUMNS);
+
+        return array_map(static function (array $row) use ($suppressed, $email, $blank): array {
+            if (null === $row[$email] || !isset($suppressed[mb_strtolower(trim($row[$email]))])) {
+                return $row;
+            }
+            foreach ($blank as $position) {
+                $row[$position] = null;
+            }
+
+            return $row;
+        }, $rows);
     }
 
     /**

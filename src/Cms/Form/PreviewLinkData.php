@@ -14,7 +14,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 final class PreviewLinkData
 {
-    #[Assert\NotBlank(message: 'cms.preview_link.campaign.required', normalizer: 'trim')]
+    /** Empty for a link sent by e-mail (G11, PO decision): only a postal letter carries a campaign. */
     #[Assert\Regex(pattern: CampaignCode::PATTERN, message: 'cms.preview_link.campaign.invalid', normalizer: 'mb_scrub')]
     public ?string $campaignCode = null;
 
@@ -26,7 +26,7 @@ final class PreviewLinkData
     {
         return new IssueVenuePreview(
             $venueNumber,
-            $this->campaignCode ?? throw new \LogicException('Validate the form before building its command.'),
+            null === $this->campaignCode || '' === trim($this->campaignCode) ? null : trim($this->campaignCode),
             $this->lifetimeDays ?? throw new \LogicException('Validate the form before building its command.'),
         );
     }

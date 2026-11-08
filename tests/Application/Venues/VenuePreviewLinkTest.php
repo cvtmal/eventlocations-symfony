@@ -14,6 +14,7 @@ use App\Venues\PreviewToken;
 use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
@@ -120,6 +121,44 @@ final class VenuePreviewLinkTest extends WebTestCase
             [['event' => 'preview_opened', 'campaign_code' => 'brief-2026-11']],
             $this->connection->fetchAllAssociative('SELECT event, campaign_code FROM funnel_events WHERE venue_id = ?', [$venue->id()]),
         );
+    }
+
+    public function test_the_short_link_a_letter_prints_shows_the_same_private_page_in_any_case(): void
+    {
+        $venue = self::draft();
+        $preview = VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'brief-2026-11', 'expiresAt' => new \DateTimeImmutable('+90 days')]);
+        $code = (string) $preview->shortCode();
+        self::assertMatchesRegularExpression('/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{10}$/', $code);
+
+        $crawler = $this->client->request('GET', '/v/'.strtolower($code));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString(self::NAME, $crawler->filter('main h1')->text());
+        self::assertSame('no-store, private', $this->client->getResponse()->headers->get('Cache-Control'));
+        self::assertSame('noindex, nofollow', $this->client->getResponse()->headers->get('X-Robots-Tag'));
+        self::assertSame('no-referrer', $this->client->getResponse()->headers->get('Referrer-Policy'));
+        self::assertStringNotContainsString('js/stats', (string) $this->client->getResponse()->getContent());
+        self::assertSame([['event' => 'preview_opened', 'campaign_code' => 'brief-2026-11']], $this->connection->fetchAllAssociative('SELECT event, campaign_code FROM funnel_events WHERE venue_id = ?', [$venue->id()]));
+
+        $preview->revoke(new \DateTimeImmutable());
+        $this->em()->flush();
+        $this->client->request('GET', '/v/'.$code);
+        self::assertResponseStatusCodeSame(410);
+        $this->client->request('GET', '/v/'.str_repeat('2', 10));
+        self::assertResponseStatusCodeSame(404);
+        $this->client->request('POST', '/v/'.$code);
+        self::assertResponseStatusCodeSame(405);
+    }
+
+    public function test_a_link_for_an_e_mail_carries_no_campaign_into_the_funnel(): void
+    {
+        $venue = self::draft();
+        $preview = VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => null, 'expiresAt' => new \DateTimeImmutable('+90 days')]);
+
+        $this->client->request('GET', '/vorschau/'.$this->tokens()->forId($preview->id()));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([['event' => 'preview_opened', 'campaign_code' => null]], $this->connection->fetchAllAssociative('SELECT event, campaign_code FROM funnel_events WHERE venue_id = ?', [$venue->id()]));
     }
 
     public function test_an_expired_link_answers_410(): void
@@ -262,6 +301,14 @@ final class VenuePreviewLinkTest extends WebTestCase
         $preview = VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => $campaign, 'at' => new \DateTimeImmutable('2026-11-07 09:00:00 Europe/Zurich'), 'expiresAt' => new \DateTimeImmutable('2026-11-07 10:00:00 Europe/Zurich +90 days')]);
 
         return '/vorschau/'.$this->tokens()->forId($preview->id());
+    }
+
+    private function em(): EntityManagerInterface
+    {
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+
+        return $em;
     }
 
     private function tokens(): PreviewToken

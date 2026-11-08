@@ -34,10 +34,14 @@ final class ClaimFlowTest extends WebTestCase
     private const string DOMAIN = 'remise-am-bach.example';
     private const string PASSWORD = 'long-enough-password';
 
-    public function test_a_domain_address_claims_the_entry_and_the_preview_link_ends(): void
+    public function test_a_domain_address_claims_the_entry_and_its_preview_links_end(): void
     {
         $venue = $this->venue();
         $token = $this->previewToken($venue);
+        // A second link of the entry, as a letter prints it: its short form (G11) ends with the claim too.
+        $shortCode = (string) VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'brief'])->shortCode();
+        $this->client->request('GET', '/v/'.$shortCode);
+        self::assertResponseIsSuccessful();
 
         $this->claim($token, 'info@'.self::DOMAIN);
         $code = $this->mailedCode('info@'.self::DOMAIN);
@@ -62,6 +66,25 @@ final class ClaimFlowTest extends WebTestCase
         self::assertSame(2, (int) $this->connection->fetchOne("SELECT count(*) FROM funnel_events WHERE venue_id = ? AND event IN ('claim_started', 'claim_verified')", [$venue->id()]));
         $this->client->request('GET', '/vorschau/'.$token);
         self::assertResponseStatusCodeSame(410);
+        $this->client->request('GET', '/v/'.$shortCode);
+        self::assertResponseStatusCodeSame(410);
+    }
+
+    public function test_a_letter_s_short_link_starts_the_same_claim(): void
+    {
+        $venue = $this->venue();
+        $preview = VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'brief']);
+
+        // The short form (G11) carries the link's own token in the banner's form body, never in a URL.
+        $crawler = $this->client->request('GET', '/v/'.strtolower((string) $preview->shortCode()));
+        self::assertResponseIsSuccessful();
+        $form = $crawler->selectButton('Gratis übernehmen')->form();
+        self::assertSame($this->tokens()->forId($preview->id()), $form->getValues()['token']);
+        $this->client->submit($form);
+        self::assertResponseRedirects('/konto/uebernehmen', 303);
+        $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="register[email]"]');
     }
 
     public function test_no_url_of_the_flow_carries_the_token_and_every_page_is_private(): void

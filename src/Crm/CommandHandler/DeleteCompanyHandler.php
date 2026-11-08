@@ -6,9 +6,11 @@ namespace App\Crm\CommandHandler;
 
 use App\Crm\Command\DeleteCompany;
 use App\Crm\Exception\CompanyHasDeals;
+use App\Crm\Exception\CompanySuppressed;
 use App\Crm\Repository\ActivityRepository;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\DealRepository;
+use App\Crm\Repository\SuppressionRepository;
 use App\Shared\Messenger\CommandHandlerInterface;
 
 /**
@@ -24,6 +26,7 @@ final class DeleteCompanyHandler implements CommandHandlerInterface
         private readonly CompanyRepository $companies,
         private readonly ActivityRepository $activities,
         private readonly DealRepository $deals,
+        private readonly SuppressionRepository $suppressions,
     ) {
     }
 
@@ -32,6 +35,10 @@ final class DeleteCompanyHandler implements CommandHandlerInterface
         $company = $this->companies->lock($command->companyId);
         if ($this->deals->existsForCompany($company->id())) {
             throw CompanyHasDeals::forCompany($company->id());
+        }
+        // An opt-out is permanent (G11): the row naming the Location would go with it.
+        if ($this->suppressions->companySuppressed($company->id())) {
+            throw CompanySuppressed::forCompany($company->id());
         }
         $activityIds = $this->activities->idsLinkedToCompany($company->id());
 

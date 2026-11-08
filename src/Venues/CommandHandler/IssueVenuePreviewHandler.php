@@ -33,7 +33,7 @@ final class IssueVenuePreviewHandler implements CommandHandlerInterface
      */
     public function __invoke(IssueVenuePreview $command): string
     {
-        if (!CampaignCode::isValid($command->campaignCode)) {
+        if (null !== $command->campaignCode && !CampaignCode::isValid($command->campaignCode)) {
             throw new \InvalidArgumentException('The campaign code is no plain code.');
         }
         if (!\in_array($command->lifetimeDays, IssueVenuePreview::LIFETIMES, true)) {

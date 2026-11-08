@@ -8,7 +8,9 @@ use App\Shared\Command\RecordFunnelEvent;
 use App\Shared\Funnel\FunnelEvent;
 use App\Venues\PreviewToken;
 use App\Venues\ReadModel\VenueDetailQuery;
+use App\Venues\ReadModel\VenuePreviewLink;
 use App\Venues\ReadModel\VenuePreviewQuery;
+use App\Venues\ValueObject\PreviewShortCode;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,9 +27,13 @@ use Symfony\Component\Routing\Attribute\Route;
  * Every answer is private (`no-store`), `noindex` and sent with `Referrer-Policy: no-referrer`, so the
  * token reaches no shared cache, no search engine and no Referer of the page's own asset requests.
  * The 404 and 410 are rendered here, not thrown: nothing goes through the error logger. The token is
- * never logged (nginx skips `/vorschau/` in its access log, Sentry's event URL is scrubbed by
+ * never logged (nginx skips `/vorschau/` and `/v/` in its access log, Sentry's event URL is scrubbed by
  * `Shared\Http\SensitiveUrlScrubber`). A GET that shows the entry records `preview_opened` with the
- * link's campaign (G8); a HEAD records nothing.
+ * link's campaign (G8; none for a link sent by e-mail); a HEAD records nothing.
+ *
+ * Both routes take any segment and any method: a near miss (a token with a full stop from a plain-text mail, a POST)
+ * must get this private page too, not the generic error page, which is cacheable and sends the stats beacon with the
+ * path.
  */
 final class VenuePreviewLinkController extends AbstractController
 {
@@ -42,13 +48,27 @@ final class VenuePreviewLinkController extends AbstractController
     ) {
     }
 
-    /**
-     * Any segment and any method: a near miss (a token with a full stop from a plain-text mail, a POST)
-     * must get this private page too, not the generic error page, which is cacheable and sends the stats
-     * beacon with the path.
-     */
     #[Route(path: ['de' => '/vorschau/{token}'], name: 'venue_preview', requirements: ['token' => '[^/]+'])]
     public function __invoke(Request $request, string $token): Response
+    {
+        $id = $this->tokens->idFrom($token);
+
+        return $this->show($request, null === $id ? null : $this->previews->find($id));
+    }
+
+    /**
+     * The short form a letter prints (G11): `/v/<code>` shows the same private page as the token, without a redirect,
+     * so the token is never in a URL (it travels only in the claim banner's POST body). Case and surrounding blanks of a typed code do not matter.
+     */
+    #[Route(path: ['de' => '/v/{code}'], name: 'venue_preview_short', requirements: ['code' => '[^/]+'])]
+    public function short(Request $request, string $code): Response
+    {
+        $code = PreviewShortCode::normalise($code);
+
+        return $this->show($request, null === $code ? null : $this->previews->findByShortCode($code));
+    }
+
+    private function show(Request $request, ?VenuePreviewLink $link): Response
     {
         if (!$request->isMethod('GET') && !$request->isMethod('HEAD')) {
             $response = $this->unavailable(Response::HTTP_METHOD_NOT_ALLOWED);
@@ -57,8 +77,6 @@ final class VenuePreviewLinkController extends AbstractController
             return $response;
         }
 
-        $id = $this->tokens->idFrom($token);
-        $link = null === $id ? null : $this->previews->find($id);
         if (null === $link) {
             return $this->unavailable(Response::HTTP_NOT_FOUND);
         }
@@ -75,7 +93,7 @@ final class VenuePreviewLinkController extends AbstractController
             $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::PreviewOpened, $link->venueId, $link->campaignCode));
         }
 
-        return self::private($this->render('venues/preview/show.html.twig', ['venue' => $venue, 'token' => $token]));
+        return self::private($this->render('venues/preview/show.html.twig', ['venue' => $venue, 'token' => $this->tokens->forId($link->id)]));
     }
 
     private function unavailable(int $status): Response

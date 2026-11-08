@@ -46,9 +46,10 @@
                         <tbody>
                             {% for row in links %}
                                 {% set link = row.link %}
+                                {% set campaign = link.campaignCode ?? 'preview_links.no_campaign'|trans({}, 'cms') %}
                                 <tr id="link-{{ link.id }}">
                                     <td>
-                                        <strong>{{ link.campaignCode }}</strong>
+                                        <strong>{{ campaign }}</strong>
                                         <span class="muted preview-links__meta">{{ 'preview_links.detail.created'|trans({date: link.createdAt|swiss_date}, 'cms') }}</span>
                                     </td>
                                     <td>
@@ -62,17 +63,21 @@
                                     <td>
                                         {% if row.url %}
                                             <div class="preview-links__link">
-                                                <label class="visually-hidden" for="link-url-{{ link.id }}">{{ 'preview_links.field.link'|trans({campaign: link.campaignCode}, 'cms') }}</label>
+                                                <label class="visually-hidden" for="link-url-{{ link.id }}">{{ 'preview_links.field.link'|trans({campaign: campaign}, 'cms') }}</label>
                                                 <input class="field__input preview-links__url" id="link-url-{{ link.id }}" type="text" readonly value="{{ row.url }}">
+                                                {% if row.short_url %}
+                                                    <label class="visually-hidden" for="link-short-{{ link.id }}">{{ 'preview_links.field.short'|trans({campaign: campaign}, 'cms') }}</label>
+                                                    <input class="field__input preview-links__url preview-links__short" id="link-short-{{ link.id }}" type="text" readonly value="{{ row.short_url }}">
+                                                {% endif %}
                                                 <div class="preview-links__actions">
                                                     {% set qr_url = path('admin_locations_preview_links_qr', {number: number, id: link.id}) %}
-                                                    <img class="preview-links__qr" src="{{ qr_url }}" width="96" height="96" alt="{{ 'preview_links.qr_alt'|trans({campaign: link.campaignCode}, 'cms') }}" loading="lazy">
-                                                    {{ include('admin/components/_button.html.twig', {label: 'preview_links.qr_download'|trans({}, 'cms'), size: 'sm', variant: 'ghost', href: qr_url, attributes: {download: 'vorschau-' ~ number ~ '-' ~ link.campaignCode ~ '.svg'}}, with_context = false) }}
+                                                    <img class="preview-links__qr" src="{{ qr_url }}" width="96" height="96" alt="{{ 'preview_links.qr_alt'|trans({campaign: campaign}, 'cms') }}" loading="lazy">
+                                                    {{ include('admin/components/_button.html.twig', {label: 'preview_links.qr_download'|trans({}, 'cms'), size: 'sm', variant: 'ghost', href: qr_url, attributes: {download: 'vorschau-' ~ number ~ '-' ~ (link.campaignCode ?? 'email') ~ '.svg'}}, with_context = false) }}
                                                     {{ include('admin/components/_button.html.twig', {
                                                         label: 'preview_links.revoke.action'|trans({}, 'cms'),
                                                         size: 'sm',
                                                         attributes: {
-                                                            'aria-label': 'preview_links.revoke.action_for'|trans({campaign: link.campaignCode}, 'cms'),
+                                                            'aria-label': 'preview_links.revoke.action_for'|trans({campaign: campaign}, 'cms'),
                                                             commandfor: 'preview-revoke-' ~ link.id,
                                                             command: 'show-modal',
                                                         },
@@ -91,7 +96,7 @@
                 {% for row in links|filter(row => row.url) %}
                     {% embed 'admin/components/_modal.html.twig' with {
                         id: 'preview-revoke-' ~ row.link.id,
-                        title: 'preview_links.revoke.title'|trans({campaign: row.link.campaignCode}, 'cms'),
+                        title: 'preview_links.revoke.title'|trans({campaign: row.link.campaignCode ?? 'preview_links.no_campaign'|trans({}, 'cms')}, 'cms'),
                         close_label: 'preview_links.revoke.close'|trans({}, 'cms'),
                         danger: true,
                         revoke_url: path('admin_locations_preview_links_revoke', {number: number, id: row.link.id}),

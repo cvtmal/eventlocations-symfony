@@ -43,6 +43,7 @@ api:
     contact_of_another_company: Dieser Kontakt gehört zu einer anderen Location.
     lost_reason_required: Bitte einen Grund für den Verlust wählen.
     no_email_address: Für diesen Empfänger ist keine E-Mail-Adresse hinterlegt.
+    recipient_suppressed: Diese Adresse oder Location steht auf der Sperrliste und bekommt keine Mails von uns.
 
 properties:
     edit: Bearbeiten
@@ -65,6 +66,7 @@ nav:
     deals: Deals
     inquiries: Anfragen
     tasks: Aufgaben
+    outreach: Akquise
     email_templates: E-Mail-Vorlagen
 
 search:
@@ -176,6 +178,7 @@ record:
     tab:
         overview: Übersicht
         deals: Deals
+        outreach: Akquise
     created: Erstellt
     created_on: "{date} · {origin, select, venue {aus Eintrag} other {manuell erfasst}}"
     stage_label: 'Phase: {stage}'
@@ -229,6 +232,7 @@ record:
         close: Schliessen
         flash: 'Location «{name}» gelöscht.'
         has_deals: Diese Location hat Deals und lässt sich nicht löschen. Bitte zuerst die Deals löschen.
+        suppressed: Diese Location steht auf der Sperrliste und bleibt gespeichert, damit die Sperre gilt.
 
 bootstrap:
     action: "{count, plural, one {Location aus # Eintrag anlegen} other {Locations aus # Einträgen anlegen}}"
@@ -648,3 +652,108 @@ email_template:
 lookup:
     venue_number: 'Nr. {number}'
     venue_company: 'bei {company}'
+
+outreach:
+    title: Akquise
+    submit: Speichern
+    cohort:
+        A: 'A · Brief mit Vorschau'
+        B: 'B · Brief mit Preisvergleich'
+        C: 'C · Direktkontakt'
+        D: 'D · Empfehlung'
+    channel:
+        postal: Brief
+        email: E-Mail
+        phone: Telefon
+        referral: Empfehlung
+    basis:
+        consent: Einwilligung
+        customer: Bestehende Kundenbeziehung
+        one_to_one: Einzelner Geschäftskontakt
+        none: Keine (nur Brief)
+    field:
+        none: '–'
+        campaign_code: Kampagne (Brief)
+        campaign_code_help: 'Nur für Briefe, zum Beispiel «brief-2026-11». Ein Link per E-Mail trägt keine Kampagne.'
+        cohort: Kohorte
+        channel: Kanal
+        basis: Grundlage
+        sent_on: Versandt am
+        returned_on: Retoure am
+    flash:
+        saved: Akquise gespeichert.
+        unchanged: Nichts geändert.
+        suppressed: Die Location steht jetzt auf der Sperrliste.
+        already_suppressed: Die Location steht schon auf der Sperrliste.
+        campaign_invalid: Bitte eine gültige Kampagne wählen.
+        date_invalid: Bitte ein gültiges Datum eingeben.
+        sent: '{count, plural, =0 {Keine Location ohne Versanddatum in {campaign}.} one {Eine Location in {campaign} als versandt erfasst.} other {# Locations in {campaign} als versandt erfasst.}}'
+        email_invalid: Bitte eine gültige E-Mail-Adresse eingeben.
+        email_suppressed: Die Adresse steht auf der Sperrliste.
+    suppression:
+        title: Sperrliste
+        pill: Gesperrt
+        since: '{reason} am {date}: keine Mails, keine Briefe, in keinem Export.'
+        since_address: 'Eine Adresse dieser Location ist gesperrt ({reason} am {date}): keine Mails, keine Briefe, in keinem Export.'
+        effect: Die Sperre ist dauerhaft und lässt sich nicht aufheben.
+        none: Nicht gesperrt. Will die Location keine Werbung mehr, erfasse hier ihren Widerspruch; das gilt dauerhaft.
+        objection: Widerspruch erfassen
+    page:
+        title: Akquise
+        lead: 'Kohorten des Pilots, Briefkampagnen mit Druckliste und die Sperrliste. Werbe-Mails in Serie verschicken wir nicht.'
+    funnel:
+        title: Funnel nach Kohorte
+        cohort: Kohorte
+        locations: Locations
+        sent: Versandt
+        returned: Retouren
+        suppressed: Gesperrt
+        note: 'Gezählt werden Einträge, die einen Schritt am Versandtag oder danach erreicht haben. Ohne Versanddatum zählt nichts.'
+        step:
+            preview_opened: Vorschau geöffnet
+            claim_started: Übernahme gestartet
+            claim_verified: Übernahme bestätigt
+            venue_published: Online
+            inquiry_delivered: Anfrage erhalten
+            pro_paid: Pro bezahlt
+    campaigns:
+        title: Briefkampagnen
+        empty: Noch keine Kampagne.
+        empty_text: Trag im Tab «Akquise» einer Location eine Kampagne ein.
+        code: Kampagne
+        locations: Locations
+        printable: In der Druckliste
+        unsent: Ohne Versanddatum
+        actions: Aktionen
+        print: Druckliste (CSV)
+        print_for: 'Druckliste für {campaign} herunterladen'
+        sent: Als versandt erfassen
+        sent_on_for: 'Versanddatum für {campaign}'
+        note: 'Die Druckliste nimmt nur Locations mit Eintrag, ohne Retoure und ohne Sperre. Fehlt ein Vorschau-Link der Kampagne, der noch 30 Tage gilt, erstellt sie einen für {days} Tage. Der QR-Code kommt aus der Spalte «Kurzlink» (Serienbrief).'
+    suppressions:
+        title: Sperrliste
+        lead: 'Wer hier steht, bekommt keine Mails aus dem CRM und fehlt in jedem Export und jeder Druckliste, für immer. Abmeldungen über den Link in unseren Mails landen von selbst hier.'
+        email: E-Mail-Adresse sperren
+        add: Sperren
+        who: Location oder Adresse
+        reason: Grund
+        since: Seit
+        more: '{shown} von {total} neusten Einträgen.'
+    print:
+        column:
+            company: Location
+            contact: Kontakt
+            address: Adresse (Location)
+            venue: Eintrag
+            street: Strasse (Eintrag)
+            zip: PLZ
+            town: Ort
+            cohort: Kohorte
+            short_link: Kurzlink
+            link: Vorschau-Link
+            valid_until: Gültig bis
+
+suppression:
+    reason:
+        opt_out: Abmeldung per Link
+        objection: Widerspruch

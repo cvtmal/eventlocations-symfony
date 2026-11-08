@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Support\Http;
 
+use App\Crm\OptOutToken;
+use App\Factory\CompanyFactory;
 use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Geo\ValueObject\Canton;
@@ -32,7 +34,7 @@ trait PublicRouteFixtures
     private const HISTORY_SLUG = 'altes-schloss-seeblick';
 
     /**
-     * @return array{number: int, gone: string, town: string, building: string, started: string, preview: string, preview_gone: string}
+     * @return array{number: int, gone: string, town: string, building: string, started: string, preview: string, preview_gone: string, preview_short: string, opt_out: string}
      */
     private function seedPublicRoutes(): array
     {
@@ -48,8 +50,13 @@ trait PublicRouteFixtures
         // G5: an open preview link of the full venue and a revoked one.
         $tokens = self::getContainer()->get(PreviewToken::class);
         self::assertInstanceOf(PreviewToken::class, $tokens);
-        $preview = $tokens->forId(VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'fixture'])->id());
+        $open = VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'fixture']);
+        $preview = $tokens->forId($open->id());
         $previewGone = $tokens->forId(VenuePreviewFactory::new()->revoked()->create(['venue' => $venue, 'campaignCode' => 'fixture'])->id());
+
+        // G11: the opt-out link of a Location's CRM mails.
+        $optOut = self::getContainer()->get(OptOutToken::class);
+        self::assertInstanceOf(OptOutToken::class, $optOut);
 
         foreach (['cache.phone_reveal', 'cache.inquiry_submit'] as $name) {
             $pool = self::getContainer()->get($name);
@@ -68,6 +75,8 @@ trait PublicRouteFixtures
             'started' => InquiryFormFields::tokenFrom(self::FILL_STARTED),
             'preview' => $preview,
             'preview_gone' => $previewGone,
+            'preview_short' => (string) $open->shortCode(),
+            'opt_out' => $optOut->forCompany(CompanyFactory::createOne()->id()),
         ];
     }
 }

@@ -88,6 +88,7 @@ final class VenuePreviewLinksController extends AbstractController
                 'link' => $link,
                 'state' => $link->state($now),
                 'url' => $link->isOpen($now) ? $this->url($link->id) : null,
+                'short_url' => $link->isOpen($now) && null !== $link->shortCode ? $this->shortUrl($link->shortCode) : null,
             ], $this->previews->forVenue($number)),
             'csrf_id' => self::CSRF_ID,
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
@@ -128,17 +129,23 @@ final class VenuePreviewLinksController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $svg = (new Writer(new ImageRenderer(new RendererStyle(self::QR_SIZE, 2), new SvgImageBackEnd())))->writeString($this->url($id));
+        $svg = (new Writer(new ImageRenderer(new RendererStyle(self::QR_SIZE, 2), new SvgImageBackEnd())))->writeString(null === $link->shortCode ? $this->url($id) : $this->shortUrl($link->shortCode));
 
         return new Response($svg, Response::HTTP_OK, [
             'Content-Type' => 'image/svg+xml',
-            'Content-Disposition' => \sprintf('inline; filename="vorschau-%d-%s.svg"', $number, $link->campaignCode),
+            'Content-Disposition' => \sprintf('inline; filename="vorschau-%d-%s.svg"', $number, $link->campaignCode ?? 'email'),
         ]);
     }
 
     private function url(string $id): string
     {
         return $this->generateUrl('venue_preview', ['token' => $this->tokens->forId($id)], UrlGeneratorInterface::ABSOLUTE_URL);
+    }
+
+    /** The short form a letter prints (G11); the QR code encodes it, which keeps the code small. */
+    private function shortUrl(string $code): string
+    {
+        return $this->generateUrl('venue_preview_short', ['code' => $code], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     private function rethrowNotFound(HandlerFailedException $failure): void

@@ -282,12 +282,14 @@ backend() {
     rm -f "$work/big"
 }
 
-# G5: a preview link's token never reaches the access log, neither as the path nor as a Referer.
+# G5, G9, G11: a preview or cancellation link's token, or a preview's short code, never reaches the access log, neither as the path nor as a Referer.
 preview_not_logged() {
     request https "$SITE" /vorschau/secret-path-fixture
     request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/vorschau/secret-referer-fixture"
     request https "$SITE" /konto/abo-kuendigen/secret-cancel-fixture
     request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/konto/abo-kuendigen/secret-cancel-referer"
+    request https "$SITE" /v/secret-short-fixture
+    request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/v/secret-short-referer-fixture"
     request https "$SITE" /logged-fixture
     docker logs "$name" > "$work/access.log" 2>&1
     grep -q "/logged-fixture" "$work/access.log" || fail "an ordinary request is no longer in the access log"

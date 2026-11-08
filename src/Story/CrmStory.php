@@ -13,9 +13,15 @@ use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
 use App\Crm\Entity\Contact;
 use App\Crm\Repository\CompanyRepository;
+use App\Crm\Repository\SuppressionRepository;
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
+use App\Crm\ValueObject\ContactBasis;
+use App\Crm\ValueObject\ContactChannel;
 use App\Crm\ValueObject\InquiryStatus;
+use App\Crm\ValueObject\Outreach;
+use App\Crm\ValueObject\OutreachCohort;
+use App\Crm\ValueObject\SuppressionReason;
 use App\Factory\ActivityFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
@@ -28,6 +34,7 @@ use App\Inquiries\ValueObject\MailStatus;
 use App\Venues\Entity\Venue;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\KnownTiers;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Zenstruck\Foundry\Story;
 
@@ -44,6 +51,8 @@ use function Zenstruck\Foundry\faker;
 final class CrmStory extends Story
 {
     private const LINKED_VENUES = 8;
+    /** G11's demo postal campaign; the Akquise page prints its list. */
+    public const string CAMPAIGN = 'brief-2026-11';
     private const MANUAL_COMPANIES = ['Eventwerk GmbH', 'Seeland Events AG', 'Alpenblick Hotels', 'Gastro Kollektiv'];
     /** A stage, and for a won deal its contract's end in days from today: one ended, one renewal due within 60 days, one running. */
     private const DEALS = [
@@ -85,6 +94,8 @@ final class CrmStory extends Story
         private readonly AdminUserRepository $users,
         private readonly CompanyStageSync $stageSync,
         private readonly MessageBusInterface $commandBus,
+        private readonly SuppressionRepository $suppressions,
+        private readonly EntityManagerInterface $em,
     ) {
     }
 
@@ -148,10 +159,40 @@ final class CrmStory extends Story
 
         $this->deals($companies, $venues, $today);
         $this->inquiries($venues, $today);
+        $this->outreach($companies, $today);
         foreach (self::EMAIL_TEMPLATES as [$name, $subject, $body]) {
             EmailTemplateFactory::createOne(['name' => $name, 'subject' => $subject, 'bodyMarkdown' => $body]);
         }
         $this->stageSync->syncAll();
+    }
+
+    /**
+     * G11: the venue Locations form the pilot's four cohorts (A and B by letter in the campaign `brief-2026-11`, sent 11
+     * weeks ago so FunnelStory's steps count, one letter came back; C by a one-to-one mail, D by a referral), one manual
+     * Location took down an objection and one address opted out. The demo addresses are fixtures, never real contacts.
+     *
+     * @param list<Company> $companies
+     */
+    private function outreach(array $companies, \DateTimeImmutable $today): void
+    {
+        $sent = $today->modify('-77 days');
+        $plan = [
+            [OutreachCohort::A, ContactChannel::Postal, ContactBasis::None, true, null],
+            [OutreachCohort::A, ContactChannel::Postal, ContactBasis::None, true, $today->modify('-70 days')],
+            [OutreachCohort::B, ContactChannel::Postal, ContactBasis::None, true, null],
+            [OutreachCohort::B, ContactChannel::Postal, ContactBasis::None, true, null],
+            [OutreachCohort::C, ContactChannel::Email, ContactBasis::OneToOne, false, null],
+            [OutreachCohort::C, ContactChannel::Email, ContactBasis::Customer, false, null],
+            [OutreachCohort::D, ContactChannel::Referral, ContactBasis::OneToOne, false, null],
+        ];
+        foreach ($plan as $index => [$cohort, $channel, $basis, $postal, $returned]) {
+            $companies[$index]->changeOutreach(new Outreach($postal ? self::CAMPAIGN : null, $cohort, $channel, $basis, $sent, $returned));
+        }
+        $this->em->flush();
+
+        $now = new \DateTimeImmutable();
+        $this->suppressions->addCompany($companies[\count($companies) - 1]->id(), SuppressionReason::Objection, $now);
+        $this->suppressions->addEmail('kein-kontakt@example.ch', SuppressionReason::OptOut, $now);
     }
 
     /**

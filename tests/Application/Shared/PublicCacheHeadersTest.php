@@ -57,7 +57,7 @@ final class PublicCacheHeadersTest extends WebTestCase
     }
 
     /**
-     * The URLs may hold {number}, {gone}, {town}, {building}, {preview} and {preview_gone}. The route is null outside the public table.
+     * The URLs may hold {number}, {gone}, {town}, {building}, {preview}, {preview_gone}, {preview_short} and {opt_out}. The route is null outside the public table.
      *
      * @return iterable<string, array{?string, string, string, int, string, ?string}> route, method, URL, status, Cache-Control, Vary
      */
@@ -97,6 +97,10 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'preview link' => ['venue_preview', 'GET', '/vorschau/{preview}', 200, self::PRIVATE, null];
         yield 'preview link, revoked' => ['venue_preview', 'GET', '/vorschau/{preview_gone}', 410, self::PRIVATE, null];
         yield 'preview link, unknown' => ['venue_preview', 'GET', '/vorschau/'.str_repeat('A', 44), 404, self::PRIVATE, null];
+        yield 'preview short link' => ['venue_preview_short', 'GET', '/v/{preview_short}', 200, self::PRIVATE, null];
+        yield 'preview short link, unknown' => ['venue_preview_short', 'GET', '/v/'.str_repeat('A', 10), 404, self::PRIVATE, null];
+        yield 'opt-out page' => ['crm_opt_out', 'GET', '/abmelden/{opt_out}', 200, self::PRIVATE, null];
+        yield 'opt-out page, unknown' => ['crm_opt_out', 'GET', '/abmelden/'.str_repeat('A', 44), 404, self::PRIVATE, null];
         yield 'merkliste' => ['merkliste', 'GET', '/merkliste', 200, self::PRIVATE, null];
         yield 'merkliste toggle' => ['merkliste_toggle', 'POST', '/merkliste/{number}', 303, self::PRIVATE, null];
         yield 'merkliste sync' => ['merkliste_sync', 'POST', '/merkliste', 204, self::PRIVATE, null];
@@ -120,7 +124,7 @@ final class PublicCacheHeadersTest extends WebTestCase
 
         $this->client->request(
             $method,
-            strtr($url, ['{number}' => (string) $data['number'], '{gone}' => $data['gone'], '{town}' => $data['town'], '{building}' => $data['building'], '{preview_gone}' => $data['preview_gone'], '{preview}' => $data['preview']]),
+            strtr($url, ['{number}' => (string) $data['number'], '{gone}' => $data['gone'], '{town}' => $data['town'], '{building}' => $data['building'], '{preview_gone}' => $data['preview_gone'], '{preview}' => $data['preview'], '{preview_short}' => $data['preview_short'], '{opt_out}' => $data['opt_out']]),
             'POST' === $method ? $posted : [],
             [],
             ['HTTP_SEC_FETCH_SITE' => 'same-origin'],

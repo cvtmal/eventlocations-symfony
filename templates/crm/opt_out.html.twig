@@ -1,0 +1,33 @@
+{#
+    The opt-out page of a CRM mail (G11). `state`: `ask` (GET, not yet on the list: one button that POSTs to this
+    URL), `done` (on the list) or `unknown` (the link names no Location, or a wrong method). Private: robots
+    `noindex`, no canonical, no stats beacon, no session (the form has no CSRF token: the signed URL is the proof).
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ ('opt_out.' ~ state ~ '.title')|trans({}, 'shared') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block hreflang %}{% endblock %}
+
+{% block jsonld %}{% endblock %}
+
+{% block stats_beacon %}{% endblock %}
+
+{% block body_class %}{% set page_class = 'page-error' %}{{ page_class }}{% endblock %}
+
+{% block main %}
+    <div class="error-page container">
+        <span class="error-page__icon">{{ icon('mail') }}</span>
+        <h1 class="error-page__heading">{{ ('opt_out.' ~ state ~ '.heading')|trans({}, 'shared') }}</h1>
+        <p class="error-page__text">{{ ('opt_out.' ~ state ~ '.text')|trans({email: site_contact_email}, 'shared') }}</p>
+        {% if state == 'ask' %}
+            <form method="post" action="{{ path('crm_opt_out', {token: token}) }}">
+                {% include 'components/_button.html.twig' with {label: 'opt_out.ask.submit'|trans({}, 'shared'), variant: 'primary', size: 'lg', type: 'submit'} only %}
+            </form>
+        {% else %}
+            {% include 'components/_button.html.twig' with {label: 'opt_out.to_home'|trans({}, 'shared'), variant: 'secondary', size: 'lg', href: path('home')} only %}
+        {% endif %}
+    </div>
+{% endblock %}

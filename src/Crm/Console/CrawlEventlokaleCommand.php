@@ -7,6 +7,7 @@ namespace App\Crm\Console;
 use App\Crm\EventlokaleCache;
 use App\Crm\EventlokaleCrawl;
 use App\Crm\EventlokaleCsv;
+use App\Crm\ReadModel\SuppressionQuery;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
@@ -27,6 +28,7 @@ final class CrawlEventlokaleCommand
     public function __construct(
         private readonly EventlokaleCrawl $crawl,
         private readonly EventlokaleCsv $csv,
+        private readonly SuppressionQuery $suppressions,
         #[Autowire('%app.content_root%')]
         private readonly string $contentRoot,
     ) {
@@ -95,7 +97,7 @@ final class CrawlEventlokaleCommand
 
             return Command::FAILURE;
         }
-        $written = $this->csv->write($root);
+        $written = $this->csv->write($root, $this->suppressions->addresses());
         $io->writeln(\sprintf('CSV: %s/%s (%d rows)', $root, EventlokaleCsv::FILE, $written['rows']));
         if ([] !== $written['emptyColumns']) {
             $io->writeln('Empty in every row: '.implode(', ', $written['emptyColumns']));

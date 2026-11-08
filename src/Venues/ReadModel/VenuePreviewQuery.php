@@ -13,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
  */
 final class VenuePreviewQuery
 {
-    private const string COLUMNS = 'p.id, p.venue_id, v.number, p.campaign_code, p.created_at, p.expires_at, p.revoked_at';
+    private const string COLUMNS = 'p.id, p.venue_id, v.number, p.campaign_code, p.short_code, p.created_at, p.expires_at, p.revoked_at';
 
     public function __construct(
         private readonly Connection $connection,
@@ -28,6 +28,19 @@ final class VenuePreviewQuery
         $row = $this->connection->fetchAssociative(
             'SELECT '.self::COLUMNS.' FROM venue_previews p JOIN venues v ON v.id = p.venue_id WHERE p.id = :id',
             ['id' => $id],
+        );
+
+        return false === $row ? null : self::link($row);
+    }
+
+    /**
+     * The link a short code names (G11, `/v/<code>`); the code is already normalised (`PreviewShortCode::normalise()`).
+     */
+    public function findByShortCode(string $code): ?VenuePreviewLink
+    {
+        $row = $this->connection->fetchAssociative(
+            'SELECT '.self::COLUMNS.' FROM venue_previews p JOIN venues v ON v.id = p.venue_id WHERE p.short_code = :code',
+            ['code' => $code],
         );
 
         return false === $row ? null : self::link($row);
@@ -53,7 +66,8 @@ final class VenuePreviewQuery
      */
     private static function link(array $row): VenuePreviewLink
     {
-        \assert(\is_string($row['id']) && \is_string($row['venue_id']) && \is_int($row['number']) && \is_string($row['campaign_code']));
+        \assert(\is_string($row['id']) && \is_string($row['venue_id']) && \is_int($row['number']));
+        \assert((null === $row['campaign_code'] || \is_string($row['campaign_code'])) && (null === $row['short_code'] || \is_string($row['short_code'])));
         \assert(\is_string($row['created_at']) && \is_string($row['expires_at']) && (null === $row['revoked_at'] || \is_string($row['revoked_at'])));
 
         return new VenuePreviewLink(
@@ -61,6 +75,7 @@ final class VenuePreviewQuery
             $row['venue_id'],
             $row['number'],
             $row['campaign_code'],
+            $row['short_code'],
             new \DateTimeImmutable($row['created_at']),
             new \DateTimeImmutable($row['expires_at']),
             null === $row['revoked_at'] ? null : new \DateTimeImmutable($row['revoked_at']),

@@ -12,7 +12,9 @@ use App\Crm\Entity\ActivityType;
 use App\Crm\Entity\Company;
 use App\Crm\Exception\ContactOfAnotherCompany;
 use App\Crm\Exception\NoEmailAddress;
+use App\Crm\Exception\RecipientSuppressed;
 use App\Crm\Mailer\CrmMailer;
+use App\Crm\ReadModel\SuppressionQuery;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\ContactRepository;
 use App\Crm\ValueObject\EmailStatus;
@@ -37,6 +39,9 @@ use Symfony\Component\Mime\Exception\RfcComplianceException;
  * The Location is locked as in `LogActivityHandler`, then the chosen contact row, which must sit on that Location. The
  * entry goes on the Location (#55: a contact has no timeline of its own). `to` stays the real address under the
  * override, so the entry says what staff asked for. Log text carries the entry and where the cause was raised, never its message, which can quote an address.
+ *
+ * The suppression list (G11) is checked under the Location's lock before anything goes out: a suppressed Location, a
+ * suppressed address or a suppressed CC refuses the mail (`RecipientSuppressed`), and nothing is stored.
  */
 final class SendCrmEmailHandler implements CommandHandlerInterface
 {
@@ -44,6 +49,7 @@ final class SendCrmEmailHandler implements CommandHandlerInterface
         private readonly CompanyRepository $companies,
         private readonly ContactRepository $contacts,
         private readonly CrmMailer $mailer,
+        private readonly SuppressionQuery $suppressions,
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
         private readonly LoggerInterface $logger,
@@ -56,10 +62,16 @@ final class SendCrmEmailHandler implements CommandHandlerInterface
             RecordKind::Company => $this->companyTarget($command->recordId, $command->contactId),
             RecordKind::Deal => throw new \LogicException('A deal has no mail step, the API refuses it.'),
         };
+        if ($this->suppressions->isLocationSuppressed($company->id()) || $this->suppressions->isAddressSuppressed($address)) {
+            throw RecipientSuppressed::forRecipient();
+        }
+        if (null !== $command->cc && $this->suppressions->isAddressSuppressed($command->cc)) {
+            throw RecipientSuppressed::forCc();
+        }
         $type = $this->em->find(ActivityType::class, ActivityType::EMAIL_SENT) ?? throw new \LogicException('The migration seeds this type.');
         $actor = $this->em->find(AdminUser::class, $command->actingUserId) ?? throw new \LogicException('Only a logged-in staff member sends.');
 
-        $status = $this->send($command, $address, $actor);
+        $status = $this->send($command, $company->id(), $address, $actor);
 
         $activity = new Activity(
             $command->id,
@@ -93,10 +105,10 @@ final class SendCrmEmailHandler implements CommandHandlerInterface
         return [$contact->email() ?? throw NoEmailAddress::forContact($contactId), $company];
     }
 
-    private function send(SendCrmEmail $command, string $address, AdminUser $actor): EmailStatus
+    private function send(SendCrmEmail $command, string $companyId, string $address, AdminUser $actor): EmailStatus
     {
         try {
-            $this->mailer->send($address, $command->cc, $command->subject, $command->body, $actor->displayName());
+            $this->mailer->send($companyId, $address, $command->cc, $command->subject, $command->body, $actor->displayName());
         } catch (TransportExceptionInterface|RfcComplianceException|HandlerFailedException $exception) {
             $this->logFailure($command->id, $exception);
 
