@@ -71,11 +71,11 @@ _Status as of 2026-11-08, kept by the PO after every merge. The cycles themselve
 
 **Built, PR open:** G6 `claim-verify` (venue claims its entry, confirms photo rights) · F9 `inquiry-event` (inquiry form with event fields) · G11 `outreach-tracking` (personal and postal contacts, opt-out page) · `places-photos` (Google photos and rating, built but off, D48) · G15 `video-embed` (click-to-load videos).
 
-**In a lane:** G13 `tier-pages` ("Eintragen / Preise") · G14 `last-minute-offers`.
+**In a lane:** G13 `tier-pages` ("Eintragen / Preise") · G10 `owner-report` (monthly report; the qualified figure follows G7).
 
-**Launch-critical, not started:** F14 `content-onboarding` (venues in, as drafts) · G7 `enquiry-quality` (real vs. spam, delivery status) · G10 `owner-report` (monthly report) · F16 `launch-verification` (final check).
+**Launch-critical, not started:** F14 `content-onboarding` (venues in, as drafts) · G7 `enquiry-quality` (real vs. spam, delivery status) · F16 `launch-verification` (final check).
 
-**After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G16 `organizer-feedback`.
+**After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G14 `last-minute-offers` (paused) · G16 `organizer-feedback`.
 
 ## Roadmap (proposed order)
 
