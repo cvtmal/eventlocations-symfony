@@ -1,6 +1,6 @@
 # Strings of the Search module. Keys: <context>.<description>.
 listing:
-    heading: Hochzeitslocations in der Schweiz
+    heading: Eventlokale in der Schweiz
     # formatted = count|swiss_number
     count: '{count, plural, one {# Resultat} other {{formatted} Resultate}}'
     results_label: Suchresultate
@@ -14,6 +14,7 @@ filter:
     event_title: Was für einen Anlass planst du?
     event_legend: Anlässe
     guests: Anzahl Gäste
+    # guests, more and more_active: below md (390 px) the first word hides, so the four triggers fit (F7b); keep two words or more.
     guests_title: Wie viele Gäste erwartest du?
     guests_placeholder: 'z.B. 80'
     # formatted = count|swiss_number
@@ -25,8 +26,8 @@ filter:
     more_name_title: Suche eine konkrete Location
     more_name_placeholder: Name eingeben
     more_access: Erreichbarkeit
-    more_buildings_all: Alle Gebäudearten
-    more_buildings_close: Gebäudearten schliessen
+    more_buildings_all: Alle Location-Arten
+    more_buildings_close: Location-Arten schliessen
     more_rooms_title: Raumangebot
     more_rooms: Anzahl Räume
     more_area: Grösster Raum
@@ -72,8 +73,8 @@ pagination:
     page: 'Seite {page}'
 related:
     title: Andere suchten auch nach
-    canton: 'Hochzeit {canton}'
-    town: 'Hochzeit {town}'
+    canton: 'Eventlokale {canton}'
+    town: 'Eventlokale {town}'
 # "Ähnliche Locations" on the detail page (#8, SimilarVenuesController fragment).
 similar:
     heading: Ähnliche Locations
@@ -319,7 +320,7 @@ landing:
 # #36: the home page, in "du". The category tiles' labels are HomeCategory's (event types, F5), keyed by its case value.
 home:
     hero:
-        heading: 'Hochzeit feiern in den schönsten Locations der Schweiz'
+        heading: 'Eventlokale für jeden Anlass in der ganzen Schweiz'
     search:
         label: 'Location suchen'
         canton: Kanton
@@ -340,11 +341,11 @@ home:
         heading: 'Nach Anlass suchen'
         all: 'Alle Locations'
     steps:
-        heading: 'In vier Schritten zur Traumlocation'
+        heading: 'In vier Schritten zur passenden Location'
         filter:
             number: '01'
             title: Filtern
-            text: 'Nach Region, Location-Art und Gästezahl eingrenzen.'
+            text: 'Nach Region, Anlass, Location-Art und Gästezahl eingrenzen.'
         compare:
             number: '02'
             title: Vergleichen
@@ -355,47 +356,47 @@ home:
             text: 'Direkt bei der Location anfragen, ohne Umweg.'
         celebrate:
             number: '04'
-            title: Feiern
-            text: 'Den grossen Tag geniessen.'
+            title: Geniessen
+            text: 'Den Anlass am passenden Ort durchführen.'
     spotlight:
         heading: 'Locations im Spotlight'
     cta:
-        heading: 'Plane deine Hochzeit'
-        text: 'Starte noch heute mit der Suche nach deiner Hochzeitslocation in der Schweiz und stell deine Anfragen direkt bei der Location.'
+        heading: 'Plane deinen Anlass'
+        text: 'Such dir die passende Location aus und frag direkt bei ihr an, kostenlos und unverbindlich.'
         button: 'Jetzt starten'
     about:
-        heading: 'Die passende Hochzeitslocation für deinen Tag'
-        lead: 'Jede Hochzeit ist einzigartig, genau wie ihr Ort. In der Schweiz gibt es zahlreiche aussergewöhnliche Locations für eine stilvolle Feier: eine romantische Hochzeit im Märchenschloss, eine freie Trauung auf der Alp mit Feier in der Berghütte oder ein Bankett in einem exklusiven Hotel.'
-        filters: 'Mit unseren Filtern grenzt du die Auswahl nach Region, Kategorie, Preisniveau und Gästezahl ein.'
+        heading: 'Das passende Eventlokal für deinen Anlass'
+        lead: 'Ob Firmenanlass, Seminar, Apéro, Weihnachtsfeier oder Geburtstag: Jeder Anlass braucht einen Ort, der zu ihm passt. Hier findest du Locations in der ganzen Schweiz, vom Seminarraum in der Stadt über das Restaurant am See bis zur Halle für grosse Gruppen.'
+        filters: 'Mit den Filtern grenzt du die Auswahl nach Region, Anlass, Location-Art, Preisniveau und Gästezahl ein.'
         kinds:
             hotels:
                 term: Hotels
-                text: 'Luxushotels und komfortable Gasthäuser.'
+                text: 'Seminarhotels und Hotels mit Tagungs- und Banketträumen.'
             restaurants:
                 term: Restaurants
-                text: 'Vom Bergrestaurant mit Alpenpanorama bis zum Lokal an der Seepromenade.'
+                text: 'Vom Stadtrestaurant bis zum Lokal am See, für Apéro, Essen und Feier.'
             castles:
                 term: 'Burgen & Schlösser'
-                text: 'Historischer Charme in denkmalgeschützten Mauern.'
+                text: 'Historische Räume für Jubiläen, Empfänge und Galadinners.'
             halls:
                 term: Säle
-                text: 'Für grössere Gesellschaften, unabhängig von Jahreszeit und Wetter.'
+                text: 'Für grosse Gruppen, unabhängig von Jahreszeit und Wetter.'
             event_halls:
                 term: Eventhallen
-                text: 'Nachtlokale, Messehallen und stillgelegte Industriehallen.'
+                text: 'Industrie- und Messehallen für Konzerte, Partys und Produktpräsentationen.'
             estates:
                 term: 'Gutshöfe & Weingüter'
-                text: 'Feiern zwischen den Reben, im Einklang mit der Natur.'
+                text: 'Teamanlässe und Apéros zwischen den Reben.'
             originals:
                 term: 'Originelle Locations'
-                text: 'Scheunen, Lofts, Wintergärten, Berghütten und Chalets.'
+                text: 'Scheunen, Lofts, Schiffe, Berghütten und Zelte.'
     regions:
-        heading: 'Hochzeitslocations nach Region'
+        heading: 'Eventlokale nach Region'
 # #52: the near-me page (In der Nähe).
 nearby:
     nav: 'In der Nähe'
-    title: 'Hochzeitslocations in deiner Nähe'
-    meta_description: 'Finde Hochzeitslocations im Umkreis von {km} km um deinen Standort oder eine PLZ, auf der Karte und in der Liste.'
+    title: 'Eventlokale in deiner Nähe'
+    meta_description: 'Finde Eventlokale im Umkreis von {km} km um deinen Standort oder eine PLZ, auf der Karte und in der Liste.'
     intro: 'Gib deine PLZ oder deinen Ort ein oder verwende deinen Standort. Wir zeigen dir alle Locations im Umkreis von {km} km.'
     form:
         label: 'PLZ oder Ort'

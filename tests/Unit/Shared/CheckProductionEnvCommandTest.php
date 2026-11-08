@@ -11,7 +11,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * #20 PD8: the deploy's stop before a migration. Every line names a variable and never its value,
@@ -235,19 +237,54 @@ final class CheckProductionEnvCommandTest extends TestCase
         self::assertSame('OK', trim($output));
     }
 
+    public function test_an_operator_placeholder_gives_one_line_with_the_parameter_and_without_the_value(): void
+    {
+        $facts = ['site.operator_name' => 'Muster AG', 'site.operator_uid' => 'TODO(owner): UID-Nummer'];
+
+        self::assertSame(
+            ['site.operator_uid in config/services.yaml must be the operator\'s fact, not a TODO(owner) placeholder (D27).'],
+            CheckProductionEnvCommand::placeholderProblems($facts),
+        );
+        self::assertSame([], CheckProductionEnvCommand::placeholderProblems(['site.operator_name' => 'Muster AG']));
+    }
+
+    public function test_the_command_refuses_a_placeholder_in_a_valid_environment(): void
+    {
+        [$status, $output] = self::runCommand(self::validEnv(), ['site.operator_street' => 'TODO(owner): Strasse und Nummer']);
+
+        self::assertSame(Command::FAILURE, $status);
+        self::assertStringContainsString('site.operator_street in config/services.yaml must be', $output);
+        self::assertStringNotContainsString('Strasse und Nummer', $output);
+    }
+
+    public function test_the_command_checks_every_operator_fact_of_the_services_file(): void
+    {
+        // A new site.operator_* fact without a line in the constructor's #[Autowire] map would escape D27's guard.
+        $parameters = Yaml::parseFile(\dirname(__DIR__, 3).'/config/services.yaml')['parameters'];
+        $facts = array_keys(array_filter($parameters, static fn (string $name): bool => str_starts_with($name, 'site.operator_'), \ARRAY_FILTER_USE_KEY));
+        $autowire = (new \ReflectionMethod(CheckProductionEnvCommand::class, '__construct'))->getParameters()[1]->getAttributes(Autowire::class)[0]->newInstance();
+        self::assertIsArray($autowire->value);
+
+        self::assertSame($facts, array_keys($autowire->value));
+        foreach ($autowire->value as $name => $placeholder) {
+            self::assertSame('%'.$name.'%', $placeholder);
+        }
+    }
+
     /**
      * @param array<string, string> $env
+     * @param array<string, string> $operatorFacts
      *
      * @return array{int, string}
      */
-    private static function runCommand(array $env): array
+    private static function runCommand(array $env, array $operatorFacts = ['site.operator_name' => 'Muster AG']): array
     {
         $saved = $_SERVER;
         $_SERVER = $env + $_SERVER;
         $output = new BufferedOutput();
 
         try {
-            $status = (new CheckProductionEnvCommand(\dirname(__DIR__, 3)))(new SymfonyStyle(new ArrayInput([]), $output));
+            $status = (new CheckProductionEnvCommand(\dirname(__DIR__, 3), $operatorFacts))(new SymfonyStyle(new ArrayInput([]), $output));
         } finally {
             $_SERVER = $saved;
         }

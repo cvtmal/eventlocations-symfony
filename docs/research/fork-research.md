@@ -248,7 +248,7 @@ It gives the shortest path to a green fork and keeps cherry-picks cheap. Hygiene
 6. Google Cloud keys limited to the new domain: Maps JavaScript and Map ID (near-me), Maps Embed (detail map), Places (rating), Geocoding (import).
 7. A GitHub repository (account `cvtmal`), the environment `production` with four secrets, a deploy key and `deploy-gate`, backup secrets with the backup workflow off until launch.
 8. The crontab, `.env.local`, the first admin with TOTP.
-9. Legal: Impressum operator (Pick n Roll GmbH again?), Datenschutz processors.
+9. Legal: Impressum operator (the sister site's operator again? D27: placeholders), Datenschutz processors.
 
 ---
 

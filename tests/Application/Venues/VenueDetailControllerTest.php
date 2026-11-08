@@ -97,12 +97,12 @@ final class VenueDetailControllerTest extends WebTestCase
         // Head.
         self::assertSelectorTextContains('.venue-head__place', '8001 Zürich');
         $facts = $crawler->filter('.venue-head__facts li')->each(static fn (Crawler $li): string => $li->text());
-        self::assertSame(['Schloss', 'Am See', '50 - 300 Personen'], $facts);
+        self::assertSame(['Schloss', 'Am Seeufer', '50 - 300 Personen'], $facts);
         self::assertCount(2, $crawler->filter('.venue-head__description p'));
 
         // Fact lists: groups in DP-7 order, two lists and no rule between them (no board draws one).
         self::assertSame(
-            ['Gebäudeart', 'Lage', 'Geeignet für', 'Infrastruktur', 'Umgebung'],
+            ['Art der Location', 'Lage', 'Geeignet für', 'Räume und Infrastruktur', 'Rund um die Location'],
             $crawler->filter('.venue-facts dt')->each(static fn (Crawler $dt): string => $dt->text()),
         );
         self::assertCount(2, $crawler->filter('.venue-facts dl'));

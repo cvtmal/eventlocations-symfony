@@ -44,7 +44,7 @@
     }
 }
 
-// Hover and active darken the ink only, because accent-strong on accent-soft is 4.39:1 (README). The edge is not text.
+// Hover and active lay accent-soft under the darker primary states (8.9:1 and 10.8:1 on it, ContrastTokensTest); the edge is not text.
 .btn--secondary {
     box-shadow: inset 0 0 0 2px var(--c-accent-strong);
     color: var(--c-accent-strong);

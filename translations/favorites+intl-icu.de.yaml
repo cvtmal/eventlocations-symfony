@@ -14,7 +14,7 @@ remove:
 
 merkliste:
     title: Deine Merkliste
-    meta_description: Alle Hochzeitslocations, die du dir gemerkt hast, auf einen Blick.
+    meta_description: Alle Locations, die du dir für deinen Anlass gemerkt hast, auf einen Blick.
     # formatted = count|swiss_number
     count: '{count, plural, one {# Location} other {{formatted} Locations}}'
     results_label: Gemerkte Locations

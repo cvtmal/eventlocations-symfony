@@ -37,7 +37,7 @@ styleguide:
             overlay-circle: Dekorative Kreise
     typography:
         heading: Typografie
-        sample: Hochzeit feiern
+        sample: Anlass planen
         role: Rolle
         desktop: Desktop, ab 768 px
         phone: Phone, unter 768 px
@@ -120,7 +120,7 @@ styleguide:
     breadcrumb:
         heading: Breadcrumb
         label: Navigationspfad
-        listing: Hochzeitslocations
+        listing: Eventlokale
         canton: Kanton Zürich
         town: Stäfa
     text_input:
@@ -143,7 +143,7 @@ styleguide:
         occasion_engagement: Verlobungsfeier
         occasion_other: Anderer Anlass
         message: Nachricht
-        message_value: Wir planen unsere Hochzeit und interessieren uns für Landgut Amselfeld.
+        message_value: Wir planen einen Firmenanlass und interessieren uns für Landgut Amselfeld.
     overlays:
         heading: Overlay
         open_region: Region
@@ -158,7 +158,7 @@ styleguide:
         guests_placeholder: Anzahl Gäste
         lage: Lage
         clear: Filter löschen
-        drawn_region_title: Wo soll deine Hochzeit stattfinden?
+        drawn_region_title: Wo soll dein Anlass stattfinden?
         drawn_more_title: Wähle weitere Filter und Möglichkeiten
         drawn_results: 24 Resultate anzeigen
         option_all_cantons: Alle Kantone

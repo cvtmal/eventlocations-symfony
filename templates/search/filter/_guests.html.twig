@@ -12,7 +12,9 @@
     {%- endif -%}
 {%- elseif part == 'trigger' -%}
     <li class="filter-bar__item">
-        {{- include('components/_button.html.twig', {label: 'filter.guests'|trans({}, 'search'), variant: 'secondary', attributes: {popovertarget: 'filter-guests'}}, with_context = false) -}}
+        {#- Below md the first word hides as .visually-hidden does, so "Gäste" shows and "Anzahl Gäste" stays the name (F7b). -#}
+        {%- set words = 'filter.guests'|trans({}, 'search')|split(' ', 2) -%}
+        <button type="button" class="btn btn--secondary" popovertarget="filter-guests"><span>{% if words|length > 1 %}<span class="filter-bar__wide">{{ words[0] }} </span>{{ words[1] }}{% else %}{{ words[0] }}{% endif %}</span></button>
         {% embed 'components/_overlay.html.twig' with {id: 'filter-guests', tone: 'guests', title: 'filter.guests_title'|trans({}, 'search'), criteria: criteria} only %}
             {% block overlay_body %}{{ include('search/filter/_guests_form.html.twig', {criteria: criteria}, with_context = false) }}{% endblock %}
             {% block overlay_footer %}

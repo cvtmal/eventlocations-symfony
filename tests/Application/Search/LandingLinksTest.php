@@ -74,7 +74,7 @@ final class LandingLinksTest extends WebTestCase
             '/eventlokale/hotel', '/eventlokale/schloss',
         ], array_column($links, 'href'));
         self::assertSame(
-            ['Hochzeit Zürich', 'Hochzeit Bern', 'Hochzeit Aargau', 'Hochzeit Graubünden', 'Hochzeit Luzern', 'Hochzeit St. Gallen', 'Hochzeit Solothurn', 'Hochzeit Schwyz', 'Hochzeit Thurgau', 'Events im Hotel', 'Events im Schloss'],
+            ['Eventlokale Zürich', 'Eventlokale Bern', 'Eventlokale Aargau', 'Eventlokale Graubünden', 'Eventlokale Luzern', 'Eventlokale St. Gallen', 'Eventlokale Solothurn', 'Eventlokale Schwyz', 'Eventlokale Thurgau', 'Events im Hotel', 'Events im Schloss'],
             array_column($links, 'label'),
         );
     }
@@ -88,7 +88,7 @@ final class LandingLinksTest extends WebTestCase
             '/eventlokale/bern', ...self::TOP_AFTER_ZH_BE, '/eventlokale/wallis',
             '/eventlokale/hotel', '/eventlokale/schloss',
         ], array_column($links, 'href'));
-        self::assertSame(['Hochzeit Meilen', 'Hochzeit Stäfa'], \array_slice(array_column($links, 'label'), 0, 2));
+        self::assertSame(['Eventlokale Meilen', 'Eventlokale Stäfa'], \array_slice(array_column($links, 'label'), 0, 2));
     }
 
     public function test_a_town_page_links_its_siblings_and_its_canton(): void
@@ -100,7 +100,7 @@ final class LandingLinksTest extends WebTestCase
             '/eventlokale/bern', ...self::TOP_AFTER_ZH_BE, '/eventlokale/wallis',
             '/eventlokale/hotel', '/eventlokale/schloss',
         ], array_column($links, 'href'));
-        self::assertSame(['Hochzeit Stäfa', 'Hochzeit Zürich'], \array_slice(array_column($links, 'label'), 0, 2));
+        self::assertSame(['Eventlokale Stäfa', 'Eventlokale Zürich'], \array_slice(array_column($links, 'label'), 0, 2));
     }
 
     public function test_a_building_page_links_the_cantons_and_the_other_buildings(): void

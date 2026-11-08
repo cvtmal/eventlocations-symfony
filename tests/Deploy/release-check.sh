@@ -108,7 +108,14 @@ check_env_guard() {
         cat "$CHECK/var-output" >&2
         fail "app:prod:check-env named '$names', wanted exactly DATABASE_URL and MAILER_DSN"
     }
-    ok "the env guard runs in the release and names exactly DATABASE_URL and MAILER_DSN"
+    # D27: while an operator fact is a TODO(owner) placeholder, the release's own container refuses it too.
+    wanted="$(grep -c "^    site\.operator_[a-z]*: 'TODO(owner)" config/services.yaml || true)"
+    placeholders="$(grep -c '^site\.operator_[a-z]* in config/services.yaml must be' "$CHECK/var-output" || true)"
+    [ "$placeholders" = "$wanted" ] || {
+        cat "$CHECK/var-output" >&2
+        fail "app:prod:check-env named $placeholders operator placeholders, config/services.yaml holds $wanted (D27)"
+    }
+    ok "the env guard runs in the release and names exactly DATABASE_URL, MAILER_DSN and the $wanted operator placeholders"
 }
 
 boot() {

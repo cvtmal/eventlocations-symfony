@@ -160,7 +160,7 @@ final class MoreFilterTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale');
 
-        self::assertSame(['Infrastruktur'], $crawler->filter('#filter-more legend')->each(static fn (Crawler $legend): string => $legend->text()));
+        self::assertSame(['Räume und Infrastruktur'], $crawler->filter('#filter-more legend')->each(static fn (Crawler $legend): string => $legend->text()));
         self::assertCount(2, $crawler->filter('.filter-more__group'), 'A rule never stands alone: Name and one group.');
     }
 
@@ -228,7 +228,7 @@ final class MoreFilterTest extends WebTestCase
         self::assertSame(['cafe'], $crawler->filter('#filter-more details input[name="building[]"]')->each(static fn (Crawler $input): string => (string) $input->attr('value')));
         self::assertCount(0, $crawler->filter('#filter-more details[open]'));
         self::assertCount(2, $crawler->filter('#filter-more summary svg'));
-        self::assertSame(['Alle Gebäudearten', 'Gebäudearten schliessen'], $crawler->filter('#filter-more summary span')->each(static fn (Crawler $text): string => $text->text()));
+        self::assertSame(['Alle Location-Arten', 'Location-Arten schliessen'], $crawler->filter('#filter-more summary span')->each(static fn (Crawler $text): string => $text->text()));
     }
 
     public function test_an_active_building_opens_the_expander(): void
@@ -247,7 +247,7 @@ final class MoreFilterTest extends WebTestCase
         $crawler = $this->get('/eventlokale');
 
         self::assertCount(2, $crawler->filter('.filter-more__group--location .filter-more__tiles'));
-        self::assertCount(6, $crawler->filter('.filter-more__group--properties .filter-more__chips'), 'Catering, Technik, Infrastruktur, Mobiliar, Umgebung, Ausstattung.');
+        self::assertCount(6, $crawler->filter('.filter-more__group--properties .filter-more__chips'), 'Catering, Technik, Räume und Infrastruktur, Mobiliar, Rund um die Location, Ausstattung.');
     }
 
     public function test_the_pill_counts_params_and_replaces_the_trigger(): void
@@ -313,7 +313,7 @@ final class MoreFilterTest extends WebTestCase
         $crawler = $this->get('/eventlokale');
 
         self::assertSame(
-            ['Lage', 'Erreichbarkeit', 'Gebäudeart', 'Catering', 'Technik', 'Infrastruktur', 'Mobiliar', 'Umgebung', 'Ausstattung', 'Raumangebot'],
+            ['Lage', 'Erreichbarkeit', 'Art der Location', 'Catering', 'Technik', 'Räume und Infrastruktur', 'Mobiliar', 'Rund um die Location', 'Ausstattung', 'Raumangebot'],
             $crawler->filter('#filter-more legend')->each(static fn (Crawler $legend): string => $legend->text()),
         );
         self::assertSame('Wähle weitere Filter und Möglichkeiten', $crawler->filter('#filter-more-title')->text());

@@ -1,15 +1,15 @@
 # Strings of the Seo module. Keys: <context>.<description>.
 # {site} is supplied by Seo\TitleChain and ListingMeta; titles stay ≤ 60 characters, descriptions ≤ 155.
 listing:
-    title: 'Hochzeitslocations in der Schweiz | {site}'
-    title_page: 'Hochzeitslocations Schweiz – Seite {page} | {site}'
-    title_page_bare: 'Hochzeitslocations Schweiz – Seite {page}'
-    description: 'Hochzeitslocations in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste und Lage aller Locations auf einen Blick.'
-    description_page: 'Hochzeitslocations in der Schweiz, Seite {page}: Fotos, Platz für Gäste und Lage aller Locations auf einen Blick.'
+    title: 'Eventlokale in der Schweiz | {site}'
+    title_page: 'Eventlokale Schweiz – Seite {page} | {site}'
+    title_page_bare: 'Eventlokale Schweiz – Seite {page}'
+    description: 'Eventlokale in der ganzen Schweiz vergleichen: Fotos, Platz für Gäste und Lage für Firmenanlass, Seminar, Apéro und Feier.'
+    description_page: 'Eventlokale in der Schweiz, Seite {page}: Fotos, Platz für Gäste und Lage aller Locations auf einen Blick.'
 home:
-    title: 'Hochzeitslocations in der Schweiz finden | {site}'
-    title_short: 'Hochzeitslocations Schweiz finden | {site}'
-    description: 'Finde die passende Hochzeitslocation in der Schweiz: nach Region, Location-Art und Gästezahl suchen und direkt bei der Location anfragen.'
+    title: 'Eventlokale in der Schweiz finden | {site}'
+    title_short: 'Eventlokale Schweiz finden | {site}'
+    description: 'Finde das passende Eventlokal in der Schweiz: nach Region, Anlass und Gästezahl suchen und direkt bei der Location anfragen.'
 # Landing pages (#17, F8), first fit wins (TitleChain), the h1 cut as the last resort:
 # canton, town, event and event_canton title_count, title, title_short, title_name, numbered title_page,
 # title_page_short, title_page_bare; building title_count, title, numbered title_page, title_page_bare.
@@ -60,7 +60,7 @@ landing:
         description: 'Eventlokale für {event} {canton_code, select, li {in} other {im Kanton}} {canton}: {count, plural, one {# Location} other {# Locations}} mit Fotos, Platz für Gäste und Lage im Vergleich.'
 # /llms.txt and the venues' Markdown views (seo-llms-txt). Numbers arrive pre-formatted ({formatted}, {count} in capacity).
 llms:
-    summary: 'Hochzeitslocations in der ganzen Schweiz: Schlösser, Scheunen, Restaurants und Locations am See mit Platz für Gäste, Lage und Ausstattung.'
+    summary: 'Eventlokale in der ganzen Schweiz für Firmenanlässe, Seminare, Apéros, Weihnachtsfeiern und private Feiern, mit Platz für Gäste, Lage und Ausstattung.'
     about: 'Alle Inhalte sind auf Deutsch. Zu jeder Location gibt es neben ihrer Seite eine Markdown-Fassung; die Links unter «Locations» führen dorthin. Anfragen gehen über das Formular auf der Seite der Location.'
     filters: 'Die Übersicht lässt sich über Parameter filtern, zum Beispiel nach der Zahl der Gäste:'
     section:
@@ -72,8 +72,8 @@ llms:
         venues: Locations
         optional: Optional
     home: Startseite
-    home_note: 'Suche nach Region, Location-Art und Gästezahl'
-    listing: Alle Hochzeitslocations
+    home_note: 'Suche nach Region, Anlass und Gästezahl'
+    listing: Alle Eventlokale
     listing_note: 'Übersicht aller Locations mit Filtern nach Kanton, Ort, Umkreis, Gästezahl, Lage, Ausstattung und Preis'
     landing_note: '{count, plural, one {1 Location} other {{formatted} Locations}}'
     capacity: 'bis {count} Personen'
@@ -89,21 +89,21 @@ venue:
     title_name: '{name} | {site}'
     canton_area: '{canton_code, select, li {} other {Kanton }}{canton}'
 breadcrumb:
-    listing: Hochzeitslocations
+    listing: Eventlokale
     canton: '{canton_code, select, li {} other {Kanton }}{canton}'
 footer:
-    cantons_title: Hochzeitslocations nach Kanton
+    cantons_title: Eventlokale nach Kanton
 error:
     not_found:
         title: Seite nicht gefunden
         heading: Diese Seite gibt es nicht
-        text: Der Link stimmt nicht mehr oder die Seite ist umgezogen. In der Übersicht findest du alle Hochzeitslocations.
+        text: Der Link stimmt nicht mehr oder die Seite ist umgezogen. In der Übersicht findest du alle Eventlokale.
     gone:
         title: Location nicht mehr verfügbar
         heading: Diese Location ist nicht mehr dabei
-        text: Die Location ist bei uns nicht mehr aufgeführt. In der Übersicht findest du alle anderen Hochzeitslocations.
+        text: Die Location ist bei uns nicht mehr aufgeführt. In der Übersicht findest du alle anderen Eventlokale.
     server:
         title: Fehler
         heading: Da ist etwas schiefgelaufen
         text: Die Seite lässt sich gerade nicht anzeigen. Bitte versuch es in ein paar Minuten noch einmal.
-    to_listing: Alle Hochzeitslocations
+    to_listing: Alle Eventlokale

@@ -348,7 +348,7 @@ final class SubmissionReviewTest extends WebTestCase
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
         self::assertEmailAddressContains($mail, 'To', 'petra@example.ch');
-        self::assertEmailHeaderSame($mail, 'Subject', 'Deine Location Seehaus');
+        self::assertEmailHeaderSame($mail, 'Subject', 'Seehaus ist noch nicht online: bitte Angaben anpassen');
         self::assertEmailHtmlBodyContains($mail, self::REASON);
         self::assertEmailHtmlBodyContains($mail, '/konto/locations/'.$venue->number().'/einrichten/pruefen');
 

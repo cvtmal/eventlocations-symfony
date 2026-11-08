@@ -208,7 +208,7 @@ final class EventFactsFilterTest extends WebTestCase
         self::assertCount(3, $groups);
         self::assertCount(1, $groups->eq(0)->filter('#filter-more-q'));
         self::assertSame(['Lage'], $this->legends($groups->eq(1)));
-        self::assertSame(['Catering', 'Technik', 'Infrastruktur', 'Ausstattung'], $this->legends($groups->eq(2)));
+        self::assertSame(['Catering', 'Technik', 'Räume und Infrastruktur', 'Ausstattung'], $this->legends($groups->eq(2)));
         self::assertCount(1, $crawler->filter('.filter-more__group--properties'));
     }
 

@@ -63,7 +63,7 @@ final class ListingControllerTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale');
 
-        self::assertSelectorTextSame('h1', 'Hochzeitslocations in der Schweiz');
+        self::assertSelectorTextSame('h1', 'Eventlokale in der Schweiz');
         self::assertSelectorExists('section.listing-hero[aria-labelledby="listing-title"] h1#listing-title', 'The hero renders before <main>, so its name makes it the landmark that holds the h1 (axe region).');
         self::assertSelectorTextSame('.listing-hero__count', '3 Resultate');
         self::assertCount(3, $crawler->filter('.card'));
@@ -540,7 +540,7 @@ final class ListingControllerTest extends WebTestCase
 
         self::assertSelectorTextSame('.related__title', 'Andere suchten auch nach');
         $links = $crawler->filter('.related__list a');
-        self::assertSame(['Hochzeit Zürich', 'Hochzeit Bern'], $links->each(static fn (Crawler $a): string => $a->text()), 'Most venues first; Luzern is under the threshold of 5.');
+        self::assertSame(['Eventlokale Zürich', 'Eventlokale Bern'], $links->each(static fn (Crawler $a): string => $a->text()), 'Most venues first; Luzern is under the threshold of 5.');
         self::assertSame('/eventlokale/zuerich', $links->first()->attr('href'));
     }
 
@@ -559,7 +559,7 @@ final class ListingControllerTest extends WebTestCase
 
         $crawler = $this->get('/eventlokale');
 
-        self::assertSame('Hochzeitslocations in der Schweiz | deine-eventlocation.ch', $crawler->filter('title')->text());
+        self::assertSame('Eventlokale in der Schweiz | deine-eventlocation.ch', $crawler->filter('title')->text());
         $description = (string) $crawler->filter('meta[name="description"]')->attr('content');
         self::assertNotSame('', $description);
         self::assertLessThanOrEqual(155, mb_strlen($description));

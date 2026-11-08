@@ -49,14 +49,14 @@ final class LlmsTxtTest extends WebTestCase
         $body = $this->llmsTxt();
 
         self::assertSame('text/plain; charset=UTF-8', $this->client->getResponse()->headers->get('Content-Type'));
-        self::assertStringStartsWith("# deine-eventlocation.ch\n\n> Hochzeitslocations in der ganzen Schweiz", $body);
+        self::assertStringStartsWith("# deine-eventlocation.ch\n\n> Eventlokale in der ganzen Schweiz", $body);
         self::assertStringEndsWith("](http://localhost/datenschutz)\n", $body);
         self::assertSame(
             ['## Suche', '## Kantone', '## Orte', '## Location-Arten', '## Locations', '## Optional'],
             array_values(preg_grep('/^## /', explode("\n", $body)) ?: []),
         );
         self::assertStringContainsString("\n- [Startseite](http://localhost/): ", $body);
-        self::assertStringContainsString("\n- [Alle Hochzeitslocations](http://localhost/eventlokale): ", $body);
+        self::assertStringContainsString("\n- [Alle Eventlokale](http://localhost/eventlokale): ", $body);
         self::assertStringContainsString("\n- [Eventlokale im Kanton Zürich](http://localhost/eventlokale/zuerich): 11 Locations\n", $body);
         self::assertStringContainsString('](http://localhost/eventlokale/zuerich/'.$data['town'].'): 5 Locations', $body);
         self::assertStringContainsString('](http://localhost/eventlokale/'.$data['building'].'): 6 Locations', $body);
