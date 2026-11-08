@@ -148,3 +148,9 @@ An Infomaniak VPS (D26: Debian 13, nginx, php-fpm 8.5 as the `deploy` user), Neo
 ## Videos (G15 `video-embed`)
 
 - `frame-src` of the site policy and of `GOOGLE_PLACES_POLICY` adds `https://www.youtube-nocookie.com https://player.vimeo.com` (the near-me policy keeps Google alone); the five literal copies in tests follow. The Datenschutz page has the section «Videos von YouTube und Vimeo» (quotes `detail.videos.load`/`open`, pinned by `LegalPagesTest`), Google's processor line names YouTube and `site.processors` lists `vimeo` (Vimeo.com, Inc., USA; a `TODO owner` comment asks to check both controllers before go-live).
+
+## G14 `last-minute-offers` (current state)
+
+- New public route `last_minute` (`/kurzfristig-frei`, `PublicCache::listing`, in `PublicCacheHeadersTest`, walked by the no-session test).
+- `bin/cron-daily` step `last-minute-expire` (`app:last-minute:expire`) after `subscriptions-remind`; Sentry: covered by the `cron-daily` monitor (no own monitor); idempotent; runbook rows in `docs/operations.md` Cron.
+- The detail page has an HTML budget now (`DetailHtmlBudgetTest`, group `budget`, §4a.9).

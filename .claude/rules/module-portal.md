@@ -118,3 +118,8 @@ The submit step shows the declaration (`rights_declaration()`, open) and an opti
 ## Videos (G15 `video-embed`)
 
 - `Controller\LocationVideosController`: `/konto/locations/{n}/videos` (+ `_up`, `_down`, `_remove`, token `portal_video`), `#[IsGranted(PortalVenueVoter::EDIT)]`, so G6's freeze applies through the voter. Staff's `Cms\VenueVideoPages` inside the location layout, plan card in the aside (`ProRequestController::BACK_ROUTES` includes the tab); tab «Videos» in `_layout.html.twig`. `LocationPlan` carries `videosUsed` and `videosMax` (row «Videos x von y»).
+
+## «Kurzfristig frei» (G14 `last-minute-offers`, D55)
+
+- **Tab** «Kurzfristig frei»: `portal_location_last_minute` (`/konto/locations/{number}/kurzfristig-frei`, GET|POST, `PortalVenueVoter::EDIT`), end `portal_location_last_minute_end` (POST, CSRF `portal_last_minute`). `Form\LastMinuteOfferType` + `LastMinuteOfferData`, rooms and event types from `LastMinuteOffersQuery::choices()`. Free sees «Kurzfristig-frei-Angebote gibt es mit Pro.» and «Pro anfragen» (`ProRequestController::BACK_ROUTES`), a POST answers 422; a hidden offer reads «Verborgen: nur mit Pro sichtbar». Plan card line «Kurzfristig frei: ja/nein» (`LocationPlan::$lastMinuteAllowed`).
+- **Mail** «Dein Angebot «Kurzfristig frei» für {venue} ist abgelaufen»: `EventListener\LastMinuteExpiredMailListener` → `PortalMailer::sendLastMinuteExpired()` (`portal/email/last_minute_expired`), one per expired offer to each active manager (`VenueManagersQuery::mailRecipients()`, no inquiry-address fallback), only while the venue keeps the entitlement; button to the tab (login required); service mail, no opt-out. No signed link (D55): saving always needs a `/konto` session.
