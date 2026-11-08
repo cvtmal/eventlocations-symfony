@@ -112,7 +112,7 @@ final class ModerationCaseSchemaTest extends KernelTestCase
         yield 'decided remove without a note' => [[$update("status = 'decided', decision = 'remove', decided_at = now(), decided_by = 's-1'")]];
         yield 'every kind' => [[$update("kind = 'rights'"), $update("kind = 'removal'"), $update("kind = 'correction'")]];
         yield 'the home page as source' => [[$update("source_url = '/'")]];
-        yield 'a detail page with a query as source' => [[$update("source_url = '/hochzeitslocation/testhaus?x=1'")]];
+        yield 'a detail page with a query as source' => [[$update("source_url = '/eventlokal/testhaus?x=1'")]];
         yield 'neither a venue nor a reference (the venue was deleted)' => [["UPDATE moderation_cases SET venue_id = NULL WHERE id = '{case}'"]];
         yield 'the same photo in two cases' => [["INSERT INTO moderation_case_photos (id, case_id, venue_photo_id, original_path) VALUES ('{missing}', '{case2}', '{photo}', 'demo/a.jpg')"]];
         yield 'two links of removed photos in one case' => [[

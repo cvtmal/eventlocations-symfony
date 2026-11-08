@@ -160,7 +160,7 @@ final class VenueCommandAuditTest extends TestCase
      */
     public static function moderationCommands(): iterable
     {
-        yield 'report content about a venue' => [new ReportContent(self::CASE, ModerationKind::Rights, self::NUMBER, null, ['0199a1b2-0000-7000-8000-000000000001'], 'Geheime Person', 'geheim@beispiel.ch', 'GEHEIMTEXT', '/hochzeitslocation/geheim')];
+        yield 'report content about a venue' => [new ReportContent(self::CASE, ModerationKind::Rights, self::NUMBER, null, ['0199a1b2-0000-7000-8000-000000000001'], 'Geheime Person', 'geheim@beispiel.ch', 'GEHEIMTEXT', '/eventlokal/geheim')];
         yield 'report content without a venue' => [new ReportContent(self::CASE, ModerationKind::Correction, null, 'Geheimregion', [], 'Geheime Person', 'geheim@beispiel.ch', 'GEHEIMTEXT', null)];
         yield 'take the entry offline' => [new TakeEntryOffline(self::CASE, self::ADMIN)];
         yield 'decide' => [new DecideModerationCase(self::CASE, ModerationDecision::Remove, 'GEHEIMTEXT', self::ADMIN)];
@@ -178,7 +178,7 @@ final class VenueCommandAuditTest extends TestCase
     {
         $summary = json_encode($command->auditSummary(), \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
 
-        foreach ([...self::SECRETS, '/hochzeitslocation/geheim'] as $secret) {
+        foreach ([...self::SECRETS, '/eventlokal/geheim'] as $secret) {
             self::assertStringNotContainsString($secret, $summary);
         }
     }
