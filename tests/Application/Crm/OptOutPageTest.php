@@ -46,6 +46,10 @@ final class OptOutPageTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame('Keine Mails und Briefe mehr von uns?', trim($crawler->filter('h1')->text()));
+        $text = $crawler->filter('.error-page__text')->text();
+        // Staff stop writing to anyone at the Location; system mails (inquiries, the Pro reminder) carry on (PO, G11).
+        self::assertStringContainsString('Ab jetzt schreibt unser Team niemandem bei dieser Location mehr E-Mails. Automatische E-Mails zu einem Konto oder einem bestehenden Vertrag, zum Beispiel Anfragen für die Location oder die Erinnerung vor Ablauf eines Pro-Eintrags, kommen weiterhin.', $text);
+        self::assertStringNotContainsString('laufenden Vertrag bekommst du', $text);
         self::assertCount(1, $crawler->filter('form[method="post"][action="'.$this->url($company).'"] button[type="submit"]'));
         self::assertSame(0, $this->rows('suppressions'));
         $this->assertPrivate();

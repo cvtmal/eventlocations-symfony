@@ -4,6 +4,12 @@
     gap: var(--a-space-4);
 }
 
+// Eleven columns: the step names wrap so the funnel fits a 1440 px screen without scrolling.
+.table--list.crm-outreach__funnel thead th {
+    white-space: normal;
+    vertical-align: bottom;
+}
+
 .table--list td.crm-outreach__actions {
     display: flex;
     flex-wrap: wrap;
