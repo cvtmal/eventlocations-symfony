@@ -10,7 +10,7 @@ MAILTO=__OPS_MAIL__
 # Every 5 minutes, offset by 2 from the clear above and serialised with it by a lock (#19 n2):
 # empty the cache only when it is over its size or file limit.
 2-59/5 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-cache-guard
-# 03:15: inquiry purge, CRM stages and renewal tasks, stuck-inquiry report, stats ingest, pool prune, sweeps.
+# 03:15: inquiry purge, complainant erasure (D36), CRM stages and renewal tasks, stuck-inquiry report, stats ingest, pool prune, sweeps.
 15 3 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-daily
 # 04:30 (F15b): the media originals to Object Storage with restic, encrypted; an unchanged night copies nothing.
 30 4 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-media-backup

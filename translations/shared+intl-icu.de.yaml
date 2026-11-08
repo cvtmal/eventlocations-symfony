@@ -17,7 +17,7 @@ legal:
         page_title: Datenschutz | deine-eventlocation.ch
         meta_description: Welche Daten deine-eventlocation.ch bearbeitet, wofür, wie lange und welche Rechte du hast.
         # TODO owner: review the whole text before go-live (T7). Draft, not legal advice.
-        updated: 'Stand: Oktober 2026'
+        updated: 'Stand: November 2026'
         intro: Hier steht, welche Personendaten wir bearbeiten, wofür und wie lange. Du kannst die Website ohne Konto nutzen. Wir setzen keine Analyse- oder Werbedienste ein, und die Schriften liefern wir selbst aus.
         controller:
             title: Verantwortliche Stelle
@@ -34,6 +34,14 @@ legal:
             data: 'Wenn du für eine Location arbeitest, bearbeiten wir deine geschäftlichen Kontaktdaten: Name, Rolle, E-Mail-Adresse, Telefonnummer und deine Location. Dazu kommen unsere Notizen zur Zusammenarbeit mit deiner Location.'
             purpose: Wir nutzen sie, um die Zusammenarbeit mit den Locations zu pflegen. Diese Daten sind nur in unserem internen Bereich sichtbar und liegen in derselben Datenbank wie die Anfragen.
             retention: Wir speichern sie, solange wir sie für die Zusammenarbeit brauchen. Verlangst du die Löschung, löschen wir sie früher.
+        report:
+            # G2 takedown-form-finish: the PO's text, word for word. The three years are
+            # EraseModerationComplainants::RETENTION_YEARS (app:venues:erase-complainants, nightly in bin/cron-daily); the two hours are the content_report limiter's
+            # hashed key (ClientIpKey; a 1-hour sliding window keeps its state for two windows).
+            title: Meldungen zu Inhalten
+            data: 'Über das Formular «Inhalt melden» kannst du uns ein Foto, einen Eintrag oder falsche Angaben melden, zum Beispiel wenn ein Foto ohne Erlaubnis gezeigt wird. Dafür bearbeiten wir deinen Namen, deine E-Mail-Adresse, deine Nachricht, die Seite, von der aus du meldest, und deine Bestätigung, dass du in gutem Glauben meldest. Mit deiner Meldung speichern wir deine IP-Adresse nicht. Zum Schutz vor Missbrauch halten wir höchstens zwei Stunden lang einen Prüfwert fest, aus dem sich deine IP-Adresse nicht zurückrechnen lässt.'
+            process: 'Du erhältst eine Eingangsbestätigung per E-Mail. Ein gemeldetes Foto blenden wir aus, bis wir entschieden haben. Wir prüfen die Meldung, entfernen den Inhalt oder lassen ihn stehen und melden uns bei Bedarf bei dir. Deinen Namen und deine E-Mail-Adresse geben wir nicht an die Location weiter, ausser du bist damit einverstanden.'
+            retention: 'Wir bewahren eine Meldung auf, solange wir sie bearbeiten, und danach höchstens drei Jahre ab unserem Entscheid, damit wir bei einem Streit über Bildrechte belegen können, was wir wann getan haben. Danach löschen wir deinen Namen, deine E-Mail-Adresse und deine Nachricht.'
         merkliste:
             title: Merkliste und Cookie
             text: 'Die Merkliste funktioniert ohne Konto. Dafür setzen wir ein einziges Cookie mit dem Namen «merkliste». Es merkt sich, welche Locations du gespeichert hast. Es ist für diese Funktion nötig, darum fragen wir nicht nach deiner Einwilligung.'

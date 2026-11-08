@@ -8,6 +8,7 @@ use App\Favorites\ValueObject\MerklisteCookie;
 use App\Shared\Controller\LegalController;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\Command\EraseModerationComplainants;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -69,6 +70,7 @@ final class LegalPagesTest extends WebTestCase
             'Verantwortliche Stelle',
             'Anfragen an eine Location',
             'Kontakte von Locations',
+            'Meldungen zu Inhalten',
             'Merkliste und Cookie',
             'Statistik',
             'Schutz vor Missbrauch',
@@ -136,6 +138,22 @@ final class LegalPagesTest extends WebTestCase
         self::assertSame(12, $months);
 
         self::assertStringContainsString('löschen sie 12 Monate nach dem Eingang', $this->page('/datenschutz')->filter('main')->text());
+    }
+
+    public function test_the_datenschutz_page_explains_content_reports_word_for_word(): void
+    {
+        self::assertSame(3, EraseModerationComplainants::RETENTION_YEARS);
+
+        $section = $this->page('/datenschutz')->filter('main section')->reduce(
+            static fn (Crawler $section): bool => 'Meldungen zu Inhalten' === $section->filter('h2')->text(),
+        );
+
+        self::assertCount(1, $section);
+        self::assertSame([
+            'Über das Formular «Inhalt melden» kannst du uns ein Foto, einen Eintrag oder falsche Angaben melden, zum Beispiel wenn ein Foto ohne Erlaubnis gezeigt wird. Dafür bearbeiten wir deinen Namen, deine E-Mail-Adresse, deine Nachricht, die Seite, von der aus du meldest, und deine Bestätigung, dass du in gutem Glauben meldest. Mit deiner Meldung speichern wir deine IP-Adresse nicht. Zum Schutz vor Missbrauch halten wir höchstens zwei Stunden lang einen Prüfwert fest, aus dem sich deine IP-Adresse nicht zurückrechnen lässt.',
+            'Du erhältst eine Eingangsbestätigung per E-Mail. Ein gemeldetes Foto blenden wir aus, bis wir entschieden haben. Wir prüfen die Meldung, entfernen den Inhalt oder lassen ihn stehen und melden uns bei Bedarf bei dir. Deinen Namen und deine E-Mail-Adresse geben wir nicht an die Location weiter, ausser du bist damit einverstanden.',
+            'Wir bewahren eine Meldung auf, solange wir sie bearbeiten, und danach höchstens drei Jahre ab unserem Entscheid, damit wir bei einem Streit über Bildrechte belegen können, was wir wann getan haben. Danach löschen wir deinen Namen, deine E-Mail-Adresse und deine Nachricht.',
+        ], $section->filter('p')->each(static fn (Crawler $p): string => $p->text()));
     }
 
     public function test_the_cookie_lifetime_is_the_merkliste_cookie_s_and_says_up_to(): void

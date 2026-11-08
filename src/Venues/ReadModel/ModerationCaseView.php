@@ -11,6 +11,7 @@ use App\Venues\ValueObject\ModerationStatus;
 /**
  * Everything staff and the two mails need of one complaint (G2). The venue fields are null when the case names no
  * venue of the site; `venuePublished` is the venue's status now. `decidedBy` is the admin user's id.
+ * Name, e-mail address and message are null once D36's retention erased them (`complainantErasedAt`).
  */
 final readonly class ModerationCaseView
 {
@@ -25,9 +26,10 @@ final readonly class ModerationCaseView
         public ?string $venueName,
         public bool $venuePublished,
         public ?string $venueReference,
-        public string $complainantName,
-        public string $complainantEmail,
-        public string $message,
+        public ?string $complainantName,
+        public ?string $complainantEmail,
+        public ?string $message,
+        public ?\DateTimeImmutable $complainantErasedAt,
         public \DateTimeImmutable $goodFaithAt,
         public ?string $sourceUrl,
         public \DateTimeImmutable $createdAt,

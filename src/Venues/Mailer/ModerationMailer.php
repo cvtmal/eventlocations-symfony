@@ -39,8 +39,15 @@ final class ModerationMailer
     ) {
     }
 
+    /**
+     * Both mails go right after the report; a case whose complainant D36 erased has no one to write to or to name.
+     */
     public function sendReceipt(ModerationCaseView $case): bool
     {
+        if (null === $case->complainantEmail) {
+            return false;
+        }
+
         return $this->send($case, (new TemplatedEmail())
             ->to($case->complainantEmail)
             ->replyTo($this->contactEmail)
@@ -55,6 +62,10 @@ final class ModerationMailer
      */
     public function sendNotice(ModerationCaseView $case, bool $holdLimitReached = false): bool
     {
+        if (null === $case->complainantEmail) {
+            return false;
+        }
+
         return $this->send($case, (new TemplatedEmail())
             ->to($this->contactEmail)
             ->replyTo($case->complainantEmail)

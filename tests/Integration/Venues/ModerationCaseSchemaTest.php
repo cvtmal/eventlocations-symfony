@@ -95,6 +95,11 @@ final class ModerationCaseSchemaTest extends KernelTestCase
         yield 'a source on another host' => ['chk_moderation_cases_source_url', [$update("source_url = '//evil.example/x'")]];
         yield 'a source that is a full URL' => ['chk_moderation_cases_source_url', [$update("source_url = 'https://evil.example/x'")]];
         yield 'a source with a backslash' => ['chk_moderation_cases_source_url', [$update("source_url = '/\\evil.example'")]];
+        $decided = "status = 'decided', decision = 'keep', decided_at = now(), decided_by = 's-1'";
+        yield 'a name erased without the time (D36)' => ['chk_moderation_cases_erased', [$update("{$decided}, complainant_name = NULL")]];
+        yield 'an erasure that keeps the message' => ['chk_moderation_cases_erased', [$update("{$decided}, complainant_name = NULL, complainant_email = NULL, complainant_erased_at = now()")]];
+        yield 'an erasure time beside a stored complainant' => ['chk_moderation_cases_erased', [$update("{$decided}, complainant_erased_at = now()")]];
+        yield 'an open case erased' => ['chk_moderation_cases_erased', [$update('complainant_name = NULL, complainant_email = NULL, message = NULL, complainant_erased_at = now()')]];
         yield 'link id taken' => ['pk_moderation_case_photos', ["INSERT INTO moderation_case_photos (id, case_id, venue_photo_id, original_path) VALUES ('{link}', '{case2}', NULL, 'demo/x.jpg')"]];
         yield 'link of an unknown case' => ['fk_moderation_case_photos_case_id', ["INSERT INTO moderation_case_photos (id, case_id, venue_photo_id, original_path) VALUES ('{missing}', '{missing}', NULL, 'demo/x.jpg')"]];
         yield 'link of an unknown photo' => ['fk_moderation_case_photos_venue_photo_id', ["INSERT INTO moderation_case_photos (id, case_id, venue_photo_id, original_path) VALUES ('{missing}', '{case}', '{missing}', 'demo/x.jpg')"]];
@@ -120,6 +125,7 @@ final class ModerationCaseSchemaTest extends KernelTestCase
             "INSERT INTO moderation_case_photos (id, case_id, venue_photo_id, original_path) VALUES ('019a0000-0000-7000-8000-000000000998', '{case}', NULL, 'demo/a.jpg')",
         ]];
         yield 'took the entry offline' => [[$update('took_entry_offline = TRUE')]];
+        yield 'a decided case erased (D36)' => [[$update("status = 'decided', decision = 'keep', decided_at = now(), decided_by = 's-1', complainant_name = NULL, complainant_email = NULL, message = NULL, complainant_erased_at = now()")]];
     }
 
     /**
@@ -163,7 +169,7 @@ final class ModerationCaseSchemaTest extends KernelTestCase
         $names = array_values(array_unique([...$constraints, ...$uniqueIndexes]));
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
-        self::assertCount(13, $names, 'two primary keys, three foreign keys, seven checks and the unique photo per case');
+        self::assertCount(14, $names, 'two primary keys, three foreign keys, eight checks (D36 added the erasure) and the unique photo per case');
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }

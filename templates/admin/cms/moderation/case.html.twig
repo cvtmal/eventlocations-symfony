@@ -45,17 +45,25 @@
                             {%- endif -%}
                         </span>
                     </div>
-                    {{ include('admin/components/_property.html.twig', {label: 'moderation.column.complainant'|trans({}, 'cms'), value: case.complainantName}, with_context = false) }}
-                    <div class="property">
-                        <div class="property__head"><span class="property__label">{{ 'moderation.case.email'|trans({}, 'cms') }}</span></div>
-                        <span class="property__value"><a href="mailto:{{ case.complainantEmail }}">{{ case.complainantEmail }}</a></span>
-                    </div>
+                    {% if case.complainantErasedAt is null %}
+                        {{ include('admin/components/_property.html.twig', {label: 'moderation.column.complainant'|trans({}, 'cms'), value: case.complainantName}, with_context = false) }}
+                        <div class="property">
+                            <div class="property__head"><span class="property__label">{{ 'moderation.case.email'|trans({}, 'cms') }}</span></div>
+                            <span class="property__value"><a href="mailto:{{ case.complainantEmail }}">{{ case.complainantEmail }}</a></span>
+                        </div>
+                    {% else %}
+                        {{ include('admin/components/_property.html.twig', {label: 'moderation.column.complainant'|trans({}, 'cms'), value: 'moderation.case.erased_at'|trans({date: case.complainantErasedAt|swiss_date}, 'cms')}, with_context = false) }}
+                    {% endif %}
                     {{ include('admin/components/_property.html.twig', {label: 'moderation.case.source'|trans({}, 'cms'), value: case.sourceUrl ?? 'moderation.case.none'|trans({}, 'cms')}, with_context = false) }}
                     {{ include('admin/components/_property.html.twig', {label: 'moderation.case.good_faith'|trans({}, 'cms'), value: 'moderation.case.good_faith_at'|trans({date: case.goodFaithAt|swiss_date}, 'cms')}, with_context = false) }}
                 </div>
                 <h3 class="moderation__subheading">{{ 'moderation.case.message'|trans({}, 'cms') }}</h3>
-                <p class="moderation__message">{{ case.message }}</p>
-                <p class="muted moderation__reply">{{ 'moderation.case.reply'|trans({}, 'cms') }} <a href="mailto:{{ case.complainantEmail }}">{{ 'moderation.case.reply_link'|trans({}, 'cms') }}</a></p>
+                {% if case.complainantErasedAt is null %}
+                    <p class="moderation__message">{{ case.message }}</p>
+                    <p class="muted moderation__reply">{{ 'moderation.case.reply'|trans({}, 'cms') }} <a href="mailto:{{ case.complainantEmail }}">{{ 'moderation.case.reply_link'|trans({}, 'cms') }}</a></p>
+                {% else %}
+                    <p class="muted">{{ 'moderation.case.erased'|trans({}, 'cms') }}</p>
+                {% endif %}
             {% endblock %}
         {% endembed %}
 

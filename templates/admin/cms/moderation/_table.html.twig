@@ -29,7 +29,7 @@
                             <span class="muted">{{ row.venueReference ?? 'moderation.no_venue'|trans({}, 'cms') }}</span>
                         {%- endif -%}
                     </td>
-                    <td>{{ row.complainantName }}</td>
+                    <td>{% if row.complainantName is null %}<span class="muted">{{ 'moderation.erased'|trans({}, 'cms') }}</span>{% else %}{{ row.complainantName }}{% endif %}</td>
                     <td>{{ row.heldPhotos|swiss_number }}</td>
                     <td>
                         {%- if row.isOpen() -%}

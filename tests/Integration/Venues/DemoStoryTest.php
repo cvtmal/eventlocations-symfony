@@ -114,7 +114,7 @@ final class DemoStoryTest extends KernelTestCase
 
         $this->story()->build();
         self::assertSame(DemoStory::VENUES, $this->rows('SELECT count(*) FROM venues'));
-        self::assertSame(3, $this->rows('SELECT count(*) FROM moderation_cases'), 'a second build adds no complaint');
+        self::assertSame(4, $this->rows('SELECT count(*) FROM moderation_cases'), 'a second build adds no complaint');
     }
 
     public function test_refuses_to_load_without_towns(): void
@@ -202,19 +202,22 @@ final class DemoStoryTest extends KernelTestCase
     }
 
     /**
-     * G2: an open rights complaint holding one photo, a decided `keep`, and an open correction without a venue.
+     * G2: an open rights complaint holding one photo, a decided `keep`, an open correction without a venue, and a
+     * correction decided over three years ago whose complainant D36 erased.
      */
     private function assertModerationCases(): void
     {
         self::assertSame(
             [
-                ['kind' => 'correction', 'status' => 'open', 'decision' => null, 'has_venue' => false, 'photos' => 0],
-                ['kind' => 'rights', 'status' => 'decided', 'decision' => 'keep', 'has_venue' => true, 'photos' => 1],
-                ['kind' => 'rights', 'status' => 'open', 'decision' => null, 'has_venue' => true, 'photos' => 1],
+                ['kind' => 'correction', 'status' => 'decided', 'decision' => 'keep', 'has_venue' => true, 'photos' => 0, 'erased' => true],
+                ['kind' => 'correction', 'status' => 'open', 'decision' => null, 'has_venue' => false, 'photos' => 0, 'erased' => false],
+                ['kind' => 'rights', 'status' => 'decided', 'decision' => 'keep', 'has_venue' => true, 'photos' => 1, 'erased' => false],
+                ['kind' => 'rights', 'status' => 'open', 'decision' => null, 'has_venue' => true, 'photos' => 1, 'erased' => false],
             ],
             $this->connection->fetchAllAssociative(<<<'SQL'
                 SELECT c.kind, c.status, c.decision, c.venue_id IS NOT NULL AS has_venue,
-                    (SELECT count(*) FROM moderation_case_photos p WHERE p.case_id = c.id AND p.venue_photo_id IS NOT NULL) AS photos
+                    (SELECT count(*) FROM moderation_case_photos p WHERE p.case_id = c.id AND p.venue_photo_id IS NOT NULL) AS photos,
+                    c.complainant_erased_at IS NOT NULL AS erased
                 FROM moderation_cases c
                 ORDER BY c.kind, c.status
                 SQL),
