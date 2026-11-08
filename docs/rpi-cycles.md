@@ -770,6 +770,8 @@ The PRDs describe a product that is mostly ours already (free listing, paid tier
 | D36 | **Content reports are kept at most three years after the decision** (evidence in a rights dispute); then the complainant's name, e-mail and message are deleted by a nightly job. The `/datenschutz` paragraph on reports is the PO's text, in `takedown-form-finish`. | G2 |
 | D37 | **A competing claim freezes the entry for every manager**, taking it offline included, until staff decide. Urgent removal goes through the report form (G2), which hides a photo at once. | G6 |
 | D38 | **The label "Noch nicht vom Betreiber bestätigt" shows on the detail page only, not on cards.** At launch most entries are unclaimed, so a label on every card would be noise; the detail page is where an organizer decides to inquire. It goes once the claim is verified. | G6 |
+| D39 | **Home tiles without a wedding tile** (D31): the six event-type tiles are Firmenanlass, Seminar, Apéro, Weihnachtsfeier, Geburtstag and **Generalversammlung** (fixed, not chosen by venue count, so the home page does not shift with the data); a tile still shows only when it has venues. Weddings stay findable through the Anlass filter. | F8 |
+| D40 | **Free carries at most 3 event types** (F12's seed, accepted by the PO): enough to be found for what a venue mainly does, and "all fitting event types" stays a Pro reason (D15). Pro entries carry the label «Top-Eintrag», which G13's page explains, so paid ranking is identifiable as such. | F12, G13 |
 
 ### Wave G §2. PRD journey → existing module
 
