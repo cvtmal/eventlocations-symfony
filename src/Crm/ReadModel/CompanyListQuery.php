@@ -72,7 +72,7 @@ final class CompanyListQuery
 
     /**
      * Every company of the filter in the list's order, unpaged. The statement runs when the CSV stream
-     * starts reading.
+     * starts reading. A suppressed Location is never in it (G11).
      *
      * @return iterable<CompanyCsvRow>
      */
@@ -80,7 +80,7 @@ final class CompanyListQuery
     {
         [$conditions, $parameters] = self::conditions($filter);
         $rows = $this->connection->iterateAssociative(
-            self::CSV_COLUMNS.' '.self::FROM.self::where($conditions).' ORDER BY '.self::order($sort, $direction),
+            self::CSV_COLUMNS.' '.self::FROM.self::where([...$conditions, 'NOT '.SuppressionQuery::LOCATION_SUPPRESSED]).' ORDER BY '.self::order($sort, $direction),
             $parameters,
         );
 

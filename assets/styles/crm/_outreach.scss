@@ -1,0 +1,25 @@
+// G11: the CRM's Akquise page (cohort funnel, campaigns, suppression list).
+.crm-outreach {
+    display: grid;
+    gap: var(--a-space-4);
+}
+
+.table--list td.crm-outreach__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-2);
+}
+
+.crm-outreach__sent,
+.crm-outreach__add {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--a-space-2);
+}
+
+.crm-outreach__add .field {
+    flex: 1 1 240px;
+    margin: 0;
+}

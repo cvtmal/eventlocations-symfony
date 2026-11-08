@@ -662,11 +662,13 @@ preview_links:
     list: Vorschau-Links
     empty: Noch kein Vorschau-Link.
     table_label: Vorschau-Links dieses Eintrags
+    no_campaign: Ohne Kampagne (E-Mail)
     field:
         campaign: Kampagne
-        campaign_help: 'Zum Beispiel «brief-2026-11». Nur Buchstaben, Ziffern, «-» und «_».'
+        campaign_help: 'Nur für Briefe, zum Beispiel «brief-2026-11»: Buchstaben, Ziffern, «-» und «_». Für eine E-Mail leer lassen.'
         lifetime: Gültig für
         link: 'Link für {campaign}'
+        short: 'Kurzlink für {campaign}'
     lifetime:
         30: 30 Tage
         90: 90 Tage

@@ -63,7 +63,8 @@ final class DealListQuery
     }
 
     /**
-     * Every deal of the filter in the list's order, unpaged. The statement runs when the CSV stream starts reading.
+     * Every deal of the filter in the list's order, unpaged. The statement runs when the CSV stream starts reading. A
+     * suppressed Location's deals are never in it (G11: a suppressed Location is absent from every export).
      *
      * @return iterable<DealCsvRow>
      */
@@ -71,7 +72,7 @@ final class DealListQuery
     {
         [$conditions, $parameters] = self::conditions($filter);
         $rows = $this->connection->iterateAssociative(
-            self::CSV_COLUMNS.' '.self::FROM.' LEFT JOIN venues v ON v.id = d.venue_id'.self::where($conditions).' ORDER BY '.self::order($sort, $direction),
+            self::CSV_COLUMNS.' '.self::FROM.' LEFT JOIN venues v ON v.id = d.venue_id'.self::where([...$conditions, 'NOT '.SuppressionQuery::LOCATION_SUPPRESSED]).' ORDER BY '.self::order($sort, $direction),
             $parameters,
         );
 

@@ -1,0 +1,157 @@
+{#
+    The CRM's "Akquise" page (G11): the funnel by pilot cohort (steps since each Location's send day), the postal
+    campaigns with their print list (ROLE_ADMIN, a CSV for a mail merge, never a mailer) and send day, and the
+    suppression list with a field to add an address. Every form posts with the one `token`.
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'outreach.page.title'|trans({}, 'crm') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'crm') }}</li>
+    <li class="breadcrumbs__item" aria-current="page">{{ 'outreach.page.title'|trans({}, 'crm') }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ 'outreach.page.title'|trans({}, 'crm') }}</h1>
+            <p class="muted">{{ 'outreach.page.lead'|trans({}, 'crm') }}</p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+<div class="crm-outreach">
+    <section class="card table-card" aria-labelledby="kohorten">
+        <div class="card__head"><h2 id="kohorten">{{ 'outreach.funnel.title'|trans({}, 'crm') }}</h2></div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'outreach.funnel.title'|trans({}, 'crm') }}">
+            <table class="table table--list" data-cohort-funnel>
+                <thead>
+                    <tr>
+                        <th scope="col">{{ 'outreach.funnel.cohort'|trans({}, 'crm') }}</th>
+                        <th scope="col">{{ 'outreach.funnel.locations'|trans({}, 'crm') }}</th>
+                        <th scope="col">{{ 'outreach.funnel.sent'|trans({}, 'crm') }}</th>
+                        <th scope="col">{{ 'outreach.funnel.returned'|trans({}, 'crm') }}</th>
+                        <th scope="col">{{ 'outreach.funnel.suppressed'|trans({}, 'crm') }}</th>
+                        {% for step in funnel.steps %}
+                            <th scope="col">{{ ('outreach.funnel.step.' ~ step.value)|trans({}, 'crm') }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in funnel.rows %}
+                        <tr data-cohort="{{ row.cohort.value }}">
+                            <th scope="row">{{ row.cohort|trans }}</th>
+                            <td>{{ row.locations|swiss_number }}</td>
+                            <td>{{ row.sent|swiss_number }}</td>
+                            <td>{{ row.returned|swiss_number }}</td>
+                            <td>{{ row.suppressed|swiss_number }}</td>
+                            {% for count in row.steps %}
+                                <td>{{ count|swiss_number }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card__foot muted">{{ 'outreach.funnel.note'|trans({}, 'crm') }}</div>
+    </section>
+
+    <section class="card table-card" aria-labelledby="kampagnen">
+        <div class="card__head"><h2 id="kampagnen">{{ 'outreach.campaigns.title'|trans({}, 'crm') }}</h2></div>
+        {% if campaigns is empty %}
+            <div class="card__body">{{ include('admin/components/_empty.html.twig', {icon: 'mail', title: 'outreach.campaigns.empty'|trans({}, 'crm'), text: 'outreach.campaigns.empty_text'|trans({}, 'crm')}, with_context = false) }}</div>
+        {% else %}
+            <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'outreach.campaigns.title'|trans({}, 'crm') }}">
+                <table class="table table--list">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ 'outreach.campaigns.code'|trans({}, 'crm') }}</th>
+                            <th scope="col">{{ 'outreach.campaigns.locations'|trans({}, 'crm') }}</th>
+                            <th scope="col">{{ 'outreach.campaigns.printable'|trans({}, 'crm') }}</th>
+                            <th scope="col">{{ 'outreach.campaigns.unsent'|trans({}, 'crm') }}</th>
+                            <th scope="col">{{ 'outreach.campaigns.actions'|trans({}, 'crm') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in campaigns %}
+                            <tr data-campaign="{{ campaign.code }}">
+                                <th scope="row">{{ campaign.code }}</th>
+                                <td>{{ campaign.locations|swiss_number }}</td>
+                                <td>{{ campaign.printable|swiss_number }}</td>
+                                <td>{{ campaign.unsent|swiss_number }}</td>
+                                <td class="crm-outreach__actions">
+                                    {% if is_granted('ROLE_ADMIN') %}
+                                        <form method="post" action="{{ path('admin_crm_outreach_print') }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token(token) }}">
+                                            <input type="hidden" name="campaign" value="{{ campaign.code }}">
+                                            {{ include('admin/components/_button.html.twig', {label: 'outreach.campaigns.print'|trans({}, 'crm'), icon: 'download', variant: 'secondary', size: 'sm', type: 'submit', attributes: {'aria-label': 'outreach.campaigns.print_for'|trans({campaign: campaign.code}, 'crm')}}, with_context = false) }}
+                                        </form>
+                                    {% endif %}
+                                    {% if campaign.unsent > 0 %}
+                                        <form class="crm-outreach__sent" method="post" action="{{ path('admin_crm_outreach_sent') }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token(token) }}">
+                                            <input type="hidden" name="campaign" value="{{ campaign.code }}">
+                                            <label class="visually-hidden" for="sent-{{ loop.index }}">{{ 'outreach.campaigns.sent_on_for'|trans({campaign: campaign.code}, 'crm') }}</label>
+                                            <input class="field__input" id="sent-{{ loop.index }}" type="date" name="sent_on" value="{{ today }}" required>
+                                            {{ include('admin/components/_button.html.twig', {label: 'outreach.campaigns.sent'|trans({}, 'crm'), variant: 'ghost', size: 'sm', type: 'submit'}, with_context = false) }}
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+        <div class="card__foot muted">{{ 'outreach.campaigns.note'|trans({days: constant('App\\Crm\\Controller\\OutreachController::PRINT_LINK_DAYS')}, 'crm') }}</div>
+    </section>
+
+    <section class="card table-card" aria-labelledby="sperrliste">
+        <div class="card__head"><h2 id="sperrliste">{{ 'outreach.suppressions.title'|trans({}, 'crm') }} <span class="muted">{{ suppression_count|swiss_number }}</span></h2></div>
+        <div class="card__body">
+            <p class="muted">{{ 'outreach.suppressions.lead'|trans({}, 'crm') }}</p>
+            <form class="crm-outreach__add" method="post" action="{{ path('admin_crm_outreach_suppress') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token(token) }}">
+                <div class="field">
+                    <label class="field__label" for="suppress-email">{{ 'outreach.suppressions.email'|trans({}, 'crm') }}</label>
+                    <input class="field__input" id="suppress-email" type="email" name="email" maxlength="254" autocomplete="off" required>
+                </div>
+                {{ include('admin/components/_button.html.twig', {label: 'outreach.suppressions.add'|trans({}, 'crm'), variant: 'secondary', type: 'submit'}, with_context = false) }}
+            </form>
+        </div>
+        {% if suppressions is not empty %}
+            <div class="table-wrap" tabindex="0" role="region" aria-label="{{ 'outreach.suppressions.title'|trans({}, 'crm') }}">
+                <table class="table table--list" data-suppressions>
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ 'outreach.suppressions.who'|trans({}, 'crm') }}</th>
+                            <th scope="col">{{ 'outreach.suppressions.reason'|trans({}, 'crm') }}</th>
+                            <th scope="col">{{ 'outreach.suppressions.since'|trans({}, 'crm') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in suppressions %}
+                            <tr>
+                                <td>
+                                    {% if row.companyId %}
+                                        <a class="crm-list__link" href="{{ path('admin_crm_companies_outreach', {id: row.companyId}) }}">{{ row.companyName }}</a>
+                                    {% else %}
+                                        {{ row.email }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ row.reason|trans }}</td>
+                                <td class="muted">{{ row.createdAt|swiss_date }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if suppression_count > suppressions|length %}
+                <div class="card__foot muted">{{ 'outreach.suppressions.more'|trans({shown: suppressions|length, total: suppression_count}, 'crm') }}</div>
+            {% endif %}
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

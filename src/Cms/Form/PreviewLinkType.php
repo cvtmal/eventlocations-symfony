@@ -19,6 +19,7 @@ final class PreviewLinkType extends AbstractType
             ->add('campaignCode', TextType::class, [
                 'label' => 'preview_links.field.campaign',
                 'help' => 'preview_links.field.campaign_help',
+                'required' => false,
                 'attr' => ['maxlength' => 40, 'autocomplete' => 'off', 'spellcheck' => 'false'],
                 'invalid_message_parameters' => ['{{ value }}' => ''],
             ])

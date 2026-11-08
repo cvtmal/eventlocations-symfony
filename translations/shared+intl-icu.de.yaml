@@ -1,6 +1,25 @@
 # Strings of the Shared module. Keys: <context>.<description>.
 email:
     footer: deine-eventlocation.ch
+    opt_out:
+        lead: 'Du möchtest keine Mails und Briefe mehr von uns?'
+        link: Hier abmelden
+        text: 'Du möchtest keine Mails und Briefe mehr von uns? Hier abmelden: {url}'
+opt_out:
+    to_home: Zur Startseite
+    ask:
+        title: Abmelden
+        heading: Keine Mails und Briefe mehr von uns?
+        text: 'Mit einem Klick nehmen wir dich aus unseren Werbe-Mails und Briefen. Das gilt dauerhaft. Mails zu deinem Konto oder einem laufenden Vertrag bekommst du weiterhin.'
+        submit: Ja, abmelden
+    done:
+        title: Abgemeldet
+        heading: Du bist abgemeldet
+        text: 'Wir schreiben dir keine Werbe-Mails und Briefe mehr. Fragen? Schreib uns an {email}.'
+    unknown:
+        title: Link ungültig
+        heading: Dieser Link gilt nicht
+        text: 'Wir können diesen Abmelde-Link nicht zuordnen. Schreib uns an {email}, dann nehmen wir dich von unserer Liste.'
 legal:
     nav_label: Rechtliches
     imprint:

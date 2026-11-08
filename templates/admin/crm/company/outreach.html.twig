@@ -1,0 +1,60 @@
+{#
+    The Location's "Akquise" tab (G11): its outreach fields and its place on the suppression list. A suppressed
+    Location gets no CRM mail and is left out of every export and print list; that is permanent.
+#}
+{% extends 'admin/crm/_record_layout.html.twig' %}
+
+{% set record_type = 'company' %}
+{% set record_id = company.id %}
+{% set record_title = company.name %}
+{% set list_route = 'admin_crm_companies' %}
+{% set list_label = 'list.companies.title'|trans({}, 'crm') %}
+
+{% block record_crumb %}<span data-crm-follow="name">{{ company.name }}</span>{% endblock %}
+
+{% block record_identity %}{{ include('admin/crm/company/_identity.html.twig', {company: company}, with_context = false) }}{% endblock %}
+
+{% block record_quick_actions %}{% endblock %}
+
+{% block record_properties %}{{ include('admin/crm/company/_properties.html.twig', {company: company, owners: owners}, with_context = false) }}{% endblock %}
+
+{% block record_center %}
+    {% embed 'admin/components/_card.html.twig' with {title: 'outreach.suppression.title'|trans({}, 'crm'), id: 'outreach-suppression', suppression: suppression, company: company, objection_token: objection_token} only %}
+        {% block body %}
+            {% if suppression %}
+                <p data-outreach-suppressed>
+                    {{ include('admin/components/_pill.html.twig', {label: 'outreach.suppression.pill'|trans({}, 'crm'), tone: 'red', dot: true}, with_context = false) }}
+                    {{ (suppression.whole ? 'outreach.suppression.since' : 'outreach.suppression.since_address')|trans({reason: ('suppression.reason.' ~ suppression.reason.value)|trans({}, 'crm'), date: suppression.since|swiss_date}, 'crm') }}
+                </p>
+                <p class="muted">{{ 'outreach.suppression.effect'|trans({}, 'crm') }}</p>
+            {% else %}
+                <p class="muted">{{ 'outreach.suppression.none'|trans({}, 'crm') }}</p>
+                <form method="post" action="{{ path('admin_crm_companies_outreach_objection', {id: company.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token(objection_token) }}">
+                    {{ include('admin/components/_button.html.twig', {label: 'outreach.suppression.objection'|trans({}, 'crm'), variant: 'secondary', size: 'sm', type: 'submit'}, with_context = false) }}
+                </form>
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+
+    {% embed 'admin/components/_card.html.twig' with {title: 'outreach.title'|trans({}, 'crm'), id: 'outreach-fields', form: form} only %}
+        {% block body %}
+            {% form_theme form 'admin/form/theme.html.twig' %}
+            {{ form_start(form, {attr: {class: 'form', 'data-outreach-form': ''}}) }}
+                <div class="field-row">
+                    {{ form_row(form.campaignCode) }}
+                    {{ form_row(form.cohort) }}
+                </div>
+                <div class="field-row">
+                    {{ form_row(form.channel) }}
+                    {{ form_row(form.basis) }}
+                </div>
+                <div class="field-row">
+                    {{ form_row(form.sentOn) }}
+                    {{ form_row(form.returnedOn) }}
+                </div>
+                {{ include('admin/components/_button.html.twig', {label: 'outreach.submit'|trans({}, 'crm'), type: 'submit'}, with_context = false) }}
+            {{ form_end(form) }}
+        {% endblock %}
+    {% endembed %}
+{% endblock %}

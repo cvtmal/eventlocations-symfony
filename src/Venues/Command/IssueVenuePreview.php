@@ -23,7 +23,7 @@ final readonly class IssueVenuePreview implements AuditableCommand
 
     public function __construct(
         public int $venueNumber,
-        public string $campaignCode,
+        public ?string $campaignCode,
         public int $lifetimeDays = self::DEFAULT_LIFETIME,
     ) {
     }
@@ -34,7 +34,8 @@ final readonly class IssueVenuePreview implements AuditableCommand
     }
 
     /**
-     * The campaign code is a plain code (no personal data); the link's token never goes here.
+     * The campaign code is a plain code (no personal data), null for a link sent by e-mail; the link's token and short
+     * code never go here.
      */
     public function auditSummary(): array
     {

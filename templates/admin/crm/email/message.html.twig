@@ -6,3 +6,6 @@
 {% block content %}
 {{ blocks.rich(body_html) }}
 {% endblock %}
+
+{# G11: every CRM mail carries the Location's opt-out link (Wave G §4a.6). #}
+{% block footer %}{{ parent() }}<br>{{ 'email.opt_out.lead'|trans({}, 'shared') }} <a href="{{ opt_out_url }}" style="color:#5a6078;text-decoration:underline;">{{ 'email.opt_out.link'|trans({}, 'shared') }}</a>{% endblock %}

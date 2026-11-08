@@ -7,8 +7,11 @@ namespace App\Tests\Integration\Crm;
 use App\Crm\Command\SendCrmEmail;
 use App\Crm\CommandHandler\SendCrmEmailHandler;
 use App\Crm\Exception\ActivityReadOnly;
+use App\Crm\Exception\RecipientSuppressed;
 use App\Crm\Mailer\CrmMailer;
+use App\Crm\OptOutToken;
 use App\Crm\OwnActivity;
+use App\Crm\ReadModel\SuppressionQuery;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\ContactRepository;
 use App\Crm\ValueObject\RecordKind;
@@ -31,6 +34,8 @@ use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\RawMessage;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -161,6 +166,43 @@ final class SendCrmEmailTest extends KernelTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_activities'));
     }
 
+    /**
+     * @return iterable<string, array{string, ?string, string}>
+     */
+    public static function suppressedTargets(): iterable
+    {
+        yield 'the Location' => ['location', null, 'contactId'];
+        yield 'the address' => ['address', null, 'contactId'];
+        yield 'another address of the Location' => ['other', null, 'contactId'];
+        yield 'the cc' => ['cc', self::CC, 'cc'];
+    }
+
+    #[DataProvider('suppressedTargets')]
+    public function test_a_suppressed_location_address_or_cc_gets_no_mail_and_no_entry(string $suppressed, ?string $cc, string $field): void
+    {
+        $recording = new RecordingMailer();
+        $contact = ContactFactory::createOne(['email' => self::ADDRESS]);
+        $companyId = (string) $this->connection->fetchOne('SELECT company_id FROM crm_contacts WHERE id = ?', [$contact->id()]);
+        match ($suppressed) {
+            'location' => $this->connection->insert('suppressions', ['id' => EntityId::generate(), 'company_id' => $companyId, 'reason' => 'objection']),
+            'address' => $this->connection->insert('suppressions', ['id' => EntityId::generate(), 'email' => self::ADDRESS, 'reason' => 'opt_out']),
+            'other' => [ContactFactory::createOne(['company' => $contact->company(), 'email' => 'tom.alt@example.ch']), $this->connection->insert('suppressions', ['id' => EntityId::generate(), 'email' => 'tom.alt@example.ch', 'reason' => 'opt_out'])],
+            default => $this->connection->insert('suppressions', ['id' => EntityId::generate(), 'email' => self::CC, 'reason' => 'opt_out']),
+        };
+
+        try {
+            ($this->handler($recording))($this->command(EntityId::generate(), $contact->id(), cc: $cc));
+            self::fail('A suppressed target should stop the mail.');
+        } catch (RecipientSuppressed $refused) {
+            self::assertSame($field, $refused->field);
+            self::assertStringNotContainsString('@', $refused->getMessage());
+        }
+        $this->em->flush();
+
+        self::assertSame([], $recording->messages);
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_activities'));
+    }
+
     public function test_a_missing_sender_stops_before_any_mail_leaves(): void
     {
         $recording = new RecordingMailer();
@@ -239,6 +281,21 @@ final class SendCrmEmailTest extends KernelTestCase
         return new SendCrmEmail($id, RecordKind::Company, $companyId, $contactId, $cc, self::SUBJECT, self::BODY, $actingUserId ?? AdminUserFactory::createOne()->id());
     }
 
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     *
+     * @return T
+     */
+    private static function service(string $class): object
+    {
+        $service = self::getContainer()->get($class);
+        self::assertInstanceOf($class, $service);
+
+        return $service;
+    }
+
     private function handler(MailerInterface $mailer, ?string $override = null, LoggerInterface $logger = new NullLogger()): SendCrmEmailHandler
     {
         $companies = self::getContainer()->get(CompanyRepository::class);
@@ -249,7 +306,8 @@ final class SendCrmEmailTest extends KernelTestCase
         return new SendCrmEmailHandler(
             $companies,
             $contacts,
-            new CrmMailer($mailer, new MarkdownRenderer(), new EnabledLocale(['de'], 'de'), 'hallo@deine-eventlocation.ch', 'deine-eventlocation.ch <hallo@deine-eventlocation.ch>', $override),
+            new CrmMailer($mailer, new MarkdownRenderer(), new EnabledLocale(['de'], 'de'), 'hallo@deine-eventlocation.ch', 'deine-eventlocation.ch <hallo@deine-eventlocation.ch>', $override, self::service(OptOutToken::class), self::service(UrlGeneratorInterface::class), self::service(TranslatorInterface::class)),
+            self::service(SuppressionQuery::class),
             $this->em,
             new MockClock('2026-11-01 10:00:00 UTC'),
             $logger,
