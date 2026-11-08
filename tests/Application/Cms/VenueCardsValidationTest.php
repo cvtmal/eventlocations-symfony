@@ -37,7 +37,6 @@ final class VenueCardsValidationTest extends WebTestCase
         yield 'capacity max 50001' => ['venue_basics', ['capacityMax' => '50001'], '#venue_basics_capacityMax'];
         yield 'capacity min 0' => ['venue_basics', ['capacityMin' => '0'], '#venue_basics_capacityMin'];
         yield 'capacity min above max' => ['venue_basics', ['capacityMin' => '400'], '#venue_basics_capacityMax'];
-        yield 'unknown tier' => ['venue_basics', ['tier' => 'gold'], '#venue_basics_tier'];
         yield 'name too long' => ['venue_basics', ['name' => $long(151)], '#venue_basics_name'];
         yield 'slug with capitals' => ['venue_basics', ['slug' => 'Schloss-Seeblick'], '#venue_basics_slug'];
         yield 'slug too long' => ['venue_basics', ['slug' => $long(161)], '#venue_basics_slug'];

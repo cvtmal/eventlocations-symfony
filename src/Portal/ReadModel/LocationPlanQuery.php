@@ -6,6 +6,7 @@ namespace App\Portal\ReadModel;
 
 use App\Venues\EntitlementResolver;
 use App\Venues\ValueObject\KnownTiers;
+use App\Venues\ValueObject\TermDay;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -34,9 +35,11 @@ final class LocationPlanQuery
                        (SELECT count(*) FROM rooms WHERE venue_id = :id) AS rooms,
                        (SELECT count(*) FROM venue_documents WHERE venue_id = :id) AS documents,
                        (SELECT price_rappen FROM tiers WHERE code = :pro) AS pro_price_rappen,
-                       (SELECT vat_line FROM tiers WHERE code = :pro) AS pro_vat_line
+                       (SELECT vat_line FROM tiers WHERE code = :pro) AS pro_vat_line,
+                       (SELECT max(ends_on) FROM subscriptions WHERE venue_id = :id AND ends_on >= :today) AS paid_until,
+                       (SELECT cancel_requested_at IS NOT NULL FROM subscriptions WHERE venue_id = :id ORDER BY ends_on DESC LIMIT 1) AS cancelled
                 SQL,
-            ['id' => $venueId, 'pro' => KnownTiers::PRO],
+            ['id' => $venueId, 'pro' => KnownTiers::PRO, 'today' => TermDay::sql($now)],
         );
         \assert(\is_array($row) && \is_int($row['photos']) && \is_int($row['rooms']) && \is_int($row['documents']));
         \assert(null === $row['pro_price_rappen'] || \is_int($row['pro_price_rappen']));
@@ -55,6 +58,8 @@ final class LocationPlanQuery
             $entitlements->eventTypesMax,
             $row['pro_price_rappen'],
             true === $row['pro_vat_line'],
+            \is_string($row['paid_until']) ? new \DateTimeImmutable($row['paid_until']) : null,
+            true === $row['cancelled'],
         );
     }
 }

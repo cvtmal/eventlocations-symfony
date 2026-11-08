@@ -148,15 +148,14 @@ final class VenueCardFormsTest extends KernelTestCase
         $form = $this->card(VenueCard::Basics, $edit);
         $values = self::values($form->createView());
         $values['name'] = 'Schloss Seeblick Neu';
-        $values['tier'] = KnownTiers::FREE;
         $form->submit($values);
 
         self::assertTrue($form->isValid(), (string) $form->getErrors(true));
         $changed = ChangedFields::between(VenueCard::Basics->dataClass()::from($edit), $form->getData());
-        self::assertSame(['name', 'tier'], $changed);
+        self::assertSame(['name'], $changed);
         $command = $form->getData()->toCommand($edit->number(), $edit, $changed);
         self::assertInstanceOf(ChangeVenueBasics::class, $command);
-        self::assertSame(['Schloss Seeblick Neu', null, KnownTiers::FREE], [$command->name, $command->newSlug, $command->tierCode]);
+        self::assertSame(['Schloss Seeblick Neu', null], [$command->name, $command->newSlug]);
     }
 
     public function test_a_new_slug_is_passed_only_when_it_differs(): void
@@ -187,7 +186,6 @@ final class VenueCardFormsTest extends KernelTestCase
         yield 'max below min' => [VenueCard::Basics, ['capacityMin' => '200', 'capacityMax' => '100'], 'capacityMax'];
         yield 'max 0' => [VenueCard::Basics, ['capacityMax' => '0'], 'capacityMax'];
         yield 'max 50001' => [VenueCard::Basics, ['capacityMax' => '50001'], 'capacityMax'];
-        yield 'unknown tier' => [VenueCard::Basics, ['tier' => 'gold'], 'tier'];
         yield 'blank summary in the default locale' => [VenueCard::Texts, ['texts' => ['de' => ['summary' => ' ']]], 'texts'];
         yield 'summary too long' => [VenueCard::Texts, ['texts' => ['de' => ['summary' => str_repeat('a', 201)]]], 'texts'];
         yield 'description with a NUL' => [VenueCard::Texts, ['texts' => ['de' => ['description' => "a\0b"]]], 'texts'];
@@ -225,7 +223,6 @@ final class VenueCardFormsTest extends KernelTestCase
         yield 'unknown catering' => [VenueCard::Faq, ['ownCatering' => 'sometimes'], 'ownCatering'];
         yield 'a token with letters' => [VenueCard::Faq, ['loadedAt' => '17000x'], ''];
         yield 'a token of invalid UTF-8' => [VenueCard::Faq, ['loadedAt' => "17000\xff"], ''];
-        yield 'an unknown tier of invalid UTF-8' => [VenueCard::Basics, ['tier' => "\xff"], 'tier'];
         yield 'place ID with a space' => [VenueCard::Google, ['placeId' => 'ChIJN1t tDeuEmsRUsoyG83frY4'], 'placeId'];
         yield 'place ID of 9 characters' => [VenueCard::Google, ['placeId' => 'ChIJN1t_t'], 'placeId'];
         yield 'place ID of invalid UTF-8' => [VenueCard::Google, ['placeId' => "ChIJN1t_tDeu\xffEmsRUso"], 'placeId'];
@@ -426,15 +423,15 @@ final class VenueCardFormsTest extends KernelTestCase
     public function test_the_create_form_builds_its_command(): void
     {
         $form = $this->forms->create(CreateVenueType::class, new CreateVenueData(), ['csrf_protection' => false]);
-        $form->submit(['name' => 'Neue Scheune', 'tier' => 'free', 'capacityMax' => '120']);
+        $form->submit(['name' => 'Neue Scheune', 'capacityMax' => '120']);
 
         self::assertTrue($form->isValid(), (string) $form->getErrors(true));
         $command = $form->getData()->toCommand();
         self::assertInstanceOf(CreateVenue::class, $command);
-        self::assertSame(['Neue Scheune', KnownTiers::FREE, 120], [$command->name, $command->tierCode, $command->capacityMax]);
+        self::assertSame(['Neue Scheune', 120], [$command->name, $command->capacityMax]);
 
         $refused = $this->forms->create(CreateVenueType::class, new CreateVenueData(), ['csrf_protection' => false]);
-        $refused->submit(['name' => '!!!', 'tier' => 'free', 'capacityMax' => '120']);
+        $refused->submit(['name' => '!!!', 'capacityMax' => '120']);
         self::assertFalse($refused->isValid());
     }
 

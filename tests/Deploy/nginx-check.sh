@@ -286,13 +286,15 @@ backend() {
 preview_not_logged() {
     request https "$SITE" /vorschau/secret-path-fixture
     request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/vorschau/secret-referer-fixture"
+    request https "$SITE" /konto/abo-kuendigen/secret-cancel-fixture
+    request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/konto/abo-kuendigen/secret-cancel-referer"
     request https "$SITE" /logged-fixture
     docker logs "$name" > "$work/access.log" 2>&1
     grep -q "/logged-fixture" "$work/access.log" || fail "an ordinary request is no longer in the access log"
     if grep -q "secret-" "$work/access.log"; then
-        fail "a preview token reached the access log"
+        fail "a preview or cancellation token reached the access log"
     fi
-    ok "a preview link's token is not in the access log"
+    ok "a preview or cancellation link's token is not in the access log"
 }
 
 # bin/deploy's switch, done the same way: the next request runs the other release.

@@ -15,6 +15,7 @@ use App\Venues\Command\AddVenueDocument;
 use App\Venues\Command\AddVenuePhoto;
 use App\Venues\Command\AnswerVenueFaq;
 use App\Venues\Command\AssignVenueGooglePlace;
+use App\Venues\Command\CancelSubscription;
 use App\Venues\Command\ChangeRoom;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Command\ChangeVenueCapacity;
@@ -30,6 +31,7 @@ use App\Venues\Command\GrantPhotoRights;
 use App\Venues\Command\IssueVenuePreview;
 use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\PublishVenue;
+use App\Venues\Command\RecordSubscriptionPayment;
 use App\Venues\Command\RecordVenueCreated;
 use App\Venues\Command\RelocateVenue;
 use App\Venues\Command\RemoveRoom;
@@ -109,7 +111,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
         $commands = [
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
             ChangeVenueTerms::class, ChangeVenueEventFacts::class, ChangeVenueContact::class, ChangeVenueCapacity::class, AnswerVenueFaq::class,
-            ChangeVenueTier::class, ReviseTier::class, PublishVenue::class, UnpublishVenue::class,
+            ChangeVenueTier::class, RecordSubscriptionPayment::class, CancelSubscription::class, ReviseTier::class, PublishVenue::class, UnpublishVenue::class,
             AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class, GrantPhotoRights::class,
             AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,
             AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,

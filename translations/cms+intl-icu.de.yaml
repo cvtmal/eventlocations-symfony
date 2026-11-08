@@ -126,7 +126,6 @@ basics:
     field:
         name: Name
         slug: Adresse der Seite
-        tier: Tier
         capacity_min: Gäste min.
         capacity_max: Gäste max.
     help:
@@ -277,6 +276,8 @@ history:
         ChangeVenueContact: den Kontakt geändert
         AnswerVenueFaq: die häufigen Fragen beantwortet
         ChangeVenueTier: den Tarif geändert
+        RecordSubscriptionPayment: eine Zahlung erfasst
+        CancelSubscription: die Verlängerung gekündigt
         ReviseTier: einen Tarif geändert
         PublishVenue: den Eintrag publiziert
         UnpublishVenue: den Eintrag offline genommen

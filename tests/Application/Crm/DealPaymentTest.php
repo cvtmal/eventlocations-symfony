@@ -8,6 +8,7 @@ use App\Admin\ValueObject\AdminRole;
 use App\Crm\Entity\Deal;
 use App\Factory\CompanyFactory;
 use App\Factory\DealFactory;
+use App\Factory\SubscriptionFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Http\RecordingHttpCachePurger;
@@ -18,10 +19,10 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * "Tarif anwenden" through HTTP (CRM-8, D20): the record's action and form, the form the board's prompt posts, its
- * tokens, and what a stale or spent offer says.
+ * «Zahlung erfassen» through HTTP (G9, D20): the record's action and form with the invoice number, the form the board's
+ * prompt posts, its tokens, and what a stale, spent or overlapping offer says.
  */
-final class ApplyDealTierTest extends WebTestCase
+final class DealPaymentTest extends WebTestCase
 {
     use AdminSession;
     use Factories;
@@ -36,7 +37,7 @@ final class ApplyDealTierTest extends WebTestCase
         self::assertResponseRedirects('/admin/login');
     }
 
-    public function test_the_record_offers_the_tier_in_its_menu_and_applying_it_ends_the_offer(): void
+    public function test_the_record_offers_the_payment_and_recording_it_ends_the_offer(): void
     {
         $this->logInAs(AdminRole::Editor);
         ['deal' => $deal, 'venue' => $venue] = $this->won();
@@ -44,25 +45,27 @@ final class ApplyDealTierTest extends WebTestCase
         $crawler = $this->client->request('GET', '/admin/crm/deals/'.$deal->id());
 
         self::assertResponseIsSuccessful();
-        self::assertSame('Tarif anwenden', $crawler->filter('[commandfor="deal-tier"]')->text());
-        self::assertSame('«Schloss Seeblick» hat heute den Tarif Free. Der Deal verkauft den Tarif Pro.', $crawler->filter('#deal-tier p')->text());
-        self::assertSame('free', $crawler->filter('#deal-tier-form input[name="expected"]')->attr('value'));
+        self::assertSame('Zahlung erfassen', $crawler->filter('[commandfor="deal-payment"]')->text());
+        self::assertStringContainsString('«Schloss Seeblick» erhält den Tarif Pro vom', $crawler->filter('#deal-payment p')->first()->text());
+        self::assertSame('', $crawler->filter('#deal-payment-form input[name="expected"]')->attr('value'));
         self::assertStringContainsString('Free', $crawler->filter('#location .crm-side__detail')->text());
 
-        $this->client->submit($crawler->filter('#deal-tier-form')->form(), [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+        $this->client->submit($crawler->filter('#deal-payment-form')->form(), ['invoice_ref' => ' RE-2026-17 '], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
         self::assertResponseRedirects('/admin/crm/deals/'.$deal->id(), 303);
         self::assertSame(KnownTiers::PRO, $this->tierOf($venue));
-        self::assertSame(1, $this->auditRows('venue', (string) $venue->number()));
+        self::assertSame('RE-2026-17', $this->connection->fetchOne('SELECT invoice_ref FROM subscriptions WHERE venue_id = ?', [$venue->id()]));
+        self::assertSame(2, $this->auditRows('venue', (string) $venue->number()));
         self::assertSame(1, $this->auditRows('deal', $deal->id()));
         self::assertSame([$venue->number()], $this->purger()->venues);
         self::assertSame(1, $this->purger()->listings);
 
         $crawler = $this->client->followRedirect();
 
-        self::assertSelectorTextContains('.toast', 'Der Tarif gilt jetzt auf dem Eintrag.');
-        self::assertCount(0, $crawler->filter('[commandfor="deal-tier"]'));
-        self::assertCount(0, $crawler->filter('#deal-tier'));
+        self::assertSelectorTextContains('.toast', 'Zahlung erfasst.');
+        self::assertCount(0, $crawler->filter('[commandfor="deal-payment"]'));
+        self::assertCount(0, $crawler->filter('#deal-payment'));
+        self::assertStringContainsString('Bezahlt bis', $crawler->filter('.crm-record')->text());
         // The Eintrag's card reads the tier the venue has now, by its name.
         self::assertStringContainsString('Pro', $crawler->filter('#location .crm-side__detail')->text());
     }
@@ -74,7 +77,7 @@ final class ApplyDealTierTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin/crm/deals/'.$deal->id());
 
-        self::assertCount(0, $crawler->filter('[commandfor="deal-tier"]'));
+        self::assertCount(0, $crawler->filter('[commandfor="deal-payment"]'));
     }
 
     public function test_the_board_prompt_comes_back_to_the_board(): void
@@ -98,21 +101,7 @@ final class ApplyDealTierTest extends WebTestCase
         self::assertResponseRedirects('/admin/crm/deals/'.$deal->id(), 303);
     }
 
-    public function test_a_stale_prompt_changes_nothing_and_says_so(): void
-    {
-        $this->logInAs(AdminRole::Editor);
-        ['deal' => $deal, 'venue' => $venue] = $this->won();
-
-        $this->post($deal, ['expected' => 'pro']);
-
-        self::assertResponseRedirects('/admin/crm/deals/'.$deal->id(), 303);
-        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
-        self::assertSame(0, $this->auditRows('deal', $deal->id()));
-        $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'wurde inzwischen geändert');
-    }
-
-    public function test_a_second_click_says_the_offer_is_gone_without_a_row(): void
+    public function test_a_second_click_is_stale_and_records_nothing_twice(): void
     {
         $this->logInAs(AdminRole::Editor);
         ['deal' => $deal, 'venue' => $venue] = $this->won();
@@ -122,51 +111,55 @@ final class ApplyDealTierTest extends WebTestCase
         $this->post($deal);
 
         self::assertSame(1, $this->auditRows('deal', $deal->id()));
-        self::assertSame(1, $this->auditRows('venue', (string) $venue->number()));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM subscriptions WHERE venue_id = ?', [$venue->id()]));
         $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'keinen Tarif mehr');
+        self::assertSelectorTextContains('.toast', 'inzwischen eine Zahlung erfasst');
+    }
+
+    public function test_an_overlapping_term_says_so(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        ['deal' => $deal, 'venue' => $venue] = $this->won(start: new \DateTimeImmutable('today'), end: new \DateTimeImmutable('+1 year'));
+        SubscriptionFactory::createOne(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('-1 month'), 'endsOn' => new \DateTimeImmutable('+1 month')]);
+        $paidUntil = (new \DateTimeImmutable('+1 month'))->format('Y-m-d');
+
+        $this->post($deal, ['expected' => $paidUntil]);
+
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.toast', 'überschneidet sich');
+        self::assertSame(0, $this->auditRows('deal', $deal->id()));
     }
 
     public function test_an_unknown_deal_is_a_404(): void
     {
         $this->logInAs(AdminRole::Editor);
 
-        $this->client->request('POST', '/admin/crm/deals/019a0000-0000-7000-8000-000000000000/tier', ['_token' => 'csrf-token', 'expected' => 'free'], server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+        $this->client->request('POST', '/admin/crm/deals/019a0000-0000-7000-8000-000000000000/zahlung', ['_token' => 'csrf-token', 'expected' => ''], server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
         self::assertResponseStatusCodeSame(404);
     }
 
-    public function test_an_expected_tier_that_does_not_exist_changes_nothing(): void
+    /**
+     * @return iterable<string, array{array<string, string>}>
+     */
+    public static function malformedFields(): iterable
     {
-        $this->logInAs(AdminRole::Editor);
-        ['deal' => $deal, 'venue' => $venue] = $this->won();
-
-        $this->post($deal, ['expected' => 'gold']);
-
-        self::assertResponseRedirects('/admin/crm/deals/'.$deal->id(), 303);
-        self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
-        $this->client->followRedirect();
-        self::assertSelectorTextContains('.toast', 'wurde inzwischen geändert');
+        yield 'a day of another shape' => [['expected' => '8.11.2026']];
+        yield 'a word' => [['expected' => 'free']];
+        yield 'an invoice number over 60 characters' => [['invoice_ref' => str_repeat('R', 61)]];
+        yield 'an invoice number with a NUL' => [['invoice_ref' => "RE\0-17"]];
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @param array<string, string> $fields
      */
-    public static function malformedCodes(): iterable
-    {
-        yield 'upper case' => ['Pro'];
-        yield 'a leading digit' => ['1pro'];
-        yield 'a space' => ['pro '];
-        yield 'empty' => [''];
-    }
-
-    #[DataProvider('malformedCodes')]
-    public function test_a_malformed_expected_code_is_refused_before_the_command(string $expected): void
+    #[DataProvider('malformedFields')]
+    public function test_a_malformed_field_is_refused_before_the_command(array $fields): void
     {
         $this->logInAs(AdminRole::Editor);
         ['deal' => $deal, 'venue' => $venue] = $this->won();
 
-        $this->post($deal, ['expected' => $expected]);
+        $this->post($deal, $fields);
 
         self::assertResponseRedirects('/admin/crm/deals/'.$deal->id(), 303);
         self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
@@ -183,7 +176,7 @@ final class ApplyDealTierTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         ['deal' => $deal, 'venue' => $venue] = $this->won();
 
-        $this->client->request('POST', '/admin/crm/deals/'.$deal->id().'/tier', $fields + ['expected' => 'free'], server: $server);
+        $this->client->request('POST', '/admin/crm/deals/'.$deal->id().'/zahlung', $fields + ['expected' => ''], server: $server);
 
         self::assertResponseRedirects('/admin/crm/deals/'.$deal->id(), 303);
         self::assertSame(KnownTiers::FREE, $this->tierOf($venue));
@@ -192,13 +185,13 @@ final class ApplyDealTierTest extends WebTestCase
     /**
      * @return array{deal: Deal, venue: Venue}
      */
-    private function won(string $stage = 'won'): array
+    private function won(string $stage = 'won', ?\DateTimeImmutable $start = null, ?\DateTimeImmutable $end = null): array
     {
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => KnownTiers::FREE]);
         $company = CompanyFactory::new()->withVenue($venue)->create();
 
         return [
-            'deal' => DealFactory::new()->inStage($stage)->create(['company' => $company, 'venue' => $venue, 'tier' => KnownTiers::PRO]),
+            'deal' => DealFactory::new()->inStage($stage)->create(['company' => $company, 'venue' => $venue, 'tier' => KnownTiers::PRO, 'contractStartOn' => $start, 'contractEndOn' => $end]),
             'venue' => $venue,
         ];
     }
@@ -208,7 +201,7 @@ final class ApplyDealTierTest extends WebTestCase
      */
     private function post(Deal $deal, array $fields = []): void
     {
-        $this->client->request('POST', '/admin/crm/deals/'.$deal->id().'/tier', $fields + ['_token' => 'csrf-token', 'expected' => 'free'], server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+        $this->client->request('POST', '/admin/crm/deals/'.$deal->id().'/zahlung', $fields + ['_token' => 'csrf-token', 'expected' => ''], server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
     }
 
     private function tierOf(Venue $venue): string

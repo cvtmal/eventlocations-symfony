@@ -29,6 +29,10 @@ final readonly class LocationPlan
         public ?int $eventTypesMax,
         public ?int $proPriceRappen,
         public bool $proVatLine = false,
+        /** The last paid day of the location's terms, null without a running or later term (G9). */
+        public ?\DateTimeImmutable $paidUntil = null,
+        /** The manager asked not to renew: the tier runs to `paidUntil` and then falls back to Free. */
+        public bool $cancelled = false,
     ) {
     }
 }

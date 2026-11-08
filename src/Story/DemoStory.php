@@ -10,6 +10,7 @@ use App\Factory\PhotoCandidateFactory;
 use App\Factory\RoomFactory;
 use App\Factory\RoomTranslationFactory;
 use App\Factory\SourceRecordFactory;
+use App\Factory\SubscriptionFactory;
 use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueDocumentTranslationFactory;
 use App\Factory\VenueFactory;
@@ -22,6 +23,7 @@ use App\Geo\Entity\Town;
 use App\Geo\Repository\TownRepository;
 use App\Geo\ValueObject\Canton;
 use App\Venues\Entity\Room;
+use App\Venues\Entity\Subscription;
 use App\Venues\Entity\TaxonomyTerm;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
@@ -45,13 +47,16 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
 use Zenstruck\Foundry\Story;
 
 use function Zenstruck\Foundry\faker;
+use function Zenstruck\Foundry\Persistence\delete;
 use function Zenstruck\Foundry\Persistence\flush_after;
+use function Zenstruck\Foundry\Persistence\repository;
 
 /**
  * 60 fictional demo venues (S8), loaded by `make seed` through AppStory.
  *
  * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town), plus one
- *   Liechtenstein venue (#46), and both tiers (15 Pro, 45 Free, spread over the cantons).
+ *   Liechtenstein venue (#46), and both tiers (15 Pro, 45 Free, spread over the cantons). Every Pro venue has a paid
+ *   term (G9); three end within 60 days (one cancelled), see createTerms().
  * - 1–5 rooms, 0–2 documents, terms of the seven filter groups (one main building and one main
  *   setting each, 1–5 event types). No own rating or reviews: #53 retired them.
  * - Deterministic: faker is seeded and the distribution is index-based.
@@ -185,6 +190,31 @@ final class DemoStory extends Story
         flush_after(fn () => $this->createSiteImport($created[0][1]));
         flush_after(fn () => $this->createPreviewLinks($created[1][1]));
         flush_after(fn () => $this->createModerationCases($created[self::HELD_VENUE][1], $created[self::KEPT_VENUE][1]));
+        flush_after(fn () => $this->createTerms(array_column($created, 1)));
+    }
+
+    /**
+     * G9: the factory gives every Pro venue a term to 2099; the first three Pro venues by index get real ones instead,
+     * so `app:subscriptions:remind` has a 30-day reminder (the dev manager's Pro location, see PortalStory), a 7-day one
+     * and a cancelled term to skip, and the CRM and `/konto` show a paid-until day that means something.
+     *
+     * @param list<Venue> $venues in index order
+     */
+    private function createTerms(array $venues): void
+    {
+        $today = new \DateTimeImmutable('today');
+        $pro = array_values(array_filter($venues, static fn (Venue $venue): bool => KnownTiers::PRO === $venue->tier()->code()));
+        foreach ([20, 5, 60] as $k => $daysLeft) {
+            if (!isset($pro[$k])) {
+                break;
+            }
+            foreach (repository(Subscription::class)->findBy(['venue' => $pro[$k]]) as $term) {
+                delete($term);
+            }
+            $end = $today->modify(\sprintf('+%d days', $daysLeft));
+            $factory = 2 === $k ? SubscriptionFactory::new()->cancelled() : SubscriptionFactory::new();
+            $factory->create(['venue' => $pro[$k], 'startsOn' => $end->modify('-1 year')->modify('+1 day'), 'endsOn' => $end, 'invoiceRef' => \sprintf('RE-DEMO-%d', $k + 1)]);
+        }
     }
 
     /**

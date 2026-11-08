@@ -6,7 +6,6 @@ namespace App\Cms\Form;
 
 use App\Venues\Command\CreateVenue;
 use App\Venues\SlugAllocator;
-use App\Venues\ValueObject\KnownTiers;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -19,9 +18,6 @@ final class CreateVenueData
     #[Assert\Length(max: 150, maxMessage: 'cms.venue.too_long')]
     public ?string $name = null;
 
-    #[Assert\NotNull(message: 'cms.venue.tier.required')]
-    public ?string $tier = KnownTiers::FREE;
-
     #[Assert\NotNull(message: 'cms.venue.capacity.max_required')]
     #[Assert\Range(notInRangeMessage: 'cms.venue.capacity.range', min: 1, max: 50000)]
     public ?int $capacityMax = null;
@@ -30,7 +26,6 @@ final class CreateVenueData
     {
         return new CreateVenue(
             (string) $this->name,
-            $this->tier ?? throw new \LogicException('Validate the form before building its command.'),
             $this->capacityMax ?? throw new \LogicException('Validate the form before building its command.'),
         );
     }

@@ -134,7 +134,7 @@ final class HostingFilesTest extends TestCase
     {
         $cron = self::file('bin/cron-daily');
 
-        foreach (['app:inquiries:purge', 'app:venues:erase-complainants', 'app:crm:refresh-stages', 'app:crm:renewal-tasks', 'app:inquiries:report-stuck', 'app:stats:ingest', 'cache:pool:prune'] as $command) {
+        foreach (['app:inquiries:purge', 'app:venues:erase-complainants', 'app:crm:refresh-stages', 'app:crm:renewal-tasks', 'app:subscriptions:expire', 'app:subscriptions:remind', 'app:inquiries:report-stuck', 'app:stats:ingest', 'cache:pool:prune'] as $command) {
             self::assertStringContainsString($command, $cron);
         }
     }

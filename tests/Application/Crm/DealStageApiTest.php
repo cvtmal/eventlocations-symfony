@@ -51,21 +51,27 @@ final class DealStageApiTest extends WebTestCase
         self::assertNull($answer['tierOffer']);
     }
 
-    public function test_a_won_move_answers_the_tier_offer_with_its_form(): void
+    public function test_a_won_move_answers_the_payment_offer_with_its_form(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => KnownTiers::FREE]);
         $company = CompanyFactory::new()->withVenue($venue)->create();
-        $deal = DealFactory::new()->inStage('negotiation')->create(['company' => $company, 'venue' => $venue, 'tier' => KnownTiers::PRO]);
+        $deal = DealFactory::new()->inStage('negotiation')->create([
+            'company' => $company,
+            'venue' => $venue,
+            'tier' => KnownTiers::PRO,
+            'contractStartOn' => new \DateTimeImmutable('2030-01-01'),
+            'contractEndOn' => new \DateTimeImmutable('2030-12-31'),
+        ]);
 
         $this->move($deal->id(), ['stage' => 'won', 'expected' => 'negotiation']);
 
         self::assertResponseIsSuccessful();
         self::assertSame([
-            'action' => '/admin/crm/deals/'.$deal->id().'/tier',
+            'action' => '/admin/crm/deals/'.$deal->id().'/zahlung',
             'token' => 'csrf-token',
-            'expected' => 'free',
-            'text' => '«Schloss Seeblick» hat heute den Tarif Free. Der Deal verkauft den Tarif Pro.',
+            'expected' => '',
+            'text' => 'Die Rechnung ist bezahlt: «Schloss Seeblick» erhält den Tarif Pro vom 1. Januar 2030 bis 31. Dezember 2030.',
         ], $this->answer()['tierOffer']);
     }
 

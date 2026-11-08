@@ -83,7 +83,7 @@ final class VenueCommandAuditTest extends TestCase
         $text = 'GEHEIMTEXT';
         $changed = ['name', 'summary'];
 
-        yield 'basics' => [new ChangeVenueBasics(self::NUMBER, '1', $changed, 'Schloss Muster', 'schloss-muster', KnownTiers::PRO, 10, 100)];
+        yield 'basics' => [new ChangeVenueBasics(self::NUMBER, '1', $changed, 'Schloss Muster', 'schloss-muster', 10, 100)];
         yield 'capacity' => [new ChangeVenueCapacity(self::NUMBER, '1', $changed, 180)];
         yield 'texts' => [new ChangeVenueTexts(self::NUMBER, '1', $changed, ['de' => ['summary' => $text, 'description' => $text, 'metaDescription' => $text, 'parkingText' => $text]])];
         yield 'relocate' => [new RelocateVenue(self::NUMBER, '1', $changed, '8706 Meilen', 'zh', 'Seestrasse 99', 47.123456, 8.654321, '1.5', $text, '2.5', $text, '30.0', $text, ['de' => 'Geheimregion'], true, true)];

@@ -40,7 +40,7 @@ change either: they keep a room's photos attached to it when rooms are reordered
 
 ## Tier
 
-A folder carries no tier. The import creates a venue on the Free tier and never changes the tier of an existing one; staff and the CRM set it (`ChangeVenueTier`, F12).
+A folder carries no tier. The import creates a venue on the Free tier and never changes the tier of an existing one; a paid tier comes only with a paid term that staff record in the CRM («Zahlung erfassen», G9).
 
 ## Example
 

@@ -96,7 +96,7 @@ final class LocationPlanCardTest extends WebTestCase
         self::assertSame('Dein Plan: Pro', $crawler->filter('#location-plan')->text());
         self::assertSame('Top-Eintrag', $crawler->filter('section[aria-labelledby="location-plan"] .card__head .pill')->text());
         self::assertSame(
-            ['Fotos 0 von 60', 'Räume 0 von 20', 'PDFs 0 von 5', 'Telefon und Website: sichtbar', 'Anlassarten: alle'],
+            ['Bezahlt bis 31. Dezember 2099', 'Fotos 0 von 60', 'Räume 0 von 20', 'PDFs 0 von 5', 'Telefon und Website: sichtbar', 'Anlassarten: alle'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
         );
         self::assertCount(0, $crawler->filter('form[action$="/pro-anfragen"]'));

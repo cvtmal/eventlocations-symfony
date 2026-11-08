@@ -8,7 +8,8 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
 
 /**
- * The CMS card "Grunddaten" (#24): name, slug, tier and capacity range. A rename moves the
+ * The CMS card "Grunddaten" (#24): name, slug and capacity range (the tier follows
+ * the paid terms, G9). A rename moves the
  * slugs with history (VenueSlugs::assign()); a slug typed by hand goes through
  * VenueSlugs::change().
  */
@@ -25,7 +26,6 @@ final readonly class ChangeVenueBasics implements AuditableCommand
         public array $changedFields,
         public string $name,
         public ?string $newSlug,
-        public string $tierCode,
         public ?int $capacityMin,
         public int $capacityMax,
     ) {
@@ -38,7 +38,7 @@ final readonly class ChangeVenueBasics implements AuditableCommand
 
     public function auditSummary(): array
     {
-        $summary = ['changed' => $this->changedFields, 'tier' => $this->tierCode];
+        $summary = ['changed' => $this->changedFields];
         if (null !== $this->newSlug) {
             $summary['slug'] = $this->newSlug;
         }

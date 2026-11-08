@@ -7,10 +7,10 @@ namespace App\Crm\Controller\Api;
 use App\Admin\Security\AdminIdentity;
 use App\Crm\Command\MoveDealStage;
 use App\Crm\CrmApi;
+use App\Crm\PaymentOfferProps;
+use App\Crm\ReadModel\DealPaymentOfferQuery;
 use App\Crm\ReadModel\DealStageQuery;
 use App\Crm\ReadModel\DealStageState;
-use App\Crm\ReadModel\DealTierOfferQuery;
-use App\Crm\TierOfferProps;
 use App\Shared\Translation\LocalizedRoutes;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,8 +40,8 @@ final class DealStageController extends AbstractController
         #[CurrentUser] AdminIdentity $user,
         CrmApi $api,
         DealStageQuery $stages,
-        DealTierOfferQuery $offers,
-        TierOfferProps $offerProps,
+        DealPaymentOfferQuery $offers,
+        PaymentOfferProps $offerProps,
         MessageBusInterface $commandBus,
     ): JsonResponse {
         $move = $api->stageMove($request, $stages->codes());
@@ -54,7 +54,7 @@ final class DealStageController extends AbstractController
             return $api->notFound();
         }
         if ($move->stage === $state->stage) {
-            return self::answer($state, $offerProps->of($offers->forDeal($id)));
+            return self::answer($state, $offerProps->of($offers->forDeal($id)->offer));
         }
 
         try {
@@ -65,7 +65,7 @@ final class DealStageController extends AbstractController
 
         $moved = $stages->stateOf($id);
 
-        return null === $moved ? $api->notFound() : self::answer($moved, $offerProps->of($offers->forDeal($id)));
+        return null === $moved ? $api->notFound() : self::answer($moved, $offerProps->of($offers->forDeal($id)->offer));
     }
 
     /**

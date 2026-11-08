@@ -19,8 +19,10 @@ use Zenstruck\Foundry\Story;
  * The dev manager, with credentials that are public on purpose, as AdminStory's. Idempotent.
  *
  * The manager looks after two of DemoStory's locations, the first published one of each tier by number, so the plan
- * card of `/konto/locations/{number}` shows both of its states (F12): Free with "Pro anfragen", Pro without it. The
- * story runs after DemoStory; without venues the manager has none, as before.
+ * card of `/konto/locations/{number}` shows both of its states (F12): Free with "Pro anfragen", Pro without it.
+ * The Pro one's term ends in 20 days (DemoStory, G9), so `make sf c=app:subscriptions:remind` sends the dev manager
+ * the 30-day reminder (Mailpit) with a working cancellation link. The story runs after DemoStory; without venues the
+ * manager has none, as before.
  */
 final class PortalStory extends Story
 {

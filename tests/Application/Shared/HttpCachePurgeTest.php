@@ -13,12 +13,12 @@ use App\Tests\Support\Http\PublicRouteFixtures;
 use App\Tests\Support\Http\ThroughHttpCache;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\ChangeVenueTexts;
-use App\Venues\Command\ChangeVenueTier;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\PurgeListingsCache;
 use App\Venues\Command\PurgeVenueCache;
+use App\Venues\Command\RefreshVenueSubscription;
 use App\Venues\Command\UnpublishVenue;
-use App\Venues\ValueObject\KnownTiers;
+use App\Venues\ValueObject\TermDay;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -95,8 +95,9 @@ final class HttpCachePurgeTest extends WebTestCase
     }
 
     /**
-     * F12: a tier decides what a page shows (the phone, the label), so changing it must reach the visitor at once.
-     * The seeded venue is on Pro; on Free its detail page loses the reveal link and its listing card the label.
+     * F12, G9: a tier decides what a page shows (the phone, the label), so changing it must reach the visitor at once.
+     * The seeded venue is on Pro; when its term lapses, the nightly refresh drops it to Free and purges, so its detail
+     * page loses the reveal link and its listing card the label.
      */
     public function test_a_tier_change_replaces_the_cached_pages(): void
     {
@@ -107,7 +108,8 @@ final class HttpCachePurgeTest extends WebTestCase
         self::assertStringContainsString('/telefon', (string) $this->get(self::DETAIL)->getContent());
         self::assertStringContainsString('Top-Eintrag', (string) $this->get(self::LISTING)->getContent());
 
-        $this->dispatch(new ChangeVenueTier($this->number, KnownTiers::FREE));
+        $this->connection->executeStatement("UPDATE subscriptions SET starts_on = DATE '2000-01-01', ends_on = CAST(? AS date) - 1 WHERE venue_id = (SELECT id FROM venues WHERE number = ?)", [TermDay::sql(new \DateTimeImmutable(self::FROZEN_NOW)), $this->number]);
+        $this->dispatch(new RefreshVenueSubscription($this->number));
 
         $detail = $this->get(self::DETAIL);
         $this->assertTrace('miss/store', $detail, self::DETAIL);

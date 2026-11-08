@@ -297,17 +297,23 @@ deal:
         session_gone: Sitzung abgelaufen. Bitte die Seite neu laden.
         forbidden: Sitzung abgelaufen. Bitte die Seite neu laden.
         error: Verschieben nicht möglich. Bitte erneut versuchen.
-    tier:
-        action: Tarif anwenden
-        title: Tarif auf Eintrag anwenden
-        text: '«{venue}» hat heute den Tarif {current}. Der Deal verkauft den Tarif {offered}.'
-        confirm: Tarif anwenden
+    payment:
+        action: Zahlung erfassen
+        title: Zahlung erfassen
+        text: 'Die Rechnung ist bezahlt: «{venue}» erhält den Tarif {tier} vom {start, date, ::dMMMMy} bis {end, date, ::dMMMMy}.'
+        invoice_ref: Rechnungsnummer
+        invoice_ref_help: Freiwillig, höchstens 60 Zeichen.
+        paid_until: Bezahlt bis
+        cancelled: 'gekündigt am {on}'
+        confirm: Zahlung erfassen
         cancel: Nicht jetzt
         close: Schliessen
         flash:
-            applied: Der Tarif gilt jetzt auf dem Eintrag.
-            stale: Der Tarif dieses Eintrags wurde inzwischen geändert. Bitte noch einmal prüfen.
-            gone: Für diesen Deal gibt es keinen Tarif mehr anzuwenden.
+            recorded: Zahlung erfasst. Der Tarif gilt für die bezahlte Laufzeit.
+            stale: Für diesen Eintrag wurde inzwischen eine Zahlung erfasst. Bitte noch einmal prüfen.
+            gone: Für diesen Deal gibt es keine Zahlung mehr zu erfassen.
+            overlap: Diese Laufzeit überschneidet sich mit einer schon bezahlten. Bitte die Vertragsdaten des Deals prüfen.
+            past: Diese Laufzeit ist schon vorbei. Bitte die Vertragsdaten des Deals prüfen.
     renew:
         action: Verlängern
         title: Deal verlängern

@@ -1,0 +1,39 @@
+{#
+    The reminder before a paid term ends (G9, PortalMailer::sendSubscriptionReminder): price of the next year, what stops
+    on Free and the cancellation link. A contract mail, so no opt-out link (Wave G §4a.6): cancelling stops the reminders.
+    Context: name (null for the inquiry address), reminder (Portal\ReadModel\SubscriptionReminderRow), cancelUrl,
+    paid and free (Venues\ValueObject\Entitlements of the term's tier and of Free).
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% set end = reminder.endsOn %}
+{% set price = (reminder.priceRappen / 100)|swiss_number(reminder.priceRappen % 100 == 0 ? 0 : 2) %}
+
+{% block preheader %}{{ 'subscription.mail.preheader'|trans({tier: reminder.tierName, venue: reminder.venueName, end: end}, 'portal') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting(name ? 'subscription.mail.greeting'|trans({name: name}, 'portal') : 'subscription.mail.greeting_plain'|trans({}, 'portal')) }}
+{{ blocks.p('subscription.mail.intro'|trans({tier: reminder.tierName, venue: reminder.venueName, end: end}, 'portal')) }}
+{{ blocks.p((reminder.vatLine ? 'subscription.mail.renewal_plus_vat' : 'subscription.mail.renewal')|trans({tier: reminder.tierName, price: price}, 'portal')) }}
+{{ blocks.p('subscription.mail.free_intro'|trans({}, 'portal')) }}
+{% set rows = [
+    {label: 'subscription.mail.fact.photos'|trans({}, 'portal'), value: 'subscription.mail.fact.photos_value'|trans({free: free.photosMax, paid: paid.photosMax}, 'portal')},
+    {label: 'subscription.mail.fact.rooms'|trans({}, 'portal'), value: 'subscription.mail.fact.limit_value'|trans({free: free.roomsMax, paid: paid.roomsMax}, 'portal')},
+    {label: 'subscription.mail.fact.documents'|trans({}, 'portal'), value: 'subscription.mail.fact.limit_value'|trans({free: free.documentsMax, paid: paid.documentsMax}, 'portal')},
+    {label: 'subscription.mail.fact.videos'|trans({}, 'portal'), value: 'subscription.mail.fact.limit_value'|trans({free: free.videosMax, paid: paid.videosMax}, 'portal')},
+] %}
+{% if free.eventTypesMax is not null and free.eventTypesMax != paid.eventTypesMax %}
+    {% set rows = rows|merge([{label: 'subscription.mail.fact.event_types'|trans({}, 'portal'), value: (paid.eventTypesMax is null ? 'subscription.mail.fact.event_types_all_value' : 'subscription.mail.fact.event_types_value')|trans({free: free.eventTypesMax, paid: paid.eventTypesMax ?? 0}, 'portal')}]) %}
+{% endif %}
+{% if paid.contactVisible and not free.contactVisible %}
+    {% set rows = rows|merge([{label: 'subscription.mail.fact.contact'|trans({}, 'portal'), value: 'subscription.mail.fact.contact_value'|trans({}, 'portal')}]) %}
+{% endif %}
+{% if paid.promoted and not free.promoted %}
+    {% set rows = rows|merge([{label: 'subscription.mail.fact.ranking'|trans({}, 'portal'), value: 'subscription.mail.fact.ranking_value'|trans({}, 'portal')}]) %}
+{% endif %}
+{{ blocks.facts(rows) }}
+{{ blocks.p('subscription.mail.cancel'|trans({end: end}, 'portal')) }}
+{{ blocks.button('subscription.mail.button'|trans({}, 'portal'), cancelUrl) }}
+{{ blocks.note('subscription.mail.note'|trans({}, 'portal')) }}
+{% endblock %}

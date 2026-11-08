@@ -21,6 +21,7 @@ final class SensitiveUrlScrubberTest extends TestCase
         yield 'a preview link' => ['https://deine-eventlocation.ch/vorschau/'.self::TOKEN, 'https://deine-eventlocation.ch/vorschau/[Filtered]'];
         yield 'with a query and a fragment' => ['https://deine-eventlocation.ch/vorschau/'.self::TOKEN.'?a=1#bilder', 'https://deine-eventlocation.ch/vorschau/[Filtered]#bilder'];
         yield 'a path' => ['/vorschau/'.self::TOKEN, '/vorschau/[Filtered]'];
+        yield 'a cancellation link (G9)' => ['https://deine-eventlocation.ch/konto/abo-kuendigen/'.self::TOKEN, 'https://deine-eventlocation.ch/konto/abo-kuendigen/[Filtered]'];
         yield 'another page' => ['https://deine-eventlocation.ch/eventlocations?seite=2', 'https://deine-eventlocation.ch/eventlocations?seite=2'];
         yield 'the staff preview' => ['https://deine-eventlocation.ch/admin/locations/12/vorschau', 'https://deine-eventlocation.ch/admin/locations/12/vorschau'];
     }

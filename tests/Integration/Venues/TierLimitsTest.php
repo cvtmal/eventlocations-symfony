@@ -245,6 +245,8 @@ final class TierLimitsTest extends KernelTestCase
     {
         $venue = $this->venue(KnownTiers::PRO);
         $this->dispatch(self::eventFacts($venue, $this->token($venue), ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']]));
+        // The term lapses (G9): the entitlements read the term, the tier follows in the nightly job.
+        $this->connection->executeStatement('DELETE FROM subscriptions WHERE venue_id = ?', [$venue->id()]);
         $this->connection->executeStatement('UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = ?) WHERE id = ?', [KnownTiers::FREE, $venue->id()]);
         $this->em->clear();
         $count = fn (): int => (int) $this->connection->fetchOne("SELECT COUNT(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'", [$venue->id()]);
