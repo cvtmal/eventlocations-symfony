@@ -48,7 +48,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 ## Facts the owner holds
 
-Every product decision is settled (D23 to D47). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
+Every product decision is settled (D23 to D49). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
 
 | Fact | Until it arrives |
 |---|---|
@@ -58,7 +58,8 @@ Every product decision is settled (D23 to D47). Only facts and the owner's own p
 | Infomaniak Object Storage credentials for the media backup (F15b) | Placeholders; launch is refused without a backup less than 26 hours old |
 | Once a year: delete the report mails (G2) older than three years in the contact mailbox (D36) | Note in `docs/operations.md` |
 | Venue spreadsheet for D1(b) | F14 is built and tested on a fixture |
-| Contact list for the one-to-one pilot | After launch (D30: no bulk mail) |
+| Contact list for the one-to-one pilot | After launch (D30: no bulk mail); F14 builds the import |
+| Google photos and rating: check Google's terms, then switch them on | Both off; the placeholder shows (D48) |
 
 Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults together; the owner has delegated them and is not asked. The owner still holds real-world facts (the operator's identity, the host account, the venue spreadsheet, the contact list) and deploys. Where a fact is missing, the site ships a marked placeholder.
 
