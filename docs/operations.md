@@ -63,7 +63,7 @@ Once, in this order. Steps 1 to 4 need root (`sudo`); everything after runs as `
 ```sh
 apt update && apt full-upgrade
 timedatectl set-timezone Europe/Zurich        # deploy/crontab.txt is written in Zurich time
-apt install nginx certbot unattended-upgrades curl ca-certificates openssl rsync
+apt install nginx certbot unattended-upgrades curl ca-certificates openssl rsync restic
 # PHP 8.5 from packages.sury.org (Debian itself ships an older PHP)
 curl -sSLo /tmp/sury.deb https://packages.sury.org/debsuryorg-archive-keyring.deb && dpkg -i /tmp/sury.deb
 echo 'deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ trixie main' \
@@ -73,7 +73,8 @@ apt install php8.5-fpm php8.5-cli php8.5-pgsql php8.5-intl php8.5-gd php8.5-zip 
 update-alternatives --set php /usr/bin/php8.5
 ```
 
-`php -v` must say 8.5. OPcache is built into PHP 8.5.
+`php -v` must say 8.5. OPcache is built into PHP 8.5. `restic version` must say 0.18 or newer (Debian 13
+ships 0.18.0; the media backup needs its `--skip-if-unchanged`).
 
 ### 3. The deploy user and the tree
 
@@ -183,9 +184,10 @@ Append the line of `deploy/authorized_keys.example`, with the public key of `dep
    `__OPS_MAIL__` placeholder), then `crontab deploy/crontab.txt` and `crontab -l`. The server needs
    a mail transport for cron mail (`apt install msmtp-mta` with the Infomaniak mailbox), or set
    `MAILTO=""` and rely on the Sentry cron monitor in [Monitoring](#monitoring).
-3. The first staff account: `cd <root>/current && php bin/console app:admin:create-user <e-mail> --role=admin`
+3. The media backup: [Media backup](#media-backup), "Setup" (bucket, keys, `init`, a first run).
+4. The first staff account: `cd <root>/current && php bin/console app:admin:create-user <e-mail> --role=admin`
    (it asks for the password twice), then log in at `/admin` and enrol the second factor.
-4. Content: [Content](#content). Then add the Sentry monitors and the backup schedule.
+5. Content: [Content](#content). Then add the Sentry monitors and the backup schedule.
 
 ## Deploy, purge, rollback
 
@@ -264,6 +266,7 @@ links to it. A deploy never writes it, and `bin/deploy` changes nothing live whi
 | `MEDIA_MAX_PIXELS`, `MEDIA_MAX_PORTRAIT_RATIO` | `20000000` and `2`. Raise the pixels only together with `memory_limit` in `public/.user.ini`. |
 | `GOOGLE_MAPS_EMBED_KEY`, `GOOGLE_MAPS_JS_KEY`, `GOOGLE_MAPS_MAP_ID`, `GOOGLE_PLACES_API_KEY` | Optional; empty means no request goes to Google and the link to Google Maps remains. Restrict each key to its API and the referrers `https://deine-eventlocation.ch/*` and `https://www.deine-eventlocation.ch/*`. `GOOGLE_MAPS_MAP_ID` must not be `DEMO_MAP_ID` once the JS key is set. After a key change run `sh bin/prod-import purge`. |
 | `SENTRY_DSN` | Optional. Empty: no error reports. |
+| `MEDIA_BACKUP_REPOSITORY`, `MEDIA_BACKUP_PASSWORD`, `MEDIA_BACKUP_ACCESS_KEY_ID`, `MEDIA_BACKUP_SECRET_ACCESS_KEY` | The media backup's bucket, encryption password and S3 keys; read only by `bin/cron-media-backup`, which refuses an empty value or a placeholder. Single quotes. The password also goes into the password manager: without it the backup is unreadable. `MEDIA_BACKUP_REGION` stays empty unless restic cannot find the region. See [Media backup](#media-backup). |
 | `SYMFONY_TRUSTED_PROXIES` | Unset: nginx faces the visitor. Only if a proxy is ever put in front; its exact address, never `REMOTE_ADDR` |
 
 `MEDIA_PUBLIC_DIR` is not set in production (default `public/media`). `SENTRY_RELEASE` is not set
@@ -324,6 +327,7 @@ step 2), so the times below are Zurich times. `php` on cron's PATH is 8.5 throug
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
 | `15 3 * * *` | `bin/cron-daily` | Inquiry purge, CRM stage refresh and renewal tasks, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `30 4 * * *` | `bin/cron-media-backup` | The media originals to Object Storage, encrypted, with retention ([Media backup](#media-backup)); no database |
 
 The cache jobs share the lock `var/lock/cache-clear.lock` (in `shared/`, so it holds across a
 switch). A good night prints nothing, and cron mails a job's output to `MAILTO`, so every mail is
@@ -338,6 +342,9 @@ worth reading:
 | `<id> venue <n> since <time> UTC` | An inquiry stayed `pending`; the venue may have no mail | Open `/admin/crm/anfragen/<id>` and press Erneut senden |
 | `cron-midnight: the cache lock stayed busy for 60 s` | A guard run held the lock | Nothing if the next night is clean |
 | `HTTP cache store: ... bytes, ... files.` | The store hit a limit and was emptied | Nothing, unless it repeats daily: raise the limits |
+| `cron-media-backup: the backup failed`, with restic's error | No new backup tonight; the last one stays | Read restic's line: `wrong password` or `Access Denied` is `.env.local`, `repository does not exist` is the URL or a missing `init`, a network error retries tomorrow. `already locked` after a crash: `sh bin/cron-media-backup restic unlock`. Rerun `sh <root>/current/bin/cron-media-backup` |
+| `cron-media-backup: ... is not set in .env.local`, `... still holds the template's placeholder` | The backup never started | Fill the `MEDIA_BACKUP_*` lines in `shared/.env.local` |
+| `cron-media-backup: the retention failed (the backup itself is done)` | Old snapshots were not forgotten | Nothing if the next night is clean; otherwise run `sh bin/cron-media-backup restic check` |
 
 A new nightly job is a console command plus a line in `bin/cron-daily` plus a note under
 [Monitoring](#monitoring), and must be idempotent on a second run.
@@ -380,12 +387,13 @@ on.
 |---|---|---|
 | Database, first line | Neon's point-in-time restore (PITR) | 6 hours on Free, up to 7 days on Launch, to the second |
 | Database, outside Neon | `backup.yaml`: `pg_dump`, then a test restore | Plain artifacts in GitHub, 7 days |
-| Media (originals and variants) | `bin/pull-media-backup`, by hand from the Mac, from `shared/` | As far back as the backup disk keeps it; nothing is deleted |
+| Media originals | `bin/cron-media-backup` every night at 04:30: restic, encrypted, to Infomaniak Object Storage in Switzerland | A snapshot a day for 14 days, a week for 2 months, a month for a year |
+| Media (originals and variants), second copy | `bin/pull-media-backup`, by hand from the Mac, from `shared/` | As far back as the backup disk keeps it; nothing is deleted |
 | Secrets | `shared/.env.local` | A copy in the owner's password manager |
 | Code | Every release is a commit on `main`; the VPS keeps the last three | Rebuild with a deploy |
 
-The releases hold no state, so a lost VPS is: setup steps 1 to 8, the media restore below, one
-deploy. Never run `pg_dump` on the server: Debian's client is not Neon's major. The dump runs in
+The releases hold no state, so a lost VPS is: setup steps 1 to 8, one deploy, the media restore
+below. Never run `pg_dump` on the server: Debian's client is not Neon's major. The dump runs in
 Actions with a Postgres 18 image.
 
 ### When to enable the nightly backup
@@ -426,18 +434,103 @@ php bin/console cache:pool:clear cache.content_blocks
 
 ### Media backup
 
-Once staff or managers upload photos, the originals exist only on the server, in
-`<root>/shared/var/media` and `<root>/shared/public/media`. Set `PROD_SSH` and
-`BACKUP_DIR` (an external disk), then pull regularly and verify:
+Venue photos and PDFs are the one thing we cannot recreate. `bin/cron-media-backup` copies the
+originals in `<root>/shared/var/media` every night at 04:30 to Infomaniak Object Storage (S3-compatible,
+data in Switzerland) with [restic](https://restic.net):
+
+- restic encrypts on the server with `MEDIA_BACKUP_PASSWORD`; the bucket holds only encrypted chunks.
+- It uploads only chunks the repository does not hold yet and skips the snapshot when nothing changed,
+  so an unchanged night copies nothing.
+- Retention, counted back from the newest snapshot: one a day for 14 days, one a week for 2 months,
+  one a month for a year. Older data is pruned.
+- The variants and published PDFs in `shared/public/media` are not copied: `app:media:regenerate`
+  rebuilds both from the originals.
+- After a good backup the script writes the time into `<root>/shared/var/log/media-backup.ok`.
+  `sh bin/cron-media-backup status` exits 1 unless that is less than 26 hours old (the F16 launch
+  check); it needs no network.
+- The snapshots carry the host name `deine-eventlocation.ch`, not the machine's, so a rebuilt server
+  continues the same history.
+
+`make deploy-test` runs the script with restic 0.18.0 against a local S3 server: refusals, `init`, a
+first run, a second run that copies nothing, retention, `status` and the restore drill below.
+
+#### Setup
+
+Once, after the first deploy (the script runs from `current/`). TODO(owner): the bucket and keys.
+
+1. In the Infomaniak Manager, open (or create) a Public Cloud project, create a private bucket
+   `deine-eventlocation-media` in Object Storage and S3 credentials for the project (Horizon: API
+   Access, or `openstack ec2 credentials create`). Note the S3 endpoint of the project's region
+   (`s3.pub1.infomaniak.cloud` for dc3-a, `s3.pub2.infomaniak.cloud` for dc4-a; check Infomaniak's
+   page). Create the bucket first: on a missing bucket restic retries for minutes instead of failing.
+2. Fill the `MEDIA_BACKUP_*` lines in `shared/.env.local`: the repository is
+   `s3:https://<endpoint>/<bucket>/deine-eventlocation`, the password `openssl rand -hex 32`. Put the
+   password into the password manager now: without it the backup cannot be read.
+3. Create the repository and run the first backup by hand:
+
+   ```sh
+   cd <root>/current
+   sh bin/cron-media-backup init       # "created restic repository ..."
+   sh bin/cron-media-backup            # prints nothing on success
+   sh bin/cron-media-backup status     # "the last backup finished at ..."
+   sh bin/cron-media-backup restic snapshots
+   ```
+
+4. The crontab line is in `deploy/crontab.txt`. Add the Sentry cron monitor (see
+   [Monitoring](#monitoring)), then do the restore drill.
+
+`sh bin/cron-media-backup restic <args>` runs any restic command with the settings of `.env.local`
+(`snapshots`, `ls latest`, `restore`, `check`, `unlock`, `stats`).
+
+#### Restore drill
+
+Before go-live, then every six months. It restores into a scratch directory and changes nothing:
+
+```sh
+cd <root>/current
+media=/var/www/deine-eventlocation.ch/shared/var/media
+sh bin/cron-media-backup restic snapshots
+sh bin/cron-media-backup restic restore "latest:$media" --target /var/tmp/media-drill
+diff -r /var/tmp/media-drill "$media" && echo identical
+rm -rf /var/tmp/media-drill
+sh bin/cron-media-backup restic check --read-data-subset=10%
+```
+
+`latest:<path>` restores the media folder itself, not the whole path from `/`: as `deploy`, restic may
+not set the mode of `/var` and `/var/www` and would end with errors. `/var/tmp` is on disk (Debian 13
+keeps `/tmp` in RAM). `diff` lists only uploads and deletions since the last backup; `check` reads a
+tenth of the stored data back and verifies it.
+
+#### Restore after losing the server
+
+Setup steps 1 to 8 with `.env.local` from the password manager (its `MEDIA_BACKUP_*` lines included),
+then the first deploy, which creates an empty `shared/var/media`. Then, as `deploy`:
+
+```sh
+cd <root>/current
+media=/var/www/deine-eventlocation.ch/shared/var/media
+sh bin/cron-media-backup restic restore "latest:$media" --target "$media"
+php bin/console app:media:regenerate
+```
+
+`app:media:regenerate` renders the variants and publishes the PDFs again and exits 1 if an original is
+missing; then run the `purge` action. To get back one file or an older state, find it with
+`restic snapshots` and `restic ls <snapshot>`, restore it with
+`restic restore <snapshot>:$media --target /var/tmp/one`, copy the file into place and delete `/var/tmp/one`. A file brings
+back no database row: the photo shows only where the database still (or again) points at it.
+
+#### Second copy on the Mac
+
+`bin/pull-media-backup` pulls originals and variants to an external disk, additively. Set `PROD_SSH`
+and `BACKUP_DIR`, then:
 
 ```sh
 BACKUP_DIR=/Volumes/Backup/deine-eventlocation sh bin/pull-media-backup
 BACKUP_DIR=/Volumes/Backup/deine-eventlocation sh bin/pull-media-backup --verify
 ```
 
-`--verify` compares checksums without copying and exits 1 if a server file is missing or differs.
-Before go-live copy one venue's directory out of the backup and open a photo. To restore, rsync back
-(nothing is deleted on the server):
+`--verify` compares checksums without copying and exits 1 if a server file is missing or differs. To
+restore from it, rsync back (nothing is deleted on the server):
 
 ```sh
 rsync -rltz "$BACKUP_DIR/var-media/" "$PROD_SSH:/var/www/deine-eventlocation.ch/shared/var/media/"
@@ -461,6 +554,9 @@ grace) and have the crontab line ping it after a good run, so a failing or missi
 even when no mail arrives:
 `15 3 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-daily && curl -fsS -o /dev/null '<monitor url>?status=ok'`.
 That line is the owner's edit on the server, not in `deploy/crontab.txt`, because the URL is a secret.
+The same for the media backup: a monitor `media-backup` (daily, 04:30 Europe/Zurich, 60 minutes grace),
+and on the server
+`30 4 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-media-backup && curl -fsS -o /dev/null '<monitor url>?status=ok'`.
 
 **The server:** `unattended-upgrades` installs Debian's security updates; check `apt list --upgradable`
 and the free disk (`check` prints it) once a month. A PHP minor upgrade from sury is

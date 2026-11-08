@@ -1,0 +1,125 @@
+#!/bin/sh
+# 04:30 Europe/Zurich: copies the media originals (shared/var/media) to Infomaniak Object Storage with
+# restic (F15b). restic encrypts with MEDIA_BACKUP_PASSWORD before anything leaves the server, uploads
+# only the chunks the repository does not hold yet and skips the snapshot when nothing changed, so a
+# second run copies nothing. The variants and PDFs in public/media are not copied: app:media:regenerate
+# rebuilds them from the originals. Prints only on a failure, because cron mails any output.
+#
+#   sh bin/cron-media-backup                 the nightly run
+#   sh bin/cron-media-backup init            once, by hand: creates the encrypted repository
+#   sh bin/cron-media-backup status          exits 1 unless a backup finished in the last 26 hours (F16)
+#   sh bin/cron-media-backup restic <args>   any restic command on the repository (snapshots, restore, check)
+#
+# The settings are the MEDIA_BACKUP_* lines of .env.local (deploy/env.local.example). Setup, the restore
+# drill and what a cron mail means: docs/operations.md, "Media backup".
+set -u
+
+cd -P "$(dirname "$0")/.." || exit 1
+
+ENV_FILE=.env.local
+# In var/log, which every release links into shared/, so a deploy keeps it.
+STAMP=var/log/media-backup.ok
+# Fixed rather than the machine's name, so the backups of a rebuilt server continue the same history.
+BACKUP_HOST=deine-eventlocation.ch
+# 26 hours: one missed night shows the next morning.
+FRESH_MINUTES=1560
+
+say() { printf '%s\n' "cron-media-backup: $*"; }
+die() { printf '%s\n' "cron-media-backup: $*" >&2; exit 1; }
+
+# env_value <name>: the value of the last <name>= line of .env.local (an `export ` in front allowed, as
+# Symfony allows it), without a carriage return and one pair of outer quotes. Read line by line rather
+# than sourced: the file is Symfony's, not a shell script.
+env_value() {
+    value="$(sed -n "s/^\(export \)\{0,1\}$1=//p" "$ENV_FILE" | tr -d '\r' | tail -n 1)"
+    case "$value" in
+        \'*\') value="${value#\'}" && value="${value%\'}" ;;
+        \"*\") value="${value#\"}" && value="${value%\"}" ;;
+    esac
+    printf '%s' "$value"
+}
+
+require() { # require <name> <value>
+    case "$2" in
+        "") die "$1 is not set in $ENV_FILE" ;;
+        *__MEDIA_BACKUP_*) die "$1 in $ENV_FILE still holds the template's placeholder" ;;
+    esac
+}
+
+load_config() {
+    [ -r "$ENV_FILE" ] || die "$ENV_FILE is missing"
+    RESTIC_REPOSITORY="$(env_value MEDIA_BACKUP_REPOSITORY)"
+    RESTIC_PASSWORD="$(env_value MEDIA_BACKUP_PASSWORD)"
+    AWS_ACCESS_KEY_ID="$(env_value MEDIA_BACKUP_ACCESS_KEY_ID)"
+    AWS_SECRET_ACCESS_KEY="$(env_value MEDIA_BACKUP_SECRET_ACCESS_KEY)"
+    require MEDIA_BACKUP_REPOSITORY "$RESTIC_REPOSITORY"
+    require MEDIA_BACKUP_PASSWORD "$RESTIC_PASSWORD"
+    require MEDIA_BACKUP_ACCESS_KEY_ID "$AWS_ACCESS_KEY_ID"
+    require MEDIA_BACKUP_SECRET_ACCESS_KEY "$AWS_SECRET_ACCESS_KEY"
+    export RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+    # Optional: only if restic cannot find the bucket's region by itself.
+    region="$(env_value MEDIA_BACKUP_REGION)"
+    if [ -n "$region" ]; then
+        AWS_DEFAULT_REGION="$region"
+        export AWS_DEFAULT_REGION
+    fi
+}
+
+nightly() {
+    load_config
+    media="$(cd -P var/media 2>/dev/null && pwd)" || die "var/media is missing"
+    mkdir -p var/log
+    # The resolved shared/ path, never var/media of one release: the same path every night lets restic
+    # compare with the last snapshot and skip unchanged files. Exit 3 (a file could not be read) is a
+    # failure too; that snapshot is incomplete, so the stamp stays as it was.
+    out="$(restic backup --quiet --skip-if-unchanged --host "$BACKUP_HOST" "$media" 2>&1)" || {
+        say "the backup failed"
+        [ -z "$out" ] || printf '%s\n' "$out"
+        exit 1
+    }
+    [ -z "$out" ] || printf '%s\n' "$out"
+    date -u '+%Y-%m-%dT%H:%M:%SZ' > "$STAMP" || die "the backup is done, but $STAMP could not be written"
+    # One snapshot a day for two weeks, one a week for two months, one a month for a year, counted back
+    # from the newest snapshot. --prune deletes the data no snapshot needs any more, and only runs when a
+    # snapshot was forgotten.
+    out="$(restic forget --quiet --host "$BACKUP_HOST" --keep-within-daily 14d --keep-within-weekly 2m \
+        --keep-within-monthly 1y --prune 2>&1)" || {
+        say "the retention failed (the backup itself is done)"
+        [ -z "$out" ] || printf '%s\n' "$out"
+        exit 1
+    }
+    [ -z "$out" ] || printf '%s\n' "$out"
+}
+
+status() {
+    if [ -n "$(find "$STAMP" -mmin "-$FRESH_MINUTES" 2>/dev/null)" ]; then
+        say "the last backup finished at $(cat "$STAMP")"
+        return 0
+    fi
+    [ -f "$STAMP" ] || die "no backup has finished yet"
+    die "the last backup finished at $(cat "$STAMP"), more than 26 hours ago"
+}
+
+main() {
+    case "${1:-}" in
+        "")
+            nightly
+            ;;
+        init)
+            load_config
+            # Never part of the nightly run: a wrong URL there must fail, not start an empty repository.
+            restic init
+            ;;
+        status)
+            status
+            ;;
+        restic)
+            shift
+            load_config
+            exec restic "$@"
+            ;;
+        *) die "usage: bin/cron-media-backup [init | status | restic <args>]" ;;
+    esac
+}
+
+main "$@"
