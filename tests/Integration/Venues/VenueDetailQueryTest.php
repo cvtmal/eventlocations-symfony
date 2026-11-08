@@ -339,6 +339,8 @@ final class VenueDetailQueryTest extends KernelTestCase
     public function test_a_minimal_venue_has_empty_sections(): void
     {
         $venue = DetailVenues::minimal();
+        // Without the factory's description (G12 gives every factory entry one).
+        $this->connection->executeStatement('UPDATE venue_translations SET description = NULL WHERE venue_id = ?', [$venue->id()]);
 
         $detail = $this->query->detail($venue->number(), 'de');
 

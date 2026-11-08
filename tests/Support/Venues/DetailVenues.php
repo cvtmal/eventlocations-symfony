@@ -138,7 +138,7 @@ final class DetailVenues
             'capacityMax' => 80,
             'street' => null,
         ]);
-        VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug, 'summary' => 'Ein kleines Gartenhaus.', 'description' => null]);
+        VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug, 'summary' => 'Ein kleines Gartenhaus.']);
 
         return $venue;
     }

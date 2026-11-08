@@ -95,3 +95,9 @@ Record tab "Vorschau-Links" (`Extension\VenuePreviewLinksRecordTab`, priority 60
 
 **G9 (`subscription-term`).** The tier is no longer edited in the CMS: «Stammdaten» and «Neue Location» lost the Tier field (`ChangeVenueBasics` and `CreateVenue` carry no tier; a new entry is Free). The header badge and the list filter still read `venues.tier_id`, which follows the paid terms recorded in the CRM («Zahlung erfassen»). The Verlauf names `RecordSubscriptionPayment` («eine Zahlung erfasst») and `CancelSubscription` («die Verlängerung gekündigt»).
 - **Finish:** the Verlauf names `VoidSubscription` («eine Zahlung storniert»).
+
+## Indexing and zero-result searches (G12 `launch-regions`)
+
+- **Editor aside card "Suchmaschinen"** (`section[aria-labelledby="venue-indexing"]`, after the checklist): items `facts`, `description` (`VenueEdit::missingForIndex()`, codes `MISSING_FACTS`, `MISSING_DESCRIPTION`; the PHP whitespace class matches the SQL gate's), a state line (`indexing.state.*`) and one button: `admin_locations_check_facts` `POST .../{number}/fakten-geprueft` or `admin_locations_uncheck_facts` `.../fakten-offen` (`VenueActionsExtension::ROUTES` `check_facts`/`uncheck_facts`, `VenueStatusController`; a click in the state already set, read from `VenueHeader::$factsChecked`, dispatches nothing). Strings `cms` `indexing.*`, history `CheckVenueFacts`.
+- **Landing pages:** the list and editor pill read `landing.threshold.noindex` ("online, noindex", amber) for a live page that fails `LandingQualityGate`.
+- **Funnel screen:** section "Suchen ohne Treffer" (`#funnel-misses-table`, one `th rowspan` per week) from `Stats\ReadModel\SearchMissQuery` for the same `?wochen=` window, campaign-independent; each query links to `/eventlokale?<query>&staff=1` (not counted). Strings `stats.funnel.misses.*`.
