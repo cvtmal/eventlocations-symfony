@@ -98,7 +98,7 @@ The trait `tests/Support/Search/LandingFixtures.php` (`inCanton()`, `inTown()`, 
 ## F5 `filter-event` (current state)
 
 - **Paths** (route names unchanged, no redirects): `listing` `/eventlokale`, `listing_landing` `/eventlokale/{slug}`, `listing_town` `/eventlokale/{canton}/{town}`, `nearby` `/eventlokal-in-meiner-naehe`; the venue routes are `/eventlokal/{slug}` (`### Venues`). "Eventlokale" is a generic keyword: no competitor name, domain or logo in titles, meta, copy or JSON-LD.
-- **Event search:** `event[]` (`suitable_for`, OR) is the first `PARAMS` key and has its own bar slot "Anlass"; `catering[]` (AND) sits in the More overlay's properties group; `guests` is one number ("fits N", `capacity_min` read). No layout criterion (D4). `LandingPaths` does not consume `event` yet: F8 adds event landing pages there, the home tiles already link through `LandingPaths::url(['event' => [code]])`.
+- **Event search:** `event[]` (`suitable_for`, OR) is the first `PARAMS` key and has its own bar slot "Anlass"; `catering[]` (AND) sits in the More overlay's properties group; `guests` is one number ("fits N", `capacity_min` read). No layout criterion (D4). `LandingPaths` consumes exactly one `event` code (F8, below); the home tiles link through `LandingPaths::url(['event' => [code]])`, so a tile with a live event page links to it.
 - **Not done here:** the "Hochzeitslocations" wording in titles and headings stays for F7b (the card placeholder's event type came with F5b).
 
 ## F8 `landing-event` (current state)
