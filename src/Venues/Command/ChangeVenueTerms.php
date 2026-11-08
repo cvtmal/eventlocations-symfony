@@ -8,9 +8,9 @@ use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
 
 /**
- * The CMS card "Merkmale" (#24, D16): the seven filter groups (setting … surroundings) with
- * the main building and the main setting. A group missing from `terms` is emptied; the three
- * event groups (amenity, catering, language) are ChangeVenueEventFacts'.
+ * The card "Merkmale" (#24, D16) of the CMS and `/konto`: setting, building, infrastructure, furniture and
+ * surroundings with the main building and the main setting. A group missing from `terms` is emptied; event types,
+ * catering, technology, amenity and language are ChangeVenueEventFacts' (F11).
  */
 final readonly class ChangeVenueTerms implements AuditableCommand
 {

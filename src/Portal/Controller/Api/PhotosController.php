@@ -12,6 +12,7 @@ use App\Portal\Security\PortalIdentity;
 use App\Portal\Security\PortalVenueVoter;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
+use App\Venues\Command\MoveVenuePhotoToRoom;
 use App\Venues\Command\RemoveVenuePhoto;
 use App\Venues\Command\ReorderVenuePhotos;
 use App\Venues\ValueObject\Grantor;
@@ -29,8 +30,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * A manager's photo writes other than the upload (POR-8), with the bodies and answers of staff's
- * `Cms\Controller\Api\PhotosController`. Rooms stay with staff: `order` works on the gallery whatever the body says,
- * and there is no room action. A removal ends the photo's rights grant with the manager as the revoker (G1).
+ * `Cms\Controller\Api\PhotosController`: `order` sorts the gallery or one room (`roomId`), `room` moves a photo
+ * between gallery and the location's rooms (F11). A removal ends the photo's rights grant with the manager as the
+ * revoker (G1). A photo over the plan's budget stays stored and hidden (F12); the handlers purge after the commit.
  */
 #[IsGranted(PortalVenueVoter::EDIT, subject: 'number')]
 #[IsCsrfTokenValid('portal_api', tokenKey: 'X-CSRF-Token', methods: ['POST', 'PUT', 'PATCH', 'DELETE'], tokenSource: IsCsrfTokenValid::SOURCE_HEADER)]
@@ -49,12 +51,17 @@ final class PhotosController extends AbstractController
     #[Route('/order', name: 'portal_api_photos_order', methods: ['PUT'])]
     public function order(int $number, Request $request): JsonResponse
     {
-        $ids = VenueMediaApi::ids(VenueMediaApi::payload($request)['ids'] ?? null);
+        $payload = VenueMediaApi::payload($request);
+        $roomId = VenueMediaApi::roomId($payload['roomId'] ?? null);
+        if (false === $roomId) {
+            return $this->api->invalid('roomId', 'cms.photo.room.invalid');
+        }
+        $ids = VenueMediaApi::ids($payload['ids'] ?? null);
         if (null === $ids) {
             return $this->api->invalid('ids', 'cms.photo.order.invalid');
         }
 
-        return $this->dispatch($number, new ReorderVenuePhotos($number, null, $ids));
+        return $this->dispatch($number, new ReorderVenuePhotos($number, $roomId, $ids));
     }
 
     #[Route('/{id}/alt', name: 'portal_api_photos_alt', methods: ['PUT'])]
@@ -67,6 +74,18 @@ final class PhotosController extends AbstractController
         }
 
         return $this->dispatch($number, $data->toCommand($number, $id));
+    }
+
+    #[Route('/{id}/room', name: 'portal_api_photos_room', methods: ['PUT'])]
+    public function room(int $number, string $id, Request $request): JsonResponse
+    {
+        $payload = VenueMediaApi::payload($request);
+        $roomId = \array_key_exists('roomId', $payload) ? VenueMediaApi::roomId($payload['roomId']) : false;
+        if (false === $roomId) {
+            return $this->api->invalid('roomId', 'cms.photo.room.invalid');
+        }
+
+        return $this->dispatch($number, new MoveVenuePhotoToRoom($number, $id, $roomId));
     }
 
     #[Route('/{id}', name: 'portal_api_photos_remove', methods: ['DELETE'])]

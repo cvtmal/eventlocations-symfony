@@ -1,10 +1,10 @@
 {#
-    The manager's Fotos tab (POR-8): the `photo-manager` island with four endpoints; without `room` it offers no room.
+    The manager's Fotos tab (POR-8): the `photo-manager` island with all five endpoints, rooms included (F11).
     Below it the "Bildrechte" card and, while a photo has no grant, the declaration form (G1). Above the island a note
     says what a new upload is worth: public at once with the declaration of this manager on record (a colleague's does
     not count), otherwise it waits for one.
     Context from `LocationPhotosController`: what `_photo_manager.html.twig` lists, apart from endpoints and reload_url,
-    plus rights (`PhotoRightsView`, read for the logged-in manager), declaration_form (FormView) and offline_form.
+    plus rights (`PhotoRightsView`, read for the logged-in manager), declaration_form (FormView), offline_form and plan.
 #}
 {% extends 'portal/location/_layout.html.twig' %}
 
@@ -22,6 +22,7 @@
                 upload: path('portal_api_photos_add', {number: venue.number}),
                 order: path('portal_api_photos_order', {number: venue.number}),
                 alt: path('portal_api_photos_alt', id_route),
+                room: path('portal_api_photos_room', id_route),
                 remove: path('portal_api_photos_remove', id_route),
             },
             reload_url: path('portal_location_photos', {number: venue.number}),

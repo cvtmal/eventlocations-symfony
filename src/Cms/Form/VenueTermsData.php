@@ -11,7 +11,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * Merkmale (D16): the seven filter groups and the main building and setting. A main term must be among the
+ * Merkmale (D16): setting, building, infrastructure, furniture and surroundings, with the main building and setting
+ * (event types and technology are the Veranstaltung card's since F11). A main term must be among the
  * selected ones (`ContentReader`'s rule; `VenueTermSet` treats a violation as a programming error).
  */
 final class VenueTermsData implements VenueCardData
@@ -22,10 +23,8 @@ final class VenueTermsData implements VenueCardData
     public const array GROUPS = [
         TermGroup::Setting,
         TermGroup::Building,
-        TermGroup::SuitableFor,
         TermGroup::Infrastructure,
         TermGroup::Furniture,
-        TermGroup::Technology,
         TermGroup::Surroundings,
     ];
 

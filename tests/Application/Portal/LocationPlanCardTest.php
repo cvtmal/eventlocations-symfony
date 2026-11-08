@@ -153,16 +153,40 @@ final class LocationPlanCardTest extends WebTestCase
         self::assertCount(0, $crawler->filter('form[action$="/pro-anfragen"]'));
     }
 
-    public function test_the_photos_and_statistics_tabs_carry_no_plan_card(): void
+    /**
+     * F11: the tabs whose writes the plan caps carry the card too; Statistik does not.
+     */
+    public function test_the_media_tabs_carry_the_plan_card_and_statistics_does_not(): void
     {
         $venue = $this->managedVenue(DetailVenues::minimal());
 
-        foreach (['/fotos', '/statistik'] as $tab) {
+        foreach (['/fotos' => 1, '/raeume' => 1, '/dokumente' => 1, '/statistik' => 0] as $tab => $cards) {
             $crawler = $this->client->request('GET', $this->url($venue).$tab);
 
             self::assertResponseIsSuccessful();
-            self::assertCount(0, $crawler->filter('#location-plan'), $tab);
+            self::assertCount($cards, $crawler->filter('aside #location-plan'), $tab);
         }
+    }
+
+    /**
+     * D40 on the editor: Free's event-type limit sits under the chips of the Veranstaltung card in du, and once the
+     * stored types reach it the note points to the plan card beside it.
+     */
+    public function test_the_event_card_names_the_event_type_limit_and_points_to_pro_once_it_is_reached(): void
+    {
+        $venue = $this->managedVenue(DetailVenues::minimal());
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen.', $crawler->filter('#event-types-limit')->text());
+        self::assertSame('event-types-limit', $crawler->filter('#venue_event_suitable_for')->attr('aria-describedby'));
+
+        foreach (['seminar', 'apero', 'birthday'] as $code) {
+            $this->connection->executeStatement("INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES (?, 'suitable_for', ?, FALSE)", [$venue->id(), $code]);
+        }
+        $crawler = $this->client->request('GET', $this->url($venue));
+        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen. Mehr Anlassarten gibt es mit Pro. Pro anfragen', $crawler->filter('#event-types-limit')->text());
+        self::assertSame('#location-plan', $crawler->filter('#event-types-limit a')->attr('href'));
+        self::assertSame('Pro anfragen', $crawler->filter('#event-types-limit a')->text());
     }
 
     private function managedVenue(Venue $venue): Venue

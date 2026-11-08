@@ -49,7 +49,7 @@ final class VenueStatusActionsTest extends WebTestCase
         self::assertResponseRedirects('/admin/locations/'.$number);
         $crawler = $this->client->followRedirect();
         $toast = $crawler->filter('.toast')->text();
-        self::assertSame('Noch nicht publizierbar. Es fehlt: Kurztext, Haupt-Gebäudeart, Mindestens ein Foto.', $toast);
+        self::assertSame('Noch nicht publizierbar. Es fehlt: Kurztext, Wichtigste Art der Location, Mindestens ein Foto.', $toast);
         self::assertSame(1, substr_count($toast, 'fehlt'), 'the frame says it once, each gap is a noun (#45 F-m2)');
         self::assertSame('unpublished', $this->venueStatus($number));
         self::assertSame(1, $this->auditRows($number), 'only the creation');

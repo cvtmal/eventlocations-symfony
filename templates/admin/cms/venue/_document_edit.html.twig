@@ -1,0 +1,53 @@
+{#
+    A document's titles (#25, CMS-7), shared by staff's tab and the manager's (F11). Context from `VenueDocumentPages`:
+    venue (VenueHeader), document (ManagedDocument), title (its title in the default locale), form (titles + row token),
+    locale_codes, stale (bool: a 409 re-render), documents_route (the list route; `_edit` follows from it).
+#}
+{% set locales = locale_codes|map(code => {code: code, label: ('editor.locale.' ~ code)|trans({}, 'cms')}) %}
+<div class="venue-media">
+    {% form_theme form 'admin/form/theme.html.twig' %}
+    {{ form_start(form, {attr: {class: 'venue-media__form', novalidate: 'novalidate', 'data-unsaved-guard': ''}}) }}
+        {% embed 'admin/components/_card.html.twig' with {
+            title: 'documents.edit.title'|trans({title: title}, 'cms'),
+            id: 'venue-document-edit',
+            titles_form: form,
+            document: document,
+            locales: locales,
+            stale: stale,
+            reload_url: path(documents_route ~ '_edit', {number: venue.number, id: document.id}),
+            back_url: path(documents_route, {number: venue.number}),
+        } only %}
+            {% block actions %}
+                {{ include('admin/components/_button.html.twig', {
+                    label: 'documents.edit.open'|trans({}, 'cms'),
+                    size: 'sm', icon: 'external-link', href: document.url,
+                    attributes: {target: '_blank', rel: 'noopener'},
+                }, with_context = false) }}
+            {% endblock %}
+            {% block body %}
+                {{ form_errors(titles_form) }}
+                {% if stale %}
+                    <p class="venue-card__stale"><a href="{{ reload_url }}">{{ 'error.stale_reload'|trans({}, 'cms') }}</a></p>
+                {% endif %}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(titles_form.loadedAt) }}
+                {% set panels = {} %}
+                {% for locale in locales %}
+                    {% set panel %}{{ form_row(titles_form.titles[locale.code]) }}{% endset %}
+                    {% set panels = panels|merge({(locale.code): panel}) %}
+                {% endfor %}
+                {{ include('admin/components/_locale_tabs.html.twig', {
+                    id: 'document-titles',
+                    label: 'editor.locales_label'|trans({}, 'cms'),
+                    locales: locales,
+                    panels: panels,
+                    active: locales|filter(locale => not titles_form.titles[locale.code].vars.valid)|map(locale => locale.code)|first|default(null),
+                }, with_context = false) }}
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'documents.edit.back'|trans({}, 'cms'), variant: 'ghost', href: back_url}, with_context = false) }}
+                {{ include('admin/components/_button.html.twig', {label: 'editor.save'|trans({}, 'cms'), variant: 'primary', type: 'submit'}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+</div>

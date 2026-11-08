@@ -19,8 +19,8 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * The manager's photo endpoints (POR-8): the bodies and answers of staff's API, gallery only, behind the voter, the
- * `portal_api` token and the `portal_upload` limiter.
+ * The manager's photo endpoints (POR-8): the bodies and answers of staff's API, gallery and rooms (F11), behind the
+ * voter, the `portal_api` token and the `portal_upload` limiter.
  */
 final class LocationPhotosApiTest extends WebTestCase
 {
@@ -41,10 +41,10 @@ final class LocationPhotosApiTest extends WebTestCase
         $this->endPortalSession();
     }
 
-    public function test_the_page_mounts_the_island_without_rooms(): void
+    public function test_the_page_mounts_the_island_with_the_rooms(): void
     {
         $venue = $this->managedVenue();
-        RoomFactory::createOne(['venue' => $venue]);
+        $room = RoomFactory::createOne(['venue' => $venue]);
 
         $crawler = $this->client->request('GET', '/konto/locations/'.$venue->number().'/fotos');
 
@@ -52,12 +52,16 @@ final class LocationPhotosApiTest extends WebTestCase
         $props = json_decode((string) $crawler->filter('[data-island="photo-manager"]')->attr('data-props'), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($props);
         self::assertIsArray($props['endpoints']);
-        self::assertSame(['upload', 'order', 'alt', 'remove'], array_keys($props['endpoints']));
-        self::assertSame([], $props['rooms']);
+        self::assertSame(['upload', 'order', 'alt', 'room', 'remove'], array_keys($props['endpoints']));
+        self::assertIsArray($props['rooms']);
+        self::assertCount(1, $props['rooms']);
+        self::assertIsArray($props['rooms'][0]);
+        self::assertSame($room->id(), $props['rooms'][0]['id']);
         self::assertSame('/konto/locations/'.$venue->number().'/fotos', $props['reloadUrl']);
+        self::assertSelectorExists('aside #location-plan');
     }
 
-    public function test_an_upload_lands_in_the_gallery_whatever_the_body_says(): void
+    public function test_an_upload_lands_in_the_room_the_body_names(): void
     {
         $venue = $this->managedVenue();
         $room = RoomFactory::createOne(['venue' => $venue]);
@@ -65,32 +69,50 @@ final class LocationPhotosApiTest extends WebTestCase
         $this->upload(self::url($venue), $this->photoFile(), ['roomId' => $room->id()], $this->csrfToken());
 
         self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
-        $answer = $this->answer();
-        self::assertFalse($answer['duplicate']);
-        self::assertIsArray($answer['photos']);
-        self::assertCount(1, $answer['photos']);
-        self::assertIsArray($answer['photos'][0]);
-        self::assertSame($answer['photo'], $answer['photos'][0]['id']);
-        self::assertNull($answer['photos'][0]['roomId']);
-        self::assertNull($this->connection->fetchOne('SELECT room_id FROM venue_photos WHERE venue_id = ?', [$venue->id()]));
+        self::assertSame($room->id(), $this->connection->fetchOne('SELECT room_id FROM venue_photos WHERE venue_id = ?', [$venue->id()]));
     }
 
-    public function test_an_order_stays_in_the_gallery_whatever_the_body_says(): void
+    public function test_an_upload_to_a_room_of_another_location_stores_nothing(): void
+    {
+        $venue = $this->managedVenue();
+        $foreign = RoomFactory::createOne(['venue' => VenueFactory::new()->withoutLocation()->create()]);
+
+        $this->upload(self::url($venue), $this->photoFile(), ['roomId' => $foreign->id()], $this->csrfToken());
+
+        self::assertGreaterThanOrEqual(400, $this->client->getResponse()->getStatusCode());
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM venue_photos WHERE venue_id = ?', [$venue->id()]));
+    }
+
+    public function test_a_room_order_and_a_move_to_a_room_are_saved(): void
     {
         $venue = $this->managedVenue();
         $room = RoomFactory::createOne(['venue' => $venue]);
-        $first = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
-        $second = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
-        $inRoom = VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $room, 'position' => 1]);
+        $gallery = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $first = VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $room, 'position' => 1]);
+        $second = VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $room, 'position' => 2]);
+        $token = $this->csrfToken();
 
-        $this->json('PUT', self::url($venue).'/order', ['roomId' => $room->id(), 'ids' => [$second->id(), $first->id()]], $this->csrfToken());
-
+        $this->json('PUT', self::url($venue).'/order', ['roomId' => $room->id(), 'ids' => [$second->id(), $first->id()]], $token);
         self::assertResponseIsSuccessful();
+        $this->json('PUT', self::url($venue).'/'.$gallery->id().'/room', ['roomId' => $room->id()], $token);
+        self::assertResponseIsSuccessful();
+
         self::assertSame(
-            [$second->id(), $first->id()],
-            $this->connection->fetchFirstColumn('SELECT id FROM venue_photos WHERE venue_id = ? AND room_id IS NULL ORDER BY position', [$venue->id()]),
+            [$second->id(), $first->id(), $gallery->id()],
+            $this->connection->fetchFirstColumn('SELECT id FROM venue_photos WHERE room_id = ? ORDER BY position', [$room->id()]),
         );
-        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM venue_photos WHERE room_id = ? AND id = ?', [$room->id(), $inRoom->id()]));
+    }
+
+    public function test_a_move_to_a_room_of_another_location_is_refused(): void
+    {
+        $venue = $this->managedVenue();
+        $photo = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $foreign = RoomFactory::createOne(['venue' => VenueFactory::new()->withoutLocation()->create()]);
+
+        $this->json('PUT', self::url($venue).'/'.$photo->id().'/room', ['roomId' => $foreign->id()], $this->csrfToken());
+
+        self::assertGreaterThanOrEqual(400, $this->client->getResponse()->getStatusCode());
+        self::assertNull($this->connection->fetchOne('SELECT room_id FROM venue_photos WHERE id = ?', [$photo->id()]));
     }
 
     public function test_an_alt_text_is_saved_with_the_photo_token(): void
@@ -131,6 +153,7 @@ final class LocationPhotosApiTest extends WebTestCase
         yield 'add' => ['add'];
         yield 'order' => ['order'];
         yield 'alt' => ['alt'];
+        yield 'room' => ['room'];
         yield 'remove' => ['remove'];
     }
 
@@ -146,6 +169,7 @@ final class LocationPhotosApiTest extends WebTestCase
             'add' => $this->upload($url, $this->photoFile()),
             'order' => $this->json('PUT', $url.'/order', ['ids' => [$photo->id()]]),
             'alt' => $this->json('PUT', $url.'/'.$photo->id().'/alt', ['loadedAt' => '1', 'alts' => ['de' => 'Später']]),
+            'room' => $this->json('PUT', $url.'/'.$photo->id().'/room', ['roomId' => RoomFactory::createOne(['venue' => $venue])->id()]),
             'remove' => $this->json('DELETE', $url.'/'.$photo->id()),
             default => self::fail('Unknown write '.$write),
         };

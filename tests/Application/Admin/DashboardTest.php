@@ -69,7 +69,7 @@ final class DashboardTest extends WebTestCase
 
         $incomplete = $crawler->filter('.widget')->eq(6);
         self::assertSame('/admin/locations/'.$hut->number(), $incomplete->filter('.venue-widget__name')->attr('href'));
-        self::assertSame(['Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Haupt-Gebäudeart fehlt'], $incomplete->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
+        self::assertSame(['Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Wichtigste Art der Location fehlt'], $incomplete->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
         $all = $incomplete->filter('.venue-widget__foot a');
         self::assertSame('1 unvollständige ansehen', $all->text());
         self::assertSame('/admin/locations?status=incomplete', $all->attr('href'));

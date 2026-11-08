@@ -1,6 +1,7 @@
 {#
     The plan card (F12): the location's tier, how much of each limit it uses and, below Pro, "Pro anfragen". Include with
-    `with_context = false`: plan (`Portal\ReadModel\LocationPlan`), number (the location's number).
+    `with_context = false`: plan (`Portal\ReadModel\LocationPlan`), number (the location's number), optional back (the
+    route of the tab to return to after «Pro anfragen»; `ProRequestController` takes Fotos, Räume and Dokumente).
     The button posts to `ProRequestController` with the stateless `submit` token, like the claim form.
 #}
 <section class="card" aria-labelledby="location-plan">
@@ -29,6 +30,7 @@
         <div class="card__foot">
             <form method="post" action="{{ path('portal_location_pro_request', {number: number}) }}">
                 <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
+                {% if back|default(null) %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
                 {{ include('admin/components/_button.html.twig', {label: 'plan.pro.request'|trans({}, 'portal'), variant: 'primary', type: 'submit'}, with_context = false) }}
             </form>
         </div>

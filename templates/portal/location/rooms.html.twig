@@ -1,0 +1,19 @@
+{#
+    The manager's Räume tab (F11): staff's `room-editor` island with the `portal_api_rooms_*` endpoints. Context from
+    `LocationRoomsController`: venue, submission, offline_form, plan (for `_layout`), and what `_room_editor.html.twig`
+    lists apart from endpoints and reload_url.
+#}
+{% extends 'portal/location/_layout.html.twig' %}
+
+{% block location_main %}
+    {% set id_route = {number: venue.number, id: id_placeholder} %}
+    {{ include('admin/cms/venue/_room_editor.html.twig', {
+        endpoints: {
+            add: path('portal_api_rooms_add', {number: venue.number}),
+            order: path('portal_api_rooms_order', {number: venue.number}),
+            change: path('portal_api_rooms_change', id_route),
+            remove: path('portal_api_rooms_remove', id_route),
+        },
+        reload_url: path('portal_location_rooms', {number: venue.number}),
+    }) }}
+{% endblock %}

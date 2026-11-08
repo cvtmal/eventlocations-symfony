@@ -17,8 +17,8 @@ use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * F12: event types are checked when they are written (CMS and `/konto` share the Merkmale card, its form and its
- * `ChangeVenueTerms` handler), never hidden when a page is read. The refusal sits on the chip group it belongs to, and
+ * F12: event types are checked when they are written (CMS and `/konto` share the Veranstaltung card since F11, its form and its
+ * `ChangeVenueEventFacts` handler), never hidden when a page is read. The refusal sits on the chip group it belongs to, and
  * a venue that already holds more than its plan allows is not locked out of saving the rest of the card.
  */
 final class EventTypeLimitTest extends WebTestCase
@@ -38,8 +38,8 @@ final class EventTypeLimitTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertSame(
-            'Mit dem Plan Free sind höchstens 3 Anlassarten möglich. Wähle weniger aus oder wechsle auf einen grösseren Plan.',
-            trim($crawler->filter('#venue_terms_suitable_for_error')->text()),
+            'Mit dem Plan Free sind höchstens 3 Anlassarten möglich. Wähle weniger aus; mehr gibt es mit einem grösseren Plan.',
+            trim($crawler->filter('#venue_event_suitable_for_error')->text()),
             'the message sits on the chip group',
         );
         self::assertSame(\array_slice($codes, 0, 3), $this->stored($venue), 'nothing was written');
@@ -136,15 +136,15 @@ final class EventTypeLimitTest extends WebTestCase
     }
 
     /**
-     * Opens the Merkmale card and ticks exactly these event types, as a browser would.
+     * Opens the Veranstaltung card and ticks exactly these event types, as a browser would.
      *
      * @param list<string> $codes
      */
     private function submit(Venue $venue, array $codes): Crawler
     {
         $crawler = $this->client->request('GET', '/admin/locations/'.$venue->number());
-        $form = $crawler->filter('form[name="venue_terms"]')->form();
-        $boxes = $form['venue_terms[suitable_for]'];
+        $form = $crawler->filter('form[name="venue_event"]')->form();
+        $boxes = $form['venue_event[suitable_for]'];
         self::assertIsArray($boxes);
         foreach ($boxes as $box) {
             self::assertInstanceOf(ChoiceFormField::class, $box);

@@ -1,9 +1,23 @@
 {#
-    Card "Veranstaltung" (the event facts). Include with `with_context = false`: form, card, number, stale, locales.
+    Card "Veranstaltung" (the event facts). Include with `with_context = false`: form, card, number, stale, locales,
+    optional event_types_limit `{max, text, full_text, link_label, link_href}` (the manager's plan, D40: `text` under the
+    event types; `full_text` and the link, when `link_href` is set, once the selection reaches `max`; staff pass none).
+    Event types, catering and technology come first (F11: what the wizard's event step asks), amenity and language last.
     The texts have a tab per locale with a translation row; after a 422 the first locale with an error is open (L2).
 #}
-{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, locales: locales, submit_label: submit_label|default(null)} only %}
+{% embed 'admin/cms/venue/_card_shell.html.twig' with {form: form, card: card, number: number, stale: stale, locales: locales, submit_label: submit_label|default(null), event_types_limit: event_types_limit|default(null)} only %}
     {% block fields %}
+        {{ form_row(form.suitable_for, event_types_limit ? {attr: {'aria-describedby': 'event-types-limit'}} : {}) }}
+        {% if event_types_limit %}
+            <p class="field__help" id="event-types-limit">
+                {{- event_types_limit.text -}}
+                {%- if event_types_limit.link_href and form.suitable_for|filter(chip => chip.vars.checked)|length >= event_types_limit.max %}
+                    {{ event_types_limit.full_text }} <a href="{{ event_types_limit.link_href }}">{{ event_types_limit.link_label }}</a>
+                {%- endif -%}
+            </p>
+        {% endif %}
+        {{ form_row(form.catering) }}
+        {{ form_row(form.technology) }}
         {{ form_row(form.priceLevel) }}
         <div class="field-row">
             {{ form_row(form.capacitySeated) }}
@@ -30,8 +44,7 @@
             }, with_context = false) }}
         {% endif %}
         {% do form.texts.setRendered() %}
-        {% for group in constant('App\\Cms\\Form\\VenueEventData::GROUPS')|map(group => group.value) %}
-            {{ form_row(form[group]) }}
-        {% endfor %}
+        {{ form_row(form.amenity) }}
+        {{ form_row(form.language) }}
     {% endblock %}
 {% endembed %}

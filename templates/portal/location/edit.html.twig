@@ -6,6 +6,14 @@
 {% extends 'portal/location/_layout.html.twig' %}
 
 {% block location_main %}
+    {# D40: the event types' limit under the Veranstaltung card's chips, with «Pro anfragen» once it is reached. #}
+    {% set event_types_limit = plan.eventTypesMax is not null ? {
+        max: plan.eventTypesMax,
+        text: 'plan.event_types.limit'|trans({tier: plan.tierName, max: plan.eventTypesMax}, 'portal'),
+        full_text: 'plan.event_types.full'|trans({}, 'portal'),
+        link_label: 'plan.event_types.link'|trans({}, 'portal'),
+        link_href: plan.canRequestPro ? '#location-plan' : null,
+    } : null %}
     <div class="venue-editor">
         {% for card in cards %}
             {{ include(card.template, {
@@ -15,11 +23,8 @@
                 stale: stale and bound_card == card.value,
                 locales: locales,
                 town_centre_hint: edit.townCentreHint,
+                event_types_limit: event_types_limit,
             }, with_context = false) }}
         {% endfor %}
     </div>
-{% endblock %}
-
-{% block aside %}
-    {{ include('portal/location/_plan.html.twig', {plan: plan, number: venue.number}, with_context = false) }}
 {% endblock %}

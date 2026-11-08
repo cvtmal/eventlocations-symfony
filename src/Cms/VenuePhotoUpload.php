@@ -70,7 +70,7 @@ final class VenuePhotoUpload
         $this->limits = new PhotoUploadLimits($maxPortraitRatio);
     }
 
-    public function add(int $number, Request $request, ?PhotoGrant $grant, bool $roomsAllowed = true): JsonResponse
+    public function add(int $number, Request $request, ?PhotoGrant $grant): JsonResponse
     {
         if (null === $this->venues->byNumber($number)) {
             return $this->api->notFound();
@@ -84,7 +84,7 @@ final class VenuePhotoUpload
             return $this->api->invalid('file', $dropped ? 'cms.photo.too_large' : 'cms.photo.missing');
         }
 
-        $roomId = $roomsAllowed ? VenueMediaApi::roomId($request->request->all()['roomId'] ?? null) : null;
+        $roomId = VenueMediaApi::roomId($request->request->all()['roomId'] ?? null);
         if (false === $roomId) {
             return $this->api->invalid('roomId', 'cms.photo.room.invalid');
         }

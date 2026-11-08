@@ -9,7 +9,7 @@ use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Tests\Support\Admin\RollsBackDatabase;
-use App\Venues\Command\ChangeVenueTerms;
+use App\Venues\Command\ChangeVenueEventFacts;
 use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueRuleViolation;
@@ -192,17 +192,17 @@ final class TierLimitsTest extends KernelTestCase
     }
 
     /**
-     * The handler of the CMS and portal terms form asks before it writes (event types are never hidden when a page is
+     * The handler of the CMS and portal Veranstaltung card (F11) asks before it writes (event types are never hidden when a page is
      * read, so this is the one place the limit holds).
      */
-    public function test_the_terms_handler_refuses_a_fourth_event_type_on_free_and_writes_nothing(): void
+    public function test_the_event_facts_handler_refuses_a_fourth_event_type_on_free_and_writes_nothing(): void
     {
         $venue = $this->venue(KnownTiers::FREE);
 
-        $violation = $this->violation(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], [
+        $violation = $this->violation(self::eventFacts($venue, $this->token($venue), [
             'suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event'],
-            'building' => ['castle'],
-        ], []));
+            'catering' => ['in_house'],
+        ]));
 
         self::assertSame('venue.error.too_many_event_types', $violation->translationKey());
         self::assertSame('suitable_for', $violation->field);
@@ -212,13 +212,13 @@ final class TierLimitsTest extends KernelTestCase
         self::assertSame([], $this->purger()->venues);
     }
 
-    public function test_the_terms_handler_takes_three_event_types_on_free(): void
+    public function test_the_event_facts_handler_takes_three_event_types_on_free(): void
     {
         $venue = $this->venue(KnownTiers::FREE);
 
-        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], [
+        $this->dispatch(self::eventFacts($venue, $this->token($venue), [
             'suitable_for' => ['wedding', 'family_celebration', 'birthday'],
-        ], []));
+        ]));
 
         self::assertSame(
             ['birthday', 'family_celebration', 'wedding'],
@@ -226,13 +226,13 @@ final class TierLimitsTest extends KernelTestCase
         );
     }
 
-    public function test_the_terms_handler_takes_every_event_type_on_pro(): void
+    public function test_the_event_facts_handler_takes_every_event_type_on_pro(): void
     {
         $venue = $this->venue(KnownTiers::PRO);
         $codes = array_map(strval(...), $this->connection->fetchFirstColumn("SELECT code FROM taxonomy_terms WHERE term_group = 'suitable_for' ORDER BY position"));
         self::assertGreaterThan(3, \count($codes));
 
-        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => $codes], []));
+        $this->dispatch(self::eventFacts($venue, $this->token($venue), ['suitable_for' => $codes]));
 
         self::assertSame(\count($codes), (int) $this->connection->fetchOne("SELECT COUNT(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'", [$venue->id()]));
     }
@@ -244,20 +244,28 @@ final class TierLimitsTest extends KernelTestCase
     public function test_a_venue_that_fell_back_to_free_keeps_its_event_types_may_shorten_them_and_cannot_grow_them(): void
     {
         $venue = $this->venue(KnownTiers::PRO);
-        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']], []));
+        $this->dispatch(self::eventFacts($venue, $this->token($venue), ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']]));
         $this->connection->executeStatement('UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = ?) WHERE id = ?', [KnownTiers::FREE, $venue->id()]);
         $this->em->clear();
         $count = fn (): int => (int) $this->connection->fetchOne("SELECT COUNT(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'", [$venue->id()]);
 
         self::assertSame(5, $count());
 
-        $this->dispatch(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event']], []));
+        $this->dispatch(self::eventFacts($venue, $this->token($venue), ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event']]));
         self::assertSame(4, $count(), 'shortening is allowed');
 
-        $violation = $this->violation(new ChangeVenueTerms($venue->number(), $this->token($venue), ['terms'], ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']], []));
+        $violation = $this->violation(self::eventFacts($venue, $this->token($venue), ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']]));
 
         self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
         self::assertSame(4, $count(), 'growing past the plan is refused and nothing is written');
+    }
+
+    /**
+     * @param array<string, list<string>> $terms
+     */
+    private static function eventFacts(Venue $venue, string $token, array $terms): ChangeVenueEventFacts
+    {
+        return new ChangeVenueEventFacts($venue->number(), $token, ['terms'], null, null, null, [], $terms);
     }
 
     private function venue(string $tier): Venue

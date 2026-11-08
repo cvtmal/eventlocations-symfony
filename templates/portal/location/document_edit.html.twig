@@ -1,0 +1,10 @@
+{#
+    A document's titles on the manager's Dokumente tab (F11). Context from `VenueDocumentPages` with
+    `LocationDocumentsController`'s setup: what `admin/cms/venue/_document_edit.html.twig` lists, plus submission,
+    offline_form and plan (for `_layout`).
+#}
+{% extends 'portal/location/_layout.html.twig' %}
+
+{% block location_main %}
+    {{ include('admin/cms/venue/_document_edit.html.twig') }}
+{% endblock %}

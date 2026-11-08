@@ -13,6 +13,7 @@ use App\Cms\VenuePhotoUpload;
 use App\Portal\Form\LocationForms;
 use App\Portal\Form\PhotoRightsDeclarationData;
 use App\Portal\Form\PhotoRightsDeclarationType;
+use App\Portal\ReadModel\LocationPlanQuery;
 use App\Portal\ReadModel\SubmissionQuery;
 use App\Portal\Security\PortalIdentity;
 use App\Portal\Security\PortalVenueVoter;
@@ -26,6 +27,7 @@ use App\Venues\ReadModel\PhotoRightsQuery;
 use App\Venues\ReadModel\PhotoRightsView;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -39,8 +41,9 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * The manager's Fotos tab (POR-8): staff's `photo-manager` island without rooms, so it shows the gallery and offers
- * no room. Every write of the island goes through `portal_api_photos_*`.
+ * The manager's Fotos tab (POR-8): staff's `photo-manager` island with the location's rooms (F11: a manager may put a
+ * photo into a room and move it between gallery and rooms), and the plan card beside it (the plan caps the photos,
+ * gallery and rooms together, F12). Every write of the island goes through `portal_api_photos_*`.
  *
  * Below the island sit the "Bildrechte" card (G1) and, while a photo has no grant, the declaration form. The page
  * itself takes the form's POST, so an unticked box is a 422 on the same page and a success is a redirect back to it.
@@ -58,6 +61,8 @@ final class LocationPhotosController extends AbstractController
         private readonly LocationForms $forms,
         private readonly SubmissionQuery $submissions,
         private readonly MessageBusInterface $commandBus,
+        private readonly LocationPlanQuery $plans,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -116,7 +121,8 @@ final class LocationPhotosController extends AbstractController
             'venue' => $venue,
             'submission' => $this->submissions->find($venue->id),
             'photos' => $view->photosArray(),
-            'rooms' => [],
+            'rooms' => $view->roomsArray(),
+            'plan' => $this->plans->forVenue($venue->id, $this->clock->now()),
             'rights' => $rights,
             'declaration_form' => $form->createView(),
             'locale_codes' => $this->locales->all(),

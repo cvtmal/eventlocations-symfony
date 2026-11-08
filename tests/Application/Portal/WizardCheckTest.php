@@ -87,13 +87,13 @@ final class WizardCheckTest extends WebTestCase
 
         $crawler = $this->client->request('GET', $this->url($venue));
 
-        self::assertSame(['Kurztext', 'Haupt-Gebäudeart', 'Mindestens ein Foto'], $crawler->filter('section[aria-labelledby="check-missing"] li a')->each(static fn (Crawler $gap): string => $gap->text()));
+        self::assertSame(['Kurztext', 'Wichtigste Art der Location', 'Mindestens ein Foto'], $crawler->filter('section[aria-labelledby="check-missing"] li a')->each(static fn (Crawler $gap): string => $gap->text()));
 
         $crawler = $this->press($venue);
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $error = $crawler->filter('.form-error')->text();
-        self::assertSame('Die Location ist noch nicht vollständig. Es fehlt: Kurztext, Haupt-Gebäudeart, Mindestens ein Foto', $error);
+        self::assertSame('Die Location ist noch nicht vollständig. Es fehlt: Kurztext, Wichtigste Art der Location, Mindestens ein Foto', $error);
         self::assertSame(1, substr_count($error, 'fehlt'));
     }
 
@@ -330,7 +330,7 @@ final class WizardCheckTest extends WebTestCase
         $form = $this->client->request('GET', $this->url($venue, 'texte'))->filter('form[name="venue_texts"]')->form();
         $this->client->submit($form, ['venue_texts[texts][de][summary]' => 'Während der Prüfung geändert.']);
 
-        self::assertResponseRedirects($this->url($venue, 'ausstattung'), Response::HTTP_SEE_OTHER);
+        self::assertResponseRedirects($this->url($venue, 'merkmale'), Response::HTTP_SEE_OTHER);
         self::assertSame('Während der Prüfung geändert.', $this->connection->fetchOne("SELECT summary FROM venue_translations WHERE venue_id = ? AND locale = 'de'", [$venue->id()]));
         self::assertSame('submitted', $this->submissionStatus($venue));
     }

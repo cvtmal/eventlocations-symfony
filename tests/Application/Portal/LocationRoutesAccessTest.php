@@ -71,7 +71,12 @@ final class LocationRoutesAccessTest extends WebTestCase
 
             if ('GET' === $endpoint['method']) {
                 $this->send($endpoint, $token);
-                $expected = \in_array($endpoint['name'], self::WIZARD_ROUTES, true) ? Response::HTTP_FOUND : Response::HTTP_OK;
+                // A page of one row (a PDF's titles, F11) gets the sample id, which names no row: past the voter that is a 404.
+                $expected = match (true) {
+                    \in_array($endpoint['name'], self::WIZARD_ROUTES, true) => Response::HTTP_FOUND,
+                    str_contains($endpoint['path'], self::UUID) => Response::HTTP_NOT_FOUND,
+                    default => Response::HTTP_OK,
+                };
                 self::assertSame($expected, $this->client->getResponse()->getStatusCode(), $label);
                 ++$opened;
             } elseif (self::isJsonEndpoint($endpoint)) {

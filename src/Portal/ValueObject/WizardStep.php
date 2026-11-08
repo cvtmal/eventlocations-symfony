@@ -7,18 +7,18 @@ namespace App\Portal\ValueObject;
 /**
  * The pages of the location wizard (#45), in order, the case's value being the URL segment. There is no wizard table:
  * the step a manager lands on is derived from what the location lacks. `veranstaltung` is never derived, because no gap
- * belongs to it, and it shares its progress position with `ausstattung`.
+ * belongs to it, and it shares its progress position with `merkmale`.
  */
 enum WizardStep: string
 {
     case Texts = 'texte';
-    case Terms = 'ausstattung';
+    case Terms = 'merkmale';
     case Event = 'veranstaltung';
     case Photos = 'fotos';
     case Contact = 'kontakt';
     case Check = 'pruefen';
 
-    public const string REQUIREMENT = 'texte|ausstattung|veranstaltung|fotos|kontakt|pruefen';
+    public const string REQUIREMENT = 'texte|merkmale|veranstaltung|fotos|kontakt|pruefen';
     public const int LAST_POSITION = 6;
 
     /** The gap codes in the wizard's order: the first one missing decides. */

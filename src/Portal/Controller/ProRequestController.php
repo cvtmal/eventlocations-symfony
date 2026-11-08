@@ -37,6 +37,9 @@ final class ProRequestController extends AbstractController
 {
     private const string TOKEN = 'submit';
 
+    /** The tabs that show the plan card (F11) and so may be the way back; anything else goes to Angaben. */
+    private const array BACK_ROUTES = ['portal_location_photos', 'portal_location_rooms', 'portal_location_documents'];
+
     public function __construct(
         private readonly VenueHeaderQuery $headers,
         private readonly LocationPlanQuery $plans,
@@ -59,13 +62,21 @@ final class ProRequestController extends AbstractController
         if (!\is_string($token) || !$this->isCsrfTokenValid(self::TOKEN, $token)) {
             $this->addFlash('error', PortalFlash::message('plan.flash.failed'));
 
-            return $this->redirectToRoute('portal_location', ['number' => $number], Response::HTTP_SEE_OTHER);
+            return $this->back($number, $request);
         }
 
         $profile = $this->profiles->find($identity->id()) ?? throw $this->createNotFoundException();
         $this->events->proRequested(new ProRequested($venue->id, $venue->name, $profile->email, $profile->firstName, $profile->lastName));
         $this->addFlash('success', PortalFlash::message('plan.flash.requested'));
 
-        return $this->redirectToRoute('portal_location', ['number' => $number], Response::HTTP_SEE_OTHER);
+        return $this->back($number, $request);
+    }
+
+    private function back(int $number, Request $request): Response
+    {
+        $back = $request->request->all()['back'] ?? null;
+        $route = \is_string($back) && \in_array($back, self::BACK_ROUTES, true) ? $back : 'portal_location';
+
+        return $this->redirectToRoute($route, ['number' => $number], Response::HTTP_SEE_OTHER);
     }
 }

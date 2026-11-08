@@ -10,8 +10,8 @@ venue:
         coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
         not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
         still_published: 'Ein veröffentlichter Eintrag kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
-        too_many_photos: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Foto} other {# Fotos}} möglich. Entferne zuerst ein Foto oder wechsle auf einen grösseren Plan.'
-        too_many_event_types: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Anlassart} other {# Anlassarten}} möglich. Wähle weniger aus oder wechsle auf einen grösseren Plan.'
+        too_many_photos: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Foto} other {# Fotos}} möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.'
+        too_many_event_types: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Anlassart} other {# Anlassarten}} möglich. Wähle weniger aus; mehr gibt es mit einem grösseren Plan.'
 
 nav:
     section: CMS
@@ -79,7 +79,7 @@ create:
     intro: Der Eintrag startet unpubliziert. Alles Weitere folgt im Editor.
     submit: Erfassen
     cancel: Abbrechen
-    flash: '«{name}» ist erfasst. Sie bleibt unpubliziert, bis Kurztext, Haupt-Gebäudeart und ein Foto da sind.'
+    flash: '«{name}» ist erfasst. Sie bleibt unpubliziert, bis Kurztext, wichtigste Art der Location und ein Foto da sind.'
 
 editor:
     title: '{name} bearbeiten'
@@ -119,7 +119,7 @@ editor:
         missing: fehlt
         item:
             summary: Kurztext
-            main_building: Haupt-Gebäudeart
+            main_building: Wichtigste Art der Location
             photo: Mindestens ein Foto
 
 basics:
@@ -174,8 +174,8 @@ terms:
     legend: Merkmale
     more: '+ {count} weitere'
     field:
-        main_building: Haupt-Gebäudeart
-        main_setting: Haupt-Lage
+        main_building: Wichtigste Art der Location
+        main_setting: Wichtigste Lage
     placeholder:
         main: Keine
 
@@ -320,7 +320,7 @@ dashboard:
             photo: Keine Fotos
             inquiry_email: Keine Anfrage-E-Mail
             summary: Kurztext fehlt
-            main_building: Haupt-Gebäudeart fehlt
+            main_building: Wichtigste Art der Location fehlt
     recent:
         title: Zuletzt bearbeitet
         empty: Noch nichts im Backoffice bearbeitet.
@@ -481,7 +481,7 @@ rooms:
         session_gone: Die Sitzung ist nicht mehr gültig. Bitte wenn nötig neu anmelden und die Seite neu laden.
     error:
         name_required: Der Raum braucht einen Namen.
-        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # Raum} other {sind höchstens # Räume}} möglich. Entferne zuerst einen Raum oder wechsle auf einen grösseren Plan.'
+        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # Raum} other {sind höchstens # Räume}} möglich. Entferne zuerst einen Raum; mehr gibt es mit einem grösseren Plan.'
 
 documents:
     tab: Dokumente
@@ -523,7 +523,7 @@ documents:
         file: PDF, bis 15 MB
     error:
         already_uploaded: Dieses PDF ist bereits bei den Dokumenten.
-        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # PDF} other {sind höchstens # PDFs}} möglich. Entferne zuerst ein PDF oder wechsle auf einen grösseren Plan.'
+        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # PDF} other {sind höchstens # PDFs}} möglich. Entferne zuerst ein PDF; mehr gibt es mit einem grösseren Plan.'
         title_required: Das Dokument braucht einen Titel.
 
 error:
@@ -542,7 +542,7 @@ landing:
             all: Alle
             canton: Kantone
             town: Orte
-            building: Gebäudearten
+            building: Location-Arten
             event: Anlässe
         filter:
             search: Seite suchen
@@ -570,7 +570,7 @@ landing:
     type:
         canton: Kanton
         town: Ort
-        building: Gebäudeart
+        building: Art der Location
         event: Anlass
     threshold:
         online: online

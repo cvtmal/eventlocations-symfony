@@ -56,6 +56,23 @@ final class ProRequestTest extends WebTestCase
         self::assertSame('Danke! Wir haben deine Anfrage erhalten und melden uns bei dir.', $this->client->followRedirect()->filter('.toast')->text());
     }
 
+    /**
+     * F11: the plan card sits beside Fotos, Räume and Dokumente too; a press there returns to that tab, any other
+     * `back` to Angaben.
+     */
+    public function test_a_press_from_a_media_tab_returns_to_it_and_a_foreign_back_goes_to_the_details(): void
+    {
+        $venue = $this->managedVenue(DetailVenues::minimal());
+        $this->recordRequests();
+
+        $crawler = $this->client->request('GET', $this->url($venue).'/raeume');
+        $this->client->submit($crawler->filter('aside form[action$="/pro-anfragen"]')->form());
+        self::assertResponseRedirects($this->url($venue).'/raeume', 303);
+
+        $this->client->request('POST', $this->url($venue).'/pro-anfragen', ['_token' => self::SAME_SITE_TOKEN, 'back' => 'admin_dashboard'], server: self::SAME_ORIGIN);
+        self::assertResponseRedirects($this->url($venue), 303);
+    }
+
     public function test_the_press_leaves_one_task_for_staff_however_often_it_is_pressed(): void
     {
         AdminUserFactory::createOne(['role' => AdminRole::Admin]);
