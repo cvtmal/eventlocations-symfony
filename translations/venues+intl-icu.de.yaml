@@ -346,3 +346,66 @@ preview:
         title: Vorschau abgelaufen
         heading: Dieser Vorschau-Link gilt nicht mehr
         text: 'Der Link ist abgelaufen oder wurde zurückgezogen. Schreib uns an {email}, dann schicken wir dir einen neuen.'
+report:
+    title: Inhalt melden
+    meta_description: Melde Fotos ohne Bildrechte, einen Eintrag, der entfernt werden soll, oder falsche Angaben zu einer Location.
+    intro: 'Hier meldest du Fotos, an denen du die Rechte hast, einen Eintrag, der entfernt werden soll, oder falsche Angaben. Wir prüfen jede Meldung. Gemeldete Fotos verbergen wir in der Regel sofort, bis wir entschieden haben.'
+    venue_label: 'Deine Meldung betrifft:'
+    footer_link: Inhalt melden
+    detail_link: Inhalt melden
+    kind:
+        rights: Bildrechte
+        removal: Eintrag entfernen
+        correction: Angaben korrigieren
+    photo: 'Foto {position}'
+    photo_room: '{room}, Foto {position}'
+    field:
+        kind: Worum geht es?
+        photos: Welche Fotos?
+        photos_hint: Nur bei Bildrechten. Die Fotos, die du auswählst, verbergen wir sofort, bis wir entschieden haben.
+        venue: Welche Location?
+        venue_hint: Name oder Link der Location.
+        message: Deine Nachricht
+        message_hint: Was ist falsch, oder woran hast du die Rechte? Je genauer, desto schneller können wir entscheiden.
+        name: Dein Name
+        email: Deine E-Mail-Adresse
+        good_faith: Ich bestätige, dass meine Angaben stimmen und ich berechtigt bin, diese Meldung zu machen.
+        website: Website
+    submit: Meldung senden
+    privacy: Wir nutzen deine Angaben nur, um die Meldung zu bearbeiten.
+    privacy_link: Datenschutz
+    back: 'Zurück zu {name}'
+    back_home: Zur Startseite
+    error:
+        summary: Bitte prüf die markierten Angaben.
+        rate_limited: Du hast in der letzten Stunde schon mehrere Meldungen geschickt. Bitte versuch es später noch einmal.
+        venue_gone: Diese Location gibt es nicht mehr. Bitte gib an, welche Location du meinst.
+    sent:
+        title: Danke, deine Meldung ist eingegangen.
+        text: Wir prüfen sie so bald wie möglich und melden uns per E-Mail, falls wir Fragen haben. Gemeldete Fotos verbergen wir in der Regel sofort, bis wir entschieden haben.
+    mail:
+        fact:
+            kind: Art
+            venue: Location
+            reference: Referenz
+            held: Verborgene Fotos
+            name: Name
+            email: E-Mail
+            source: Seite
+        receipt:
+            subject: Deine Meldung ist eingegangen
+            preheader: Wir prüfen deine Meldung so bald wie möglich.
+            greeting: Hallo
+            intro: Danke für deine Meldung. Wir haben sie erhalten und prüfen sie so bald wie möglich.
+            held: '{count, plural, one {Das gemeldete Foto ist ab sofort verborgen, bis wir entschieden haben.} other {Die # gemeldeten Fotos sind ab sofort verborgen, bis wir entschieden haben.}}'
+            next: Wir prüfen deine Meldung. Haben wir Fragen dazu, melden wir uns per E-Mail. Bitte nenn die Referenz, falls du uns schreibst.
+            not_you: Diese E-Mail ging an deine Adresse, weil sie im Formular «Inhalt melden» angegeben wurde. Warst du das nicht, kannst du sie ignorieren.
+        notice:
+            subject: '{kind, select, rights {Meldung: Bildrechte} removal {Meldung: Eintrag entfernen} other {Meldung: Angaben korrigieren}} – {venue}'
+            preheader: '{kind, select, rights {Neue Meldung zu Bildrechten} removal {Neue Meldung: Eintrag entfernen} other {Neue Meldung: Angaben korrigieren}}'
+            greeting: Hallo Team
+            intro: '{kind, select, rights {Über das Formular «Inhalt melden» kam eine Meldung zu Bildrechten. {held, plural, =0 {Es ist kein Foto verborgen.} one {Das genannte Foto ist verborgen, bis ihr entschieden habt.} other {Die # genannten Fotos sind verborgen, bis ihr entschieden habt.}}} removal {Über das Formular «Inhalt melden» kam eine Meldung: Ein Eintrag soll entfernt werden.} other {Über das Formular «Inhalt melden» kam eine Meldung: Angaben sollen korrigiert werden.}}'
+            venue: '{name} (Nr. {number})'
+            typed: 'Angegeben: {reference}'
+            hold_limit: 'Tageslimit erreicht: nichts verborgen. Heute haben schon so viele Meldungen Fotos verborgen, dass diese keine mehr verbirgt. Welche Fotos gemeint sind, steht allenfalls in der Nachricht; sonst fragt per E-Mail nach.'
+            button: Meldung öffnen

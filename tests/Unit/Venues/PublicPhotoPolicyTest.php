@@ -21,12 +21,13 @@ final class PublicPhotoPolicyTest extends TestCase
     private const string A = '0199a1b2-0000-7000-8000-000000000001';
     private const string B = '0199a1b2-0000-7000-8000-000000000002';
 
-    public function test_the_predicate_asks_for_a_live_grant_that_allows_the_listing_and_resized_copies(): void
+    public function test_the_predicate_asks_for_a_live_grant_that_allows_the_listing_and_resized_copies_and_no_open_complaint(): void
     {
         $sql = PublicPhotoPolicy::sql('vp');
 
         self::assertSame(
-            'EXISTS (SELECT 1 FROM media_rights_grants rg WHERE rg.venue_photo_id = vp.id AND rg.revoked_at IS NULL AND rg.scope_listing AND rg.scope_resized_copies)',
+            '(EXISTS (SELECT 1 FROM media_rights_grants rg WHERE rg.venue_photo_id = vp.id AND rg.revoked_at IS NULL AND rg.scope_listing AND rg.scope_resized_copies)'
+            ." AND NOT EXISTS (SELECT 1 FROM moderation_case_photos mcp JOIN moderation_cases mc ON mc.id = mcp.case_id WHERE mcp.venue_photo_id = vp.id AND mc.status = 'open'))",
             $sql,
         );
     }
@@ -35,6 +36,7 @@ final class PublicPhotoPolicyTest extends TestCase
     public function test_a_plain_alias_is_spliced_in_as_given(string $alias): void
     {
         self::assertStringContainsString('rg.venue_photo_id = '.$alias.'.id', PublicPhotoPolicy::sql($alias));
+        self::assertStringContainsString('mcp.venue_photo_id = '.$alias.'.id', PublicPhotoPolicy::sql($alias));
     }
 
     /**
@@ -74,6 +76,8 @@ final class PublicPhotoPolicyTest extends TestCase
         yield 'a comment' => ['vp--'];
         yield 'a second statement' => ['vp; DROP TABLE venues'];
         yield 'the alias the predicate uses for the grants' => ['rg'];
+        yield 'the alias the predicate uses for the photos of a complaint' => ['mcp'];
+        yield 'the alias the predicate uses for the complaints' => ['mc'];
         yield 'a hyphen' => ['venue-photo'];
         yield 'a non-ASCII letter' => ['vä'];
         // PCRE's `$` also matches before a final newline, so the pattern needs the D modifier.

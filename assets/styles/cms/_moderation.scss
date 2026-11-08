@@ -1,0 +1,79 @@
+// G2: the complaints queue ("Meldungen") and one complaint's page.
+
+.moderation {
+    display: flex;
+    flex-direction: column;
+    gap: var(--a-space-4);
+}
+
+.moderation__heading {
+    margin: var(--a-space-2) 0 0;
+    font-size: 1rem;
+}
+
+.moderation__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: var(--a-space-4);
+}
+
+.moderation__subheading {
+    margin: var(--a-space-4) 0 var(--a-space-2);
+    font-size: .875rem;
+}
+
+// The complainant's text as typed: line breaks kept, long words wrapped.
+.moderation__message {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.moderation__photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: var(--a-space-4);
+    margin: var(--a-space-2) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.moderation__photo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--a-space-2);
+}
+
+.moderation__thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--a-r-sm);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.moderation__path {
+    font-size: .75rem;
+    overflow-wrap: anywhere;
+}
+
+.moderation__offline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--a-space-3);
+    margin: var(--a-space-2) 0 var(--a-space-4);
+}
+
+.moderation__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--a-space-3);
+}

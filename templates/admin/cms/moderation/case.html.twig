@@ -1,0 +1,121 @@
+{#
+    One complaint (G2, `ModerationCaseController`). case (`Venues\ReadModel\ModerationCaseView`), form (the decision,
+    `ModerationDecisionType`), decided_by (the staff member's name, or null), csrf (the token id of "Eintrag offline
+    nehmen").
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% set page_title = 'moderation.case.title'|trans({kind: case.kind.value, date: case.createdAt|swiss_date}, 'cms') %}
+
+{% block title %}{{ page_title }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item"><a href="{{ path('admin_moderation') }}">{{ 'moderation.title'|trans({}, 'cms') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ page_title }}</li>
+{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>{{ page_title }}</h1>
+            {% if case.isOpen() %}
+                {{ include('admin/components/_pill.html.twig', {label: 'moderation.status.open'|trans({}, 'cms'), tone: 'amber', dot: true}, with_context = false) }}
+            {% else %}
+                {{ include('admin/components/_pill.html.twig', {label: ('moderation.decision.' ~ case.decision.value)|trans({}, 'cms'), tone: 'grey'}, with_context = false) }}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    <div class="moderation">
+        {% embed 'admin/components/_card.html.twig' with {title: 'moderation.case.details'|trans({}, 'cms'), id: 'meldung', case: case} only %}
+            {% block body %}
+                <div class="moderation__facts">
+                    {{ include('admin/components/_property.html.twig', {label: 'moderation.column.date'|trans({}, 'cms'), value: case.createdAt|swiss_date}, with_context = false) }}
+                    {{ include('admin/components/_property.html.twig', {label: 'moderation.column.kind'|trans({}, 'cms'), value: ('moderation.kind.' ~ case.kind.value)|trans({}, 'cms')}, with_context = false) }}
+                    <div class="property">
+                        <div class="property__head"><span class="property__label">{{ 'moderation.column.venue'|trans({}, 'cms') }}</span></div>
+                        <span class="property__value">
+                            {%- if case.venueNumber is not null -%}
+                                <a href="{{ path('admin_locations_edit', {number: case.venueNumber}) }}">{{ case.venueName }}</a>
+                                {{ include('admin/components/_pill.html.twig', {label: (case.venuePublished ? 'moderation.case.venue_online' : 'moderation.case.venue_offline')|trans({}, 'cms'), tone: case.venuePublished ? 'green' : 'grey'}, with_context = false) }}
+                            {%- else -%}
+                                {{ case.venueReference ?? 'moderation.no_venue'|trans({}, 'cms') }}
+                            {%- endif -%}
+                        </span>
+                    </div>
+                    {{ include('admin/components/_property.html.twig', {label: 'moderation.column.complainant'|trans({}, 'cms'), value: case.complainantName}, with_context = false) }}
+                    <div class="property">
+                        <div class="property__head"><span class="property__label">{{ 'moderation.case.email'|trans({}, 'cms') }}</span></div>
+                        <span class="property__value"><a href="mailto:{{ case.complainantEmail }}">{{ case.complainantEmail }}</a></span>
+                    </div>
+                    {{ include('admin/components/_property.html.twig', {label: 'moderation.case.source'|trans({}, 'cms'), value: case.sourceUrl ?? 'moderation.case.none'|trans({}, 'cms')}, with_context = false) }}
+                    {{ include('admin/components/_property.html.twig', {label: 'moderation.case.good_faith'|trans({}, 'cms'), value: 'moderation.case.good_faith_at'|trans({date: case.goodFaithAt|swiss_date}, 'cms')}, with_context = false) }}
+                </div>
+                <h3 class="moderation__subheading">{{ 'moderation.case.message'|trans({}, 'cms') }}</h3>
+                <p class="moderation__message">{{ case.message }}</p>
+                <p class="muted moderation__reply">{{ 'moderation.case.reply'|trans({}, 'cms') }} <a href="mailto:{{ case.complainantEmail }}">{{ 'moderation.case.reply_link'|trans({}, 'cms') }}</a></p>
+            {% endblock %}
+        {% endembed %}
+
+        {% if case.photos is not empty %}
+            {% embed 'admin/components/_card.html.twig' with {title: 'moderation.case.photos'|trans({}, 'cms'), id: 'fotos', case: case} only %}
+                {% block body %}
+                    {% if case.isOpen() %}<p class="muted">{{ 'moderation.case.photos_held'|trans({}, 'cms') }}</p>{% endif %}
+                    <ul class="moderation__photos">
+                        {% for photo in case.photos %}
+                            <li class="moderation__photo">
+                                {% if photo.exists() %}
+                                    <span class="moderation__thumb">{{ venue_picture(photo.picture, sizes: '160px', widths: [360]) }}</span>
+                                    {{ include('admin/components/_pill.html.twig', {label: (case.isOpen() ? 'moderation.case.photo_held' : 'moderation.case.photo_kept')|trans({}, 'cms'), tone: case.isOpen() ? 'red' : 'green'}, with_context = false) }}
+                                {% else %}
+                                    {{ include('admin/components/_pill.html.twig', {label: 'moderation.case.photo_removed'|trans({}, 'cms'), tone: 'grey'}, with_context = false) }}
+                                {% endif %}
+                                <span class="muted moderation__path">{{ photo.originalPath }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endblock %}
+            {% endembed %}
+        {% endif %}
+
+        {% if case.isOpen() %}
+            {% form_theme form 'admin/form/theme.html.twig' %}
+            {% embed 'admin/components/_card.html.twig' with {title: 'moderation.case.decide.title'|trans({}, 'cms'), id: 'entscheiden', case: case, form: form, csrf: csrf} only %}
+                {% block body %}
+                    <p class="muted">{{ 'moderation.case.decide.intro'|trans({}, 'cms') }}</p>
+                    {% if case.canTakeEntryOffline() %}
+                        <form method="post" action="{{ path('admin_moderation_case_offline', {id: case.id}) }}" class="moderation__offline">
+                            <input type="hidden" name="_token" value="{{ csrf_token(csrf) }}">
+                            {{ include('admin/components/_button.html.twig', {label: 'moderation.case.offline'|trans({}, 'cms'), type: 'submit'}, with_context = false) }}
+                            <span class="muted">{{ 'moderation.case.offline_hint'|trans({}, 'cms') }}</span>
+                        </form>
+                    {% elseif case.tookEntryOffline %}
+                        <p>{{ 'moderation.case.took_offline'|trans({}, 'cms') }}</p>
+                    {% endif %}
+                    {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+                        {{ form_errors(form) }}
+                        {{ form_row(form.note) }}
+                        <div class="moderation__actions">
+                            {{ form_widget(form.remove) }}
+                            {{ form_widget(form.keep) }}
+                        </div>
+                    {{ form_end(form) }}
+                {% endblock %}
+            {% endembed %}
+        {% else %}
+            {% embed 'admin/components/_card.html.twig' with {title: 'moderation.case.decision'|trans({}, 'cms'), id: 'entscheidung', case: case, decided_by: decided_by} only %}
+                {% block body %}
+                    <div class="moderation__facts">
+                        {{ include('admin/components/_property.html.twig', {label: 'moderation.case.decision'|trans({}, 'cms'), value: ('moderation.decision.' ~ case.decision.value)|trans({}, 'cms')}, with_context = false) }}
+                        {{ include('admin/components/_property.html.twig', {label: 'moderation.case.decided_at'|trans({}, 'cms'), value: case.decidedAt ? case.decidedAt|swiss_date}, with_context = false) }}
+                        {{ include('admin/components/_property.html.twig', {label: 'moderation.case.decided_by'|trans({}, 'cms'), value: decided_by ?? 'moderation.case.unknown_staff'|trans({}, 'cms')}, with_context = false) }}
+                        {{ include('admin/components/_property.html.twig', {label: 'moderation.case.note'|trans({}, 'cms'), value: case.decisionNote ?? 'moderation.case.none'|trans({}, 'cms')}, with_context = false) }}
+                    </div>
+                    {% if case.tookEntryOffline %}<p class="muted">{{ 'moderation.case.took_offline_decided'|trans({}, 'cms') }}</p>{% endif %}
+                {% endblock %}
+            {% endembed %}
+        {% endif %}
+    </div>
+{% endblock %}

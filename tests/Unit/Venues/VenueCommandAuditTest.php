@@ -19,6 +19,7 @@ use App\Venues\Command\ChangeVenueGooglePlace;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
+use App\Venues\Command\DecideModerationCase;
 use App\Venues\Command\DeleteVenue;
 use App\Venues\Command\DescribeVenuePhoto;
 use App\Venues\Command\GrantPhotoRights;
@@ -33,11 +34,15 @@ use App\Venues\Command\RemoveVenuePhoto;
 use App\Venues\Command\ReorderRooms;
 use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
+use App\Venues\Command\ReportContent;
 use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Command\RevokeVenuePreview;
+use App\Venues\Command\TakeEntryOffline;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\ModerationDecision;
+use App\Venues\ValueObject\ModerationKind;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Tier;
@@ -54,6 +59,7 @@ final class VenueCommandAuditTest extends TestCase
     private const int NUMBER = 4711;
     private const string ADMIN = '0199a1b2-0000-7000-8000-0000000000ad';
     private const string MANAGER = '0199a1b2-0000-7000-8000-0000000000aa';
+    private const string CASE = '0199a1b2-0000-7000-8000-0000000000cc';
 
     /** Values that must never reach a summary. */
     private const array SECRETS = [
@@ -145,6 +151,48 @@ final class VenueCommandAuditTest extends TestCase
             ['grantor' => 'staff', 'evidence' => 'staff_attestation', 'derivatives' => false, 'photos' => 'all'],
             new GrantPhotoRights(self::NUMBER, Grantor::staff(self::ADMIN), GrantEvidence::StaffAttestation)->auditSummary(),
         );
+    }
+
+    /**
+     * The complaint commands of G2: their subject is the case, whatever the venue.
+     *
+     * @return iterable<string, array{AuditableCommand}>
+     */
+    public static function moderationCommands(): iterable
+    {
+        yield 'report content about a venue' => [new ReportContent(self::CASE, ModerationKind::Rights, self::NUMBER, null, ['0199a1b2-0000-7000-8000-000000000001'], 'Geheime Person', 'geheim@beispiel.ch', 'GEHEIMTEXT', '/hochzeitslocation/geheim')];
+        yield 'report content without a venue' => [new ReportContent(self::CASE, ModerationKind::Correction, null, 'Geheimregion', [], 'Geheime Person', 'geheim@beispiel.ch', 'GEHEIMTEXT', null)];
+        yield 'take the entry offline' => [new TakeEntryOffline(self::CASE, self::ADMIN)];
+        yield 'decide' => [new DecideModerationCase(self::CASE, ModerationDecision::Remove, 'GEHEIMTEXT', self::ADMIN)];
+    }
+
+    #[DataProvider('moderationCommands')]
+    public function test_the_subject_of_a_complaint_command_is_the_case(AuditableCommand $command): void
+    {
+        self::assertSame('moderation_case', $command->auditSubject()->type);
+        self::assertSame(self::CASE, $command->auditSubject()->id);
+    }
+
+    #[DataProvider('moderationCommands')]
+    public function test_a_complaint_summary_holds_no_free_text_or_contact_data(AuditableCommand $command): void
+    {
+        $summary = json_encode($command->auditSummary(), \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+
+        foreach ([...self::SECRETS, '/hochzeitslocation/geheim'] as $secret) {
+            self::assertStringNotContainsString($secret, $summary);
+        }
+    }
+
+    public function test_the_complaint_commands_name_the_kind_the_venue_and_the_decision(): void
+    {
+        self::assertSame(
+            ['kind' => 'rights', 'venue' => self::NUMBER, 'photos' => 2],
+            new ReportContent(self::CASE, ModerationKind::Rights, self::NUMBER, null, ['a', 'b'], 'X', 'x@example.ch', 'Text', null)->auditSummary(),
+            'the number of named photos, never their ids',
+        );
+        self::assertSame(['kind' => 'correction', 'venue' => null, 'photos' => 0], new ReportContent(self::CASE, ModerationKind::Correction, null, 'Ort', [], 'X', 'x@example.ch', 'Text', null)->auditSummary());
+        self::assertSame(['entry' => 'offline'], new TakeEntryOffline(self::CASE, self::ADMIN)->auditSummary());
+        self::assertSame(['decision' => 'keep'], new DecideModerationCase(self::CASE, ModerationDecision::Keep, 'Notiz', self::ADMIN)->auditSummary(), 'the note stays on the case');
     }
 
     public function test_a_form_command_lists_its_changed_fields(): void

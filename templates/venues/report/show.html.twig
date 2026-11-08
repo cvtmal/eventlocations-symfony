@@ -1,0 +1,113 @@
+{#
+    /inhalt-melden (G2, `ReportContentController`): the complaint form, or its confirmation. Variables: venue
+    (`Venues\ReadModel\ReportableVenue` or null), form (the form view, null once sent), sent (bool).
+    No JS. Photos are offered for a rights complaint only; the handler ignores them for the other kinds. An error is
+    text linked to its field with aria-describedby, plus aria-invalid. noindex, never cached.
+#}
+{% extends 'base.html.twig' %}
+
+{% macro errors(field) %}
+    {%- if field.vars.errors|length > 0 %}<p class="report__error" id="{{ field.vars.id }}_error">{{ icon('info', {class: 'icon--sm'}) }}<span>{% for error in field.vars.errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}</span></p>{% endif -%}
+{% endmacro %}
+
+{% macro field(field, label, hint = null) %}
+    {%- set attr = field.vars.attr|merge({class: 'text-input__field'}) -%}
+    {%- if hint %}{% set attr = attr|merge({'aria-describedby': field.vars.id ~ '_hint'}) %}{% endif -%}
+    {%- if field.vars.errors|length > 0 %}{% set attr = attr|merge({'aria-invalid': 'true', 'aria-describedby': (hint ? field.vars.id ~ '_hint ' : '') ~ field.vars.id ~ '_error'}) %}{% endif -%}
+    <div class="report__field">
+        <label class="report__label" for="{{ field.vars.id }}">{{ label }}</label>
+        {% if hint %}<p class="report__hint" id="{{ field.vars.id }}_hint">{{ hint }}</p>{% endif %}
+        {{ form_widget(field, {attr: attr}) }}
+        {{ _self.errors(field) }}
+    </div>
+{% endmacro %}
+
+{% block title %}{{ 'report.title'|trans({}, 'venues') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow"><meta name="description" content="{{ 'report.meta_description'|trans({}, 'venues') }}">{% endblock %}
+
+{% block main %}
+    <div class="container report">
+        <h1 class="report__title">{{ 'report.title'|trans({}, 'venues') }}</h1>
+        {% if sent %}
+            <div class="report__sent" role="status">
+                <span class="report__sent-icon">{{ icon('check') }}</span>
+                <h2 class="report__subtitle">{{ 'report.sent.title'|trans({}, 'venues') }}</h2>
+                <p>{{ 'report.sent.text'|trans({}, 'venues') }}</p>
+                {% if venue %}
+                    <p><a class="report__back" href="{{ path('venue_show', {slug: venue.slug}) }}">{{ icon('chevron-left') }}<span>{{ 'report.back'|trans({name: venue.name}, 'venues') }}</span></a></p>
+                {% else %}
+                    <p><a class="report__back" href="{{ path('home') }}">{{ icon('chevron-left') }}<span>{{ 'report.back_home'|trans({}, 'venues') }}</span></a></p>
+                {% endif %}
+            </div>
+        {% else %}
+            <p class="report__intro">{{ 'report.intro'|trans({}, 'venues') }}</p>
+            {% if venue %}
+                <p class="report__venue">{{ 'report.venue_label'|trans({}, 'venues') }} <a href="{{ path('venue_show', {slug: venue.slug}) }}">{{ venue.name }}</a></p>
+            {% endif %}
+            {% if not form.vars.valid %}
+                <div class="report__summary" role="alert">
+                    {{ icon('info') }}
+                    <div>
+                        <p>{{ 'report.error.summary'|trans({}, 'venues') }}</p>
+                        {% if form.vars.errors|length > 0 %}
+                            <ul>{% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+            {{ form_start(form, {attr: {class: 'report__form'}}) }}
+                <fieldset class="report__group"{% if form.kind.vars.errors|length > 0 %} aria-describedby="{{ form.kind.vars.id }}_error"{% endif %}>
+                    <legend class="report__label">{{ 'report.field.kind'|trans({}, 'venues') }}</legend>
+                    {% for choice in form.kind %}
+                        <label class="report__choice">{{ form_widget(choice) }}<span>{{ ('report.kind.' ~ choice.vars.value)|trans({}, 'venues') }}</span></label>
+                    {% endfor %}
+                    {{ _self.errors(form.kind) }}
+                </fieldset>
+                {% if form.photos is defined %}
+                    {% set pictures = {} %}
+                    {% for photo in venue.photos %}{% set pictures = pictures|merge({(photo.picture.photoId): photo}) %}{% endfor %}
+                    <fieldset class="report__group" aria-describedby="{{ form.photos.vars.id }}_hint">
+                        <legend class="report__label">{{ 'report.field.photos'|trans({}, 'venues') }}</legend>
+                        <p class="report__hint" id="{{ form.photos.vars.id }}_hint">{{ 'report.field.photos_hint'|trans({}, 'venues') }}</p>
+                        <ul class="report__photos">
+                            {% for choice in form.photos %}
+                                {% set photo = pictures[choice.vars.value] %}
+                                <li>
+                                    <label class="report__photo">
+                                        {{ venue_picture(photo.picture, sizes='8rem', widths=[360], class='report__thumb', decorative=true) }}
+                                        <span class="report__photo-name">{{ form_widget(choice) }}<span>{{ photo.roomName is null
+                                            ? 'report.photo'|trans({position: photo.position}, 'venues')
+                                            : 'report.photo_room'|trans({position: photo.position, room: photo.roomName}, 'venues') }}</span></span>
+                                    </label>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        {{ _self.errors(form.photos) }}
+                    </fieldset>
+                {% endif %}
+                {% if form.venueReference is defined %}
+                    {{ _self.field(form.venueReference, 'report.field.venue'|trans({}, 'venues'), 'report.field.venue_hint'|trans({}, 'venues')) }}
+                {% endif %}
+                {{ _self.field(form.message, 'report.field.message'|trans({}, 'venues'), 'report.field.message_hint'|trans({}, 'venues')) }}
+                <div class="report__row">
+                    {{ _self.field(form.name, 'report.field.name'|trans({}, 'venues')) }}
+                    {{ _self.field(form.email, 'report.field.email'|trans({}, 'venues')) }}
+                </div>
+                <div class="report__field">
+                    <label class="report__choice">{{ form_widget(form.goodFaith, {attr: form.goodFaith.vars.errors|length > 0 ? {'aria-invalid': 'true', 'aria-describedby': form.goodFaith.vars.id ~ '_error'} : {}}) }}<span>{{ 'report.field.good_faith'|trans({}, 'venues') }}</span></label>
+                    {{ _self.errors(form.goodFaith) }}
+                </div>
+                <div class="report__trap">
+                    <label for="{{ form.website.vars.id }}">{{ 'report.field.website'|trans({}, 'venues') }}</label>
+                    {{ form_widget(form.website) }}
+                </div>
+                {{ form_rest(form) }}
+                <div class="report__actions">
+                    {{ include('components/_button.html.twig', {label: 'report.submit'|trans({}, 'venues'), type: 'submit', size: 'lg'}, with_context = false) }}
+                    <p class="report__privacy">{{ 'report.privacy'|trans({}, 'venues') }} <a href="{{ path('datenschutz') }}">{{ 'report.privacy_link'|trans({}, 'venues') }}</a></p>
+                </div>
+            {{ form_end(form) }}
+        {% endif %}
+    </div>
+{% endblock %}

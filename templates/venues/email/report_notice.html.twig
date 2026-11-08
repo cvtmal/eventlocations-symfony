@@ -1,0 +1,29 @@
+{#
+    The staff notice of a complaint (G2, `ModerationMailer::sendNotice`), to `site.contact_email` with the
+    complainant as Reply-To. Context: case_id, reference, kind (ModerationKind), venue_name, venue_number,
+    venue_reference, held_photos, complainant_name, complainant_email, message, source_url, hold_limit_reached.
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'report.mail.notice.preheader'|trans({kind: kind.value}, 'venues') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('report.mail.notice.greeting'|trans({}, 'venues')) }}
+{{ blocks.p('report.mail.notice.intro'|trans({kind: kind.value, held: held_photos}, 'venues')) }}
+{% if hold_limit_reached %}{{ blocks.p('report.mail.notice.hold_limit'|trans({}, 'venues')) }}{% endif %}
+{% set venue = venue_name is null
+    ? ('report.mail.notice.typed'|trans({reference: venue_reference ?? '-'}, 'venues'))
+    : ('report.mail.notice.venue'|trans({name: venue_name, number: venue_number ~ ''}, 'venues')) %}
+{{ blocks.facts([
+    {label: 'report.mail.fact.kind'|trans({}, 'venues'), value: ('report.kind.' ~ kind.value)|trans({}, 'venues')},
+    {label: 'report.mail.fact.venue'|trans({}, 'venues'), value: venue},
+    {label: 'report.mail.fact.held'|trans({}, 'venues'), value: held_photos},
+    {label: 'report.mail.fact.name'|trans({}, 'venues'), value: complainant_name},
+    {label: 'report.mail.fact.email'|trans({}, 'venues'), value: complainant_email},
+    {label: 'report.mail.fact.source'|trans({}, 'venues'), value: source_url ?? '-'},
+    {label: 'report.mail.fact.reference'|trans({}, 'venues'), value: reference},
+]) }}
+{{ blocks.quote(message) }}
+{{ blocks.button('report.mail.notice.button'|trans({}, 'venues'), url('admin_moderation_case', {id: case_id})) }}
+{% endblock %}

@@ -44,7 +44,8 @@ final class PhotoRightsQuery
         $rows = $this->connection->fetchAllAssociative(
             <<<SQL
                 SELECT p.id, p.position, NULLIF(rt.name, '') AS room_name,
-                       g.evidence, g.grantor_type, g.created_at AS granted_at, g.scope_derivatives, g.policy_version
+                       g.evidence, g.grantor_type, g.created_at AS granted_at, g.scope_derivatives, g.policy_version,
+                       EXISTS (SELECT 1 FROM moderation_case_photos mcp JOIN moderation_cases mc ON mc.id = mcp.case_id WHERE mcp.venue_photo_id = p.id AND mc.status = 'open') AS held
                 FROM venue_photos p
                 LEFT JOIN rooms r ON r.id = p.room_id
                 {$roomName}
@@ -124,6 +125,7 @@ final class PhotoRightsQuery
             grantedAt: $granted ? new \DateTimeImmutable((string) $row['granted_at']) : null,
             derivatives: $granted && (bool) $row['scope_derivatives'],
             policyVersion: $granted ? (string) $row['policy_version'] : null,
+            held: true === $row['held'],
         );
     }
 }

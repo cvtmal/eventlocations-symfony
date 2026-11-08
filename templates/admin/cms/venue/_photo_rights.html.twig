@@ -39,6 +39,9 @@
                                     <td>
                                         <div class="photo-rights__cell">
                                             <div class="photo-rights__status">
+                                                {% if row.held %}
+                                                    {{ include('admin/components/_pill.html.twig', {label: 'photos.rights.status.held'|trans({}, 'cms'), tone: 'red', dot: true}, with_context = false) }}
+                                                {% endif %}
                                                 {% if row.granted %}
                                                     {{ include('admin/components/_pill.html.twig', {label: 'photos.rights.status.granted'|trans({}, 'cms'), tone: 'green', dot: true}, with_context = false) }}
                                                     <span class="muted">{{ 'photos.rights.detail.granted'|trans({date: row.grantedAt|swiss_date, evidence: ('photos.rights.evidence.' ~ row.evidence.value)|trans({}, 'cms')}, 'cms') }}</span>

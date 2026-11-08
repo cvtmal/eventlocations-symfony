@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Story;
 
+use App\Factory\ModerationCaseFactory;
+use App\Factory\ModerationCasePhotoFactory;
 use App\Factory\PhotoCandidateFactory;
 use App\Factory\RoomFactory;
 use App\Factory\RoomTranslationFactory;
@@ -23,12 +25,15 @@ use App\Venues\Entity\Room;
 use App\Venues\Entity\TaxonomyTerm;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueDocument;
+use App\Venues\Entity\VenuePhoto;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\Repository\TaxonomyTermRepository;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\CandidateOrigin;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\ImageCandidate;
+use App\Venues\ValueObject\ModerationDecision;
+use App\Venues\ValueObject\ModerationKind;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -67,6 +72,10 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  *   others none, so both states of the detail page stay visible. Their share of each fact is
  *   index-based, and the terms (amenity, catering, language) come from a seeded RNG of their
  *   own, after the media step, so nothing before it shifts.
+ *
+ * - Complaints (G2): an open rights complaint about venue 3 (index 2) hides its first gallery photo, a decided
+ *   `keep` complaint about venue 4 names its first gallery photo (shown again), and an open correction names a
+ *   location the site does not know, so the "Meldungen" queue of the back office shows each state.
  *
  * Names come from the word lists below and texts from faker; nothing is taken from
  * eventlokale.
@@ -116,6 +125,9 @@ final class DemoStory extends Story
     private const LIECHTENSTEIN_PHONE = '+4232345678';
     /** The venue whose last gallery photo stays ungranted (G1), venue 2 of the list. */
     private const UNGRANTED_VENUE = 1;
+    /** The venue whose first gallery photo an open rights complaint hides (G2), and the one of a decided `keep`. */
+    private const HELD_VENUE = 2;
+    private const KEPT_VENUE = 3;
     private const REGION_ONLY = 54;
     private const NO_PLACE = 55;
     private const REGION_TEXT = 'Schweizweit';
@@ -170,6 +182,7 @@ final class DemoStory extends Story
         flush_after(fn () => $this->createEventFacts($created, $terms));
         flush_after(fn () => $this->createSiteImport($created[0][1]));
         flush_after(fn () => $this->createPreviewLinks($created[1][1]));
+        flush_after(fn () => $this->createModerationCases($created[self::HELD_VENUE][1], $created[self::KEPT_VENUE][1]));
     }
 
     /**
@@ -180,6 +193,41 @@ final class DemoStory extends Story
     {
         VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'demo-brief-2026-11']);
         VenuePreviewFactory::new()->revoked()->create(['venue' => $venue, 'campaignCode' => 'demo-mail-2026-10']);
+    }
+
+    /**
+     * The three complaints of the class docblock, with fictional complainants.
+     */
+    private function createModerationCases(Venue $held, Venue $kept): void
+    {
+        $first = static function (Venue $venue): VenuePhoto {
+            $photo = VenuePhotoFactory::repository()->findOneBy(['venue' => $venue, 'room' => null, 'position' => 1]);
+            \assert($photo instanceof VenuePhoto);
+
+            return $photo;
+        };
+
+        $rights = ModerationCaseFactory::createOne([
+            'kind' => ModerationKind::Rights,
+            'venue' => $held,
+            'venueReference' => null,
+            'complainantName' => 'Petra Fotografin',
+            'complainantEmail' => 'petra.fotografin@example.ch',
+            'message' => 'Das erste Foto dieser Location habe ich aufgenommen. Eine Nutzung habe ich nie erlaubt.',
+        ]);
+        ModerationCasePhotoFactory::createOne(['case' => $rights, 'photo' => $first($held)]);
+
+        $keep = ModerationCaseFactory::new()->decided(ModerationDecision::Keep, note: 'Der Betreiber hat die Rechte belegt.')->create([
+            'kind' => ModerationKind::Rights,
+            'venue' => $kept,
+            'venueReference' => null,
+            'complainantName' => 'Max Muster',
+            'complainantEmail' => 'max.muster@example.ch',
+            'message' => 'Ich glaube, dieses Foto stammt von meiner Website.',
+        ]);
+        ModerationCasePhotoFactory::createOne(['case' => $keep, 'photo' => $first($kept)]);
+
+        ModerationCaseFactory::createOne();
     }
 
     /**

@@ -21,7 +21,11 @@ use Symfony\Component\Uid\Uuid;
  * open (G5's signed link) uses `filter()` or `sql()` like the public pages.
  *
  * Revoking removes the photo itself (`RemoveVenuePhoto` closes the grant first), so a photo that
- * is not public is one that has not been granted yet.
+ * is not public is one that has not been granted yet, or one that is held.
+ *
+ * The hold (G2): a photo that an open complaint names (`moderation_case_photos` of a `moderation_cases` row with
+ * status `open`) is hidden until staff decide. Deciding closes the case, which lifts the hold (`keep`) or comes
+ * with the revoke (`remove`); a held photo is never deleted on a report alone.
  */
 final class PublicPhotoPolicy
 {
@@ -30,10 +34,13 @@ final class PublicPhotoPolicy
     ) {
     }
 
+    /** The aliases of the predicate's own tables: grants (G1), and the case photos and cases of the hold (G2). */
+    private const array OWN_ALIASES = ['rg', 'mcp', 'mc'];
+
     /**
      * The predicate for a query over `venue_photos <alias>`; the alias is the caller's own, a
-     * plain SQL identifier. It uses `rg` for its own table, so a caller must not: the predicate
-     * would compare the grant with itself and hide every photo without a word.
+     * plain SQL identifier. It uses `rg`, `mcp` and `mc` for its own tables, so a caller must not:
+     * the predicate would compare a row with itself and hide every photo, or none, without a word.
      */
     public static function sql(string $photoAlias): string
     {
@@ -41,12 +48,13 @@ final class PublicPhotoPolicy
         if (1 !== preg_match('/^[a-z][a-z0-9_]*$/D', $photoAlias)) {
             throw new \InvalidArgumentException(\sprintf('"%s" is not a plain SQL alias.', $photoAlias));
         }
-        if ('rg' === $photoAlias) {
-            throw new \InvalidArgumentException('"rg" is the alias of the grants table inside the predicate; name the photo table otherwise.');
+        if (\in_array($photoAlias, self::OWN_ALIASES, true)) {
+            throw new \InvalidArgumentException(\sprintf('"%s" is an alias of the predicate\'s own tables (%s); name the photo table otherwise.', $photoAlias, implode(', ', self::OWN_ALIASES)));
         }
 
         return \sprintf(
-            'EXISTS (SELECT 1 FROM media_rights_grants rg WHERE rg.venue_photo_id = %s.id AND rg.revoked_at IS NULL AND rg.scope_listing AND rg.scope_resized_copies)',
+            '(EXISTS (SELECT 1 FROM media_rights_grants rg WHERE rg.venue_photo_id = %1$s.id AND rg.revoked_at IS NULL AND rg.scope_listing AND rg.scope_resized_copies)'
+            ." AND NOT EXISTS (SELECT 1 FROM moderation_case_photos mcp JOIN moderation_cases mc ON mc.id = mcp.case_id WHERE mcp.venue_photo_id = %1\$s.id AND mc.status = 'open'))",
             $photoAlias,
         );
     }

@@ -24,6 +24,7 @@ use App\Venues\Command\ChangeVenueGooglePlace;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
 use App\Venues\Command\ChangeVenueTier;
+use App\Venues\Command\DecideModerationCase;
 use App\Venues\Command\DescribeVenuePhoto;
 use App\Venues\Command\GrantPhotoRights;
 use App\Venues\Command\IssueVenuePreview;
@@ -37,11 +38,15 @@ use App\Venues\Command\RemoveVenuePhoto;
 use App\Venues\Command\ReorderRooms;
 use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
+use App\Venues\Command\ReportContent;
 use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Command\RevokeVenuePreview;
+use App\Venues\Command\TakeEntryOffline;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\GrantEvidence;
+use App\Venues\ValueObject\ModerationDecision;
+use App\Venues\ValueObject\ModerationKind;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Translation\TranslatorBagInterface;
@@ -93,6 +98,13 @@ final class CmsTranslationKeysTest extends KernelTestCase
         foreach (GrantEvidence::cases() as $evidence) {
             $keys[] = 'photos.rights.evidence.'.$evidence->value;
         }
+        // The staff queue of the complaints names their kind and decision (G2).
+        foreach (ModerationKind::cases() as $kind) {
+            $keys[] = 'moderation.kind.'.$kind->value;
+        }
+        foreach (ModerationDecision::cases() as $decision) {
+            $keys[] = 'moderation.decision.'.$decision->value;
+        }
         $commands = [
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
             ChangeVenueTerms::class, ChangeVenueEventFacts::class, ChangeVenueContact::class, ChangeVenueCapacity::class, AnswerVenueFaq::class,
@@ -102,6 +114,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
             AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,
             ChangeVenueGooglePlace::class, AssignVenueGooglePlace::class,
             IssueVenuePreview::class, RevokeVenuePreview::class,
+            ReportContent::class, TakeEntryOffline::class, DecideModerationCase::class,
         ];
         foreach ($commands as $command) {
             $keys[] = 'history.command.'.substr($command, strrpos($command, '\\') + 1);

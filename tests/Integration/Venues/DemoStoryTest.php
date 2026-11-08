@@ -110,9 +110,11 @@ final class DemoStoryTest extends KernelTestCase
         $this->assertEventFacts();
         $this->assertPhotos();
         $this->assertDocuments();
+        $this->assertModerationCases();
 
         $this->story()->build();
         self::assertSame(DemoStory::VENUES, $this->rows('SELECT count(*) FROM venues'));
+        self::assertSame(3, $this->rows('SELECT count(*) FROM moderation_cases'), 'a second build adds no complaint');
     }
 
     public function test_refuses_to_load_without_towns(): void
@@ -197,6 +199,29 @@ final class DemoStoryTest extends KernelTestCase
         foreach ($avifs as $file) {
             self::assertLessThanOrEqual(40 * 1024, filesize($file), basename($file).' exceeds the 40 KB card budget');
         }
+    }
+
+    /**
+     * G2: an open rights complaint holding one photo, a decided `keep`, and an open correction without a venue.
+     */
+    private function assertModerationCases(): void
+    {
+        self::assertSame(
+            [
+                ['kind' => 'correction', 'status' => 'open', 'decision' => null, 'has_venue' => false, 'photos' => 0],
+                ['kind' => 'rights', 'status' => 'decided', 'decision' => 'keep', 'has_venue' => true, 'photos' => 1],
+                ['kind' => 'rights', 'status' => 'open', 'decision' => null, 'has_venue' => true, 'photos' => 1],
+            ],
+            $this->connection->fetchAllAssociative(<<<'SQL'
+                SELECT c.kind, c.status, c.decision, c.venue_id IS NOT NULL AS has_venue,
+                    (SELECT count(*) FROM moderation_case_photos p WHERE p.case_id = c.id AND p.venue_photo_id IS NOT NULL) AS photos
+                FROM moderation_cases c
+                ORDER BY c.kind, c.status
+                SQL),
+        );
+        self::assertSame(1, $this->rows(<<<'SQL'
+            SELECT count(*) FROM moderation_case_photos p JOIN moderation_cases c ON c.id = p.case_id WHERE c.status = 'open'
+            SQL), 'one photo of the demo site is held');
     }
 
     private function assertDocuments(): void

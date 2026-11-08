@@ -1,0 +1,48 @@
+{#
+    One table of the complaints queue (G2). Include with `with_context = false`: rows (list<ModerationCaseRow>),
+    label (translated, names the table), id, empty_title (translated).
+#}
+{% embed 'admin/components/_table.html.twig' with {
+    label: label,
+    id: id,
+    columns: [
+        {label: 'moderation.column.date'|trans({}, 'cms')},
+        {label: 'moderation.column.kind'|trans({}, 'cms')},
+        {label: 'moderation.column.venue'|trans({}, 'cms')},
+        {label: 'moderation.column.complainant'|trans({}, 'cms')},
+        {label: 'moderation.column.held'|trans({}, 'cms')},
+        {label: 'moderation.column.status'|trans({}, 'cms')},
+    ],
+    rows: rows,
+    empty_title: empty_title,
+} only %}
+    {% block rows %}
+        {% for row in rows %}
+            {% embed 'admin/components/_table_row.html.twig' with {row: row} only %}
+                {% block cells %}
+                    <td><a class="moderation__link" href="{{ path('admin_moderation_case', {id: row.id}) }}">{{ row.createdAt|swiss_date }}</a></td>
+                    <td>{{ ('moderation.kind.' ~ row.kind.value)|trans({}, 'cms') }}</td>
+                    <td>
+                        {%- if row.venueNumber is not null -%}
+                            <a href="{{ path('admin_locations_edit', {number: row.venueNumber}) }}">{{ row.venueName }}</a>
+                        {%- else -%}
+                            <span class="muted">{{ row.venueReference ?? 'moderation.no_venue'|trans({}, 'cms') }}</span>
+                        {%- endif -%}
+                    </td>
+                    <td>{{ row.complainantName }}</td>
+                    <td>{{ row.heldPhotos|swiss_number }}</td>
+                    <td>
+                        {%- if row.isOpen() -%}
+                            {{ include('admin/components/_pill.html.twig', {label: 'moderation.status.open'|trans({}, 'cms'), tone: 'amber', dot: true}, with_context = false) }}
+                        {%- else -%}
+                            {{ include('admin/components/_pill.html.twig', {label: ('moderation.decision.' ~ row.decision.value)|trans({}, 'cms'), tone: 'grey'}, with_context = false) }}
+                        {%- endif -%}
+                    </td>
+                {% endblock %}
+            {% endembed %}
+        {% endfor %}
+    {% endblock %}
+    {% block empty %}
+        {{ include('admin/components/_empty.html.twig', {icon: 'bell', title: empty_title}, with_context = false) }}
+    {% endblock %}
+{% endembed %}

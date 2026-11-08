@@ -12,6 +12,12 @@
 # a UUID, so it needs no ClientIpKey. Every attempt counts, a refused file too; staff are not limited.
 # `stats_collect` (#47) guards POST /_stats, the statistics beacon: 120 sends per 10 minutes per client
 # IP. Over the limit the beacon gets its 204 and nothing is written. Filesystem only, so no Neon.
+# `content_report` (G2) guards POST /inhalt-melden, the public complaint form: 5 complaints per hour per client
+# IP, consumed only after the form is valid, like the inquiry form.
+# `content_report_holds` (G2) caps what anonymous complaints can hide: 20 complaints that name photos per day,
+# site-wide (one key, `site`). Over it the complaint is stored and mailed, nothing is hidden, and the staff notice
+# says so. It shares the pool of `content_report` (the limiter id is part of every key), so a test that clears one
+# clears both.
 framework:
     rate_limiter:
         phone_reveal:
@@ -39,6 +45,16 @@ framework:
             limit: 120
             interval: '10 minutes'
             cache_pool: cache.stats_collect
+        content_report:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+            cache_pool: cache.content_report
+        content_report_holds:
+            policy: fixed_window
+            limit: 20
+            interval: '1 day'
+            cache_pool: cache.content_report
     cache:
         pools:
             cache.phone_reveal:
@@ -50,6 +66,8 @@ framework:
             cache.portal_upload:
                 adapter: cache.app
             cache.stats_collect:
+                adapter: cache.app
+            cache.content_report:
                 adapter: cache.app
 
 # Tests clear the pools in setUp(): an array adapter would not work there, because the test client

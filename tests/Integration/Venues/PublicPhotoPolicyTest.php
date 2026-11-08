@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Venues;
 
 use App\Factory\MediaRightsGrantFactory;
+use App\Factory\ModerationCaseFactory;
+use App\Factory\ModerationCasePhotoFactory;
 use App\Factory\RoomFactory;
 use App\Factory\RoomTranslationFactory;
 use App\Factory\VenueFactory;
@@ -23,6 +25,7 @@ use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Tests\Support\Venues\PublicPhotos;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenuePhoto;
 use App\Venues\PublicPhotoPolicy;
@@ -31,6 +34,8 @@ use App\Venues\ReadModel\VenueDetail;
 use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ReadModel\VenueSitemapQuery;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\ModerationDecision;
+use App\Venues\ValueObject\ModerationKind;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -46,6 +51,9 @@ use Zenstruck\Foundry\Test\Factories;
  * copies), in the gallery and in two rooms. Each test runs in a rolled-back transaction.
  *
  * The preview (`detail(includeUnpublished: true)`) is the one reader that shows them all.
+ *
+ * G2 adds the hold: a granted photo that an open complaint names is hidden from the same readers, and shown again
+ * once the complaint is decided.
  */
 final class PublicPhotoPolicyTest extends KernelTestCase
 {
@@ -286,6 +294,90 @@ final class PublicPhotoPolicyTest extends KernelTestCase
         self::assertSame(2, (int) $this->connection->fetchOne('SELECT count(*) FROM media_rights_grants WHERE venue_photo_id = ?', [$photo->id()]));
 
         self::assertSame($before, $this->pictureIds($this->detail($venue)->photos));
+    }
+
+    public function test_a_photo_an_open_complaint_names_is_on_no_public_reader(): void
+    {
+        $venue = $this->venue();
+        [$held, $kept] = $this->granted($venue);
+        $hall = $this->grantedHall($venue);
+        $this->hold($venue, [$held, $hall]);
+        $neighbour = $this->neighbour();
+
+        $shown = PublicPhotos::of($this->connection, $this->translator(), $venue->number(), $neighbour);
+
+        self::assertSame([$kept], $shown['listing']);
+        self::assertSame([$kept], $shown['merkliste']);
+        self::assertSame([$kept], $shown['similar'], 'the card of the similar venues takes the next public photo');
+        self::assertSame([$kept], $shown['detail']);
+        self::assertSame([], $shown['rooms'], 'the held room photo was the room\'s only public one');
+        self::assertSame([$kept], $shown['sitemap']);
+        self::assertSame(['/media/'.$venue->number().'/'.$kept.'-1280.jpg'], $this->detail($venue)->imageUrls(5), 'og:image and JSON-LD');
+        self::assertSame([$kept], $this->policy()->filter([$held, $hall, $kept]));
+        self::assertSame($this->stored($venue), $this->pictureIds($this->detail($venue, includeUnpublished: true)->photos), 'the preview behind the login shows the held photo');
+    }
+
+    public function test_a_decided_complaint_holds_nothing(): void
+    {
+        $venue = $this->venue();
+        $granted = $this->granted($venue);
+        $this->hold($venue, [$granted[0]], ModerationCaseFactory::new()->decided(ModerationDecision::Keep));
+
+        self::assertSame($granted, $this->pictureIds($this->detail($venue)->photos));
+        self::assertSame($granted, $this->policy()->filter($granted));
+    }
+
+    public function test_one_open_complaint_among_decided_ones_still_holds_the_photo(): void
+    {
+        $venue = $this->venue(rooms: false);
+        [$held, $kept] = $this->granted($venue);
+        $this->hold($venue, [$held], ModerationCaseFactory::new()->decided(ModerationDecision::Keep));
+        $this->hold($venue, [$held]);
+
+        self::assertSame([$kept], $this->pictureIds($this->detail($venue)->photos));
+    }
+
+    public function test_a_complaint_about_a_photo_that_is_not_public_changes_nothing(): void
+    {
+        $venue = $this->venue(rooms: false);
+        $granted = $this->granted($venue);
+        $this->hold($venue, $this->notPublic($venue));
+
+        self::assertSame($granted, $this->pictureIds($this->detail($venue)->photos));
+    }
+
+    /**
+     * An open rights complaint about the venue (or the given factory's case) that names the photos.
+     *
+     * @param list<string> $photoIds
+     */
+    private function hold(Venue $venue, array $photoIds, ?ModerationCaseFactory $case = null): void
+    {
+        $complaint = ($case ?? ModerationCaseFactory::new())->create(['kind' => ModerationKind::Rights, 'venue' => $venue, 'venueReference' => null]);
+        foreach ($photoIds as $id) {
+            $photo = $this->em->find(VenuePhoto::class, $id);
+            self::assertInstanceOf(VenuePhoto::class, $photo);
+            ModerationCasePhotoFactory::createOne(['case' => $complaint, 'photo' => $photo]);
+        }
+    }
+
+    /**
+     * Another published venue in Zürich, whose "similar venues" list the venue under test.
+     */
+    private function neighbour(): string
+    {
+        $other = VenueFactory::createOne(['name' => 'Nachbar', 'town' => DetailVenues::town('Zürich')]);
+        VenueTranslationFactory::createOne(['venue' => $other, 'slug' => 'nachbar']);
+
+        return $other->id();
+    }
+
+    private function translator(): TranslatorInterface
+    {
+        $translator = self::getContainer()->get('translator');
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+
+        return $translator;
     }
 
     /**
