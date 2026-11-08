@@ -98,7 +98,7 @@ final class VenuePreviewLinkController extends AbstractController
             $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::PreviewOpened, $link->venueId, $link->campaignCode));
         }
 
-        return self::private($this->render('venues/preview/show.html.twig', ['venue' => $venue, 'token' => $token]));
+        return self::private($this->render('venues/preview/show.html.twig', ['venue' => $venue, 'token' => $this->tokens->forId($link->id)]));
     }
 
     private function unavailable(int $status): Response
