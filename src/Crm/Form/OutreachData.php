@@ -11,6 +11,7 @@ use App\Crm\ValueObject\Outreach;
 use App\Crm\ValueObject\OutreachCohort;
 use App\Shared\Funnel\CampaignCode;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * The "Akquise" tab's form (G11): a Location's outreach fields, all optional.
@@ -30,6 +31,18 @@ final class OutreachData
 
     #[Assert\GreaterThanOrEqual(propertyPath: 'sentOn', message: 'crm.outreach.returned_before_sent')]
     public ?\DateTimeImmutable $returnedOn = null;
+
+    /**
+     * A campaign code goes on postal links only (PO decision), so a Location reached another way carries none.
+     */
+    #[Assert\Callback]
+    public function campaignOnlyForLetters(ExecutionContextInterface $context): void
+    {
+        $code = null === $this->campaignCode ? '' : trim($this->campaignCode);
+        if ('' !== $code && null !== $this->channel && ContactChannel::Postal !== $this->channel) {
+            $context->buildViolation('crm.outreach.campaign_not_postal')->atPath('campaignCode')->addViolation();
+        }
+    }
 
     public static function of(Outreach $outreach): self
     {

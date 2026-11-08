@@ -29,6 +29,9 @@
                 <p class="muted">{{ 'outreach.suppression.effect'|trans({}, 'crm') }}</p>
             {% else %}
                 <p class="muted">{{ 'outreach.suppression.none'|trans({}, 'crm') }}</p>
+            {% endif %}
+            {# A Location suppressed through one address only still takes its own objection, which outlives that address. #}
+            {% if not suppression or not suppression.whole %}
                 <form method="post" action="{{ path('admin_crm_companies_outreach_objection', {id: company.id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token(objection_token) }}">
                     {{ include('admin/components/_button.html.twig', {label: 'outreach.suppression.objection'|trans({}, 'crm'), variant: 'secondary', size: 'sm', type: 'submit'}, with_context = false) }}

@@ -65,6 +65,18 @@ final class CompanyOutreachTabTest extends WebTestCase
         self::assertNull($this->connection()->fetchOne('SELECT campaign_code FROM crm_companies WHERE id = ?', [$company->id()]));
     }
 
+    public function test_a_campaign_code_goes_with_letters_only(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $company = CompanyFactory::createOne();
+        $crawler = $this->client->request('GET', $this->url($company));
+
+        $this->client->submit($crawler->filter('form[data-outreach-form]')->form(['outreach[campaignCode]' => 'brief-2026-11', 'outreach[channel]' => 'email']));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('form[data-outreach-form]', 'Eine Kampagne gibt es nur für Briefe.');
+    }
+
     public function test_an_objection_suppresses_the_location_for_good_and_it_cannot_be_deleted(): void
     {
         $this->logInAs();

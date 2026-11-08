@@ -155,6 +155,7 @@ crm:
     outreach:
         campaign_code: 'Nur Buchstaben, Ziffern, «-» und «_», höchstens 40 Zeichen, am Anfang ein Buchstabe oder eine Ziffer.'
         returned_before_sent: Die Retoure kann nicht vor dem Versand liegen.
+        campaign_not_postal: Eine Kampagne gibt es nur für Briefe. Bitte den Kanal «Brief» wählen oder die Kampagne leeren.
 inquiry:
     occasion:
         required: Bitte wähle einen Anlass.

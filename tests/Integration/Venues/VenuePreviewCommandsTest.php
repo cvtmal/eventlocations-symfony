@@ -115,6 +115,27 @@ final class VenuePreviewCommandsTest extends KernelTestCase
         self::assertNull($this->previews()->find($preview->id()));
     }
 
+    public function test_a_short_code_is_unique_and_plain(): void
+    {
+        $a = VenuePreviewFactory::createOne();
+        $b = VenuePreviewFactory::createOne();
+        self::assertSame($a->id(), $this->previews()->findByShortCode((string) $a->shortCode())?->id);
+
+        foreach ([
+            'uk_venue_previews_short_code' => "UPDATE venue_previews SET short_code = '".$a->shortCode()."' WHERE id = '".$b->id()."'",
+            'chk_venue_previews_short_code' => "UPDATE venue_previews SET short_code = 'k7m3qx9tpa' WHERE id = '".$b->id()."'",
+        ] as $constraint => $sql) {
+            $this->connection->executeStatement('SAVEPOINT short_code');
+            try {
+                $this->connection->executeStatement($sql);
+                self::fail($constraint);
+            } catch (\Doctrine\DBAL\Exception\DriverException $refused) {
+                self::assertStringContainsString($constraint, $refused->getMessage());
+            }
+            $this->connection->executeStatement('ROLLBACK TO SAVEPOINT short_code');
+        }
+    }
+
     private function previews(): VenuePreviewQuery
     {
         $previews = self::getContainer()->get(VenuePreviewQuery::class);

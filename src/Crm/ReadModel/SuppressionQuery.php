@@ -71,6 +71,16 @@ final class SuppressionQuery
         return new SuppressionState(SuppressionReason::from((string) $row['reason']), new \DateTimeImmutable((string) $row['created_at']), (bool) $row['whole']);
     }
 
+    /**
+     * Every suppressed address, for a file the CRM writes outside the database (the crawler's private list).
+     *
+     * @return list<string>
+     */
+    public function addresses(): array
+    {
+        return array_map(strval(...), $this->connection->fetchFirstColumn('SELECT email FROM suppressions WHERE email IS NOT NULL ORDER BY email'));
+    }
+
     public function count(): int
     {
         return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM suppressions');

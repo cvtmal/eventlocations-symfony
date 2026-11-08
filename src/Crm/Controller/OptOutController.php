@@ -51,16 +51,18 @@ final class OptOutController extends AbstractController
             return $this->page('unknown', Response::HTTP_NOT_FOUND, $token);
         }
 
-        $suppressed = $this->suppressions->isLocationSuppressed($companyId);
+        // Only a row naming the Location itself counts as done: a Location suppressed through one address alone would
+        // lose that suppression when the address leaves it.
+        $whole = $this->suppressions->stateOf($companyId)?->whole ?? false;
         if ($request->isMethod('POST')) {
-            if (!$suppressed) {
+            if (!$whole) {
                 $this->commandBus->dispatch(new SuppressCompany($companyId, SuppressionReason::OptOut));
             }
 
             return $this->page('done', Response::HTTP_OK, $token);
         }
 
-        return $this->page($suppressed ? 'done' : 'ask', Response::HTTP_OK, $token);
+        return $this->page($whole ? 'done' : 'ask', Response::HTTP_OK, $token);
     }
 
     private function page(string $state, int $status, string $token): Response

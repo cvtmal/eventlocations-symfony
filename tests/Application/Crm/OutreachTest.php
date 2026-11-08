@@ -151,12 +151,20 @@ final class OutreachTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $open = $this->location('Aaa Offen');
         $done = $this->location('Bbb Schon', sentOn: new \DateTimeImmutable('2026-11-01'));
+        $unprinted = $this->location('Ccc Ohne Link');
+        $returned = $this->location('Ddd Retoure', returnedOn: new \DateTimeImmutable('2026-11-15'));
+        foreach ([$open, $done, $returned] as $company) {
+            VenuePreviewFactory::createOne(['venue' => $company->venue(), 'campaignCode' => self::CAMPAIGN]);
+        }
 
         $this->client->request('POST', '/admin/crm/akquise/versand', ['_token' => $this->token(), 'campaign' => self::CAMPAIGN, 'sent_on' => '2026-11-19']);
 
         self::assertResponseRedirects('/admin/crm/akquise#kampagnen', 303);
         self::assertSame('2026-11-19', $this->connection()->fetchOne('SELECT outreach_sent_on FROM crm_companies WHERE id = ?', [$open->id()]));
         self::assertSame('2026-11-01', $this->connection()->fetchOne('SELECT outreach_sent_on FROM crm_companies WHERE id = ?', [$done->id()]));
+        // No letter went to a Location without a link of the campaign or with a returned letter.
+        self::assertNull($this->connection()->fetchOne('SELECT outreach_sent_on FROM crm_companies WHERE id = ?', [$unprinted->id()]));
+        self::assertNull($this->connection()->fetchOne('SELECT outreach_sent_on FROM crm_companies WHERE id = ?', [$returned->id()]));
         self::assertSame('{"sent_on": "2026-11-19"}', $this->connection()->fetchOne("SELECT changes::text FROM admin_audit_log WHERE subject_type = 'campaign'"));
     }
 

@@ -58,6 +58,18 @@ final class EventlokaleCsvTest extends TestCase
         self::assertSame(['1', '2', '3'], array_column($this->rows(), 'eventlokale_id'));
     }
 
+    public function test_a_suppressed_address_loses_the_person_and_contact_cells_but_the_venue_stays(): void
+    {
+        (new EventlokaleCsv())->write($this->root, ['info@example.test']);
+
+        $row = $this->rows()[0];
+        self::assertSame('Testschloss Musterberg am See 1', $row['name']);
+        self::assertSame(['Muster Events GmbH', 'www.example.test'], [$row['contact_company'], $row['website']]);
+        foreach (['contact_salutation', 'contact_first_name', 'contact_last_name', 'contact_function', 'phone', 'mobile', 'email'] as $column) {
+            self::assertSame('', $row[$column], $column);
+        }
+    }
+
     public function test_a_row_with_a_detail_carries_contact_rooms_photos_and_faq(): void
     {
         (new EventlokaleCsv())->write($this->root);

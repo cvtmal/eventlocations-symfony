@@ -61,12 +61,11 @@ final class CampaignPrintQuery
             FROM crm_companies c
             JOIN venues v ON v.id = c.venue_id
             LEFT JOIN towns t ON t.id = v.town_id
-            JOIN LATERAL (%s) link ON true
-            WHERE c.campaign_code = :code AND c.mail_returned_on IS NULL AND NOT %s
-            ORDER BY lower(c.name), c.id
+            JOIN LATERAL (
             SQL;
         $rows = $this->connection->fetchAllAssociative(
-            \sprintf($sql, self::LINK, SuppressionQuery::LOCATION_SUPPRESSED),
+            $sql.self::LINK.') link ON true WHERE c.campaign_code = :code AND c.mail_returned_on IS NULL AND NOT '
+                .SuppressionQuery::LOCATION_SUPPRESSED.' ORDER BY lower(c.name), c.id',
             ['code' => $code, 'valid' => self::validFrom($now)],
         );
 

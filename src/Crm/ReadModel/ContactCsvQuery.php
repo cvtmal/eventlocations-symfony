@@ -16,7 +16,10 @@ final class ContactCsvQuery
         SELECT p.first_name, p.last_name, c.name AS company_name, p.position, p.email, p.phone
         FROM crm_contacts p
         JOIN crm_companies c ON c.id = p.company_id
-        WHERE NOT %s
+        WHERE NOT
+        SQL;
+
+    private const string ORDER = <<<'SQL'
         ORDER BY lower(c.name), lower(p.last_name), lower(coalesce(p.first_name, '')), p.id
         SQL;
 
@@ -31,7 +34,7 @@ final class ContactCsvQuery
     public function rows(): iterable
     {
         // A suppressed Location's contacts are never in it (G11), and so is no suppressed address (the rule covers both).
-        foreach ($this->connection->iterateAssociative(\sprintf(self::SQL, SuppressionQuery::LOCATION_SUPPRESSED)) as $row) {
+        foreach ($this->connection->iterateAssociative(self::SQL.' '.SuppressionQuery::LOCATION_SUPPRESSED.' '.self::ORDER) as $row) {
             yield new ContactCsvRow(
                 null === $row['first_name'] ? null : (string) $row['first_name'],
                 (string) $row['last_name'],

@@ -75,6 +75,19 @@ final class OptOutPageTest extends WebTestCase
         self::assertSame(1, (int) $this->connection()->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'company'"));
     }
 
+    public function test_a_location_suppressed_through_one_address_still_gets_its_own_row(): void
+    {
+        $company = $this->company();
+        $this->connection()->insert('suppressions', ['id' => \App\Shared\Uid\EntityId::generate(), 'email' => 'mia@remise.ch', 'reason' => 'objection']);
+
+        $crawler = $this->client->request('GET', $this->url($company));
+        self::assertSame('Keine Mails und Briefe mehr von uns?', trim($crawler->filter('h1')->text()));
+        $this->client->request('POST', $this->url($company));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('opt_out', $this->connection()->fetchOne('SELECT reason FROM suppressions WHERE company_id = ?', [$company->id()]));
+    }
+
     public function test_a_wrong_or_foreign_token_is_a_private_404_and_writes_nothing(): void
     {
         $company = $this->company();
