@@ -6,10 +6,9 @@ namespace App\Cms\Form;
 
 use App\Cms\ReadModel\VenueListFilter;
 use App\Geo\ValueObject\Canton;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ReadModel\TierOptionsQuery;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\SearchType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -22,6 +21,11 @@ use Symfony\Contracts\Translation\TranslatableInterface;
  */
 final class VenueFilterType extends AbstractType
 {
+    public function __construct(
+        private readonly TierOptionsQuery $tiers,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $cantons = [VenueListFilter::CANTON_NONE];
@@ -31,7 +35,7 @@ final class VenueFilterType extends AbstractType
 
         $builder
             ->add('q', SearchType::class, ['label' => 'list.filter.search', 'required' => false])
-            ->add('tier', EnumType::class, ['class' => Tier::class, 'label' => 'list.filter.tier', 'required' => false, 'placeholder' => 'list.filter.all_tiers'])
+            ->add('tier', ChoiceType::class, ['choices' => $this->tiers->choices(), 'choice_translation_domain' => false, 'label' => 'list.filter.tier', 'required' => false, 'placeholder' => 'list.filter.all_tiers'])
             ->add('canton', ChoiceType::class, [
                 'label' => 'list.filter.canton',
                 'required' => false,

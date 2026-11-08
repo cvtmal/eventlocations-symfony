@@ -25,7 +25,7 @@ final class InquirySchemaMigrationTest extends KernelTestCase
 
     private const SEED = [
         "INSERT INTO towns (id, canton_code, zip, name, slug, bfs_number, lat, lng, population) VALUES ('{town}', 'zh', '8999', 'Testdorf Inquiries', 'testdorf-inquiries', 9999, 47.3, 8.5, 100)",
-        "INSERT INTO venues (id, name, tier, status, capacity_max, zip, town_id, canton_code, lat, lng, inquiry_email) VALUES ('{venue}', 'Testhaus', 'premium', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5, 'info@testhaus.example')",
+        "INSERT INTO venues (id, name, status, capacity_max, zip, town_id, canton_code, lat, lng, inquiry_email) VALUES ('{venue}', 'Testhaus', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5, 'info@testhaus.example')",
         "INSERT INTO inquiries (id, venue_id, venue_number, venue_name, venue_slug, recipient_email, locale, occasion, guest_count, message, first_name, last_name, email, fingerprint) VALUES ('{inquiry}', '{venue}', 1, 'Testhaus', 'testhaus', 'info@testhaus.example', 'de', 'wedding', 100, 'Hallo', 'Anna', 'Muster', 'anna@example.ch', repeat('a', 64))",
     ];
 

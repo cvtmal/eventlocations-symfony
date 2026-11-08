@@ -14,21 +14,21 @@ use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\Repository\TaskRepository;
+use App\Crm\TierResolver;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\PropertyValue;
 use App\Crm\ValueObject\RenewalWindow;
 use App\Crm\ValueObject\TaskDueDate;
 use App\Shared\Messenger\CommandHandlerInterface;
-use App\Venues\ValueObject\Tier;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
 /**
  * One inline edit under the row locks, company then deal (D11), the shape of ChangeCompanyPropertyHandler: the same
  * value is a no-op, an `expected` that differs from the stored one is StaleProperty, else the entity applies it.
- * Returns the stored value, the next `expected` of the island. A won deal's dates decide the company's stage, so its
- * edits flush and sync (N11). Its open renewal task follows `contract_end`: a new end moves the due date, no end
- * completes the task.
+ * Returns the stored value, the next `expected` of the island (a tier's is its code, F12). A won deal's dates decide
+ * the company's stage, so its edits flush and sync (N11). Its open renewal task follows `contract_end`: a new end moves
+ * the due date, no end completes the task.
  */
 final class ChangeDealPropertyHandler implements CommandHandlerInterface
 {
@@ -37,6 +37,7 @@ final class ChangeDealPropertyHandler implements CommandHandlerInterface
         private readonly DealRepository $deals,
         private readonly TaskRepository $tasks,
         private readonly OwnerResolver $owners,
+        private readonly TierResolver $tiers,
         private readonly CompanyStageSync $stageSync,
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
@@ -72,7 +73,7 @@ final class ChangeDealPropertyHandler implements CommandHandlerInterface
         match ($property) {
             DealProperty::Name => $deal->rename((string) $value),
             DealProperty::Venue => $deal->changeVenue(null === $value ? null : $this->companies->venueOf($companyId, $value)),
-            DealProperty::Tier => $deal->changeTier(null === $value ? null : Tier::tryFrom($value) ?? throw InvalidPropertyValue::unknown($property->value)),
+            DealProperty::Tier => $deal->changeTier($this->tiers->resolve($value)),
             DealProperty::Amount => $deal->changeAmount(null === $value ? null : (int) $value),
             DealProperty::ContractStart => $deal->changeContractStart($on),
             DealProperty::ContractEnd => $deal->changeContractEnd($on),
@@ -116,7 +117,7 @@ final class ChangeDealPropertyHandler implements CommandHandlerInterface
         return match ($property) {
             DealProperty::Name => $deal->name(),
             DealProperty::Venue => $deal->venue()?->id(),
-            DealProperty::Tier => $deal->tier()?->value,
+            DealProperty::Tier => $deal->tier()?->code(),
             DealProperty::Amount => null === $amount ? null : (string) $amount,
             DealProperty::ContractStart => $deal->contractStartOn()?->format('Y-m-d'),
             DealProperty::ContractEnd => $deal->contractEndOn()?->format('Y-m-d'),

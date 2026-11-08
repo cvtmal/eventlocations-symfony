@@ -6,21 +6,23 @@ namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\CompanyOrigin;
 use App\Crm\ValueObject\CompanyStage;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A company record page in one statement (D20): the company, its owner's name, its Eintrag (#56) and
- * its contacts as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
+ * A company record page in one statement (D20): the company, its owner's name, its Eintrag (#56), its
+ * contacts as JSON and the names of the tiers, which the timeline needs for a change of tier (F12), so a tier change
+ * costs the page no statement. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
  */
 final class CompanyRecordQuery
 {
     private const string SQL = <<<'SQL'
         SELECT c.id, c.name, c.legal_name, c.website, c.phone, c.email, c.address, c.stage, c.owner_id, c.notes,
                c.origin, c.created_at, u.display_name AS owner_name,
-               v.id AS venue_id, v.number AS venue_number, v.name AS venue_name, v.tier AS venue_tier,
+               v.id AS venue_id, v.number AS venue_number, v.name AS venue_name,
+               vt.code AS tier_code, vt.name AS tier_name, vt.rank_weight AS tier_rank_weight,
                tw.name AS venue_town, v.canton_code AS venue_canton,
                COALESCE((
                    SELECT json_agg(json_build_object('id', p.id, 'first_name', p.first_name, 'last_name', p.last_name,
@@ -29,6 +31,7 @@ final class CompanyRecordQuery
                    FROM crm_contacts p
                    WHERE p.company_id = c.id
                ), '[]') AS contacts,
+               COALESCE((SELECT jsonb_object_agg(t.code, t.name) FROM tiers t), '{}') AS tier_names,
                EXISTS (
                    SELECT 1 FROM crm_deals d JOIN crm_deal_stages s ON s.code = d.stage_code
                    WHERE d.company_id = c.id AND s.is_won
@@ -36,6 +39,7 @@ final class CompanyRecordQuery
         FROM crm_companies c
         LEFT JOIN admin_users u ON u.id = c.owner_id
         LEFT JOIN venues v ON v.id = c.venue_id
+        LEFT JOIN tiers vt ON vt.id = v.tier_id
         LEFT JOIN towns tw ON tw.id = v.town_id
         WHERE c.id = :id
         SQL;
@@ -73,7 +77,7 @@ final class CompanyRecordQuery
                 (string) $row['venue_id'],
                 (int) $row['venue_number'],
                 (string) $row['venue_name'],
-                Tier::from((string) $row['venue_tier']),
+                TierLabel::fromRow($row),
                 VenuePlace::of(self::text($row['venue_town']), self::text($row['venue_canton']), null),
             ),
             array_map(static fn (array $contact): CompanyRecordContact => new CompanyRecordContact(
@@ -85,6 +89,7 @@ final class CompanyRecordQuery
                 self::text($contact['phone']),
             ), self::list($row['contacts'])),
             (bool) $row['stage_derived'],
+            self::names($row['tier_names']),
         );
     }
 
@@ -115,6 +120,18 @@ final class CompanyRecordQuery
         \assert(\is_array($decoded) && array_is_list($decoded));
 
         /* @var list<array<string, mixed>> $decoded */
+        return $decoded;
+    }
+
+    /**
+     * @return array<string, string> tier code => name
+     */
+    private static function names(mixed $json): array
+    {
+        $decoded = json_decode((string) $json, true, flags: \JSON_THROW_ON_ERROR);
+        \assert(\is_array($decoded));
+
+        /* @var array<string, string> $decoded */
         return $decoded;
     }
 }

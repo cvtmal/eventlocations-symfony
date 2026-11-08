@@ -6,10 +6,11 @@ namespace App\Search\ReadModel;
 
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -27,6 +28,8 @@ final class SimilarVenuesQuery
         private readonly Connection $connection,
         private readonly TranslationJoin $translationJoin,
         private readonly EnabledLocale $enabledLocale,
+        private readonly EntitlementResolver $entitlements,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -51,7 +54,7 @@ final class SimilarVenuesQuery
                     SELECT id, canton_code, capacity_min, capacity_max, ll_to_earth(lat, lng) AS e
                     FROM venues WHERE id = :id
                 )
-                SELECT v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max,
+                SELECT v.id, v.number, v.name, v.capacity_min, v.capacity_max,
                     tw.name AS town_name, v.canton_code, t.region, t.slug, ph.photo, pt.alt
                 FROM me
                 JOIN venues v ON v.id <> me.id
@@ -75,12 +78,17 @@ final class SimilarVenuesQuery
             $published->types,
         );
 
-        return array_map(static function (array $row): SimilarVenue {
+        $ids = [];
+        foreach ($rows as $row) {
             \assert(\is_string($row['id']));
+            $ids[] = $row['id'];
+        }
+        $entitlements = $this->entitlements->forVenues($ids, $this->clock->now());
+
+        return array_map(static function (array $row) use ($entitlements): SimilarVenue {
             \assert(\is_int($row['number']));
             \assert(\is_string($row['slug']));
             \assert(\is_string($row['name']));
-            \assert(\is_string($row['tier']));
             \assert(null === $row['town_name'] || \is_string($row['town_name']));
             \assert(null === $row['canton_code'] || \is_string($row['canton_code']));
             \assert(null === $row['region'] || \is_string($row['region']));
@@ -90,7 +98,7 @@ final class SimilarVenuesQuery
             \assert(null === $row['alt'] || \is_string($row['alt']));
 
             $photo = null;
-            if (null !== $row['photo']) {
+            if (null !== $row['photo'] && $entitlements[$row['id']]->photosMax > 0) {
                 $decoded = json_decode($row['photo'], true, 512, \JSON_THROW_ON_ERROR);
                 \assert(\is_array($decoded));
                 $photo = CardPhoto::fromRow($row['number'], $decoded, $row['alt']);
@@ -101,7 +109,7 @@ final class SimilarVenuesQuery
                 $row['number'],
                 $row['slug'],
                 $row['name'],
-                Tier::from($row['tier']),
+                $entitlements[$row['id']]->isPromoted(),
                 VenuePlace::of($row['town_name'], $row['canton_code'], $row['region']),
                 $row['capacity_min'],
                 $row['capacity_max'],

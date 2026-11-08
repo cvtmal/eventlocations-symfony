@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Cms\ReadModel;
 
 use App\Media\ValueObject\Picture;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
 
@@ -20,7 +20,7 @@ final readonly class VenueHeader
         public int $number,
         public string $id,
         public string $name,
-        public Tier $tier,
+        public TierLabel $tier,
         public VenueStatus $status,
         public bool $isPublished,
         public VenuePlace $place,

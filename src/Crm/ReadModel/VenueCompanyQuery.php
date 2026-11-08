@@ -60,6 +60,18 @@ final class VenueCompanyQuery
     }
 
     /**
+     * Whether the company has an open task of exactly this title, for the check before a task command (P1): the Pro
+     * request of a manager who presses twice writes one task, and the second press leaves no audit row.
+     */
+    public function hasOpenTask(string $companyId, string $title): bool
+    {
+        return (bool) $this->connection->fetchOne(
+            'SELECT EXISTS (SELECT 1 FROM crm_tasks WHERE company_id = ? AND title = ? AND done_at IS NULL)',
+            [$companyId, $title],
+        );
+    }
+
+    /**
      * Null when no venue has the number.
      */
     public function forVenue(int $number): ?VenueCompany

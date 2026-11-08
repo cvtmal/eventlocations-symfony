@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues;
 
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\ORM\Events;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Command\Command;
@@ -32,6 +33,22 @@ final class ImportContentFailuresTest extends KernelTestCase
         self::assertSame([[$this->venueNumber('b-venue')], 1], [$this->purger()->venues, $this->purger()->listings], 'only the imported venue is purged');
     }
 
+    /**
+     * F12: a tier is data that staff set, not content. A folder that still names one fails alone and names the
+     * property, so nobody believes the import applied it.
+     */
+    public function test_a_tier_in_the_folder_fails_that_venue_only(): void
+    {
+        $this->content->venue('a-venue', ['tier' => 'pro'])->venue('b-venue');
+
+        self::assertSame(Command::FAILURE, $this->import());
+
+        self::assertStringContainsString('a-venue: /: Unknown properties: tier', $this->display());
+        self::assertFalse($this->venueRow('a-venue'));
+        self::assertSame(KnownTiers::FREE, $this->tierCode('b-venue'));
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT venues_failed FROM content_imports'));
+    }
+
     public function test_unknown_and_ambiguous_towns_fail_and_the_canton_disambiguates(): void
     {
         $this->content->venue('a-venue', ['address' => ['town' => 'Atlantis']]);
@@ -52,7 +69,7 @@ final class ImportContentFailuresTest extends KernelTestCase
     public function test_file_yaml_and_folder_name_problems_fail_only_their_venue(): void
     {
         $this->content->venue('a-venue')->file('a-venue', 'photos/unlisted.jpg', self::image(1));
-        $this->content->rawYaml('b-venue', "name: Kaputt\n  tier: basic\n");
+        $this->content->rawYaml('b-venue', "name: Kaputt\n  status: published\n");
         $this->content->venue('C_Venue');
         $this->content->venue('d-venue');
 

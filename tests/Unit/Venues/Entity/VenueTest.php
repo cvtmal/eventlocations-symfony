@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Venues\Entity;
 
 use App\Geo\Entity\Canton;
+use App\Tests\Support\Venues\TierObjects;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\TestCase;
 
@@ -56,7 +56,7 @@ final class VenueTest extends TestCase
     {
         $zurich = VenueObjects::canton('zh');
         $town = VenueObjects::town($zurich);
-        $venue = new Venue('Seehaus', Tier::Basic, VenueStatus::Published, 80, null, $town, $town->zip(), null, null, null, null, VenueObjects::canton('be'));
+        $venue = new Venue('Seehaus', TierObjects::free(), VenueStatus::Published, 80, null, $town, $town->zip(), null, null, null, null, VenueObjects::canton('be'));
 
         self::assertSame($zurich, $venue->canton());
 
@@ -216,8 +216,20 @@ final class VenueTest extends TestCase
         VenueObjects::venue()->relocate(null, null, null, null, null, coordinatesFromTown: true);
     }
 
+    public function test_a_venue_holds_the_tier_it_is_given_and_can_change_it(): void
+    {
+        $venue = VenueObjects::venue();
+        self::assertSame('pro', $venue->tier()->code());
+
+        $free = TierObjects::free();
+        $venue->changeTier($free);
+
+        self::assertSame($free, $venue->tier());
+        self::assertSame('Free', $venue->tier()->name());
+    }
+
     private function venueWithoutTown(?Canton $canton): Venue
     {
-        return new Venue('Seehaus', Tier::Basic, VenueStatus::Published, 80, null, null, null, null, null, null, null, $canton);
+        return new Venue('Seehaus', TierObjects::free(), VenueStatus::Published, 80, null, null, null, null, null, null, null, $canton);
     }
 }

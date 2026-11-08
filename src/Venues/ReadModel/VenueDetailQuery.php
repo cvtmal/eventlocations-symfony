@@ -8,18 +8,20 @@ use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\InstagramProfile;
 use App\Venues\ValueObject\OwnCatering;
+use App\Venues\ValueObject\PhotoBudget;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -58,6 +60,8 @@ final class VenueDetailQuery
         private readonly TranslationJoin $translationJoin,
         private readonly EnabledLocale $enabledLocale,
         private readonly TranslatorInterface $translator,
+        private readonly EntitlementResolver $entitlements,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -139,7 +143,7 @@ final class VenueDetailQuery
 
         $row = $this->connection->fetchAssociative(
             <<<SQL
-                SELECT v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max, v.street, v.zip,
+                SELECT v.id, v.number, v.name, v.capacity_min, v.capacity_max, v.street, v.zip,
                     tw.name AS town_name, v.canton_code, v.lat, v.lng,
                     v.distance_station_km, v.station_name, v.distance_highway_km, v.highway_name,
                     v.distance_airport_km, v.airport_name,
@@ -172,7 +176,6 @@ final class VenueDetailQuery
         \assert(\is_string($row['id']));
         \assert(\is_int($row['number']));
         \assert(\is_string($row['name']));
-        \assert(\is_string($row['tier']));
         \assert(\is_string($row['slug']));
         \assert(\is_string($row['summary']));
         \assert(null === $row['zip'] || \is_string($row['zip']));
@@ -188,15 +191,31 @@ final class VenueDetailQuery
         \assert(\is_string($row['documents']));
 
         $venueId = $row['id'];
+        $entitlements = $this->entitlements->forVenue($venueId, $this->clock->now());
         [$mainBuilding, $mainSetting, $factGroups, $termsByGroup] = $this->terms(self::decode($row['terms']));
-        $rooms = $this->rooms($venueId, $locale);
-        [$venuePhotos, $roomPhotos] = $this->photos($venueId, $row['number'], $row['name'], $rooms, $locale, $everyPhoto);
+        // The tier's limits (F12), one rule for the page and the sitemap (PhotoBudget): the first N by position are
+        // public and the rest stays stored and hidden. A hidden room takes its photo with it.
+        $allRooms = $this->rooms($venueId, $locale);
+        [$galleryPhotos, $roomFirstPhotos] = $this->photos($venueId, $row['number'], $row['name'], $allRooms, $locale, $everyPhoto);
+        [$venuePhotos, $roomPhotos] = PhotoBudget::cut(
+            $galleryPhotos,
+            array_map(static fn (DetailRoom $room): string => $room->id, $allRooms),
+            $roomFirstPhotos,
+            $entitlements->photosMax,
+            $entitlements->roomsMax,
+        );
+        $rooms = array_map(
+            static fn (DetailRoom $room): DetailRoom => isset($roomPhotos[$room->id])
+                ? new DetailRoom($room->id, $room->name, $room->description, $room->capacityMin, $room->capacityMax, $room->areaM2, $room->heightM, $room->floorMaterial, $room->seatings, $roomPhotos[$room->id])
+                : $room,
+            \array_slice($allRooms, 0, $entitlements->roomsMax),
+        );
 
         return new VenueDetail(
             $row['id'],
             $row['number'],
             $row['name'],
-            Tier::from($row['tier']),
+            $entitlements->isPromoted(),
             $row['slug'],
             $row['summary'],
             self::nullableString($row['description']),
@@ -215,17 +234,12 @@ final class VenueDetailQuery
             $row['daylight'],
             self::nullableString($row['parking_text']),
             self::distances($row),
-            $row['has_phone'],
+            $row['has_phone'] && $entitlements->contactVisible,
             self::nullableString($row['inquiry_email']),
-            self::nullableString($row['website']),
+            $entitlements->contactVisible ? self::nullableString($row['website']) : null,
             self::nullableString($row['contact_person']),
-            self::documents(self::decode($row['documents'])),
-            array_map(
-                static fn (DetailRoom $room): DetailRoom => isset($roomPhotos[$room->id])
-                    ? new DetailRoom($room->id, $room->name, $room->description, $room->capacityMin, $room->capacityMax, $room->areaM2, $room->heightM, $room->floorMaterial, $room->seatings, $roomPhotos[$room->id])
-                    : $room,
-                $rooms,
-            ),
+            \array_slice(self::documents(self::decode($row['documents'])), 0, $entitlements->documentsMax),
+            $rooms,
             $venuePhotos,
             self::event($row, $termsByGroup),
             InstagramProfile::fromInput(self::nullableString($row['instagram']))?->url(),
@@ -236,11 +250,12 @@ final class VenueDetailQuery
     }
 
     /**
-     * The E.164 phone number of a published venue, for the phone reveal only. One query.
+     * The E.164 phone number of a published venue, for the phone reveal only; null when the venue's tier hides contact
+     * data (F12), so the reveal route answers like an unknown venue. Two queries.
      */
     public function phone(string $venueId): ?string
     {
-        if (!Uuid::isValid($venueId)) {
+        if (!Uuid::isValid($venueId) || !$this->entitlements->forVenue($venueId, $this->clock->now())->contactVisible) {
             return null;
         }
         $published = self::PUBLISHED;

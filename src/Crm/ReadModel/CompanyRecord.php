@@ -11,12 +11,14 @@ use App\Crm\ValueObject\Initials;
 /**
  * A company record page (CRM-1, CRM-3): the properties in canonical form (ids for the owner, codes for
  * the stage), the owner's name for display, and the Eintrag and Kontakte cards. `stageDerived` says the
- * company has a won deal, so its stage comes from the deals (#28's D9).
+ * company has a won deal, so its stage comes from the deals (#28's D9). `tierNames` maps every tier's code to its name
+ * (F12), for the timeline's sentence about a change of tier.
  */
 final readonly class CompanyRecord
 {
     /**
      * @param list<CompanyRecordContact> $contacts
+     * @param array<string, string>      $tierNames
      */
     public function __construct(
         public string $id,
@@ -35,6 +37,7 @@ final readonly class CompanyRecord
         public ?CompanyRecordVenue $venue,
         public array $contacts,
         public bool $stageDerived,
+        public array $tierNames = [],
     ) {
     }
 

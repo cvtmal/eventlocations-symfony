@@ -13,6 +13,7 @@ use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\Positions;
 use App\Venues\PublishedMedia;
+use App\Venues\TierLimits;
 use App\Venues\VenueEditing;
 use App\Venues\VenueRows;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,6 +38,7 @@ final class AddVenueDocumentHandler implements CommandHandlerInterface
         private readonly DocumentTitles $titles,
         private readonly MediaPublisher $publisher,
         private readonly EntityManagerInterface $em,
+        private readonly TierLimits $limits,
     ) {
     }
 
@@ -60,6 +62,7 @@ final class AddVenueDocumentHandler implements CommandHandlerInterface
         if (null !== $this->rows->documentWithPath($venue, $path)) {
             throw VenueRuleViolation::documentAlreadyUploaded();
         }
+        $this->limits->assertDocumentFits($venue);
 
         $this->documents->store($command->sourceFile, $path);
         $document = $this->documents->add($venue, $this->positions->nextDocument($venue), $path, $size);

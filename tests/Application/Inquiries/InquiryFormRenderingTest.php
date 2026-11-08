@@ -7,6 +7,7 @@ namespace App\Tests\Application\Inquiries;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Inquiries\InquiryFormFields;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -113,7 +114,8 @@ final class InquiryFormRenderingTest extends WebTestCase
 
         $this->page(self::PAGE);
 
-        self::assertCount(5, $holder->getData()['default']);
+        // The slug, the venue (row, rooms, photos and the plan's limits, F12) and the similar venues; the form adds none.
+        self::assertCount(6, $holder->getData()['default']);
     }
 
     public function test_a_venue_without_an_address_has_an_empty_section_and_no_primary_link(): void
@@ -138,7 +140,8 @@ final class InquiryFormRenderingTest extends WebTestCase
 
     public function test_the_primary_link_goes_to_kontakt_without_an_address(): void
     {
-        $venue = DetailVenues::minimal();
+        // On Pro: Free hides the phone, and then there is no Kontakt section to link to (F12).
+        $venue = DetailVenues::minimal(tier: KnownTiers::PRO);
         $venue->changeContact('+41441234567', null, null, null);
         $this->em->flush();
 

@@ -12,6 +12,7 @@ use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\Positions;
 use App\Venues\RoomFields;
 use App\Venues\RoomSummary;
+use App\Venues\TierLimits;
 use App\Venues\VenueEditing;
 use App\Venues\VenueRows;
 use Doctrine\ORM\EntityManagerInterface;
@@ -29,6 +30,7 @@ final class AddRoomHandler implements CommandHandlerInterface
         private readonly Positions $positions,
         private readonly RoomFields $fields,
         private readonly EntityManagerInterface $em,
+        private readonly TierLimits $limits,
     ) {
     }
 
@@ -41,6 +43,7 @@ final class AddRoomHandler implements CommandHandlerInterface
     public function __invoke(AddRoom $command): string
     {
         $venue = $this->editing->lock($command->venueNumber);
+        $this->limits->assertRoomFits($venue);
         $room = new Room($venue, $this->positions->nextRoom($venue));
         $this->fields->write(
             $room,

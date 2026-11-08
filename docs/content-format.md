@@ -38,15 +38,18 @@ across imports and **never changes**. It is not the URL: the URL slug comes from
 Room keys (`rooms[].key`) follow the same rules, are unique within the venue and never
 change either: they keep a room's photos attached to it when rooms are reordered.
 
+## Tier
+
+A folder carries no tier. The import creates a venue on the Free tier and never changes the tier of an existing one; staff and the CRM set it (`ChangeVenueTier`, F12).
+
 ## Example
 
-Every field, with fictional values. Only `name`, `tier`, `capacity.max` and
+Every field, with fictional values. Only `name`, `capacity.max` and
 `translations.de.summary` are required. A venue may have no address at all.
 
 ```yaml
 # yaml-language-server: $schema=../../../docs/content-format.schema.json
 name: Schloss Beispiel                # ≤ 150 characters, not translated; the URL slug comes from it
-tier: premium                         # beliebte_location | empfehlung | top_premium | premium | basic
 status: published                     # optional: published (default) or unpublished
 price_level: medium                   # optional: moderate | medium | exclusive
 capacity:
@@ -136,7 +139,6 @@ documents:                            # in display order; files in documents/
 | Field | Type and limits | Notes |
 |---|---|---|
 | `name` | text ≤ 150, required | Proper noun, not translated. Changing it changes the URL slug; the old slug redirects. |
-| `tier` | code, required | `beliebte_location`, `empfehlung`, `top_premium`, `premium`, `basic` (S6: sets the listing order). |
 | `status` | code | `published` (default) or `unpublished` (hidden, kept). |
 | `price_level` | code | `moderate`, `medium`, `exclusive`. |
 | `capacity.min`, `capacity.max` | 1–50000 | `max` required; `min` ≤ `max`. |
@@ -284,7 +286,7 @@ first line comment; the path is relative to the `venue.yaml`:
 # yaml-language-server: $schema=<path to the checkout>/docs/content-format.schema.json
 ```
 
-The editor then completes codes (`tier`, `terms.building`, …) and shows each field's limits.
+The editor then completes codes (`status`, `terms.building`, …) and shows each field's limits.
 
 ## What is not in the format
 

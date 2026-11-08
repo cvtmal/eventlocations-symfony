@@ -13,10 +13,10 @@ use App\Portal\Entity\PortalUser;
 use App\Tests\Application\Cms\SendsVenueMediaRequests;
 use App\Tests\Support\Media\TestImages;
 use App\Tests\Support\Portal\PortalSession;
-use App\Venues\Command\AddVenuePhoto;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
@@ -38,6 +38,9 @@ final class WizardPhotosTest extends WebTestCase
     use SendsVenueMediaRequests;
 
     private const string RATE_LIMITED = 'Du hast in der letzten Stunde sehr viele Fotos hochgeladen. Bitte versuch es später noch einmal.';
+
+    /** `photos_max` of the seeded Free plan. */
+    private const int FREE_PHOTOS = 6;
 
     protected function tearDown(): void
     {
@@ -156,18 +159,29 @@ final class WizardPhotosTest extends WebTestCase
         self::assertSame(0, $this->photoCount($venue));
     }
 
-    public function test_the_thirty_first_photo_is_refused(): void
+    public function test_the_seventh_photo_of_a_free_location_is_refused_with_the_plan_in_the_message(): void
     {
         $venue = $this->location($this->logInAsManager());
-        for ($position = 1; $position <= AddVenuePhoto::MAX_PHOTOS; ++$position) {
-            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
-        }
+        $this->fillGallery($venue, self::FREE_PHOTOS);
 
         $crawler = $this->uploadThroughForm($venue, $this->photoFile());
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
-        self::assertNotSame('', $crawler->filter('#wizard_photo_file_error')->text());
-        self::assertSame(AddVenuePhoto::MAX_PHOTOS, $this->photoCount($venue));
+        $message = $crawler->filter('#wizard_photo_file_error')->text();
+        self::assertStringContainsString('Free', $message);
+        self::assertStringContainsString('6 Fotos', $message);
+        self::assertSame(self::FREE_PHOTOS, $this->photoCount($venue));
+    }
+
+    public function test_a_pro_location_takes_the_seventh_photo(): void
+    {
+        $venue = $this->location($this->logInAsManager(), KnownTiers::PRO);
+        $this->fillGallery($venue, self::FREE_PHOTOS);
+
+        $this->uploadThroughForm($venue, $this->photoFile());
+
+        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
+        self::assertSame(self::FREE_PHOTOS + 1, $this->photoCount($venue));
     }
 
     public function test_the_upload_limiter_refuses_with_a_form_error(): void
@@ -194,13 +208,20 @@ final class WizardPhotosTest extends WebTestCase
         self::assertSame('/konto/locations/'.$venue->number().'/einrichten/kontakt', $this->client->getRequest()->getPathInfo());
     }
 
-    private function location(PortalUser $manager): Venue
+    private function location(PortalUser $manager, string $tier = KnownTiers::FREE): Venue
     {
-        $venue = VenueFactory::new()->withoutLocation()->create(['status' => VenueStatus::Unpublished]);
+        $venue = VenueFactory::new()->withoutLocation()->create(['status' => VenueStatus::Unpublished, 'tier' => $tier]);
         SubmissionFactory::createOne(['venue' => $venue]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $venue]);
 
         return $venue;
+    }
+
+    private function fillGallery(Venue $venue, int $photos): void
+    {
+        for ($position = 1; $position <= $photos; ++$position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
     }
 
     private function uploadThroughForm(Venue $venue, UploadedFile $file): Crawler

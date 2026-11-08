@@ -16,7 +16,7 @@ use App\Factory\TaskFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -39,7 +39,7 @@ final class RenewDealTest extends KernelTestCase
             'name' => 'Premium 2026',
             'company' => $company,
             'venue' => $venue,
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'amountRappen' => 240000,
             'owner' => $owner,
             'contractStartOn' => new \DateTimeImmutable('2026-01-01'),
@@ -53,7 +53,7 @@ final class RenewDealTest extends KernelTestCase
             'name' => 'Verlängerung 2027',
             'company_id' => $company->id(),
             'venue_id' => $venue->id(),
-            'tier' => 'premium',
+            'tier_id' => (string) $this->connection->fetchOne("SELECT id FROM tiers WHERE code = 'pro'"),
             'amount_rappen' => 240000,
             'owner_id' => $owner->id(),
             'stage_code' => 'new',
@@ -64,7 +64,7 @@ final class RenewDealTest extends KernelTestCase
             'closed_at' => null,
             'lost_reason' => null,
         ], $this->connection->fetchAssociative(
-            'SELECT name, company_id, venue_id, tier, amount_rappen, owner_id, stage_code, contract_start_on, contract_end_on, expected_close_on, renewed_from_id, closed_at, lost_reason FROM crm_deals WHERE id = ?',
+            'SELECT name, company_id, venue_id, tier_id, amount_rappen, owner_id, stage_code, contract_start_on, contract_end_on, expected_close_on, renewed_from_id, closed_at, lost_reason FROM crm_deals WHERE id = ?',
             [$id],
         ));
         self::assertSame([['command' => RenewDeal::class, 'changes' => ['renewed_from' => $old->id()]]], $this->auditRows('deal', $id));

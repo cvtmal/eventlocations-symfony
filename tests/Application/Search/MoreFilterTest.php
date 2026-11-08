@@ -326,12 +326,12 @@ final class MoreFilterTest extends WebTestCase
         self::assertSame([], $response->headers->getCookies());
     }
 
-    public function test_the_listing_page_runs_seven_queries(): void
+    public function test_the_listing_page_runs_eight_queries(): void
     {
         $this->venue();
 
-        // Cards, photos, count, known terms, landing pages, filter flags, filter terms.
-        self::assertSame(7, $this->queriesOf('/eventlokale'));
+        // Cards, photos, the plans' limits (F12), count, known terms, landing pages, filter flags, filter terms.
+        self::assertSame(8, $this->queriesOf('/eventlokale'));
     }
 
     public function test_a_cold_content_block_snapshot_adds_its_fill(): void
@@ -340,37 +340,37 @@ final class MoreFilterTest extends WebTestCase
         $holder = self::getContainer()->get('doctrine.debug_data_holder');
         self::assertInstanceOf(BacktraceDebugDataHolder::class, $holder);
 
-        // #26: on an empty pool the first listing or landing hit adds four statements to the seven: begin, try-lock, the SELECT, commit.
+        // #26: on an empty pool the first listing or landing hit adds four statements to the eight: begin, try-lock, the SELECT, commit.
         $holder->reset();
         $this->get('/eventlokale');
-        self::assertCount(11, $holder->getData()['default'] ?? []);
+        self::assertCount(12, $holder->getData()['default'] ?? []);
 
         $holder->reset();
         $this->get('/eventlokale');
-        self::assertCount(7, $holder->getData()['default'] ?? [], 'The next hit reads the stored snapshot.');
+        self::assertCount(8, $holder->getData()['default'] ?? [], 'The next hit reads the stored snapshot.');
     }
 
-    public function test_a_canton_page_runs_seven_queries(): void
+    public function test_a_canton_page_runs_eight_queries(): void
     {
         $this->inCanton(Canton::ZH, 5);
 
-        // The same seven: the landing pages' one statement also resolves the route.
-        self::assertSame(7, $this->queriesOf('/eventlokale/zuerich'));
+        // The same eight: the landing pages' one statement also resolves the route.
+        self::assertSame(8, $this->queriesOf('/eventlokale/zuerich'));
     }
 
-    public function test_a_building_page_runs_seven_queries(): void
+    public function test_a_building_page_runs_eight_queries(): void
     {
         $this->withBuilding($this->inCanton(Canton::ZH, 5), 'castle');
 
-        self::assertSame(7, $this->queriesOf('/eventlokale/schloss'));
+        self::assertSame(8, $this->queriesOf('/eventlokale/schloss'));
     }
 
-    public function test_a_town_page_runs_eight_queries(): void
+    public function test_a_town_page_runs_nine_queries(): void
     {
         $this->inTown('Stäfa', 5);
 
-        // The seven, plus selected_place() for the town's `place` (#10's chip and form).
-        self::assertSame(8, $this->queriesOf('/eventlokale/zuerich/staefa'));
+        // The eight, plus selected_place() for the town's `place` (#10's chip and form).
+        self::assertSame(9, $this->queriesOf('/eventlokale/zuerich/staefa'));
     }
 
     private function assertOnlyTheNameField(Crawler $crawler): void

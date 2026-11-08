@@ -147,7 +147,7 @@ final class LocationCardsTest extends WebTestCase
     {
         yield 'name' => [LocationCard::Texts, self::TEXTS_CHANGE, ['name' => 'Neuer Name']];
         yield 'slug' => [LocationCard::Texts, self::TEXTS_CHANGE, ['slug' => 'neuer-slug']];
-        yield 'tier' => [LocationCard::Texts, self::TEXTS_CHANGE, ['tier' => 'premium']];
+        yield 'tier' => [LocationCard::Texts, self::TEXTS_CHANGE, ['tier' => 'pro']];
         yield 'the slug of a language' => [LocationCard::Texts, self::TEXTS_CHANGE, ['texts' => ['de' => ['slug' => 'neuer-slug']]]];
         yield 'minimum' => [LocationCard::Capacity, self::CAPACITY_CHANGE, ['capacityMin' => '10']];
         yield 'the party rule of the old wedding card' => [LocationCard::Event, self::EVENT_CHANGE, ['party' => 'yes']];
@@ -256,7 +256,7 @@ final class LocationCardsTest extends WebTestCase
     {
         $row = $this->connection->fetchAssociative(
             <<<'SQL'
-                SELECT v.name, v.tier, v.capacity_min, v.capacity_max, v.cms_edited_at, t.slug, t.summary
+                SELECT v.name, v.tier_id, v.capacity_min, v.capacity_max, v.cms_edited_at, t.slug, t.summary
                 FROM venues v
                 JOIN venue_translations t ON t.venue_id = v.id AND t.locale = 'de'
                 WHERE v.id = ?

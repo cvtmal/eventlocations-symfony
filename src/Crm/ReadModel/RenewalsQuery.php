@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\RenewalWindow;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 use Psr\Clock\ClockInterface;
@@ -19,6 +19,7 @@ final class RenewalsQuery
     private const string SCOPE = <<<'SQL'
         FROM crm_deals d
         JOIN crm_deal_stages s ON s.code = d.stage_code
+        LEFT JOIN tiers dt ON dt.id = d.tier_id
         WHERE s.is_won
           AND d.contract_end_on BETWEEN :first AND :last
           AND NOT EXISTS (SELECT 1 FROM crm_deals r WHERE r.renewed_from_id = d.id)
@@ -36,7 +37,7 @@ final class RenewalsQuery
     public function upcoming(int $limit): RenewalPreview
     {
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT d.id, d.tier, d.contract_end_on, d.amount_rappen,'
+            'SELECT d.id, dt.code AS tier_code, dt.name AS tier_name, dt.rank_weight AS tier_rank_weight, d.contract_end_on, d.amount_rappen,'
             .' (SELECT c.name FROM crm_companies c WHERE c.id = d.company_id) AS company_name, COUNT(*) OVER () AS total '
             .self::SCOPE
             .' ORDER BY d.contract_end_on, d.id LIMIT :limit',
@@ -81,7 +82,7 @@ final class RenewalsQuery
         return new RenewalRow(
             (string) $row['id'],
             (string) $row['company_name'],
-            null === $row['tier'] ? null : Tier::from((string) $row['tier']),
+            TierLabel::tryFromRow($row),
             new \DateTimeImmutable((string) $row['contract_end_on']),
             null === $row['amount_rappen'] ? null : (int) $row['amount_rappen'],
         );

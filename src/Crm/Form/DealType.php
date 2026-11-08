@@ -6,11 +6,9 @@ namespace App\Crm\Form;
 
 use App\Crm\ReadModel\DealFormCompany;
 use App\Crm\ValueObject\TaskDueDate;
-use App\Venues\ValueObject\Tier;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
-use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -18,7 +16,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * The second step of "Deal erfassen" (N5). A new deal takes its Location's Eintrag (#56 D7), so the form has no
- * Eintrag field; `owners` are the selectable staff accounts. A new deal always starts at `new`, so there is no stage.
+ * Eintrag field; `owners` are the selectable staff accounts and `tiers` the tiers by name and code
+ * (`TierChoices::choices()`). A new deal always starts at `new`, so there is no stage.
  */
 final class DealType extends AbstractType
 {
@@ -26,7 +25,8 @@ final class DealType extends AbstractType
     {
         $builder
             ->add('name', TextType::class, ['label' => 'deal.property.name', 'constraints' => FieldRules::of(PropertyConstraints::dealName()), 'help' => 'create.deal.name_help', 'attr' => ['data-counter-max' => 150]])
-            ->add('tier', EnumType::class, ['class' => Tier::class, 'label' => 'deal.property.tier', 'required' => false, 'placeholder' => 'create.deal.tier_none'])
+            // A tier's name is data, not a catalogue key, so the labels stay untranslated.
+            ->add('tier', ChoiceType::class, ['label' => 'deal.property.tier', 'required' => false, 'placeholder' => 'create.deal.tier_none', 'choices' => $options['tiers'], 'choice_translation_domain' => false])
             ->add('amount', ChfTextType::class, ['label' => 'deal.property.amount', 'required' => false])
             ->add('contractStart', DateType::class, self::day('deal.property.contract_start'))
             ->add('contractEnd', DateType::class, self::day('deal.property.contract_end'))
@@ -37,9 +37,10 @@ final class DealType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults(['data_class' => DealData::class, 'translation_domain' => 'crm']);
-        $resolver->setRequired(['company', 'owners']);
+        $resolver->setRequired(['company', 'owners', 'tiers']);
         $resolver->setAllowedTypes('company', DealFormCompany::class);
         $resolver->setAllowedTypes('owners', 'array');
+        $resolver->setAllowedTypes('tiers', 'array');
     }
 
     /**

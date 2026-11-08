@@ -13,6 +13,7 @@ use App\Search\ReadModel\SimilarVenuesQuery;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Search\ListingQueryTest;
+use App\Venues\EntitlementResolver;
 use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ReadModel\VenueSitemapQuery;
 use Doctrine\DBAL\Connection;
@@ -40,7 +41,7 @@ final class PublicPhotos
     {
         $locale = ListingQueryTest::enabledLocale();
         $translation = new TranslationJoin($locale);
-        $listing = new ListingQuery($connection, $translation, $locale, new MockClock('2026-10-30 10:00:00', 'UTC'));
+        $listing = new ListingQuery($connection, $translation, $locale, new MockClock('2026-10-30 10:00:00', 'UTC'), new EntitlementResolver($connection));
 
         $cards = array_values(array_filter(
             $listing->results(SearchCriteria::none(), 'de')->cards,
@@ -48,7 +49,7 @@ final class PublicPhotos
         ));
         $saved = $listing->cardsByNumbers([$venueNumber], 'de', self::ALL);
 
-        $detail = new VenueDetailQuery($connection, $translation, $locale, $translator)->detail($venueNumber, 'de')
+        $detail = new VenueDetailQuery($connection, $translation, $locale, $translator, new EntitlementResolver($connection), new MockClock('2026-10-30 10:00:00', 'UTC'))->detail($venueNumber, 'de')
             ?? throw new \LogicException(\sprintf('Venue %d has no public detail page.', $venueNumber));
         $rooms = [];
         foreach ($detail->rooms as $room) {
@@ -86,7 +87,7 @@ final class PublicPhotos
             return [];
         }
 
-        foreach (new SimilarVenuesQuery($connection, $translation, $locale)->forVenue($neighbourId, 'de') as $similar) {
+        foreach (new SimilarVenuesQuery($connection, $translation, $locale, new EntitlementResolver($connection), new MockClock('2026-10-30 10:00:00', 'UTC'))->forVenue($neighbourId, 'de') as $similar) {
             if ($similar->number === $venueNumber && null !== $similar->photo) {
                 return [$similar->photo->photoId];
             }
@@ -101,7 +102,7 @@ final class PublicPhotos
     private static function sitemap(Connection $connection, EnabledLocale $locale, int $venueNumber): array
     {
         $ids = [];
-        foreach (new VenueSitemapQuery($connection, $locale)->page(1) as $venue) {
+        foreach (new VenueSitemapQuery($connection, $locale, new EntitlementResolver($connection), new MockClock('2026-10-30 10:00:00', 'UTC'))->page(1) as $venue) {
             foreach ($venue->imageUrls as $url) {
                 if (1 === preg_match('#^/media/'.$venueNumber.'/([0-9a-f-]{36})-\d+\.jpg$#', $url, $match)) {
                     $ids[] = $match[1];

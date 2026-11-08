@@ -70,9 +70,30 @@ final class VenueRuleViolation extends DomainException
         return new self('venue.error.still_published');
     }
 
-    public static function tooManyPhotos(): self
+    /**
+     * The plan's photo limit is reached (F12). Gallery and room photos count together.
+     */
+    public static function tooManyPhotos(int $max, string $tier): self
     {
-        return new self('venue.error.too_many_photos', 'file');
+        return new self('venue.error.too_many_photos', 'file', ['max' => $max, 'tier' => $tier]);
+    }
+
+    public static function tooManyRooms(int $max, string $tier): self
+    {
+        return new self('rooms.error.too_many', null, ['max' => $max, 'tier' => $tier]);
+    }
+
+    public static function tooManyDocuments(int $max, string $tier): self
+    {
+        return new self('documents.error.too_many', 'file', ['max' => $max, 'tier' => $tier]);
+    }
+
+    /**
+     * @param string $field the form child that carries the event types
+     */
+    public static function tooManyEventTypes(int $max, string $tier, string $field): self
+    {
+        return new self('venue.error.too_many_event_types', $field, ['max' => $max, 'tier' => $tier]);
     }
 
     /**
@@ -125,7 +146,10 @@ final class VenueRuleViolation extends DomainException
             self::coordinatesRequired(),
             self::notPublishable(['summary']),
             self::stillPublished(),
-            self::tooManyPhotos(),
+            self::tooManyPhotos(6, 'Free'),
+            self::tooManyRooms(1, 'Free'),
+            self::tooManyDocuments(1, 'Free'),
+            self::tooManyEventTypes(3, 'Free', 'suitableFor'),
             self::documentAlreadyUploaded(),
             self::documentTitleRequired('de'),
             self::roomNameRequired('de'),

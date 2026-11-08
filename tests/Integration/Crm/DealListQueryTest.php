@@ -16,7 +16,8 @@ use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
+use App\Venues\ValueObject\TierLabel;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -35,7 +36,7 @@ final class DealListQueryTest extends KernelTestCase
         $deal = DealFactory::new()->inStage('offer')->create([
             'name' => 'Premium 2027',
             'company' => $company,
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'amountRappen' => 9_999_999_999,
             'expectedCloseOn' => new \DateTimeImmutable('2026-11-15'),
             'owner' => $owner,
@@ -45,8 +46,20 @@ final class DealListQueryTest extends KernelTestCase
 
         self::assertSame(1, $page->total);
         $row = $page->rows[0];
-        self::assertSame([$deal->id(), 'Premium 2027', $company->id(), 'Seeblick Events', 'offer', Tier::Premium, 9_999_999_999, 'Andrea Keller'], [$row->id, $row->name, $row->companyId, $row->companyName, $row->stage, $row->tier, $row->amountRappen, $row->ownerName]);
+        self::assertEquals([$deal->id(), 'Premium 2027', $company->id(), 'Seeblick Events', 'offer', new TierLabel('pro', 'Pro', true), 9_999_999_999, 'Andrea Keller'], [$row->id, $row->name, $row->companyId, $row->companyName, $row->stage, $row->tier, $row->amountRappen, $row->ownerName]);
         self::assertSame('2026-11-15', $row->expectedCloseOn?->format('Y-m-d'));
+    }
+
+    public function test_a_deal_without_a_tier_has_none_and_a_free_one_is_not_promoted(): void
+    {
+        DealFactory::createOne(['name' => 'Ohne']);
+        DealFactory::createOne(['name' => 'Gratis', 'tier' => KnownTiers::FREE]);
+
+        $rows = $this->query()->search(new DealFilter(), DealSort::Name, SortDirection::Asc, 1)->rows;
+
+        self::assertSame(['Gratis', 'Ohne'], array_map(static fn ($row): string => $row->name, $rows));
+        self::assertEquals(new TierLabel('free', 'Free', false), $rows[0]->tier);
+        self::assertNull($rows[1]->tier);
     }
 
     public function test_the_month_is_the_month_of_the_expected_close(): void
@@ -69,6 +82,7 @@ final class DealListQueryTest extends KernelTestCase
         DealFactory::new()->inStage('lost', reason: LostReason::Budget)->create([
             'company' => $company,
             'venue' => $venue,
+            'tier' => KnownTiers::PRO,
             'contractStartOn' => new \DateTimeImmutable('2027-01-01'),
             'contractEndOn' => new \DateTimeImmutable('2027-12-31'),
         ]);
@@ -78,6 +92,7 @@ final class DealListQueryTest extends KernelTestCase
         self::assertCount(1, $rows);
         self::assertSame('Schloss Seeblick', $rows[0]->venueName);
         self::assertSame(LostReason::Budget, $rows[0]->lostReason);
+        self::assertSame('Pro', $rows[0]->tier?->name);
         self::assertSame('2027-12-31', $rows[0]->contractEndOn?->format('Y-m-d'));
     }
 

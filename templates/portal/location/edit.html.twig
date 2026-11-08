@@ -1,7 +1,7 @@
 {#
     The manager's editor (POR-8): one card per `Portal\ValueObject\LocationCard`, each its own form. Context from
     `LocationEditController`: venue (VenueHeader), edit (VenueEdit), forms (card value → FormView), bound_card, stale,
-    cards (the LocationCard cases), locales list<{code, label}>, offline_form.
+    cards (the LocationCard cases), locales list<{code, label}>, offline_form, plan (LocationPlan, F12).
 #}
 {% extends 'portal/location/_layout.html.twig' %}
 
@@ -18,4 +18,8 @@
             }, with_context = false) }}
         {% endfor %}
     </div>
+{% endblock %}
+
+{% block aside %}
+    {{ include('portal/location/_plan.html.twig', {plan: plan, number: venue.number}, with_context = false) }}
 {% endblock %}

@@ -17,6 +17,7 @@ use App\Tests\Support\Venues\DetailVenues;
 use App\Tests\Support\Venues\PublicPhotos;
 use App\Venues\Command\GrantPhotoRights;
 use App\Venues\Command\RemoveVenuePhoto;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\ReadModel\VenueDetail;
@@ -24,8 +25,10 @@ use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ReadModel\VenueSitemapQuery;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PhotoGrant;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -191,7 +194,7 @@ final class RevokePhotoRightsTest extends KernelTestCase
         $first = $this->addPhoto($number, $this->upload(), $roomId, grant: $this->staffGrant())->photoId;
         $second = $this->addPhoto($number, $this->upload(), $roomId, grant: $this->staffGrant())->photoId;
         self::assertSame([$first], PublicPhotos::of($this->connection, $this->translator(), $number)['rooms'], 'the room shows its first photo');
-        self::assertSame([$first, $second], PublicPhotos::of($this->connection, $this->translator(), $number)['sitemap'], 'and the sitemap lists both room photos');
+        self::assertSame([$first], PublicPhotos::of($this->connection, $this->translator(), $number)['sitemap'], 'and the sitemap lists what the page shows (F12 PhotoBudget): the room\'s first photo');
         $this->purger()->venues = [];
         $this->purger()->listings = 0;
 
@@ -292,7 +295,7 @@ final class RevokePhotoRightsTest extends KernelTestCase
         foreach (['venues' => 'id', 'venue_translations' => 'venue_id', 'venue_photos' => 'venue_id'] as $table => $column) {
             $this->connection->executeStatement(\sprintf("UPDATE %s SET updated_at = '2026-01-01 10:00:00+00' WHERE %s = ?", $table, $column), [$venue->id()]);
         }
-        $sitemap = new VenueSitemapQuery($this->connection, ListingQueryTest::enabledLocale());
+        $sitemap = new VenueSitemapQuery($this->connection, ListingQueryTest::enabledLocale(), new EntitlementResolver($this->connection), new MockClock('2026-10-30 10:00:00', 'UTC'));
         self::assertSame('2026-01-01T10:00:00+00:00', $sitemap->page(1)[0]->lastmod->format('c'));
 
         $this->dispatch(new RemoveVenuePhoto($number, $photo, Grantor::staff(self::ADMIN)));
@@ -332,7 +335,7 @@ final class RevokePhotoRightsTest extends KernelTestCase
     private function preview(int $number): VenueDetail
     {
         $locale = ListingQueryTest::enabledLocale();
-        $detail = new VenueDetailQuery($this->connection, new TranslationJoin($locale), $locale, $this->translator())->detail($number, 'de', includeUnpublished: true);
+        $detail = new VenueDetailQuery($this->connection, new TranslationJoin($locale), $locale, $this->translator(), new EntitlementResolver($this->connection), new MockClock('2026-10-30 10:00:00', 'UTC'))->detail($number, 'de', includeUnpublished: true);
         self::assertNotNull($detail);
 
         return $detail;
@@ -358,7 +361,7 @@ final class RevokePhotoRightsTest extends KernelTestCase
 
     private function venue(string $name, string $slug): Venue
     {
-        $venue = VenueFactory::createOne(['name' => $name, 'town' => DetailVenues::town('Zürich')]);
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO, 'name' => $name, 'town' => DetailVenues::town('Zürich')]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug]);
 
         return $venue;

@@ -1,6 +1,5 @@
 {#
-    A venue's tier as a pill (Tokens). Include with `with_context = false`: tier (the value of Venues\ValueObject\Tier),
-    label (translated). A hash, so Admin stays free of Venues; `TierBadgeTest` pins it to the enum.
+    A venue's tier as a pill (Tokens). Include with `with_context = false`: label (the tier's name, data), promoted (the tier
+    ranks above the unboosted ones, F12): green when promoted, grey otherwise. Plain values, so Admin stays free of Venues.
 #}
-{%- set tones = {beliebte_location: 'pink', empfehlung: 'amber', top_premium: 'blue', premium: 'green', basic: 'grey'} -%}
-{{- include('admin/components/_pill.html.twig', {label: label, tone: tones[tier]|default('grey')}, with_context = false) -}}
+{{- include('admin/components/_pill.html.twig', {label: label, tone: promoted ? 'green' : 'grey'}, with_context = false) -}}

@@ -10,7 +10,6 @@ use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
@@ -30,7 +29,6 @@ final class VocabularyCatalogueTest extends TestCase
     public static function enums(): iterable
     {
         yield 'TermGroup' => [TermGroup::class, 'term_group'];
-        yield 'Tier' => [Tier::class, 'tier'];
         yield 'OwnCatering' => [OwnCatering::class, 'own_catering'];
         yield 'FloorMaterial' => [FloorMaterial::class, 'floor_material'];
         yield 'Seating' => [Seating::class, 'seating'];
@@ -74,6 +72,14 @@ final class VocabularyCatalogueTest extends TestCase
             self::assertSame('label', $case->trans($translator, 'de'));
             self::assertSame([[$context.'.'.$case->value, [], 'venues', 'de']], $translator->calls);
         }
+    }
+
+    /**
+     * The tier names are data (`tiers.name`), so the catalogue holds only the label of a promoted listing (F12).
+     */
+    public function test_the_tier_context_holds_the_promoted_label_only(): void
+    {
+        self::assertSame(['promoted' => 'Top-Eintrag'], $this->labels('tier'));
     }
 
     /**

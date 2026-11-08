@@ -30,6 +30,7 @@ use App\Venues\PhotoGrants;
 use App\Venues\PhotoPipeline;
 use App\Venues\PublishedMedia;
 use App\Venues\Repository\TaxonomyTermRepository;
+use App\Venues\Repository\TierRepository;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\RoomSummary;
 use App\Venues\TownResolver;
@@ -91,6 +92,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         private readonly ContentReader $reader,
         private readonly VenueRepository $venues,
         private readonly TaxonomyTermRepository $terms,
+        private readonly TierRepository $tiers,
         private readonly TownResolver $towns,
         private readonly EntityManagerInterface $em,
         private readonly VenueSlugs $slugs,
@@ -357,11 +359,10 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         $canton = null === $town && null !== $content->cantonCode ? $this->em->getReference(Canton::class, $content->cantonCode) : null;
 
         if (null === $venue) {
-            $venue = new Venue($content->name, $content->tier, $content->status, $content->capacityMax, $content->capacityMin, $town, $content->zip, $content->street, $content->lat, $content->lng, $content->key, $canton);
+            $venue = new Venue($content->name, $this->tiers->free(), $content->status, $content->capacityMax, $content->capacityMin, $town, $content->zip, $content->street, $content->lat, $content->lng, $content->key, $canton);
             $this->em->persist($venue);
         } else {
             $venue->rename($content->name);
-            $venue->changeTier($content->tier);
             VenueStatus::Published === $content->status ? $venue->publish() : $venue->unpublish();
             $venue->changeCapacity($content->capacityMax, $content->capacityMin);
             // A folder's coordinates are the venue's own point, so a town centre set in the CMS goes.

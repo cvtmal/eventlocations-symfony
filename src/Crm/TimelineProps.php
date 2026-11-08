@@ -12,7 +12,6 @@ use App\Crm\ReadModel\OwnerOption;
 use App\Crm\ReadModel\TimelineEntry;
 use App\Crm\ReadModel\TimelineQuery;
 use App\Crm\ValueObject\RecordKind;
-use App\Venues\ValueObject\Tier;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -20,6 +19,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The props of the `timeline` island (D12): the first page of the record's timeline (P6), the tabs from the registry and
  * the strings, translated once here so a company and a deal pass the same set. They cost one statement beyond
  * `TimelineQuery::page()`, `EmailTemplateQuery::options()`, and only on a record with an address, the one that can send.
+ * A tier's name is data (F12): `labels.tiers` maps a code to its name, for the sentence about a change of tier. A
+ * Location's record brings every name in its own statement (`CompanyRecord::$tierNames`), so a tier change costs nothing
+ * here; a deal's timeline holds none and passes none. The island shows a code it has no name for as it is.
  * `_timeline.html.twig` renders the first page from the same array as its fallback.
  */
 final readonly class TimelineProps
@@ -93,12 +95,13 @@ final readonly class TimelineProps
     }
 
     /**
-     * @param list<OwnerOption>    $assignees  who a new task can go to
-     * @param list<EmailRecipient> $recipients who a mail from this record can go to
+     * @param list<OwnerOption>     $assignees  who a new task can go to
+     * @param list<EmailRecipient>  $recipients who a mail from this record can go to
+     * @param array<string, string> $tierNames  tier code => name
      *
      * @return array<string, mixed>
      */
-    public function of(RecordKind $kind, string $id, string $viewerId, array $assignees, array $recipients = []): array
+    public function of(RecordKind $kind, string $id, string $viewerId, array $assignees, array $recipients = [], array $tierNames = []): array
     {
         return [
             'kind' => $kind->value,
@@ -120,7 +123,7 @@ final readonly class TimelineProps
                 'tasks' => $this->urls->generate('admin_api_crm_tasks'),
                 'inquiries' => $this->urls->generate('admin_crm_inquiries'),
             ],
-            'labels' => $this->labels(),
+            'labels' => $this->labels($tierNames),
             'locale' => $this->translator->getLocale(),
         ];
     }
@@ -169,15 +172,12 @@ final readonly class TimelineProps
     }
 
     /**
+     * @param array<string, string> $tierNames
+     *
      * @return array<string, mixed>
      */
-    private function labels(): array
+    private function labels(array $tierNames): array
     {
-        $tiers = [];
-        foreach (Tier::cases() as $tier) {
-            $tiers[$tier->value] = $tier->trans($this->translator);
-        }
-
         $stages = [];
         foreach (self::DEAL_STAGES as $code) {
             $stages[$code] = $this->crm('deal.stage.'.$code);
@@ -193,7 +193,7 @@ final readonly class TimelineProps
             ],
             'dealStageChangedAnonymous' => $this->crm('timeline.system.deal_stage_changed_anonymous', ['deal' => '__deal__', 'stage' => '__stage__']),
             'inquiryEntry' => $this->crm('timeline.inquiry.entry', ['couple' => '__couple__', 'venue' => '__venue__']),
-            'tiers' => $tiers,
+            'tiers' => $tierNames,
             'stages' => $stages,
         ];
     }

@@ -19,7 +19,7 @@
                         <span class="crm-side__text">
                             <a class="crm-side__link" href="{{ path('admin_crm_deals_show', {id: deal.id}) }}">{{ deal.name }}</a>
                             {%- set facts = [] -%}
-                            {%- if deal.tier -%}{%- set facts = facts|merge([deal.tier|trans]) -%}{%- endif -%}
+                            {%- if deal.tier -%}{%- set facts = facts|merge([deal.tier.name]) -%}{%- endif -%}
                             {%- if deal.contractEndOn -%}{%- set facts = facts|merge(['deal.card.until'|trans({date: deal.contractEndOn|swiss_date}, 'crm')]) -%}{%- endif -%}
                             {%- if facts is not empty %}<span class="crm-side__detail">{{ facts|join(' · ') }}</span>{% endif -%}
                         </span>

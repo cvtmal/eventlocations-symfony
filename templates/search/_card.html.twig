@@ -1,6 +1,6 @@
 {#
     One venue card (LP-2, LP-3). Owned by #7; #13 reuses it on /merkliste. Include with `only`:
-      card (a ListingCard, or anything with its public properties: number, slug, name, tier, capacityMin, capacityMax,
+      card (a ListingCard, or anything with its public properties: number, slug, name, promoted, capacityMin, capacityMax,
       place, summary, priceLevel, ambience, photos),
       index (0-based position on the page; 0 = the LCP image, 1 = eager; default 99 = lazy),
       action: merken|remove|none (default merken),
@@ -50,8 +50,8 @@
             {%- endif %}
         </div>
         <h{{ level }} class="card__title">
-            {%- if card.tier != enum('App\\Venues\\ValueObject\\Tier').Basic -%}
-                {{ include('components/_badge.html.twig', {label: card.tier|trans}, with_context = false) }}
+            {%- if card.promoted -%}
+                {{ include('components/_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues')}, with_context = false) }}
             {%- endif -%}
             <a class="card__link" href="{{ href }}">{{ card.name }}</a>
         </h{{ level }}>

@@ -10,7 +10,7 @@ use App\Factory\AdminUserFactory;
 use App\Factory\CompanyFactory;
 use App\Factory\DealFactory;
 use App\Tests\Support\Admin\AdminSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Zenstruck\Foundry\Test\Factories;
@@ -61,7 +61,7 @@ final class DealBoardTest extends WebTestCase
     {
         ['user' => $owner] = $this->logInAs(AdminRole::Editor, 'Andrea Keller');
         $company = CompanyFactory::createOne(['name' => 'Seeblick Events']);
-        $deal = DealFactory::new()->inStage('offer')->create(['name' => 'Premium 2027', 'company' => $company, 'tier' => Tier::Premium, 'amountRappen' => 240000, 'expectedCloseOn' => new \DateTimeImmutable('2026-11-15'), 'owner' => $owner]);
+        $deal = DealFactory::new()->inStage('offer')->create(['name' => 'Premium 2027', 'company' => $company, 'tier' => KnownTiers::PRO, 'amountRappen' => 240000, 'expectedCloseOn' => new \DateTimeImmutable('2026-11-15'), 'owner' => $owner]);
 
         $props = $this->props($this->client->request('GET', self::BOARD));
 
@@ -77,7 +77,7 @@ final class DealBoardTest extends WebTestCase
             'company' => 'Seeblick Events',
             'href' => '/admin/crm/deals/'.$deal->id(),
             'stageUrl' => '/admin/api/crm/deals/'.$deal->id().'/stage',
-            'tier' => ['code' => 'premium', 'label' => 'Premium'],
+            'tier' => ['code' => 'pro', 'label' => 'Pro', 'promoted' => true],
             'amountRappen' => 240000,
             'expectedCloseOn' => '2026-11-15',
             'closedOn' => null,
@@ -92,6 +92,26 @@ final class DealBoardTest extends WebTestCase
         foreach ($props['labels'] as $name => $label) {
             self::assertStringStartsNotWith('deal.board.', $label, $name.' is translated.');
         }
+    }
+
+    public function test_a_card_names_its_tier_as_the_database_does_and_says_whether_it_ranks_above_the_rest(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        DealFactory::createOne(['name' => 'Gratis', 'tier' => KnownTiers::FREE]);
+        DealFactory::createOne(['name' => 'Unentschieden']);
+        $this->connection->executeStatement("UPDATE tiers SET name = 'Premium' WHERE code = 'pro'");
+        DealFactory::createOne(['name' => 'Bezahlt', 'tier' => KnownTiers::PRO]);
+
+        $cards = [];
+        foreach ($this->props($this->client->request('GET', self::BOARD))['columns'][0]['cards'] as $card) {
+            $cards[$card['name']] = $card['tier'];
+        }
+
+        self::assertSame([
+            'Bezahlt' => ['code' => 'pro', 'label' => 'Premium', 'promoted' => true],
+            'Gratis' => ['code' => 'free', 'label' => 'Free', 'promoted' => false],
+            'Unentschieden' => null,
+        ], $cards);
     }
 
     public function test_filters_are_get_parameters_for_the_cards_and_the_totals(): void

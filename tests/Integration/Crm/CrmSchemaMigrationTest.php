@@ -44,7 +44,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
 
     private const SEED = [
         "INSERT INTO admin_users (id, email, display_name, password_hash, role) VALUES ('{admin}', 'crm-schema@example.test', 'Schema', 'x', 'admin')",
-        "INSERT INTO venues (id, name, tier, status, capacity_max) VALUES ('{venue}', 'Crm Testhaus', 'basic', 'published', 100), ('{venue2}', 'Crm Zweithaus', 'basic', 'published', 50)",
+        "INSERT INTO venues (id, name, status, capacity_max) VALUES ('{venue}', 'Crm Testhaus', 'published', 100), ('{venue2}', 'Crm Zweithaus', 'published', 50)",
         "INSERT INTO crm_companies (id, name, origin, owner_id, venue_id) VALUES ('{company}', 'Testhaus AG', 'venue', '{admin}', '{venue}'), ('{company2}', 'Zweite GmbH', 'manual', NULL, NULL)",
         "INSERT INTO crm_contacts (id, first_name, last_name, email, company_id) VALUES ('{contact}', 'Anna', 'Muster', 'anna@example.test', '{company}')",
         "INSERT INTO crm_activities (id, type_code, occurred_at, actor_id, body) VALUES ('{activity}', 'note', CURRENT_TIMESTAMP, '{admin}', 'Erstes Gespräch.')",
@@ -144,7 +144,11 @@ final class CrmSchemaMigrationTest extends KernelTestCase
 
         // crm_deals
         yield 'blank deal name' => ['chk_crm_deals_name', ["UPDATE crm_deals SET name = ' ' WHERE id = '{deal}'"]];
-        yield 'unknown tier' => ['chk_crm_deals_tier', ["UPDATE crm_deals SET tier = 'gold' WHERE id = '{deal}'"]];
+        yield 'deal of unknown tier' => ['fk_crm_deals_tier_id', ["UPDATE crm_deals SET tier_id = '{missing}' WHERE id = '{deal}'"]];
+        yield 'tier in use is not deleted' => ['fk_crm_deals_tier_id', [
+            "UPDATE crm_deals SET tier_id = (SELECT id FROM tiers WHERE code = 'pro') WHERE id = '{deal}'",
+            "DELETE FROM tiers WHERE code = 'pro'",
+        ]];
         yield 'negative amount' => ['chk_crm_deals_amount', ["UPDATE crm_deals SET amount_rappen = -1 WHERE id = '{deal}'"]];
         yield 'contract ends before it starts' => ['chk_crm_deals_contract', ["UPDATE crm_deals SET contract_start_on = '2027-01-02', contract_end_on = '2027-01-01' WHERE id = '{deal}'"]];
         yield 'unknown lost reason' => ['chk_crm_deals_lost_reason', ["UPDATE crm_deals SET lost_reason = 'weather' WHERE id = '{deal}'"]];
@@ -244,6 +248,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         yield 'open-ended contract' => [["UPDATE crm_deals SET contract_start_on = '2027-01-01', contract_end_on = NULL WHERE id = '{deal}'"]];
         yield 'one-day contract' => [["UPDATE crm_deals SET contract_start_on = '2027-01-01', contract_end_on = '2027-01-01' WHERE id = '{deal}'"]];
         yield 'free deal' => [["UPDATE crm_deals SET amount_rappen = 0 WHERE id = '{deal}'"]];
+        yield 'deal without a tier, and with one' => [["UPDATE crm_deals SET tier_id = (SELECT id FROM tiers WHERE code = 'free') WHERE id = '{deal}'", "UPDATE crm_deals SET tier_id = NULL WHERE id = '{deal}'"]];
         yield 'template names differ by case' => [[
             "INSERT INTO crm_email_templates (id, name, subject, body_markdown) VALUES (gen_random_uuid(), 'Vorlage', 'Betreff', 'Text')",
             "INSERT INTO crm_email_templates (id, name, subject, body_markdown) VALUES (gen_random_uuid(), 'vorlage', 'Betreff', 'Text')",

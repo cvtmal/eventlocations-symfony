@@ -11,6 +11,7 @@ use App\Cms\ReadModel\VenueListFilter;
 use App\Cms\ReadModel\VenueListQuery;
 use App\Cms\ReadModel\VenueSort;
 use App\Shared\Translation\LocalizedRoutes;
+use App\Venues\ReadModel\TierOptionsQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,7 +27,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class VenueListController extends AbstractController
 {
     #[Route('/admin/locations', name: 'admin_locations', methods: ['GET'], options: [LocalizedRoutes::UNLOCALIZED => true])]
-    public function __invoke(Request $request, VenueListQuery $venues, FormFactoryInterface $forms): Response
+    public function __invoke(Request $request, VenueListQuery $venues, FormFactoryInterface $forms, TierOptionsQuery $tiers): Response
     {
         $data = new VenueFilterData();
         // An empty name keeps the parameters flat: ?q=…&tier=…
@@ -43,6 +44,7 @@ final class VenueListController extends AbstractController
             'form' => $form,
             'filter' => $form->isSubmitted() && $valid ? $data : new VenueFilterData(),
             'list' => $venues->search($form->isSubmitted() && $valid ? $data->toFilter() : new VenueListFilter(), $sort, $direction, false === $page ? 1 : $page),
+            'tier_names' => array_flip($tiers->choices()),
             'sort' => $sort->value,
             'dir' => $direction->value,
         ], new Response(status: $valid ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY));

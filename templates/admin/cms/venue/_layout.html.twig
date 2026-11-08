@@ -57,7 +57,7 @@
             {%- endif -%}
         {% endblock %}
         {% block meta %}
-            {{ include('admin/components/_tier_badge.html.twig', {tier: venue.tier.value, label: venue.tier|trans}, with_context = false) }}
+            {{ include('admin/components/_tier_badge.html.twig', {label: venue.tier.name, promoted: venue.tier.promoted}, with_context = false) }}
             {{ include('admin/components/_pill.html.twig', {
                 label: ('list.status.' ~ venue.status.value)|trans({}, 'cms'),
                 tone: venue.status.value == 'published' ? 'green' : 'grey',

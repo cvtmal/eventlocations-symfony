@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Venues;
 
+use App\Factory\RoomFactory;
+use App\Factory\RoomTranslationFactory;
 use App\Factory\VenueFactory;
+use App\Factory\VenuePhotoFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
@@ -14,23 +17,26 @@ use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\EntitlementResolver;
+use App\Venues\Entity\Venue;
 use App\Venues\ReadModel\DetailFactGroup;
 use App\Venues\ReadModel\DetailSeating;
 use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -53,7 +59,7 @@ final class VenueDetailQueryTest extends KernelTestCase
         $translator = self::getContainer()->get('translator');
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         $locale = ListingQueryTest::enabledLocale();
-        $this->query = new VenueDetailQuery($this->connection, new TranslationJoin($locale), $locale, $translator);
+        $this->query = new VenueDetailQuery($this->connection, new TranslationJoin($locale), $locale, $translator, new EntitlementResolver($this->connection), new MockClock('2026-11-07 10:00:00'));
     }
 
     protected function tearDown(): void
@@ -244,7 +250,7 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertSame($venue->id(), $detail->id);
         self::assertSame($venue->number(), $detail->number);
         self::assertSame('Schloss Seeblick', $detail->name);
-        self::assertSame(Tier::Premium, $detail->tier);
+        self::assertTrue($detail->promoted);
         self::assertSame(DetailVenues::FULL_SLUG, $detail->slug);
         self::assertSame("Erster Absatz über das Schloss.\n\nZweiter Absatz mit dem Park.", $detail->descriptionText());
         self::assertSame('Schloss Seeblick: Hochzeit am See.', $detail->metaDescription);
@@ -479,6 +485,118 @@ final class VenueDetailQueryTest extends KernelTestCase
         self::assertNull($this->query->phone('abc'));
     }
 
+    public function test_a_free_venue_has_no_phone_and_no_website_but_keeps_the_inquiry_form_and_instagram(): void
+    {
+        $free = DetailVenues::overfull(KnownTiers::FREE);
+
+        $detail = $this->query->detail($free->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertFalse($detail->promoted);
+        self::assertFalse($detail->hasPhone);
+        self::assertNull($detail->website);
+        self::assertSame('anfrage@ueberfluss.example', $detail->inquiryEmail);
+        self::assertSame('https://www.instagram.com/haus.ueberfluss', $detail->instagram);
+        self::assertSame('Beat Muster', $detail->contactPerson);
+        self::assertTrue($detail->hasContact());
+        self::assertNull($this->query->phone($free->id()), 'the reveal route answers like an unknown venue');
+    }
+
+    public function test_the_same_venue_on_pro_shows_phone_and_website(): void
+    {
+        $pro = DetailVenues::overfull(KnownTiers::PRO);
+
+        $detail = $this->query->detail($pro->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertTrue($detail->promoted);
+        self::assertTrue($detail->hasPhone);
+        self::assertSame('https://ueberfluss.example', $detail->website);
+        self::assertSame(DetailVenues::FULL_PHONE, $this->query->phone($pro->id()));
+    }
+
+    public function test_a_free_venue_shows_the_first_six_photos_the_first_room_and_the_first_pdf(): void
+    {
+        $free = DetailVenues::overfull(KnownTiers::FREE);
+
+        $detail = $this->query->detail($free->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertSame(\array_slice($this->galleryIds($free), 0, 6), array_map(static fn (Picture $photo): string => $photo->photoId, $detail->photos), 'the first six by position, not by insertion');
+        self::assertSame([DetailVenues::OVERFULL_ROOMS[0]], array_map(static fn ($room): string => $room->name, $detail->rooms));
+        self::assertNull($detail->rooms[0]->photo, 'the six gallery photos use the whole budget, so the room photo stays hidden');
+        self::assertSame([DetailVenues::OVERFULL_DOCUMENTS[0]], array_map(static fn ($document): string => $document->title, $detail->documents));
+    }
+
+    public function test_a_pro_venue_shows_everything_it_holds(): void
+    {
+        $pro = DetailVenues::overfull(KnownTiers::PRO);
+
+        $detail = $this->query->detail($pro->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertSame($this->galleryIds($pro), array_map(static fn (Picture $photo): string => $photo->photoId, $detail->photos));
+        self::assertCount(DetailVenues::OVERFULL_GALLERY, $detail->photos);
+        self::assertSame(DetailVenues::OVERFULL_ROOMS, array_map(static fn ($room): string => $room->name, $detail->rooms));
+        self::assertNotNull($detail->rooms[0]->photo);
+        self::assertSame(DetailVenues::OVERFULL_DOCUMENTS, array_map(static fn ($document): string => $document->title, $detail->documents));
+    }
+
+    /**
+     * The photo budget runs through the gallery first, then through the visible rooms in order; a room that the plan
+     * hides takes its photo with it.
+     */
+    public function test_the_photo_budget_is_spent_on_the_gallery_first_and_a_hidden_room_takes_its_photo_with_it(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE, 'town' => DetailVenues::town('Bern')]);
+        VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => 'wenig-fotos', 'summary' => 'Wenige Fotos.']);
+        foreach ([1, 2, 3, 4] as $position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
+        $first = RoomFactory::createOne(['venue' => $venue, 'position' => 1]);
+        RoomTranslationFactory::createOne(['room' => $first, 'name' => 'Erster Saal']);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $first, 'position' => 1]);
+        $second = RoomFactory::createOne(['venue' => $venue, 'position' => 2]);
+        RoomTranslationFactory::createOne(['room' => $second, 'name' => 'Zweiter Saal']);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $second, 'position' => 1]);
+
+        $detail = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($detail);
+        self::assertCount(4, $detail->photos);
+        self::assertSame(['Erster Saal'], array_map(static fn ($room): string => $room->name, $detail->rooms), 'Free shows one room');
+        self::assertNotNull($detail->rooms[0]->photo, 'two photos of the budget are left for the room');
+    }
+
+    public function test_a_plan_edit_is_read_at_once(): void
+    {
+        $venue = DetailVenues::overfull(KnownTiers::FREE);
+        $before = $this->query->detail($venue->number(), 'de');
+        self::assertNotNull($before);
+        self::assertCount(6, $before->photos);
+
+        $this->connection->executeStatement("UPDATE tiers SET photos_max = 3, rooms_max = 2, documents_max = 2, contact_visible = TRUE WHERE code = 'free'");
+        $after = $this->query->detail($venue->number(), 'de');
+
+        self::assertNotNull($after);
+        self::assertCount(3, $after->photos);
+        self::assertCount(2, $after->rooms);
+        self::assertCount(2, $after->documents);
+        self::assertTrue($after->hasPhone);
+        self::assertSame('https://ueberfluss.example', $after->website);
+    }
+
+    /**
+     * @return list<string> the ids of the venue's gallery photos, by position
+     */
+    private function galleryIds(Venue $venue): array
+    {
+        /** @var list<string> $ids */
+        $ids = $this->connection->fetchFirstColumn('SELECT id FROM venue_photos WHERE venue_id = ? AND room_id IS NULL ORDER BY position', [$venue->id()]);
+
+        return $ids;
+    }
+
     public function test_query_count(): void
     {
         $venue = DetailVenues::full($this->em);
@@ -489,12 +607,13 @@ final class VenueDetailQueryTest extends KernelTestCase
         $this->query->resolveSlug(DetailVenues::FULL_SLUG, 'de');
         self::assertCount(1, $holder->getData()['default'] ?? []);
 
+        // The venue, its rooms and photos, and the plan's limits (EntitlementResolver, F12).
         $holder->reset();
         self::assertNotNull($this->query->detail($venue->number(), 'de'));
-        self::assertCount(3, $holder->getData()['default'] ?? []);
+        self::assertCount(4, $holder->getData()['default'] ?? []);
 
         $holder->reset();
         self::assertNotNull($this->query->detail($venue->number(), 'de', includeUnpublished: true));
-        self::assertCount(3, $holder->getData()['default'] ?? []);
+        self::assertCount(4, $holder->getData()['default'] ?? []);
     }
 }

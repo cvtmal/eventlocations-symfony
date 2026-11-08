@@ -9,7 +9,7 @@ use App\Crm\Entity\Deal;
 use App\Factory\CompanyFactory;
 use App\Factory\DealFactory;
 use App\Tests\Support\Admin\AdminSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\DomCrawler\Crawler;
@@ -28,7 +28,7 @@ final class RenewalsWidgetTest extends WebTestCase
     {
         self::mockTime('2026-11-01 10:00:00 UTC');
         $this->logInAs(AdminRole::Editor);
-        $deal = $this->ending('2026-11-30', ['company' => CompanyFactory::createOne(['name' => 'Seehotel Bellerive']), 'tier' => Tier::TopPremium, 'amountRappen' => 360000]);
+        $deal = $this->ending('2026-11-30', ['company' => CompanyFactory::createOne(['name' => 'Seehotel Bellerive']), 'tier' => KnownTiers::PRO, 'amountRappen' => 360000]);
 
         $widget = $this->widget();
 
@@ -36,7 +36,7 @@ final class RenewalsWidgetTest extends WebTestCase
         self::assertSame('nächste 60 Tage', $widget->filter('.renewal-widget__window')->text());
         self::assertSame('Seehotel Bellerive', $widget->filter('.renewal-widget__company')->text());
         self::assertSame('/admin/crm/deals/'.$deal->id(), $widget->filter('.renewal-widget__company')->attr('href'));
-        self::assertSame('Top Premium · endet 30.11.2026', $widget->filter('.crm-list__detail')->text());
+        self::assertSame('Pro · endet 30.11.2026', $widget->filter('.crm-list__detail')->text());
         self::assertSame("CHF 3'600", $widget->filter('.renewal-widget__amount')->text());
     }
 

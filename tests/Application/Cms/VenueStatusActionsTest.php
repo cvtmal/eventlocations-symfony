@@ -72,27 +72,25 @@ final class VenueStatusActionsTest extends WebTestCase
         self::assertSame(2, $this->auditRows($number));
         self::assertNotNull($this->connection->fetchOne('SELECT cms_edited_at FROM venues WHERE number = ?', [$number]));
         self::assertCount(1, $crawler->filter('form[name="unpublish"]'));
-        // Only an editor is active, so nobody can take the invoice task (Q20): the CRM fails and the publish stands.
-        self::assertSame(0, $this->invoiceTasks($number));
+        // A published entry writes no CRM task: a new entry is Free and nobody invoices it (F12, D2).
+        self::assertSame(0, $this->crmTasks($number));
     }
 
     /**
-     * Q20, the owner's rule of 2026-11-02: a venue staff created goes live for the first time, so the owner is reminded
-     * to invoice it, once. It has no CRM company yet, so the reminder creates one.
+     * The sister site's rule "remind the owner to invoice a new entry" (Q20, POR-14) is gone with F12: a new entry is
+     * Free and not invoiced, so the first publish writes no task and no company, and neither does offline and back.
      */
-    public function test_the_first_publish_of_a_new_venue_writes_one_invoice_task(): void
+    public function test_the_first_publish_of_a_new_venue_writes_no_task(): void
     {
-        $staff = $this->logInAs();
+        $this->logInAs();
         $number = $this->createPublishable('Neue Scheune');
         $crawler = $this->client->request('GET', '/admin/locations/'.$number);
 
         $this->client->submit($crawler->filter('form[name="publish"]')->form());
 
         self::assertSame('published', $this->venueStatus($number));
-        self::assertSame([['name' => 'Neue Scheune', 'title' => 'Rechnung stellen', 'assignee_id' => $staff['user']->id()]], $this->connection->fetchAllAssociative(
-            'SELECT c.name, t.title, t.assignee_id FROM crm_tasks t JOIN crm_companies c ON c.id = t.company_id JOIN venues v ON v.id = c.venue_id WHERE v.number = ?',
-            [$number],
-        ));
+        self::assertSame(0, $this->crmTasks($number));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_companies'));
 
         $crawler = $this->client->followRedirect();
         $this->client->submit($crawler->filter('form[name="unpublish"]')->form());
@@ -100,10 +98,10 @@ final class VenueStatusActionsTest extends WebTestCase
         $this->client->submit($crawler->filter('form[name="publish"]')->form());
 
         self::assertSame('published', $this->venueStatus($number));
-        self::assertSame(1, $this->invoiceTasks($number), 'offline and back writes none');
+        self::assertSame(0, $this->crmTasks($number), 'offline and back writes none');
     }
 
-    public function test_publishing_an_imported_or_seeded_venue_writes_no_invoice_task(): void
+    public function test_publishing_an_imported_or_seeded_venue_writes_no_task(): void
     {
         $this->logInAs();
         $venue = DetailVenues::minimal();
@@ -265,10 +263,10 @@ final class VenueStatusActionsTest extends WebTestCase
         return $number;
     }
 
-    private function invoiceTasks(int $number): int
+    private function crmTasks(int $number): int
     {
         return (int) $this->connection->fetchOne(
-            "SELECT count(*) FROM crm_tasks t JOIN crm_companies l ON l.id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
+            'SELECT count(*) FROM crm_tasks t JOIN crm_companies l ON l.id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE v.number = ?',
             [$number],
         );
     }

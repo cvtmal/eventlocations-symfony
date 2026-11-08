@@ -6,9 +6,10 @@ namespace App\Search\ReadModel;
 
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\EntitlementResolver;
 use App\Venues\PublicPhotoPolicy;
+use App\Venues\ValueObject\Entitlements;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -18,8 +19,9 @@ use Psr\Clock\ClockInterface;
  * The venue listing (LP-1…LP-4): one page of cards and the total, in at most three queries
  * (cards, their photos, the count; two when the page is empty).
  *
- * Order (S6): tier first, then a shuffle that is stable for a day and changes with the date
- * (md5 of the venue id and today's date in Europe/Zurich), then the id so the order is total.
+ * Order (S6): the tier's rank weight first (a Pro entry before a Free one, F12), then a shuffle that is stable for a
+ * day and changes with the date (md5 of the venue id and today's date in Europe/Zurich), then the id so the order
+ * is total.
  */
 final class ListingQuery
 {
@@ -31,7 +33,7 @@ final class ListingQuery
      * cannot drift. The town is optional (#21), hence the LEFT JOIN, in one place for both.
      */
     private const CARD_COLUMNS = <<<'SQL'
-        v.id, v.number, v.name, v.tier, v.capacity_min, v.capacity_max,
+        v.id, v.number, v.name, v.capacity_min, v.capacity_max,
             tw.name AS town_name, v.canton_code, t.region, t.slug, t.summary, v.price_level, t.ambience
         SQL;
     private const CARD_TOWN_JOIN = 'LEFT JOIN towns tw ON tw.id = v.town_id';
@@ -41,6 +43,7 @@ final class ListingQuery
         private readonly TranslationJoin $translationJoin,
         private readonly EnabledLocale $enabledLocale,
         private readonly ClockInterface $clock,
+        private readonly EntitlementResolver $entitlements,
     ) {
     }
 
@@ -133,10 +136,11 @@ final class ListingQuery
             {$filter->with}
             SELECT {$columns}
             FROM {$filter->from}
+            JOIN tiers rank_tier ON rank_tier.id = v.tier_id
             {$townJoin}
             {$translation}
             WHERE {$filter->where}
-            ORDER BY v.tier_rank, md5(v.id::text || :seed), v.id
+            ORDER BY rank_tier.rank_weight DESC, md5(v.id::text || :seed), v.id
             LIMIT :limit OFFSET :offset
             SQL;
 
@@ -185,8 +189,9 @@ final class ListingQuery
             $numbers[$row['id']] = $row['number'];
         }
         $photos = [] === $numbers ? [] : $this->photos($numbers, $locale, $photosPerCard);
+        $entitlements = $this->entitlements->forVenues(array_keys($numbers), $this->clock->now());
 
-        return array_map(fn (array $row): ListingCard => $this->card($row, $photos), $rows);
+        return array_map(fn (array $row): ListingCard => $this->card($row, $photos, $entitlements), $rows);
     }
 
     /**
@@ -234,14 +239,14 @@ final class ListingQuery
     /**
      * @param array<string, mixed>           $row
      * @param array<string, list<CardPhoto>> $photos
+     * @param array<string, Entitlements>    $entitlements venue id → what the venue's tier allows
      */
-    private function card(array $row, array $photos): ListingCard
+    private function card(array $row, array $photos, array $entitlements): ListingCard
     {
         \assert(\is_string($row['id']));
         \assert(\is_int($row['number']));
         \assert(\is_string($row['slug']));
         \assert(\is_string($row['name']));
-        \assert(\is_string($row['tier']));
         \assert(null === $row['capacity_min'] || \is_int($row['capacity_min']));
         \assert(\is_int($row['capacity_max']));
         \assert(null === $row['town_name'] || \is_string($row['town_name']));
@@ -256,14 +261,14 @@ final class ListingQuery
             $row['number'],
             $row['slug'],
             $row['name'],
-            Tier::from($row['tier']),
+            $entitlements[$row['id']]->isPromoted(),
             $row['capacity_min'],
             $row['capacity_max'],
             VenuePlace::of($row['town_name'], $row['canton_code'], $row['region']),
             $row['summary'],
             null === $row['price_level'] ? null : PriceLevel::from($row['price_level']),
             $row['ambience'],
-            $photos[$row['id']] ?? [],
+            \array_slice($photos[$row['id']] ?? [], 0, $entitlements[$row['id']]->photosMax),
         );
     }
 }

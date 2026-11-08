@@ -20,8 +20,8 @@ use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use Doctrine\DBAL\Connection;
@@ -272,7 +272,7 @@ final class HomePageTest extends WebTestCase
     public function test_spotlight_shows_the_head_of_the_listing_with_one_photo_each(): void
     {
         $venues = $this->inCanton(Canton::ZH, 4);
-        $premium = VenueFactory::new()->create(['name' => 'Schloss Bezahlt', 'tier' => Tier::Premium, 'town' => $this->town('Stäfa')]);
+        $premium = VenueFactory::new()->create(['name' => 'Schloss Bezahlt', 'tier' => KnownTiers::PRO, 'town' => $this->town('Stäfa')]);
         VenueTranslationFactory::createOne(['venue' => $premium]);
         foreach ([...$venues, $premium] as $venue) {
             $this->photos($venue, 2);
@@ -424,17 +424,17 @@ final class HomePageTest extends WebTestCase
         // #26: on an empty pool the first hit adds four statements: begin, try-lock, the SELECT, commit.
         $holder->reset();
         $this->get('/');
-        self::assertCount(9, $holder->getData()['default'] ?? []);
+        self::assertCount(10, $holder->getData()['default'] ?? []);
 
         $blocks = self::getContainer()->get(ContentBlocks::class);
         self::assertInstanceOf(ContentBlocks::class, $blocks);
         $blocks->refresh();
 
-        // Cards, their photos, the hero's hash, the landing pages' one statement and FilterDataQuery's terms
-        // statement for the Anlass select (F5).
+        // Cards, their photos, the plans' limits (F12), the hero's hash, the landing pages' one statement and
+        // FilterDataQuery's terms statement for the Anlass select (F5).
         $holder->reset();
         $this->get('/');
-        self::assertCount(5, $holder->getData()['default'] ?? []);
+        self::assertCount(6, $holder->getData()['default'] ?? []);
     }
 
     private function assertOneHeroImage(Crawler $crawler): void

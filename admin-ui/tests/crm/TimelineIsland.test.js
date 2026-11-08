@@ -58,7 +58,7 @@ const labels = {
     },
     dealStageChangedAnonymous: 'Deal «__deal__» auf __stage__ verschoben',
     stages: { negotiation: 'Verhandlung' },
-    tiers: { premium: 'Premium' },
+    tiers: { pro: 'Pro' },
 };
 
 const types = [
@@ -202,7 +202,7 @@ describe('TimelineIsland', () => {
             entries: [
                 entry('e3', '2026-10-29T14:02', { type: 'call', body: 'Will verlängern' }),
                 entry('e2', '2026-10-27T10:30', { kind: 'system', type: 'published', venueName: 'Schloss Seeblick', body: null }),
-                entry('e1', '2026-09-30T09:00', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'premium', actorName: null, body: null }),
+                entry('e1', '2026-09-30T09:00', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'pro', actorName: null, body: null }),
             ],
             next: null,
         });
@@ -213,9 +213,19 @@ describe('TimelineIsland', () => {
         expect(wrapper.get('.timeline-item__icon').classes()).toContain('timeline-item__icon--green');
         expect(wrapper.findAll('.timeline-item--system').map((item) => item.text())).toEqual([
             '«Schloss Seeblick» publiziert · Andrea Keller · 27.10.2026, 10:30',
-            '«Schloss Seeblick»: neu Premium · 30.09.2026, 09:00',
+            '«Schloss Seeblick»: neu Pro · 30.09.2026, 09:00',
         ]);
         expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('shows a tier code it has no name for as it is', () => {
+        // The audit row of a tier that is gone, or of the old enum, still holds its code.
+        wrapper = island({
+            entries: [entry('e1', '2026-10-27T10:30', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'premium', actorName: null, body: null })],
+            next: null,
+        });
+
+        expect(wrapper.get('.timeline-item--system').text()).toBe('«Schloss Seeblick»: neu premium · 27.10.2026, 10:30');
     });
 
     it('writes a stage change as the design\'s sentence, with or without an actor', () => {
@@ -646,6 +656,19 @@ describe('TimelineIsland', () => {
         expect(fetch.mock.calls[1][0]).toBe(`${urls.timeline}?before=token+2`);
         expect(button(wrapper, 'Mehr laden')).toBeUndefined();
         expect(document.activeElement).toBe(wrapper.get('.crm-timeline__list').element);
+    });
+
+    it('names the tier of an entry from a later page with the names it was given for the first', async () => {
+        wrapper = island({ entries: [entry('e3', '2026-10-29T14:02')], next: 'token' });
+        fetch.mockResolvedValueOnce(json({
+            entries: [entry('e1', '2026-01-05T09:00', { kind: 'system', type: 'tier_changed', venueName: 'Schloss Seeblick', tier: 'pro', actorName: null, body: null })],
+            next: null,
+        }));
+
+        await button(wrapper, 'Mehr laden').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('.timeline-item--system').text()).toBe('«Schloss Seeblick»: neu Pro · 05.01.2026, 09:00');
     });
 
     it('leaves an entry older than the loaded ones to "Mehr laden"', async () => {

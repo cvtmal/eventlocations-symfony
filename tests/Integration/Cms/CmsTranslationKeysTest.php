@@ -40,6 +40,7 @@ use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\ReorderVenuePhotos;
 use App\Venues\Command\ReportContent;
 use App\Venues\Command\RetitleVenueDocument;
+use App\Venues\Command\ReviseTier;
 use App\Venues\Command\RevokeVenuePreview;
 use App\Venues\Command\TakeEntryOffline;
 use App\Venues\Command\UnpublishVenue;
@@ -108,7 +109,7 @@ final class CmsTranslationKeysTest extends KernelTestCase
         $commands = [
             RecordVenueCreated::class, ChangeVenueBasics::class, ChangeVenueTexts::class, RelocateVenue::class,
             ChangeVenueTerms::class, ChangeVenueEventFacts::class, ChangeVenueContact::class, ChangeVenueCapacity::class, AnswerVenueFaq::class,
-            ChangeVenueTier::class, PublishVenue::class, UnpublishVenue::class,
+            ChangeVenueTier::class, ReviseTier::class, PublishVenue::class, UnpublishVenue::class,
             AddVenuePhoto::class, ReorderVenuePhotos::class, DescribeVenuePhoto::class, MoveVenuePhotoToRoom::class, RemoveVenuePhoto::class, GrantPhotoRights::class,
             AddRoom::class, ChangeRoom::class, ReorderRooms::class, RemoveRoom::class,
             AddVenueDocument::class, RetitleVenueDocument::class, ReorderVenueDocuments::class, RemoveVenueDocument::class,

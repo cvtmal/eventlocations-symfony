@@ -2,8 +2,9 @@
 -- translations, terms, venue-level photos and their rights grants. Run by `make perf-seed TIMES=10` on
 -- a fresh dump of the lane's seeded database; never against the lane or the test database.
 --
--- Columns are listed from information_schema (not generated, not identity), so `number` and
--- `tier_rank` are left to the database and a new column needs no change here. Rooms are not
+-- Columns are listed from information_schema (not generated, not identity), so `number` is
+-- left to the database and a new column needs no change here; a clone keeps its source's
+-- `tier_id`. Rooms are not
 -- cloned, so room photos are left out too: a clone's card shows the same photos as its source.
 -- A photo is public only with a live grant (G1, Venues\PublicPhotoPolicy), so each cloned photo
 -- gets a copy of its source's live grant, and a source without one is cloned without one.

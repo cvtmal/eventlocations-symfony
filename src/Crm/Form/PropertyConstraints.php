@@ -11,7 +11,6 @@ use App\Crm\ValueObject\ContactProperty;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\TaskDueDate;
 use App\Shared\Validator\CleanText;
-use App\Venues\ValueObject\Tier;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -149,16 +148,19 @@ final readonly class PropertyConstraints
 
     /**
      * The rules of a deal field. Unlike a company's or contact's, an amount and a date are applied to what was typed,
-     * because `DealProperty::canonical()` can only read what passed them.
+     * because `DealProperty::canonical()` can only read what passed them. The tier is a row, so the codes it may take
+     * come from outside (`TierChoices::codes()`) and only the Tier case reads them; without them it refuses every code.
+     *
+     * @param list<string> $tierCodes
      *
      * @return list<Constraint>
      */
-    public static function deal(DealProperty $property): array
+    public static function deal(DealProperty $property, array $tierCodes = []): array
     {
         return match ($property) {
             DealProperty::Name => self::dealName(),
             DealProperty::Venue, DealProperty::Owner => self::reference(),
-            DealProperty::Tier => self::choice(array_map(static fn (Tier $tier): string => $tier->value, Tier::cases()), required: false),
+            DealProperty::Tier => self::choice($tierCodes, required: false),
             DealProperty::Amount => self::amount(),
             DealProperty::ContractStart, DealProperty::ContractEnd, DealProperty::ExpectedClose => self::date(),
         };

@@ -39,7 +39,7 @@
         {% set chips = chips|merge([{label: label, remove_href: admin_query_path({q: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'cms')}]) %}
     {% endif %}
     {% if filter.tier %}
-        {% set label = 'list.chip.tier'|trans({label: filter.tier|trans}, 'cms') %}
+        {% set label = 'list.chip.tier'|trans({label: tier_names[filter.tier]|default(filter.tier)}, 'cms') %}
         {% set chips = chips|merge([{label: label, remove_href: admin_query_path({tier: null}), remove_label: 'list.chip.remove'|trans({label: label}, 'cms')}]) %}
     {% endif %}
     {% if filter.canton %}
@@ -123,7 +123,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td>{{ include('admin/components/_tier_badge.html.twig', {tier: row.tier.value, label: row.tier|trans}, with_context = false) }}</td>
+                        <td>{{ include('admin/components/_tier_badge.html.twig', {label: row.tier.name, promoted: row.tier.promoted}, with_context = false) }}</td>
                         <td>{{ row.capacityMin ? swiss_range(row.capacityMin, row.capacityMax) : row.capacityMax|swiss_number }}</td>
                         <td>{{ row.photoCount|swiss_number }}</td>
                         <td>

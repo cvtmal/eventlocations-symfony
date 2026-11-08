@@ -13,6 +13,7 @@ use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Command\GrantPhotoRights;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRowNotFound;
@@ -23,6 +24,7 @@ use App\Venues\ValueObject\Grantor;
 use App\Venues\ValueObject\PhotoGrant;
 use App\Venues\ValueObject\RightsPolicyText;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -238,7 +240,7 @@ final class GrantPhotoRightsTest extends KernelTestCase
         $venue = $this->venue();
         $this->addPhoto($venue->number(), $this->upload());
         $locale = ListingQueryTest::enabledLocale();
-        $sitemap = new VenueSitemapQuery($this->connection, $locale);
+        $sitemap = new VenueSitemapQuery($this->connection, $locale, new EntitlementResolver($this->connection), new MockClock('2026-10-30 10:00:00', 'UTC'));
         foreach (['venues' => 'id', 'venue_translations' => 'venue_id', 'venue_photos' => 'venue_id'] as $table => $column) {
             $this->connection->executeStatement(\sprintf("UPDATE %s SET updated_at = '2026-01-01 10:00:00+00' WHERE %s = ?", $table, $column), [$venue->id()]);
         }

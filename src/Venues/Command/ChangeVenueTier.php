@@ -6,17 +6,17 @@ namespace App\Venues\Command;
 
 use App\Shared\Messenger\AuditableCommand;
 use App\Shared\Messenger\AuditSubject;
-use App\Venues\ValueObject\Tier;
 
 /**
- * Sets the paid tier alone, with no form state (#28, D18): a won deal's tier reaches the venue through this, so the CRM
- * cannot race a CMS editor over the capacities `ChangeVenueBasics` writes. The same tier changes nothing.
+ * Sets the listing tier alone, with no form state (#28, D18): a won deal's tier reaches the venue through this, so the
+ * CRM cannot race a CMS editor over the capacities `ChangeVenueBasics` writes. The same tier changes nothing. The tier
+ * is named by its code (`tiers.code`); the handler refuses an unknown one with `TierNotFound`.
  */
 final readonly class ChangeVenueTier implements AuditableCommand
 {
     public function __construct(
         public int $venueNumber,
-        public Tier $tier,
+        public string $tierCode,
     ) {
     }
 
@@ -27,6 +27,6 @@ final readonly class ChangeVenueTier implements AuditableCommand
 
     public function auditSummary(): array
     {
-        return ['changed' => ['tier'], 'tier' => $this->tier->value];
+        return ['changed' => ['tier'], 'tier' => $this->tierCode];
     }
 }

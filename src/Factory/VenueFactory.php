@@ -6,9 +6,10 @@ namespace App\Factory;
 
 use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
+use App\Venues\Entity\Tier;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\OwnCatering;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
@@ -77,6 +78,13 @@ final class VenueFactory extends PersistentObjectFactory
     protected function initialize(): static
     {
         return $this->beforeInstantiate(static function (array $attributes): array {
+            // A tier is named by its code ('free', 'pro', KnownTiers) or passed as the entity; the seeded rows come from the migration.
+            $tier = $attributes['tier'] ?? KnownTiers::FREE;
+            if (\is_string($tier)) {
+                $tier = repository(Tier::class)->findOneBy(['code' => $tier]) ?? throw new \LogicException(\sprintf('No tier "%s".', $tier));
+            }
+            $attributes['tier'] = $tier;
+
             // `??` below would replace an explicit null, which is withoutLocation().
             if (\array_key_exists('town', $attributes) && null === $attributes['town']) {
                 return $attributes;
@@ -101,7 +109,6 @@ final class VenueFactory extends PersistentObjectFactory
     {
         return [
             'name' => self::faker()->randomElement(self::NAME_PREFIXES).' '.self::faker()->lastName(),
-            'tier' => Tier::Basic,
             'status' => VenueStatus::Published,
             'capacityMax' => 120,
             'capacityMin' => null,

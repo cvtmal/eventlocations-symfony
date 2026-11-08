@@ -5,22 +5,25 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\LostReason;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenuePlace;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * A deal record page in one statement (D20): the deal, its company, owner and venue, its Location's contact rows
- * (read-only, #55) and what its forms offer as JSON. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
+ * (read-only, #55) and what its forms offer as JSON, the tiers in the order of `TierOptionsQuery::choices()` (F12), so the
+ * Tier field costs the page no statement. Null for an unknown id, a non-UUID included, so no 22P02 reaches a 500.
  */
 final class DealRecordQuery
 {
     private const string SQL = <<<'SQL'
-        SELECT d.id, d.name, d.company_id, d.tier, d.amount_rappen, d.contract_start_on, d.contract_end_on,
+        SELECT d.id, d.name, d.company_id, dt.code AS tier_code, dt.name AS tier_name, dt.rank_weight AS tier_rank_weight,
+               d.amount_rappen, d.contract_start_on, d.contract_end_on,
                d.expected_close_on, d.stage_code, d.owner_id, d.lost_reason, d.closed_at, d.created_at,
                c.name AS company_name, u.display_name AS owner_name,
-               d.venue_id, v.number AS venue_number, v.name AS venue_name, v.tier AS venue_tier,
+               d.venue_id, v.number AS venue_number, v.name AS venue_name,
+               vt.code AS venue_tier_code, vt.name AS venue_tier_name, vt.rank_weight AS venue_tier_rank_weight,
                tw.name AS venue_town, v.canton_code AS venue_canton,
                COALESCE((
                    SELECT json_agg(json_build_object('id', p.id, 'first_name', p.first_name, 'last_name', p.last_name,
@@ -35,6 +38,11 @@ final class DealRecordQuery
                    JOIN venues lv ON lv.id = lc.venue_id
                    WHERE lc.id = d.company_id
                ), '[]') AS company_venues,
+               COALESCE((
+                   SELECT json_agg(json_build_object('id', t.code, 'label', t.name)
+                                   ORDER BY t.rank_weight DESC, t.price_rappen DESC, t.code)
+                   FROM tiers t
+               ), '[]') AS tier_options,
                s.is_won AND d.contract_end_on IS NOT NULL
                    AND NOT EXISTS (SELECT 1 FROM crm_deals r WHERE r.renewed_from_id = d.id) AS renewable
         FROM crm_deals d
@@ -42,6 +50,8 @@ final class DealRecordQuery
         JOIN crm_companies c ON c.id = d.company_id
         LEFT JOIN admin_users u ON u.id = d.owner_id
         LEFT JOIN venues v ON v.id = d.venue_id
+        LEFT JOIN tiers vt ON vt.id = v.tier_id
+        LEFT JOIN tiers dt ON dt.id = d.tier_id
         LEFT JOIN towns tw ON tw.id = v.town_id
         WHERE d.id = :id
         SQL;
@@ -70,10 +80,10 @@ final class DealRecordQuery
                 (string) $row['venue_id'],
                 (int) $row['venue_number'],
                 (string) $row['venue_name'],
-                Tier::from((string) $row['venue_tier']),
+                TierLabel::of((string) $row['venue_tier_code'], (string) $row['venue_tier_name'], (int) $row['venue_tier_rank_weight']),
                 VenuePlace::of(self::text($row['venue_town']), self::text($row['venue_canton']), null),
             ),
-            null === $row['tier'] ? null : Tier::from((string) $row['tier']),
+            TierLabel::tryFromRow($row),
             null === $row['amount_rappen'] ? null : (int) $row['amount_rappen'],
             self::text($row['contract_start_on']),
             self::text($row['contract_end_on']),
@@ -91,6 +101,7 @@ final class DealRecordQuery
                 self::text($contact['position']),
             ), self::list($row['contacts'])),
             self::options($row['company_venues']),
+            self::options($row['tier_options']),
             (bool) $row['renewable'],
         );
     }

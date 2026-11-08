@@ -12,7 +12,7 @@ use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
@@ -83,11 +83,27 @@ final class DealPropertyApiTest extends WebTestCase
         $this->patch($deal->id(), ['field' => 'owner', 'value' => $owner->id(), 'expected' => null]);
         self::assertSame(['value' => $owner->id(), 'display' => null, 'draft' => null], $this->answer());
 
-        $this->patch($deal->id(), ['field' => 'tier', 'value' => Tier::Premium->value, 'expected' => null]);
-        self::assertSame(['value' => 'premium', 'display' => null, 'draft' => null], $this->answer());
+        $this->patch($deal->id(), ['field' => 'tier', 'value' => KnownTiers::PRO, 'expected' => null]);
+        self::assertSame(['value' => 'pro', 'display' => null, 'draft' => null], $this->answer());
+        self::assertSame('pro', $this->connection->fetchOne('SELECT t.code FROM crm_deals d JOIN tiers t ON t.id = d.tier_id WHERE d.id = ?', [$deal->id()]));
+
+        $this->patch($deal->id(), ['field' => 'tier', 'value' => '', 'expected' => 'pro']);
+        self::assertSame(['value' => null, 'display' => null, 'draft' => null], $this->answer());
 
         $this->patch($deal->id(), ['field' => 'venue', 'value' => $venue->id(), 'expected' => null]);
         self::assertSame(['value' => $venue->id(), 'display' => null, 'draft' => null], $this->answer());
+    }
+
+    public function test_a_tier_added_later_is_a_choice_at_once(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $deal = DealFactory::createOne();
+        $this->connection->executeStatement("INSERT INTO tiers (id, code, name, price_rappen, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max) VALUES (gen_random_uuid(), 'team', 'Team', 49900, 5, 20, 5, 2, 2, TRUE, FALSE, FALSE, NULL)");
+
+        $this->patch($deal->id(), ['field' => 'tier', 'value' => 'team', 'expected' => null]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['value' => 'team', 'display' => null, 'draft' => null], $this->answer());
     }
 
     public function test_an_unchanged_value_is_a_success_without_an_audit_row(): void
@@ -127,6 +143,7 @@ final class DealPropertyApiTest extends WebTestCase
         yield 'no such day' => ['expected_close', '2027-02-30'];
         yield 'not a date' => ['contract_start', '1.3.2027'];
         yield 'no such tier' => ['tier', 'gold'];
+        yield 'a tier of the old enum' => ['tier', 'premium'];
         yield 'no id' => ['owner', 'andrea'];
         yield 'no id for a venue' => ['venue', '42'];
     }

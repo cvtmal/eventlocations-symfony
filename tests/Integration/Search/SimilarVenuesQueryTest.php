@@ -13,11 +13,14 @@ use App\Search\ReadModel\SimilarVenuesQuery;
 use App\Shared\Translation\TranslationJoin;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Uid\Uuid;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -41,7 +44,7 @@ final class SimilarVenuesQueryTest extends KernelTestCase
         $this->connection = $em->getConnection();
         $this->connection->beginTransaction();
         $locale = ListingQueryTest::enabledLocale();
-        $this->query = new SimilarVenuesQuery($this->connection, new TranslationJoin($locale), $locale);
+        $this->query = new SimilarVenuesQuery($this->connection, new TranslationJoin($locale), $locale, new EntitlementResolver($this->connection), new MockClock('2026-11-07 10:00:00'));
         $this->zurich = $this->town('Zürich');
     }
 
@@ -154,6 +157,29 @@ final class SimilarVenuesQueryTest extends KernelTestCase
         self::assertNull($similar[1]->photo);
     }
 
+    public function test_a_pro_card_is_promoted_and_a_free_card_is_not(): void
+    {
+        $me = $this->venue('Ich', $this->zurich);
+        $this->venue('Bezahlt', $this->zurich, lat: $this->zurich->lat() + 0.001, lng: $this->zurich->lng(), tier: KnownTiers::PRO);
+        $this->venue('Gratis', $this->zurich, lat: $this->zurich->lat() + 0.01, lng: $this->zurich->lng());
+
+        $similar = $this->query->forVenue($me->id(), 'de');
+
+        self::assertSame([['Bezahlt', true], ['Gratis', false]], array_map(static fn (SimilarVenue $venue): array => [$venue->name, $venue->promoted], $similar));
+    }
+
+    public function test_a_plan_without_photos_shows_no_photo(): void
+    {
+        $me = $this->venue('Ich', $this->zurich);
+        $other = $this->venue('Mit Fotos', $this->zurich, lat: $this->zurich->lat() + 0.001, lng: $this->zurich->lng());
+        VenuePhotoFactory::createOne(['venue' => $other, 'position' => 1]);
+        self::assertNotNull($this->query->forVenue($me->id(), 'de')[0]->photo);
+
+        $this->connection->executeStatement("UPDATE tiers SET photos_max = 0 WHERE code = 'free'");
+
+        self::assertNull($this->query->forVenue($me->id(), 'de')[0]->photo);
+    }
+
     /**
      * @return list<string>
      */
@@ -162,10 +188,11 @@ final class SimilarVenuesQueryTest extends KernelTestCase
         return array_map(static fn (SimilarVenue $v): string => $v->name, $this->query->forVenue($me->id(), 'de'));
     }
 
-    private function venue(string $name, Town $town, ?int $min = null, int $max = 120, ?float $lat = null, ?float $lng = null): Venue
+    private function venue(string $name, Town $town, ?int $min = null, int $max = 120, ?float $lat = null, ?float $lng = null, string $tier = KnownTiers::FREE): Venue
     {
         $venue = VenueFactory::createOne(array_filter([
             'name' => $name,
+            'tier' => $tier,
             'town' => $town,
             'capacityMin' => $min,
             'capacityMax' => $max,

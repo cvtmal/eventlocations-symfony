@@ -17,6 +17,7 @@ use App\Venues\Entity\Venue;
 use App\Venues\Exception\VenueNotFound;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\ORM\Events;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
@@ -28,6 +29,9 @@ final class AddVenuePhotoTest extends KernelTestCase
 {
     use Factories;
     use HandlesVenueMedia;
+
+    /** `photos_max` of the seeded Free plan. */
+    private const int FREE_PHOTOS = 6;
 
     public function test_the_photo_is_stored_rendered_published_and_appended(): void
     {
@@ -180,10 +184,14 @@ final class AddVenuePhotoTest extends KernelTestCase
         self::assertInstanceOf(\InvalidArgumentException::class, $this->failure(new AddVenuePhoto($venue->number(), null, $this->upload(), 'gif')));
     }
 
-    public function test_a_31st_photo_is_refused_on_the_file_field_and_stores_nothing(): void
+    /**
+     * F12: the limit is the plan's `photos_max` for the whole venue. Free holds six, so the seventh is refused on the
+     * file field with a message that names the plan and the limit, and nothing is stored.
+     */
+    public function test_a_seventh_photo_is_refused_on_free_with_the_plan_in_the_message_and_stores_nothing(): void
     {
-        $venue = VenueFactory::createOne();
-        $this->fillScope($venue, AddVenuePhoto::MAX_PHOTOS);
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE]);
+        $this->fillScope($venue, self::FREE_PHOTOS);
         $source = $this->upload();
         $stagingBefore = $this->stagingEntries();
 
@@ -192,40 +200,73 @@ final class AddVenuePhotoTest extends KernelTestCase
         self::assertInstanceOf(VenueRuleViolation::class, $failure);
         self::assertSame('venue.error.too_many_photos', $failure->translationKey());
         self::assertSame('file', $failure->field);
-        self::assertCount(30, $this->scope($venue->id()));
+        self::assertSame(['max' => 6, 'tier' => 'Free'], $failure->parameters);
+        self::assertCount(self::FREE_PHOTOS, $this->scope($venue->id()));
         self::assertFileDoesNotExist($this->paths->original('cms/'.$venue->number().'/'.hash_file('sha256', $source).'.jpg'));
         self::assertSame($stagingBefore, $this->stagingEntries());
         self::assertFalse($this->cmsEdited($venue->number()));
     }
 
+    public function test_a_pro_venue_takes_the_seventh_photo(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO]);
+        $this->fillScope($venue, self::FREE_PHOTOS);
+
+        $added = $this->addPhoto($venue->number(), $this->upload());
+
+        self::assertFalse($added->duplicate);
+        self::assertCount(self::FREE_PHOTOS + 1, $this->scope($venue->id()));
+    }
+
     public function test_at_the_limit_the_same_file_stays_a_duplicate(): void
     {
-        $venue = VenueFactory::createOne();
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE]);
         $number = $venue->number();
-        $this->fillScope($venue, AddVenuePhoto::MAX_PHOTOS - 1);
+        $this->fillScope($venue, self::FREE_PHOTOS - 1);
         $source = $this->upload();
-        $thirtieth = $this->addPhoto($number, $source);
+        $sixth = $this->addPhoto($number, $source);
 
         $again = $this->addPhoto($number, $source);
 
-        self::assertFalse($thirtieth->duplicate);
+        self::assertFalse($sixth->duplicate);
         self::assertTrue($again->duplicate);
-        self::assertSame($thirtieth->photoId, $again->photoId);
+        self::assertSame($sixth->photoId, $again->photoId);
     }
 
-    public function test_a_room_at_the_limit_does_not_stop_the_gallery(): void
+    /**
+     * The limit counts the venue's photos together, the gallery's and the rooms' (it used to be 30 per scope): a full
+     * room stops the gallery, and the other way round.
+     */
+    public function test_room_photos_and_gallery_photos_count_together(): void
     {
-        $venue = VenueFactory::createOne();
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE]);
         $room = RoomFactory::createOne(['venue' => $venue]);
         $roomId = $room->id();
         $number = $venue->number();
-        $this->fillScope($venue, AddVenuePhoto::MAX_PHOTOS, $room);
+        $this->fillScope($venue, self::FREE_PHOTOS - 2, $room);
+        $this->fillScope($venue, 2);
 
-        $inGallery = $this->addPhoto($number, $this->upload());
+        $inGallery = $this->failure(new AddVenuePhoto($number, null, $this->upload(), 'jpg'));
         $inRoom = $this->failure(new AddVenuePhoto($number, $roomId, $this->upload(), 'jpg'));
 
-        self::assertFalse($inGallery->duplicate);
+        self::assertInstanceOf(VenueRuleViolation::class, $inGallery);
         self::assertInstanceOf(VenueRuleViolation::class, $inRoom);
+        self::assertSame(2, \count($this->scope($venue->id())));
+        self::assertSame(self::FREE_PHOTOS - 2, \count($this->scope($venue->id(), $roomId)));
+    }
+
+    public function test_a_plan_edit_moves_the_limit_at_once(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE]);
+        $this->fillScope($venue, self::FREE_PHOTOS);
+        self::assertInstanceOf(VenueRuleViolation::class, $this->failure(new AddVenuePhoto($venue->number(), null, $this->upload(), 'jpg')));
+
+        $this->connection->executeStatement("UPDATE tiers SET photos_max = 7 WHERE code = 'free'");
+        $added = $this->addPhoto($venue->number(), $this->upload());
+
+        self::assertFalse($added->duplicate);
+        self::assertCount(7, $this->scope($venue->id()));
+        self::assertInstanceOf(VenueRuleViolation::class, $this->failure(new AddVenuePhoto($venue->number(), null, $this->upload(), 'jpg')));
     }
 
     private function fillScope(Venue $venue, int $photos, ?Room $room = null): void

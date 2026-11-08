@@ -45,9 +45,8 @@
 
 {{ sg.section_open('tier-badge', 'tier_badge') }}
     <div class="card__body styleguide__row">
-        {% for tier in ['beliebte_location', 'empfehlung', 'top_premium', 'premium', 'basic'] %}
-            {{ include('admin/components/_tier_badge.html.twig', {tier: tier, label: ('tier.' ~ tier)|trans({}, 'venues')}, with_context = false) }}
-        {% endfor %}
+        {{ include('admin/components/_tier_badge.html.twig', {label: 'Free', promoted: false}, with_context = false) }}
+        {{ include('admin/components/_tier_badge.html.twig', {label: 'Pro', promoted: true}, with_context = false) }}
     </div>
 </section>
 
@@ -194,7 +193,7 @@
     } only %}
         {% block media %}<span class="record-header__placeholder">{{ admin_icon('landmark') }}</span>{% endblock %}
         {% block meta %}
-            {{ include('admin/components/_tier_badge.html.twig', {tier: 'beliebte_location', label: 'tier.beliebte_location'|trans({}, 'venues')}, with_context = false) }}
+            {{ include('admin/components/_tier_badge.html.twig', {label: 'Pro', promoted: true}, with_context = false) }}
             {{ include('admin/components/_pill.html.twig', {label: 'styleguide.pill_green'|trans({}, 'admin'), tone: 'green', dot: true}, with_context = false) }}
         {% endblock %}
         {% block actions %}

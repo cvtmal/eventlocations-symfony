@@ -16,6 +16,7 @@ use App\Venues\Command\ReorderVenueDocuments;
 use App\Venues\Command\RetitleVenueDocument;
 use App\Venues\Exception\StaleEdit;
 use App\Venues\Exception\VenueRowNotFound;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Events;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -32,7 +33,8 @@ final class DocumentCommandsTest extends KernelTestCase
 
     public function test_add_document_stores_the_original_publishes_the_pdf_and_purges_the_venue_only(): void
     {
-        $venue = VenueFactory::createOne();
+        // Pro: the venue holds a PDF already, and Free holds one (F12).
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO]);
         $number = $venue->number();
         VenueDocumentFactory::createOne(['venue' => $venue, 'position' => 1]);
         $this->em->clear();
@@ -52,6 +54,27 @@ final class DocumentCommandsTest extends KernelTestCase
         self::assertTrue($this->cmsEdited($number));
         self::assertSame([$number], $this->purger()->venues);
         self::assertSame(0, $this->purger()->listings);
+    }
+
+    /**
+     * F12: the plan's `documents_max` is checked before the PDF is stored; the message names the plan and the limit.
+     */
+    public function test_a_second_pdf_is_refused_on_free_and_stores_nothing(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE]);
+        $number = $venue->number();
+        VenueDocumentFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $this->em->clear();
+        $source = $this->uploadPdf('Zweite Liste');
+
+        $violation = $this->violation(new AddVenueDocument($number, $source, ['de' => 'Zweite Liste']));
+
+        self::assertSame('documents.error.too_many', $violation->translationKey());
+        self::assertSame('file', $violation->field);
+        self::assertSame(['max' => 1, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM venue_documents WHERE venue_id = ?', [$venue->id()]));
+        self::assertFileDoesNotExist($this->paths->original('cms/'.$number.'/'.hash_file('sha256', $source).'.pdf'));
+        self::assertFalse($this->cmsEdited($number));
     }
 
     public function test_the_same_pdf_again_or_a_missing_title_is_refused_and_writes_nothing(): void
@@ -190,7 +213,8 @@ final class DocumentCommandsTest extends KernelTestCase
 
     public function test_remove_document_deletes_the_pdf_and_an_unused_original_but_keeps_a_shared_one(): void
     {
-        $venue = VenueFactory::createOne();
+        // Pro: two PDFs are added in a row, and Free holds one (F12).
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO]);
         $number = $venue->number();
         $this->em->clear();
         $first = $this->dispatch(new AddVenueDocument($number, $this->uploadPdf('Eins'), ['de' => 'Eins']));

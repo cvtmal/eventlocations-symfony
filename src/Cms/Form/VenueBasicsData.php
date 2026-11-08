@@ -8,7 +8,6 @@ use App\Cms\ReadModel\VenueEdit;
 use App\Venues\Command\ChangeVenueBasics;
 use App\Venues\Controller\VenueDetailController;
 use App\Venues\SlugAllocator;
-use App\Venues\ValueObject\Tier;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -28,7 +27,7 @@ final class VenueBasicsData implements VenueCardData
     public ?string $slug = null;
 
     #[Assert\NotNull(message: 'cms.venue.tier.required')]
-    public ?Tier $tier = null;
+    public ?string $tier = null;
 
     #[Assert\Range(notInRangeMessage: 'cms.venue.capacity.range', min: 1, max: 50000)]
     public ?int $capacityMin = null;
@@ -47,7 +46,7 @@ final class VenueBasicsData implements VenueCardData
         $data->name = $edit->header->name;
         $data->slug = $edit->header->slug;
         $data->loadedSlug = $edit->header->slug;
-        $data->tier = $edit->header->tier;
+        $data->tier = $edit->header->tier->code;
         $data->capacityMin = $edit->capacityMin;
         $data->capacityMax = $edit->capacityMax;
 

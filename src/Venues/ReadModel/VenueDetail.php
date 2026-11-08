@@ -7,12 +7,14 @@ namespace App\Venues\ReadModel;
 use App\Media\ValueObject\Picture;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\Term;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 
 /**
  * Everything the venue detail page (`venue_show`, DP-2 to DP-17) renders, in one locale. The
  * phone number itself is not part of it (DP-11: never in the page HTML), only `hasPhone`.
+ * What the venue's tier does not allow is already cut here (F12): `hasPhone` and `website` are
+ * empty on a tier without visible contact data, `documents`, `rooms` and `photos` hold the
+ * first N by position, and `promoted` is the "Top-Eintrag" label. Templates decide nothing.
  * `coordinatesFromTown` says lat/lng are the town centre ("Ortsmitte übernehmen", #24), not
  * the venue's own point: no map pin and no geo data may claim them. `googlePlaceId` is the only
  * Google value we hold (#53); the rating itself is never read or stored, Google's element shows it.
@@ -31,7 +33,7 @@ final readonly class VenueDetail
         public string $id,
         public int $number,
         public string $name,
-        public Tier $tier,
+        public bool $promoted,
         public string $slug,
         public string $summary,
         public ?string $description,

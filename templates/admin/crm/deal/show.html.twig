@@ -57,9 +57,9 @@
             {% block body %}
                 <form id="deal-tier-form" method="post" action="{{ path('admin_crm_deals_apply_tier', {id: deal.id}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
-                    <input type="hidden" name="expected" value="{{ offer.current.value }}">
+                    <input type="hidden" name="expected" value="{{ offer.current.code }}">
                     <input type="hidden" name="return_to" value="{{ path('admin_crm_deals_show', {id: deal.id}) }}">
-                    <p>{{ 'deal.tier.text'|trans({venue: offer.venueName, current: offer.current|trans, offered: offer.offered|trans}, 'crm') }}</p>
+                    <p>{{ 'deal.tier.text'|trans({venue: offer.venueName, current: offer.current.name, offered: offer.offered.name}, 'crm') }}</p>
                 </form>
             {% endblock %}
             {% block footer %}
@@ -154,7 +154,7 @@
                         <span class="crm-side__thumb">{{ admin_icon('landmark') }}</span>
                         <span class="crm-side__text">
                             <a class="crm-side__link" href="{{ path('admin_locations_edit', {number: deal.venue.number}) }}">{{ deal.venue.name }}</a>
-                            <span class="crm-side__detail">{{ deal.venue.tier|trans }}{% if deal.venue.place.isKnown %} · {{ deal.venue.place|trans }}{% endif %}</span>
+                            <span class="crm-side__detail">{{ deal.venue.tier.name }}{% if deal.venue.place.isKnown %} · {{ deal.venue.place|trans }}{% endif %}</span>
                         </span>
                     </li>
                 </ul>

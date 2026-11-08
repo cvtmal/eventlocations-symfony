@@ -7,7 +7,7 @@ namespace App\Cms\ReadModel;
 use App\Media\ValueObject\ImageVariants;
 use App\Media\ValueObject\Picture;
 use App\Shared\Translation\EnabledLocale;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenuePlace;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
@@ -34,12 +34,13 @@ final class VenueHeaderQuery
 
         $row = $this->connection->fetchAssociative(
             <<<'SQL'
-                SELECT v.id, v.number, v.name, v.tier, v.status, v.street, v.zip, v.content_key, v.cms_edited_at, v.updated_at,
+                SELECT v.id, v.number, v.name, tr.code AS tier_code, tr.name AS tier_name, tr.rank_weight AS tier_rank_weight, v.status, v.street, v.zip, v.content_key, v.cms_edited_at, v.updated_at,
                        v.canton_code, tw.name AS town_name, t.slug, t.region,
                        cover.id AS cover_id, cover.width AS cover_width, cover.height AS cover_height,
                        cover.dominant_color AS cover_color, cover.variants AS cover_variants,
                        editor.created_at AS edited_at, editor.display_name AS editor_name
                 FROM venues v
+                JOIN tiers tr ON tr.id = v.tier_id
                 LEFT JOIN towns tw ON tw.id = v.town_id
                 LEFT JOIN venue_translations t ON t.venue_id = v.id AND t.locale = :locale
                 LEFT JOIN LATERAL (
@@ -91,7 +92,7 @@ final class VenueHeaderQuery
             number: $number,
             id: (string) $row['id'],
             name: (string) $row['name'],
-            tier: Tier::from((string) $row['tier']),
+            tier: TierLabel::fromRow($row),
             status: $status,
             isPublished: VenueStatus::Published === $status,
             place: VenuePlace::of(self::string($row['town_name']), self::string($row['canton_code']), self::string($row['region'])),

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Search\ReadModel;
 
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenuePlace;
 
 /**
- * One card of "Ähnliche Locations" on the detail page (DP-15): photo, badge, name, town,
- * capacity.
+ * One card of "Ähnliche Locations" on the detail page (DP-15): photo, "Top-Eintrag" label, name,
+ * town, capacity.
  */
 final readonly class SimilarVenue
 {
@@ -18,7 +17,7 @@ final readonly class SimilarVenue
         public int $number,
         public string $slug,
         public string $name,
-        public Tier $tier,
+        public bool $promoted,
         public VenuePlace $place,
         public ?int $capacityMin,
         public int $capacityMax,

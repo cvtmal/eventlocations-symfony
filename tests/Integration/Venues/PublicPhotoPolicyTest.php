@@ -26,6 +26,7 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Tests\Support\Venues\PublicPhotos;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenuePhoto;
 use App\Venues\PublicPhotoPolicy;
@@ -34,6 +35,7 @@ use App\Venues\ReadModel\VenueDetail;
 use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ReadModel\VenueSitemapQuery;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\ModerationDecision;
 use App\Venues\ValueObject\ModerationKind;
 use Doctrine\DBAL\Connection;
@@ -119,7 +121,7 @@ final class PublicPhotoPolicyTest extends KernelTestCase
     public function test_the_merkliste_shows_only_granted_photos(): void
     {
         $saved = $this->venue();
-        $other = VenueFactory::createOne(['name' => 'Andere Location', 'town' => DetailVenues::town('Bern')]);
+        $other = VenueFactory::createOne(['tier' => KnownTiers::PRO, 'name' => 'Andere Location', 'town' => DetailVenues::town('Bern')]);
         VenueTranslationFactory::createOne(['venue' => $other, 'slug' => 'andere-location']);
         VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $other, 'position' => 1]);
 
@@ -133,10 +135,10 @@ final class PublicPhotoPolicyTest extends KernelTestCase
     public function test_the_similar_venues_carry_the_first_granted_photo(): void
     {
         $venue = $this->venue();
-        $none = VenueFactory::createOne(['name' => 'Nur ohne Freigabe', 'town' => DetailVenues::town('Zürich')]);
+        $none = VenueFactory::createOne(['tier' => KnownTiers::PRO, 'name' => 'Nur ohne Freigabe', 'town' => DetailVenues::town('Zürich')]);
         VenueTranslationFactory::createOne(['venue' => $none, 'slug' => 'nur-ohne-freigabe']);
         VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $none, 'position' => 1]);
-        $me = VenueFactory::createOne(['name' => 'Ich', 'town' => DetailVenues::town('Zürich')]);
+        $me = VenueFactory::createOne(['tier' => KnownTiers::PRO, 'name' => 'Ich', 'town' => DetailVenues::town('Zürich')]);
         VenueTranslationFactory::createOne(['venue' => $me, 'slug' => 'ich']);
 
         $similar = $this->similar()->forVenue($me->id(), 'de');
@@ -180,7 +182,7 @@ final class PublicPhotoPolicyTest extends KernelTestCase
     {
         $first = $this->venue(rooms: false);
         $this->connection->executeStatement('UPDATE media_rights_grants SET revoked_at = now(), revoked_by_type = ?, revoked_by_ref = ? WHERE venue_id = ?', ['staff', 'test', $first->id()]);
-        $second = VenueFactory::createOne(['name' => 'Mit Freigabe', 'town' => DetailVenues::town('Bern')]);
+        $second = VenueFactory::createOne(['tier' => KnownTiers::PRO, 'name' => 'Mit Freigabe', 'town' => DetailVenues::town('Bern')]);
         VenueTranslationFactory::createOne(['venue' => $second, 'slug' => 'mit-freigabe']);
         $photo = VenuePhotoFactory::createOne(['venue' => $second, 'position' => 1]);
 
@@ -387,7 +389,7 @@ final class PublicPhotoPolicyTest extends KernelTestCase
      */
     private function venue(bool $rooms = true): Venue
     {
-        $venue = VenueFactory::createOne(['name' => 'Seehaus Policy', 'town' => DetailVenues::town('Zürich')]);
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO, 'name' => 'Seehaus Policy', 'town' => DetailVenues::town('Zürich')]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => 'seehaus-policy']);
 
         $photo = static fn (int $position, ?object $room = null): VenuePhoto => VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'room' => $room, 'position' => $position]);
@@ -496,7 +498,7 @@ final class PublicPhotoPolicyTest extends KernelTestCase
         $translator = self::getContainer()->get('translator');
         self::assertInstanceOf(TranslatorInterface::class, $translator);
         $locale = ListingQueryTest::enabledLocale();
-        $detail = new VenueDetailQuery($this->connection, new TranslationJoin($locale), $locale, $translator)->detail($venue->number(), 'de', $includeUnpublished);
+        $detail = new VenueDetailQuery($this->connection, new TranslationJoin($locale), $locale, $translator, new EntitlementResolver($this->connection), new MockClock('2026-10-30 10:00:00', 'UTC'))->detail($venue->number(), 'de', $includeUnpublished);
         self::assertNotNull($detail);
 
         return $detail;
@@ -506,19 +508,19 @@ final class PublicPhotoPolicyTest extends KernelTestCase
     {
         $locale = ListingQueryTest::enabledLocale();
 
-        return new ListingQuery($this->connection, new TranslationJoin($locale), $locale, new MockClock('2026-10-30 10:00:00', 'UTC'));
+        return new ListingQuery($this->connection, new TranslationJoin($locale), $locale, new MockClock('2026-10-30 10:00:00', 'UTC'), new EntitlementResolver($this->connection));
     }
 
     private function similar(): SimilarVenuesQuery
     {
         $locale = ListingQueryTest::enabledLocale();
 
-        return new SimilarVenuesQuery($this->connection, new TranslationJoin($locale), $locale);
+        return new SimilarVenuesQuery($this->connection, new TranslationJoin($locale), $locale, new EntitlementResolver($this->connection), new MockClock('2026-10-30 10:00:00', 'UTC'));
     }
 
     private function sitemap(): VenueSitemapQuery
     {
-        return new VenueSitemapQuery($this->connection, ListingQueryTest::enabledLocale());
+        return new VenueSitemapQuery($this->connection, ListingQueryTest::enabledLocale(), new EntitlementResolver($this->connection), new MockClock('2026-10-30 10:00:00', 'UTC'));
     }
 
     private function policy(): PublicPhotoPolicy

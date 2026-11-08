@@ -8,6 +8,7 @@ use App\Crm\Command\ChangeDealProperty;
 use App\Crm\CrmApi;
 use App\Crm\Form\PropertyConstraints;
 use App\Crm\ReadModel\RecordPropertyQuery;
+use App\Crm\TierChoices;
 use App\Crm\ValueObject\DealProperty;
 use App\Crm\ValueObject\PropertyValue;
 use App\Shared\Translation\LocalizedRoutes;
@@ -39,6 +40,7 @@ final class DealPropertyController extends AbstractController
         CrmApi $api,
         ValidatorInterface $validator,
         RecordPropertyQuery $properties,
+        TierChoices $tiers,
         MessageBusInterface $commandBus,
     ): JsonResponse {
         $edit = $api->propertyEdit($request, array_map(static fn (DealProperty $property): string => $property->value, DealProperty::cases()));
@@ -47,8 +49,10 @@ final class DealPropertyController extends AbstractController
         }
 
         $property = DealProperty::from($edit->field);
+        // The codes of `tiers` cost a statement, which only the tier's own edit needs.
+        $tierCodes = DealProperty::Tier === $property ? $tiers->codes() : [];
         $violations = $validator->startContext()
-            ->atPath('value')->validate(PropertyValue::canonical($edit->value), new Assert\Sequentially(PropertyConstraints::deal($property)))
+            ->atPath('value')->validate(PropertyValue::canonical($edit->value), new Assert\Sequentially(PropertyConstraints::deal($property, $tierCodes)))
             ->getViolations();
         if (\count($violations) > 0) {
             return $api->invalid($violations);

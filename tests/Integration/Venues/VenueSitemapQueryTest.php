@@ -8,19 +8,25 @@ use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\ValueObject\Canton;
+use App\Media\ValueObject\Picture;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Search\LandingFixtures;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\EntitlementResolver;
+use App\Venues\Entity\Room;
 use App\Venues\Entity\Venue;
 use App\Venues\ReadModel\IndexedVenue;
 use App\Venues\ReadModel\SitemapFile;
 use App\Venues\ReadModel\SitemapVenue;
+use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ReadModel\VenueSitemapQuery;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
 use Zenstruck\Foundry\Test\Factories;
 
 final class VenueSitemapQueryTest extends KernelTestCase
@@ -43,7 +49,7 @@ final class VenueSitemapQueryTest extends KernelTestCase
         $this->em = $em;
         $this->connection = $em->getConnection();
         $this->connection->beginTransaction();
-        $this->query = new VenueSitemapQuery($this->connection, ListingQueryTest::enabledLocale());
+        $this->query = new VenueSitemapQuery($this->connection, ListingQueryTest::enabledLocale(), new EntitlementResolver($this->connection), new MockClock('2026-11-07 10:00:00'));
     }
 
     protected function tearDown(): void
@@ -128,11 +134,74 @@ final class VenueSitemapQueryTest extends KernelTestCase
 
         $images = $this->query->page(1)[0]->imageUrls;
 
-        self::assertCount(5, $images);
+        self::assertCount(4, $images, 'three gallery photos and the first photo of the hall; its second photo is shown nowhere on the page');
         foreach ($images as $image) {
             self::assertMatchesRegularExpression('#^/media/'.$venue->number().'/[0-9a-f-]+-1280\.jpg$#', $image);
         }
         self::assertSame($this->venuePhotoId($venue), substr($images[0], \strlen('/media/'.$venue->number().'/'), 36));
+    }
+
+    /**
+     * F12: the sitemap advertises what the page shows. Free is cut to its photo limit, in the page's order
+     * (gallery by position, then the rooms); Pro lists all nine (eight gallery photos and one room photo).
+     */
+    public function test_a_free_venue_lists_only_the_photos_its_plan_shows(): void
+    {
+        $free = DetailVenues::overfull(KnownTiers::FREE, 'haus-klein', 'Haus Klein');
+        $pro = DetailVenues::overfull(KnownTiers::PRO, 'haus-gross', 'Haus Gross');
+
+        $images = [];
+        foreach ($this->query->page(1) as $venue) {
+            $images[$venue->slug] = $venue->imageUrls;
+        }
+
+        self::assertCount(6, $images['haus-klein']);
+        self::assertCount(DetailVenues::OVERFULL_GALLERY + 1, $images['haus-gross']);
+        self::assertSame(\array_slice($this->galleryIds($free), 0, 6), array_map(static fn (string $image): string => substr($image, \strlen('/media/'.$free->number().'/'), 36), $images['haus-klein']));
+        self::assertSame($this->galleryIds($pro), array_map(static fn (string $image): string => substr($image, \strlen('/media/'.$pro->number().'/'), 36), \array_slice($images['haus-gross'], 0, DetailVenues::OVERFULL_GALLERY)));
+    }
+
+    /**
+     * F12, review: the page shows the gallery, then the FIRST photo of each visible room (rooms by position); the sitemap
+     * must advertise the same set, not "the first N photos of all". Free, 4 gallery photos, room A with a second photo
+     * the page never shows, and room B, which Free hides with its photo.
+     */
+    public function test_the_sitemap_advertises_exactly_the_photos_the_page_shows(): void
+    {
+        $venue = DetailVenues::overfull(KnownTiers::FREE, 'haus-klein', 'Haus Klein', 4);
+        $rooms = $this->connection->fetchFirstColumn('SELECT id FROM rooms WHERE venue_id = ? ORDER BY position', [$venue->id()]);
+        self::assertCount(2, $rooms);
+        $roomA = $this->em->find(Room::class, $rooms[0]);
+        $roomB = $this->em->find(Room::class, $rooms[1]);
+        self::assertInstanceOf(Room::class, $roomA);
+        self::assertInstanceOf(Room::class, $roomB);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $roomA, 'position' => 2]);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $roomB, 'position' => 1]);
+
+        $detailQuery = self::getContainer()->get(VenueDetailQuery::class);
+        self::assertInstanceOf(VenueDetailQuery::class, $detailQuery);
+        $detail = $detailQuery->detail($venue->number(), 'de');
+        self::assertNotNull($detail);
+        $pageIds = array_map(static fn (Picture $picture): string => $picture->photoId, $detail->photos);
+        foreach ($detail->rooms as $room) {
+            if (null !== $room->photo) {
+                $pageIds[] = $room->photo->photoId;
+            }
+        }
+        $sitemapIds = array_map(static fn (string $image): string => substr($image, \strlen('/media/'.$venue->number().'/'), 36), $this->query->page(1)[0]->imageUrls);
+
+        self::assertCount(5, $pageIds, 'four gallery photos and the first photo of the one visible room');
+        self::assertSame($pageIds, $sitemapIds);
+    }
+
+    public function test_a_plan_edit_moves_the_cut_of_the_sitemap_at_once(): void
+    {
+        DetailVenues::overfull(KnownTiers::FREE, 'haus-klein', 'Haus Klein');
+        self::assertCount(6, $this->query->page(1)[0]->imageUrls);
+
+        $this->connection->executeStatement("UPDATE tiers SET photos_max = 2 WHERE code = 'free'");
+
+        self::assertCount(2, $this->query->page(1)[0]->imageUrls);
     }
 
     public function test_a_venue_without_photos_has_no_images(): void
@@ -333,6 +402,17 @@ final class VenueSitemapQueryTest extends KernelTestCase
         ksort($changes);
 
         return array_map(static fn (\DateTimeImmutable $at): string => $at->format('c'), $changes);
+    }
+
+    /**
+     * @return list<string> the ids of the venue's gallery photos, by position
+     */
+    private function galleryIds(Venue $venue): array
+    {
+        /** @var list<string> $ids */
+        $ids = $this->connection->fetchFirstColumn('SELECT id FROM venue_photos WHERE venue_id = ? AND room_id IS NULL ORDER BY position', [$venue->id()]);
+
+        return $ids;
     }
 
     private function venuePhotoId(Venue $venue): string

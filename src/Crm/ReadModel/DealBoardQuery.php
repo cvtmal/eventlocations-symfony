@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\LostReason;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -21,10 +21,12 @@ final class DealBoardQuery
     private const string ZONE = 'Europe/Zurich';
 
     private const string CARDS = <<<'SQL'
-        SELECT id, name, company_name, stage_code, tier, amount_rappen, expected_close_on, closed_at, lost_reason, owner_name
+        SELECT id, name, company_name, stage_code, tier_code, tier_name, tier_rank_weight, amount_rappen, expected_close_on,
+               closed_at, lost_reason, owner_name
         FROM (
-            SELECT d.id, d.name, c.name AS company_name, d.stage_code, d.tier, d.amount_rappen, d.expected_close_on,
-                   d.closed_at, d.lost_reason, u.display_name AS owner_name,
+            SELECT d.id, d.name, c.name AS company_name, d.stage_code,
+                   dt.code AS tier_code, dt.name AS tier_name, dt.rank_weight AS tier_rank_weight, d.amount_rappen,
+                   d.expected_close_on, d.closed_at, d.lost_reason, u.display_name AS owner_name,
                    (s.is_won OR s.is_lost) AS closed,
                    row_number() OVER (
                        PARTITION BY d.stage_code
@@ -35,6 +37,7 @@ final class DealBoardQuery
             JOIN crm_companies c ON c.id = d.company_id
             JOIN crm_deal_stages s ON s.code = d.stage_code
             LEFT JOIN admin_users u ON u.id = d.owner_id
+            LEFT JOIN tiers dt ON dt.id = d.tier_id
             %s
         ) ranked
         WHERE rank <= CASE WHEN closed THEN %d ELSE %d END
@@ -96,7 +99,7 @@ final class DealBoardQuery
                 (string) $row['id'],
                 (string) $row['name'],
                 (string) $row['company_name'],
-                null === $row['tier'] ? null : Tier::from((string) $row['tier']),
+                TierLabel::tryFromRow($row),
                 null === $row['amount_rappen'] ? null : (int) $row['amount_rappen'],
                 null === $row['expected_close_on'] ? null : (string) $row['expected_close_on'],
                 null === $row['closed_at'] ? null : new \DateTimeImmutable((string) $row['closed_at'])->setTimezone($zone)->format('Y-m-d'),

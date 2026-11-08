@@ -21,7 +21,6 @@ use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\SourceStatus;
 use App\Venues\ValueObject\SourceType;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -38,7 +37,6 @@ final class VocabularyChecksTest extends KernelTestCase
      */
     public static function checks(): iterable
     {
-        yield 'tier' => ['chk_venues_tier', Tier::class];
         yield 'status' => ['chk_venues_status', VenueStatus::class];
         yield 'own catering' => ['chk_venues_own_catering', OwnCatering::class];
         yield 'floor material' => ['chk_rooms_floor_material', FloorMaterial::class];

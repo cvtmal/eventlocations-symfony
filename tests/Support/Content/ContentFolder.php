@@ -32,7 +32,6 @@ final class ContentFolder
     {
         return [
             'name' => $name,
-            'tier' => 'basic',
             'capacity' => ['max' => 120],
             'address' => ['street' => 'Musterweg 1', 'zip' => '8001', 'town' => 'Zürich'],
             'geo' => ['lat' => 47.37, 'lng' => 8.54],

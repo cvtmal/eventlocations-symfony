@@ -32,12 +32,12 @@ use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\CandidateOrigin;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\ImageCandidate;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\ModerationDecision;
 use App\Venues\ValueObject\ModerationKind;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
 use Faker\Generator;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
@@ -51,7 +51,7 @@ use function Zenstruck\Foundry\Persistence\flush_after;
  * 60 fictional demo venues (S8), loaded by `make seed` through AppStory.
  *
  * - Every canton (venue i is in canton i % 26, in its 1st–3rd most populous town), plus one
- *   Liechtenstein venue (#46), and every tier (3/6/9/12/30, spread over the cantons).
+ *   Liechtenstein venue (#46), and both tiers (15 Pro, 45 Free, spread over the cantons).
  * - 1–5 rooms, 0–2 documents, terms of the seven filter groups (one main building and one main
  *   setting each, 1–5 event types). No own rating or reviews: #53 retired them.
  * - Deterministic: faker is seeded and the distribution is index-based.
@@ -95,7 +95,7 @@ final class DemoStory extends Story
     ];
 
     /** 3 + 6 + 9 + 12 + 30 = 60. */
-    private const TIER_COUNTS = ['beliebte_location' => 3, 'empfehlung' => 6, 'top_premium' => 9, 'premium' => 12, 'basic' => 30];
+    private const TIER_COUNTS = [KnownTiers::PRO => 15, KnownTiers::FREE => 45];
 
     /** Venue i gets TIERS[(i * 13) % 60]; 13 is coprime to 60, so the tiers spread over the cantons. */
     private const TIER_STRIDE = 13;
@@ -159,7 +159,7 @@ final class DemoStory extends Story
         $created = [];
         $tiers = [];
         foreach (self::TIER_COUNTS as $tier => $count) {
-            array_push($tiers, ...array_fill(0, $count, Tier::from($tier)));
+            array_push($tiers, ...array_fill(0, $count, $tier));
         }
 
         for ($i = 0; $i < self::VENUES; ++$i) {
@@ -271,7 +271,7 @@ final class DemoStory extends Story
      *
      * @return array{Venue, list<Room>, list<VenueDocument>, VenueTranslation}
      */
-    private function createVenue(Generator $faker, int $i, string $name, string $slug, Tier $tier, Town $town, array $terms): array
+    private function createVenue(Generator $faker, int $i, string $name, string $slug, string $tier, Town $town, array $terms): array
     {
         $capacityMax = (int) $faker->randomElement(self::CAPACITIES);
         $factory = VenueFactory::new()->withFaq();

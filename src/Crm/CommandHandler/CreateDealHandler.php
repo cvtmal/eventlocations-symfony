@@ -13,11 +13,13 @@ use App\Crm\OwnerResolver;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\DealRepository;
 use App\Crm\Repository\DealStageRepository;
+use App\Crm\TierResolver;
 use App\Crm\ValueObject\PropertyValue;
 use App\Shared\Messenger\CommandHandlerInterface;
 
 /**
- * The form offers only the company's venues; the handler holds the rule under the company's lock.
+ * The form offers only the company's venues; the handler holds the rule under the company's lock. The tier comes as a
+ * code, which the form offers from `tiers`; an unknown one is the handler's `InvalidPropertyValue`, like an owner's.
  */
 final class CreateDealHandler implements CommandHandlerInterface
 {
@@ -26,6 +28,7 @@ final class CreateDealHandler implements CommandHandlerInterface
         private readonly DealRepository $deals,
         private readonly DealStageRepository $stages,
         private readonly OwnerResolver $owners,
+        private readonly TierResolver $tiers,
     ) {
     }
 
@@ -43,7 +46,7 @@ final class CreateDealHandler implements CommandHandlerInterface
             $company,
             $this->stages->get(DealStage::NEW),
             null === $command->venueId ? null : $this->companies->venueOf($company->id(), $command->venueId),
-            $command->tier,
+            $this->tiers->resolve($command->tierCode),
             $command->amountRappen,
             $command->contractStartOn,
             $command->contractEndOn,

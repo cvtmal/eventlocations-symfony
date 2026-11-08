@@ -69,15 +69,16 @@ final class TimelineQueryTest extends KernelTestCase
     {
         $company = CompanyFactory::createOne();
         $venue = $this->linkedVenue($company);
-        $this->audit($venue->number(), ChangeVenueBasics::class, '2026-10-21 09:00:00+00', ['changed' => ['name'], 'tier' => 'basic']);
-        $tier = $this->audit($venue->number(), ChangeVenueBasics::class, '2026-10-22 09:00:00+00', ['changed' => ['name', 'tier'], 'tier' => 'premium']);
+        $this->audit($venue->number(), ChangeVenueBasics::class, '2026-10-21 09:00:00+00', ['changed' => ['name'], 'tier' => 'free']);
+        $tier = $this->audit($venue->number(), ChangeVenueBasics::class, '2026-10-22 09:00:00+00', ['changed' => ['name', 'tier'], 'tier' => 'pro']);
+        // A code that no row has any more (F12) still reads: the island shows it as it is.
         $later = $this->audit($venue->number(), ChangeVenueTier::class, '2026-10-23 09:00:00+00', ['tier' => 'exklusiv']);
         $this->em->clear();
 
         $entries = $this->query()->page(RecordKind::Company, $company->id(), null, null)->entries;
 
         self::assertSame([$later, $tier], array_map(static fn (TimelineEntry $entry): string => $entry->id, $entries));
-        self::assertSame(['exklusiv', 'premium'], array_map(static fn (TimelineEntry $entry): ?string => $entry->tier, $entries));
+        self::assertSame(['exklusiv', 'pro'], array_map(static fn (TimelineEntry $entry): ?string => $entry->tier, $entries));
     }
 
     public function test_photo_text_and_foreign_events_never_show(): void

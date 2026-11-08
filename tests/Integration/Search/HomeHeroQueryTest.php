@@ -14,8 +14,9 @@ use App\Search\ReadModel\HomeHeroQuery;
 use App\Search\ReadModel\ListingQuery;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\TranslationJoin;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -102,10 +103,10 @@ final class HomeHeroQueryTest extends KernelTestCase
 
     public function test_the_fallback_skips_a_card_without_a_photo(): void
     {
-        $this->venue('Ohne Foto', ['tier' => Tier::BeliebteLocation]);
-        $photo = VenuePhotoFactory::createOne(['venue' => $this->venue('Mit Foto', ['tier' => Tier::Basic])]);
+        $this->venue('Ohne Foto', ['tier' => KnownTiers::PRO]);
+        $photo = VenuePhotoFactory::createOne(['venue' => $this->venue('Mit Foto', ['tier' => KnownTiers::FREE])]);
 
-        $cards = (new ListingQuery($this->connection, $this->translationJoin(), $this->locale(), new MockClock('2026-10-30 10:00:00', 'UTC')))->first(3, 1, 'de');
+        $cards = (new ListingQuery($this->connection, $this->translationJoin(), $this->locale(), new MockClock('2026-10-30 10:00:00', 'UTC'), new EntitlementResolver($this->connection)))->first(3, 1, 'de');
         self::assertSame('Ohne Foto', $cards[0]->name);
 
         $hero = HomeHero::fromCards($cards);

@@ -1,0 +1,56 @@
+{#
+    One tier (F12). Context from `TierEditController`: tier (TierDefinition), form, last_edit (?AuditLogRow).
+#}
+{% extends 'admin/base.html.twig' %}
+
+{% form_theme form 'admin/form/theme.html.twig' %}
+
+{% block title %}{{ 'tiers.editor.title'|trans({name: tier.name}, 'cms') }} – {{ 'shell.backoffice'|trans({}, 'admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumbs__item">{{ 'nav.section'|trans({}, 'cms') }}</li>
+    <li class="breadcrumbs__item"><a href="{{ path('admin_tiers') }}">{{ 'tiers.list.title'|trans({}, 'cms') }}</a></li>
+    <li class="breadcrumbs__item" aria-current="page">{{ tier.name }}</li>
+{% endblock %}
+
+{% block page_header %}
+    {%- set parts = ['tiers.editor.meta'|trans({code: tier.code, count: tier.venueCount, formatted: tier.venueCount|swiss_number}, 'cms')] -%}
+    {%- if last_edit -%}
+        {%- set when = last_edit.createdAt|swiss_date ~ ', ' ~ last_edit.timeInZurich -%}
+        {%- set parts = parts|merge([last_edit.actorName
+            ? 'editor.meta.edited_by'|trans({name: last_edit.actorName, date: when}, 'cms')
+            : 'editor.meta.edited_at'|trans({date: when}, 'cms')]) -%}
+    {%- endif -%}
+    {% embed 'admin/components/_record_header.html.twig' with {title: tier.name, subtitle: parts|join(' · ')} only %}{% endembed %}
+{% endblock %}
+
+{% block main %}
+    {{ form_start(form, {attr: {id: 'tier-form', novalidate: 'novalidate', 'aria-labelledby': 'tier-card', 'data-unsaved-guard': ''}}) }}
+        {% embed 'admin/components/_card.html.twig' with {title: 'tiers.editor.card'|trans({}, 'cms'), id: 'tier-card', editor_form: form} only %}
+            {% block body %}
+                {{ form_errors(editor_form) }}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(editor_form.name) }}
+                <div class="field-row">
+                    {{ form_row(editor_form.priceRappen) }}
+                    {{ form_row(editor_form.rankWeight) }}
+                </div>
+                {{ form_row(editor_form.vatLine) }}
+                <div class="field-row">
+                    {{ form_row(editor_form.photosMax) }}
+                    {{ form_row(editor_form.roomsMax) }}
+                    {{ form_row(editor_form.videosMax) }}
+                    {{ form_row(editor_form.documentsMax) }}
+                </div>
+                {{ form_row(editor_form.eventTypesMax) }}
+                {{ form_row(editor_form.contactVisible) }}
+                {{ form_row(editor_form.lastMinuteAllowed) }}
+                {{ form_row(editor_form.detailedReport) }}
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'editor.save'|trans({}, 'cms'), variant: 'primary', type: 'submit'}, with_context = false) }}
+                {{ include('admin/components/_button.html.twig', {label: 'tiers.editor.cancel'|trans({}, 'cms'), variant: 'ghost', href: path('admin_tiers')}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+{% endblock %}

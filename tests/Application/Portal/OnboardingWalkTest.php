@@ -74,7 +74,7 @@ final class OnboardingWalkTest extends WebTestCase
         $this->assertPublicPage($number, Response::HTTP_OK);
         self::assertSelectorTextContains('h1', self::NAME);
         self::assertSelectorTextContains('main', self::SUMMARY);
-        self::assertSame(1, $this->invoiceTasks($number));
+        self::assertSame(0, $this->crmTasks($number), 'a new entry is Free and not invoiced');
     }
 
     public function test_a_resubmitted_offline_location_goes_back_online(): void
@@ -104,7 +104,7 @@ final class OnboardingWalkTest extends WebTestCase
         $this->accept($number);
 
         $this->assertPublicPage($number, Response::HTTP_OK);
-        self::assertSame(1, $this->invoiceTasks($number));
+        self::assertSame(0, $this->crmTasks($number), 'a new entry is Free and not invoiced');
     }
 
     public function test_the_accepted_location_appears_in_listing_sitemap_and_canton_page(): void
@@ -358,10 +358,10 @@ final class OnboardingWalkTest extends WebTestCase
         return $slug;
     }
 
-    private function invoiceTasks(int $number): int
+    private function crmTasks(int $number): int
     {
         return (int) $this->connection->fetchOne(
-            "SELECT count(*) FROM crm_tasks t JOIN crm_companies l ON l.id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE t.title = 'Rechnung stellen' AND v.number = ?",
+            'SELECT count(*) FROM crm_tasks t JOIN crm_companies l ON l.id = t.company_id JOIN venues v ON v.id = l.venue_id WHERE v.number = ?',
             [$number],
         );
     }

@@ -119,7 +119,7 @@
                         <span class="crm-side__thumb">{{ admin_icon('landmark') }}</span>
                         <span class="crm-side__text">
                             <a class="crm-side__link" href="{{ path('admin_locations_edit', {number: venue.number}) }}">{{ venue.name }}</a>
-                            <span class="crm-side__detail">{{ venue.tier|trans }}{% if venue.place.isKnown %} · {{ venue.place|trans }}{% endif %}</span>
+                            <span class="crm-side__detail">{{ venue.tier.name }}{% if venue.place.isKnown %} · {{ venue.place|trans }}{% endif %}</span>
                         </span>
                         <form class="crm-side__form" method="post" action="{{ path('admin_crm_companies_unlink_venue', {id: company.id, venueId: venue.id}) }}">
                             <input type="hidden" name="_token" value="{{ csrf_token(unlink_token) }}">

@@ -115,6 +115,19 @@ cms:
             invalid: 'Nur Buchstaben, Ziffern, «-» und «_», höchstens 40 Zeichen, am Anfang ein Buchstabe oder eine Ziffer.'
         lifetime:
             invalid: Bitte eine Gültigkeit wählen.
+    tier:
+        too_long: Bitte höchstens {limit} Zeichen eingeben.
+        range: Bitte eine Zahl zwischen {min} und {max} eingeben.
+        name:
+            required: Bitte einen Namen eingeben.
+            taken: Diesen Namen hat schon ein anderer Tarif.
+        price:
+            required: Bitte den Preis eingeben.
+            invalid: Bitte den Preis in Franken eingeben, zum Beispiel «199» oder «199.50».
+            range: Bitte einen Preis zwischen 0 und 100'000 Franken eingeben.
+        number:
+            required: Bitte eine Zahl eingeben.
+            invalid: Bitte eine ganze Zahl eingeben.
 crm:
     property:
         unknown_field: Dieses Feld lässt sich nicht bearbeiten.

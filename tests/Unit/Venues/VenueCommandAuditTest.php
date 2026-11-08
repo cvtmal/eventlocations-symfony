@@ -41,11 +41,11 @@ use App\Venues\Command\TakeEntryOffline;
 use App\Venues\Command\UnpublishVenue;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\ModerationDecision;
 use App\Venues\ValueObject\ModerationKind;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -83,7 +83,7 @@ final class VenueCommandAuditTest extends TestCase
         $text = 'GEHEIMTEXT';
         $changed = ['name', 'summary'];
 
-        yield 'basics' => [new ChangeVenueBasics(self::NUMBER, '1', $changed, 'Schloss Muster', 'schloss-muster', Tier::Premium, 10, 100)];
+        yield 'basics' => [new ChangeVenueBasics(self::NUMBER, '1', $changed, 'Schloss Muster', 'schloss-muster', KnownTiers::PRO, 10, 100)];
         yield 'capacity' => [new ChangeVenueCapacity(self::NUMBER, '1', $changed, 180)];
         yield 'texts' => [new ChangeVenueTexts(self::NUMBER, '1', $changed, ['de' => ['summary' => $text, 'description' => $text, 'metaDescription' => $text, 'parkingText' => $text]])];
         yield 'relocate' => [new RelocateVenue(self::NUMBER, '1', $changed, '8706 Meilen', 'zh', 'Seestrasse 99', 47.123456, 8.654321, '1.5', $text, '2.5', $text, '30.0', $text, ['de' => 'Geheimregion'], true, true)];
@@ -94,7 +94,7 @@ final class VenueCommandAuditTest extends TestCase
         yield 'google_place' => [new ChangeVenueGooglePlace(self::NUMBER, '1', ['placeId', 'ratingHidden'], 'ChIJGEHEIM12345', true)];
         yield 'google_place_assign' => [new AssignVenueGooglePlace(self::NUMBER, 'ChIJGEHEIM12345')];
         yield 'created' => [new RecordVenueCreated(self::NUMBER, 'Schloss Muster')];
-        yield 'tier' => [new ChangeVenueTier(self::NUMBER, Tier::Premium)];
+        yield 'tier' => [new ChangeVenueTier(self::NUMBER, KnownTiers::PRO)];
         yield 'publish' => [new PublishVenue(self::NUMBER)];
         yield 'unpublish' => [new UnpublishVenue(self::NUMBER)];
         yield 'delete' => [new DeleteVenue(self::NUMBER, 'Schloss Muster', 'schloss-muster')];

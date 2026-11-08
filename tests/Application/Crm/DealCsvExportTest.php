@@ -11,7 +11,7 @@ use App\Factory\CompanyFactory;
 use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Tests\Support\Admin\AdminSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Zenstruck\Foundry\Test\Factories;
@@ -34,7 +34,7 @@ final class DealCsvExportTest extends WebTestCase
             'name' => 'Premium 2027',
             'company' => CompanyFactory::new()->withVenue($venue)->create(['name' => 'Seeblick Events']),
             'venue' => $venue,
-            'tier' => Tier::Premium,
+            'tier' => KnownTiers::PRO,
             'amountRappen' => 123450,
             'contractStartOn' => new \DateTimeImmutable('2027-01-01'),
             'contractEndOn' => new \DateTimeImmutable('2027-12-31'),
@@ -49,7 +49,7 @@ final class DealCsvExportTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Disposition', 'attachment; filename=deals-2027-01-01.csv');
         self::assertSame([
             ['Name', 'Location', 'Eintrag', 'Phase', 'Verlustgrund', 'Tier', 'Wert (CHF)', 'Vertragsbeginn', 'Vertragsende', 'Erwarteter Abschluss', 'Zuständig'],
-            ['Premium 2027', 'Seeblick Events', 'Schloss Seeblick', 'Verloren', 'Budget', 'Premium', '1234.50', '01.01.2027', '31.12.2027', '15.11.2026', 'Andrea Keller'],
+            ['Premium 2027', 'Seeblick Events', 'Schloss Seeblick', 'Verloren', 'Budget', 'Pro', '1234.50', '01.01.2027', '31.12.2027', '15.11.2026', 'Andrea Keller'],
         ], $this->records());
     }
 

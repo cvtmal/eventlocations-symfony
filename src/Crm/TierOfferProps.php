@@ -12,7 +12,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The offer in the stage endpoint's answer: all the board's won prompt needs for its form (D17-a, D20), so the prompt
- * comes from the server and there is no second endpoint.
+ * comes from the server and there is no second endpoint. The text names the two tiers as the database does, and
+ * `expected` is the venue's tier code.
  */
 final readonly class TierOfferProps
 {
@@ -31,11 +32,11 @@ final readonly class TierOfferProps
         return null === $offer ? null : [
             'action' => $this->urls->generate('admin_crm_deals_apply_tier', ['id' => $offer->dealId]),
             'token' => $this->tokens->getToken(DealTierController::TOKEN)->getValue(),
-            'expected' => $offer->current->value,
+            'expected' => $offer->current->code,
             'text' => $this->translator->trans('deal.tier.text', [
                 'venue' => $offer->venueName,
-                'current' => $offer->current->trans($this->translator),
-                'offered' => $offer->offered->trans($this->translator),
+                'current' => $offer->current->name,
+                'offered' => $offer->offered->name,
             ], 'crm'),
         ];
     }

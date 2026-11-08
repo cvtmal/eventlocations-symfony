@@ -10,7 +10,7 @@ use App\Factory\DealFactory;
 use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -54,9 +54,9 @@ final class DealStageApiTest extends WebTestCase
     public function test_a_won_move_answers_the_tier_offer_with_its_form(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => Tier::Basic]);
+        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Schloss Seeblick', 'tier' => KnownTiers::FREE]);
         $company = CompanyFactory::new()->withVenue($venue)->create();
-        $deal = DealFactory::new()->inStage('negotiation')->create(['company' => $company, 'venue' => $venue, 'tier' => Tier::Premium]);
+        $deal = DealFactory::new()->inStage('negotiation')->create(['company' => $company, 'venue' => $venue, 'tier' => KnownTiers::PRO]);
 
         $this->move($deal->id(), ['stage' => 'won', 'expected' => 'negotiation']);
 
@@ -64,8 +64,8 @@ final class DealStageApiTest extends WebTestCase
         self::assertSame([
             'action' => '/admin/crm/deals/'.$deal->id().'/tier',
             'token' => 'csrf-token',
-            'expected' => 'basic',
-            'text' => '«Schloss Seeblick» hat heute den Tier Standard. Der Deal verkauft Premium.',
+            'expected' => 'free',
+            'text' => '«Schloss Seeblick» hat heute den Tarif Free. Der Deal verkauft den Tarif Pro.',
         ], $this->answer()['tierOffer']);
     }
 

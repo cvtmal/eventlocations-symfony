@@ -16,6 +16,7 @@ use App\Search\ReadModel\SqlStatement;
 use App\Shared\Translation\TranslationJoin;
 use App\Story\DemoStory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,7 +62,7 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         $this->connection = $em->getConnection();
         $this->connection->beginTransaction();
         $locale = ListingQueryTest::enabledLocale();
-        $this->query = new ListingQuery($this->connection, new TranslationJoin($locale), $locale, new MockClock('2026-10-30 10:00:00', 'UTC'));
+        $this->query = new ListingQuery($this->connection, new TranslationJoin($locale), $locale, new MockClock('2026-10-30 10:00:00', 'UTC'), new EntitlementResolver($this->connection));
 
         $this->buildTimesTen();
     }

@@ -38,7 +38,7 @@ final class CreateOwnLocationTest extends KernelTestCase
 
     private const string TOWN = '8706 Meilen';
 
-    public function test_it_creates_an_unpublished_basic_location_with_active_access_and_a_draft(): void
+    public function test_it_creates_an_unpublished_free_location_with_active_access_and_a_draft(): void
     {
         $manager = PortalUserFactory::createOne();
 
@@ -46,8 +46,9 @@ final class CreateOwnLocationTest extends KernelTestCase
 
         $row = $this->connection->fetchAssociative(
             <<<'SQL'
-                SELECT v.name, v.tier, v.status, v.capacity_max, v.awaits_first_publish, a.status AS access, a.confirmed_at IS NOT NULL AS confirmed, s.status AS submission
+                SELECT v.name, tr.code AS tier, v.status, v.capacity_max, v.awaits_first_publish, a.status AS access, a.confirmed_at IS NOT NULL AS confirmed, s.status AS submission
                 FROM venues v
+                JOIN tiers tr ON tr.id = v.tier_id
                 JOIN portal_venue_access a ON a.venue_id = v.id AND a.portal_user_id = ?
                 JOIN portal_submissions s ON s.venue_id = v.id
                 WHERE v.number = ?
@@ -56,7 +57,7 @@ final class CreateOwnLocationTest extends KernelTestCase
         );
         self::assertSame([
             'name' => 'Seehaus Meilen',
-            'tier' => 'basic',
+            'tier' => 'free',
             'status' => 'unpublished',
             'capacity_max' => 120,
             'awaits_first_publish' => true,

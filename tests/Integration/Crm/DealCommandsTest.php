@@ -32,7 +32,7 @@ use App\Factory\VenueFactory;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Entity\Venue;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Doctrine\Bundle\DoctrineBundle\Middleware\BacktraceDebugDataHolder;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -60,7 +60,7 @@ final class DealCommandsTest extends KernelTestCase
             '  Premium 2027 ',
             $company->id(),
             $venue->id(),
-            Tier::Premium,
+            KnownTiers::PRO,
             120050,
             new \DateTimeImmutable('2027-01-01'),
             new \DateTimeImmutable('2027-12-31'),
@@ -73,7 +73,7 @@ final class DealCommandsTest extends KernelTestCase
                 'name' => 'Premium 2027',
                 'company_id' => $company->id(),
                 'venue_id' => $venue->id(),
-                'tier' => 'premium',
+                'tier_id' => $this->tierId(KnownTiers::PRO),
                 'amount_rappen' => 120050,
                 'contract_start_on' => '2027-01-01',
                 'contract_end_on' => '2027-12-31',
@@ -83,12 +83,22 @@ final class DealCommandsTest extends KernelTestCase
                 'lost_reason' => null,
                 'closed_at' => null,
             ],
-            $this->connection->fetchAssociative('SELECT name, company_id, venue_id, tier, amount_rappen, contract_start_on, contract_end_on, expected_close_on, stage_code, owner_id, lost_reason, closed_at FROM crm_deals WHERE id = ?', [$id]),
+            $this->connection->fetchAssociative('SELECT name, company_id, venue_id, tier_id, amount_rappen, contract_start_on, contract_end_on, expected_close_on, stage_code, owner_id, lost_reason, closed_at FROM crm_deals WHERE id = ?', [$id]),
         );
         self::assertSame(
             [['command' => CreateDeal::class, 'changes' => ['fields' => ['name', 'venue', 'tier', 'amount', 'contract_start', 'contract_end', 'expected_close', 'owner']]]],
             $this->auditRows('deal', $id),
         );
+    }
+
+    public function test_a_new_deal_refuses_a_tier_no_row_has(): void
+    {
+        $company = CompanyFactory::createOne();
+
+        self::assertFalse($this->failure(new CreateDeal(EntityId::generate(), 'Premium 2027', $company->id(), tierCode: 'gold'), InvalidPropertyValue::class)->isRequired());
+        $this->em->clear();
+
+        self::assertSame(0, $this->rows('SELECT count(*) FROM crm_deals WHERE company_id = ?', $company->id()));
     }
 
     public function test_a_new_deal_needs_a_name_and_a_company(): void
@@ -136,7 +146,7 @@ final class DealCommandsTest extends KernelTestCase
     public static function edits(): iterable
     {
         yield 'name' => [DealProperty::Name, '  Top Premium ', 'Top Premium', 'name'];
-        yield 'tier' => [DealProperty::Tier, 'top_premium', 'top_premium', 'tier'];
+        yield 'tier' => [DealProperty::Tier, 'pro', 'pro', '(SELECT t.code FROM tiers t WHERE t.id = crm_deals.tier_id)'];
         yield 'amount as typed' => [DealProperty::Amount, "1'234.50", '123450', 'amount_rappen'];
         yield 'contract start' => [DealProperty::ContractStart, '2027-01-01', '2027-01-01', 'contract_start_on'];
         yield 'expected close' => [DealProperty::ExpectedClose, '2026-12-24', '2026-12-24', 'expected_close_on'];
@@ -162,6 +172,23 @@ final class DealCommandsTest extends KernelTestCase
         self::assertSame('name', $this->failure(new ChangeDealProperty($deal->id(), DealProperty::Name, 'Basic', 'Veraltet'), StaleProperty::class)->field);
         self::assertSame('123450', $this->dispatch(new ChangeDealProperty($deal->id(), DealProperty::Amount, "1'234.50", 'veraltet')));
         self::assertSame('Premium', $this->connection->fetchOne('SELECT name FROM crm_deals WHERE id = ?', [$deal->id()]));
+    }
+
+    public function test_a_tier_is_named_by_its_code_and_can_be_emptied(): void
+    {
+        $deal = DealFactory::createOne(['tier' => KnownTiers::FREE]);
+
+        self::assertSame('pro', $this->dispatch(new ChangeDealProperty($deal->id(), DealProperty::Tier, 'pro', 'free')));
+        $this->em->clear();
+        self::assertSame($this->tierId(KnownTiers::PRO), $this->connection->fetchOne('SELECT tier_id FROM crm_deals WHERE id = ?', [$deal->id()]));
+
+        // The version is the code the island last saw: the old enum's value is a stale one now.
+        self::assertSame('tier', $this->failure(new ChangeDealProperty($deal->id(), DealProperty::Tier, 'free', 'premium'), StaleProperty::class)->field);
+        $this->em->clear();
+
+        self::assertNull($this->dispatch(new ChangeDealProperty($deal->id(), DealProperty::Tier, ' ', 'pro')));
+        $this->em->clear();
+        self::assertNull($this->connection->fetchOne('SELECT tier_id FROM crm_deals WHERE id = ?', [$deal->id()]));
     }
 
     public function test_a_field_can_be_emptied_but_the_name_cannot(): void
@@ -392,6 +419,11 @@ final class DealCommandsTest extends KernelTestCase
     private static function venue(): Venue
     {
         return VenueFactory::new()->withoutLocation(null)->create();
+    }
+
+    private function tierId(string $code): string
+    {
+        return (string) $this->connection->fetchOne('SELECT id FROM tiers WHERE code = ?', [$code]);
     }
 
     /**

@@ -7,10 +7,12 @@ namespace App\Tests\Unit\Cms;
 use App\Cms\Form\ChangedFields;
 use App\Cms\Form\VenueAddressData;
 use App\Cms\Form\VenueBasicsData;
+use App\Cms\Form\VenueEventData;
 use App\Cms\Form\VenueLocaleTextsData;
 use App\Cms\Form\VenueTermsData;
 use App\Cms\Form\VenueTextsData;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
+use App\Venues\ValueObject\PriceLevel;
 use PHPUnit\Framework\TestCase;
 
 final class ChangedFieldsTest extends TestCase
@@ -30,8 +32,21 @@ final class ChangedFieldsTest extends TestCase
 
     public function test_an_enum_compares_by_value(): void
     {
+        $before = new VenueEventData();
+        $before->priceLevel = PriceLevel::Medium;
+        $after = new VenueEventData();
+        $after->priceLevel = PriceLevel::Exclusive;
+        $same = new VenueEventData();
+        $same->priceLevel = PriceLevel::Medium;
+
+        self::assertSame(['priceLevel'], ChangedFields::between($before, $after));
+        self::assertSame([], ChangedFields::between($before, $same));
+    }
+
+    public function test_a_tier_is_a_code_and_a_new_code_is_named(): void
+    {
         $after = self::basics();
-        $after->tier = Tier::Premium;
+        $after->tier = KnownTiers::PRO;
 
         self::assertSame(['tier'], ChangedFields::between(self::basics(), $after));
         self::assertSame([], ChangedFields::between(self::basics(), self::basics()));
@@ -119,7 +134,7 @@ final class ChangedFieldsTest extends TestCase
         $data->loadedAt = '1700000000';
         $data->name = 'Schloss Seeblick';
         $data->slug = 'schloss-seeblick';
-        $data->tier = Tier::Basic;
+        $data->tier = KnownTiers::FREE;
         $data->capacityMin = 50;
         $data->capacityMax = 300;
 

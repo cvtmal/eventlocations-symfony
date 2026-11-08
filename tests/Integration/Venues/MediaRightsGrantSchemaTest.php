@@ -53,7 +53,7 @@ final class MediaRightsGrantSchemaTest extends KernelTestCase
      */
     private const SEED = [
         "INSERT INTO towns (id, canton_code, zip, name, slug, bfs_number, lat, lng, population) VALUES ('{town}', 'zh', '8999', 'Testdorf Rechte', 'testdorf-rechte', 9998, 47.3, 8.5, 100)",
-        "INSERT INTO venues (id, name, tier, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES ('{venue}', 'Testhaus', 'premium', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5), ('{venue2}', 'Zweithaus', 'basic', 'published', 50, '8999', '{town}', 'zh', 47.3, 8.5)",
+        "INSERT INTO venues (id, name, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES ('{venue}', 'Testhaus', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5), ('{venue2}', 'Zweithaus', 'published', 50, '8999', '{town}', 'zh', 47.3, 8.5)",
         "INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES ('{photo}', '{venue}', NULL, 1, 'demo/a.jpg', {photo-vals}), ('{photo2}', '{venue}', NULL, 2, 'demo/b.jpg', {photo-vals}), ('{photo3}', '{venue2}', NULL, 1, 'demo/c.jpg', {photo-vals})",
         "INSERT INTO rights_policy_versions (version, body_markdown) VALUES ('abcdef123456', 'Der Wortlaut.')",
         "INSERT INTO media_rights_grants (id, venue_id, venue_photo_id, original_path, grantor_type, grantor_ref, evidence, policy_version) VALUES ('{grant}', '{venue}', '{photo}', 'demo/a.jpg', 'manager', 'm-1', 'declaration', 'abcdef123456'), ('{grant2}', '{venue}', '{photo2}', 'demo/b.jpg', 'staff', 's-1', 'staff_attestation', 'legacy'), ('{grant3}', '{venue2}', '{photo3}', 'demo/c.jpg', 'system', 'import', 'staff_attestation', 'legacy')",

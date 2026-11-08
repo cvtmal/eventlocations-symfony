@@ -23,8 +23,9 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Integration\Search\ListingQueryTest;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\TermGroup;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -62,7 +63,7 @@ final class VenueListQueryTest extends KernelTestCase
 
     public function test_a_complete_venue_maps_every_column(): void
     {
-        $venue = $this->complete('Schloss Seeblick', town: 'Zürich', tier: Tier::Premium, capacityMax: 300);
+        $venue = $this->complete('Schloss Seeblick', town: 'Zürich', tier: KnownTiers::PRO, capacityMax: 300);
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
         $room = RoomFactory::createOne(['venue' => $venue, 'position' => 1]);
         VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $room, 'position' => 1]);
@@ -72,7 +73,8 @@ final class VenueListQueryTest extends KernelTestCase
 
         self::assertSame([$venue->number(), 'Schloss Seeblick', 'schloss-seeblick'], [$row->number, $row->name, $row->slug]);
         self::assertSame('Zürich', $row->place->townName);
-        self::assertSame([Tier::Premium, null, 300, VenueStatus::Published, true], [$row->tier, $row->capacityMin, $row->capacityMax, $row->status, $row->isPublished()]);
+        self::assertEquals(new TierLabel(KnownTiers::PRO, 'Pro', true), $row->tier);
+        self::assertSame([null, 300, VenueStatus::Published, true], [$row->capacityMin, $row->capacityMax, $row->status, $row->isPublished()]);
         self::assertSame(2, $row->photoCount);
         self::assertNotNull($row->thumbnail);
         self::assertSame($cover, $row->thumbnail->photoId);
@@ -89,6 +91,7 @@ final class VenueListQueryTest extends KernelTestCase
         $row = $this->only($this->search());
 
         self::assertSame($venue->number(), $row->number);
+        self::assertEquals(new TierLabel(KnownTiers::FREE, 'Free', false), $row->tier, 'a new venue is on Free');
         self::assertFalse($row->place->isKnown());
         self::assertNull($row->slug);
         self::assertSame(0, $row->photoCount);
@@ -172,18 +175,20 @@ final class VenueListQueryTest extends KernelTestCase
 
     public function test_tier_canton_and_address_filters(): void
     {
-        $this->complete('Premium Zürich', town: 'Zürich', tier: Tier::Premium);
-        $this->complete('Basic Bern', town: 'Bern');
+        $this->complete('Pro Zürich', town: 'Zürich', tier: KnownTiers::PRO);
+        $this->complete('Free Bern', town: 'Bern');
         $this->locationless('Nur Tessin', 'ti');
         $this->locationless('Nirgends', null);
 
-        self::assertSame(['Premium Zürich'], $this->names(new VenueListFilter(tier: Tier::Premium)));
-        self::assertSame(['Basic Bern'], $this->names(new VenueListFilter(canton: 'be')));
+        self::assertSame(['Pro Zürich'], $this->names(new VenueListFilter(tier: KnownTiers::PRO)));
+        self::assertSame(['Free Bern', 'Nirgends', 'Nur Tessin'], $this->names(new VenueListFilter(tier: KnownTiers::FREE)));
+        self::assertSame([], $this->names(new VenueListFilter(tier: 'gold')));
+        self::assertSame(['Free Bern'], $this->names(new VenueListFilter(canton: 'be')));
         self::assertSame(['Nur Tessin'], $this->names(new VenueListFilter(canton: 'ti')));
         self::assertSame(['Nirgends'], $this->names(new VenueListFilter(canton: VenueListFilter::CANTON_NONE)));
         self::assertSame(['Nirgends', 'Nur Tessin'], $this->names(new VenueListFilter(withoutAddress: true)));
         self::assertSame(['Nirgends'], $this->names(new VenueListFilter(canton: VenueListFilter::CANTON_NONE, withoutAddress: true)));
-        self::assertSame([], $this->names(new VenueListFilter(tier: Tier::Premium, withoutAddress: true)));
+        self::assertSame([], $this->names(new VenueListFilter(tier: KnownTiers::PRO, withoutAddress: true)));
     }
 
     public function test_search_by_name_town_number_and_zip(): void
@@ -208,9 +213,11 @@ final class VenueListQueryTest extends KernelTestCase
 
     public function test_each_sort_in_both_directions(): void
     {
-        $a = $this->complete('Alpha', tier: Tier::Basic, capacityMax: 200);
-        $b = $this->complete('Beta', tier: Tier::BeliebteLocation, capacityMax: 50);
-        $c = $this->complete('Gamma', tier: Tier::Premium, capacityMax: 120);
+        // A third plan between Free and Pro: a tier is a row, so the sort needs no code for it (F12).
+        $this->connection->executeStatement("INSERT INTO tiers (id, code, name, price_rappen, rank_weight, photos_max, rooms_max, videos_max, documents_max, contact_visible, last_minute_allowed, detailed_report, event_types_max) VALUES (gen_random_uuid(), 'plus', 'Plus', 9900, 5, 20, 5, 2, 2, TRUE, FALSE, FALSE, 6)");
+        $a = $this->complete('Alpha', tier: KnownTiers::FREE, capacityMax: 200);
+        $b = $this->complete('Beta', tier: KnownTiers::PRO, capacityMax: 50);
+        $c = $this->complete('Gamma', tier: 'plus', capacityMax: 120);
         foreach ([[$a, '3 days'], [$b, '1 day'], [$c, '2 days']] as [$venue, $age]) {
             $this->connection->executeStatement("UPDATE venues SET updated_at = now() - INTERVAL '{$age}' WHERE id = ?", [$venue->id()]);
         }
@@ -393,7 +400,7 @@ final class VenueListQueryTest extends KernelTestCase
     /**
      * A venue with nothing missing: a gallery photo, an inquiry address, a summary and a main building.
      */
-    private function complete(string $name, ?string $town = null, Tier $tier = Tier::Basic, int $capacityMax = 120, VenueStatus $status = VenueStatus::Published, ?string $email = 'info@example.ch'): Venue
+    private function complete(string $name, ?string $town = null, string $tier = KnownTiers::FREE, int $capacityMax = 120, VenueStatus $status = VenueStatus::Published, ?string $email = 'info@example.ch'): Venue
     {
         $venue = VenueFactory::createOne([
             'name' => $name,

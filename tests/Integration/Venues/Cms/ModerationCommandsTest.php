@@ -22,6 +22,7 @@ use App\Venues\Exception\ModerationCaseNotFound;
 use App\Venues\Exception\ModerationCaseWithoutVenue;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\ModerationDecision;
 use App\Venues\ValueObject\ModerationKind;
 use App\Venues\ValueObject\PhotoGrant;
@@ -247,7 +248,8 @@ final class ModerationCommandsTest extends KernelTestCase
 
     public function test_a_complaint_links_at_most_ten_photos_and_none_without_a_hold(): void
     {
-        $venue = $this->venue('Seehaus Viele', 'seehaus-viele');
+        // Eleven photos fit Pro's limit only (F12).
+        $venue = $this->venue('Seehaus Viele', 'seehaus-viele', KnownTiers::PRO);
         $number = $venue->number();
         $photos = [];
         for ($i = 1; $i <= 11; ++$i) {
@@ -347,9 +349,9 @@ final class ModerationCommandsTest extends KernelTestCase
         return $this->addPhoto($number, $this->upload(), grant: new PhotoGrant(Grantor::staff(self::ADMIN), GrantEvidence::StaffAttestation))->photoId;
     }
 
-    private function venue(string $name, string $slug): Venue
+    private function venue(string $name, string $slug, string $tier = KnownTiers::FREE): Venue
     {
-        $venue = VenueFactory::createOne(['name' => $name, 'town' => DetailVenues::town('Zürich')]);
+        $venue = VenueFactory::createOne(['name' => $name, 'town' => DetailVenues::town('Zürich'), 'tier' => $tier]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug]);
 
         return $venue;

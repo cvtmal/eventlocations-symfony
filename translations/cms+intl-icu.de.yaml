@@ -10,7 +10,8 @@ venue:
         coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
         not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
         still_published: 'Ein veröffentlichter Eintrag kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
-        too_many_photos: 'Eine Location zeigt höchstens 30 Fotos. Entferne zuerst ein Foto.'
+        too_many_photos: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Foto} other {# Fotos}} möglich. Entferne zuerst ein Foto oder wechsle auf einen grösseren Plan.'
+        too_many_event_types: 'Mit dem Plan {tier} sind höchstens {max, plural, one {# Anlassart} other {# Anlassarten}} möglich. Wähle weniger aus oder wechsle auf einen grösseren Plan.'
 
 nav:
     section: CMS
@@ -31,7 +32,7 @@ list:
         search: Suchen
         search_placeholder: Name, Ort, PLZ oder Nummer
         tier: Tier
-        all_tiers: Alle Tiers
+        all_tiers: Alle Tarife
         canton: Kanton
         all_cantons: Alle Kantone
         canton_none: Ohne Kanton
@@ -275,7 +276,8 @@ history:
         ChangeVenueEventFacts: die Veranstaltungsangaben geändert
         ChangeVenueContact: den Kontakt geändert
         AnswerVenueFaq: die häufigen Fragen beantwortet
-        ChangeVenueTier: den Tier geändert
+        ChangeVenueTier: den Tarif geändert
+        ReviseTier: einen Tarif geändert
         PublishVenue: den Eintrag publiziert
         UnpublishVenue: den Eintrag offline genommen
         AddVenuePhoto: ein Foto hochgeladen
@@ -479,6 +481,7 @@ rooms:
         session_gone: Die Sitzung ist nicht mehr gültig. Bitte wenn nötig neu anmelden und die Seite neu laden.
     error:
         name_required: Der Raum braucht einen Namen.
+        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # Raum} other {sind höchstens # Räume}} möglich. Entferne zuerst einen Raum oder wechsle auf einen grösseren Plan.'
 
 documents:
     tab: Dokumente
@@ -520,6 +523,7 @@ documents:
         file: PDF, bis 15 MB
     error:
         already_uploaded: Dieses PDF ist bereits bei den Dokumenten.
+        too_many: 'Mit dem Plan {tier} {max, plural, one {ist höchstens # PDF} other {sind höchstens # PDFs}} möglich. Entferne zuerst ein PDF oder wechsle auf einen grösseren Plan.'
         title_required: Das Dokument braucht einen Titel.
 
 error:
@@ -846,3 +850,67 @@ moderation:
         already_decided: Diese Meldung ist schon entschieden.
         no_venue: Diese Meldung nennt keine Location der Website.
         not_publishable: 'Der Eintrag kann nicht wieder online gehen. Es fehlt: {missing}'
+
+# F12 (business-model): the screen "Tarife", where staff edit the tiers.
+tiers:
+    nav: Tarife
+    list:
+        title: Tarife
+        table_label: Tarife
+        column:
+            name: Name
+            code: Code
+            price: Preis pro Jahr (CHF)
+            rank: Rang
+            photos: Fotos
+            rooms: Räume
+            videos: Videos
+            documents: PDFs
+            contact: Kontaktdaten sichtbar
+            last_minute: Last-Minute
+            report: Detailbericht
+            event_types: Anlassarten
+            venues: Einträge
+            actions: Aktionen
+        plus_vat: zzgl. MwSt.
+        edit: Bearbeiten
+        edit_for: 'Tarif «{name}» bearbeiten'
+        empty:
+            title: Keine Tarife
+    value:
+        'yes': Ja
+        'no': Nein
+        all: alle
+    editor:
+        title: '{name} bearbeiten'
+        card: Tarif
+        meta: 'Code: {code}, {count, plural, =0 {kein Eintrag} one {ein Eintrag} other {{formatted} Einträge}}'
+        cancel: Abbrechen
+        field:
+            name: Name
+            price: Preis pro Jahr
+            vat_line: «zzgl. MwSt.» zum Preis schreiben
+            rank_weight: Rang
+            photos_max: Fotos
+            rooms_max: Räume
+            videos_max: Videos
+            documents_max: PDFs
+            event_types_max: Anlassarten höchstens
+            contact_visible: Kontaktdaten sichtbar
+            last_minute_allowed: Last-Minute erlaubt
+            detailed_report: Detailbericht
+        help:
+            price: 'In Franken, so wie er angezeigt wird, zum Beispiel «199» oder «199.50». Wir stellen die Rechnung von Hand.'
+            vat_line: 'Nur einschalten, wenn wir mehrwertsteuerpflichtig sind. Aus: der Preis gilt als Endpreis, ohne MwSt.-Hinweis.'
+            rank_weight: 'Je höher, desto weiter vorne in der Liste. Bei 0 gibt es keinen Vorrang und kein «Top-Eintrag».'
+            photos_max: 'So viele Fotos zeigt die Seite einer Location mit diesem Tarif, und so viele lassen sich hochladen. Mehr bleiben gespeichert, aber verborgen.'
+            rooms_max: 'So viele Räume zeigt die Seite, und so viele lassen sich anlegen. Mehr bleiben gespeichert, aber verborgen.'
+            videos_max: 'Reserviert für Videos, die später kommen.'
+            documents_max: 'So viele PDFs zeigt die Seite, und so viele lassen sich hochladen. Mehr bleiben gespeichert, aber verborgen.'
+            event_types_max: 'Wie viele Anlassarten eine Location wählen darf. Leer: alle.'
+            contact_visible: 'Telefon und Website der Location sind öffentlich. Anfrageformular und Adresse sind es immer.'
+            last_minute_allowed: 'Schaltet die Last-Minute-Funktion für diesen Tarif frei.'
+            detailed_report: 'Schaltet den ausführlichen Bericht für diesen Tarif frei.'
+    flash:
+        saved: '«{name}» gespeichert.'
+        unchanged: 'Keine Änderungen an «{name}».'

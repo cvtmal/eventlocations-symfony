@@ -6,6 +6,7 @@ namespace App\Venues\CommandHandler;
 
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Command\ChangeVenueTerms;
+use App\Venues\TierLimits;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\VenueEditing;
 use App\Venues\VenueTermSet;
@@ -28,6 +29,7 @@ final class ChangeVenueTermsHandler implements CommandHandlerInterface
     public function __construct(
         private readonly VenueEditing $editing,
         private readonly VenueTermSet $terms,
+        private readonly TierLimits $limits,
     ) {
     }
 
@@ -39,6 +41,8 @@ final class ChangeVenueTermsHandler implements CommandHandlerInterface
         foreach (self::GROUPS as $group) {
             $codes[$group->value] = $command->terms[$group->value] ?? [];
         }
+        // Event types are checked when they are written, never hidden when a page is read (F12).
+        $this->limits->assertEventTypesFit($venue, \count($codes[TermGroup::SuitableFor->value]), TermGroup::SuitableFor->value);
         $this->terms->replace($venue, $codes, array_intersect_key($command->main, $codes));
 
         $this->editing->close($venue);

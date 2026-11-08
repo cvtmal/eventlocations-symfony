@@ -15,6 +15,7 @@ use App\Venues\Command\ReorderRooms;
 use App\Venues\Exception\StaleEdit;
 use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\Exception\VenueRuleViolation;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\Seating;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
@@ -31,7 +32,8 @@ final class RoomCommandsTest extends KernelTestCase
 
     public function test_add_room_writes_the_row_its_texts_and_seating_and_recomputes_the_facts(): void
     {
-        $venue = VenueFactory::createOne();
+        // Pro: the venue holds a room already, and Free holds one (F12).
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO]);
         RoomFactory::createOne(['venue' => $venue, 'position' => 1, 'areaM2' => 120, 'heightM' => '3.50']);
         $this->em->clear();
 
@@ -65,6 +67,50 @@ final class RoomCommandsTest extends KernelTestCase
         self::assertTrue($this->cmsEdited($venue->number()));
         self::assertSame([$venue->number()], $this->purger()->venues);
         self::assertSame(1, $this->purger()->listings);
+    }
+
+    /**
+     * F12: the plan's `rooms_max` is checked before anything is written; the message names the plan and the limit.
+     */
+    public function test_a_second_room_is_refused_on_free_and_writes_nothing(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE]);
+        RoomFactory::createOne(['venue' => $venue, 'position' => 1, 'areaM2' => 120, 'heightM' => '3.50']);
+        $this->em->clear();
+
+        $violation = $this->violation(new AddRoom($venue->number(), ['de' => 'Zweiter Saal'], [], null, 80, 90, '3.00', null, self::NO_SEATING));
+
+        self::assertSame('rooms.error.too_many', $violation->translationKey());
+        self::assertNull($violation->field);
+        self::assertSame(['max' => 1, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$venue->id()]));
+        self::assertFalse($this->cmsEdited($venue->number()));
+        self::assertSame([], $this->purger()->venues);
+    }
+
+    public function test_the_first_room_of_a_free_venue_is_taken(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::FREE]);
+        $this->em->clear();
+
+        $roomId = $this->dispatch(new AddRoom($venue->number(), ['de' => 'Einziger Saal'], [], null, 80, 90, '3.00', null, self::NO_SEATING));
+
+        self::assertIsString($roomId);
+        self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$venue->id()]));
+    }
+
+    public function test_the_room_limit_is_read_from_the_plan_row_at_the_time_of_the_save(): void
+    {
+        $venue = VenueFactory::createOne(['tier' => KnownTiers::PRO]);
+        RoomFactory::createOne(['venue' => $venue, 'position' => 1]);
+        RoomFactory::createOne(['venue' => $venue, 'position' => 2]);
+        $this->em->clear();
+        $this->connection->executeStatement("UPDATE tiers SET rooms_max = 2 WHERE code = 'pro'");
+
+        $violation = $this->violation(new AddRoom($venue->number(), ['de' => 'Dritter Saal'], [], null, null, null, null, null, self::NO_SEATING));
+
+        self::assertSame(['max' => 2, 'tier' => 'Pro'], $violation->parameters);
+        self::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rooms WHERE venue_id = ?', [$venue->id()]));
     }
 
     public function test_a_room_needs_a_name_in_the_default_locale_and_only_enabled_locales(): void

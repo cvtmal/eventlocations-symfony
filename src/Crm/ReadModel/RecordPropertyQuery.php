@@ -41,14 +41,14 @@ final class RecordPropertyQuery
     }
 
     /**
-     * The stored form, as `DealProperty::canonical()` writes it: Rappen, `Y-m-d`, ids, codes.
+     * The stored form, as `DealProperty::canonical()` writes it: Rappen, `Y-m-d`, ids, codes (a tier's is its `tiers.code`).
      */
     public function deal(string $dealId, DealProperty $property): ?CurrentProperty
     {
         $column = match ($property) {
             DealProperty::Name => 'name',
             DealProperty::Venue => 'venue_id',
-            DealProperty::Tier => 'tier',
+            DealProperty::Tier => '(SELECT t.code FROM tiers t WHERE t.id = crm_deals.tier_id)',
             DealProperty::Amount => 'amount_rappen',
             DealProperty::ContractStart => 'contract_start_on',
             DealProperty::ContractEnd => 'contract_end_on',
@@ -60,7 +60,7 @@ final class RecordPropertyQuery
     }
 
     /**
-     * Table and column come from the matches above, never from the request.
+     * Table and column (or the one expression) come from the matches above, never from the request.
      */
     private function read(string $table, string $column, string $id, bool $email): ?CurrentProperty
     {

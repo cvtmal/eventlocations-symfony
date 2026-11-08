@@ -6,7 +6,7 @@ namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\LostReason;
 use App\Crm\ValueObject\TaskDueDate;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\TierLabel;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 
@@ -23,15 +23,18 @@ final class DealListQuery
         JOIN crm_companies c ON c.id = d.company_id
         JOIN crm_deal_stages s ON s.code = d.stage_code
         LEFT JOIN admin_users u ON u.id = d.owner_id
+        LEFT JOIN tiers dt ON dt.id = d.tier_id
         SQL;
 
     private const string COLUMNS = <<<'SQL'
-        SELECT d.id, d.name, d.company_id, c.name AS company_name, d.stage_code, d.tier, d.amount_rappen,
+        SELECT d.id, d.name, d.company_id, c.name AS company_name, d.stage_code,
+               dt.code AS tier_code, dt.name AS tier_name, dt.rank_weight AS tier_rank_weight, d.amount_rappen,
                d.expected_close_on, u.display_name AS owner_name
         SQL;
 
     private const string CSV_COLUMNS = <<<'SQL'
-        SELECT d.name, c.name AS company_name, v.name AS venue_name, d.stage_code, d.lost_reason, d.tier, d.amount_rappen,
+        SELECT d.name, c.name AS company_name, v.name AS venue_name, d.stage_code, d.lost_reason,
+               dt.code AS tier_code, dt.name AS tier_name, dt.rank_weight AS tier_rank_weight, d.amount_rappen,
                d.contract_start_on, d.contract_end_on, d.expected_close_on, u.display_name AS owner_name
         SQL;
 
@@ -79,7 +82,7 @@ final class DealListQuery
                 null === $row['venue_name'] ? null : (string) $row['venue_name'],
                 (string) $row['stage_code'],
                 null === $row['lost_reason'] ? null : LostReason::from((string) $row['lost_reason']),
-                null === $row['tier'] ? null : Tier::from((string) $row['tier']),
+                TierLabel::tryFromRow($row),
                 null === $row['amount_rappen'] ? null : (int) $row['amount_rappen'],
                 TaskDueDate::parse($row['contract_start_on']),
                 TaskDueDate::parse($row['contract_end_on']),
@@ -178,7 +181,7 @@ final class DealListQuery
             (string) $row['company_id'],
             (string) $row['company_name'],
             (string) $row['stage_code'],
-            null === $row['tier'] ? null : Tier::from((string) $row['tier']),
+            TierLabel::tryFromRow($row),
             null === $row['amount_rappen'] ? null : (int) $row['amount_rappen'],
             TaskDueDate::parse($row['expected_close_on']),
             null === $row['owner_name'] ? null : (string) $row['owner_name'],

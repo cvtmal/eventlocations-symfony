@@ -9,7 +9,7 @@ use App\Factory\VenueFactory;
 use App\Portal\Entity\PortalUser;
 use App\Tests\Application\Crm\CountsQueries;
 use App\Tests\Support\Portal\PortalSession;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -53,7 +53,7 @@ final class PortalLoginTest extends WebTestCase
     public function test_the_account_lists_the_manager_s_active_locations_only(): void
     {
         $manager = $this->logInAsManager();
-        $published = VenueFactory::createOne(['name' => 'Schloss Aarau', 'tier' => Tier::Premium]);
+        $published = VenueFactory::createOne(['name' => 'Schloss Aarau', 'tier' => KnownTiers::PRO]);
         $offline = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $published]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $offline]);
@@ -69,7 +69,7 @@ final class PortalLoginTest extends WebTestCase
         self::assertSame('/konto/locations/'.$offline->number(), $links->eq(1)->attr('href'));
         $row = $crawler->filter('.venue-widget__row')->eq(1);
         self::assertSame(['Unpubliziert', 'Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Haupt-Gebäudeart fehlt'], $row->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
-        self::assertStringNotContainsString('Premium', $crawler->filter('.venue-widget')->text());
+        self::assertStringNotContainsString('Top-Eintrag', $crawler->filter('.venue-widget')->text());
     }
 
     public function test_the_list_costs_one_statement_more_than_the_empty_account(): void

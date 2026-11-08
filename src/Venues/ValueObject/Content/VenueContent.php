@@ -6,7 +6,6 @@ namespace App\Venues\ValueObject\Content;
 
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 
 /**
@@ -27,7 +26,6 @@ final readonly class VenueContent
         public string $key,
         public string $contentHash,
         public string $name,
-        public Tier $tier,
         public VenueStatus $status,
         public int $capacityMax,
         public ?int $capacityMin,

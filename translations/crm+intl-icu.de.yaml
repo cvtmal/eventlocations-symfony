@@ -268,7 +268,7 @@ deal:
         other: Anderer Grund
     board:
         open: 'Offen: CHF {sum} · {count, plural, one {# Deal} other {{n} Deals}}'
-        hint: Karten ziehen oder «Weiter →» bzw. das Menü «Verschieben nach» benutzen. Bei «Gewonnen» fragt das CRM, ob der Tier auf den Eintrag angewendet werden soll.
+        hint: Karten ziehen oder «Weiter →» bzw. das Menü «Verschieben nach» benutzen. Bei «Gewonnen» fragt das CRM, ob der Tarif auf den Eintrag angewendet werden soll.
         to_list: Deals als Liste anzeigen
         filter: Filtern
         column_sum: CHF {sum}
@@ -298,20 +298,20 @@ deal:
         forbidden: Sitzung abgelaufen. Bitte die Seite neu laden.
         error: Verschieben nicht möglich. Bitte erneut versuchen.
     tier:
-        action: Tier anwenden
-        title: Tier auf Eintrag anwenden
-        text: '«{venue}» hat heute den Tier {current}. Der Deal verkauft {offered}.'
-        confirm: Tier anwenden
+        action: Tarif anwenden
+        title: Tarif auf Eintrag anwenden
+        text: '«{venue}» hat heute den Tarif {current}. Der Deal verkauft den Tarif {offered}.'
+        confirm: Tarif anwenden
         cancel: Nicht jetzt
         close: Schliessen
         flash:
-            applied: Der Tier gilt jetzt auf dem Eintrag.
-            stale: Der Tier dieses Eintrags wurde inzwischen geändert. Bitte noch einmal prüfen.
-            gone: Für diesen Deal gibt es keinen Tier mehr anzuwenden.
+            applied: Der Tarif gilt jetzt auf dem Eintrag.
+            stale: Der Tarif dieses Eintrags wurde inzwischen geändert. Bitte noch einmal prüfen.
+            gone: Für diesen Deal gibt es keinen Tarif mehr anzuwenden.
     renew:
         action: Verlängern
         title: Deal verlängern
-        text: Ein neuer Deal für die nächste Vertragsperiode entsteht in der Phase «Neu». Location, Eintrag, Tier, Wert und Zuständige werden übernommen.
+        text: Ein neuer Deal für die nächste Vertragsperiode entsteht in der Phase «Neu». Location, Eintrag, Tarif, Wert und Zuständige werden übernommen.
         confirm: Verlängern
         cancel: Abbrechen
         close: Schliessen
@@ -477,7 +477,7 @@ task:
         done: '«{title}» als erledigt markieren'
         reopen: '«{title}» wieder öffnen'
     renewal_title: 'Verlängerung: {name}'
-    invoice_title: Rechnung stellen
+    pro_request_title: 'Pro-Anfrage: {venue} ({email})'
     object:
         company: Location
         deal: Deal

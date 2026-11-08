@@ -27,7 +27,7 @@ use App\Inquiries\Entity\Inquiry;
 use App\Inquiries\ValueObject\MailStatus;
 use App\Venues\Entity\Venue;
 use App\Venues\Repository\VenueRepository;
-use App\Venues\ValueObject\Tier;
+use App\Venues\ValueObject\KnownTiers;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Zenstruck\Foundry\Story;
 
@@ -165,11 +165,13 @@ final class CrmStory extends Story
 
         foreach (self::DEALS as $index => [$stage, $contractEnd]) {
             $company = $index % \count($companies);
+            // The factory resolves the code to the seeded row (F12).
+            $tier = $faker->randomElement([KnownTiers::FREE, KnownTiers::PRO]);
             $attributes = [
-                'name' => $faker->randomElement(['Premium', 'Top Premium', 'Empfehlung', 'Basic']).' '.$today->format('Y'),
+                'name' => ucfirst($tier).' '.$today->format('Y'),
                 'company' => $companies[$company],
                 'venue' => $venues[$company] ?? null,
-                'tier' => $faker->randomElement(Tier::cases()),
+                'tier' => $tier,
                 'amountRappen' => $faker->numberBetween(1, 40) * 50000,
                 'owner' => 0 === $index % 3 ? null : $admin,
                 'expectedCloseOn' => $today->modify(\sprintf('%+d days', 7 * ($index + 1))),

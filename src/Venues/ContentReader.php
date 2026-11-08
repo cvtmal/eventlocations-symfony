@@ -13,7 +13,6 @@ use App\Venues\ValueObject\Content\VenueContent;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -103,7 +102,7 @@ final class ContentReader
             throw InvalidContent::withMessages($key, ['venue.yaml: '.$exception->getMessage()]);
         }
         if (!$data instanceof \stdClass) {
-            throw InvalidContent::withMessages($key, ['venue.yaml: the file must be a mapping of fields (name: …, tier: …)']);
+            throw InvalidContent::withMessages($key, ['venue.yaml: the file must be a mapping of fields (name: …, capacity: …)']);
         }
 
         return $data;
@@ -315,7 +314,6 @@ final class ContentReader
             key: $key,
             contentHash: hash('sha256', ContentFormat::VERSION."\n".self::canonicalJson($data)."\n".implode("\n", $lines)),
             name: $data->name,
-            tier: Tier::from($data->tier),
             status: VenueStatus::from($data->status ?? VenueStatus::Published->value),
             capacityMax: $data->capacity->max,
             capacityMin: $data->capacity->min ?? null,

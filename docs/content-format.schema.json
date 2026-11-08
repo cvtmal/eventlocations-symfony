@@ -7,7 +7,6 @@
     "additionalProperties": false,
     "required": [
         "name",
-        "tier",
         "capacity",
         "translations"
     ],
@@ -91,17 +90,6 @@
             "minLength": 1,
             "description": "Name of the venue (≤ 150, not translated). The URL slug is made from it.",
             "maxLength": 150
-        },
-        "tier": {
-            "description": "Listing tier (S6): sets the order in listings.",
-            "enum": [
-                "beliebte_location",
-                "empfehlung",
-                "top_premium",
-                "premium",
-                "basic"
-            ],
-            "type": "string"
         },
         "status": {
             "description": "published (default) or unpublished to hide the venue.",

@@ -18,8 +18,8 @@ use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Cms\ResetsContentBlocks;
 use App\Venues\Entity\Venue;
 use App\Venues\Entity\VenueTranslation;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PriceLevel;
-use App\Venues\ValueObject\Tier;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -80,7 +80,7 @@ final class ListingHtmlBudgetTest extends WebTestCase
                 }
                 $venue = $factory->create([
                     'name' => 'Schlossgut Hohenrain am See '.$i,
-                    'tier' => Tier::TopPremium,
+                    'tier' => KnownTiers::PRO,
                     'capacityMin' => 40,
                     'capacityMax' => 1200,
                     'town' => repository(Town::class)->find($towns[$i - 1]),
