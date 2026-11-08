@@ -48,7 +48,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 ## Facts the owner holds
 
-Every product decision is settled (D23 to D54). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
+Every product decision is settled (D23 to D55). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
 
 | Fact | Until it arrives |
 |---|---|
@@ -71,11 +71,11 @@ _Status as of 2026-11-08, kept by the PO after every merge. The cycles themselve
 
 **Built, PR open:** F9 `inquiry-event` (inquiry form with event fields) · `places-photos` (Google photos and rating, built but off, D48) · G15 `video-embed` (click-to-load videos).
 
-**In a lane:** G13 `tier-pages` ("Eintragen / Preise") · F14 `content-onboarding` (venues in, as drafts; contact-list import) · G10 `owner-report` (monthly report; the qualified figure follows G7).
+**In a lane:** G13 `tier-pages` ("Eintragen / Preise") · F14 `content-onboarding` (venues in, as drafts; contact-list import) · G10 `owner-report` (monthly report; the qualified figure follows G7) · G14 `last-minute-offers` («Kurzfristig frei», after-launch scope in a free lane).
 
 **Launch-critical, not started:** G7 `enquiry-quality` (real vs. spam, delivery status) · F16 `launch-verification` (final check).
 
-**After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G14 `last-minute-offers` (paused) · G16 `organizer-feedback`.
+**After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G16 `organizer-feedback`.
 
 ## Roadmap (proposed order)
 
