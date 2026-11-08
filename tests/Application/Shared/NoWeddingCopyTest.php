@@ -17,10 +17,10 @@ use Zenstruck\Foundry\Test\Factories;
  * every other wedding word fails, in the public catalogues and in the rendered public pages. The competitor's domain
  * never appears in public copy (D11).
  *
- * Two namespaces are still other cycles' copy and are skipped in the catalogues: `landing.*` of `search` and `seo` until
- * landing-event (F8) merges, and the inquiry's Occasion list (`inquiries` `occasion.*`, the styleguide's copy of it) until
- * inquiry-event (F9) merges. Whichever of F7b and F8 (F9) rebases second removes its skip. In rendered pages only the
- * Occasion labels pass, and only on the detail page (its inquiry form): no page here renders a landing heading.
+ * One namespace is still another cycle's copy and is skipped in the catalogues: the inquiry's Occasion list
+ * (`inquiries` `occasion.*`, the styleguide's copy of it) until inquiry-event (F9) merges; F9 removes the skip. F8's
+ * `landing.*` keys of `search` and `seo` are checked like every other key. In rendered pages only the Occasion labels
+ * pass, and only on the detail page (its inquiry form).
  * Public Twig and `assets/js` must carry no copy of their own, so they get the same check without exceptions.
  */
 final class NoWeddingCopyTest extends WebTestCase
@@ -33,8 +33,6 @@ final class NoWeddingCopyTest extends WebTestCase
     private const string COMPETITOR = '/eventlokale\.ch/iu';
     /** domain => key prefixes skipped until the owning cycle merges (see the class comment) */
     private const array SKIPPED = [
-        'search' => ['landing.'], // until landing-event (F8) merges
-        'seo' => ['landing.'], // until landing-event (F8) merges
         'inquiries' => ['occasion.'], // until inquiry-event (F9) merges
         'styleguide' => ['styleguide.text_input.occasion_'], // the styleguide's copy of the Occasion list, until inquiry-event (F9) merges
     ];
@@ -91,7 +89,8 @@ final class NoWeddingCopyTest extends WebTestCase
         self::assertSame(1, preg_match(self::COMPETITOR, 'wie auf eventlokale.ch'));
         self::assertSame(0, preg_match(self::WEDDING, 'Eventlokale in der Schweiz'));
         self::assertSame(0, preg_match(self::COMPETITOR, '/eventlokale/zuerich'));
-        self::assertTrue(self::skipped('search', 'landing.canton.heading'));
+        self::assertTrue(self::skipped('inquiries', 'occasion.wedding'));
+        self::assertFalse(self::skipped('search', 'landing.canton.heading'));
         self::assertFalse(self::skipped('search', 'listing.heading'));
     }
 
