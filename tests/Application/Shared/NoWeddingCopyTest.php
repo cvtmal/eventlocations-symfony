@@ -17,10 +17,8 @@ use Zenstruck\Foundry\Test\Factories;
  * every other wedding word fails, in the public catalogues and in the rendered public pages. The competitor's domain
  * never appears in public copy (D11).
  *
- * One namespace is still another cycle's copy and is skipped in the catalogues: the inquiry's Occasion list
- * (`inquiries` `occasion.*`, the styleguide's copy of it) until inquiry-event (F9) merges; F9 removes the skip. F8's
- * `landing.*` keys of `search` and `seo` are checked like every other key. In rendered pages only the Occasion labels
- * pass, and only on the detail page (its inquiry form).
+ * Every public key is checked, F8's `landing.*` keys of `search` and `seo` too. Since F9 the inquiry's Anlass list is the
+ * F3 event types (`suitable_for` labels, the styleguide's copy of them), so no catalogue or page needs an exception.
  * Public Twig and `assets/js` must carry no copy of their own, so they get the same check without exceptions.
  */
 final class NoWeddingCopyTest extends WebTestCase
@@ -31,13 +29,6 @@ final class NoWeddingCopyTest extends WebTestCase
     private const string WEDDING = '/[\p{L}-]*(?:hochzeit|trauung|braut|heirat|traumlocation|grossen tag)[\p{L}-]*/iu';
     private const string EVENT_TYPE_LABEL = 'Hochzeit';
     private const string COMPETITOR = '/eventlokale\.ch/iu';
-    /** domain => key prefixes skipped until the owning cycle merges (see the class comment) */
-    private const array SKIPPED = [
-        'inquiries' => ['occasion.'], // until inquiry-event (F9) merges
-        'styleguide' => ['styleguide.text_input.occasion_'], // the styleguide's copy of the Occasion list, until inquiry-event (F9) merges
-    ];
-    /** Skipped keys whose words may render, until inquiry-event (F9) merges: the detail page's Anlass select. */
-    private const array OCCASION_KEYS = ['inquiries' => 'occasion.'];
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -66,9 +57,6 @@ final class NoWeddingCopyTest extends WebTestCase
         $found = [];
         foreach (self::catalogues() as $domain => $messages) {
             foreach ($messages as $key => $value) {
-                if (self::skipped($domain, $key)) {
-                    continue;
-                }
                 if (self::EVENT_TYPE_LABEL !== $value && 1 === preg_match(self::WEDDING, $value)) {
                     $found[] = $domain.': '.$key;
                 }
@@ -89,9 +77,6 @@ final class NoWeddingCopyTest extends WebTestCase
         self::assertSame(1, preg_match(self::COMPETITOR, 'wie auf eventlokale.ch'));
         self::assertSame(0, preg_match(self::WEDDING, 'Eventlokale in der Schweiz'));
         self::assertSame(0, preg_match(self::COMPETITOR, '/eventlokale/zuerich'));
-        self::assertTrue(self::skipped('inquiries', 'occasion.wedding'));
-        self::assertFalse(self::skipped('search', 'landing.canton.heading'));
-        self::assertFalse(self::skipped('search', 'listing.heading'));
     }
 
     public function test_rendered_public_pages_have_no_wedding_wording_and_no_competitor(): void
@@ -101,13 +86,12 @@ final class NoWeddingCopyTest extends WebTestCase
 
         $found = [];
         foreach (['/', '/eventlokale', $detail, '/merkliste', '/eventlokal-in-meiner-naehe', '/impressum', '/datenschutz', '/llms.txt'] as $path) {
-            $allowed = $path === $detail ? [self::EVENT_TYPE_LABEL, ...self::occasionWords()] : [self::EVENT_TYPE_LABEL];
             $this->client->request('GET', $path);
             self::assertResponseIsSuccessful($path);
             $body = (string) $this->client->getResponse()->getContent();
 
             preg_match_all(self::WEDDING, $body, $matches);
-            foreach (array_diff(array_unique($matches[0]), $allowed) as $word) {
+            foreach (array_diff(array_unique($matches[0]), [self::EVENT_TYPE_LABEL]) as $word) {
                 $found[] = $path.': '.$word;
             }
             if (1 === preg_match(self::COMPETITOR, $body)) {
@@ -136,36 +120,6 @@ final class NoWeddingCopyTest extends WebTestCase
 
         self::assertGreaterThan(50, \count(iterator_to_array($files, false)));
         self::assertSame([], $found);
-    }
-
-    /**
-     * The words of the Occasion labels, which the detail page's inquiry form renders until inquiry-event (F9) merges.
-     *
-     * @return list<string>
-     */
-    private static function occasionWords(): array
-    {
-        $words = [];
-        foreach (self::OCCASION_KEYS as $domain => $prefix) {
-            foreach (self::catalogues()[$domain] as $key => $value) {
-                if (str_starts_with($key, $prefix) && preg_match_all(self::WEDDING, $value, $matches) > 0) {
-                    array_push($words, ...$matches[0]);
-                }
-            }
-        }
-
-        return array_values(array_unique($words));
-    }
-
-    private static function skipped(string $domain, string $key): bool
-    {
-        foreach (self::SKIPPED[$domain] ?? [] as $prefix) {
-            if (str_starts_with($key, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
