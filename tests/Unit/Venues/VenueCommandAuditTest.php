@@ -99,6 +99,7 @@ final class VenueCommandAuditTest extends TestCase
         yield 'publish' => [new PublishVenue(self::NUMBER)];
         yield 'unpublish' => [new UnpublishVenue(self::NUMBER)];
         yield 'check_facts' => [new CheckVenueFacts(self::NUMBER, true)];
+        yield 'check_facts_by_claim' => [new CheckVenueFacts(self::NUMBER, true, CheckVenueFacts::VIA_CLAIM)];
         yield 'delete' => [new DeleteVenue(self::NUMBER, 'Schloss Muster', 'schloss-muster')];
         yield 'add photo' => [new AddVenuePhoto(self::NUMBER, null, '/tmp/php/GEHEIMTEXT.jpg', 'jpg')];
         yield 'reorder photos' => [new ReorderVenuePhotos(self::NUMBER, null, ['0199a1b2-0000-7000-8000-000000000001'])];

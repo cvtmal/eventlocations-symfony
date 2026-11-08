@@ -8,6 +8,7 @@ use App\Factory\PortalUserFactory;
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePreviewFactory;
+use App\Factory\VenueTranslationFactory;
 use App\Portal\Command\GrantVenueAccess;
 use App\Portal\Command\StartClaim;
 use App\Portal\Command\VerifyClaim;
@@ -17,7 +18,9 @@ use App\Portal\ValueObject\ClaimOutcome;
 use App\Portal\ValueObject\ClaimVerification;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
+use App\Tests\Support\Http\RecordingHttpCachePurger;
 use App\Venues\Entity\Venue;
+use App\Venues\ReadModel\VenueDetailQuery;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
@@ -199,11 +202,130 @@ final class ClaimCommandsTest extends KernelTestCase
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM claim_challenges'), 'rows older than a day are gone');
     }
 
-    private function venue(string $domain = 'remise-am-bach.example'): Venue
+    public function test_a_claim_granted_on_the_website_domain_checks_the_facts_audited_and_purges_the_pages(): void
     {
-        return VenueFactory::new()->afterInstantiate(static function (Venue $venue) use ($domain): void {
+        $venue = $this->venue(factsChecked: false);
+        $purger = $this->purger();
+        [$id, $code] = $this->start($venue, 'info@remise-am-bach.example');
+
+        self::assertSame(ClaimOutcome::Granted, $this->verify($id, $code)->outcome);
+
+        self::assertSame('2026-11-07 10:00:00+00', $this->factsCheckedAt($venue));
+        self::assertEquals([['facts_checked' => true, 'via' => 'claim']], $this->factsAudit($venue));
+        self::assertContains($venue->number(), $purger->venues);
+        self::assertGreaterThan(0, $purger->listings, 'landing pages count indexable entries');
+    }
+
+    public function test_a_queued_claim_leaves_the_facts_to_staff_and_their_approval_checks_them(): void
+    {
+        $venue = $this->venue(factsChecked: false);
+        [$id, $code] = $this->start($venue, 'jemand@gmail.com');
+        $result = $this->verify($id, $code);
+        self::assertSame(ClaimOutcome::Queued, $result->outcome);
+        self::assertNull($this->factsCheckedAt($venue));
+        \assert(null !== $result->portalUserId);
+        $purger = $this->purger();
+
+        $this->dispatch(new GrantVenueAccess($result->portalUserId, $venue->id(), GrantVenueAccess::VIA_REVIEW));
+
+        self::assertSame('2026-11-07 10:00:00+00', $this->factsCheckedAt($venue));
+        self::assertEquals([['facts_checked' => true, 'via' => 'claim']], $this->factsAudit($venue));
+        self::assertContains($venue->number(), $purger->venues);
+        self::assertGreaterThan(0, $purger->listings);
+    }
+
+    public function test_a_manager_added_in_the_panel_leaves_the_facts_unchecked(): void
+    {
+        $venue = $this->venue(factsChecked: false);
+        $user = PortalUserFactory::createOne();
+
+        $this->dispatch(new GrantVenueAccess($user->id(), $venue->id(), GrantVenueAccess::VIA_PANEL));
+
+        self::assertNull($this->factsCheckedAt($venue));
+        self::assertSame([], $this->factsAudit($venue));
+    }
+
+    public function test_checked_facts_keep_their_date_and_write_no_audit_row(): void
+    {
+        $venue = $this->venue();
+        [$id, $code] = $this->start($venue, 'info@remise-am-bach.example');
+        $other = $this->venue('andere.example');
+        $user = PortalUserFactory::createOne();
+        PortalVenueAccessFactory::createOne(['user' => $user, 'venue' => $other]);
+
+        self::assertSame(ClaimOutcome::Granted, $this->verify($id, $code)->outcome);
+        $this->dispatch(new GrantVenueAccess($user->id(), $other->id(), GrantVenueAccess::VIA_REVIEW));
+
+        foreach ([$venue, $other] as $checked) {
+            self::assertSame('2025-12-31 23:00:00+00', $this->factsCheckedAt($checked), 'the factory\'s date stays');
+            self::assertSame([], $this->factsAudit($checked));
+        }
+    }
+
+    public function test_a_claim_does_not_index_an_entry_without_a_description(): void
+    {
+        $written = $this->venue(factsChecked: false);
+        VenueTranslationFactory::createOne(['venue' => $written]);
+        $empty = $this->venue('andere.example', factsChecked: false);
+        VenueTranslationFactory::createOne(['venue' => $empty, 'description' => null]);
+
+        foreach (['info@remise-am-bach.example' => $written, 'info@andere.example' => $empty] as $email => $venue) {
+            [$id, $code] = $this->start($venue, $email);
+            self::assertSame(ClaimOutcome::Granted, $this->verify($id, $code)->outcome);
+        }
+
+        self::assertTrue($this->indexable($written));
+        self::assertFalse($this->indexable($empty), 'the gate still asks for a description');
+        self::assertNotNull($this->factsCheckedAt($empty));
+    }
+
+    private function venue(string $domain = 'remise-am-bach.example', bool $factsChecked = true): Venue
+    {
+        $factory = VenueFactory::new()->afterInstantiate(static function (Venue $venue) use ($domain): void {
             $venue->changeContact(null, null, 'https://www.'.$domain.'/', null);
-        })->create(['status' => VenueStatus::Unpublished]);
+        });
+
+        return ($factsChecked ? $factory : $factory->withUncheckedFacts())->create(['status' => VenueStatus::Unpublished]);
+    }
+
+    private function factsCheckedAt(Venue $venue): ?string
+    {
+        $at = $this->connection->fetchOne("SELECT to_char(facts_checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') || '+00' FROM venues WHERE id = ?", [$venue->id()]);
+
+        return \is_string($at) ? $at : null;
+    }
+
+    /**
+     * @return list<mixed> the decoded summaries of the venue's CheckVenueFacts audit rows
+     */
+    private function factsAudit(Venue $venue): array
+    {
+        $rows = $this->connection->fetchFirstColumn(
+            "SELECT changes::text FROM admin_audit_log WHERE subject_type = 'venue' AND subject_id = ? AND command LIKE '%CheckVenueFacts'",
+            [(string) $venue->number()],
+        );
+
+        return array_map(static fn (mixed $changes): mixed => json_decode((string) $changes, true, flags: \JSON_THROW_ON_ERROR), $rows);
+    }
+
+    private function indexable(Venue $venue): bool
+    {
+        $query = self::getContainer()->get(VenueDetailQuery::class);
+        self::assertInstanceOf(VenueDetailQuery::class, $query);
+        $detail = $query->detail($venue->number(), 'de', includeUnpublished: true);
+        self::assertNotNull($detail);
+
+        return $detail->indexable;
+    }
+
+    private function purger(): RecordingHttpCachePurger
+    {
+        $purger = self::getContainer()->get(RecordingHttpCachePurger::class);
+        self::assertInstanceOf(RecordingHttpCachePurger::class, $purger);
+        $purger->venues = [];
+        $purger->listings = 0;
+
+        return $purger;
     }
 
     /**

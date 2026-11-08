@@ -19,6 +19,7 @@ use App\Shared\Command\RecordFunnelEvent;
 use App\Shared\Funnel\FunnelEvent;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Uid\EntityId;
+use App\Venues\Command\CheckVenueFacts;
 use App\Venues\Command\PurgeVenueCache;
 use App\Venues\Command\RevokeVenuePreviews;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,9 +34,9 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * two claims at once one sees the other.
  *
  * Access comes at once only for an address on the website's domain (`ClaimDomain`) on a venue nobody else manages
- * or asked for; then every open preview link ends. Anything else is a pending request in #43's queue; one that met
- * somebody else's row is `competing`, and while it waits nobody on the venue can edit (`PortalVenueAccessQuery`),
- * so staff decide between them.
+ * or asked for; then every open preview link ends and the facts count as checked (D45). Anything else is a pending
+ * request in #43's queue; one that met somebody else's row is `competing`, and while it waits nobody on the venue can
+ * edit (`PortalVenueAccessQuery`), so staff decide between them.
  */
 final class VerifyClaimHandler implements CommandHandlerInterface
 {
@@ -112,6 +113,10 @@ final class VerifyClaimHandler implements CommandHandlerInterface
 
         $access->confirm($now);
         $this->commandBus->dispatch(new RevokeVenuePreviews($venue->id()));
+        // D45: the operator confirmed the facts; the description condition of the index gate still applies.
+        if (null === $venue->factsCheckedAt()) {
+            $this->commandBus->dispatch(new CheckVenueFacts($venue->number(), true, CheckVenueFacts::VIA_CLAIM));
+        }
         // The detail page loses its «Noch nicht vom Betreiber bestätigt» (D18).
         $this->commandBus->dispatch(new PurgeVenueCache($venue->number()), [new DispatchAfterCurrentBusStamp()]);
 
