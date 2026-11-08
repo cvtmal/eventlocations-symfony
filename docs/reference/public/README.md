@@ -6,7 +6,7 @@ The back office keeps `docs/reference/admin/`.
 - **Status:** the sister site drew these boards (approved 2026-10-31). F6b `brand-assets` (2026-11-07) redrew every board in the D23 look
   (`docs/brand.md`: indigo, vermilion, cool neutrals, Hanken Grotesk, the SVG lockup) with F3's event vocabulary, and checked them against the
   live pages at 390 and 1440 px. The design system is published privately: https://claude.ai/artifact/62CFPCBUmi8R7JwJJd4woV.
-  F11 `portal-event` (2026-11-08) redrew `More` and `Detail` with F7b's taxonomy labels (groups "Art der Location", "Räume und
+  F11 `portal-event` (2026-11-08) redrew `More`, `Detail` and `DetailReal` (and the admin `LocationEdit` board) with F7b's taxonomy labels (groups "Art der Location", "Räume und
   Infrastruktur", "Rund um die Location", and the reworded terms of `setting`, `building`, `infrastructure` and `surroundings`), as
   live since F7b `event-copy-de`.
 - **Files:** `canvas.json`, one `*.dc.html` per board and width, `assets/` (the logo, the dark logo for the mail, the font, drawn photos,
@@ -48,7 +48,7 @@ later cycles:
 
 - **Copy (F7b done, F8 and F9 open):** F7b replaced the wedding wording of headings, footer, home, error pages and Datenschutz (operator facts
   are `TODO(owner)` placeholders, D27; processors per D26). Still open: the canton, town and building landing headings and intros (F8) and
-  the inquiry's Anlass list (F9). The `More` and `Detail` boards draw F7b's taxonomy labels since F11.
+  the inquiry's Anlass list (F9). The `More`, `Detail` and `DetailReal` boards draw F7b's taxonomy labels since F11.
 - **Routes (F5):** board labels use `/eventlokale`, `/eventlokale/{kanton}`, `/eventlokale/{kanton}/{ort}`, `/eventlokal/{slug}` and
   `/eventlokal-in-meiner-naehe`; the live app has them since F5.
 - **Content:** the boards keep curated fictional venues; the demo data is lorem-like. The Detail board draws a Google rating box, which the live
