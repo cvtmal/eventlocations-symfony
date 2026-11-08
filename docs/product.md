@@ -39,7 +39,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 - Event types (Firmenanlass, Seminar, Geburtstag, Apéro, Hochzeit …), catering, technology and guest number as filters; layouts shown on the detail page, no layout filter (D4, E5).
 - URLs carry the search term "Eventlokale": `/eventlokale` (listing), `/eventlokale/{kanton}` and `/eventlokale/{kanton}/{ort}` (landing pages), `/eventlokal/{venue}` (detail page), `/eventlokal-in-meiner-naehe`. No redirects, since nothing is live yet. The competitor's name, domain and logo never appear in titles, meta, copy or structured data (F5, 2026-11-07).
-- **Free + Pro at CHF 199 a year, final, shown without a VAT line (D24, D25).** Free: a basic entry, 6 photos, 1 room, inquiries by e-mail. Pro: more photos, rooms, PDFs and video embeds, ranking above Free, visible contact data, last-minute offers, a detailed monthly report. Invoiced by hand; a lapsed Pro entry falls back to Free and stays online (D2).
+- **Free + Pro at CHF 199 a year, final, shown without a VAT line (D24, D25).** Free: a basic entry, 6 photos, 1 room, inquiries by e-mail. Pro: more photos, rooms, PDFs and video embeds, ranking above Free, visible contact data, «Kurzfristig frei» offers, a detailed monthly report. Invoiced by hand; a lapsed Pro entry falls back to Free and stays online (D2).
 - **Prepared entries.** The platform prepares an entry from the venue's own website; the manager gets a private preview link, claims it, confirms the photos they have rights to, and publishes. No photo is public without a rights record. Until then Google Places photos and a neutral placeholder fill the gap (D12, D16).
 - **Brand:** indigo and vermilion, Hanken Grotesk, an SVG wordmark (D23). Hosted at Infomaniak in Switzerland with a Neon database in Frankfurt (D26).
 - **No Hochzeit landing pages:** Hochzeit is an event type only (D31).
@@ -81,7 +81,7 @@ _Status as of 2026-11-08, kept by the PO after every merge. The cycles themselve
 
 1. Event wording and look: "du" (F7a), brand (F6) and vocabulary (F3) are done; filters and URLs (F5), room layouts (F4), copy (F7b), landing pages (F8) and the brand polish (F6b) follow.
 2. Wave G, launch-critical: rights records and takedown, own-site importer, preview link and claim, enquiry quality, funnel scorecard, tiers with term and expiry, monthly report, outreach tracking, launch regions, Free/Pro page.
-3. F13 reverse match, last-minute offers, video embed, organizer feedback.
+3. After launch-critical: F13 reverse match and G16 organizer feedback («Kurzfristig frei» and videos were built early in free lanes).
 4. F15 production setup (done), F16 launch verification. Deploys are the owner's.
 5. After launch: the 100-account outreach pilot (CMO §6.5), then the first 10 paying venues as the gate (CMO §11).
 
