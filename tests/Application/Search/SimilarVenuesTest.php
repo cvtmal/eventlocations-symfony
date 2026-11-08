@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Search;
 
+use App\Factory\LastMinuteOfferFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
@@ -120,6 +122,32 @@ final class SimilarVenuesTest extends WebTestCase
         self::assertCount(0, $free->filter('.badge'));
     }
 
+    /**
+     * G14: the «Kurzfristig frei» badge sits on every card surface, the band included, under the same rule as the
+     * listing's card: a live offer and a plan that allows offers.
+     */
+    public function test_a_pro_venue_with_a_live_offer_carries_the_last_minute_badge(): void
+    {
+        $this->venue('ich-selbst', 'Ich Selbst', 'Zürich', 20, 60);
+        $live = $this->venue('pro-mit-angebot', 'Pro mit Angebot', 'Zürich', 50, 100, KnownTiers::PRO);
+        $free = $this->venue('gratis-mit-angebot', 'Gratis mit Angebot', 'Zürich', 50, 100);
+        $expired = $this->venue('pro-abgelaufen', 'Pro abgelaufen', 'Zürich', 50, 100, KnownTiers::PRO);
+        LastMinuteOfferFactory::createOne(['venue' => $live]);
+        LastMinuteOfferFactory::createOne(['venue' => $free]);
+        LastMinuteOfferFactory::new()->expired()->create(['venue' => $expired]);
+
+        $cards = $this->client->request('GET', '/eventlokal/ich-selbst')->filter('.similar-card');
+
+        self::assertResponseIsSuccessful();
+        $badges = static fn (string $name): array => $cards
+            ->reduce(static fn (Crawler $card): bool => str_contains($card->text(), $name))
+            ->filter('.badge')
+            ->each(static fn (Crawler $badge): string => $badge->text());
+        self::assertSame(['Top-Eintrag', 'Kurzfristig frei'], $badges('Pro mit Angebot'));
+        self::assertSame([], $badges('Gratis mit Angebot'));
+        self::assertSame(['Top-Eintrag'], $badges('Pro abgelaufen'));
+    }
+
     private function detailPage(): Crawler
     {
         $this->venue('ich-selbst', 'Ich Selbst', 'Zürich', 20, 60);
@@ -133,7 +161,7 @@ final class SimilarVenuesTest extends WebTestCase
         return $crawler;
     }
 
-    private function venue(string $slug, string $name, string $town, ?int $min, int $max, string $tier = KnownTiers::FREE): void
+    private function venue(string $slug, string $name, string $town, ?int $min, int $max, string $tier = KnownTiers::FREE): Venue
     {
         $venue = VenueFactory::createOne([
             'name' => $name,
@@ -144,5 +172,7 @@ final class SimilarVenuesTest extends WebTestCase
             'capacityMax' => $max,
         ]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => $slug]);
+
+        return $venue;
     }
 }

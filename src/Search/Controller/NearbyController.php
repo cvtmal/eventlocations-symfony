@@ -7,12 +7,14 @@ namespace App\Search\Controller;
 use App\Geo\ReadModel\TownLocator;
 use App\Search\NearbyCentres;
 use App\Search\NearbyPins;
+use App\Search\ReadModel\ListingCard;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\NearbyVenue;
 use App\Search\ReadModel\NearbyVenuesQuery;
 use App\Search\ReadModel\SearchCriteria;
 use App\Shared\Http\PublicCache;
 use App\Shared\Security\ContentSecurityPolicy;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,7 +31,8 @@ use Symfony\Component\Routing\Attribute\Route;
  * pin query and no request to Google. The pins are embedded in the page, there is no endpoint.
  * The route's `_csp` default selects the maps policy and `geolocation=(self)` for it alone. The
  * key and the Map ID are in the cached HTML, so a change to either needs a purge
- * (`docs/operations.md`).
+ * (`docs/operations.md`). A list with a «Kurzfristig frei» badge (G14) expires at Zurich midnight
+ * (`PublicCache::listing()`), when an offer's last day ends; any other answer keeps a day.
  */
 final class NearbyController extends AbstractController
 {
@@ -43,6 +46,7 @@ final class NearbyController extends AbstractController
         private readonly ?string $mapsKey,
         #[Autowire('%env(default::GOOGLE_MAPS_MAP_ID)%')]
         private readonly ?string $mapId,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -97,7 +101,9 @@ final class NearbyController extends AbstractController
             'filtered' => [] !== array_intersect(['lat', 'lng', 'ort'], array_keys($query)),
             'centre_point' => $centre?->point,
         ]);
-        $response->setCache(PublicCache::page());
+        $response->setCache(array_any($cards, static fn (ListingCard $card): bool => $card->lastMinute)
+            ? PublicCache::listing($this->clock->now())
+            : PublicCache::page());
 
         return $response;
     }

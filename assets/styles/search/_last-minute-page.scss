@@ -1,7 +1,7 @@
 @use '../abstracts/breakpoints' as bp;
 
 // The page «Kurzfristig frei» (G14, search/last_minute.html.twig): title, intro and disclaimer, then one entry per
-// venue, its card beside its offers from md. Two classes, so it beats `.listing.container`, which it comes after.
+// venue, its card above its offers, beside them from xl. Two classes, so it beats `.listing.container`, which it comes after.
 .listing.last-minute {
     gap: var(--space-24);
     padding-top: var(--space-16);
@@ -51,8 +51,10 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-16);
 
-    @include bp.up(md) {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    // The card is a row from md (photo 20 to 25rem), so the offers go beside it only where the card keeps room for
+    // its text: at xl the container is 1248px and two thirds hold the row.
+    @include bp.up(xl) {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
         align-items: start;
         gap: var(--space-24);
     }

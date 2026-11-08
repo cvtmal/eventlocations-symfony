@@ -1,7 +1,7 @@
 {#
     "Ähnliche Locations" (DP-15), rendered by App\Search\Controller\SimilarVenuesController and embedded by the
     Venues detail page. Params: venues (list<SimilarVenue>). Photos via #7's card_picture(), the facts as one line
-    of text (DetailReal), the "Top-Eintrag" label via components/_badge (D19). The carousel's section is the band's one named
+    of text (DetailReal), the "Top-Eintrag" label and the «Kurzfristig frei» badge (G14) via components/_badge (D19). The carousel's section is the band's one named
     region: a name on the outer section too would make two landmarks of the same name (axe landmark-unique).
     The name link is the card's one link and stretches over the whole card (search/_card's .card__link::after), so the
     photo opens the venue too, with one tab stop and the venue's name as the link's name. A card has no button to keep
@@ -26,6 +26,7 @@
                         {% endif %}
                         <div class="similar-card__body">
                             {% if venue.promoted %}{{ include('components/_badge.html.twig', {label: 'tier.promoted'|trans({}, 'venues')}, with_context = false) }}{% endif %}
+                            {% if venue.lastMinute %}{{ include('components/_badge.html.twig', {label: 'card.last_minute'|trans({}, 'search')}, with_context = false) }}{% endif %}
                             <h3 class="similar-card__name"><a class="card__link" href="{{ path('venue_show', {slug: venue.slug}) }}">{{ venue.name }}</a></h3>
                             <p class="card-facts similar-card__facts">{{ venue.place.isKnown()
                                 ? 'similar.facts'|trans({place: venue.place|trans, capacity: capacity}, 'search')

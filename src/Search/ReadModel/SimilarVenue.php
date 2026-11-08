@@ -8,7 +8,7 @@ use App\Venues\ValueObject\VenuePlace;
 
 /**
  * One card of "Ähnliche Locations" on the detail page (DP-15): photo, "Top-Eintrag" label, name,
- * town, capacity.
+ * town, capacity, and the «Kurzfristig frei» badge (G14, `$lastMinute`: a live offer the plan shows).
  */
 final readonly class SimilarVenue
 {
@@ -22,6 +22,7 @@ final readonly class SimilarVenue
         public ?int $capacityMin,
         public int $capacityMax,
         public ?CardPhoto $photo,
+        public bool $lastMinute = false,
     ) {
     }
 }

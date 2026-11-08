@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Shared;
 
+use App\Factory\LastMinuteOfferFactory;
 use App\Tests\Support\Http\PublicRouteFixtures;
 use App\Tests\Support\Inquiries\InquiryFormFields;
 use App\Tests\Support\Venues\DetailVenues;
+use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -138,6 +141,30 @@ final class PublicCacheHeadersTest extends WebTestCase
         self::assertSame($status, $response->getStatusCode());
         self::assertSame($cacheControl, $response->headers->get('Cache-Control'));
         self::assertSame($vary, $response->headers->get('Vary'));
+    }
+
+    /**
+     * G14: a page that shows an offer «Kurzfristig frei» (the detail section, a near-me card's badge) expires at
+     * Zurich midnight, when the offer's last day may end; the table's rows, without an offer, keep the day.
+     */
+    public function test_a_page_with_a_live_offer_expires_at_zurich_midnight(): void
+    {
+        $this->seedPublicRoutes();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        self::assertInstanceOf(EntityManagerInterface::class, $em);
+        $venueId = $this->connection->fetchOne('SELECT venue_id FROM venue_translations WHERE slug = ?', [DetailVenues::FULL_SLUG]);
+        self::assertIsString($venueId);
+        $venue = $em->find(Venue::class, $venueId);
+        self::assertInstanceOf(Venue::class, $venue);
+        LastMinuteOfferFactory::createOne(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2026-10-30'), 'endsOn' => new \DateTimeImmutable('2026-10-30')]);
+
+        foreach ([self::DETAIL, '/eventlokal-in-meiner-naehe?ort=8001'] as $url) {
+            $crawler = $this->client->request('GET', $url, server: ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+
+            self::assertResponseIsSuccessful();
+            self::assertStringContainsString('Kurzfristig frei', $crawler->filter('main')->text(), $url);
+            self::assertSame(self::LISTING, $this->client->getResponse()->headers->get('Cache-Control'), $url);
+        }
     }
 
     public function test_the_phone_limit_answers_private(): void
