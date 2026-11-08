@@ -6,30 +6,27 @@ namespace App\Venues\CommandHandler;
 
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Command\ChangeVenueTerms;
-use App\Venues\TierLimits;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\VenueEditing;
 use App\Venues\VenueTermSet;
 
 /**
- * Replaces the seven filter groups; the three event groups stay as they are.
+ * Replaces the Merkmale groups (setting, building, infrastructure, furniture, surroundings) with the main building and
+ * setting; the event groups of `ChangeVenueEventFactsHandler` stay as they are (F11 moved event types and technology there).
  */
 final class ChangeVenueTermsHandler implements CommandHandlerInterface
 {
     public const array GROUPS = [
         TermGroup::Setting,
         TermGroup::Building,
-        TermGroup::SuitableFor,
         TermGroup::Infrastructure,
         TermGroup::Furniture,
-        TermGroup::Technology,
         TermGroup::Surroundings,
     ];
 
     public function __construct(
         private readonly VenueEditing $editing,
         private readonly VenueTermSet $terms,
-        private readonly TierLimits $limits,
     ) {
     }
 
@@ -41,8 +38,6 @@ final class ChangeVenueTermsHandler implements CommandHandlerInterface
         foreach (self::GROUPS as $group) {
             $codes[$group->value] = $command->terms[$group->value] ?? [];
         }
-        // Event types are checked when they are written, never hidden when a page is read (F12).
-        $this->limits->assertEventTypesFit($venue, \count($codes[TermGroup::SuitableFor->value]), TermGroup::SuitableFor->value);
         $this->terms->replace($venue, $codes, array_intersect_key($command->main, $codes));
 
         $this->editing->close($venue);

@@ -23,6 +23,7 @@ use App\Portal\Form\WizardForms;
 use App\Portal\Form\WizardPhotoType;
 use App\Portal\Mailer\PortalMailer;
 use App\Portal\ManagerUploadGrant;
+use App\Portal\ReadModel\LocationPlanQuery;
 use App\Portal\ReadModel\PortalProfileQuery;
 use App\Portal\ReadModel\SubmissionQuery;
 use App\Portal\ReadModel\SubmissionState;
@@ -36,6 +37,7 @@ use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\Command\AddVenuePhoto;
 use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ReadModel\VenuePublishGaps;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
@@ -77,6 +79,8 @@ final class WizardController extends AbstractController
         private readonly MessageBusInterface $commandBus,
         private readonly RateLimiterFactoryInterface $portalUploadLimiter,
         private readonly ManagerUploadGrant $grants,
+        private readonly LocationPlanQuery $plans,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -285,6 +289,8 @@ final class WizardController extends AbstractController
             'venue' => $edit->header,
             'stale' => $stale,
             'locales' => $locales,
+            // The event step shows the plan's event-type limit (D40, F11).
+            'plan' => WizardStep::Event === $step ? $this->plans->forVenue($edit->header->id, $this->clock->now()) : null,
         ], new Response(status: $status));
     }
 

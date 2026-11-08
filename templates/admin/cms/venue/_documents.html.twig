@@ -1,0 +1,115 @@
+{#
+    The Dokumente list and upload card (#25, CMS-7), shared by staff's tab and the manager's (F11). Context from
+    `VenueDocumentPages`: venue (VenueHeader), documents (list<ManagedDocument>, by position), form (the upload form),
+    locale_codes, default_locale, csrf_id (the token id of the move and remove forms), documents_route (the list route;
+    `_edit`, `_up`, `_down` and `_remove` follow from it).
+#}
+{% set locales = locale_codes|map(code => {code: code, label: ('editor.locale.' ~ code)|trans({}, 'cms')}) %}
+<div class="venue-media">
+    {% embed 'admin/components/_card.html.twig' with {
+        title: 'documents.list.title'|trans({}, 'cms'),
+        id: 'venue-documents',
+        documents: documents,
+        number: venue.number,
+        default_locale: default_locale,
+        csrf_id: csrf_id,
+        documents_route: documents_route,
+    } only %}
+        {% block body %}
+            {% if documents is empty %}
+                {{ include('admin/components/_empty.html.twig', {
+                    icon: 'file-text',
+                    title: 'documents.empty.title'|trans({}, 'cms'),
+                    text: 'documents.empty.text'|trans({}, 'cms'),
+                }, with_context = false) }}
+            {% else %}
+                {% set items = [] %}
+                {% for document in documents %}
+                    {% set title = document.title(default_locale, default_locale) %}
+                    {% set route = {number: number, id: document.id} %}
+                    {% set actions %}
+                        {{ include('admin/components/_button.html.twig', {
+                            label: 'documents.open'|trans({title: title}, 'cms'),
+                            size: 'sm', variant: 'ghost', icon: 'external-link', icon_only: true,
+                            href: document.url,
+                            attributes: {target: '_blank', rel: 'noopener'},
+                        }, with_context = false) }}
+                        {{ include('admin/components/_button.html.twig', {
+                            label: 'documents.remove.action'|trans({}, 'cms'),
+                            size: 'sm', variant: 'ghost',
+                            attributes: {'aria-label': 'documents.remove.action_for'|trans({title: title}, 'cms'), commandfor: 'document-remove-' ~ document.id, command: 'show-modal'},
+                        }, with_context = false) }}
+                    {% endset %}
+                    {% set items = items|merge([{
+                        id: document.id,
+                        label: title,
+                        href: path(documents_route ~ '_edit', route),
+                        detail: 'documents.size'|trans({size: (document.sizeBytes / 1000000)|swiss_number(1)}, 'cms'),
+                        actions: actions,
+                        move_up_url: path(documents_route ~ '_up', route),
+                        move_down_url: path(documents_route ~ '_down', route),
+                    }]) %}
+                {% endfor %}
+                <p class="muted">{{ 'documents.list.hint'|trans({}, 'cms') }}</p>
+                {{ include('admin/components/_sortable.html.twig', {
+                    label: 'documents.list.title'|trans({}, 'cms'),
+                    up_label: 'documents.move_up'|trans({}, 'cms'),
+                    down_label: 'documents.move_down'|trans({}, 'cms'),
+                    csrf_token: csrf_token(csrf_id),
+                    items: items,
+                }, with_context = false) }}
+                {% for document in documents %}
+                    {% embed 'admin/components/_modal.html.twig' with {
+                        id: 'document-remove-' ~ document.id,
+                        title: 'documents.remove.title'|trans({}, 'cms'),
+                        close_label: 'documents.remove.close'|trans({}, 'cms'),
+                        danger: true,
+                        document_title: document.title(default_locale, default_locale),
+                        remove_url: path(documents_route ~ '_remove', {number: number, id: document.id}),
+                        csrf_id: csrf_id,
+                    } only %}
+                        {% block body %}<p>{{ 'documents.remove.text'|trans({title: document_title}, 'cms') }}</p>{% endblock %}
+                        {% block footer %}
+                            <form method="dialog"><button class="btn" autofocus>{{ 'documents.remove.cancel'|trans({}, 'cms') }}</button></form>
+                            <form method="post" action="{{ remove_url }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
+                                {{ include('admin/components/_button.html.twig', {label: 'documents.remove.confirm'|trans({}, 'cms'), variant: 'danger', type: 'submit'}, with_context = false) }}
+                            </form>
+                        {% endblock %}
+                    {% endembed %}
+                {% endfor %}
+            {% endif %}
+        {% endblock %}
+    {% endembed %}
+
+    {% form_theme form 'admin/form/theme.html.twig' %}
+    {{ form_start(form, {attr: {id: 'dokument-hochladen', class: 'venue-media__form', novalidate: 'novalidate'}}) }}
+        {% embed 'admin/components/_card.html.twig' with {
+            title: 'documents.upload.title'|trans({}, 'cms'),
+            id: 'venue-documents-upload',
+            upload: form,
+            locales: locales,
+        } only %}
+            {% block body %}
+                {{ form_errors(upload) }}
+                {{ include('admin/components/_required_hint.html.twig', with_context = false) }}
+                {{ form_row(upload.file) }}
+                {% set panels = {} %}
+                {% for locale in locales %}
+                    {% set panel %}{{ form_row(upload.titles[locale.code]) }}{% endset %}
+                    {% set panels = panels|merge({(locale.code): panel}) %}
+                {% endfor %}
+                {{ include('admin/components/_locale_tabs.html.twig', {
+                    id: 'document-upload-titles',
+                    label: 'editor.locales_label'|trans({}, 'cms'),
+                    locales: locales,
+                    panels: panels,
+                    active: locales|filter(locale => not upload.titles[locale.code].vars.valid)|map(locale => locale.code)|first|default(null),
+                }, with_context = false) }}
+            {% endblock %}
+            {% block foot %}
+                {{ include('admin/components/_button.html.twig', {label: 'documents.upload.submit'|trans({}, 'cms'), variant: 'primary', icon: 'upload', type: 'submit'}, with_context = false) }}
+            {% endblock %}
+        {% endembed %}
+    {{ form_end(form) }}
+</div>

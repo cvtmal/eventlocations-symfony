@@ -68,7 +68,7 @@ final class PortalLoginTest extends WebTestCase
         self::assertSame(['Schloss Aarau', 'Waldhütte Eichholz'], $links->each(static fn (Crawler $link): string => $link->text()));
         self::assertSame('/konto/locations/'.$offline->number(), $links->eq(1)->attr('href'));
         $row = $crawler->filter('.venue-widget__row')->eq(1);
-        self::assertSame(['Unpubliziert', 'Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Haupt-Gebäudeart fehlt'], $row->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
+        self::assertSame(['Unpubliziert', 'Keine Fotos', 'Keine Anfrage-E-Mail', 'Kurztext fehlt', 'Wichtigste Art der Location fehlt'], $row->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()));
         self::assertStringNotContainsString('Top-Eintrag', $crawler->filter('.venue-widget')->text());
     }
 

@@ -28,9 +28,10 @@ final class VenueEventCardTest extends WebTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const array EVENT_GROUPS = ['amenity', 'catering', 'language'];
+    /** The Veranstaltung card's groups since F11 (event types and technology moved here from Merkmale). */
+    private const array EVENT_GROUPS = ['suitable_for', 'catering', 'technology', 'amenity', 'language'];
 
-    public function test_the_card_offers_the_event_fields_and_every_term_of_its_three_groups(): void
+    public function test_the_card_offers_the_event_fields_and_every_term_of_its_five_groups(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = $this->venue();
@@ -54,7 +55,7 @@ final class VenueEventCardTest extends WebTestCase
             self::assertCount($terms, $form->filter('input[name="venue_event['.$group.'][]"]'), $group);
         }
         self::assertSame(
-            ['Preisniveau', 'Ausstattung', 'Catering', 'Sprachen'],
+            ['Geeignet für', 'Catering', 'Technik', 'Preisniveau', 'Ausstattung', 'Sprachen'],
             $form->filter('fieldset > legend')->each(static fn (Crawler $legend): string => $legend->text()),
         );
     }
@@ -72,21 +73,23 @@ final class VenueEventCardTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
-    public function test_a_save_stores_the_facts_audits_them_and_replaces_only_the_three_groups(): void
+    public function test_a_save_stores_the_facts_audits_them_and_replaces_only_its_five_groups(): void
     {
         $this->logInAs(AdminRole::Editor);
         $venue = $this->venue();
         $filterTerms = $this->terms($venue, self::filterGroups());
-        self::assertSame(['building.castle', 'setting.lake', 'suitable_for.corporate_event', 'technology.wifi'], $filterTerms);
-        self::assertSame(['amenity.parking', 'catering.in_house', 'language.de'], $this->terms($venue, self::EVENT_GROUPS));
+        self::assertSame(['building.castle', 'setting.lake'], $filterTerms);
+        self::assertSame(['amenity.parking', 'catering.in_house', 'language.de', 'suitable_for.corporate_event', 'technology.wifi'], $this->terms($venue, self::EVENT_GROUPS));
 
         $this->post($venue, [
             'priceLevel' => 'exclusive',
             'capacitySeated' => '300',
             'capacityStanding' => '450',
             'texts' => ['de' => ['ambience' => 'Festlich', 'capacityNote' => 'Mit Bühne 300 Plätze.', 'openingHours' => 'Täglich ab 9 Uhr']],
-            'amenity' => ['overnight', 'parking'],
+            'suitable_for' => ['corporate_event', 'seminar'],
             'catering' => ['buffet', 'vegan'],
+            'technology' => ['wifi'],
+            'amenity' => ['overnight', 'parking'],
             'language' => [],
         ]);
 
@@ -96,7 +99,7 @@ final class VenueEventCardTest extends WebTestCase
             ['Festlich', 'Mit Bühne 300 Plätze.', 'Täglich ab 9 Uhr'],
             $this->connection->fetchNumeric("SELECT ambience, capacity_note, opening_hours FROM venue_translations WHERE venue_id = ? AND locale = 'de'", [$venue->id()]),
         );
-        self::assertSame(['amenity.overnight', 'amenity.parking', 'catering.buffet', 'catering.vegan'], $this->terms($venue, self::EVENT_GROUPS));
+        self::assertSame(['amenity.overnight', 'amenity.parking', 'catering.buffet', 'catering.vegan', 'suitable_for.corporate_event', 'suitable_for.seminar', 'technology.wifi'], $this->terms($venue, self::EVENT_GROUPS));
         self::assertSame($filterTerms, $this->terms($venue, self::filterGroups()));
         self::assertNotNull($this->connection->fetchOne('SELECT cms_edited_at FROM venues WHERE id = ?', [$venue->id()]));
 
@@ -106,7 +109,7 @@ final class VenueEventCardTest extends WebTestCase
         $changes = json_decode((string) $audit['changes'], true);
         self::assertIsArray($changes);
         self::assertSame(
-            ['priceLevel', 'capacitySeated', 'capacityStanding', 'texts.de.ambience', 'texts.de.capacityNote', 'texts.de.openingHours', 'terms.amenity', 'terms.catering', 'terms.language'],
+            ['priceLevel', 'capacitySeated', 'capacityStanding', 'texts.de.ambience', 'texts.de.capacityNote', 'texts.de.openingHours', 'terms.suitable_for', 'terms.catering', 'terms.amenity', 'terms.language'],
             $changes['changed'],
         );
 
@@ -133,7 +136,7 @@ final class VenueEventCardTest extends WebTestCase
         $this->client->request('POST', $form->getUri(), $values);
 
         self::assertResponseRedirects($this->url($venue).'#merkmale');
-        self::assertSame(['building.castle', 'setting.lake', 'setting.river', 'suitable_for.corporate_event', 'technology.wifi'], $this->terms($venue, self::filterGroups()));
+        self::assertSame(['building.castle', 'setting.lake', 'setting.river'], $this->terms($venue, self::filterGroups()));
         self::assertSame($eventTerms, $this->terms($venue, self::EVENT_GROUPS));
     }
 

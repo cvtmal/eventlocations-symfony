@@ -12,7 +12,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Veranstaltung (the event facts): price, seated and standing capacity, the three texts per locale that has a
- * row (the handler writes no other), and the term groups amenity, catering and language.
+ * row (the handler writes no other), and the term groups event types (`suitable_for`), catering, technology, amenity
+ * and language (F11: the event step of the wizard asks these).
  */
 final class VenueEventData implements VenueCardData
 {
@@ -20,8 +21,10 @@ final class VenueEventData implements VenueCardData
 
     /** The groups this card owns, the same as `ChangeVenueEventFactsHandler::GROUPS` (pinned by a test). */
     public const array GROUPS = [
-        TermGroup::Amenity,
+        TermGroup::SuitableFor,
         TermGroup::Catering,
+        TermGroup::Technology,
+        TermGroup::Amenity,
         TermGroup::Language,
     ];
 

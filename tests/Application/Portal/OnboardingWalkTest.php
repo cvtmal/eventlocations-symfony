@@ -172,7 +172,7 @@ final class OnboardingWalkTest extends WebTestCase
 
         $crawler = $this->client->followRedirect();
         $this->client->submit($crawler->filter('form[name="venue_texts"]')->form(), ['venue_texts[texts][de][summary]' => self::SUMMARY]);
-        self::assertResponseRedirects($this->step($number, 'ausstattung'), Response::HTTP_SEE_OTHER);
+        self::assertResponseRedirects($this->step($number, 'merkmale'), Response::HTTP_SEE_OTHER);
 
         $crawler = $this->client->followRedirect();
         $form = $crawler->filter('form[name="venue_terms"]')->form();

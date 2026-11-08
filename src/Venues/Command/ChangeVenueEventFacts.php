@@ -10,8 +10,9 @@ use App\Venues\ValueObject\PriceLevel;
 
 /**
  * The CMS card "Veranstaltung" (#24, #31's facts, event-vocabulary F3): price level, seated and
- * standing capacity, the three event texts per locale and the three event term groups
- * (amenity, catering, language). A group missing from `terms` is emptied.
+ * standing capacity, the three event texts per locale and the five event term groups (event types `suitable_for`,
+ * catering, technology, amenity, language; F11). A group missing from `terms` is emptied; event types are checked
+ * against the plan (`TierLimits`).
  */
 final readonly class ChangeVenueEventFacts implements AuditableCommand
 {

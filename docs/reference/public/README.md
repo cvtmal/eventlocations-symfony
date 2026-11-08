@@ -6,6 +6,9 @@ The back office keeps `docs/reference/admin/`.
 - **Status:** the sister site drew these boards (approved 2026-10-31). F6b `brand-assets` (2026-11-07) redrew every board in the D23 look
   (`docs/brand.md`: indigo, vermilion, cool neutrals, Hanken Grotesk, the SVG lockup) with F3's event vocabulary, and checked them against the
   live pages at 390 and 1440 px. The design system is published privately: https://claude.ai/artifact/62CFPCBUmi8R7JwJJd4woV.
+  F11 `portal-event` (2026-11-08) redrew `More` and `Detail` with F7b's taxonomy labels (groups "Art der Location", "Räume und
+  Infrastruktur", "Rund um die Location", and the reworded terms of `setting`, `building`, `infrastructure` and `surroundings`), as
+  live since F7b `event-copy-de`.
 - **Files:** `canvas.json`, one `*.dc.html` per board and width, `assets/` (the logo, the dark logo for the mail, the font, drawn photos,
   icons, the canton map), `tokens.json`, and one PNG per board and width. The `.dc.html` files are static HTML with inline styles; open them
   in a browser, or read them for markup, values and copy.
@@ -28,7 +31,7 @@ The back office keeps `docs/reference/admin/`.
 | `Filterbar` | Bar with four triggers (Region, Anlass, Anzahl Gäste, weitere Filter; "Gäste" and "Filter +" at 390), active chips with the fading end at 390, "weitere Filter (N)" pill, the Anlass overlay |
 | `Region` | Region overlay: tabs, list, radius and pin; map states |
 | `Guests` | Guest overlay with one number input ("z.B. 80"), filled and focused |
-| `More` | "Weitere Filter" with F3's groups (Art der Location, Lage, Räume und Infrastruktur, Mobiliar, Technik, Ausstattung ...; the board still draws the labels before F7b), sticky footer |
+| `More` | "Weitere Filter" with F3's groups (Art der Location, Lage, Räume und Infrastruktur, Mobiliar, Technik, Ausstattung ...), sticky footer |
 | `DetailReal` | The shape of most real venues |
 | `Detail` | Every section (facts, "Angaben zur Location", Räume, Häufige Fragen, Standort, Kontakt, Dokumente), action card, mobile bar |
 | `DetailDialogs` | Gallery, room dialogs, share fallback, phone page |
@@ -45,8 +48,7 @@ later cycles:
 
 - **Copy (F7b done, F8 and F9 open):** F7b replaced the wedding wording of headings, footer, home, error pages and Datenschutz (operator facts
   are `TODO(owner)` placeholders, D27; processors per D26). Still open: the canton, town and building landing headings and intros (F8) and
-  the inquiry's Anlass list (F9). The `More` and `Detail` boards still draw the taxonomy labels from before F7b ("Gebäudeart",
-  "Infrastruktur", "Umgebung"; live: "Art der Location", "Räume und Infrastruktur", "Rund um die Location").
+  the inquiry's Anlass list (F9). The `More` and `Detail` boards draw F7b's taxonomy labels since F11.
 - **Routes (F5):** board labels use `/eventlokale`, `/eventlokale/{kanton}`, `/eventlokale/{kanton}/{ort}`, `/eventlokal/{slug}` and
   `/eventlokal-in-meiner-naehe`; the live app has them since F5.
 - **Content:** the boards keep curated fictional venues; the demo data is lorem-like. The Detail board draws a Google rating box, which the live

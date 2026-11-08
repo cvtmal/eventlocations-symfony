@@ -1,6 +1,7 @@
 {#
     A wizard step with a card (#45). Context from `WizardController`: form, step (`WizardStep`), card (`LocationCard`),
-    venue (`VenueHeader`), stale, locales list<{code, label}>. A stale card's reload link goes to `portal_location`.
+    venue (`VenueHeader`), stale, locales list<{code, label}>,
+    plan (`LocationPlan` on the event step, else null: the event-type limit, D40). A stale card's reload link goes to `portal_location`.
 #}
 {% extends 'portal/wizard/_layout.html.twig' %}
 
@@ -8,6 +9,13 @@
 {% set heading = ('onboarding.step.' ~ step.value)|trans({}, 'portal') %}
 
 {% block wizard_main %}
+    {% set event_types_limit = plan and plan.eventTypesMax is not null ? {
+        max: plan.eventTypesMax,
+        text: 'plan.event_types.limit'|trans({tier: plan.tierName, max: plan.eventTypesMax}, 'portal'),
+        full_text: 'plan.event_types.full'|trans({}, 'portal'),
+        link_label: 'plan.event_types.link'|trans({}, 'portal'),
+        link_href: plan.canRequestPro ? path('portal_location', {number: venue.number}) ~ '#location-plan' : null,
+    } : null %}
     <div class="venue-editor">
         {{ include(card.template, {
             form: form,
@@ -15,6 +23,7 @@
             number: venue.number,
             stale: stale,
             locales: locales,
+            event_types_limit: event_types_limit,
             submit_label: 'onboarding.next'|trans({}, 'portal'),
         }, with_context = false) }}
     </div>

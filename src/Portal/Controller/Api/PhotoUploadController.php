@@ -21,7 +21,8 @@ use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
- * One photo upload for a manager (POR-8): staff's `VenuePhotoUpload`, always to the gallery. The limiter sits here,
+ * One photo upload for a manager (POR-8): staff's `VenuePhotoUpload`, to the gallery or, with `roomId`, to one of the
+ * location's rooms (F11; a room of another venue is the handler's refusal). The limiter sits here,
  * so staff stay unlimited, and answers a 422 on `file`, because the island turns only a 422 into a text beside the
  * file; a 429 would show none and invite a retry. The photo is public at once only with a manager declaration on
  * record (`ManagerUploadGrant`); before that it waits for the declaration (G1).
@@ -45,6 +46,6 @@ final class PhotoUploadController extends AbstractController
             return $this->api->invalid('file', 'portal.photo.rate_limited');
         }
 
-        return $this->upload->add($number, $request, $this->grants->forUpload($identity->id(), $number), roomsAllowed: false);
+        return $this->upload->add($number, $request, $this->grants->forUpload($identity->id(), $number));
     }
 }

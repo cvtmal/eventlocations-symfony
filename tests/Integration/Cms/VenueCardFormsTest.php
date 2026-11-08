@@ -376,7 +376,7 @@ final class VenueCardFormsTest extends KernelTestCase
         $view = $this->card(VenueCard::Event, $edit)->createView();
 
         self::assertSame(
-            ['loadedAt', 'priceLevel', 'capacitySeated', 'capacityStanding', 'texts', 'amenity', 'catering', 'language'],
+            ['loadedAt', 'priceLevel', 'capacitySeated', 'capacityStanding', 'texts', 'suitable_for', 'catering', 'technology', 'amenity', 'language'],
             array_keys($view->children),
         );
         self::assertSame(['de'], array_keys($view['texts']->children));

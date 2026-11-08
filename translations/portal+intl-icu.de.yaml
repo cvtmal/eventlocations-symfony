@@ -60,6 +60,8 @@ editor:
         label: Bereiche der Location
         details: Angaben
         photos: Fotos
+        rooms: Räume
+        documents: Dokumente
         stats: Statistik
     offline:
         action: Offline nehmen
@@ -164,7 +166,7 @@ onboarding:
     progress: Schritt {position} von {total}
     step:
         texte: Texte
-        ausstattung: Ausstattung
+        merkmale: Merkmale
         veranstaltung: Veranstaltung
         fotos: Fotos
         kontakt: Kontakt
@@ -417,3 +419,8 @@ plan:
     flash:
         requested: 'Danke! Wir haben deine Anfrage erhalten und melden uns bei dir.'
         failed: Das hat nicht geklappt. Bitte lade die Seite neu und versuch es noch einmal.
+    # F11 (portal-event): under the event types of the Veranstaltung card (D40).
+    event_types:
+        limit: 'Mit deinem Plan {tier} kannst du bis zu {max, plural, one {# Anlassart} other {# Anlassarten}} wählen.'
+        full: Mehr Anlassarten gibt es mit Pro.
+        link: Pro anfragen

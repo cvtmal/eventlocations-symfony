@@ -19,6 +19,7 @@ use App\Venues\ValueObject\VenueStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
 use Symfony\Component\DomCrawler\Form;
 use Symfony\Component\HttpFoundation\Response;
 use Zenstruck\Foundry\Test\Factories;
@@ -43,7 +44,7 @@ final class WizardTest extends WebTestCase
     public static function gaps(): iterable
     {
         yield 'summary' => ['summary', 'texte'];
-        yield 'main building' => ['main_building', 'ausstattung'];
+        yield 'main building' => ['main_building', 'merkmale'];
         yield 'photo' => ['photo', 'fotos'];
         yield 'inquiry address' => ['inquiry_email', 'kontakt'];
     }
@@ -72,9 +73,9 @@ final class WizardTest extends WebTestCase
         $venue = $this->location($this->logInAsManager());
 
         $this->save($venue, 'texte', 'venue_texts', ['venue_texts[texts][de][summary]' => 'Ein neuer Kurztext.']);
-        self::assertResponseRedirects($this->url($venue, 'ausstattung'), Response::HTTP_SEE_OTHER);
+        self::assertResponseRedirects($this->url($venue, 'merkmale'), Response::HTTP_SEE_OTHER);
 
-        $this->save($venue, 'ausstattung', 'venue_terms');
+        $this->save($venue, 'merkmale', 'venue_terms');
         self::assertResponseRedirects($this->url($venue, 'veranstaltung'), Response::HTTP_SEE_OTHER);
 
         $this->save($venue, 'veranstaltung', 'venue_event');
@@ -85,7 +86,7 @@ final class WizardTest extends WebTestCase
     {
         $venue = $this->location($this->logInAsManager());
 
-        foreach (['ausstattung' => 'Ausstattung', 'veranstaltung' => 'Veranstaltung'] as $step => $heading) {
+        foreach (['merkmale' => 'Merkmale', 'veranstaltung' => 'Veranstaltung'] as $step => $heading) {
             $crawler = $this->client->request('GET', $this->url($venue, $step));
 
             self::assertResponseIsSuccessful();
@@ -97,13 +98,63 @@ final class WizardTest extends WebTestCase
         }
     }
 
+    /**
+     * F11: the event step asks the event types, catering and technology; Merkmale keeps the building and its
+     * surroundings, so "Ausstattung" is only the amenity group's label. Free's limit is named in du, and once the
+     * selection reaches it the step points to «Pro anfragen» (D40).
+     */
+    public function test_the_event_step_asks_the_event_facts_with_the_plans_limit(): void
+    {
+        $venue = $this->location($this->logInAsManager());
+
+        $crawler = $this->client->request('GET', $this->url($venue, 'merkmale'));
+        self::assertCount(0, $crawler->filter('[name="venue_terms[suitable_for][]"], [name="venue_terms[technology][]"]'));
+
+        $crawler = $this->client->request('GET', $this->url($venue, 'veranstaltung'));
+        self::assertGreaterThan(3, $crawler->filter('[name="venue_event[suitable_for][]"]')->count());
+        self::assertGreaterThan(0, $crawler->filter('[name="venue_event[catering][]"]')->count());
+        self::assertGreaterThan(0, $crawler->filter('[name="venue_event[technology][]"]')->count());
+        self::assertSame(['Geeignet für', 'Catering', 'Technik', 'Preisniveau', 'Ausstattung', 'Sprachen'], $crawler->filter('.venue-card legend.field__label')->each(static fn (Crawler $legend): string => $legend->text()));
+        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen.', $crawler->filter('#event-types-limit')->text());
+
+        $form = $crawler->filter('form[name="venue_event"]')->form();
+        self::tick($form, ['seminar', 'apero', 'birthday']);
+        $this->client->submit($form);
+        self::assertResponseRedirects($this->url($venue, 'fotos'), Response::HTTP_SEE_OTHER);
+
+        $crawler = $this->client->request('GET', $this->url($venue, 'veranstaltung'));
+        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen. Mehr Anlassarten gibt es mit Pro. Pro anfragen', $crawler->filter('#event-types-limit')->text());
+        self::assertSame('/konto/locations/'.$venue->number().'#location-plan', $crawler->filter('#event-types-limit a')->attr('href'));
+
+        $form = $crawler->filter('form[name="venue_event"]')->form();
+        self::tick($form, ['seminar', 'apero', 'birthday', 'party']);
+        $crawler = $this->client->submit($form);
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertStringContainsString('Mit dem Plan Free sind höchstens 3 Anlassarten möglich.', $crawler->filter('#venue_event_suitable_for_error')->text());
+    }
+
+    public function test_a_pro_location_sees_no_event_type_limit_on_the_step_or_the_editor(): void
+    {
+        $venue = $this->location($this->logInAsManager());
+        $this->connection->executeStatement("UPDATE venues SET tier_id = (SELECT id FROM tiers WHERE code = 'pro') WHERE id = ?", [$venue->id()]);
+
+        $this->client->request('GET', $this->url($venue, 'veranstaltung'));
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('#event-types-limit');
+
+        $this->client->request('GET', '/konto/locations/'.$venue->number());
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[name="venue_event"] [name="venue_event[suitable_for][]"]');
+        self::assertSelectorNotExists('#event-types-limit');
+    }
+
     public function test_an_unchanged_form_moves_on_and_dispatches_nothing(): void
     {
         $venue = $this->location($this->logInAsManager());
 
         $this->save($venue, 'texte', 'venue_texts');
 
-        self::assertResponseRedirects($this->url($venue, 'ausstattung'), Response::HTTP_SEE_OTHER);
+        self::assertResponseRedirects($this->url($venue, 'merkmale'), Response::HTTP_SEE_OTHER);
         self::assertSame(0, $this->auditRows($venue));
         self::assertNull($this->connection->fetchOne('SELECT cms_edited_at FROM venues WHERE id = ?', [$venue->id()]));
     }
@@ -222,6 +273,25 @@ final class WizardTest extends WebTestCase
     private function form(Venue $venue, string $step, string $formName): Form
     {
         return $this->client->request('GET', $this->url($venue, $step))->filter('form[name="'.$formName.'"]')->form();
+    }
+
+    /**
+     * Ticks exactly these event types, as a browser would.
+     *
+     * @param list<string> $codes
+     */
+    private static function tick(Form $form, array $codes): void
+    {
+        $boxes = $form['venue_event[suitable_for]'];
+        self::assertIsArray($boxes);
+        foreach ($boxes as $box) {
+            self::assertInstanceOf(ChoiceFormField::class, $box);
+            if (\in_array($box->availableOptionValues()[0], $codes, true)) {
+                $box->tick();
+            } else {
+                $box->untick();
+            }
+        }
     }
 
     private function url(Venue $venue, ?string $step = null): string
