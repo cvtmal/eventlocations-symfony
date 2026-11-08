@@ -82,7 +82,7 @@ final class ReportContentControllerTest extends WebTestCase
         $public = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
         $private = VenuePhotoFactory::new()->withoutGrant()->create(['venue' => $venue, 'position' => 2]);
 
-        $crawler = $this->client->request('GET', '/inhalt-melden?location='.$venue->number(), server: ['HTTP_REFERER' => 'http://localhost/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG]);
+        $crawler = $this->client->request('GET', '/inhalt-melden?location='.$venue->number(), server: ['HTTP_REFERER' => 'http://localhost/eventlokal/'.DetailVenues::MINIMAL_SLUG]);
 
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('Gartenhaus Minimal', $crawler->filter('.report__venue')->text());
@@ -90,7 +90,7 @@ final class ReportContentControllerTest extends WebTestCase
         self::assertSame([$public->id()], $crawler->filter('input[name="report[photos][]"]')->each(static fn ($box): string => (string) $box->attr('value')));
         self::assertStringNotContainsString($private->id(), (string) $this->client->getResponse()->getContent());
         self::assertSame('lazy', $crawler->filter('.report__photo img')->attr('loading'));
-        self::assertSame('/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG, $crawler->filter('input[name="report[source]"]')->attr('value'));
+        self::assertSame('/eventlokal/'.DetailVenues::MINIMAL_SLUG, $crawler->filter('input[name="report[source]"]')->attr('value'));
     }
 
     public function test_an_unknown_unpublished_or_malformed_location_shows_the_form_without_a_venue(): void
@@ -241,7 +241,7 @@ final class ReportContentControllerTest extends WebTestCase
         self::assertStringContainsString('Es ist kein Foto verborgen.', $notice);
         self::assertStringNotContainsString('verborgen, bis', (string) $this->mailTo('anna@example.ch')->getHtmlBody());
 
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertStringContainsString($photo, (string) $this->client->getResponse()->getContent(), 'the photo stays public');
     }
 
@@ -310,7 +310,7 @@ final class ReportContentControllerTest extends WebTestCase
     {
         $venue = DetailVenues::minimal();
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
         self::assertSame('/inhalt-melden?location='.$venue->number(), $crawler->filter('.venue-report a')->attr('href'));
         self::assertCount(1, $crawler->filter('.site-footer a[href="/inhalt-melden"]'));

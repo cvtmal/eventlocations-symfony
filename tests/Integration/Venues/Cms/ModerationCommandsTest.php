@@ -64,7 +64,7 @@ final class ModerationCommandsTest extends KernelTestCase
         self::assertGreaterThan(0, $this->purger()->listings);
 
         $case = $this->connection->fetchAssociative('SELECT kind, status, venue_reference, complainant_name, complainant_email, source_url, good_faith_at IS NOT NULL AS confirmed FROM moderation_cases');
-        self::assertSame(['kind' => 'rights', 'status' => 'open', 'venue_reference' => null, 'complainant_name' => 'Erika Beispiel', 'complainant_email' => 'erika@example.ch', 'source_url' => '/hochzeitslocation/seehaus-meldung', 'confirmed' => true], $case);
+        self::assertSame(['kind' => 'rights', 'status' => 'open', 'venue_reference' => null, 'complainant_name' => 'Erika Beispiel', 'complainant_email' => 'erika@example.ch', 'source_url' => '/eventlokal/seehaus-meldung', 'confirmed' => true], $case);
         self::assertSame(
             [['actor_type' => 'console', 'subject_type' => 'moderation_case', 'changes' => '{"kind": "rights", "venue": '.$number.', "photos": 5}']],
             $this->connection->fetchAllAssociative("SELECT actor_type, subject_type, changes::text AS changes FROM admin_audit_log WHERE command = 'App\\Venues\\Command\\ReportContent'"),
@@ -303,7 +303,7 @@ final class ModerationCommandsTest extends KernelTestCase
             'Erika Beispiel',
             'erika@example.ch',
             'Dieses Foto habe ich aufgenommen.',
-            '/hochzeitslocation/'.$this->connection->fetchOne('SELECT t.slug FROM venue_translations t JOIN venues v ON v.id = t.venue_id WHERE v.number = ?', [$number]),
+            '/eventlokal/'.$this->connection->fetchOne('SELECT t.slug FROM venue_translations t JOIN venues v ON v.id = t.venue_id WHERE v.number = ?', [$number]),
         ));
         self::assertIsInt($held);
         $this->em->clear();

@@ -145,7 +145,7 @@ final class ModerationQueueTest extends WebTestCase
         self::assertCount(0, $page->filter('.moderation__actions'));
         self::assertSame(['decided', 'keep', $staff['user']->id()], array_values((array) $this->connection->fetchAssociative('SELECT status, decision, decided_by FROM moderation_cases')));
 
-        $this->client->request('GET', '/hochzeitslocation/'.DetailVenues::MINIMAL_SLUG);
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG);
         self::assertStringContainsString($photo->id(), (string) $this->client->getResponse()->getContent());
 
         // The same form again (a second tab): the case is decided, nothing changes.

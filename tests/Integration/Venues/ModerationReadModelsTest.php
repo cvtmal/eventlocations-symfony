@@ -93,7 +93,7 @@ final class ModerationReadModelsTest extends KernelTestCase
         $venue = $this->venue('Seehaus Fall', 'seehaus-fall');
         $present = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1, 'originalPath' => 'demo/present.jpg']);
         $removed = VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2, 'originalPath' => 'demo/removed.jpg']);
-        $case = ModerationCaseFactory::createOne(['kind' => ModerationKind::Rights, 'venue' => $venue, 'venueReference' => null, 'sourceUrl' => '/hochzeitslocation/seehaus-fall']);
+        $case = ModerationCaseFactory::createOne(['kind' => ModerationKind::Rights, 'venue' => $venue, 'venueReference' => null, 'sourceUrl' => '/eventlokal/seehaus-fall']);
         ModerationCasePhotoFactory::createOne(['case' => $case, 'photo' => $present]);
         ModerationCasePhotoFactory::createOne(['case' => $case, 'photo' => $removed]);
         $this->connection->executeStatement('DELETE FROM venue_photos WHERE id = ?', [$removed->id()]);
@@ -101,7 +101,7 @@ final class ModerationReadModelsTest extends KernelTestCase
         $view = $this->queue()->find($case->id());
 
         self::assertNotNull($view);
-        self::assertSame([ModerationKind::Rights, $venue->number(), 'Seehaus Fall', true, '/hochzeitslocation/seehaus-fall'], [$view->kind, $view->venueNumber, $view->venueName, $view->venuePublished, $view->sourceUrl]);
+        self::assertSame([ModerationKind::Rights, $venue->number(), 'Seehaus Fall', true, '/eventlokal/seehaus-fall'], [$view->kind, $view->venueNumber, $view->venueName, $view->venuePublished, $view->sourceUrl]);
         self::assertSame(['Erika Beispiel', 'erika.beispiel@example.ch'], [$view->complainantName, $view->complainantEmail]);
         self::assertSame([$present->id(), null], array_map(static fn ($photo): ?string => $photo->picture?->photoId, $view->photos));
         self::assertSame(['demo/present.jpg', 'demo/removed.jpg'], array_map(static fn ($photo): string => $photo->originalPath, $view->photos));
