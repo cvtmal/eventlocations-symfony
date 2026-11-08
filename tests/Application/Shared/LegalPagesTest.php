@@ -173,6 +173,7 @@ final class LegalPagesTest extends WebTestCase
     public function test_the_search_miss_log_follows_its_cap_filter_and_purge(): void
     {
         self::assertSame(100, SearchMissFilter::MAX_TEXT);
+        self::assertSame(6, SearchMissFilter::MIN_DIGITS, '«sechs oder mehr Ziffern»');
         self::assertSame(12, PurgeSearchMisses::RETENTION_MONTHS);
 
         self::assertStringContainsString(

@@ -29,6 +29,10 @@ final class SearchMissFilterTest extends TestCase
         yield 'six digits split by mixed separators' => ['12 . 34/56'];
         yield 'a full date' => ['Weihnachtsessen 12.12.2026'];
         yield 'a postcode next to a year (eight digits with one space)' => ['8001 2026'];
+        yield 'a number with commas' => ['079,123,45,67'];
+        yield 'a number with underscores' => ['079_123_45_67'];
+        yield 'an area code in brackets' => ['(044) 123 45'];
+        yield 'a fullwidth at sign' => ["anna\u{FF20}example.ch"];
     }
 
     /**
@@ -56,6 +60,17 @@ final class SearchMissFilterTest extends TestCase
     {
         self::assertFalse(SearchMissFilter::looksLikeContactData($text));
         self::assertSame('canton=zh&q='.urlencode($text), SearchMissFilter::query(['canton' => 'zh', 'q' => $text]));
+    }
+
+    public function test_a_number_that_crosses_the_cut_is_found_in_the_raw_text(): void
+    {
+        $raw = str_repeat('a', 95).' 079 12 34 56';
+        $cut = mb_substr($raw, 0, 100);
+        self::assertFalse(SearchMissFilter::looksLikeContactData($cut), 'the cut leaves five digits');
+
+        self::assertNull(SearchMissFilter::query(['q' => $cut], $raw));
+        self::assertSame('q=Schloss', SearchMissFilter::query(['q' => 'Schloss'], 'Schloss'));
+        self::assertSame('q=Schloss', SearchMissFilter::query(['q' => 'Schloss'], ['not', 'a', 'string']));
     }
 
     public function test_invalid_utf8_is_not_logged(): void

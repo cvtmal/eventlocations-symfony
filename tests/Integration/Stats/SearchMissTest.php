@@ -139,7 +139,6 @@ final class SearchMissTest extends KernelTestCase
             'week_start' => $week,
             'query' => $query,
             'searches' => $searches,
-            'last_searched_at' => $week.' 12:00:00+01',
         ]);
     }
 

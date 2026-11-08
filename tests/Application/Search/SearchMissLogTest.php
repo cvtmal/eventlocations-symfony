@@ -73,6 +73,7 @@ final class SearchMissLogTest extends WebTestCase
     {
         $this->client->request('GET', '/eventlokale?guests=9000&q='.rawurlencode('Rückruf 079 123 45 67'));
         $this->client->request('GET', '/eventlokale?guests=9000&q='.rawurlencode('anna@example.ch'));
+        $this->client->request('GET', '/eventlokale?guests=9000&q='.rawurlencode(str_repeat('a', 95).' 079 12 34 56'));
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('private', (string) $this->client->getResponse()->headers->get('Cache-Control'), 'still not stored by a shared cache');
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM search_misses'));

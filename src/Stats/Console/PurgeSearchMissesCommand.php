@@ -27,7 +27,7 @@ final class PurgeSearchMissesCommand
         $count = $this->commandBus->dispatch(new PurgeSearchMisses())->last(HandledStamp::class)?->getResult();
         \assert(\is_int($count));
 
-        $io->writeln(\sprintf('%d search misses deleted.', $count));
+        $io->writeln(\sprintf('Search misses deleted: %d.', $count));
 
         return Command::SUCCESS;
     }

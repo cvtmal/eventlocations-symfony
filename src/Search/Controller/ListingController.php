@@ -93,7 +93,7 @@ final class ListingController extends AbstractController
             // The scorecard's "Ansehen" link carries `staff=1` (no criterion), so looking at a miss adds none.
             // SearchMissFilter caps the text and drops a search whose text looks like contact data (D45, D46).
             if ('1' !== $request->headers->get('Sec-GPC') && !$request->query->has('staff')
-                && null !== $logged = SearchMissFilter::query($criteria->toQuery())) {
+                && null !== $logged = SearchMissFilter::query($criteria->toQuery(), $request->query->all()['q'] ?? null)) {
                 $this->commandBus->dispatch(new RecordSearchMiss($logged));
             }
 

@@ -100,14 +100,14 @@ final class FunnelStory extends Story
         $record(Step::BriefSent, null, 1, 3, 17);
         $record(Step::BriefSent, null, 0, 0, 8);
 
-        $this->searchMisses($monday, $now);
+        $this->searchMisses($monday);
     }
 
     /**
      * G12: searches without results over the last three weeks (the scorecard's "Suchen ohne Treffer"), with text,
      * filters and one town, so the labelled parts and the town lookup show in dev.
      */
-    private function searchMisses(\DateTimeImmutable $monday, \DateTimeImmutable $now): void
+    private function searchMisses(\DateTimeImmutable $monday): void
     {
         $town = $this->connection->fetchOne("SELECT id::text FROM towns WHERE canton_code = 'zh' ORDER BY population DESC, name LIMIT 1");
         $misses = [
@@ -128,7 +128,6 @@ final class FunnelStory extends Story
                 'week_start' => $week->format('Y-m-d'),
                 'query' => $query,
                 'searches' => $searches,
-                'last_searched_at' => min($now, $week->modify('+1 day 10:00'))->format(\DATE_ATOM),
             ]);
         }
     }

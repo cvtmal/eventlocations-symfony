@@ -33,7 +33,6 @@ final class Version20261108101505 extends AbstractMigration
                 week_start DATE NOT NULL,
                 query VARCHAR(2000) NOT NULL,
                 searches INTEGER DEFAULT 1 NOT NULL,
-                last_searched_at TIMESTAMP(0) WITH TIME ZONE NOT NULL,
                 CONSTRAINT pk_search_misses PRIMARY KEY (id),
                 CONSTRAINT uk_search_misses_week_start_query UNIQUE (week_start, query),
                 CONSTRAINT chk_search_misses_week_start CHECK (EXTRACT(ISODOW FROM week_start) = 1),

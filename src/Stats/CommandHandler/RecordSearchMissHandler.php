@@ -46,10 +46,10 @@ final class RecordSearchMissHandler implements CommandHandlerInterface
         try {
             $this->connection->transactional(static fn (Connection $connection): int|string => $connection->executeStatement(
                 <<<'SQL'
-                    INSERT INTO search_misses (id, week_start, query, searches, last_searched_at) VALUES (:id, :week, :query, 1, :at)
-                    ON CONFLICT (week_start, query) DO UPDATE SET searches = search_misses.searches + 1, last_searched_at = EXCLUDED.last_searched_at
+                    INSERT INTO search_misses (id, week_start, query, searches) VALUES (:id, :week, :query, 1)
+                    ON CONFLICT (week_start, query) DO UPDATE SET searches = search_misses.searches + 1
                     SQL,
-                ['id' => EntityId::generate(), 'week' => $week, 'query' => $command->query, 'at' => $now->format(\DATE_ATOM)],
+                ['id' => EntityId::generate(), 'week' => $week, 'query' => $command->query],
             ));
         } catch (\Throwable $exception) {
             $this->logger->error('Search miss: not recorded ({exception_class} at {file}:{line}).', [

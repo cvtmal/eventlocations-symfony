@@ -45,9 +45,9 @@ final class FunnelControllerTest extends WebTestCase
     public function test_the_searches_without_results_render_week_by_week(): void
     {
         $this->logInAs(AdminRole::Editor);
-        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-11-02', 'query' => 'canton=zh&guests=900', 'searches' => 3, 'last_searched_at' => '2026-11-03 10:00:00+01']);
-        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-11-02', 'query' => 'q=Turnhalle', 'searches' => 1, 'last_searched_at' => '2026-11-03 11:00:00+01']);
-        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-10-26', 'query' => 'q=Scheune', 'searches' => 2, 'last_searched_at' => '2026-10-27 11:00:00+01']);
+        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-11-02', 'query' => 'canton=zh&guests=900', 'searches' => 3]);
+        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-11-02', 'query' => 'q=Turnhalle', 'searches' => 1]);
+        $this->connection->insert('search_misses', ['id' => EntityId::generate(), 'week_start' => '2026-10-26', 'query' => 'q=Scheune', 'searches' => 2]);
 
         $crawler = $this->client->request('GET', '/admin/statistik/funnel');
 

@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * A search without results, counted per ISO week (G12). Mapping only: `RecordSearchMissHandler` upserts with DBAL
- * and `SearchMissQuery` reads with DBAL. No person: the row holds the week, the canonical query and a count.
+ * and `SearchMissQuery` reads with DBAL. No person: the row holds the week, the canonical query and a count, no time of a search.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'search_misses')]
@@ -30,15 +30,11 @@ class SearchMiss
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 1])]
     private int $searches = 1;
 
-    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
-    private \DateTimeImmutable $lastSearchedAt;
-
-    public function __construct(\DateTimeImmutable $weekStart, string $query, \DateTimeImmutable $lastSearchedAt)
+    public function __construct(\DateTimeImmutable $weekStart, string $query)
     {
         $this->id = EntityId::generate();
         $this->weekStart = $weekStart;
         $this->query = $query;
-        $this->lastSearchedAt = $lastSearchedAt;
     }
 
     public function id(): string
@@ -49,11 +45,6 @@ class SearchMiss
     public function weekStart(): \DateTimeImmutable
     {
         return $this->weekStart;
-    }
-
-    public function lastSearchedAt(): \DateTimeImmutable
-    {
-        return $this->lastSearchedAt;
     }
 
     public function query(): string
