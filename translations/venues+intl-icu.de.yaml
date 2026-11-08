@@ -213,6 +213,7 @@ detail:
         photos: Bilder
         contact: Kontakt
         location: Standort
+        videos: Videos
     actions:
         label: 'Anfragen & Merken'
         check_availability: Verfügbarkeit prüfen
@@ -301,6 +302,16 @@ detail:
         person: 'Kontaktperson: {name}'
     documents:
         heading: Dokumente
+    # G15: the click-to-load facade of each video (templates/venues/detail/_videos.html.twig). The Datenschutz page
+    # quotes `load` and `open` (LegalPagesTest).
+    videos:
+        heading: Videos
+        caption: 'Video {position} auf {provider}'
+        load: 'Video laden ({provider})'
+        open: 'Auf {provider} ansehen'
+        new_tab: ' (öffnet in neuem Tab)'
+        notice: 'Beim Laden des Videos werden Daten an {provider} in den USA übertragen.'
+        frame_title: 'Video {position} von {name}'
     phone:
         title: 'Telefonnummer von {name}'
         heading: 'Telefonnummer von {name}'

@@ -19,6 +19,7 @@ use App\Factory\VenuePhotoTranslationFactory;
 use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueTermFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Factory\VenueVideoFactory;
 use App\Geo\Entity\Town;
 use App\Geo\Repository\TownRepository;
 use App\Geo\ValueObject\Canton;
@@ -200,6 +201,7 @@ final class DemoStory extends Story
         flush_after(fn () => $this->createPreviewLinks($created[1][1]));
         flush_after(fn () => $this->createModerationCases($created[self::HELD_VENUE][1], $created[self::KEPT_VENUE][1]));
         flush_after(fn () => $this->createTerms(array_column($created, 1)));
+        flush_after(fn () => $this->createVideos($created[0][1], $created[2][1]));
     }
 
     /**
@@ -228,6 +230,18 @@ final class DemoStory extends Story
             };
             $factory->create(['venue' => $pro[$k], 'startsOn' => $end->modify('-1 year')->modify('+1 day'), 'endsOn' => $end, 'invoiceRef' => \sprintf('RE-DEMO-%d', $k + 1)]);
         }
+    }
+
+    /**
+     * G15: venue 1 gets a YouTube and a Vimeo video, venue 3 one YouTube video, so the detail page shows the facade and
+     * a Free entry keeps its second video stored and hidden. The ids are fictional: the players say the video does not
+     * exist, and no demo entry points at somebody's real video.
+     */
+    private function createVideos(Venue $first, Venue $third): void
+    {
+        VenueVideoFactory::createOne(['venue' => $first, 'position' => 1, 'embed' => VenueVideoFactory::youtube('demoVideo01')]);
+        VenueVideoFactory::createOne(['venue' => $first, 'position' => 2, 'embed' => VenueVideoFactory::vimeo('999999999999')]);
+        VenueVideoFactory::createOne(['venue' => $third, 'position' => 1, 'embed' => VenueVideoFactory::youtube('demoVideo03')]);
     }
 
     /**

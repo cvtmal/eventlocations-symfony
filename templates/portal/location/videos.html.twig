@@ -1,0 +1,10 @@
+{#
+    The manager's Videos tab (G15): staff's list and link card. Context from `VenueVideoPages` with
+    `LocationVideosController`'s setup: what `admin/cms/venue/_videos.html.twig` lists, plus submission, offline_form
+    and plan (for `_layout`, which puts the plan card into the aside, F12).
+#}
+{% extends 'portal/location/_layout.html.twig' %}
+
+{% block location_main %}
+    {{ include('admin/cms/venue/_videos.html.twig') }}
+{% endblock %}

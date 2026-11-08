@@ -25,6 +25,8 @@ final readonly class LocationPlan
         public int $roomsMax,
         public int $documentsUsed,
         public int $documentsMax,
+        public int $videosUsed,
+        public int $videosMax,
         public bool $contactVisible,
         public ?int $eventTypesMax,
         public ?int $proPriceRappen,

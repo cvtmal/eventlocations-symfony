@@ -34,6 +34,7 @@ final class LocationPlanQuery
                 SELECT (SELECT count(*) FROM venue_photos WHERE venue_id = :id) AS photos,
                        (SELECT count(*) FROM rooms WHERE venue_id = :id) AS rooms,
                        (SELECT count(*) FROM venue_documents WHERE venue_id = :id) AS documents,
+                       (SELECT count(*) FROM venue_videos WHERE venue_id = :id) AS videos,
                        (SELECT price_rappen FROM tiers WHERE code = :pro) AS pro_price_rappen,
                        (SELECT vat_line FROM tiers WHERE code = :pro) AS pro_vat_line,
                        (SELECT max(ends_on) FROM subscriptions WHERE venue_id = :id AND ends_on >= :today) AS paid_until,
@@ -42,7 +43,7 @@ final class LocationPlanQuery
                 SQL,
             ['id' => $venueId, 'pro' => KnownTiers::PRO, 'today' => TermDay::sql($now)],
         );
-        \assert(\is_array($row) && \is_int($row['photos']) && \is_int($row['rooms']) && \is_int($row['documents']));
+        \assert(\is_array($row) && \is_int($row['photos']) && \is_int($row['rooms']) && \is_int($row['documents']) && \is_int($row['videos']));
         \assert(null === $row['pro_price_rappen'] || \is_int($row['pro_price_rappen']));
 
         return new LocationPlan(
@@ -55,6 +56,8 @@ final class LocationPlanQuery
             $entitlements->roomsMax,
             $row['documents'],
             $entitlements->documentsMax,
+            $row['videos'],
+            $entitlements->videosMax,
             $entitlements->contactVisible,
             $entitlements->eventTypesMax,
             $row['pro_price_rappen'],

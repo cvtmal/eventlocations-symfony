@@ -38,7 +38,7 @@ final class ProRequestController extends AbstractController
     private const string TOKEN = 'submit';
 
     /** The tabs that show the plan card (F11) and so may be the way back; anything else goes to Angaben. */
-    private const array BACK_ROUTES = ['portal_location_photos', 'portal_location_rooms', 'portal_location_documents'];
+    private const array BACK_ROUTES = ['portal_location_photos', 'portal_location_rooms', 'portal_location_documents', 'portal_location_videos'];
 
     public function __construct(
         private readonly VenueHeaderQuery $headers,

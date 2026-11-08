@@ -101,6 +101,7 @@ final class LegalPagesTest extends WebTestCase
             'Dienstleister, die Daten für uns bearbeiten',
             'Hosting und Datenbank',
             'Karten, Bewertungen und Fotos von Google Maps',
+            'Videos von YouTube und Vimeo',
             'Links zu anderen Anbietern',
             'Interner Bereich',
             'Deine Rechte',
@@ -116,7 +117,8 @@ final class LegalPagesTest extends WebTestCase
             'Infomaniak Network SA: Hosting der Website und Versand der E-Mails (Schweiz)',
             'Neon (Databricks, Inc.): Datenbank mit Anfragen und Kontakten (Frankfurt, Deutschland)',
             'Sentry (Functional Software, Inc.): Meldungen technischer Fehler (Frankfurt, Deutschland)',
-            'Google Ireland Limited: Karten, Bewertungen und Fotos von Google Maps (Irland)',
+            'Google Ireland Limited: Karten, Bewertungen und Fotos von Google Maps, Videos von YouTube (Irland)',
+            'Vimeo.com, Inc.: Videos von Vimeo (USA)',
         ], $crawler->filter('.legal__processors li')->each(static fn (Crawler $item): string => $item->text()));
     }
 
@@ -239,6 +241,26 @@ final class LegalPagesTest extends WebTestCase
         $open = $translator->trans('detail.location.map.open', [], 'venues', 'de');
         self::assertStringContainsString('erst, wenn du auf «'.$load.'» klickst', $text);
         self::assertStringContainsString('«'.$open.'»', $text);
+    }
+
+    /**
+     * G15: the page quotes the facade's button and links, so it must follow them when they change.
+     */
+    public function test_the_videos_are_explained_with_the_labels_of_the_facade(): void
+    {
+        $text = $this->page('/datenschutz')->filter('main')->text();
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+        $load = static fn (string $provider): string => $translator->trans('detail.videos.load', ['provider' => $provider], 'venues', 'de');
+
+        self::assertStringContainsString('Erst wenn du auf «'.$load('YouTube').'» oder «'.$load('Vimeo').'» klickst', $text);
+        self::assertStringContainsString('Bevor du klickst, lädt die Seite nichts von YouTube oder Vimeo', $text);
+        self::assertStringContainsString('Dabei gehen Daten in die USA zu YouTube (Google) oder Vimeo, mindestens deine IP-Adresse', $text);
+        foreach (['YouTube', 'Vimeo'] as $provider) {
+            self::assertStringContainsString('«'.$translator->trans('detail.videos.open', ['provider' => $provider], 'venues', 'de').'»', $text);
+        }
+        self::assertStringContainsString('youtube-nocookie.com', $text);
+        self::assertStringContainsString('«Do Not Track»', $text);
     }
 
     public function test_the_near_me_page_is_named_in_the_google_maps_section(): void

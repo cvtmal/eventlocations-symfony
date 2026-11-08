@@ -62,6 +62,7 @@ editor:
         photos: Fotos
         rooms: Räume
         documents: Dokumente
+        videos: Videos
         stats: Statistik
     offline:
         action: Offline nehmen
@@ -412,6 +413,8 @@ plan:
         rooms_over: 'Räume {used}, davon {max} sichtbar'
         documents: 'PDFs {used} von {max}'
         documents_over: 'PDFs {used}, davon {max} sichtbar'
+        videos: 'Videos {used} von {max}'
+        videos_over: 'Videos {used}, davon {max} sichtbar'
         contact_visible: 'Telefon und Website: sichtbar'
         contact_hidden: 'Telefon und Website: verborgen'
         event_types: 'Anlassarten: bis zu {max}'

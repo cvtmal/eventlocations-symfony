@@ -10,7 +10,7 @@ use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
 
 /**
- * The write side of the entitlements (F12): a handler asks here before it adds a photo, a room or a document, or sets
+ * The write side of the entitlements (F12): a handler asks here before it adds a photo, a room, a document or a video (G15), or sets
  * the event types, and gets a `VenueRuleViolation` with a message that names the plan and the limit. The read side
  * cuts the same limits when a page is rendered (a venue that fell back to a smaller plan keeps its rows, hidden), so a
  * limit is never a reason to delete anything.
@@ -61,6 +61,17 @@ final class TierLimits
     }
 
     /**
+     * @throws VenueRuleViolation
+     */
+    public function assertVideoFits(Venue $venue): void
+    {
+        $entitlements = $this->entitlements->forVenue($venue->id(), $this->clock->now());
+        if ($this->count('venue_videos', $venue) >= $entitlements->videosMax) {
+            throw VenueRuleViolation::tooManyVideos($entitlements->videosMax, $entitlements->tierName);
+        }
+    }
+
+    /**
      * A save that would leave the venue with more event types than its plan allows is refused, unless it does not
      * grow the list: a venue that holds more already (imported, or fallen back to a smaller plan) keeps its list and
      * may still save the rest of the card, and may shorten it step by step.
@@ -87,7 +98,7 @@ final class TierLimits
 
     private function count(string $table, Venue $venue): int
     {
-        // $table is one of three literals above, never input.
+        // $table is one of the literals above, never input.
         return (int) $this->connection->fetchOne(\sprintf('SELECT count(*) FROM %s WHERE venue_id = :id', $table), ['id' => $venue->id()]);
     }
 }

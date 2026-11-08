@@ -55,7 +55,8 @@ final class DatenschutzGoogleSwitchesTest extends WebTestCase
 
         self::assertContains($title, $crawler->filter('main h2')->each(static fn (Crawler $h): string => $h->text()));
         self::assertContains(
-            'Google Ireland Limited: '.$title.' (Irland)',
+            // G15: YouTube videos are click-to-load, not Places content, so no D48 switch hides them.
+            'Google Ireland Limited: '.$title.', Videos von YouTube (Irland)',
             $crawler->filter('.legal__processors li')->each(static fn (Crawler $item): string => $item->text()),
         );
         self::assertSame($ratingShown, str_contains($text, self::RATING), 'rating paragraph');

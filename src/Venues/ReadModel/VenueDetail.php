@@ -12,7 +12,7 @@ use App\Venues\ValueObject\VenuePlace;
  * Everything the venue detail page (`venue_show`, DP-2 to DP-17) renders, in one locale. The
  * phone number itself is not part of it (DP-11: never in the page HTML), only `hasPhone`.
  * What the venue's tier does not allow is already cut here (F12): `hasPhone` and `website` are
- * empty on a tier without visible contact data, `documents`, `rooms` and `photos` hold the
+ * empty on a tier without visible contact data, `documents`, `videos` (G15), `rooms` and `photos` hold the
  * first N by position, and `promoted` is the "Top-Eintrag" label. Templates decide nothing.
  * `coordinatesFromTown` says lat/lng are the town centre ("Ortsmitte übernehmen", #24), not
  * the venue's own point: no map pin and no geo data may claim them. `googlePlaceId` is the only
@@ -24,6 +24,7 @@ final readonly class VenueDetail
      * @param list<DetailFactGroup> $factGroups in DP-7 order, empty groups dropped
      * @param list<DetailDistance>  $distances  station, highway, airport (those with a distance)
      * @param list<DetailDocument>  $documents  in position order
+     * @param list<DetailVideo>     $videos     in position order
      * @param list<DetailRoom>      $rooms      in position order
      * @param list<Picture>         $photos     venue-level photos in position order
      * @param ?string               $instagram  `https://www.instagram.com/<handle>`, null when the stored value names no profile (`InstagramProfile`)
@@ -55,6 +56,7 @@ final readonly class VenueDetail
         public ?string $website,
         public ?string $contactPerson,
         public array $documents,
+        public array $videos,
         public array $rooms,
         public array $photos,
         public DetailEvent $event,

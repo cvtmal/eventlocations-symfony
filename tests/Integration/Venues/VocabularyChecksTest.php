@@ -22,6 +22,7 @@ use App\Venues\ValueObject\SourceType;
 use App\Venues\ValueObject\SubscriptionStatus;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueStatus;
+use App\Venues\ValueObject\VideoProvider;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -56,6 +57,7 @@ final class VocabularyChecksTest extends KernelTestCase
         yield 'complaint status' => ['chk_moderation_cases_status', ModerationStatus::class];
         yield 'complaint decision' => ['chk_moderation_cases_decision', ModerationDecision::class];
         yield 'subscription status' => ['chk_subscriptions_status', SubscriptionStatus::class];
+        yield 'video provider' => ['chk_venue_videos_provider', VideoProvider::class];
     }
 
     /**

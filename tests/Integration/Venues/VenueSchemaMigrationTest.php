@@ -24,7 +24,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
     private const TABLES = [
         'venues', 'venue_translations', 'venue_slug_history', 'taxonomy_terms', 'venue_terms',
         'rooms', 'room_translations', 'venue_documents', 'venue_document_translations', 'venue_photos',
-        'venue_photo_translations', 'tiers',
+        'venue_photo_translations', 'tiers', 'venue_videos',
     ];
 
     private const IDS = [
@@ -34,6 +34,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         '{room}' => '019a0000-0000-7000-8000-000000000201',
         '{doc}' => '019a0000-0000-7000-8000-000000000301',
         '{photo}' => '019a0000-0000-7000-8000-000000000401',
+        '{video}' => '019a0000-0000-7000-8000-000000000501',
         '{missing}' => '019a0000-0000-7000-8000-000000000999',
     ];
 
@@ -56,6 +57,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         // A venue photo and a room photo may share a position: the sequences are separate.
         "INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, {photo-cols}) VALUES ('{photo}', '{venue}', NULL, 1, 'demo/a.jpg', {photo-vals}), (gen_random_uuid(), '{venue}', '{room}', 1, 'demo/b.jpg', {photo-vals})",
         "INSERT INTO venue_photo_translations (id, venue_photo_id, locale, alt) VALUES (gen_random_uuid(), '{photo}', 'de', 'Aussenansicht')",
+        "INSERT INTO venue_videos (id, venue_id, position, provider, video_id) VALUES ('{video}', '{venue}', 1, 'youtube', 'aB3_dE-fGh1')",
     ];
 
     private Connection $connection;
@@ -206,6 +208,14 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'document position zero' => ['chk_venue_documents_position', ["UPDATE venue_documents SET position = 0 WHERE id = '{doc}'"]];
         yield 'document not a pdf' => ['chk_venue_documents_path', ["UPDATE venue_documents SET path = 'demo/a.docx' WHERE id = '{doc}'"]];
         yield 'empty document' => ['chk_venue_documents_size_bytes', ["UPDATE venue_documents SET size_bytes = 0 WHERE id = '{doc}'"]];
+        // venue_videos (G15)
+        yield 'video position taken' => ['uk_venue_videos_venue_id_position', ["INSERT INTO venue_videos (id, venue_id, position, provider, video_id) VALUES (gen_random_uuid(), '{venue}', 1, 'vimeo', '76979871')"]];
+        yield 'same video twice' => ['uk_venue_videos_venue_id_provider_video_id', ["INSERT INTO venue_videos (id, venue_id, position, provider, video_id) VALUES (gen_random_uuid(), '{venue}', 2, 'youtube', 'aB3_dE-fGh1')"]];
+        yield 'video position zero' => ['chk_venue_videos_position', ["UPDATE venue_videos SET position = 0 WHERE id = '{video}'"]];
+        yield 'unknown video provider' => ['chk_venue_videos_provider', ["UPDATE venue_videos SET provider = 'dailymotion' WHERE id = '{video}'"]];
+        yield 'youtube id of the wrong shape' => ['chk_venue_videos_video_id', ["UPDATE venue_videos SET video_id = 'x\"><script>' WHERE id = '{video}'"]];
+        yield 'vimeo id that is no number' => ['chk_venue_videos_video_id', ["UPDATE venue_videos SET provider = 'vimeo' WHERE id = '{video}'"]];
+        yield 'video of unknown venue' => ['fk_venue_videos_venue_id', ["INSERT INTO venue_videos (id, venue_id, position, provider, video_id) VALUES (gen_random_uuid(), '{missing}', 1, 'vimeo', '76979871')"]];
         yield 'document of unknown venue' => ['fk_venue_documents_venue_id', ["INSERT INTO venue_documents (id, venue_id, position, path, size_bytes) VALUES (gen_random_uuid(), '{missing}', 1, 'demo/b.pdf', 10)"]];
 
         // venue_document_translations
@@ -331,7 +341,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         $tested = array_values(array_unique(array_map(static fn (array $case): string => $case[0], iterator_to_array(self::rejections()))));
 
         self::assertContains('uk_venue_terms_venue_id_term_group_main', $names);
-        self::assertCount(12, $primaryKeys);
+        self::assertCount(13, $primaryKeys);
         foreach ($names as $name) {
             self::assertContains($name, $tested, $name.' has no rejection case');
         }
@@ -423,6 +433,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
             'venue_documents' => "SELECT count(*) FROM venue_documents WHERE venue_id = '{$venue}'",
             'venue_document_translations' => "SELECT count(*) FROM venue_document_translations WHERE venue_document_id = '".self::IDS['{doc}']."'",
             'venue_photos' => "SELECT count(*) FROM venue_photos WHERE venue_id = '{$venue}'",
+            'venue_videos' => "SELECT count(*) FROM venue_videos WHERE venue_id = '{$venue}'",
             'venue_photo_translations (venue photo)' => "SELECT count(*) FROM venue_photo_translations WHERE venue_photo_id = '".self::IDS['{photo}']."'",
             'venue_photo_translations (room photo)' => 'SELECT count(*) FROM venue_photo_translations t JOIN venue_photos p ON p.id = t.venue_photo_id WHERE p.room_id = \''.self::IDS['{room}']."'",
         ];

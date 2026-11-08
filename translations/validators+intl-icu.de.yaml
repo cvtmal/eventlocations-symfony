@@ -107,6 +107,11 @@ cms:
             failed: Die Datei kam nicht vollständig an. Bitte noch einmal versuchen.
         title:
             required: Bitte einen Titel eingeben.
+    # G15: the video card of the CMS and /konto; the allowlist itself is the handler's (cms `videos.error.*`).
+    video:
+        url:
+            required: Bitte einen Link zu einem Video auf YouTube oder Vimeo eingeben.
+            too_long: 'Der Link ist zu lang, höchstens {limit} Zeichen.'
     preview_link:
         campaign:
             invalid: 'Nur Buchstaben, Ziffern, «-» und «_», höchstens 40 Zeichen, am Anfang ein Buchstabe oder eine Ziffer.'

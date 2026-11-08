@@ -9,6 +9,7 @@ use App\Factory\SubscriptionFactory;
 use App\Factory\VenueDocumentFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
+use App\Factory\VenueVideoFactory;
 use App\Portal\ReadModel\LocationPlan;
 use App\Portal\ReadModel\LocationPlanQuery;
 use App\Tests\Support\Admin\RollsBackDatabase;
@@ -36,9 +37,11 @@ final class LocationPlanQueryTest extends KernelTestCase
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 2]);
         VenuePhotoFactory::createOne(['venue' => $venue, 'room' => $room, 'position' => 1]);
         VenueDocumentFactory::createOne(['venue' => $venue]);
+        VenueVideoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        VenueVideoFactory::createOne(['venue' => $venue, 'position' => 2]);
 
         self::assertEquals(
-            new LocationPlan('Free', false, true, 3, 6, 2, 1, 1, 1, false, 3, 19900),
+            new LocationPlan('Free', false, true, 3, 6, 2, 1, 1, 1, 2, 1, false, 3, 19900),
             $this->plan($venue),
         );
     }
@@ -49,7 +52,7 @@ final class LocationPlanQueryTest extends KernelTestCase
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
 
         self::assertEquals(
-            new LocationPlan('Pro', true, false, 1, 60, 0, 20, 0, 5, true, null, 19900, false, new \DateTimeImmutable(VenueFactory::TERM_TO), false),
+            new LocationPlan('Pro', true, false, 1, 60, 0, 20, 0, 5, 0, 5, true, null, 19900, false, new \DateTimeImmutable(VenueFactory::TERM_TO), false),
             $this->plan($venue),
         );
     }
