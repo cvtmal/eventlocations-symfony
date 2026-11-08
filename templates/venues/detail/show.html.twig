@@ -40,7 +40,7 @@
     <div class="venue-layout">
         {{ include('venues/detail/_actions.html.twig', {venue: venue}, with_context = false) }}
         <div class="venue-content">
-            {{ include('venues/detail/_head.html.twig', {venue: venue}, with_context = false) }}
+            {{ include('venues/detail/_head.html.twig', {venue: venue, unconfirmed: unconfirmed|default(false)}, with_context = false) }}
             {% block google_rating %}{{ venue_google_rating(venue) }}{% endblock %}
             {% if venue.hasFacts() %}{{ include('venues/detail/_facts.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.event.hasAny() %}{{ include('venues/detail/_event.html.twig', {venue: venue}, with_context = false) }}{% endif %}

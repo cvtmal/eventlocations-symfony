@@ -90,6 +90,8 @@ security:
         - { path: ^/konto/passwort-neu/[^/]+$, roles: PUBLIC_ACCESS }
         # G9: the cancellation link of the reminder mail works without a login.
         - { path: ^/konto/abo-kuendigen/[^/]+$, roles: PUBLIC_ACCESS }
+        # G6: the claim flow a preview page starts (ClaimFlowController); the code proves the address.
+        - { path: ^/konto/uebernehmen(/(start|code|passwort))?$, roles: PUBLIC_ACCESS }
         - { path: ^/konto/api/, roles: ROLE_PORTAL_USER }
         - { path: ^/konto(/|$), roles: ROLE_PORTAL_USER }
 

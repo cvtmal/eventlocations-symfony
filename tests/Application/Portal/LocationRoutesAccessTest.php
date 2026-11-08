@@ -40,7 +40,8 @@ final class LocationRoutesAccessTest extends WebTestCase
     private const int WALKED = 18;
 
     /** On a published location both send the manager to the edit page. */
-    private const array WIZARD_ROUTES = ['portal_location_setup', 'portal_location_setup_step'];
+    /** Routes that only send a published location on (G6's photo step does so without candidates). */
+    private const array WIZARD_ROUTES = ['portal_location_setup', 'portal_location_setup_step', 'portal_location_claim_photos'];
 
     public function test_another_managers_location_is_refused(): void
     {

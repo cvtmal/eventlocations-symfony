@@ -85,6 +85,22 @@ class PhotoCandidate
         $this->updatedAt = $this->createdAt;
     }
 
+    /**
+     * G6: the claimant ticked it and it was added to the venue's photos.
+     */
+    public function approve(\DateTimeImmutable $at): void
+    {
+        $this->decide(CandidateStatus::Approved, $at);
+    }
+
+    /**
+     * G6: the claimant left it out.
+     */
+    public function reject(\DateTimeImmutable $at): void
+    {
+        $this->decide(CandidateStatus::Rejected, $at);
+    }
+
     public function id(): string
     {
         \assert(null !== $this->id);
@@ -155,5 +171,14 @@ class PhotoCandidate
     public function updatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    private function decide(CandidateStatus $status, \DateTimeImmutable $at): void
+    {
+        if ($this->status === $status) {
+            return;
+        }
+        $this->status = $status;
+        $this->updatedAt = $at;
     }
 }

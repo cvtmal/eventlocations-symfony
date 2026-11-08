@@ -25,8 +25,13 @@
             <ul class="venue-widget">
                 {% for location in locations %}
                     {% set review = location.isPublished ? null : (statuses[location.number].value ?? null) %}
+                    {% set is_frozen = location.number in frozen %}
                     <li class="venue-widget__row">
-                        <a class="venue-widget__name" href="{{ path('portal_location', {number: location.number}) }}">{{ location.name }}</a>
+                        {% if is_frozen %}
+                            <span class="venue-widget__name">{{ location.name }}</span>
+                        {% else %}
+                            <a class="venue-widget__name" href="{{ path('portal_location', {number: location.number}) }}">{{ location.name }}</a>
+                        {% endif %}
                         <span class="venue-widget__pills">
                             {{ include('admin/components/_pill.html.twig', {
                                 label: ('list.status.' ~ location.status.value)|trans({}, 'cms'),
@@ -36,13 +41,16 @@
                             {% for code in location.missing %}
                                 {{ include('admin/components/_pill.html.twig', {label: ('dashboard.incomplete.missing.' ~ code)|trans({}, 'cms'), tone: 'grey'}, with_context = false) }}
                             {% endfor %}
+                            {% if is_frozen %}
+                                {{ include('admin/components/_pill.html.twig', {label: 'claim.overview.frozen'|trans({}, 'portal'), tone: 'amber'}, with_context = false) }}
+                            {% endif %}
                             {% if review == 'rejected' %}
                                 {{ include('admin/components/_pill.html.twig', {label: 'onboarding.overview.rejected'|trans({}, 'portal'), tone: 'red'}, with_context = false) }}
                             {% elseif review == 'submitted' %}
                                 {{ include('admin/components/_pill.html.twig', {label: 'onboarding.overview.in_review'|trans({}, 'portal'), tone: 'amber'}, with_context = false) }}
                             {% endif %}
                         </span>
-                        {% if review in ['draft', 'rejected'] %}
+                        {% if review in ['draft', 'rejected'] and not is_frozen %}
                             {{ include('admin/components/_button.html.twig', {label: 'onboarding.overview.resume'|trans({}, 'portal'), href: path('portal_location_setup', {number: location.number}), size: 'sm'}, with_context = false) }}
                         {% endif %}
                     </li>

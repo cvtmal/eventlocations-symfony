@@ -114,8 +114,8 @@ final class InquiryFormRenderingTest extends WebTestCase
 
         $this->page(self::PAGE);
 
-        // The slug, the venue (row, rooms, photos and the plan's limits, F12) and the similar venues; the form adds none.
-        self::assertCount(6, $holder->getData()['default']);
+        // The slug, the venue (row, rooms, photos and the plan's limits, F12), the similar venues and D18's operator check (G6, `Venues\VenueClaims`); the form adds none.
+        self::assertCount(7, $holder->getData()['default']);
     }
 
     public function test_a_venue_without_an_address_has_an_empty_section_and_no_primary_link(): void

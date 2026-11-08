@@ -19,6 +19,16 @@
     font-weight: var(--fw-semibold);
 }
 
+// D18, G6: no operator manages the entry yet.
+.venue-head__unconfirmed {
+    display: flex;
+    gap: var(--space-8);
+    align-items: center;
+    margin: 0;
+    color: var(--c-ink-muted);
+    font-size: var(--fs-small);
+}
+
 .venue-head__facts {
     display: flex;
     flex-wrap: wrap;

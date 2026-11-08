@@ -1,3 +1,7 @@
+{#
+    The proof that a location is online (#45; G6 added the public link and the removal link): staff accepted the
+    review, or a claimant took over an entry that was online already.
+#}
 {% extends 'emails/layout.html.twig' %}
 {% import 'emails/_blocks.html.twig' as blocks %}
 
@@ -6,5 +10,12 @@
 {% block content %}
 {{ blocks.greeting('onboarding.mail.accepted.greeting'|trans({name: firstName}, 'portal')) }}
 {{ blocks.p('onboarding.mail.accepted.intro'|trans({venue: venueName}, 'portal')) }}
+{% if slug is not empty %}
+{{ blocks.button('onboarding.mail.accepted.public'|trans({}, 'portal'), url('venue_show', {slug: slug})) }}
+{% endif %}
+{{ blocks.p('onboarding.mail.accepted.settings'|trans({}, 'portal')) }}
 {{ blocks.button('onboarding.mail.accepted.button'|trans({}, 'portal'), url('portal_location', {number: number})) }}
+{{ blocks.rule() }}
+{{ blocks.p('onboarding.mail.accepted.removal'|trans({}, 'portal')) }}
+{{ blocks.button('onboarding.mail.accepted.removal_button'|trans({}, 'portal'), url('portal_location', {number: number})) }}
 {% endblock %}

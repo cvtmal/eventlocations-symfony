@@ -76,7 +76,7 @@ final class SubmissionReviewController extends AbstractController
 
         // In `finally` so that an unexpected mail error cannot lose the event.
         try {
-            $mailed = null === $row->managerEmail || $this->mailer->sendLocationAccepted($row->managerEmail, (string) $row->managerFirstName, $row->name, $number);
+            $mailed = null === $row->managerEmail || $this->mailer->sendLocationAccepted($row->managerEmail, (string) $row->managerFirstName, $row->name, $number, (string) $row->slug);
         } finally {
             if (true === $first) {
                 $this->events->newVenuePublished($row->venueId);

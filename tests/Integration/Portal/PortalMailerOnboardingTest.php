@@ -39,10 +39,21 @@ final class PortalMailerOnboardingTest extends KernelTestCase
             ['Für Seehaus Meilen liegt eine neue Zugriffsanfrage vor.', 'Anna Meier', 'anna@example.ch', '/admin/pruefung?tab=requests'],
         ];
         yield 'accepted' => [
-            static fn (PortalMailer $mailer): bool => $mailer->sendLocationAccepted('anna@example.ch', 'Anna', 'Seehaus Meilen', 1234),
+            static fn (PortalMailer $mailer): bool => $mailer->sendLocationAccepted('anna@example.ch', 'Anna', 'Seehaus Meilen', 1234, 'seehaus-meilen'),
             'anna@example.ch',
             'Seehaus Meilen ist online',
-            ['Hallo Anna', '/konto/locations/1234'],
+            // G6: the proof of publication links the public page, the settings and the way to remove the entry.
+            ['Hallo Anna', '/eventlokal/seehaus-meilen', '/konto/locations/1234', 'Offline nehmen', 'Eintrag entfernen'],
+        ];
+        yield 'claim code' => [
+            static function (PortalMailer $mailer): bool {
+                $mailer->sendClaimCode('info@seehaus.example', '042917', 'Seehaus Meilen');
+
+                return true;
+            },
+            'info@seehaus.example',
+            'Dein Code für Seehaus Meilen',
+            ['Hallo', '042917', 'Seehaus Meilen', '30 Minuten'],
         ];
         yield 'rejected' => [
             static fn (PortalMailer $mailer): bool => $mailer->sendLocationRejected('anna@example.ch', 'Anna', 'Seehaus Meilen', 1234, 'Die Fotos fehlen.'),

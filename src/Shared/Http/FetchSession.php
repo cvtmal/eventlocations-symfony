@@ -81,6 +81,24 @@ final class FetchSession
         return $result;
     }
 
+    /**
+     * Fetches one image a person picked (G6: a photo from their own website). Any public host, since photos often
+     * sit on a CDN, and no robots.txt, since the site's operator asks for the file; everything else is vetted as
+     * for a page, and it counts against the page cap.
+     *
+     * @throws FetchRefused
+     */
+    public function image(string $url): FetchResult
+    {
+        $target = SafeUrl::parse($url);
+        if ($this->pages >= $this->limits->maxPages) {
+            throw FetchRefused::because(RefusalReason::PageLimit, 'at most '.$this->limits->maxPages.' requests per session');
+        }
+        ++$this->pages;
+
+        return $this->follow($target, $this->limits->maxBytesPerResponse, ['image/jpeg', 'image/png', 'image/webp'], false, false);
+    }
+
     public function pages(): int
     {
         return $this->pages;

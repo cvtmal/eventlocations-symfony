@@ -4,8 +4,8 @@
     Whoever holds the link may open it, so nothing here may reach a search engine, a statistic or a Referer: robots
     `noindex` (the response says the same), no canonical, hreflang, JSON-LD or social tags, no stats beacon, no Google element
     (its key check would send the address with the token to Google), and a note in place of the inquiry form (a preview
-    takes no inquiries). The banner's two actions write to the site's address
-    with the entry's number until G6 (claim) and G2 (corrections) give them their own pages.
+    takes no inquiries). The banner's two actions post the token to the claim flow (G6, `portal_claim_start`); a
+    correction needs the entry claimed first.
 #}
 {% extends 'venues/detail/show.html.twig' %}
 
@@ -22,18 +22,18 @@
 {% block stats_beacon %}{% endblock %}
 
 {% block hero %}
-    {% set claim_subject = 'preview.claim_subject'|trans({number: venue.number, name: venue.name}, 'venues') %}
-    {% set correct_subject = 'preview.correct_subject'|trans({number: venue.number, name: venue.name}, 'venues') %}
     <div class="preview-banner preview-banner--public">
         <div class="preview-banner__inner container">
             <div class="preview-banner__body">
                 <p class="preview-banner__label">{{ icon('info') }}<strong>{{ 'preview.unconfirmed'|trans({}, 'venues') }}</strong></p>
                 <p class="preview-banner__text">{{ 'preview.intro'|trans({}, 'venues') }}</p>
             </div>
-            <div class="preview-banner__actions">
-                {{ include('components/_button.html.twig', {label: 'preview.claim'|trans({}, 'venues'), variant: 'primary', href: 'mailto:' ~ site_contact_email ~ '?subject=' ~ claim_subject|url_encode}, with_context = false) }}
-                <a class="preview-banner__link" href="mailto:{{ site_contact_email }}?subject={{ correct_subject|url_encode }}">{{ 'preview.correct'|trans({}, 'venues') }}</a>
-            </div>
+            {# G6: both actions start the claim. The token travels in the body, never in a URL (Wave G §4a.4). #}
+            <form class="preview-banner__actions" method="post" action="{{ path('portal_claim_start') }}">
+                <input type="hidden" name="token" value="{{ token }}">
+                {{ include('components/_button.html.twig', {label: 'preview.claim'|trans({}, 'venues'), variant: 'primary', type: 'submit', attributes: {name: 'intent', value: 'claim'}}, with_context = false) }}
+                <button class="preview-banner__link" type="submit" name="intent" value="correct">{{ 'preview.correct'|trans({}, 'venues') }}</button>
+            </form>
         </div>
     </div>
     {{ parent() }}
