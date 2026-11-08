@@ -29,7 +29,7 @@ main() {
     # D36: three years after the decision, a complaint's name, e-mail and message go (the case stays). --quiet:
     # its count line would mail every night.
     step moderation-erase "$PHP" bin/console --no-interaction --quiet app:venues:erase-complainants
-    # D44: a week of searches without results goes 12 months after its Monday. --quiet: its count line would mail
+    # D46: a week of searches without results goes 12 months after its Monday. --quiet: its count line would mail
     # every night.
     step search-misses-purge "$PHP" bin/console --no-interaction --quiet app:stats:purge-search-misses
     # #28: a contract's end flips the company stage and writes its renewal task. Counts stay at normal

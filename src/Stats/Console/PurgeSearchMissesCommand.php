@@ -12,7 +12,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 
 /**
- * Run nightly by `bin/cron-daily` (step `search-misses-purge`), D44. Safe to repeat: a second run deletes nothing.
+ * Run nightly by `bin/cron-daily` (step `search-misses-purge`), D46. Safe to repeat: a second run deletes nothing.
  */
 #[AsCommand(name: 'app:stats:purge-search-misses', description: 'Delete the weekly counts of searches without results after 12 months')]
 final class PurgeSearchMissesCommand

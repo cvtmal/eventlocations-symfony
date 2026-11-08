@@ -83,7 +83,7 @@ final class VenueIndexingTest extends WebTestCase
 
     public function test_an_entry_outside_the_launch_cantons_is_indexed_by_the_gate_alone(): void
     {
-        // D21's launch cantons limit landing pages only; an entry's own page follows VenueIndexGate in any canton.
+        // D44: the launch cantons (D21) limit landing pages only; an entry's own page follows VenueIndexGate in any canton.
         $launch = self::getContainer()->getParameter('landing.launch_cantons');
         self::assertIsArray($launch);
         self::assertNotContains('lu', $launch);

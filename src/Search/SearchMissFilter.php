@@ -6,7 +6,7 @@ namespace App\Search;
 
 /**
  * What the listing may log of a search without results (G12): the canonical query, with the search text cut to
- * `MAX_TEXT` characters (D45; multibyte-safe, so a cut never splits a character), or nothing at all when the text
+ * `MAX_TEXT` characters (D46; multibyte-safe, so a cut never splits a character), or nothing at all when the text
  * looks like contact data (D46): an "@" or a run of `MIN_DIGITS` or more digits, which spaces, dots, commas, dashes,
  * underscores, slashes and brackets may separate ("079 123 45 67", "044/123.45.67", "(044) 123 45 67"). Only the text
  * is checked: the other values are codes, numbers and a postcode or town id that `SearchCriteria` already validated.

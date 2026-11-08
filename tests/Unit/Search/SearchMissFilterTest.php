@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * D45, D46: the zero-result log keeps at most 100 characters of the search text and nothing of a search whose text
+ * D46: the zero-result log keeps at most 100 characters of the search text and nothing of a search whose text
  * holds an "@" or six or more digits in a row (spaces, dots, dashes and slashes may separate them).
  */
 final class SearchMissFilterTest extends TestCase

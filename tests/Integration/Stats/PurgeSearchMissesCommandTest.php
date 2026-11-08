@@ -12,7 +12,7 @@ use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
- * D44: a week of searches without results is deleted on the last night before its Monday (00:00 Zurich, the
+ * D46: a week of searches without results is deleted on the last night before its Monday (00:00 Zurich, the
  * earliest search the row can hold) turns 12 months old (cutoff `now - 12 months + 1 day`), so no search stays
  * longer; a younger week stays, and a second run deletes nothing.
  */

@@ -326,7 +326,7 @@ step 2), so the times below are Zurich times. `php` on cron's PATH is 8.5 throug
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D44), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D46), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
 | `30 4 * * *` | `bin/cron-media-backup` | The media originals to Object Storage, encrypted, with retention ([Media backup](#media-backup)); no database |
 
 `moderation-erase` (D36) erases the complainant of a report three years after the decision in the
