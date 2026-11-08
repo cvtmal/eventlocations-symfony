@@ -48,11 +48,6 @@ final class VenuePreviewLinkController extends AbstractController
     ) {
     }
 
-    /**
-     * Any segment and any method: a near miss (a token with a full stop from a plain-text mail, a POST)
-     * must get this private page too, not the generic error page, which is cacheable and sends the stats
-     * beacon with the path.
-     */
     #[Route(path: ['de' => '/vorschau/{token}'], name: 'venue_preview', requirements: ['token' => '[^/]+'])]
     public function __invoke(Request $request, string $token): Response
     {
@@ -63,7 +58,7 @@ final class VenuePreviewLinkController extends AbstractController
 
     /**
      * The short form a letter prints (G11): `/v/<code>` shows the same private page as the token, without a redirect,
-     * so the token never travels. Case and surrounding blanks of a typed code do not matter.
+     * so the token is never in a URL (it travels only in the claim banner's POST body). Case and surrounding blanks of a typed code do not matter.
      */
     #[Route(path: ['de' => '/v/{code}'], name: 'venue_preview_short', requirements: ['code' => '[^/]+'])]
     public function short(Request $request, string $code): Response
