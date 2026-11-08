@@ -103,6 +103,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F6b | `brand-assets` | M | F6 | — | — (D23) | Done |
 | F7a | `du-flip` | S | F0 | — | — | Done (`3c19cad`) |
 | F5b | `guests-rooms` | S | F4, F5 | indexes only | — | Done |
+| – | `places-photos` | S–M | F7b | — | — (D12, D47) | Todo |
 | F7b | `event-copy-de` | M | F3, F5, F7a | — | Operator facts as `TODO(owner)` (D27); processors in D26 | Done |
 | F8 | `landing-event` | M | F5 | `content_blocks` rows (landing texts) | — | Done |
 | F9 | `inquiry-event` | S–M | F3 | `inquiries` (event columns) | — | Todo |
@@ -802,6 +803,7 @@ The PRDs describe a product that is mostly ours already (free listing, paid tier
 | D44 | **Indexing by region and size** (D21): canton, town and event × canton landing pages are indexed only in ZH, AG, ZG and BE and only with at least 8 indexable entries; elsewhere they render with `noindex`. Both are configuration, not code. A venue's detail page is indexed by the entry gate (D45) in every canton. | G12 |
 | D45 | **Entry gate:** an entry is indexed only when its facts are checked and its description is written. Staff tick «Fakten geprüft»; a verified claim (G6) sets it too, because the operator confirmed the facts. No backfill: before launch every entry is `noindex` until checked. Imports, the wizard and `/konto` start unchecked. | G12, G6, F14 |
 | D46 | **Zero-result searches** are logged per week for the scorecard, at most 100 characters, never with "@" or a run of 6+ digits (an e-mail or phone typed into the box is not stored), skipped for GPC and staff, and deleted after 12 months; `/datenschutz` says so. | G12 |
+| D47 | **Google Places photos go through our server** (refines D12's "loaded live"): our server fetches each photo and streams it with `no-store`, never stored or cached, so the visitor's IP and the page address never reach Google; the uploader's name shows on each photo; detail page only, never on cards, the preview or behind login; a daily request cap (configuration) with the F6 placeholder above it. `/datenschutz` says Google receives requests from our server. If Google's terms do not allow proxying the photo media, click-to-load instead. Videos (G15) are click-to-load via youtube-nocookie. | `places-photos`, G15 |
 
 ### Wave G §2. PRD journey → existing module
 
