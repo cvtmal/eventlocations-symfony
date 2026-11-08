@@ -21,7 +21,7 @@ It is modelled on eventlokale.ch's features and behaviour. Its texts, photos, ve
 
 The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 2026-11-06). The look is our own since F6 (indigo and vermilion, Hanken Grotesk, `docs/brand.md`), and the vocabulary since F3. Filters, URLs and wording are still the wedding site's until F5, F7b and F8.
 
-- **Public:** home page, one listing with filters, one detail page per venue with photos, rooms, documents and map, canton landing pages, the Merkliste without login, an inquiry form on every venue, SEO basics, own cookieless statistics.
+- **Public:** home page with a search by canton, event type and guest number; the listing at `/eventlokale` with filters for event type, guests, catering and more; one detail page per venue with photos, rooms, documents and map, canton landing pages, the Merkliste without login, an inquiry form on every venue, SEO basics, own cookieless statistics.
 - **Back office (`/admin`, staff only, 2FA):** CMS for entries, photos, rooms, documents, landing pages and text blocks; CRM for Locations (prospects and customers), deals, tasks, timeline, e-mail, inquiries; statistics.
 - **Location accounts (`/konto`):** a manager registers, asks access to an entry or creates one in a wizard; the owner accepts the first publication.
 - **Event vocabulary (F3):** 17 event types (Firmenanlass, Seminar, Tagung / Konferenz, Workshop, Sitzung / Meeting, Produktpräsentation, Generalversammlung, Teamevent, Weihnachtsfeier, Vereinsanlass, Apéro, Geburtstag, Familienfeier, Hochzeit, Party, Konzert, Ausstellung), catering and technology as their own groups; staff and managers edit them, the detail page shows them under "Geeignet für". Not yet filterable (F5).
@@ -29,6 +29,8 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 - **Own-site importer (G3, staff only):** reads a venue's own website safely and stores facts and photo candidates privately; nothing reaches a public page.
 - **Photo rights (G1):** a photo is public only with a rights record. Staff uploads and imports are granted at once; a manager's photos wait until the manager accepts the rights declaration in `/konto`. Revoking deletes the photo everywhere.
 - **Preview links (G5):** staff issue a private link (with a QR code for letters) to a prepared entry. It shows the entry as it would look, with the banner "Noch nicht vom Betreiber bestätigt" and only photos with a rights record; it is never indexed and can be revoked. Taking over the entry from the preview comes with G6.
+- **Reports (G2):** anyone can report a photo, an entry or wrong facts at `/inhalt-melden`; a reported photo is hidden until staff decide in `/admin/meldungen`.
+- **Photo backup (F15b):** the photos are copied every night, encrypted, to Infomaniak Object Storage in Switzerland; launch is refused without a backup less than 26 hours old.
 - **Funnel scorecard (G8, `/admin`):** counts previews, claims, publications, delivered inquiries and paid venues per campaign and week, with no personal data.
 - **Eventlokale crawler:** kept for internal working data (D11, D12).
 
@@ -45,7 +47,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 ## Facts the owner holds
 
-Every product decision is settled (D23 to D34). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
+Every product decision is settled (D23 to D38). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
 
 | Fact | Until it arrives |
 |---|---|
@@ -60,15 +62,15 @@ Since 2026-11-07 the PO and the tech lead decide scope, priorities and defaults 
 
 ## Cycles at a glance
 
-_Status as of 2026-11-07, kept by the PO after every merge. The cycles themselves are in `docs/rpi-cycles.md`: F-cycles in the overview table and under "Cycles", G-cycles in Wave G §3._
+_Status as of 2026-11-08, kept by the PO after every merge. The cycles themselves are in `docs/rpi-cycles.md`: F-cycles in the overview table and under "Cycles", G-cycles in Wave G §3._
 
-**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved) · G1 `rights-grants` (no photo public without a rights record) · F15 `prod-setup` (deploy to an Infomaniak VPS + Neon, off until the owner enables it) · F4 `room-layouts` (six seating layouts per room) · F6b `brand-assets` (logo lockups, icons, share-card templates, 34 boards in the new look) · G5 `preview-link` (private preview link with QR, issued and revoked in the CMS).
+**Done:** F0 `fork-baseline` (copy of the wedding site, renamed and stripped) · F0b `fork-docs` (docs) · F1 `owner-decisions` (D1–D12) · F7a `du-flip` ("du" everywhere) · F6 `brand-design` (colours, typeface, logo, photo placeholders) · F3 `event-vocabulary` (17 event types, catering, technology) · G3 `site-import` (reads a venue's own website, internal) · G8 `funnel-scorecard` (funnel counts in `/admin`) · `rules-condense` (developer notes halved) · G1 `rights-grants` (no photo public without a rights record) · F15 `prod-setup` (deploy to an Infomaniak VPS + Neon, off until the owner enables it) · F4 `room-layouts` (six seating layouts per room) · F6b `brand-assets` (logo lockups, icons, share-card templates, 34 boards in the new look) · G5 `preview-link` (private preview link with QR, issued and revoked in the CMS) · F5 `filter-event` (event-type and guest filters, `/eventlokale…` URLs) · G2 `takedown-form` (report a photo or entry; reported photos hidden until decided) · F15b `media-backup` (nightly encrypted copy of the photos to Infomaniak Object Storage).
 
-**Built, PR open:** F12 `business-model` (Free + Pro as data).
+**Built, PR open:** F12 `business-model` (Free + Pro as data) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · F9 `inquiry-event` (inquiry form with event fields).
 
-**In a lane:** F5 `filter-event` (event type and guest filters, `/eventlokale…` URLs) · F9 `inquiry-event` (inquiry form with event fields) · G2 `takedown-form` (report a photo or text).
+**In a lane:** F7b `event-copy-de` (all German texts, legal pages) · F8 `landing-event` (event landing pages, no Hochzeit) · F5b `guests-rooms` (guest filter and card also count the rooms) · `takedown-form-finish` (privacy paragraph on reports, D36 deletion job).
 
-**Launch-critical, not started:** F15b `media-backup` (nightly off-server copy of venue photos) · F5b `guests-rooms` (guest filter and card also count the rooms) · F7b `event-copy-de` (all German texts, legal pages) · F8 `landing-event` (event landing pages, no Hochzeit) · F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G6 `claim-verify` (venue claims its entry, confirms photo rights) · G7 `enquiry-quality` (real vs. spam, delivery status) · G9 `subscription-term` (Pro term, expiry, reminders) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G12 `launch-regions` (ZH, AG, ZG, BE first) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
+**Launch-critical, not started:** F11 `portal-event` (`/konto` with event fields) · F14 `content-onboarding` (venues in, as drafts) · G7 `enquiry-quality` (real vs. spam, delivery status) · G9 `subscription-term` (Pro term, expiry, reminders) · G10 `owner-report` (monthly report) · G11 `outreach-tracking` (personal and postal contacts) · G12 `launch-regions` (ZH, AG, ZG, BE first) · G13 `tier-pages` ("Eintragen / Preise") · F16 `launch-verification` (final check).
 
 **After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) · G14 `last-minute-offers` · G15 `video-embed` · G16 `organizer-feedback`.
 

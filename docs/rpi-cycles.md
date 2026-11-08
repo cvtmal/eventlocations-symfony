@@ -765,6 +765,9 @@ The PRDs describe a product that is mostly ours already (free listing, paid tier
 | D33 | **Catering has one source:** the `catering` terms (`in_house`, `external_allowed`, …). The FAQ question `own_catering` goes, so the fact is not asked twice and cannot contradict itself. F9 removes it; F4 and F11 leave it alone. | F9 |
 | D34 | **No "founder minutes" field.** The G8 scorecard does without the manual minutes per claim (CMO §9.1): with two staff users, time spent is known without a form. Parked. | G8, G10 |
 | D35 | **Share images at launch:** a venue page uses its first public photo, and without one the default card `og-default.png`; landing pages use the default card. No per-page prerendered cards at launch: the server cannot rasterise, and a generic card costs no reach while there is no traffic. F6b's `OgCard` templates and `app:brand:og-card` stay for later. | F7b, F8 |
+| D36 | **Content reports are kept at most three years after the decision** (evidence in a rights dispute); then the complainant's name, e-mail and message are deleted by a nightly job. The `/datenschutz` paragraph on reports is the PO's text, in `takedown-form-finish`. | G2 |
+| D37 | **A competing claim freezes the entry for every manager**, taking it offline included, until staff decide. Urgent removal goes through the report form (G2), which hides a photo at once. | G6 |
+| D38 | **The label "Noch nicht vom Betreiber bestätigt" shows on the detail page only, not on cards.** At launch most entries are unclaimed, so a label on every card would be noise; the detail page is where an organizer decides to inquire. It goes once the claim is verified. | G6 |
 
 ### Wave G §2. PRD journey → existing module
 
