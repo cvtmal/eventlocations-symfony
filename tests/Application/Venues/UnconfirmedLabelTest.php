@@ -63,11 +63,11 @@ final class UnconfirmedLabelTest extends WebTestCase
         PortalVenueAccessFactory::new()->active()->create(['venue' => $managed]);
         PortalVenueAccessFactory::createOne(['venue' => $unclaimed]);
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.self::SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.self::SLUG);
         self::assertResponseIsSuccessful();
         self::assertSame(self::LABEL, trim($crawler->filter('.venue-head__unconfirmed')->text()), 'a pending request confirms nothing');
 
-        $this->client->request('GET', '/hochzeitslocation/seehaus-meilen');
+        $this->client->request('GET', '/eventlokal/seehaus-meilen');
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('.venue-head__unconfirmed');
         self::assertStringNotContainsString(self::LABEL, (string) $this->client->getResponse()->getContent());
@@ -76,7 +76,7 @@ final class UnconfirmedLabelTest extends WebTestCase
     public function test_a_verified_claim_purges_the_cached_page_and_the_label_goes(): void
     {
         $venue = $this->venue(self::SLUG);
-        $url = '/hochzeitslocation/'.self::SLUG;
+        $url = '/eventlokal/'.self::SLUG;
         $this->startHttpCache($this->client->getKernel());
         try {
             self::assertStringContainsString(self::LABEL, (string) $this->through(Request::create($url))->getContent());

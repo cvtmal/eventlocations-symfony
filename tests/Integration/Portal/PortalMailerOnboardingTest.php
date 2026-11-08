@@ -43,7 +43,7 @@ final class PortalMailerOnboardingTest extends KernelTestCase
             'anna@example.ch',
             'Seehaus Meilen ist online',
             // G6: the proof of publication links the public page, the settings and the way to remove the entry.
-            ['Hallo Anna', '/hochzeitslocation/seehaus-meilen', '/konto/locations/1234', 'Offline nehmen', 'Eintrag entfernen'],
+            ['Hallo Anna', '/eventlokal/seehaus-meilen', '/konto/locations/1234', 'Offline nehmen', 'Eintrag entfernen'],
         ];
         yield 'claim code' => [
             static function (PortalMailer $mailer): bool {
