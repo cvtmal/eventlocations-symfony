@@ -48,6 +48,9 @@ final class LocationPreviewTest extends WebTestCase
             self::assertResponseIsSuccessful();
             self::assertSame('Hier zeigt die Website die Google-Bewertung. Die Vorschau lädt sie nicht.', $crawler->filter('.venue-content > .preview-banner__note')->text());
             self::assertSelectorNotExists('[data-google-rating]');
+            // D12, places-photos: no Google photos either, though the key is set in the test env.
+            self::assertSelectorNotExists('[data-google-photos]');
+            self::assertStringNotContainsString('google-fotos', (string) $this->client->getResponse()->getContent());
             self::assertStringNotContainsString('data-maps-key', (string) $this->client->getResponse()->getContent());
             self::assertStringNotContainsString('googleapis', (string) $this->client->getResponse()->headers->get('Content-Security-Policy'));
         } finally {

@@ -18,6 +18,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * between requests, byte, page and time caps, a content type allowlist). Nothing is cached between sessions and no
  * cookie or credential of the application is ever sent: the requests carry a User-Agent that names us and a way to
  * reach us, and nothing else.
+ *
+ * `FetchSession::resource()` is the one other use (D12, places-photos): a call to an API the caller chose, with the
+ * caller's headers on the first request only and without robots.txt. A caller with its own budget builds its own
+ * instance with its own FetchLimits.
  */
 final class SafeFetcher
 {

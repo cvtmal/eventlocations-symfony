@@ -4,6 +4,7 @@
       - {% block map %} at the end of <section id="standort"> (#15 fills it with venue_map(); nothing without coordinates), which renders only on venue.hasLocation();
       - {% block inquiry %} inside <section id="anfrage"> (#14 fills it with inquiry_form(); `inquiry` is the bound form of a POST re-render, and no whitespace, so :empty hides the section);
       - {% block google_rating %} after the head (#53 fills it with venue_google_rating(); nothing without a place ID or when hidden; the previews override it with a note);
+      - {% block google_photos %} beside the placeholder of a venue without public photos (D12, places-photos: venue_google_photos(); every preview overrides it empty);
       - the Merken button in _actions via favorites/_merken_button.html.twig (#7/#13).
     The blocks live in this file on purpose: a block inside an included partial cannot be overridden.
 #}
@@ -31,7 +32,7 @@
         {{ include('venues/detail/_hero.html.twig', {venue: venue}, with_context = false) }}
         {{ include('venues/detail/_gallery.html.twig', {venue: venue}, with_context = false) }}
     {% else %}
-        <div class="venue-placeholder">{{ include('components/_photo_placeholder.html.twig', {}, with_context = false) }}</div>
+        <div class="venue-placeholder">{{ include('components/_photo_placeholder.html.twig', {}, with_context = false) }}{% block google_photos %}{{ venue_google_photos(venue) }}{% endblock %}</div>
     {% endif %}
 {% endblock %}
 
@@ -69,4 +70,5 @@
     <script type="module" src="{{ asset('js/phone-reveal.js') }}"></script>
     <script type="module" src="{{ asset('js/venue-map.js') }}"></script>
     <script type="module" src="{{ asset('js/google-rating.js') }}"></script>
+    <script type="module" src="{{ asset('js/google-photos.js') }}"></script>
 {% endblock %}

@@ -10,12 +10,14 @@ use Sentry\EventHint;
 /**
  * Sentry's `before_send` (config/packages/sentry.yaml): an error report keeps the request URL, and on
  * a page whose path is a secret, the secret goes. Today that is G5's preview link, `/vorschau/{token}`,
- * its short form `/v/{code}` (G11) and G9's cancellation link `/konto/abo-kuendigen/{token}`, which must never be logged (Wave G §4a.4). The report itself still goes out.
+ * its short form `/v/{code}` (G11) and G9's cancellation link `/konto/abo-kuendigen/{token}`, which must never be logged (Wave G §4a.4),
+ * and the Google photo of `/eventlokal/{slug}/google-fotos/{reference}` (D12, places-photos: a photo name may not be kept).
+ * The report itself still goes out.
  */
 final class SensitiveUrlScrubber
 {
     /** A path prefix whose next segment is a secret. */
-    private const array SECRET_SEGMENT_AFTER = ['/vorschau/', '/konto/abo-kuendigen/', '/v/'];
+    private const array SECRET_SEGMENT_AFTER = ['/vorschau/', '/konto/abo-kuendigen/', '/v/', '/google-fotos/'];
 
     public const string FILTERED = '[Filtered]';
 

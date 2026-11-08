@@ -42,4 +42,7 @@
 {# Google's element would send the page address (and so the token) to Google with its key check (Wave G §4a.4). #}
 {% block google_rating %}{% endblock %}
 
+{# D12, places-photos: no Google call from a preview (Wave G §4a.4, G5 Outcome). #}
+{% block google_photos %}{% endblock %}
+
 {% block inquiry %}<p class="preview-banner__note">{{ 'preview.inquiry_note'|trans({}, 'venues') }}</p>{% endblock %}

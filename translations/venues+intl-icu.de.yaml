@@ -236,6 +236,12 @@ detail:
     google_rating:
         label: Google-Bewertung
         link: Bewertungen auf Google Maps ansehen
+    # D12, places-photos: the strip of Google Places photos of a venue without its own (venues/detail/google_photos.html.twig).
+    google_photos:
+        label: Fotos von Google Maps
+        alt: '{name}, Foto {position} von Google Maps'
+        photo_by: 'Foto:'
+        source: Google Maps
     facts:
         heading: Ausstattung und Eignung
     event:

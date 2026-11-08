@@ -78,6 +78,16 @@ final readonly class VenueDetail
     }
 
     /**
+     * Whether the page may show Google Places photos (D12): a place ID is set and the venue has no photo the public
+     * may see (`$photos` is already cut by PublicPhotoPolicy, the G2 hold and the F12 PhotoBudget). Its own granted
+     * photos replace Google's the moment they are public. Staff's rating switch does not hide the photos.
+     */
+    public function showsGooglePhotos(): bool
+    {
+        return null !== $this->googlePlaceId && [] === $this->photos;
+    }
+
+    /**
      * The head block's text (D13): the description, or the summary when there is none.
      */
     public function descriptionText(): string

@@ -93,7 +93,7 @@ final class LegalPagesTest extends WebTestCase
             'Schutz vor Missbrauch',
             'Dienstleister, die Daten für uns bearbeiten',
             'Hosting und Datenbank',
-            'Karten und Bewertungen von Google Maps',
+            'Karten, Bewertungen und Fotos von Google Maps',
             'Links zu anderen Anbietern',
             'Interner Bereich',
             'Deine Rechte',
@@ -109,7 +109,7 @@ final class LegalPagesTest extends WebTestCase
             'Infomaniak Network SA: Hosting der Website und Versand der E-Mails (Schweiz)',
             'Neon (Databricks, Inc.): Datenbank mit Anfragen und Kontakten (Frankfurt, Deutschland)',
             'Sentry (Functional Software, Inc.): Meldungen technischer Fehler (Frankfurt, Deutschland)',
-            'Google Ireland Limited: Karten und Bewertungen von Google Maps (Irland)',
+            'Google Ireland Limited: Karten, Bewertungen und Fotos von Google Maps (Irland)',
         ], $crawler->filter('.legal__processors li')->each(static fn (Crawler $item): string => $item->text()));
     }
 
@@ -257,6 +257,20 @@ final class LegalPagesTest extends WebTestCase
         self::assertStringContainsString('Auf der Seite einer Location kann die Google-Bewertung erscheinen', $text);
         self::assertStringContainsString('ohne Klick direkt bei Google, sobald dieser Teil der Seite sichtbar wird', $text);
         self::assertStringContainsString('Wir speichern keine Bewertungen von Google.', $text);
+    }
+
+    public function test_the_google_photos_come_from_our_server_and_the_caption_link_is_quoted(): void
+    {
+        $text = $this->page('/datenschutz')->filter('main')->text();
+        $translator = self::getContainer()->get(TranslatorInterface::class);
+        self::assertInstanceOf(TranslatorInterface::class, $translator);
+
+        // D12, places-photos: the pass-through promise, and the caption link the sentence quotes.
+        self::assertStringContainsString('Diese Fotos ruft unser Server bei Google ab', $text);
+        self::assertStringContainsString('Google erhält die Anfragen von unserem Server, nicht von deinem Browser, und damit weder deine IP-Adresse noch die Adresse der Seite', $text);
+        self::assertStringContainsString('Wir speichern die Fotos nicht.', $text);
+        self::assertStringContainsString('«'.$translator->trans('detail.google_photos.source', [], 'venues', 'de').'»', $text);
+        self::assertStringContainsString('Karten, Bewertungen und Fotos von Google Maps', $text);
     }
 
     private function page(string $path): Crawler

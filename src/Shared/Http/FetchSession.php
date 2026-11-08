@@ -99,6 +99,29 @@ final class FetchSession
         return $this->follow($target, $this->limits->maxBytesPerResponse, ['image/jpeg', 'image/png', 'image/webp'], false, false);
     }
 
+    /**
+     * Fetches one resource of a service the caller chose, not a page of a site somebody typed in (D12: the Google
+     * Places API and the image it names). The same address checks, pinned connection, redirect, byte, page and time
+     * caps as `get()`, but no robots.txt (a file for crawlers of pages, not for an API client) and no same-site rule.
+     * `$headers` (an API key, say) go with the URL asked for only: a redirect drops them, so they never reach a host
+     * the caller did not name.
+     *
+     * @param list<string>          $contentTypes accepted types, as for `get()`
+     * @param array<string, string> $headers
+     *
+     * @throws FetchRefused
+     */
+    public function resource(string $url, array $contentTypes, array $headers = []): FetchResult
+    {
+        $target = SafeUrl::parse($url);
+        if ($this->pages >= $this->limits->maxPages) {
+            throw FetchRefused::because(RefusalReason::PageLimit, 'at most '.$this->limits->maxPages.' requests per session');
+        }
+        ++$this->pages;
+
+        return $this->follow($target, $this->limits->maxBytesPerResponse, $contentTypes, false, false, $headers);
+    }
+
     public function pages(): int
     {
         return $this->pages;
@@ -115,11 +138,12 @@ final class FetchSession
     }
 
     /**
-     * @param list<string> $contentTypes accepted types; `text/*` style patterns allowed; '' (none sent) only in a list that holds ''
+     * @param list<string>          $contentTypes accepted types; `text/*` style patterns allowed; '' (none sent) only in a list that holds ''
+     * @param array<string, string> $headers      extra request headers for `$start` only, never for a redirect target
      *
      * @throws FetchRefused
      */
-    private function follow(SafeUrl $start, int $cap, array $contentTypes, bool $checkRobots, bool $sameSiteOnly): FetchResult
+    private function follow(SafeUrl $start, int $cap, array $contentTypes, bool $checkRobots, bool $sameSiteOnly, array $headers = []): FetchResult
     {
         $current = $start;
         $seen = [(string) $start];
@@ -133,7 +157,7 @@ final class FetchSession
                 $this->assertRobotsAllow($current);
             }
 
-            $exchange = $this->exchange($current, $cap, $contentTypes);
+            $exchange = $this->exchange($current, $cap, $contentTypes, 0 === $hops ? $headers : []);
             if (null !== $exchange['body']) {
                 return new FetchResult($current, $exchange['status'], $exchange['type'], $exchange['charset'], $exchange['body'], $redirects);
             }
@@ -163,13 +187,14 @@ final class FetchSession
      * One request. Returns the body for a 2xx answer, a null body with the Location for a redirect, and throws for
      * everything else.
      *
-     * @param list<string> $contentTypes
+     * @param list<string>          $contentTypes
+     * @param array<string, string> $headers      the caller's extra headers; ours (User-Agent, Accept, ...) win
      *
      * @return array{status: int, type: string, charset: ?string, body: ?string, location: ?string}
      *
      * @throws FetchRefused
      */
-    private function exchange(SafeUrl $url, int $cap, array $contentTypes): array
+    private function exchange(SafeUrl $url, int $cap, array $contentTypes, array $headers = []): array
     {
         $address = $this->vet($url);
         $this->waitForTurn($url->host);
@@ -190,7 +215,7 @@ final class FetchSession
                     'Accept-Language' => 'de-CH,de;q=0.9,en;q=0.4',
                     // A compressed body can inflate to far more than its size on the wire before the cap sees it.
                     'Accept-Encoding' => 'identity',
-                ],
+                ] + $headers,
                 // The second line of defence: a connection to an address that never passed the check (a proxy, a
                 // resolver of its own) is aborted. Any vetted address counts, not only the pinned one, because the
                 // client may reuse a keep-alive connection made earlier or DNS may rotate its answers.

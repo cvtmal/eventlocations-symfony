@@ -1,0 +1,23 @@
+{#
+    D12, places-photos: the fragment of VenueGooglePhotosController::photos(), which google-photos.js puts where F6's
+    placeholder stands. Params: name (the venue's), slug, photos (list of GooglePlacePhoto). Every image comes from our
+    own route, so the browser never contacts Google; each photo carries its uploader's name and "Google Maps"
+    (Places policies: credit the author on the photo, attribute Google Maps, give access to the source photo). Both
+    links open Google Maps in a new tab, only on a click. The list scrolls sideways, so it takes focus (keyboard).
+#}
+<div class="google-photos" role="region" aria-label="{{ 'detail.google_photos.label'|trans({}, 'venues') }}">
+    <ul class="google-photos__list" tabindex="0">
+        {%- for photo in photos %}
+        <li class="google-photos__item">
+            <figure class="google-photos__figure">
+                <img class="google-photos__img" src="{{ path('venue_google_photo', {slug: slug, reference: photo.reference}) }}" width="{{ photo.width }}" height="{{ photo.height }}" alt="{{ 'detail.google_photos.alt'|trans({name: name, position: loop.index}, 'venues') }}" decoding="async"{% if not loop.first %} loading="lazy"{% endif %}>
+                <figcaption class="google-photos__caption">
+                    {{- 'detail.google_photos.photo_by'|trans({}, 'venues') }}
+                    {% if photo.authorUri %}<a href="{{ photo.authorUri }}" target="_blank" rel="nofollow noopener noreferrer">{{ photo.author }}<span class="visually-hidden">{{ 'detail.location.map.new_tab'|trans({}, 'venues') }}</span></a>{% else %}{{ photo.author }}{% endif %}
+                    · {% if photo.mapsUri %}<a href="{{ photo.mapsUri }}" target="_blank" rel="nofollow noopener noreferrer">{{ 'detail.google_photos.source'|trans({}, 'venues') }}<span class="visually-hidden">{{ 'detail.location.map.new_tab'|trans({}, 'venues') }}</span></a>{% else %}{{ 'detail.google_photos.source'|trans({}, 'venues') }}{% endif %}
+                </figcaption>
+            </figure>
+        </li>
+        {%- endfor %}
+    </ul>
+</div>

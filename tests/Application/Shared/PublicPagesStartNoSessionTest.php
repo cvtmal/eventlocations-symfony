@@ -42,7 +42,7 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
     private const COOKIE_ROUTES = ['merkliste', 'merkliste_toggle', 'merkliste_sync'];
 
     /** The routes outside the shared cache. Every other 2xx/3xx GET is `public` with an `s-maxage`. */
-    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'venue_report', 'health', '_stats_collect', 'venue_preview', 'venue_preview_short', 'crm_opt_out'];
+    private const PRIVATE_ROUTES = [...self::COOKIE_ROUTES, 'venue_phone', 'inquiry_submit', 'venue_report', 'health', '_stats_collect', 'venue_preview', 'venue_preview_short', 'crm_opt_out', 'venue_google_photos', 'venue_google_photo'];
 
     public function test_no_public_page_starts_a_session_or_sets_a_cookie(): void
     {
@@ -54,6 +54,8 @@ final class PublicPagesStartNoSessionTest extends WebTestCase
             'venue_show' => [['slug' => DetailVenues::FULL_SLUG], ['slug' => self::HISTORY_SLUG]],
             'venue_markdown' => [['slug' => DetailVenues::FULL_SLUG], ['slug' => self::HISTORY_SLUG]],
             'venue_phone' => [['slug' => DetailVenues::FULL_SLUG]],
+            'venue_google_photos' => [['slug' => DetailVenues::FULL_SLUG]],
+            'venue_google_photo' => [['slug' => DetailVenues::FULL_SLUG, 'reference' => 'REF_one']],
             'inquiry_submit' => [['slug' => DetailVenues::FULL_SLUG]],
             'listing_landing' => [['slug' => 'zuerich'], ['slug' => $data['building']]],
             'listing_town' => [['canton' => 'zuerich', 'town' => $data['town']]],

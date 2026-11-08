@@ -1,0 +1,6 @@
+{#
+    D12, places-photos: rendered by venue_google_photos() next to F6's placeholder. Param: slug. google-photos.js fills
+    the box with the fragment of venue_google_photos and then hides the placeholder; without JS, over the daily cap or
+    when Google answers nothing, the box stays empty and the placeholder stays.
+#}
+<div class="venue-google-photos" data-google-photos="{{ path('venue_google_photos', {slug: slug}) }}"></div>
