@@ -206,10 +206,10 @@
         total.hidden = left === 0;
         document.querySelector('[data-merkliste-full]').hidden = read().length < MAX_ENTRIES;
         document.querySelector('[data-merkliste-empty]').hidden = left > 0;
-        // The «Top-Eintrag» footnote explains a badge; it goes with the last card that has one (G13).
+        // The «Top-Eintrag» footnote explains a badge; it goes with the last promoted card (G13). Not `.badge`: «Kurzfristig frei» (G14) is one too.
         const note = document.querySelector('[data-merkliste-promoted-note]');
         if (note) {
-            note.hidden = !document.querySelector('[data-merkliste-item] .badge');
+            note.hidden = !document.querySelector('[data-merkliste-item][data-merkliste-promoted]');
         }
     };
 

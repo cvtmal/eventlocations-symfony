@@ -66,7 +66,7 @@ function merklistePage(numbers, promoted = []) {
             <h1 tabindex="-1" data-merkliste-title></h1>
             <p data-merkliste-total data-count-one="1 Location" data-count-other="__count__ Locations"></p>
             <p data-merkliste-full hidden></p>
-            <ol>${numbers.map((number) => `<li data-merkliste-item>${promoted.includes(number) ? '<span class="badge">Top-Eintrag</span>' : ''}<form><button data-merkliste-remove="${number}" data-merken-name="V${number}"></button></form></li>`).join('')}</ol>
+            <ol>${numbers.map((number) => `<li data-merkliste-item${promoted.includes(number) ? ' data-merkliste-promoted><span class="badge">Top-Eintrag</span>' : '><span class="badge">Kurzfristig frei</span>'}<form><button data-merkliste-remove="${number}" data-merken-name="V${number}"></button></form></li>`).join('')}</ol>
             ${promoted.length > 0 ? '<p class="promoted-note" data-merkliste-promoted-note></p>' : ''}
             <div data-merkliste-empty hidden></div>
         </div>

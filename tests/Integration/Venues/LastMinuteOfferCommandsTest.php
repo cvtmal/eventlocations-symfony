@@ -75,7 +75,7 @@ final class LastMinuteOfferCommandsTest extends KernelTestCase
         $violation = $this->violation($this->publish($venue, '2026-11-20'));
 
         self::assertSame('last_minute.error.not_in_plan', $violation->translationKey());
-        self::assertSame(['tier' => 'Free'], $violation->parameters);
+        self::assertSame(['tier' => 'Gratis'], $violation->parameters);
         self::assertSame(0, $this->offers($venue));
         self::assertSame([], $this->purger()->venues);
     }

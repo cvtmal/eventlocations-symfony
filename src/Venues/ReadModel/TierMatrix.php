@@ -67,10 +67,12 @@ final readonly class TierMatrix
         return match ($feature) {
             TierFeature::Promoted => $tier->label()->promoted,
             TierFeature::Photos => $tier->photosMax,
+            TierFeature::Videos => $tier->videosMax,
             TierFeature::Rooms => $tier->roomsMax,
             TierFeature::Documents => $tier->documentsMax,
             TierFeature::Contact => $tier->contactVisible,
             TierFeature::EventTypes => $tier->eventTypesMax,
+            TierFeature::LastMinute => $tier->lastMinuteAllowed,
         };
     }
 

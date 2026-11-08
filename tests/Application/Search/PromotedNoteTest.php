@@ -97,6 +97,24 @@ final class PromotedNoteTest extends WebTestCase
         yield 'similar venues' => ['similar'];
     }
 
+    /**
+     * merkliste.js hides the footnote once no item marked `data-merkliste-promoted` is left: the server must mark the
+     * promoted entry and only it (a «Kurzfristig frei» badge is a `.badge` too, so the JS cannot go by the badge).
+     */
+    public function test_the_merkliste_marks_only_the_promoted_entry_for_its_footnote(): void
+    {
+        $paid = $this->venue('bezahlte-location', 'Bezahlte Location', KnownTiers::PRO);
+        $free = $this->venue('gratis-location', 'Gratis Location', KnownTiers::FREE);
+
+        $crawler = $this->merkliste($paid, $free);
+
+        $promoted = $crawler->filter('li[data-merkliste-item][data-merkliste-promoted]');
+        self::assertCount(1, $promoted);
+        self::assertStringContainsString('Bezahlte Location', $promoted->text());
+        self::assertCount(2, $crawler->filter('li[data-merkliste-item]'));
+        self::assertCount(1, $crawler->filter('.promoted-note[data-merkliste-promoted-note]'));
+    }
+
     public function test_the_home_spotlight_shows_the_badge(): void
     {
         $this->venue('bezahlte-location', 'Bezahlte Location', KnownTiers::PRO);

@@ -552,7 +552,7 @@ videos:
     list:
         title: Videos
         hint: Die Reihenfolge hier ist die Reihenfolge auf der Website. Die Seite lädt ein Video erst, wenn jemand auf «Video laden (YouTube)» oder «Video laden (Vimeo)» klickt.
-        limit: 'Mit dem Plan {tier} {max, plural, =0 {zeigt die Website keine Videos} one {zeigt die Website # Video} other {zeigt die Website bis zu # Videos}}.'
+        limit: 'Mit dem Plan «{tier}» {max, plural, =0 {zeigt die Website keine Videos} one {zeigt die Website # Video} other {zeigt die Website bis zu # Videos}}.'
         hidden: Nicht sichtbar (Plan)
     empty:
         title: Noch keine Videos
@@ -584,7 +584,7 @@ videos:
         not_allowed: Diesen Link können wir nicht einbinden. Möglich sind öffentliche Videos auf YouTube (youtube.com, youtu.be) und Vimeo (vimeo.com).
         not_public: 'Dieses Vimeo-Video ist nicht öffentlich. Stell es bei Vimeo auf «Öffentlich» oder nimm einen YouTube-Link.'
         already_added: Dieses Video ist bereits bei den Videos.
-        too_many: 'Mit dem Plan {tier} {max, plural, =0 {sind keine Videos} one {ist höchstens # Video} other {sind höchstens # Videos}} möglich. Entferne zuerst ein Video oder wechsle auf einen grösseren Plan.'
+        too_many: 'Mit dem Plan «{tier}» {max, plural, =0 {sind keine Videos} one {ist höchstens # Video} other {sind höchstens # Videos}} möglich. Entferne zuerst ein Video oder wechsle auf einen grösseren Plan.'
 
 error:
     not_found: Diese Location oder dieser Eintrag existiert nicht mehr. Bitte die Seite neu laden.
@@ -1012,7 +1012,7 @@ tiers:
 # G14 «Kurzfristig frei» (D55): the refusals of PublishLastMinuteOffer, shown in /konto (du).
 last_minute:
     error:
-        not_in_plan: 'Mit dem Plan {tier} gibt es keine Angebote «Kurzfristig frei». Die gibt es mit Pro.'
+        not_in_plan: 'Mit dem Plan «{tier}» gibt es keine Angebote «Kurzfristig frei». Die gibt es mit Pro.'
         too_many: 'Es sind höchstens {max, plural, one {# Angebot} other {# Angebote}} gleichzeitig möglich. Beende zuerst ein Angebot.'
         start_in_past: Das erste Datum liegt in der Vergangenheit. Wähle heute oder ein späteres Datum.
         too_far_ahead: 'Das erste Datum darf höchstens {days} Tage in der Zukunft liegen.'

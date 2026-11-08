@@ -100,7 +100,7 @@ final class VideoCommandsTest extends KernelTestCase
         $violation = $this->violation(new AddVenueVideo($venue->number(), 'https://vimeo.com/76979871'));
 
         self::assertSame('videos.error.too_many', $violation->translationKey());
-        self::assertSame(['max' => 1, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 1, 'tier' => 'Gratis'], $violation->parameters);
         self::assertSame(1, $this->videoCount($venue->id()));
     }
 

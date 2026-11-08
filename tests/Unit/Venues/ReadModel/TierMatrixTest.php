@@ -30,13 +30,15 @@ final class TierMatrixTest extends TestCase
         $matrix = TierMatrix::fromDefinitions([self::pro(), self::free()]);
 
         self::assertSame(
-            [TierFeature::Promoted, TierFeature::Photos, TierFeature::Rooms, TierFeature::Documents, TierFeature::Contact, TierFeature::EventTypes],
+            [TierFeature::Promoted, TierFeature::Photos, TierFeature::Videos, TierFeature::Rooms, TierFeature::Documents, TierFeature::Contact, TierFeature::EventTypes, TierFeature::LastMinute],
             self::features($matrix),
         );
         self::assertSame([false, true], self::row($matrix, TierFeature::Promoted)->cells);
         self::assertSame([6, 60], self::row($matrix, TierFeature::Photos)->cells);
         self::assertSame([false, true], self::row($matrix, TierFeature::Contact)->cells);
         self::assertSame([3, null], self::row($matrix, TierFeature::EventTypes)->cells, 'NULL means every event type that fits');
+        self::assertSame([1, 5], self::row($matrix, TierFeature::Videos)->cells);
+        self::assertSame([false, true], self::row($matrix, TierFeature::LastMinute)->cells);
         self::assertSame(['Pro'], $matrix->promotedTierNames());
     }
 
@@ -93,8 +95,8 @@ final class TierMatrixTest extends TestCase
     {
         $matrix = TierMatrix::fromDefinitions([self::free(), self::pro()]);
 
-        // Pro has videos, last-minute and the detailed report on; G15, G14 and G10 have not shipped them.
-        self::assertSame(['promoted', 'photos', 'rooms', 'documents', 'contact', 'event_types'], array_map(static fn (TierFeature $feature): string => $feature->value, TierFeature::cases()));
+        // Pro has the detailed report on; G10 has not shipped it. G15 (videos) and G14 (last-minute) have.
+        self::assertSame(['promoted', 'photos', 'videos', 'rooms', 'documents', 'contact', 'event_types', 'last_minute'], array_map(static fn (TierFeature $feature): string => $feature->value, TierFeature::cases()));
         self::assertCount(\count(TierFeature::cases()), $matrix->rows);
     }
 

@@ -449,10 +449,12 @@ tier_page:
         price: 'Preis'
         promoted: 'Top-Eintrag: weiter oben in den Suchergebnissen'
         photos: 'Fotos'
+        videos: 'Videos'
         rooms: 'Räume'
         documents: 'PDF-Dokumente (z. B. Menü, Preisliste)'
         contact: 'Telefonnummer und Website im Eintrag'
         event_types: 'Anlassarten'
+        last_minute: 'Kurzfristig frei'
     cell:
         free: 'Gratis, ohne Ablaufdatum'
         price: 'CHF {price} pro Jahr'

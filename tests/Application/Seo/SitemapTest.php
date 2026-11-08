@@ -117,7 +117,7 @@ final class SitemapTest extends WebTestCase
 
         $xml = $this->fetch('/sitemap-pages.xml');
 
-        self::assertSame(['http://localhost/', 'http://localhost/eventlokale', 'http://localhost/eventlokal-in-meiner-naehe', 'http://localhost/kurzfristig-frei', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
+        self::assertSame(['http://localhost/', 'http://localhost/eventlokale', 'http://localhost/eventlokal-in-meiner-naehe', 'http://localhost/kurzfristig-frei', 'http://localhost/location-eintragen', 'http://localhost/impressum', 'http://localhost/datenschutz'], $this->values($xml, 'loc', self::SITEMAP_NS));
         self::assertCount(3, $xml->getElementsByTagNameNS(self::SITEMAP_NS, 'lastmod'));
 
         $this->connection->executeStatement('DELETE FROM last_minute_offers WHERE id = ?', [$offer->id()]);

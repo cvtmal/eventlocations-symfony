@@ -88,7 +88,9 @@ final class TierPageTest extends WebTestCase
         self::assertSame(['– nicht enthalten', 'inklusive'], $this->cells($matrix, 'Telefonnummer und Website im Eintrag'));
         self::assertSame(['– nicht enthalten', 'inklusive'], $this->cells($matrix, 'Top-Eintrag: weiter oben in den Suchergebnissen'));
         self::assertSame(['1', 'bis zu 20'], $this->cells($matrix, 'Räume'));
+        self::assertSame(['1', 'bis zu 5'], $this->cells($matrix, 'Videos'));
         self::assertSame(['bis zu 3', 'alle passenden'], $this->cells($matrix, 'Anlassarten'));
+        self::assertSame(['– nicht enthalten', 'inklusive'], $this->cells($matrix, 'Kurzfristig frei'));
     }
 
     /**
@@ -122,6 +124,8 @@ final class TierPageTest extends WebTestCase
         yield 'contact off everywhere' => [['UPDATE tiers SET contact_visible = FALSE']];
         yield 'no boost' => [['UPDATE tiers SET rank_weight = 0']];
         yield 'no documents' => [['UPDATE tiers SET documents_max = 0']];
+        yield 'no videos' => [['UPDATE tiers SET videos_max = 0']];
+        yield 'no last-minute offers' => [['UPDATE tiers SET last_minute_allowed = FALSE']];
         yield 'every flag off' => [[
             'UPDATE tiers SET contact_visible = FALSE, last_minute_allowed = FALSE, detailed_report = FALSE, rank_weight = 0, photos_max = 0, rooms_max = 0, videos_max = 0, documents_max = 0',
         ]];
@@ -134,7 +138,10 @@ final class TierPageTest extends WebTestCase
         $page = $this->page();
         $main = $page->filter('main');
 
-        self::assertSame(['Preis', 'Anlassarten'], $main->filter('table.tier-matrix tbody th[scope=row]')->each(static fn (Crawler $th): string => $th->text()));
+        $labels = $main->filter('table.tier-matrix tbody th[scope=row]')->each(static fn (Crawler $th): string => $th->text());
+        self::assertSame(['Preis', 'Anlassarten'], $labels);
+        self::assertNotContains('Videos', $labels);
+        self::assertNotContains('Kurzfristig frei', $labels);
         self::assertCount(0, $main->filter('#top-eintrag'));
         self::assertStringNotContainsString('Top-Eintrag', $main->text());
         self::assertStringNotContainsString('weiter oben', $main->text());
@@ -235,10 +242,12 @@ final class TierPageTest extends WebTestCase
         $column = match ($feature) {
             TierFeature::Promoted => 'rank_weight > 0',
             TierFeature::Photos => 'photos_max > 0',
+            TierFeature::Videos => 'videos_max > 0',
             TierFeature::Rooms => 'rooms_max > 0',
             TierFeature::Documents => 'documents_max > 0',
             TierFeature::Contact => 'contact_visible',
             TierFeature::EventTypes => '(event_types_max IS NULL OR event_types_max > 0)',
+            TierFeature::LastMinute => 'last_minute_allowed',
         };
 
         return (bool) $this->connection->fetchOne('SELECT EXISTS (SELECT 1 FROM tiers WHERE '.$column.')');
