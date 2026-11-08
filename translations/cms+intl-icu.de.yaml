@@ -803,7 +803,7 @@ stats:
             text: Die Schritte erscheinen hier, sobald eine Vorschau geöffnet, ein Eintrag veröffentlicht oder eine Anfrage zugestellt wird.
         misses:
             title: Suchen ohne Treffer
-            scope: 'Pro Woche die {top} häufigsten Suchen mit Text und Filtern, die keinen Eintrag fanden; ohne Angaben zur Person. Unabhängig von der Kampagne.'
+            scope: 'Pro Woche die {top} häufigsten Suchen mit Text und Filtern, die keinen Eintrag fanden; ohne Angaben zur Person, gelöscht nach 12 Monaten. Unabhängig von der Kampagne.'
             week: 'KW {week}: {searches, plural, one {# Suche} other {# Suchen}}, {queries} verschiedene'
             column_search: Suche
             column_count: Anzahl

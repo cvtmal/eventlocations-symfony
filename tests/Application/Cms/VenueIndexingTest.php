@@ -7,6 +7,7 @@ namespace App\Tests\Application\Cms;
 use App\Admin\ValueObject\AdminRole;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
+use App\Geo\Entity\Town;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Admin\AdminSession;
 use App\Tests\Support\Http\RecordingHttpCachePurger;
@@ -14,6 +15,8 @@ use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
+
+use function Zenstruck\Foundry\Persistence\repository;
 
 /**
  * G12: the editor's "Suchmaschinen" card shows what keeps an entry out of the index, and staff check or withdraw
@@ -76,6 +79,23 @@ final class VenueIndexingTest extends WebTestCase
         self::assertStringContainsString('noindex', $this->publicRobots('haus-ohne-text'));
         self::assertStringNotContainsString('/eventlokal/haus-ohne-text', $this->sitemap());
         self::assertStringNotContainsString('/eventlokal/haus-ohne-text', $this->get('/llms.txt'));
+    }
+
+    public function test_an_entry_outside_the_launch_cantons_is_indexed_by_the_gate_alone(): void
+    {
+        // D21's launch cantons limit landing pages only; an entry's own page follows VenueIndexGate in any canton.
+        $launch = self::getContainer()->getParameter('landing.launch_cantons');
+        self::assertIsArray($launch);
+        self::assertNotContains('lu', $launch);
+        $town = repository(Town::class)->findOneBy(['name' => 'Luzern']);
+        self::assertInstanceOf(Town::class, $town);
+        $venue = VenueFactory::createOne(['name' => 'Haus am See', 'status' => VenueStatus::Published, 'town' => $town]);
+        VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => 'haus-luzern']);
+        self::assertSame('lu', $this->connection->fetchOne('SELECT t.canton_code FROM venues v JOIN towns t ON t.id = v.town_id WHERE v.id = ?', [$venue->id()]));
+
+        self::assertStringNotContainsString('noindex', $this->publicRobots('haus-luzern'));
+        self::assertStringContainsString('/eventlokal/haus-luzern', $this->sitemap());
+        self::assertStringContainsString('/eventlokal/haus-luzern', $this->get('/llms.txt'));
     }
 
     public function test_a_second_click_writes_nothing_and_a_missing_token_changes_nothing(): void

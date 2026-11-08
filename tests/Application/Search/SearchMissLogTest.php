@@ -69,6 +69,31 @@ final class SearchMissLogTest extends WebTestCase
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM search_misses'));
     }
 
+    public function test_a_search_text_with_contact_data_is_not_counted_at_all(): void
+    {
+        $this->client->request('GET', '/eventlokale?guests=9000&q='.rawurlencode('Rückruf 079 123 45 67'));
+        $this->client->request('GET', '/eventlokale?guests=9000&q='.rawurlencode('anna@example.ch'));
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('private', (string) $this->client->getResponse()->headers->get('Cache-Control'), 'still not stored by a shared cache');
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM search_misses'));
+
+        $this->client->request('GET', '/eventlokale?guests=9000&q=Saal+in+8001+f%C3%BCr+2026');
+        self::assertSame(['guests=9000&q=Saal+in+8001+f%C3%BCr+2026'], $this->connection->fetchFirstColumn('SELECT query FROM search_misses'), 'a postcode and a year are no contact data');
+    }
+
+    public function test_a_long_search_text_is_stored_with_100_characters(): void
+    {
+        $this->client->request('GET', '/eventlokale?guests=9000&q='.rawurlencode(str_repeat('Schlössli ', 20)));
+
+        self::assertResponseIsSuccessful();
+        $query = $this->connection->fetchOne('SELECT query FROM search_misses');
+        self::assertIsString($query);
+        parse_str($query, $parsed);
+        self::assertIsString($parsed['q']);
+        self::assertSame(rtrim(mb_substr(str_repeat('Schlössli ', 20), 0, 100)), $parsed['q']);
+        self::assertLessThanOrEqual(100, mb_strlen($parsed['q']));
+    }
+
     public function test_global_privacy_control_and_the_staff_link_are_not_counted(): void
     {
         $this->client->request('GET', '/eventlokale?guests=9000', server: ['HTTP_SEC_GPC' => '1']);

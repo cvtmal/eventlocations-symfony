@@ -13,7 +13,9 @@ use Doctrine\Migrations\AbstractMigration;
  * starts unchecked. `search_misses`: searches without a result, counted per ISO week (`week_start` is its Monday,
  * Europe/Zurich) and canonical query string, written by `Stats\CommandHandler\RecordSearchMissHandler`. It stores no
  * person: no IP, user agent, session or time of day. The query is the URL-encoded canonical `SearchCriteria` query,
- * at most 2000 characters (ASCII, so the unique index stays under the btree row limit).
+ * at most 2000 characters (ASCII, so the unique index stays under the btree row limit). Its search text is cut to
+ * 100 characters and a text that looks like contact data is never written (`Search\SearchMissFilter`, D45, D46); a
+ * week's rows go 12 months after its Monday (`Stats\Command\PurgeSearchMisses`, nightly, D44).
  */
 final class Version20261108101505 extends AbstractMigration
 {

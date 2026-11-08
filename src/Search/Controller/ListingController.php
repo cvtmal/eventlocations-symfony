@@ -9,6 +9,7 @@ use App\Search\ReadModel\LandingPage;
 use App\Search\ReadModel\LandingPages;
 use App\Search\ReadModel\ListingQuery;
 use App\Search\ReadModel\SearchCriteria;
+use App\Search\SearchMissFilter;
 use App\Shared\Command\RecordSearchMiss;
 use App\Shared\Http\PublicCache;
 use App\Shared\ValueObject\PageLinks;
@@ -90,8 +91,10 @@ final class ListingController extends AbstractController
             // cache (private, max-age 0; s-maxage 0 so the route's #[Cache] adds none), so every search counts, not
             // only the first of a day. Page 1 only: a later page of nothing is a 404.
             // The scorecard's "Ansehen" link carries `staff=1` (no criterion), so looking at a miss adds none.
-            if ('1' !== $request->headers->get('Sec-GPC') && !$request->query->has('staff')) {
-                $this->commandBus->dispatch(new RecordSearchMiss(http_build_query($criteria->toQuery())));
+            // SearchMissFilter caps the text and drops a search whose text looks like contact data (D45, D46).
+            if ('1' !== $request->headers->get('Sec-GPC') && !$request->query->has('staff')
+                && null !== $logged = SearchMissFilter::query($criteria->toQuery())) {
+                $this->commandBus->dispatch(new RecordSearchMiss($logged));
             }
 
             return $response->setSharedMaxAge(0)->setPrivate()->setMaxAge(0);
