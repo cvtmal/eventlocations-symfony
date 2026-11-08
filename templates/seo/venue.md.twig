@@ -96,9 +96,6 @@
 {% if venue.hasFaq() %}
 ## {{ 'detail.faq.heading'|trans({}, 'venues')|md }}
 
-{% if venue.ownCatering %}
-- **{{ 'detail.faq.own_catering'|trans({}, 'venues')|md }}** {{ venue.ownCatering|trans|md }}
-{% endif %}
 {% if venue.daylight is not null %}
 - **{{ 'detail.faq.daylight'|trans({}, 'venues')|md }}** {{ (venue.daylight ? 'detail.faq.yes' : 'detail.faq.no')|trans({}, 'venues')|md }}
 {% endif %}

@@ -220,7 +220,7 @@ final class VenueCardFormsTest extends KernelTestCase
         yield 'Instagram naming no profile' => [VenueCard::Contact, ['instagram' => 'https://example.ch'], 'instagram'];
         yield 'Instagram with a NUL' => [VenueCard::Contact, ['instagram' => "re\0mise"], 'instagram'];
         yield 'contact person with a NUL' => [VenueCard::Contact, ['contactPerson' => "An\0na"], 'contactPerson'];
-        yield 'unknown catering' => [VenueCard::Faq, ['ownCatering' => 'sometimes'], 'ownCatering'];
+        yield 'unknown daylight answer' => [VenueCard::Faq, ['daylight' => 'sometimes'], 'daylight'];
         yield 'a token with letters' => [VenueCard::Faq, ['loadedAt' => '17000x'], ''];
         yield 'a token of invalid UTF-8' => [VenueCard::Faq, ['loadedAt' => "17000\xff"], ''];
         yield 'place ID with a space' => [VenueCard::Google, ['placeId' => 'ChIJN1t tDeuEmsRUsoyG83frY4'], 'placeId'];

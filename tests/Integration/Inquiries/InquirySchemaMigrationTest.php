@@ -26,7 +26,7 @@ final class InquirySchemaMigrationTest extends KernelTestCase
     private const SEED = [
         "INSERT INTO towns (id, canton_code, zip, name, slug, bfs_number, lat, lng, population) VALUES ('{town}', 'zh', '8999', 'Testdorf Inquiries', 'testdorf-inquiries', 9999, 47.3, 8.5, 100)",
         "INSERT INTO venues (id, name, status, capacity_max, zip, town_id, canton_code, lat, lng, inquiry_email) VALUES ('{venue}', 'Testhaus', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5, 'info@testhaus.example')",
-        "INSERT INTO inquiries (id, venue_id, venue_number, venue_name, venue_slug, recipient_email, locale, occasion, guest_count, message, first_name, last_name, email, fingerprint) VALUES ('{inquiry}', '{venue}', 1, 'Testhaus', 'testhaus', 'info@testhaus.example', 'de', 'wedding', 100, 'Hallo', 'Anna', 'Muster', 'anna@example.ch', repeat('a', 64))",
+        "INSERT INTO inquiries (id, venue_id, venue_number, venue_name, venue_slug, recipient_email, locale, event_type, date_flexible, guest_count, message, first_name, last_name, email, fingerprint) VALUES ('{inquiry}', '{venue}', 1, 'Testhaus', 'testhaus', 'info@testhaus.example', 'de', 'corporate_event', true, 100, 'Hallo', 'Anna', 'Muster', 'anna@example.ch', repeat('a', 64))",
     ];
 
     private Connection $connection;
@@ -55,7 +55,12 @@ final class InquirySchemaMigrationTest extends KernelTestCase
     public static function rejections(): iterable
     {
         yield 'upper-case locale' => ['chk_inquiries_locale', "UPDATE inquiries SET locale = 'DE'"];
-        yield 'unknown occasion' => ['chk_inquiries_occasion', "UPDATE inquiries SET occasion = 'birthday'"];
+        yield 'event type not a term code' => ['chk_inquiries_event_type', "UPDATE inquiries SET event_type = 'Firmenanlass'"];
+        yield 'blank company' => ['chk_inquiries_company', "UPDATE inquiries SET company = '  '"];
+        yield 'neither date nor flexible' => ['chk_inquiries_event_date_or_flexible', 'UPDATE inquiries SET event_date = NULL, date_flexible = false'];
+        yield 'unknown catering wish' => ['chk_inquiries_catering_wish', "UPDATE inquiries SET catering_wish = 'buffet'"];
+        yield 'zero budget' => ['chk_inquiries_budget_chf', 'UPDATE inquiries SET budget_chf = 0'];
+        yield 'budget over a million' => ['chk_inquiries_budget_chf', 'UPDATE inquiries SET budget_chf = 1000001'];
         yield 'no guests' => ['chk_inquiries_guest_count', 'UPDATE inquiries SET guest_count = 0'];
         yield '5001 guests' => ['chk_inquiries_guest_count', 'UPDATE inquiries SET guest_count = 5001'];
         yield 'blank message' => ['chk_inquiries_message', "UPDATE inquiries SET message = '   '"];
@@ -93,7 +98,10 @@ final class InquirySchemaMigrationTest extends KernelTestCase
         yield 'message of 5000 characters' => ["UPDATE inquiries SET message = repeat('ä', 5000)"];
         yield 'umlaut domain' => ["UPDATE inquiries SET email = 'info@schüür.be'"];
         yield 'every status' => ["UPDATE inquiries SET venue_mail_status = 'failed', guest_mail_status = 'skipped'"];
-        yield 'open date, no phone' => ['UPDATE inquiries SET event_date = NULL, phone = NULL'];
+        yield 'flexible date, no phone' => ['UPDATE inquiries SET event_date = NULL, date_flexible = true, phone = NULL'];
+        yield 'a date, not flexible' => ["UPDATE inquiries SET event_date = '2030-06-15', date_flexible = false"];
+        yield 'every event field' => ["UPDATE inquiries SET company = 'Muster AG', start_time = '18:30', catering_wish = 'external_allowed', budget_chf = 1000000"];
+        yield 'smallest budget, in-house catering' => ["UPDATE inquiries SET budget_chf = 1, catering_wish = 'in_house'"];
     }
 
     #[DataProvider('acceptances')]

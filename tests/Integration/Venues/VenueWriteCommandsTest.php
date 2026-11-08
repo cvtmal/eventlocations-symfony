@@ -30,7 +30,6 @@ use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\SlugAllocator;
 use App\Venues\ValueObject\KnownTiers;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueStatus;
@@ -332,25 +331,24 @@ final class VenueWriteCommandsTest extends KernelTestCase
     }
 
     /**
-     * @return iterable<string, array{?OwnCatering, ?bool}>
+     * @return iterable<string, array{?bool}>
      */
     public static function faqAnswers(): iterable
     {
-        yield 'unknown' => [null, null];
-        yield 'yes' => [OwnCatering::Allowed, true];
-        yield 'no' => [OwnCatering::FixedCaterer, false];
+        yield 'unknown' => [null];
+        yield 'yes' => [true];
+        yield 'no' => [false];
     }
 
     #[DataProvider('faqAnswers')]
-    public function test_faq_answers_are_stored(?OwnCatering $catering, ?bool $daylight): void
+    public function test_faq_answers_are_stored(?bool $daylight): void
     {
         $venue = VenueFactory::new()->withFaq()->create();
         VenueTranslationFactory::createOne(['venue' => $venue, 'slug' => 'faq']);
 
-        $this->dispatch(new AnswerVenueFaq($venue->number(), $this->token($venue), ['ownCatering', 'daylight'], $catering, $daylight));
+        $this->dispatch(new AnswerVenueFaq($venue->number(), $this->token($venue), ['daylight'], $daylight));
 
         $saved = $this->reload($venue);
-        self::assertSame($catering, $saved->ownCatering());
         self::assertSame($daylight, $saved->daylight());
     }
 

@@ -556,10 +556,11 @@ final class DemoStory extends Story
         ];
         if ($seminar) {
             $isSeminar = static fn (TaxonomyTerm $term): bool => 'seminar' === $term->code();
-            $picks['suitable_for'] = [
+            // Seminar first, then the draw without it, still at most five (the tiers' event-type cap).
+            $picks['suitable_for'] = \array_slice([
                 ...array_filter($terms['suitable_for'], $isSeminar),
                 ...array_filter($picks['suitable_for'], static fn (TaxonomyTerm $term): bool => !$isSeminar($term)),
-            ];
+            ], 0, 5);
         }
         foreach (['infrastructure', 'furniture', 'technology', 'surroundings'] as $group) {
             // Furniture has three terms only, and randomElements() refuses to draw more than there are.

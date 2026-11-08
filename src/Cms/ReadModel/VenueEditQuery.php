@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Cms\ReadModel;
 
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\TownText;
@@ -38,7 +37,7 @@ final class VenueEditQuery
                        v.distance_highway_km::text AS highway_km, v.highway_name,
                        v.distance_airport_km::text AS airport_km, v.airport_name,
                        v.phone, v.inquiry_email, v.website, v.contact_person, v.instagram,
-                       v.own_catering, v.daylight,
+                       v.daylight,
                        v.price_level, v.capacity_seated, v.capacity_standing,
                        v.google_place_id, v.google_rating_hidden, v.facts_checked_at,
                        (SELECT COUNT(*) FROM venue_photos p WHERE p.venue_id = v.id AND p.room_id IS NULL) AS gallery_photo_count,
@@ -86,7 +85,6 @@ final class VenueEditQuery
             website: self::string($row['website']),
             contactPerson: self::string($row['contact_person']),
             instagram: self::string($row['instagram']),
-            ownCatering: null === $row['own_catering'] ? null : OwnCatering::from((string) $row['own_catering']),
             daylight: self::bool($row['daylight']),
             priceLevel: null === $row['price_level'] ? null : PriceLevel::from((string) $row['price_level']),
             capacitySeated: self::int($row['capacity_seated']),

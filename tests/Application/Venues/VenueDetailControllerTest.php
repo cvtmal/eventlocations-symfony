@@ -124,10 +124,10 @@ final class VenueDetailControllerTest extends WebTestCase
 
         // Häufige Fragen.
         self::assertSame(
-            ['Eigenes Catering?', 'Tageslicht?', 'Parking?'],
+            ['Tageslicht?', 'Parking?'],
             $crawler->filter('.venue-faq dt')->each(static fn (Crawler $dt): string => $dt->text()),
         );
-        self::assertSelectorTextContains('.venue-faq', 'Eigenes Catering möglich');
+        self::assertSelectorTextNotContains('.venue-faq', 'Catering');
         self::assertSelectorTextContains('.venue-faq', '100 Parkplätze (kostenlos)');
 
         // Standort.

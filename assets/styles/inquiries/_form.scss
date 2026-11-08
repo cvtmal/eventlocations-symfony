@@ -84,8 +84,27 @@
 }
 
 // Grid children must be able to shrink: a date input has a wide intrinsic size.
-.inquiry-form__field {
+.inquiry-form__field,
+.inquiry-form__date {
     min-width: 0;
+}
+
+// "Datum ist flexibel" under the date: a native checkbox, its label the click target.
+.inquiry-form__check {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin-top: var(--space-8);
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    input {
+        flex: none;
+        width: 1.125rem;
+        height: 1.125rem;
+        margin: 0;
+        accent-color: var(--c-accent-strong);
+    }
 }
 
 .inquiry-form__label {

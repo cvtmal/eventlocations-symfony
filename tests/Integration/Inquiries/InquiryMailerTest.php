@@ -8,7 +8,6 @@ use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
 use App\Inquiries\Entity\Inquiry;
 use App\Inquiries\Mailer\InquiryMailer;
-use App\Inquiries\ValueObject\Occasion;
 use App\Shared\Twig\SwissFormatExtension;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Inquiries\RecordingMailer;
@@ -56,7 +55,16 @@ final class InquiryMailerTest extends KernelTestCase
 
     public function test_venue_mail_through_the_pipeline(): void
     {
-        $inquiry = $this->inquiry(['eventDate' => new \DateTimeImmutable('2026-09-12'), 'phone' => '044 123 45 67', 'guestCount' => 1200]);
+        $inquiry = $this->inquiry([
+            'eventDate' => new \DateTimeImmutable('2026-09-12'),
+            'dateFlexible' => false,
+            'phone' => '044 123 45 67',
+            'guestCount' => 1200,
+            'company' => 'Muster AG',
+            'startTime' => new \DateTimeImmutable('1970-01-01 18:30'),
+            'cateringWish' => 'in_house',
+            'budgetChf' => 25000,
+        ]);
 
         $deliveredTo = $this->mailer()->sendToVenue($inquiry);
 
@@ -68,30 +76,49 @@ final class InquiryMailerTest extends KernelTestCase
         self::assertSame('Anna Muster', $mail->getReplyTo()[0]->getName());
         self::assertSame(['hallo@deine-eventlocation.ch'], $this->addresses($mail->getFrom()));
         self::assertSame('deine-eventlocation.ch', $mail->getFrom()[0]->getName());
-        self::assertSame("Neue Anfrage für Schloss Seeblick: Anna Muster, 12.09.2026, 1'200 Gäste", $mail->getSubject());
+        self::assertSame("Neue Anfrage für Schloss Seeblick: Anna Muster, Firmenanlass, 12.09.2026, 1'200 Gäste", $mail->getSubject());
 
         $html = (string) $mail->getHtmlBody();
-        self::assertStringContainsString('Hochzeit', $html);
+        self::assertStringContainsString('Firmenanlass', $html);
         self::assertStringContainsString('12.09.2026', $html);
         self::assertStringContainsString('044 123 45 67', $html);
         self::assertStringContainsString('Ist der Termin frei?', $html);
 
         $text = (string) $mail->getTextBody();
-        self::assertStringContainsString('Anlass: Hochzeit', $text);
+        self::assertStringContainsString('Anlass: Firmenanlass', $text);
         self::assertStringContainsString('Wunschtermin: 12.09.2026', $text);
+        self::assertStringNotContainsString('flexibel', $text);
         self::assertStringContainsString("Gäste: 1'200", $text);
+        self::assertStringContainsString('Beginn: 18:30 Uhr', $text);
+        self::assertStringContainsString('Catering-Wunsch: Hauseigenes Catering', $text);
+        self::assertStringContainsString("Budget: CHF 25'000", $text);
+        self::assertStringContainsString('Firma: Muster AG', $text);
         self::assertStringContainsString('Ist der Termin frei?', $text);
         self::assertStringNotContainsString('<', $text);
     }
 
-    public function test_an_open_date_says_so_and_no_phone_shows_no_row(): void
+    public function test_a_flexible_date_says_so_and_empty_optional_facts_show_no_row(): void
     {
-        $this->mailer()->sendToVenue($this->inquiry(['eventDate' => null, 'phone' => null]));
+        $this->mailer()->sendToVenue($this->inquiry(['eventDate' => null, 'dateFlexible' => true, 'phone' => null]));
 
         $mail = $this->sentMail();
-        self::assertStringContainsString(', offen,', (string) $mail->getSubject());
-        self::assertStringContainsString('Wunschtermin: offen', (string) $mail->getTextBody());
-        self::assertStringNotContainsString('Telefon', (string) $mail->getTextBody());
+        self::assertStringContainsString(', flexibel,', (string) $mail->getSubject());
+        $text = (string) $mail->getTextBody();
+        self::assertStringContainsString('Wunschtermin: flexibel', $text);
+        foreach (['Telefon', 'Firma', 'Beginn', 'Catering', 'Budget'] as $label) {
+            self::assertStringNotContainsString($label, $text);
+        }
+    }
+
+    public function test_a_date_that_is_flexible_shows_both(): void
+    {
+        $this->mailer()->sendToVenue($this->inquiry(['eventDate' => new \DateTimeImmutable('2026-09-12'), 'dateFlexible' => true, 'cateringWish' => 'external_allowed']));
+
+        $mail = $this->sentMail();
+        self::assertStringContainsString(', 12.09.2026 (flexibel),', (string) $mail->getSubject());
+        $text = (string) $mail->getTextBody();
+        self::assertStringContainsString('Wunschtermin: 12.09.2026 (flexibel)', $text);
+        self::assertStringContainsString('Catering-Wunsch: Externes Catering erlaubt', $text);
     }
 
     public function test_free_text_cannot_inject_markup(): void
@@ -184,7 +211,7 @@ final class InquiryMailerTest extends KernelTestCase
         return InquiryFactory::createOne($attributes + [
             'venue' => $venue,
             'venueSlug' => 'schloss-seeblick',
-            'occasion' => Occasion::Wedding,
+            'eventType' => 'corporate_event',
             'guestCount' => 120,
             'message' => 'Ist der Termin frei?',
             'firstName' => 'Anna',

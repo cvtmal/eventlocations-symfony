@@ -24,7 +24,6 @@ use App\Venues\Entity\VenueTerm;
 use App\Venues\Entity\VenueTranslation;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\KnownTiers;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -90,7 +89,7 @@ final class VenueMappingTest extends KernelTestCase
         $venue->changeTier($this->tier(KnownTiers::PRO));
         $venue->changeContact('+41441234567', 'info@example.ch', 'https://example.ch', 'Frau Muster');
         $venue->changeDistances('1.5', 'Stäfa', '12.0', 'A3', null, null);
-        $venue->answerFaq(OwnCatering::FixedCaterer, true);
+        $venue->answerFaq(true);
         $venue->summariseRooms(1, 180, '4.20');
         $venue->changePriceLevel(PriceLevel::Exclusive);
         $venue->changeSeatingCapacity(120, 180);
@@ -131,7 +130,6 @@ final class VenueMappingTest extends KernelTestCase
         self::assertSame($venue->number(), $loaded->number());
         self::assertSame([KnownTiers::PRO, 'Pro'], [$loaded->tier()->code(), $loaded->tier()->name()]);
         self::assertSame(VenueStatus::Published, $loaded->status());
-        self::assertSame(OwnCatering::FixedCaterer, $loaded->ownCatering());
         self::assertTrue($loaded->daylight());
         self::assertSame(1.5, $loaded->distanceStationKm());
         self::assertSame(4.2, $loaded->maxRoomHeightM());

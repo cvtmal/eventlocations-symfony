@@ -10,7 +10,6 @@ use App\Crm\Exception\InquiryNotFound;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
-use App\Inquiries\ValueObject\Occasion;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -100,14 +99,15 @@ final class InquiryInboxTest extends WebTestCase
             'venue' => VenueFactory::new()->withContact()->create(['name' => 'Schloss Seeblick']),
             'guestCount' => 1200,
             'eventDate' => new \DateTimeImmutable('2027-06-12'),
+            'company' => 'Muster AG',
         ]);
 
         $row = $this->client->request('GET', self::LIST)->filter('.crm-inbox__row');
 
-        self::assertSame('Sina Huber', $row->filter('.crm-inbox__name')->text());
+        self::assertSame('Sina Huber, Muster AG', $row->filter('.crm-inbox__name')->text());
         self::assertSame('31.10.2026', $row->filter('.crm-inbox__date')->text(), 'The date is Zurich\'s, and absolute.');
         self::assertStringContainsString('Schloss Seeblick', $row->text());
-        self::assertSame('1\'200 Gäste · 12.06.2027', $row->filter('.crm-inbox__facts-line')->text());
+        self::assertSame('Firmenanlass · 1\'200 Gäste · 12.06.2027', $row->filter('.crm-inbox__facts-line')->text());
         self::assertSame(self::LIST.'/'.$id.'?status=new#anfrage-detail', $row->attr('href'));
         self::assertCount(1, $row->filter('.crm-inbox__dot--new[aria-label="Neu"]'));
     }
@@ -119,7 +119,7 @@ final class InquiryInboxTest extends WebTestCase
 
         $crawler = $this->client->request('GET', self::LIST.'?status=seen');
 
-        self::assertSame('80 Gäste', $crawler->filter('.crm-inbox__facts-line')->text());
+        self::assertSame('Firmenanlass · 80 Gäste', $crawler->filter('.crm-inbox__facts-line')->text());
         self::assertSelectorNotExists('.crm-inbox__dot--new');
     }
 
@@ -172,9 +172,14 @@ final class InquiryInboxTest extends WebTestCase
             'firstName' => 'Sina',
             'lastName' => 'Huber',
             'venue' => $venue,
-            'occasion' => Occasion::CivilWedding,
+            'eventType' => 'general_assembly',
+            'company' => 'Wohnbaugenossenschaft Linde',
             'guestCount' => 80,
             'eventDate' => new \DateTimeImmutable('2027-06-12'),
+            'dateFlexible' => true,
+            'startTime' => new \DateTimeImmutable('1970-01-01 19:00'),
+            'cateringWish' => 'in_house',
+            'budgetChf' => 6500,
             'email' => 'sina@example.ch',
             'phone' => '+41 79 000 00 01',
             'message' => "Liebes Team\n\nist der Juni frei?",
@@ -188,14 +193,18 @@ final class InquiryInboxTest extends WebTestCase
         self::assertSame('Anfrage für Schloss Seeblick · 30.10.2026', $detail->filter('.crm-inbox__title .muted')->text());
         self::assertSame('/admin/locations/'.$venue->number(), $detail->filter('.crm-inbox__title a')->attr('href'));
         self::assertSame([
-            'Anlass' => 'Standesamtliche Trauung',
+            'Anlass' => 'Generalversammlung',
+            'Firma' => 'Wohnbaugenossenschaft Linde',
             'Anzahl Gäste' => '80',
-            'Wunschtermin' => '12.06.2027',
+            'Wunschtermin' => '12.06.2027 (flexibel)',
+            'Beginn' => '19:00',
+            'Catering' => 'Hauseigenes Catering',
+            'Budget' => 'CHF 6\'500',
             'E-Mail' => 'sina@example.ch',
             'Telefon' => '+41 79 000 00 01',
         ], $this->facts($detail));
         self::assertSame('mailto:sina@example.ch', $detail->filter('.crm-inbox__facts a')->attr('href'));
-        // The couple is no CRM contact (#55): the reply button writes to the inquiry's address.
+        // The organizer is no CRM contact (S13): the reply button writes to the inquiry's address.
         $reply = $detail->filter('.crm-inbox__actions a');
         self::assertSame(['Per E-Mail antworten', 'mailto:sina@example.ch'], [$reply->text(), $reply->attr('href')]);
         self::assertCount(0, $detail->filter('a[href*="/admin/crm/kontakte"]'));
@@ -205,15 +214,17 @@ final class InquiryInboxTest extends WebTestCase
         self::assertStringContainsString('12 Monaten', $detail->filter('.crm-inbox__retention')->text());
     }
 
-    public function test_an_empty_event_date_and_phone_show_a_dash(): void
+    public function test_a_flexible_date_says_so_and_empty_facts_show_a_dash(): void
     {
         $this->logInAs(AdminRole::Editor);
         $this->inquiry();
 
         $facts = $this->facts($this->client->request('GET', self::LIST)->filter('#anfrage-detail'));
 
-        self::assertSame('–', $facts['Wunschtermin']);
-        self::assertSame('–', $facts['Telefon']);
+        self::assertSame('flexibel', $facts['Wunschtermin']);
+        foreach (['Firma', 'Beginn', 'Catering', 'Budget', 'Telefon'] as $label) {
+            self::assertSame('–', $facts[$label], $label);
+        }
     }
 
     public function test_the_open_inquiry_need_not_be_in_the_tab(): void
@@ -287,10 +298,10 @@ final class InquiryInboxTest extends WebTestCase
      */
     public static function bothMails(): iterable
     {
-        yield 'both sent' => ['sent', 'sent', ['pill pill--green: An die Location zugestellt', 'pill pill--green: Bestätigung ans Paar zugestellt']];
-        yield 'both pending' => ['pending', 'pending', ['pill pill--amber: Zustellung an die Location ausstehend', 'pill pill--amber: Bestätigung ans Paar ausstehend']];
-        yield 'failed and skipped' => ['failed', 'skipped', ['pill pill--red: Zustellung an die Location fehlgeschlagen', 'pill pill--grey: Bestätigung ans Paar nicht gesendet']];
-        yield 'guest copy failed' => ['sent', 'failed', ['pill pill--green: An die Location zugestellt', 'pill pill--red: Bestätigung ans Paar fehlgeschlagen']];
+        yield 'both sent' => ['sent', 'sent', ['pill pill--green: An die Location zugestellt', 'pill pill--green: Bestätigung an den Veranstalter zugestellt']];
+        yield 'both pending' => ['pending', 'pending', ['pill pill--amber: Zustellung an die Location ausstehend', 'pill pill--amber: Bestätigung an den Veranstalter ausstehend']];
+        yield 'failed and skipped' => ['failed', 'skipped', ['pill pill--red: Zustellung an die Location fehlgeschlagen', 'pill pill--grey: Bestätigung an den Veranstalter nicht gesendet']];
+        yield 'guest copy failed' => ['sent', 'failed', ['pill pill--green: An die Location zugestellt', 'pill pill--red: Bestätigung an den Veranstalter fehlgeschlagen']];
     }
 
     public function test_a_get_leaves_the_status_alone(): void

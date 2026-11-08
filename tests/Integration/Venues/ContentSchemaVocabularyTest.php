@@ -7,7 +7,6 @@ namespace App\Tests\Integration\Venues;
 use App\Geo\ValueObject\Canton;
 use App\Venues\ContentFormat;
 use App\Venues\ValueObject\FloorMaterial;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -28,7 +27,6 @@ final class ContentSchemaVocabularyTest extends KernelTestCase
     public static function enums(): iterable
     {
         yield 'status' => ['properties.status.enum', VenueStatus::class];
-        yield 'own catering' => ['properties.faq.properties.own_catering.enum', OwnCatering::class];
         yield 'floor material' => ['properties.rooms.items.properties.floor_material.enum', FloorMaterial::class];
         yield 'seating' => ['properties.rooms.items.properties.seating.propertyNames.enum', Seating::class];
         yield 'price level' => ['properties.price_level.enum', PriceLevel::class];

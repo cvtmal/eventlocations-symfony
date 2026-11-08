@@ -287,18 +287,6 @@
             "description": "FAQ answers; null or missing means unknown.",
             "additionalProperties": false,
             "properties": {
-                "own_catering": {
-                    "description": "allowed (own catering allowed) or fixed_caterer.",
-                    "enum": [
-                        "allowed",
-                        "fixed_caterer",
-                        null
-                    ],
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
                 "daylight": {
                     "type": [
                         "boolean",

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Venues\ValueObject\Content;
 
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\VenueStatus;
 
@@ -45,7 +44,6 @@ final readonly class VenueContent
         public ?string $inquiryEmail,
         public ?string $website,
         public ?string $contactPerson,
-        public ?OwnCatering $ownCatering,
         public ?bool $daylight,
         public ?PriceLevel $priceLevel,
         public ?int $capacitySeated,

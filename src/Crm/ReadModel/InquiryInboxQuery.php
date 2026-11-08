@@ -6,7 +6,8 @@ namespace App\Crm\ReadModel;
 
 use App\Crm\ValueObject\InquiryStatus;
 use App\Inquiries\ValueObject\MailStatus;
-use App\Inquiries\ValueObject\Occasion;
+use App\Venues\ValueObject\Term;
+use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
 
@@ -20,7 +21,7 @@ final class InquiryInboxQuery
 
     private const string FROM = 'FROM crm_inquiry_links l JOIN inquiries i ON i.id = l.inquiry_id';
 
-    private const string COLUMNS = 'SELECT i.id, i.first_name, i.last_name, i.venue_name, i.guest_count, i.event_date,'
+    private const string COLUMNS = 'SELECT i.id, i.first_name, i.last_name, i.company, i.venue_name, i.event_type, i.guest_count, i.event_date,'
         .' l.status, i.venue_mail_status, i.created_at';
 
     private const string NEWEST_FIRST = 'ORDER BY i.created_at DESC, i.id DESC';
@@ -63,7 +64,8 @@ final class InquiryInboxQuery
     public function detail(string $id): ?InquiryDetail
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT i.id, i.first_name, i.last_name, i.venue_name, i.venue_id, i.venue_number, i.occasion, i.guest_count, i.event_date,'
+            'SELECT i.id, i.first_name, i.last_name, i.company, i.venue_name, i.venue_id, i.venue_number, i.event_type, i.guest_count,'
+            .' i.event_date, i.date_flexible, i.start_time, i.catering_wish, i.budget_chf,'
             .' i.email, i.phone, i.message, l.status, i.venue_mail_status, i.guest_mail_status, i.created_at '
             .self::FROM.' WHERE l.inquiry_id = :id',
             ['id' => $id],
@@ -74,13 +76,18 @@ final class InquiryInboxQuery
 
         return new InquiryDetail(
             (string) $row['id'],
-            self::coupleName($row),
+            self::organizerName($row),
+            null === $row['company'] ? null : (string) $row['company'],
             (string) $row['venue_name'],
             null === $row['venue_id'] ? null : (string) $row['venue_id'],
             (int) $row['venue_number'],
-            Occasion::from((string) $row['occasion']),
+            self::eventType($row),
             (int) $row['guest_count'],
             self::eventDate($row),
+            (bool) $row['date_flexible'],
+            null === $row['start_time'] ? null : substr((string) $row['start_time'], 0, 5),
+            null === $row['catering_wish'] ? null : new Term(TermGroup::Catering, (string) $row['catering_wish']),
+            null === $row['budget_chf'] ? null : (int) $row['budget_chf'],
             (string) $row['email'],
             null === $row['phone'] ? null : (string) $row['phone'],
             (string) $row['message'],
@@ -157,8 +164,10 @@ final class InquiryInboxQuery
     {
         return array_map(static fn (array $row): InquiryInboxRow => new InquiryInboxRow(
             (string) $row['id'],
-            self::coupleName($row),
+            self::organizerName($row),
+            null === $row['company'] ? null : (string) $row['company'],
             (string) $row['venue_name'],
+            self::eventType($row),
             (int) $row['guest_count'],
             self::eventDate($row),
             InquiryStatus::from((string) $row['status']),
@@ -170,9 +179,17 @@ final class InquiryInboxQuery
     /**
      * @param array<string, mixed> $row
      */
-    private static function coupleName(array $row): string
+    private static function organizerName(array $row): string
     {
         return $row['first_name'].' '.$row['last_name'];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private static function eventType(array $row): Term
+    {
+        return new Term(TermGroup::SuitableFor, (string) $row['event_type']);
     }
 
     /**

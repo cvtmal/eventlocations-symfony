@@ -22,9 +22,14 @@ final class InquiryFingerprintTest extends TestCase
             'venueId' => '019a0000-0000-7000-8000-000000000101',
             'venueSlug' => 'schloss-seeblick',
             'locale' => 'de',
-            'occasion' => 'wedding',
+            'eventType' => 'corporate_event',
+            'company' => null,
             'guests' => 120,
             'eventDate' => '2030-06-15',
+            'dateFlexible' => false,
+            'startTime' => null,
+            'cateringWish' => null,
+            'budgetChf' => null,
             'message' => "Liebes Team\n\nIst der Termin frei?",
             'firstName' => 'Anna',
             'lastName' => 'Müller',
@@ -61,10 +66,15 @@ final class InquiryFingerprintTest extends TestCase
     public static function anotherInquiry(): iterable
     {
         yield 'another venue' => [['venueId' => '019a0000-0000-7000-8000-000000000102']];
-        yield 'another occasion' => [['occasion' => 'engagement']];
+        yield 'another event type' => [['eventType' => 'seminar']];
+        yield 'a company' => [['company' => 'Muster AG']];
+        yield 'a flexible date' => [['dateFlexible' => true]];
+        yield 'a start time' => [['startTime' => '18:00']];
+        yield 'a catering wish' => [['cateringWish' => 'in_house']];
+        yield 'a budget' => [['budgetChf' => 5000]];
         yield 'one guest more' => [['guests' => 121]];
         yield 'another date' => [['eventDate' => '2030-06-16']];
-        yield 'an open date' => [['eventDate' => null]];
+        yield 'an open date' => [['eventDate' => null, 'dateFlexible' => true]];
         yield 'a corrected message' => [['message' => "Liebes Team\n\nIst der Termin noch frei?"]];
         yield 'a corrected capital' => [['message' => "liebes Team\n\nIst der Termin frei?"]];
         yield 'another first name' => [['firstName' => 'Anne']];

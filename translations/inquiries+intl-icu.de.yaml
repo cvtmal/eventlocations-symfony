@@ -6,9 +6,14 @@ form:
         noncommittal: Unverbindlich
         direct: Direkt zur Location
     field:
-        occasion: Anlass
+        event_type: Anlass
         guests: Anzahl Gäste
         event_date: Wunschtermin
+        date_flexible: Datum ist flexibel
+        start_time: Beginn
+        catering_wish: Catering
+        budget: Budget in CHF
+        company: Firma
         message: Deine Nachricht
         first_name: Vorname
         last_name: Name
@@ -16,6 +21,9 @@ form:
         phone: Telefon
         website: Dieses Feld bitte leer lassen
     optional: (optional)
+    placeholder:
+        choose: Bitte wählen
+        catering_open: Noch offen
     submit: Anfragen
     privacy: Deine Angaben gehen direkt an {name}.
     privacy_link: Datenschutz
@@ -27,28 +35,32 @@ form:
         not_accepted: Diese Location nimmt gerade keine Anfragen entgegen.
         delivery_failed: Deine Anfrage konnte nicht zugestellt werden. Bitte versuch es noch einmal oder nimm direkt Kontakt mit der Location auf.
         date_past: Der Wunschtermin liegt in der Vergangenheit.
+        date_missing: Bitte gib einen Wunschtermin an oder wähle «Datum ist flexibel».
+        budget_range: Bitte gib ein Budget zwischen 1 Franken und 1 Million Franken an.
+        unknown_term: Bitte wähle Anlass und Catering aus der Liste.
         guests_range: Bitte gib zwischen 1 und 5000 Gäste an.
-occasion:
-    wedding: Hochzeit
-    civil_wedding: Standesamtliche Trauung
-    wedding_aperitif: Hochzeitsapéro
-    engagement: Verlobungsfeier
-    other: Anderer Anlass
 confirmation:
     heading: Danke! Deine Anfrage ist unterwegs.
     text: '{name} hat deine Anfrage erhalten und antwortet dir direkt. Eine Kopie findest du in deinem Postfach.'
     again: Weitere Anfrage senden
 email:
-    date_open: offen
+    date_flexible: flexibel
+    date_and_flexible: '{date} (flexibel)'
+    start_time: '{time} Uhr'
+    budget: CHF {amount}
     fact:
-        occasion: Anlass
+        event_type: Anlass
+        company: Firma
         guests: Gäste
         date: Wunschtermin
+        start_time: Beginn
+        catering: Catering-Wunsch
+        budget: Budget
         name: Name
         email: E-Mail
         phone: Telefon
     venue:
-        subject: 'Neue Anfrage für {venue}: {name}, {date}, {guests} Gäste'
+        subject: 'Neue Anfrage für {venue}: {name}, {event_type}, {date}, {guests} Gäste'
         preheader: '{name} fragt für {guests} Gäste an.'
         greeting: Neue Anfrage für {venue}
         intro: '{name} hat über deine-eventlocation.ch diese Anfrage gesendet.'

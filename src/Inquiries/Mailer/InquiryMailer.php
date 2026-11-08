@@ -6,6 +6,8 @@ namespace App\Inquiries\Mailer;
 
 use App\Inquiries\Entity\Inquiry;
 use App\Shared\Twig\SwissFormatExtension;
+use App\Venues\ValueObject\Term;
+use App\Venues\ValueObject\TermGroup;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -58,9 +60,8 @@ final class InquiryMailer
             ->subject($this->translator->trans('email.venue.subject', [
                 'venue' => $inquiry->venueName(),
                 'name' => $guestName,
-                'date' => null === $inquiry->eventDate()
-                    ? $this->translator->trans('email.date_open', [], 'inquiries', $inquiry->locale())
-                    : $this->format->date($inquiry->eventDate()),
+                'event_type' => self::eventType($inquiry)->trans($this->translator, $inquiry->locale()),
+                'date' => $this->date($inquiry),
                 'guests' => $this->format->number($inquiry->guestCount()),
             ], 'inquiries', $inquiry->locale()))
             ->htmlTemplate('inquiries/email/venue.html.twig')
@@ -100,14 +101,39 @@ final class InquiryMailer
         return [
             'venue_name' => $inquiry->venueName(),
             'venue_slug' => $inquiry->venueSlug(),
-            'occasion' => $inquiry->occasion(),
+            'event_type' => self::eventType($inquiry),
+            'company' => $inquiry->company(),
             'guests' => $inquiry->guestCount(),
             'event_date' => $inquiry->eventDate(),
+            'date_flexible' => $inquiry->isDateFlexible(),
+            'start_time' => $inquiry->startTime()?->format('H:i'),
+            'catering_wish' => null === $inquiry->cateringWish() ? null : new Term(TermGroup::Catering, $inquiry->cateringWish()),
+            'budget_chf' => $inquiry->budgetChf(),
             'message' => $inquiry->message(),
             'first_name' => $inquiry->firstName(),
             'last_name' => $inquiry->lastName(),
             'guest_email' => $inquiry->email(),
             'phone' => $inquiry->phone(),
         ];
+    }
+
+    private static function eventType(Inquiry $inquiry): Term
+    {
+        return new Term(TermGroup::SuitableFor, $inquiry->eventType());
+    }
+
+    /**
+     * The subject's date, as the facts row says it: "flexibel", the date, or "{date} (flexibel)".
+     */
+    private function date(Inquiry $inquiry): string
+    {
+        $date = $inquiry->eventDate();
+        if (null === $date) {
+            return $this->translator->trans('email.date_flexible', [], 'inquiries', $inquiry->locale());
+        }
+
+        return $inquiry->isDateFlexible()
+            ? $this->translator->trans('email.date_and_flexible', ['date' => $this->format->date($date)], 'inquiries', $inquiry->locale())
+            : $this->format->date($date);
     }
 }

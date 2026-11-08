@@ -26,14 +26,14 @@ final class ContentYamlFileTest extends TestCase
     public function test_setting_null_removes_the_field_and_an_emptied_section(): void
     {
         $document = new \stdClass();
-        ContentYamlFile::set($document, 'faq', 'own_catering', 'allowed');
-        ContentYamlFile::set($document, 'faq', 'daylight', false);
+        ContentYamlFile::set($document, 'contact', 'website', 'https://example.ch');
+        ContentYamlFile::set($document, 'contact', 'contact_person', 'Anna Muster');
 
-        ContentYamlFile::set($document, 'faq', 'own_catering', null);
-        self::assertSame(['daylight' => false], get_object_vars($document->faq));
+        ContentYamlFile::set($document, 'contact', 'website', null);
+        self::assertSame(['contact_person' => 'Anna Muster'], get_object_vars($document->contact));
 
-        ContentYamlFile::set($document, 'faq', 'daylight', null);
-        self::assertObjectNotHasProperty('faq', $document);
+        ContentYamlFile::set($document, 'contact', 'contact_person', null);
+        self::assertObjectNotHasProperty('contact', $document);
 
         ContentYamlFile::set($document, 'absent', 'field', null);
         self::assertSame([], get_object_vars($document));

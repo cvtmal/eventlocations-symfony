@@ -37,3 +37,12 @@ Inquiry form on the venue detail page, `inquiries` table, both mails, retention,
 ## Tests
 
 - `InquiryFormFields::valid()` posts a back-dated fill-time token. `MailerInterface` is inlined in the test container: hand-build `InquiryMailer` with `RecordingMailer`. `SmtpSink` is a real SMTP server without SMTPUTF8 (Mailpit has it). `SubmitInquiryConcurrencyTest` forces the overlap of two POSTs with `pg_locks`. Each mail logs two mailer events: use `assertEmailCount()` or filter `!isQueued()`. A dead SMTP needs `MAILER_DSN` set before `createClient()`.
+
+## Event fields (F9 `inquiry-event`)
+
+- **Columns** (migration `Version20261107173925`): `event_type` (NOT NULL, a `suitable_for` code; no FK, CHECK on the code shape), `company`, `date_flexible` (CHECK: `event_date` or `date_flexible`), `start_time` (`TIME(0)`, the command carries `H:i`), `catering_wish` (`in_house` | `external_allowed` | NULL), `budget_chf` (1 to 1,000,000). `occasion` and the `Occasion` enum are gone.
+- **Vocabulary:** `ReadModel\InquiryVocabularyQuery` (`eventTypes()`, `cateringWishes()`, `Term` labels, `kernel.reset`) is the only list of choices, for the form and the handler; `InquiryVocabularyQuery::CATERING_WISHES` is pinned to the CHECK by `InquiryVocabularyChecksTest`. A new event type is a F3-style term row, no change here.
+- **Handler rules** (after the existing ones): unknown event type or catering code `UnknownInquiryTerm`, neither date nor "flexibel" `EventDateMissing`, budget out of range `BudgetOutOfRange`. `InquiryFingerprint` covers every new field.
+- **Mails:** both render `email/_facts.html.twig` (`facts(i)` macro: Anlass, Gäste, Wunschtermin with "(flexibel)", then Beginn, Catering-Wunsch, Budget, Name, Firma, E-Mail, Telefon; optional rows only when given). The venue subject names name, event type, date and guests. `InquiryMailer::context()` keys are snake_case (`event_type`, `date_flexible`, `start_time`, `catering_wish`, `budget_chf`, `company`).
+- **Not asked:** the room layout (D4; follow-up if the PO wants it).
+

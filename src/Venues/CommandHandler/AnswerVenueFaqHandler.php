@@ -19,7 +19,7 @@ final class AnswerVenueFaqHandler implements CommandHandlerInterface
     {
         $venue = $this->editing->open($command->venueNumber, $command->loadedAt);
 
-        $venue->answerFaq($command->ownCatering, $command->daylight);
+        $venue->answerFaq($command->daylight);
 
         $this->editing->close($venue);
     }

@@ -9,7 +9,6 @@ use App\Geo\Entity\Town;
 use App\Venues\Entity\Tier;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\KnownTiers;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\VenueStatus;
 use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 
@@ -69,7 +68,6 @@ final class VenueFactory extends PersistentObjectFactory
     public function withFaq(): self
     {
         return $this->afterInstantiate(static fn (Venue $venue) => $venue->answerFaq(
-            self::faker()->randomElement([...OwnCatering::cases(), null]),
             self::faker()->randomElement([true, false, null]),
         ));
     }

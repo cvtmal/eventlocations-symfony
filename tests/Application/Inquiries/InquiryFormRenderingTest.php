@@ -63,16 +63,31 @@ final class InquiryFormRenderingTest extends WebTestCase
         self::assertSelectorTextContains('#anfrage h2', 'Schloss Seeblick kontaktieren');
         self::assertSame(['Kostenlos', 'Unverbindlich', 'Direkt zur Location'], $crawler->filter('.inquiry-form__promises li')->each(static fn (Crawler $li): string => $li->text()));
 
-        foreach (['occasion', 'guests', 'eventDate', 'message', 'firstName', 'lastName', 'email', 'phone'] as $field) {
+        foreach (['eventType', 'guests', 'eventDate', 'dateFlexible', 'startTime', 'cateringWish', 'budgetChf', 'message', 'firstName', 'lastName', 'email', 'phone', 'company'] as $field) {
             self::assertCount(1, $crawler->filter(\sprintf('#anfrage label[for="inquiry_%s"]', $field)), $field);
             self::assertCount(1, $crawler->filter('#anfrage #inquiry_'.$field), $field);
         }
         self::assertSelectorTextContains('#anfrage button[type="submit"]', 'Anfragen');
         self::assertSame('/datenschutz', $crawler->filter('#anfrage .inquiry-form__privacy a')->attr('href'));
 
-        self::assertSame('wedding', $crawler->filter('#inquiry_occasion option[selected]')->attr('value'));
-        self::assertSame(['Hochzeit', 'Standesamtliche Trauung', 'Hochzeitsapéro', 'Verlobungsfeier', 'Anderer Anlass'], $crawler->filter('#inquiry_occasion option')->each(static fn (Crawler $option): string => $option->text()));
-        self::assertStringStartsWith('Liebes Schloss Seeblick-Team', $crawler->filter('#inquiry_message')->text(normalizeWhitespace: false));
+        // DP-13: no default event type; the choices are the 17 `suitable_for` terms (F3).
+        $eventTypes = $crawler->filter('#inquiry_eventType option');
+        self::assertCount(18, $eventTypes);
+        self::assertSame(['', 'Bitte wählen'], [$eventTypes->eq(0)->attr('value'), $eventTypes->eq(0)->text()]);
+        self::assertSame(['corporate_event', 'Firmenanlass'], [$eventTypes->eq(1)->attr('value'), $eventTypes->eq(1)->text()]);
+        self::assertSame('', $crawler->filter('#inquiry_eventType option[selected]')->attr('value'));
+        self::assertSame('required', $crawler->filter('#inquiry_eventType')->attr('required'));
+        self::assertSame(
+            [['', 'Noch offen'], ['in_house', 'Hauseigenes Catering'], ['external_allowed', 'Externes Catering erlaubt']],
+            $crawler->filter('#inquiry_cateringWish option')->each(static fn (Crawler $option): array => [(string) $option->attr('value'), $option->text()]),
+        );
+        self::assertSame('checkbox', $crawler->filter('#inquiry_dateFlexible')->attr('type'));
+        self::assertSame('Datum ist flexibel', $crawler->filter('label[for="inquiry_dateFlexible"]')->text());
+        self::assertSame('time', $crawler->filter('#inquiry_startTime')->attr('type'));
+        self::assertSame('organization', $crawler->filter('#inquiry_company')->attr('autocomplete'));
+        $message = $crawler->filter('#inquiry_message')->text(normalizeWhitespace: false);
+        self::assertStringStartsWith('Liebes Schloss Seeblick-Team', $message);
+        self::assertStringNotContainsString('Hochzeit', $message);
     }
 
     public function test_the_spam_fields_are_there_and_the_honeypot_is_out_of_the_tab_order(): void
@@ -105,7 +120,11 @@ final class InquiryFormRenderingTest extends WebTestCase
         self::assertSame($first, $this->withoutFillTime($this->html(self::PAGE)));
     }
 
-    public function test_the_form_adds_no_query(): void
+    /**
+     * The form reads the vocabulary for "Anlass" and "Catering" (F9) in one query; nothing else of it touches the
+     * database.
+     */
+    public function test_the_form_adds_one_query_for_its_vocabulary(): void
     {
         DetailVenues::full($this->em);
         $holder = self::getContainer()->get('doctrine.debug_data_holder');
@@ -114,8 +133,10 @@ final class InquiryFormRenderingTest extends WebTestCase
 
         $this->page(self::PAGE);
 
-        // The slug, the venue (row, rooms, photos and the plan's limits, F12), the similar venues and D18's operator check (G6, `Venues\VenueClaims`); the form adds none.
-        self::assertCount(7, $holder->getData()['default']);
+        // The slug, the venue (row, rooms, photos and the plan's limits, F12), the similar venues and D18's operator check (G6, `Venues\VenueClaims`); the form adds one, its event types and catering wishes (F9).
+        $queries = $holder->getData()['default'];
+        self::assertCount(8, $queries);
+        self::assertCount(1, array_filter($queries, static fn (array $query): bool => str_contains((string) $query['sql'], 'taxonomy_terms WHERE term_group = ')));
     }
 
     public function test_a_venue_without_an_address_has_an_empty_section_and_no_primary_link(): void

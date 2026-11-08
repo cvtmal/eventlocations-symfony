@@ -7,12 +7,15 @@ namespace App\Tests\Integration\Inquiries;
 use App\Factory\VenueFactory;
 use App\Inquiries\Command\SubmitInquiry;
 use App\Inquiries\CommandHandler\SubmitInquiryHandler;
+use App\Inquiries\Exception\BudgetOutOfRange;
 use App\Inquiries\Exception\EventDateInPast;
+use App\Inquiries\Exception\EventDateMissing;
 use App\Inquiries\Exception\GuestCountOutOfRange;
 use App\Inquiries\Exception\InquiryNotAccepted;
+use App\Inquiries\Exception\UnknownInquiryTerm;
+use App\Inquiries\ReadModel\InquiryVocabularyQuery;
 use App\Inquiries\Repository\InquiryRepository;
 use App\Inquiries\ValueObject\MailStatus;
-use App\Inquiries\ValueObject\Occasion;
 use App\Inquiries\ValueObject\SubmittedInquiry;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Venues\Entity\Venue;
@@ -53,7 +56,9 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
         self::assertInstanceOf(InquiryRepository::class, $inquiries);
         $this->inquiries = $inquiries;
         $this->clock = new MockClock(self::NOW);
-        $this->handler = new SubmitInquiryHandler($venues, $inquiries, $this->clock, 'a secret');
+        $vocabulary = $container->get(InquiryVocabularyQuery::class);
+        self::assertInstanceOf(InquiryVocabularyQuery::class, $vocabulary);
+        $this->handler = new SubmitInquiryHandler($venues, $inquiries, $vocabulary, $this->clock, 'a secret');
     }
 
     protected function tearDown(): void
@@ -67,7 +72,7 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
     {
         $venue = $this->venue();
 
-        $id = ($this->handler)($this->command($venue->id(), eventDate: '2026-09-12', phone: '044 123 45 67'))->id;
+        $id = ($this->handler)($this->command($venue->id(), eventDate: '2026-09-12', phone: '044 123 45 67', company: 'Muster AG', startTime: '18:30', cateringWish: 'external_allowed', budgetChf: 12000))->id;
         $this->em->flush();
         $this->em->clear();
 
@@ -79,9 +84,14 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
         self::assertSame($venue->inquiryEmail(), $inquiry->recipientEmail());
         self::assertNull($inquiry->deliveredTo());
         self::assertSame('de', $inquiry->locale());
-        self::assertSame(Occasion::CivilWedding, $inquiry->occasion());
+        self::assertSame('seminar', $inquiry->eventType());
+        self::assertSame('Muster AG', $inquiry->company());
         self::assertSame(120, $inquiry->guestCount());
         self::assertSame('2026-09-12', $inquiry->eventDate()?->format('Y-m-d'));
+        self::assertFalse($inquiry->isDateFlexible());
+        self::assertSame('18:30', $inquiry->startTime()?->format('H:i'));
+        self::assertSame('external_allowed', $inquiry->cateringWish());
+        self::assertSame(12000, $inquiry->budgetChf());
         self::assertSame('Liebes Team', $inquiry->message());
         self::assertSame('Anna', $inquiry->firstName());
         self::assertSame('Muster', $inquiry->lastName());
@@ -101,7 +111,54 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
 
         $inquiry = $this->inquiries->get($id);
         self::assertNull($inquiry->eventDate());
+        self::assertTrue($inquiry->isDateFlexible());
         self::assertNull($inquiry->phone());
+        self::assertNull($inquiry->company());
+        self::assertNull($inquiry->startTime());
+        self::assertNull($inquiry->cateringWish());
+        self::assertNull($inquiry->budgetChf());
+    }
+
+    public function test_a_flexible_date_in_the_past_is_still_refused(): void
+    {
+        $this->expectException(EventDateInPast::class);
+
+        ($this->handler)($this->command($this->venue()->id(), eventDate: '2020-01-01', dateFlexible: true));
+    }
+
+    public function test_a_start_time_off_its_format_is_a_programming_error(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        ($this->handler)($this->command($this->venue()->id(), startTime: '25:00'));
+    }
+
+    public function test_neither_a_date_nor_flexible_is_refused(): void
+    {
+        $this->expectException(EventDateMissing::class);
+
+        ($this->handler)($this->command($this->venue()->id(), dateFlexible: false));
+    }
+
+    public function test_an_event_type_outside_the_vocabulary_is_refused(): void
+    {
+        $this->expectException(UnknownInquiryTerm::class);
+
+        ($this->handler)($this->command($this->venue()->id(), eventType: 'civil_wedding'));
+    }
+
+    public function test_a_catering_term_that_is_no_wish_is_refused(): void
+    {
+        $this->expectException(UnknownInquiryTerm::class);
+
+        ($this->handler)($this->command($this->venue()->id(), cateringWish: 'buffet'));
+    }
+
+    public function test_a_budget_out_of_range_is_refused(): void
+    {
+        $this->expectException(BudgetOutOfRange::class);
+
+        ($this->handler)($this->command($this->venue()->id(), budgetChf: 1_000_001));
     }
 
     public function test_an_unknown_venue_is_refused(): void
@@ -245,8 +302,35 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
         return VenueFactory::new()->withContact()->create();
     }
 
-    private function command(string $venueId, int $guests = 120, ?string $eventDate = null, ?string $phone = null): SubmitInquiry
-    {
-        return new SubmitInquiry($venueId, 'schloss-seeblick', 'de', 'civil_wedding', $guests, $eventDate, 'Liebes Team', 'Anna', 'Muster', 'anna@example.ch', $phone);
+    private function command(
+        string $venueId,
+        int $guests = 120,
+        ?string $eventDate = null,
+        ?string $phone = null,
+        string $eventType = 'seminar',
+        ?string $company = null,
+        ?bool $dateFlexible = null,
+        ?string $startTime = null,
+        ?string $cateringWish = null,
+        ?int $budgetChf = null,
+    ): SubmitInquiry {
+        return new SubmitInquiry(
+            $venueId,
+            'schloss-seeblick',
+            'de',
+            $eventType,
+            $company,
+            $guests,
+            $eventDate,
+            $dateFlexible ?? null === $eventDate,
+            $startTime,
+            $cateringWish,
+            $budgetChf,
+            'Liebes Team',
+            'Anna',
+            'Muster',
+            'anna@example.ch',
+            $phone,
+        );
     }
 }

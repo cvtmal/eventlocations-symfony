@@ -205,10 +205,7 @@ contact:
 
 faq:
     field:
-        own_catering: Eigenes Catering?
         daylight: Tageslicht?
-    placeholder:
-        unknown: Keine Angabe
 
 google:
     field:

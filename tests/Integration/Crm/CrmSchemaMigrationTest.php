@@ -53,7 +53,7 @@ final class CrmSchemaMigrationTest extends KernelTestCase
         "INSERT INTO crm_deals (id, name, company_id, venue_id, stage_code, owner_id) VALUES ('{deal}', 'Premium 2027', '{company}', '{venue}', 'new', '{admin}')",
         "INSERT INTO crm_deals (id, name, company_id, stage_code) VALUES ('{deal2}', 'Basic 2027', '{company2}', 'offer')",
         "INSERT INTO crm_activity_deals (activity_id, deal_id) VALUES ('{activity}', '{deal}')",
-        "INSERT INTO inquiries (id, venue_id, venue_number, venue_name, venue_slug, recipient_email, locale, occasion, guest_count, message, first_name, last_name, email, fingerprint) SELECT id, '{venue}'::uuid, 1, 'Crm Testhaus', 'crm-testhaus', 'haus@example.test', 'de', 'wedding', 80, 'Grüezi', 'Anna', 'Muster', 'anna@example.test', repeat('a', 64) FROM (VALUES ('{inquiry}'::uuid), ('{inquiry2}'::uuid)) AS seed (id)",
+        "INSERT INTO inquiries (id, venue_id, venue_number, venue_name, venue_slug, recipient_email, locale, event_type, date_flexible, guest_count, message, first_name, last_name, email, fingerprint) SELECT id, '{venue}'::uuid, 1, 'Crm Testhaus', 'crm-testhaus', 'haus@example.test', 'de', 'corporate_event', true, 80, 'Grüezi', 'Anna', 'Muster', 'anna@example.test', repeat('a', 64) FROM (VALUES ('{inquiry}'::uuid), ('{inquiry2}'::uuid)) AS seed (id)",
         "INSERT INTO crm_inquiry_links (inquiry_id, activity_id) VALUES ('{inquiry}', '{activity}')",
     ];
 

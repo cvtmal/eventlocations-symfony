@@ -199,7 +199,8 @@ final class ListingQueryPerformanceTest extends KernelTestCase
 
     /**
      * Every group set like heaviestQuery(), but with values taken from one DemoStory venue
-     * within 50 km of Zürich, so the planner also sorts and pages real rows.
+     * within 50 km of Zürich, so the planner also sorts and pages real rows. The venue is
+     * moved near a station when it is near nothing.
      */
     private function matchingHeaviestQuery(): string
     {
@@ -211,7 +212,6 @@ final class ListingQueryPerformanceTest extends KernelTestCase
               AND earth_distance(ll_to_earth(z.lat, z.lng), ll_to_earth(v.lat, v.lng)) <= 50000
               AND (SELECT count(DISTINCT t.term_group) FROM venue_terms t WHERE t.venue_id = v.id
                    AND t.term_group IN ('infrastructure', 'furniture', 'technology', 'surroundings')) = 4
-              AND (v.distance_station_km <= 1 OR v.distance_highway_km <= 10 OR v.distance_airport_km <= 30)
               AND v.room_count >= 1 AND v.largest_room_m2 >= 50 AND v.max_room_height_m >= 2.5
             ORDER BY v.name
             LIMIT 1
@@ -222,7 +222,16 @@ final class ListingQueryPerformanceTest extends KernelTestCase
         self::assertIsInt($venue['capacity_max']);
         self::assertIsInt($venue['room_count']);
         self::assertIsInt($venue['largest_room_m2']);
-        $access = array_values(array_filter(['station', 'highway', 'airport'], static fn (string $a): bool => true === $venue[$a]))[0] ?? self::fail('The venue is near nothing.');
+        $access = array_values(array_filter(['station', 'highway', 'airport'], static fn (string $a): bool => true === $venue[$a]))[0] ?? null;
+        if (null === $access) {
+            // DemoStory's seeded Faker stream decides the distances, and any factory change shifts it:
+            // put the venue and its clones near a station (rolled back with the test).
+            $this->connection->executeStatement(
+                'UPDATE venues SET distance_station_km = 0.5 WHERE id = :id OR id IN (SELECT id FROM clone_map WHERE src = :id)',
+                ['id' => $venue['id']],
+            );
+            $access = 'station';
+        }
 
         $parts = [
             'place='.$this->zurich()->id(),

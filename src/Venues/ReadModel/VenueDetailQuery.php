@@ -13,7 +13,6 @@ use App\Venues\PublicPhotoPolicy;
 use App\Venues\ValueObject\Access;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\InstagramProfile;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PhotoBudget;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
@@ -154,7 +153,7 @@ final class VenueDetailQuery
                     v.distance_station_km, v.station_name, v.distance_highway_km, v.highway_name,
                     v.distance_airport_km, v.airport_name,
                     v.phone IS NOT NULL AS has_phone, v.inquiry_email, v.website, v.contact_person,
-                    v.own_catering, v.daylight,
+                    v.daylight,
                     v.price_level, v.capacity_seated, v.capacity_standing, v.instagram, v.coordinates_from_town,
                     v.google_place_id, v.google_rating_hidden, {$indexable} AS indexable,
                     t.slug, t.summary, t.description, t.meta_description, t.parking_text,
@@ -192,7 +191,6 @@ final class VenueDetailQuery
         \assert(null === $row['capacity_min'] || \is_int($row['capacity_min']));
         \assert(\is_bool($row['has_phone']));
         \assert(null === $row['daylight'] || \is_bool($row['daylight']));
-        \assert(null === $row['own_catering'] || \is_string($row['own_catering']));
         \assert(\is_string($row['terms']));
         \assert(\is_string($row['documents']));
 
@@ -236,7 +234,6 @@ final class VenueDetailQuery
             $mainBuilding,
             $mainSetting,
             $factGroups,
-            null === $row['own_catering'] ? null : OwnCatering::from($row['own_catering']),
             $row['daylight'],
             self::nullableString($row['parking_text']),
             self::distances($row),

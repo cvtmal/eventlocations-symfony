@@ -63,6 +63,19 @@ final class CrmStory extends Story
     private const INQUIRIES = [
         [MailStatus::Pending, 1], [MailStatus::Failed, 2], [MailStatus::Sent, 3], [MailStatus::Failed, 6], [MailStatus::Sent, 10], [MailStatus::Sent, 17],
     ];
+
+    /**
+     * The event fields of those six inquiries (F9): event type, company, days until the date (null: flexible only),
+     * flexible, start time, catering wish, budget in CHF.
+     */
+    private const INQUIRY_EVENTS = [
+        ['corporate_event', 'Muster Treuhand AG', 60, false, '18:00', 'in_house', 15000],
+        ['seminar', 'Alpina Software GmbH', 30, true, '09:00', 'in_house', null],
+        ['birthday', null, 90, false, '19:00', 'external_allowed', 4000],
+        ['christmas_party', 'Bäckerei Zentral', 45, false, '18:30', null, 8000],
+        ['general_assembly', 'Wohnbaugenossenschaft Linde', null, true, null, null, null],
+        ['wedding', null, 200, true, '14:00', 'in_house', 25000],
+    ];
     /** Name, subject and Markdown, each template using all three merge fields. */
     private const EMAIL_TEMPLATES = [
         [
@@ -228,8 +241,8 @@ final class CrmStory extends Story
     }
 
     /**
-     * Each goes through `IngestInquiry`, as a real one does, so the inbox and the timeline stay in step; a couple is no
-     * contact (#55). A demo venue without an inquiry address can take no inquiry.
+     * Each goes through `IngestInquiry`, as a real one does, so the inbox and the timeline stay in step; an organizer is no
+     * contact (S13). A demo venue without an inquiry address can take no inquiry.
      *
      * @param list<Venue> $venues
      */
@@ -240,6 +253,7 @@ final class CrmStory extends Story
         $ids = [];
         foreach (self::INQUIRIES as $index => [$mail, $age]) {
             $at = $today->modify(\sprintf('-%d days', $age))->setTime(9 + $index, 0);
+            [$eventType, $company, $inDays, $flexible, $startTime, $catering, $budget] = self::INQUIRY_EVENTS[$index];
             $inquiry = InquiryFactory::new()
                 ->afterInstantiate(static function (Inquiry $inquiry) use ($mail, $at): void {
                     if (MailStatus::Sent === $mail) {
@@ -251,7 +265,17 @@ final class CrmStory extends Story
                         $inquiry->recordGuestMail(MailStatus::Skipped, $at);
                     }
                 })
-                ->create(['venue' => $addressed[$index % \count($addressed)], 'createdAt' => $at]);
+                ->create([
+                    'venue' => $addressed[$index % \count($addressed)],
+                    'createdAt' => $at,
+                    'eventType' => $eventType,
+                    'company' => $company,
+                    'eventDate' => null === $inDays ? null : $today->modify(\sprintf('+%d days', $inDays)),
+                    'dateFlexible' => $flexible,
+                    'startTime' => null === $startTime ? null : new \DateTimeImmutable('1970-01-01 '.$startTime),
+                    'cateringWish' => $catering,
+                    'budgetChf' => $budget,
+                ]);
 
             $this->commandBus->dispatch(new IngestInquiry($inquiry->id()));
             $ids[] = $inquiry->id();

@@ -11,7 +11,6 @@ use App\Venues\ValueObject\Content\PhotoContent;
 use App\Venues\ValueObject\Content\RoomContent;
 use App\Venues\ValueObject\Content\VenueContent;
 use App\Venues\ValueObject\FloorMaterial;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -333,7 +332,6 @@ final class ContentReader
             inquiryEmail: $data->contact->inquiry_email ?? null,
             website: $data->contact->website ?? null,
             contactPerson: $data->contact->contact_person ?? null,
-            ownCatering: isset($data->faq->own_catering) ? OwnCatering::from($data->faq->own_catering) : null,
             daylight: $data->faq->daylight ?? null,
             priceLevel: isset($data->price_level) ? PriceLevel::from($data->price_level) : null,
             capacitySeated: $data->capacity->seated ?? null,

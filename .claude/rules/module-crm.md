@@ -96,3 +96,8 @@ Bridge listeners catch `\Throwable`, log class and place (never the message: it 
 - **Opt-out link** in every CRM mail (`CrmMailer`: footer, text line, `List-Unsubscribe(-Post)`), public `crm_opt_out` `/abmelden/{token}` (`OptOutToken`, GET asks, POST `SuppressCompany(opt_out)`), copy in `shared`.
 - **Akquise page** `/admin/crm/akquise`: `CohortFunnelQuery` (reads `funnel_events` by SQL; steps since the send day), `OutreachQuery::campaigns()`, print list `CampaignPrintQuery` (issues missing 180-day links via `Venues\Command\IssueVenuePreview`, CSV through `CsvStream`), `RecordCampaignSent`, `SuppressEmail`. Nav 150, record tab 400.
 - **Seed:** `CrmStory::outreach()` (campaign `CrmStory::CAMPAIGN`).
+
+## Inquiry event fields (F9 `inquiry-event`)
+
+- `InquiryInboxRow` / `InquiryDetail`: `organizerName` (was `coupleName`), `company`, `eventType` (`Venues\ValueObject\Term`); the detail adds `dateFlexible`, `startTime` (`H:i`), `cateringWish` (`?Term`), `budgetChf`. The inbox line reads "Name, Firma" and "Anlass · n Gäste". Staff copy (`crm` catalogue) says "Veranstalter", never "Paar". The organizer is still no CRM contact (S13). `CrmStory` seeds inquiries over several event types, with and without date, company, catering and budget.
+

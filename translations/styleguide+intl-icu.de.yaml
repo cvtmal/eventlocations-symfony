@@ -137,11 +137,11 @@ styleguide:
         error: Bitte gib eine gültige E-Mail-Adresse an.
         guests_placeholder: z.B. 80
         occasion: Anlass
+        occasion_corporate_event: Firmenanlass
+        occasion_seminar: Seminar
+        occasion_birthday: Geburtstag
+        occasion_apero: Apéro
         occasion_wedding: Hochzeit
-        occasion_civil: Standesamtliche Trauung
-        occasion_apero: Hochzeitsapéro
-        occasion_engagement: Verlobungsfeier
-        occasion_other: Anderer Anlass
         message: Nachricht
         message_value: Wir planen einen Firmenanlass und interessieren uns für Landgut Amselfeld.
     overlays:

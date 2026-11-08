@@ -111,7 +111,6 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'phone not E.164' => ['chk_venues_phone', ["UPDATE venues SET phone = '044 123 45 67' WHERE id = '{venue}'"]];
         yield 'inquiry email without at' => ['chk_venues_inquiry_email', ["UPDATE venues SET inquiry_email = 'info.example.ch' WHERE id = '{venue}'"]];
         yield 'website without scheme' => ['chk_venues_website', ["UPDATE venues SET website = 'www.example.ch' WHERE id = '{venue}'"]];
-        yield 'unknown own catering' => ['chk_venues_own_catering', ["UPDATE venues SET own_catering = 'yes' WHERE id = '{venue}'"]];
         yield 'unknown price level' => ['chk_venues_price_level', ["UPDATE venues SET price_level = 'cheap' WHERE id = '{venue}'"]];
         yield 'seated capacity zero' => ['chk_venues_capacity_seated', ["UPDATE venues SET capacity_seated = 0 WHERE id = '{venue}'"]];
         yield 'seated capacity above 50000' => ['chk_venues_capacity_seated', ["UPDATE venues SET capacity_seated = 50001 WHERE id = '{venue}'"]];
@@ -269,7 +268,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
         yield 'distances 0 and 500 with names' => [["UPDATE venues SET distance_station_km = 0, station_name = 'Stäfa', distance_highway_km = 500, highway_name = 'A3', distance_airport_km = 12.5, airport_name = NULL WHERE id = '{venue}'"]];
         yield 'contact fields' => [["UPDATE venues SET phone = '+41441234567', inquiry_email = 'info@example.ch', website = 'https://example.ch', contact_person = 'Frau Muster' WHERE id = '{venue}'"]];
         yield 'room facts at their bounds' => [["UPDATE venues SET room_count = 0, largest_room_m2 = 50000, max_room_height_m = 30 WHERE id = '{venue}'"]];
-        yield 'FAQ answers' => [["UPDATE venues SET own_catering = 'fixed_caterer', daylight = FALSE WHERE id = '{venue}'"]];
+        yield 'FAQ answers' => [["UPDATE venues SET daylight = FALSE WHERE id = '{venue}'"]];
         yield 'event facts at their bounds' => [["UPDATE venues SET price_level = 'exclusive', capacity_seated = 1, capacity_standing = 50000, instagram = 'https://www.instagram.com/testhaus' WHERE id = '{venue}'"]];
         yield 'same slug in another locale' => [["INSERT INTO venue_translations (id, venue_id, locale, slug, summary) VALUES (gen_random_uuid(), '{venue2}', 'fr', 'testhaus-venues', 'Court.')"]];
         yield 'many terms without primary position' => [["INSERT INTO taxonomy_terms (term_group, code, position) VALUES ('building', 'igloo', 40), ('building', 'treehouse', 41)"]];

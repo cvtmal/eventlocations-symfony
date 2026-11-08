@@ -18,7 +18,6 @@ use App\Geo\Entity\Town;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\FloorMaterial;
 use App\Venues\ValueObject\KnownTiers;
-use App\Venues\ValueObject\OwnCatering;
 use App\Venues\ValueObject\PriceLevel;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\TermGroup;
@@ -62,7 +61,7 @@ final class DetailVenues
         ]);
         $venue->changeContact(self::FULL_PHONE, 'info@seeblick.example', 'https://seeblick.example', 'Anna Muster');
         $venue->changeDistances('0.9', 'Zürich Stadelhofen', '3.2', null, '12.0', 'Zürich');
-        $venue->answerFaq(OwnCatering::Allowed, true);
+        $venue->answerFaq(true);
         $venue->changePriceLevel(PriceLevel::Medium);
         $venue->changeSeatingCapacity(1200, 1500);
         $venue->changeInstagram('https://www.instagram.com/schloss.seeblick');
