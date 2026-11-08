@@ -91,6 +91,8 @@ final class VideoEmbedTest extends TestCase
         yield 'vimeo unlisted' => ['https://vimeo.com/76979871/abcdef1234', true];
         yield 'vimeo unlisted with share parameter' => ['vimeo.com/76979871/ABCDEF1234?share=copy', true];
         yield 'vimeo player unlisted' => ['https://player.vimeo.com/video/76979871?h=abcdef1234&autoplay=1', true];
+        yield 'vimeo manager unlisted' => ['https://vimeo.com/manage/videos/76979871/abcdef1234', true];
+        yield 'vimeo manager without hash' => ['https://vimeo.com/manage/videos/76979871', false];
         yield 'vimeo public' => ['https://vimeo.com/76979871', false];
         yield 'vimeo player public' => ['https://player.vimeo.com/video/76979871', false];
         yield 'vimeo channel' => ['https://vimeo.com/channels/staffpicks/76979871', false];

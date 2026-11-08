@@ -71,8 +71,9 @@ final readonly class VideoEmbed
     }
 
     /**
-     * True for a Vimeo video set to "unlisted" (`vimeo.com/<number>/<hash>`, `player.vimeo.com/video/<number>?h=<hash>`):
-     * fromUrl() refuses it, and the manager can fix it by making the video public.
+     * True for a Vimeo video set to "unlisted" (`vimeo.com/<number>/<hash>`, `vimeo.com/manage/videos/<number>/<hash>`,
+     * `player.vimeo.com/video/<number>?h=<hash>`): fromUrl() refuses it, and the manager can fix it by making the video
+     * public.
      */
     public static function isUnlistedVimeo(string $input): bool
     {
@@ -83,6 +84,11 @@ final readonly class VideoEmbed
         [$host, $segments, $query] = $link;
 
         if (\in_array($host, self::VIMEO_HOSTS, true)) {
+            // The link Vimeo's own video manager shows: `vimeo.com/manage/videos/<number>/<hash>`.
+            if (4 === \count($segments) && ['manage', 'videos'] === \array_slice($segments, 0, 2)) {
+                $segments = \array_slice($segments, 2);
+            }
+
             return 2 === \count($segments) && VideoProvider::Vimeo->isValidId($segments[0]) && self::isUnlistedHash($segments[1]);
         }
         if ('player.vimeo.com' === $host) {

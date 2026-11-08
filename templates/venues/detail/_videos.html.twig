@@ -1,6 +1,6 @@
 {#
     Videos (G15): one click-to-load facade per video, the same way as the Standort map (#15). Params: venue.
-    The player iframe waits inert inside <template>, so nothing reaches YouTube or Vimeo before "Video laden (YouTube)" clones it
+    The player iframe waits inert inside <template>, so nothing reaches YouTube or Vimeo before "Video laden ({provider})" clones it
     (assets/js/venue-video.js); the loader is hidden until that script runs, and the provider link works without it.
     No thumbnail: a preview image would come from the provider before the click.
 #}

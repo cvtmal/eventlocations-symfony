@@ -11,6 +11,7 @@ use App\Tests\Support\Portal\PortalSession;
 use App\Tests\Support\Venues\DetailVenues;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\KnownTiers;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -60,11 +61,11 @@ final class LocationVideosTest extends WebTestCase
      */
     public static function refusedLinks(): iterable
     {
-        yield 'unlisted Vimeo' => ['https://player.vimeo.com/video/76979871?h=abcdef1234', 'Dieses Vimeo-Video ist nicht öffentlich. Stell es bei Vimeo auf «öffentlich» oder nimm einen YouTube-Link.', 'Diesen Link können wir nicht einbinden.'];
+        yield 'unlisted Vimeo' => ['https://player.vimeo.com/video/76979871?h=abcdef1234', 'Dieses Vimeo-Video ist nicht öffentlich. Stell es bei Vimeo auf «Öffentlich» oder nimm einen YouTube-Link.', 'Diesen Link können wir nicht einbinden.'];
         yield 'another site' => ['https://example.com/video.mp4', 'Diesen Link können wir nicht einbinden.', 'Vimeo-Video ist nicht öffentlich'];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('refusedLinks')]
+    #[DataProvider('refusedLinks')]
     public function test_a_refused_link_tells_the_manager_why(string $url, string $message, string $notShown): void
     {
         $venue = $this->managedVenue(DetailVenues::minimal(tier: KnownTiers::PRO));

@@ -50,7 +50,7 @@ final class VenueVideosPageTest extends WebTestCase
     {
         yield 'empty' => ['', 'Bitte einen Link zu einem Video auf YouTube oder Vimeo eingeben.'];
         yield 'another site' => ['https://example.com/video.mp4', 'Diesen Link können wir nicht einbinden.'];
-        yield 'unlisted Vimeo' => ['https://vimeo.com/76979871/abcdef1234', 'Dieses Vimeo-Video ist nicht öffentlich. Stell es bei Vimeo auf «öffentlich» oder nimm einen YouTube-Link.'];
+        yield 'unlisted Vimeo' => ['https://vimeo.com/76979871/abcdef1234', 'Dieses Vimeo-Video ist nicht öffentlich. Stell es bei Vimeo auf «Öffentlich» oder nimm einen YouTube-Link.'];
         yield 'embed HTML' => ['<iframe src="https://www.youtube.com/embed/aB3_dE-fGh1"></iframe>', 'Diesen Link können wir nicht einbinden.'];
         yield 'too long' => ['https://youtu.be/'.str_repeat('a', 500), 'höchstens 500 Zeichen'];
     }
