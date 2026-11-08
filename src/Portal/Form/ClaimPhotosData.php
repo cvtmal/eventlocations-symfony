@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Portal\Form;
 
-use App\Portal\ClaimPhotoImport;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -15,7 +14,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 final class ClaimPhotosData
 {
     /** @var list<string> */
-    #[Assert\Count(max: ClaimPhotoImport::MAX_PICKS, maxMessage: 'portal.claim.too_many_photos')]
     public array $photos = [];
 
     public bool $declaration = false;

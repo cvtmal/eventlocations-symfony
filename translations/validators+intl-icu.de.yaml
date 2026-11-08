@@ -221,7 +221,7 @@ portal:
     claim:
         code_required: Bitte gib den Code aus der E-Mail ein.
         code_format: Der Code hat sechs Ziffern.
-        too_many_photos: Bitte wähle höchstens {limit} Fotos auf einmal.
+        too_many_photos: '{limit, plural, one {Bitte wähle höchstens ein Foto auf einmal.} other {Bitte wähle höchstens # Fotos auf einmal.}}'
 shared:
     text:
         invalid: Der Text enthält ungültige Zeichen.

@@ -9,6 +9,7 @@ use App\Factory\PortalUserFactory;
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\SourceRecordFactory;
 use App\Factory\VenueFactory;
+use App\Factory\VenuePhotoFactory;
 use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Tests\Support\Portal\PortalSession;
@@ -199,6 +200,31 @@ final class ClaimFlowTest extends WebTestCase
             ['rejected', 'rejected'],
             $this->connection->fetchFirstColumn('SELECT status FROM photo_candidates WHERE id IN (?, ?)', [$saal->id(), $bach->id()]),
         );
+    }
+
+    public function test_the_photo_step_caps_the_ticks_at_what_the_free_plan_leaves(): void
+    {
+        $venue = $this->venue();
+        foreach (range(1, 5) as $position) {
+            VenuePhotoFactory::createOne(['venue' => $venue, 'position' => $position]);
+        }
+        $record = SourceRecordFactory::createOne(['venue' => $venue, 'url' => 'https://www.'.self::DOMAIN.'/', 'report' => ['final_url' => 'https://www.'.self::DOMAIN.'/']]);
+        $saal = PhotoCandidateFactory::createOne(['sourceRecord' => $record, 'position' => 1, 'image' => new ImageCandidate('https://www.'.self::DOMAIN.'/bilder/saal.jpg', 'https://www.'.self::DOMAIN.'/', CandidateOrigin::Img)]);
+        $bach = PhotoCandidateFactory::createOne(['sourceRecord' => $record, 'position' => 2, 'image' => new ImageCandidate('https://www.'.self::DOMAIN.'/bilder/bach.jpg', 'https://www.'.self::DOMAIN.'/', CandidateOrigin::Img)]);
+        $manager = $this->logInAsManager();
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $venue]);
+
+        $this->client->request('GET', '/konto/locations/'.$venue->number().'/website-fotos');
+        self::assertSelectorTextContains('main', 'höchstens 1 auf einmal');
+
+        $this->client->submitForm('Weiter', ['claim_photos[photos]' => [$saal->id(), $bach->id()], 'claim_photos[declaration]' => true]);
+        self::assertResponseStatusCodeSame(422, 'Free shows six photos and five are taken');
+        self::assertSelectorTextContains('main', 'höchstens ein Foto auf einmal');
+        self::assertSame(['candidate', 'candidate'], $this->connection->fetchFirstColumn('SELECT status FROM photo_candidates WHERE id IN (?, ?)', [$saal->id(), $bach->id()]));
+
+        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 6]);
+        $this->client->request('GET', '/konto/locations/'.$venue->number().'/website-fotos');
+        self::assertResponseRedirects('/konto/locations/'.$venue->number().'/einrichten/kontakt', 302, 'a full plan skips the step');
     }
 
     private function venue(): Venue

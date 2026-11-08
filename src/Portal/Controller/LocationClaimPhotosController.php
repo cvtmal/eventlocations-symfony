@@ -9,6 +9,7 @@ use App\Cms\ValueObject\VenueNumber;
 use App\Portal\ClaimPhotoImport;
 use App\Portal\Form\ClaimPhotosData;
 use App\Portal\Form\ClaimPhotosType;
+use App\Portal\ReadModel\LocationPlanQuery;
 use App\Portal\Security\PortalIdentity;
 use App\Portal\Security\PortalVenueVoter;
 use App\Portal\ValueObject\PortalFlash;
@@ -20,6 +21,7 @@ use App\Venues\ReadModel\PhotoCandidateRow;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
 use App\Venues\ValueObject\PhotoGrant;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,6 +38,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * back-office CSP allows no foreign image, and nothing is fetched before the claimant asks. Without candidates the
  * page sends straight on: to the wizard's contact step (the inquiry address is confirmed there), or to the editor
  * of an entry that is online already.
+ *
+ * The plan caps the ticks (F12): at most the photos its `photos_max` leaves free, so a claimant on Free cannot tick
+ * more than `AddVenuePhoto` would take. An entry whose plan is full skips the step like one without candidates.
  */
 #[IsGranted(PortalVenueVoter::EDIT, subject: 'number')]
 final class LocationClaimPhotosController extends AbstractController
@@ -45,6 +50,8 @@ final class LocationClaimPhotosController extends AbstractController
         private readonly VenueHeaderQuery $venues,
         private readonly ClaimPhotoImport $import,
         private readonly MessageBusInterface $commandBus,
+        private readonly LocationPlanQuery $plans,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -53,17 +60,19 @@ final class LocationClaimPhotosController extends AbstractController
     {
         $venue = $this->venues->find($number) ?? throw $this->createNotFoundException();
         $candidates = $this->candidates->open($number);
-        if ([] === $candidates) {
+        $plan = $this->plans->forVenue($venue->id, $this->clock->now());
+        $max = min(ClaimPhotoImport::MAX_PICKS, $plan->photosMax - $plan->photosUsed);
+        if ([] === $candidates || $max <= 0) {
             return $this->next($number, $venue->isPublished, $request->isMethod('GET') ? Response::HTTP_FOUND : Response::HTTP_SEE_OTHER);
         }
 
-        $form = $this->createForm(ClaimPhotosType::class, new ClaimPhotosData(), ['candidates' => $candidates])->handleRequest($request);
+        $form = $this->createForm(ClaimPhotosType::class, new ClaimPhotosData(), ['candidates' => $candidates, 'max' => $max])->handleRequest($request);
         if (!$form->isSubmitted() || !$form->isValid()) {
             return $this->render('portal/location/claim_photos.html.twig', [
                 'venue' => $venue,
                 'form' => $form,
                 'candidates' => $candidates,
-                'max' => ClaimPhotoImport::MAX_PICKS,
+                'max' => $max,
             ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
         }
 
