@@ -231,7 +231,7 @@ final class DemoStory extends Story
 
         // D36: decided more than three years ago, so the nightly retention erased the complainant; the case stays.
         $decidedAt = new \DateTimeImmutable('-3 years -2 months');
-        ModerationCaseFactory::new()->decided(ModerationDecision::Keep, note: 'Die Angaben stimmten.', at: $decidedAt)->erased($decidedAt->modify('+3 years +1 day'))->create([
+        ModerationCaseFactory::new()->decided(ModerationDecision::Keep, note: 'Die Angaben stimmten.', at: $decidedAt)->erased($decidedAt->modify('+3 years -1 day'))->create([
             'kind' => ModerationKind::Correction,
             'venue' => $kept,
             'venueReference' => null,

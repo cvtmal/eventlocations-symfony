@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Venues\Command;
 
 /**
- * D36: erases the complainant's name, e-mail address and message of every complaint decided at least
- * `RETENTION_YEARS` ago (`decided_at <= now - 3 years`; the nightly run may be up to a day late). The case, its
+ * D36: erases the complainant's name, e-mail address and message of every complaint whose decision turns
+ * `RETENTION_YEARS` old within a day (`decided_at <= now - 3 years + 1 day`), so a nightly run is never late and
+ * /datenschutz's "höchstens drei Jahre" holds. The case, its
  * decision and its photo links stay as evidence. The handler returns how many cases it erased, or would erase with
  * `dryRun`; an erased case is never counted again, so a second run erases nothing.
  *

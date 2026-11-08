@@ -25,7 +25,7 @@ final class ModerationErasedCaseTest extends WebTestCase
         $this->logInAs(AdminRole::Editor);
         $case = ModerationCaseFactory::new()
             ->decided(ModerationDecision::Keep, note: 'Die Angaben stimmten.', at: new \DateTimeImmutable('2023-03-01 10:00 Europe/Zurich'))
-            ->erased(new \DateTimeImmutable('2026-03-02 03:15 Europe/Zurich'))
+            ->erased(new \DateTimeImmutable('2026-02-28 03:15 Europe/Zurich'))
             ->create(['at' => new \DateTimeImmutable('2023-02-27 10:00 Europe/Zurich')]);
 
         $crawler = $this->client->request('GET', '/admin/meldungen');
@@ -38,7 +38,7 @@ final class ModerationErasedCaseTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         $main = $crawler->filter('main')->text();
-        self::assertStringContainsString('Gelöscht am 02.03.2026', $main);
+        self::assertStringContainsString('Gelöscht am 28.02.2026', $main);
         self::assertStringContainsString('drei Jahre nach dem Entscheid gelöscht', $main);
         self::assertStringContainsString('Die Angaben stimmten.', $main);
         self::assertStringNotContainsString('Erika Beispiel', $main);

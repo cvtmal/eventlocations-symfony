@@ -16,9 +16,10 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * D36: three years after the decision the complainant's name, e-mail address and message go; the case and its
- * decision stay. A decision exactly three years old is due, one a second younger is not, an open case never is, and
- * a second run erases nothing.
+ * D36: the complainant's name, e-mail address and message go on the last night before the decision is three years
+ * old (cutoff `now - 3 years + 1 day`), so no nightly run is late; the case and its decision stay. A decision that
+ * turns three within a day is due, one a second younger is not, an open case never is, and a second run erases
+ * nothing.
  */
 final class EraseModerationComplainantsCommandTest extends KernelTestCase
 {
@@ -40,9 +41,9 @@ final class EraseModerationComplainantsCommandTest extends KernelTestCase
         $this->connection->beginTransaction();
         self::mockTime(self::NOW);
 
-        $this->decided('Alt', '2026-11-08 03:14:59 UTC');
-        $this->decided('Grenze', '2026-11-08 03:15:00 UTC');
-        $this->decided('Jung', '2026-11-08 03:15:01 UTC');
+        $this->decided('Alt', '2026-11-09 03:14:59 UTC');
+        $this->decided('Grenze', '2026-11-09 03:15:00 UTC');
+        $this->decided('Jung', '2026-11-09 03:15:01 UTC');
         ModerationCaseFactory::createOne(['complainantName' => 'Offen', 'at' => new \DateTimeImmutable('2025-01-01 10:00 UTC')]);
         $this->em->clear();
     }
@@ -54,17 +55,20 @@ final class EraseModerationComplainantsCommandTest extends KernelTestCase
         parent::tearDown();
     }
 
-    public function test_erases_the_complainant_of_cases_decided_three_years_ago_or_earlier(): void
+    public function test_erases_the_complainant_on_the_last_night_before_three_years(): void
     {
         $tester = $this->runCommand([]);
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertSame("2 complainants erased.\n", $tester->getDisplay());
         self::assertSame([
-            ['note' => 'Alt', 'complainant_name' => null, 'complainant_email' => null, 'message' => null, 'complainant_erased_at' => '2029-11-08 03:15:00+00', 'updated_at' => '2029-11-08 03:15:00+00', 'decision' => 'remove', 'decided_at' => '2026-11-08 03:14:59+00', 'decided_by' => ModerationCaseFactory::STAFF, 'good_faith_at' => '2026-10-30 12:00:00+00'],
-            ['note' => 'Grenze', 'complainant_name' => null, 'complainant_email' => null, 'message' => null, 'complainant_erased_at' => '2029-11-08 03:15:00+00', 'updated_at' => '2029-11-08 03:15:00+00', 'decision' => 'remove', 'decided_at' => '2026-11-08 03:15:00+00', 'decided_by' => ModerationCaseFactory::STAFF, 'good_faith_at' => '2026-10-30 12:00:00+00'],
-            ['note' => 'Jung', 'complainant_name' => 'Jung', 'complainant_email' => 'erika.beispiel@example.ch', 'message' => 'Die Öffnungszeiten auf dem Eintrag stimmen nicht mehr.', 'complainant_erased_at' => null, 'updated_at' => '2026-11-08 03:15:01+00', 'decision' => 'remove', 'decided_at' => '2026-11-08 03:15:01+00', 'decided_by' => ModerationCaseFactory::STAFF, 'good_faith_at' => '2026-10-30 12:00:00+00'],
+            ['note' => 'Alt', 'complainant_name' => null, 'complainant_email' => null, 'message' => null, 'complainant_erased_at' => '2029-11-08 03:15:00+00', 'updated_at' => '2029-11-08 03:15:00+00', 'decision' => 'remove', 'decided_at' => '2026-11-09 03:14:59+00', 'decided_by' => ModerationCaseFactory::STAFF, 'good_faith_at' => '2026-10-30 12:00:00+00'],
+            ['note' => 'Grenze', 'complainant_name' => null, 'complainant_email' => null, 'message' => null, 'complainant_erased_at' => '2029-11-08 03:15:00+00', 'updated_at' => '2029-11-08 03:15:00+00', 'decision' => 'remove', 'decided_at' => '2026-11-09 03:15:00+00', 'decided_by' => ModerationCaseFactory::STAFF, 'good_faith_at' => '2026-10-30 12:00:00+00'],
+            ['note' => 'Jung', 'complainant_name' => 'Jung', 'complainant_email' => 'erika.beispiel@example.ch', 'message' => 'Die Öffnungszeiten auf dem Eintrag stimmen nicht mehr.', 'complainant_erased_at' => null, 'updated_at' => '2026-11-09 03:15:01+00', 'decision' => 'remove', 'decided_at' => '2026-11-09 03:15:01+00', 'decided_by' => ModerationCaseFactory::STAFF, 'good_faith_at' => '2026-10-30 12:00:00+00'],
         ], $this->decidedRows());
+        self::assertSame(0, (int) $this->connection->fetchOne(<<<'SQL'
+            SELECT count(*) FROM moderation_cases WHERE complainant_erased_at >= decided_at + interval '3 years'
+            SQL), 'never later than three years after the decision');
         self::assertSame('Offen', $this->connection->fetchOne("SELECT complainant_name FROM moderation_cases WHERE status = 'open'"), 'an open case is never erased');
         self::assertSame(4, (int) $this->connection->fetchOne('SELECT count(*) FROM moderation_cases'), 'every case stays as evidence');
     }

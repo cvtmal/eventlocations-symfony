@@ -20,8 +20,10 @@ final class EraseModerationComplainantsHandler implements CommandHandlerInterfac
     public function __invoke(EraseModerationComplainants $command): int
     {
         $now = $this->clock->now();
+        // One day early: the job runs once a night, so the last night before the three years are up erases what
+        // would otherwise outlive them by up to a day.
         $due = $this->cases->complainantsDueForErasure(
-            $now->modify(\sprintf('-%d years', EraseModerationComplainants::RETENTION_YEARS)),
+            $now->modify(\sprintf('-%d years +1 day', EraseModerationComplainants::RETENTION_YEARS)),
         );
 
         if (!$command->dryRun) {

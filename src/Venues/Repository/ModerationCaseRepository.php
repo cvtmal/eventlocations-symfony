@@ -59,7 +59,7 @@ class ModerationCaseRepository extends ServiceEntityRepository
     }
 
     /**
-     * D36: the decided cases whose decision is at least three years old (`$cutoff`) and whose complainant is still
+     * D36: the decided cases decided on or before `$cutoff` (three years ago less a day) whose complainant is still
      * stored. A handful per year on this site, so they are loaded, not bulk-updated.
      *
      * @return list<ModerationCase>
