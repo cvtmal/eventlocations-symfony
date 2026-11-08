@@ -42,7 +42,7 @@ final class ModerationCaseSchemaTest extends KernelTestCase
      */
     private const array SEED = [
         "INSERT INTO towns (id, canton_code, zip, name, slug, bfs_number, lat, lng, population) VALUES ('{town}', 'zh', '8999', 'Testdorf Meldung', 'testdorf-meldung', 9997, 47.3, 8.5, 100)",
-        "INSERT INTO venues (id, name, tier, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES ('{venue}', 'Testhaus', 'premium', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5)",
+        "INSERT INTO venues (id, name, status, capacity_max, zip, town_id, canton_code, lat, lng) VALUES ('{venue}', 'Testhaus', 'published', 100, '8999', '{town}', 'zh', 47.3, 8.5)",
         "INSERT INTO venue_photos (id, venue_id, room_id, position, original_path, width, height, dominant_color, variants) VALUES ('{photo}', '{venue}', NULL, 1, 'demo/a.jpg', 1600, 1067, '#b9a58c', '{\"widths\": [360], \"formats\": [\"jpg\"]}'), ('{photo2}', '{venue}', NULL, 2, 'demo/b.jpg', 1600, 1067, '#b9a58c', '{\"widths\": [360], \"formats\": [\"jpg\"]}')",
         "INSERT INTO moderation_cases ({case-cols}) VALUES ('{case}', '{venue}', NULL, 'rights', 'open', 'Erika', 'erika@example.ch', 'Mein Foto.', now()), ('{case2}', NULL, 'Gasthaus Beispiel', 'correction', 'open', 'Max', 'max@example.ch', 'Falsch.', now())",
         "INSERT INTO moderation_case_photos (id, case_id, venue_photo_id, original_path) VALUES ('{link}', '{case}', '{photo}', 'demo/a.jpg')",

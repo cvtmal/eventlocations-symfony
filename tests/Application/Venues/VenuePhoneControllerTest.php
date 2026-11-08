@@ -111,7 +111,7 @@ final class VenuePhoneControllerTest extends WebTestCase
      */
     public function test_a_venue_on_free_answers_404_even_when_it_holds_a_phone(): void
     {
-        $uri = '/hochzeitslocation/'.DetailVenues::OVERFULL_SLUG.'/telefon';
+        $uri = '/eventlokal/'.DetailVenues::OVERFULL_SLUG.'/telefon';
         DetailVenues::overfull(KnownTiers::FREE);
 
         $this->get($uri, '10.0.0.10');
@@ -125,7 +125,7 @@ final class VenuePhoneControllerTest extends WebTestCase
     {
         DetailVenues::overfull(KnownTiers::PRO);
 
-        $this->get('/hochzeitslocation/'.DetailVenues::OVERFULL_SLUG.'/telefon', '10.0.0.11', ['HTTP_ACCEPT' => 'application/json']);
+        $this->get('/eventlokal/'.DetailVenues::OVERFULL_SLUG.'/telefon', '10.0.0.11', ['HTTP_ACCEPT' => 'application/json']);
 
         self::assertResponseIsSuccessful();
         self::assertSame(['phone' => DetailVenues::FULL_PHONE, 'display' => '044 123 45 67'], json_decode((string) $this->client->getResponse()->getContent(), true, 512, \JSON_THROW_ON_ERROR));

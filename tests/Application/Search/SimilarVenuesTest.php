@@ -110,7 +110,7 @@ final class SimilarVenuesTest extends WebTestCase
         $this->venue('bezahlte-location', 'Bezahlte Location', 'Zürich', 50, 100, KnownTiers::PRO);
         $this->venue('gratis-location', 'Gratis Location', 'Zürich', 50, 100);
 
-        $cards = $this->client->request('GET', '/hochzeitslocation/ich-selbst')->filter('.similar-card');
+        $cards = $this->client->request('GET', '/eventlokal/ich-selbst')->filter('.similar-card');
 
         self::assertResponseIsSuccessful();
         $paid = $cards->reduce(static fn (Crawler $card): bool => str_contains($card->text(), 'Bezahlte Location'));

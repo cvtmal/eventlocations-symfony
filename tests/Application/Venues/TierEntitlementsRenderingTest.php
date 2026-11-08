@@ -75,7 +75,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
     {
         $free = DetailVenues::overfull(KnownTiers::FREE, self::FREE_SLUG, self::FREE_NAME);
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.self::FREE_SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.self::FREE_SLUG);
 
         self::assertResponseIsSuccessful();
         $html = $this->html();
@@ -108,7 +108,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
     {
         $free = DetailVenues::overfull(KnownTiers::FREE, self::FREE_SLUG, self::FREE_NAME);
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.self::FREE_SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.self::FREE_SLUG);
 
         $venue = $this->venueNode($crawler);
         self::assertSame([self::INSTAGRAM], $venue['sameAs'], 'the website is not a sameAs of a Free venue');
@@ -125,7 +125,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
     {
         DetailVenues::overfull(KnownTiers::FREE, self::FREE_SLUG, self::FREE_NAME);
 
-        $this->client->request('GET', '/hochzeitslocation/'.self::FREE_SLUG.'.md');
+        $this->client->request('GET', '/eventlokal/'.self::FREE_SLUG.'.md');
 
         self::assertResponseIsSuccessful();
         $body = $this->html();
@@ -147,11 +147,11 @@ final class TierEntitlementsRenderingTest extends WebTestCase
         DetailVenues::overfull(KnownTiers::PRO, self::PRO_SLUG, self::PRO_NAME);
 
         foreach ([[], ['HTTP_ACCEPT' => 'application/json']] as $server) {
-            $this->client->request('GET', '/hochzeitslocation/'.self::FREE_SLUG.'/telefon', server: $this->server($server));
+            $this->client->request('GET', '/eventlokal/'.self::FREE_SLUG.'/telefon', server: $this->server($server));
             self::assertResponseStatusCodeSame(404);
         }
 
-        $this->client->request('GET', '/hochzeitslocation/'.self::PRO_SLUG.'/telefon', server: $this->server(['HTTP_ACCEPT' => 'application/json']));
+        $this->client->request('GET', '/eventlokal/'.self::PRO_SLUG.'/telefon', server: $this->server(['HTTP_ACCEPT' => 'application/json']));
         self::assertResponseIsSuccessful();
         self::assertSame(['phone' => DetailVenues::FULL_PHONE, 'display' => '044 123 45 67'], json_decode($this->html(), true, 512, \JSON_THROW_ON_ERROR));
     }
@@ -160,7 +160,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
     {
         $pro = DetailVenues::overfull(KnownTiers::PRO, self::PRO_SLUG, self::PRO_NAME);
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.self::PRO_SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.self::PRO_SLUG);
 
         self::assertResponseIsSuccessful();
         $html = $this->html();
@@ -175,7 +175,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
             self::assertStringContainsString($document, $html);
         }
 
-        self::assertSelectorExists('#kontakt a[data-phone-reveal][href="/hochzeitslocation/'.self::PRO_SLUG.'/telefon"]');
+        self::assertSelectorExists('#kontakt a[data-phone-reveal][href="/eventlokal/'.self::PRO_SLUG.'/telefon"]');
         self::assertSelectorExists('#kontakt a[href="'.self::WEBSITE.'"][rel="nofollow noopener"]');
         self::assertStringNotContainsString(substr(DetailVenues::FULL_PHONE, 3), $html, 'the number itself is never in the page');
         self::assertSelectorTextContains('h1 .badge', 'Top-Eintrag');
@@ -189,7 +189,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
     {
         DetailVenues::overfull(KnownTiers::PRO, self::PRO_SLUG, self::PRO_NAME);
 
-        $this->client->request('GET', '/hochzeitslocation/'.self::PRO_SLUG.'.md');
+        $this->client->request('GET', '/eventlokal/'.self::PRO_SLUG.'.md');
 
         self::assertResponseIsSuccessful();
         $body = $this->html();
@@ -209,7 +209,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
         $free = DetailVenues::overfull(KnownTiers::FREE, self::FREE_SLUG, self::FREE_NAME);
         $pro = DetailVenues::overfull(KnownTiers::PRO, self::PRO_SLUG, self::PRO_NAME);
 
-        $listing = $this->client->request('GET', '/hochzeitslocations');
+        $listing = $this->client->request('GET', '/eventlokale');
         self::assertResponseIsSuccessful();
         $this->assertCards($listing);
         self::assertSame([self::PRO_NAME, self::FREE_NAME], $listing->filter('.card__link')->each(static fn (Crawler $link): string => $link->text()), 'Pro first');
@@ -243,7 +243,7 @@ final class TierEntitlementsRenderingTest extends WebTestCase
     public function test_a_tier_change_purges_the_cache_and_the_next_render_shows_the_new_plan(): void
     {
         $venue = DetailVenues::overfull(KnownTiers::FREE, self::FREE_SLUG, self::FREE_NAME);
-        $before = $this->client->request('GET', '/hochzeitslocation/'.self::FREE_SLUG);
+        $before = $this->client->request('GET', '/eventlokal/'.self::FREE_SLUG);
         self::assertResponseIsSuccessful();
         self::assertCount(self::FREE_PHOTOS, $this->photoIds($this->html(), $venue));
         self::assertStringNotContainsString('/telefon', $this->html());
@@ -256,10 +256,10 @@ final class TierEntitlementsRenderingTest extends WebTestCase
 
         self::assertSame([$venue->number()], $purger->venues);
         self::assertSame(1, $purger->listings);
-        $after = $this->client->request('GET', '/hochzeitslocation/'.self::FREE_SLUG);
+        $after = $this->client->request('GET', '/eventlokal/'.self::FREE_SLUG);
         self::assertResponseIsSuccessful();
         self::assertCount(self::GALLERY + 1, $this->photoIds($this->html(), $venue));
-        self::assertSelectorExists('#kontakt a[data-phone-reveal][href="/hochzeitslocation/'.self::FREE_SLUG.'/telefon"]');
+        self::assertSelectorExists('#kontakt a[data-phone-reveal][href="/eventlokal/'.self::FREE_SLUG.'/telefon"]');
         self::assertSelectorTextContains('h1 .badge', 'Top-Eintrag');
         self::assertSame(DetailVenues::OVERFULL_ROOMS, $this->roomNames($after));
         self::assertSame([self::WEBSITE, self::INSTAGRAM], $this->venueNode($after)['sameAs']);
@@ -271,12 +271,12 @@ final class TierEntitlementsRenderingTest extends WebTestCase
     public function test_a_venue_that_falls_back_to_free_is_cut_again_without_losing_a_row(): void
     {
         $venue = DetailVenues::overfull(KnownTiers::PRO, self::PRO_SLUG, self::PRO_NAME);
-        $this->client->request('GET', '/hochzeitslocation/'.self::PRO_SLUG);
+        $this->client->request('GET', '/eventlokal/'.self::PRO_SLUG);
         self::assertCount(self::GALLERY + 1, $this->photoIds($this->html(), $venue));
 
         $this->dispatch(new ChangeVenueTier($venue->number(), KnownTiers::FREE));
 
-        $crawler = $this->client->request('GET', '/hochzeitslocation/'.self::PRO_SLUG);
+        $crawler = $this->client->request('GET', '/eventlokal/'.self::PRO_SLUG);
         self::assertCount(self::FREE_PHOTOS, $this->photoIds($this->html(), $venue));
         self::assertSame([DetailVenues::OVERFULL_ROOMS[0]], $this->roomNames($crawler));
         self::assertStringNotContainsString('/telefon', $this->html());
