@@ -69,6 +69,11 @@ final class ProRequestTest extends WebTestCase
         $this->client->submit($crawler->filter('aside form[action$="/pro-anfragen"]')->form());
         self::assertResponseRedirects($this->url($venue).'/raeume', 303);
 
+        // G15: the Videos tab carries the card as well.
+        $crawler = $this->client->request('GET', $this->url($venue).'/videos');
+        $this->client->submit($crawler->filter('aside form[action$="/pro-anfragen"]')->form());
+        self::assertResponseRedirects($this->url($venue).'/videos', 303);
+
         $this->client->request('POST', $this->url($venue).'/pro-anfragen', ['_token' => self::SAME_SITE_TOKEN, 'back' => 'admin_dashboard'], server: self::SAME_ORIGIN);
         self::assertResponseRedirects($this->url($venue), 303);
     }

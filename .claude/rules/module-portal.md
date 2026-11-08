@@ -118,4 +118,4 @@ The submit step shows the declaration (`rights_declaration()`, open) and an opti
 
 ## Videos (G15 `video-embed`)
 
-- `Controller\LocationVideosController`: `/konto/locations/{n}/videos` (+ `_up`, `_down`, `_remove`, token `portal_video`), `#[IsGranted(PortalVenueVoter::EDIT)]`, so G6's freeze applies through the voter. Staff's `Cms\VenueVideoPages` inside the location layout, plan card in the aside; tab «Videos» in `_layout.html.twig`. `LocationPlan` carries `videosUsed` and `videosMax` (row «Videos x von y»).
+- `Controller\LocationVideosController`: `/konto/locations/{n}/videos` (+ `_up`, `_down`, `_remove`, token `portal_video`), `#[IsGranted(PortalVenueVoter::EDIT)]`, so G6's freeze applies through the voter. Staff's `Cms\VenueVideoPages` inside the location layout, plan card in the aside (`ProRequestController::BACK_ROUTES` includes the tab); tab «Videos» in `_layout.html.twig`. `LocationPlan` carries `videosUsed` and `videosMax` (row «Videos x von y»).
