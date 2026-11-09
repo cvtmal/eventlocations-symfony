@@ -318,6 +318,42 @@ final class InquiryBriefPageTest extends WebTestCase
     }
 
     /**
+     * PO: the pages depend on the guest's selection or a mailed link, so search engines get `noindex` (meta and
+     * header) on every state. robots.txt stays open on purpose: a disallowed page is never fetched, so its
+     * `noindex` would go unseen and the bare URL could still be indexed from a link.
+     */
+    public function test_every_brief_page_is_noindex_and_left_out_of_the_sitemap(): void
+    {
+        $a = $this->venue('alpha-saal', 'Alpha Saal');
+        $b = $this->venue('beta-haus', 'Beta Haus');
+        $optOut = '/sammelanfrage/abbestellen/'.$this->optOutToken($a);
+
+        foreach (['/sammelanfrage', '/sammelanfrage?nr='.$a->number(), '/sammelanfrage?nr='.$a->number().','.$b->number(), $optOut, '/sammelanfrage/abbestellen/kaputt'] as $url) {
+            $this->client->request('GET', $url);
+            $this->assertNoindex($url);
+        }
+        $this->postBrief($a->number().','.$b->number(), [$a->number(), $b->number()]);
+        $this->client->followRedirect();
+        self::assertResponseIsSuccessful();
+        $this->assertNoindex('/sammelanfrage/gesendet');
+        $this->client->request('POST', $optOut);
+        $this->assertNoindex('opt-out done');
+
+        foreach (['/sitemap.xml', '/sitemap-pages.xml', '/sitemap-venues-1.xml', '/robots.txt'] as $path) {
+            $this->client->request('GET', $path);
+            self::assertResponseIsSuccessful();
+            self::assertStringNotContainsString('sammelanfrage', (string) $this->client->getResponse()->getContent(), $path);
+        }
+    }
+
+    private function assertNoindex(string $page): void
+    {
+        self::assertSame('noindex, nofollow', $this->client->getResponse()->headers->get('X-Robots-Tag'), $page);
+        self::assertCount(1, $this->client->getCrawler()->filter('meta[name="robots"][content="noindex, nofollow"]'), $page);
+        self::assertCount(0, $this->client->getCrawler()->filter('link[rel="canonical"]'), $page);
+    }
+
+    /**
      * @param list<int> $ticked
      */
     private function postBrief(string $nr, array $ticked): Crawler
