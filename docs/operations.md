@@ -47,7 +47,8 @@ front of php-fpm; `make release-check` boots the tarball with `APP_ENV=prod`.
 
 ## First-time setup
 
-Once, in this order. Steps 1 to 4 need root (`sudo`); everything after runs as `deploy`.
+Once, in this order. Steps 1 to 4 need root (`sudo`); 4a, 8 and 10 run in web consoles, 6 and 7 start on the Mac;
+everything else runs as `deploy`.
 
 ### 1. VPS and DNS
 
@@ -133,6 +134,35 @@ whose nginx file was copied before F16 lacks the `error_page` line: copy the fil
 **Logs.** nginx logs to `/var/log/nginx/`. Keep 14 days, as the privacy page says: in
 `/etc/logrotate.d/nginx` set `daily` and `rotate 13` (the live file plus 13 rotated ones).
 
+### 4a. Neon project
+
+Before the probe, which needs the database. In Neon's console, no root on the VPS needed:
+
+- **Create the project** `deine-eventlocation` with **Postgres 18** (the major of local dev and CI) in
+  **AWS Europe Central 1 (Frankfurt), `aws-eu-central-1`** (D26). Neither can be changed later: a
+  wrong one means a new project. Plan and compute size: [Neon plan](#neon-plan) (autoscaling 0.25 to
+  0.5 CU, scale to zero after 5 minutes).
+- **Database and role:** the project's default database and its owner role are enough (one role for
+  the app, migrations and the dump). The role owns the database, so the first deploy's migration can
+  run `CREATE EXTENSION` itself.
+- **Extensions:** the baseline migration creates `pg_trgm`, `unaccent`, `cube` and `earthdistance`
+  (`earthdistance` needs `cube`); create nothing by hand. Check in the SQL editor that Neon offers
+  all four: `SELECT name FROM pg_available_extensions WHERE name IN ('pg_trgm', 'unaccent', 'cube',
+  'earthdistance');` must return four rows.
+- **Connection string:** the console's «Connect» dialog shows two. With «Connection pooling» on, the
+  host carries `-pooler` (PgBouncer in transaction mode); **off is the direct string, and the direct
+  string goes into `DATABASE_URL`** and `NEON_BACKUP_URL`. The site opens few connections (one
+  php-fpm pool of 8, plus cron), migrations and `pg_dump` want a session of their own, and a pooler
+  in transaction mode would silently break any session-level lock or setting (the advisory locks are
+  transaction-level today). Edit the string as [`.env.local`](#envlocal) says (`serverVersion=18`,
+  no `channel_binding`, no `%`); the probe in step 5 takes the same host, database, user and password
+  as a PDO DSN. The password goes into the password manager.
+- **Branches and backup:** production lives on the project's default branch; run nothing on it by
+  hand. Local dev and CI use Docker, so no dev branch is needed. A point-in-time restore makes a new
+  branch from the restore window, so set the window (history retention) to the plan's maximum. The
+  dump outside Neon is `backup.yaml`, switched on later: [When to enable the nightly
+  backup](#when-to-enable-the-nightly-backup).
+
 ### 5. Probe
 
 Copy `deploy/probe.sh` to the server and run it as `deploy` with a Neon test DSN in `~/probe.env`
@@ -203,6 +233,35 @@ Append the line of `deploy/authorized_keys.example`, with the public key of `dep
 5. The first staff account: `cd <root>/current && php bin/console app:admin:create-user <e-mail> --role=admin`
    (it asks for the password twice), then log in at `/admin` and enrol the second factor.
 6. Content: [Content](#content). Then add the Sentry monitors and the backup schedule.
+
+### 10. Search Console (after go-live)
+
+Once the first content is online and the owner wants Google in:
+
+1. **Lift the pre-launch block.** Until then `seo.robots_block_google: true` (`config/services.yaml`)
+   makes `/robots.txt` start with `User-agent: Googlebot` + `Disallow: /`: Google crawls nothing,
+   other crawlers keep the normal rules, and no page sends a `noindex` because of it. A PR on `main`
+   sets it to `false` and drops the Googlebot group from `RobotsTxtTest::test_the_exact_body`; then
+   deploy (the deploy empties the HTTP cache, so `/robots.txt` changes at once). Check:
+   `curl -s https://deine-eventlocation.ch/robots.txt` starts with `User-agent: *`, has no `Googlebot`
+   and ends with `Sitemap: https://deine-eventlocation.ch/sitemap.xml`.
+2. **Verify the domain.** In Google Search Console add a **Domain property** `deine-eventlocation.ch`
+   (it covers `https`, `http` and `www`) and put the `google-site-verification=…` TXT record it shows
+   into the Infomaniak DNS zone of `deine-eventlocation.ch`; keep the record, removing it unverifies
+   the property. `deineeventlocation.ch` only redirects and needs no property.
+3. **Submit the sitemap:** Sitemaps -> `https://deine-eventlocation.ch/sitemap.xml` (the index; it
+   names `sitemap-pages.xml` and the `sitemap-venues-N.xml` files). Its status must become "Success"
+   with the venue count; "Couldn't fetch" or "Blocked by robots.txt" means step 1 is not live.
+4. **Ask for the first crawl:** URL inspection of the home page and one venue page, "Request
+   indexing" on each.
+5. **After a week:** under Pages, "Blocked by robots.txt" lists only the `Disallow` paths of
+   `RobotsController` (Merkliste, `/konto`, `/telefon`, …). "Excluded by 'noindex' tag" is expected
+   for private pages (`/sammelanfrage`, the feedback pages, `/inhalt-melden`, preview links), filtered
+   result lists, an empty `/kurzfristig-frei`, and entries and landing pages below their index gates
+   (`VenueIndexGate`: facts unchecked or no description; `LandingQualityGate`); any other page there
+   is a finding.
+
+Search Console adds no script to the site, so `/datenschutz` stays as it is.
 
 ## Deploy, purge, rollback
 
@@ -531,7 +590,7 @@ on.
 | Secrets | `shared/.env.local` | A copy in the owner's password manager |
 | Code | Every release is a commit on `main`; the VPS keeps the last three | Rebuild with a deploy |
 
-The releases hold no state, so a lost VPS is: setup steps 1 to 8, one deploy, the media restore
+The releases hold no state, so a lost VPS is: setup steps 1 to 8 except 4a (Neon keeps the database), one deploy, the media restore
 below. Never run `pg_dump` on the server: Debian's client is not Neon's major. The dump runs in
 Actions with a Postgres 18 image.
 

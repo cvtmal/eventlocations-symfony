@@ -72,7 +72,7 @@ final class OwnerReportMailTest extends KernelTestCase
             'Hinterlege eine E-Mail-Adresse für Anfragen, damit Interessierte dich direkt erreichen.',
             'button: E-Mail-Adresse ergänzen',
             'Dein Tarif: Gratis-Eintrag, ohne Ablaufdatum.',
-            'link: Mehr Fotos, Räume und Zahlen gibt es mit Pro: | Pro anfragen',
+            'link: Mehr Fotos, Räume und Zahlen gibt es mit Pro. | Pro anfragen',
             'button: Eintrag bearbeiten',
             'link: Du möchtest den Monatsbericht für «Alpstube Seeblick» nicht mehr? | Abbestellen',
         ], $this->sections($mail));
@@ -188,7 +188,7 @@ final class OwnerReportMailTest extends KernelTestCase
             'facts: Besuche | Interaktionen | Zugestellte Anfragen | Qualifizierte Anfragen',
             'Besuche zählen jede Person einmal pro Tag. Interaktionen sind Klicks auf deine Kontaktangaben und Einträge auf der Merkliste. Qualifiziert sind zugestellte Anfragen, deren Anlass und Gästezahl zu deinem Eintrag passen und deren Termin höchstens zwei Jahre entfernt ist. Doppelte Anfragen, Spam und Tests zählen nicht. Stand: 1. November 2026',
             'Dein Tarif: Gratis-Eintrag, ohne Ablaufdatum.',
-            'link: Mehr Fotos, Räume und Zahlen gibt es mit Pro: | Pro anfragen',
+            'link: Mehr Fotos, Räume und Zahlen gibt es mit Pro. | Pro anfragen',
             'button: Eintrag bearbeiten',
             'link: Du möchtest den Monatsbericht für «Alpstube Seeblick» nicht mehr? | Abbestellen',
         ], $sections);
@@ -216,6 +216,12 @@ final class OwnerReportMailTest extends KernelTestCase
             $optOut,
         ], $links);
         self::assertStringContainsString('Abbestellen: '.$optOut, (string) $mail->getTextBody());
+        // F16: one «Pro anfragen» label, after a full stop, not «Pro: Pro anfragen:».
+        self::assertStringContainsString('Mehr Fotos, Räume und Zahlen gibt es mit Pro. Pro anfragen: '.$edit.'#location-plan', (string) $mail->getTextBody());
+        foreach ([(string) $mail->getHtmlBody(), (string) $mail->getTextBody()] as $body) {
+            self::assertStringNotContainsString('Pro: Pro', $body);
+        }
+        self::assertSame('Pro anfragen', (new Crawler((string) $mail->getHtmlBody()))->filter('a.hl-btn[href$="#location-plan"]')->text());
     }
 
     private function assertHonest(Email $mail, Venue $venue): void

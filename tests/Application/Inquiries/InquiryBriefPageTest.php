@@ -77,6 +77,27 @@ final class InquiryBriefPageTest extends WebTestCase
         self::assertCount(1, $crawler->filter('script[src*="/js/inquiry"]'), 'inquiry.js moves the caret of the prefilled message (F16 N4)');
     }
 
+    public function test_a_venue_without_an_inquiry_address_is_named_only_as_a_link_to_its_page(): void
+    {
+        $a = $this->venue('haus-a', 'Haus A');
+        $b = $this->venue('haus-b', 'Haus B');
+        $noAddress = VenueFactory::createOne(['name' => 'Ohne Adresse']);
+        VenueTranslationFactory::createOne(['venue' => $noAddress, 'slug' => 'ohne-adresse', 'summary' => 'Ein Ort für Anlässe.']);
+
+        $crawler = $this->client->request('GET', '/sammelanfrage?nr='.implode(',', [$a->number(), $noAddress->number(), $b->number()]));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(
+            [(string) $a->number(), (string) $b->number()],
+            $crawler->filter('input[type="checkbox"][name="inquiry[venues][]"]')->each(static fn (Crawler $box): string => (string) $box->attr('value')),
+            'never a choice',
+        );
+        $single = $crawler->filter('.brief-page__single');
+        self::assertStringContainsString('Nur einzeln anfragbar', $single->text());
+        self::assertStringContainsString('Ohne Adresse', $single->text());
+        self::assertCount(1, $single->filter('a[href="/eventlokal/ohne-adresse"]'), 'its page, which has no #anfrage');
+    }
+
     public function test_fewer_than_two_offered_venues_show_no_form(): void
     {
         $open = $this->venue('offen', 'Offen');
@@ -217,6 +238,31 @@ final class InquiryBriefPageTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString('Bitte hake zwei bis fünf Locations an.', $crawler->filter('.brief-page__venues')->text());
         self::assertSame('-1', $crawler->filter('.inquiry-form__summary[role="alert"][data-inquiry-focus]')->attr('tabindex'), 'inquiry.js focuses the summary, so it is read');
+        $this->assertNothingStored();
+    }
+
+    public function test_the_summary_links_each_invalid_field_in_form_order(): void
+    {
+        $a = $this->venue('alpha-saal', 'Alpha Saal');
+        $b = $this->venue('beta-haus', 'Beta Haus');
+
+        $crawler = $this->client->request(
+            'POST',
+            '/sammelanfrage?nr='.$a->number().','.$b->number(),
+            InquiryFormFields::valid(['venues' => [(string) $a->number()], 'lastName' => '', 'eventType' => '']),
+            [],
+            ['HTTP_SEC_FETCH_SITE' => 'same-origin'],
+        );
+
+        self::assertResponseStatusCodeSame(422);
+        $links = $crawler->filter('.inquiry-form__summary li a');
+        $first = (string) $crawler->filter('input[name="inquiry[venues][]"]')->first()->attr('id');
+        self::assertSame(
+            ['#'.$first, '#inquiry_eventType', '#inquiry_lastName'],
+            $links->each(static fn (Crawler $link): string => (string) $link->attr('href')),
+            'the venue list first, as the page shows it',
+        );
+        self::assertSame(['An diese Locations', 'Anlass', 'Name'], $links->each(static fn (Crawler $link): string => $link->text()));
         $this->assertNothingStored();
     }
 

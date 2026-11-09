@@ -1,0 +1,44 @@
+{#
+    The error summary of an inquiry form re-render (single form and brief page, F16): the sentence, the form's own
+    errors, then each invalid field as a link to it, in the order _fields.html.twig (and the brief's venue list before
+    it) shows them, named by its label. A fragment link to a focusable field moves the focus there, so no JS is needed.
+    inquiry.js focuses the summary itself (`data-inquiry-focus`). Params: form (an InquiryType view), anchor (its id, or null).
+#}
+{%- set fields = [
+    ['eventType', 'form.field.event_type'],
+    ['guests', 'form.field.guests'],
+    ['eventDate', 'form.field.event_date'],
+    ['dateFlexible', 'form.field.date_flexible'],
+    ['startTime', 'form.field.start_time'],
+    ['cateringWish', 'form.field.catering_wish'],
+    ['budgetChf', 'form.field.budget'],
+    ['message', 'form.field.message'],
+    ['firstName', 'form.field.first_name'],
+    ['lastName', 'form.field.last_name'],
+    ['company', 'form.field.company'],
+    ['email', 'form.field.email'],
+    ['phone', 'form.field.phone'],
+] -%}
+{%- set links = [] -%}
+{%- set venues = form.children.venues ?? null -%}
+{%- if venues is not null and venues.vars.errors|length > 0 and venues.children|length > 0 -%}
+    {%- set links = links|merge([{id: (venues.children|first).vars.id, label: 'brief.choose'|trans({}, 'inquiries')}]) -%}
+{%- endif -%}
+{%- for field in fields -%}
+    {%- set child = form.children[field[0]] ?? null -%}
+    {%- if child is not null and child.vars.errors|length > 0 -%}
+        {%- set links = links|merge([{id: child.vars.id, label: field[1]|trans({}, 'inquiries')}]) -%}
+    {%- endif -%}
+{%- endfor -%}
+<div class="inquiry-form__summary" role="alert"{% if anchor %} id="{{ anchor }}"{% endif %} tabindex="-1" data-inquiry-focus>
+    {{ icon('info') }}
+    <div>
+        <p>{{ 'form.error.summary'|trans({}, 'inquiries') }}</p>
+        {% if form.vars.errors|length > 0 or links is not empty %}
+            <ul>
+                {%- for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor -%}
+                {%- for link in links %}<li><a href="#{{ link.id }}">{{ link.label }}</a></li>{% endfor -%}
+            </ul>
+        {% endif %}
+    </div>
+</div>

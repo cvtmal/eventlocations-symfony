@@ -61,6 +61,12 @@
         padding: 0;
         list-style: none;
     }
+
+    // F16: each invalid field is a link to it, in the summary's own colour (its contrast is already checked).
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
 }
 
 .inquiry-form__form {
@@ -87,6 +93,12 @@
 .inquiry-form__field,
 .inquiry-form__date {
     min-width: 0;
+}
+
+// A summary link (F16) focuses the field itself: keep its label above it in view, below the sticky nav.
+.inquiry-form__field :is(input, select, textarea),
+.inquiry-form__check input {
+    scroll-margin-top: 2.5rem;
 }
 
 // "Datum ist flexibel" under the date: a native checkbox, its label the click target.

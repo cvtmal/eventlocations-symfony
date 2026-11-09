@@ -7,7 +7,8 @@ namespace App\Search\ReadModel;
 use App\Venues\ReadModel\LastMinuteOfferView;
 
 /**
- * One venue on the page «Kurzfristig frei» (G14): its card and its live offers, soonest first.
+ * One venue on the page «Kurzfristig frei» (G14): its card and its live offers, soonest first. `inquirable`: it has an
+ * inquiry address, so its detail page has the form at `#anfrage` (F16).
  */
 final readonly class LastMinuteEntry
 {
@@ -17,6 +18,7 @@ final readonly class LastMinuteEntry
     public function __construct(
         public ListingCard $card,
         public array $offers,
+        public bool $inquirable,
     ) {
     }
 }

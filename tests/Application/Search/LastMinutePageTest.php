@@ -63,8 +63,19 @@ final class LastMinutePageTest extends WebTestCase
         self::assertStringContainsString('Seminarpauschale ab CHF 89', $entries->text());
         self::assertStringContainsString('ab 20 Personen', $entries->text());
         self::assertStringContainsString('Ganze Location', $entries->text());
-        self::assertSame('/eventlokal/seehaus#anfrage', $entries->filter('a.btn')->last()->attr('href'));
+        self::assertSame('/eventlokal/seehaus', $entries->filter('a.btn')->last()->attr('href'), 'no inquiry address: its page, which has no #anfrage (F16)');
         self::assertStringNotContainsString('Nur mit Pro', $crawler->filter('main')->text());
+    }
+
+    public function test_the_link_opens_the_form_of_a_venue_with_an_inquiry_address(): void
+    {
+        $pro = DetailVenues::minimal('seehaus', 'Seehaus Pro', KnownTiers::PRO);
+        $this->connection->update('venues', ['inquiry_email' => 'info@seehaus.example'], ['id' => $pro->id()]);
+        $this->offer($pro);
+
+        $crawler = $this->client->request('GET', '/kurzfristig-frei');
+
+        self::assertSame('/eventlokal/seehaus#anfrage', $crawler->filter('.last-minute__entry a.btn')->last()->attr('href'));
     }
 
     public function test_empty_it_says_so_links_to_the_listing_and_is_noindex(): void

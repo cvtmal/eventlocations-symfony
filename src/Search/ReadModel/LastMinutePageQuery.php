@@ -42,7 +42,7 @@ final class LastMinutePageQuery
 
         $rows = $this->connection->fetchAllAssociative(
             <<<SQL
-                SELECT v.number, o.id, o.starts_on, o.ends_on, o.event_types, o.price_text, o.min_guests, o.terms, rt.name AS room_name
+                SELECT v.number, v.inquiry_email IS NOT NULL AS inquirable, o.id, o.starts_on, o.ends_on, o.event_types, o.price_text, o.min_guests, o.terms, rt.name AS room_name
                 FROM last_minute_offers o
                 JOIN venues v ON v.id = o.venue_id
                 {$translation}
@@ -54,8 +54,10 @@ final class LastMinutePageQuery
         );
 
         $offers = [];
+        $inquirable = [];
         foreach ($rows as $row) {
             \assert(\is_int($row['number']));
+            $inquirable[$row['number']] = (bool) $row['inquirable'];
             \assert(null === $row['room_name'] || \is_string($row['room_name']));
             $offers[$row['number']][] = LastMinuteOfferView::fromRow($row, $row['room_name']);
         }
@@ -65,7 +67,7 @@ final class LastMinutePageQuery
 
         $entries = [];
         foreach ($this->listing->cardsByNumbers(array_keys($offers), $locale, 1) as $card) {
-            $entries[] = new LastMinuteEntry($card, $offers[$card->number]);
+            $entries[] = new LastMinuteEntry($card, $offers[$card->number], $inquirable[$card->number]);
         }
 
         return $entries;

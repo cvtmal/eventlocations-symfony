@@ -88,6 +88,11 @@ final class VenuePreviewLinkTest extends WebTestCase
         self::assertSelectorNotExists('script[type="application/ld+json"]');
         self::assertSelectorNotExists('meta[property="og:title"]');
         self::assertSelectorNotExists('form.inquiry-form__form');
+        self::assertSame(
+            'Anfragen sind möglich, sobald der Eintrag übernommen und veröffentlicht ist.',
+            $crawler->filter('#anfrage')->text(),
+            'the note stays without an inquiry address, unlike the public page (F16)',
+        );
         self::assertSelectorExists('.venue-placeholder', 'without a photo, the neutral placeholder');
     }
 

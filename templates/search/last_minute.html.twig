@@ -27,7 +27,7 @@
                         <li>{{ include('venues/_last_minute_offer.html.twig', {offer: offer}, with_context = false) }}</li>
                         {%- endfor %}
                     </ul>
-                    <a class="btn btn--secondary" href="{{ path('venue_show', {slug: entry.card.slug}) }}#anfrage">{{ 'last_minute.inquire'|trans({}, 'search') }}<span class="visually-hidden"> {{ 'last_minute.inquire_at'|trans({name: entry.card.name}, 'search') }}</span></a>
+                    <a class="btn btn--secondary" href="{{ path('venue_show', {slug: entry.card.slug}) }}{% if entry.inquirable %}#anfrage{% endif %}">{{ 'last_minute.inquire'|trans({}, 'search') }}<span class="visually-hidden"> {{ 'last_minute.inquire_at'|trans({name: entry.card.name}, 'search') }}</span></a>
                 </div>
             </li>
             {%- endfor %}

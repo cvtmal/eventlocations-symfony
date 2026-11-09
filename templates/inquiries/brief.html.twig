@@ -2,7 +2,7 @@
     The brief page /sammelanfrage (F13, InquiryBriefController). Params: numbers (the asked `nr`), offered and not_offered
     (BriefCandidate lists), form (null when fewer than two venues are offered, or after a delivery that reached none),
     undelivered (the G7 «gespeichert» state). The ticked checkboxes are the consent step: each venue is named there, and
-    the brief goes to exactly those. Not offered venues are links to their own inquiry form, never a choice. Private:
+    the brief goes to exactly those. Not offered venues are links to their own inquiry form (to their page without an inquiry address), never a choice. Private:
     robots `noindex`, no canonical, no stats beacon, no session.
 #}
 {% extends 'base.html.twig' %}
@@ -34,16 +34,7 @@
                 <p class="brief-page__lead">{{ 'brief.lead'|trans({}, 'inquiries') }}</p>
                 {# A refused brief rebuilds the form unsubmitted, so `valid` stays true: its own error opens the summary too. #}
                 {% if not form.vars.valid or form.vars.errors|length > 0 %}
-                    {# inquiry.js focuses it, so a screen reader reads it (F16). #}
-                    <div class="inquiry-form__summary" role="alert" tabindex="-1" data-inquiry-focus>
-                        {{ icon('info') }}
-                        <div>
-                            <p>{{ 'form.error.summary'|trans({}, 'inquiries') }}</p>
-                            {% if form.vars.errors|length > 0 %}
-                                <ul>{% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
-                            {% endif %}
-                        </div>
-                    </div>
+                    {{ include('inquiries/_error_summary.html.twig', {form: form, anchor: null}, with_context = false) }}
                 {% endif %}
                 {{ form_start(form, {attr: {class: 'inquiry-form__form'}}) }}
                     {% set venue_errors = form.venues.vars.errors %}
@@ -71,7 +62,7 @@
                     <p>{{ 'brief.not_offered'|trans({}, 'inquiries') }}</p>
                     <ul>
                         {% for venue in not_offered %}
-                            <li>{{ venue.name }}{% if venue.town %}, {{ venue.town }}{% endif %}: <a href="{{ path('venue_show', {slug: venue.slug}) }}#anfrage">{{ 'brief.ask_single'|trans({}, 'inquiries') }}</a></li>
+                            <li>{{ venue.name }}{% if venue.town %}, {{ venue.town }}{% endif %}: <a href="{{ path('venue_show', {slug: venue.slug}) }}{% if venue.inquirable %}#anfrage{% endif %}">{{ 'brief.ask_single'|trans({}, 'inquiries') }}</a></li>
                         {% endfor %}
                     </ul>
                 </section>

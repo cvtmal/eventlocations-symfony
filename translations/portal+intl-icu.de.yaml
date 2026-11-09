@@ -653,7 +653,7 @@ report:
             cancelled: 'Dein Tarif {tier}: Gekündigt, läuft bis {end, date, ::dMMMMy}.'
             free: 'Dein Tarif: Gratis-Eintrag, ohne Ablaufdatum.'
         pro_line:
-            text: 'Mehr Fotos, Räume und Zahlen gibt es mit Pro:'
+            text: 'Mehr Fotos, Räume und Zahlen gibt es mit Pro.'
             link: Pro anfragen
         edit: Eintrag bearbeiten
         opt_out:

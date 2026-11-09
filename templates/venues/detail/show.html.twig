@@ -2,7 +2,7 @@
     Venue detail page (#8, DP-1 to DP-16). Sections in the original's order (research D2).
     Slots for later cycles (final names, see CLAUDE.md "Venues"):
       - {% block map %} at the end of <section id="standort"> (#15 fills it with venue_map(); nothing without coordinates), which renders only on venue.hasLocation();
-      - {% block inquiry %} inside <section id="anfrage"> (#14 fills it with inquiry_form(); `inquiry` is the bound form of a POST re-render, `inquiry_undelivered` its G7 "stored, not delivered" state, and no whitespace, so :empty hides the section);
+      - {% block inquiry %} inside <section id="anfrage">, rendered only with venue.inquiryEmail (F16; G5's preview sets `inquiry_note_always`) (#14 fills it with inquiry_form(); `inquiry` is the bound form of a POST re-render, `inquiry_undelivered` its G7 "stored, not delivered" state);
       - {% block google_rating %} after the head (#53 fills it with venue_google_rating(); nothing without a place ID or when hidden; the previews override it with a note);
       - {% block google_photos %} beside the placeholder of a venue without public photos (D12, places-photos: venue_google_photos(); every preview overrides it empty);
       - the Merken button in _actions via favorites/_merken_button.html.twig (#7/#13).
@@ -57,7 +57,8 @@
             {% endif %}
             {% if venue.hasContact() %}{{ include('venues/detail/_contact.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.documents is not empty %}{{ include('venues/detail/_documents.html.twig', {venue: venue}, with_context = false) }}{% endif %}
-            <section id="anfrage" class="venue-inquiry">{% block inquiry %}{{ inquiry_form(venue, inquiry ?? null, inquiry_undelivered ?? false) }}{% endblock %}</section>
+            {# F16: no section without an inquiry address (online is possible: the publish rule does not ask for one), so no link points at it. G5's preview link keeps its note (`inquiry_note_always`). #}
+            {% if venue.inquiryEmail or (inquiry_note_always ?? false) %}<section id="anfrage" class="venue-inquiry">{% block inquiry %}{{ inquiry_form(venue, inquiry ?? null, inquiry_undelivered ?? false) }}{% endblock %}</section>{% endif %}
             <p class="venue-report"><a href="{{ path('venue_report', {location: venue.number}) }}" rel="nofollow">{{ 'report.detail_link'|trans({}, 'venues') }}</a></p>
         </div>
     </div>

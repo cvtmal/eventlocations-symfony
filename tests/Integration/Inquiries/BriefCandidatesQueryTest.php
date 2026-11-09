@@ -71,16 +71,27 @@ final class BriefCandidatesQueryTest extends KernelTestCase
         self::assertSame([true, true, true], array_map(static fn (BriefCandidate $x): bool => $x->offered, $candidates));
     }
 
-    public function test_leaves_out_what_cannot_get_any_inquiry(): void
+    public function test_leaves_out_what_is_not_online(): void
     {
         $kept = $this->venue('bleibt');
         $unpublished = $this->venue('versteckt', status: VenueStatus::Unpublished);
-        $noAddress = VenueFactory::createOne();
-        VenueTranslationFactory::createOne(['venue' => $noAddress, 'slug' => 'ohne-adresse']);
 
-        $candidates = $this->candidates([$unpublished->number(), $noAddress->number(), $kept->number(), 999999999]);
+        $candidates = $this->candidates([$unpublished->number(), $kept->number(), 999999999]);
 
         self::assertSame([$kept->number()], array_map(static fn (BriefCandidate $x): int => $x->number, $candidates));
+    }
+
+    public function test_a_venue_without_an_inquiry_address_is_named_but_not_offered(): void
+    {
+        $noAddress = VenueFactory::createOne();
+        VenueTranslationFactory::createOne(['venue' => $noAddress, 'slug' => 'ohne-adresse']);
+        $open = $this->venue('offen');
+
+        $candidates = $this->candidates([$noAddress->number(), $open->number()]);
+
+        self::assertSame([$noAddress->number(), $open->number()], array_map(static fn (BriefCandidate $x): int => $x->number, $candidates));
+        self::assertSame([false, true], array_map(static fn (BriefCandidate $x): bool => $x->offered, $candidates));
+        self::assertSame([false, true], array_map(static fn (BriefCandidate $x): bool => $x->inquirable, $candidates));
     }
 
     public function test_an_opted_out_venue_is_named_but_not_offered(): void
@@ -93,6 +104,7 @@ final class BriefCandidatesQueryTest extends KernelTestCase
         $candidates = $this->candidates([$optedOut->number(), $open->number()]);
 
         self::assertSame([false, true], array_map(static fn (BriefCandidate $x): bool => $x->offered, $candidates));
+        self::assertSame([true, true], array_map(static fn (BriefCandidate $x): bool => $x->inquirable, $candidates));
     }
 
     public function test_a_venue_at_todays_cap_is_named_but_not_offered(): void

@@ -13,6 +13,7 @@ use App\Tests\Support\Inquiries\SubmitsInquiries;
 use App\Tests\Support\Venues\DetailVenues;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Log\Logger;
 use Symfony\Component\Mime\Email;
@@ -190,6 +191,26 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertSame([], $this->rows());
         self::assertEmailCount(0);
         self::assertSame([], $received->ids);
+    }
+
+    public function test_the_summary_links_each_invalid_field_in_form_order(): void
+    {
+        DetailVenues::full($this->em);
+
+        $crawler = $this->post(self::SLUG, InquiryFormFields::valid(['email' => 'keine-adresse', 'firstName' => '', 'guests' => '', 'message' => '']));
+
+        self::assertResponseStatusCodeSame(422);
+        $links = $crawler->filter('#anfrage-hinweis li a');
+        self::assertSame(
+            ['#inquiry_guests', '#inquiry_message', '#inquiry_firstName', '#inquiry_email'],
+            $links->each(static fn (Crawler $link): string => (string) $link->attr('href')),
+            'in the order the form shows them',
+        );
+        self::assertSame(['Anzahl Gäste', 'Deine Nachricht', 'Vorname', 'E-Mail'], $links->each(static fn (Crawler $link): string => $link->text()));
+        foreach ($links->each(static fn (Crawler $link): string => (string) $link->attr('href')) as $href) {
+            self::assertCount(1, $crawler->filter($href), 'each link has its field');
+        }
+        self::assertStringContainsString('Bitte prüfe deine Angaben.', $crawler->filter('#anfrage-hinweis p')->text());
     }
 
     public function test_a_re_render_carries_a_fresh_fill_time_so_it_can_be_sent_again(): void

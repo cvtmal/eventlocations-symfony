@@ -10,17 +10,7 @@
         <li>{{ icon('check') }}<span>{{ 'form.promise.noncommittal'|trans({}, 'inquiries') }}</span></li>
         <li>{{ icon('check') }}<span>{{ 'form.promise.direct'|trans({}, 'inquiries') }}</span></li>
     </ul>
-    {% if not form.vars.valid %}
-        <div class="inquiry-form__summary" role="alert" id="{{ anchor }}" tabindex="-1" data-inquiry-focus>
-            {{ icon('info') }}
-            <div>
-                <p>{{ 'form.error.summary'|trans({}, 'inquiries') }}</p>
-                {% if form.vars.errors|length > 0 %}
-                    <ul>{% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
+    {% if not form.vars.valid %}{{ include('inquiries/_error_summary.html.twig', {form: form, anchor: anchor}, with_context = false) }}{% endif %}
     {{ form_start(form, {attr: {class: 'inquiry-form__form'}}) }}
         {{ include('inquiries/_fields.html.twig', {form: form}, with_context = false) }}
         {{ form_rest(form) }}
