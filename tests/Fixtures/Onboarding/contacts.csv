@@ -1,0 +1,5 @@
+location,address,email,phone,website,first_name,last_name,position,contact_email,contact_phone,cohort,channel,basis,campaign,venue
+Seehof Muster AG,"Seestrasse 10, 8712 Stäfa",info@seehof-muster.example,044 555 01 01,https://seehof-muster.example,Lena,Beispiel,Geschäftsführerin,lena@seehof-muster.example,079 555 01 02,A,postal,one_to_one,brief-2026-11,
+Halle Erfunden GmbH,"Industriestrasse 5, 4051 Basel",kontakt@halle-erfunden.example,,,,,,,,B,email,customer,,
+Gesperrt Beispiel,,nein@gesperrt.example,,,,,,,,,,,,
+Kaputt,,keine-adresse,,,Max,,,,,E,fax,,,

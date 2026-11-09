@@ -7,9 +7,24 @@
     "additionalProperties": false,
     "required": [
         "name",
-        "capacity",
-        "translations"
+        "capacity"
     ],
+    "if": {
+        "description": "A draft (status unpublished) may come without texts; every other venue needs translations.",
+        "properties": {
+            "status": {
+                "const": "unpublished"
+            }
+        },
+        "required": [
+            "status"
+        ]
+    },
+    "else": {
+        "required": [
+            "translations"
+        ]
+    },
     "definitions": {
         "capacity_range": {
             "type": "object",

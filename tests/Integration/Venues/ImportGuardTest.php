@@ -384,7 +384,8 @@ final class ImportGuardTest extends KernelTestCase
     private function importedAndEdited(): void
     {
         $this->content->venue(self::KEY);
-        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+        // Online (F14: an imported entry is a draft until staff check it), so a prune has something to keep.
+        self::assertSame(Command::SUCCESS, $this->importOnline(self::KEY), $this->display());
         $this->edit(self::KEY);
     }
 

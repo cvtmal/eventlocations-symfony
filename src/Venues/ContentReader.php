@@ -132,7 +132,7 @@ final class ContentReader
             $errors[] = '/address/street: needs zip and town';
         }
 
-        $errors = [...$errors, ...$this->localeErrors('/translations', $data->translations)];
+        $errors = [...$errors, ...$this->localeErrors('/translations', $data->translations ?? null)];
         foreach ($data->photos ?? [] as $i => $photo) {
             $errors = [...$errors, ...$this->localeErrors('/photos/'.$i.'/alt', $photo->alt ?? null)];
         }
@@ -290,8 +290,9 @@ final class ContentReader
             throw InvalidContent::withMessages($key, $errors);
         }
 
+        // A draft (status unpublished) may come without texts (F14); the import then keeps an empty default-locale row.
         $translations = [];
-        foreach (get_object_vars($data->translations) as $locale => $text) {
+        foreach (get_object_vars($data->translations ?? new \stdClass()) as $locale => $text) {
             $translations[$locale] = [
                 'summary' => $text->summary,
                 'description' => $text->description ?? null,

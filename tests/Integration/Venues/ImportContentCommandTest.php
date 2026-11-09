@@ -34,7 +34,8 @@ final class ImportContentCommandTest extends KernelTestCase
 
         $venue = $this->venueRow('schloss-beispiel');
         self::assertIsArray($venue);
-        self::assertSame(['Schloss Beispiel', 'published', 180, 20, '8001', 'zh'], [$venue['name'], $venue['status'], $venue['capacity_max'], $venue['capacity_min'], $venue['zip'], $venue['canton_code']]);
+        // F14 (D54): nobody checked the facts of a new imported venue, so it lands as a draft (ImportDraftTest).
+        self::assertSame(['Schloss Beispiel', 'unpublished', 180, 20, '8001', 'zh'], [$venue['name'], $venue['status'], $venue['capacity_max'], $venue['capacity_min'], $venue['zip'], $venue['canton_code']]);
         self::assertSame([KnownTiers::FREE, KnownTiers::FREE_ID], [$this->tierCode('schloss-beispiel'), $venue['tier_id']], 'an imported venue starts on Free; the folder has no tier');
         self::assertSame(KnownTiers::FREE, $this->tierCode('seehaus-muster'));
         self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', (string) $venue['content_hash']);
@@ -146,7 +147,7 @@ final class ImportContentCommandTest extends KernelTestCase
     public function test_a_venue_that_comes_back_from_a_removed_folder_keeps_its_tier(): void
     {
         $this->twoVenues();
-        $this->import();
+        $this->importOnline('seehaus-muster');
         $this->setTier('seehaus-muster', KnownTiers::PRO);
         $kept = $this->content->data('seehaus-muster');
         $this->content->remove('seehaus-muster');
@@ -192,6 +193,39 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $this->import(), $this->display());
 
         self::assertSame('seehaus-muster-zuerich-2', $this->connection->fetchOne('SELECT slug FROM venue_translations WHERE venue_id = ?', [$this->venueId('c-venue')]));
+    }
+
+    public function test_notes_are_listed_without_failing_the_run(): void
+    {
+        $this->content->venue('schloss-viele', ['terms' => ['suitable_for' => ['corporate_event', 'seminar', 'conference', 'workshop']]]);
+        $this->content->venue('gasthaus-ruhig', ['status' => 'unpublished']);
+
+        self::assertSame(Command::SUCCESS, $this->import(['--dry-run' => true]), $this->display());
+        self::assertStringContainsString('Held as draft: 1.', $this->display());
+        self::assertStringContainsString('Notes:', $this->display());
+        self::assertStringContainsString('schloss-viele: event_types: 4 > 3 (Free)', $this->display());
+        self::assertStringNotContainsString('gasthaus-ruhig:', $this->display(), 'a folder that asks to stay a draft is neither held nor noted');
+
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+        self::assertStringContainsString('schloss-viele: event_types: 4 > 3 (Free)', $this->display());
+    }
+
+    /** F14 (D54): a folder the draft rule keeps offline is listed with what it lacks, in a dry run too, without failing the run. */
+    public function test_drafts_held_by_the_draft_rule_are_listed(): void
+    {
+        $this->content->venue('remise-neu');
+        $this->content->venue('remise-beschrieben', ['translations' => ['de' => ['description' => 'Eine fiktive Remise mit Garten.']]]);
+
+        foreach ([['--dry-run' => true], []] as $options) {
+            self::assertSame(Command::SUCCESS, $this->import($options), $this->display());
+            self::assertStringContainsString('Held as draft: 2.', $this->display());
+            self::assertStringContainsString('Held as draft (an entry nobody answers for goes online only with checked facts and a description):', $this->display());
+            self::assertStringContainsString('remise-neu: facts, description', $this->display());
+            self::assertStringContainsString('remise-beschrieben: facts', $this->display());
+            self::assertStringNotContainsString('remise-beschrieben: facts,', $this->display());
+        }
+        self::assertSame('unpublished', $this->venueRow('remise-neu')['status'] ?? null);
+        self::assertSame('unpublished', $this->venueRow('remise-beschrieben')['status'] ?? null);
     }
 
     public function test_a_dry_run_writes_nothing_and_classifies(): void
@@ -245,13 +279,14 @@ final class ImportContentCommandTest extends KernelTestCase
         VenueTranslationFactory::createOne(['venue' => $demo, 'locale' => 'de', 'slug' => 'demo-ohne-schluessel']);
         $this->twoVenues();
         $this->content->photo('seehaus-muster', 'a.jpg', bytes: self::image(3));
-        $this->import();
+        $this->importOnline('schloss-beispiel', 'seehaus-muster');
+        $this->purger()->venues = [];
+        $this->purger()->listings = 0;
         $files = $this->fileTimes();
         $kept = $this->content->data('seehaus-muster');
 
         $number = $this->venueNumber('seehaus-muster');
         $purged = $this->purger()->venues;
-        self::assertSame(1, $this->purger()->listings);
 
         $this->content->remove('seehaus-muster');
         self::assertSame(Command::SUCCESS, $this->import(), $this->display());
@@ -260,10 +295,10 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $this->import(['--prune' => true, '--dry-run' => true]), $this->display());
         self::assertStringContainsString('1 unpublished', $this->display());
         self::assertSame('published', $this->venueRow('seehaus-muster')['status'] ?? null);
-        self::assertSame([$purged, 1], [$this->purger()->venues, $this->purger()->listings], 'neither the unchanged run nor a dry run purges');
+        self::assertSame([$purged, 0], [$this->purger()->venues, $this->purger()->listings], 'neither the unchanged run nor a dry run purges');
 
         self::assertSame(Command::SUCCESS, $this->import(['--prune' => true]), $this->display());
-        self::assertSame([[...$purged, $number], 2], [$this->purger()->venues, $this->purger()->listings], 'the unpublished venue and the listings are purged');
+        self::assertSame([[...$purged, $number], 1], [$this->purger()->venues, $this->purger()->listings], 'the unpublished venue and the listings are purged');
         $venue = $this->venueRow('seehaus-muster');
         self::assertIsArray($venue);
         self::assertSame(['unpublished', null], [$venue['status'], $venue['content_hash']]);

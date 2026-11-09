@@ -19,7 +19,9 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 final class EventlokaleCrawlTest extends TestCase
 {
     private const string BASE = 'https://www.eventlokale.ch';
-    private const string SEARCH = 'POST /api/guest/location/search/draw';
+    /** The search of the wedding category; the other category of the fixture terms is OTHER. */
+    private const string SEARCH = 'POST /api/guest/location/search/draw events=370';
+    private const string OTHER = 'POST /api/guest/location/search/draw events=371';
     private const string TERMS = 'GET /api/guest/location/all-taxonomies';
 
     private string $root;
@@ -33,7 +35,7 @@ final class EventlokaleCrawlTest extends TestCase
     {
         $this->root = sys_get_temp_dir().'/eventlokale-'.bin2hex(random_bytes(4));
         $this->clock = new MockClock('2026-11-03 10:00:00');
-        // Page 1 holds 1 and 2, page 2 holds 2 again and 3.
+        // Category 370: page 1 holds 1 and 2, page 2 holds 2 again and 3. Category 371: one page with 3.
         $this->route(self::TERMS, static fn (): MockResponse => new JsonMockResponse(EventlokalePayloads::taxonomies()));
         $this->route(self::SEARCH, ...[
             fn (): MockResponse => $this->page([1, 2], 1),
@@ -41,6 +43,7 @@ final class EventlokaleCrawlTest extends TestCase
             fn (): MockResponse => $this->page([1, 2], 1),
             fn (): MockResponse => $this->page([2, 3], 2),
         ]);
+        $this->route(self::OTHER, fn (): MockResponse => $this->page([3], 1, 1, 1));
         foreach ([1, 2, 3] as $id) {
             $this->route($this->detail($id), static fn (): MockResponse => new JsonMockResponse(EventlokalePayloads::detail($id)));
         }
@@ -50,20 +53,61 @@ final class EventlokaleCrawlTest extends TestCase
     {
         array_map('unlink', glob($this->root.'/eventlokale/venues/*') ?: []);
         array_map('unlink', glob($this->root.'/eventlokale/*.json') ?: []);
+        array_map('unlink', glob($this->root.'/owner/*') ?: []);
+        @rmdir($this->root.'/owner');
         @rmdir($this->root.'/eventlokale/venues');
         @rmdir($this->root.'/eventlokale');
         @rmdir($this->root);
     }
 
-    public function test_it_pages_the_list_dedupes_by_id_and_caches_the_terms(): void
+    public function test_it_pages_every_category_dedupes_by_id_and_caches_the_terms(): void
     {
         $result = $this->crawl(listOnly: true);
 
         $index = $this->cache()->readIndex();
         self::assertSame([1, 2, 3], array_column($index['items'], 'id'));
+        self::assertSame([1 => [370], 2 => [370], 3 => [370, 371]], $index['events']);
         self::assertSame(3, $result->listed);
-        self::assertSame(935, $result->total);
+        self::assertSame(2, $result->categories);
+        self::assertSame(935 + 1, $result->total);
         self::assertSame(EventlokalePayloads::taxonomies(), $this->cache()->readTaxonomies());
+    }
+
+    public function test_a_venue_two_categories_list_is_fetched_once(): void
+    {
+        $result = $this->crawl();
+
+        self::assertSame(3, $result->fetched);
+        self::assertSame(1, \count(array_keys($this->requested, $this->detail(3), true)));
+    }
+
+    public function test_a_run_stopped_in_one_category_resumes_with_the_next_one(): void
+    {
+        $this->route(self::OTHER, static fn (): MockResponse => new MockResponse('', ['http_code' => 500]));
+
+        $result = $this->crawl();
+
+        self::assertSame(1, $result->failed);
+        self::assertSame(1, $result->categories);
+        self::assertSame([self::TERMS, self::SEARCH, self::SEARCH, self::OTHER], $this->requested);
+
+        $this->route(self::OTHER, fn (): MockResponse => $this->page([3], 1, 1, 1));
+        $this->requested = [];
+        $result = $this->crawl();
+
+        self::assertSame([self::OTHER, $this->detail(1), $this->detail(2), $this->detail(3)], $this->requested);
+        self::assertSame(2, $result->categories);
+        self::assertSame(3, $result->fetched);
+    }
+
+    public function test_the_old_wedding_list_is_ignored(): void
+    {
+        mkdir($this->root.'/eventlokale', 0775, true);
+        file_put_contents($this->root.'/eventlokale/index.json', '{"total":1,"items":[{"id":99}]}');
+
+        $this->crawl(listOnly: true);
+
+        self::assertNotContains(99, array_column($this->cache()->readIndex()['items'], 'id'));
     }
 
     public function test_it_caches_every_detail_as_served(): void
@@ -96,7 +140,7 @@ final class EventlokaleCrawlTest extends TestCase
 
         $result = $this->crawl(refresh: true);
 
-        self::assertCount(1 + 2 + 3, $this->requested);
+        self::assertCount(1 + 2 + 1 + 3, $this->requested);
         self::assertSame(3, $result->fetched);
         self::assertSame(0, $result->skipped);
     }
@@ -106,14 +150,14 @@ final class EventlokaleCrawlTest extends TestCase
         $result = $this->crawl(limit: 1);
 
         self::assertSame(1, $result->fetched);
-        self::assertSame([self::TERMS, self::SEARCH, self::SEARCH, $this->detail(1)], $this->requested);
+        self::assertSame([self::TERMS, self::SEARCH, self::SEARCH, self::OTHER, $this->detail(1)], $this->requested);
     }
 
     public function test_list_only_fetches_no_detail(): void
     {
         $result = $this->crawl(listOnly: true);
 
-        self::assertSame([self::TERMS, self::SEARCH, self::SEARCH], $this->requested);
+        self::assertSame([self::TERMS, self::SEARCH, self::SEARCH, self::OTHER], $this->requested);
         self::assertSame(0, $result->fetched);
     }
 
@@ -121,8 +165,8 @@ final class EventlokaleCrawlTest extends TestCase
     {
         $this->crawl(delayMs: 1500, jitterMs: 0);
 
-        self::assertCount(6, $this->requested);
-        self::assertSame('2026-11-03 10:00:07.500000', $this->clock->now()->format('Y-m-d H:i:s.u'));
+        self::assertCount(7, $this->requested);
+        self::assertSame('2026-11-03 10:00:09.000000', $this->clock->now()->format('Y-m-d H:i:s.u'));
     }
 
     public function test_a_gone_venue_is_marked_and_skipped_on_the_next_run(): void
@@ -213,8 +257,12 @@ final class EventlokaleCrawlTest extends TestCase
 
     private function crawl(int $delayMs = 0, int $jitterMs = 0, ?int $limit = null, bool $refresh = false, bool $listOnly = false): EventlokaleCrawlResult
     {
-        $http = new MockHttpClient(function (string $method, string $url): ResponseInterface {
+        $http = new MockHttpClient(function (string $method, string $url, array $options): ResponseInterface {
             $key = $method.' '.substr($url, \strlen(self::BASE));
+            if ('POST' === $method) {
+                $body = json_decode(\is_string($options['body'] ?? null) ? $options['body'] : '{}', true, 512, \JSON_THROW_ON_ERROR);
+                $key .= ' events='.implode(',', \is_array($body) ? (array) ($body['search']['events'] ?? []) : []);
+            }
             $this->requested[] = $key;
             $queue = $this->routes[$key] ?? throw new \LogicException('No route for '.$key);
             if (\count($queue) > 1) {
@@ -247,13 +295,13 @@ final class EventlokaleCrawlTest extends TestCase
     /**
      * @param list<int> $ids
      */
-    private function page(array $ids, int $page): MockResponse
+    private function page(array $ids, int $page, int $lastPage = 2, int $total = 935): MockResponse
     {
         return new JsonMockResponse(EventlokalePayloads::searchPage(
             array_map(static fn (int $id): array => EventlokalePayloads::listItem($id), $ids),
             $page,
-            2,
-            935,
+            $lastPage,
+            $total,
         ));
     }
 

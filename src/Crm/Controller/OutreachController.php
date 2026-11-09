@@ -19,6 +19,7 @@ use App\Shared\Funnel\CampaignCode;
 use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\Command\IssueVenuePreview;
 use App\Venues\PreviewToken;
+use App\Venues\ValueObject\PreviewShortCode;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -155,7 +156,7 @@ final class OutreachController extends AbstractController
             $row->zip,
             $row->town,
             $row->cohort,
-            $this->generateUrl('venue_preview_short', ['code' => $row->shortCode], UrlGeneratorInterface::ABSOLUTE_URL),
+            $this->generateUrl('venue_preview_short', ['code' => PreviewShortCode::display($row->shortCode)], UrlGeneratorInterface::ABSOLUTE_URL),
             $this->generateUrl('venue_preview', ['token' => $tokens->forId($row->linkId)], UrlGeneratorInterface::ABSOLUTE_URL),
             $row->expiresAt->setTimezone($zone)->format('d.m.Y'),
         ];

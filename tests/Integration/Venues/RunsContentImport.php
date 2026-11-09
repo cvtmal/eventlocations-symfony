@@ -10,10 +10,12 @@ use App\Tests\Support\Content\ContentFolder;
 use App\Tests\Support\Http\RecordingHttpCachePurger;
 use App\Tests\Support\Media\MediaFiles;
 use App\Tests\Support\Media\TestImages;
+use App\Venues\Command\CheckVenueFacts;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * app:venues:import against app_test in a rolled-back transaction (each venue's own
@@ -64,6 +66,34 @@ trait RunsContentImport
     private function import(array $options = []): int
     {
         return $this->tester->execute(['path' => $this->content->path(), ...$options]);
+    }
+
+    /**
+     * F14 (D54): a new imported venue is a draft until staff checked its facts and it has a description. This does
+     * what staff would: writes a description into each folder, imports, checks the facts (`CheckVenueFacts`) and
+     * imports those folders again (`--force --only`), so each folder that asks `published` is online.
+     *
+     * @return int the exit code of the last run
+     */
+    private function importOnline(string ...$keys): int
+    {
+        foreach ($keys as $key) {
+            if (null === ($this->content->data($key)['translations']['de']['description'] ?? null)) {
+                $this->content->change($key, ['translations' => ['de' => ['description' => 'Fiktive Beschreibung der Location.']]]);
+            }
+        }
+        $code = $this->import();
+        $bus = self::getContainer()->get(MessageBusInterface::class);
+        self::assertInstanceOf(MessageBusInterface::class, $bus);
+        foreach ($keys as $key) {
+            $number = (int) $this->connection->fetchOne('SELECT number FROM venues WHERE content_key = ?', [$key]);
+            self::assertGreaterThan(0, $number, $key.' was not imported: '.$this->display());
+            $bus->dispatch(new CheckVenueFacts($number, true));
+            $code = $this->import(['--force' => true, '--only' => $key]);
+        }
+        $this->em->clear();
+
+        return $code;
     }
 
     private function display(): string

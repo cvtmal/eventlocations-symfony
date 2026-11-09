@@ -121,6 +121,9 @@ editor:
             summary: Kurztext
             main_building: Wichtigste Art der Location
             photo: Mindestens ein Foto
+            # F14 (D54): the draft rule's gaps as nouns, for the portal's «Es fehlt» frames (an entry with a manager never has them).
+            facts: Prüfung der Fakten
+            description: Beschreibung
 
 basics:
     field:
@@ -234,7 +237,12 @@ publish:
         already_published: '«{name}» war schon publiziert.'
         already_unpublished: '«{name}» war schon offline.'
     error:
-        missing: 'Noch nicht publizierbar. Es fehlt: {missing}.'
+        missing: 'Noch nicht publizierbar. {missing}.'
+        # The gaps a refusal names (PublishGapLabels): nouns after one «Es fehlt», the draft rule's gaps (F14, D54) as they are.
+        lacks: 'Es fehlt: {missing}'
+    gap:
+        facts: Fakten nicht geprüft
+        description: Beschreibung fehlt
 
 indexing:
     title: Suchmaschinen
@@ -945,7 +953,7 @@ moderation:
             keep: Die Meldung ist entschieden. Die Inhalte sind wieder sichtbar.
         already_decided: Diese Meldung ist schon entschieden.
         no_venue: Diese Meldung nennt keine Location der Website.
-        not_publishable: 'Der Eintrag kann nicht wieder online gehen. Es fehlt: {missing}'
+        not_publishable: 'Der Eintrag kann nicht wieder online gehen. {missing}'
 
 # F12 (business-model): the screen "Tarife", where staff edit the tiers.
 tiers:

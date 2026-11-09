@@ -21,11 +21,12 @@ final class EventlokaleCsvTest extends TestCase
         $cache = new EventlokaleCache($this->root);
         $cache->writeTaxonomies(EventlokalePayloads::taxonomies());
         // Out of id order on purpose: the CSV sorts.
-        $cache->writeIndex([
+        $cache->writeIndex(370, [
             EventlokalePayloads::listItem(3),
             EventlokalePayloads::listItem(1),
             EventlokalePayloads::listItem(2),
         ], 3, new \DateTimeImmutable('2026-11-03 10:00:00'));
+        $cache->writeIndex(371, [EventlokalePayloads::listItem(2)], 1, new \DateTimeImmutable('2026-11-03 10:00:00'));
         $cache->writeDetail(1, EventlokalePayloads::detail(1));
         $cache->markGone(3);
     }
@@ -56,6 +57,7 @@ final class EventlokaleCsvTest extends TestCase
         (new EventlokaleCsv())->write($this->root);
 
         self::assertSame(['1', '2', '3'], array_column($this->rows(), 'eventlokale_id'));
+        self::assertSame(['370', '370|371', '370'], array_column($this->rows(), 'events'), 'the categories that list each venue');
     }
 
     public function test_a_suppressed_address_loses_the_person_and_contact_cells_but_the_venue_stays(): void

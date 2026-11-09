@@ -106,7 +106,8 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'preview link, revoked' => ['venue_preview', 'GET', '/vorschau/{preview_gone}', 410, self::PRIVATE, null];
         yield 'preview link, unknown' => ['venue_preview', 'GET', '/vorschau/'.str_repeat('A', 44), 404, self::PRIVATE, null];
         yield 'preview short link' => ['venue_preview_short', 'GET', '/v/{preview_short}', 200, self::PRIVATE, null];
-        yield 'preview short link, unknown' => ['venue_preview_short', 'GET', '/v/'.str_repeat('A', 10), 404, self::PRIVATE, null];
+        yield 'preview short link, upper case' => ['venue_preview_short', 'GET', '/v/'.str_repeat('A', 10), 301, self::PRIVATE, null];
+        yield 'preview short link, unknown' => ['venue_preview_short', 'GET', '/v/'.str_repeat('a', 10), 404, self::PRIVATE, null];
         yield 'opt-out page' => ['crm_opt_out', 'GET', '/abmelden/{opt_out}', 200, self::PRIVATE, null];
         yield 'opt-out page, unknown' => ['crm_opt_out', 'GET', '/abmelden/'.str_repeat('A', 44), 404, self::PRIVATE, null];
         yield 'feedback page' => ['inquiry_feedback', 'GET', '/rueckmeldung/{feedback}', 200, self::PRIVATE, null];

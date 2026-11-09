@@ -104,7 +104,7 @@ final class OutreachTest extends WebTestCase
         self::assertCount(2, $records);
         self::assertSame(['Aaa Remise', 'Mia Muster', 'Bahnhofstrasse 1'], \array_slice($records[1], 0, 3));
         self::assertSame('A', $records[1][7]);
-        self::assertMatchesRegularExpression('~^http://localhost/v/[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{10}$~', $records[1][8]);
+        self::assertMatchesRegularExpression('~^http://localhost/v/[23456789abcdefghjkmnpqrstuvwxyz]{10}$~', $records[1][8]);
         self::assertMatchesRegularExpression('~^http://localhost/vorschau/[A-Za-z0-9_-]{44}$~', $records[1][9]);
         self::assertSame('19.05.2027', $records[1][10]);
         self::assertSame(

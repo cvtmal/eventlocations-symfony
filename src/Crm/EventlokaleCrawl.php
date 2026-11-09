@@ -9,9 +9,11 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
 
 /**
- * Fills the EventlokaleCache (#49): the term groups, every page of the wedding search, then one
- * detail per listed venue, one request at a time with a pause in between. A rerun fetches only
- * what is missing, so a stopped or killed run resumes where it ended.
+ * Fills the EventlokaleCache (#49): the term groups, every page of the search for each event
+ * category (F14: every category, not only weddings), then one detail per listed venue (a venue
+ * several categories list is fetched once), one request at a time with a pause in between. A
+ * rerun fetches only what is missing, a category list or a detail, so a stopped or killed run
+ * resumes where it ended.
  *
  * A 429 that survives the scoped client's own retries counts toward a streak; any answer resets
  * it, and MAX_CONSECUTIVE_429 in a row stop the run. A 429 on a list page or the terms retries
@@ -46,8 +48,10 @@ final class EventlokaleCrawl
             if ($refresh || !$cache->hasTaxonomies()) {
                 $cache->writeTaxonomies($this->sendUntilAnswered(fn (): array => $this->client->taxonomies(), $pace));
             }
-            if ($refresh || !$cache->hasIndex()) {
-                $this->fetchIndex($cache, $pace);
+            foreach ($cache->eventIds() as $eventId) {
+                if ($refresh || !$cache->hasCategoryIndex($eventId)) {
+                    $this->fetchIndex($cache, $eventId, $pace);
+                }
             }
         } catch (ExceptionInterface $exception) {
             return $this->result($cache, 0, 0, 0, self::isRateLimit($exception) ? 0 : 1, self::isRateLimit($exception));
@@ -97,14 +101,14 @@ final class EventlokaleCrawl
      *
      * @throws ExceptionInterface
      */
-    private function fetchIndex(EventlokaleCache $cache, \Closure $pace): void
+    private function fetchIndex(EventlokaleCache $cache, int $eventId, \Closure $pace): void
     {
         $now = $this->clock->now();
         $items = [];
         $total = 0;
         $lastPage = 1;
         for ($page = 1; $page <= $lastPage; ++$page) {
-            $body = $this->sendUntilAnswered(fn (): array => $this->client->search($page, $now), $pace);
+            $body = $this->sendUntilAnswered(fn (): array => $this->client->search($eventId, $page, $now), $pace);
             $data = \is_array($body['data'] ?? null) ? $body['data'] : [];
             if (1 === $page) {
                 $total = \is_int($data['total'] ?? null) ? $data['total'] : 0;
@@ -116,7 +120,7 @@ final class EventlokaleCrawl
                 }
             }
         }
-        $cache->writeIndex(array_values($items), $total, $now);
+        $cache->writeIndex($eventId, array_values($items), $total, $now);
     }
 
     /**
@@ -182,8 +186,8 @@ final class EventlokaleCrawl
 
     private function result(EventlokaleCache $cache, int $fetched, int $skipped, int $gone, int $failed, bool $rateLimited): EventlokaleCrawlResult
     {
-        $index = $cache->hasIndex() ? $cache->readIndex() : ['total' => 0, 'items' => []];
+        $index = $cache->readIndex();
 
-        return new EventlokaleCrawlResult($index['total'], \count($index['items']), $fetched, $skipped, $gone, $failed, $rateLimited);
+        return new EventlokaleCrawlResult($index['total'], \count($index['items']), $fetched, $skipped, $gone, $failed, $rateLimited, $index['categories']);
     }
 }

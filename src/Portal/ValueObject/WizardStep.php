@@ -43,9 +43,18 @@ enum WizardStep: string
         return self::Check;
     }
 
+    /**
+     * The draft rule's gaps (F14, D54) concern only entries nobody manages, so a manager's wizard never meets them and
+     * `derive()` ignores them; they still have a page here so the match stays total: the description is a text, the
+     * facts check is staff's, after the check page.
+     */
     public static function forGap(string $code): self
     {
-        return self::GAPS[$code] ?? throw new \LogicException(\sprintf('Unknown gap "%s".', $code));
+        return self::GAPS[$code] ?? match ($code) {
+            'description' => self::Texts,
+            'facts' => self::Check,
+            default => throw new \LogicException(\sprintf('Unknown gap "%s".', $code)),
+        };
     }
 
     public function next(): self

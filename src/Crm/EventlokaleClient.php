@@ -17,7 +17,6 @@ final class EventlokaleClient
     public const string BASE_URL = 'https://www.eventlokale.ch';
     /** A fixed seed keeps the shuffled order stable across pages. */
     public const string SEED = '61496132';
-    public const int WEDDING_EVENT_ID = 370;
     public const int CATEGORY_SWITZERLAND = 1;
     public const int PAGE_LENGTH = 200;
 
@@ -27,17 +26,38 @@ final class EventlokaleClient
     }
 
     /**
-     * One page of the wedding search, the paginator envelope as served.
+     * One page of the search for one event category (F14: the crawl lists every category in turn, one id per
+     * request, the shape the listing page sends), the paginator envelope as served.
      *
      * @return array<mixed>
      *
      * @throws ExceptionInterface
      */
-    public function search(int $page, \DateTimeImmutable $now): array
+    public function search(int $eventId, int $page, \DateTimeImmutable $now): array
     {
         return $this->eventlokaleClient->request('POST', '/api/guest/location/search/draw', [
-            'json' => self::searchBody($page, $now),
+            'json' => self::searchBody($eventId, $page, $now),
         ])->toArray();
+    }
+
+    /**
+     * The ids of the event categories (the `suitable_for` group of `all-taxonomies`), in the served order.
+     *
+     * @param array<mixed> $taxonomies
+     *
+     * @return list<int>
+     */
+    public static function eventIds(array $taxonomies): array
+    {
+        $group = $taxonomies['taxonomies']['suitable_for'] ?? null;
+        $ids = [];
+        foreach (\is_array($group) ? $group : [] as $term) {
+            if (\is_array($term) && \is_int($term['id'] ?? null)) {
+                $ids[$term['id']] = $term['id'];
+            }
+        }
+
+        return array_values($ids);
     }
 
     /**
@@ -71,11 +91,11 @@ final class EventlokaleClient
     }
 
     /**
-     * The body exactly as the listing page sends it, with the wedding filter.
+     * The body exactly as the listing page sends it, filtered to one event category.
      *
      * @return array<string, mixed>
      */
-    private static function searchBody(int $page, \DateTimeImmutable $now): array
+    private static function searchBody(int $eventId, int $page, \DateTimeImmutable $now): array
     {
         $days = ['d1' => null, 'd2' => null, 'd3' => null, 'd4' => null];
 
@@ -89,7 +109,7 @@ final class EventlokaleClient
             'search' => [
                 'active' => 'location',
                 'service' => '',
-                'events' => [self::WEDDING_EVENT_ID],
+                'events' => [$eventId],
                 'region' => '',
                 'term' => '',
                 'persons' => 0,

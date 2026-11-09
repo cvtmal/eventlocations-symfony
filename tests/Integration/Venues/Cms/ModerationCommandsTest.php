@@ -20,6 +20,7 @@ use App\Venues\Entity\Venue;
 use App\Venues\Exception\ModerationCaseAlreadyDecided;
 use App\Venues\Exception\ModerationCaseNotFound;
 use App\Venues\Exception\ModerationCaseWithoutVenue;
+use App\Venues\Exception\VenueRuleViolation;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
 use App\Venues\ValueObject\KnownTiers;
@@ -185,6 +186,23 @@ final class ModerationCommandsTest extends KernelTestCase
         $commands = array_column($this->auditRows($number), 'command');
         self::assertContains('App\Venues\Command\UnpublishVenue', $commands);
         self::assertContains('App\Venues\Command\PublishVenue', $commands);
+    }
+
+    /** F14 (D54): `keep` publishes through the draft rule, so an entry nobody manages with unchecked facts stays offline and the case stays open. */
+    public function test_keep_cannot_bring_back_an_unmanaged_entry_whose_facts_are_unchecked(): void
+    {
+        $venue = $this->publishable('Seehaus Ungeprüft', 'seehaus-ungeprueft');
+        $number = $venue->number();
+        $caseId = $this->reportCase($number, [], ModerationKind::Removal);
+        self::assertTrue($this->dispatch(new TakeEntryOffline($caseId, self::ADMIN)));
+        $this->connection->executeStatement('UPDATE venues SET facts_checked_at = NULL WHERE number = ?', [$number]);
+
+        $failure = $this->failure(new DecideModerationCase($caseId, ModerationDecision::Keep, null, self::ADMIN));
+
+        self::assertInstanceOf(VenueRuleViolation::class, $failure);
+        self::assertSame(['facts'], $failure->missing);
+        self::assertFalse($this->reload($number)->isPublished());
+        self::assertSame('open', $this->connection->fetchOne('SELECT status FROM moderation_cases WHERE id = ?', [$caseId]));
     }
 
     public function test_an_entry_taken_offline_stays_offline_with_remove(): void

@@ -7,6 +7,7 @@ namespace App\Crm\Console;
 use App\Crm\EventlokaleCache;
 use App\Crm\EventlokaleCrawl;
 use App\Crm\EventlokaleCsv;
+use App\Crm\EventlokaleSheet;
 use App\Crm\ReadModel\SuppressionQuery;
 use Symfony\Component\Console\Attribute\Argument;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -17,17 +18,20 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Owner-run (#49): every wedding venue of eventlokale.ch, which permitted the crawl, into the
- * private list content/owner/eventlokale-hochzeit.csv. About 25 minutes at the default pace; the
- * raw payloads under content/eventlokale/ are the checkpoint, so a rerun resumes. The list stays
- * out of the repository, the demo data and the production content (docs/rpi-cycles.md, Q12).
+ * Owner-run (#49, F14): every venue of eventlokale.ch, which permitted the crawl, in every event
+ * category, into the private list content/owner/eventlokale.csv and the facts-only draft sheet
+ * content/owner/eventlokale-entwuerfe.csv (EventlokaleSheet, the venue sheet's columns, for
+ * app:venues:convert-sheet after a review). Several hours at the default pace; the raw payloads
+ * under content/eventlokale/ are the checkpoint, so a rerun resumes. Both files stay out of the
+ * repository, the demo data and the production content (docs/rpi-cycles.md, Q12; D11, D12).
  */
-#[AsCommand(name: 'app:crm:crawl-eventlokale', description: 'Crawls the eventlokale wedding listing into a private CSV (owner-run)')]
+#[AsCommand(name: 'app:crm:crawl-eventlokale', description: 'Crawls every eventlokale category into a private CSV and a facts-only draft sheet (owner-run)')]
 final class CrawlEventlokaleCommand
 {
     public function __construct(
         private readonly EventlokaleCrawl $crawl,
         private readonly EventlokaleCsv $csv,
+        private readonly EventlokaleSheet $sheet,
         private readonly SuppressionQuery $suppressions,
         #[Autowire('%app.content_root%')]
         private readonly string $contentRoot,
@@ -75,17 +79,15 @@ final class CrawlEventlokaleCommand
                 $io->newLine();
             }
             $io->writeln(\sprintf(
-                '%d listed (API total %d), %d fetched, %d from cache, %d gone, %d failed.',
+                '%d listed in %d categories (API totals %d, a venue in several categories counts in each), %d fetched, %d from cache, %d gone, %d failed.',
                 $result->listed,
+                $result->categories,
                 $result->total,
                 $result->fetched,
                 $result->skipped,
                 $result->gone,
                 $result->failed,
             ));
-            if ($result->listed !== $result->total) {
-                $io->warning('The unique venue count differs from the API total: the listing changed during the run.');
-            }
             if ($result->rateLimited) {
                 $io->error('Stopped after 3 rate-limit answers in a row. Rerun later to resume.');
             }
@@ -97,11 +99,14 @@ final class CrawlEventlokaleCommand
 
             return Command::FAILURE;
         }
-        $written = $this->csv->write($root, $this->suppressions->addresses());
+        $suppressed = $this->suppressions->addresses();
+        $written = $this->csv->write($root, $suppressed);
         $io->writeln(\sprintf('CSV: %s/%s (%d rows)', $root, EventlokaleCsv::FILE, $written['rows']));
         if ([] !== $written['emptyColumns']) {
             $io->writeln('Empty in every row: '.implode(', ', $written['emptyColumns']));
         }
+        $drafts = $this->sheet->write($root, $suppressed);
+        $io->writeln(\sprintf('Draft sheet: %s/%s (%d rows, facts only; review it, then app:venues:convert-sheet)', $root, EventlokaleSheet::FILE, $drafts));
 
         return $failed ? Command::FAILURE : Command::SUCCESS;
     }

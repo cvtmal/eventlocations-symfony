@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Cms\Controller;
 
 use App\Admin\Form\ConfirmActionType;
+use App\Cms\PublishGapLabels;
 use App\Cms\ReadModel\VenueHeader;
 use App\Cms\ReadModel\VenueHeaderQuery;
 use App\Cms\Twig\VenueActionsExtension;
@@ -29,13 +30,12 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Publish, unpublish and delete (CMS-3), posted by the record header's forms (`cms_venue_action_form()`), so
  * they come from the editor and from #25's tabs alike, and go back to the editor (delete: to the list). A venue
  * already in the asked state dispatches nothing, so a double click leaves no second audit row. A refusal is a
- * flash: a refused publish names what is missing, in the checklist's words. The first publish of a venue made with
+ * flash: a refused publish names what is missing, in the checklist's words (`PublishGapLabels`). The first publish of a venue made with
  * "Neue Location" or the portal's wizard fires `NewVenuePublished` after the commit (Q20).
  */
 #[IsGranted('ROLE_EDITOR')]
@@ -47,7 +47,7 @@ final class VenueStatusController extends AbstractController
         private readonly FormFactoryInterface $forms,
         private readonly MessageBusInterface $commandBus,
         private readonly VenueEvents $events,
-        private readonly TranslatorInterface $translator,
+        private readonly PublishGapLabels $gapLabels,
     ) {
     }
 
@@ -160,8 +160,7 @@ final class VenueStatusController extends AbstractController
             }
             $violation = VenueRuleViolation::unwrap($failure);
             if ([] !== $violation->missing) {
-                $labels = array_map(fn (string $code): string => $this->translator->trans('editor.checklist.item.'.$code, [], 'cms'), $violation->missing);
-                $this->addFlash('error', CmsFlash::message('publish.error.missing', ['missing' => implode(', ', $labels)]));
+                $this->addFlash('error', CmsFlash::message('publish.error.missing', ['missing' => $this->gapLabels->describe($violation->missing)]));
             } else {
                 $this->addFlash('error', CmsFlash::message($violation->translationKey(), $violation->parameters));
             }

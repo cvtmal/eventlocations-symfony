@@ -90,9 +90,14 @@ final class CmsTranslationKeysTest extends KernelTestCase
         foreach ($locales->all() as $locale) {
             $keys[] = 'editor.locale.'.$locale;
         }
-        foreach ([VenueEdit::MISSING_SUMMARY, VenueEdit::MISSING_MAIN_BUILDING, VenueEdit::MISSING_PHOTO] as $code) {
+        foreach ([VenueEdit::MISSING_SUMMARY, VenueEdit::MISSING_MAIN_BUILDING, VenueEdit::MISSING_PHOTO, 'facts', 'description'] as $code) {
             $keys[] = 'editor.checklist.item.'.$code;
         }
+        // F14 (D54): the draft rule's gaps in a refused publish (PublishGapLabels).
+        foreach (['facts', 'description'] as $code) {
+            $keys[] = 'publish.gap.'.$code;
+        }
+        $keys[] = 'publish.error.lacks';
         foreach ([VenueListRow::MISSING_PHOTO, VenueListRow::MISSING_INQUIRY_EMAIL, VenueListRow::MISSING_SUMMARY, VenueListRow::MISSING_MAIN_BUILDING] as $code) {
             $keys[] = 'dashboard.incomplete.missing.'.$code;
         }

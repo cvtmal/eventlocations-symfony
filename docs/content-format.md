@@ -45,7 +45,9 @@ A folder carries no tier. The import creates a venue on the Free tier and never 
 ## Example
 
 Every field, with fictional values. Only `name`, `capacity.max` and
-`translations.de.summary` are required. A venue may have no address at all.
+`translations.de.summary` are required. A venue may have no address at all. A draft
+(`status: unpublished`) may leave out `translations` altogether (F14): the import then gives
+it an empty summary and the slug from the name, and the text is written later.
 
 ```yaml
 # yaml-language-server: $schema=../../../docs/content-format.schema.json
@@ -138,7 +140,7 @@ documents:                            # in display order; files in documents/
 | Field | Type and limits | Notes |
 |---|---|---|
 | `name` | text ≤ 150, required | Proper noun, not translated. Changing it changes the URL slug; the old slug redirects. |
-| `status` | code | `published` (default) or `unpublished` (hidden, kept). |
+| `status` | code | `published` (default) or `unpublished` (hidden, kept). `published` is a wish for an entry nobody manages: see [the draft rule](#the-draft-rule). |
 | `price_level` | code | `moderate`, `medium`, `exclusive`. |
 | `capacity.min`, `capacity.max` | 1–50000 | `max` required; `min` ≤ `max`. |
 | `capacity.seated`, `capacity.standing` | 1–50000 | The venue's own numbers; not compared with `max`. |
@@ -156,7 +158,7 @@ documents:                            # in display order; files in documents/
 | `faq.daylight` | true, false, null | |
 | `terms.<group>` | list of codes | See the vocabulary below. |
 | `main_terms.<setting\|building\|suitable_for>` | one code | Must also be listed under `terms`. |
-| `translations.<locale>` | `summary` ≤ 200 (required), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250, `ambience` ≤ 60, `capacity_note`, `opening_hours` ≤ 250, `region` ≤ 60 | `de` is required; other locales only once the site serves them (today only `de`). |
+| `translations.<locale>` | `summary` ≤ 200 (required once `translations` is given), `description`, `meta_description` ≤ 160, `parking_text` ≤ 250, `ambience` ≤ 60, `capacity_note`, `opening_hours` ≤ 250, `region` ≤ 60 | `de` is required, except in a draft (`status: unpublished`), which may have no `translations` at all; other locales only once the site serves them (today only `de`). |
 | `photos[]` | `file`, `alt.<locale>` ≤ 700 | Order = display order. |
 | `rooms[]` | `key`, `translations.<locale>.name` ≤ 100 (+ `description`), `capacity`, `area_m2` 1–50000, `height_m` (> 0, ≤ 30, two decimals), `floor_material`, `seating`, `photos` | Order = display order. A seating entry needs `min` or `max`. Seating codes and labels: `seminar` Seminar/Parlament, `banquet` Bankett, `apero` Apéro/Stehempfang, `concert` Konzert/Reihen, `u_shape` U-Form, `block` Block. Once an entry states a `max`, the room's guest range is the seating's: the greatest `max` and the least `min` of the entries with a `max` (`capacity` is then ignored). |
 | `documents[]` | `file` (`.pdf`), `title.<locale>` ≤ 200 | `title.de` is required. |
@@ -248,6 +250,27 @@ The exit code is `1` when any folder failed (the message lists `<key>: <problem>
 otherwise `0`. Venues kept because of a CMS edit are listed after the summary and do not
 change the exit code. To hide a venue by hand, set `status: unpublished`.
 
+After the summary the run lists, in a dry run too and without changing the exit code:
+
+- **Held as draft**: `<key>: facts, description`, the folders [the draft rule](#the-draft-rule)
+  keeps offline and what each lacks.
+- **Notes**: `<key>: event_types: N > M (Free)` when a folder names more event types than the
+  Free tier shows (D43). Every type is imported; staff cut the list to the plan while they
+  check the facts.
+
+### The draft rule
+
+An entry nobody answers for, that is one without an active `/konto` manager, goes online
+only when staff ticked «Fakten geprüft» in the CMS and its default-locale `description` is
+written (F14, D54). The import applies it to a folder that asks `published`: a new venue is
+never checked, so **every imported venue lands as a draft**; an existing one moves online on
+the first import after both are done (`--force --only=<key>` when the folder is unchanged).
+The rule gates only the move online: an entry already online stays online. The CMS publish
+button and the moderation `keep` refuse the same entry with «Fakten nicht geprüft» and
+«Beschreibung fehlt». An entry with a manager keeps G12's rule: online even unchecked, but
+`noindex` until both are done. A verified claim and a staff approval in the review queue tick
+«Fakten geprüft» themselves (D45).
+
 Run one import at a time; there is no lock between two imports. A CMS save and the import
 of the same venue do not interleave: the import locks the venue's row before it checks the
 guard.
@@ -274,6 +297,40 @@ above about 40 MP needs more than the stock 256M (a 60 MP photo peaks at about 3
 Run a full import with `--no-debug` in dev: with debug on, Doctrine keeps every query and
 its backtrace for the whole command (about 2.5 KB each), so a few hundred venues come close
 to the 512M.
+
+## Venue sheet
+
+The owner keeps venues in a spreadsheet; `app:venues:convert-sheet` turns each row into a
+draft folder (`status: unpublished`) that the import above then reads. The template is
+`tests/Fixtures/Onboarding/venue-sheet.csv` (fictional rows).
+
+```
+make sf c="app:venues:convert-sheet <csv> [path] [--dry-run]"
+```
+
+- Comma or semicolon separated (taken from the header line), UTF-8 with or without BOM; the
+  columns are found by name, in any order. A missing or unknown column refuses the file.
+- Per row it prints `created` (folder written), `exists` (a folder with that key is there;
+  it is never overwritten) or `failed` with `row N: <problem>`; the exit code is `1` when a
+  row failed, the others are still written. `--dry-run` writes nothing. No database row is
+  written: run `app:venues:import --dry-run`, then the import.
+- Rows are checked by the converter (below) and then against the schema, as a folder would be.
+
+| Column | Becomes | Rule |
+|---|---|---|
+| `key` | folder name | Optional: empty derives `<name>-<town>` (ASCII, lower case, cut at a hyphen to 100), printed by the run. |
+| `source` | — | `owner`, `hochzeitslocation` (a customer who answered yes, D29) or `eventlokale` (the crawl's draft sheet). |
+| `name`, `street`, `zip`, `town`, `canton`, `lat`, `lng` | `name`, `address.*`, `geo.*` | As in the field reference. |
+| `region` | `translations.de.region` | Needs `summary`. |
+| `capacity_min`, `capacity_max`, `capacity_seated`, `capacity_standing` | `capacity.*` | `capacity_max` required. |
+| `price_level` | `price_level` | Code. |
+| `event_types` | `terms.suitable_for` | Our codes, separated by `\|`. More than Free shows is noted, not cut. |
+| `building` | `main_terms.building` + `terms.building` | Optional code. |
+| `phone`, `inquiry_email`, `website`, `contact_person`, `instagram` | same names | A Swiss phone number is written as `+41…`. |
+| `summary`, `description` | `translations.de.*` | Optional; without a `summary` the folder has no texts (a draft may). A `description` needs a `summary`. |
+| `consent_on`, `consent_from` | — (CRM) | Required for `source = hochzeitslocation` and refused for the others: the date of the yes (`YYYY-MM-DD`, not in the future) and the address it came from. `app:crm:record-consents` puts them on the Location's timeline. |
+
+Every folder the sheet makes is a draft; it goes online by [the draft rule](#the-draft-rule).
 
 ## Editor support
 

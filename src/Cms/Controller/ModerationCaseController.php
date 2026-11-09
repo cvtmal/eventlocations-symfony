@@ -8,6 +8,7 @@ use App\Admin\ReadModel\AdminUserListQuery;
 use App\Admin\Security\AdminIdentity;
 use App\Cms\Form\ModerationDecisionData;
 use App\Cms\Form\ModerationDecisionType;
+use App\Cms\PublishGapLabels;
 use App\Cms\ValueObject\CmsFlash;
 use App\Shared\Translation\LocalizedRoutes;
 use App\Venues\Command\DecideModerationCase;
@@ -32,7 +33,6 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * One complaint (G2): everything it says, the photos it names, and staff's actions, each POST → redirect → GET with
@@ -55,7 +55,7 @@ final class ModerationCaseController extends AbstractController
         private readonly ModerationCaseQuery $cases,
         private readonly AdminUserListQuery $staff,
         private readonly MessageBusInterface $commandBus,
-        private readonly TranslatorInterface $translator,
+        private readonly PublishGapLabels $gapLabels,
     ) {
     }
 
@@ -188,8 +188,7 @@ final class ModerationCaseController extends AbstractController
             return $this->back($id);
         }
         $violation = VenueRuleViolation::unwrap($failure);
-        $missing = implode(', ', array_map(fn (string $code): string => $this->translator->trans('editor.checklist.item.'.$code, [], 'cms'), $violation->missing));
-        $this->addFlash('error', CmsFlash::message('moderation.flash.not_publishable', ['missing' => $missing]));
+        $this->addFlash('error', CmsFlash::message('moderation.flash.not_publishable', ['missing' => $this->gapLabels->describe($violation->missing)]));
 
         return $this->back($id);
     }

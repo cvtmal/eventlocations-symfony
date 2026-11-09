@@ -50,6 +50,20 @@ final class ImportEventFactsTest extends KernelTestCase
         self::assertStringContainsString('Venues: 1 seen, 0 created, 0 updated, 1 unchanged', $this->display());
     }
 
+    public function test_more_event_types_than_free_allows_are_kept_and_reported(): void
+    {
+        $types = ['corporate_event', 'seminar', 'conference', 'workshop', 'christmas_party'];
+        $this->content->venue('schloss-viele', ['terms' => ['suitable_for' => $types]]);
+
+        $this->assertImports();
+
+        self::assertSame(5, (int) $this->connection->fetchOne(
+            "SELECT count(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'",
+            [$this->venueId('schloss-viele')],
+        ), 'the import never trims (F12 follow-up: report)');
+        self::assertStringContainsString('schloss-viele: event_types: 5 > 3 (Free)', $this->display());
+    }
+
     public function test_an_update_replaces_the_facts(): void
     {
         $this->content->venue('schloss-fakten', self::facts());

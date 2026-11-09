@@ -58,6 +58,16 @@ final class WizardStepTest extends TestCase
         self::assertSame(WizardStep::Contact, WizardStep::forGap('inquiry_email'));
     }
 
+    /** F14 (D54): the draft rule's gaps never decide a manager's step, yet each has a page. */
+    public function test_the_draft_rule_gaps_are_ignored_by_derive_but_have_a_step(): void
+    {
+        self::assertSame(WizardStep::Check, WizardStep::derive(['facts']));
+        self::assertSame(WizardStep::Check, WizardStep::derive(['facts', 'description']));
+        self::assertSame(WizardStep::Photos, WizardStep::derive(['photo', 'facts']));
+        self::assertSame(WizardStep::Texts, WizardStep::forGap('description'));
+        self::assertSame(WizardStep::Check, WizardStep::forGap('facts'));
+    }
+
     public function test_an_unknown_gap_is_refused(): void
     {
         $this->expectException(\LogicException::class);

@@ -1,0 +1,6 @@
+key,source,name,street,zip,town,canton,region,lat,lng,capacity_min,capacity_max,capacity_seated,capacity_standing,price_level,event_types,building,phone,inquiry_email,website,contact_person,instagram,summary,description,consent_on,consent_from
+,owner,Remise am Bach,Bachweg 3,8001,Zürich,zh,,47.37,8.54,20,120,80,120,medium,corporate_event|seminar|apero,event_venue,044 123 45 67,anfragen@remise-am-bach.example,https://remise-am-bach.example,Anna Beispiel,,Fiktive Remise am Bach für Firmenanlässe.,Eine erfundene Remise mit Garten und Saal.,,
+seehof-muster,owner,Seehof Muster,Seestrasse 10,8712,Stäfa,,,,,,60,,,,team_event,,,,,,,,,,
+,hochzeitslocation,Gutshof Erfunden,Hofweg 1,3011,Bern,be,,,,30,150,,,exclusive,wedding|birthday,farm_barn,+41311234567,info@gutshof-erfunden.example,https://gutshof-erfunden.example,,,,,2026-10-12,info@gutshof-erfunden.example
+,hochzeitslocation,Villa Ohne Ja,Parkweg 2,6003,Luzern,lu,,,,,90,,,,,villa,,,,,,,,,
+,eventlokale,Halle Beispiel,Industriestrasse 5,4051,Basel,bs,,47.55,7.59,50,400,,,,,,,kontakt@halle-beispiel.example,https://halle-beispiel.example,,,,,,

@@ -108,6 +108,8 @@ final class ImportContentCommand
         $counts = array_fill_keys(['created', 'updated', 'unchanged', 'failed', 'cms_edited', 'photosAdded', 'photosRemoved', 'documentsAdded', 'documentsRemoved'], 0);
         $errors = [];
         $cmsEditedKeys = [];
+        $drafts = [];
+        $notes = [];
         foreach ($keys as $key) {
             $outcome = $this->import(new ImportVenueContent($root.'/venues/'.$key, $key, $dryRun, $force, $overwriteCmsEdits));
             ++$counts[$outcome->status->value];
@@ -117,6 +119,14 @@ final class ImportContentCommand
             $counts['documentsRemoved'] += $outcome->documentsRemoved;
             if (ImportStatus::Failed === $outcome->status) {
                 $errors[] = ['key' => $key, 'messages' => $outcome->messages];
+            } else {
+                foreach ($outcome->messages as $message) {
+                    if (str_starts_with($message, VenueImportOutcome::DRAFT_NOTE)) {
+                        $drafts[] = $key.': '.substr($message, \strlen(VenueImportOutcome::DRAFT_NOTE));
+                    } else {
+                        $notes[] = $key.': '.$message;
+                    }
+                }
             }
             if (ImportStatus::CmsEdited === $outcome->status) {
                 $cmsEditedKeys[] = $key;
@@ -159,7 +169,7 @@ final class ImportContentCommand
         }
 
         $io->writeln(\sprintf(
-            '%sVenues: %d seen, %d created, %d updated, %d unchanged, %d failed, %d unpublished. Photos: +%d −%d. Documents: +%d −%d.',
+            '%sVenues: %d seen, %d created, %d updated, %d unchanged, %d failed, %d unpublished. Photos: +%d −%d. Documents: +%d −%d. Held as draft: %d.',
             $dryRun ? 'Dry run: ' : '',
             \count($keys),
             $counts['created'],
@@ -171,7 +181,18 @@ final class ImportContentCommand
             $counts['photosRemoved'],
             $counts['documentsAdded'],
             $counts['documentsRemoved'],
+            \count($drafts),
         ));
+
+        // Notes never change the exit code: a draft and a long event-type list are work for staff, not errors (F14).
+        if ([] !== $drafts) {
+            $io->writeln('Held as draft (an entry nobody answers for goes online only with checked facts and a description):');
+            $io->listing($drafts);
+        }
+        if ([] !== $notes) {
+            $io->writeln('Notes:');
+            $io->listing($notes);
+        }
 
         if ([] !== $cmsEditedKeys) {
             $io->writeln(\sprintf(

@@ -19,6 +19,7 @@ use App\Venues\Command\ChangeVenueContact;
 use App\Venues\Command\ChangeVenueEventFacts;
 use App\Venues\Command\ChangeVenueTerms;
 use App\Venues\Command\ChangeVenueTexts;
+use App\Venues\Command\CheckVenueFacts;
 use App\Venues\Command\CreateVenue;
 use App\Venues\Command\PublishVenue;
 use App\Venues\Command\RecordVenueCreated;
@@ -473,7 +474,9 @@ final class VenueWriteCommandsTest extends KernelTestCase
         self::assertIsInt($number);
         self::assertTrue($this->reload($number)->awaitsFirstPublish());
         $venue = $this->reload($number);
-        $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune.' WHERE venue_id = ?", [$venue->id()]);
+        // F14 (D54): nobody manages it, so staff check its facts and write its description first.
+        $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune.', description = 'Eine alte Scheune am Waldrand.' WHERE venue_id = ?", [$venue->id()]);
+        $this->dispatch(new CheckVenueFacts($number, true));
         VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
         VenuePhotoFactory::createOne(['venue' => $venue]);
 
