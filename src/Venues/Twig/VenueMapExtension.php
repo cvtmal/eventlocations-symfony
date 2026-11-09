@@ -29,6 +29,13 @@ final class VenueMapExtension
     ) {
     }
 
+    /** Whether a detail page can offer "Karte laden" (the embed key is set); /datenschutz explains the embed only then. */
+    #[AsTwigFunction('venue_map_embed_enabled')]
+    public function embedEnabled(): bool
+    {
+        return '' !== (string) $this->embedKey;
+    }
+
     #[AsTwigFunction('venue_map', isSafe: ['html'])]
     public function venueMap(Environment $twig, VenueDetail $venue): string
     {
@@ -37,12 +44,10 @@ final class VenueMapExtension
             return '';
         }
 
-        $key = (string) $this->embedKey;
-
         return $twig->render('venues/detail/_map.html.twig', [
             'venue' => $venue,
             'search_url' => $location->searchUrl(),
-            'embed_url' => '' === $key ? null : $location->embedUrl($key, $this->locale->getLocale()),
+            'embed_url' => $this->embedEnabled() ? $location->embedUrl((string) $this->embedKey, $this->locale->getLocale()) : null,
         ]);
     }
 

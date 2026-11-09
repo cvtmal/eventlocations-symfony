@@ -5,11 +5,19 @@
     processors (%site.processors%, D26: key, name, location; the purpose is `legal.privacy.processors.<key>`).
     D48: the Google rating and photos paragraphs, the Maps title and Google's processor line follow the switches
     (venue_google_rating_enabled(), venue_google_photos_enabled()), so the page names only what the site does.
+    f16: likewise the detail page's "Karte laden" paragraph (venue_map_embed_enabled(), GOOGLE_MAPS_EMBED_KEY) and the
+    near-me map's (nearby_map_enabled(), GOOGLE_MAPS_JS_KEY). The rating paragraph needs the live rating
+    (venue_google_rating_live(): switch on and the JS key); switched on without the key the rating is a plain link,
+    named under "Links". `shows` lists what Google delivers (map, rating, photos joined by "_"; `none`): with nothing,
+    the section is left out and Google's processor line names the YouTube videos only.
 #}
 {% extends 'base.html.twig' %}
-{% set google_rating = venue_google_rating_enabled() %}
+{% set google_rating = venue_google_rating_live() %}
+{% set google_rating_link = venue_google_rating_enabled() and not google_rating %}
 {% set google_photos = venue_google_photos_enabled() %}
-{% set google_shows = google_rating and google_photos ? 'both' : (google_rating ? 'rating' : (google_photos ? 'photos' : 'maps')) %}
+{% set google_map = venue_map_embed_enabled() %}
+{% set google_nearby = nearby_map_enabled() %}
+{% set google_shows = [google_map or google_nearby ? 'map', google_rating ? 'rating', google_photos ? 'photos']|filter(part => part)|join('_')|default('none') %}
 
 {% block title %}{{ 'legal.privacy.page_title'|trans({}, 'shared') }}{% endblock %}
 
@@ -80,14 +88,17 @@
             <p>{{ 'legal.privacy.hosting.mail'|trans({}, 'shared') }}</p>
             <p>{{ 'legal.privacy.hosting.errors'|trans({}, 'shared') }}</p>
         </section>
+        {% if google_shows != 'none' %}
         <section class="legal__section">
             <h2>{{ 'legal.privacy.maps.title'|trans({shows: google_shows}, 'shared') }}</h2>
-            <p>{{ 'legal.privacy.maps.text'|trans({}, 'shared') }}</p>
-            <p>{{ 'legal.privacy.maps.nearby'|trans({}, 'shared') }}</p>
+            <p>{{ 'legal.privacy.maps.intro'|trans({}, 'shared') }}</p>
+            {% if google_map %}<p>{{ 'legal.privacy.maps.text'|trans({}, 'shared') }}</p>{% endif %}
+            {% if google_nearby %}<p>{{ 'legal.privacy.maps.nearby'|trans({}, 'shared') }}</p>{% endif %}
             {% if google_rating %}<p>{{ 'legal.privacy.maps.rating'|trans({}, 'shared') }}</p>{% endif %}
             {% if google_photos %}<p>{{ 'legal.privacy.maps.photos'|trans({}, 'shared') }}</p>{% endif %}
             <p>{{ 'legal.privacy.maps.policy'|trans({}, 'shared') }} <a href="https://policies.google.com/privacy">{{ 'legal.privacy.maps.policy_link'|trans({}, 'shared') }}</a></p>
         </section>
+        {% endif %}
         <section class="legal__section">
             <h2>{{ 'legal.privacy.videos.title'|trans({}, 'shared') }}</h2>
             <p>{{ 'legal.privacy.videos.text'|trans({}, 'shared') }}</p>
@@ -97,6 +108,7 @@
         <section class="legal__section">
             <h2>{{ 'legal.privacy.links.title'|trans({}, 'shared') }}</h2>
             <p>{{ 'legal.privacy.links.text'|trans({}, 'shared') }}</p>
+            {% if google_rating_link %}<p>{{ 'legal.privacy.links.rating'|trans({}, 'shared') }}</p>{% endif %}
         </section>
         <section class="legal__section">
             <h2>{{ 'legal.privacy.staff.title'|trans({}, 'shared') }}</h2>

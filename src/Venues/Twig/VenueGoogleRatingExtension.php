@@ -44,6 +44,16 @@ final class VenueGoogleRatingExtension
         return $this->enabled;
     }
 
+    /**
+     * f16: whether the rating is live, i.e. switched on and with a `GOOGLE_MAPS_JS_KEY`, so the visitor's browser loads
+     * Google's element (and `google-rating.js` has a box to fill). Switched on without the key it is a plain link.
+     */
+    #[AsTwigFunction('venue_google_rating_live')]
+    public function live(): bool
+    {
+        return $this->enabled && '' !== (string) $this->mapsKey;
+    }
+
     #[AsTwigFunction('venue_google_rating', isSafe: ['html'])]
     public function venueGoogleRating(Environment $twig, VenueDetail $venue): string
     {
