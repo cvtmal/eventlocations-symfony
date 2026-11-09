@@ -60,7 +60,7 @@ final class PublicCacheHeadersTest extends WebTestCase
     }
 
     /**
-     * The URLs may hold {number}, {gone}, {town}, {building}, {preview}, {preview_gone}, {preview_short}, {opt_out} and {feedback}. The route is null outside the public table.
+     * The URLs may hold {number}, {gone}, {town}, {building}, {preview}, {preview_gone}, {preview_short}, {opt_out}, {feedback} and {brief_opt_out}. The route is null outside the public table.
      *
      * @return iterable<string, array{?string, string, string, int, string, ?string}> route, method, URL, status, Cache-Control, Vary
      */
@@ -112,6 +112,9 @@ final class PublicCacheHeadersTest extends WebTestCase
         yield 'feedback page' => ['inquiry_feedback', 'GET', '/rueckmeldung/{feedback}', 200, self::PRIVATE, null];
         yield 'feedback page, unknown' => ['inquiry_feedback', 'GET', '/rueckmeldung/'.str_repeat('A', 44), 404, self::PRIVATE, null];
         yield 'feedback opt-out' => ['inquiry_feedback_opt_out', 'GET', '/rueckmeldung/{feedback}/abmelden', 200, self::PRIVATE, null];
+        yield 'brief page' => ['inquiry_brief', 'GET', '/sammelanfrage?nr={number}', 200, self::PRIVATE, null];
+        yield 'brief sent, unsigned' => ['inquiry_brief_sent', 'GET', '/sammelanfrage/gesendet', 404, self::PRIVATE, null];
+        yield 'brief opt-out' => ['inquiry_brief_opt_out', 'GET', '/sammelanfrage/abbestellen/{brief_opt_out}', 200, self::PRIVATE, null];
         yield 'merkliste' => ['merkliste', 'GET', '/merkliste', 200, self::PRIVATE, null];
         yield 'merkliste toggle' => ['merkliste_toggle', 'POST', '/merkliste/{number}', 303, self::PRIVATE, null];
         yield 'merkliste sync' => ['merkliste_sync', 'POST', '/merkliste', 204, self::PRIVATE, null];
@@ -135,7 +138,7 @@ final class PublicCacheHeadersTest extends WebTestCase
 
         $this->client->request(
             $method,
-            strtr($url, ['{number}' => (string) $data['number'], '{gone}' => $data['gone'], '{town}' => $data['town'], '{building}' => $data['building'], '{preview_gone}' => $data['preview_gone'], '{preview}' => $data['preview'], '{preview_short}' => $data['preview_short'], '{feedback}' => $data['feedback'], '{opt_out}' => $data['opt_out']]),
+            strtr($url, ['{number}' => (string) $data['number'], '{gone}' => $data['gone'], '{town}' => $data['town'], '{building}' => $data['building'], '{preview_gone}' => $data['preview_gone'], '{preview}' => $data['preview'], '{preview_short}' => $data['preview_short'], '{feedback}' => $data['feedback'], '{brief_opt_out}' => $data['brief_opt_out'], '{opt_out}' => $data['opt_out']]),
             'POST' === $method ? $posted : [],
             [],
             ['HTTP_SEC_FETCH_SITE' => 'same-origin'],

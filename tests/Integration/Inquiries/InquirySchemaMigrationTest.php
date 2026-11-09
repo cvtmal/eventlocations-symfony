@@ -77,6 +77,7 @@ final class InquirySchemaMigrationTest extends KernelTestCase
         yield 'qualified with a reason' => ['chk_inquiries_qualification_reason_pair', "UPDATE inquiries SET qualification = 'qualified', qualification_reason = 'duplicate'"];
         yield 'unqualified without a reason' => ['chk_inquiries_qualification_reason_pair', "UPDATE inquiries SET qualification = 'unqualified', qualification_reason = NULL"];
         yield 'a reason without a qualification' => ['chk_inquiries_qualification_reason_pair', "UPDATE inquiries SET qualification = NULL, qualification_reason = 'duplicate'"];
+        yield 'unknown brief' => ['fk_inquiries_brief_id', "UPDATE inquiries SET brief_id = '{missing}'"];
         yield 'unknown venue' => ['fk_inquiries_venue_id', "UPDATE inquiries SET venue_id = '{missing}'"];
     }
 

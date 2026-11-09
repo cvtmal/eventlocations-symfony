@@ -77,6 +77,7 @@ final class SiteImportIsPrivateTest extends WebTestCase
             'crm_opt_out' => [['token' => $data['opt_out']]],
             'inquiry_feedback' => [['token' => $data['feedback']]],
             'inquiry_feedback_opt_out' => [['token' => $data['feedback']]],
+            'inquiry_brief_opt_out' => [['token' => $data['brief_opt_out']]],
         ];
         $router = self::getContainer()->get('router');
         self::assertInstanceOf(RouterInterface::class, $router);

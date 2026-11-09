@@ -6,11 +6,14 @@ namespace App\Tests\Support\Http;
 
 use App\Crm\OptOutToken;
 use App\Factory\CompanyFactory;
+use App\Factory\InquiryBriefFactory;
 use App\Factory\InquiryFactory;
 use App\Factory\InquiryFeedbackFactory;
 use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Geo\ValueObject\Canton;
+use App\Inquiries\BriefOptOutToken;
+use App\Inquiries\Entity\Inquiry;
 use App\Inquiries\FeedbackToken;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Inquiries\InquiryFormFields;
@@ -20,6 +23,7 @@ use App\Venues\PreviewToken;
 use App\Venues\ValueObject\VenueStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -37,7 +41,7 @@ trait PublicRouteFixtures
     private const HISTORY_SLUG = 'altes-schloss-seeblick';
 
     /**
-     * @return array{number: int, gone: string, town: string, building: string, started: string, preview: string, preview_gone: string, preview_short: string, opt_out: string, feedback: string}
+     * @return array{number: int, gone: string, town: string, building: string, started: string, preview: string, preview_gone: string, preview_short: string, opt_out: string, feedback: string, brief_opt_out: string, brief_sent: array{brief: string, _hash: string}}
      */
     private function seedPublicRoutes(): array
     {
@@ -67,6 +71,18 @@ trait PublicRouteFixtures
         $feedbackInquiry = InquiryFactory::createOne(['venue' => $venue]);
         InquiryFeedbackFactory::createOne(['inquiry' => $feedbackInquiry]);
 
+        // F13: the opt-out link of a brief's venue mail, for the full venue.
+        $briefOptOut = self::getContainer()->get(BriefOptOutToken::class);
+        self::assertInstanceOf(BriefOptOutToken::class, $briefOptOut);
+        // F13: the signed confirmation of a brief that reached the full venue.
+        $brief = InquiryBriefFactory::createOne(['venueCount' => 2]);
+        InquiryFactory::new()
+            ->afterInstantiate(static fn (Inquiry $inquiry) => $inquiry->recordVenueMailSent($inquiry->recipientEmail(), new \DateTimeImmutable()))
+            ->create(['venue' => $venue, 'brief' => $brief]);
+        $signer = self::getContainer()->get(UriSigner::class);
+        self::assertInstanceOf(UriSigner::class, $signer);
+        parse_str((string) parse_url($signer->sign('http://localhost/sammelanfrage/gesendet?brief='.$brief->id()), \PHP_URL_QUERY), $signed);
+
         foreach (['cache.phone_reveal', 'cache.inquiry_submit'] as $name) {
             $pool = self::getContainer()->get($name);
             self::assertInstanceOf(CacheItemPoolInterface::class, $pool);
@@ -87,6 +103,8 @@ trait PublicRouteFixtures
             'preview_short' => (string) $open->shortCode(),
             'opt_out' => $optOut->forCompany(CompanyFactory::createOne()->id()),
             'feedback' => $feedback->forInquiry($feedbackInquiry->id()),
+            'brief_opt_out' => $briefOptOut->forVenue($venue->number()),
+            'brief_sent' => ['brief' => $brief->id(), '_hash' => \is_string($signed['_hash'] ?? null) ? $signed['_hash'] : ''],
         ];
     }
 }

@@ -160,7 +160,7 @@ brief:
     to_listing: Locations finden
     consent: Deine Anfrage mit Name, E-Mail und Telefon geht nur an die Locations, die du oben angehakt hast. Keine erfährt, an welche anderen sie ging.
     submit: Anfrage senden
-    message_default: "Hallo zusammen,\n\nwir planen einen Anlass und suchen eine passende Location. Ist unser Wunschtermin bei euch noch frei?\n\nHerzliche Grüsse"
+    message_default: "Hallo zusammen,\n\nwir planen einen Anlass und suchen eine passende Location. Ist unser Wunschtermin noch frei?\n\nHerzliche Grüsse"
     undelivered: Deine Anfrage ist bei uns gespeichert, konnte aber gerade nicht zugestellt werden. Wir kümmern uns darum und stellen sie so bald wie möglich zu. Du musst nichts weiter tun.
     error:
         changed: Eine der Locations nimmt gerade keine Sammelanfragen mehr an. Prüf die Auswahl und sende die Anfrage noch einmal.

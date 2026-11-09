@@ -86,7 +86,8 @@ final class InquiryBriefController extends AbstractController
         $numbers = BriefRules::numbers($request->query->all()['nr'] ?? null);
         [$offered, $notOffered] = $this->candidates($numbers, $locale);
         if (\count($offered) < BriefRules::MIN_VENUES) {
-            return $this->page($numbers, $offered, $notOffered, null, $request->isMethod('POST') ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK);
+            // A state of the page, not an error of the guest's input: the same answer for GET and POST.
+            return $this->page($numbers, $offered, $notOffered, null);
         }
 
         $form = $this->forms->create($offered, $numbers);
