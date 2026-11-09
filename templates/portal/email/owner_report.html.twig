@@ -1,7 +1,8 @@
 {#
-    The monthly report per entry (G10, PortalMailer::sendOwnerReport). Three figures against the month before for every
-    entry, more figures and a 3-month trend on Pro, one suggestion, the plan line, on Free exactly one «Pro anfragen»
-    line and no other advertising (D52), the edit link and the per-venue opt-out (Wave G §4a.6: not a contract mail).
+    The monthly report per entry (G10, PortalMailer::sendOwnerReport). Four figures against the month before for every
+    entry (five while G16's «Rückmeldungen» has one, explained in the note), more figures and a 3-month trend on Pro,
+    one suggestion, the plan line, on Free exactly one «Pro anfragen» line and no other advertising (D52), the edit link
+    and the per-venue opt-out (Wave G §4a.6: not a contract mail).
     Without data the mail says so plainly and puts the suggestion first. "Anfragen", never "Buchungen".
     OwnerReportMailTest pins the sections.
     Context: name (null for an inquiry address), report (Portal\ReadModel\OwnerReport), links
@@ -61,7 +62,7 @@
 {{ blocks.p('report.mail.trend.title'|trans({}, 'portal')) }}
 {{ blocks.facts(trend) }}
 {% endif %}
-{{ blocks.note('report.mail.visits_note'|trans({}, 'portal') ~ (report.asOf ? ' ' ~ 'report.mail.as_of'|trans({when: report.asOf}, 'portal') : '')) }}
+{{ blocks.note('report.mail.visits_note'|trans({}, 'portal') ~ ' ' ~ 'report.mail.qualified_note'|trans({}, 'portal') ~ (report.showsFeedback ? ' ' ~ 'report.mail.feedback_note'|trans({}, 'portal') : '') ~ (report.asOf ? ' ' ~ 'report.mail.as_of'|trans({when: report.asOf}, 'portal') : '')) }}
 {% if not report.noData %}
 {{ suggestion }}
 {% endif %}

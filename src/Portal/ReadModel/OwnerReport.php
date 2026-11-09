@@ -38,4 +38,12 @@ final readonly class OwnerReport
         public array $recipients,
     ) {
     }
+
+    /**
+     * Whether G16's «Rückmeldungen» row is in the basic figures, so the mail explains it.
+     */
+    public function showsFeedback(): bool
+    {
+        return array_any($this->figures, static fn (ReportFigure $figure): bool => OwnerReportFigures::FEEDBACK === $figure->key);
+    }
 }

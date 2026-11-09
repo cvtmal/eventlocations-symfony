@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Story;
 
+use App\Factory\InquiryFactory;
+use App\Factory\InquiryFeedbackFactory;
 use App\Factory\OwnerReportFactory;
 use App\Factory\RecordedFunnelEventFactory;
 use App\Factory\ReportOptOutFactory;
+use App\Inquiries\Entity\Inquiry;
+use App\Inquiries\ValueObject\FeedbackOutcome;
 use App\Portal\ValueObject\ReportMonth;
 use App\Shared\Funnel\FunnelEvent;
 use App\Shared\Uid\EntityId;
@@ -17,7 +21,10 @@ use Zenstruck\Foundry\Story;
 /**
  * The monthly report (G10) in dev. The dev manager's two venues (PortalStory: one Free, one Pro) get three full months
  * of figures before the current Zurich month, the Free one quieter than the month before, the Pro one busier, plus
- * delivered inquiries; an ingest marker lets the freshness check pass. Two other published venues have last month's
+ * delivered inquiries; a venue with an inquiry address (an inquiry needs one: in the demo data the Free one) also gets
+ * qualified inquiries (G7) and one feedback answer last month (G16's «Rückmeldungen»), so its mail shows both rows.
+ * The Pro one has no inquiry address, so its mail shows «Qualifizierte Anfragen» 0 next to the seeded deliveries and
+ * no answers row; an ingest marker lets the freshness check pass. Two other published venues have last month's
  * report sent and an opt-out, so the run skips them. To see it:
  *
  *     make seed
@@ -63,6 +70,7 @@ final class OwnerReportStory extends Story
             $visitors = 'free' === $venue['code'] ? [38, 52, 41] : [164, 121, 133];
             foreach ($months as $i => $month) {
                 $this->seedMonth((int) $venue['number'], $month, $visitors[$i]);
+                $this->seedInquiries($venue['id'], $month, [1, 1, 0][$i], [1, 0, 0][$i]);
                 foreach (range(1, max(1, intdiv($visitors[$i], 20))) as $n) {
                     RecordedFunnelEventFactory::createOne([
                         'event' => FunnelEvent::InquiryDelivered,
@@ -82,6 +90,32 @@ final class OwnerReportStory extends Story
         }
 
         $this->connection->insert('stats_ingest_files', ['id' => EntityId::generate(), 'file_name' => self::MARKER, 'events' => 0]);
+    }
+
+    /**
+     * `$qualified` delivered, qualified inquiries in the month; the first `$answered` of them got a feedback answer in
+     * the same month.
+     */
+    private function seedInquiries(string $venueId, ReportMonth $month, int $qualified, int $answered): void
+    {
+        $venue = $this->venues->find($venueId);
+        if (null === $venue?->inquiryEmail()) {
+            return; // an inquiry needs the venue's inquiry address
+        }
+        for ($n = 1; $n <= $qualified; ++$n) {
+            $at = $month->firstDay()->modify(\sprintf('+%d days 11:00', 2 * $n));
+            $inquiry = InquiryFactory::new()
+                ->afterInstantiate(static function (Inquiry $inquiry) use ($at): void {
+                    $inquiry->recordVenueMailSent('team@example.ch', $at);
+                    $inquiry->recordQualification(null, $at);
+                })
+                ->create(['venue' => $venue, 'createdAt' => $at]);
+            if ($n <= $answered) {
+                InquiryFeedbackFactory::new()
+                    ->answered(true, FeedbackOutcome::Open, $at->modify('+8 days'))
+                    ->create(['inquiry' => $inquiry, 'at' => $at->modify('+7 days')]);
+            }
+        }
     }
 
     private function seedMonth(int $number, ReportMonth $month, int $visitors): void

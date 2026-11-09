@@ -14,9 +14,13 @@ use App\Stats\ValueObject\ClickKind;
  */
 final readonly class OwnerReportFigures
 {
+    /** The catalogue suffix of G16's «Rückmeldungen» row; the mail explains the row only when it is there. */
+    public const string FEEDBACK = 'feedback';
+
     /**
-     * Every venue: «Besuche», «Interaktionen», «Zugestellte Anfragen», against the month before. The qualified
-     * inquiries (G7) get a row only once Stats supplies a number (D52).
+     * Every venue: «Besuche», «Interaktionen», «Zugestellte Anfragen», «Qualifizierte Anfragen» (G7), against the
+     * month before. G16's «Rückmeldungen» (answers of any kind, never bookings) shows only while this month or the
+     * month before has one: a standing 0 next to a quiet entry would read as a verdict.
      *
      * @return list<ReportFigure>
      */
@@ -26,9 +30,10 @@ final readonly class OwnerReportFigures
             new ReportFigure('visits', $now->summary->detailVisitors, $before->summary->detailVisitors),
             new ReportFigure('interactions', self::interactions($now), self::interactions($before)),
             new ReportFigure('delivered', $now->deliveredInquiries, $before->deliveredInquiries),
+            new ReportFigure('qualified', $now->qualifiedInquiries, $before->qualifiedInquiries),
         ];
-        if (null !== $now->qualifiedInquiries) {
-            $figures[] = new ReportFigure('qualified', $now->qualifiedInquiries, $before->qualifiedInquiries);
+        if (0 < $now->feedbackAnswers || 0 < $before->feedbackAnswers) {
+            $figures[] = new ReportFigure(self::FEEDBACK, $now->feedbackAnswers, $before->feedbackAnswers);
         }
 
         return $figures;
@@ -53,7 +58,9 @@ final readonly class OwnerReportFigures
     }
 
     /**
-     * Pro: the basic figures of each month, newest first, without a comparison.
+     * Pro: visits, interactions and delivered inquiries of each month, newest first, without a comparison; the trend
+     * line stays that short on purpose (`report.mail.trend.value`), the qualified and feedback rows are in the basic
+     * figures above it.
      *
      * @param list<VenueMonth> $months newest first
      *

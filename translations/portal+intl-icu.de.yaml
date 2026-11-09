@@ -593,6 +593,7 @@ report:
             interactions: Interaktionen
             delivered: Zugestellte Anfragen
             qualified: Qualifizierte Anfragen
+            feedback: Rückmeldungen von Veranstaltern
             clicks_website: Klicks auf die Website
             clicks_email: Klicks auf die E-Mail-Adresse
             clicks_phone: Klicks auf die Telefonnummer
@@ -613,6 +614,8 @@ report:
             title: 'Die letzten drei Monate:'
             value: 'Besuche {visits}, Interaktionen {interactions}, Zugestellte Anfragen {delivered}'
         visits_note: Besuche zählen jede Person einmal pro Tag. Interaktionen sind Klicks auf deine Kontaktangaben und Einträge auf der Merkliste.
+        qualified_note: Qualifiziert sind zugestellte Anfragen, deren Anlass und Gästezahl zu deinem Eintrag passen und deren Termin höchstens zwei Jahre entfernt ist. Doppelte Anfragen, Spam und Tests zählen nicht.
+        feedback_note: Rückmeldungen zählen, wie viele Veranstalter nach ihrer Anfrage unsere kurze Umfrage beantwortet haben. Die Antworten selbst geben wir nicht weiter.
         as_of: 'Stand: {when, date, ::dMMMMy}'
         suggestion:
             inquiry_email:

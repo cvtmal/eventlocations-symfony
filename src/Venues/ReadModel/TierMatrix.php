@@ -73,6 +73,7 @@ final readonly class TierMatrix
             TierFeature::Contact => $tier->contactVisible,
             TierFeature::EventTypes => $tier->eventTypesMax,
             TierFeature::LastMinute => $tier->lastMinuteAllowed,
+            TierFeature::DetailedReport => $tier->detailedReport,
         };
     }
 
