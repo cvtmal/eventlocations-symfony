@@ -371,9 +371,11 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
    `sh bin/prod-import withdraw-dry <venue-number>`, then
    `sh bin/prod-import withdraw <venue-number>` (`--on=YYYY-MM-DD` after the number for the day
    they wrote): the entry and everything it brought (contacts, website, phone, e-mail, address,
-   the content folder, the photos on the server) are deleted, the Location is suppressed, the
-   cache is emptied, and the Location with its name and both notes stays as proof. Then delete
-   the row from the sheet, as the command says.
+   the content folder) are deleted, the Location is suppressed, the cache is emptied, and the
+   Location with its name and both notes stays as proof. `withdraw` also deletes the venue's
+   media folder on the server (`public/media/<venue-number>`), so its photos are no longer
+   reachable; the sync never deletes there, so nothing else would. Then delete the row from the
+   sheet, as the command says.
 4. **The eventlokale crawl** (D11, D12, D32; owner-run, internal only):
    `make sf c="app:crm:crawl-eventlokale"` (every category, several hours, resumable) writes
    the private `CONTENT_ROOT/owner/eventlokale.csv` and the facts-only draft sheet
