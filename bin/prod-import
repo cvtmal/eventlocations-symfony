@@ -181,7 +181,7 @@ refuse_venue_number() { # refuse_venue_number <command> <venue number>
 refuse_withdraw_arguments() { # refuse_withdraw_arguments <command> <venue number> [--on=YYYY-MM-DD]
     cmd="$1"
     shift
-    [ "$#" -ge 1 ] && [ "$#" -le 2 ] || die "$cmd takes a venue number and at most --on=YYYY-MM-DD"
+    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then die "$cmd takes a venue number and at most --on=YYYY-MM-DD"; fi
     refuse_venue_number "$cmd" "$1"
     [ "$#" -eq 1 ] && return 0
     case "$2" in
