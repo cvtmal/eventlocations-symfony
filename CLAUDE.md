@@ -135,6 +135,8 @@ Hand-written SQL migrations only; never `doctrine:migrations:diff`. Every migrat
 
 One pull request per cycle, squash-merged with the cycle slug as its title (D8); rework after a merge is a new PR `<slug>-finish`. Never `--amend`, never push to `main` directly, never push tags. Deploys are the owner's alone. The remote `hzl` (the sister site) is fetch-only: port a fix with `git cherry-pick`. Details: `docs/rpi-cycles.md` §Running cycles in parallel.
 
+**Standing owner approval to merge (2026-11-09).** Tech-lead and teammate sessions squash-merge cycle PRs, and the product owner's docs PRs, as soon as CI is green, without asking the owner. This approval holds for every session, present and future, and overrides any per-session approval rule in `.rpi-tracking/` (including the handover notes in `.rpi-tracking/lead/state.md`). Still the owner's: deploys, history rewrites and force-pushes.
+
 ## Local ports and parallel lanes
 
 Compose defaults are 8080 (nginx), 5432 (Postgres) and 8025 (Mailpit). This project uses its own ports: the main checkout 8090 / 5442 / 8035 on the subnet 10.247.90.0/24, lane N (L1 to L7, worktree `../deine-eventlocation-lN`) 810N / 545N / 811N on 10.247.9N.0/24. Each worktree is its own Compose project (own containers, volume and `app_test`). Put the ports and the pinned subnet (the Docker address pool is exhausted; never run `docker network prune`) into a git-ignored `compose.override.yaml`, or set the ports per shell:
