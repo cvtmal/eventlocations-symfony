@@ -16,7 +16,8 @@ use Doctrine\DBAL\ParameterType;
 
 /**
  * The inquiries as the back office sees them. The mail statuses are read live from `inquiries`, because #29 copies
- * nothing of them, and a list holds only what has a link row. One statement per method.
+ * nothing of them, and a list holds only what has a link row. One statement per method: the detail reads its
+ * «Sammelanfrage» (F13) in the same statement, the brief's venue count by a join and the other children as JSON.
  */
 final class InquiryInboxQuery
 {
@@ -25,7 +26,8 @@ final class InquiryInboxQuery
     private const string FROM = 'FROM crm_inquiry_links l JOIN inquiries i ON i.id = l.inquiry_id';
 
     private const string COLUMNS = 'SELECT i.id, i.first_name, i.last_name, i.company, i.venue_name, i.event_type, i.guest_count, i.event_date,'
-        .' l.status, i.venue_mail_status, i.created_at, i.qualification, i.qualification_reason, i.qualification_override';
+        .' l.status, i.venue_mail_status, i.created_at, i.qualification, i.qualification_reason, i.qualification_override,'
+        .' i.brief_id IS NOT NULL AS in_brief';
 
     private const string NEWEST_FIRST = 'ORDER BY i.created_at DESC, i.id DESC';
 
@@ -70,8 +72,11 @@ final class InquiryInboxQuery
             'SELECT i.id, i.first_name, i.last_name, i.company, i.venue_name, i.venue_id, i.venue_number, i.event_type, i.guest_count,'
             .' i.event_date, i.date_flexible, i.start_time, i.catering_wish, i.budget_chf,'
             .' i.email, i.phone, i.message, l.status, i.venue_mail_status, i.guest_mail_status, i.created_at,'
-            .' i.qualification, i.qualification_reason, i.qualification_override '
-            .self::FROM.' WHERE l.inquiry_id = :id',
+            .' i.qualification, i.qualification_reason, i.qualification_override, b.venue_count AS brief_venue_count,'
+            .' (SELECT json_agg(json_build_object(\'id\', s.id, \'venue_name\', s.venue_name, \'linked\', sl.inquiry_id IS NOT NULL)'
+            .' ORDER BY s.venue_name, s.id) FROM inquiries s LEFT JOIN crm_inquiry_links sl ON sl.inquiry_id = s.id'
+            .' WHERE s.brief_id = i.brief_id AND s.id <> i.id) AS brief_siblings '
+            .self::FROM.' LEFT JOIN inquiry_briefs b ON b.id = i.brief_id WHERE l.inquiry_id = :id',
             ['id' => $id],
         );
         if (false === $row) {
@@ -100,6 +105,7 @@ final class InquiryInboxQuery
             MailStatus::from((string) $row['guest_mail_status']),
             new \DateTimeImmutable((string) $row['created_at']),
             ...self::qualification($row),
+            brief: self::brief($row),
         );
     }
 
@@ -179,6 +185,7 @@ final class InquiryInboxQuery
             MailStatus::from((string) $row['venue_mail_status']),
             new \DateTimeImmutable((string) $row['created_at']),
             ...self::qualification($row),
+            inBrief: (bool) $row['in_brief'],
         ), $this->connection->fetchAllAssociative($sql, $parameters, $types));
     }
 
@@ -194,6 +201,23 @@ final class InquiryInboxQuery
             null === $row['qualification_reason'] ? null : QualificationReason::from((string) $row['qualification_reason']),
             null === $row['qualification_override'] ? null : InquiryOverride::from((string) $row['qualification_override']),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private static function brief(array $row): ?InquiryBriefSummary
+    {
+        if (null === $row['brief_venue_count']) {
+            return null;
+        }
+        /** @var list<array{id: string, venue_name: string, linked: bool}> $others */
+        $others = null === $row['brief_siblings'] ? [] : json_decode((string) $row['brief_siblings'], true, flags: \JSON_THROW_ON_ERROR);
+
+        return new InquiryBriefSummary((int) $row['brief_venue_count'], array_map(
+            static fn (array $other): InquiryBriefSibling => new InquiryBriefSibling($other['id'], $other['venue_name'], $other['linked']),
+            $others,
+        ));
     }
 
     /**
