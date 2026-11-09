@@ -1,8 +1,8 @@
 {#
     Preview of a venue's public page (CMS-9): the public detail template, published or not, with a banner above the
     hero. Nothing here may reach a search engine or a guest: no canonical, hreflang, JSON-LD or social tags, robots
-    `noindex` (the `/admin` response headers say the same), and a note in place of the inquiry form and of Google's
-    rating (#53). It loads the
+    `noindex` (the `/admin` response headers say the same), and a note in place of the inquiry form (none without an
+    inquiry address, as on the public page, F16) and of Google's rating (#53). It loads the
     public `app.css`, so the banner is styled by `venues/_preview-banner.scss` with `--c-*` tokens (P18).
     Optional context: back_url, the banner link's target (default: the staff editor).
 #}

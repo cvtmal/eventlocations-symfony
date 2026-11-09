@@ -47,7 +47,8 @@ front of php-fpm; `make release-check` boots the tarball with `APP_ENV=prod`.
 
 ## First-time setup
 
-Once, in this order. Steps 1 to 4 need root (`sudo`); 4a and 10 run in web consoles; everything else runs as `deploy`.
+Once, in this order. Steps 1 to 4 need root (`sudo`); 4a, 8 and 10 run in web consoles, 6 and 7 start on the Mac;
+everything else runs as `deploy`.
 
 ### 1. VPS and DNS
 
@@ -254,8 +255,11 @@ Once the first content is online and the owner wants Google in:
 4. **Ask for the first crawl:** URL inspection of the home page and one venue page, "Request
    indexing" on each.
 5. **After a week:** under Pages, "Blocked by robots.txt" lists only the `Disallow` paths of
-   `RobotsController` (Merkliste, `/konto`, `/telefon`, …) and "Excluded by 'noindex' tag" only the
-   private pages and filtered result lists (`/sammelanfrage`, the feedback pages, a listing with filters).
+   `RobotsController` (Merkliste, `/konto`, `/telefon`, …). "Excluded by 'noindex' tag" is expected
+   for private pages (`/sammelanfrage`, the feedback pages, `/inhalt-melden`, preview links), filtered
+   result lists, an empty `/kurzfristig-frei`, and entries and landing pages below their index gates
+   (`VenueIndexGate`: facts unchecked or no description; `LandingQualityGate`); any other page there
+   is a finding.
 
 Search Console adds no script to the site, so `/datenschutz` stays as it is.
 
@@ -586,7 +590,7 @@ on.
 | Secrets | `shared/.env.local` | A copy in the owner's password manager |
 | Code | Every release is a commit on `main`; the VPS keeps the last three | Rebuild with a deploy |
 
-The releases hold no state, so a lost VPS is: setup steps 1 to 8, one deploy, the media restore
+The releases hold no state, so a lost VPS is: setup steps 1 to 8 except 4a (Neon keeps the database), one deploy, the media restore
 below. Never run `pg_dump` on the server: Debian's client is not Neon's major. The dump runs in
 Actions with a Postgres 18 image.
 

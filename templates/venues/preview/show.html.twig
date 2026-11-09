@@ -4,10 +4,13 @@
     Whoever holds the link may open it, so nothing here may reach a search engine, a statistic or a Referer: robots
     `noindex` (the response says the same), no canonical, hreflang, JSON-LD or social tags, no stats beacon, no Google element
     (its key check would send the address with the token to Google), and a note in place of the inquiry form (a preview
-    takes no inquiries). The banner's two actions post the token to the claim flow (G6, `portal_claim_start`); a
+    takes no inquiries), also for an entry without an inquiry address (`inquiry_note_always`: the public page has no form
+    then, F16, but claiming it adds one). The banner's two actions post the token to the claim flow (G6, `portal_claim_start`); a
     correction needs the entry claimed first.
 #}
 {% extends 'venues/detail/show.html.twig' %}
+
+{% set inquiry_note_always = true %}
 
 {% block title %}{{ 'preview.title'|trans({name: venue.name}, 'venues') }}{% endblock %}
 

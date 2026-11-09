@@ -2,6 +2,7 @@
     The fields of an inquiry (DP-13), shared by the single form (_form.html.twig) and the brief page (brief.html.twig, F13).
     Param: form (an InquiryType view). No JS beyond the message caret (inquiry.js, F16 N4). An error is text linked to its field with aria-describedby, plus aria-invalid
     (form_row would set these, the local macro does not use it). Labels are here so optional fields can carry their hint.
+    A new or moved field goes into _error_summary.html.twig's list too, in the same order (F16).
 #}
 {% macro field(field, label, optional = false) %}
     {%- set errors = field.vars.errors -%}
