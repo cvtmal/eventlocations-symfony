@@ -60,6 +60,7 @@ Every product decision is settled (D23 to D59). Only facts and the owner's own p
 | Backup schedule and Sentry cron monitor | Runbook in `docs/operations.md`; the database backup runs by hand until the owner schedules it |
 | Infomaniak Object Storage credentials for the media backup (F15b) | Placeholders; launch is refused without a backup less than 26 hours old |
 | Once a year: delete the report mails (G2) older than three years in the contact mailbox (D36) | Note in `docs/operations.md` |
+| After a consent withdrawal (D54): delete that venue's folders `cms/<Nr>` and `content/<Key>` in the external media copy too; number and key are in the CRM withdrawal note | Runbook in `docs/operations.md` |
 | Venue spreadsheet for D1(b) | F14 is built and tested on a fixture |
 | Contact list for the one-to-one pilot | After launch (D30: no bulk mail); F14 builds the import |
 | Google photos and rating: check Google's terms, then switch them on | Both off; the placeholder shows (D48); steps in `docs/operations.md` §"Google rating and photos" |
