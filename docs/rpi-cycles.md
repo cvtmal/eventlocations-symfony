@@ -110,7 +110,7 @@ Up to seven cycles run at once, one per lane. Wave G §4 groups the cycles into 
 | F11 | `portal-event` | S–M | F4 | `portal_submissions` (event step) | — | Done |
 | F12 | `business-model` | M–L | F1 | `tiers`, `venues.tier_id`, `crm_deals.tier_id` | Tier names and prices | Done |
 | F13 | `multi-inquiry` | M–L | F9, G7 | `inquiries` (parent and child deliveries) | — | Done |
-| F14 | `content-onboarding` | M | F3, F4, G5 | — | Spreadsheet (fixture until it arrives); consent D29, follow-ups D32 | Todo |
+| F14 | `content-onboarding` | M | F3, F4, G5 | — | Spreadsheet (fixture until it arrives); consent D29, follow-ups D32 | Done (`1a610ac`) |
 | F15 | `prod-setup` | M | F0 | — | — (host D26) | Done |
 | F15b | `media-backup` | S | F15 | — | Object Storage credentials (placeholders) | Done |
 | F16 | `launch-verification` | S–M | all except F13, G14 to G16 | — | — | Todo |
