@@ -344,7 +344,7 @@ step 2), so the times below are Zurich times. `php` on cron's PATH is 8.5 throug
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D46), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, deletion of expired «Kurzfristig frei» offers with a mail to the managers, inquiry backfill, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D46), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, deletion of expired «Kurzfristig frei» offers with a mail to the managers, the feedback mail to guests a week after their inquiry (G16), inquiry backfill, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
 | `40 * * * *` | `bin/cron-hourly` | Mails staff (`site.contact_email`) the inquiries whose venue mail failed or is stuck past 15 minutes, of the last 7 days and not marked spam or test, each inquiry once (G7, D56); one short Neon wake-up an hour |
 | `30 4 * * *` | `bin/cron-media-backup` | The media originals to Object Storage, encrypted, with retention ([Media backup](#media-backup)); no database |
 
@@ -353,6 +353,11 @@ last day (Zurich) has passed and mails each active manager of a venue that still
 offer, with a link to the `/konto` tab. The pages already hide such offers from midnight, so the job
 only tidies the rows. A second run deletes and sends nothing, a missed night is caught up by the
 next, and `--dry-run` prints how many would go.
+
+`inquiry-feedback` (`app:inquiries:request-feedback`, G16) mails each guest whose delivered and
+qualified inquiry (never spam or test) went to its venue 7 to 14 days ago, once per inquiry and one
+mail per address per night, unless the address opted out through the mail's link. A second run sends
+nothing; a failed mail is retried the next night while the inquiry is inside the 14 days.
 
 `moderation-erase` (D36) erases the complainant of a report three years after the decision in the
 database only. The staff notices ("Meldung: …") in the `site.contact_email` mailbox and the replies
@@ -371,6 +376,8 @@ worth reading:
 | `cron-daily: subscriptions-expire failed`, with `<number>: <reason>` | One venue's lapsed term was not handled; its pages already show Free (the entitlements read the dates), only the listing order waits | The next night retries; if the number returns, open the venue's CRM deal and its terms |
 | `cron-daily: subscriptions-remind failed`, with `<id>: <reason>` | One reminder mail could not be prepared; a mail that did not go out is logged as an error and retried the next night | The next night retries; if it repeats, check the mail settings (`MAILER_DSN`) |
 | `cron-daily: last-minute-expire failed`, with `Expiring the offers failed: <reason>` | Nothing public is wrong: every page filters offers by date, so expired ones stay hidden; only the deletion and the mails wait | Check the database connection, then run `<root>/current/bin/console app:last-minute:expire` (safe to repeat). A mail that fails is logged ("The portal mail portal/email/last_minute_expired.html.twig failed") and not resent; the offer is deleted anyway |
+| `<n> feedback mails failed; they are retried next night.` | Feedback mails to guests did not go out; nothing else waits | Nothing if the next night is clean; if it repeats, check the mail settings (`MAILER_DSN`) |
+| `cron-daily: inquiry-feedback failed` | The feedback job failed, often the database was unreachable; nothing was recorded | The next night retries; run `<root>/current/bin/console app:inquiries:request-feedback` (safe to repeat) |
 | `cron-daily: stats-ingest failed` | Day files not loaded; nothing lost, they stay in `var/stats/spool` | The next night or the Statistik button loads them |
 | `<id> venue <n> failed\|pending since <time> UTC`, then `Mail to staff failed: …` | The hourly staff alert mail did not go; those inquiries may not have reached their venue | The next hour retries; meanwhile open `/admin/crm/anfragen/<id>` and press Erneut senden, and check the mail settings (`MAILER_DSN`) |
 | `cron-hourly: inquiries-stuck failed` | The alert command failed, often the database was unreachable; nothing was marked | The next hour retries; if it repeats, run `sh <root>/current/bin/cron-hourly` and read the error |

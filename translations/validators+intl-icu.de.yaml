@@ -164,6 +164,12 @@ crm:
 inquiry:
     event_type:
         required: Bitte wähle einen Anlass.
+    # G16: the feedback page (FeedbackData).
+    feedback:
+        venue_replied:
+            required: Bitte wähle Ja oder Nein.
+        outcome:
+            required: Bitte wähle eine Antwort.
     guests:
         required: Bitte gib die Anzahl Gäste an.
         invalid: Bitte gib die Anzahl Gäste als ganze Zahl an.

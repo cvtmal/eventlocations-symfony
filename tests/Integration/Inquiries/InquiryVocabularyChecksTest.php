@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Inquiries;
 
 use App\Inquiries\ReadModel\InquiryVocabularyQuery;
+use App\Inquiries\ValueObject\FeedbackOutcome;
 use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
 use App\Inquiries\ValueObject\Qualification;
@@ -30,6 +31,7 @@ final class InquiryVocabularyChecksTest extends KernelTestCase
         yield 'qualification' => ['chk_inquiries_qualification', Qualification::class];
         yield 'qualification reason' => ['chk_inquiries_qualification_reason', QualificationReason::class];
         yield 'qualification override' => ['chk_inquiries_qualification_override', InquiryOverride::class];
+        yield 'feedback outcome' => ['chk_inquiry_feedback_outcome', FeedbackOutcome::class];
     }
 
     /**

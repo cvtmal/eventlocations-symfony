@@ -43,6 +43,9 @@ main() {
     # G14: offers «Kurzfristig frei» past their last day are deleted and their managers mailed. The pages hid them at
     # midnight already. A second run writes nothing; a failure line prints under --quiet.
     step last-minute-expire "$PHP" bin/console --no-interaction --quiet app:last-minute:expire
+    # G16: the one feedback mail to guests a week after a delivered, qualified inquiry, one mail per address. A second
+    # run sends and writes nothing; a failed mail prints one line under --quiet and is retried the next night.
+    step inquiry-feedback "$PHP" bin/console --no-interaction --quiet app:inquiries:request-feedback
     # No --quiet: a repaired inquiry is worth the mail, and a good night prints nothing anyway.
     step crm-backfill "$PHP" bin/console --no-interaction app:crm:backfill-inquiries
     # #47: loads the beacon's day files into Neon and rebuilds stats_daily; the button on /admin/statistik runs

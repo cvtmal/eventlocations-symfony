@@ -600,6 +600,7 @@ inquiry:
         delivery: Zustellung
         resend: Erneut senden
         qualification: Qualifizierung
+        feedback: Rückmeldung des Veranstalters
         mark_spam: Als Spam markieren
         mark_test: Als Test markieren
         unmark: Markierung entfernen
@@ -629,6 +630,12 @@ inquiry:
     override:
         spam: Spam
         test: Test
+    # G16: the guest's answer to the feedback mail a week after delivery; the venue only ever sees a count.
+    feedback:
+        venue_replied: "Location hat sich gemeldet: {answer, select, yes {Ja} other {Nein}}"
+        outcome: "Hat geklappt: {answer, select, yes {Ja} no {Nein} other {Noch offen}}"
+        none: Rückfrage gesendet, noch keine Antwort.
+        opted_out: Der Veranstalter möchte keine solchen Rückfragen mehr.
     flash:
         status_changed: Status gespeichert.
         gone: Diese Anfrage gibt es nicht mehr.

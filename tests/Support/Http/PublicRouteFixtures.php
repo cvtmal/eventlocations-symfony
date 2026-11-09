@@ -6,9 +6,12 @@ namespace App\Tests\Support\Http;
 
 use App\Crm\OptOutToken;
 use App\Factory\CompanyFactory;
+use App\Factory\InquiryFactory;
+use App\Factory\InquiryFeedbackFactory;
 use App\Factory\VenuePreviewFactory;
 use App\Factory\VenueSlugHistoryFactory;
 use App\Geo\ValueObject\Canton;
+use App\Inquiries\FeedbackToken;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Inquiries\InquiryFormFields;
 use App\Tests\Support\Search\LandingFixtures;
@@ -34,7 +37,7 @@ trait PublicRouteFixtures
     private const HISTORY_SLUG = 'altes-schloss-seeblick';
 
     /**
-     * @return array{number: int, gone: string, town: string, building: string, started: string, preview: string, preview_gone: string, preview_short: string, opt_out: string}
+     * @return array{number: int, gone: string, town: string, building: string, started: string, preview: string, preview_gone: string, preview_short: string, opt_out: string, feedback: string}
      */
     private function seedPublicRoutes(): array
     {
@@ -58,6 +61,12 @@ trait PublicRouteFixtures
         $optOut = self::getContainer()->get(OptOutToken::class);
         self::assertInstanceOf(OptOutToken::class, $optOut);
 
+        // G16: the links of a feedback mail, for an inquiry to the full venue.
+        $feedback = self::getContainer()->get(FeedbackToken::class);
+        self::assertInstanceOf(FeedbackToken::class, $feedback);
+        $feedbackInquiry = InquiryFactory::createOne(['venue' => $venue]);
+        InquiryFeedbackFactory::createOne(['inquiry' => $feedbackInquiry]);
+
         foreach (['cache.phone_reveal', 'cache.inquiry_submit'] as $name) {
             $pool = self::getContainer()->get($name);
             self::assertInstanceOf(CacheItemPoolInterface::class, $pool);
@@ -77,6 +86,7 @@ trait PublicRouteFixtures
             'preview_gone' => $previewGone,
             'preview_short' => (string) $open->shortCode(),
             'opt_out' => $optOut->forCompany(CompanyFactory::createOne()->id()),
+            'feedback' => $feedback->forInquiry($feedbackInquiry->id()),
         ];
     }
 }

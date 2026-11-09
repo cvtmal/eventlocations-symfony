@@ -10,7 +10,7 @@ MAILTO=__OPS_MAIL__
 # Every 5 minutes, offset by 2 from the clear above and serialised with it by a lock (#19 n2):
 # empty the cache only when it is over its size or file limit.
 2-59/5 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-cache-guard
-# 03:15: inquiry purge, complainant erasure (D36), search-miss purge (D46), CRM stages and renewal tasks, stats ingest, pool prune, sweeps.
+# 03:15: inquiry purge, complainant erasure (D36), search-miss purge (D46), CRM stages and renewal tasks, guest feedback mails (G16), stats ingest, pool prune, sweeps.
 15 3 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-daily
 # Every hour at :40 (G7, D56): mail staff the inquiries whose venue mail failed or is stuck, each once.
 40 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-hourly

@@ -1,0 +1,58 @@
+{#
+    The feedback page of G16 (InquiryFeedbackController). `state`: `form` (the two questions, filled in when the guest
+    answered before), `done` (answer stored), `opt_out_ask` (one button that POSTs to the opt-out URL), `opt_out_done`
+    or `unknown` (the link names no mailed inquiry any more, or a wrong method). Private: robots `noindex`, no
+    canonical, no stats beacon, no session (the form's CSRF token is the site's stateless one).
+#}
+{% extends 'base.html.twig' %}
+
+{% set venue = feedback ? feedback.venueName : '' %}
+
+{% block title %}{{ ('feedback.' ~ state ~ '.title')|trans({}, 'inquiries') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block hreflang %}{% endblock %}
+
+{% block jsonld %}{% endblock %}
+
+{% block stats_beacon %}{% endblock %}
+
+{% block body_class %}{% set page_class = 'page-error' %}{{ page_class }}{% endblock %}
+
+{% block main %}
+    <div class="error-page container">
+        <span class="error-page__icon">{{ icon('mail') }}</span>
+        <h1 class="error-page__heading">{{ ('feedback.' ~ state ~ '.heading')|trans({venue: venue}, 'inquiries') }}</h1>
+        <p class="error-page__text">{{ ('feedback.' ~ state ~ '.text')|trans({venue: venue, email: site_contact_email}, 'inquiries') }}</p>
+        {% if state == 'form' %}
+            {{ form_start(form, {attr: {class: 'feedback-form', novalidate: 'novalidate'}}) }}
+                {% for field in [form.venueReplied, form.outcome] %}
+                    {% set errors = field.vars.errors %}
+                    <fieldset class="feedback-form__question"{% if errors|length > 0 %} aria-describedby="{{ field.vars.id }}_error"{% endif %}>
+                        <legend class="feedback-form__legend">{{ ('feedback.question.' ~ field.vars.name)|trans({venue: venue}, 'inquiries') }}</legend>
+                        <div class="feedback-form__options">
+                            {% for choice in field %}
+                                <label class="feedback-form__option">{{ form_widget(choice) }} {{ choice.vars.label|trans({}, 'inquiries') }}</label>
+                            {% endfor %}
+                        </div>
+                        {% if errors|length > 0 %}<p class="feedback-form__error" id="{{ field.vars.id }}_error">{{ icon('info', {class: 'icon--sm'}) }}<span>{% for error in errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}</span></p>{% endif %}
+                    </fieldset>
+                {% endfor %}
+                {% include 'components/_button.html.twig' with {label: 'feedback.form.submit'|trans({}, 'inquiries'), variant: 'primary', size: 'lg', type: 'submit'} only %}
+            {{ form_end(form, {render_rest: true}) }}
+            <p class="feedback-form__opt-out"><a href="{{ path('inquiry_feedback_opt_out', {token: token}) }}">{{ 'feedback.form.opt_out'|trans({}, 'inquiries') }}</a></p>
+        {% elseif state == 'opt_out_ask' %}
+            <form method="post" action="{{ path('inquiry_feedback_opt_out', {token: token}) }}">
+                {% include 'components/_button.html.twig' with {label: 'feedback.opt_out_ask.submit'|trans({}, 'inquiries'), variant: 'primary', size: 'lg', type: 'submit'} only %}
+            </form>
+        {% elseif state == 'done' %}
+            <div class="feedback-form__actions">
+                {% include 'components/_button.html.twig' with {label: 'feedback.done.change'|trans({}, 'inquiries'), variant: 'secondary', size: 'lg', href: path('inquiry_feedback', {token: token})} only %}
+                {% include 'components/_button.html.twig' with {label: 'feedback.to_home'|trans({}, 'inquiries'), variant: 'primary', size: 'lg', href: path('home')} only %}
+            </div>
+        {% else %}
+            {% include 'components/_button.html.twig' with {label: 'feedback.to_home'|trans({}, 'inquiries'), variant: 'secondary', size: 'lg', href: path('home')} only %}
+        {% endif %}
+    </div>
+{% endblock %}

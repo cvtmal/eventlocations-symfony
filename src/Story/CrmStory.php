@@ -28,8 +28,10 @@ use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\EmailTemplateFactory;
 use App\Factory\InquiryFactory;
+use App\Factory\InquiryFeedbackFactory;
 use App\Factory\TaskFactory;
 use App\Inquiries\Entity\Inquiry;
+use App\Inquiries\ValueObject\FeedbackOutcome;
 use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
 use App\Inquiries\ValueObject\QualificationReason;
@@ -61,9 +63,10 @@ final class CrmStory extends Story
         ['new', null], ['contacted', null], ['offer', null], ['negotiation', null], ['won', -30], ['lost', null], ['new', null],
         ['offer', null], ['won', 45], ['negotiation', null], ['contacted', null], ['won', 240], ['lost', null], ['offer', null],
     ];
-    /** The venue mail's outcome and the age in days, newest first. The fourth (marked test) and the last end up `done`, the fifth `seen`, the others stay `new`. */
+    /** The venue mail's outcome and the age in days, newest first. The fourth (marked test) and the sixth end up `done`, the fifth `seen`, the others stay `new`. */
     private const INQUIRIES = [
         [MailStatus::Pending, 1], [MailStatus::Failed, 2], [MailStatus::Sent, 3], [MailStatus::Failed, 6], [MailStatus::Sent, 10], [MailStatus::Sent, 17],
+        [MailStatus::Sent, 9],
     ];
     /**
      * G7 (D56): the qualification each delivered or failed one got, and the staff mark, so the inbox shows every pill.
@@ -75,7 +78,10 @@ final class CrmStory extends Story
         3 => [QualificationReason::NotDelivered, InquiryOverride::Test],
         4 => [QualificationReason::EventTypeNotOffered, null],
         5 => [null, InquiryOverride::Spam],
+        6 => [null, null],
     ];
+    /** G16: the index of the qualified inquiry whose guest answered the feedback mail a day after it went out. */
+    private const INQUIRY_WITH_FEEDBACK = 6;
 
     /**
      * The event fields of those six inquiries (F9): event type, company, days until the date (null: flexible only),
@@ -88,6 +94,7 @@ final class CrmStory extends Story
         ['christmas_party', 'Bäckerei Zentral', 45, false, '18:30', null, 8000],
         ['general_assembly', 'Wohnbaugenossenschaft Linde', null, true, null, null, null],
         ['wedding', null, 200, true, '14:00', 'in_house', 25000],
+        ['apero', 'Kanzlei Bergmann', 21, false, '17:30', 'external_allowed', 3000],
     ];
     /** Name, subject and Markdown, each template using all three merge fields. */
     private const EMAIL_TEMPLATES = [
@@ -297,6 +304,12 @@ final class CrmStory extends Story
 
             $this->commandBus->dispatch(new IngestInquiry($inquiry->id()));
             $ids[] = $inquiry->id();
+
+            if (self::INQUIRY_WITH_FEEDBACK === $index) {
+                InquiryFeedbackFactory::new()
+                    ->answered(true, FeedbackOutcome::Yes, $at->modify('+8 days'))
+                    ->create(['inquiry' => $inquiry, 'at' => $at->modify('+7 days')]);
+            }
         }
 
         $this->commandBus->dispatch(new ChangeInquiryStatus($ids[3], InquiryStatus::Done));
