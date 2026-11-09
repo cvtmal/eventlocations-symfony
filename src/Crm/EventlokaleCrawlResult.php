@@ -10,7 +10,7 @@ namespace App\Crm;
 final readonly class EventlokaleCrawlResult
 {
     public function __construct(
-        /** The venue count the API reported. */
+        /** The venue counts the API reported, added up over the categories: a venue in two counts twice. */
         public int $total,
         /** Unique ids in the cached list. */
         public int $listed,
@@ -21,6 +21,8 @@ final readonly class EventlokaleCrawlResult
         public int $failed,
         /** Stopped after EventlokaleCrawl::MAX_CONSECUTIVE_429 rate-limit answers in a row. */
         public bool $rateLimited,
+        /** Event categories whose list is cached. */
+        public int $categories = 0,
     ) {
     }
 }

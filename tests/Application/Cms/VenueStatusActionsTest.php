@@ -49,15 +49,13 @@ final class VenueStatusActionsTest extends WebTestCase
         self::assertResponseRedirects('/admin/locations/'.$number);
         $crawler = $this->client->followRedirect();
         $toast = $crawler->filter('.toast')->text();
-        self::assertSame('Noch nicht publizierbar. Es fehlt: Kurztext, Wichtigste Art der Location, Mindestens ein Foto.', $toast);
-        self::assertSame(1, substr_count($toast, 'fehlt'), 'the frame says it once, each gap is a noun (#45 F-m2)');
+        self::assertSame('Noch nicht publizierbar. Es fehlt: Kurztext, Wichtigste Art der Location, Mindestens ein Foto. Fakten nicht geprüft, Beschreibung fehlt.', $toast);
+        self::assertSame(1, substr_count($toast, 'Es fehlt'), 'the frame says it once, each checklist gap is a noun (#45 F-m2)');
         self::assertSame('unpublished', $this->venueStatus($number));
         self::assertSame(1, $this->auditRows($number), 'only the creation');
 
         $venue = $this->entity($number);
-        $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune am Waldrand.' WHERE venue_id = ? AND locale = 'de'", [$venue->id()]);
-        VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
-        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $this->makePublishable($venue);
         $this->purger()->venues = [];
         $this->purger()->listings = 0;
 
@@ -115,6 +113,40 @@ final class VenueStatusActionsTest extends WebTestCase
         self::assertSame('published', $this->venueStatus($venue->number()));
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_tasks'));
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM crm_companies'));
+    }
+
+    /**
+     * D54 pin: the CMS refuses to publish an unmanaged entry without «Fakten geprüft» and a description. Each half on
+     * its own keeps it offline; with both it goes online.
+     */
+    public function test_the_cms_refuses_to_publish_an_unmanaged_entry_without_checked_facts_and_a_description(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = DetailVenues::minimal();
+        VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished', facts_checked_at = NULL WHERE id = ?", [$venue->id()]);
+        $this->connection->executeStatement("UPDATE venue_translations SET description = 'Ein Gartenhaus für 80 Gäste.' WHERE venue_id = ?", [$venue->id()]);
+
+        $crawler = $this->client->request('GET', $this->url($venue));
+        $this->client->submit($crawler->filter('form[name="publish"]')->form());
+
+        self::assertSame('Noch nicht publizierbar. Fakten nicht geprüft.', $this->client->followRedirect()->filter('.toast')->text());
+        self::assertSame('unpublished', $this->venueStatus($venue->number()));
+
+        $this->connection->executeStatement('UPDATE venues SET facts_checked_at = now() WHERE id = ?', [$venue->id()]);
+        $this->connection->executeStatement('UPDATE venue_translations SET description = NULL WHERE venue_id = ?', [$venue->id()]);
+        $crawler = $this->client->request('GET', $this->url($venue));
+        $this->client->submit($crawler->filter('form[name="publish"]')->form());
+
+        self::assertSame('Noch nicht publizierbar. Beschreibung fehlt.', $this->client->followRedirect()->filter('.toast')->text());
+        self::assertSame('unpublished', $this->venueStatus($venue->number()));
+
+        $this->connection->executeStatement("UPDATE venue_translations SET description = 'Ein Gartenhaus für 80 Gäste.' WHERE venue_id = ?", [$venue->id()]);
+        $crawler = $this->client->request('GET', $this->url($venue));
+        $this->client->submit($crawler->filter('form[name="publish"]')->form());
+
+        self::assertSame('published', $this->venueStatus($venue->number()));
     }
 
     public function test_unpublish_takes_a_venue_offline(): void
@@ -228,9 +260,12 @@ final class VenueStatusActionsTest extends WebTestCase
         $kernel = self::$kernel;
         self::assertNotNull($kernel);
         $this->content = new ContentFolder($kernel->getProjectDir().'/var/test-content-'.uniqid());
-        $this->content->venue('gasthaus-status');
+        $this->content->venue('gasthaus-status', ['translations' => ['de' => ['description' => 'Fiktive Beschreibung der Location.']]]);
         $import = new CommandTester((new Application($kernel))->find('app:venues:import'));
         $import->execute(['path' => $this->content->path()]);
+        // F14 (D54): an imported entry is a draft until staff check its facts; then the import puts it online.
+        $this->connection->executeStatement("UPDATE venues SET facts_checked_at = now() WHERE content_key = 'gasthaus-status'");
+        $import->execute(['path' => $this->content->path(), '--force' => true]);
         $number = (int) $this->connection->fetchOne("SELECT number FROM venues WHERE content_key = 'gasthaus-status'");
         self::assertSame('published', $this->venueStatus($number), $import->getDisplay());
 
@@ -255,12 +290,21 @@ final class VenueStatusActionsTest extends WebTestCase
         $this->client->request('GET', '/admin/locations/neu');
         $this->client->submitForm('Erfassen', ['create_venue[name]' => $name, 'create_venue[capacityMax]' => '140']);
         $number = (int) $this->connection->fetchOne('SELECT number FROM venues WHERE name = ?', [$name]);
-        $venue = $this->entity($number);
-        $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune am Waldrand.' WHERE venue_id = ? AND locale = 'de'", [$venue->id()]);
-        VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
-        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
+        $this->makePublishable($this->entity($number));
 
         return $number;
+    }
+
+    /**
+     * What a publish needs, the draft rule included (F14, D54): summary, main building, photo, checked facts and a
+     * description. Nobody manages a venue made in the CMS.
+     */
+    private function makePublishable(Venue $venue): void
+    {
+        $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune am Waldrand.', description = 'Eine alte Scheune mit Platz für 140 Gäste.' WHERE venue_id = ? AND locale = 'de'", [$venue->id()]);
+        $this->connection->executeStatement('UPDATE venues SET facts_checked_at = now() WHERE id = ?', [$venue->id()]);
+        VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
+        VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
     }
 
     private function crmTasks(int $number): int

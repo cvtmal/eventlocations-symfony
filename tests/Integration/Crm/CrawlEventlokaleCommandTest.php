@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Crm;
 
 use App\Crm\EventlokaleCache;
 use App\Crm\EventlokaleCsv;
+use App\Crm\EventlokaleSheet;
 use App\Tests\Support\Crm\EventlokalePayloads;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -44,7 +45,7 @@ final class CrawlEventlokaleCommandTest extends KernelTestCase
     {
         $cache = new EventlokaleCache($this->root);
         $cache->writeTaxonomies(EventlokalePayloads::taxonomies());
-        $cache->writeIndex([EventlokalePayloads::listItem(1), EventlokalePayloads::listItem(2)], 2, new \DateTimeImmutable());
+        $cache->writeIndex(370, [EventlokalePayloads::listItem(1), EventlokalePayloads::listItem(2)], 2, new \DateTimeImmutable());
         $cache->writeDetail(1, EventlokalePayloads::detail(1));
 
         $status = $this->command->execute(['path' => $this->root, '--from-cache' => true]);
@@ -55,6 +56,7 @@ final class CrawlEventlokaleCommandTest extends KernelTestCase
         self::assertCount(1 + 2, $lines);
         self::assertStringContainsString('CSV: '.$this->root.'/'.EventlokaleCsv::FILE.' (2 rows)', $this->command->getDisplay());
         self::assertStringContainsString('Empty in every row: ', $this->command->getDisplay());
+        self::assertStringContainsString('Draft sheet: '.$this->root.'/'.EventlokaleSheet::FILE.' (1 rows', $this->command->getDisplay());
     }
 
     public function test_from_cache_fails_without_a_cached_list(): void

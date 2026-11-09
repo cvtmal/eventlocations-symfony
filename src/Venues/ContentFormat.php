@@ -40,6 +40,6 @@ final class ContentFormat
     {
         $extension = strtolower($extension);
 
-        return \sprintf('content/%s/%s.%s', $venueKey, $sha256, 'jpeg' === $extension ? 'jpg' : $extension);
+        return \sprintf('%s/%s.%s', VenueOriginals::contentDirectory($venueKey), $sha256, 'jpeg' === $extension ? 'jpg' : $extension);
     }
 }

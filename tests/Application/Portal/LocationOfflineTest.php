@@ -104,9 +104,12 @@ final class LocationOfflineTest extends WebTestCase
         $kernel = self::$kernel;
         self::assertNotNull($kernel);
         $this->content = new ContentFolder($kernel->getProjectDir().'/var/test-content-'.uniqid());
-        $this->content->venue('gasthaus-offline');
+        $this->content->venue('gasthaus-offline', ['translations' => ['de' => ['description' => 'Fiktive Beschreibung der Location.']]]);
         $import = new CommandTester((new Application($kernel))->find('app:venues:import'));
         $import->execute(['path' => $this->content->path()]);
+        // F14 (D54): an imported entry is a draft until staff check its facts; then the import puts it online.
+        $this->connection->executeStatement("UPDATE venues SET facts_checked_at = now() WHERE content_key = 'gasthaus-offline'");
+        $import->execute(['path' => $this->content->path(), '--force' => true]);
         $number = (int) $this->connection->fetchOne("SELECT number FROM venues WHERE content_key = 'gasthaus-offline'");
         self::assertSame('published', $this->venueStatus($number), $import->getDisplay());
         $venue = $this->portalEntityManager()->getRepository(Venue::class)->findOneBy(['number' => $number]);

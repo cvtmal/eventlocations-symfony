@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Portal;
 use App\Admin\Entity\AdminUser;
 use App\Factory\AdminUserFactory;
 use App\Factory\PortalUserFactory;
+use App\Factory\PortalVenueAccessFactory;
 use App\Factory\SubmissionFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenuePhotoFactory;
@@ -43,8 +44,11 @@ final class SubmissionCommandsTest extends KernelTestCase
     {
         $venue = VenueFactory::createOne(['status' => VenueStatus::Unpublished]);
         SubmissionFactory::createOne(['venue' => $venue]);
+        $manager = PortalUserFactory::createOne();
+        // The submitter manages the location, so the draft rule (F14) adds no gap.
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $venue]);
 
-        $violation = $this->refusal(new SubmitLocation(PortalUserFactory::createOne()->id(), $venue->number()), VenueRuleViolation::class);
+        $violation = $this->refusal(new SubmitLocation($manager->id(), $venue->number()), VenueRuleViolation::class);
 
         self::assertSame(['summary', 'main_building', 'photo'], $violation->missing);
         self::assertSame('draft', $this->row($venue)['status']);

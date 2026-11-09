@@ -149,6 +149,39 @@ final class ContentSchemaTest extends TestCase
         self::assertSame([], $errors);
     }
 
+    public function test_a_draft_may_come_without_texts(): void
+    {
+        $errors = self::schema()->validate(self::object([
+            'name' => 'Gasthaus Beispiel',
+            'status' => 'unpublished',
+            'capacity' => ['max' => 80],
+        ]));
+
+        self::assertSame([], $errors);
+    }
+
+    public function test_a_published_or_status_less_venue_needs_its_texts(): void
+    {
+        foreach ([['status' => 'published'], []] as $status) {
+            $errors = self::schema()->validate(self::object(['name' => 'Gasthaus Beispiel', 'capacity' => ['max' => 80]] + $status));
+
+            self::assertNotSame([], $errors);
+            self::assertStringContainsString('translations', implode("\n", $errors));
+        }
+    }
+
+    public function test_a_draft_with_texts_still_needs_the_de_summary(): void
+    {
+        $errors = self::schema()->validate(self::object([
+            'name' => 'Gasthaus Beispiel',
+            'status' => 'unpublished',
+            'capacity' => ['max' => 80],
+            'translations' => ['de' => ['description' => 'Lang.']],
+        ]));
+
+        self::assertNotSame([], $errors);
+    }
+
     public function test_geo_needs_both_coordinates(): void
     {
         $data = self::full();

@@ -10,8 +10,12 @@ namespace App\Venues\ValueObject;
  */
 final readonly class VenueImportOutcome
 {
+    /** The note on a folder the draft rule keeps offline (F14), followed by what is missing: `draft: facts, description`. */
+    public const string DRAFT_NOTE = 'draft: ';
+
     /**
-     * @param list<string> $messages why the venue failed (empty otherwise)
+     * @param list<string> $messages why the venue failed; for any other status, notes for staff the run prints
+     *                               without failing (F14: `event_types: N > M (Gratis)`)
      */
     private function __construct(
         public string $key,
@@ -47,6 +51,20 @@ final readonly class VenueImportOutcome
     public static function cmsEdited(string $key, bool $dryRun): self
     {
         return new self($key, ImportStatus::CmsEdited, $dryRun);
+    }
+
+    /**
+     * The same outcome with notes for staff added; a failed outcome keeps only its errors.
+     *
+     * @param list<string> $notes
+     */
+    public function noting(array $notes): self
+    {
+        if ([] === $notes || ImportStatus::Failed === $this->status) {
+            return $this;
+        }
+
+        return new self($this->key, $this->status, $this->dryRun, $this->photosAdded, $this->photosRemoved, $this->documentsAdded, $this->documentsRemoved, [...$this->messages, ...$notes]);
     }
 
     /**

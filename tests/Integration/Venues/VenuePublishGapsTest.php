@@ -33,7 +33,8 @@ final class VenuePublishGapsTest extends KernelTestCase
     {
         $venue = VenueFactory::createOne(['status' => VenueStatus::Unpublished]);
 
-        self::assertSame(['summary', 'main_building', 'photo'], $this->gaps()->missing($venue->id()));
+        // F14 (D54): nobody manages it, so the missing description is a gap too (DraftRuleTest).
+        self::assertSame(['summary', 'main_building', 'photo', 'description'], $this->gaps()->missing($venue->id()));
     }
 
     public function test_a_room_photo_does_not_count(): void

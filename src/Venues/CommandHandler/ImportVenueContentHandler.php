@@ -8,12 +8,14 @@ use App\Geo\Entity\Canton;
 use App\Geo\Entity\Town;
 use App\Media\MediaPublisher;
 use App\Shared\Messenger\CommandHandlerInterface;
+use App\Shared\Translation\EnabledLocale;
 use App\Venues\Command\ImportVenueContent;
 use App\Venues\Command\PurgeVenueCache;
 use App\Venues\Command\RemoveVenueFiles;
 use App\Venues\ContentFormat;
 use App\Venues\ContentReader;
 use App\Venues\DocumentPipeline;
+use App\Venues\EntitlementResolver;
 use App\Venues\Entity\Room;
 use App\Venues\Entity\RoomTranslation;
 use App\Venues\Entity\TaxonomyTerm;
@@ -39,12 +41,14 @@ use App\Venues\ValueObject\Content\RoomContent;
 use App\Venues\ValueObject\Content\VenueContent;
 use App\Venues\ValueObject\GrantEvidence;
 use App\Venues\ValueObject\Grantor;
+use App\Venues\ValueObject\KnownTiers;
 use App\Venues\ValueObject\PhotoGrant;
 use App\Venues\ValueObject\Seating;
 use App\Venues\ValueObject\StagedPhoto;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueImportOutcome;
 use App\Venues\ValueObject\VenueStatus;
+use App\Venues\VenueClaims;
 use App\Venues\VenueSlugs;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -66,7 +70,7 @@ use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
  * 4. A dry run stops here with the would-be counts.
  * 5. New photos: store the original content-addressed under MEDIA_ROOT and render the
  *    variants into a staging directory, all before the first DB write.
- * 6. Write: the venue's fields; translations and slugs (old slug to venue_slug_history);
+ * 6. Write: the venue's fields (the status through the draft rule, F14); translations and slugs (old slug to venue_slug_history);
  *    terms and every translation set replaced; rooms, photos and
  *    documents kept when their identity matches (room key; room key + original; original)
  *    and moved in two flushes because their position uniques are not deferrable.
@@ -101,7 +105,52 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         private readonly DocumentPipeline $documents,
         private readonly MediaPublisher $publisher,
         private readonly MessageBusInterface $commandBus,
+        private readonly EnabledLocale $locales,
+        private readonly EntitlementResolver $entitlements,
+        private readonly VenueClaims $claims,
     ) {
+    }
+
+    /**
+     * The draft rule at the import (F14, D54; `VenuePublishGaps` holds it for every other publish): a folder that asks
+     * `published` for an entry nobody manages moves it online only when staff checked its facts and the folder has a
+     * default-locale description. A new venue is never checked, so it always lands as a draft. The rule gates the move
+     * online only: an entry already online stays online.
+     *
+     * @return list<string> what holds the venue back (`facts`, `description`); empty when it may go online as asked
+     */
+    private function heldAsDraft(VenueContent $content, ?Venue $venue): array
+    {
+        if (VenueStatus::Published !== $content->status || (null !== $venue && ($venue->isPublished() || $this->claims->isConfirmed($venue->id())))) {
+            return [];
+        }
+
+        $held = [];
+        if (null === $venue?->factsCheckedAt()) {
+            $held[] = 'facts';
+        }
+        if (1 !== preg_match('/\S/u', $content->translations[$this->locales->default()]['description'] ?? '')) {
+            $held[] = 'description';
+        }
+
+        return $held;
+    }
+
+    /**
+     * Notes for staff that do not stop the import (F14). Every import makes a Free venue (D43) but keeps all its
+     * event types (F12's follow-up: report, never trim); staff cut the list to the plan while they check the facts.
+     *
+     * @return list<string>
+     */
+    private function notes(VenueContent $content): array
+    {
+        $eventTypes = \count($content->terms[TermGroup::SuitableFor->value] ?? []);
+        if (0 === $eventTypes) {
+            return [];
+        }
+        $free = $this->entitlements->forTier(KnownTiers::FREE);
+
+        return $free->allowsEventTypes($eventTypes) ? [] : [\sprintf('event_types: %d > %d (%s)', $eventTypes, $free->eventTypesMax, $free->tierName)];
     }
 
     public function __invoke(ImportVenueContent $command): VenueImportOutcome
@@ -143,18 +192,21 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         $existing = $this->existingRows($venue);
         $photoPlan = self::planPhotos($content, $existing['photos']);
         $documentPlan = self::planDocuments($content, $existing['documents']);
+        $held = $this->heldAsDraft($content, $venue);
+        $notes = [...([] === $held ? [] : [VenueImportOutcome::DRAFT_NOTE.implode(', ', $held)]), ...$this->notes($content)];
 
         if ($command->dryRun) {
-            return null === $venue
+            return (null === $venue
                 ? VenueImportOutcome::created($content->key, true, \count($photoPlan['new']), \count($documentPlan['new']))
-                : VenueImportOutcome::updated($content->key, true, \count($photoPlan['new']), \count($photoPlan['removed']), \count($documentPlan['new']), \count($documentPlan['removed']));
+                : VenueImportOutcome::updated($content->key, true, \count($photoPlan['new']), \count($photoPlan['removed']), \count($documentPlan['new']), \count($documentPlan['removed']))
+            )->noting($notes);
         }
 
         $staging = $this->photos->openStaging();
         try {
             $staged = $this->stage($content, $photoPlan['new'], $documentPlan['new'], $staging);
 
-            return $this->write($content, $venue, $town, $existing, $photoPlan, $documentPlan, $staged);
+            return $this->write($content, $venue, $town, $existing, $photoPlan, $documentPlan, $staged, [] !== $held)->noting($notes);
         } finally {
             $this->photos->discardStaging($staging);
         }
@@ -199,13 +251,14 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
         array $photoPlan,
         array $documentPlan,
         array $staged,
+        bool $heldAsDraft,
     ): VenueImportOutcome {
         $isNew = null === $venue;
         $published = new PublishedMedia();
 
         try {
             $oldName = $venue?->name();
-            $venue = $this->applyVenueFields($content, $venue, $town);
+            $venue = $this->applyVenueFields($content, $venue, $town, $heldAsDraft);
 
             // First flush: a new venue gets its number; removed rows go and retained ones
             // move out of the way (the position uniques are not deferrable).
@@ -353,17 +406,21 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
             : VenueImportOutcome::updated($content->key, false, \count($photoPlan['new']), \count($photoPlan['removed']), \count($documentPlan['new']), \count($documentPlan['removed']));
     }
 
-    private function applyVenueFields(VenueContent $content, ?Venue $venue, ?Town $town): Venue
+    /**
+     * @param bool $heldAsDraft the draft rule keeps the venue offline although the folder asks `published`
+     */
+    private function applyVenueFields(VenueContent $content, ?Venue $venue, ?Town $town, bool $heldAsDraft): Venue
     {
+        $status = $heldAsDraft ? VenueStatus::Unpublished : $content->status;
         // The code passed the schema's enum, so the reference can never miss the FK.
         $canton = null === $town && null !== $content->cantonCode ? $this->em->getReference(Canton::class, $content->cantonCode) : null;
 
         if (null === $venue) {
-            $venue = new Venue($content->name, $this->tiers->free(), $content->status, $content->capacityMax, $content->capacityMin, $town, $content->zip, $content->street, $content->lat, $content->lng, $content->key, $canton);
+            $venue = new Venue($content->name, $this->tiers->free(), $status, $content->capacityMax, $content->capacityMin, $town, $content->zip, $content->street, $content->lat, $content->lng, $content->key, $canton);
             $this->em->persist($venue);
         } else {
             $venue->rename($content->name);
-            VenueStatus::Published === $content->status ? $venue->publish() : $venue->unpublish();
+            VenueStatus::Published === $status ? $venue->publish() : $venue->unpublish();
             $venue->changeCapacity($content->capacityMax, $content->capacityMin);
             // A folder's coordinates are the venue's own point, so a town centre set in the CMS goes.
             $venue->relocate($town, $content->zip, $content->street, $content->lat, $content->lng, $canton, coordinatesFromTown: false);
@@ -400,12 +457,16 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
     /**
      * Updates or adds one VenueTranslation per locale and removes the locales no longer in
      * the content; the slug comes from VenueSlugs (changes only with the name, with history).
+     * The default-locale row always stays: a draft folder without texts (F14) gets it with an
+     * empty summary and the slug from the name, as CreateVenue makes it.
      *
      * @param array<string, VenueTranslation> $rows the venue's current rows by locale
      */
     private function applyTranslations(VenueContent $content, Venue $venue, ?Town $town, ?string $oldName, array $rows): void
     {
-        foreach ($content->translations as $locale => $text) {
+        $translations = $content->translations;
+        $translations[$this->locales->default()] ??= ['summary' => '', 'description' => null, 'metaDescription' => null, 'parkingText' => null, 'ambience' => null, 'capacityNote' => null, 'openingHours' => null, 'region' => null];
+        foreach ($translations as $locale => $text) {
             $row = $rows[$locale] ?? null;
             $slug = $this->slugs->assign($venue, $locale, $content->name, $town, $row, $oldName !== $content->name);
 
@@ -418,7 +479,7 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
             $row->describeEvent($text['ambience'], $text['capacityNote'], $text['openingHours']);
             $row->changeRegion($text['region']);
         }
-        foreach (array_diff_key($rows, $content->translations) as $row) {
+        foreach (array_diff_key($rows, $translations) as $row) {
             $this->em->remove($row);
         }
     }

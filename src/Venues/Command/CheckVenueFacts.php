@@ -9,8 +9,9 @@ use App\Shared\Messenger\AuditSubject;
 
 /**
  * G12: staff confirm (`checked` true) or withdraw that an entry's facts are checked. With a written description
- * the entry may then be indexed (`Venues\VenueIndexGate`). Staff dispatch it from the Cms; a verified claim (G6,
- * D45) dispatches it nested with `$via` VIA_CLAIM, because the operator confirmed the facts.
+ * the entry may then be indexed (`Venues\VenueIndexGate`) and, if nobody manages it, published (`VenuePublishGaps`,
+ * F14). Staff dispatch it from the Cms; a verified claim (G6, D45) dispatches it nested with `$via` VIA_CLAIM, because
+ * the operator confirmed the facts.
  */
 final readonly class CheckVenueFacts implements AuditableCommand
 {

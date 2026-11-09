@@ -100,7 +100,7 @@ trait PublicRouteFixtures
             'started' => InquiryFormFields::tokenFrom(self::FILL_STARTED),
             'preview' => $preview,
             'preview_gone' => $previewGone,
-            'preview_short' => (string) $open->shortCode(),
+            'preview_short' => strtolower((string) $open->shortCode()),
             'opt_out' => $optOut->forCompany(CompanyFactory::createOne()->id()),
             'feedback' => $feedback->forInquiry($feedbackInquiry->id()),
             'brief_opt_out' => $briefOptOut->forVenue($venue->number()),

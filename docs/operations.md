@@ -336,9 +336,81 @@ export PROD_SSH=deploy@<vps>
 Order: first deploy (schema and towns), then `import-dry` until its summary is right, then `all`.
 Every import keeps each venue that staff or a manager edited since the last import
 (`docs/content-format.md`, "After a CMS edit"). **Never** run `--prune` (the script refuses it),
-`make seed` or demo data against production, or keep a Neon string in a file on the Mac. The
-sources of new content (managers, the owner's sheet, customers) are the business of cycle F14, which
-reshapes this section. `sh bin/warm-cache` requests every public page once; by hand only, never from cron.
+`make seed` or demo data against production, or keep a Neon string in a file on the Mac.
+`sh bin/warm-cache` requests every public page once; by hand only, never from cron.
+
+### Onboarding
+
+Every new entry starts as a draft (`venues.status = unpublished`). An entry nobody manages
+through `/konto` goes online only when staff ticked «Fakten geprüft» and its description is
+written; the CMS publish button, the moderation `keep` and the import all refuse it until then
+(«Fakten nicht geprüft», «Beschreibung fehlt»; F14, D54, `docs/content-format.md`, "The draft
+rule"). An entry with a manager may go online unchecked, but stays `noindex` until both are done
+(G12). A verified claim and a staff approval in the review queue (claims and access requests)
+tick «Fakten geprüft» by themselves (D45); accepting a wizard submission, a grant from the
+managers panel and an invitation do not. Four sources (D1), each a path into drafts:
+
+1. **`/konto`.** A manager registers, enters the Location in the wizard and submits it; staff
+   accept it in the review queue (G13 owns the public way in).
+2. **The owner's sheet** (template `tests/Fixtures/Onboarding/venue-sheet.csv`, columns in
+   `docs/content-format.md`, "Venue sheet"; `source = owner`): save it as CSV under
+   `CONTENT_ROOT/owner/`, then
+   `make sf c="app:venues:convert-sheet <csv> --dry-run"` until every row passes, then without
+   `--dry-run` (it writes one draft folder per row, never over an existing one), then
+   `sh bin/prod-import import-dry` and `sh bin/prod-import all`. The entries arrive as drafts
+   («Held as draft» in the summary). In the CMS staff write the text, check the facts (and cut
+   the event types to what «Gratis» shows: the import notes `event_types: N > M (Gratis)` and
+   keeps them all), tick «Fakten geprüft» and publish.
+3. **hochzeitslocation.ch customers who said yes** (D1(c), D29; `source = hochzeitslocation`,
+   with `consent_on` and `consent_from`; a row without them is refused): as 2., then
+   `sh bin/prod-import consents-dry content/owner/<csv>` until its summary is right, then
+   `sh bin/prod-import consents content/owner/<csv>`: the yes goes
+   onto the Location's timeline with its date and address (proof), and the Location's basis
+   becomes «consent». A draft imported with consent (D1(c)) is published only through the venue's claim, never by staff ticking «Fakten geprüft» first.
+   When a customer withdraws:
+   `sh bin/prod-import withdraw-dry <venue-number>`, then
+   `sh bin/prod-import withdraw <venue-number>` (`--on=YYYY-MM-DD` after the number for the day
+   they wrote): the entry and everything it brought (contacts, website, phone, e-mail, address,
+   the content folder) are deleted, the Location is suppressed, the cache is emptied, and the
+   Location with its name and both notes stays as proof. `withdraw` also deletes the venue's
+   media on the server: the variants (`public/media/<venue-number>`) and the private originals
+   (`shared/var/media/content/<key>` and `shared/var/media/cms/<venue-number>`, the key taken from
+   the withdrawal note in Neon, never from a sheet), so its photos are gone; the sync never deletes
+   there, so nothing else would. It deletes the local copies under `PROD_MEDIA_DIR` too
+   (`public/<venue-number>`, `originals/content/<key>`), so a later sync cannot bring them back
+   if the console's own delete failed. `withdraw-dry` names these paths and deletes nothing. The Location and the address
+   the yes came from both go on the suppression list, so a later contact list cannot bring them
+   back. If `withdraw` stops after the database step (the media removal or the purge failed), a
+   rerun stops at "no venue": retry with `sh bin/prod-import withdraw-media <venue-number>`,
+   which does only those two steps and may run again when nothing is left. Then delete the row
+   from the sheet, as the command says.
+   Withdrawn photos remain in the media backup until its retention ages them out (F15b: 365 days); no restore of a withdrawn venue.
+   Nach einem Widerruf löscht der Owner die Ordner cms/<Nr> und content/<Key> auch in seiner externen Kopie (bin/pull-media-backup löscht nie); Nummer und Key stehen in der Widerrufsnotiz.
+4. **The eventlokale crawl** (D11, D12, D32; owner-run, internal only):
+   `make sf c="app:crm:crawl-eventlokale"` (every category, several hours, resumable) writes
+   the private `CONTENT_ROOT/owner/eventlokale.csv` and the facts-only draft sheet
+   `owner/eventlokale-entwuerfe.csv` (`source = eventlokale`; no text, photo or rating of
+   theirs, a suppressed address left out). Review it row by row, keep what is right, then as 2.
+   Crawled facts are never published as they are: staff check each against the venue's own
+   website before ticking «Fakten geprüft», and write the text themselves.
+
+**Contacts.** The owner's contact list (template `tests/Fixtures/Onboarding/contacts.csv`; one
+Location per row, an optional contact person, the outreach fields and the venue by number or
+key) goes into the CRM with `sh bin/prod-import contacts-dry content/owner/<csv>` until every row
+passes, then `sh bin/prod-import contacts content/owner/<csv>`. A row whose address is on the
+suppression list is skipped (`suppressed`), a row whose Location or address the CRM already holds
+is `exists`; nothing is ever mailed (D30, D49: one-to-one or postal only). The run prints row numbers and reason codes, never addresses.
+
+**Letters.** The short link of a preview (`/v/<code>`) is printed in lower case and answers in
+any case (D53). Print it in a clear font where g and 9, s and 5 look different; the alphabet
+stays as it is.
+
+`convert-sheet` only writes folders, so it runs on the Mac as it is, in the local stack (`make up`;
+its event-type note takes the cap from the local database, `import-dry` prints it again against
+Neon). The CRM commands (`consents`, `withdraw`, `contacts`) write to the production database, so
+they go through `bin/prod-import` with `PROD_DATABASE_URL` and `PROD_SSH` in the shell, like the
+import; `<csv>` is a path inside the checkout (the default `CONTENT_ROOT` is `content/`).
+`make sf c="app:crm:…"` checks a file against the local database only.
 
 ## Cron
 

@@ -19,6 +19,7 @@ use App\Portal\Security\PortalIdentity;
 use App\Shared\Uid\EntityId;
 use App\Tests\Integration\Crm\DispatchesCrmCommands;
 use App\Tests\Support\Admin\RollsBackDatabase;
+use App\Venues\Command\CheckVenueFacts;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\VenueStatus;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -114,6 +115,28 @@ final class VenueAccessCommandsTest extends KernelTestCase
         self::assertCount(1, $rows);
         self::assertSame('active', $rows[0]['status']);
         self::assertNotNull($rows[0]['confirmed_at']);
+    }
+
+    /** D45: staff approving in the review queue check the facts; a panel grant and an invitation do not. */
+    public function test_only_a_review_grant_checks_the_facts(): void
+    {
+        $review = VenueFactory::new()->withoutLocation(null)->withUncheckedFacts()->create();
+        $panel = VenueFactory::new()->withoutLocation(null)->withUncheckedFacts()->create();
+        $invited = VenueFactory::new()->withoutLocation(null)->withUncheckedFacts()->create();
+        $requester = PortalUserFactory::createOne();
+        PortalVenueAccessFactory::createOne(['user' => $requester, 'venue' => $review]);
+
+        $this->dispatch(new GrantVenueAccess($requester->id(), $review->id(), GrantVenueAccess::VIA_REVIEW));
+        $this->dispatch(new GrantVenueAccess(PortalUserFactory::createOne()->id(), $panel->id(), GrantVenueAccess::VIA_PANEL));
+        $this->dispatch(new InviteLocationManager(EntityId::generate(), 'nora@example.ch', 'Nora', 'Keller', $invited->id()));
+
+        self::assertNotNull($this->connection->fetchOne('SELECT facts_checked_at FROM venues WHERE id = ?', [$review->id()]));
+        self::assertNull($this->connection->fetchOne('SELECT facts_checked_at FROM venues WHERE id = ?', [$panel->id()]));
+        self::assertNull($this->connection->fetchOne('SELECT facts_checked_at FROM venues WHERE id = ?', [$invited->id()]));
+        self::assertSame(
+            [(string) $review->number()],
+            $this->connection->fetchFirstColumn("SELECT subject_id FROM admin_audit_log WHERE subject_type = 'venue' AND command = ?", [CheckVenueFacts::class]),
+        );
     }
 
     public function test_revoke_deletes_the_row(): void

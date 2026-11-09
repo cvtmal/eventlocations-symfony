@@ -15,6 +15,7 @@ use App\Venues\Positions;
 use App\Venues\PublishedMedia;
 use App\Venues\TierLimits;
 use App\Venues\VenueEditing;
+use App\Venues\VenueOriginals;
 use App\Venues\VenueRows;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -56,7 +57,7 @@ final class AddVenueDocumentHandler implements CommandHandlerInterface
         if (false === $hash || false === $size) {
             throw new \RuntimeException(\sprintf('Cannot read "%s".', $command->sourceFile));
         }
-        $path = \sprintf('cms/%d/%s.pdf', $command->venueNumber, $hash);
+        $path = \sprintf('%s/%s.pdf', VenueOriginals::uploadDirectory($command->venueNumber), $hash);
 
         $venue = $this->editing->lock($command->venueNumber);
         if (null !== $this->rows->documentWithPath($venue, $path)) {

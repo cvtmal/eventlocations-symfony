@@ -13,12 +13,12 @@ namespace App\Crm;
  */
 final class EventlokaleCsv
 {
-    public const string FILE = 'owner/eventlokale-hochzeit.csv';
+    public const string FILE = 'owner/eventlokale.csv';
 
     private const string BASE_URL = EventlokaleClient::BASE_URL;
 
     public const array HEADER = [
-        'eventlokale_id', 'name', 'short_name', 'eventlokale_url', 'tier', 'boost', 'detail_status',
+        'eventlokale_id', 'name', 'short_name', 'eventlokale_url', 'tier', 'boost', 'detail_status', 'events',
         'street', 'street_number', 'zip', 'place', 'region', 'lat', 'lng',
         'distance_airport_km', 'distance_train_station_km', 'distance_highway_km', 'train_station_name',
         'building_types', 'settings', 'suitable_for', 'infrastructure', 'technology', 'furniture', 'surroundings', 'access', 'highlights',
@@ -109,13 +109,14 @@ final class EventlokaleCsv
     {
         $cache = new EventlokaleCache($root);
         $termNames = self::termNames($cache->readTaxonomies());
-        $items = $cache->readIndex()['items'];
+        $index = $cache->readIndex();
+        $items = $index['items'];
         usort($items, static fn (array $a, array $b): int => self::int($a['id'] ?? null) <=> self::int($b['id'] ?? null));
 
         $rows = [];
         foreach ($items as $item) {
             $id = self::int($item['id'] ?? null);
-            $rows[] = $this->row($item, $cache->readDetail($id), $cache->isGone($id), $cache->detailMtime($id), $termNames);
+            $rows[] = $this->row($item, $cache->readDetail($id), $cache->isGone($id), $cache->detailMtime($id), $termNames, $index['events'][$id] ?? []);
         }
         $rows = self::withoutSuppressed($rows, $suppressed);
 
@@ -168,14 +169,16 @@ final class EventlokaleCsv
      * @param array<mixed>                      $item
      * @param array<mixed>|null                 $detail
      * @param array<string, array<int, string>> $termNames group => id => German name
+     * @param list<int>                         $events    the event categories whose list holds the venue
      *
      * @return list<string|null> in HEADER order
      */
-    private function row(array $item, ?array $detail, bool $gone, ?int $mtime, array $termNames): array
+    private function row(array $item, ?array $detail, bool $gone, ?int $mtime, array $termNames, array $events): array
     {
         $id = self::int($item['id'] ?? null);
         $cells = [
             'eventlokale_id' => (string) $id,
+            'events' => [] === $events ? null : implode('|', $events),
             'name' => self::clean(self::at($detail, 'general_data.full_name')) ?? self::clean($item['name'] ?? null),
             'eventlokale_url' => self::publicUrl($item),
             'detail_status' => null !== $detail ? 'ok' : ($gone ? 'gone' : 'missing'),
@@ -371,9 +374,9 @@ final class EventlokaleCsv
     }
 
     /**
-     * Entities decoded, tags stripped, whitespace collapsed; empty is null.
+     * Entities decoded, tags stripped, whitespace collapsed; empty is null. EventlokaleSheet reads the same way.
      */
-    private static function clean(mixed $value): ?string
+    public static function clean(mixed $value): ?string
     {
         if (\is_int($value) || \is_float($value)) {
             return (string) $value;
@@ -402,7 +405,7 @@ final class EventlokaleCsv
     /**
      * A dotted path into nested arrays; null when any step is missing.
      */
-    private static function at(mixed $data, string $path): mixed
+    public static function at(mixed $data, string $path): mixed
     {
         foreach (explode('.', $path) as $key) {
             if (!\is_array($data) || !\array_key_exists($key, $data)) {

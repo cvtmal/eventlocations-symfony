@@ -58,12 +58,18 @@ final class VenuePreviewLinkController extends AbstractController
 
     /**
      * The short form a letter prints (G11): `/v/<code>` shows the same private page as the token, without a redirect,
-     * so the token is never in a URL (it travels only in the claim banner's POST body). Case and surrounding blanks of a typed code do not matter.
+     * so the token is never in a URL (it travels only in the claim banner's POST body). Lower case is the canonical
+     * form (D53): a GET or HEAD of a well-formed code in any other case or with surrounding blanks gets a private 301
+     * to it before the lookup, so the redirect says nothing about whether the code exists.
      */
     #[Route(path: ['de' => '/v/{code}'], name: 'venue_preview_short', requirements: ['code' => '[^/]+'])]
     public function short(Request $request, string $code): Response
     {
-        $code = PreviewShortCode::normalise($code);
+        $raw = $code;
+        $code = PreviewShortCode::normalise($raw);
+        if (null !== $code && $raw !== PreviewShortCode::display($code) && ($request->isMethod('GET') || $request->isMethod('HEAD'))) {
+            return self::private($this->redirectToRoute('venue_preview_short', ['code' => PreviewShortCode::display($code)], Response::HTTP_MOVED_PERMANENTLY));
+        }
 
         return $this->show($request, null === $code ? null : $this->previews->findByShortCode($code));
     }

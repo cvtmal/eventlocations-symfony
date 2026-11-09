@@ -6,9 +6,10 @@ namespace App\Crm;
 
 /**
  * The raw eventlokale payloads under `<root>/eventlokale/` (#49): the crawl's resume checkpoint
- * and the CSV's only source. `index.json` holds the list items, `taxonomies.json` the term
- * groups, `venues/<id>.json` a detail as served and `venues/<id>.gone` a venue that answered
- * 404 or 410. Every file is written through a temporary name and rename(), so a killed run
+ * and the CSV's only source. `index-<event id>.json` holds the list items of one event category
+ * (F14: every category is listed; #49's wedding-only `index.json` is ignored), `taxonomies.json`
+ * the term groups, `venues/<id>.json` a detail as served and `venues/<id>.gone` a venue that
+ * answered 404 or 410. Every file is written through a temporary name and rename(), so a killed run
  * never leaves half a file.
  */
 final readonly class EventlokaleCache
@@ -20,32 +21,68 @@ final readonly class EventlokaleCache
     ) {
     }
 
+    /**
+     * The event categories of the cached term groups (EventlokaleClient::eventIds()).
+     *
+     * @return list<int>
+     */
+    public function eventIds(): array
+    {
+        return EventlokaleClient::eventIds($this->readTaxonomies());
+    }
+
+    /** True when the list of at least one event category is cached. */
     public function hasIndex(): bool
     {
-        return is_file($this->path('index.json'));
+        foreach ($this->eventIds() as $eventId) {
+            if ($this->hasCategoryIndex($eventId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function hasCategoryIndex(int $eventId): bool
+    {
+        return is_file($this->indexPath($eventId));
     }
 
     /**
-     * @return array{fetched_at: string, total: int, items: list<array<mixed>>}
+     * The cached category lists as one: each venue once (first seen wins), `events` the categories that listed it
+     * by venue id, `total` the API totals added up (a venue in two categories counts twice), `categories` how many
+     * category lists are cached.
+     *
+     * @return array{total: int, categories: int, items: list<array<mixed>>, events: array<int, list<int>>}
      */
     public function readIndex(): array
     {
-        $index = $this->readJson($this->path('index.json'));
-        $items = \is_array($index['items'] ?? null) ? array_values(array_filter($index['items'], \is_array(...))) : [];
+        $total = $categories = 0;
+        $items = $events = [];
+        foreach ($this->eventIds() as $eventId) {
+            if (!$this->hasCategoryIndex($eventId)) {
+                continue;
+            }
+            ++$categories;
+            $index = $this->readJson($this->indexPath($eventId));
+            $total += \is_int($index['total'] ?? null) ? $index['total'] : 0;
+            foreach (\is_array($index['items'] ?? null) ? $index['items'] : [] as $item) {
+                if (\is_array($item) && \is_int($item['id'] ?? null)) {
+                    $items[$item['id']] ??= $item;
+                    $events[$item['id']][] = $eventId;
+                }
+            }
+        }
 
-        return [
-            'fetched_at' => \is_string($index['fetched_at'] ?? null) ? $index['fetched_at'] : '',
-            'total' => \is_int($index['total'] ?? null) ? $index['total'] : 0,
-            'items' => $items,
-        ];
+        return ['total' => $total, 'categories' => $categories, 'items' => array_values($items), 'events' => $events];
     }
 
     /**
      * @param list<array<mixed>> $items
      */
-    public function writeIndex(array $items, int $total, \DateTimeImmutable $at): void
+    public function writeIndex(int $eventId, array $items, int $total, \DateTimeImmutable $at): void
     {
-        $this->writeJson($this->path('index.json'), ['fetched_at' => $at->format(\DATE_ATOM), 'total' => $total, 'items' => $items]);
+        $this->writeJson($this->indexPath($eventId), ['fetched_at' => $at->format(\DATE_ATOM), 'total' => $total, 'items' => $items]);
     }
 
     public function hasTaxonomies(): bool
@@ -120,6 +157,11 @@ final readonly class EventlokaleCache
     private function path(string $name): string
     {
         return $this->root.'/eventlokale/'.$name;
+    }
+
+    private function indexPath(int $eventId): string
+    {
+        return $this->path('index-'.$eventId.'.json');
     }
 
     private function detailPath(int $id): string

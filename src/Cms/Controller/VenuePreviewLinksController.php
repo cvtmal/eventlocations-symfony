@@ -16,6 +16,7 @@ use App\Venues\Exception\VenueRowNotFound;
 use App\Venues\PreviewToken;
 use App\Venues\ReadModel\VenuePreviewLink;
 use App\Venues\ReadModel\VenuePreviewQuery;
+use App\Venues\ValueObject\PreviewShortCode;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -142,10 +143,10 @@ final class VenuePreviewLinksController extends AbstractController
         return $this->generateUrl('venue_preview', ['token' => $this->tokens->forId($id)], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
-    /** The short form a letter prints (G11); the QR code encodes it, which keeps the code small. */
+    /** The short form a letter prints (G11), in lower case (D53); the QR code encodes it, which keeps the code small. */
     private function shortUrl(string $code): string
     {
-        return $this->generateUrl('venue_preview_short', ['code' => $code], UrlGeneratorInterface::ABSOLUTE_URL);
+        return $this->generateUrl('venue_preview_short', ['code' => PreviewShortCode::display($code)], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 
     private function rethrowNotFound(HandlerFailedException $failure): void

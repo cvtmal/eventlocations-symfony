@@ -61,8 +61,8 @@ final class ImportedRenameRedirectTest extends WebTestCase
 
     public function test_the_old_slug_of_a_renamed_venue_redirects_to_the_new_one(): void
     {
-        $this->content->venue('schloss-beispiel', name: 'Schloss Beispiel');
-        $this->import();
+        $this->content->venue('schloss-beispiel', ['translations' => ['de' => ['description' => 'Fiktive Beschreibung der Location.']]], 'Schloss Beispiel');
+        $this->importOnline();
         $this->client->request('GET', '/eventlokal/schloss-beispiel');
         self::assertResponseIsSuccessful();
 
@@ -78,8 +78,8 @@ final class ImportedRenameRedirectTest extends WebTestCase
 
     public function test_a_rename_back_serves_the_old_slug_again_and_redirects_the_other(): void
     {
-        $this->content->venue('schloss-beispiel', name: 'Schloss Beispiel');
-        $this->import();
+        $this->content->venue('schloss-beispiel', ['translations' => ['de' => ['description' => 'Fiktive Beschreibung der Location.']]], 'Schloss Beispiel');
+        $this->importOnline();
         $this->content->change('schloss-beispiel', ['name' => 'Schloss Neuheim']);
         $this->import();
         $this->content->change('schloss-beispiel', ['name' => 'Schloss Beispiel']);
@@ -89,6 +89,17 @@ final class ImportedRenameRedirectTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $this->client->request('GET', '/eventlokal/schloss-neuheim');
         self::assertResponseRedirects('/eventlokal/schloss-beispiel', 301);
+    }
+
+    /**
+     * F14 (D54): an imported venue is a draft until staff check its facts (the folder has a description), so the
+     * first import is followed by the check and a forced import that puts it online.
+     */
+    private function importOnline(): void
+    {
+        $this->import();
+        $this->connection->executeStatement('UPDATE venues SET facts_checked_at = now() WHERE content_key IS NOT NULL AND facts_checked_at IS NULL');
+        self::assertSame(Command::SUCCESS, $this->tester->execute(['path' => $this->content->path(), '--force' => true]), $this->tester->getDisplay());
     }
 
     private function import(): void

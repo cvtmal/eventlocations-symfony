@@ -28,4 +28,20 @@ final class PreviewShortCodeTest extends TestCase
             self::assertNull(PreviewShortCode::normalise($typed), var_export($typed, true));
         }
     }
+
+    public function test_the_printed_form_is_lower_case_and_normalises_back(): void
+    {
+        $code = PreviewShortCode::generate();
+
+        self::assertSame(strtolower($code), PreviewShortCode::display($code));
+        self::assertMatchesRegularExpression('/^[2-9a-hjkmnp-z]{10}$/', PreviewShortCode::display($code));
+        self::assertSame($code, PreviewShortCode::normalise(PreviewShortCode::display($code)));
+    }
+
+    public function test_no_excluded_look_alike_is_accepted(): void
+    {
+        foreach (['0', '1', 'i', 'l', 'o', 'I', 'L', 'O'] as $lookAlike) {
+            self::assertNull(PreviewShortCode::normalise('k7m3qx9tp'.$lookAlike), $lookAlike);
+        }
+    }
 }

@@ -39,7 +39,7 @@ final class ClaimFlowTest extends WebTestCase
         $venue = $this->venue();
         $token = $this->previewToken($venue);
         // A second link of the entry, as a letter prints it: its short form (G11) ends with the claim too.
-        $shortCode = (string) VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'brief'])->shortCode();
+        $shortCode = strtolower((string) VenuePreviewFactory::createOne(['venue' => $venue, 'campaignCode' => 'brief'])->shortCode());
         $this->client->request('GET', '/v/'.$shortCode);
         self::assertResponseIsSuccessful();
 
@@ -67,6 +67,11 @@ final class ClaimFlowTest extends WebTestCase
         $this->client->request('GET', '/vorschau/'.$token);
         self::assertResponseStatusCodeSame(410);
         $this->client->request('GET', '/v/'.$shortCode);
+        self::assertResponseStatusCodeSame(410);
+        // Typed in upper case it is redirected to the lower-case form first, which still answers 410 (D53).
+        $this->client->request('GET', '/v/'.strtoupper($shortCode));
+        self::assertResponseRedirects('/v/'.$shortCode, 301);
+        $this->client->followRedirect();
         self::assertResponseStatusCodeSame(410);
     }
 

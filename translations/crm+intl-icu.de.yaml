@@ -449,6 +449,8 @@ timeline:
         tier_changed: '«{venue}»: neu {tier}'
         deal_stage_changed: '{actor} hat den Deal «{deal}» auf {stage} verschoben'
         deal_stage_changed_anonymous: 'Deal «{deal}» auf {stage} verschoben'
+        consent_recorded: 'Zustimmung zum Import von hochzeitslocation.ch: «Ja» von {address} am {date}.'
+        consent_withdrawn: 'Zustimmung zurückgezogen am {date}: Eintrag und übernommene Angaben gelöscht.'
     composer:
         title: Neue Aktivität
         tabs: Art

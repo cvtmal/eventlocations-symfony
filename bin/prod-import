@@ -33,6 +33,19 @@ Usage: bin/prod-import <command>
   places-find              app:venues:find-google-places against Neon: the place ID report, no writes
   places-apply-dry         app:venues:apply-google-places --dry-run against Neon: the summary, no writes
   places-apply             app:venues:apply-google-places against Neon, then purge
+  consents-dry <csv>       app:crm:record-consents --dry-run against Neon: what would be recorded, no writes
+  consents <csv>           app:crm:record-consents against Neon
+  withdraw-dry <number> [--on=YYYY-MM-DD]
+                           app:crm:withdraw-consent --dry-run against Neon: what would go, here and
+                           on the server, no writes
+  withdraw <number> [--on=YYYY-MM-DD]
+                           app:crm:withdraw-consent against Neon, then delete the venue's public
+                           media and originals on the server, then purge
+  withdraw-media <number>  delete the withdrawn venue's public media and originals here and on the
+                           server, then purge: the retry when withdraw committed but its media
+                           step or purge failed
+  contacts-dry <csv>       app:crm:import-contacts --dry-run against Neon: the row outcomes, no writes
+  contacts <csv>           app:crm:import-contacts against Neon (sends nothing)
   help                     this text
 
 Run order: first deploy (migrations and towns), then import-dry until its summary is right, then
@@ -41,6 +54,9 @@ all. The import keeps every venue staff edited and lists it; import-dry shows th
 
 Google place IDs (#53, #57): places-find (needs GOOGLE_PLACES_API_KEY in the shell; confident rows
 come pre-marked apply=yes), check the report, then places-apply-dry until right, then places-apply.
+
+Onboarding (F14, docs/operations.md "Onboarding"): each CRM command runs its -dry form first, until
+its summary is right. <csv> is a path inside the checkout (e.g. content/owner/sheet.csv).
 
 Environment, never in a file:
   PROD_DATABASE_URL   Neon's direct string
@@ -107,14 +123,96 @@ sync_media() {
     say "media synced"
 }
 
+withdrawn_key() { # withdrawn_key <venue number>: the content key Neon's withdrawal note keeps, never a sheet's
+    if ! key="$(prod_console app:crm:withdraw-consent --withdrawn-key "$1")"; then
+        printf '%s\n' "$key" >&2
+        die "no content key for venue $1: it has to be withdrawn first"
+    fi
+    # The pattern of a content key (ContentFormat::KEY_PATTERN), so the path stays one directory deep.
+    case "$key" in
+        "") ;;
+        *[!a-z0-9-]* | -* | *- | *--*) die "refused content key for venue $1: $key" ;;
+    esac
+    [ "${#key}" -le 100 ] || die "refused content key for venue $1: longer than 100"
+    printf '%s' "$key"
+}
+
+venue_media_paths() { # venue_media_paths <venue number> [<content key>]: the venue's directories on the server
+    # Public media and uploads are kept under the number, the import's originals under the key (Venues\VenueOriginals).
+    printf '%s' "$REMOTE_APP/public/media/$1 $REMOTE_APP/var/media/cms/$1"
+    [ -z "${2:-}" ] || printf ' %s' "$REMOTE_APP/var/media/content/$2"
+}
+
+remove_venue_media() { # remove_venue_media <venue number>
+    # The console deletes the local copies only; the sync never deletes on the server.
+    # Two steps: set -e stops on a failed substitution only when it is the whole assignment.
+    key="$(withdrawn_key "$1")"
+    # The local copies again: if the console's own delete failed after the withdrawal committed, the next sync
+    # would bring them back. A venue without a key has no content directory, so content/ itself is never named.
+    rm -rf "$MEDIA_DIR/public/$1"
+    [ -z "$key" ] || rm -rf "$MEDIA_DIR/originals/content/$key"
+    say "deleted here: $MEDIA_DIR/public/$1${key:+ $MEDIA_DIR/originals/content/$key}"
+    paths="$(venue_media_paths "$1" "$key")"
+    # shellcheck disable=SC2029 # The paths are meant to expand here: digits and a checked key only.
+    ssh "$PROD_SSH" "rm -rf $paths"
+    say "deleted on the server: $paths"
+}
+
 purge_cache() {
     # shellcheck disable=SC2029 # Both paths are meant to expand here.
     ssh "$PROD_SSH" "cd $REMOTE_APP && $REMOTE_PHP bin/console app:http-cache:clear"
 }
 
+refuse_csv_arguments() { # refuse_csv_arguments <command> <args...>: exactly one CSV inside the checkout
+    cmd="$1"
+    shift
+    [ "$#" -eq 1 ] || die "$cmd takes one CSV file"
+    # Mounted into the php container with the checkout, so it has to stay inside it.
+    case "$1" in
+        "" | -* | /* | ..* | */..*) die "$cmd needs a CSV path inside the checkout" ;;
+        *.csv | *.CSV) ;;
+        *) die "$cmd needs a .csv file" ;;
+    esac
+    [ -f "$1" ] || die "$1 is not a file"
+}
+
+refuse_venue_number() { # refuse_venue_number <command> <venue number>
+    # Digits without a leading zero: the console reads 007 as 7, the rm would take public/media/007.
+    case "$2" in
+        "" | 0* | *[!0-9]*) die "$1 needs a venue number" ;;
+    esac
+}
+
+refuse_withdraw_arguments() { # refuse_withdraw_arguments <command> <venue number> [--on=YYYY-MM-DD]
+    cmd="$1"
+    shift
+    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then die "$cmd takes a venue number and at most --on=YYYY-MM-DD"; fi
+    refuse_venue_number "$cmd" "$1"
+    [ "$#" -eq 1 ] && return 0
+    case "$2" in
+        --on=[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+        *) die "refused: $2 ($cmd takes --on=YYYY-MM-DD only)" ;;
+    esac
+}
+
 refuse_arguments() { # refuse_arguments <command> <args...>
     cmd="$1"
     shift
+    case "$cmd" in
+        consents-dry | consents | contacts-dry | contacts)
+            refuse_csv_arguments "$cmd" "$@"
+            return 0
+            ;;
+        withdraw-dry | withdraw)
+            refuse_withdraw_arguments "$cmd" "$@"
+            return 0
+            ;;
+        withdraw-media)
+            [ "$#" -eq 1 ] || die "$cmd takes a venue number only"
+            refuse_venue_number "$cmd" "$1"
+            return 0
+            ;;
+    esac
     for arg in "$@"; do
         case "$arg" in
             --prune*) die "--prune is refused: run bin/prod-import help" ;;
@@ -144,6 +242,7 @@ main() {
             ;;
         import | import-dry | regenerate | sync | purge | all | crm-bootstrap) ;;
         places-find | places-apply-dry | places-apply) ;;
+        consents-dry | consents | withdraw-dry | withdraw | withdraw-media | contacts-dry | contacts) ;;
         *)
             usage >&2
             die "unknown command: $cmd"
@@ -177,6 +276,25 @@ main() {
             prod_console app:venues:apply-google-places
             purge_cache
             ;;
+        consents-dry) prod_console app:crm:record-consents --dry-run "$CONTAINER_ROOT/$1" ;;
+        consents) prod_console app:crm:record-consents "$CONTAINER_ROOT/$1" ;;
+        withdraw-dry)
+            prod_console app:crm:withdraw-consent --dry-run "$@"
+            # withdraw takes the key from the withdrawal note, which does not exist yet: the console named the originals.
+            say "dry run: withdraw would then delete on the server $REMOTE_APP/public/media/$1 and the originals named above, under $REMOTE_APP/var/media"
+            ;;
+        withdraw)
+            prod_console app:crm:withdraw-consent "$@"
+            # Once this commits, a rerun stops at "no venue": withdraw-media is the retry of the two steps below.
+            remove_venue_media "$1"
+            purge_cache
+            ;;
+        withdraw-media)
+            remove_venue_media "$1"
+            purge_cache
+            ;;
+        contacts-dry) prod_console app:crm:import-contacts --dry-run "$CONTAINER_ROOT/$1" ;;
+        contacts) prod_console app:crm:import-contacts "$CONTAINER_ROOT/$1" ;;
     esac
 }
 

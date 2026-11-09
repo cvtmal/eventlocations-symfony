@@ -87,7 +87,7 @@ final class VenuePreviewLinksPageTest extends WebTestCase
         self::assertStringContainsString('Ohne Kampagne (E-Mail)', $row->text());
         self::assertNull($this->connection->fetchOne('SELECT campaign_code FROM venue_previews WHERE venue_id = ?', [$venue->id()]));
         $short = (string) $row->filter('input.preview-links__short')->attr('value');
-        self::assertMatchesRegularExpression('#^http://localhost/v/[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{10}$#', $short);
+        self::assertMatchesRegularExpression('#^http://localhost/v/[23456789abcdefghjkmnpqrstuvwxyz]{10}$#', $short);
         self::assertEquals(['campaign' => null, 'days' => 90], json_decode((string) $this->connection->fetchOne("SELECT changes::text FROM admin_audit_log WHERE subject_type = 'venue' AND subject_id = ?", [(string) $venue->number()]), true));
 
         $this->client->request('GET', (string) $row->filter('img.preview-links__qr')->attr('src'));

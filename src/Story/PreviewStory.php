@@ -44,7 +44,8 @@ final class PreviewStory extends Story
             return;
         }
 
-        $venue = VenueFactory::new()->withoutLocation()->afterInstantiate(static function (Venue $venue): void {
+        // F14 (D54): a draft nobody manages, facts unchecked: only a claim (or staff's check and a description) lets it go online.
+        $venue = VenueFactory::new()->withoutLocation()->withUncheckedFacts()->afterInstantiate(static function (Venue $venue): void {
             $venue->changeContact(null, null, self::WEBSITE, null);
         })->create([
             'name' => 'Remise am Bach',
