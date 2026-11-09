@@ -30,7 +30,7 @@ final class TierMatrixTest extends TestCase
         $matrix = TierMatrix::fromDefinitions([self::pro(), self::free()]);
 
         self::assertSame(
-            [TierFeature::Promoted, TierFeature::Photos, TierFeature::Videos, TierFeature::Rooms, TierFeature::Documents, TierFeature::Contact, TierFeature::EventTypes, TierFeature::LastMinute],
+            [TierFeature::Promoted, TierFeature::Photos, TierFeature::Videos, TierFeature::Rooms, TierFeature::Documents, TierFeature::Contact, TierFeature::EventTypes, TierFeature::LastMinute, TierFeature::DetailedReport],
             self::features($matrix),
         );
         self::assertSame([false, true], self::row($matrix, TierFeature::Promoted)->cells);
@@ -39,6 +39,8 @@ final class TierMatrixTest extends TestCase
         self::assertSame([3, null], self::row($matrix, TierFeature::EventTypes)->cells, 'NULL means every event type that fits');
         self::assertSame([1, 5], self::row($matrix, TierFeature::Videos)->cells);
         self::assertSame([false, true], self::row($matrix, TierFeature::LastMinute)->cells);
+        self::assertSame([false, true], self::row($matrix, TierFeature::DetailedReport)->cells, 'Gratis gets the basic report only');
+        self::assertFalse(TierFeature::DetailedReport->isLimit());
         self::assertSame(['Pro'], $matrix->promotedTierNames());
     }
 
@@ -91,13 +93,20 @@ final class TierMatrixTest extends TestCase
         self::assertSame([], $matrix->promotedTierNames());
     }
 
-    public function test_unshipped_features_get_no_row_even_when_a_tier_has_them(): void
+    public function test_every_shipped_feature_has_a_row_in_order(): void
     {
         $matrix = TierMatrix::fromDefinitions([self::free(), self::pro()]);
 
-        // Pro has the detailed report on; G10 has not shipped it. G15 (videos) and G14 (last-minute) have.
-        self::assertSame(['promoted', 'photos', 'videos', 'rooms', 'documents', 'contact', 'event_types', 'last_minute'], array_map(static fn (TierFeature $feature): string => $feature->value, TierFeature::cases()));
+        // G15 (videos), G14 (last-minute) and G10 (detailed report) have shipped; a flag for a feature still to come gets no case.
+        self::assertSame(['promoted', 'photos', 'videos', 'rooms', 'documents', 'contact', 'event_types', 'last_minute', 'detailed_report'], array_map(static fn (TierFeature $feature): string => $feature->value, TierFeature::cases()));
         self::assertCount(\count(TierFeature::cases()), $matrix->rows);
+    }
+
+    public function test_the_detailed_report_row_goes_when_no_tier_has_it(): void
+    {
+        $pro = new TierDefinition('pro', 'Pro', 19900, false, 10, 60, 20, 5, 5, true, true, false, null, 0);
+
+        self::assertNotContains(TierFeature::DetailedReport, self::features(TierMatrix::fromDefinitions([self::free(), $pro])));
     }
 
     public function test_a_third_tier_adds_a_column_in_price_order(): void

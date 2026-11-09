@@ -102,7 +102,8 @@ final class DeliverInquiryHandler implements CommandHandlerInterface
         $inquiry->recordVenueMailSent($deliveredTo, $now);
         $inquiry->recordQualification($this->rule->evaluate($facts->withDelivered(true)), $now);
         if (null === $inquiry->qualificationOverride()) {
-            $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::InquiryDelivered, $inquiry->venue()?->id()), [new DispatchAfterCurrentBusStamp()]);
+            // At the venue mail's own time, so G10's delivered and qualified figures put it in the same month.
+            $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::InquiryDelivered, $inquiry->venue()?->id(), occurredAt: $now), [new DispatchAfterCurrentBusStamp()]);
         }
 
         // A child of a brief (F13): the guest gets the brief's one confirmation (`ConfirmInquiryBrief`), no copy per venue.

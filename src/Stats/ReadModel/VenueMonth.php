@@ -7,8 +7,9 @@ namespace App\Stats\ReadModel;
 /**
  * One venue's figures over one calendar month (Europe/Zurich), for the monthly report of G10. `deliveredInquiries`
  * counts `funnel_events` `inquiry_delivered` (the `inquiries` rows are purged, the funnel rows are not).
- * `qualifiedInquiries` stays null in this cycle: D52 keeps the qualified figure out of the monthly mail, which shows
- * no row for a null. A follow-up that wants it fills it with G7's `QualifiedInquirySql::where()`.
+ * `qualifiedInquiries` counts the venue's inquiries by the month of their venue mail through G7's
+ * `QualifiedInquirySql::where()`; `feedbackAnswers` is G16's «Rückmeldungen» (`InquiryFeedbackCounts`), answers of any
+ * kind, never bookings.
  */
 final readonly class VenueMonth
 {
@@ -16,7 +17,8 @@ final readonly class VenueMonth
         public \DateTimeImmutable $month,
         public VenueSummary $summary,
         public int $deliveredInquiries,
-        public ?int $qualifiedInquiries = null,
+        public int $qualifiedInquiries = 0,
+        public int $feedbackAnswers = 0,
     ) {
     }
 }

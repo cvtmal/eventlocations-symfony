@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Portal;
 
+use App\Factory\InquiryFactory;
+use App\Factory\InquiryFeedbackFactory;
 use App\Factory\PortalUserFactory;
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\RecordedFunnelEventFactory;
 use App\Factory\SubscriptionFactory;
 use App\Factory\VenueFactory;
+use App\Inquiries\Entity\Inquiry;
+use App\Inquiries\ValueObject\FeedbackOutcome;
+use App\Inquiries\ValueObject\InquiryOverride;
+use App\Inquiries\ValueObject\QualificationReason;
 use App\Portal\Security\ReportOptOutToken;
 use App\Shared\Funnel\FunnelEvent;
 use App\Shared\Uid\EntityId;
@@ -27,9 +33,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * The monthly report mail (G10, D52), section by section: the subject from intl, exactly three basic figures, on Free
- * exactly one «Pro anfragen» line and no other advertising, on Pro the detailed rows and the trend, an honest mail
- * without data, the opt-out link in the body and in the RFC 8058 headers. "Anfragen", never "Buchungen".
+ * The monthly report mail (G10, D52), section by section: the subject from intl, four basic figures (G7's qualified
+ * row included) plus G16's «Rückmeldungen» only while there are some, on Free exactly one «Pro anfragen» line and no
+ * other advertising, on Pro the detailed rows and the trend, an honest mail without data, the opt-out link in the body
+ * and in the RFC 8058 headers. "Anfragen", never "Buchungen".
  */
 final class OwnerReportMailTest extends KernelTestCase
 {
@@ -49,7 +56,7 @@ final class OwnerReportMailTest extends KernelTestCase
         $this->connection->insert('stats_ingest_files', ['id' => EntityId::generate(), 'file_name' => 'test-mail', 'events' => 1, 'created_at' => '2026-11-01T03:16:00+01:00']);
     }
 
-    public function test_the_free_report_has_three_figures_and_one_pro_line(): void
+    public function test_the_free_report_has_four_figures_and_one_pro_line(): void
     {
         $venue = $this->venue(KnownTiers::FREE);
         $this->traffic($venue, october: 40, september: 50);
@@ -60,8 +67,8 @@ final class OwnerReportMailTest extends KernelTestCase
         self::assertSame([
             'Hallo Anna',
             'Hier sind die Zahlen von «Alpstube Seeblick» für Oktober 2026, verglichen mit dem Vormonat.',
-            'facts: Besuche | Interaktionen | Zugestellte Anfragen',
-            'Besuche zählen jede Person einmal pro Tag. Interaktionen sind Klicks auf deine Kontaktangaben und Einträge auf der Merkliste. Stand: 1. November 2026',
+            'facts: Besuche | Interaktionen | Zugestellte Anfragen | Qualifizierte Anfragen',
+            'Besuche zählen jede Person einmal pro Tag. Interaktionen sind Klicks auf deine Kontaktangaben und Einträge auf der Merkliste. Qualifiziert sind zugestellte Anfragen, deren Anlass und Gästezahl zu deinem Eintrag passen und deren Termin höchstens zwei Jahre entfernt ist. Doppelte Anfragen, Spam und Tests zählen nicht. Stand: 1. November 2026',
             'Hinterlege eine E-Mail-Adresse für Anfragen, damit Interessierte dich direkt erreichen.',
             'button: E-Mail-Adresse ergänzen',
             'Dein Tarif: Gratis-Eintrag, ohne Ablaufdatum.',
@@ -74,10 +81,12 @@ final class OwnerReportMailTest extends KernelTestCase
         self::assertStringContainsString('Besuche: 40 (Vormonat: 50, −10)', $text);
         self::assertStringContainsString('Interaktionen: 5 (Vormonat: 1, +4)', $text);
         self::assertStringContainsString('Zugestellte Anfragen: 2 (Vormonat: 2, ±0)', $text);
+        self::assertStringContainsString('Qualifizierte Anfragen: 0 (Vormonat: 0, ±0)', $text);
         foreach ([(string) $mail->getHtmlBody(), $text] as $body) {
             self::assertSame(1, substr_count($body, 'Pro anfragen'), 'exactly one «Pro anfragen» line (D52)');
             self::assertStringContainsString('Gratis-Eintrag, ohne Ablaufdatum', $body);
             self::assertStringNotContainsString('In Suchergebnissen gezeigt', $body);
+            self::assertStringNotContainsString('Rückmeldungen', $body, 'no answers in either month: no row, no note');
         }
         $this->assertHonest($mail, $venue);
     }
@@ -92,7 +101,7 @@ final class OwnerReportMailTest extends KernelTestCase
         $text = (string) $mail->getTextBody();
 
         $sections = $this->sections($mail);
-        self::assertSame('facts: Besuche | Interaktionen | Zugestellte Anfragen', $sections[2]);
+        self::assertSame('facts: Besuche | Interaktionen | Zugestellte Anfragen | Qualifizierte Anfragen', $sections[2]);
         self::assertContains('Mehr Zahlen aus dem Oktober 2026:', $sections);
         self::assertContains('facts: Klicks auf die Website | Klicks auf die E-Mail-Adresse | Klicks auf die Telefonnummer | Klicks auf die Karte | Klicks auf Instagram | In Suchergebnissen gezeigt | Auf die Merkliste gesetzt | Abgeschickte Anfragen', $sections);
         self::assertContains('Die letzten drei Monate:', $sections);
@@ -104,6 +113,43 @@ final class OwnerReportMailTest extends KernelTestCase
             self::assertSame(0, substr_count($body, 'Pro anfragen'), 'Pro gets no advertising');
         }
         $this->assertHonest($mail, $venue);
+    }
+
+    /**
+     * G7 and G16 through Stats: qualified inquiries by the month of their venue mail (an unqualified or spam one is not
+     * counted), and «Rückmeldungen» by the month of the answer, explained once in the note. Answers are never called
+     * bookings.
+     */
+    public function test_the_qualified_and_the_feedback_rows(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        $this->traffic($venue, october: 40, september: 50);
+        $this->inquiry($venue, '2026-10-03 12:00', answeredAt: '2026-10-12 08:00');
+        $this->inquiry($venue, '2026-10-20 12:00');
+        $this->inquiry($venue, '2026-09-20 12:00', answeredAt: '2026-10-01 09:00');
+        $this->inquiry($venue, '2026-10-21 12:00', reason: QualificationReason::Duplicate);
+        $this->inquiry($venue, '2026-10-22 12:00', mark: InquiryOverride::Spam, answeredAt: '2026-10-25 09:00');
+
+        $mail = $this->send();
+        $text = (string) $mail->getTextBody();
+
+        self::assertSame('facts: Besuche | Interaktionen | Zugestellte Anfragen | Qualifizierte Anfragen | Rückmeldungen von Veranstaltern', $this->sections($mail)[2]);
+        self::assertStringContainsString('Qualifizierte Anfragen: 2 (Vormonat: 1, +1)', $text);
+        self::assertStringContainsString('Rückmeldungen von Veranstaltern: 2 (Vormonat: 0, +2)', $text);
+        self::assertStringContainsString('Spam und Tests zählen nicht. Rückmeldungen zählen, wie viele Veranstalter nach ihrer Anfrage unsere kurze Umfrage beantwortet haben. Die Antworten selbst geben wir nicht weiter. Stand:', $text);
+        $this->assertHonest($mail, $venue);
+    }
+
+    public function test_the_feedback_row_stays_while_the_month_before_had_answers(): void
+    {
+        $venue = $this->venue(KnownTiers::FREE);
+        $this->traffic($venue, october: 40, september: 50);
+        $this->inquiry($venue, '2026-09-03 12:00', answeredAt: '2026-09-12 08:00');
+
+        $text = (string) $this->send()->getTextBody();
+
+        self::assertStringContainsString('Rückmeldungen von Veranstaltern: 0 (Vormonat: 1, −1)', $text);
+        self::assertStringContainsString('Rückmeldungen zählen, wie viele Veranstalter', $text, 'the row comes with its note');
     }
 
     /**
@@ -139,8 +185,8 @@ final class OwnerReportMailTest extends KernelTestCase
             'Im Oktober 2026 wurde «Alpstube Seeblick» nicht aufgerufen, und es kamen keine Anfragen. Ein vollständiger Eintrag wird leichter gefunden.',
             'Hinterlege eine E-Mail-Adresse für Anfragen, damit Interessierte dich direkt erreichen.',
             'button: E-Mail-Adresse ergänzen',
-            'facts: Besuche | Interaktionen | Zugestellte Anfragen',
-            'Besuche zählen jede Person einmal pro Tag. Interaktionen sind Klicks auf deine Kontaktangaben und Einträge auf der Merkliste. Stand: 1. November 2026',
+            'facts: Besuche | Interaktionen | Zugestellte Anfragen | Qualifizierte Anfragen',
+            'Besuche zählen jede Person einmal pro Tag. Interaktionen sind Klicks auf deine Kontaktangaben und Einträge auf der Merkliste. Qualifiziert sind zugestellte Anfragen, deren Anlass und Gästezahl zu deinem Eintrag passen und deren Termin höchstens zwei Jahre entfernt ist. Doppelte Anfragen, Spam und Tests zählen nicht. Stand: 1. November 2026',
             'Dein Tarif: Gratis-Eintrag, ohne Ablaufdatum.',
             'link: Mehr Fotos, Räume und Zahlen gibt es mit Pro: | Pro anfragen',
             'button: Eintrag bearbeiten',
@@ -177,7 +223,7 @@ final class OwnerReportMailTest extends KernelTestCase
         $text = (string) $mail->getTextBody();
         self::assertSame(strip_tags($text), $text, 'the text part has no tags');
         foreach ([(string) $mail->getHtmlBody(), $text] as $body) {
-            foreach (['Buchung', '%', 'Qualifiziert', 'ß'] as $word) {
+            foreach (['Buchung', 'gebucht', '%', 'ß'] as $word) {
                 self::assertStringNotContainsString($word, strip_tags($body), $word);
             }
             foreach ([$venue->phone(), $venue->website()] as $contact) {
@@ -210,6 +256,26 @@ final class OwnerReportMailTest extends KernelTestCase
         $this->stat($venue, '2026-10-12', 'inquiry', 2);
         foreach (['2026-10-03 12:00', '2026-10-20 12:00', '2026-09-03 12:00', '2026-09-20 12:00'] as $at) {
             RecordedFunnelEventFactory::createOne(['event' => FunnelEvent::InquiryDelivered, 'venueId' => $venue->id(), 'occurredAt' => new \DateTimeImmutable($at.' Europe/Zurich')]);
+        }
+    }
+
+    /**
+     * A delivered inquiry, qualified unless `reason` says otherwise, with a feedback answer when `answeredAt` is set.
+     */
+    private function inquiry(Venue $venue, string $sentAt, ?QualificationReason $reason = null, ?InquiryOverride $mark = null, ?string $answeredAt = null): void
+    {
+        $at = new \DateTimeImmutable($sentAt.' Europe/Zurich');
+        $inquiry = InquiryFactory::new()
+            ->afterInstantiate(static function (Inquiry $inquiry) use ($at, $reason, $mark): void {
+                $inquiry->recordVenueMailSent('team@example.ch', $at);
+                $inquiry->recordQualification($reason, $at);
+                $inquiry->mark($mark, $at);
+            })
+            ->create(['venue' => $venue, 'createdAt' => $at]);
+        if (null !== $answeredAt) {
+            InquiryFeedbackFactory::new()
+                ->answered(true, FeedbackOutcome::Open, new \DateTimeImmutable($answeredAt.' Europe/Zurich'))
+                ->create(['inquiry' => $inquiry, 'at' => $at->modify('+7 days')]);
         }
     }
 

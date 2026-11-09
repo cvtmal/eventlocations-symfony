@@ -11,31 +11,32 @@ use App\Stats\ReadModel\VenueSummary;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The rows of the monthly report (G10, D52): three basic figures for everyone, the qualified row only once G7 supplies
- * a number, the Pro rows in a fixed order, the signed difference, and the empty case.
+ * The rows of the monthly report (G10, D52): four basic figures for everyone (G7's qualified row included), G16's
+ * «Rückmeldungen» only while either month has one, the Pro rows in a fixed order, the signed difference, and the empty
+ * case.
  */
 final class OwnerReportFiguresTest extends TestCase
 {
-    public function test_the_basic_figures_are_visits_interactions_and_delivered_inquiries(): void
+    public function test_the_basic_figures_are_visits_interactions_delivered_and_qualified_inquiries(): void
     {
-        $figures = OwnerReportFigures::basic(self::month('2026-10-01', visitors: 40, phone: 3, merkliste: 2, delivered: 4), self::month('2026-09-01', visitors: 50, phone: 1, delivered: 4));
+        $figures = OwnerReportFigures::basic(self::month('2026-10-01', visitors: 40, phone: 3, merkliste: 2, delivered: 4, qualified: 3), self::month('2026-09-01', visitors: 50, phone: 1, delivered: 4, qualified: 1));
 
-        self::assertSame(['visits', 'interactions', 'delivered'], self::keys($figures));
-        self::assertSame([40, 5, 4], array_map(static fn (ReportFigure $f): int => $f->current, $figures));
-        self::assertSame([-10, 4, 0], array_map(static fn (ReportFigure $f): ?int => $f->difference(), $figures));
+        self::assertSame(['visits', 'interactions', 'delivered', 'qualified'], self::keys($figures));
+        self::assertSame([40, 5, 4, 3], array_map(static fn (ReportFigure $f): int => $f->current, $figures));
+        self::assertSame([-10, 4, 0, 2], array_map(static fn (ReportFigure $f): ?int => $f->difference(), $figures));
     }
 
-    public function test_the_qualified_row_appears_only_with_a_number(): void
+    public function test_the_feedback_row_shows_only_while_either_month_has_an_answer(): void
     {
-        $before = self::month('2026-09-01');
+        self::assertNotContains('feedback', self::keys(OwnerReportFigures::basic(self::month('2026-10-01', qualified: 2), self::month('2026-09-01'))));
 
-        self::assertNotContains('qualified', self::keys(OwnerReportFigures::basic(self::month('2026-10-01'), $before)));
+        $now = OwnerReportFigures::basic(self::month('2026-10-01', feedback: 2), self::month('2026-09-01'));
+        self::assertSame(['visits', 'interactions', 'delivered', 'qualified', 'feedback'], self::keys($now));
+        self::assertSame(2, $now[4]->difference());
 
-        $figures = OwnerReportFigures::basic(self::month('2026-10-01', qualified: 2), $before);
-        self::assertSame(['visits', 'interactions', 'delivered', 'qualified'], self::keys($figures));
-        self::assertSame(2, $figures[3]->current);
-        self::assertNull($figures[3]->previous, 'the month before had none yet: «–»');
-        self::assertNull($figures[3]->difference());
+        $before = OwnerReportFigures::basic(self::month('2026-10-01'), self::month('2026-09-01', feedback: 1));
+        self::assertSame('feedback', $before[4]->key);
+        self::assertSame(-1, $before[4]->difference(), 'a drop to 0 still shows');
     }
 
     public function test_the_detailed_rows_are_in_a_fixed_order(): void
@@ -61,6 +62,7 @@ final class OwnerReportFiguresTest extends TestCase
         self::assertTrue(OwnerReportFigures::isEmpty(OwnerReportFigures::basic(self::month('2026-10-01'), self::month('2026-09-01'))));
         self::assertFalse(OwnerReportFigures::isEmpty(OwnerReportFigures::basic(self::month('2026-10-01'), self::month('2026-09-01', visitors: 1))));
         self::assertFalse(OwnerReportFigures::isEmpty(OwnerReportFigures::basic(self::month('2026-10-01', delivered: 1), self::month('2026-09-01'))));
+        self::assertFalse(OwnerReportFigures::isEmpty(OwnerReportFigures::basic(self::month('2026-10-01', feedback: 1), self::month('2026-09-01'))));
     }
 
     /**
@@ -73,7 +75,7 @@ final class OwnerReportFiguresTest extends TestCase
         return array_map(static fn (ReportFigure $f): string => $f->key, $figures);
     }
 
-    private static function month(string $first, int $visitors = 0, int $phone = 0, int $merkliste = 0, int $delivered = 0, ?int $qualified = null, int $impressions = 0, int $inquiries = 0): VenueMonth
+    private static function month(string $first, int $visitors = 0, int $phone = 0, int $merkliste = 0, int $delivered = 0, int $qualified = 0, int $impressions = 0, int $inquiries = 0, int $feedback = 0): VenueMonth
     {
         $clicks = ['website' => 0, 'email' => 0, 'phone' => $phone, 'map' => 0, 'instagram' => 0];
 
@@ -82,6 +84,7 @@ final class OwnerReportFiguresTest extends TestCase
             new VenueSummary($visitors, $visitors, $impressions, $clicks, array_sum($clicks), $merkliste, $inquiries),
             $delivered,
             $qualified,
+            $feedback,
         );
     }
 }

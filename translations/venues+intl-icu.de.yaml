@@ -455,6 +455,7 @@ tier_page:
         contact: 'Telefonnummer und Website im Eintrag'
         event_types: 'Anlassarten'
         last_minute: 'Kurzfristig frei'
+        detailed_report: 'Ausführlicher Monatsbericht: Klicks, Sichtbarkeit in der Suche, drei Monate im Vergleich'
     cell:
         free: 'Gratis, ohne Ablaufdatum'
         price: 'CHF {price} pro Jahr'

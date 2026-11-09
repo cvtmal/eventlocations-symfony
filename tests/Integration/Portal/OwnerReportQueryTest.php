@@ -92,7 +92,7 @@ final class OwnerReportQueryTest extends KernelTestCase
         self::assertSame(0, $report->gaps->eventTypes);
         self::assertFalse($report->gaps->hasPriceLevel);
         self::assertTrue($report->noData);
-        self::assertSame(['visits', 'interactions', 'delivered'], array_map(static fn ($f): string => $f->key, $report->figures));
+        self::assertSame(['visits', 'interactions', 'delivered', 'qualified'], array_map(static fn ($f): string => $f->key, $report->figures));
         self::assertFalse($report->pro);
         self::assertNull($report->detailed);
         self::assertNull($report->trend);

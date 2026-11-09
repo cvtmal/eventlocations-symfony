@@ -91,6 +91,7 @@ final class TierPageTest extends WebTestCase
         self::assertSame(['1', 'bis zu 5'], $this->cells($matrix, 'Videos'));
         self::assertSame(['bis zu 3', 'alle passenden'], $this->cells($matrix, 'Anlassarten'));
         self::assertSame(['– nicht enthalten', 'inklusive'], $this->cells($matrix, 'Kurzfristig frei'));
+        self::assertSame(['– nicht enthalten', 'inklusive'], $this->cells($matrix, 'Ausführlicher Monatsbericht: Klicks, Sichtbarkeit in der Suche, drei Monate im Vergleich'));
     }
 
     /**
@@ -126,6 +127,8 @@ final class TierPageTest extends WebTestCase
         yield 'no documents' => [['UPDATE tiers SET documents_max = 0']];
         yield 'no videos' => [['UPDATE tiers SET videos_max = 0']];
         yield 'no last-minute offers' => [['UPDATE tiers SET last_minute_allowed = FALSE']];
+        yield 'no detailed report' => [['UPDATE tiers SET detailed_report = FALSE']];
+        yield 'detailed report on Gratis too' => [["UPDATE tiers SET detailed_report = TRUE WHERE code = 'free'"]];
         yield 'every flag off' => [[
             'UPDATE tiers SET contact_visible = FALSE, last_minute_allowed = FALSE, detailed_report = FALSE, rank_weight = 0, photos_max = 0, rooms_max = 0, videos_max = 0, documents_max = 0',
         ]];
@@ -248,6 +251,7 @@ final class TierPageTest extends WebTestCase
             TierFeature::Contact => 'contact_visible',
             TierFeature::EventTypes => '(event_types_max IS NULL OR event_types_max > 0)',
             TierFeature::LastMinute => 'last_minute_allowed',
+            TierFeature::DetailedReport => 'detailed_report',
         };
 
         return (bool) $this->connection->fetchOne('SELECT EXISTS (SELECT 1 FROM tiers WHERE '.$column.')');
