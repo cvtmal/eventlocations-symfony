@@ -359,19 +359,21 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
    `--dry-run` (it writes one draft folder per row, never over an existing one), then
    `sh bin/prod-import import-dry` and `sh bin/prod-import all`. The entries arrive as drafts
    («Held as draft» in the summary). In the CMS staff write the text, check the facts (and cut
-   the event types to what Free shows: the import notes `event_types: N > M (Free)` and keeps
-   them all), tick «Fakten geprüft» and publish.
+   the event types to what «Gratis» shows: the import notes `event_types: N > M (Gratis)` and
+   keeps them all), tick «Fakten geprüft» and publish.
 3. **hochzeitslocation.ch customers who said yes** (D1(c), D29; `source = hochzeitslocation`,
    with `consent_on` and `consent_from`; a row without them is refused): as 2., then
-   `make sf c="app:crm:record-consents <csv> --dry-run"`, then without `--dry-run`: the yes goes
+   `sh bin/prod-import consents-dry content/owner/<csv>` until its summary is right, then
+   `sh bin/prod-import consents content/owner/<csv>`: the yes goes
    onto the Location's timeline with its date and address (proof), and the Location's basis
    becomes «consent». A draft imported with consent (D1(c)) is published only through the venue's claim, never by staff ticking «Fakten geprüft» first.
    When a customer withdraws:
-   `make sf c="app:crm:withdraw-consent <venue-number> --dry-run"`, then without `--dry-run`
-   (`--on=YYYY-MM-DD` for the day they wrote): the entry and everything it brought (contacts,
-   website, phone, e-mail, address, the content folder) are deleted, the Location is suppressed,
-   and the Location with its name and both notes stays as proof. Then delete the row from the
-   sheet, as the command says.
+   `sh bin/prod-import withdraw-dry <venue-number>`, then
+   `sh bin/prod-import withdraw <venue-number>` (`--on=YYYY-MM-DD` after the number for the day
+   they wrote): the entry and everything it brought (contacts, website, phone, e-mail, address,
+   the content folder, the photos on the server) are deleted, the Location is suppressed, the
+   cache is emptied, and the Location with its name and both notes stays as proof. Then delete
+   the row from the sheet, as the command says.
 4. **The eventlokale crawl** (D11, D12, D32; owner-run, internal only):
    `make sf c="app:crm:crawl-eventlokale"` (every category, several hours, resumable) writes
    the private `CONTENT_ROOT/owner/eventlokale.csv` and the facts-only draft sheet
@@ -382,19 +384,21 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
 
 **Contacts.** The owner's contact list (template `tests/Fixtures/Onboarding/contacts.csv`; one
 Location per row, an optional contact person, the outreach fields and the venue by number or
-key) goes into the CRM with `make sf c="app:crm:import-contacts <csv> --dry-run"`, then without
-`--dry-run`. A row whose address is on the suppression list is skipped (`suppressed`), a row
-whose Location or address the CRM already holds is `exists`; nothing is ever mailed (D30, D49:
-one-to-one or postal only). The run prints row numbers and reason codes, never addresses.
+key) goes into the CRM with `sh bin/prod-import contacts-dry content/owner/<csv>` until every row
+passes, then `sh bin/prod-import contacts content/owner/<csv>`. A row whose address is on the
+suppression list is skipped (`suppressed`), a row whose Location or address the CRM already holds
+is `exists`; nothing is ever mailed (D30, D49: one-to-one or postal only). The run prints row numbers and reason codes, never addresses.
 
 **Letters.** The short link of a preview (`/v/<code>`) is printed in lower case and answers in
 any case (D53). Print it in a clear font where g and 9, s and 5 look different; the alphabet
 stays as it is.
 
-`convert-sheet` only writes folders, so it runs on the Mac as it is. The CRM commands
-(`record-consents`, `withdraw-consent`, `import-contacts`) write to the database and have no
-`bin/prod-import` command yet: run them locally to check a file; running them against production
-needs that wrapper first.
+`convert-sheet` only writes folders, so it runs on the Mac as it is, in the local stack (`make up`;
+its event-type note takes the cap from the local database, `import-dry` prints it again against
+Neon). The CRM commands (`consents`, `withdraw`, `contacts`) write to the production database, so
+they go through `bin/prod-import` with `PROD_DATABASE_URL` and `PROD_SSH` in the shell, like the
+import; `<csv>` is a path inside the checkout (the default `CONTENT_ROOT` is `content/`).
+`make sf c="app:crm:…"` checks a file against the local database only.
 
 ## Cron
 

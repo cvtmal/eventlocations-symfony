@@ -865,7 +865,12 @@ prod_import_refusals() {
         "regenerate --venue=abc" "regenerate --venue=1 --venue=2" "import --venue=1" \
         "import-dry --overwrite-cms-edits" "import-dry --force" "import-dry extra" \
         "customers --force" "customers-dry extra" "crm-bootstrap --limit=1" \
-        "places-find --limit=5" "places-apply-dry extra" "places-apply --dry-run"; do
+        "places-find --limit=5" "places-apply-dry extra" "places-apply --dry-run" \
+        "consents" "consents-dry content/owner/missing.csv" "consents /etc/passwd.csv" "consents ../sheet.csv" \
+        "consents content/../../sheet.csv" "consents content/owner/notes.txt" "consents --dry-run" \
+        "consents content/owner/sheet.csv extra" "contacts-dry content/owner/contacts.csv --force" "contacts -x.csv" \
+        "withdraw" "withdraw abc" "withdraw 7 --on=gestern" "withdraw 7 --path=/tmp" "withdraw 7 --on=2026-11-09 extra" \
+        "withdraw-dry --dry-run" "withdraw-dry 7;rm"; do
         # shellcheck disable=SC2086 # Each string is several arguments.
         run prod_import $arguments
         [ "$rc" != 0 ] || fail "prod-import accepted '$arguments'"
@@ -990,6 +995,52 @@ purge" ] || fail "prod-import all ran another order: $steps"
     [ "$steps" = "apply
 purge" ] || fail "places-apply ran another order: $steps"
     ok "places-apply applies, then purges"
+
+    prod_import_onboarding
+}
+
+prod_import_onboarding() { # The CRM commands of the onboarding runbook (F14), on the fictional sheets in content/owner/.
+    for pair in "consents-dry:app:crm:record-consents --dry-run /var/www/html/content/owner/sheet.csv" \
+        "consents:app:crm:record-consents /var/www/html/content/owner/sheet.csv" \
+        "contacts-dry:app:crm:import-contacts --dry-run /var/www/html/content/owner/contacts.csv" \
+        "contacts:app:crm:import-contacts /var/www/html/content/owner/contacts.csv"; do
+        cmd="${pair%%:*}"
+        console="${pair#*:}"
+        case "$cmd" in
+            consents*) csv=content/owner/sheet.csv ;;
+            *) csv=content/owner/contacts.csv ;;
+        esac
+        clear_log
+        run prod_import "$cmd" "$csv"
+        expect_exit "prod-import $cmd exits 0" 0
+        last="$(grep -n 'app:crm:' "$STUB_LOG" | tail -n 1)"
+        case "$last" in
+            *"-e APP_ENV=prod -e DATABASE_URL -e MEDIA_ROOT=/var/www/html/var/prod-media/originals -e MEDIA_PUBLIC_DIR=/var/www/html/var/prod-media/public php "*" $console") ok "$cmd runs $console with the production env" ;;
+            *) fail "$cmd ran another command or env: $last" ;;
+        esac
+        if grep -q -E '^(rsync|ssh) ' "$STUB_LOG"; then
+            fail "$cmd synced or purged"
+        fi
+        ok "$cmd neither syncs nor purges"
+    done
+
+    clear_log
+    run prod_import withdraw-dry 7 --on=2026-11-09
+    expect_exit "prod-import withdraw-dry exits 0" 0
+    grep -q -- 'php .* app:crm:withdraw-consent --dry-run 7 --on=2026-11-09$' "$STUB_LOG" || fail "withdraw-dry ran another command"
+    if grep -q -E '^(rsync|ssh) ' "$STUB_LOG"; then
+        fail "withdraw-dry touched the server"
+    fi
+    ok "withdraw-dry runs the dry run and leaves the server alone"
+
+    clear_log
+    run prod_import withdraw 7
+    expect_exit "prod-import withdraw exits 0" 0
+    steps="$(sed -n 's/.*app:crm:withdraw-consent --dry-run.*/dry-run/p; s/.*app:crm:withdraw-consent 7$/withdraw/p; s/^ssh .*rm -rf \/var\/www\/deine-eventlocation.ch\/current\/public\/media\/7$/remove-media/p; s/^ssh .*app:http-cache:clear.*/purge/p' "$STUB_LOG")"
+    [ "$steps" = "withdraw
+remove-media
+purge" ] || fail "prod-import withdraw ran another order: $steps"
+    ok "withdraw deletes the entry, then its public media on the server, then purges"
 }
 
 pull_backup() { # pull_backup <args...>
@@ -1088,6 +1139,10 @@ prepare() {
     pack "$work/release" "$work/release.tgz"
     server_tree
     cp "$ROOT/bin/prod-import" "$work/checkout/bin/prod-import"
+    # Fictional sheets: prod-import only checks that the file is there; the stub php reads nothing.
+    printf '%s\n' 'name,town' 'Remise am Bach,Musterdorf' > "$work/checkout/content/owner/sheet.csv"
+    printf '%s\n' 'company,email' 'Seehof Muster AG,hallo@seehof.example' > "$work/checkout/content/owner/contacts.csv"
+    printf '%s\n' 'not a sheet' > "$work/checkout/content/owner/notes.txt"
 }
 
 main() {

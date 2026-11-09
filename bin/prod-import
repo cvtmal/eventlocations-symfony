@@ -33,6 +33,15 @@ Usage: bin/prod-import <command>
   places-find              app:venues:find-google-places against Neon: the place ID report, no writes
   places-apply-dry         app:venues:apply-google-places --dry-run against Neon: the summary, no writes
   places-apply             app:venues:apply-google-places against Neon, then purge
+  consents-dry <csv>       app:crm:record-consents --dry-run against Neon: what would be recorded, no writes
+  consents <csv>           app:crm:record-consents against Neon
+  withdraw-dry <number> [--on=YYYY-MM-DD]
+                           app:crm:withdraw-consent --dry-run against Neon: what would go, no writes
+  withdraw <number> [--on=YYYY-MM-DD]
+                           app:crm:withdraw-consent against Neon, then delete the venue's public
+                           media on the server, then purge
+  contacts-dry <csv>       app:crm:import-contacts --dry-run against Neon: the row outcomes, no writes
+  contacts <csv>           app:crm:import-contacts against Neon (sends nothing)
   help                     this text
 
 Run order: first deploy (migrations and towns), then import-dry until its summary is right, then
@@ -41,6 +50,9 @@ all. The import keeps every venue staff edited and lists it; import-dry shows th
 
 Google place IDs (#53, #57): places-find (needs GOOGLE_PLACES_API_KEY in the shell; confident rows
 come pre-marked apply=yes), check the report, then places-apply-dry until right, then places-apply.
+
+Onboarding (F14, docs/operations.md "Onboarding"): each CRM command runs its -dry form first, until
+its summary is right. <csv> is a path inside the checkout (e.g. content/owner/sheet.csv).
 
 Environment, never in a file:
   PROD_DATABASE_URL   Neon's direct string
@@ -112,9 +124,46 @@ purge_cache() {
     ssh "$PROD_SSH" "cd $REMOTE_APP && $REMOTE_PHP bin/console app:http-cache:clear"
 }
 
+refuse_csv_arguments() { # refuse_csv_arguments <command> <args...>: exactly one CSV inside the checkout
+    cmd="$1"
+    shift
+    [ "$#" -eq 1 ] || die "$cmd takes one CSV file"
+    # Mounted into the php container with the checkout, so it has to stay inside it.
+    case "$1" in
+        "" | -* | /* | ..* | */..*) die "$cmd needs a CSV path inside the checkout" ;;
+        *.csv | *.CSV) ;;
+        *) die "$cmd needs a .csv file" ;;
+    esac
+    [ -f "$1" ] || die "$1 is not a file"
+}
+
+refuse_withdraw_arguments() { # refuse_withdraw_arguments <command> <venue number> [--on=YYYY-MM-DD]
+    cmd="$1"
+    shift
+    [ "$#" -ge 1 ] && [ "$#" -le 2 ] || die "$cmd takes a venue number and at most --on=YYYY-MM-DD"
+    case "$1" in
+        "" | *[!0-9]*) die "$cmd needs a venue number" ;;
+    esac
+    [ "$#" -eq 1 ] && return 0
+    case "$2" in
+        --on=[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
+        *) die "refused: $2 ($cmd takes --on=YYYY-MM-DD only)" ;;
+    esac
+}
+
 refuse_arguments() { # refuse_arguments <command> <args...>
     cmd="$1"
     shift
+    case "$cmd" in
+        consents-dry | consents | contacts-dry | contacts)
+            refuse_csv_arguments "$cmd" "$@"
+            return 0
+            ;;
+        withdraw-dry | withdraw)
+            refuse_withdraw_arguments "$cmd" "$@"
+            return 0
+            ;;
+    esac
     for arg in "$@"; do
         case "$arg" in
             --prune*) die "--prune is refused: run bin/prod-import help" ;;
@@ -144,6 +193,7 @@ main() {
             ;;
         import | import-dry | regenerate | sync | purge | all | crm-bootstrap) ;;
         places-find | places-apply-dry | places-apply) ;;
+        consents-dry | consents | withdraw-dry | withdraw | contacts-dry | contacts) ;;
         *)
             usage >&2
             die "unknown command: $cmd"
@@ -177,6 +227,18 @@ main() {
             prod_console app:venues:apply-google-places
             purge_cache
             ;;
+        consents-dry) prod_console app:crm:record-consents --dry-run "$CONTAINER_ROOT/$1" ;;
+        consents) prod_console app:crm:record-consents "$CONTAINER_ROOT/$1" ;;
+        withdraw-dry) prod_console app:crm:withdraw-consent --dry-run "$@" ;;
+        withdraw)
+            prod_console app:crm:withdraw-consent "$@"
+            # The command deletes the local copies only; the sync never deletes on the server.
+            # shellcheck disable=SC2029 # REMOTE_APP is meant to expand here; $1 is digits only.
+            ssh "$PROD_SSH" "rm -rf $REMOTE_APP/public/media/$1"
+            purge_cache
+            ;;
+        contacts-dry) prod_console app:crm:import-contacts --dry-run "$CONTAINER_ROOT/$1" ;;
+        contacts) prod_console app:crm:import-contacts "$CONTAINER_ROOT/$1" ;;
     esac
 }
 
