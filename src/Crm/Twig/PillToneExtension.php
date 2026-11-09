@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Crm\Twig;
 
 use App\Crm\ValueObject\CompanyStage;
+use App\Inquiries\ValueObject\InquiryOverride;
+use App\Inquiries\ValueObject\Qualification;
 use Twig\Attribute\AsTwigFunction;
 
 /**
@@ -19,12 +21,26 @@ final readonly class PillToneExtension
         'deal' => ['contacted' => 'blue', 'offer' => 'amber', 'negotiation' => 'pink', 'won' => 'green', 'lost' => 'red'],
         'inquiry' => ['new' => 'pink', 'seen' => 'blue', 'done' => 'green'],
         'mail' => ['sent' => 'green', 'failed' => 'red', 'pending' => 'amber', 'skipped' => 'grey'],
+        'qualification' => ['qualified' => 'green', 'unqualified' => 'grey'],
+        'override' => ['spam' => 'red', 'test' => 'grey'],
     ];
 
     #[AsTwigFunction('crm_tone')]
     public function tone(CompanyStage $value): string
     {
         return self::TONES['stage'][$value->value];
+    }
+
+    #[AsTwigFunction('crm_qualification_tone')]
+    public function qualificationTone(Qualification $value): string
+    {
+        return self::TONES['qualification'][$value->value];
+    }
+
+    #[AsTwigFunction('crm_override_tone')]
+    public function overrideTone(InquiryOverride $value): string
+    {
+        return self::TONES['override'][$value->value];
     }
 
     #[AsTwigFunction('crm_deal_tone')]

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Inquiries\Entity;
 
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\Qualification;
+use App\Inquiries\ValueObject\QualificationReason;
 use App\Shared\Uid\EntityId;
 use App\Venues\Entity\Venue;
 use Doctrine\DBAL\Types\Types;
@@ -15,6 +18,10 @@ use Doctrine\ORM\Mapping as ORM;
  * in, so the row stays meaningful after the venue changes or is deleted (`venue` becomes null).
  * `recipientEmail` is always the venue's address; `deliveredTo` is where the mail really went.
  * `fingerprint` recognises a repeat (`InquiryFingerprint`).
+ *
+ * `qualification` (+ `qualificationReason`) is the D19 flag of the latest delivery (G7); `qualificationOverride` is
+ * the staff mark, kept apart so an unmark restores the derived value. `stuckAlertedAt` is set once the hourly staff
+ * alert has reported the inquiry.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'inquiries')]
@@ -102,6 +109,18 @@ class Inquiry
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
     private ?\DateTimeImmutable $venueMailSentAt = null;
 
+    #[ORM\Column(type: Types::STRING, length: 12, nullable: true, enumType: Qualification::class)]
+    private ?Qualification $qualification = null;
+
+    #[ORM\Column(type: Types::STRING, length: 30, nullable: true, enumType: QualificationReason::class)]
+    private ?QualificationReason $qualificationReason = null;
+
+    #[ORM\Column(type: Types::STRING, length: 10, nullable: true, enumType: InquiryOverride::class)]
+    private ?InquiryOverride $qualificationOverride = null;
+
+    #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $stuckAlertedAt = null;
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
     private \DateTimeImmutable $createdAt;
 
@@ -174,6 +193,28 @@ class Inquiry
     {
         $this->guestMailStatus = $status;
         $this->updatedAt = $at;
+    }
+
+    /**
+     * Stores the outcome of `QualificationRule` for this delivery: no reason is qualified, a reason is unqualified.
+     */
+    public function recordQualification(?QualificationReason $reason, \DateTimeImmutable $at): void
+    {
+        $this->qualification = null === $reason ? Qualification::Qualified : Qualification::Unqualified;
+        $this->qualificationReason = $reason;
+        $this->updatedAt = $at;
+    }
+
+    /**
+     * Sets or (with null) removes the staff mark and returns the previous one.
+     */
+    public function mark(?InquiryOverride $override, \DateTimeImmutable $at): ?InquiryOverride
+    {
+        $previous = $this->qualificationOverride;
+        $this->qualificationOverride = $override;
+        $this->updatedAt = $at;
+
+        return $previous;
     }
 
     public function id(): string
@@ -301,6 +342,26 @@ class Inquiry
     public function venueMailSentAt(): ?\DateTimeImmutable
     {
         return $this->venueMailSentAt;
+    }
+
+    public function qualification(): ?Qualification
+    {
+        return $this->qualification;
+    }
+
+    public function qualificationReason(): ?QualificationReason
+    {
+        return $this->qualificationReason;
+    }
+
+    public function qualificationOverride(): ?InquiryOverride
+    {
+        return $this->qualificationOverride;
+    }
+
+    public function stuckAlertedAt(): ?\DateTimeImmutable
+    {
+        return $this->stuckAlertedAt;
     }
 
     public function createdAt(): \DateTimeImmutable

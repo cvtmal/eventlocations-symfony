@@ -181,7 +181,7 @@ pack() { tar -C "$1" -czf "$2" .; }
 
 build_release() { # build_release <dir>: what bin/build-release ships, as far as a deploy can tell
     mkdir -p "$1/bin" "$1/vendor" "$1/public/assets" "$1/public/admin-build/.vite"
-    for script in deploy cron-lock.sh cron-midnight cron-cache-guard cron-daily; do
+    for script in deploy cron-lock.sh cron-midnight cron-cache-guard cron-daily cron-hourly; do
         cp "$ROOT/bin/$script" "$1/bin/$script"
     done
     echo console > "$1/bin/console"
@@ -645,7 +645,7 @@ cron_daily() {
     run sh "$APP/bin/cron-daily"
     expect_exit "cron-daily exits 0 on a good night" 0
     expect_no_output "a good night prints nothing"
-    expect_calls "cron-daily runs its twelve commands in order" "release app:inquiries:purge
+    expect_calls "cron-daily runs its eleven commands in order" "release app:inquiries:purge
 release app:venues:erase-complainants
 release app:stats:purge-search-misses
 release app:crm:refresh-stages
@@ -654,7 +654,6 @@ release app:subscriptions:expire
 release app:subscriptions:remind
 release app:last-minute:expire
 release app:crm:backfill-inquiries
-release app:inquiries:report-stuck
 release app:stats:ingest
 release cache:pool:prune"
     expect_gone "an abandoned upload is swept" "$APP/var/import-staging/abandoned"
@@ -688,16 +687,38 @@ release app:subscriptions:expire
 release app:subscriptions:remind
 release app:last-minute:expire
 release app:crm:backfill-inquiries
-release app:inquiries:report-stuck
 release app:stats:ingest
 release cache:pool:prune"
 
-    STUB_PRINT=app:inquiries:report-stuck
+    STUB_PRINT=app:crm:backfill-inquiries
     export STUB_PRINT
     run sh "$APP/bin/cron-daily"
     unset STUB_PRINT
-    expect_exit "a stuck inquiry is no failure" 0
+    expect_exit "a repaired inquiry is no failure" 0
+    expect_output "what backfill prints reaches the cron mail" "stub: app:crm:backfill-inquiries says something"
+}
+
+cron_hourly() {
+    clear_log
+    run sh "$APP/bin/cron-hourly"
+    expect_exit "cron-hourly exits 0" 0
+    expect_no_output "an hour whose alert went out prints nothing"
+    expect_calls "cron-hourly runs only the stuck-inquiry alert" "release app:inquiries:report-stuck"
+
+    STUB_PRINT=app:inquiries:report-stuck
+    export STUB_PRINT
+    run sh "$APP/bin/cron-hourly"
+    unset STUB_PRINT
+    expect_exit "a failed staff mail is no cron failure" 0
     expect_output "what report-stuck prints reaches the cron mail" "stub: app:inquiries:report-stuck says something"
+
+    STUB_FAIL=app:inquiries:report-stuck
+    export STUB_FAIL
+    run sh "$APP/bin/cron-hourly"
+    unset STUB_FAIL
+    expect_failure "cron-hourly reports a failed command"
+    expect_output "cron-hourly names the failed step" "cron-hourly: inquiries-stuck failed"
+    expect_output "the command's own output follows" "stub: app:inquiries:report-stuck failed"
 }
 
 write_site() { # write_site <listed extra path, or nothing>
@@ -1030,6 +1051,7 @@ main() {
     cron_midnight
     cron_lock
     cron_daily
+    cron_hourly
     warm_cache
     prod_import_refusals
     prod_import_commands

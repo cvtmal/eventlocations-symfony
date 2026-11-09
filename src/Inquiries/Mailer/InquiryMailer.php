@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Inquiries\Mailer;
 
 use App\Inquiries\Entity\Inquiry;
+use App\Inquiries\ReadModel\StuckInquiry;
 use App\Shared\Twig\SwissFormatExtension;
 use App\Venues\ValueObject\Term;
 use App\Venues\ValueObject\TermGroup;
@@ -19,7 +20,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * The two mails of an inquiry (IQ-2): to the venue with the guest as Reply-To, and a copy to
- * the guest. From comes from MAILER_FROM (config/packages/mailer.yaml), the text part from
+ * the guest; and the hourly staff alert about undelivered inquiries (G7, D56) to `site.contact_email`. From comes from MAILER_FROM (config/packages/mailer.yaml), the text part from
  * `EmailHtmlToTextConverter`. The context holds values, never the entity, so a transport stays
  * possible (.claude/rules/cqrs.md); `email` is Twig's name for the message itself.
  *
@@ -91,6 +92,35 @@ final class InquiryMailer
             ->htmlTemplate('inquiries/email/guest.html.twig')
             ->locale($inquiry->locale())
             ->context($this->context($inquiry)));
+    }
+
+    /**
+     * Tells staff which inquiries did not reach their venue. Names the inquiry, its venue and its state, never the
+     * guest: the link opens the CRM detail, where staff resend it.
+     *
+     * @param non-empty-list<StuckInquiry> $rows
+     *
+     * @throws TransportExceptionInterface a transport error
+     * @throws HandlerFailedException      any other failure in the mail pipeline
+     */
+    public function sendStuckAlert(array $rows): void
+    {
+        $zone = new \DateTimeZone('Europe/Zurich');
+
+        $this->mailer->send((new TemplatedEmail())
+            ->to($this->contactEmail)
+            ->subject($this->translator->trans('email.stuck.subject', ['count' => \count($rows)], 'inquiries', 'de'))
+            ->htmlTemplate('inquiries/email/stuck_alert.html.twig')
+            ->locale('de')
+            ->context([
+                'inquiries' => array_map(static fn (StuckInquiry $row): array => [
+                    'id' => $row->id,
+                    'venue_name' => $row->venueName,
+                    'venue_number' => $row->venueNumber,
+                    'status' => $row->venueMailStatus->value,
+                    'created_at' => $row->createdAt->setTimezone($zone)->format('d.m.Y H:i'),
+                ], $rows),
+            ]));
     }
 
     /**

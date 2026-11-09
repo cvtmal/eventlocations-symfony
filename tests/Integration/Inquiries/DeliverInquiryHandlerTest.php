@@ -5,15 +5,22 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Inquiries;
 
 use App\Factory\InquiryFactory;
+use App\Factory\VenueFactory;
+use App\Factory\VenueTermFactory;
 use App\Inquiries\Command\DeliverInquiry;
 use App\Inquiries\CommandHandler\DeliverInquiryHandler;
 use App\Inquiries\Entity\Inquiry;
 use App\Inquiries\Mailer\InquiryMailer;
+use App\Inquiries\ReadModel\QualificationFactsQuery;
 use App\Inquiries\Repository\InquiryRepository;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\Qualification;
+use App\Inquiries\ValueObject\QualificationReason;
 use App\Shared\Twig\SwissFormatExtension;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Inquiries\RecordingMailer;
+use App\Venues\ValueObject\TermGroup;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -229,6 +236,126 @@ final class DeliverInquiryHandlerTest extends KernelTestCase
         self::assertSame(MailStatus::Failed, $this->reloaded($id)->venueMailStatus());
     }
 
+    public function test_a_delivered_inquiry_is_qualified(): void
+    {
+        $id = $this->plausible()->id();
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($id));
+
+        $inquiry = $this->reloaded($id);
+        self::assertSame(Qualification::Qualified, $inquiry->qualification());
+        self::assertNull($inquiry->qualificationReason());
+    }
+
+    public function test_a_failed_venue_mail_is_unqualified_as_not_delivered(): void
+    {
+        $id = $this->plausible()->id();
+
+        $this->handler(new RecordingMailer(new TransportException('SMTP down')))(new DeliverInquiry($id));
+
+        $inquiry = $this->reloaded($id);
+        self::assertSame(Qualification::Unqualified, $inquiry->qualification());
+        self::assertSame(QualificationReason::NotDelivered, $inquiry->qualificationReason());
+    }
+
+    public function test_a_resend_after_a_failure_qualifies_again(): void
+    {
+        $id = $this->plausible()->id();
+        $this->handler(new RecordingMailer(new TransportException('SMTP down')))(new DeliverInquiry($id));
+        $this->reloaded($id);
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($id));
+
+        $inquiry = $this->reloaded($id);
+        self::assertSame(Qualification::Qualified, $inquiry->qualification());
+        self::assertNull($inquiry->qualificationReason());
+    }
+
+    public function test_a_second_inquiry_ten_days_after_a_delivered_one_is_a_duplicate(): void
+    {
+        $venue = VenueFactory::new()->withContact()->create();
+        $first = $this->plausible(['venue' => $venue, 'email' => 'anna@example.ch', 'createdAt' => new \DateTimeImmutable(self::NOW.' -10 days')])->id();
+        $this->handler(new RecordingMailer())(new DeliverInquiry($first));
+        $this->reloaded($first);
+        $second = $this->plausible(['venue' => $venue, 'email' => 'Anna@Example.ch'])->id();
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($second));
+
+        self::assertSame(Qualification::Qualified, $this->reloaded($first)->qualification());
+        self::assertSame(QualificationReason::Duplicate, $this->reloaded($second)->qualificationReason());
+    }
+
+    public function test_an_event_type_the_venue_does_not_list_is_unqualified(): void
+    {
+        $venue = VenueFactory::new()->withContact()->create();
+        VenueTermFactory::new()->term(TermGroup::SuitableFor, 'seminar')->create(['venue' => $venue]);
+        $id = $this->plausible(['venue' => $venue, 'eventType' => 'wedding'])->id();
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($id));
+
+        self::assertSame(QualificationReason::EventTypeNotOffered, $this->reloaded($id)->qualificationReason());
+    }
+
+    public function test_guests_no_range_holds_are_unqualified(): void
+    {
+        $id = $this->plausible(['guestCount' => 500])->id();
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($id));
+
+        self::assertSame(QualificationReason::GuestsOutsideCapacity, $this->reloaded($id)->qualificationReason());
+    }
+
+    public function test_a_date_twenty_five_months_ahead_is_too_far(): void
+    {
+        $id = $this->plausible(['eventDate' => new \DateTimeImmutable('2028-07-01'), 'dateFlexible' => false])->id();
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($id));
+
+        self::assertSame(QualificationReason::DateTooFar, $this->reloaded($id)->qualificationReason());
+    }
+
+    public function test_a_delivery_records_the_funnel_step(): void
+    {
+        $inquiry = $this->plausible();
+        $venueId = $inquiry->venue()?->id();
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($inquiry->id()));
+
+        self::assertSame(1, $this->deliveredSteps($venueId));
+    }
+
+    public function test_a_marked_inquiry_resent_records_no_funnel_step(): void
+    {
+        $inquiry = $this->plausible();
+        $id = $inquiry->id();
+        $venueId = $inquiry->venue()?->id();
+        $this->handler(new RecordingMailer(new TransportException('SMTP down')))(new DeliverInquiry($id));
+        $this->reloaded($id)->mark(InquiryOverride::Test, new \DateTimeImmutable(self::NOW));
+        $this->em->flush();
+
+        $this->handler(new RecordingMailer())(new DeliverInquiry($id));
+
+        $inquiry = $this->reloaded($id);
+        self::assertSame(MailStatus::Sent, $inquiry->venueMailStatus());
+        self::assertSame(Qualification::Qualified, $inquiry->qualification());
+        self::assertSame(0, $this->deliveredSteps($venueId));
+    }
+
+    /**
+     * An inquiry every criterion passes: the factory venue (up to 120 guests, no event types) and 50 guests.
+     *
+     * @param array<string, mixed> $attributes
+     */
+    private function plausible(array $attributes = []): Inquiry
+    {
+        return InquiryFactory::createOne(['guestCount' => 50, 'createdAt' => new \DateTimeImmutable(self::NOW), ...$attributes]);
+    }
+
+    private function deliveredSteps(?string $venueId): int
+    {
+        return (int) $this->connection->fetchOne("SELECT count(*) FROM funnel_events WHERE event = 'inquiry_delivered' AND venue_id = ?", [$venueId]);
+    }
+
     private function handler(RecordingMailer $mailer, ?string $override = 'override@example.test', LoggerInterface $logger = new NullLogger()): DeliverInquiryHandler
     {
         $translator = self::getContainer()->get(TranslatorInterface::class);
@@ -244,6 +371,7 @@ final class DeliverInquiryHandlerTest extends KernelTestCase
             new MockClock(self::NOW),
             $logger,
             $bus,
+            new QualificationFactsQuery($this->connection),
         );
     }
 

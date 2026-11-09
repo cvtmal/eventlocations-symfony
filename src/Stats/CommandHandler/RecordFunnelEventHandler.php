@@ -52,7 +52,7 @@ final class RecordFunnelEventHandler implements CommandHandlerInterface
                 'INSERT INTO funnel_events (id, occurred_at, event, venue_id, campaign_code) VALUES (:id, :at, :event, :venue, :campaign)',
                 [
                     'id' => EntityId::generate(),
-                    'at' => $this->clock->now()->format(\DATE_ATOM),
+                    'at' => ($command->occurredAt ?? $this->clock->now())->format(\DATE_ATOM),
                     'event' => $command->event->value,
                     'venue' => $venueId,
                     'campaign' => $campaign,

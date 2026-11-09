@@ -1,7 +1,7 @@
 #!/bin/sh
 # 03:15 Europe/Zurich: the one nightly chain, one Neon wake-up (#20). Every step runs even if an
-# earlier one failed; the script exits non-zero if any did, and prints only on a failure or when
-# report-stuck has something to say, so the host's cron mail stays silent on a good night.
+# earlier one failed; the script exits non-zero if any did, and prints only on a failure, so the
+# host's cron mail stays silent on a good night. The stuck-inquiry alert runs hourly (bin/cron-hourly).
 set -u
 
 PHP="${DEPLOY_PHP:-php}"
@@ -45,8 +45,6 @@ main() {
     step last-minute-expire "$PHP" bin/console --no-interaction --quiet app:last-minute:expire
     # No --quiet: a repaired inquiry is worth the mail, and a good night prints nothing anyway.
     step crm-backfill "$PHP" bin/console --no-interaction app:crm:backfill-inquiries
-    # No --quiet: its output (the stuck rows) is the point of this step.
-    step inquiries-stuck "$PHP" bin/console --no-interaction app:inquiries:report-stuck
     # #47: loads the beacon's day files into Neon and rebuilds stats_daily; the button on /admin/statistik runs
     # the same job. --quiet: its count line would mail every night; an error still prints.
     step stats-ingest "$PHP" bin/console --no-interaction --quiet app:stats:ingest

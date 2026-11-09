@@ -805,7 +805,6 @@ stats:
         title: Funnel
         intro: Von der Vorschau bis zur Pro-Zahlung, pro Woche und Kampagne. Einträge zählen pro Woche und im ganzen Zeitraum je einmal, Anfragen einzeln.
         note: Ein Schritt gehört zur Kampagne, die ihm mitgegeben wurde. Fehlt sie, gilt die erste Kampagne seines Eintrags davor. Was keiner Kampagne zugeordnet werden kann, steht unter Ohne Kampagne.
-        not_available: n/a
         window:
             label: Zeitraum
             weeks: '{weeks} Wochen'
@@ -824,7 +823,7 @@ stats:
             brief_sent: Sammelanfragen
         qualified:
             label: Qualifizierte Anfragen
-            note: Folgt, sobald Anfragen qualifiziert werden.
+            note: Zugestellt und qualifiziert, ohne Spam und Test; unabhängig von der Kampagne.
         weeks:
             title: Pro Woche
             column: Woche

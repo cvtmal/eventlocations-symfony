@@ -8,6 +8,7 @@ use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
 use App\Inquiries\ReadModel\StuckInquiries;
 use App\Inquiries\ReadModel\StuckInquiry;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use Doctrine\DBAL\Connection;
@@ -16,7 +17,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * #20 PD7: `pending` is the only sign of a process death between the SMTP call and the commit.
+ * #20 PD7, G7 (D56): what the hourly staff alert is due to report. `pending` is the only sign of a process death
+ * between the SMTP call and the commit; `failed` is reported at once. Each inquiry once, unmarked, of the last week.
  */
 final class StuckInquiriesTest extends KernelTestCase
 {
@@ -63,12 +65,50 @@ final class StuckInquiriesTest extends KernelTestCase
         self::assertSame([], $this->stuck());
     }
 
-    public function test_a_row_with_an_outcome_is_never_stuck(): void
+    public function test_a_failed_row_is_due_at_once(): void
     {
-        $this->inquiry('2026-06-01 11:00:00 UTC', MailStatus::Failed);
+        $failed = $this->inquiry('2026-06-01 11:59:00 UTC', MailStatus::Failed);
+
+        $stuck = $this->stuck();
+
+        self::assertSame([$failed], array_map(static fn (StuckInquiry $inquiry): string => $inquiry->id, $stuck));
+        self::assertSame(MailStatus::Failed, $stuck[0]->venueMailStatus);
+    }
+
+    public function test_a_sent_row_is_never_stuck(): void
+    {
         $this->inquiry('2026-06-01 11:00:00 UTC', MailStatus::Sent);
 
         self::assertSame([], $this->stuck());
+    }
+
+    public function test_a_marked_row_is_left_out(): void
+    {
+        foreach ([InquiryOverride::Spam, InquiryOverride::Test] as $override) {
+            $id = $this->inquiry('2026-06-01 11:00:00 UTC', MailStatus::Failed);
+            $this->connection->executeStatement('UPDATE inquiries SET qualification_override = ? WHERE id = ?', [$override->value, $id]);
+            $id = $this->inquiry('2026-06-01 11:00:00 UTC');
+            $this->connection->executeStatement('UPDATE inquiries SET qualification_override = ? WHERE id = ?', [$override->value, $id]);
+        }
+
+        self::assertSame([], $this->stuck());
+    }
+
+    public function test_an_alerted_row_is_left_out(): void
+    {
+        $id = $this->inquiry('2026-06-01 11:00:00 UTC', MailStatus::Failed);
+        $this->connection->executeStatement("UPDATE inquiries SET stuck_alerted_at = '2026-06-01 11:40:00+00' WHERE id = ?", [$id]);
+
+        self::assertSame([], $this->stuck());
+    }
+
+    public function test_a_row_older_than_the_window_is_left_out(): void
+    {
+        $this->inquiry('2026-05-25 11:59:00 UTC', MailStatus::Failed);
+        $this->inquiry('2026-05-25 11:59:00 UTC');
+        $inside = $this->inquiry('2026-05-25 12:00:00 UTC', MailStatus::Failed);
+
+        self::assertSame([$inside], array_map(static fn (StuckInquiry $inquiry): string => $inquiry->id, $this->stuck()));
     }
 
     public function test_the_oldest_row_comes_first(): void
@@ -80,14 +120,17 @@ final class StuckInquiriesTest extends KernelTestCase
         self::assertSame([$oldest, $middle, $newer], array_map(static fn (StuckInquiry $inquiry): string => $inquiry->id, $this->stuck()));
     }
 
-    public function test_a_row_carries_its_venue_number_and_time(): void
+    public function test_a_row_carries_its_venue_number_name_status_and_time(): void
     {
         $this->inquiry('2026-06-01 11:00:00 UTC');
 
         $row = $this->stuck()[0];
-        $expected = $this->connection->fetchOne('SELECT venue_number FROM inquiries');
+        $expected = $this->connection->fetchAssociative('SELECT venue_number, venue_name FROM inquiries');
+        self::assertIsArray($expected);
 
-        self::assertSame($expected, $row->venueNumber);
+        self::assertSame($expected['venue_number'], $row->venueNumber);
+        self::assertSame($expected['venue_name'], $row->venueName);
+        self::assertSame(MailStatus::Pending, $row->venueMailStatus);
         self::assertSame(
             (new \DateTimeImmutable('2026-06-01 11:00:00 UTC'))->getTimestamp(),
             $row->createdAt->getTimestamp(),
@@ -113,12 +156,15 @@ final class StuckInquiriesTest extends KernelTestCase
         $query = self::getContainer()->get(StuckInquiries::class);
         self::assertInstanceOf(StuckInquiries::class, $query);
 
-        return $query->olderThan((new \DateTimeImmutable(self::NOW))->modify('-15 minutes'));
+        $now = new \DateTimeImmutable(self::NOW);
+
+        return $query->due($now->modify('-15 minutes'), $now->modify(\sprintf('-%d days', StuckInquiries::WINDOW_DAYS)));
     }
 
     private function inquiry(string $createdAt, MailStatus $status = MailStatus::Pending): string
     {
         $inquiry = InquiryFactory::createOne(['createdAt' => new \DateTimeImmutable($createdAt)]);
+        $this->em->flush();
 
         if (MailStatus::Failed === $status) {
             $inquiry->recordVenueMailFailed(new \DateTimeImmutable($createdAt));

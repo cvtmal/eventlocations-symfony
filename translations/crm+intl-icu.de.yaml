@@ -599,6 +599,10 @@ inquiry:
         message: Nachricht
         delivery: Zustellung
         resend: Erneut senden
+        qualification: Qualifizierung
+        mark_spam: Als Spam markieren
+        mark_test: Als Test markieren
+        unmark: Markierung entfernen
         status: Status
         save: Speichern
         retention: Wird nach 12 Monaten ohne Aktivität gelöscht (Datenschutz).
@@ -613,12 +617,26 @@ inquiry:
             sent: Bestätigung an den Veranstalter zugestellt
             failed: Bestätigung an den Veranstalter fehlgeschlagen
             skipped: Bestätigung an den Veranstalter nicht gesendet
+    qualification:
+        qualified: Qualifiziert
+        unqualified: 'Nicht qualifiziert: {reason}'
+        reason:
+            not_delivered: Nicht zugestellt
+            duplicate: Doppelte Anfrage
+            event_type_not_offered: Anlass nicht angeboten
+            guests_outside_capacity: Zu viele oder zu wenige Gäste
+            date_too_far: Termin zu weit weg
+    override:
+        spam: Spam
+        test: Test
     flash:
         status_changed: Status gespeichert.
         gone: Diese Anfrage gibt es nicht mehr.
         resent: Die Anfrage ist an die Location gesendet.
         resend_failed: Die Anfrage konnte nicht gesendet werden. Bitte später nochmals versuchen.
         already_sent: Die Anfrage ist bereits an die Location zugestellt.
+        marked: Markierung gespeichert.
+        unmarked: Markierung entfernt.
 renewal:
     widget:
         title: Verlängerungen

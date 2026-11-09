@@ -344,7 +344,8 @@ step 2), so the times below are Zurich times. `php` on cron's PATH is 8.5 throug
 |---|---|---|
 | `5 0 * * *` | `bin/cron-midnight` | Empties the HTTP cache after listings expire at midnight |
 | `2-59/5 * * * *` | `bin/cron-cache-guard` | Empties it only when it is over its size or file limit |
-| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D46), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, deletion of expired «Kurzfristig frei» offers with a mail to the managers, inquiry backfill, stuck-inquiry report, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `15 3 * * *` | `bin/cron-daily` | Inquiry purge, erasure of complainants three years after the decision (D36), purge of the zero-result search counts after 12 months (D46), CRM stage refresh and renewal tasks, paid-term expiry and reminder mails, deletion of expired «Kurzfristig frei» offers with a mail to the managers, inquiry backfill, statistics ingest, cache pool prune, staging, session and limiter-lock sweeps |
+| `40 * * * *` | `bin/cron-hourly` | Mails staff (`site.contact_email`) the inquiries whose venue mail failed or is stuck past 15 minutes, of the last 7 days and not marked spam or test, each inquiry once (G7, D56); one short Neon wake-up an hour |
 | `30 4 * * *` | `bin/cron-media-backup` | The media originals to Object Storage, encrypted, with retention ([Media backup](#media-backup)); no database |
 
 `last-minute-expire` (`app:last-minute:expire`, G14) deletes the offers «Kurzfristig frei» whose
@@ -371,7 +372,8 @@ worth reading:
 | `cron-daily: subscriptions-remind failed`, with `<id>: <reason>` | One reminder mail could not be prepared; a mail that did not go out is logged as an error and retried the next night | The next night retries; if it repeats, check the mail settings (`MAILER_DSN`) |
 | `cron-daily: last-minute-expire failed`, with `Expiring the offers failed: <reason>` | Nothing public is wrong: every page filters offers by date, so expired ones stay hidden; only the deletion and the mails wait | Check the database connection, then run `<root>/current/bin/console app:last-minute:expire` (safe to repeat). A mail that fails is logged ("The portal mail portal/email/last_minute_expired.html.twig failed") and not resent; the offer is deleted anyway |
 | `cron-daily: stats-ingest failed` | Day files not loaded; nothing lost, they stay in `var/stats/spool` | The next night or the Statistik button loads them |
-| `<id> venue <n> since <time> UTC` | An inquiry stayed `pending`; the venue may have no mail | Open `/admin/crm/anfragen/<id>` and press Erneut senden |
+| `<id> venue <n> failed\|pending since <time> UTC`, then `Mail to staff failed: …` | The hourly staff alert mail did not go; those inquiries may not have reached their venue | The next hour retries; meanwhile open `/admin/crm/anfragen/<id>` and press Erneut senden, and check the mail settings (`MAILER_DSN`) |
+| `cron-hourly: inquiries-stuck failed` | The alert command failed, often the database was unreachable; nothing was marked | The next hour retries; if it repeats, run `sh <root>/current/bin/cron-hourly` and read the error |
 | `cron-midnight: the cache lock stayed busy for 60 s` | A guard run held the lock | Nothing if the next night is clean |
 | `HTTP cache store: ... bytes, ... files.` | The store hit a limit and was emptied | Nothing, unless it repeats daily: raise the limits |
 | `cron-media-backup: the backup failed`, with restic's error | No new backup tonight; the last one stays | Read restic's line: `wrong password` or `Access Denied` is `.env.local`, `repository does not exist` is the URL or a missing `init`, a network error retries tomorrow. `already locked` after a crash: `sh bin/cron-media-backup restic unlock`. Rerun `sh <root>/current/bin/cron-media-backup` |
@@ -589,6 +591,10 @@ That line is the owner's edit on the server, not in `deploy/crontab.txt`, becaus
 The same for the media backup: a monitor `media-backup` (daily, 04:30 Europe/Zurich, 60 minutes grace),
 and on the server
 `30 4 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-media-backup && curl -fsS -o /dev/null '<monitor url>?status=ok'`.
+And for the stuck-inquiry alert (G7): a monitor `cron-hourly` (hourly at :40 Europe/Zurich, 15 minutes
+grace), and on the server
+`40 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-hourly && curl -fsS -o /dev/null '<monitor url>?status=ok'`.
+A missed run only delays the alert: an inquiry is marked as reported only after the staff mail went out.
 
 **The server:** `unattended-upgrades` installs Debian's security updates; check `apt list --upgradable`
 and the free disk (`check` prints it) once a month. A PHP minor upgrade from sury is

@@ -75,6 +75,24 @@ class InquiryRepository extends ServiceEntityRepository
         return $id;
     }
 
+    /**
+     * Notes that the staff alert reported these inquiries (G7), so the next hourly run leaves them out.
+     *
+     * @param list<string> $ids
+     */
+    public function recordStuckAlerted(array $ids, \DateTimeImmutable $at): void
+    {
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->getEntityManager()
+            ->createQuery('UPDATE '.Inquiry::class.' i SET i.stuckAlertedAt = :at WHERE i.id IN (:ids)')
+            ->setParameter('at', $at, Types::DATETIMETZ_IMMUTABLE)
+            ->setParameter('ids', $ids)
+            ->execute();
+    }
+
     public function countCreatedBefore(\DateTimeImmutable $cutoff): int
     {
         return (int) $this->createQueryBuilder('i')

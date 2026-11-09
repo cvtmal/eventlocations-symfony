@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Stats;
 
+use App\Factory\InquiryFactory;
 use App\Factory\RecordedFunnelEventFactory;
+use App\Factory\VenueFactory;
 use App\Shared\Funnel\FunnelEvent;
 use App\Shared\Uid\EntityId;
 use App\Stats\ReadModel\FunnelCampaignRow;
@@ -35,6 +37,7 @@ final class FunnelScorecardQueryTest extends KernelTestCase
     {
         $this->beginTransaction();
         $this->connection->executeStatement('DELETE FROM funnel_events');
+        $this->connection->executeStatement('DELETE FROM inquiries');
     }
 
     public function test_an_empty_log_gives_every_week_of_the_window_as_zeros(): void
@@ -47,7 +50,9 @@ final class FunnelScorecardQueryTest extends KernelTestCase
         self::assertSame([], $card->campaigns);
         self::assertSame(0, $card->paying->paying);
         self::assertNull($card->paying->deliveredPercent());
-        self::assertNull($card->paying->withQualifiedInquiry);
+        self::assertSame(0, $card->paying->withQualifiedInquiry);
+        self::assertNull($card->paying->qualifiedPercent());
+        self::assertSame(0, $card->qualifiedInquiries);
     }
 
     public function test_the_window_sets_the_number_of_weeks(): void
@@ -211,17 +216,60 @@ final class FunnelScorecardQueryTest extends KernelTestCase
         self::assertSame(3, $paying->paying);
         self::assertSame(1, $paying->withDeliveredInquiry);
         self::assertSame(33, $paying->deliveredPercent());
-        self::assertNull($paying->withQualifiedInquiry, 'n/a until the inquiries are qualified');
+        self::assertSame(0, $paying->withQualifiedInquiry);
     }
 
-    public function test_the_screen_asks_the_database_four_times(): void
+    public function test_the_qualified_tile_counts_counted_qualified_inquiries_by_their_venue_mail_week(): void
+    {
+        $venue = VenueFactory::new()->withContact()->create()->id();
+        $this->inquiry($venue, '2026-11-03 10:00');
+        $this->inquiry($venue, '2026-10-12 00:00');
+        $this->inquiry($venue, '2026-11-03 11:00', override: 'spam');
+        $this->inquiry($venue, '2026-11-03 12:00', override: 'test');
+        $this->inquiry($venue, '2026-11-03 13:00', qualified: false);
+        $this->inquiry($venue, '2026-10-11 23:59');
+        $this->inquiry($venue, '2026-11-09 00:00');
+
+        self::assertSame(2, $this->scorecard()->qualifiedInquiries);
+    }
+
+    public function test_the_qualified_tile_ignores_the_campaign_filter(): void
+    {
+        $this->inquiry(VenueFactory::new()->withContact()->create()->id(), '2026-11-03 10:00');
+
+        self::assertSame(1, $this->scorecard(filter: FunnelFilter::campaign('zh-brief'))->qualifiedInquiries);
+        self::assertSame(1, $this->scorecard(filter: FunnelFilter::withoutCampaign())->qualifiedInquiries);
+    }
+
+    public function test_paying_venues_with_a_qualified_inquiry_since_their_first_payment(): void
+    {
+        [$served, $onlyMarked, $onlyUnqualified, $servedBefore] = array_map(
+            static fn (): string => VenueFactory::new()->withContact()->create()->id(),
+            range(1, 4),
+        );
+        foreach ([$served, $onlyMarked, $onlyUnqualified, $servedBefore] as $venue) {
+            $this->event(FunnelEvent::ProPaid, '2026-10-20 09:00', $venue);
+        }
+        $this->inquiry($served, '2026-10-28 09:00');
+        $this->inquiry($onlyMarked, '2026-10-28 09:00', override: 'spam');
+        $this->inquiry($onlyUnqualified, '2026-10-28 09:00', qualified: false);
+        $this->inquiry($servedBefore, '2026-10-19 09:00');
+
+        $paying = $this->scorecard()->paying;
+
+        self::assertSame(4, $paying->paying);
+        self::assertSame(1, $paying->withQualifiedInquiry);
+        self::assertSame(25, $paying->qualifiedPercent());
+    }
+
+    public function test_the_screen_asks_the_database_five_times(): void
     {
         $this->event(FunnelEvent::PreviewOpened, '2026-11-03 09:00', EntityId::generate(), 'zh-brief');
         $before = $this->statements();
 
         $this->scorecard(FunnelWindow::Weeks52, FunnelFilter::campaign('zh-brief'));
 
-        self::assertSame($before + 4, $this->statements());
+        self::assertSame($before + 5, $this->statements());
     }
 
     private function scorecard(FunnelWindow $window = FunnelWindow::Weeks4, ?FunnelFilter $filter = null): FunnelScorecard
@@ -240,6 +288,24 @@ final class FunnelScorecardQueryTest extends KernelTestCase
             'venueId' => $venue,
             'campaignCode' => $campaign,
         ]);
+    }
+
+    /**
+     * A delivered inquiry whose venue mail went out at `$sentAt` (Zurich), qualified unless told otherwise.
+     */
+    private function inquiry(string $venue, string $sentAt, bool $qualified = true, ?string $override = null): void
+    {
+        $id = InquiryFactory::createOne(['venue' => VenueFactory::find($venue)])->id();
+        $this->connection->executeStatement(
+            "UPDATE inquiries SET venue_mail_status = 'sent', venue_mail_sent_at = ?, qualification = ?, qualification_reason = ?, qualification_override = ? WHERE id = ?",
+            [
+                new \DateTimeImmutable($sentAt, new \DateTimeZone(self::ZONE))->format(\DATE_ATOM),
+                $qualified ? 'qualified' : 'unqualified',
+                $qualified ? null : 'duplicate',
+                $override,
+                $id,
+            ],
+        );
     }
 
     private function statements(): int

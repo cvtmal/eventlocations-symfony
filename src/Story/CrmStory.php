@@ -30,7 +30,9 @@ use App\Factory\EmailTemplateFactory;
 use App\Factory\InquiryFactory;
 use App\Factory\TaskFactory;
 use App\Inquiries\Entity\Inquiry;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Inquiries\ValueObject\MailStatus;
+use App\Inquiries\ValueObject\QualificationReason;
 use App\Venues\Entity\Venue;
 use App\Venues\Repository\VenueRepository;
 use App\Venues\ValueObject\KnownTiers;
@@ -59,9 +61,20 @@ final class CrmStory extends Story
         ['new', null], ['contacted', null], ['offer', null], ['negotiation', null], ['won', -30], ['lost', null], ['new', null],
         ['offer', null], ['won', 45], ['negotiation', null], ['contacted', null], ['won', 240], ['lost', null], ['offer', null],
     ];
-    /** The venue mail's outcome and the age in days, newest first. The last two end up `seen` and `done`, the others stay `new`. */
+    /** The venue mail's outcome and the age in days, newest first. The fourth (marked test) and the last end up `done`, the fifth `seen`, the others stay `new`. */
     private const INQUIRIES = [
         [MailStatus::Pending, 1], [MailStatus::Failed, 2], [MailStatus::Sent, 3], [MailStatus::Failed, 6], [MailStatus::Sent, 10], [MailStatus::Sent, 17],
+    ];
+    /**
+     * G7 (D56): the qualification each delivered or failed one got, and the staff mark, so the inbox shows every pill.
+     * The pending one has none yet; the one marked test is filed `done` as marking a `new` one does.
+     */
+    private const INQUIRY_QUALITY = [
+        1 => [QualificationReason::NotDelivered, null],
+        2 => [null, null],
+        3 => [QualificationReason::NotDelivered, InquiryOverride::Test],
+        4 => [QualificationReason::EventTypeNotOffered, null],
+        5 => [null, InquiryOverride::Spam],
     ];
 
     /**
@@ -255,7 +268,7 @@ final class CrmStory extends Story
             $at = $today->modify(\sprintf('-%d days', $age))->setTime(9 + $index, 0);
             [$eventType, $company, $inDays, $flexible, $startTime, $catering, $budget] = self::INQUIRY_EVENTS[$index];
             $inquiry = InquiryFactory::new()
-                ->afterInstantiate(static function (Inquiry $inquiry) use ($mail, $at): void {
+                ->afterInstantiate(static function (Inquiry $inquiry) use ($mail, $at, $index): void {
                     if (MailStatus::Sent === $mail) {
                         $inquiry->recordVenueMailSent($inquiry->recipientEmail(), $at);
                         $inquiry->recordGuestMail(MailStatus::Sent, $at);
@@ -263,6 +276,11 @@ final class CrmStory extends Story
                     if (MailStatus::Failed === $mail) {
                         $inquiry->recordVenueMailFailed($at);
                         $inquiry->recordGuestMail(MailStatus::Skipped, $at);
+                    }
+                    if (isset(self::INQUIRY_QUALITY[$index])) {
+                        [$reason, $override] = self::INQUIRY_QUALITY[$index];
+                        $inquiry->recordQualification($reason, $at);
+                        $inquiry->mark($override, $at);
                     }
                 })
                 ->create([
@@ -281,6 +299,7 @@ final class CrmStory extends Story
             $ids[] = $inquiry->id();
         }
 
+        $this->commandBus->dispatch(new ChangeInquiryStatus($ids[3], InquiryStatus::Done));
         $this->commandBus->dispatch(new ChangeInquiryStatus($ids[4], InquiryStatus::Seen));
         $this->commandBus->dispatch(new ChangeInquiryStatus($ids[5], InquiryStatus::Done));
     }

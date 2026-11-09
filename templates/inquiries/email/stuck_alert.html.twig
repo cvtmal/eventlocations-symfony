@@ -1,0 +1,19 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'email.stuck.subject'|trans({count: inquiries|length}, 'inquiries') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('email.stuck.greeting'|trans({}, 'inquiries')) }}
+{{ blocks.p('email.stuck.intro'|trans({}, 'inquiries')) }}
+{% for inquiry in inquiries %}
+{{ blocks.rule() }}
+{{ blocks.facts([{
+    label: ('email.stuck.status.' ~ inquiry.status)|trans({}, 'inquiries'),
+    value: 'email.stuck.line'|trans({venue: inquiry.venue_name, number: inquiry.venue_number, date: inquiry.created_at}, 'inquiries'),
+}]) }}
+{{ blocks.button('email.stuck.open'|trans({}, 'inquiries'), url('admin_crm_inquiries_show', {id: inquiry.id})) }}
+{% endfor %}
+{{ blocks.rule() }}
+{{ blocks.note('email.stuck.note'|trans({}, 'inquiries')) }}
+{% endblock %}
