@@ -1,25 +1,26 @@
 # Performance baseline
 
-_Last updated: 2026-11-09 · Source: `docs/rpi-cycles.md` S11 (PERF-1 budgets), §F16 (dry-run finding S1 and N10) · Tree: `origin/main` at `51ced0c` (#73 `f16-listing-lcp`)_
+_Last updated: 2026-11-09 · Source: `docs/rpi-cycles.md` S11 (PERF-1 budgets), §F16 (dry-run finding S1 and N10) · Tree: `origin/main` at `51ced0c` (#73 `f16-listing-lcp`); detail pages and k6 run 3 on `c8b03ef` (`f16-google-off-cleanup`)_
 
 Every figure here is from deine-eventlocation.ch, measured on 2026-11-09. The figures from before the fork belong to the sister site and are gone. The method and the measurement tools came over with the fork, and §9 keeps the caveats that are properties of the shared code.
 
 ## 1. Summary
 
 - **Lighthouse and the byte budgets hold on every public page type.** Thirteen pages, three Lighthouse runs each, on demo ×1. The worst LCP is the listing at 1,957 ms (runs 1,954 to 1,960) against 2,000. CLS is at most 0.002 and TBT at most 79 ms. Performance, Accessibility and Best Practices are 99 to 100 everywhere. SEO is 100 on every indexable page. The landing pages (66, on demo data only), `/merkliste` and `/inhalt-melden` (63) are `noindex`, and `is-crawlable` is their only failing audit. **`/sammelanfrage` scores SEO 54:** it is `noindex` too, but it also fails `meta-description`, which is not by design (§8).
-- **The k6 server budgets are not settled.** Two `make perf-run MODE=all` runs on demo ×10, both above the load-4 rule (§10):
+- **BLOCKED: the detail page's uncached p95 misses its budget in 2 of 3 k6 runs.** Three `make perf-run MODE=all` runs on demo ×10, all above the load-4 rule (§10):
   - Run 2, at load average 11.9 to 7.8, exits 0. Uncached p95 is 54.1 to 116.3 ms on `/` and the listing pages against 200, and 92.0 ms on the detail page against 120. Cached p95 is 6.2 to 11.6 ms against 20.
   - Run 1, at load 10.5 to 17.7, exits 2. Detail is 128.3 ms against 120, cached listing 20.2 ms and cached canton 21.2 ms against 20.
-  - Neither run had a `server_error` or a short body. The perf containers peaked at half a core in 5-second samples, so the host's contention is the likely cause of run 1's tail; those samples cannot prove it (§5). The load did not fall below 4 while seven lane stacks ran. A run on an idle host decides it.
+  - Run 3, on `c8b03ef` at load 22.7 to 14.0, exits 2. Detail is 196.6 ms against 120 and cached canton 48.8 ms against 20. `/` and the listing pages stay under 200 ms in every run (at most 164.1 ms).
+  - No run had a `server_error` or a short body. The detail p95 follows the host's load: 92.0, 128.3 and 196.6 ms at rising load. The perf containers peaked at about half a core in 5-second samples, which points at host contention, but samples that coarse cannot prove it (§5). The load did not fall below 4 while seven lane stacks ran. A run on an idle host decides it. If the detail page still misses there, the lever is `SimilarVenuesQuery` (§6).
 - **Byte budgets:** `make perf-check` exits 0 (26 tests). CSS is 15,451 B gzip, 60 % of its budget. N10's 92 % counted the dev build's inline source map, which the test strips (§7). The listing HTML is the tight one: 56,631 B served at nginx's level 5 (92 %). At level 9, which is how the test counts, it is 55,065 B (90 %), and the test fixtures are 54,901 to 55,295 B (89 to 90 %).
-- **Watch items** (worst run at 90 % of the budget or more, §8): listing LCP (98 %), landing and detail LCP (94 % in single runs), listing HTML (92 % served, about 90 % in the fixtures), detail uncached p95 and cached p95 (107 % and 106 % in k6 run 1), and the region overlay's script budget (99.8 %, a test budget beside S11). On the listing, LCP and HTML move together: its LCP image is 3 KB, so its simulated LCP tracks the 57 KB document.
-- **Open:** the k6 re-run on an idle host, and `/sammelanfrage`'s meta description (§8).
+- **Watch items** (worst run at 90 % of the budget or more, §8): listing LCP (98 %), landing LCP (94 % in one run), listing HTML (92 % served, about 90 % in the fixtures), detail uncached p95 (164 % in k6 run 3, the BLOCKED item), cached p95 (244 % in run 3), and the region overlay's script budget (99.8 %, a test budget beside S11). On the listing, LCP and HTML move together: its LCP image is 3 KB, so its simulated LCP tracks the 57 KB document.
+- **Open:** the k6 re-run on an idle host (BLOCKED until then), and `/sammelanfrage`'s meta description (§8).
 
 | Budget (S11) | Limit | Measured | Share | Pass | Watch |
 |---|---|---|---|---|---|
 | LCP, worst page (`/eventlokale`) | ≤ 2.0 s | 1,957 ms (1,954–1,960) | 98 % | yes | **yes** |
 | LCP, landing pages (event type, canton) | ≤ 2.0 s | 1,804 ms (1,727–1,878), 1,802 ms (1,729–1,803) | 94 %, 90 % | yes | **yes** |
-| LCP, detail pages (richest, Pro with offer) | ≤ 2.0 s | 1,727 ms (1,726–1,878), 1,819 ms (1,803–1,884) | 94 %, 94 % | yes | **yes** |
+| LCP, detail pages (richest, Pro with offer), on `c8b03ef` | ≤ 2.0 s | 1,727 ms (1,727–1,731), 1,728 ms (1,728–1,732) | 87 % | yes | no |
 | LCP, every other page | ≤ 2.0 s | 1,354–1,507 ms, single runs up to 1,532 ms | ≤ 77 % | yes | no |
 | CLS, worst page | ≤ 0.05 | 0.002 (detail) | 4 % | yes | no |
 | TBT, worst single run | ≤ 100 ms | 79 ms (`/location-eintragen`, run 1; median 0) | 79 % | yes | no |
@@ -27,16 +28,16 @@ Every figure here is from deine-eventlocation.ch, measured on 2026-11-09. The fi
 | Lighthouse SEO, indexable pages | ≥ 95 | 100 | – | yes | no |
 | Lighthouse SEO, `noindex` pages | ≥ 95 | 63–66, `is-crawlable` only | – | `noindex` (landing pages: on demo data) | no |
 | Lighthouse SEO, `/sammelanfrage` | ≥ 95 | 54: `is-crawlable` and `meta-description` | – | **no**, follow-up (§8) | – |
-| Uncached p95, `/` and listing pages, demo ×10 | ≤ 200 ms | run 2: 54.1–116.3 ms; run 1: 83.0–154.5 ms | 58 %; 77 % | yes in both runs | no |
-| Uncached p95, detail, demo ×10 | ≤ 120 ms | run 2: 92.0 ms; run 1: **128.3 ms** | 77 %; 107 % | **open**: 1 of 2 runs | **yes** |
-| Cached p95, all five pages, demo ×10 | ≤ 20 ms (#19) | run 2: 6.2–11.6 ms; run 1: 9.1–**21.2** ms | 58 %; 106 % | **open**: 1 of 2 runs | **yes** |
+| Uncached p95, `/` and listing pages, demo ×10 | ≤ 200 ms | run 2: 54.1–116.3 ms; run 1: 83.0–154.5 ms; run 3: 81.8–164.1 ms | 58 %; 77 %; 82 % | yes in all three runs | no |
+| Uncached p95, detail, demo ×10 | ≤ 120 ms | run 2: 92.0 ms; run 1: **128.3 ms**; run 3: **196.6 ms** | 77 %; 107 %; 164 % | **BLOCKED**: 1 of 3 runs, all at load ≥ 7.8 | **yes** |
+| Cached p95, all five pages, demo ×10 | ≤ 20 ms (#19) | run 2: 6.2–11.6 ms; run 1: 9.1–**21.2** ms; run 3: 11.3–**48.8** ms | 58 %; 106 %; 244 % | **open**: 1 of 3 runs | **yes** |
 | CSS gzip | ≤ 25 KB | 15,451 B | 60 % | yes | no |
 | JS gzip per page, worst (listing) | ≤ 15 KB | 13,149 B | 86 % | yes | no |
 | Listing HTML gzip, served (48 cards) | ≤ 60 KB | 56,631 B at level 5; 55,065 B at level 9 | 92 %; 90 % | yes | **yes** |
 | Listing HTML gzip, test fixtures (level 9) | ≤ 60 KB | 54,901–55,295 B | 89 to ≈ 90 % | yes | **yes** |
 | Font files on first view | ≤ 2 | 1 | 50 % | yes | no |
 
-"Share" is the measured value as a share of its limit, from the worst run. For k6, both runs are listed, run 2 first.
+"Share" is the measured value as a share of its limit, from the worst run. For k6, every run is listed, the passing run 2 first.
 
 ## 2. Setup
 
@@ -48,8 +49,8 @@ Every figure here is from deine-eventlocation.ch, measured on 2026-11-09. The fi
   - `vendor/`, `var/` and `public/assets/` are named volumes. `public/media` is bind-mounted, so the photos are real files.
   - nginx compresses at `gzip_comp_level 5`, as `deploy/nginx/deine-eventlocation.ch.conf` does in production.
 - **Size.** nginx, php and Postgres share two cores (`cpuset: "0,1"`), like a 2 vCPU host. Their memory limits are 256 MB, 1.5 GB and 2 GB.
-- **Host.** Apple M4 Pro; the Docker VM has 14 CPUs and 11.4 GiB. The same machine as the sister site's baseline. Seven other lane stacks ran on it (`docker ps`): the load average was 30 to 11 during Lighthouse, 10.5 to 17.7 during k6 run 1 and 11.9 to 7.8 during run 2. Lighthouse throttling is simulated, so its LCP figures stand. TBT and k6 carry the noise (§9).
-- **Tree.** `origin/main` at `51ced0c` (`f16-listing-lcp`, #73), which includes F13 (`multi-inquiry`, `product-doc-f13`). Run from lane L4 on branch `f16-perf-baseline`, which changes only docs.
+- **Host.** Apple M4 Pro; the Docker VM has 14 CPUs and 11.4 GiB. Seven other lane stacks ran on it (`docker ps`): the load average was 30 to 11 during Lighthouse, 10.5 to 17.7 during k6 run 1, 11.9 to 7.8 during run 2 and 22.7 to 14.0 during run 3. Lighthouse throttling is simulated, so its LCP figures stand. TBT and k6 carry the noise (§9).
+- **Tree.** `origin/main` at `51ced0c` (`f16-listing-lcp`, #73), which includes F13 (`multi-inquiry`, `product-doc-f13`). Run from lane L4 on branch `f16-perf-baseline`, which changes only docs. Two commits landed during the run. `f16-ops-guards` touches no measured page. `f16-google-off-cleanup` changes the detail page, which now loads `google-rating.js` and `google-photos.js` only while their feature is on. So the detail pages' Lighthouse rows, their served HTML and k6 run 3 were re-measured on `c8b03ef`, the tree with both. On `51ced0c` the detail pages measured 1,727 ms (1,726–1,878) and 1,819 ms (1,803–1,884).
 - **Tools.** Lighthouse 13.5.0 (`docker/lighthouse`), mobile, simulated slow 4G. k6 2.3.0 (`grafana/k6:2.3.0`).
 
 ## 3. Datasets
@@ -65,7 +66,7 @@ No real venue data exists for this site yet. The F16 run on production data is t
 
 ## 4. Lighthouse
 
-Demo ×1, 2026-11-09 13:22 to 13:32 (Europe/Zurich), `make perf-lighthouse URL=… NAME=…`. Each page was warmed twice with Lighthouse's `Host`, so every run is an HttpCache hit (or a `no-store` render, for `/merkliste`, `/sammelanfrage` and `/inhalt-melden`). Median of 3 runs, range in brackets. Scores are listed per run when they differ.
+Demo ×1, 2026-11-09 13:22 to 13:32 (Europe/Zurich) on `51ced0c`, and the two detail pages again 14:20 to 14:22 on `c8b03ef` (load 24 to 20), `make perf-lighthouse URL=… NAME=…`. Each page was warmed twice with Lighthouse's `Host`, so every run is an HttpCache hit (or a `no-store` render, for `/merkliste`, `/sammelanfrage` and `/inhalt-melden`). Median of 3 runs, range in brackets. Scores are listed per run when they differ.
 
 | Page | URL | P / A / BP / SEO | LCP | CLS | TBT, max | FCP |
 |---|---|---|---|---|---|---|
@@ -74,8 +75,8 @@ Demo ×1, 2026-11-09 13:22 to 13:32 (Europe/Zurich), `make perf-lighthouse URL=�
 | Landing page, event type | `/eventlokale/firmenanlass` | 99, 99, 100 / 100 / 100 / 66 | 1,804 ms (1,727–1,878) | 0.000 | 28 ms | 1,255 ms |
 | Landing page, canton | `/eventlokale/zuerich` | 99, 99, 100 / 100 / 100 / 66 | 1,802 ms (1,729–1,803) | 0.000 | 0 ms | 1,353 ms |
 | Near me (no Maps key) | `/eventlokal-in-meiner-naehe` | 100 / 100 / 100 / 100 | 1,503 ms (1,502–1,508) | 0.000 | 0 ms | 1,053 ms |
-| Detail, richest venue by `run.sh` (9 photos, 5 rooms), with the inquiry form | `/eventlokal/landgut-talwiese` | 100, 99, 100 / 100 / 100 / 100 | 1,727 ms (1,726–1,878) | 0.002 | 0 ms | 1,205 ms |
-| Detail, Pro with a last-minute offer, with the inquiry form | `/eventlokal/landgut-erlenhof` | 99 / 100 / 100 / 100 | 1,819 ms (1,803–1,884) | 0.002 | 31 ms | 1,237 ms |
+| Detail, richest venue by `run.sh` (9 photos, 5 rooms), with the inquiry form, `c8b03ef` | `/eventlokal/landgut-talwiese` | 100 / 100 / 100 / 100 | 1,727 ms (1,727–1,731) | 0.002 | 0 ms | 1,116 ms |
+| Detail, Pro with a last-minute offer, with the inquiry form, `c8b03ef` | `/eventlokal/landgut-erlenhof` | 100 / 100 / 100 / 100 | 1,728 ms (1,728–1,732) | 0.002 | 0 ms | 1,096 ms |
 | Merkliste (empty) | `/merkliste` | 100 / 100 / 100 / 63 | 1,502 ms (1,502–1,504) | 0.000 | 0 ms | 1,052 ms |
 | Last minute | `/kurzfristig-frei` | 100 / 100 / 100 / 100 | 1,507 ms (1,504–1,532) | 0.000 | 5 ms | 1,042 ms |
 | Tier page | `/location-eintragen` | 100 / 100 / 100 / 100 | 1,507 ms (1,505–1,516) | 0.000 | 79 ms | 1,057 ms |
@@ -101,8 +102,8 @@ Transfer of the median run, in bytes, response headers included:
 | Landing, event type | 30,401 | 42,750 | 16,520 | 15,701 | 34,998 |
 | Landing, canton | 27,667 | 45,684 | 16,520 | 15,701 | 34,998 |
 | Near me | 5,494 | 0 | 16,520 | 9,175 | 34,998 |
-| Detail, richest | 12,350 | 28,675 | 16,520 | 16,316 | 34,998 |
-| Detail, Pro | 13,792 | 34,478 | 16,520 | 17,602 | 34,998 |
+| Detail, richest (`c8b03ef`) | 12,252 | 28,675 | 16,520 | 13,480 | 34,998 |
+| Detail, Pro (`c8b03ef`) | 13,691 | 34,478 | 16,520 | 14,766 | 34,998 |
 | Merkliste | 4,843 | 0 | 16,520 | 8,446 | 34,998 |
 | Last minute | 8,003 | 15,513 | 16,520 | 6,503 | 34,998 |
 | Tier page | 6,431 | 0 | 16,520 | 6,503 | 34,998 |
@@ -110,7 +111,7 @@ Transfer of the median run, in bytes, response headers included:
 | Impressum | 4,774 | 0 | 16,520 | 6,503 | 34,998 |
 | Report form | 5,548 | 0 | 16,520 | 6,503 | 34,998 |
 
-Transfer is not what the budget counts. JS transfer adds each file's response headers (12 files on the Pro detail page) and nginx's level 5 to the content. The budget counts the files' content at gzip level 9, as `AssetBudgetTest` does: 12,496 B for the detail template (§7). One font file loads on every page.
+Transfer is not what the budget counts. JS transfer adds each file's response headers (10 files on the Pro detail page) and nginx's level 5 to the content. The budget counts the files' content at gzip level 9, as `AssetBudgetTest` does: 12,496 B for the detail template with both Google loaders (§7). One font file loads on every page.
 
 ## 5. Server time (k6)
 
@@ -136,8 +137,18 @@ k6 2.3.0 over the Compose network, demo ×10, `make perf-run MODE=all`. Uncached
 | canton page | 65.6 ms | 118.7 ms | 200 ms | 7.4 ms | **21.2 ms** | 20 ms |
 | detail | 57.0 ms | **128.3 ms** | 120 ms | 4.1 ms | 11.2 ms | 20 ms |
 
-- **Run 1's misses are probably the host, not the app, but that is not proven.** In 5-second `docker stats` samples php peaked at 50 % and Postgres at 42 % of one core in run 1 (45 % and 36 % in run 2), out of the two cores they share. Samples that coarse cannot show short CPU starvation. From run 2 to run 1 the uncached p50s rose 15 to 28 % and the p95s 10 to 53 %. Cached responses are file reads by HttpCache, so their p95 crossing 20 ms points at scheduling on a VM that seven lane stacks share. The two runs started at similar loads (10.5 and 11.9), so one pass and one miss do not settle the budget.
-- **Neither run met the rule** of a load average under 4 (§10). The readings between the runs, 13:48 to 14:03, were 6.9 to 17.5. A run on an idle host decides the detail and cached budgets (§8). The detail page has the least headroom under load: 92.0 ms is 77 % of its budget, and the 128.3 ms of run 1 is 107 %.
+**Run 3, on `c8b03ef`, 14:22 to 14:31, load average 22.7 to 14.0: exit 2.** 4,774 requests, 0 failed, 0 `server_errors`, 0 `short_bodies`. Two thresholds failed:
+
+| Page | Uncached p50 | p95 | Budget | Cached p50 | p95 | Budget |
+|---|---|---|---|---|---|---|
+| home | 35.9 ms | 81.8 ms | 200 ms | 4.5 ms | 19.1 ms | 20 ms |
+| listing | 60.3 ms | 136.2 ms | 200 ms | 5.0 ms | 14.7 ms | 20 ms |
+| three filters | 52.4 ms | 164.1 ms | 200 ms | 4.0 ms | 11.3 ms | 20 ms |
+| canton page | 66.0 ms | 130.5 ms | 200 ms | 4.9 ms | **48.8 ms** | 20 ms |
+| detail | 74.7 ms | **196.6 ms** | 120 ms | 3.6 ms | 14.2 ms | 20 ms |
+
+- **The misses are probably the host, not the app, but that is not proven.** In 5-second `docker stats` samples php peaked at 50 % and Postgres at 42 % of one core in run 1 (45 % and 36 % in run 2, 43 % and 56 % in run 3), out of the two cores they share. Samples that coarse cannot show short CPU starvation. From run 2 to run 1 the uncached p50s rose 15 to 28 % and the p95s 10 to 53 %. Cached responses are file reads by HttpCache, so their p95 crossing 20 ms points at scheduling on a VM that seven lane stacks share. Runs 1 and 2 started at similar loads (10.5 and 11.9) with opposite results, so the runs do not settle the budget. In run 3 the detail page was the most load-sensitive page: its p50 went from 49.6 ms in run 2 to 74.7 ms in run 3, and its p95 from 92.0 to 196.6 ms.
+- **No run met the rule** of a load average under 4 (§10). The readings between runs 1 and 2, 13:48 to 14:03, were 6.9 to 17.5, and 10 to 35 around run 3. A run on an idle host decides the detail and cached budgets (§8). The detail page has the least headroom under load: 92.0 ms is 77 % of its budget, the 128.3 ms of run 1 is 107 %, and the 196.6 ms of run 3 is 164 %.
 
 ## 6. Top SQL
 
@@ -145,13 +156,13 @@ k6 2.3.0 over the Compose network, demo ×10, `make perf-run MODE=all`. Uncached
 
 | Statement | Calls | Mean | Runs on |
 |---|---|---|---|
-| `SimilarVenuesQuery` (`WITH me AS MATERIALIZED …`) | 351 | 26.7 ms (run 1: 31.7) | every uncached detail render |
+| `SimilarVenuesQuery` (`WITH me AS MATERIALIZED …`) | 351 | 26.7 ms (run 1: 31.7, run 3: 33.7) | every uncached detail render |
 | `LandingPages` (canton and town counts) | 1,407 | 5.9 ms | every uncached render of `/` and the listing pages |
 | Card photos (`unnest(ARRAY[…]) … venue_photos`) | 703 | 5.0 ms | listing pages |
 | `FilterDataQuery` (filter terms with `EXISTS`) | 1,407 | 2.5 ms | `/` and the listing pages |
 | Listing cards (`SELECT v.id, v.number, v.name, …`) | 703 | 3.1 ms | listing pages |
 
-`SimilarVenuesQuery` is about half of an uncached detail render's p50, the largest single cost, and the lever if the detail p95 ever misses. It is untuned, because the page is inside its budget.
+`SimilarVenuesQuery` is about half of an uncached detail render's p50, the largest single cost, and the lever if the idle-host re-run still misses. It stays untuned until that run decides.
 
 ## 7. Byte budgets
 
@@ -168,9 +179,9 @@ k6 2.3.0 over the Compose network, demo ×10, `make perf-run MODE=all`. Uncached
 | Home HTML, fixture | 8,087 B gzip (41,807 raw); served 7,718 B | 61,440 | 13 % |
 | Last minute HTML, fixture | 27,574 B gzip (385,230 raw); served 7,088 B | 61,440 | 45 % |
 | Near me HTML, fixture A (full list within 30 km) / B (whole map) | 31,067 / 16,688 B gzip | 61,440 | 51 % |
-| Detail HTML, fixture (overfull Pro, three offers) | 10,092 B gzip (66,552 raw); served 11,440 / 12,885 B | 61,440 | 16 % |
+| Detail HTML, fixture (overfull Pro, three offers) | 10,092 B gzip (66,552 raw); served 11,341 / 12,785 B on `c8b03ef` | 61,440 | 16 % |
 | `app.css`, as the test measures it | 15,451 B gzip (101,609 raw) | 25,600 | 60 % |
-| JS per page | home 5,411 · listing 13,149 · detail 12,496 · Merkliste 6,999 · near me 7,727 B gzip | 15,360 each | 35–86 % |
+| JS per page | home 5,411 · listing 13,149 · detail 12,496 (both Google loaders counted, as the test reads the template; 10,363 B as shipped with Google off) · Merkliste 6,999 · near me 7,727 B gzip | 15,360 each | 35–86 % |
 | `overlay.js + live-count.js + region-filter.js` (test budget) | 6,132 B gzip | 6,144 | **99.8 %** |
 | `carousel.js` (test budget) | 1,588 B gzip | 2,048 | 78 % |
 | `near-me.js` (test budget) | 2,316 B gzip | 4,096 | 57 % |
@@ -182,15 +193,15 @@ k6 2.3.0 over the Compose network, demo ×10, `make perf-run MODE=all`. Uncached
 
 ## 8. Watch items and findings
 
-A figure counts as a watch item when its worst run reaches 90 % of its budget. Lighthouse and the byte figures are all under budget. The two k6 rows are open, because only one of the two runs passed.
+A figure counts as a watch item when its worst run reaches 90 % of its budget. Lighthouse and the byte figures are all under budget. The two k6 rows are open, because only one of the three runs passed; the detail row is BLOCKED.
 
 | Item | Figure | Why it is tight | What to do before adding to it |
 |---|---|---|---|
 | Listing LCP | 1,957 ms (98 %) | The LCP image is 3 KB; the simulated LCP follows the 57 KB document over slow 4G (FCP 1,501 ms). #73 took it from 2,028 to under 2,000 ms | Any new card markup, listing copy or above-the-fold script: rerun `make perf-lighthouse URL=/eventlokale` |
-| Landing and detail LCP | 1,802–1,819 ms medians, single runs to 1,884 ms (90–94 %) | Same shape on fewer cards; on detail pages the hero slide plus the document | Rerun on a change to the card, hero or detail template |
+| Landing LCP | 1,804 and 1,802 ms medians, single runs to 1,878 ms (90–94 %) | The listing's shape on 9 and 5 cards: a 3 KB LCP photo after a 27–30 KB document | Rerun on a change to the card or the listing template |
 | Listing HTML | 56,631 B served (92 %), fixtures 89–90 % | Of the served page at level 9 (55,065 B), the 48 cards alone compress to about 32 KB and the rest to about 23 KB, of which the region and filter overlay forms are about 16 KB (68 KB raw). Parts compressed alone add up to more than the whole | A budget look for any new card or overlay markup (`make perf-check`); the levers are fewer cards per page (`ListingQuery::PER_PAGE` = 48), fewer slides per card, or a lighter overlay |
-| Detail uncached p95 (open) | 92.0 ms (77 %) in run 2, 128.3 ms (107 %) in run 1 | `SimilarVenuesQuery` at 26.7–31.7 ms mean (§6) | Re-run k6 on an idle host before F16 signs off; any new detail query needs a k6 look |
-| Cached p95 (open) | 6.2–11.6 ms in run 2; listing 20.2 ms and canton 21.2 ms (106 %) in run 1 | HttpCache file reads; the tail follows the host's load | The same idle-host re-run |
+| Detail uncached p95 (**BLOCKED**) | 92.0 ms (77 %) in run 2, 128.3 ms (107 %) in run 1, 196.6 ms (164 %) in run 3 | `SimilarVenuesQuery` at 26.7–33.7 ms mean (§6) | Re-run k6 on an idle host before F16 signs off. If it still misses, tune `SimilarVenuesQuery`. Any new detail query needs a k6 look |
+| Cached p95 (open) | 6.2–11.6 ms in run 2; listing 20.2 ms and canton 21.2 ms (106 %) in run 1; canton 48.8 ms (244 %) in run 3 | HttpCache file reads; the tail follows the host's load | The same idle-host re-run |
 | Region overlay JS | 6,132 of 6,144 B (99.8 %) | A test budget beside S11, in `AssetBudgetTest` | Any change to `overlay.js`, `live-count.js` or `region-filter.js` fails `perf-check` once it grows by 12 B |
 
 **Finding, follow-up (SEO below 95, not by design): `/sammelanfrage` has no meta description.** The `meta` block of `templates/inquiries/brief.html.twig` (F13) holds only the robots tag, so the page fails `meta-description` beside `is-crawlable`. It is `noindex, nofollow`, so no search result shows it, but every other public page carries a description. Not fixed here (docs only).
@@ -223,4 +234,4 @@ make perf-check                        # byte budgets; needs no perf stack
 docker compose exec -T -e SEARCH_PERF_REPORT=1 php vendor/bin/phpunit --group budget   # prints the HTML fixture sizes
 ```
 
-The pages of §4 are `/`, `/eventlokale`, `/eventlokale/firmenanlass`, `/eventlokale/zuerich`, `/eventlokal-in-meiner-naehe`, the richest venue by `tests/Load/run.sh` (`landgut-talwiese` on demo), a Pro venue with a last-minute offer (`landgut-erlenhof`), `/merkliste`, `/kurzfristig-frei`, `/location-eintragen`, `/sammelanfrage`, `/impressum` and `/inhalt-melden`. Results land in `var/lighthouse/` (`perf-<stamp>-<NAME>-<run>.report.json`) and `var/perf/`. Run the Lighthouse pages in one session, because the day seed moves the first card at midnight Zurich. k6 is not simulated: a k6 miss counts only at a load average under 4 (`uptime`), so wait for one, and record the load either way. The perf stack is one Compose project for every lane: check `docker ps | grep deine-eventlocation-perf` first and run `make perf-down` when done. `make perf-up` can leave nginx stopped under load, because its `restart php nginx` races and nginx exits on `host not found in upstream "php"`. Run it again.
+The pages of §4 are `/`, `/eventlokale`, `/eventlokale/firmenanlass`, `/eventlokale/zuerich`, `/eventlokal-in-meiner-naehe`, the richest venue by `tests/Load/run.sh` (`landgut-talwiese` on demo), a Pro venue with a last-minute offer (`landgut-erlenhof`), `/merkliste`, `/kurzfristig-frei`, `/location-eintragen`, `/sammelanfrage`, `/impressum` and `/inhalt-melden`. Results land in `var/lighthouse/` (`perf-<stamp>-<NAME>-<run>.report.json`) and `var/perf/`. Run the Lighthouse pages in one session, because the day seed moves the first card at midnight Zurich. k6 is not simulated: a k6 result is conclusive only at a load average under 4 (`uptime`). A miss above it stays BLOCKED until an idle run, so wait for one, and record the load either way. The perf stack is one Compose project for every lane: check `docker ps | grep deine-eventlocation-perf` first and run `make perf-down` when done. `make perf-up` can leave nginx stopped under load, because its `restart php nginx` races and nginx exits on `host not found in upstream "php"`. Run it again.
