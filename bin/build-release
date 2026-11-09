@@ -85,7 +85,7 @@ slim() {
 verify() {
     for f in bin/console vendor/autoload_runtime.php public/index.php \
         public/assets/manifest.json public/admin-build/.vite/manifest.json \
-        assets/icons/sprite.svg public/brand/mail-logo.png data/geo/towns.csv bin/deploy; do
+        assets/icons/sprite.svg public/brand/mail-logo.png public/50x.html data/geo/towns.csv bin/deploy; do
         [ -e "$SRC/$f" ] || { say "missing $f"; exit 1; }
     done
     for f in .env.local tests content var; do

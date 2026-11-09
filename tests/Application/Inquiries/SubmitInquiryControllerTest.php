@@ -29,7 +29,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
     use SubmitsInquiries;
 
     private const SLUG = DetailVenues::FULL_SLUG;
-    private const OVERRIDE = 'override@hochzeitslocation.test';
+    private const OVERRIDE = 'override@deine-eventlocation.test';
 
     protected function setUp(): void
     {

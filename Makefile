@@ -159,10 +159,11 @@ lighthouse: ## Lighthouse (mobile) against URL=/path (ADMIN=1 or PORTAL=1 logs i
 	docker compose --profile tools run --rm lighthouse '$(TOOL_URL)' '$(TOOL_NAME)'$(if $(DEV_LOGIN_HEADER), '{"$(DEV_LOGIN_HEADER)":"$(ADMIN_DEV_TOKEN)"}')
 
 # vnu refuses to fetch localhost URLs, so the php container saves the page (via nginx) and vnu reads the file.
-validate-html: ## Nu Html Checker on the rendered HTML of URL=/path (ADMIN=1 or PORTAL=1 logs in)
-	@test -n "$(URL)" || { echo 'Usage: make validate-html URL=/_styleguide [ADMIN=1|PORTAL=1]'; exit 1; }
+# A 4xx/5xx stops it, so a mistyped URL never validates an error page; ALLOW_STATUS=1 validates whatever comes (F16).
+validate-html: ## Nu Html Checker on the rendered HTML of URL=/path (ADMIN=1 or PORTAL=1 logs in, ALLOW_STATUS=1 takes a 4xx/5xx page)
+	@test -n "$(URL)" || { echo 'Usage: make validate-html URL=/_styleguide [ADMIN=1|PORTAL=1] [ALLOW_STATUS=1]'; exit 1; }
 	@mkdir -p var/validate
-	$(EXEC) curl -fsS $(if $(DEV_LOGIN_HEADER),-H '$(DEV_LOGIN_HEADER): $(ADMIN_DEV_TOKEN)') '$(subst localhost,nginx,$(TOOL_URL))' -o var/validate/page.html
+	$(EXEC) curl -sS $(if $(ALLOW_STATUS),-w 'HTTP %{http_code}\n',-f) $(if $(DEV_LOGIN_HEADER),-H '$(DEV_LOGIN_HEADER): $(ADMIN_DEV_TOKEN)') '$(subst localhost,nginx,$(TOOL_URL))' -o var/validate/page.html
 	docker compose --profile tools run --rm vnu --format text /work/page.html
 
 ## —— Performance (perf stack, PERF-1, see docs/performance-baseline.md) ——

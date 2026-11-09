@@ -17,7 +17,7 @@ use Zenstruck\Foundry\Story;
  */
 final class AdminStory extends Story
 {
-    public const string EMAIL = 'admin@hochzeitslocation.test';
+    public const string EMAIL = 'admin@deine-eventlocation.test';
     public const string PASSWORD = 'admin-dev-password';
     public const string TOTP_SECRET = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
 

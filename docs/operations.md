@@ -124,6 +124,12 @@ echo 'deploy-hook = systemctl reload nginx' >> /etc/letsencrypt/cli.ini
 Until the first deploy every page is a 404 or 502, which is expected. Renewals run through
 certbot's own timer and the webroot that the port-80 block keeps open.
 
+**Outage page.** While php-fpm is down, overloaded or too slow, nginx answers its 502, 503 or 504
+with `public/50x.html` of the live release: static, in German, the status kept, `Cache-Control:
+no-store`, not reachable on its own. The app's own error pages pass through unchanged. A server
+whose nginx file was copied before F16 lacks the `error_page` line: copy the file again, then
+`nginx -t && systemctl reload nginx`.
+
 **Logs.** nginx logs to `/var/log/nginx/`. Keep 14 days, as the privacy page says: in
 `/etc/logrotate.d/nginx` set `daily` and `rotate 13` (the live file plus 13 rotated ones).
 
@@ -138,7 +144,10 @@ sh probe.sh | tee probe-cli.txt
 
 Check 1 must say 8.5, check 2 lists `rsync` (media sync and backup), check 3 lists `pdo_pgsql`, check 4 says `AVIF: yes`, check 7 says port 5432
 open, check 8 connects with channel binding and libpq 14 or newer, check 9 shows Zurich time, check 11
-shows `mail.infomaniak.com:587` open with STARTTLS, check 13 says `works`.
+shows `mail.infomaniak.com:587` open with STARTTLS, check 13 says `works`. Check 14 (the media
+backup) says `skipped` until the first deploy and fails until the first nightly backup; before launch
+copy the probe again and run `sh probe.sh 14` alone: it lists restic's newest snapshot and must end with
+"the last backup finished at …" less than 26 hours ago (F16).
 
 ### 6. `.env.local`
 
@@ -489,7 +498,9 @@ data in Switzerland) with [restic](https://restic.net):
   rebuilds both from the originals.
 - After a good backup the script writes the time into `<root>/shared/var/log/media-backup.ok`.
   `sh bin/cron-media-backup status` exits 1 unless that is less than 26 hours old (the F16 launch
-  check); it needs no network.
+  check); it needs no network. `deploy/probe.sh` check 14 runs it after listing the repository's
+  newest snapshot, and the Sentry monitor `media-backup` (see [Monitoring](#monitoring)) alerts when
+  the nightly run fails or never starts.
 - The snapshots carry the host name `deine-eventlocation.ch`, not the machine's, so a rebuilt server
   continues the same history.
 

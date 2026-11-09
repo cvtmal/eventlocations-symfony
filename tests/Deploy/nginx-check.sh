@@ -43,6 +43,9 @@ release_fixture() { # release_fixture <name>
     mkdir -p "$public/assets" "$public/admin-build" "$public/media/1"
     cat > "$public/index.php" <<'PHP'
 <?php
+if (str_starts_with($_SERVER['REQUEST_URI'], '/fixture-503')) {
+    http_response_code(503);
+}
 header('X-Powered-By: PHP/8.5');
 header('X-Fixture: backend');
 echo "fixture front controller\n";
@@ -54,6 +57,7 @@ echo 'query=', $_SERVER['QUERY_STRING'] ?? '', "\n";
 echo str_repeat("<p>padding for the compression case</p>\n", 60);
 PHP
     printf 'memory_limit=256M\n' > "$public/.user.ini"
+    cp "$ROOT/public/50x.html" "$public/50x.html"
     printf '<?php echo "must never run";\n' > "$public/other.php"
     i=0
     while [ "$i" -lt 200 ]; do
@@ -313,6 +317,29 @@ release_switch() {
     expect_status "static files follow the switch" 200
 }
 
+# F16 N8: nginx's own 502/503/504 shows public/50x.html with the status kept; the app's own 5xx passes.
+# Last, because it points fastcgi_pass at a closed port.
+server_down() {
+    request https "$SITE" /fixture-503
+    expect_status "the app's own 503 keeps its status" 503
+    expect_body_has "and its own body" "$INDEX_MARKER"
+    request https "$SITE" /50x.html
+    expect_status "the error page is not reachable on its own" 404
+
+    docker exec "$name" sed -i 's#fastcgi_pass php:9000;#fastcgi_pass 127.0.0.1:9;#' /etc/nginx/conf.d/default.conf
+    docker exec "$name" nginx -s reload >/dev/null 2>&1 || fail "nginx refused the reload"
+    tries=0
+    until request https "$SITE" /eventlokale && [ "$(status)" = 502 ]; do
+        tries=$((tries + 1))
+        [ "$tries" -lt 40 ] || fail "php-fpm out of reach: status $(status), wanted 502"
+        sleep 0.25
+    done
+    ok "php-fpm out of reach is a 502"
+    expect_body_has "the 502 shows the German error page" "Wir sind gleich wieder da"
+    expect_header_has "the error page is never cached" cache-control no-store
+    expect_header_has "and is HTML" content-type text/html
+}
+
 main() {
     fixtures
     start_nginx
@@ -325,6 +352,7 @@ main() {
     backend
     preview_not_logged
     release_switch
+    server_down
     printf '%s\n' "nginx-check: all cases passed"
 }
 

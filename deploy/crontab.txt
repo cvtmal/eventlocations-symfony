@@ -15,4 +15,6 @@ MAILTO=__OPS_MAIL__
 # Every hour at :40 (G7, D56): mail staff the inquiries whose venue mail failed or is stuck, each once.
 40 * * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-hourly
 # 04:30 (F15b): the media originals to Object Storage with restic, encrypted; an unchanged night copies nothing.
+# On the server this line, like cron-daily and cron-hourly, ends in `&& curl -fsS -o /dev/null '<monitor url>?status=ok'`
+# for its Sentry cron monitor (docs/operations.md, Monitoring); the URL is a secret and never enters this file.
 30 4 * * * /bin/sh /var/www/deine-eventlocation.ch/current/bin/cron-media-backup

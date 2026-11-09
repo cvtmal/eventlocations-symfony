@@ -26,7 +26,7 @@ final class DeliverInquiryOverSmtpTest extends KernelTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const VENUE_MAIL_RECIPIENT = 'override@hochzeitslocation.test';
+    private const VENUE_MAIL_RECIPIENT = 'override@deine-eventlocation.test';
     private const REFUSED = 'abgelehnt@example.ch';
 
     private SmtpSink $sink;

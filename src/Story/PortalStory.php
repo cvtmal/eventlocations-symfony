@@ -30,7 +30,7 @@ use function Zenstruck\Foundry\Persistence\repository;
  */
 final class PortalStory extends Story
 {
-    public const string EMAIL = 'manager@hochzeitslocation.test';
+    public const string EMAIL = 'manager@deine-eventlocation.test';
     public const string PASSWORD = 'manager-dev-password';
 
     public function __construct(

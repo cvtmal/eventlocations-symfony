@@ -25,7 +25,7 @@ use Twig\Environment;
  */
 final class CrmMailerTest extends KernelTestCase
 {
-    private const string OVERRIDE = 'override@hochzeitslocation.test';
+    private const string OVERRIDE = 'override@deine-eventlocation.test';
     private const string MAILBOX = 'hallo@deine-eventlocation.ch';
     private const string TO = 'mia@example.ch';
     private const string CC = 'tom@example.ch';

@@ -36,7 +36,7 @@ final class EmailApiTest extends WebTestCase
 
     private const string URL = '/admin/api/crm/emails';
     private const string MAILBOX = 'hallo@deine-eventlocation.ch';
-    private const string OVERRIDE = 'override@hochzeitslocation.test';
+    private const string OVERRIDE = 'override@deine-eventlocation.test';
     private const string COMPANY_ADDRESS = 'info@seeblick.example';
     private const string CONTACT_ADDRESS = 'mia@example.ch';
     private const string CC = 'tom@example.ch';

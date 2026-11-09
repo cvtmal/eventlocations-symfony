@@ -76,6 +76,8 @@ final class PublicCopyAddressTest extends TestCase
             ...self::hits('templates', '*.twig', [self::FORMAL, self::PLURAL, self::ESZETT]),
             ...self::hits('src', '*.php', [self::FORMAL, self::PLURAL]),
             ...self::hits('assets/js', '*.js', [self::FORMAL, self::PLURAL]),
+            // nginx's static page while PHP is down (F16 N8); depth 0 keeps the media and build folders out.
+            ...self::hits('public', '*.html', [self::FORMAL, self::PLURAL, self::ESZETT], 0),
         ];
 
         self::assertSame([], $hits);
@@ -199,9 +201,12 @@ final class PublicCopyAddressTest extends TestCase
      *
      * @return list<string>
      */
-    private static function hits(string $dir, string $name, array $patterns): array
+    private static function hits(string $dir, string $name, array $patterns, ?int $depth = null): array
     {
         $files = (new Finder())->files()->in(self::root().'/'.$dir)->name($name);
+        if (null !== $depth) {
+            $files->depth($depth);
+        }
         self::assertGreaterThan(0, $files->count(), "no {$name} file found in {$dir}");
 
         $hits = [];
