@@ -319,8 +319,9 @@ final class InquiryBriefPageTest extends WebTestCase
 
     /**
      * PO: the pages depend on the guest's selection or a mailed link, so search engines get `noindex` (meta and
-     * header) on every state. robots.txt stays open on purpose: a disallowed page is never fetched, so its
-     * `noindex` would go unseen and the bare URL could still be indexed from a link.
+     * header) on every state (the 429 and 503 re-renders go through the same `page()` and template). robots.txt
+     * stays open on purpose: a disallowed page is never fetched, so its `noindex` would go unseen and the bare URL
+     * could still be indexed from a link. The sitemap and robots checks guard against a later change.
      */
     public function test_every_brief_page_is_noindex_and_left_out_of_the_sitemap(): void
     {
@@ -328,11 +329,18 @@ final class InquiryBriefPageTest extends WebTestCase
         $b = $this->venue('beta-haus', 'Beta Haus');
         $optOut = '/sammelanfrage/abbestellen/'.$this->optOutToken($a);
 
-        foreach (['/sammelanfrage', '/sammelanfrage?nr='.$a->number(), '/sammelanfrage?nr='.$a->number().','.$b->number(), $optOut, '/sammelanfrage/abbestellen/kaputt'] as $url) {
+        $both = $a->number().','.$b->number();
+        foreach (['/sammelanfrage' => 200, '/sammelanfrage?nr='.$a->number() => 200, '/sammelanfrage?nr='.$both => 200, $optOut => 200, '/sammelanfrage/abbestellen/kaputt' => 404] as $url => $status) {
             $this->client->request('GET', $url);
+            self::assertResponseStatusCodeSame($status, $url);
             $this->assertNoindex($url);
         }
-        $this->postBrief($a->number().','.$b->number(), [$a->number(), $b->number()]);
+        $this->client->request('GET', '/sammelanfrage?nr='.$both);
+        self::assertSelectorExists('input[name="inquiry[venues][]"]');
+        $this->postBrief($both, [$a->number()]);
+        self::assertResponseStatusCodeSame(422);
+        $this->assertNoindex('422 re-render');
+        $this->postBrief($both, [$a->number(), $b->number()]);
         $this->client->followRedirect();
         self::assertResponseIsSuccessful();
         $this->assertNoindex('/sammelanfrage/gesendet');
