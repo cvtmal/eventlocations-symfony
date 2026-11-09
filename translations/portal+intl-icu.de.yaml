@@ -648,7 +648,7 @@ report:
             paid_until: 'Dein Tarif {tier}: Bezahlt bis {end, date, ::dMMMMy}.'
             free_until: 'Dein Tarif {tier}: Kostenlos bis {end, date, ::dMMMMy}.'
             cancelled: 'Dein Tarif {tier}: Gekündigt, läuft bis {end, date, ::dMMMMy}.'
-            free: 'Dein Tarif {tier}: Gratis-Eintrag, ohne Ablaufdatum.'
+            free: 'Dein Tarif: Gratis-Eintrag, ohne Ablaufdatum.'
         pro_line:
             text: 'Mehr Fotos, Räume und Zahlen gibt es mit Pro:'
             link: Pro anfragen

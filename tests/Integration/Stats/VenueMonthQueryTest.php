@@ -6,12 +6,19 @@ namespace App\Tests\Integration\Stats;
 
 use App\Factory\RecordedFunnelEventFactory;
 use App\Factory\VenueFactory;
+use App\Inquiries\Command\DeliverInquiry;
+use App\Inquiries\Command\SubmitInquiryBrief;
+use App\Inquiries\ValueObject\SubmittedBrief;
 use App\Shared\Funnel\FunnelEvent;
 use App\Stats\ReadModel\VenueMonthQuery;
 use App\Stats\ReadModel\VenueStatsQuery;
 use App\Venues\Entity\Venue;
+use App\Venues\ValueObject\VenueStatus;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -20,6 +27,7 @@ use Zenstruck\Foundry\Test\Factories;
  */
 final class VenueMonthQueryTest extends KernelTestCase
 {
+    use ClockSensitiveTrait;
     use Factories;
 
     private Connection $connection;
@@ -91,6 +99,51 @@ final class VenueMonthQueryTest extends KernelTestCase
 
         self::assertCount(1, $months);
         self::assertSame(1, $months[0]->deliveredInquiries);
+    }
+
+    /**
+     * F13: a brief to two venues is one `brief_sent` row without a venue and one `inquiry_delivered` per child,
+     * written by the real submit and deliveries; each venue counts its own child once, the brief row for none.
+     */
+    public function test_a_brief_to_two_venues_counts_one_delivery_for_each_venue(): void
+    {
+        self::mockTime('2026-10-15 12:00:00 UTC');
+        $first = VenueFactory::new()->withContact()->create(['status' => VenueStatus::Published]);
+        $second = VenueFactory::new()->withContact()->create(['status' => VenueStatus::Published]);
+        $bus = self::getContainer()->get(MessageBusInterface::class);
+        self::assertInstanceOf(MessageBusInterface::class, $bus);
+
+        $brief = $bus->dispatch(new SubmitInquiryBrief(
+            [$first->id() => 'slug-'.$first->number(), $second->id() => 'slug-'.$second->number()],
+            'de',
+            'corporate_event',
+            null,
+            80,
+            null,
+            true,
+            null,
+            null,
+            null,
+            'Liebes Team',
+            'Anna',
+            'Muster',
+            'anna@example.ch',
+            null,
+        ))->last(HandledStamp::class)?->getResult();
+        self::assertInstanceOf(SubmittedBrief::class, $brief);
+        foreach ($brief->inquiryIds as $inquiryId) {
+            $bus->dispatch(new DeliverInquiry($inquiryId));
+        }
+
+        self::assertSame(
+            ['brief_sent' => 1, 'inquiry_delivered' => 2],
+            array_map('intval', $this->connection->fetchAllKeyValue('SELECT event, count(*) FROM funnel_events GROUP BY event ORDER BY event')),
+        );
+        foreach ([$first, $second] as $venue) {
+            $months = $this->query->months($venue->id(), $venue->number(), self::day('2026-10-01'), 1);
+            self::assertSame(1, $months[0]->deliveredInquiries, 'one delivery for '.$venue->name());
+        }
+        self::assertSame(0, $this->query->months($this->venue->id(), $this->venue->number(), self::day('2026-10-01'), 1)[0]->deliveredInquiries);
     }
 
     private function delivered(Venue $venue, string $at): void

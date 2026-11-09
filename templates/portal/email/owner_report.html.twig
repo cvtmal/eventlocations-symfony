@@ -67,7 +67,7 @@
 {% endif %}
 {% set plan = report.plan %}
 {% if plan.paidUntil is null %}
-{{ blocks.p('report.mail.plan.free'|trans({tier: plan.tierName}, 'portal')) }}
+{{ blocks.p('report.mail.plan.free'|trans({}, 'portal')) }}
 {% else %}
 {{ blocks.p(('report.mail.plan.' ~ (plan.cancelled ? 'cancelled' : (plan.freeOfCharge ? 'free_until' : 'paid_until')))|trans({tier: plan.tierName, end: plan.paidUntil}, 'portal')) }}
 {% endif %}
