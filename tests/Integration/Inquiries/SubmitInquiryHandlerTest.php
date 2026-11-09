@@ -182,7 +182,7 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
 
     public function test_a_venue_without_an_address_is_refused(): void
     {
-        $venue = VenueFactory::createOne();
+        $venue = VenueFactory::new()->withoutInquiryEmail()->create();
 
         $this->expectException(InquiryNotAccepted::class);
 

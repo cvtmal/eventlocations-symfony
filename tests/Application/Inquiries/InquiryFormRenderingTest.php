@@ -143,7 +143,7 @@ final class InquiryFormRenderingTest extends WebTestCase
 
     public function test_a_venue_without_an_address_has_no_section_and_no_link_to_it(): void
     {
-        // Reachable: the publish rule does not ask for an inquiry address (VenuePublishGaps), staff can clear it (F16).
+        // Defensive since D60: no publish path leaves a venue online without an inquiry address (F16 kept the path).
         DetailVenues::minimal();
 
         $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);

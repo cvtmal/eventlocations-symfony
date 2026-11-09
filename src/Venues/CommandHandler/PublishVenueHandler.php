@@ -15,9 +15,9 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\DispatchAfterCurrentBusStamp;
 
 /**
- * CMS-3, D14: a venue goes online only with a summary in the default locale, a main
- * building and at least one gallery photo (`room_id IS NULL`; a room's photo is not on the
- * card). Every gap is named at once. Publishing an online venue changes nothing.
+ * CMS-3, D14, D60: a venue goes online only with what `VenuePublishGaps` asks for (a summary in the default locale, a
+ * main building, a gallery photo, an inquiry address, and for an entry nobody manages the draft rule). Every gap is
+ * named at once. Publishing an online venue changes nothing.
  *
  * The answer says whether this was the first publish of a venue CreateVenue made (Q20). The caller then fires
  * NewVenuePublished through VenueEvents, after the commit, because a handler cannot run code after its own.

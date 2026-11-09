@@ -205,6 +205,23 @@ final class ModerationCommandsTest extends KernelTestCase
         self::assertSame('open', $this->connection->fetchOne('SELECT status FROM moderation_cases WHERE id = ?', [$caseId]));
     }
 
+    /** D60: an entry that lost its inquiry address while offline cannot come back with `keep`; the case stays open. */
+    public function test_keep_cannot_bring_back_an_entry_without_an_inquiry_address(): void
+    {
+        $venue = $this->publishable('Seehaus Ohne Adresse', 'seehaus-ohne-adresse');
+        $number = $venue->number();
+        $caseId = $this->reportCase($number, [], ModerationKind::Removal);
+        self::assertTrue($this->dispatch(new TakeEntryOffline($caseId, self::ADMIN)));
+        $this->connection->executeStatement('UPDATE venues SET inquiry_email = NULL WHERE number = ?', [$number]);
+
+        $failure = $this->failure(new DecideModerationCase($caseId, ModerationDecision::Keep, null, self::ADMIN));
+
+        self::assertInstanceOf(VenueRuleViolation::class, $failure);
+        self::assertSame(['inquiry_email'], $failure->missing);
+        self::assertFalse($this->reload($number)->isPublished());
+        self::assertSame('open', $this->connection->fetchOne('SELECT status FROM moderation_cases WHERE id = ?', [$caseId]));
+    }
+
     public function test_an_entry_taken_offline_stays_offline_with_remove(): void
     {
         $venue = $this->publishable('Seehaus Weg', 'seehaus-weg');

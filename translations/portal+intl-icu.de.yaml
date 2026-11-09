@@ -183,7 +183,6 @@ onboarding:
     check:
         title: Prüfen und veröffentlichen
         missing: Das fehlt noch
-        hint_inquiry: Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Trag sie im Kontakt ein.
         preview: Vorschau
         edit: Angaben ändern
         rights: Ich darf diese Location vertreten und bestätige die Bildrechte-Erklärung.

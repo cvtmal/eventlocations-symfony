@@ -54,7 +54,7 @@ final class PortalLoginTest extends WebTestCase
     {
         $manager = $this->logInAsManager();
         $published = VenueFactory::createOne(['name' => 'Schloss Aarau', 'tier' => KnownTiers::PRO]);
-        $offline = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished]);
+        $offline = VenueFactory::new()->withoutLocation(null)->withoutInquiryEmail()->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $published]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $offline]);
         PortalVenueAccessFactory::createOne(['user' => $manager, 'venue' => VenueFactory::createOne(['name' => 'Scheune Beantragt'])]);

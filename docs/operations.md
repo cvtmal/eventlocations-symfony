@@ -425,7 +425,8 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
    `sh bin/prod-import import-dry` and `sh bin/prod-import all`. The entries arrive as drafts
    («Held as draft» in the summary). In the CMS staff write the text, check the facts (and cut
    the event types to what «Gratis» shows: the import notes `event_types: N > M (Gratis)` and
-   keeps them all), tick «Fakten geprüft» and publish.
+   keeps them all), make sure the «Anfrage-E-Mail» is filled (D60: no publish without it),
+   tick «Fakten geprüft» and publish.
 3. **hochzeitslocation.ch customers who said yes** (D1(c), D29; `source = hochzeitslocation`,
    with `consent_on` and `consent_from`; a row without them is refused): as 2., then
    `sh bin/prod-import consents-dry content/owner/<csv>` until its summary is right, then

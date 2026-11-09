@@ -71,7 +71,7 @@ distances:                            # each optional; km 0–500 with at most o
   station: {km: 0.9, name: Bahnhof Beispiel}
   highway: {km: 3.2, name: A1}
   airport: {km: 12.0, name: Flughafen Zürich}
-contact:                              # all optional
+contact:                              # optional; inquiry_email is needed to go online (D60)
   phone: '+41441234567'               # E.164, quoted
   inquiry_email: anfragen@example.ch  # receives the inquiries
   website: https://example.ch         # starts with http:// or https://
@@ -151,7 +151,7 @@ documents:                            # in display order; files in documents/
 | `geo.lat`, `geo.lng` | decimal degrees | Inside Switzerland or Liechtenstein. Optional, both or neither. |
 | `distances.<station\|highway\|airport>` | `km` 0–500 (one decimal), `name` ≤ 150 | A name needs its km. |
 | `contact.phone` | E.164 (`'+41…'`) | Quote it. |
-| `contact.inquiry_email` | e-mail ≤ 254 | |
+| `contact.inquiry_email` | e-mail ≤ 254 | Needed to go online (D60, see [the draft rule](#the-draft-rule)). |
 | `contact.website` | URL ≤ 500 | `http://` or `https://`. |
 | `contact.contact_person` | text ≤ 150 | |
 | `contact.instagram` | URL ≤ 500 | `https://` only. |
@@ -252,7 +252,7 @@ change the exit code. To hide a venue by hand, set `status: unpublished`.
 
 After the summary the run lists, in a dry run too and without changing the exit code:
 
-- **Held as draft**: `<key>: facts, description`, the folders [the draft rule](#the-draft-rule)
+- **Held as draft**: `<key>: inquiry_email, facts, description`, the folders [the draft rule](#the-draft-rule)
   keeps offline and what each lacks.
 - **Notes**: `<key>: event_types: N > M (Gratis)` when a folder names more event types than the
   free tier («Gratis») shows (D43, D50). Every type is imported; staff cut the list to the plan while they
@@ -270,6 +270,11 @@ button and the moderation `keep` refuse the same entry with «Fakten nicht gepr�
 «Beschreibung fehlt». An entry with a manager keeps G12's rule: online even unchecked, but
 `noindex` until both are done. A verified claim and a staff approval in the review queue tick
 «Fakten geprüft» themselves (D45).
+
+Every entry, managed or not, also needs an inquiry address (`contact.inquiry_email`, D60): a
+folder without one that asks `published` keeps a new or offline entry a draft
+(`inquiry_email`). For an entry that is online, such a folder fails (`/contact/inquiry_email`)
+and the entry stays as it was, the same as a CMS save that empties the address.
 
 Run one import at a time; there is no lock between two imports. A CMS save and the import
 of the same venue do not interleave: the import locks the venue's row before it checks the

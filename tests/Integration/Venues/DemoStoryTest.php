@@ -71,6 +71,8 @@ final class DemoStoryTest extends KernelTestCase
         self::assertSame(1, $this->rows("SELECT count(*) FROM venues WHERE canton_code = 'li' AND town_id IS NULL"));
         self::assertSame(1, $this->rows("SELECT count(*) FROM venues WHERE canton_code = 'li' AND phone LIKE '+423%'"));
         self::assertSame(1, $this->rows("SELECT count(*) FROM venues WHERE phone LIKE '+423%'"));
+        // D60: no published venue without an inquiry address.
+        self::assertSame(0, $this->rows("SELECT count(*) FROM venues WHERE status = 'published' AND inquiry_email IS NULL"));
         self::assertSame(4, $this->rows('SELECT count(*) FROM venues WHERE town_id IS NULL'));
         self::assertSame(2, $this->rows('SELECT count(*) FROM venues WHERE town_id IS NULL AND canton_code IS NOT NULL'));
         self::assertSame(0, $this->rows('SELECT count(*) FROM venues WHERE town_id IS NULL AND (zip IS NOT NULL OR street IS NOT NULL OR lat IS NOT NULL)'));

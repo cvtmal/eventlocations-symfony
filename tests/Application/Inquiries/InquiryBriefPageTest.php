@@ -81,7 +81,7 @@ final class InquiryBriefPageTest extends WebTestCase
     {
         $a = $this->venue('haus-a', 'Haus A');
         $b = $this->venue('haus-b', 'Haus B');
-        $noAddress = VenueFactory::createOne(['name' => 'Ohne Adresse']);
+        $noAddress = VenueFactory::new()->withoutInquiryEmail()->create(['name' => 'Ohne Adresse']);
         VenueTranslationFactory::createOne(['venue' => $noAddress, 'slug' => 'ohne-adresse', 'summary' => 'Ein Ort für Anlässe.']);
 
         $crawler = $this->client->request('GET', '/sammelanfrage?nr='.implode(',', [$a->number(), $noAddress->number(), $b->number()]));

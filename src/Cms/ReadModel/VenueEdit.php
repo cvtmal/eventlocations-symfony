@@ -28,6 +28,7 @@ final readonly class VenueEdit
     public const string MISSING_SUMMARY = 'summary';
     public const string MISSING_MAIN_BUILDING = 'main_building';
     public const string MISSING_PHOTO = 'photo';
+    public const string MISSING_INQUIRY_EMAIL = 'inquiry_email';
     public const string MISSING_FACTS = 'facts';
     public const string MISSING_DESCRIPTION = 'description';
 
@@ -113,7 +114,8 @@ final readonly class VenueEdit
 
     /**
      * What `PublishVenue` would refuse, as its codes and in its order: a summary in the default locale
-     * (`btrim` strips spaces only, so does this), a main building, a gallery photo (a room's does not count).
+     * (`btrim` strips spaces only, so does this), a main building, a gallery photo (a room's does not count), an
+     * inquiry address (D60).
      *
      * @return list<string>
      */
@@ -128,6 +130,9 @@ final readonly class VenueEdit
         }
         if (0 === $this->galleryPhotoCount) {
             $missing[] = self::MISSING_PHOTO;
+        }
+        if (null === $this->inquiryEmail) {
+            $missing[] = self::MISSING_INQUIRY_EMAIL;
         }
 
         return $missing;

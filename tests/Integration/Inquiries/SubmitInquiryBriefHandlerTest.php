@@ -160,7 +160,7 @@ final class SubmitInquiryBriefHandlerTest extends KernelTestCase
 
     public function test_a_venue_without_an_inquiry_address_refuses_the_whole_brief(): void
     {
-        $this->assertRefused([$this->venue(), VenueFactory::createOne()]);
+        $this->assertRefused([$this->venue(), VenueFactory::new()->withoutInquiryEmail()->create()]);
     }
 
     public function test_a_venue_at_todays_cap_refuses_the_whole_brief(): void

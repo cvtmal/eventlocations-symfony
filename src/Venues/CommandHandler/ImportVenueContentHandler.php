@@ -115,17 +115,23 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
      * The draft rule at the import (F14, D54; `VenuePublishGaps` holds it for every other publish): a folder that asks
      * `published` for an entry nobody manages moves it online only when staff checked its facts and the folder has a
      * default-locale description. A new venue is never checked, so it always lands as a draft. The rule gates the move
-     * online only: an entry already online stays online.
+     * online only: an entry already online stays online. D60 adds the inquiry address for every entry, managed or not
+     * (an online entry's folder without one fails instead, see `__invoke`).
      *
-     * @return list<string> what holds the venue back (`facts`, `description`); empty when it may go online as asked
+     * @return list<string> what holds the venue back (`inquiry_email`, `facts`, `description`); empty when it may go
+     *                      online as asked
      */
     private function heldAsDraft(VenueContent $content, ?Venue $venue): array
     {
-        if (VenueStatus::Published !== $content->status || (null !== $venue && ($venue->isPublished() || $this->claims->isConfirmed($venue->id())))) {
+        if (VenueStatus::Published !== $content->status || true === $venue?->isPublished()) {
             return [];
         }
 
-        $held = [];
+        $held = null === $content->inquiryEmail ? ['inquiry_email'] : [];
+        if (null !== $venue && $this->claims->isConfirmed($venue->id())) {
+            return $held;
+        }
+
         if (null === $venue?->factsCheckedAt()) {
             $held[] = 'facts';
         }
@@ -187,6 +193,11 @@ final class ImportVenueContentHandler implements CommandHandlerInterface
                     ? \sprintf('/address: ambiguous town "%s" (%d towns); add address.canton', $exception->place(), $exception->townCount())
                     : \sprintf('/address: unknown town "%s"', $exception->place()),
             ]);
+        }
+
+        if (null === $content->inquiryEmail && VenueStatus::Published === $content->status && true === $venue?->isPublished()) {
+            // D60: as a staff save, the folder may not take the address of an online venue; it stays as it was.
+            return VenueImportOutcome::failed($content->key, $command->dryRun, ['/contact/inquiry_email: the venue is online and needs an inquiry address']);
         }
 
         $existing = $this->existingRows($venue);

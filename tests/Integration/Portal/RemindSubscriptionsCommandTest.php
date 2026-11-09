@@ -129,7 +129,7 @@ final class RemindSubscriptionsCommandTest extends KernelTestCase
 
     private function venue(string $name, ?string $inquiryEmail = null): Venue
     {
-        $venue = VenueFactory::new()->withoutLocation()->create(['name' => $name]);
+        $venue = VenueFactory::new()->withoutLocation()->withoutInquiryEmail()->create(['name' => $name]);
         if (null !== $inquiryEmail) {
             $this->connection->executeStatement('UPDATE venues SET inquiry_email = ? WHERE id = ?', [$inquiryEmail, $venue->id()]);
         }

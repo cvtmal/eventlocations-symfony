@@ -16,7 +16,7 @@ final class VenueRuleViolation extends DomainException
 {
     /**
      * @param array<string, int|string> $parameters
-     * @param list<string>              $missing    what a publish lacks: `summary`, `main_building`, `photo`
+     * @param list<string>              $missing    what a publish lacks: `VenuePublishGaps` codes
      */
     private function __construct(
         string $translationKey,
@@ -58,7 +58,7 @@ final class VenueRuleViolation extends DomainException
     }
 
     /**
-     * @param list<string> $missing `summary`, `main_building`, `photo`
+     * @param list<string> $missing `VenuePublishGaps` codes
      */
     public static function notPublishable(array $missing): self
     {
@@ -68,6 +68,14 @@ final class VenueRuleViolation extends DomainException
     public static function stillPublished(): self
     {
         return new self('venue.error.still_published');
+    }
+
+    /**
+     * D60: an online venue keeps its inquiry address; the save is refused and the venue stays online with the old one.
+     */
+    public static function inquiryEmailRequired(): self
+    {
+        return new self('venue.error.inquiry_email_required', 'inquiryEmail');
     }
 
     /**
@@ -194,6 +202,7 @@ final class VenueRuleViolation extends DomainException
             self::coordinatesRequired(),
             self::notPublishable(['summary']),
             self::stillPublished(),
+            self::inquiryEmailRequired(),
             self::tooManyPhotos(6, 'Gratis'),
             self::tooManyRooms(1, 'Gratis'),
             self::tooManyDocuments(1, 'Gratis'),

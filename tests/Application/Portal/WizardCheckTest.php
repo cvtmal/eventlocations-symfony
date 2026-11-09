@@ -16,6 +16,7 @@ use App\Tests\Support\Portal\PortalSession;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\TermGroup;
 use App\Venues\ValueObject\VenueStatus;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Form;
@@ -27,8 +28,8 @@ use Symfony\Component\Mime\Email;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * "Prüfen" (#45, POR-12): the page, "Veröffentlichen" and the way back online. A wizard rule sends a draft without an
- * inquiry address back to `kontakt`; the publish rule itself has no such gap.
+ * "Prüfen" (#45, POR-12): the page, "Veröffentlichen" and the way back online. Since D60 a missing inquiry address
+ * is a publish gap like the others, for a draft, a rejected and a claimed location alike.
  */
 final class WizardCheckTest extends WebTestCase
 {
@@ -109,42 +110,39 @@ final class WizardCheckTest extends WebTestCase
         self::assertSame([], $this->mails);
     }
 
-    public function test_a_draft_without_inquiry_address_goes_back_to_kontakt_on_get_and_post(): void
+    /**
+     * D60: the gap is listed with a link to `kontakt`, and «Veröffentlichen» names it; nothing is submitted.
+     *
+     * @return iterable<string, array{?string}>
+     */
+    public static function withoutAddress(): iterable
     {
-        $venue = $this->draft($this->logInAsManager(), self::NO_ADDRESS);
-
-        $this->client->request('GET', $this->url($venue));
-        self::assertResponseRedirects($this->url($venue, 'kontakt'));
-
-        $this->client->request('POST', $this->url($venue), ['submit_location' => ['rights' => '1']]);
-        self::assertResponseRedirects($this->url($venue, 'kontakt'));
-        self::assertSame('draft', $this->submissionStatus($venue));
+        yield 'draft' => ['draft'];
+        yield 'rejected' => ['rejected'];
+        yield 'claimed, no submission row' => [null];
     }
 
-    public function test_a_rejected_location_without_inquiry_address_gets_the_hint_and_may_submit(): void
+    #[DataProvider('withoutAddress')]
+    public function test_a_location_without_inquiry_address_is_refused_with_the_gap(?string $state): void
     {
         $venue = $this->venue($this->logInAsManager(), self::NO_ADDRESS);
-        SubmissionFactory::new()->rejected()->create(['venue' => $venue]);
+        match ($state) {
+            'draft' => SubmissionFactory::createOne(['venue' => $venue]),
+            'rejected' => SubmissionFactory::new()->rejected()->create(['venue' => $venue]),
+            default => null,
+        };
 
         $crawler = $this->client->request('GET', $this->url($venue));
 
         self::assertResponseIsSuccessful();
-        self::assertSame('/konto/locations/'.$venue->number().'#kontakt', $crawler->selectLink('Für diese Location ist keine E-Mail-Adresse für Anfragen hinterlegt. Trag sie im Kontakt ein.')->attr('href'));
+        self::assertSame($this->url($venue, 'kontakt'), $crawler->filter('section[aria-labelledby="check-missing"]')->selectLink('Anfrage-E-Mail')->attr('href'));
 
-        $this->press($venue);
+        $crawler = $this->press($venue);
 
-        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
-        self::assertSame('submitted', $this->submissionStatus($venue));
-    }
-
-    public function test_a_claimed_location_without_inquiry_address_may_submit(): void
-    {
-        $venue = $this->venue($this->logInAsManager(), self::NO_ADDRESS);
-
-        $this->press($venue);
-
-        self::assertResponseRedirects($this->url($venue), Response::HTTP_SEE_OTHER);
-        self::assertSame('submitted', $this->submissionStatus($venue));
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSame('Die Location ist noch nicht vollständig. Es fehlt: Anfrage-E-Mail', $crawler->filter('.form-error')->text());
+        self::assertSame($state, $this->submissionStatus($venue) ?: null);
+        self::assertSame([], $this->mails);
     }
 
     public function test_submit_sets_submitted_stores_rights_and_shows_wird_geprueft(): void
@@ -367,7 +365,7 @@ final class WizardCheckTest extends WebTestCase
      */
     private function venue(PortalUser $manager, array $has = self::EVERYTHING): Venue
     {
-        $venue = VenueFactory::new()->withoutLocation()->create(['status' => VenueStatus::Unpublished]);
+        $venue = VenueFactory::new()->withoutLocation()->withoutInquiryEmail()->create(['status' => VenueStatus::Unpublished]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'summary' => \in_array('summary', $has, true) ? 'Ein Haus am See.' : '']);
         if (\in_array('main_building', $has, true)) {
             VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);

@@ -86,7 +86,7 @@ final class VenueListQueryTest extends KernelTestCase
 
     public function test_a_venue_without_town_or_photo_is_a_row_with_its_gaps(): void
     {
-        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Wiesenhof', 'capacityMax' => 80]);
+        $venue = VenueFactory::new()->withoutLocation(null)->withoutInquiryEmail()->create(['name' => 'Wiesenhof', 'capacityMax' => 80]);
 
         $row = $this->only($this->search());
 

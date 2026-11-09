@@ -332,6 +332,35 @@ final class VenueWriteCommandsTest extends KernelTestCase
         }
     }
 
+    public function test_an_offline_venue_may_drop_its_inquiry_address(): void
+    {
+        $venue = $this->venueWithSlug('ohne-anfrage');
+        $venue->changeContact(null, 'anfrage@beispiel.ch', null, null);
+        $this->em->flush();
+
+        $this->dispatch(new ChangeVenueContact($venue->number(), $this->token($venue), ['inquiryEmail'], null, null, null, null, null, true));
+
+        self::assertNull($this->reload($venue)->inquiryEmail());
+    }
+
+    /**
+     * D60: an online venue keeps its inquiry address; the save is refused and changes nothing.
+     */
+    public function test_an_online_venue_may_not_drop_its_inquiry_address(): void
+    {
+        $venue = $this->publishable();
+        $this->dispatch(new PublishVenue($venue->number()));
+
+        $violation = $this->violation(new ChangeVenueContact($venue->number(), $this->token($venue), ['phone', 'inquiryEmail'], '+41441234567', null, null, null, null, true));
+
+        self::assertSame('venue.error.inquiry_email_required', $violation->translationKey());
+        self::assertSame('inquiryEmail', $violation->field);
+        $saved = $this->reload($venue);
+        self::assertSame(VenueStatus::Published, $saved->status());
+        self::assertSame('anfragen@bereit.example.ch', $saved->inquiryEmail());
+        self::assertNull($saved->phone());
+    }
+
     /**
      * @return iterable<string, array{?bool}>
      */
@@ -420,6 +449,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
         yield 'summary' => ['summary'];
         yield 'main building' => ['main_building'];
         yield 'photo' => ['photo'];
+        yield 'inquiry address' => ['inquiry_email'];
     }
 
     #[DataProvider('publishGaps')]
@@ -430,6 +460,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
             'summary' => $this->connection->executeStatement("UPDATE venue_translations SET summary = '  ' WHERE venue_id = ?", [$venue->id()]),
             'main_building' => $this->connection->executeStatement("UPDATE venue_terms SET is_main = FALSE WHERE venue_id = ? AND term_group = 'building'", [$venue->id()]),
             'photo' => $this->connection->executeStatement('DELETE FROM venue_photos WHERE venue_id = ?', [$venue->id()]),
+            'inquiry_email' => $this->connection->executeStatement('UPDATE venues SET inquiry_email = NULL WHERE id = ?', [$venue->id()]),
             default => self::fail($gap),
         };
 
@@ -476,6 +507,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
         $venue = $this->reload($number);
         // F14 (D54): nobody manages it, so staff check its facts and write its description first.
         $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune.', description = 'Eine alte Scheune am Waldrand.' WHERE venue_id = ?", [$venue->id()]);
+        $this->connection->executeStatement("UPDATE venues SET inquiry_email = 'anfragen@scheune.example' WHERE id = ?", [$venue->id()]);
         $this->dispatch(new CheckVenueFacts($number, true));
         VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
         VenuePhotoFactory::createOne(['venue' => $venue]);
@@ -513,11 +545,13 @@ final class VenueWriteCommandsTest extends KernelTestCase
     }
 
     /**
-     * Offline, with a summary, a main building and a gallery photo.
+     * Offline, with a summary, a main building, a gallery photo and an inquiry address.
      */
     private function publishable(): Venue
     {
         $venue = $this->venueWithSlug('bereit');
+        $venue->changeContact(null, 'anfragen@bereit.example.ch', null, null);
+        $this->em->flush();
         VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
         VenuePhotoFactory::createOne(['venue' => $venue]);
 

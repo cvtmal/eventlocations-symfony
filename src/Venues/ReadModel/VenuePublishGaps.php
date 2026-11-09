@@ -10,8 +10,8 @@ use Doctrine\DBAL\Connection;
 
 /**
  * What a venue still lacks to go online (CMS-3, D14): a summary in the default locale, a main building and at least
- * one gallery photo (`room_id IS NULL`; a room's photo is not on the card). The one rule, shared by `PublishVenue` and
- * the portal's wizard. An inquiry address is no part of it: that is a wizard form rule only (#45).
+ * one gallery photo (`room_id IS NULL`; a room's photo is not on the card) and an inquiry address (D60: D2 promises an
+ * inquiry form on every page). The one rule, shared by `PublishVenue`, the portal's submit and wizard.
  *
  * The draft rule (F14, D32(2), D45, D54): an entry nobody answers for (no active `/konto` manager, `VenueClaims`)
  * goes online only when it may also be indexed (`VenueIndexGate`): staff checked its facts and its default-locale
@@ -28,7 +28,7 @@ final readonly class VenuePublishGaps
     }
 
     /**
-     * @return list<string> the codes `summary`, `main_building`, `photo`, `facts`, `description`, in that order;
+     * @return list<string> the codes `summary`, `main_building`, `photo`, `inquiry_email`, `facts`, `description`, in that order;
      *                      the last two only for an entry without an active manager
      */
     public function missing(string $venueId): array
@@ -39,6 +39,7 @@ final readonly class VenuePublishGaps
                     EXISTS (SELECT 1 FROM venue_translations t WHERE t.venue_id = :venue AND t.locale = :locale AND btrim(t.summary) <> '') AS summary,
                     EXISTS (SELECT 1 FROM venue_terms vt WHERE vt.venue_id = :venue AND vt.term_group = 'building' AND vt.is_main) AS main_building,
                     EXISTS (SELECT 1 FROM venue_photos p WHERE p.venue_id = :venue AND p.room_id IS NULL) AS photo,
+                    EXISTS (SELECT 1 FROM venues v WHERE v.id = :venue AND v.inquiry_email IS NOT NULL) AS inquiry_email,
                     EXISTS (SELECT 1 FROM venues v WHERE v.id = :venue AND v.facts_checked_at IS NOT NULL) AS facts,
                     EXISTS (SELECT 1 FROM venue_translations t WHERE t.venue_id = :venue AND t.locale = :locale AND COALESCE(t.description, '') ~ '[^[:space:]]') AS description
                 SQL,

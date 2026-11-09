@@ -139,6 +139,20 @@ final class LocationCardsTest extends WebTestCase
     }
 
     /**
+     * D60: an online location keeps its inquiry address; the save is refused and the field says why.
+     */
+    public function test_an_online_location_keeps_its_inquiry_address(): void
+    {
+        $venue = $this->managedVenue($this->logInAsManager());
+        $crawler = $this->post(LocationCard::Contact, $venue, ['inquiryEmail' => '', 'contactPerson' => 'Anna Muster']);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSame('true', $crawler->filter('#venue_contact_inquiryEmail')->attr('aria-invalid'));
+        self::assertStringContainsString('Eine Location, die online ist, braucht eine Anfrage-E-Mail.', $crawler->filter('form[name="venue_contact"]')->text());
+        self::assertSame(['published', 'anfragen@gartenhaus.example', null], $this->connection->fetchNumeric('SELECT status, inquiry_email, contact_person FROM venues WHERE id = ?', [$venue->id()]));
+    }
+
+    /**
      * One crafted field per case: together, a field that had slipped into the form would hide behind the others.
      *
      * @return iterable<string, array{LocationCard, array<string, mixed>, array<string, mixed>}>
@@ -244,6 +258,8 @@ final class LocationCardsTest extends WebTestCase
     private function managedVenue(PortalUser $manager): Venue
     {
         $venue = DetailVenues::minimal();
+        // D60: an online location keeps its inquiry address, so a contact save needs one to start from.
+        $this->connection->executeStatement("UPDATE venues SET inquiry_email = 'anfragen@gartenhaus.example' WHERE id = ?", [$venue->id()]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $venue]);
 
         return $venue;

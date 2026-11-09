@@ -54,7 +54,7 @@ final class DashboardTest extends WebTestCase
     public function test_it_shows_the_cms_widgets_and_the_new_action(): void
     {
         $this->logInAs(displayName: 'Andrea Keller');
-        $hut = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished]);
+        $hut = VenueFactory::new()->withoutLocation(null)->withoutInquiryEmail()->create(['name' => 'Waldhütte Eichholz', 'status' => VenueStatus::Unpublished]);
         $connection = self::getContainer()->get(Connection::class);
         self::assertInstanceOf(Connection::class, $connection);
         $connection->executeStatement("UPDATE venues SET cms_edited_at = '2026-10-28 09:00:00+00' WHERE id = ?", [$hut->id()]);

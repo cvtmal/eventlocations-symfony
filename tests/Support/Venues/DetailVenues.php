@@ -124,11 +124,14 @@ final class DetailVenues
     }
 
     /**
+     * Online without an inquiry address: since D60 no publish path leaves a venue so, but the pages keep the defensive
+     * path for it (F16 follow-up), and this fixture pins that path.
+     *
      * @param string $tier a tier code (`KnownTiers`); Free unless a test needs what Pro shows
      */
     public static function minimal(string $slug = self::MINIMAL_SLUG, string $name = 'Gartenhaus Minimal', string $tier = KnownTiers::FREE): Venue
     {
-        $venue = VenueFactory::createOne([
+        $venue = VenueFactory::new()->withoutInquiryEmail()->create([
             'name' => $name,
             'tier' => $tier,
             'status' => VenueStatus::Published,
