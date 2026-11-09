@@ -31,7 +31,7 @@
     {% embed 'admin/components/_card.html.twig' with {title: 'editor.checklist.title'|trans({}, 'cms'), id: 'venue-checklist', missing: missing} only %}
         {% block body %}
             <ul class="venue-checklist">
-                {% for item in ['summary', 'main_building', 'photo'] %}
+                {% for item in ['summary', 'main_building', 'photo', 'inquiry_email'] %}
                     {% set done = item not in missing %}
                     <li class="venue-checklist__item{{ done ? ' venue-checklist__item--done' }}">
                         {{ admin_icon(done ? 'check' : 'x') }}

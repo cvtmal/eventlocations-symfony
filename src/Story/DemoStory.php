@@ -62,6 +62,8 @@ use function Zenstruck\Foundry\Persistence\repository;
  *   Every Pro venue has a paid term (G9); three end within 60 days (one cancelled), see createTerms().
  * - Index gate (G12): every fifth venue has unchecked facts and every odd one no description, so about two in five
  *   entries are indexed and the launch regions show indexable and noindex landing pages in dev.
+ * - Contact (D60): every venue has an inquiry address; every fourth (index % 4 = 0) has nothing else (no phone,
+ *   website or contact person).
  * - 1–5 rooms, 0–2 documents, terms of the seven filter groups (one main building and one main
  *   setting each, 1–5 event types). No own rating or reviews: #53 retired them.
  * - Deterministic: faker is seeded and the distribution is index-based.
@@ -100,7 +102,7 @@ final class DemoStory extends Story
 {
     public const VENUES = 60;
 
-    /** F13: the demo venue (index) that opted out of briefs; it has an inquiry address (`0 !== $i % 4`). */
+    /** F13: the demo venue (index) that opted out of briefs. */
     private const int NO_BRIEFS = 2;
 
     /** Venue i is named PREFIXES[i % 12] + SUFFIXES[i % 15]: 60 distinct pairs (lcm 12, 15). */
@@ -397,6 +399,9 @@ final class DemoStory extends Story
         $factory = VenueFactory::new()->withFaq();
         if (0 !== $i % 4) {
             $factory = $factory->withContact();
+        } else {
+            // D60: a published venue needs an inquiry address. No faker draw, so every other venue keeps its data.
+            $factory = $factory->afterInstantiate(static fn (Venue $venue) => $venue->changeContact(null, 'anfragen@'.$slug.'.example.ch', null, null));
         }
         if (self::LIECHTENSTEIN === $i) {
             // After withContact(), whose faker draws stay, so every other venue keeps its data.

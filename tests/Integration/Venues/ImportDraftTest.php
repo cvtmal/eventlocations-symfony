@@ -115,6 +115,46 @@ final class ImportDraftTest extends KernelTestCase
     }
 
     /**
+     * D60: a folder without an inquiry address keeps every new or offline entry a draft, a managed one too, and names
+     * the gap before the draft rule's.
+     */
+    public function test_the_import_publishes_no_entry_without_an_inquiry_address(): void
+    {
+        $this->content->venue('remise-ohne-adresse', ['contact' => null]);
+        self::assertSame(Command::SUCCESS, $this->import(), $this->display());
+        self::assertSame('unpublished', $this->venueRow('remise-ohne-adresse')['status'] ?? null);
+        self::assertStringContainsString('remise-ohne-adresse: inquiry_email, facts, description', $this->display());
+
+        $user = PortalUserFactory::createOne();
+        $this->connection->executeStatement(
+            "INSERT INTO portal_venue_access (portal_user_id, venue_id, status, confirmed_at) VALUES (?, ?, 'active', now())",
+            [$user->id(), $this->venueId('remise-ohne-adresse')],
+        );
+        self::assertSame(Command::SUCCESS, $this->import(['--force' => true]), $this->display());
+        self::assertSame('unpublished', $this->venueRow('remise-ohne-adresse')['status'] ?? null, 'a manager does not lift D60');
+        self::assertStringContainsString('remise-ohne-adresse: inquiry_email', $this->display());
+        self::assertStringNotContainsString('remise-ohne-adresse: inquiry_email,', $this->display());
+    }
+
+    /**
+     * D60, as a staff save: a folder may not take the inquiry address of an online entry. That folder fails, and the
+     * entry stays online with its address and its old data.
+     */
+    public function test_a_folder_without_an_inquiry_address_fails_for_an_online_entry(): void
+    {
+        $this->content->venue('remise-online');
+        $this->import();
+        $this->connection->executeStatement("UPDATE venues SET status = 'published' WHERE content_key = 'remise-online'");
+
+        $this->content->change('remise-online', ['capacity' => ['max' => 150], 'contact' => null]);
+        self::assertSame(Command::FAILURE, $this->import(), $this->display());
+
+        self::assertStringContainsString('/contact/inquiry_email: the venue is online and needs an inquiry address', $this->display());
+        $row = $this->venueRow('remise-online');
+        self::assertSame(['published', 120, 'anfragen@example.ch'], [$row['status'] ?? null, $row['capacity_max'] ?? null, $row['inquiry_email'] ?? null]);
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function translations(string $key): array

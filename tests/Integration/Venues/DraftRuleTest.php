@@ -46,10 +46,10 @@ final class DraftRuleTest extends KernelTestCase
 
     public function test_every_gap_is_named_in_the_rules_order(): void
     {
-        $venue = VenueFactory::new()->withUncheckedFacts()->create(['status' => VenueStatus::Unpublished]);
+        $venue = VenueFactory::new()->withUncheckedFacts()->withoutInquiryEmail()->create(['status' => VenueStatus::Unpublished]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'summary' => ' ', 'description' => "  \n "]);
 
-        self::assertSame(['summary', 'main_building', 'photo', 'facts', 'description'], $this->violation(new PublishVenue($venue->number()))->missing);
+        self::assertSame(['summary', 'main_building', 'photo', 'inquiry_email', 'facts', 'description'], $this->violation(new PublishVenue($venue->number()))->missing);
     }
 
     public function test_checked_facts_and_a_description_let_an_unmanaged_entry_go_online(): void
@@ -69,6 +69,19 @@ final class DraftRuleTest extends KernelTestCase
         $this->dispatch(new PublishVenue($venue->number()));
 
         self::assertTrue($this->reload($venue)->isPublished());
+    }
+
+    /**
+     * D60: a manager lifts the draft rule, never the inquiry address.
+     */
+    public function test_an_entry_with_an_active_manager_still_needs_an_inquiry_address(): void
+    {
+        $venue = $this->draft(checked: false, description: null);
+        PortalVenueAccessFactory::new()->active()->create(['venue' => $venue]);
+        $this->connection->executeStatement('UPDATE venues SET inquiry_email = NULL WHERE id = ?', [$venue->id()]);
+
+        self::assertSame(['inquiry_email'], $this->violation(new PublishVenue($venue->number()))->missing);
+        self::assertFalse($this->reload($venue)->isPublished());
     }
 
     public function test_a_pending_access_request_is_no_manager(): void

@@ -10,6 +10,8 @@ venue:
         coordinates_required: 'Bitte Breite und Länge eintragen oder «Ortsmitte übernehmen» wählen.'
         not_publishable: '{count, plural, one {Noch nicht veröffentlichbar: eine Angabe fehlt.} other {Noch nicht veröffentlichbar: # Angaben fehlen.}}'
         still_published: 'Ein veröffentlichter Eintrag kann nicht gelöscht werden. Bitte zuerst offline nehmen.'
+        # D60: a contact save that empties the inquiry address of an online venue; also shown in /konto.
+        inquiry_email_required: 'Eine Location, die online ist, braucht eine Anfrage-E-Mail.'
         too_many_photos: 'Mit dem Plan «{tier}» sind höchstens {max, plural, one {# Foto} other {# Fotos}} möglich. Entferne zuerst ein Foto; mehr gibt es mit einem grösseren Plan.'
         too_many_event_types: 'Mit dem Plan «{tier}» sind höchstens {max, plural, one {# Anlassart} other {# Anlassarten}} möglich. Wähle weniger aus; mehr gibt es mit einem grösseren Plan.'
 
@@ -121,6 +123,7 @@ editor:
             summary: Kurztext
             main_building: Wichtigste Art der Location
             photo: Mindestens ein Foto
+            inquiry_email: Anfrage-E-Mail
             # F14 (D54): the draft rule's gaps as nouns, for the portal's «Es fehlt» frames (an entry with a manager never has them).
             facts: Prüfung der Fakten
             description: Beschreibung

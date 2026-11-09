@@ -1,7 +1,7 @@
 {#
     Step 6 (#45, POR-12), also the way back online. Context from `WizardController`: form, venue (`VenueHeader`),
-    state (`?SubmissionState`, null for a location that never went through the wizard), gaps list<{code, step}>,
-    hint_inquiry (bool), contact_anchor. Under review there is no form: "Wird geprüft" replaces it. The checkbox is also
+    state (`?SubmissionState`, null for a location that never went through the wizard), gaps list<{code, step}>
+    (D60: the inquiry address is one of them). Under review there is no form: "Wird geprüft" replaces it. The checkbox is also
     the rights declaration for the photos (G1): the text in force is printed above it, open, and the label names it; the
     second box is optional.
 #}
@@ -33,10 +33,6 @@
                 </ul>
             {% endblock %}
         {% endembed %}
-    {% endif %}
-
-    {% if hint_inquiry %}
-        <p><a href="{{ path('portal_location', {number: venue.number}) }}#{{ contact_anchor }}">{{ 'onboarding.check.hint_inquiry'|trans({}, 'portal') }}</a></p>
     {% endif %}
 
     <div class="page-header__actions">

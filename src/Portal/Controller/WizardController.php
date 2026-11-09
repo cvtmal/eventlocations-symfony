@@ -29,8 +29,6 @@ use App\Portal\ReadModel\SubmissionQuery;
 use App\Portal\ReadModel\SubmissionState;
 use App\Portal\Security\PortalIdentity;
 use App\Portal\Security\PortalVenueVoter;
-use App\Portal\ValueObject\LocationCard;
-use App\Portal\ValueObject\SubmissionStatus;
 use App\Portal\ValueObject\WizardStep;
 use App\Shared\Translation\EnabledLocale;
 use App\Shared\Translation\LocalizedRoutes;
@@ -92,7 +90,7 @@ final class WizardController extends AbstractController
             return $this->redirectToRoute('portal_location', ['number' => $number]);
         }
 
-        return $this->toStep(WizardStep::derive($this->lacks($edit)), $number, Response::HTTP_FOUND);
+        return $this->toStep(WizardStep::derive($this->gaps->missing($edit->header->id)), $number, Response::HTTP_FOUND);
     }
 
     #[Route('/{step}', name: 'portal_location_setup_step', requirements: ['step' => WizardStep::REQUIREMENT], methods: ['GET', 'POST'])]
@@ -189,15 +187,11 @@ final class WizardController extends AbstractController
     }
 
     /**
-     * Only here does a missing inquiry address stop anyone, and only a draft: the publish rule stays free of it, so a
-     * rejected, accepted or claimed location passes with the hint.
+     * A missing inquiry address is a publish gap like any other (D60): the check page names it with a link to its step.
      */
     private function check(WizardStep $step, VenueEdit $edit, Request $request, PortalIdentity $identity): Response
     {
         $state = $this->submissions->find($edit->header->id);
-        if (SubmissionStatus::Draft === $state?->status && null === $edit->inquiryEmail) {
-            return $this->toStep(WizardStep::Contact, $edit->number(), Response::HTTP_SEE_OTHER);
-        }
 
         $form = $this->createForm(SubmitLocationType::class, new SubmitLocationData());
         $form->handleRequest($request);
@@ -247,19 +241,6 @@ final class WizardController extends AbstractController
         } finally {
             $this->events->locationSubmitted(new LocationSubmitted($edit->header->id, $name, $profile->email, $profile->firstName, $profile->lastName, $profile->phone));
         }
-    }
-
-    /**
-     * @return list<string> gap codes; the inquiry address is the wizard's own, no publish rule
-     */
-    private function lacks(VenueEdit $edit): array
-    {
-        $missing = $this->gaps->missing($edit->header->id);
-        if (null === $edit->inquiryEmail) {
-            $missing[] = 'inquiry_email';
-        }
-
-        return $missing;
     }
 
     private function venue(int $number): VenueEdit
@@ -330,8 +311,6 @@ final class WizardController extends AbstractController
             'venue' => $edit->header,
             'state' => $state,
             'gaps' => $gaps,
-            'hint_inquiry' => SubmissionStatus::Draft !== $state?->status && null === $edit->inquiryEmail,
-            'contact_anchor' => LocationCard::Contact->anchor(),
         ], new Response(status: $status));
     }
 }

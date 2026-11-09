@@ -57,7 +57,7 @@
             {% endif %}
             {% if venue.hasContact() %}{{ include('venues/detail/_contact.html.twig', {venue: venue}, with_context = false) }}{% endif %}
             {% if venue.documents is not empty %}{{ include('venues/detail/_documents.html.twig', {venue: venue}, with_context = false) }}{% endif %}
-            {# F16: no section without an inquiry address (online is possible: the publish rule does not ask for one), so no link points at it. G5's preview link keeps its note (`inquiry_note_always`). #}
+            {# F16: no section without an inquiry address (defensive since D60: the publish rule asks for one, so an online venue has it), so no link points at it. G5's preview link keeps its note (`inquiry_note_always`). #}
             {% if venue.inquiryEmail or (inquiry_note_always ?? false) %}<section id="anfrage" class="venue-inquiry">{% block inquiry %}{{ inquiry_form(venue, inquiry ?? null, inquiry_undelivered ?? false) }}{% endblock %}</section>{% endif %}
             <p class="venue-report"><a href="{{ path('venue_report', {location: venue.number}) }}" rel="nofollow">{{ 'report.detail_link'|trans({}, 'venues') }}</a></p>
         </div>

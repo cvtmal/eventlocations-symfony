@@ -167,6 +167,23 @@ final class VenueCardsValidationTest extends WebTestCase
         self::assertSame('https://www.instagram.com/remise.rebhalde', $crawler->filter('#venue_contact_instagram')->attr('value'));
     }
 
+    /**
+     * D60: the venue stays online with its old address, and the field says why.
+     */
+    public function test_an_online_venue_keeps_its_inquiry_address(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $venue = $this->venue();
+        $before = $this->snapshot($venue);
+
+        $crawler = $this->post($venue, 'venue_contact', ['inquiryEmail' => '', 'contactPerson' => 'Beat Muster']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('true', $crawler->filter('#venue_contact_inquiryEmail')->attr('aria-invalid'));
+        self::assertStringContainsString('Eine Location, die online ist, braucht eine Anfrage-E-Mail.', $crawler->filter('form[name="venue_contact"]')->text());
+        self::assertSame($before, $this->snapshot($venue));
+    }
+
     public function test_an_emptied_instagram_is_removed(): void
     {
         $this->logInAs(AdminRole::Editor);

@@ -53,7 +53,7 @@ final class VenueEditorTest extends WebTestCase
             self::assertSame($card->anchor(), $form->attr('id'), $card->value);
             self::assertSame('', $form->attr('data-unsaved-guard'), $card->value);
         }
-        self::assertSame(['Kurztext', 'Wichtigste Art der Location', 'Mindestens ein Foto'], $crawler->filter('section[aria-labelledby="venue-checklist"] .venue-checklist__item > span:not(.visually-hidden)')->each(static fn (Crawler $item): string => $item->text()));
+        self::assertSame(['Kurztext', 'Wichtigste Art der Location', 'Mindestens ein Foto', 'Anfrage-E-Mail'], $crawler->filter('section[aria-labelledby="venue-checklist"] .venue-checklist__item > span:not(.visually-hidden)')->each(static fn (Crawler $item): string => $item->text()));
         self::assertSelectorTextContains('section[aria-labelledby="venue-history"]', 'Noch keine Änderungen');
     }
 

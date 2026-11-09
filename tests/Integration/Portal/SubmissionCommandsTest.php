@@ -213,6 +213,29 @@ final class SubmissionCommandsTest extends KernelTestCase
         self::assertSame('unpublished', $this->venueStatus($venue));
     }
 
+    /**
+     * D60: no submit and no accept without an inquiry address; the location stays where it was.
+     */
+    public function test_submit_and_accept_refuse_a_location_without_an_inquiry_address(): void
+    {
+        $draft = $this->complete();
+        SubmissionFactory::createOne(['venue' => $draft]);
+        $manager = PortalUserFactory::createOne();
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $draft]);
+        $submitted = $this->complete();
+        SubmissionFactory::new()->submitted()->create(['venue' => $submitted]);
+        $this->connection->executeStatement('UPDATE venues SET inquiry_email = NULL');
+
+        $violation = $this->refusal(new SubmitLocation($manager->id(), $draft->number()), VenueRuleViolation::class);
+        self::assertSame(['inquiry_email'], $violation->missing);
+        self::assertSame('draft', $this->row($draft)['status']);
+
+        $violation = $this->refusal(new AcceptSubmission($submitted->number(), $this->staff()->id()), VenueRuleViolation::class);
+        self::assertSame(['inquiry_email'], $violation->missing);
+        self::assertSame('submitted', $this->row($submitted)['status']);
+        self::assertSame('unpublished', $this->venueStatus($submitted));
+    }
+
     public function test_reject_keeps_the_venue_unpublished(): void
     {
         $staff = $this->staff();

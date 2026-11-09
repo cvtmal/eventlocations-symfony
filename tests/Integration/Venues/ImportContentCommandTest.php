@@ -219,7 +219,7 @@ final class ImportContentCommandTest extends KernelTestCase
         foreach ([['--dry-run' => true], []] as $options) {
             self::assertSame(Command::SUCCESS, $this->import($options), $this->display());
             self::assertStringContainsString('Held as draft: 2.', $this->display());
-            self::assertStringContainsString('Held as draft (an entry nobody answers for goes online only with checked facts and a description):', $this->display());
+            self::assertStringContainsString('Held as draft (an entry goes online only with an inquiry address; one nobody answers for also needs checked facts and a description):', $this->display());
             self::assertStringContainsString('remise-neu: facts, description', $this->display());
             self::assertStringContainsString('remise-beschrieben: facts', $this->display());
             self::assertStringNotContainsString('remise-beschrieben: facts,', $this->display());

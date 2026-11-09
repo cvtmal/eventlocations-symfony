@@ -21,10 +21,9 @@ use Zenstruck\Foundry\Story;
 /**
  * The monthly report (G10) in dev. The dev manager's two venues (PortalStory: one Free, one Pro) get three full months
  * of figures before the current Zurich month, the Free one quieter than the month before, the Pro one busier, plus
- * delivered inquiries; a venue with an inquiry address (an inquiry needs one: in the demo data the Free one) also gets
- * qualified inquiries (G7) and one feedback answer last month (G16's «Rückmeldungen»), so its mail shows both rows.
- * The Pro one has no inquiry address, so its mail shows «Qualifizierte Anfragen» 0 next to the seeded deliveries and
- * no answers row; an ingest marker lets the freshness check pass. Two other published venues have last month's
+ * delivered inquiries; a venue with an inquiry address (an inquiry needs one; every published demo venue has one
+ * since D60) also gets qualified inquiries (G7) and one feedback answer last month (G16's «Rückmeldungen»), so its
+ * mail shows both rows; an ingest marker lets the freshness check pass. Two other published venues have last month's
  * report sent and an opt-out, so the run skips them. To see it:
  *
  *     make seed

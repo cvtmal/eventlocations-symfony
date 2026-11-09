@@ -68,7 +68,7 @@ final class CreateCompanyForVenueTest extends KernelTestCase
 
     public function test_a_venue_without_a_town_has_no_address(): void
     {
-        $venue = VenueFactory::new()->withoutLocation(null)->create(['name' => 'Ohne Ort']);
+        $venue = VenueFactory::new()->withoutLocation(null)->withoutInquiryEmail()->create(['name' => 'Ohne Ort']);
         $id = EntityId::generate();
 
         $outcome = $this->dispatch(new CreateCompanyForVenue($venue->id(), $id));

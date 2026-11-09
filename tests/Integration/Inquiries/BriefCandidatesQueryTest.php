@@ -83,7 +83,7 @@ final class BriefCandidatesQueryTest extends KernelTestCase
 
     public function test_a_venue_without_an_inquiry_address_is_named_but_not_offered(): void
     {
-        $noAddress = VenueFactory::createOne();
+        $noAddress = VenueFactory::new()->withoutInquiryEmail()->create();
         VenueTranslationFactory::createOne(['venue' => $noAddress, 'slug' => 'ohne-adresse']);
         $open = $this->venue('offen');
 

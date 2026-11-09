@@ -31,10 +31,10 @@ final class VenuePublishGapsTest extends KernelTestCase
 
     public function test_it_names_each_gap_in_the_rules_order(): void
     {
-        $venue = VenueFactory::createOne(['status' => VenueStatus::Unpublished]);
+        $venue = VenueFactory::new()->withoutInquiryEmail()->create(['status' => VenueStatus::Unpublished]);
 
         // F14 (D54): nobody manages it, so the missing description is a gap too (DraftRuleTest).
-        self::assertSame(['summary', 'main_building', 'photo', 'description'], $this->gaps()->missing($venue->id()));
+        self::assertSame(['summary', 'main_building', 'photo', 'inquiry_email', 'description'], $this->gaps()->missing($venue->id()));
     }
 
     public function test_a_room_photo_does_not_count(): void
@@ -54,12 +54,15 @@ final class VenuePublishGapsTest extends KernelTestCase
         self::assertSame(['summary'], $this->gaps()->missing($venue->id()));
     }
 
-    public function test_an_inquiry_address_is_no_gap(): void
+    /**
+     * D60: D2 promises an inquiry form on every page, so a venue without an inquiry address cannot go online.
+     */
+    public function test_a_missing_inquiry_address_is_a_gap(): void
     {
         $venue = $this->complete();
         $this->connection->executeStatement('UPDATE venues SET inquiry_email = NULL WHERE id = ?', [$venue->id()]);
 
-        self::assertSame([], $this->gaps()->missing($venue->id()));
+        self::assertSame(['inquiry_email'], $this->gaps()->missing($venue->id()));
     }
 
     private function gaps(): VenuePublishGaps

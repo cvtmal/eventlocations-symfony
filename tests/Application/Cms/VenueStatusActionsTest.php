@@ -49,7 +49,7 @@ final class VenueStatusActionsTest extends WebTestCase
         self::assertResponseRedirects('/admin/locations/'.$number);
         $crawler = $this->client->followRedirect();
         $toast = $crawler->filter('.toast')->text();
-        self::assertSame('Noch nicht publizierbar. Es fehlt: Kurztext, Wichtigste Art der Location, Mindestens ein Foto. Fakten nicht geprüft, Beschreibung fehlt.', $toast);
+        self::assertSame('Noch nicht publizierbar. Es fehlt: Kurztext, Wichtigste Art der Location, Mindestens ein Foto, Anfrage-E-Mail. Fakten nicht geprüft, Beschreibung fehlt.', $toast);
         self::assertSame(1, substr_count($toast, 'Es fehlt'), 'the frame says it once, each checklist gap is a noun (#45 F-m2)');
         self::assertSame('unpublished', $this->venueStatus($number));
         self::assertSame(1, $this->auditRows($number), 'only the creation');
@@ -302,7 +302,7 @@ final class VenueStatusActionsTest extends WebTestCase
     private function makePublishable(Venue $venue): void
     {
         $this->connection->executeStatement("UPDATE venue_translations SET summary = 'Eine Scheune am Waldrand.', description = 'Eine alte Scheune mit Platz für 140 Gäste.' WHERE venue_id = ? AND locale = 'de'", [$venue->id()]);
-        $this->connection->executeStatement('UPDATE venues SET facts_checked_at = now() WHERE id = ?', [$venue->id()]);
+        $this->connection->executeStatement("UPDATE venues SET facts_checked_at = now(), inquiry_email = 'anfragen@scheune.example' WHERE id = ?", [$venue->id()]);
         VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
     }

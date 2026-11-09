@@ -36,6 +36,8 @@ final class ContentFolder
             'address' => ['street' => 'Musterweg 1', 'zip' => '8001', 'town' => 'Zürich'],
             'geo' => ['lat' => 47.37, 'lng' => 8.54],
             'translations' => ['de' => ['summary' => 'Fiktive Testlocation am Stadtrand.']],
+            // D60: no venue goes online without an inquiry address.
+            'contact' => ['inquiry_email' => 'anfragen@example.ch'],
         ];
     }
 

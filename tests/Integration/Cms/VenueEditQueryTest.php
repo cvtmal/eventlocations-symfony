@@ -220,7 +220,9 @@ final class VenueEditQueryTest extends KernelTestCase
             'no summary' => DetailVenues::full($this->em, 'ohne-text', 'Ohne Text'),
             'room photo only' => DetailVenues::full($this->em, 'nur-raumfoto', 'Nur Raumfoto'),
             'only a photo' => DetailVenues::withoutPlace(),
+            'no inquiry address' => DetailVenues::full($this->em, 'ohne-anfrage', 'Ohne Anfrage'),
         ];
+        $this->connection->executeStatement('UPDATE venues SET inquiry_email = NULL WHERE id = ?', [$cases['no inquiry address']->id()]);
         $this->connection->executeStatement("UPDATE venue_translations SET summary = '' WHERE venue_id = ?", [$cases['no summary']->id()]);
         $this->connection->executeStatement('DELETE FROM venue_photos WHERE venue_id = ? AND room_id IS NULL', [$cases['room photo only']->id()]);
         VenuePhotoFactory::createOne(['venue' => $cases['only a photo'], 'position' => 1]);

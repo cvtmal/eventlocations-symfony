@@ -83,6 +83,15 @@ final class VenueFactory extends PersistentObjectFactory
         });
     }
 
+    /**
+     * D60: a venue without an inquiry address, which can never be online (every factory venue has one by default,
+     * `initialize()`). Keeps the other contact fields.
+     */
+    public function withoutInquiryEmail(): self
+    {
+        return $this->afterInstantiate(static fn (Venue $venue) => $venue->changeContact($venue->phone(), null, $venue->website(), $venue->contactPerson()));
+    }
+
     public function withRoomFacts(int $roomCount, ?int $largestRoomM2, ?string $maxRoomHeightM): self
     {
         return $this->afterInstantiate(static fn (Venue $venue) => $venue->summariseRooms($roomCount, $largestRoomM2, $maxRoomHeightM));
@@ -91,8 +100,11 @@ final class VenueFactory extends PersistentObjectFactory
     protected function initialize(): static
     {
         // G12: checked by default, so a factory venue with a description passes VenueIndexGate; withUncheckedFacts() undoes it.
+        // D60: an inquiry address by default, as every online venue has one; withoutInquiryEmail() undoes it. Not from
+        // faker, so the seeded draws of the demo data stay as they were.
         return $this->afterInstantiate(static function (Venue $venue): void {
             $venue->confirmFacts(true, new \DateTimeImmutable('2026-01-01 00:00:00+01:00'));
+            $venue->changeContact(null, 'anfragen-'.bin2hex(random_bytes(4)).'@example.ch', null, null);
         })->afterPersist(static function (Venue $venue): void {
             // A paid tier comes with a paid term (G9): the entitlements read the term, not the tier. This one covers
             // every date a test mocks; a test about terms writes its own (SubscriptionFactory) or removes this one.

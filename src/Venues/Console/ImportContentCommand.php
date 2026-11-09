@@ -186,7 +186,7 @@ final class ImportContentCommand
 
         // Notes never change the exit code: a draft and a long event-type list are work for staff, not errors (F14).
         if ([] !== $drafts) {
-            $io->writeln('Held as draft (an entry nobody answers for goes online only with checked facts and a description):');
+            $io->writeln('Held as draft (an entry goes online only with an inquiry address; one nobody answers for also needs checked facts and a description):');
             $io->listing($drafts);
         }
         if ([] !== $notes) {

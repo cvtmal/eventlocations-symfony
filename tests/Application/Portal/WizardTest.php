@@ -248,7 +248,7 @@ final class WizardTest extends WebTestCase
      */
     private function location(PortalUser $manager, array $has = self::EVERYTHING): Venue
     {
-        $venue = VenueFactory::createOne(['status' => VenueStatus::Unpublished]);
+        $venue = VenueFactory::new()->withoutInquiryEmail()->create(['status' => VenueStatus::Unpublished]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'summary' => \in_array('summary', $has, true) ? self::SUMMARY : '']);
         if (\in_array('main_building', $has, true)) {
             VenueTermFactory::new()->term(TermGroup::Building, 'castle')->main()->create(['venue' => $venue]);
