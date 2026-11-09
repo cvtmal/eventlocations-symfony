@@ -75,7 +75,7 @@ _Status as of 2026-11-08, kept by the PO after every merge. The cycles themselve
 
 **Launch-critical, not started:** F16 `launch-verification` (final check). Small follow-up: G10's qualified row after G7 and G10.
 
-**After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues) .
+**After launch-critical:** F13 `multi-inquiry` (one request to up to 5 venues).
 
 ## Roadmap (proposed order)
 
