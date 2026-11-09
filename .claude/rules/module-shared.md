@@ -157,3 +157,11 @@ An Infomaniak VPS (D26: Debian 13, nginx, php-fpm 8.5 as the `deploy` user), Neo
 - New public route `last_minute` (`/kurzfristig-frei`, `PublicCache::listing`, in `PublicCacheHeadersTest`, walked by the no-session test).
 - `bin/cron-daily` step `last-minute-expire` (`app:last-minute:expire`) after `subscriptions-remind`; Sentry: covered by the `cron-daily` monitor (no own monitor); idempotent; runbook rows in `docs/operations.md` Cron.
 - The detail page has an HTML budget now (`DetailHtmlBudgetTest`, group `budget`, §4a.9).
+
+## F16 dry-run fixes (`f16-ops-guards`, current state)
+
+- `app:prod:check-env` also refuses any variable whose value holds a `__[A-Z][A-Z0-9_]*__` placeholder of `deploy/env.local.example` (one line per variable, the name only), the `MEDIA_BACKUP_*` lines included: leave those empty until the backup is set up. This sits on top of the per-variable rules above.
+- `deploy/probe.sh` takes check numbers (`sh probe.sh 14` runs only check 14); check 14 lists restic's newest snapshot (`--no-lock --no-cache`) and runs `bin/cron-media-backup status` from `<root>/current`. `tests/Deploy/run.sh` case `probe_media_backup`. The `media-backup` Sentry ping stays the owner's server-side crontab edit (comment in `deploy/crontab.txt`).
+- `public/50x.html` is nginx's static outage page (German, du, inline CSS, `/brand/logo.svg`; a brand swap point in `docs/brand.md`): `error_page 502 503 504 /50x.html` in the `index.php` location only (the app's own 5xx and the google-fotos limiter's 503 pass unchanged), `location = /50x.html` is `internal`, `no-store`, `try_files $uri =502`. `bin/build-release` checks that it ships; `HostingFilesTest` keeps it standalone and small; `PublicCopyAddressTest` scans `public/*.html`; `nginx-check.sh` case `server_down`. The server's nginx file is copied by hand, so the owner copies it again once.
+- `make validate-html URL=… ALLOW_STATUS=1` validates a 4xx/5xx page (prints the status); without it a non-2xx still stops the run.
+- Dev and test addresses are `*@deine-eventlocation.test` (`AdminStory::EMAIL`, `PortalStory::EMAIL`, `.env*`): a dev database seeded before needs `make seed` again for `ADMIN=1`/`PORTAL=1`.

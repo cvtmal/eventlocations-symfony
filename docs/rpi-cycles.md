@@ -780,6 +780,8 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Dry-run fix** (PR `f16-listing-lcp`, 2026-11-09). The F16 dry run measured `/eventlokale` at LCP 2,027–2,029 ms on the perf stack (S11: 2.0 s). Cause: the lazy images of the card carousels' off-screen slides (34 images, 128 KB). Card carousels are now deferred (`data-carousel-defer`, see `module-search`): 1,886–1,952 ms, Accessibility 100, `PER_PAGE` stays 48. The dry run's N6 (the card track's tab stop) and N7 (`aria-hidden` on the region tooltip) were dropped: below md the arrows are hidden, so the track is a narrow-viewport keyboard user's only way to the photos, and region-filter.js unhides the tooltip, which repeats the path's `aria-label`.
 
+**Dry-run fixes** (`f16-ops-guards`). From the L4 dry run: S2, `app:prod:check-env` refuses any `__PLACEHOLDER__` of `deploy/env.local.example` left in any variable; S3, `deploy/probe.sh` check 14 (`sh probe.sh 14`) lists restic's newest snapshot and runs `bin/cron-media-backup status`, the launch check of the 26-hour rule; N8, nginx answers its own 502/503/504 with the static `public/50x.html` (the owner copies the nginx file to the server again); N9, `make validate-html … ALLOW_STATUS=1` validates the error pages; N3, the dev addresses are `*@deine-eventlocation.test`.
+
 ## Reference material
 
 - **Product and plan:** `docs/product.md` (PO), `KICKOFF.md` (superseded fork brief), `docs/research/fork-research.md` (what carries over; written before E3, so ignore its French and language parts), `docs/prd/CMO_PRD.md` and `docs/prd/CTO_PRD.md` (their Next.js, Stripe and BullMQ parts are ignored: we stay on Symfony).
