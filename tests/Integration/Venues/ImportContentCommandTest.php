@@ -203,11 +203,11 @@ final class ImportContentCommandTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $this->import(['--dry-run' => true]), $this->display());
         self::assertStringContainsString('Held as draft: 1.', $this->display());
         self::assertStringContainsString('Notes:', $this->display());
-        self::assertStringContainsString('schloss-viele: event_types: 4 > 3 (Free)', $this->display());
+        self::assertStringContainsString('schloss-viele: event_types: 4 > 3 (Gratis)', $this->display());
         self::assertStringNotContainsString('gasthaus-ruhig:', $this->display(), 'a folder that asks to stay a draft is neither held nor noted');
 
         self::assertSame(Command::SUCCESS, $this->import(), $this->display());
-        self::assertStringContainsString('schloss-viele: event_types: 4 > 3 (Free)', $this->display());
+        self::assertStringContainsString('schloss-viele: event_types: 4 > 3 (Gratis)', $this->display());
     }
 
     /** F14 (D54): a folder the draft rule keeps offline is listed with what it lacks, in a dry run too, without failing the run. */

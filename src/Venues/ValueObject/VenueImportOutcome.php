@@ -15,7 +15,7 @@ final readonly class VenueImportOutcome
 
     /**
      * @param list<string> $messages why the venue failed; for any other status, notes for staff the run prints
-     *                               without failing (F14: `event_types: N > M (Free)`)
+     *                               without failing (F14: `event_types: N > M (Gratis)`)
      */
     private function __construct(
         public string $key,

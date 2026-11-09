@@ -61,7 +61,7 @@ final class ImportEventFactsTest extends KernelTestCase
             "SELECT count(*) FROM venue_terms WHERE venue_id = ? AND term_group = 'suitable_for'",
             [$this->venueId('schloss-viele')],
         ), 'the import never trims (F12 follow-up: report)');
-        self::assertStringContainsString('schloss-viele: event_types: 5 > 3 (Free)', $this->display());
+        self::assertStringContainsString('schloss-viele: event_types: 5 > 3 (Gratis)', $this->display());
     }
 
     public function test_an_update_replaces_the_facts(): void

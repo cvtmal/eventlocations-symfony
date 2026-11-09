@@ -254,8 +254,8 @@ After the summary the run lists, in a dry run too and without changing the exit 
 
 - **Held as draft**: `<key>: facts, description`, the folders [the draft rule](#the-draft-rule)
   keeps offline and what each lacks.
-- **Notes**: `<key>: event_types: N > M (Free)` when a folder names more event types than the
-  Free tier shows (D43). Every type is imported; staff cut the list to the plan while they
+- **Notes**: `<key>: event_types: N > M (Gratis)` when a folder names more event types than the
+  free tier («Gratis») shows (D43, D50). Every type is imported; staff cut the list to the plan while they
   check the facts.
 
 ### The draft rule
