@@ -1,20 +1,17 @@
 # Performance baseline
 
-_Last updated: 2026-11-09 · Source: `docs/rpi-cycles.md` S11 (PERF-1 budgets), §F16 (dry-run finding S1 and N10) · Tree: `origin/main` at `51ced0c` (#73 `f16-listing-lcp`); detail pages and k6 run 3 on `c8b03ef` (`f16-google-off-cleanup`)_
+_Last updated: 2026-11-09 · Source: `docs/rpi-cycles.md` S11 (PERF-1 budgets), §F16 (dry-run finding S1 and N10) · Tree: `origin/main` at `51ced0c` (#73 `f16-listing-lcp`); detail pages and k6 run 3 on `c8b03ef` (`f16-google-off-cleanup`); k6 run 4 (F16 `launch-verification`) on `6c1d0a3`_
 
 Every figure here is from deine-eventlocation.ch, measured on 2026-11-09. The figures from before the fork belong to the sister site and are gone. The method and the measurement tools came over with the fork, and §9 keeps the caveats that are properties of the shared code.
 
 ## 1. Summary
 
 - **Lighthouse and the byte budgets hold on every public page type.** Thirteen pages, three Lighthouse runs each, on demo ×1. The worst LCP is the listing at 1,957 ms (runs 1,954 to 1,960) against 2,000. CLS is at most 0.002 and TBT at most 79 ms. Performance, Accessibility and Best Practices are 99 to 100 everywhere. SEO is 100 on every indexable page. The landing pages (66, on demo data only), `/merkliste` and `/inhalt-melden` (63) are `noindex`, and `is-crawlable` is their only failing audit. **`/sammelanfrage` scores SEO 54:** it is `noindex` too, but it also fails `meta-description`, which is not by design (§8).
-- **BLOCKED: the detail page's uncached p95 misses its budget in 2 of 3 k6 runs.** Three `make perf-run MODE=all` runs on demo ×10, all above the load-4 rule (§10):
-  - Run 2, at load average 11.9 to 7.8, exits 0. Uncached p95 is 54.1 to 116.3 ms on `/` and the listing pages against 200, and 92.0 ms on the detail page against 120. Cached p95 is 6.2 to 11.6 ms against 20.
-  - Run 1, at load 10.5 to 17.7, exits 2. Detail is 128.3 ms against 120, cached listing 20.2 ms and cached canton 21.2 ms against 20.
-  - Run 3, on `c8b03ef` at load 22.7 to 14.0, exits 2. Detail is 196.6 ms against 120 and cached canton 48.8 ms against 20. `/` and the listing pages stay under 200 ms in every run (at most 164.1 ms).
-  - No run had a `server_error` or a short body. The detail p95 follows the host's load: 92.0, 128.3 and 196.6 ms at rising load. The perf containers peaked at about half a core in 5-second samples, which points at host contention, but samples that coarse cannot prove it (§5). The load did not fall below 4 while seven lane stacks ran. A run on an idle host decides it. If the detail page still misses there, the lever is `SimilarVenuesQuery` (§6).
+- **k6 holds every server budget (run 4, F16, exit 0).** On an idle host (every other lane stack idle, load 3.3 at the start; the run's own k6, php and Postgres lifted it to 4.1–8.9), `make perf-run MODE=all` on demo ×10: uncached p95 49.1 to 67.6 ms on `/` and the listing pages against 200, **65.1 ms on the detail page against 120** (54 %), cached p95 7.6 to 9.3 ms against 20. That settles the BLOCKED item of runs 1 to 3 (detail 92.0, 128.3 and 196.6 ms at load 8 to 23): those misses were host contention. `SimilarVenuesQuery` stays untuned (27.5 ms mean in run 4, §6).
+  - Runs 1 to 3 (#78, all above the load-4 rule, §10): run 2 at load 11.9 to 7.8 exits 0 (detail 92.0 ms); run 1 at 10.5 to 17.7 exits 2 (detail 128.3 ms, cached listing 20.2 and canton 21.2 ms); run 3 on `c8b03ef` at 22.7 to 14.0 exits 2 (detail 196.6 ms, cached canton 48.8 ms). No run had a `server_error` or a short body.
 - **Byte budgets:** `make perf-check` exits 0 (26 tests). CSS is 15,451 B gzip, 60 % of its budget. N10's 92 % counted the dev build's inline source map, which the test strips (§7). The listing HTML is the tight one: 56,631 B served at nginx's level 5 (92 %). At level 9, which is how the test counts, it is 55,065 B (90 %), and the test fixtures are 54,901 to 55,295 B (89 to 90 %).
-- **Watch items** (worst run at 90 % of the budget or more, §8): listing LCP (98 %), landing LCP (94 % in one run), listing HTML (92 % served, about 90 % in the fixtures), detail uncached p95 (164 % in k6 run 3, the BLOCKED item), cached p95 (244 % in run 3), and the region overlay's script budget (99.8 %, a test budget beside S11). On the listing, LCP and HTML move together: its LCP image is 3 KB, so its simulated LCP tracks the 57 KB document.
-- **Open:** the k6 re-run on an idle host (BLOCKED until then), and `/sammelanfrage`'s meta description (§8).
+- **Watch items** (worst run at 90 % of the budget or more, §8): listing LCP (98 %), landing LCP (94 % in one run), listing HTML (92 % served, about 90 % in the fixtures), and the region overlay's script budget (99.8 %, a test budget beside S11). On the listing, LCP and HTML move together: its LCP image is 3 KB, so its simulated LCP tracks the 57 KB document.
+- **Closed in F16:** the idle-host k6 run (run 4) and `/sammelanfrage`'s meta description.
 
 | Budget (S11) | Limit | Measured | Share | Pass | Watch |
 |---|---|---|---|---|---|
@@ -27,17 +24,17 @@ Every figure here is from deine-eventlocation.ch, measured on 2026-11-09. The fi
 | Lighthouse P / A / BP | ≥ 95 each | 99–100 | – | yes | no |
 | Lighthouse SEO, indexable pages | ≥ 95 | 100 | – | yes | no |
 | Lighthouse SEO, `noindex` pages | ≥ 95 | 63–66, `is-crawlable` only | – | `noindex` (landing pages: on demo data) | no |
-| Lighthouse SEO, `/sammelanfrage` | ≥ 95 | 54: `is-crawlable` and `meta-description` | – | **no**, follow-up (§8) | – |
-| Uncached p95, `/` and listing pages, demo ×10 | ≤ 200 ms | run 2: 54.1–116.3 ms; run 1: 83.0–154.5 ms; run 3: 81.8–164.1 ms | 58 %; 77 %; 82 % | yes in all three runs | no |
-| Uncached p95, detail, demo ×10 | ≤ 120 ms | run 2: 92.0 ms; run 1: **128.3 ms**; run 3: **196.6 ms** | 77 %; 107 %; 164 % | **BLOCKED**: 1 of 3 runs, all at load ≥ 7.8 | **yes** |
-| Cached p95, all five pages, demo ×10 | ≤ 20 ms (#19) | run 2: 6.2–11.6 ms; run 1: 9.1–**21.2** ms; run 3: 11.3–**48.8** ms | 58 %; 106 %; 244 % | **open**: 1 of 3 runs | **yes** |
+| Lighthouse SEO, `/sammelanfrage` | ≥ 95 | 54: `is-crawlable` and `meta-description`; F16 added the description, so only `is-crawlable` (`noindex`) is left | – | `noindex` | no |
+| Uncached p95, `/` and listing pages, demo ×10 | ≤ 200 ms | **run 4: 49.1–67.6 ms**; run 2: 54.1–116.3 ms; run 1: 83.0–154.5 ms; run 3: 81.8–164.1 ms | 34 %; 58 %; 77 %; 82 % | yes in all four runs | no |
+| Uncached p95, detail, demo ×10 | ≤ 120 ms | **run 4: 65.1 ms**; run 2: 92.0 ms; run 1: **128.3 ms**; run 3: **196.6 ms** | 54 %; 77 %; 107 %; 164 % | yes on the idle host (run 4); runs 1 and 3 missed at load ≥ 10 | no |
+| Cached p95, all five pages, demo ×10 | ≤ 20 ms (#19) | **run 4: 7.6–9.3 ms**; run 2: 6.2–11.6 ms; run 1: 9.1–**21.2** ms; run 3: 11.3–**48.8** ms | 47 %; 58 %; 106 %; 244 % | yes on the idle host (run 4) | no |
 | CSS gzip | ≤ 25 KB | 15,451 B | 60 % | yes | no |
 | JS gzip per page, worst (listing) | ≤ 15 KB | 13,149 B | 86 % | yes | no |
 | Listing HTML gzip, served (48 cards) | ≤ 60 KB | 56,631 B at level 5; 55,065 B at level 9 | 92 %; 90 % | yes | **yes** |
 | Listing HTML gzip, test fixtures (level 9) | ≤ 60 KB | 54,901–55,295 B | 89 to ≈ 90 % | yes | **yes** |
 | Font files on first view | ≤ 2 | 1 | 50 % | yes | no |
 
-"Share" is the measured value as a share of its limit, from the worst run. For k6, every run is listed, the passing run 2 first.
+"Share" is the measured value as a share of its limit, from the worst run. For k6, every run is listed, the idle-host run 4 (F16) first; it decides.
 
 ## 2. Setup
 
@@ -117,6 +114,18 @@ Transfer is not what the budget counts. JS transfer adds each file's response he
 
 k6 2.3.0 over the Compose network, demo ×10, `make perf-run MODE=all`. Uncached: per page a 10 s warm-up, then 60 s at 5 requests/s, each request with a unique `k6=` query, so every request is a backend render plus a store write. Cached: 30 s at 20 requests/s per page after one priming request. Pages: `/`, `/eventlokale`, `/eventlokale?canton=zh&guests=80&event[]=workshop` (three filters), `/eventlokale/zuerich`, and the detail page of `landgut-talwiese` (the richest venue, picked by `run.sh`).
 
+**Run 4 (F16 `launch-verification`, on `6c1d0a3` plus the branch's inquiry changes, which touch no measured page's render), 19:10 to 19:18, load average 3.3 at the start, 4.1 to 8.9 during the run (its own load; every other lane stack idle): exit 0.** 4,773 requests, 0 failed, 0 `server_errors`, 0 `short_bodies`, checks and `cache_fresh` 100 % in the measured phase. `docker stats` peaked at 28 % of one core for Postgres and 27 % for php. This run decides the budgets.
+
+| Page | Uncached p50 | p90 | p95 | max | Budget | Cached p50 | p95 | Budget |
+|---|---|---|---|---|---|---|---|---|
+| home | 39.9 ms | 44.9 ms | 49.1 ms | 257.7 ms | 200 ms | 5.7 ms | 8.2 ms | 20 ms |
+| listing | 52.5 ms | 60.2 ms | 64.9 ms | 214.9 ms | 200 ms | 5.9 ms | 8.9 ms | 20 ms |
+| three filters | 47.9 ms | 56.7 ms | 62.0 ms | 141.7 ms | 200 ms | 6.4 ms | 8.1 ms | 20 ms |
+| canton page | 51.9 ms | 59.8 ms | 67.6 ms | 271.3 ms | 200 ms | 6.3 ms | 9.3 ms | 20 ms |
+| detail | 51.7 ms | 59.6 ms | 65.1 ms | 188.3 ms | 120 ms | 5.8 ms | 7.6 ms | 20 ms |
+
+The p90 to p95 spread is now 5 to 8 ms on every page, where runs 1 to 3 spread 20 to 120 ms: the earlier tails were the host. `SimilarVenuesQuery` ran 352 times at 27.5 ms mean, about half of the detail page's p50, as in run 2; with 55 ms of headroom it stays untuned.
+
 **Run 2, 14:03 to 14:12, load average 11.9 to 7.8: exit 0.** 4,773 requests, 0 failed, 0 `server_errors`, 0 `short_bodies`, checks 4,506 of 4,506, `cache_fresh` 3,003 of 3,003 in the measured phase.
 
 | Page | Uncached p50 | p90 | p95 | max | Budget | Cached p50 | p95 | Budget |
@@ -162,7 +171,7 @@ k6 2.3.0 over the Compose network, demo ×10, `make perf-run MODE=all`. Uncached
 | `FilterDataQuery` (filter terms with `EXISTS`) | 1,407 | 2.5 ms | `/` and the listing pages |
 | Listing cards (`SELECT v.id, v.number, v.name, …`) | 703 | 3.1 ms | listing pages |
 
-`SimilarVenuesQuery` is about half of an uncached detail render's p50, the largest single cost, and the lever if the idle-host re-run still misses. It stays untuned until that run decides.
+`SimilarVenuesQuery` is about half of an uncached detail render's p50, the largest single cost, and the lever if the detail page's p95 ever nears 120 ms. Run 4 (F16, idle host) measured 27.5 ms mean and a detail p95 of 65.1 ms, so it stays untuned.
 
 ## 7. Byte budgets
 
@@ -193,15 +202,15 @@ k6 2.3.0 over the Compose network, demo ×10, `make perf-run MODE=all`. Uncached
 
 ## 8. Watch items and findings
 
-A figure counts as a watch item when its worst run reaches 90 % of its budget. Lighthouse and the byte figures are all under budget. The two k6 rows are open, because only one of the three runs passed; the detail row is BLOCKED.
+A figure counts as a watch item when its worst run reaches 90 % of its budget. Lighthouse and the byte figures are all under budget. The two k6 rows stay in the table as a record: runs 1 to 3 missed under host load, and the idle-host run 4 (F16) passed both with room to spare.
 
 | Item | Figure | Why it is tight | What to do before adding to it |
 |---|---|---|---|
 | Listing LCP | 1,957 ms (98 %) | The LCP image is 3 KB; the simulated LCP follows the 57 KB document over slow 4G (FCP 1,501 ms). #73 took it from 2,028 to under 2,000 ms | Any new card markup, listing copy or above-the-fold script: rerun `make perf-lighthouse URL=/eventlokale` |
 | Landing LCP | 1,804 and 1,802 ms medians, single runs to 1,878 ms (90–94 %) | The listing's shape on 9 and 5 cards: a 3 KB LCP photo after a 27–30 KB document | Rerun on a change to the card or the listing template |
 | Listing HTML | 56,631 B served (92 %), fixtures 89–90 % | Of the served page at level 9 (55,065 B), the 48 cards alone compress to about 32 KB and the rest to about 23 KB, of which the region and filter overlay forms are about 16 KB (68 KB raw). Parts compressed alone add up to more than the whole | A budget look for any new card or overlay markup (`make perf-check`); the levers are fewer cards per page (`ListingQuery::PER_PAGE` = 48), fewer slides per card, or a lighter overlay |
-| Detail uncached p95 (**BLOCKED**) | 92.0 ms (77 %) in run 2, 128.3 ms (107 %) in run 1, 196.6 ms (164 %) in run 3 | `SimilarVenuesQuery` at 26.7–33.7 ms mean (§6) | Re-run k6 on an idle host before F16 signs off. If it still misses, tune `SimilarVenuesQuery`. Any new detail query needs a k6 look |
-| Cached p95 (open) | 6.2–11.6 ms in run 2; listing 20.2 ms and canton 21.2 ms (106 %) in run 1; canton 48.8 ms (244 %) in run 3 | HttpCache file reads; the tail follows the host's load | The same idle-host re-run |
+| Detail uncached p95 (closed in F16) | 65.1 ms (54 %) in run 4 on the idle host; 92.0 to 196.6 ms in runs 1 to 3 under load | `SimilarVenuesQuery` at 26.7–33.7 ms mean (§6) | Any new detail query needs a k6 look; tune `SimilarVenuesQuery` first |
+| Cached p95 (closed in F16) | 7.6–9.3 ms (47 %) in run 4 on the idle host; up to 48.8 ms in run 3 under load | HttpCache file reads; the tail follows the host's load | Measure on an idle host (§10) |
 | Region overlay JS | 6,132 of 6,144 B (99.8 %) | A test budget beside S11, in `AssetBudgetTest` | Any change to `overlay.js`, `live-count.js` or `region-filter.js` fails `perf-check` once it grows by 12 B |
 
 **Finding, follow-up (SEO below 95, not by design): `/sammelanfrage` has no meta description.** The `meta` block of `templates/inquiries/brief.html.twig` (F13) holds only the robots tag, so the page fails `meta-description` beside `is-crawlable`. It is `noindex, nofollow`, so no search result shows it, but every other public page carries a description. Not fixed here (docs only).

@@ -186,17 +186,23 @@ Append the line of `deploy/authorized_keys.example`, with the public key of `dep
 
 ### 9. First deploy, crontab, first admin
 
-1. Actions -> Deploy -> Run workflow on `main`, action `deploy`. The smoke tests at the end need DNS
+1. The operator facts (D27), before the first deploy: replace the five `TODO(owner)` values
+   `site.operator_{name,street,postcode,city,uid}` in `config/services.yaml` in a commit on `main`. They show on
+   `/impressum`, `/datenschutz` and in every page's Organization JSON-LD; the deploy's env guard
+   (`app:prod:check-env`) refuses the release while any is left. In the same pass check the YouTube and Vimeo controller names and addresses in
+   `translations/shared+intl-icu.de.yaml` (`legal.privacy.videos.text`, marked `TODO owner`, G15) against
+   policies.google.com/privacy and vimeo.com/privacy; the guard does not catch that one.
+2. Actions -> Deploy -> Run workflow on `main`, action `deploy`. The smoke tests at the end need DNS
    and the certificate; before DNS points at the VPS check it directly (`-k` skips the certificate
    check): `curl -kI --resolve deine-eventlocation.ch:443:<vps ip> https://deine-eventlocation.ch/health`.
-2. Crontab, as `deploy`: put `MAILTO=` to the operator's address into `deploy/crontab.txt` (the
+3. Crontab, as `deploy`: put `MAILTO=` to the operator's address into `deploy/crontab.txt` (the
    `__OPS_MAIL__` placeholder), then `crontab deploy/crontab.txt` and `crontab -l`. The server needs
    a mail transport for cron mail (`apt install msmtp-mta` with the Infomaniak mailbox), or set
    `MAILTO=""` and rely on the Sentry cron monitor in [Monitoring](#monitoring).
-3. The media backup: [Media backup](#media-backup), "Setup" (bucket, keys, `init`, a first run).
-4. The first staff account: `cd <root>/current && php bin/console app:admin:create-user <e-mail> --role=admin`
+4. The media backup: [Media backup](#media-backup), "Setup" (bucket, keys, `init`, a first run).
+5. The first staff account: `cd <root>/current && php bin/console app:admin:create-user <e-mail> --role=admin`
    (it asks for the password twice), then log in at `/admin` and enrol the second factor.
-5. Content: [Content](#content). Then add the Sentry monitors and the backup schedule.
+6. Content: [Content](#content). Then add the Sentry monitors and the backup schedule.
 
 ## Deploy, purge, rollback
 
@@ -385,7 +391,8 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
    which does only those two steps and may run again when nothing is left. Then delete the row
    from the sheet, as the command says.
    Withdrawn photos remain in the media backup until its retention ages them out (F15b: 365 days); no restore of a withdrawn venue.
-   Nach einem Widerruf löscht der Owner die Ordner cms/<Nr> und content/<Key> auch in seiner externen Kopie (bin/pull-media-backup löscht nie); Nummer und Key stehen in der Widerrufsnotiz.
+   After a withdrawal the owner also deletes the folders `cms/<Nr>` and `content/<Key>` in the external copy on the Mac
+   (`bin/pull-media-backup` never deletes); the number and the key are in the withdrawal note.
 4. **The eventlokale crawl** (D11, D12, D32; owner-run, internal only):
    `make sf c="app:crm:crawl-eventlokale"` (every category, several hours, resumable) writes
    the private `CONTENT_ROOT/owner/eventlokale.csv` and the facts-only draft sheet
@@ -501,6 +508,12 @@ php bin/console mailer:test --from hallo@deine-eventlocation.ch <address outside
 ```
 
 The message must arrive with `dkim=pass spf=pass dmarc=pass`.
+
+One-click unsubscribe (RFC 8058) needs the `List-Unsubscribe` and `List-Unsubscribe-Post` headers inside the DKIM
+signature; `mailer:test` sets neither. So also send one real mail that carries them (the monthly owner report, the
+G16 feedback mail, a Sammelanfrage mail or a CRM mail) to a Gmail address and check "Show original": the `DKIM-Signature` header's `h=`
+list must name both headers. If Infomaniak's signer leaves them out, the unsubscribe links in the body still work,
+but Gmail and Yahoo show no unsubscribe button; ask Infomaniak support before launch (F16).
 
 Every inquiry waits for SMTP (delivery is synchronous). `default_socket_timeout=10` in
 `public/.user.ini` bounds each blocking read. If `venue_mail_sent_at - created_at` stays above

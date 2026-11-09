@@ -1,7 +1,7 @@
-{# The POST answer when the venue mail did not go out (G7, D56): the inquiry is stored and staff get the hourly alert, so the guest has nothing more to do and gets no form (a resubmit would only duplicate it). Params: venue. #}
+{# The POST answer when the venue mail did not go out (G7, D56): the inquiry is stored and staff get the hourly alert, so the guest has nothing more to do and gets no form (a resubmit would only duplicate it). The notice is the POST's fragment target and takes the focus, so a screen reader reads it (F16). Params: venue, anchor. #}
 <div class="inquiry-form venue-section">
     <h2 class="venue-section__title">{{ 'form.heading'|trans({name: venue.name}, 'inquiries') }}</h2>
-    <div class="inquiry-form__summary" role="alert">
+    <div class="inquiry-form__summary" role="alert" id="{{ anchor }}" tabindex="-1" data-inquiry-focus>
         {{ icon('info') }}
         <div>
             <p>{{ 'form.undelivered'|trans({name: venue.name}, 'inquiries') }}</p>

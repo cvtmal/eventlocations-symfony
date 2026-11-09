@@ -147,6 +147,7 @@ feedback:
 # F13: the brief page /sammelanfrage, its confirmation and the venue's opt-out page.
 brief:
     title: Sammelanfrage
+    meta_description: Eine Anfrage an bis zu fünf Locations auf einmal. Du füllst das Formular einmal aus, und jede Location antwortet dir direkt.
     heading: Eine Anfrage an mehrere Locations
     lead: Du füllst das Formular einmal aus, und deine Anfrage geht an die Locations, die du anhakst, höchstens fünf. Jede antwortet dir direkt.
     choose: An diese Locations

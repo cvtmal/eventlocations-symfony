@@ -59,7 +59,7 @@ final class InquiryFormRenderingTest extends WebTestCase
         $form = $crawler->filter('#anfrage form');
         self::assertCount(1, $form);
         self::assertSame('post', strtolower((string) $form->attr('method')));
-        self::assertSame(self::PAGE.'/anfrage#anfrage', $form->attr('action'));
+        self::assertSame(self::PAGE.'/anfrage#anfrage-hinweis', $form->attr('action'), 'a re-render opens at its focusable summary');
         self::assertSelectorTextContains('#anfrage h2', 'Schloss Seeblick kontaktieren');
         self::assertSame(['Kostenlos', 'Unverbindlich', 'Direkt zur Location'], $crawler->filter('.inquiry-form__promises li')->each(static fn (Crawler $li): string => $li->text()));
 

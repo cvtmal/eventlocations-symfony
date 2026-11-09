@@ -63,6 +63,7 @@ final class InquiryMailer
         $recipient = '' === $override ? $inquiry->recipientEmail() : $override;
         $guestName = $inquiry->firstName().' '.$inquiry->lastName();
 
+        $brief = $this->briefContext($inquiry);
         $message = (new TemplatedEmail())
             ->to($recipient)
             ->replyTo(new Address($inquiry->email(), $guestName))
@@ -75,7 +76,14 @@ final class InquiryMailer
             ], 'inquiries', $inquiry->locale()))
             ->htmlTemplate('inquiries/email/venue.html.twig')
             ->locale($inquiry->locale())
-            ->context($this->context($inquiry) + $this->briefContext($inquiry));
+            ->context($this->context($inquiry) + $brief);
+
+        // The brief opt-out takes RFC 8058's one-click POST, as the feedback and owner-report mails do (F16).
+        if (null !== $brief['brief_opt_out_url']) {
+            $message->getHeaders()
+                ->addTextHeader('List-Unsubscribe', '<'.$brief['brief_opt_out_url'].'>')
+                ->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+        }
 
         if ('' !== $override) {
             $message->getHeaders()->addTextHeader(self::ORIGINAL_RECIPIENT_HEADER, $inquiry->recipientEmail());
