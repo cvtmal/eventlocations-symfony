@@ -838,11 +838,21 @@ write_stub_tools() {
 printf 'docker %s\n' "$*" >> "$STUB_LOG"
 [ -z "${DATABASE_URL:-}" ] || printf 'docker env DATABASE_URL=%s\n' "$DATABASE_URL" >> "$STUB_LOG"
 [ -z "${GOOGLE_PLACES_API_KEY:-}" ] || printf 'docker env GOOGLE_PLACES_API_KEY=%s\n' "$GOOGLE_PLACES_API_KEY" >> "$STUB_LOG"
+case "$*" in
+    *" app:crm:withdraw-consent --withdrawn-key "*)
+        printf '%s\n' "${STUB_WITHDRAWN_KEY-}"
+        exit "${STUB_WITHDRAWN_EXIT:-0}"
+        ;;
+esac
 exit 0
 STUB
+    # STUB_SSH_RUN=1 runs a remote "rm -rf" here, on a fake tree (PROD_REMOTE_APP under $work).
     cat > "$work/tools/ssh" <<'STUB'
 #!/bin/sh
 printf 'ssh %s\n' "$*" >> "$STUB_LOG"
+case "${STUB_SSH_RUN:-}:$2" in
+    "1:rm -rf "*) sh -c "$2" ;;
+esac
 STUB
     cat > "$work/tools/rsync" <<'STUB'
 #!/bin/sh
@@ -855,6 +865,7 @@ STUB
 
 prod_import() { # prod_import <args...>: the real script from a fake checkout, with stub tools
     env PATH="$work/tools:$PATH" PROD_DATABASE_URL="${TEST_DATABASE_URL-postgresql://fake-url}" PROD_SSH="${TEST_SSH-site@host.example}" \
+        PROD_REMOTE_APP="${TEST_REMOTE_APP-/var/www/deine-eventlocation.ch/current}" \
         sh "$work/checkout/bin/prod-import" "$@"
 }
 
@@ -1025,6 +1036,35 @@ prod_import_onboarding() { # The CRM commands of the onboarding runbook (F14), o
         ok "$cmd neither syncs nor purges"
     done
 
+    prod_import_withdraw
+}
+
+remote_venue_media() { # remote_venue_media: venue 7's media on a fake server, beside venue 8's
+    for dir in public/media/7 var/media/cms/7 var/media/content/remise-am-bach public/media/8 var/media/cms/8 \
+        var/media/content/seehof-muster; do
+        mkdir -p "$TEST_REMOTE_APP/$dir"
+        printf 'fictional\n' > "$TEST_REMOTE_APP/$dir/photo.jpg"
+    done
+}
+
+expect_venue_media() { # expect_venue_media <case> present|gone: venue 7's directories; venue 8's always stay
+    for dir in public/media/7 var/media/cms/7 var/media/content/remise-am-bach; do
+        case "$2" in
+            present) [ -f "$TEST_REMOTE_APP/$dir/photo.jpg" ] || fail "$1: $dir is gone" ;;
+            *) [ ! -e "$TEST_REMOTE_APP/$dir" ] || fail "$1: $dir is still there" ;;
+        esac
+    done
+    for dir in public/media/8 var/media/cms/8 var/media/content/seehof-muster; do
+        [ -f "$TEST_REMOTE_APP/$dir/photo.jpg" ] || fail "$1: another venue's $dir is gone"
+    done
+    ok "$1"
+}
+
+prod_import_withdraw() { # withdraw on a fake server tree: the ssh stub runs the rm there
+    TEST_REMOTE_APP="$work/remote-app"
+    export STUB_SSH_RUN=1 STUB_WITHDRAWN_KEY=remise-am-bach
+    remote_venue_media
+
     clear_log
     run prod_import withdraw-dry 7 --on=2026-11-09
     expect_exit "prod-import withdraw-dry exits 0" 0
@@ -1033,26 +1073,63 @@ prod_import_onboarding() { # The CRM commands of the onboarding runbook (F14), o
         fail "withdraw-dry touched the server"
     fi
     ok "withdraw-dry runs the dry run and leaves the server alone"
+    expect_output "withdraw-dry names what withdraw deletes on the server" \
+        "dry run: withdraw would then delete on the server $TEST_REMOTE_APP/public/media/7 and the originals named above, under $TEST_REMOTE_APP/var/media"
+    expect_venue_media "after withdraw-dry the public media and the originals are still there" present
 
     clear_log
     run prod_import withdraw 7
     expect_exit "prod-import withdraw exits 0" 0
-    steps="$(sed -n 's/.*app:crm:withdraw-consent --dry-run.*/dry-run/p; s/.*app:crm:withdraw-consent 7$/withdraw/p; s/^ssh .*rm -rf \/var\/www\/deine-eventlocation.ch\/current\/public\/media\/7$/remove-media/p; s/^ssh .*app:http-cache:clear.*/purge/p' "$STUB_LOG")"
+    paths="$TEST_REMOTE_APP/public/media/7 $TEST_REMOTE_APP/var/media/cms/7 $TEST_REMOTE_APP/var/media/content/remise-am-bach"
+    steps="$(sed -n "s/.*app:crm:withdraw-consent --dry-run.*/dry-run/p; s/.*app:crm:withdraw-consent 7\$/withdraw/p; s/.*app:crm:withdraw-consent --withdrawn-key 7\$/key/p; s#^ssh site@host.example rm -rf $paths\$#remove-media#p; s/^ssh .*app:http-cache:clear.*/purge/p" "$STUB_LOG")"
     [ "$steps" = "withdraw
+key
 remove-media
 purge" ] || fail "prod-import withdraw ran another order: $steps"
-    ok "withdraw deletes the entry, then its public media on the server, then purges"
+    ok "withdraw deletes the entry, then its public media and originals on the server, then purges"
+    expect_venue_media "after withdraw the public media and the originals are gone" gone
+    expect_output "withdraw says what it deleted" "deleted on the server: $paths"
 
+    remote_venue_media
+    for attempt in retry "second retry"; do
+        clear_log
+        run prod_import withdraw-media 7
+        expect_exit "prod-import withdraw-media exits 0 ($attempt)" 0
+        if grep '^docker ' "$STUB_LOG" | grep -v -e '^docker env ' -e ' rm -rf var/cache/prod$' -e ' test -x /usr/bin/time$' | grep -q -v -- ' app:crm:withdraw-consent --withdrawn-key 7$'; then
+            fail "withdraw-media ran more than the key lookup against Neon"
+        fi
+        steps="$(sed -n "s/.*app:crm:withdraw-consent --withdrawn-key 7\$/key/p; s#^ssh site@host.example rm -rf $paths\$#remove-media#p; s/^ssh .*app:http-cache:clear.*/purge/p" "$STUB_LOG")"
+        [ "$steps" = "key
+remove-media
+purge" ] || fail "prod-import withdraw-media ran another order: $steps"
+        expect_venue_media "withdraw-media deletes the public media and the originals ($attempt)" gone
+    done
+    ok "withdraw-media retries only the key lookup, the media removal and the purge, and again with nothing left"
+
+    for key in ../seehof-muster "seehof-muster x" -x "a--b" "a/b"; do
+        remote_venue_media
+        clear_log
+        STUB_WITHDRAWN_KEY="$key"
+        run prod_import withdraw-media 7
+        expect_failure "withdraw-media refuses the key '$key'"
+        if grep -q '^ssh ' "$STUB_LOG"; then
+            fail "withdraw-media touched the server with the key '$key'"
+        fi
+        expect_venue_media "nothing is deleted with the key '$key'" present
+    done
+
+    STUB_WITHDRAWN_KEY=remise-am-bach
+    export STUB_WITHDRAWN_EXIT=1
     clear_log
     run prod_import withdraw-media 7
-    expect_exit "prod-import withdraw-media exits 0" 0
-    if grep -q '^docker ' "$STUB_LOG"; then
-        fail "withdraw-media ran the local container against Neon"
+    expect_failure "withdraw-media stops when the venue was not withdrawn"
+    if grep -q '^ssh ' "$STUB_LOG"; then
+        fail "withdraw-media touched the server without a withdrawal"
     fi
-    steps="$(sed -n 's/^ssh .*rm -rf \/var\/www\/deine-eventlocation.ch\/current\/public\/media\/7$/remove-media/p; s/^ssh .*app:http-cache:clear.*/purge/p' "$STUB_LOG")"
-    [ "$steps" = "remove-media
-purge" ] || fail "prod-import withdraw-media ran another order: $steps"
-    ok "withdraw-media retries only the media removal and the purge"
+    expect_venue_media "nothing is deleted without a withdrawal" present
+
+    rm -rf "$TEST_REMOTE_APP"
+    unset TEST_REMOTE_APP STUB_SSH_RUN STUB_WITHDRAWN_KEY STUB_WITHDRAWN_EXIT
 }
 
 pull_backup() { # pull_backup <args...>

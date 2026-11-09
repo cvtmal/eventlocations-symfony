@@ -12,10 +12,12 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * app:crm:withdraw-consent (F14): a dry run changes nothing; a run deletes the entry and its content folder and
- * reminds to delete the sheet row; an unknown number or a venue without a recorded yes is refused.
+ * app:crm:withdraw-consent (F14): a dry run changes nothing; a run deletes the entry, its content folder and its
+ * originals (D54) and reminds to delete the sheet row; an unknown number or a venue without a recorded yes is refused.
+ * `--withdrawn-key` gives bin/prod-import the key of a withdrawn venue, again and again, and refuses any other.
  */
 final class WithdrawConsentCommandTest extends KernelTestCase
 {
@@ -29,17 +31,43 @@ final class WithdrawConsentCommandTest extends KernelTestCase
     public function test_it_deletes_the_entry_and_its_folder(): void
     {
         $number = $this->importedWithConsent(true);
+        $originals = $this->originals($number);
         $withdraw = $this->withdraw();
 
         self::assertSame(Command::SUCCESS, $withdraw->execute(['venue-number' => (string) $number, 'path' => $this->content->path(), '--dry-run' => true]));
         self::assertStringContainsString('Dry run: would delete the folder', $withdraw->getDisplay(true));
+        self::assertStringContainsString('Dry run: would delete the originals '.implode(' and ', $originals), $withdraw->getDisplay(true));
         self::assertDirectoryExists($this->content->folder(self::KEY));
+        foreach ($originals as $directory) {
+            self::assertFileExists($directory.'/kept-by-no-row.jpg', 'the dry run deletes no original');
+        }
         self::assertNotFalse($this->venueRow(self::KEY));
 
         self::assertSame(Command::SUCCESS, $withdraw->execute(['venue-number' => (string) $number, 'path' => $this->content->path(), '--on' => '2026-11-02']));
         self::assertDirectoryDoesNotExist($this->content->folder(self::KEY));
+        foreach ($originals as $directory) {
+            self::assertDirectoryDoesNotExist($directory);
+        }
         self::assertFalse($this->venueRow(self::KEY));
+        self::assertStringContainsString('Deleted the originals '.implode(' and ', $originals), $withdraw->getDisplay(true));
         self::assertStringContainsString('Delete the row of gutshof-erfunden from your sheet.', $withdraw->getDisplay(true));
+    }
+
+    public function test_the_withdrawn_key_comes_from_the_note_again_and_again_and_only_for_a_withdrawn_venue(): void
+    {
+        $number = $this->importedWithConsent(true);
+        $withdraw = $this->withdraw();
+
+        self::assertSame(Command::FAILURE, $withdraw->execute(['venue-number' => (string) $number, '--withdrawn-key' => true]));
+        self::assertStringContainsString(\sprintf('Venue %d still exists: withdraw it first.', $number), $withdraw->getDisplay(true));
+        self::assertSame(Command::FAILURE, $withdraw->execute(['venue-number' => '999999', '--withdrawn-key' => true]));
+        self::assertStringContainsString('No venue 999999 was withdrawn.', $withdraw->getDisplay(true));
+
+        self::assertSame(Command::SUCCESS, $withdraw->execute(['venue-number' => (string) $number, 'path' => $this->content->path(), '--on' => '2026-11-02']));
+        foreach ([1, 2] as $run) {
+            self::assertSame(Command::SUCCESS, $withdraw->execute(['venue-number' => (string) $number, '--withdrawn-key' => true]), 'run '.$run);
+            self::assertSame(self::KEY."\n", $withdraw->getDisplay(true), 'only the key, run '.$run);
+        }
     }
 
     public function test_an_unknown_number_or_a_venue_without_a_yes_is_refused(): void
@@ -66,6 +94,25 @@ final class WithdrawConsentCommandTest extends KernelTestCase
         }
 
         return $this->venueNumber(self::KEY);
+    }
+
+    /**
+     * Both original directories of the venue under MEDIA_ROOT, each with a file no row names (as a leftover would be).
+     *
+     * @return list<string>
+     */
+    private function originals(int $number): array
+    {
+        $root = self::getContainer()->getParameter('app.media_root');
+        self::assertIsString($root);
+        $directories = [];
+        foreach (['content/'.self::KEY, 'cms/'.$number] as $relative) {
+            $directory = rtrim($root, '/').'/'.$relative;
+            (new Filesystem())->dumpFile($directory.'/kept-by-no-row.jpg', 'not an image');
+            $directories[] = $directory;
+        }
+
+        return $directories;
     }
 
     private function withdraw(): CommandTester

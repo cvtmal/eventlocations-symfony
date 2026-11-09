@@ -36,12 +36,14 @@ Usage: bin/prod-import <command>
   consents-dry <csv>       app:crm:record-consents --dry-run against Neon: what would be recorded, no writes
   consents <csv>           app:crm:record-consents against Neon
   withdraw-dry <number> [--on=YYYY-MM-DD]
-                           app:crm:withdraw-consent --dry-run against Neon: what would go, no writes
+                           app:crm:withdraw-consent --dry-run against Neon: what would go, here and
+                           on the server, no writes
   withdraw <number> [--on=YYYY-MM-DD]
                            app:crm:withdraw-consent against Neon, then delete the venue's public
-                           media on the server, then purge
-  withdraw-media <number>  delete the venue's public media on the server, then purge: the retry
-                           when withdraw committed but its media step or purge failed
+                           media and originals on the server, then purge
+  withdraw-media <number>  delete the withdrawn venue's public media and originals on the server,
+                           then purge: the retry when withdraw committed but its media step or
+                           purge failed
   contacts-dry <csv>       app:crm:import-contacts --dry-run against Neon: the row outcomes, no writes
   contacts <csv>           app:crm:import-contacts against Neon (sends nothing)
   help                     this text
@@ -121,10 +123,34 @@ sync_media() {
     say "media synced"
 }
 
+withdrawn_key() { # withdrawn_key <venue number>: the content key Neon's withdrawal note keeps, never a sheet's
+    if ! key="$(prod_console app:crm:withdraw-consent --withdrawn-key "$1")"; then
+        printf '%s\n' "$key" >&2
+        die "no content key for venue $1: it has to be withdrawn first"
+    fi
+    # The pattern of a content key (ContentFormat::KEY_PATTERN), so the path stays one directory deep.
+    case "$key" in
+        "") ;;
+        *[!a-z0-9-]* | -* | *- | *--*) die "refused content key for venue $1: $key" ;;
+    esac
+    [ "${#key}" -le 100 ] || die "refused content key for venue $1: longer than 100"
+    printf '%s' "$key"
+}
+
+venue_media_paths() { # venue_media_paths <venue number> [<content key>]: the venue's directories on the server
+    # Public media and uploads are kept under the number, the import's originals under the key (Venues\VenueOriginals).
+    printf '%s' "$REMOTE_APP/public/media/$1 $REMOTE_APP/var/media/cms/$1"
+    [ -z "${2:-}" ] || printf ' %s' "$REMOTE_APP/var/media/content/$2"
+}
+
 remove_venue_media() { # remove_venue_media <venue number>
     # The console deletes the local copies only; the sync never deletes on the server.
-    # shellcheck disable=SC2029 # REMOTE_APP is meant to expand here; $1 is digits only.
-    ssh "$PROD_SSH" "rm -rf $REMOTE_APP/public/media/$1"
+    # Two steps: set -e stops on a failed substitution only when it is the whole assignment.
+    key="$(withdrawn_key "$1")"
+    paths="$(venue_media_paths "$1" "$key")"
+    # shellcheck disable=SC2029 # The paths are meant to expand here: digits and a checked key only.
+    ssh "$PROD_SSH" "rm -rf $paths"
+    say "deleted on the server: $paths"
 }
 
 purge_cache() {
@@ -247,7 +273,11 @@ main() {
             ;;
         consents-dry) prod_console app:crm:record-consents --dry-run "$CONTAINER_ROOT/$1" ;;
         consents) prod_console app:crm:record-consents "$CONTAINER_ROOT/$1" ;;
-        withdraw-dry) prod_console app:crm:withdraw-consent --dry-run "$@" ;;
+        withdraw-dry)
+            prod_console app:crm:withdraw-consent --dry-run "$@"
+            # withdraw takes the key from the withdrawal note, which does not exist yet: the console named the originals.
+            say "dry run: withdraw would then delete on the server $REMOTE_APP/public/media/$1 and the originals named above, under $REMOTE_APP/var/media"
+            ;;
         withdraw)
             prod_console app:crm:withdraw-consent "$@"
             # Once this commits, a rerun stops at "no venue": withdraw-media is the retry of the two steps below.

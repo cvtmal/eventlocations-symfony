@@ -39,7 +39,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * 3. Takes the venue offline and deletes it; DeleteVenue leaves a tombstone of the content key, so the import never
  *    brings it back.
  * 4. Removes the Location's contacts and clears the website, phone, e-mail and address copied from the entry.
- * 5. Writes a note with no actor: the withdrawal, dated the day it came. The consent note stays beside it.
+ * 5. Writes a note with no actor: the withdrawal, dated the day it came, with the venue's number and content key
+ *    (`ConsentQuery::withdrawnKey()`). The consent note stays beside it.
  *
  * The Location, its name and its timeline stay, as the proof of the yes and of its withdrawal.
  */
@@ -109,7 +110,8 @@ final class WithdrawConsentHandler implements CommandHandlerInterface
             null,
             null,
             $this->translator->trans('timeline.system.consent_withdrawn', ['date' => $on->format('d.m.Y')], 'crm', $this->locales->default()),
-            ['consent_withdrawn' => ['on' => $command->withdrawnOn]],
+            // The venue's number and key outlive it here: the retry of the server's media step finds its originals by them.
+            ['consent_withdrawn' => ['on' => $command->withdrawnOn, 'venue' => $venue->number, 'key' => $venue->contentKey]],
         );
         $this->em->persist($activity);
         $this->em->persist(new ActivityCompany($activity, $company));

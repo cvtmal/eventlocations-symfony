@@ -19,6 +19,7 @@ use App\Venues\PublishedMedia;
 use App\Venues\TierLimits;
 use App\Venues\ValueObject\AddedPhoto;
 use App\Venues\VenueEditing;
+use App\Venues\VenueOriginals;
 use App\Venues\VenueRows;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -66,7 +67,7 @@ final class AddVenuePhotoHandler implements CommandHandlerInterface
         if (false === $hash) {
             throw new \RuntimeException(\sprintf('Cannot read "%s".', $command->sourceFile));
         }
-        $originalPath = \sprintf('cms/%d/%s.%s', $command->venueNumber, $hash, $command->extension);
+        $originalPath = \sprintf('%s/%s.%s', VenueOriginals::uploadDirectory($command->venueNumber), $hash, $command->extension);
 
         $venue = $this->rows->venue($command->venueNumber);
         $room = $this->room($venue, $command->roomId);

@@ -373,12 +373,16 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
    they wrote): the entry and everything it brought (contacts, website, phone, e-mail, address,
    the content folder) are deleted, the Location is suppressed, the cache is emptied, and the
    Location with its name and both notes stays as proof. `withdraw` also deletes the venue's
-   media folder on the server (`public/media/<venue-number>`), so its photos are no longer
-   reachable; the sync never deletes there, so nothing else would. The Location and the address
+   media on the server: the variants (`public/media/<venue-number>`) and the private originals
+   (`shared/var/media/content/<key>` and `shared/var/media/cms/<venue-number>`, the key taken from
+   the withdrawal note in Neon, never from a sheet), so its photos are gone; the sync never deletes
+   there, so nothing else would. `withdraw-dry` names these paths and deletes nothing. The Location and the address
    the yes came from both go on the suppression list, so a later contact list cannot bring them
    back. If `withdraw` stops after the database step (the media removal or the purge failed), a
    rerun stops at "no venue": retry with `sh bin/prod-import withdraw-media <venue-number>`,
-   which does only those two steps. Then delete the row from the sheet, as the command says.
+   which does only those two steps and may run again when nothing is left. Then delete the row
+   from the sheet, as the command says.
+   Withdrawn photos remain in the media backup until its retention ages them out (F15b: 365 days); no restore of a withdrawn venue.
 4. **The eventlokale crawl** (D11, D12, D32; owner-run, internal only):
    `make sf c="app:crm:crawl-eventlokale"` (every category, several hours, resumable) writes
    the private `CONTENT_ROOT/owner/eventlokale.csv` and the facts-only draft sheet

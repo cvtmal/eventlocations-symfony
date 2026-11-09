@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 
 /**
  * Whether a Location's timeline holds a consent entry, and the addresses its yeses came from (F14, `RecordConsent`: payload `{"consent": {…}}`), for the
- * consent and withdrawal handlers and the dry run of `app:crm:record-consents`.
+ * consent and withdrawal handlers and the dry run of `app:crm:record-consents`, and the key a withdrawal note keeps.
  */
 final readonly class ConsentQuery
 {
@@ -55,5 +55,24 @@ final readonly class ConsentQuery
         );
 
         return $addresses;
+    }
+
+    /**
+     * The content key of the venue withdrawn under this number (`{"consent_withdrawn": {"venue", "key"}}`), '' when it had
+     * none, null when no venue was withdrawn under it: `app:crm:withdraw-consent --withdrawn-key` for `bin/prod-import`.
+     */
+    public function withdrawnKey(int $venueNumber): ?string
+    {
+        $key = $this->connection->fetchOne(
+            <<<'SQL'
+                SELECT COALESCE(a.payload->'consent_withdrawn'->>'key', '') FROM crm_activities a
+                WHERE a.payload->'consent_withdrawn'->>'venue' = :venue
+                ORDER BY a.occurred_at DESC
+                LIMIT 1
+                SQL,
+            ['venue' => (string) $venueNumber],
+        );
+
+        return \is_string($key) ? $key : null;
     }
 }
