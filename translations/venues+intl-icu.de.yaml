@@ -495,6 +495,9 @@ tier_page:
 promoted_note:
     title: 'Bezahlter Eintrag, steht in den Suchergebnissen weiter oben'
     text: 'Top-Eintrag: bezahlter Eintrag, der in den Suchergebnissen weiter oben steht.'
+    # D57: on a list not ordered by tier (near-me, Merkliste, «Kurzfristig frei», similar venues) «weiter oben» would not be true.
+    title_unsorted: 'Bezahlter Eintrag'
+    text_unsorted: 'Top-Eintrag: bezahlter Eintrag.'
     link: 'Mehr dazu'
     # Visually hidden after `link`, so the link's accessible name reads «Mehr dazu zum Top-Eintrag».
     link_hidden: 'zum Top-Eintrag'
