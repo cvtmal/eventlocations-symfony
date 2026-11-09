@@ -48,11 +48,11 @@
             {%- if cards is not empty %}
             <ol class="listing__results" aria-label="{{ 'nearby.results.label'|trans({}, 'search') }}">
                 {%- for card in cards %}
-                <li class="listing__item">{{ include('search/_card.html.twig', {card: card, index: loop.index0, heading: 'h3', distance: 'nearby.distance'|trans({km: distances[card.number]|swiss_number}, 'search')}, with_context = false) }}</li>
+                <li class="listing__item">{{ include('search/_card.html.twig', {card: card, index: loop.index0, heading: 'h3', distance: 'nearby.distance'|trans({km: distances[card.number]|swiss_number}, 'search'), tier_sorted: false}, with_context = false) }}</li>
                 {%- endfor %}
             </ol>
             {%- if cards|filter(c => c.promoted)|length > 0 %}
-            {% include 'components/_promoted_note.html.twig' with {} only %}
+            {% include 'components/_promoted_note.html.twig' with {tier_sorted: false} only %}
             {%- endif %}
             {%- else %}
             <div class="listing-empty">

@@ -20,7 +20,7 @@
         <ol class="last-minute__results" aria-label="{{ 'last_minute.results_label'|trans({}, 'search') }}">
             {%- for entry in entries %}
             <li class="last-minute__entry">
-                {{ include('search/_card.html.twig', {card: entry.card, index: loop.index0, heading: 'h2'}, with_context = false) }}
+                {{ include('search/_card.html.twig', {card: entry.card, index: loop.index0, heading: 'h2', tier_sorted: false}, with_context = false) }}
                 <div class="last-minute__offers">
                     <ul class="venue-last-minute__list">
                         {%- for offer in entry.offers %}
@@ -32,6 +32,9 @@
             </li>
             {%- endfor %}
         </ol>
+        {%- if entries|filter(e => e.card.promoted)|length > 0 %}
+        {% include 'components/_promoted_note.html.twig' with {tier_sorted: false} only %}
+        {%- endif %}
         {%- else %}
         <div class="listing-empty">
             <span class="listing-empty__disc" aria-hidden="true">{{ icon('calendar') }}</span>

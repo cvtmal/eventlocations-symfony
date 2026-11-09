@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Search;
 
+use App\Factory\LastMinuteOfferFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTranslationFactory;
 use App\Geo\Entity\Town;
@@ -23,7 +24,9 @@ use function Zenstruck\Foundry\Persistence\repository;
 
 /**
  * D40, G13: every surface that shows the «Top-Eintrag» badge explains it, with the badge's tooltip and one footnote
- * linking to the explanation on /location-eintragen; a surface without a promoted entry has no footnote.
+ * linking to the explanation on /location-eintragen; a surface without a promoted entry has no footnote. D57: only a
+ * list ordered by tier says the entry is listed higher; near-me, the Merkliste, «Kurzfristig frei» and the similar
+ * venues (ordered by canton, capacity and distance) say only that it is paid, and the badge stays.
  */
 final class PromotedNoteTest extends WebTestCase
 {
@@ -32,6 +35,9 @@ final class PromotedNoteTest extends WebTestCase
 
     private const string NOTE_LINK = '.promoted-note a[href="/location-eintragen#top-eintrag"]';
     private const string TITLE = 'Bezahlter Eintrag, steht in den Suchergebnissen weiter oben';
+    private const string NOTE = 'Top-Eintrag: bezahlter Eintrag, der in den Suchergebnissen weiter oben steht. Mehr dazu zum Top-Eintrag';
+    private const string TITLE_UNSORTED = 'Bezahlter Eintrag';
+    private const string NOTE_UNSORTED = 'Top-Eintrag: bezahlter Eintrag. Mehr dazu zum Top-Eintrag';
 
     private KernelBrowser $client;
     private Connection $connection;
@@ -56,7 +62,7 @@ final class PromotedNoteTest extends WebTestCase
     }
 
     #[DataProvider('surfaces')]
-    public function test_a_surface_with_a_promoted_entry_explains_the_badge(string $surface): void
+    public function test_a_surface_with_a_promoted_entry_explains_the_badge(string $surface, bool $tierSorted): void
     {
         $paid = $this->venue('bezahlte-location', 'Bezahlte Location', KnownTiers::PRO);
         $free = $this->venue('gratis-location', 'Gratis Location', KnownTiers::FREE);
@@ -66,13 +72,13 @@ final class PromotedNoteTest extends WebTestCase
         $badge = $crawler->filter($this->badgeScope($surface).' .badge');
         self::assertGreaterThan(0, $badge->count(), $surface);
         self::assertSame('Top-Eintrag', $badge->first()->text(), $surface);
-        self::assertSame(self::TITLE, $badge->first()->attr('title'), $surface);
+        self::assertSame($tierSorted ? self::TITLE : self::TITLE_UNSORTED, $badge->first()->attr('title'), $surface);
         self::assertCount(1, $crawler->filter(self::NOTE_LINK), $surface);
-        self::assertSame('Top-Eintrag: bezahlter Eintrag, der in den Suchergebnissen weiter oben steht. Mehr dazu zum Top-Eintrag', $crawler->filter('.promoted-note')->text());
+        self::assertSame($tierSorted ? self::NOTE : self::NOTE_UNSORTED, $crawler->filter('.promoted-note')->text(), $surface);
         self::assertSame('zum Top-Eintrag', $crawler->filter(self::NOTE_LINK.' .visually-hidden')->text(), $surface);
     }
 
-    #[DataProvider('surfaces')]
+    #[DataProvider('surfacesWithFreeEntries')]
     public function test_a_surface_without_a_promoted_entry_has_no_footnote(string $surface): void
     {
         $first = $this->venue('erste-location', 'Erste Location', KnownTiers::FREE);
@@ -85,16 +91,34 @@ final class PromotedNoteTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * The surface, and whether it lists by tier (D57; landing pages render the listing's template; the detail page is no
+     * list: its entry does stand higher in the search results).
+     *
+     * @return iterable<string, array{string, bool}>
      */
     public static function surfaces(): iterable
     {
-        yield 'listing' => ['listing'];
-        yield 'home spotlight' => ['home'];
-        yield 'near me' => ['nearby'];
-        yield 'merkliste' => ['merkliste'];
-        yield 'detail page' => ['detail'];
-        yield 'similar venues' => ['similar'];
+        yield 'listing' => ['listing', true];
+        yield 'home spotlight' => ['home', true];
+        yield 'near me' => ['nearby', false];
+        yield 'merkliste' => ['merkliste', false];
+        yield 'kurzfristig frei' => ['last_minute', false];
+        yield 'detail page' => ['detail', true];
+        yield 'similar venues' => ['similar', false];
+    }
+
+    /**
+     * The surfaces that can list a Free entry («Kurzfristig frei» lists only plans with offers, so only promoted ones).
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function surfacesWithFreeEntries(): iterable
+    {
+        foreach (self::surfaces() as $name => [$surface]) {
+            if ('last_minute' !== $surface) {
+                yield $name => [$surface];
+            }
+        }
     }
 
     /**
@@ -136,6 +160,7 @@ final class PromotedNoteTest extends WebTestCase
             'home' => $this->get('/'),
             'nearby' => $this->get('/eventlokal-in-meiner-naehe?ort=8712'),
             'merkliste' => $this->merkliste($first, $second),
+            'last_minute' => $this->lastMinute($first),
             'detail' => $this->get('/eventlokal/'.$this->slug($first)),
             'similar' => $this->get('/eventlokal/'.$this->slug($second)),
             default => self::fail($surface),
@@ -156,6 +181,14 @@ final class PromotedNoteTest extends WebTestCase
         $this->client->getCookieJar()->set(new Cookie('merkliste', $first->number().','.$second->number(), null, '/', 'localhost'));
 
         return $this->get('/merkliste');
+    }
+
+    private function lastMinute(Venue $venue): Crawler
+    {
+        $day = new \DateTimeImmutable('today +5 days', new \DateTimeZone('Europe/Zurich'));
+        LastMinuteOfferFactory::createOne(['venue' => $venue, 'startsOn' => $day, 'endsOn' => $day]);
+
+        return $this->get('/kurzfristig-frei');
     }
 
     private function get(string $path): Crawler
