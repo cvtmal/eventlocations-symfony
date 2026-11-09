@@ -376,7 +376,9 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
    media on the server: the variants (`public/media/<venue-number>`) and the private originals
    (`shared/var/media/content/<key>` and `shared/var/media/cms/<venue-number>`, the key taken from
    the withdrawal note in Neon, never from a sheet), so its photos are gone; the sync never deletes
-   there, so nothing else would. `withdraw-dry` names these paths and deletes nothing. The Location and the address
+   there, so nothing else would. It deletes the local copies under `PROD_MEDIA_DIR` too
+   (`public/<venue-number>`, `originals/content/<key>`), so a later sync cannot bring them back
+   if the console's own delete failed. `withdraw-dry` names these paths and deletes nothing. The Location and the address
    the yes came from both go on the suppression list, so a later contact list cannot bring them
    back. If `withdraw` stops after the database step (the media removal or the purge failed), a
    rerun stops at "no venue": retry with `sh bin/prod-import withdraw-media <venue-number>`,

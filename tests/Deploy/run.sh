@@ -1039,25 +1039,46 @@ prod_import_onboarding() { # The CRM commands of the onboarding runbook (F14), o
     prod_import_withdraw
 }
 
-remote_venue_media() { # remote_venue_media: venue 7's media on a fake server, beside venue 8's
-    for dir in public/media/7 var/media/cms/7 var/media/content/remise-am-bach public/media/8 var/media/cms/8 \
-        var/media/content/seehof-muster; do
-        mkdir -p "$TEST_REMOTE_APP/$dir"
-        printf 'fictional\n' > "$TEST_REMOTE_APP/$dir/photo.jpg"
+# Venue 7's media on a fake server and in the checkout's PROD_MEDIA_DIR (the sync's source), beside venue 8's.
+VENUE_MEDIA="remote/public/media/7 remote/var/media/cms/7 remote/var/media/content/remise-am-bach
+local/public/7 local/originals/content/remise-am-bach"
+OTHER_VENUE_MEDIA="remote/public/media/8 remote/var/media/cms/8 remote/var/media/content/seehof-muster
+local/public/8 local/originals/content/seehof-muster"
+
+venue_media_dir() { # venue_media_dir remote/<path>|local/<path>
+    case "$1" in
+        remote/*) printf '%s' "$TEST_REMOTE_APP/${1#remote/}" ;;
+        *) printf '%s' "$work/checkout/var/prod-media/${1#local/}" ;;
+    esac
+}
+
+remote_venue_media() { # remote_venue_media: venue 7's media and venue 8's, on the server and here
+    for dir in $VENUE_MEDIA $OTHER_VENUE_MEDIA; do
+        dir="$(venue_media_dir "$dir")"
+        mkdir -p "$dir"
+        printf 'fictional\n' > "$dir/photo.jpg"
     done
 }
 
-expect_venue_media() { # expect_venue_media <case> present|gone: venue 7's directories; venue 8's always stay
-    for dir in public/media/7 var/media/cms/7 var/media/content/remise-am-bach; do
-        case "$2" in
-            present) [ -f "$TEST_REMOTE_APP/$dir/photo.jpg" ] || fail "$1: $dir is gone" ;;
-            *) [ ! -e "$TEST_REMOTE_APP/$dir" ] || fail "$1: $dir is still there" ;;
+expect_venue_media() { # expect_venue_media <case> present|gone [<kept dir>...]: venue 7's directories; venue 8's always stay
+    case_name="$1"
+    state="$2"
+    shift 2
+    for dir in $VENUE_MEDIA; do
+        expected="$state"
+        for kept in "$@"; do
+            [ "$kept" != "$dir" ] || expected=present
+        done
+        path="$(venue_media_dir "$dir")"
+        case "$expected" in
+            present) [ -f "$path/photo.jpg" ] || fail "$case_name: $dir is gone" ;;
+            *) [ ! -e "$path" ] || fail "$case_name: $dir is still there" ;;
         esac
     done
-    for dir in public/media/8 var/media/cms/8 var/media/content/seehof-muster; do
-        [ -f "$TEST_REMOTE_APP/$dir/photo.jpg" ] || fail "$1: another venue's $dir is gone"
+    for dir in $OTHER_VENUE_MEDIA; do
+        [ -f "$(venue_media_dir "$dir")/photo.jpg" ] || fail "$case_name: another venue's $dir is gone"
     done
-    ok "$1"
+    ok "$case_name"
 }
 
 prod_import_withdraw() { # withdraw on a fake server tree: the ssh stub runs the rm there
@@ -1087,8 +1108,9 @@ key
 remove-media
 purge" ] || fail "prod-import withdraw ran another order: $steps"
     ok "withdraw deletes the entry, then its public media and originals on the server, then purges"
-    expect_venue_media "after withdraw the public media and the originals are gone" gone
+    expect_venue_media "after withdraw the public media and the originals are gone, here too" gone
     expect_output "withdraw says what it deleted" "deleted on the server: $paths"
+    expect_output "withdraw says what it deleted here" "deleted here: var/prod-media/public/7 var/prod-media/originals/content/remise-am-bach"
 
     remote_venue_media
     for attempt in retry "second retry"; do
@@ -1102,9 +1124,29 @@ purge" ] || fail "prod-import withdraw ran another order: $steps"
         [ "$steps" = "key
 remove-media
 purge" ] || fail "prod-import withdraw-media ran another order: $steps"
-        expect_venue_media "withdraw-media deletes the public media and the originals ($attempt)" gone
+        expect_venue_media "withdraw-media deletes the public media and the originals, here too ($attempt)" gone
     done
     ok "withdraw-media retries only the key lookup, the media removal and the purge, and again with nothing left"
+
+    # A venue made in the CMS has no content key: the console prints an empty line, and no content directory is named.
+    remote_venue_media
+    clear_log
+    STUB_WITHDRAWN_KEY=""
+    run prod_import withdraw-media 7
+    expect_exit "prod-import withdraw-media exits 0 for a venue without a content key" 0
+    grep -q "^ssh site@host.example rm -rf $TEST_REMOTE_APP/public/media/7 $TEST_REMOTE_APP/var/media/cms/7\$" "$STUB_LOG" ||
+        fail "withdraw-media without a content key removed other paths: $(grep '^ssh .*rm -rf' "$STUB_LOG")"
+    expect_venue_media "without a content key every content directory stays, here and on the server" gone \
+        remote/var/media/content/remise-am-bach local/originals/content/remise-am-bach
+    if [ ! -d "$TEST_REMOTE_APP/var/media/content" ] || [ ! -d "$work/checkout/var/prod-media/originals/content" ]; then
+        fail "withdraw-media without a content key deleted content/"
+    fi
+    case "$out" in
+        *"deleted here: var/prod-media/public/7
+"*) ok "withdraw-media without a content key names only the public media here" ;;
+        *) fail "withdraw-media without a content key named more here: $out" ;;
+    esac
+    ok "withdraw-media without a content key leaves content/ itself in place"
 
     for key in ../seehof-muster "seehof-muster x" -x "a--b" "a/b"; do
         remote_venue_media
@@ -1128,7 +1170,8 @@ purge" ] || fail "prod-import withdraw-media ran another order: $steps"
     fi
     expect_venue_media "nothing is deleted without a withdrawal" present
 
-    rm -rf "$TEST_REMOTE_APP"
+    rm -rf "$TEST_REMOTE_APP" "$work/checkout/var/prod-media/public/7" "$work/checkout/var/prod-media/public/8" \
+        "$work/checkout/var/prod-media/originals/content/remise-am-bach" "$work/checkout/var/prod-media/originals/content/seehof-muster"
     unset TEST_REMOTE_APP STUB_SSH_RUN STUB_WITHDRAWN_KEY STUB_WITHDRAWN_EXIT
 }
 

@@ -41,9 +41,9 @@ Usage: bin/prod-import <command>
   withdraw <number> [--on=YYYY-MM-DD]
                            app:crm:withdraw-consent against Neon, then delete the venue's public
                            media and originals on the server, then purge
-  withdraw-media <number>  delete the withdrawn venue's public media and originals on the server,
-                           then purge: the retry when withdraw committed but its media step or
-                           purge failed
+  withdraw-media <number>  delete the withdrawn venue's public media and originals here and on the
+                           server, then purge: the retry when withdraw committed but its media
+                           step or purge failed
   contacts-dry <csv>       app:crm:import-contacts --dry-run against Neon: the row outcomes, no writes
   contacts <csv>           app:crm:import-contacts against Neon (sends nothing)
   help                     this text
@@ -147,6 +147,11 @@ remove_venue_media() { # remove_venue_media <venue number>
     # The console deletes the local copies only; the sync never deletes on the server.
     # Two steps: set -e stops on a failed substitution only when it is the whole assignment.
     key="$(withdrawn_key "$1")"
+    # The local copies again: if the console's own delete failed after the withdrawal committed, the next sync
+    # would bring them back. A venue without a key has no content directory, so content/ itself is never named.
+    rm -rf "$MEDIA_DIR/public/$1"
+    [ -z "$key" ] || rm -rf "$MEDIA_DIR/originals/content/$key"
+    say "deleted here: $MEDIA_DIR/public/$1${key:+ $MEDIA_DIR/originals/content/$key}"
     paths="$(venue_media_paths "$1" "$key")"
     # shellcheck disable=SC2029 # The paths are meant to expand here: digits and a checked key only.
     ssh "$PROD_SSH" "rm -rf $paths"
