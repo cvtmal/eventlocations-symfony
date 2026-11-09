@@ -164,6 +164,9 @@ crm:
 inquiry:
     event_type:
         required: Bitte wähle einen Anlass.
+    # F13: the brief page (BriefFormFactory).
+    venues:
+        count: Bitte hake zwei bis fünf Locations an.
     # G16: the feedback page (FeedbackData).
     feedback:
         venue_replied:

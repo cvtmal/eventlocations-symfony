@@ -26,6 +26,7 @@ final readonly class ChangeVenueContact implements AuditableCommand
         public ?string $website,
         public ?string $contactPerson,
         public ?string $instagram,
+        public bool $acceptsMultiInquiries,
     ) {
     }
 

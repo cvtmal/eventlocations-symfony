@@ -131,6 +131,10 @@ class Venue
     #[ORM\Column(type: Types::STRING, length: 254, nullable: true)]
     private ?string $inquiryEmail = null;
 
+    /** False once the venue opted out of briefs to several venues (F13); single inquiries reach it either way. */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
+    private bool $acceptsMultiInquiries = true;
+
     #[ORM\Column(type: Types::STRING, length: 500, nullable: true)]
     private ?string $website = null;
 
@@ -303,6 +307,15 @@ class Venue
         $this->inquiryEmail = $inquiryEmail;
         $this->website = $website;
         $this->contactPerson = $contactPerson;
+        $this->touch();
+    }
+
+    public function changeMultiInquiryConsent(bool $accepts): void
+    {
+        if ($this->acceptsMultiInquiries === $accepts) {
+            return;
+        }
+        $this->acceptsMultiInquiries = $accepts;
         $this->touch();
     }
 
@@ -561,6 +574,11 @@ class Venue
     public function inquiryEmail(): ?string
     {
         return $this->inquiryEmail;
+    }
+
+    public function acceptsMultiInquiries(): bool
+    {
+        return $this->acceptsMultiInquiries;
     }
 
     public function website(): ?string

@@ -28,6 +28,7 @@ final class InquiryVocabularyChecksTest extends KernelTestCase
     {
         yield 'venue mail status' => ['chk_inquiries_venue_mail_status', MailStatus::class];
         yield 'guest mail status' => ['chk_inquiries_guest_mail_status', MailStatus::class];
+        yield 'brief guest mail status' => ['chk_inquiry_briefs_guest_mail_status', MailStatus::class];
         yield 'qualification' => ['chk_inquiries_qualification', Qualification::class];
         yield 'qualification reason' => ['chk_inquiries_qualification_reason', QualificationReason::class];
         yield 'qualification override' => ['chk_inquiries_qualification_override', InquiryOverride::class];

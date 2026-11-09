@@ -21,6 +21,7 @@ final class ChangeVenueContactHandler implements CommandHandlerInterface
 
         $venue->changeContact($command->phone, $command->inquiryEmail, $command->website, $command->contactPerson);
         $venue->changeInstagram($command->instagram);
+        $venue->changeMultiInquiryConsent($command->acceptsMultiInquiries);
 
         $this->editing->close($venue);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inquiries\Mailer;
 
+use App\Inquiries\BriefOptOutToken;
 use App\Inquiries\Entity\Inquiry;
 use App\Inquiries\ReadModel\StuckInquiry;
 use App\Shared\Twig\SwissFormatExtension;
@@ -16,6 +17,7 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Exception\RfcComplianceException;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -26,6 +28,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * `INQUIRY_RECIPIENT_OVERRIDE` (IQ-4) redirects the venue mail only: the guest copy goes to the
  * address the tester typed. Null and '' both mean no override.
+ *
+ * A child of a brief to several venues (F13) tells the venue how many venues got the brief, never which, and carries
+ * the venue's one-click opt-out of briefs; the guest gets one confirmation for the whole brief instead of a copy per
+ * venue.
  */
 final class InquiryMailer
 {
@@ -39,6 +45,8 @@ final class InquiryMailer
         private readonly string $contactEmail,
         #[Autowire('%env(default::INQUIRY_RECIPIENT_OVERRIDE)%')]
         private readonly ?string $recipientOverride,
+        private readonly UrlGeneratorInterface $urls,
+        private readonly BriefOptOutToken $briefOptOutTokens,
     ) {
     }
 
@@ -58,7 +66,7 @@ final class InquiryMailer
         $message = (new TemplatedEmail())
             ->to($recipient)
             ->replyTo(new Address($inquiry->email(), $guestName))
-            ->subject($this->translator->trans('email.venue.subject', [
+            ->subject($this->translator->trans(null === $inquiry->brief() ? 'email.venue.subject' : 'email.brief.venue_subject', [
                 'venue' => $inquiry->venueName(),
                 'name' => $guestName,
                 'event_type' => self::eventType($inquiry)->trans($this->translator, $inquiry->locale()),
@@ -67,7 +75,7 @@ final class InquiryMailer
             ], 'inquiries', $inquiry->locale()))
             ->htmlTemplate('inquiries/email/venue.html.twig')
             ->locale($inquiry->locale())
-            ->context($this->context($inquiry));
+            ->context($this->context($inquiry) + $this->briefContext($inquiry));
 
         if ('' !== $override) {
             $message->getHeaders()->addTextHeader(self::ORIGINAL_RECIPIENT_HEADER, $inquiry->recipientEmail());
@@ -92,6 +100,32 @@ final class InquiryMailer
             ->htmlTemplate('inquiries/email/guest.html.twig')
             ->locale($inquiry->locale())
             ->context($this->context($inquiry)));
+    }
+
+    /**
+     * The one confirmation of a brief (F13): the guest's details once, the venues reached, and those staff still
+     * deliver.
+     *
+     * @param non-empty-list<Inquiry> $reached     children whose venue mail went out, in the guest's order
+     * @param list<Inquiry>           $undelivered the other children
+     *
+     * @throws TransportExceptionInterface a transport error
+     * @throws HandlerFailedException      any other failure in the mail pipeline
+     * @throws RfcComplianceException      an address `Address` refuses at build time
+     */
+    public function sendBriefConfirmation(array $reached, array $undelivered): void
+    {
+        $first = $reached[0];
+        $this->mailer->send((new TemplatedEmail())
+            ->to($first->email())
+            ->replyTo($this->contactEmail)
+            ->subject($this->translator->trans('email.brief.guest_subject', ['count' => \count($reached)], 'inquiries', $first->locale()))
+            ->htmlTemplate('inquiries/email/brief_guest.html.twig')
+            ->locale($first->locale())
+            ->context($this->context($first) + [
+                'reached' => array_map(static fn (Inquiry $child): array => ['name' => $child->venueName(), 'slug' => $child->venueSlug()], $reached),
+                'undelivered' => array_map(static fn (Inquiry $child): string => $child->venueName(), $undelivered),
+            ]));
     }
 
     /**
@@ -144,6 +178,23 @@ final class InquiryMailer
             'last_name' => $inquiry->lastName(),
             'guest_email' => $inquiry->email(),
             'phone' => $inquiry->phone(),
+        ];
+    }
+
+    /**
+     * @return array{brief_venue_count: int|null, brief_opt_out_url: string|null}
+     */
+    private function briefContext(Inquiry $inquiry): array
+    {
+        $brief = $inquiry->brief();
+
+        return [
+            'brief_venue_count' => $brief?->venueCount(),
+            'brief_opt_out_url' => null === $brief ? null : $this->urls->generate(
+                'inquiry_brief_opt_out',
+                ['token' => $this->briefOptOutTokens->forVenue($inquiry->venueNumber())],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            ),
         ];
     }
 

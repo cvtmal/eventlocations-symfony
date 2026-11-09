@@ -1,0 +1,67 @@
+@use '../abstracts/breakpoints' as bp;
+
+// F13: the brief page /sammelanfrage and the way into it from the Merkliste and a result list. No JS.
+.brief-page {
+    max-width: 52rem;
+    padding-top: var(--space-32);
+    padding-bottom: var(--space-64);
+}
+
+.brief-page__lead {
+    margin: var(--space-8) 0 var(--space-24);
+}
+
+.brief-page__subheading {
+    margin: var(--space-24) 0 var(--space-8);
+    font-size: var(--fs-h3);
+}
+
+.brief-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-12);
+}
+
+.brief-page__venues {
+    margin: 0 0 var(--space-24);
+    padding: 0;
+    border: 0;
+
+    .inquiry-form__check {
+        font-size: var(--fs-body);
+    }
+}
+
+.brief-page__single ul,
+.brief-page__reached {
+    padding-left: var(--space-24);
+}
+
+.brief-cta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    margin: var(--space-32) 0;
+    padding: var(--space-24);
+    border-radius: var(--radius-card);
+    background: var(--c-surface-alt);
+
+    @include bp.up(md) {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.brief-cta__title {
+    margin: 0 0 var(--space-4);
+    font-size: var(--fs-h3);
+}
+
+.brief-cta__text {
+    margin: 0;
+}
+
+.brief-cta[hidden] {
+    display: none;
+}

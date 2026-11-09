@@ -72,6 +72,18 @@ email:
         intro: Deine Anfrage ist an {venue} gegangen. Das hast du gesendet.
         answer_note: '{venue} antwortet dir direkt.'
         button: Zur Location
+    # F13: a brief to several venues. The venue learns how many got it, never which.
+    brief:
+        venue_subject: 'Neue Sammelanfrage für {venue}: {name}, {event_type}, {date}, {guests} Gäste'
+        venue_note: 'Sammelanfrage: Diese Anfrage ging gleichzeitig an {count} Locations. Wer die anderen sind, erfährst du nicht, und sie erfahren nichts von dir.'
+        opt_out_lead: Keine Sammelanfragen mehr erhalten?
+        opt_out_link: Hier abbestellen
+        guest_subject: '{count, plural, one {Deine Anfrage an eine Location} other {Deine Anfrage an # Locations}}'
+        guest_preheader: '{count, plural, one {Deine Anfrage ist an eine Location gegangen.} other {Deine Anfrage ist an # Locations gegangen.}}'
+        guest_intro: '{count, plural, one {Deine Anfrage ist an diese Location gegangen:} other {Deine Anfrage ist an diese # Locations gegangen:}}'
+        guest_undelivered: 'Noch nicht zugestellt: {names}. Wir kümmern uns darum und stellen sie so bald wie möglich zu.'
+        guest_sent: Das hast du gesendet.
+        guest_answer_note: Jede Location antwortet dir direkt.
     stuck:
         subject: 'Anfragen nicht zugestellt: {count}'
         greeting: Hallo
@@ -132,3 +144,43 @@ feedback:
         title: Link ungültig
         heading: Dieser Link gilt nicht mehr
         text: 'Vielleicht ist die Anfrage schon gelöscht. Fragen? Schreib uns an {email}.'
+# F13: the brief page /sammelanfrage, its confirmation and the venue's opt-out page.
+brief:
+    title: Sammelanfrage
+    heading: Eine Anfrage an mehrere Locations
+    lead: Du füllst das Formular einmal aus, und deine Anfrage geht an die Locations, die du anhakst, höchstens fünf. Jede antwortet dir direkt.
+    choose: An diese Locations
+    choose_hint: Hake zwei bis fünf Locations an.
+    not_offered_heading: Nur einzeln anfragbar
+    not_offered: Diese Locations nehmen gerade keine Sammelanfragen an. Du kannst sie auf ihrer Seite einzeln anfragen.
+    ask_single: Einzeln anfragen
+    too_few_heading: Zu wenige Locations für eine Sammelanfrage
+    too_few: Für eine Sammelanfrage brauchst du mindestens zwei Locations, die Sammelanfragen annehmen. Merk dir weitere Locations oder frag sie einzeln an.
+    to_merkliste: Zur Merkliste
+    to_listing: Locations finden
+    consent: Deine Anfrage mit Name, E-Mail und Telefon geht nur an die Locations, die du oben angehakt hast. Keine erfährt, an welche anderen sie ging.
+    submit: Anfrage senden
+    message_default: "Hallo zusammen,\n\nwir planen einen Anlass und suchen eine passende Location. Ist unser Wunschtermin noch frei?\n\nHerzliche Grüsse"
+    undelivered: Deine Anfrage ist bei uns gespeichert, konnte aber gerade nicht zugestellt werden. Wir kümmern uns darum und stellen sie so bald wie möglich zu. Du musst nichts weiter tun.
+    error:
+        changed: Eine der Locations nimmt gerade keine Sammelanfragen mehr an. Prüf die Auswahl und sende die Anfrage noch einmal.
+    sent:
+        heading: Danke! Deine Anfrage ist unterwegs.
+        reached: '{count, plural, one {Diese Location hat deine Anfrage erhalten:} other {Diese # Locations haben deine Anfrage erhalten:}}'
+        undelivered: 'Noch nicht zugestellt: {names}. Wir kümmern uns darum, du musst nichts weiter tun.'
+        text: Jede Location antwortet dir direkt. Eine Bestätigung findest du in deinem Postfach.
+    opt_out:
+        title: Sammelanfragen abbestellen
+        heading: Keine Sammelanfragen mehr für {venue}?
+        text: Eine Sammelanfrage schickt ein Veranstalter gleichzeitig an bis zu fünf Locations. Einzelne Anfragen erhältst du weiterhin.
+        confirm: Sammelanfragen abbestellen
+        done_heading: Abbestellt
+        unknown_heading: Link nicht gültig
+        unknown: Dieser Link ist nicht (mehr) gültig. Schreib uns, wenn du keine Sammelanfragen mehr möchtest.
+        to_home: Zur Startseite
+        done: '{venue} bekommt keine Sammelanfragen mehr. Einzelne Anfragen kommen weiterhin an. Wieder einschalten kannst du sie im Konto auf der Karte «Kontakt» oder mit einer Nachricht an uns.'
+    cta:
+        merkliste_heading: Mehrere Locations auf einmal anfragen
+        merkliste_text: Schick eine Anfrage an bis zu fünf Locations deiner Merkliste.
+        listing_text: Frag bis zu fünf dieser Locations mit einer einzigen Anfrage an.
+        button: Sammelanfrage starten

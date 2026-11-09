@@ -6,13 +6,8 @@ namespace App\Inquiries\CommandHandler;
 
 use App\Inquiries\Command\SubmitInquiry;
 use App\Inquiries\Entity\Inquiry;
-use App\Inquiries\Exception\BudgetOutOfRange;
-use App\Inquiries\Exception\EventDateInPast;
-use App\Inquiries\Exception\EventDateMissing;
-use App\Inquiries\Exception\GuestCountOutOfRange;
 use App\Inquiries\Exception\InquiryNotAccepted;
-use App\Inquiries\Exception\UnknownInquiryTerm;
-use App\Inquiries\ReadModel\InquiryVocabularyQuery;
+use App\Inquiries\InquiryRules;
 use App\Inquiries\Repository\InquiryRepository;
 use App\Inquiries\ValueObject\InquiryFingerprint;
 use App\Inquiries\ValueObject\SubmittedInquiry;
@@ -22,8 +17,7 @@ use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Business rules of an inquiry (the handler layer of the validation strategy) and the row.
- * "Today" is the Swiss calendar day, whatever the server's clock says.
+ * Business rules of an inquiry (the handler layer of the validation strategy, `InquiryRules`) and the row.
  *
  * One guest action is one row: the same inquiry again within the window returns the row it
  * repeats, whatever that row's mail status, and `DeliverInquiry` decides what is left to do. The
@@ -33,17 +27,12 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 final class SubmitInquiryHandler implements CommandHandlerInterface
 {
-    private const TIMEZONE = 'Europe/Zurich';
-    private const MIN_GUESTS = 1;
-    private const MAX_GUESTS = 5000;
-    private const MIN_BUDGET_CHF = 1;
-    private const MAX_BUDGET_CHF = 1_000_000;
     private const REPEAT_WINDOW = '-10 minutes';
 
     public function __construct(
         private readonly VenueRepository $venues,
         private readonly InquiryRepository $inquiries,
-        private readonly InquiryVocabularyQuery $vocabulary,
+        private readonly InquiryRules $rules,
         private readonly ClockInterface $clock,
         #[Autowire('%kernel.secret%')]
         private readonly string $secret,
@@ -57,30 +46,8 @@ final class SubmitInquiryHandler implements CommandHandlerInterface
             throw InquiryNotAccepted::forVenue($command->venueId);
         }
 
-        if ($command->guests < self::MIN_GUESTS || $command->guests > self::MAX_GUESTS) {
-            throw GuestCountOutOfRange::for($command->guests);
-        }
-
-        if (!$this->vocabulary->isEventType($command->eventType)) {
-            throw UnknownInquiryTerm::eventType($command->eventType);
-        }
-
-        if (null !== $command->cateringWish && !$this->vocabulary->isCateringWish($command->cateringWish)) {
-            throw UnknownInquiryTerm::cateringWish($command->cateringWish);
-        }
-
-        if (null === $command->eventDate && !$command->dateFlexible) {
-            throw EventDateMissing::create();
-        }
-
-        if (null !== $command->budgetChf && ($command->budgetChf < self::MIN_BUDGET_CHF || $command->budgetChf > self::MAX_BUDGET_CHF)) {
-            throw BudgetOutOfRange::for($command->budgetChf);
-        }
-
         $now = $this->clock->now();
-        if (null !== $command->eventDate && $command->eventDate < $now->setTimezone(new \DateTimeZone(self::TIMEZONE))->format('Y-m-d')) {
-            throw EventDateInPast::for($command->eventDate);
-        }
+        $this->rules->check($command, $now);
 
         $fingerprint = InquiryFingerprint::of($command, $this->secret)->value;
         $this->inquiries->lockFingerprint($fingerprint);
@@ -99,7 +66,7 @@ final class SubmitInquiryHandler implements CommandHandlerInterface
             $command->guests,
             null === $command->eventDate ? null : new \DateTimeImmutable($command->eventDate),
             $command->dateFlexible,
-            self::startTime($command->startTime),
+            InquiryRules::startTime($command->startTime),
             $command->cateringWish,
             $command->budgetChf,
             $command->message,
@@ -113,22 +80,5 @@ final class SubmitInquiryHandler implements CommandHandlerInterface
         $this->inquiries->add($inquiry);
 
         return new SubmittedInquiry($inquiry->id(), false);
-    }
-
-    /**
-     * @throws \InvalidArgumentException when the command breaks its own `H:i` contract (the form never does)
-     */
-    private static function startTime(?string $time): ?\DateTimeImmutable
-    {
-        if (null === $time) {
-            return null;
-        }
-
-        $parsed = \DateTimeImmutable::createFromFormat('!H:i', $time);
-        if (false === $parsed || $parsed->format('H:i') !== $time) {
-            throw new \InvalidArgumentException(\sprintf('"%s" is no start time of the form H:i.', $time));
-        }
-
-        return $parsed;
     }
 }

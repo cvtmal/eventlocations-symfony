@@ -1,0 +1,80 @@
+{#
+    The brief page /sammelanfrage (F13, InquiryBriefController). Params: numbers (the asked `nr`), offered and not_offered
+    (BriefCandidate lists), form (null when fewer than two venues are offered, or after a delivery that reached none),
+    undelivered (the G7 «gespeichert» state). The ticked checkboxes are the consent step: each venue is named there, and
+    the brief goes to exactly those. Not offered venues are links to their own inquiry form, never a choice. Private:
+    robots `noindex`, no canonical, no stats beacon, no session.
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'brief.title'|trans({}, 'inquiries') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block hreflang %}{% endblock %}
+
+{% block jsonld %}{% endblock %}
+
+{% block stats_beacon %}{% endblock %}
+
+{% block main %}
+    <div class="brief-page container">
+        <div class="inquiry-form">
+            <h1 class="venue-section__title">{{ 'brief.heading'|trans({}, 'inquiries') }}</h1>
+            {% if undelivered %}
+                <p class="brief-page__lead" role="status">{{ 'brief.undelivered'|trans({}, 'inquiries') }}</p>
+            {% elseif form is null %}
+                <h2 class="brief-page__subheading">{{ 'brief.too_few_heading'|trans({}, 'inquiries') }}</h2>
+                <p class="brief-page__lead">{{ 'brief.too_few'|trans({}, 'inquiries') }}</p>
+                <div class="brief-page__actions">
+                    {{ include('components/_button.html.twig', {label: 'brief.to_merkliste'|trans({}, 'inquiries'), variant: 'secondary', href: path('merkliste')}, with_context = false) }}
+                    {{ include('components/_button.html.twig', {label: 'brief.to_listing'|trans({}, 'inquiries'), variant: 'primary', href: path('listing')}, with_context = false) }}
+                </div>
+            {% else %}
+                <p class="brief-page__lead">{{ 'brief.lead'|trans({}, 'inquiries') }}</p>
+                {# A refused brief rebuilds the form unsubmitted, so `valid` stays true: its own error opens the summary too. #}
+                {% if not form.vars.valid or form.vars.errors|length > 0 %}
+                    <div class="inquiry-form__summary" role="alert">
+                        {{ icon('info') }}
+                        <div>
+                            <p>{{ 'form.error.summary'|trans({}, 'inquiries') }}</p>
+                            {% if form.vars.errors|length > 0 %}
+                                <ul>{% for error in form.vars.errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                {{ form_start(form, {attr: {class: 'inquiry-form__form'}}) }}
+                    {% set venue_errors = form.venues.vars.errors %}
+                    <fieldset class="brief-page__venues"{% if venue_errors|length > 0 %} aria-describedby="{{ form.venues.vars.id }}_error"{% endif %}>
+                        <legend class="inquiry-form__label">{{ 'brief.choose'|trans({}, 'inquiries') }} <span class="inquiry-form__hint">{{ 'brief.choose_hint'|trans({}, 'inquiries') }}</span></legend>
+                        {% for choice in form.venues %}
+                            <div class="inquiry-form__check">
+                                {{ form_widget(choice) }}
+                                <label for="{{ choice.vars.id }}">{{ choice.vars.label }}</label>
+                            </div>
+                        {% endfor %}
+                        {% if venue_errors|length > 0 %}<p class="inquiry-form__error" id="{{ form.venues.vars.id }}_error">{{ icon('info', {class: 'icon--sm'}) }}<span>{% for error in venue_errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}</span></p>{% endif %}
+                    </fieldset>
+                    {{ include('inquiries/_fields.html.twig', {form: form}, with_context = false) }}
+                    {{ form_rest(form) }}
+                    <div class="inquiry-form__actions">
+                        {{ include('components/_button.html.twig', {label: 'brief.submit'|trans({}, 'inquiries'), type: 'submit', size: 'lg'}, with_context = false) }}
+                        <p class="inquiry-form__privacy">{{ 'brief.consent'|trans({}, 'inquiries') }} <a href="{{ path('datenschutz') }}">{{ 'form.privacy_link'|trans({}, 'inquiries') }}</a></p>
+                    </div>
+                {{ form_end(form) }}
+            {% endif %}
+            {% if not_offered is not empty and not undelivered %}
+                <section class="brief-page__single">
+                    <h2 class="brief-page__subheading">{{ 'brief.not_offered_heading'|trans({}, 'inquiries') }}</h2>
+                    <p>{{ 'brief.not_offered'|trans({}, 'inquiries') }}</p>
+                    <ul>
+                        {% for venue in not_offered %}
+                            <li>{{ venue.name }}{% if venue.town %}, {{ venue.town }}{% endif %}: <a href="{{ path('venue_show', {slug: venue.slug}) }}#anfrage">{{ 'brief.ask_single'|trans({}, 'inquiries') }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

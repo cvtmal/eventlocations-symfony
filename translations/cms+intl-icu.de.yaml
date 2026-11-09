@@ -198,9 +198,11 @@ contact:
         website: Website
         contact_person: Kontaktperson
         instagram: Instagram
+        accepts_multi_inquiries: Sammelanfragen annehmen
     help:
         phone: 'Zum Beispiel «044 123 45 67» oder «+41 44 123 45 67».'
         inquiry_email: Hierhin gehen die Anfragen.
+        accepts_multi_inquiries: Eine Sammelanfrage schickt ein Veranstalter gleichzeitig an bis zu fünf Locations. Einzelne Anfragen kommen immer an.
         instagram: 'Der Name (zum Beispiel «@remise») oder der Link zum Profil.'
 
 faq:

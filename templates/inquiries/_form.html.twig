@@ -1,19 +1,7 @@
 {#
     "{Name} kontaktieren" (DP-13), rendered by inquiry_form() into the detail page's #anfrage. Params: venue, form.
-    No JS. An error is text linked to its field with aria-describedby, plus aria-invalid (form_row would set these,
-    the local macro does not use it). Labels are here so optional fields can carry their hint.
+    No JS. The fields are _fields.html.twig, shared with the brief page (F13).
 #}
-{% macro field(field, label, optional = false) %}
-    {%- set errors = field.vars.errors -%}
-    {%- set attr = field.vars.attr|merge({class: 'inquiry-form__control'}) -%}
-    {%- if errors|length > 0 %}{% set attr = attr|merge({'aria-invalid': 'true', 'aria-describedby': field.vars.id ~ '_error'}) %}{% endif -%}
-    <div class="inquiry-form__field">
-        <label class="inquiry-form__label" for="{{ field.vars.id }}">{{ label }}{% if optional %} <span class="inquiry-form__hint">{{ 'form.optional'|trans({}, 'inquiries') }}</span>{% endif %}</label>
-        {{ form_widget(field, {attr: attr}) }}
-        {% if errors|length > 0 %}<p class="inquiry-form__error" id="{{ field.vars.id }}_error">{{ icon('info', {class: 'icon--sm'}) }}<span>{% for error in errors %}{{ error.message }}{% if not loop.last %} {% endif %}{% endfor %}</span></p>{% endif %}
-    </div>
-{% endmacro %}
-{% import _self as inquiry %}
 <div class="inquiry-form venue-section">
     <h2 class="venue-section__title">{{ 'form.heading'|trans({name: venue.name}, 'inquiries') }}</h2>
     <ul class="inquiry-form__promises">
@@ -33,38 +21,7 @@
         </div>
     {% endif %}
     {{ form_start(form, {attr: {class: 'inquiry-form__form'}}) }}
-        <div class="inquiry-form__row inquiry-form__row--three">
-            {{ inquiry.field(form.eventType, 'form.field.event_type'|trans({}, 'inquiries')) }}
-            {{ inquiry.field(form.guests, 'form.field.guests'|trans({}, 'inquiries')) }}
-            <div class="inquiry-form__date">
-                {{ inquiry.field(form.eventDate, 'form.field.event_date'|trans({}, 'inquiries')) }}
-                <div class="inquiry-form__check">
-                    {{ form_widget(form.dateFlexible) }}
-                    <label for="{{ form.dateFlexible.vars.id }}">{{ 'form.field.date_flexible'|trans({}, 'inquiries') }}</label>
-                </div>
-            </div>
-        </div>
-        <div class="inquiry-form__row inquiry-form__row--three">
-            {{ inquiry.field(form.startTime, 'form.field.start_time'|trans({}, 'inquiries'), true) }}
-            {{ inquiry.field(form.cateringWish, 'form.field.catering_wish'|trans({}, 'inquiries'), true) }}
-            {{ inquiry.field(form.budgetChf, 'form.field.budget'|trans({}, 'inquiries'), true) }}
-        </div>
-        {{ inquiry.field(form.message, 'form.field.message'|trans({}, 'inquiries')) }}
-        <div class="inquiry-form__row">
-            {{ inquiry.field(form.firstName, 'form.field.first_name'|trans({}, 'inquiries')) }}
-            {{ inquiry.field(form.lastName, 'form.field.last_name'|trans({}, 'inquiries')) }}
-        </div>
-        <div class="inquiry-form__row">
-            {{ inquiry.field(form.company, 'form.field.company'|trans({}, 'inquiries'), true) }}
-        </div>
-        <div class="inquiry-form__row">
-            {{ inquiry.field(form.email, 'form.field.email'|trans({}, 'inquiries')) }}
-            {{ inquiry.field(form.phone, 'form.field.phone'|trans({}, 'inquiries'), true) }}
-        </div>
-        <div class="inquiry-form__trap">
-            <label for="{{ form.website.vars.id }}">{{ 'form.field.website'|trans({}, 'inquiries') }}</label>
-            {{ form_widget(form.website) }}
-        </div>
+        {{ include('inquiries/_fields.html.twig', {form: form}, with_context = false) }}
         {{ form_rest(form) }}
         <div class="inquiry-form__actions">
             {{ include('components/_button.html.twig', {label: 'form.submit'|trans({}, 'inquiries'), type: 'submit', size: 'lg'}, with_context = false) }}

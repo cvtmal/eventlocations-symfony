@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Inquiries;
 
 use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
+use App\Inquiries\BriefOptOutToken;
 use App\Inquiries\Entity\Inquiry;
 use App\Inquiries\Mailer\InquiryMailer;
 use App\Shared\Twig\SwissFormatExtension;
@@ -18,6 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Mailer\Event\MessageEvent;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -235,7 +237,7 @@ final class InquiryMailerTest extends KernelTestCase
         $format = self::getContainer()->get(SwissFormatExtension::class);
         self::assertInstanceOf(SwissFormatExtension::class, $format);
 
-        return new InquiryMailer($recorder, $translator, $format, 'hallo@deine-eventlocation.ch', $override);
+        return new InquiryMailer($recorder, $translator, $format, 'hallo@deine-eventlocation.ch', $override, self::urls(), new BriefOptOutToken('a secret'));
     }
 
     private function sentMail(): Email
@@ -275,5 +277,13 @@ final class InquiryMailerTest extends KernelTestCase
     private function addresses(array $addresses): array
     {
         return array_values(array_map(static fn (Address $address): string => $address->getAddress(), $addresses));
+    }
+
+    private static function urls(): UrlGeneratorInterface
+    {
+        $urls = self::getContainer()->get(UrlGeneratorInterface::class);
+        self::assertInstanceOf(UrlGeneratorInterface::class, $urls);
+
+        return $urls;
     }
 }

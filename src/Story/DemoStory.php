@@ -100,6 +100,9 @@ final class DemoStory extends Story
 {
     public const VENUES = 60;
 
+    /** F13: the demo venue (index) that opted out of briefs; it has an inquiry address (`0 !== $i % 4`). */
+    private const int NO_BRIEFS = 2;
+
     /** Venue i is named PREFIXES[i % 12] + SUFFIXES[i % 15]: 60 distinct pairs (lcm 12, 15). */
     private const PREFIXES = [
         'Landgut', 'Seehaus', 'Gasthof', 'Schlossgut', 'Waldhaus', 'Villa',
@@ -403,6 +406,10 @@ final class DemoStory extends Story
                 null === $venue->website() ? null : str_replace('.example.ch', '.example.li', $venue->website()),
                 $venue->contactPerson(),
             ));
+        }
+        if (self::NO_BRIEFS === $i) {
+            // F13: one venue with an inquiry address takes no briefs, so the brief page shows "nur einzeln anfragbar".
+            $factory = $factory->afterInstantiate(static fn (Venue $venue) => $venue->changeMultiInquiryConsent(false));
         }
         if (0 !== $i % 3) {
             $factory = $factory->withDistances();
