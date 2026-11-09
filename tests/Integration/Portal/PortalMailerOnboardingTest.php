@@ -83,6 +83,45 @@ final class PortalMailerOnboardingTest extends KernelTestCase
         }
     }
 
+    /**
+     * @return iterable<string, array{\Closure(PortalMailer, string): bool}>
+     */
+    public static function staffNotices(): iterable
+    {
+        yield 'new location' => [static fn (PortalMailer $mailer, string $email): bool => $mailer->sendLocationNotice('Seehaus Meilen', 'Anna Meier', $email)];
+        yield 'access request' => [static fn (PortalMailer $mailer, string $email): bool => $mailer->sendAccessRequestNotice('Seehaus Meilen', 'Anna Meier', $email)];
+    }
+
+    /**
+     * @param \Closure(PortalMailer, string): bool $send
+     */
+    #[DataProvider('staffNotices')]
+    public function test_a_staff_notice_replies_to_the_manager(\Closure $send): void
+    {
+        self::assertTrue($send($this->mailer(), 'anna@example.ch'));
+
+        $mail = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $mail);
+        self::assertSame($this->contactEmail(), $mail->getTo()[0]->getAddress());
+        self::assertCount(1, $mail->getReplyTo());
+        self::assertSame('anna@example.ch', $mail->getReplyTo()[0]->getAddress());
+        self::assertSame('Anna Meier', $mail->getReplyTo()[0]->getName());
+    }
+
+    /**
+     * @param \Closure(PortalMailer, string): bool $send
+     */
+    #[DataProvider('staffNotices')]
+    public function test_a_staff_notice_with_a_broken_manager_address_still_goes_and_replies_to_the_site(\Closure $send): void
+    {
+        self::assertTrue($send($this->mailer(), "anna@example.ch\r\nBcc: x@example.ch"));
+
+        $mail = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $mail);
+        self::assertSame([$this->contactEmail()], array_map(static fn ($address): string => $address->getAddress(), $mail->getReplyTo()));
+        self::assertFalse($mail->getHeaders()->has('Bcc'));
+    }
+
     public function test_an_invalid_address_gives_false(): void
     {
         self::assertFalse($this->mailer()->sendLocationSubmitted('keine adresse', 'Anna', 'Seehaus Meilen'));

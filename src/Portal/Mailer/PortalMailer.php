@@ -9,6 +9,7 @@ use App\Portal\ReadModel\OwnerReport;
 use App\Portal\ReadModel\SubscriptionReminderRow;
 use App\Portal\Security\PortalLinkSigner;
 use App\Portal\ValueObject\OwnerReportLinks;
+use App\Shared\Mailer\ReplyTo;
 use App\Venues\ValueObject\Entitlements;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -16,6 +17,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Exception\RfcComplianceException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -62,14 +64,15 @@ final class PortalMailer
     }
 
     /**
-     * Tells staff, at `site.contact_email`, that a manager asked for access to a location (`ClaimController`).
+     * Tells staff, at `site.contact_email`, that a manager asked for access to a location (`ClaimController`,
+     * `ClaimFlowController`). Reply-To is the manager, so staff answer with one click.
      */
     public function sendAccessRequestNotice(string $venueName, string $managerName, string $managerEmail): bool
     {
         return $this->sendLocationMail($this->contactEmail, 'claims.mail.notice.subject', $venueName, 'portal/email/access_notice.html.twig', [
             'managerName' => $managerName,
             'managerEmail' => $managerEmail,
-        ]);
+        ], ReplyTo::person($managerEmail, $managerName));
     }
 
     /**
@@ -104,12 +107,16 @@ final class PortalMailer
         ]);
     }
 
+    /**
+     * Tells staff, at `site.contact_email`, that a manager submitted a new location (`WizardController`). Reply-To is
+     * the manager.
+     */
     public function sendLocationNotice(string $venueName, string $managerName, string $managerEmail): bool
     {
         return $this->sendLocationMail($this->contactEmail, 'onboarding.mail.notice.subject', $venueName, 'portal/email/location_notice.html.twig', [
             'managerName' => $managerName,
             'managerEmail' => $managerEmail,
-        ]);
+        ], ReplyTo::person($managerEmail, $managerName));
     }
 
     /**
@@ -260,16 +267,16 @@ final class PortalMailer
 
     /**
      * These mails greet by name: creating a location needs a login, so the address is proved. They answer whether the
-     * mail went, so a controller can tell staff when it did not.
+     * mail went, so a controller can tell staff when it did not. `$replyTo` null replies to `site.contact_email`.
      *
      * @param array<string, int|string|\DateTimeImmutable> $context
      */
-    private function sendLocationMail(string $to, string $subjectKey, string $venueName, string $template, array $context): bool
+    private function sendLocationMail(string $to, string $subjectKey, string $venueName, string $template, array $context, ?Address $replyTo = null): bool
     {
         try {
             $this->mailer->send((new TemplatedEmail())
                 ->to($to)
-                ->replyTo($this->contactEmail)
+                ->replyTo($replyTo ?? $this->contactEmail)
                 ->subject($this->translator->trans($subjectKey, ['venue' => $venueName], 'portal'))
                 ->htmlTemplate($template)
                 ->context(['venueName' => $venueName] + $context));
