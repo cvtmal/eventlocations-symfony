@@ -810,8 +810,8 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 - **Product and plan:** `docs/product.md` (PO), `KICKOFF.md` (superseded fork brief), `docs/research/fork-research.md` (what carries over; written before E3, so ignore its French and language parts), `docs/prd/CMO_PRD.md` and `docs/prd/CTO_PRD.md` (their Next.js, Stripe and BullMQ parts are ignored: we stay on Symfony).
 - **Behaviour of eventlokale** (a record of behaviour only, never of look or content): the live listing and detail pages (see **Important** for the visit rules). No screenshot of eventlokale is kept in the repository: it is public, and the seven earlier screenshots were removed from the tree and the history on 2026-11-07. Its vocabulary is public at `GET https://www.eventlokale.ch/api/guest/location/all-taxonomies`.
-- **Back office:** `docs/reference/admin/` (S12). **Public look:** `docs/reference/public/` (the sister site's boards until F6).
-- **Formats and runbooks:** `docs/content-format.md` with its schema, `docs/performance-baseline.md`, `docs/operations.md` (the sister site's runbook until F15).
+- **Back office:** `docs/reference/admin/` (S12). **Public look:** `docs/reference/public/` (redrawn in the D23 look by F6b).
+- **Formats and runbooks:** `docs/content-format.md` with its schema, `docs/performance-baseline.md`, `docs/operations.md` (this site's runbook since F15; the owner's launch checklist is in F16's Outcome).
 - **Cycle history of the sister site:** `git show 7e96eee:docs/rpi-cycles.md` (**History**).
 
 ## Out of scope / proposals (not scheduled)
