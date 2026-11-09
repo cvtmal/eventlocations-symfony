@@ -28,6 +28,9 @@ final class VenueFactory extends PersistentObjectFactory
     public const string TERM_FROM = '2000-01-01';
     public const string TERM_TO = '2099-12-31';
 
+    /** Numbers the default inquiry addresses, so they are unique and need no faker draw. */
+    private static int $inquiryAddresses = 0;
+
     private const NAME_PREFIXES = ['Landgut', 'Seehaus', 'Gasthof', 'Schlossgut', 'Waldhaus', 'Villa', 'Remise', 'Gutshof'];
 
     public static function class(): string
@@ -84,8 +87,8 @@ final class VenueFactory extends PersistentObjectFactory
     }
 
     /**
-     * D60: a venue without an inquiry address, which can never be online (every factory venue has one by default,
-     * `initialize()`). Keeps the other contact fields.
+     * D60: a venue without an inquiry address, which no publish path puts online (every factory venue has one by
+     * default, `initialize()`). Keeps the other contact fields.
      */
     public function withoutInquiryEmail(): self
     {
@@ -104,7 +107,7 @@ final class VenueFactory extends PersistentObjectFactory
         // faker, so the seeded draws of the demo data stay as they were.
         return $this->afterInstantiate(static function (Venue $venue): void {
             $venue->confirmFacts(true, new \DateTimeImmutable('2026-01-01 00:00:00+01:00'));
-            $venue->changeContact(null, 'anfragen-'.bin2hex(random_bytes(4)).'@example.ch', null, null);
+            $venue->changeContact(null, \sprintf('anfragen-%d@example.ch', ++self::$inquiryAddresses), null, null);
         })->afterPersist(static function (Venue $venue): void {
             // A paid tier comes with a paid term (G9): the entitlements read the term, not the tier. This one covers
             // every date a test mocks; a test about terms writes its own (SubscriptionFactory) or removes this one.

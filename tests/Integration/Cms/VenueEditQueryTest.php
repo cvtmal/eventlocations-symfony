@@ -132,7 +132,7 @@ final class VenueEditQueryTest extends KernelTestCase
         self::assertSame([null, false], [$edit->googlePlaceId, $edit->googleRatingHidden]);
         self::assertSame(0, $edit->galleryPhotoCount);
         self::assertNull($edit->header->cover);
-        self::assertSame([VenueEdit::MISSING_MAIN_BUILDING, VenueEdit::MISSING_PHOTO], $edit->missingForPublish('de'));
+        self::assertSame([VenueEdit::MISSING_MAIN_BUILDING, VenueEdit::MISSING_PHOTO, VenueEdit::MISSING_INQUIRY_EMAIL], $edit->missingForPublish('de'));
     }
 
     public function test_a_venue_without_place(): void

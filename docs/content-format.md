@@ -71,7 +71,7 @@ distances:                            # each optional; km 0–500 with at most o
   station: {km: 0.9, name: Bahnhof Beispiel}
   highway: {km: 3.2, name: A1}
   airport: {km: 12.0, name: Flughafen Zürich}
-contact:                              # all optional
+contact:                              # optional; inquiry_email is needed to go online (D60)
   phone: '+41441234567'               # E.164, quoted
   inquiry_email: anfragen@example.ch  # receives the inquiries
   website: https://example.ch         # starts with http:// or https://

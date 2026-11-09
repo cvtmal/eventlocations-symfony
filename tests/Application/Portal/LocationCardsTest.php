@@ -144,14 +144,12 @@ final class LocationCardsTest extends WebTestCase
     public function test_an_online_location_keeps_its_inquiry_address(): void
     {
         $venue = $this->managedVenue($this->logInAsManager());
-        $this->connection->executeStatement("UPDATE venues SET status = 'published', inquiry_email = 'anfragen@remise.example' WHERE id = ?", [$venue->id()]);
-
         $crawler = $this->post(LocationCard::Contact, $venue, ['inquiryEmail' => '', 'contactPerson' => 'Anna Muster']);
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         self::assertSame('true', $crawler->filter('#venue_contact_inquiryEmail')->attr('aria-invalid'));
         self::assertStringContainsString('Eine Location, die online ist, braucht eine Anfrage-E-Mail.', $crawler->filter('form[name="venue_contact"]')->text());
-        self::assertSame(['published', 'anfragen@remise.example', null], $this->connection->fetchNumeric('SELECT status, inquiry_email, contact_person FROM venues WHERE id = ?', [$venue->id()]));
+        self::assertSame(['published', 'anfragen@gartenhaus.example', null], $this->connection->fetchNumeric('SELECT status, inquiry_email, contact_person FROM venues WHERE id = ?', [$venue->id()]));
     }
 
     /**
@@ -260,6 +258,8 @@ final class LocationCardsTest extends WebTestCase
     private function managedVenue(PortalUser $manager): Venue
     {
         $venue = DetailVenues::minimal();
+        // D60: an online location keeps its inquiry address, so a contact save needs one to start from.
+        $this->connection->executeStatement("UPDATE venues SET inquiry_email = 'anfragen@gartenhaus.example' WHERE id = ?", [$venue->id()]);
         PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $venue]);
 
         return $venue;

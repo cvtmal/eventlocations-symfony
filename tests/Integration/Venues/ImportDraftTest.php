@@ -147,9 +147,11 @@ final class ImportDraftTest extends KernelTestCase
         $this->connection->executeStatement("UPDATE venues SET status = 'published' WHERE content_key = 'remise-online'");
 
         $this->content->change('remise-online', ['capacity' => ['max' => 150], 'contact' => null]);
-        self::assertSame(Command::FAILURE, $this->import(), $this->display());
+        foreach ([['--dry-run' => true], []] as $options) {
+            self::assertSame(Command::FAILURE, $this->import($options), $this->display());
+            self::assertStringContainsString('/contact/inquiry_email: the venue is online and needs an inquiry address', $this->display());
+        }
 
-        self::assertStringContainsString('/contact/inquiry_email: the venue is online and needs an inquiry address', $this->display());
         $row = $this->venueRow('remise-online');
         self::assertSame(['published', 120, 'anfragen@example.ch'], [$row['status'] ?? null, $row['capacity_max'] ?? null, $row['inquiry_email'] ?? null]);
     }

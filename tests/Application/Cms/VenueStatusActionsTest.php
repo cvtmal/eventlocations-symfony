@@ -105,7 +105,7 @@ final class VenueStatusActionsTest extends WebTestCase
         $venue = DetailVenues::minimal();
         VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
-        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished' WHERE id = ?", [$venue->id()]);
+        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished', inquiry_email = 'anfragen@gartenhaus.example' WHERE id = ?", [$venue->id()]);
         $crawler = $this->client->request('GET', $this->url($venue));
 
         $this->client->submit($crawler->filter('form[name="publish"]')->form());
@@ -125,7 +125,7 @@ final class VenueStatusActionsTest extends WebTestCase
         $venue = DetailVenues::minimal();
         VenueTermFactory::new()->term(TermGroup::Building, 'farm_barn')->main()->create(['venue' => $venue]);
         VenuePhotoFactory::createOne(['venue' => $venue, 'position' => 1]);
-        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished', facts_checked_at = NULL WHERE id = ?", [$venue->id()]);
+        $this->connection->executeStatement("UPDATE venues SET status = 'unpublished', facts_checked_at = NULL, inquiry_email = 'anfragen@gartenhaus.example' WHERE id = ?", [$venue->id()]);
         $this->connection->executeStatement("UPDATE venue_translations SET description = 'Ein Gartenhaus für 80 Gäste.' WHERE venue_id = ?", [$venue->id()]);
 
         $crawler = $this->client->request('GET', $this->url($venue));
