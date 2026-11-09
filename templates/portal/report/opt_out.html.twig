@@ -1,0 +1,27 @@
+{#
+    The opt-out link of the monthly report (G10, ReportOptOutController): the question, or, once off, the answer with
+    «wieder abonnieren». `state` is a `Portal\ReadModel\ReportOptOutState`; `resumed` is true right after
+    «wieder abonnieren». No csrf_token() here: the page must never start a session (RFC 8058 one-click POST).
+#}
+{% extends 'portal/base_auth.html.twig' %}
+
+{% block title %}{{ 'report.opt_out_page.title'|trans({}, 'portal') }} – {{ 'shell.account'|trans({}, 'portal') }}{% endblock %}
+
+{% block form %}
+    <div class="auth__form">
+        <h1>{{ 'report.opt_out_page.title'|trans({}, 'portal') }}</h1>
+        {% if state.optedOut %}
+            <p class="auth__intro">{{ 'report.opt_out_page.done'|trans({venue: state.venueName}, 'portal') }}</p>
+            <form method="post">
+                <input type="hidden" name="resubscribe" value="1">
+                <button class="btn btn--secondary btn--lg" type="submit">{{ 'report.opt_out_page.resubscribe'|trans({}, 'portal') }}</button>
+            </form>
+        {% else %}
+            <p class="auth__intro">{{ (resumed ? 'report.opt_out_page.resumed' : 'report.opt_out_page.question')|trans({venue: state.venueName}, 'portal') }}</p>
+            <form method="post">
+                <input type="hidden" name="List-Unsubscribe" value="One-Click">
+                <button class="btn btn--primary btn--lg" type="submit">{{ 'report.opt_out_page.submit'|trans({}, 'portal') }}</button>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

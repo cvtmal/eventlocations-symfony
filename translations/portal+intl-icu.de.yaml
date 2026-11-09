@@ -579,3 +579,91 @@ last_minute:
             intro: 'Dein Angebot «Kurzfristig frei» für {venue} vom {dates} ist abgelaufen und nicht mehr zu sehen.'
             next: 'Hast du wieder kurzfristig ein Datum frei? Erfasse in deinem Konto ein neues Angebot.'
             button: Neues Angebot erfassen
+# G10 (owner-report): the monthly report mail per entry and its opt-out page. "Anfragen", never "Buchungen" (D52).
+report:
+    mail:
+        subject: 'Dein Monatsbericht für {venue}: {month}'
+        preheader: 'So lief «{venue}» im {month}.'
+        greeting: 'Hallo {name}'
+        greeting_plain: Hallo
+        intro: 'Hier sind die Zahlen von «{venue}» für {month}, verglichen mit dem Vormonat.'
+        no_data: 'Im {month} wurde «{venue}» nicht aufgerufen, und es kamen keine Anfragen. Ein vollständiger Eintrag wird leichter gefunden.'
+        figure:
+            visits: Besuche
+            interactions: Interaktionen
+            delivered: Zugestellte Anfragen
+            qualified: Qualifizierte Anfragen
+            clicks_website: Klicks auf die Website
+            clicks_email: Klicks auf die E-Mail-Adresse
+            clicks_phone: Klicks auf die Telefonnummer
+            clicks_map: Klicks auf die Karte
+            clicks_instagram: Klicks auf Instagram
+            impressions: In Suchergebnissen gezeigt
+            merkliste_adds: Auf die Merkliste gesetzt
+            submitted: Abgeschickte Anfragen
+            value: '{current} (Vormonat: {previous}, {change})'
+            value_no_previous: '{current} (Vormonat: –)'
+        change:
+            more: '+{n}'
+            less: '−{n}'
+            same: '±0'
+        detailed:
+            title: 'Mehr Zahlen aus dem {month}:'
+        trend:
+            title: 'Die letzten drei Monate:'
+            value: 'Besuche {visits}, Interaktionen {interactions}, Zugestellte Anfragen {delivered}'
+        visits_note: Besuche zählen jede Person einmal pro Tag. Interaktionen sind Klicks auf deine Kontaktangaben und Einträge auf der Merkliste.
+        as_of: 'Stand: {when, date, ::dMMMMy}'
+        suggestion:
+            inquiry_email:
+                text: Hinterlege eine E-Mail-Adresse für Anfragen, damit Interessierte dich direkt erreichen.
+                button: E-Mail-Adresse ergänzen
+            title_photo:
+                text: Dein Eintrag hat noch kein Foto. Mit einem Titelbild fällt er in den Suchergebnissen auf.
+                button: Foto hochladen
+            more_photos:
+                text: 'Zeig deine Location mit mindestens drei Fotos: Wer mehr sieht, fragt eher an.'
+                button: Fotos hochladen
+            description:
+                text: 'Beschreib deine Location in ein paar Sätzen: was sie besonders macht und für welche Anlässe sie passt.'
+                button: Beschreibung schreiben
+            room:
+                text: Erfasse deine Räume mit ihrer Grösse, damit Planende sehen, was hineinpasst.
+                button: Räume erfassen
+            capacity:
+                text: Gib an, wie viele Gäste sitzend oder stehend Platz haben. Danach filtern viele Planende.
+                button: Gästezahl ergänzen
+            event_types:
+                text: Wähle die Anlässe, für die deine Location passt, damit sie in den passenden Suchen erscheint.
+                button: Anlassarten wählen
+            price_level:
+                text: Gib dein Preisniveau an, damit Planende deinen Eintrag einordnen können.
+                button: Preisniveau angeben
+            free_photo_slots:
+                text: Dein Plan hat noch Platz für weitere Fotos. Zeig mehr von deiner Location.
+                button: Fotos hochladen
+            complete:
+                text: Dein Eintrag ist vollständig. Danke!
+        plan:
+            paid_until: 'Dein Tarif {tier}: Bezahlt bis {end, date, ::dMMMMy}.'
+            free_until: 'Dein Tarif {tier}: Kostenlos bis {end, date, ::dMMMMy}.'
+            cancelled: 'Dein Tarif {tier}: Gekündigt, läuft bis {end, date, ::dMMMMy}.'
+            free: 'Dein Tarif {tier}: Gratis-Eintrag, ohne Ablaufdatum.'
+        pro_line:
+            text: 'Mehr Fotos, Räume und Zahlen gibt es mit Pro:'
+            link: Pro anfragen
+        edit: Eintrag bearbeiten
+        opt_out:
+            text: 'Du möchtest den Monatsbericht für «{venue}» nicht mehr?'
+            link: Abbestellen
+    opt_out_page:
+        title: Monatsbericht abbestellen
+        question: 'Möchtest du den Monatsbericht für «{venue}» nicht mehr erhalten? Wir schicken ihn jeweils Anfang Monat.'
+        submit: Monatsbericht abbestellen
+        done: 'Du erhältst den Monatsbericht für «{venue}» nicht mehr.'
+        resubscribe: wieder abonnieren
+        resumed: 'Du erhältst den Monatsbericht für «{venue}» wieder, jeweils Anfang Monat.'
+        invalid:
+            title: Dieser Link gilt nicht mehr
+            text: Die Location gibt es nicht mehr oder der Link ist unvollständig. Bei Fragen antworte einfach auf unsere Mail.
+            link: Zur Anmeldung

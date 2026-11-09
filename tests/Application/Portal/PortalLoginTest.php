@@ -90,6 +90,21 @@ final class PortalLoginTest extends WebTestCase
         self::assertResponseRedirects('/konto/anmelden');
     }
 
+    public function test_a_login_returns_to_the_page_a_mail_link_asked_for(): void
+    {
+        // G10: the monthly report's buttons point at a /konto tab; the login in between must not lose it.
+        $manager = $this->createManager();
+        $venue = VenueFactory::createOne();
+        PortalVenueAccessFactory::new()->active()->create(['user' => $manager, 'venue' => $venue]);
+        $target = '/konto/locations/'.$venue->number().'/fotos';
+
+        $this->client->request('GET', $target);
+        self::assertResponseRedirects('/konto/anmelden');
+
+        $this->submitManagerLogin($manager->email());
+        self::assertResponseRedirects('http://localhost'.$target);
+    }
+
     public function test_a_wrong_password_is_refused(): void
     {
         $this->submitManagerLogin($this->createManager()->email(), 'wrong-password');

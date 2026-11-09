@@ -92,6 +92,8 @@ security:
         - { path: ^/konto/abo-kuendigen/[^/]+$, roles: PUBLIC_ACCESS }
         # G6: the claim flow a preview page starts (ClaimFlowController); the code proves the address.
         - { path: ^/konto/uebernehmen(/(start|code|passwort))?$, roles: PUBLIC_ACCESS }
+        # G10: the opt-out link of the monthly report works without a login (RFC 8058 one-click POST).
+        - { path: ^/konto/bericht-abbestellen/[^/]+$, roles: PUBLIC_ACCESS }
         - { path: ^/konto/api/, roles: ROLE_PORTAL_USER }
         - { path: ^/konto(/|$), roles: ROLE_PORTAL_USER }
 

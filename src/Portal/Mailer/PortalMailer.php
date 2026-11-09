@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Portal\Mailer;
 
 use App\Portal\Entity\PortalUser;
+use App\Portal\ReadModel\OwnerReport;
 use App\Portal\ReadModel\SubscriptionReminderRow;
 use App\Portal\Security\PortalLinkSigner;
+use App\Portal\ValueObject\OwnerReportLinks;
 use App\Venues\ValueObject\Entitlements;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -207,6 +209,48 @@ final class PortalMailer
             'endsOn' => $endsOn,
             'tabUrl' => $tabUrl,
         ]);
+    }
+
+    /**
+     * The monthly report of one entry (G10). Not a contract mail, so it carries the per-venue opt-out (Wave G §4a.6):
+     * the link in the body and RFC 8058's `List-Unsubscribe` + `List-Unsubscribe-Post` headers for the one-click
+     * button of the mail client. Whether Infomaniak's DKIM signature covers those headers is unverified, so the
+     * in-body link is the path that always works. `$name` is null when it goes to an inquiry address.
+     */
+    public function sendOwnerReport(string $to, ?string $name, OwnerReport $report, OwnerReportLinks $links): bool
+    {
+        $template = 'portal/email/owner_report.html.twig';
+        try {
+            $email = (new TemplatedEmail())
+                ->to($to)
+                ->replyTo($this->contactEmail)
+                ->subject($this->translator->trans('report.mail.subject', [
+                    'venue' => $report->venueName,
+                    'month' => $report->month->label(),
+                ], 'portal'))
+                ->htmlTemplate($template)
+                ->context([
+                    'name' => $name,
+                    'report' => $report,
+                    'links' => $links,
+                ]);
+            $email->getHeaders()
+                ->addTextHeader('List-Unsubscribe', '<'.$links->optOut.'>')
+                ->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
+            $this->mailer->send($email);
+
+            return true;
+        } catch (TransportExceptionInterface|RfcComplianceException|HandlerFailedException $exception) {
+            $cause = $exception instanceof HandlerFailedException ? $exception->getPrevious() ?? $exception : $exception;
+            $this->logger->error('The portal mail {template} failed ({exception_class} at {file}:{line}).', [
+                'template' => $template,
+                'exception_class' => $cause::class,
+                'file' => $cause->getFile(),
+                'line' => $cause->getLine(),
+            ]);
+
+            return false;
+        }
     }
 
     private function sendAccessMail(string $email, string $firstName, string $venueName, string $subjectKey, string $template): bool
