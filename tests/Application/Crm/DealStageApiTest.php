@@ -71,7 +71,7 @@ final class DealStageApiTest extends WebTestCase
             'action' => '/admin/crm/deals/'.$deal->id().'/zahlung',
             'token' => 'csrf-token',
             'expected' => '',
-            'text' => 'Die Rechnung ist bezahlt: «Schloss Seeblick» erhält den Tarif Pro vom 1. Januar 2030 bis 31. Dezember 2030.',
+            'text' => 'Die Rechnung ist bezahlt: «Schloss Seeblick» erhält den Tarif «Pro» vom 1. Januar 2030 bis 31. Dezember 2030.',
         ], $this->answer()['tierOffer']);
     }
 

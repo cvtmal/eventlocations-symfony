@@ -107,7 +107,7 @@ final class DealCreateTest extends WebTestCase
         $crawler = $this->client->request('GET', self::NEW.'?company='.$company->id());
 
         self::assertSame(['', 'pro', 'free'], $crawler->filter('#deal_tier option')->each(static fn (Crawler $option): string => (string) $option->attr('value')));
-        self::assertSame(['Kein Tier', 'Premium', 'Free'], $crawler->filter('#deal_tier option')->each(static fn (Crawler $option): string => $option->text()));
+        self::assertSame(['Kein Tier', 'Premium', 'Gratis'], $crawler->filter('#deal_tier option')->each(static fn (Crawler $option): string => $option->text()));
     }
 
     public function test_a_tier_no_row_has_is_a_422(): void

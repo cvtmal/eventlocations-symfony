@@ -343,6 +343,9 @@ blocks:
     rights_declaration:
         label: 'Bildrechte-Erklärung'
         placement: 'Beim Veröffentlichen der Location (Schritt «Prüfen») und im Fotos-Tab des Kontos'
+    tier_faq:
+        label: 'Location eintragen: Häufige Fragen'
+        placement: 'Seite «Location eintragen» (/location-eintragen), Abschnitt «Häufige Fragen». Preise nicht abtippen: die Tabelle zeigt sie aus den Tarifen.'
 preview:
     title: 'Vorschau: {name}'
     unconfirmed: Noch nicht vom Betreiber bestätigt
@@ -433,3 +436,65 @@ last_minute:
     min_guests: 'ab {count, plural, one {# Person} other {# Personen}}'
     guests: Personen
     terms: Bedingungen
+tier_page:
+    page_title: 'Location eintragen: gratis oder mit Pro | deine-eventlocation.ch'
+    meta_description: '{promoted, select, yes {Trag deine Eventlocation gratis ein oder wähle Pro für mehr Fotos, Räume und einen Top-Eintrag. Alle Leistungen und Preise im Überblick.} other {Trag deine Eventlocation gratis ein oder wähle Pro für mehr Fotos und Räume. Alle Leistungen und Preise im Überblick.}}'
+    title: 'Deine Location auf deine-eventlocation.ch'
+    # `promoted`: whether any tier ranks above the others (`TierMatrix::promotedTierNames()`); without one the ranking clause is dropped (D18).
+    intro: '{promoted, select, yes {Der Eintrag ist gratis. Mit Pro zeigst du mehr und stehst in den Suchergebnissen weiter oben. Anfragen kommen in jedem Fall direkt per E-Mail zu dir, ohne Provision.} other {Der Eintrag ist gratis. Mit Pro zeigst du mehr. Anfragen kommen in jedem Fall direkt per E-Mail zu dir, ohne Provision.}}'
+    matrix:
+        heading: 'Gratis und Pro im Vergleich'
+        feature_header: 'Leistung'
+    row:
+        price: 'Preis'
+        promoted: 'Top-Eintrag: weiter oben in den Suchergebnissen'
+        photos: 'Fotos'
+        videos: 'Videos'
+        rooms: 'Räume'
+        documents: 'PDF-Dokumente (z. B. Menü, Preisliste)'
+        contact: 'Telefonnummer und Website im Eintrag'
+        event_types: 'Anlassarten'
+        last_minute: 'Kurzfristig frei'
+    cell:
+        free: 'Gratis, ohne Ablaufdatum'
+        price: 'CHF {price} pro Jahr'
+        price_plus_vat: 'CHF {price} pro Jahr zzgl. MwSt.'
+        term: 'Laufzeit ein Jahr, auf Rechnung'
+        limit: 'bis zu {max}'
+        limit_one: '1'
+        all: 'alle passenden'
+        included: 'inklusive'
+        excluded: 'nicht enthalten'
+    top:
+        heading: 'Was heisst «Top-Eintrag»?'
+        text: 'Einträge mit {tiers} sind bezahlt, tragen das Label «Top-Eintrag» und stehen in den Suchergebnissen vor den übrigen Einträgen. Innerhalb der Top-Einträge und innerhalb der übrigen Einträge mischen wir die Reihenfolge jeden Tag neu.'
+    cta:
+        register: 'Location gratis eintragen oder übernehmen'
+        login: 'Schon ein Konto? Anmelden und Pro anfragen'
+        order: 'Pro bestellst du in deinem Konto mit «Pro anfragen» oder per E-Mail an {email}. Wir schicken dir eine Rechnung, eine Online-Zahlung gibt es nicht.'
+    faq:
+        heading: 'Häufige Fragen'
+        cost:
+            question: 'Was kostet ein Eintrag?'
+            answer: 'Der Gratis-Eintrag kostet nichts und läuft ohne Ablaufdatum. Pro kostet, was oben in der Tabelle steht, für ein Jahr. Wir stellen die Rechnung von Hand, eine Online-Zahlung gibt es nicht.'
+        claim:
+            question: 'Wer darf eine Location eintragen oder übernehmen?'
+            answer: 'Wer die Location vertreten darf, zum Beispiel die Betreiberin, der Geschäftsführer oder wer von ihnen beauftragt ist. Du registrierst dich mit Name und E-Mail und fragst den bestehenden Eintrag an. Wir prüfen, ob du dazu berechtigt bist, bevor du ihn bearbeiten kannst.'
+        rights:
+            question: 'Welche Fotos darf ich zeigen?'
+            answer: 'Nur Fotos, an denen du die Rechte hast oder die du zeigen darfst. Sind Personen erkennbar, müssen sie einverstanden sein. Beim Veröffentlichen bestätigst du das in der Bildrechte-Erklärung. Eine Freigabe kannst du jederzeit widerrufen, das Foto verschwindet dann sofort von der Website.'
+        inquiries:
+            question: 'Wie kommen Anfragen zu mir?'
+            answer: 'Anfragen gehen per E-Mail direkt an die Adresse, die du für Anfragen angibst. Du antwortest der anfragenden Person direkt. Wir verlangen keine Provision, weder auf Anfragen noch auf Buchungen.'
+        cancel:
+            question: 'Wie kündige ich Pro?'
+            answer: 'Pro läuft ein Jahr. 30 und 7 Tage vor dem Ende erinnern wir dich per E-Mail; mit dem Link darin kündigst du. Kündigst du nicht, schicken wir dir die Rechnung für ein weiteres Jahr. Endet Pro, bleibt dein Eintrag online und wird wieder ein Gratis-Eintrag: Fotos über der Gratis-Grenze blenden wir aus, gelöscht wird nichts.'
+        removal:
+            question: 'Wie lasse ich einen Eintrag entfernen?'
+            answer: 'In deinem Konto nimmst du deinen Eintrag jederzeit offline. Ohne Konto meldest du es uns über «Inhalt melden» unten auf jeder Seite oder per E-Mail an {email}. Fotos, an denen du die Rechte hast, blenden wir nach deiner Meldung in der Regel sofort aus.'
+promoted_note:
+    title: 'Bezahlter Eintrag, steht in den Suchergebnissen weiter oben'
+    text: 'Top-Eintrag: bezahlter Eintrag, der in den Suchergebnissen weiter oben steht.'
+    link: 'Mehr dazu'
+    # Visually hidden after `link`, so the link's accessible name reads «Mehr dazu zum Top-Eintrag».
+    link_hidden: 'zum Top-Eintrag'

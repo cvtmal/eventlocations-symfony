@@ -206,6 +206,11 @@
         total.hidden = left === 0;
         document.querySelector('[data-merkliste-full]').hidden = read().length < MAX_ENTRIES;
         document.querySelector('[data-merkliste-empty]').hidden = left > 0;
+        // The «Top-Eintrag» footnote explains a badge; it goes with the last promoted card (G13). Not `.badge`: «Kurzfristig frei» (G14) is one too.
+        const note = document.querySelector('[data-merkliste-promoted-note]');
+        if (note) {
+            note.hidden = !document.querySelector('[data-merkliste-item][data-merkliste-promoted]');
+        }
     };
 
     // In place, because a reload would jump to the top of a list of up to 100 cards.

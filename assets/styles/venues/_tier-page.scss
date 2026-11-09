@@ -1,0 +1,143 @@
+@use '../abstracts/breakpoints' as bp;
+@use '../abstracts/staff-text';
+
+// «Location eintragen» (G13): the tier matrix, the «Top-Eintrag» explanation, the call to action and the FAQ, in one
+// centred column like the legal pages.
+.tier-page {
+    padding-block: var(--space-16) var(--space-64);
+
+    @include bp.up(md) {
+        padding-top: var(--space-40);
+    }
+}
+
+// Two classes, to beat `.container`'s max-widths.
+.tier-page.container {
+    max-width: 45.5rem;
+    padding-inline: var(--space-24);
+}
+
+.tier-page__title {
+    margin: 0 0 var(--space-16);
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+}
+
+.tier-page__intro {
+    margin: 0;
+}
+
+.tier-page__section {
+    margin-top: var(--space-32);
+
+    @include bp.up(md) {
+        margin-top: var(--space-40);
+    }
+
+    h2 {
+        margin: 0 0 var(--space-12);
+        font-size: var(--fs-h2);
+        line-height: var(--lh-h2);
+    }
+
+    p {
+        margin: 0 0 var(--space-12);
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+// A safety net only: three columns fit at 390 px, a fourth tier or a long name scrolls inside, never the page.
+.tier-matrix__scroll {
+    overflow-x: auto;
+}
+
+.tier-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+
+    @include bp.up(md) {
+        font-size: var(--fs-body);
+        line-height: var(--lh-body);
+    }
+
+    th,
+    td {
+        padding: var(--space-12) var(--space-8);
+        border-bottom: 1px solid var(--c-line-soft);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    thead th {
+        font-size: var(--fs-h3);
+        line-height: var(--lh-h3);
+        border-bottom-color: var(--c-line);
+    }
+
+    tbody th {
+        font-weight: var(--fw-semibold);
+    }
+
+    a {
+        color: var(--c-accent-strong);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+
+        &:hover {
+            color: var(--c-ink);
+        }
+    }
+}
+
+.tier-matrix__term {
+    display: block;
+    color: var(--c-ink-muted);
+}
+
+.tier-matrix__check {
+    color: var(--c-success);
+}
+
+.tier-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-16);
+    margin-bottom: var(--space-16);
+}
+
+.tier-page__login,
+.tier-page__faq a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--c-accent-strong);
+    font-weight: var(--fw-semibold);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+
+    &:hover {
+        color: var(--c-ink);
+    }
+}
+
+.tier-page__order {
+    color: var(--c-ink-muted);
+}
+
+.tier-page__faq {
+    h3 {
+        margin: var(--space-24) 0 var(--space-8);
+        font-size: var(--fs-h3);
+        line-height: var(--lh-h3);
+    }
+}
+
+.tier-page__faq-staff {
+    @include staff-text.flow;
+}

@@ -42,6 +42,9 @@
             <li class="listing__item">{{ include('search/_card.html.twig', {card: card, index: loop.index0}, with_context = false) }}</li>
             {%- endfor %}
         </ol>
+        {%- if page.cards|filter(c => c.promoted)|length > 0 %}
+        {% include 'components/_promoted_note.html.twig' with {} only %}
+        {%- endif %}
         {{ include('search/_pagination.html.twig', {criteria: criteria, page: page, links: page_links}, with_context = false) }}
         {%- else %}
         {{ include('search/_empty.html.twig', with_context = false) }}

@@ -57,7 +57,7 @@ final class VenueListScreenTest extends WebTestCase
         // A venue without a town is a row of its own; unpublished, so no link to the public page.
         $second = $crawler->filter('#venue-list tbody tr')->eq(1);
         self::assertSame('Nr. '.$hut->number(), $second->filter('.venue-list__name .muted')->text());
-        self::assertSame('Free', $second->filter('.pill')->first()->text());
+        self::assertSame('Gratis', $second->filter('.pill')->first()->text());
         self::assertStringContainsString('Unpubliziert', $second->text());
         self::assertStringContainsString('Unvollständig', $second->text());
         self::assertCount(0, $second->filter('a[href^="/eventlokal/"]'));

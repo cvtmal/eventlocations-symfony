@@ -225,7 +225,7 @@ final class VenueTest extends TestCase
         $venue->changeTier($free);
 
         self::assertSame($free, $venue->tier());
-        self::assertSame('Free', $venue->tier()->name());
+        self::assertSame('Gratis', $venue->tier()->name());
     }
 
     private function venueWithoutTown(?Canton $canton): Venue

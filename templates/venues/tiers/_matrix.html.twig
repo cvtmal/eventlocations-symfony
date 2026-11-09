@@ -1,0 +1,64 @@
+{#
+    The tier matrix of /location-eintragen (G13). Include with `only`: matrix (Venues\ReadModel\TierMatrix). A row is
+    there only while some tier offers its feature; the price row always is.
+#}
+<section class="tier-page__section">
+    <h2 id="tier-matrix-heading">{{ 'tier_page.matrix.heading'|trans({}, 'venues') }}</h2>
+    <div class="tier-matrix__scroll">
+        <table class="tier-matrix" aria-labelledby="tier-matrix-heading">
+            <thead>
+                <tr>
+                    <td class="tier-matrix__corner"><span class="visually-hidden">{{ 'tier_page.matrix.feature_header'|trans({}, 'venues') }}</span></td>
+                    {%- for column in matrix.columns %}
+                    <th scope="col">{{ column.name }}</th>
+                    {%- endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">{{ 'tier_page.row.price'|trans({}, 'venues') }}</th>
+                    {%- for column in matrix.columns %}
+                    <td>
+                        {%- if column.free -%}
+                        {{ 'tier_page.cell.free'|trans({}, 'venues') }}
+                        {%- else -%}
+                        {{ (column.vatLine ? 'tier_page.cell.price_plus_vat' : 'tier_page.cell.price')|trans({price: column.francs|swiss_number(column.priceDecimals)}, 'venues') }}
+                        <span class="tier-matrix__term">{{ 'tier_page.cell.term'|trans({}, 'venues') }}</span>
+                        {%- endif -%}
+                    </td>
+                    {%- endfor %}
+                </tr>
+                {%- for row in matrix.rows %}
+                <tr>
+                    <th scope="row">
+                        {%- if row.feature.value == 'promoted' -%}
+                        <a href="#top-eintrag">{{ 'tier_page.row.promoted'|trans({}, 'venues') }}</a>
+                        {%- else -%}
+                        {{ ('tier_page.row.' ~ row.feature.value)|trans({}, 'venues') }}
+                        {%- endif -%}
+                    </th>
+                    {%- for cell in row.cells %}
+                    <td>
+                        {%- if row.limit -%}
+                            {%- if cell is null -%}
+                            {{ 'tier_page.cell.all'|trans({}, 'venues') }}
+                            {%- elseif cell == 0 -%}
+                            <span aria-hidden="true">–</span> <span class="visually-hidden">{{ 'tier_page.cell.excluded'|trans({}, 'venues') }}</span>
+                            {%- elseif cell == 1 -%}
+                            {{ 'tier_page.cell.limit_one'|trans({}, 'venues') }}
+                            {%- else -%}
+                            {{ 'tier_page.cell.limit'|trans({max: cell|swiss_number}, 'venues') }}
+                            {%- endif -%}
+                        {%- elseif cell -%}
+                            <span class="tier-matrix__check">{{ icon('check') }}</span> <span class="visually-hidden">{{ 'tier_page.cell.included'|trans({}, 'venues') }}</span>
+                        {%- else -%}
+                            <span aria-hidden="true">–</span> <span class="visually-hidden">{{ 'tier_page.cell.excluded'|trans({}, 'venues') }}</span>
+                        {%- endif -%}
+                    </td>
+                    {%- endfor %}
+                </tr>
+                {%- endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>

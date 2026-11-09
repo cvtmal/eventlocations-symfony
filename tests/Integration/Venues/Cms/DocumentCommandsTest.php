@@ -71,7 +71,7 @@ final class DocumentCommandsTest extends KernelTestCase
 
         self::assertSame('documents.error.too_many', $violation->translationKey());
         self::assertSame('file', $violation->field);
-        self::assertSame(['max' => 1, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 1, 'tier' => 'Gratis'], $violation->parameters);
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM venue_documents WHERE venue_id = ?', [$venue->id()]));
         self::assertFileDoesNotExist($this->paths->original('cms/'.$number.'/'.hash_file('sha256', $source).'.pdf'));
         self::assertFalse($this->cmsEdited($number));

@@ -75,6 +75,9 @@
             <li>{{ include('search/_card.html.twig', {card: card, heading: 'h3'}, with_context = false) }}</li>
             {%- endfor %}
         </ul>
+        {%- if cards|filter(c => c.promoted)|length > 0 %}
+        {% include 'components/_promoted_note.html.twig' with {} only %}
+        {%- endif %}
     </section>
     {%- endif %}
 

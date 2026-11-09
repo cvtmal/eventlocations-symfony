@@ -1,0 +1,38 @@
+{#
+    /location-eintragen (G13). Variables: matrix (Venues\ReadModel\TierMatrix). Every price, limit and flag comes from
+    the `tiers` rows; the copy is the `venues` catalogue's `tier_page.*`.
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'tier_page.page_title'|trans({}, 'venues') }}{% endblock %}
+
+{% block meta %}<meta name="description" content="{{ 'tier_page.meta_description'|trans({promoted: matrix.promotedTierNames() is empty ? 'no' : 'yes'}, 'venues') }}">{% endblock %}
+
+{% block canonical %}<link rel="canonical" href="{{ url('tier_page') }}">{% endblock %}
+
+{% block main %}
+    <div class="container tier-page">
+        <h1 class="tier-page__title">{{ 'tier_page.title'|trans({}, 'venues') }}</h1>
+        {% set promoted_names = matrix.promotedTierNames() %}
+        <p class="tier-page__intro">{{ 'tier_page.intro'|trans({promoted: promoted_names is empty ? 'no' : 'yes'}, 'venues') }}</p>
+
+        {{ include('venues/tiers/_matrix.html.twig', {matrix: matrix}, with_context = false) }}
+
+        {% if promoted_names is not empty %}
+        <section class="tier-page__section" id="top-eintrag">
+            <h2>{{ 'tier_page.top.heading'|trans({}, 'venues') }}</h2>
+            <p>{{ 'tier_page.top.text'|trans({tiers: promoted_names|join(', ')}, 'venues') }}</p>
+        </section>
+        {% endif %}
+
+        <div class="tier-page__section tier-page__cta">
+            <div class="tier-page__actions">
+                {% include 'components/_button.html.twig' with {label: 'tier_page.cta.register'|trans({}, 'venues'), size: 'lg', href: path('portal_register')} only %}
+                <a class="tier-page__login" href="{{ path('portal_home') }}">{{ 'tier_page.cta.login'|trans({}, 'venues') }}</a>
+            </div>
+            <p class="tier-page__order">{{ 'tier_page.cta.order'|trans({email: site_contact_email}, 'venues') }}</p>
+        </div>
+
+        {{ include('venues/tiers/_faq.html.twig', {email: site_contact_email}, with_context = false) }}
+    </div>
+{% endblock %}

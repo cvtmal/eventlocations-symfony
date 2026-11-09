@@ -94,7 +94,7 @@ final class LocationLastMinuteTest extends WebTestCase
         ]]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('Mit dem Plan Free gibt es keine Angebote «Kurzfristig frei».', $crawler->filter('main')->text());
+        self::assertStringContainsString('Mit dem Plan «Gratis» gibt es keine Angebote «Kurzfristig frei».', $crawler->filter('main')->text());
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM last_minute_offers WHERE venue_id = ?', [$venue->id()]));
     }
 

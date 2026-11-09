@@ -41,7 +41,7 @@ final class LocationPlanQueryTest extends KernelTestCase
         VenueVideoFactory::createOne(['venue' => $venue, 'position' => 2]);
 
         self::assertEquals(
-            new LocationPlan('Free', false, true, 3, 6, 2, 1, 1, 1, 2, 1, false, 3, 19900),
+            new LocationPlan('Gratis', false, true, 3, 6, 2, 1, 1, 1, 2, 1, false, 3, 19900),
             $this->plan($venue),
         );
     }
@@ -83,7 +83,7 @@ final class LocationPlanQueryTest extends KernelTestCase
         $venue = $this->venue(KnownTiers::FREE);
         SubscriptionFactory::createOne(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2025-01-01'), 'endsOn' => new \DateTimeImmutable('2025-12-31')]);
 
-        self::assertSame(['Free', null], [$this->plan($venue)->tierName, $this->plan($venue)->paidUntil]);
+        self::assertSame(['Gratis', null], [$this->plan($venue)->tierName, $this->plan($venue)->paidUntil]);
     }
 
     public function test_only_the_locations_own_rows_are_counted(): void

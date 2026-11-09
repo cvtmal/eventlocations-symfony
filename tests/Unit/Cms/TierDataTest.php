@@ -127,7 +127,7 @@ final class TierDataTest extends TestCase
 
     private static function free(): TierDefinition
     {
-        return new TierDefinition('free', 'Free', 0, false, 0, 6, 1, 1, 1, false, false, false, 3, 40);
+        return new TierDefinition('free', 'Gratis', 0, false, 0, 6, 1, 1, 1, false, false, false, 3, 40);
     }
 
     private static function pro(): TierDefinition

@@ -76,7 +76,7 @@ final class LocationDocumentsTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         self::assertSame(
-            'Mit dem Plan Free ist höchstens 1 PDF möglich. Entferne zuerst ein PDF; mehr gibt es mit einem grösseren Plan.',
+            'Mit dem Plan «Gratis» ist höchstens 1 PDF möglich. Entferne zuerst ein PDF; mehr gibt es mit einem grösseren Plan.',
             $crawler->filter('.field__error')->first()->text(),
         );
         self::assertSelectorExists('aside form[action="/konto/locations/'.$venue->number().'/pro-anfragen"]');

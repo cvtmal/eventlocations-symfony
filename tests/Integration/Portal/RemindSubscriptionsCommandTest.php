@@ -56,7 +56,7 @@ final class RemindSubscriptionsCommandTest extends KernelTestCase
         $mail = self::getMailerMessage();
         self::assertInstanceOf(Email::class, $mail);
         self::assertSame('anna@example.ch', $mail->getTo()[0]->getAddress());
-        self::assertSame('Dein Tarif Pro für «Seehaus Meilen» läuft am 1. Dezember 2026 ab', $mail->getSubject());
+        self::assertSame('Dein Tarif «Pro» für «Seehaus Meilen» läuft am 1. Dezember 2026 ab', $mail->getSubject());
         $html = (string) $mail->getHtmlBody();
         foreach (['Hallo Anna', 'CHF 199 pro Jahr', '6 statt 60 sichtbar', 'werden nicht mehr angezeigt', 'Nicht verlängern'] as $text) {
             self::assertStringContainsString($text, $html);
@@ -80,7 +80,7 @@ final class RemindSubscriptionsCommandTest extends KernelTestCase
         self::assertSame([30], $this->markers($early));
         self::assertSame([7], $this->markers($late));
         $subjects = array_map(static fn ($mail): string => $mail instanceof Email ? (string) $mail->getSubject() : '', self::getMailerMessages());
-        self::assertContains('Dein Tarif Pro für «Spät» endet am 12. November 2026', $subjects);
+        self::assertContains('Dein Tarif «Pro» für «Spät» endet am 12. November 2026', $subjects);
 
         self::mockTime('2026-11-23 03:15:00 Europe/Zurich');
         $this->remind();

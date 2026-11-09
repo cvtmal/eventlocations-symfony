@@ -101,7 +101,7 @@ final class DealRecordTest extends WebTestCase
         self::assertSame(['date', '2027-01-01', '01.01.2027'], [$fields['contract_start']['type'], $fields['contract_start']['value'], $fields['contract_start']['display']]);
         self::assertSame(['select', 'pro', 'Pro'], [$fields['tier']['type'], $fields['tier']['value'], $fields['tier']['display']]);
         // The options are the rows of `tiers`, best first, as value and name.
-        self::assertSame([['value' => 'pro', 'label' => 'Pro'], ['value' => 'free', 'label' => 'Free']], $fields['tier']['options']);
+        self::assertSame([['value' => 'pro', 'label' => 'Pro'], ['value' => 'free', 'label' => 'Gratis']], $fields['tier']['options']);
         self::assertNull($fields['contract_end']['value']);
         self::assertSame("CHF 1'250.50", $crawler->filter('.record-properties .property__value')->eq(1)->text());
     }

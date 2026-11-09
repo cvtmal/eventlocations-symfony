@@ -56,7 +56,7 @@ final class LocationRoomsTest extends WebTestCase
         ], $props['endpoints']);
         self::assertSame(self::page($venue), $props['reloadUrl']);
         self::assertSelectorTextContains('.tabs--record [aria-current="page"]', 'Räume');
-        self::assertSelectorTextContains('aside #location-plan', 'Free');
+        self::assertSelectorTextContains('aside #location-plan', 'Gratis');
         self::assertSelectorTextContains('aside', 'Räume 1 von 1');
     }
 
@@ -99,7 +99,7 @@ final class LocationRoomsTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
         $errors = $this->errors();
-        self::assertSame(['Mit dem Plan Free ist höchstens 1 Raum möglich. Entferne zuerst einen Raum; mehr gibt es mit einem grösseren Plan.'], array_merge(...array_values($errors)));
+        self::assertSame(['Mit dem Plan «Gratis» ist höchstens 1 Raum möglich. Entferne zuerst einen Raum; mehr gibt es mit einem grösseren Plan.'], array_merge(...array_values($errors)));
         self::assertSame(1, $this->roomCount($venue));
     }
 

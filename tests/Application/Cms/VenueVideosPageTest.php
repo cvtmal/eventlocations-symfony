@@ -79,11 +79,11 @@ final class VenueVideosPageTest extends WebTestCase
         VenueVideoFactory::createOne(['venue' => $venue, 'position' => 1]);
 
         $crawler = $this->client->request('GET', self::url($venue));
-        self::assertStringContainsString('Mit dem Plan Free zeigt die Website 1 Video.', $crawler->filter('section[aria-labelledby="venue-videos"]')->text());
+        self::assertStringContainsString('Mit dem Plan «Gratis» zeigt die Website 1 Video.', $crawler->filter('section[aria-labelledby="venue-videos"]')->text());
         $crawler = $this->client->submit($crawler->filter('form[name="video_url"]')->form(), ['video_url[url]' => 'https://vimeo.com/76979871']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('Mit dem Plan Free ist höchstens 1 Video möglich.', $crawler->text());
+        self::assertStringContainsString('Mit dem Plan «Gratis» ist höchstens 1 Video möglich.', $crawler->text());
     }
 
     public function test_a_video_above_the_plan_is_marked_hidden(): void

@@ -49,7 +49,7 @@ final class ReviseTierTest extends KernelTestCase
         );
         self::assertSame($purges + 1, $purger->listings);
         self::assertSame([], $purger->venues);
-        self::assertSame('Free', $this->connection->fetchOne("SELECT name FROM tiers WHERE code = 'free'"), 'Only the tier asked for changes.');
+        self::assertSame('Gratis', $this->connection->fetchOne("SELECT name FROM tiers WHERE code = 'free'"), 'Only the tier asked for changes.');
     }
 
     public function test_the_limits_the_resolver_hands_out_are_the_revised_ones(): void
@@ -121,7 +121,7 @@ final class ReviseTierTest extends KernelTestCase
         $purger = $this->purger();
         $purges = $purger->listings;
         $data = $this->data(KnownTiers::PRO);
-        $data->name = 'Free';
+        $data->name = 'Gratis';
         $data->photosMax = 99;
 
         try {
@@ -131,7 +131,7 @@ final class ReviseTierTest extends KernelTestCase
             self::assertNotSame([], $failure->getWrappedExceptions(TierNameTaken::class));
         }
 
-        self::assertSame([['free', 'Free', 6], ['pro', 'Pro', 60]], $this->namesAndPhotos());
+        self::assertSame([['free', 'Gratis', 6], ['pro', 'Pro', 60]], $this->namesAndPhotos());
         self::assertSame($purges, $purger->listings);
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'tier'"));
     }
@@ -158,7 +158,7 @@ final class ReviseTierTest extends KernelTestCase
 
         $this->dispatch($data->toCommand(KnownTiers::PRO, ['photosMax']));
 
-        self::assertSame([['free', 'Free', 6], ['pro', 'Pro', 99]], $this->namesAndPhotos());
+        self::assertSame([['free', 'Gratis', 6], ['pro', 'Pro', 99]], $this->namesAndPhotos());
     }
 
     public function test_a_name_taken_between_the_check_and_the_flush_is_the_same_domain_error(): void
@@ -191,7 +191,7 @@ final class ReviseTierTest extends KernelTestCase
             self::assertNotSame([], $failure->getWrappedExceptions(TierNameTaken::class));
         }
 
-        self::assertSame([['free', 'Free', 6], ['pro', 'Pro', 60]], $this->namesAndPhotos(), 'The failed save rolled back with the other session\'s rename.');
+        self::assertSame([['free', 'Gratis', 6], ['pro', 'Pro', 60]], $this->namesAndPhotos(), 'The failed save rolled back with the other session\'s rename.');
         self::assertSame($purges, $purger->listings);
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM admin_audit_log WHERE subject_type = 'tier'"));
     }

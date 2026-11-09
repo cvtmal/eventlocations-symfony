@@ -52,7 +52,7 @@ final class LocationVideosTest extends WebTestCase
         $crawler = $this->client->submit($crawler->filter('form[name="video_url"]')->form(), ['video_url[url]' => 'https://youtu.be/aB3_dE-fGh1']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('Mit dem Plan Free ist höchstens 1 Video möglich.', $crawler->filter('form[name="video_url"]')->text());
+        self::assertStringContainsString('Mit dem Plan «Gratis» ist höchstens 1 Video möglich.', $crawler->filter('form[name="video_url"]')->text());
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM venue_videos WHERE venue_id = ?', [$venue->id()]));
     }
 

@@ -58,7 +58,7 @@ function page(numbers = [15, 1, 38], extra = '') {
     new Function(SCRIPT)();
 }
 
-function merklistePage(numbers) {
+function merklistePage(numbers, promoted = []) {
     document.body.innerHTML = `
         <a data-merkliste-link href="/merkliste" data-sync-token="csrf-token"
             data-toast-removed="__name__ -" data-toast-link="Zur Merkliste"><svg class="icon"></svg><span data-merkliste-count hidden></span></a>
@@ -66,7 +66,8 @@ function merklistePage(numbers) {
             <h1 tabindex="-1" data-merkliste-title></h1>
             <p data-merkliste-total data-count-one="1 Location" data-count-other="__count__ Locations"></p>
             <p data-merkliste-full hidden></p>
-            <ol>${numbers.map((number) => `<li data-merkliste-item><form><button data-merkliste-remove="${number}" data-merken-name="V${number}"></button></form></li>`).join('')}</ol>
+            <ol>${numbers.map((number) => `<li data-merkliste-item${promoted.includes(number) ? ' data-merkliste-promoted><span class="badge">Top-Eintrag</span>' : '><span class="badge">Kurzfristig frei</span>'}<form><button data-merkliste-remove="${number}" data-merken-name="V${number}"></button></form></li>`).join('')}</ol>
+            ${promoted.length > 0 ? '<p class="promoted-note" data-merkliste-promoted-note></p>' : ''}
             <div data-merkliste-empty hidden></div>
         </div>
         <div data-toast-region></div>`;
@@ -365,6 +366,32 @@ describe('merkliste.js', () => {
             expect(press(button, true)).toBe(true);
             expect(press(button, false)).toBe(false);
             expect(press(document.querySelector('[data-merkliste-link]'), true)).toBe(false);
+        });
+    });
+
+    describe('the Top-Eintrag footnote', () => {
+        it('stays while a promoted card is left and goes with the last one', () => {
+            setCookie('1%2C2%2C3');
+            merklistePage([1, 2, 3], [1, 3]);
+            const note = document.querySelector('[data-merkliste-promoted-note]');
+            const [first, second, third] = document.querySelectorAll('[data-merkliste-item] form');
+
+            submitAt(first, 1000);
+            expect(note.hidden).toBe(false);
+
+            submitAt(third, 2000);
+            expect(note.hidden).toBe(true);
+            expect(document.querySelectorAll('[data-merkliste-item]')).toHaveLength(1);
+            expect(second.isConnected).toBe(true);
+        });
+
+        it('goes when the last card goes', () => {
+            setCookie('1%2C');
+            merklistePage([1], [1]);
+
+            submitAt(document.querySelector('[data-merkliste-item] form'), 1000);
+
+            expect(document.querySelector('[data-merkliste-promoted-note]').hidden).toBe(true);
         });
     });
 

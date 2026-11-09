@@ -45,7 +45,7 @@ final class DealPaymentVoidTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin/crm/deals/'.$deal->id());
         self::assertSame('Zahlung stornieren', $crawler->filter('[commandfor="deal-void"]')->text());
-        self::assertStringContainsString('Tarif Pro von «Schloss Seeblick»', $crawler->filter('#deal-void p')->text());
+        self::assertStringContainsString('Tarif «Pro» von «Schloss Seeblick»', $crawler->filter('#deal-void p')->text());
         $this->client->submit($crawler->filter('#deal-void-form')->form(), [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
 
         self::assertResponseRedirects('/admin/crm/deals/'.$deal->id(), 303);
@@ -70,7 +70,7 @@ final class DealPaymentVoidTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/admin/crm/deals/'.$deal->id());
 
-        self::assertStringContainsString('Der kostenlose Zeitraum im Tarif Pro', $crawler->filter('#deal-void p')->text());
+        self::assertStringContainsString('Der kostenlose Zeitraum im Tarif «Pro»', $crawler->filter('#deal-void p')->text());
     }
 
     public function test_an_ended_term_offers_no_void(): void

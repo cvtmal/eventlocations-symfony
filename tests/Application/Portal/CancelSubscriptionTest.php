@@ -29,7 +29,7 @@ final class CancelSubscriptionTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Nicht verlängern');
-        self::assertStringContainsString('Dein Tarif Pro für «Seehaus Meilen» läuft bis am', $crawler->filter('.auth__intro')->first()->text());
+        self::assertStringContainsString('Dein Tarif «Pro» für «Seehaus Meilen» läuft bis am', $crawler->filter('.auth__intro')->first()->text());
         self::assertNull($this->cancelledAt($term), 'a GET changes nothing');
         self::assertResponseHeaderSame('X-Robots-Tag', 'noindex, nofollow');
         self::assertStringContainsString('no-store', (string) $this->client->getResponse()->headers->get('Cache-Control'));
@@ -40,7 +40,7 @@ final class CancelSubscriptionTest extends WebTestCase
         self::assertNotNull($this->cancelledAt($term));
         $crawler = $this->client->followRedirect();
         self::assertSelectorTextContains('h1', 'Verlängerung gekündigt');
-        self::assertStringContainsString('danach gilt Free', $crawler->filter('.auth__intro')->text());
+        self::assertStringContainsString('danach gilt der Tarif Gratis', $crawler->filter('.auth__intro')->text());
     }
 
     public function test_a_term_whose_successor_is_paid_only_says_so(): void

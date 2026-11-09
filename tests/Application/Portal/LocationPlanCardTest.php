@@ -38,7 +38,7 @@ final class LocationPlanCardTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->url($venue));
 
         self::assertResponseIsSuccessful();
-        self::assertSame('Dein Plan: Free', $crawler->filter('#location-plan')->text());
+        self::assertSame('Dein Plan: Gratis', $crawler->filter('#location-plan')->text());
         self::assertSame(
             ['Fotos 4 von 6', 'Räume 1 von 1', 'PDFs 0 von 1', 'Videos 0 von 1', 'Telefon und Website: verborgen', 'Anlassarten: bis zu 3', 'Kurzfristig frei: nein'],
             $crawler->filter('section[aria-labelledby="location-plan"] .venue-widget__row')->each(static fn (Crawler $row): string => $row->text()),
@@ -71,7 +71,7 @@ final class LocationPlanCardTest extends WebTestCase
         $crawler = $this->client->submit($crawler->filter('form[name="venue_texts"]')->form(), ['venue_texts[texts][de][summary]' => '']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame('Dein Plan: Free', $crawler->filter('#location-plan')->text());
+        self::assertSame('Dein Plan: Gratis', $crawler->filter('#location-plan')->text());
     }
 
     public function test_hidden_rows_count_as_used(): void
@@ -149,7 +149,7 @@ final class LocationPlanCardTest extends WebTestCase
         $crawler = $this->client->request('GET', $this->url($venue));
 
         self::assertResponseIsSuccessful();
-        self::assertSame('Dein Plan: Free', $crawler->filter('#location-plan')->text());
+        self::assertSame('Dein Plan: Gratis', $crawler->filter('#location-plan')->text());
         self::assertCount(0, $crawler->filter('form[action$="/pro-anfragen"]'));
     }
 
@@ -177,14 +177,14 @@ final class LocationPlanCardTest extends WebTestCase
         $venue = $this->managedVenue(DetailVenues::minimal());
 
         $crawler = $this->client->request('GET', $this->url($venue));
-        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen.', $crawler->filter('#event-types-limit')->text());
+        self::assertSame('Mit deinem Plan «Gratis» kannst du bis zu 3 Anlassarten wählen.', $crawler->filter('#event-types-limit')->text());
         self::assertSame('event-types-limit', $crawler->filter('#venue_event_suitable_for')->attr('aria-describedby'));
 
         foreach (['seminar', 'apero', 'birthday'] as $code) {
             $this->connection->executeStatement("INSERT INTO venue_terms (venue_id, term_group, term_code, is_main) VALUES (?, 'suitable_for', ?, FALSE)", [$venue->id(), $code]);
         }
         $crawler = $this->client->request('GET', $this->url($venue));
-        self::assertSame('Mit deinem Plan Free kannst du bis zu 3 Anlassarten wählen. Mehr Anlassarten gibt es mit Pro. Pro anfragen', $crawler->filter('#event-types-limit')->text());
+        self::assertSame('Mit deinem Plan «Gratis» kannst du bis zu 3 Anlassarten wählen. Mehr Anlassarten gibt es mit Pro. Pro anfragen', $crawler->filter('#event-types-limit')->text());
         self::assertSame('#location-plan', $crawler->filter('#event-types-limit a')->attr('href'));
         self::assertSame('Pro anfragen', $crawler->filter('#event-types-limit a')->text());
     }

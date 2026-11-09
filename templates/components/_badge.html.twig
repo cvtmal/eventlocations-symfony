@@ -1,2 +1,2 @@
-{# "Top-Eintrag" badge. Include with `only`: label (translated). Rendering nothing for an unboosted tier is the caller's job (S6, F12). #}
-<span class="badge">{{ label }}</span>
+{# "Top-Eintrag" badge. Include with `only`: label (translated), title (optional, translated: the short explanation as a tooltip, G13). Rendering nothing for an unboosted tier is the caller's job (S6, F12). #}
+<span class="badge"{% if title is defined and title %} title="{{ title }}"{% endif %}>{{ label }}</span>

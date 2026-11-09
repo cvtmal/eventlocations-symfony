@@ -47,7 +47,7 @@ final class TierLimitsTest extends KernelTestCase
 
         self::assertSame('venue.error.too_many_photos', $violation->translationKey());
         self::assertSame('file', $violation->field);
-        self::assertSame(['max' => 6, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 6, 'tier' => 'Gratis'], $violation->parameters);
     }
 
     public function test_a_venue_over_the_limit_stays_refused(): void
@@ -114,7 +114,7 @@ final class TierLimitsTest extends KernelTestCase
 
         self::assertSame('rooms.error.too_many', $violation->translationKey());
         self::assertNull($violation->field);
-        self::assertSame(['max' => 1, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 1, 'tier' => 'Gratis'], $violation->parameters);
     }
 
     public function test_a_free_venue_takes_one_document_and_refuses_the_second(): void
@@ -128,7 +128,7 @@ final class TierLimitsTest extends KernelTestCase
 
         self::assertSame('documents.error.too_many', $violation->translationKey());
         self::assertSame('file', $violation->field);
-        self::assertSame(['max' => 1, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 1, 'tier' => 'Gratis'], $violation->parameters);
     }
 
     public function test_three_event_types_fit_on_free_and_four_do_not(): void
@@ -143,7 +143,7 @@ final class TierLimitsTest extends KernelTestCase
 
         self::assertSame('venue.error.too_many_event_types', $violation->translationKey());
         self::assertSame('suitable_for', $violation->field, 'the field is the caller\'s, so the form marks the right group');
-        self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 3, 'tier' => 'Gratis'], $violation->parameters);
     }
 
     public function test_pro_has_no_event_type_limit(): void
@@ -175,7 +175,7 @@ final class TierLimitsTest extends KernelTestCase
         $violation = $this->violationOf(static fn () => $limits->assertEventTypesFit($venue, 6, 'suitable_for'));
 
         self::assertSame('venue.error.too_many_event_types', $violation->translationKey());
-        self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 3, 'tier' => 'Gratis'], $violation->parameters);
         $this->addToAssertionCount(3);
     }
 
@@ -188,7 +188,7 @@ final class TierLimitsTest extends KernelTestCase
         $this->connection->executeStatement("UPDATE tiers SET event_types_max = 5 WHERE code = 'free'");
 
         $limits->assertEventTypesFit($venue, 4, 'suitable_for');
-        self::assertSame(['max' => 5, 'tier' => 'Free'], $this->violationOf(static fn () => $limits->assertEventTypesFit($venue, 6, 'suitable_for'))->parameters);
+        self::assertSame(['max' => 5, 'tier' => 'Gratis'], $this->violationOf(static fn () => $limits->assertEventTypesFit($venue, 6, 'suitable_for'))->parameters);
     }
 
     /**
@@ -206,7 +206,7 @@ final class TierLimitsTest extends KernelTestCase
 
         self::assertSame('venue.error.too_many_event_types', $violation->translationKey());
         self::assertSame('suitable_for', $violation->field);
-        self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 3, 'tier' => 'Gratis'], $violation->parameters);
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM venue_terms WHERE venue_id = ?', [$venue->id()]));
         self::assertNull($this->reload($venue)->cmsEditedAt());
         self::assertSame([], $this->purger()->venues);
@@ -258,7 +258,7 @@ final class TierLimitsTest extends KernelTestCase
 
         $violation = $this->violation(self::eventFacts($venue, $this->token($venue), ['suitable_for' => ['wedding', 'family_celebration', 'birthday', 'club_event', 'party']]));
 
-        self::assertSame(['max' => 3, 'tier' => 'Free'], $violation->parameters);
+        self::assertSame(['max' => 3, 'tier' => 'Gratis'], $violation->parameters);
         self::assertSame(4, $count(), 'growing past the plan is refused and nothing is written');
     }
 

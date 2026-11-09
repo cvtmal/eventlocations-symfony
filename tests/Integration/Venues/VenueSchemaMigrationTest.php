@@ -379,7 +379,7 @@ final class VenueSchemaMigrationTest extends KernelTestCase
 
         self::assertSame(
             [
-                ['code' => 'free', 'name' => 'Free', 'price_rappen' => 0, 'vat_line' => false, 'rank_weight' => 0, 'photos_max' => 6, 'rooms_max' => 1, 'videos_max' => 1, 'documents_max' => 1, 'contact_visible' => false, 'last_minute_allowed' => false, 'detailed_report' => false, 'event_types_max' => 3],
+                ['code' => 'free', 'name' => 'Gratis', 'price_rappen' => 0, 'vat_line' => false, 'rank_weight' => 0, 'photos_max' => 6, 'rooms_max' => 1, 'videos_max' => 1, 'documents_max' => 1, 'contact_visible' => false, 'last_minute_allowed' => false, 'detailed_report' => false, 'event_types_max' => 3],
                 ['code' => 'pro', 'name' => 'Pro', 'price_rappen' => 19900, 'vat_line' => false, 'rank_weight' => 10, 'photos_max' => 60, 'rooms_max' => 20, 'videos_max' => 5, 'documents_max' => 5, 'contact_visible' => true, 'last_minute_allowed' => true, 'detailed_report' => true, 'event_types_max' => null],
             ],
             $rows,

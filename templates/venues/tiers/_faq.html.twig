@@ -1,0 +1,17 @@
+{#
+    The FAQ of /location-eintragen (G13). Include with `only`: email (the site's contact address). Staff text from the
+    `tiers.faq` block replaces the catalogue default (`TierFaqBlock::DEFAULT_ENTRIES`, which the block editor quotes).
+#}
+<section class="tier-page__section tier-page__faq">
+    <h2>{{ 'tier_page.faq.heading'|trans({}, 'venues') }}</h2>
+    {#- Staff text is safe HTML from content_block(), and a captured set stays Markup: no |raw. -#}
+    {%- set text -%}{{- content_block('tiers.faq') -}}{%- endset -%}
+    {%- if text %}
+    <div class="tier-page__faq-staff">{{ text }}</div>
+    {%- else %}
+    {%- for entry in constant('App\\Venues\\Extension\\TierFaqBlock::DEFAULT_ENTRIES') %}
+    <h3>{{ entry[0]|trans({email: email}, 'venues') }}</h3>
+    <p>{{ entry[1]|trans({email: email}, 'venues') }}</p>
+    {%- endfor %}
+    {%- endif %}
+</section>

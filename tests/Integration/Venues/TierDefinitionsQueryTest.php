@@ -28,7 +28,7 @@ final class TierDefinitionsQueryTest extends KernelTestCase
         self::assertEquals(
             [
                 new TierDefinition('pro', 'Pro', 19900, false, 10, 60, 20, 5, 5, true, true, true, null, $definitions[0]->venueCount),
-                new TierDefinition('free', 'Free', 0, false, 0, 6, 1, 1, 1, false, false, false, 3, $definitions[1]->venueCount),
+                new TierDefinition('free', 'Gratis', 0, false, 0, 6, 1, 1, 1, false, false, false, 3, $definitions[1]->venueCount),
             ],
             $definitions,
         );
@@ -61,7 +61,7 @@ final class TierDefinitionsQueryTest extends KernelTestCase
     public function test_a_name_gives_the_code_of_its_tier_as_the_unique_key_sees_it(): void
     {
         self::assertSame('pro', $this->query()->codeByName('Pro'));
-        self::assertSame('free', $this->query()->codeByName('Free'));
+        self::assertSame('free', $this->query()->codeByName('Gratis'));
         // The key is an exact match: another case, a space or a part of a name is no match.
         self::assertNull($this->query()->codeByName('pro'));
         self::assertNull($this->query()->codeByName('Pro '));

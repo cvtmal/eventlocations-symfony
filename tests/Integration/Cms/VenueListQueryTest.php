@@ -91,7 +91,7 @@ final class VenueListQueryTest extends KernelTestCase
         $row = $this->only($this->search());
 
         self::assertSame($venue->number(), $row->number);
-        self::assertEquals(new TierLabel(KnownTiers::FREE, 'Free', false), $row->tier, 'a new venue is on Free');
+        self::assertEquals(new TierLabel(KnownTiers::FREE, 'Gratis', false), $row->tier, 'a new venue is on Free');
         self::assertFalse($row->place->isKnown());
         self::assertNull($row->slug);
         self::assertSame(0, $row->photoCount);
