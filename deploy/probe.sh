@@ -206,14 +206,15 @@ CODE
 }
 
 # F16: the last media backup finished less than 26 hours ago. The stamp is written only after restic
-# succeeded; the repository's newest snapshot shows the backup arrived. --no-lock keeps restic read-only.
+# succeeded; the repository's newest snapshot shows the backup arrived. --no-lock and --no-cache keep restic
+# read-only, here and in the repository.
 media_backup() {
     script="$APP_DIR/current/bin/cron-media-backup"
     if [ ! -f "$script" ]; then
         printf 'skipped: no release in %s/current yet\n' "$APP_DIR"
         return 0
     fi
-    bounded sh "$script" restic --no-lock snapshots --latest 1 || printf 'restic: the snapshot list failed\n'
+    bounded sh "$script" restic --no-lock --no-cache snapshots --latest 1 || printf 'restic: the snapshot list failed\n'
     sh "$script" status
 }
 

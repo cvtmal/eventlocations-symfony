@@ -139,6 +139,7 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'a clean url with more options' => [['DATABASE_URL' => self::DATABASE_URL.'&application_name=site']];
         yield 'double underscores around lower case' => [['MEDIA_BACKUP_REPOSITORY' => 's3:https://s3.example.ch/__bucket__/site']];
         yield 'a lone double underscore' => [['SENTRY_DSN' => 'https://key__@o1.ingest.de.sentry.io/1']];
+        yield 'a run of underscores in a password' => [['MAILER_DSN' => 'smtp://fake:pass_____word@mail.example.ch:587']];
     }
 
     public function test_the_non_string_values_of_server_are_skipped(): void

@@ -27,7 +27,7 @@ final class CheckProductionEnvCommand
     /** D27: the marker of an operator fact the owner has not supplied yet (`config/services.yaml`). */
     public const string PLACEHOLDER = 'TODO(owner)';
     /** A `__NAME__` of `deploy/env.local.example` that was never replaced (F16 S2). */
-    private const string TEMPLATE_PLACEHOLDER = '/__[A-Z_]+__/';
+    private const string TEMPLATE_PLACEHOLDER = '/__[A-Z][A-Z0-9_]*__/';
 
     /**
      * @param array<string, string> $operatorFacts parameter name => value, the `site.operator_*` facts of D27

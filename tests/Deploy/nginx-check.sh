@@ -338,6 +338,10 @@ server_down() {
     expect_body_has "the 502 shows the German error page" "Wir sind gleich wieder da"
     expect_header_has "the error page is never cached" cache-control no-store
     expect_header_has "and is HTML" content-type text/html
+
+    docker exec "$name" rm "$FIX/current/public/50x.html"
+    request https "$SITE" /eventlokale
+    expect_status "a release without the page stays a 502" 502
 }
 
 main() {

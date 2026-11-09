@@ -1028,7 +1028,9 @@ rsync -rlnc --itemize-changes site@host.example:/var/www/deine-eventlocation.ch/
 }
 
 probe() { # probe <app dir> <checks...>: deploy/probe.sh with a stub restic and without PHP
-    env PATH="$work/probe-tools:$PATH" PROBE_APP_DIR="$1" PROBE_PHP=false PROBE_ENV_FILE="$work/no-probe.env" \
+    dir="$1"
+    shift
+    env PATH="$work/probe-tools:$PATH" PROBE_APP_DIR="$dir" PROBE_PHP=false PROBE_ENV_FILE="$work/no-probe.env" \
         sh "$ROOT/deploy/probe.sh" "$@"
 }
 
@@ -1056,7 +1058,7 @@ MEDIA_BACKUP_ACCESS_KEY_ID='fake-backup-key'
 MEDIA_BACKUP_SECRET_ACCESS_KEY='fake-backup-secret'
 ENV
     run probe "$work/probe" 14
-    expect_output "check 14 lists the newest snapshot, without a lock" "stub restic --no-lock snapshots --latest 1"
+    expect_output "check 14 lists the newest snapshot, without a lock" "stub restic --no-lock --no-cache snapshots --latest 1"
     expect_output "check 14 says that no backup has finished yet" "no backup has finished yet"
     expect_output "a missing backup fails check 14" "check 14: ended with exit 1"
 

@@ -126,7 +126,7 @@ certbot's own timer and the webroot that the port-80 block keeps open.
 
 **Outage page.** While php-fpm is down, overloaded or too slow, nginx answers its 502, 503 or 504
 with `public/50x.html` of the live release: static, in German, the status kept, `Cache-Control:
-no-store`, not reachable on its own. The app's own error pages pass through unchanged. A server
+no-store`, not reachable on its own; a release without the page answers a bare 502. The app's own error pages pass through unchanged. A server
 whose nginx file was copied before F16 lacks the `error_page` line: copy the file again, then
 `nginx -t && systemctl reload nginx`.
 
