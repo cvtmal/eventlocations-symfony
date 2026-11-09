@@ -107,6 +107,18 @@ final class VenueMarkdownTest extends WebTestCase
         self::assertStringNotContainsString('/telefon', $body);
     }
 
+    public function test_a_venue_without_an_inquiry_address_has_no_inquiry_link(): void
+    {
+        DetailVenues::minimal();
+
+        $this->client->request('GET', '/eventlokal/'.DetailVenues::MINIMAL_SLUG.'.md');
+
+        self::assertResponseIsSuccessful();
+        $body = (string) $this->client->getResponse()->getContent();
+        self::assertStringNotContainsString('Anfrage über das Formular', $body);
+        self::assertStringNotContainsString('#anfrage', $body, 'its page has no form (F16)');
+    }
+
     public function test_every_link_is_absolute_on_the_request_host(): void
     {
         DetailVenues::full($this->em);

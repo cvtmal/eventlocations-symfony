@@ -10,9 +10,9 @@ use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 /**
- * The venues of a Merkliste or a result list that a brief can go to, in the order asked. A venue that cannot get any
- * inquiry (unpublished, gone, no inquiry address) is left out; one that opted out of briefs or reached today's cap
- * comes back with `offered = false`. `SubmitInquiryBriefHandler` checks the same rules again under a lock.
+ * The venues of a Merkliste or a result list that a brief can go to, in the order asked. An unpublished or gone venue
+ * is left out; one without an inquiry address, opted out of briefs or at today's cap comes back with `offered = false`
+ * (the page names it under «Nur einzeln anfragbar», F16). `SubmitInquiryBriefHandler` checks the same rules again under a lock.
  */
 final readonly class BriefCandidatesQuery
 {
@@ -35,15 +35,15 @@ final readonly class BriefCandidatesQuery
         $translation = $this->translationJoin->localized('venue_translations', 'venue_id', 'v.id', 't');
         $rows = $this->connection->fetchAllAssociative(
             <<<SQL
-                SELECT v.id, v.number, v.name, t.slug, tw.name AS town,
-                       v.accepts_multi_inquiries AND (
+                SELECT v.id, v.number, v.name, t.slug, tw.name AS town, v.inquiry_email IS NOT NULL AS inquirable,
+                       v.inquiry_email IS NOT NULL AND v.accepts_multi_inquiries AND (
                            SELECT count(*) FROM inquiries i
                            WHERE i.venue_id = v.id AND i.brief_id IS NOT NULL AND i.created_at >= :day_start
                        ) < :cap AS offered
                 FROM venues v
                 LEFT JOIN towns tw ON tw.id = v.town_id
                 {$translation}
-                WHERE v.number IN (:numbers) AND v.status = 'published' AND v.inquiry_email IS NOT NULL AND t.slug IS NOT NULL
+                WHERE v.number IN (:numbers) AND v.status = 'published' AND t.slug IS NOT NULL
                 SQL,
             [
                 'numbers' => $numbers,
@@ -62,6 +62,7 @@ final readonly class BriefCandidatesQuery
                 (string) $row['slug'],
                 null === $row['town'] ? null : (string) $row['town'],
                 (bool) $row['offered'],
+                (bool) $row['inquirable'],
             );
         }
 

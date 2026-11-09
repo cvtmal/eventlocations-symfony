@@ -141,14 +141,15 @@ final class InquiryFormRenderingTest extends WebTestCase
         self::assertCount(1, array_filter($queries, static fn (array $query): bool => str_contains((string) $query['sql'], 'taxonomy_terms WHERE term_group = ')));
     }
 
-    public function test_a_venue_without_an_address_has_an_empty_section_and_no_primary_link(): void
+    public function test_a_venue_without_an_address_has_no_section_and_no_link_to_it(): void
     {
+        // Reachable: the publish rule does not ask for an inquiry address (VenuePublishGaps), staff can clear it (F16).
         DetailVenues::minimal();
 
         $crawler = $this->page('/eventlokal/'.DetailVenues::MINIMAL_SLUG);
 
-        self::assertCount(1, $crawler->filter('section#anfrage'));
-        self::assertSame('', $crawler->filter('section#anfrage')->html());
+        self::assertCount(0, $crawler->filter('#anfrage'));
+        self::assertCount(0, $crawler->filter('a[href*="#anfrage"]'));
         self::assertSelectorNotExists('.venue-actions__primary');
     }
 
@@ -172,7 +173,7 @@ final class InquiryFormRenderingTest extends WebTestCase
 
         self::assertSame('#kontakt', $crawler->filter('.venue-actions__primary')->attr('href'));
         self::assertCount(1, $crawler->filter('#kontakt'));
-        self::assertSame('', $crawler->filter('section#anfrage')->html());
+        self::assertCount(0, $crawler->filter('#anfrage'));
     }
 
     public function test_a_signed_flag_shows_the_confirmation(): void

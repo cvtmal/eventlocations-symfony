@@ -127,7 +127,9 @@
 {% if venue.contactPerson %}
 - {{ 'detail.contact.person'|trans({name: venue.contactPerson}, 'venues')|md }}
 {% endif %}
+{% if venue.inquiryEmail %}
 - [{{ 'llms.inquiry'|trans({}, 'seo')|md }}]({{ url('venue_show', {slug: venue.slug, _fragment: 'anfrage'}) }})
+{% endif %}
 
 {% if venue.documents is not empty %}
 ## {{ 'detail.documents.heading'|trans({}, 'venues')|md }}

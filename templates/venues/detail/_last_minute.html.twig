@@ -1,4 +1,4 @@
-{# Kurzfristig frei (G14, D55): the venue's live offers, the disclaimer and a link to the inquiry form. Rendered only with offers. Params: venue. #}
+{# Kurzfristig frei (G14, D55): the venue's live offers, the disclaimer and a link to the inquiry form (else to Kontakt). Rendered only with offers. Params: venue. #}
 <section id="kurzfristig-frei" class="venue-section venue-last-minute" aria-labelledby="venue-last-minute-title">
     <h2 id="venue-last-minute-title" class="venue-section__title">{{ 'detail.last_minute.heading'|trans({}, 'venues') }}</h2>
     <p>{{ 'detail.last_minute.intro'|trans({}, 'venues') }}</p>
@@ -8,5 +8,7 @@
         {%- endfor %}
     </ul>
     <p class="venue-last-minute__disclaimer">{{ icon('info') }}<span>{{ 'detail.last_minute.disclaimer'|trans({}, 'venues') }}</span></p>
-    <a class="btn btn--secondary" href="#anfrage">{{ 'detail.last_minute.inquire'|trans({}, 'venues') }}</a>
+    {# As the actions card: the form, else Kontakt, else no link (F16: no #anfrage without an inquiry address). #}
+    {% set inquire_target = venue.inquiryEmail ? '#anfrage' : (venue.hasContact() ? '#kontakt' : null) %}
+    {% if inquire_target %}<a class="btn btn--secondary" href="{{ inquire_target }}">{{ 'detail.last_minute.inquire'|trans({}, 'venues') }}</a>{% endif %}
 </section>

@@ -61,6 +61,12 @@
         padding: 0;
         list-style: none;
     }
+
+    // F16: each invalid field is a link to it, in the summary's own colour (its contrast is already checked).
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
 }
 
 .inquiry-form__form {
