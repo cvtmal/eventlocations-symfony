@@ -24,6 +24,9 @@
             <li class="listing__item" data-merkliste-item{% if card.promoted %} data-merkliste-promoted{% endif %}>{{ include('search/_card.html.twig', {card: card, index: loop.index0, action: 'remove', tier_sorted: false}, with_context = false) }}</li>
             {%- endfor %}
         </ol>
+        {%- if cards|length >= 2 %}
+        {{ include('inquiries/_brief_cta.html.twig', {numbers: cards|map(c => c.number), text: 'brief.cta.merkliste_text'|trans({}, 'inquiries'), attributes: {'data-merkliste-brief': ''}}, with_context = false) }}
+        {%- endif %}
         {%- if cards|filter(c => c.promoted)|length > 0 %}
         {% include 'components/_promoted_note.html.twig' with {attributes: {'data-merkliste-promoted-note': ''}, tier_sorted: false} only %}
         {%- endif %}

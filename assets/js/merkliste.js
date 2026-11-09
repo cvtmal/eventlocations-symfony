@@ -211,6 +211,16 @@
         if (note) {
             note.hidden = !document.querySelector('[data-merkliste-item][data-merkliste-promoted]');
         }
+        // F13: the brief link carries the cards still listed, and goes with the second-to-last card.
+        const brief = document.querySelector('[data-merkliste-brief]');
+        if (brief) {
+            const numbers = [...document.querySelectorAll('[data-merkliste-item] [data-stats-venue]')].map((card) => card.dataset.statsVenue);
+            const link = brief.querySelector('a');
+            const url = new URL(link.href);
+            url.searchParams.set('nr', numbers.join(','));
+            link.href = url.pathname + url.search;
+            brief.hidden = numbers.length < 2;
+        }
     };
 
     // In place, because a reload would jump to the top of a list of up to 100 cards.

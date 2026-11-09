@@ -13,6 +13,7 @@ use App\Inquiries\Exception\EventDateMissing;
 use App\Inquiries\Exception\GuestCountOutOfRange;
 use App\Inquiries\Exception\InquiryNotAccepted;
 use App\Inquiries\Exception\UnknownInquiryTerm;
+use App\Inquiries\InquiryRules;
 use App\Inquiries\ReadModel\InquiryVocabularyQuery;
 use App\Inquiries\Repository\InquiryRepository;
 use App\Inquiries\ValueObject\MailStatus;
@@ -58,7 +59,7 @@ final class SubmitInquiryHandlerTest extends KernelTestCase
         $this->clock = new MockClock(self::NOW);
         $vocabulary = $container->get(InquiryVocabularyQuery::class);
         self::assertInstanceOf(InquiryVocabularyQuery::class, $vocabulary);
-        $this->handler = new SubmitInquiryHandler($venues, $inquiries, $vocabulary, $this->clock, 'a secret');
+        $this->handler = new SubmitInquiryHandler($venues, $inquiries, new InquiryRules($vocabulary), $this->clock, 'a secret');
     }
 
     protected function tearDown(): void

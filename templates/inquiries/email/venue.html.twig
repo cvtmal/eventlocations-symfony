@@ -7,8 +7,12 @@
 {% block content %}
 {{ blocks.greeting('email.venue.greeting'|trans({venue: venue_name}, 'inquiries')) }}
 {{ blocks.p('email.venue.intro'|trans({name: first_name ~ ' ' ~ last_name}, 'inquiries')) }}
+{% if brief_venue_count %}{{ blocks.note('email.brief.venue_note'|trans({count: brief_venue_count}, 'inquiries')) }}{% endif %}
 {{ inquiry.facts(_context) }}
 {{ blocks.quote(message) }}
 {{ blocks.rule() }}
 {{ blocks.note('email.venue.reply_note'|trans({name: first_name}, 'inquiries')) }}
 {% endblock %}
+
+{# F13: a child of a brief carries the venue's one-click opt-out of briefs; single inquiries keep the plain footer. #}
+{% block footer %}{{ parent() }}{% if brief_opt_out_url %}<br>{{ 'email.brief.opt_out_lead'|trans({}, 'inquiries') }} <a class="hl-btn" href="{{ brief_opt_out_url }}" style="color:#5a6078;text-decoration:underline;">{{ 'email.brief.opt_out_link'|trans({}, 'inquiries') }}</a>{% endif %}{% endblock %}

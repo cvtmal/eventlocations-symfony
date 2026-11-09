@@ -1,0 +1,13 @@
+{#
+    The way into a brief (F13) from the Merkliste or a result list: a link to /sammelanfrage with the venue numbers in
+    order (the brief page offers the ones that take briefs). Same HTML for everyone, so a cached listing can carry it.
+    Params: numbers (list<int>, at least two), text (translated), attributes (optional, e.g. the Merkliste's
+    `data-merkliste-brief`, which merkliste.js keeps in step with the cards).
+#}
+<aside class="brief-cta"{% for name, value in attributes|default({}) %} {{ name }}="{{ value }}"{% endfor %}>
+    <div>
+        <h2 class="brief-cta__title">{{ 'brief.cta.merkliste_heading'|trans({}, 'inquiries') }}</h2>
+        <p class="brief-cta__text">{{ text }}</p>
+    </div>
+    {{ include('components/_button.html.twig', {label: 'brief.cta.button'|trans({}, 'inquiries'), variant: 'secondary', href: path('inquiry_brief', {nr: numbers|join(',')})}, with_context = false) }}
+</aside>

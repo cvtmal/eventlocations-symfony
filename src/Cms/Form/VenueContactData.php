@@ -35,6 +35,9 @@ final class VenueContactData implements VenueCardData
     #[Assert\Regex(pattern: '/\Ahttps?:\/\//', message: 'cms.venue.website.scheme', normalizer: 'mb_scrub')]
     public ?string $website = null;
 
+    /** F13: briefs to several venues; single inquiries reach the venue either way. */
+    public bool $acceptsMultiInquiries = true;
+
     #[Assert\Length(max: 150, maxMessage: 'cms.venue.too_long')]
     public ?string $contactPerson = null;
 
@@ -48,6 +51,7 @@ final class VenueContactData implements VenueCardData
         $data->loadedAt = $edit->loadedAt;
         $data->phone = $edit->phone;
         $data->inquiryEmail = $edit->inquiryEmail;
+        $data->acceptsMultiInquiries = $edit->acceptsMultiInquiries;
         $data->website = $edit->website;
         $data->contactPerson = $edit->contactPerson;
         $data->instagram = $edit->instagram;
@@ -66,6 +70,7 @@ final class VenueContactData implements VenueCardData
             $this->website,
             $this->contactPerson,
             $this->instagram,
+            $this->acceptsMultiInquiries,
         );
     }
 }

@@ -316,7 +316,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
     {
         $venue = $this->venueWithSlug('kontakt');
 
-        $this->dispatch(new ChangeVenueContact($venue->number(), $this->token($venue), ['phone', 'inquiryEmail', 'website', 'contactPerson', 'instagram'], '+41441234567', 'anfrage@beispiel.ch', 'https://beispiel.ch', 'Erika Muster', 'https://www.instagram.com/beispiel'));
+        $this->dispatch(new ChangeVenueContact($venue->number(), $this->token($venue), ['phone', 'inquiryEmail', 'website', 'contactPerson', 'instagram'], '+41441234567', 'anfrage@beispiel.ch', 'https://beispiel.ch', 'Erika Muster', 'https://www.instagram.com/beispiel', false));
 
         $saved = $this->reload($venue);
         self::assertSame('+41441234567', $saved->phone());
@@ -324,6 +324,7 @@ final class VenueWriteCommandsTest extends KernelTestCase
         self::assertSame('https://beispiel.ch', $saved->website());
         self::assertSame('Erika Muster', $saved->contactPerson());
         self::assertSame('https://www.instagram.com/beispiel', $saved->instagram());
+        self::assertFalse($saved->acceptsMultiInquiries());
         $changes = (string) $this->connection->fetchOne("SELECT changes::text FROM admin_audit_log WHERE subject_type = 'venue' AND subject_id = ?", [(string) $venue->number()]);
         foreach (['41441234567', 'anfrage@', 'beispiel.ch', 'Erika', 'instagram.com'] as $value) {
             self::assertStringNotContainsString($value, $changes);

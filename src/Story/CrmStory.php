@@ -27,6 +27,7 @@ use App\Factory\CompanyFactory;
 use App\Factory\ContactFactory;
 use App\Factory\DealFactory;
 use App\Factory\EmailTemplateFactory;
+use App\Factory\InquiryBriefFactory;
 use App\Factory\InquiryFactory;
 use App\Factory\InquiryFeedbackFactory;
 use App\Factory\TaskFactory;
@@ -312,8 +313,48 @@ final class CrmStory extends Story
             }
         }
 
+        $this->brief($addressed, $today);
+
         $this->commandBus->dispatch(new ChangeInquiryStatus($ids[3], InquiryStatus::Done));
         $this->commandBus->dispatch(new ChangeInquiryStatus($ids[4], InquiryStatus::Seen));
         $this->commandBus->dispatch(new ChangeInquiryStatus($ids[5], InquiryStatus::Done));
+    }
+
+    /**
+     * F13: a brief to three venues two days ago, delivered to all three; the guest got one confirmation, so the
+     * children carry no guest copy. Each child goes through `IngestInquiry` like any inquiry.
+     *
+     * @param list<Venue> $addressed venues with an inquiry address
+     */
+    private function brief(array $addressed, \DateTimeImmutable $today): void
+    {
+        if (\count($addressed) < 3) {
+            return;
+        }
+        $at = $today->modify('-2 days')->setTime(16, 30);
+        $brief = InquiryBriefFactory::createOne(['venueCount' => 3, 'createdAt' => $at]);
+        $brief->recordGuestMail(MailStatus::Sent, $at);
+        foreach (\array_slice($addressed, 0, 3) as $venue) {
+            $inquiry = InquiryFactory::new()
+                ->afterInstantiate(static function (Inquiry $inquiry) use ($at): void {
+                    $inquiry->recordVenueMailSent($inquiry->recipientEmail(), $at);
+                    $inquiry->recordGuestMail(MailStatus::Skipped, $at);
+                    $inquiry->recordQualification(null, $at);
+                })
+                ->create([
+                    'venue' => $venue,
+                    'brief' => $brief,
+                    'createdAt' => $at,
+                    'eventType' => 'christmas_party',
+                    'company' => 'Muster Treuhand AG',
+                    'guestCount' => 45,
+                    'eventDate' => null,
+                    'dateFlexible' => true,
+                    'firstName' => 'Sandra',
+                    'lastName' => 'Keller',
+                    'email' => 'sandra.keller@example.ch',
+                ]);
+            $this->commandBus->dispatch(new IngestInquiry($inquiry->id()));
+        }
     }
 }

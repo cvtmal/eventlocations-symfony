@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cms\Form;
 
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -26,6 +27,7 @@ final class VenueContactType extends VenueCardType
                 'invalid_message_parameters' => ['{{ value }}' => ''],
             ])
             ->add('inquiryEmail', EmailType::class, ['label' => 'contact.field.inquiry_email', 'help' => 'contact.help.inquiry_email', 'required' => false])
+            ->add('acceptsMultiInquiries', CheckboxType::class, ['label' => 'contact.field.accepts_multi_inquiries', 'help' => 'contact.help.accepts_multi_inquiries', 'required' => false])
             ->add('website', UrlType::class, ['label' => 'contact.field.website', 'required' => false, 'default_protocol' => 'https'])
             ->add('contactPerson', TextType::class, ['label' => 'contact.field.contact_person', 'required' => false])
             // Text, not `UrlType`: its default protocol turned `@handle` into `https://@handle`, a dead link (#45 F-m3).

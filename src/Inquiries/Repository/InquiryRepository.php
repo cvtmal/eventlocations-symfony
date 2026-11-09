@@ -57,6 +57,52 @@ class InquiryRepository extends ServiceEntityRepository
         $this->getEntityManager()->getConnection()->fetchOne('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [$fingerprint]);
     }
 
+    /**
+     * Makes briefs to this venue wait for each other until the transaction ends (F13), so two at once cannot both take
+     * the last place under the daily cap. Callers lock their venues in a fixed order, so two briefs cannot deadlock.
+     */
+    public function lockVenueForBriefs(string $venueId): void
+    {
+        $this->lockFingerprint('inquiry-brief-venue|'.$venueId);
+    }
+
+    /**
+     * How many children of briefs the venue got since `$since` (the daily cap, `BriefRules`).
+     */
+    public function countBriefChildrenSince(string $venueId, \DateTimeImmutable $since): int
+    {
+        return (int) $this->getEntityManager()->getConnection()->fetchOne(
+            'SELECT count(*) FROM inquiries WHERE venue_id = ? AND brief_id IS NOT NULL AND created_at >= ?',
+            [$venueId, $since->format(\DATE_ATOM)],
+        );
+    }
+
+    /**
+     * Whether another child of the brief has had no delivery outcome yet (F13: the confirmation waits for it).
+     */
+    public function hasPendingSibling(string $briefId, string $inquiryId): bool
+    {
+        return false !== $this->getEntityManager()->getConnection()->fetchOne(
+            "SELECT 1 FROM inquiries WHERE brief_id = ? AND id <> ? AND venue_mail_status = 'pending' LIMIT 1",
+            [$briefId, $inquiryId],
+        );
+    }
+
+    /**
+     * The children of a brief, in the order the guest chose the venues (ids are time-ordered UUIDs made in that order).
+     *
+     * @return list<Inquiry>
+     */
+    public function childrenOf(string $briefId): array
+    {
+        return $this->createQueryBuilder('i')
+            ->where('IDENTITY(i.brief) = :brief')
+            ->setParameter('brief', $briefId)
+            ->orderBy('i.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findLatestIdByFingerprint(string $fingerprint, \DateTimeImmutable $createdAfter): ?string
     {
         $id = $this->createQueryBuilder('i')

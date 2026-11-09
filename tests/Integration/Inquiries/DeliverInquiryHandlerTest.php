@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Inquiries;
 use App\Factory\InquiryFactory;
 use App\Factory\VenueFactory;
 use App\Factory\VenueTermFactory;
+use App\Inquiries\BriefOptOutToken;
 use App\Inquiries\Command\DeliverInquiry;
 use App\Inquiries\CommandHandler\DeliverInquiryHandler;
 use App\Inquiries\Entity\Inquiry;
@@ -32,6 +33,7 @@ use Symfony\Component\HttpKernel\Log\Logger;
 use Symfony\Component\Mailer\Exception\InvalidArgumentException;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Zenstruck\Foundry\Test\Factories;
 
@@ -367,7 +369,7 @@ final class DeliverInquiryHandlerTest extends KernelTestCase
 
         return new DeliverInquiryHandler(
             $this->inquiries,
-            new InquiryMailer($mailer, $translator, $format, 'hallo@deine-eventlocation.ch', $override),
+            new InquiryMailer($mailer, $translator, $format, 'hallo@deine-eventlocation.ch', $override, self::urls(), new BriefOptOutToken('a secret')),
             new MockClock(self::NOW),
             $logger,
             $bus,
@@ -381,5 +383,13 @@ final class DeliverInquiryHandlerTest extends KernelTestCase
         $this->em->clear();
 
         return $this->inquiries->get($id);
+    }
+
+    private static function urls(): UrlGeneratorInterface
+    {
+        $urls = self::getContainer()->get(UrlGeneratorInterface::class);
+        self::assertInstanceOf(UrlGeneratorInterface::class, $urls);
+
+        return $urls;
     }
 }

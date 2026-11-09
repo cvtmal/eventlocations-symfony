@@ -91,7 +91,7 @@ final class VenueCommandAuditTest extends TestCase
         yield 'relocate' => [new RelocateVenue(self::NUMBER, '1', $changed, '8706 Meilen', 'zh', 'Seestrasse 99', 47.123456, 8.654321, '1.5', $text, '2.5', $text, '30.0', $text, ['de' => 'Geheimregion'], true, true)];
         yield 'terms' => [new ChangeVenueTerms(self::NUMBER, '1', $changed, ['building' => ['castle']], ['building' => 'castle'])];
         yield 'event facts' => [new ChangeVenueEventFacts(self::NUMBER, '1', $changed, PriceLevel::Medium, 80, 120, ['de' => ['ambience' => $text, 'capacityNote' => $text, 'openingHours' => $text]], ['catering' => ['buffet']])];
-        yield 'contact' => [new ChangeVenueContact(self::NUMBER, '1', $changed, '+41449998877', 'geheim@beispiel.ch', 'https://geheim.example', 'Geheime Person', 'https://geheim.example/insta')];
+        yield 'contact' => [new ChangeVenueContact(self::NUMBER, '1', $changed, '+41449998877', 'geheim@beispiel.ch', 'https://geheim.example', 'Geheime Person', 'https://geheim.example/insta', true)];
         yield 'faq' => [new AnswerVenueFaq(self::NUMBER, '1', $changed, true)];
         yield 'google_place' => [new ChangeVenueGooglePlace(self::NUMBER, '1', ['placeId', 'ratingHidden'], 'ChIJGEHEIM12345', true)];
         yield 'google_place_assign' => [new AssignVenueGooglePlace(self::NUMBER, 'ChIJGEHEIM12345')];
@@ -203,6 +203,6 @@ final class VenueCommandAuditTest extends TestCase
 
     public function test_a_form_command_lists_its_changed_fields(): void
     {
-        self::assertSame(['changed' => ['phone']], new ChangeVenueContact(self::NUMBER, '1', ['phone'], '+41449998877', null, null, null, null)->auditSummary());
+        self::assertSame(['changed' => ['phone']], new ChangeVenueContact(self::NUMBER, '1', ['phone'], '+41449998877', null, null, null, null, true)->auditSummary());
     }
 }

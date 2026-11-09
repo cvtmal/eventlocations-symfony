@@ -22,12 +22,16 @@ use Doctrine\ORM\Mapping as ORM;
  * `qualification` (+ `qualificationReason`) is the D19 flag of the latest delivery (G7); `qualificationOverride` is
  * the staff mark, kept apart so an unmark restores the derived value. `stuckAlertedAt` is set once the hourly staff
  * alert has reported the inquiry.
+ *
+ * `brief` is set on a child of a brief to several venues (F13): the venue gets its own mail, the guest no copy per
+ * venue but the brief's one confirmation.
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'inquiries')]
 #[ORM\Index(name: 'idx_inquiries_venue_id', columns: ['venue_id'])]
 #[ORM\Index(name: 'idx_inquiries_created_at', columns: ['created_at'])]
 #[ORM\Index(name: 'idx_inquiries_fingerprint_created_at', columns: ['fingerprint', 'created_at'])]
+#[ORM\Index(name: 'idx_inquiries_brief_id', columns: ['brief_id'])]
 class Inquiry
 {
     #[ORM\Id]
@@ -37,6 +41,10 @@ class Inquiry
     #[ORM\ManyToOne(targetEntity: Venue::class)]
     #[ORM\JoinColumn(name: 'venue_id', nullable: true, onDelete: 'SET NULL')]
     private ?Venue $venue = null;
+
+    #[ORM\ManyToOne(targetEntity: InquiryBrief::class)]
+    #[ORM\JoinColumn(name: 'brief_id', nullable: true, onDelete: 'CASCADE')]
+    private ?InquiryBrief $brief = null;
 
     #[ORM\Column(type: Types::INTEGER)]
     private int $venueNumber;
@@ -149,6 +157,7 @@ class Inquiry
         ?string $phone,
         string $fingerprint,
         \DateTimeImmutable $createdAt,
+        ?InquiryBrief $brief = null,
     ) {
         $this->id = EntityId::generate();
         $this->venue = $venue;
@@ -173,6 +182,7 @@ class Inquiry
         $this->fingerprint = $fingerprint;
         $this->createdAt = $createdAt;
         $this->updatedAt = $createdAt;
+        $this->brief = $brief;
     }
 
     public function recordVenueMailSent(string $deliveredTo, \DateTimeImmutable $at): void
@@ -227,6 +237,11 @@ class Inquiry
     public function venue(): ?Venue
     {
         return $this->venue;
+    }
+
+    public function brief(): ?InquiryBrief
+    {
+        return $this->brief;
     }
 
     public function venueNumber(): int

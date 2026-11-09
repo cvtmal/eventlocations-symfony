@@ -1,0 +1,17 @@
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+{% import 'inquiries/email/_facts.html.twig' as inquiry %}
+
+{% block preheader %}{{ 'email.brief.guest_preheader'|trans({count: reached|length}, 'inquiries') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('email.guest.greeting'|trans({name: first_name}, 'inquiries')) }}
+{{ blocks.p('email.brief.guest_intro'|trans({count: reached|length}, 'inquiries')) }}
+{% for venue in reached %}{{ blocks.button(venue.name, url('venue_show', {slug: venue.slug})) }}{% endfor %}
+{% if undelivered is not empty %}{{ blocks.note('email.brief.guest_undelivered'|trans({names: undelivered|join(', ')}, 'inquiries')) }}{% endif %}
+{{ blocks.p('email.brief.guest_sent'|trans({}, 'inquiries')) }}
+{{ inquiry.facts(_context) }}
+{{ blocks.quote(message) }}
+{{ blocks.rule() }}
+{{ blocks.note('email.brief.guest_answer_note'|trans({}, 'inquiries')) }}
+{% endblock %}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inquiries\CommandHandler;
 
+use App\Inquiries\Command\ConfirmInquiryBrief;
 use App\Inquiries\Command\DeliverInquiry;
 use App\Inquiries\Mailer\InquiryMailer;
 use App\Inquiries\ReadModel\QualificationFactsQuery;
@@ -102,6 +103,19 @@ final class DeliverInquiryHandler implements CommandHandlerInterface
         $inquiry->recordQualification($this->rule->evaluate($facts->withDelivered(true)), $now);
         if (null === $inquiry->qualificationOverride()) {
             $this->commandBus->dispatch(new RecordFunnelEvent(FunnelEvent::InquiryDelivered, $inquiry->venue()?->id()), [new DispatchAfterCurrentBusStamp()]);
+        }
+
+        // A child of a brief (F13): the guest gets the brief's one confirmation (`ConfirmInquiryBrief`), no copy per venue.
+        // Once no sibling waits for its first delivery, the brief's confirmation follows after the commit; a staff resend
+        // of a brief that reached no venue thereby confirms it late, and a confirmation sent already is never repeated.
+        $brief = $inquiry->brief();
+        if (null !== $brief) {
+            $inquiry->recordGuestMail(MailStatus::Skipped, $this->clock->now());
+            if (MailStatus::Pending === $brief->guestMailStatus() && !$this->inquiries->hasPendingSibling($brief->id(), $inquiry->id())) {
+                $this->commandBus->dispatch(new ConfirmInquiryBrief($brief->id()), [new DispatchAfterCurrentBusStamp()]);
+            }
+
+            return new DeliveryOutcome(true);
         }
 
         try {

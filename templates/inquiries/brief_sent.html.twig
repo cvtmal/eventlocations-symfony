@@ -1,0 +1,36 @@
+{#
+    The guest's confirmation after a brief (F13), on the signed /sammelanfrage/gesendet. Params: recipients
+    (BriefRecipient list: the venues reached, then a line for those staff still deliver). Private: robots `noindex`,
+    no canonical, no stats beacon.
+#}
+{% extends 'base.html.twig' %}
+
+{% set reached = recipients|filter(r => r.reached) %}
+{% set undelivered = recipients|filter(r => not r.reached)|map(r => r.venueName) %}
+
+{% block title %}{{ 'brief.sent.heading'|trans({}, 'inquiries') }} | {{ 'layout.site_name'|trans }}{% endblock %}
+
+{% block meta %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block hreflang %}{% endblock %}
+
+{% block jsonld %}{% endblock %}
+
+{% block stats_beacon %}{% endblock %}
+
+{% block main %}
+    <div class="brief-page container">
+        <div class="inquiry-form inquiry-form--sent">
+            <span class="inquiry-form__sent-icon">{{ icon('check') }}</span>
+            <h1 class="venue-section__title">{{ 'brief.sent.heading'|trans({}, 'inquiries') }}</h1>
+            <p>{{ 'brief.sent.reached'|trans({count: reached|length}, 'inquiries') }}</p>
+            <ul class="brief-page__reached">
+                {% for venue in reached %}
+                    <li><a href="{{ path('venue_show', {slug: venue.venueSlug}) }}">{{ venue.venueName }}</a></li>
+                {% endfor %}
+            </ul>
+            {% if undelivered is not empty %}<p>{{ 'brief.sent.undelivered'|trans({names: undelivered|join(', ')}, 'inquiries') }}</p>{% endif %}
+            <p>{{ 'brief.sent.text'|trans({}, 'inquiries') }}</p>
+        </div>
+    </div>
+{% endblock %}

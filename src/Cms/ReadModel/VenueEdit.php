@@ -54,6 +54,7 @@ final readonly class VenueEdit
         public ?string $airportName,
         public ?string $phone,
         public ?string $inquiryEmail,
+        public bool $acceptsMultiInquiries,
         public ?string $website,
         public ?string $contactPerson,
         public ?string $instagram,
