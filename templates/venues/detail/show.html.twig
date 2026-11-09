@@ -75,4 +75,5 @@
     {# D48: both Google features are off by default, so their loaders ship only while they have something to do (f16). #}
     {% if venue_google_rating_live() %}<script type="module" src="{{ asset('js/google-rating.js') }}"></script>{% endif %}
     {% if venue_google_photos_enabled() %}<script type="module" src="{{ asset('js/google-photos.js') }}"></script>{% endif %}
+    <script type="module" src="{{ asset('js/inquiry.js') }}"></script>
 {% endblock %}

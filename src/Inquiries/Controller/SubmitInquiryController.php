@@ -223,7 +223,7 @@ final class SubmitInquiryController extends AbstractController
     {
         $url = $this->generateUrl('venue_show', ['slug' => $venue->slug] + InquiryFormExtension::confirmationQuery(), UrlGeneratorInterface::ABSOLUTE_URL);
 
-        return self::private(new RedirectResponse($this->signer->sign($url).'#anfrage', Response::HTTP_SEE_OTHER));
+        return self::private(new RedirectResponse($this->signer->sign($url).'#'.InquiryFormExtension::CONFIRMATION_ANCHOR, Response::HTTP_SEE_OTHER));
     }
 
     private static function private(Response $response): Response

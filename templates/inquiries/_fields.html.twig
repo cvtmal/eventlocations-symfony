@@ -1,6 +1,6 @@
 {#
     The fields of an inquiry (DP-13), shared by the single form (_form.html.twig) and the brief page (brief.html.twig, F13).
-    Param: form (an InquiryType view). No JS. An error is text linked to its field with aria-describedby, plus aria-invalid
+    Param: form (an InquiryType view). No JS beyond the message caret (inquiry.js, F16 N4). An error is text linked to its field with aria-describedby, plus aria-invalid
     (form_row would set these, the local macro does not use it). Labels are here so optional fields can carry their hint.
 #}
 {% macro field(field, label, optional = false) %}

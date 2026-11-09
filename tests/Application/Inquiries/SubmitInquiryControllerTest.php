@@ -62,7 +62,7 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertStringContainsString('/eventlokal/'.self::SLUG.'?', $location);
         self::assertStringContainsString('anfrage=gesendet', $location);
         self::assertStringContainsString('_hash=', $location);
-        self::assertStringEndsWith('#anfrage', $location);
+        self::assertStringEndsWith('#anfrage-gesendet', $location, 'the focusable confirmation heading (F16 N5)');
 
         $rows = $this->rows();
         self::assertCount(1, $rows);
