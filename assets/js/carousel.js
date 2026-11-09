@@ -4,8 +4,41 @@
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     const wide = matchMedia('(min-width: 768px)');
 
+    // A deferred carousel (cards, F16) shows its later pictures on the first sign of use, or once it is near the viewport
+    // a second after the load event: the browser would fetch them at once, and on the listing they delayed the LCP.
+    const sleeping = new Map();
+    const defer = (carousel, track) => {
+        const events = ['pointerenter', 'touchstart', 'focusin'];
+        const wake = () => {
+            carousel.dataset.awake = '';
+            sleeping.delete(carousel);
+            events.forEach((type) => carousel.removeEventListener(type, wake));
+            track.removeEventListener('scroll', wake);
+        };
+        // A swipe before this module ran fired no scroll event we could see.
+        if (track.scrollLeft > 0) {
+            wake();
+            return;
+        }
+        events.forEach((type) => carousel.addEventListener(type, wake, {passive: true}));
+        track.addEventListener('scroll', wake, {passive: true});
+        sleeping.set(carousel, wake);
+    };
+    const wakeNear = () => setTimeout(() => {
+        const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                observer.unobserve(entry.target);
+                sleeping.get(entry.target)?.();
+            }
+        }), {rootMargin: '0px 0px 50%'});
+        sleeping.forEach((wake, carousel) => observer.observe(carousel));
+    }, 1000);
+
     document.querySelectorAll('[data-carousel]').forEach((carousel) => {
         const track = carousel.querySelector('.carousel__track');
+        if (track && 'carouselDefer' in carousel.dataset) {
+            defer(carousel, track);
+        }
         const slides = track ? track.querySelectorAll('.carousel__slide') : [];
         const controls = carousel.querySelector('[data-carousel-controls]');
         if (!track || !controls || slides.length < 2) {
@@ -55,4 +88,10 @@
         carousel.dataset.enhanced = '';
         update();
     });
+
+    if (document.readyState === 'complete') {
+        wakeNear();
+    } else {
+        addEventListener('load', wakeNear, {once: true});
+    }
 })();

@@ -31,6 +31,15 @@
     scroll-snap-align: start;
 }
 
+// A deferred carousel (cards, F16) shows only its first picture until carousel.js wakes it: the browser loads lazy
+// images of off-screen slides in a scroller at once, and on the listing they outweighed the LCP image 25 to 1.
+// Without scripting every picture shows, so the track still works by touch.
+@media (scripting: enabled) {
+    [data-carousel-defer]:not([data-awake]) .carousel__slide + .carousel__slide picture {
+        display: none;
+    }
+}
+
 .carousel__controls {
     position: absolute;
     inset: 0 var(--space-12);

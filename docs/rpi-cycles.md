@@ -778,6 +778,8 @@ One section per cycle: scope, what it depends on, the schema it owns, and when i
 
 **Depends on** all. **Scope.** Lighthouse and the S11 budgets (`make perf-check`, `docs/performance-baseline.md`) on every public page type, a keyboard-only walkthrough, 390 px and 1440 px, the W3C validator, `make release-check`; no `TODO(owner)` left in rendered public output (D27); the last media backup (F15b) is less than 26 hours old. **Done when** every budget and score holds, both checks pass, and each finding is fixed or listed as a follow-up.
 
+**Dry-run fix** (PR `f16-listing-lcp`, 2026-11-09). The F16 dry run measured `/eventlokale` at LCP 2,027–2,029 ms on the perf stack (S11: 2.0 s). Cause: the lazy images of the card carousels' off-screen slides (34 images, 128 KB). Card carousels are now deferred (`data-carousel-defer`, see `module-search`): 1,886–1,952 ms, Accessibility 100, `PER_PAGE` stays 48. The dry run's N6 (the card track's tab stop) and N7 (`aria-hidden` on the region tooltip) were dropped: below md the arrows are hidden, so the track is a narrow-viewport keyboard user's only way to the photos, and region-filter.js unhides the tooltip, which repeats the path's `aria-label`.
+
 ## Reference material
 
 - **Product and plan:** `docs/product.md` (PO), `KICKOFF.md` (superseded fork brief), `docs/research/fork-research.md` (what carries over; written before E3, so ignore its French and language parts), `docs/prd/CMO_PRD.md` and `docs/prd/CTO_PRD.md` (their Next.js, Stripe and BullMQ parts are ignored: we stay on Symfony).
