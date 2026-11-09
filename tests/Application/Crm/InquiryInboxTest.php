@@ -8,6 +8,7 @@ use App\Admin\ValueObject\AdminRole;
 use App\Crm\Command\IngestInquiry;
 use App\Crm\Exception\InquiryNotFound;
 use App\Crm\ValueObject\InquiryStatus;
+use App\Factory\InquiryBriefFactory;
 use App\Factory\InquiryFactory;
 use App\Factory\InquiryFeedbackFactory;
 use App\Factory\VenueFactory;
@@ -621,6 +622,79 @@ final class InquiryInboxTest extends WebTestCase
         yield 'editor' => [AdminRole::Editor];
     }
 
+    public function test_a_brief_child_has_the_sammelanfrage_pill_and_a_single_inquiry_none(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $this->brief(['Schloss Seeblick', 'Alte Mühle'], '2026-10-02 10:00:00');
+        $single = $this->inquiry('2026-10-01 10:00:00');
+
+        $rows = $this->client->request('GET', self::LIST)->filter('.crm-inbox__row');
+
+        self::assertCount(3, $rows);
+        $pills = $rows->each(static fn (Crawler $row): array => [
+            (string) $row->attr('href'),
+            $row->filter('.pill')->each(static fn (Crawler $pill): string => $pill->text()),
+        ]);
+        foreach ($pills as [$href, $labels]) {
+            self::assertSame(!str_contains($href, $single), \in_array('Sammelanfrage', $labels, true), $href);
+        }
+    }
+
+    public function test_the_detail_of_a_brief_child_names_the_other_venues_with_links(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        [$open, $second, $third] = $this->brief(['Schloss Seeblick', 'Zunfthaus', 'Alte Mühle'], '2026-10-02 10:00:00', venueCount: 3);
+
+        $line = $this->client->request('GET', self::LIST.'/'.$open)->filter('#anfrage-detail .crm-inbox__brief');
+
+        self::assertSame('Sammelanfrage Teil einer Sammelanfrage an 3 Locations: Alte Mühle, Zunfthaus', $line->text());
+        self::assertSame('Sammelanfrage', $line->filter('.pill--blue')->text());
+        self::assertSame(
+            [
+                ['Alte Mühle', self::LIST.'/'.$third.'?status=all#anfrage-detail'],
+                ['Zunfthaus', self::LIST.'/'.$second.'?status=all#anfrage-detail'],
+            ],
+            $line->filter('a')->each(static fn (Crawler $link): array => [$link->text(), (string) $link->attr('href')]),
+        );
+    }
+
+    public function test_a_sibling_the_inbox_has_not_ingested_is_named_without_a_link(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        [$open, $other] = $this->brief(['Schloss Seeblick', 'Zunfthaus'], '2026-10-02 10:00:00');
+        $this->connection->executeStatement('DELETE FROM crm_inquiry_links WHERE inquiry_id = ?', [$other]);
+
+        $line = $this->client->request('GET', self::LIST.'/'.$open)->filter('#anfrage-detail .crm-inbox__brief');
+
+        self::assertSame('Sammelanfrage Teil einer Sammelanfrage an 2 Locations: Zunfthaus', $line->text());
+        self::assertCount(0, $line->filter('a'));
+    }
+
+    public function test_the_detail_of_a_single_inquiry_has_no_brief_line(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $this->brief(['Schloss Seeblick', 'Zunfthaus'], '2026-10-01 10:00:00');
+        $single = $this->inquiry('2026-10-02 10:00:00');
+
+        $this->client->request('GET', self::LIST.'/'.$single);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('#anfrage-detail .crm-inbox__brief');
+        self::assertSelectorTextNotContains('#anfrage-detail', 'Sammelanfrage');
+    }
+
+    /**
+     * The detail reads the brief and its other children in its own statement (F13).
+     */
+    public function test_the_open_brief_child_stays_within_its_statements(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        [$id] = $this->brief(['Schloss Seeblick', 'Zunfthaus', 'Alte Mühle'], '2026-10-01 10:00:00', venueCount: 3);
+
+        self::assertSame(6, $this->queriesOf(self::LIST.'/'.$id));
+        self::assertSame('3', $this->client->getCrawler()->filter('.sidebar__badge')->text());
+    }
+
     /**
      * The counts, the rows, the inquiry, its feedback (G16) and the task badge: the inquiry badge reads the counts'
      * figure. One GET each, as a second one on this client also refreshes the user.
@@ -656,6 +730,23 @@ final class InquiryInboxTest extends WebTestCase
         $this->connection->executeStatement('UPDATE crm_inquiry_links SET status = ? WHERE inquiry_id = ?', [$status->value, $id]);
 
         return $id;
+    }
+
+    /**
+     * A brief (F13) whose children are ingested like any inquiry, one per venue name, in the given order.
+     *
+     * @param list<string> $venueNames
+     *
+     * @return list<string>
+     */
+    private function brief(array $venueNames, string $createdAt, int $venueCount = 2): array
+    {
+        $brief = InquiryBriefFactory::createOne(['venueCount' => $venueCount]);
+
+        return array_map(fn (string $name): string => $this->inquiry($createdAt, fields: [
+            'brief' => $brief,
+            'venue' => VenueFactory::new()->withContact()->create(['name' => $name]),
+        ]), $venueNames);
     }
 
     /**

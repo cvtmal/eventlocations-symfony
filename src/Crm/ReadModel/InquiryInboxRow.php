@@ -13,7 +13,8 @@ use App\Venues\ValueObject\Term;
 
 /**
  * An inquiry as a line of the inbox and of the "Neue Anfragen" widget. `qualification` (+ reason) is null until the
- * first delivery has run; `override` is the staff mark (G7).
+ * first delivery has run; `override` is the staff mark (G7). `inBrief`: the inquiry is a child of a «Sammelanfrage» (F13);
+ * only the inbox list shows it, the widget stays as it was.
  */
 final readonly class InquiryInboxRow
 {
@@ -31,6 +32,7 @@ final readonly class InquiryInboxRow
         public ?Qualification $qualification,
         public ?QualificationReason $qualificationReason,
         public ?InquiryOverride $override,
+        public bool $inBrief,
     ) {
     }
 }

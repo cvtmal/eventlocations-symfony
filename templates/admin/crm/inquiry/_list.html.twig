@@ -2,7 +2,8 @@
     The inbox's list. Include with `with_context = false`: tab, list (InquiryInboxPage), detail (?InquiryDetail, the open
     row). A row links to its page and to the pane, so 390 px lands on what it opened. The mail pill shows only what needs
     a look: a venue mail that is not `sent` (N4); the detail shows both mails. The second pill is the staff mark or, without
-    one, the qualification of the latest delivery (G7); none before the first delivery.
+    one, the qualification of the latest delivery (G7); none before the first delivery. A child of a «Sammelanfrage» (F13)
+    adds its pill.
 #}
 <section class="card crm-inbox__list" aria-label="{{ 'inquiry.inbox.list_label'|trans({}, 'crm') }}">
     {% if list.rows is empty %}
@@ -24,11 +25,12 @@
                                 {{- row.eventType|trans }} · {{ 'inquiry.inbox.guests'|trans({count: row.guestCount|swiss_number}, 'crm') -}}
                                 {%- if row.eventDate %} · {{ row.eventDate|swiss_date }}{% endif -%}
                             </span>
-                            {% if row.venueMail.value != 'sent' or row.override or row.qualification %}
+                            {% if row.venueMail.value != 'sent' or row.override or row.qualification or row.inBrief %}
                                 <span>
                                     {%- if row.venueMail.value != 'sent' %}{{ include('admin/components/_pill.html.twig', {label: ('inquiry.mail.venue.' ~ row.venueMail.value)|trans({}, 'crm'), tone: crm_tones('mail')[row.venueMail.value]}, with_context = false) }}{% endif %}
                                     {% if row.override %}{{ include('admin/components/_pill.html.twig', {label: ('inquiry.override.' ~ row.override.value)|trans({}, 'crm'), tone: crm_override_tone(row.override)}, with_context = false) }}
-                                    {%- elseif row.qualification %}{{ include('admin/components/_pill.html.twig', {label: ('inquiry.qualification.' ~ row.qualification.value)|trans({reason: row.qualificationReason ? ('inquiry.qualification.reason.' ~ row.qualificationReason.value)|trans({}, 'crm') : ''}, 'crm'), tone: crm_qualification_tone(row.qualification)}, with_context = false) }}{% endif -%}
+                                    {%- elseif row.qualification %}{{ include('admin/components/_pill.html.twig', {label: ('inquiry.qualification.' ~ row.qualification.value)|trans({reason: row.qualificationReason ? ('inquiry.qualification.reason.' ~ row.qualificationReason.value)|trans({}, 'crm') : ''}, 'crm'), tone: crm_qualification_tone(row.qualification)}, with_context = false) }}{% endif %}
+                                    {% if row.inBrief %}{{ include('admin/components/_pill.html.twig', {label: 'inquiry.brief.badge'|trans({}, 'crm'), tone: 'blue'}, with_context = false) }}{% endif -%}
                                 </span>
                             {% endif %}
                         </span>

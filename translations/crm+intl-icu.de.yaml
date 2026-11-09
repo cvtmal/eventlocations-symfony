@@ -630,6 +630,10 @@ inquiry:
     override:
         spam: Spam
         test: Test
+    # F13: a child of a «Sammelanfrage»; staff may see the other venues' names, the venues never do.
+    brief:
+        badge: Sammelanfrage
+        part_of: 'Teil einer Sammelanfrage an {count, plural, one {# Location} other {# Locations}}'
     # G16: the guest's answer to the feedback mail a week after delivery; the venue only ever sees a count.
     feedback:
         venue_replied: "Location hat sich gemeldet: {answer, select, yes {Ja} other {Nein}}"

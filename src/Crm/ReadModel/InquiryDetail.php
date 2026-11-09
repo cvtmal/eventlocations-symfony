@@ -14,7 +14,8 @@ use App\Venues\ValueObject\Term;
 /**
  * One inquiry in the inbox's detail pane. `venueId` is null once the venue is deleted; the inquiry itself outlives it.
  * `venueNumber` is the inquiry's copy, so it stays after the venue: only `venueId` says whether the edit page still
- * exists. The organizer is no CRM contact (S13): `email` is where a reply goes. `startTime` is `H:i`.
+ * exists. The organizer is no CRM contact (S13): `email` is where a reply goes. `startTime` is `H:i`. `brief` is null
+ * for a single inquiry (F13).
  */
 final readonly class InquiryDetail
 {
@@ -42,6 +43,7 @@ final readonly class InquiryDetail
         public ?Qualification $qualification,
         public ?QualificationReason $qualificationReason,
         public ?InquiryOverride $override,
+        public ?InquiryBriefSummary $brief,
     ) {
     }
 }

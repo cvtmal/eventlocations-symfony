@@ -3,7 +3,9 @@
     A venue that is gone stays as a name; "Per E-Mail antworten" writes to the organizer's address (S13: an organizer is no
     CRM contact). The forms post to
     `InquiryStatusController`, the resend form under the pills to `InquiryResendController`, the spam / test marks under
-    "Qualifizierung" to `InquiryMarkController` (G7).
+    "Qualifizierung" to `InquiryMarkController` (G7). A child of a «Sammelanfrage» (F13) says so under the title and names
+    the brief's other venues, each linked to its inquiry once the inbox has it (`crm-inbox__brief` is a line of the title
+    column and the tests' hook; it needs no style of its own).
 #}
 <article class="card crm-inbox__detail" id="anfrage-detail" aria-label="{{ 'inquiry.detail.label'|trans({}, 'crm') }}">
     <div class="crm-inbox__head">
@@ -13,6 +15,16 @@
                 {{- 'inquiry.detail.for'|trans({}, 'crm') }}
                 {% if detail.venueId %}<a href="{{ path('admin_locations_edit', {number: detail.venueNumber}) }}">{{ detail.venueName }}</a>{% else %}{{ detail.venueName }}{% endif %} · {{ detail.receivedAt|swiss_date -}}
             </span>
+            {% if detail.brief %}
+                <span class="crm-inbox__brief">
+                    {{- include('admin/components/_pill.html.twig', {label: 'inquiry.brief.badge'|trans({}, 'crm'), tone: 'blue'}, with_context = false) }}
+                    {{ 'inquiry.brief.part_of'|trans({count: detail.brief.venueCount}, 'crm') -}}
+                    {%- for other in detail.brief.others -%}
+                        {{ loop.first ? ': ' : ', ' }}
+                        {%- if other.linked %}<a href="{{ path('admin_crm_inquiries_show', {id: other.id, status: 'all'}) }}#anfrage-detail">{{ other.venueName }}</a>{% else %}{{ other.venueName }}{% endif -%}
+                    {%- endfor -%}
+                </span>
+            {% endif %}
         </div>
         <div class="crm-inbox__actions">
             {% if detail.email %}
