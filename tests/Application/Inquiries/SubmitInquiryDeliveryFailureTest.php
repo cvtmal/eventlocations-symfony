@@ -68,6 +68,7 @@ final class SubmitInquiryDeliveryFailureTest extends WebTestCase
         self::assertResponseStatusCodeSame(503);
         $this->assertPrivate();
         self::assertSame(self::UNDELIVERED, $crawler->filter('#anfrage [role="alert"]')->text());
+        self::assertSame('-1', $crawler->filter('#anfrage-hinweis[role="alert"]')->attr('tabindex'), 'the POST fragment is the focusable notice');
         self::assertStringNotContainsString('Bitte prüfe deine Angaben.', $crawler->filter('#anfrage')->text());
         self::assertCount(0, $crawler->filter('#anfrage form'), 'nothing to correct, and a resubmit would duplicate');
 

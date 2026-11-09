@@ -1,8 +1,8 @@
 #!/bin/sh
 # Read-only check of the VPS, run by hand once as the deploy user after the first-time setup (#20, F15):
 #
-#   sh ~/probe/probe.sh | tee probe-cli.txt
-#   sh ~/probe/probe.sh 14               only the checks named, here the media backup's age (F16)
+#   sh probe.sh | tee probe-cli.txt
+#   sh probe.sh 14                       only the checks named, here the media backup's age (F16)
 #
 # Prints the fourteen checks in order, one labelled block each. A failing check never stops the next.
 # Leaves nothing on the server: only the flock check writes, and it removes its file. It never prints

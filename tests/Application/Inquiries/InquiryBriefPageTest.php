@@ -123,6 +123,8 @@ final class InquiryBriefPageTest extends WebTestCase
             $content = $this->contentOf($mail);
             self::assertStringContainsString('an 2 Locations', $content);
             self::assertStringContainsString('/sammelanfrage/abbestellen/', $content);
+            self::assertMatchesRegularExpression('#^<https?://[^/>]+/sammelanfrage/abbestellen/[^>]+>$#', (string) $mail->getHeaders()->get('List-Unsubscribe')?->getBodyAsString());
+            self::assertSame('List-Unsubscribe=One-Click', $mail->getHeaders()->get('List-Unsubscribe-Post')?->getBodyAsString());
             self::assertStringNotContainsString('Beta Haus', $content);
         }
         self::assertStringNotContainsString('Gamma Hof', $this->contentOf($toA));
@@ -214,6 +216,7 @@ final class InquiryBriefPageTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString('Bitte hake zwei bis fünf Locations an.', $crawler->filter('.brief-page__venues')->text());
+        self::assertSame('-1', $crawler->filter('.inquiry-form__summary[role="alert"][data-inquiry-focus]')->attr('tabindex'), 'inquiry.js focuses the summary, so it is read');
         $this->assertNothingStored();
     }
 
@@ -337,6 +340,7 @@ final class InquiryBriefPageTest extends WebTestCase
         }
         $this->client->request('GET', '/sammelanfrage?nr='.$both);
         self::assertSelectorExists('input[name="inquiry[venues][]"]');
+        self::assertSelectorExists('meta[name="description"]', 'Lighthouse SEO asks for one even on a noindex page (F16)');
         $this->postBrief($both, [$a->number()]);
         self::assertResponseStatusCodeSame(422);
         $this->assertNoindex('422 re-render');

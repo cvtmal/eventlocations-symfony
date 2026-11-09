@@ -50,7 +50,7 @@ final class InquiryFormExtension
         }
 
         if ($undelivered) {
-            return $twig->render('inquiries/_undelivered.html.twig', ['venue' => $venue]);
+            return $twig->render('inquiries/_undelivered.html.twig', ['venue' => $venue, 'anchor' => InquiryFormFactory::NOTICE_ANCHOR]);
         }
 
         if ($this->isConfirmation()) {
@@ -60,6 +60,7 @@ final class InquiryFormExtension
         return $twig->render('inquiries/_form.html.twig', [
             'venue' => $venue,
             'form' => $form ?? $this->forms->create($venue)->createView(),
+            'anchor' => InquiryFormFactory::NOTICE_ANCHOR,
         ]);
     }
 

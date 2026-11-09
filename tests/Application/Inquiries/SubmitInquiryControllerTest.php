@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Log\Logger;
+use Symfony\Component\Mime\Email;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
@@ -88,6 +89,10 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertNotNull($rows[0]['venue_mail_sent_at']);
 
         self::assertEmailCount(2);
+        foreach (self::getMailerMessages() as $mail) {
+            self::assertInstanceOf(Email::class, $mail);
+            self::assertFalse($mail->getHeaders()->has('List-Unsubscribe'), 'a single inquiry is no brief: nothing to unsubscribe from');
+        }
         self::assertSame([$rows[0]['id']], $received->ids);
 
         $this->client->followRedirect();
@@ -167,6 +172,10 @@ final class SubmitInquiryControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         $this->assertPrivate();
         self::assertSelectorExists('#anfrage [role="alert"]');
+        $summary = $crawler->filter('#anfrage-hinweis');
+        self::assertSame('alert', $summary->attr('role'), 'the POST fragment is the summary');
+        self::assertSame('-1', $summary->attr('tabindex'), 'a focusable fragment target keeps the focus, so it is read');
+        self::assertNotNull($summary->attr('data-inquiry-focus'));
         self::assertSame('true', $crawler->filter('#inquiry_firstName')->attr('aria-invalid'));
         self::assertSame('inquiry_firstName_error', $crawler->filter('#inquiry_firstName')->attr('aria-describedby'));
         self::assertSelectorTextContains('#inquiry_firstName_error', 'Bitte gib deinen Vornamen an.');

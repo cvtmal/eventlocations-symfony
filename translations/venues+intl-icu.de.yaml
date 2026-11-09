@@ -413,7 +413,7 @@ report:
             greeting: Hallo
             intro: Danke für deine Meldung. Wir haben sie erhalten und prüfen sie so bald wie möglich.
             held: '{count, plural, one {Das gemeldete Foto ist ab sofort verborgen, bis wir entschieden haben.} other {Die # gemeldeten Fotos sind ab sofort verborgen, bis wir entschieden haben.}}'
-            next: Wir prüfen deine Meldung. Haben wir Fragen dazu, melden wir uns per E-Mail. Bitte nenn die Referenz, falls du uns schreibst.
+            next: Haben wir Fragen dazu, melden wir uns per E-Mail. Bitte nenn die Referenz, falls du uns schreibst.
             not_you: Diese E-Mail ging an deine Adresse, weil sie im Formular «Inhalt melden» angegeben wurde. Warst du das nicht, kannst du sie ignorieren.
         notice:
             subject: '{kind, select, rights {Meldung: Bildrechte} removal {Meldung: Eintrag entfernen} other {Meldung: Angaben korrigieren}} – {venue}'
