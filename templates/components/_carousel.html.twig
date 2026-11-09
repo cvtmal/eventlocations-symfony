@@ -3,10 +3,13 @@
       id, label (aria-label, translated), previous_label / next_label (default layout.carousel.*),
       counter_format (default 'layout.carousel.counter'|trans; JS replaces {current} and {total}),
       scrollable (default true: the track is a tab stop; false for a track with nothing to scroll, tested with ??
-      because |default turns an explicit false into the default).
+      because |default turns an explicit false into the default),
+      defer (default false: slides after the first keep their pictures hidden until carousel.js wakes the carousel on
+      a pointer, touch, focus or scroll, or near the viewport a second after the load event, so the hidden slides'
+      lazy images do not compete with the LCP image; F16).
       Block: slides, holding <li class="carousel__slide"> items. JS: js/carousel.js adds arrows and counter.
 #}
-<section class="carousel" aria-label="{{ label }}" data-carousel data-counter-format="{{ counter_format|default('layout.carousel.counter'|trans) }}">
+<section class="carousel" aria-label="{{ label }}" data-carousel{% if defer ?? false %} data-carousel-defer{% endif %} data-counter-format="{{ counter_format|default('layout.carousel.counter'|trans) }}">
     <ul class="carousel__track" id="{{ id }}-track"{% if scrollable ?? true %} tabindex="0"{% endif %}>{% block slides %}{% endblock %}</ul>
     <div class="carousel__controls" data-carousel-controls hidden>
         <button type="button" class="btn btn--icon" data-carousel-prev aria-controls="{{ id }}-track" aria-label="{{ previous_label|default('layout.carousel.previous'|trans) }}">{{ icon('chevron-left') }}</button>

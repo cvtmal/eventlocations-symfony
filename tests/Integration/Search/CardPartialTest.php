@@ -58,12 +58,14 @@ final class CardPartialTest extends KernelTestCase
         self::assertNull($crawler->filter('.carousel__track')->attr('tabindex'));
     }
 
-    public function test_a_track_with_several_photos_keeps_its_tab_stop(): void
+    public function test_a_track_with_several_photos_keeps_its_tab_stop_and_defers_its_later_pictures(): void
     {
+        // F16: the later slides' lazy images must not compete with the listing's LCP image (see CardCarouselDeferTest).
         $crawler = new Crawler($this->render(photos: 3));
 
         self::assertCount(3, $crawler->filter('.carousel__track .carousel__slide'));
         self::assertSame('0', $crawler->filter('.carousel__track')->attr('tabindex'));
+        self::assertCount(1, $crawler->filter('section.carousel[data-carousel-defer]'));
     }
 
     public function test_only_the_first_slide_keeps_its_alt_text(): void

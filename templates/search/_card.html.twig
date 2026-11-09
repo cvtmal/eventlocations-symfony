@@ -32,7 +32,7 @@
 <article class="card" data-stats-venue="{{ card.number }}">
     <div class="card__media">
         {%- if pictures is not empty %}
-        {% embed 'components/_carousel.html.twig' with {id: 'card-' ~ card.number ~ '-photos', label: 'card.photos_label'|trans({name: card.name}, 'search'), pictures: pictures, index: index, href: href, scrollable: pictures|length > 1} only %}
+        {% embed 'components/_carousel.html.twig' with {id: 'card-' ~ card.number ~ '-photos', label: 'card.photos_label'|trans({name: card.name}, 'search'), pictures: pictures, index: index, href: href, scrollable: pictures|length > 1, defer: true} only %}
             {% block slides %}
                 {%- for pic in pictures -%}
                 <li class="carousel__slide"><a class="card__photo-link" href="{{ href }}" tabindex="-1" aria-hidden="true">{{ venue_picture(pic, sizes='(min-width: 1024px) 400px, (min-width: 768px) 320px, calc(100vw - 80px)', loading=(index == 1 and loop.first ? 'eager' : 'lazy'), priority=(index == 0 and loop.first), widths=[360, 640, 960], class='card__picture', decorative=not loop.first) }}</a></li>
