@@ -55,6 +55,7 @@ Every product decision is settled (D23 to D59). Only facts and the owner's own p
 |---|---|
 | Operator name, street, postcode, city and UID | `TODO(owner)` on the Impressum, the Datenschutz page and in every page's JSON-LD; production refuses to boot while any is left (D27) |
 | Before the first deploy: DNS and TLS, SPF and DKIM for the mail domain, the Sentry monitors, the first backup | Runbook in `docs/operations.md`; F16 cannot check these locally |
+| After any change to the nginx config in the repo: copy it to the server and reload nginx (the first setup takes it from `main`) | Runbook in `docs/operations.md` |
 | Infomaniak and Neon accounts, first setup and first deploy | Runbook in `docs/operations.md` (F15); deploys stay off until the owner sets the repository variable `DEPLOY_ENABLED` |
 | Backup schedule and Sentry cron monitor | Runbook in `docs/operations.md`; the database backup runs by hand until the owner schedules it |
 | Infomaniak Object Storage credentials for the media backup (F15b) | Placeholders; launch is refused without a backup less than 26 hours old |
