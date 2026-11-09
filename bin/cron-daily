@@ -51,6 +51,10 @@ main() {
     # #47: loads the beacon's day files into Neon and rebuilds stats_daily; the button on /admin/statistik runs
     # the same job. --quiet: its count line would mail every night; an error still prints.
     step stats-ingest "$PHP" bin/console --no-interaction --quiet app:stats:ingest
+    # G10: last month's report mail per venue, from the 1st to the 7th. After stats-ingest, so the month's last day
+    # is in stats_daily (it waits while the ingest is stale); a second run writes nothing; a failure line prints
+    # under --quiet. It also purges send-log rows older than 24 months.
+    step owner-reports "$PHP" bin/console --no-interaction --quiet app:portal:owner-reports
     step pool-prune "$PHP" bin/console --no-interaction --quiet cache:pool:prune
     # The trailing slashes matter: these directories are symlinks into shared/, and find does not follow a
     # symlink it is given as a start unless the path names the directory behind it.

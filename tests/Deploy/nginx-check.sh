@@ -287,7 +287,7 @@ backend() {
     rm -f "$work/big"
 }
 
-# G5, G9, G11: a preview or cancellation link's token, or a preview's short code, never reaches the access log, neither as the path nor as a Referer;
+# G5, G9, G10, G11: a preview, cancellation or opt-out link's token, or a preview's short code, never reaches the access log, neither as the path nor as a Referer;
 # nor does the Google photo name in a places-photos image path (D12).
 preview_not_logged() {
     request https "$SITE" /vorschau/secret-path-fixture
@@ -297,13 +297,15 @@ preview_not_logged() {
     request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/konto/abo-kuendigen/secret-cancel-referer"
     request https "$SITE" /v/secret-short-fixture
     request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/v/secret-short-referer-fixture"
+    request https "$SITE" /konto/bericht-abbestellen/secret-optout-fixture
+    request https "$SITE" /assets/app-abc123.css -H "Referer: https://$SITE/konto/bericht-abbestellen/secret-optout-referer"
     request https "$SITE" /logged-fixture
     docker logs "$name" > "$work/access.log" 2>&1
     grep -q "/logged-fixture" "$work/access.log" || fail "an ordinary request is no longer in the access log"
     if grep -q "secret-" "$work/access.log"; then
-        fail "a preview or cancellation token or a Google photo name reached the access log"
+        fail "a preview, cancellation or opt-out token or a Google photo name reached the access log"
     fi
-    ok "a preview or cancellation link's token and a Google photo name are not in the access log"
+    ok "a preview, cancellation or opt-out link's token and a Google photo name are not in the access log"
 }
 
 # bin/deploy's switch, done the same way: the next request runs the other release.

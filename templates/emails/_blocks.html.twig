@@ -21,6 +21,11 @@
 <tr><td class="hl-pad hl-muted" style="padding-left:40px;padding-right:40px;padding-bottom:16px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:14px;line-height:22px;mso-line-height-rule:exactly;color:#5a6078;">{{ text }}</td></tr>
 {% endmacro %}
 
+{# A muted line that ends in a link. hl-btn makes the text part keep the URL ("label: url"), as for a button. #}
+{% macro link_note(text, label, url) %}
+<tr><td class="hl-pad hl-muted" style="padding-left:40px;padding-right:40px;padding-bottom:16px;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;font-size:14px;line-height:22px;mso-line-height-rule:exactly;color:#5a6078;">{{ text }} <a href="{{ url }}" class="hl-btn hl-link" style="color:#3a3fb0;text-decoration:underline;">{{ label }}</a></td></tr>
+{% endmacro %}
+
 {% macro rule() %}
 <tr><td class="hl-pad" style="padding-left:40px;padding-right:40px;padding-top:8px;padding-bottom:20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;"><tr><td class="hl-rule" height="1" bgcolor="#d8dcec" style="height:1px;line-height:1px;font-size:0;background:#d8dcec;">&#160;</td></tr></table></td></tr>
 {% endmacro %}

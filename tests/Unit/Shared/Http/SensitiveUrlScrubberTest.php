@@ -25,6 +25,7 @@ final class SensitiveUrlScrubberTest extends TestCase
         yield 'a short link (G11)' => ['https://deine-eventlocation.ch/v/K7M3QX9TPA?utm=x', 'https://deine-eventlocation.ch/v/[Filtered]'];
         yield 'a Google photo (places-photos)' => ['https://deine-eventlocation.ch/eventlokal/alte-muehle/google-fotos/AXCi2Q_abc-123', 'https://deine-eventlocation.ch/eventlokal/alte-muehle/google-fotos/[Filtered]'];
         yield 'the Google photo fragment keeps its path' => ['https://deine-eventlocation.ch/eventlokal/alte-muehle/google-fotos', 'https://deine-eventlocation.ch/eventlokal/alte-muehle/google-fotos'];
+        yield 'an opt-out link (G10)' => ['https://deine-eventlocation.ch/konto/bericht-abbestellen/'.self::TOKEN, 'https://deine-eventlocation.ch/konto/bericht-abbestellen/[Filtered]'];
         yield 'another page' => ['https://deine-eventlocation.ch/eventlocations?seite=2', 'https://deine-eventlocation.ch/eventlocations?seite=2'];
         yield 'the staff preview' => ['https://deine-eventlocation.ch/admin/locations/12/vorschau', 'https://deine-eventlocation.ch/admin/locations/12/vorschau'];
     }

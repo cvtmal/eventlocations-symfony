@@ -1,0 +1,79 @@
+{#
+    The monthly report per entry (G10, PortalMailer::sendOwnerReport). Three figures against the month before for every
+    entry, more figures and a 3-month trend on Pro, one suggestion, the plan line, on Free exactly one «Pro anfragen»
+    line and no other advertising (D52), the edit link and the per-venue opt-out (Wave G §4a.6: not a contract mail).
+    Without data the mail says so plainly and puts the suggestion first. "Anfragen", never "Buchungen".
+    OwnerReportMailTest pins the sections.
+    Context: name (null for an inquiry address), report (Portal\ReadModel\OwnerReport), links
+    (Portal\ValueObject\OwnerReportLinks).
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+{% import _self as report_mail %}
+
+{% macro value(figure) %}
+    {%- if figure.previous is null -%}
+        {{ 'report.mail.figure.value_no_previous'|trans({current: figure.current|swiss_number}, 'portal') }}
+    {%- else -%}
+        {%- set diff = figure.difference -%}
+        {%- set change = diff > 0 ? 'report.mail.change.more'|trans({n: diff|swiss_number}, 'portal') : (diff < 0 ? 'report.mail.change.less'|trans({n: (-diff)|swiss_number}, 'portal') : 'report.mail.change.same'|trans({}, 'portal')) -%}
+        {{ 'report.mail.figure.value'|trans({current: figure.current|swiss_number, previous: figure.previous|swiss_number, change: change}, 'portal') }}
+    {%- endif -%}
+{% endmacro %}
+
+{% set venue = report.venueName %}
+{% set month = report.month.label %}
+
+{% block preheader %}{{ 'report.mail.preheader'|trans({venue: venue, month: month}, 'portal') }}{% endblock %}
+
+{% block content %}
+{% set suggestion %}
+{{ blocks.p(('report.mail.suggestion.' ~ report.suggestion.value ~ '.text')|trans({}, 'portal')) }}
+{% if report.suggestion.hasButton %}
+{{ blocks.button(('report.mail.suggestion.' ~ report.suggestion.value ~ '.button')|trans({}, 'portal'), links.suggestion) }}
+{% endif %}
+{% endset %}
+{% set basic = [] %}
+{% for figure in report.figures %}
+    {% set basic = basic|merge([{label: ('report.mail.figure.' ~ figure.key)|trans({}, 'portal'), value: report_mail.value(figure)}]) %}
+{% endfor %}
+{{ blocks.greeting(name ? 'report.mail.greeting'|trans({name: name}, 'portal') : 'report.mail.greeting_plain'|trans({}, 'portal')) }}
+{% if report.noData %}
+{{ blocks.p('report.mail.no_data'|trans({venue: venue, month: month}, 'portal')) }}
+{{ suggestion }}
+{% else %}
+{{ blocks.p('report.mail.intro'|trans({venue: venue, month: month}, 'portal')) }}
+{% endif %}
+{{ blocks.facts(basic) }}
+{% if report.detailed is not null %}
+{% set detailed = [] %}
+{% for figure in report.detailed %}
+    {% set detailed = detailed|merge([{label: ('report.mail.figure.' ~ figure.key)|trans({}, 'portal'), value: report_mail.value(figure)}]) %}
+{% endfor %}
+{{ blocks.p('report.mail.detailed.title'|trans({month: month}, 'portal')) }}
+{{ blocks.facts(detailed) }}
+{% endif %}
+{% if report.trend is not null %}
+{% set trend = [] %}
+{% for row in report.trend %}
+    {% set trend = trend|merge([{label: row.label, value: 'report.mail.trend.value'|trans({visits: row.figures[0].current|swiss_number, interactions: row.figures[1].current|swiss_number, delivered: row.figures[2].current|swiss_number}, 'portal')}]) %}
+{% endfor %}
+{{ blocks.p('report.mail.trend.title'|trans({}, 'portal')) }}
+{{ blocks.facts(trend) }}
+{% endif %}
+{{ blocks.note('report.mail.visits_note'|trans({}, 'portal') ~ (report.asOf ? ' ' ~ 'report.mail.as_of'|trans({when: report.asOf}, 'portal') : '')) }}
+{% if not report.noData %}
+{{ suggestion }}
+{% endif %}
+{% set plan = report.plan %}
+{% if plan.paidUntil is null %}
+{{ blocks.p('report.mail.plan.free'|trans({}, 'portal')) }}
+{% else %}
+{{ blocks.p(('report.mail.plan.' ~ (plan.cancelled ? 'cancelled' : (plan.freeOfCharge ? 'free_until' : 'paid_until')))|trans({tier: plan.tierName, end: plan.paidUntil}, 'portal')) }}
+{% endif %}
+{% if not report.pro and plan.canRequestPro %}
+{{ blocks.link_note('report.mail.pro_line.text'|trans({}, 'portal'), 'report.mail.pro_line.link'|trans({}, 'portal'), links.pro) }}
+{% endif %}
+{{ blocks.button('report.mail.edit'|trans({}, 'portal'), links.edit) }}
+{{ blocks.link_note('report.mail.opt_out.text'|trans({venue: venue}, 'portal'), 'report.mail.opt_out.link'|trans({}, 'portal'), links.optOut) }}
+{% endblock %}

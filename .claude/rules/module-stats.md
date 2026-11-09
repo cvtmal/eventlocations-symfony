@@ -74,3 +74,9 @@ G8 (`funnel-scorecard`): the event-level log behind the staff screen `/admin/sta
 - **Paying «Mit qualifizierter Anfrage»** (`FunnelPaying::$withQualifiedInquiry`, `qualifiedPercent()`): paying venues with such an inquiry whose venue mail went out at or after their first payment, an `EXISTS` probe per paying venue in the `PAYING` statement.
 - **Marking** an inquiry spam or test withdraws its `inquiry_delivered` step and unmarking records one again at the venue mail's time (`### Inquiries`), so the step counts follow the marks too. `stats_daily` «Anfragen» stays raw (D56).
 - Tests: `FunnelScorecardQueryTest` (window bounds, marks, unqualified, campaign filter, paying), `FunnelControllerTest` (no "n/a" left).
+
+## Monthly figures per venue (G10 `owner-report`)
+
+- `ReadModel\VenueMonthQuery::months($venueId, $venueNumber, $month, $count)` → `list<VenueMonth>` (newest last; Zurich months): detail visitors, clicks by kind, Merkliste adds, impressions and submitted inquiries from `stats_daily`, delivered inquiries from `funnel_events` `inquiry_delivered` per `venue_id` (an F13 child delivery counts once for its own venue; `brief_sent` has no venue and counts nowhere; `VenueMonthQueryTest`). Only Portal reads it (the monthly mail, `### Portal`).
+- **G7 hook:** `VenueMonth::$qualifiedInquiries` is `?int` and null in this cycle (D52: not in the mail yet). The follow-up fills it in `VenueMonthQuery` with G7's `QualifiedInquirySql::where()`; Portal's `OwnerReportFigures` then shows the row by itself (it adds it only when not null), so no template change is needed.
+
