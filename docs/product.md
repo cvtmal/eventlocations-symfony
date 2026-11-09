@@ -51,7 +51,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 ## Facts the owner holds
 
-Every product decision is settled (D23 to D59). **The complete, ordered launch checklist is the «Owner launch checklist» in the F16 Outcome of `docs/rpi-cycles.md`**, with runbook steps in `docs/operations.md`. In short:
+Every product decision is settled (D23 to D60). **The complete, ordered launch checklist is the «Owner launch checklist» in the F16 Outcome of `docs/rpi-cycles.md`**, with runbook steps in `docs/operations.md`. In short:
 
 | Fact | Until it arrives |
 |---|---|
