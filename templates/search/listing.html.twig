@@ -46,7 +46,7 @@
         {% include 'components/_promoted_note.html.twig' with {} only %}
         {%- endif %}
         {%- if page.cards|length >= 2 %}
-        {{ include('inquiries/_brief_cta.html.twig', {numbers: page.cards|slice(0, 10)|map(c => c.number), text: 'brief.cta.listing_text'|trans({}, 'inquiries')}, with_context = false) }}
+        {{ include('inquiries/_brief_cta.html.twig', {numbers: page.cards|slice(0, 10)|map(c => c.number), text: 'brief.cta.listing_text'|trans({}, 'inquiries'), from_list: true}, with_context = false) }}
         {%- endif %}
         {{ include('search/_pagination.html.twig', {criteria: criteria, page: page, links: page_links}, with_context = false) }}
         {%- else %}

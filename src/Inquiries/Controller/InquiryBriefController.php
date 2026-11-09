@@ -61,6 +61,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class InquiryBriefController extends AbstractController
 {
+    /** `quelle` of a brief started from a result list (D59). */
+    public const string FROM_LIST = 'liste';
     private const HEADERS = ['X-Robots-Tag' => 'noindex, nofollow'];
 
     public function __construct(
@@ -84,13 +86,15 @@ final class InquiryBriefController extends AbstractController
     {
         $locale = $request->getLocale();
         $numbers = BriefRules::numbers($request->query->all()['nr'] ?? null);
+        // D59: from a result list the organizer picks, nothing is ticked; from the Merkliste the first five are.
+        $fromList = self::FROM_LIST === ($request->query->all()['quelle'] ?? null);
         [$offered, $notOffered] = $this->candidates($numbers, $locale);
         if (\count($offered) < BriefRules::MIN_VENUES) {
             // A state of the page, not an error of the guest's input: the same answer for GET and POST.
             return $this->page($numbers, $offered, $notOffered, null);
         }
 
-        $form = $this->forms->create($offered, $numbers);
+        $form = $this->forms->create($offered, $numbers, null, $fromList ? [] : null, $fromList);
         if (!$request->isMethod('POST')) {
             return $this->page($numbers, $offered, $notOffered, $form);
         }
@@ -108,7 +112,7 @@ final class InquiryBriefController extends AbstractController
                 $data = $form->getData();
                 \assert($data instanceof InquiryData);
 
-                return $this->changed($numbers, $offered, $notOffered, $data, $ticked);
+                return $this->changed($numbers, $offered, $notOffered, $data, $ticked, $fromList);
             }
 
             return $this->page($numbers, $offered, $notOffered, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -139,7 +143,7 @@ final class InquiryBriefController extends AbstractController
             if ($domainException instanceof BriefNotAccepted) {
                 [$offered, $notOffered] = $this->candidates($numbers, $locale);
 
-                return $this->changed($numbers, $offered, $notOffered, $data, $ticked);
+                return $this->changed($numbers, $offered, $notOffered, $data, $ticked, $fromList);
             }
             $this->addDomainError($form, $domainException, $exception);
 
@@ -270,9 +274,9 @@ final class InquiryBriefController extends AbstractController
      * @param list<BriefCandidate> $notOffered
      * @param list<int>            $ticked
      */
-    private function changed(array $numbers, array $offered, array $notOffered, InquiryData $data, array $ticked): Response
+    private function changed(array $numbers, array $offered, array $notOffered, InquiryData $data, array $ticked, bool $fromList): Response
     {
-        $form = \count($offered) < BriefRules::MIN_VENUES ? null : $this->forms->create($offered, $numbers, $data, $ticked);
+        $form = \count($offered) < BriefRules::MIN_VENUES ? null : $this->forms->create($offered, $numbers, $data, $ticked, $fromList);
         $form?->addError($this->error('brief.error.changed'));
 
         return $this->page($numbers, $offered, $notOffered, $form, Response::HTTP_UNPROCESSABLE_ENTITY);

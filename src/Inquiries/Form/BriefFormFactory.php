@@ -16,7 +16,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * The form of a brief to several venues (F13): the single inquiry's fields (`InquiryType`) plus `venues`, one checkbox
  * per offered venue, each named. That list is the consent step: the brief goes to exactly the ticked venues. The
- * first five are ticked to start with; after a refused POST the guest's own ticks are kept where still offered.
+ * first five are ticked to start with from the Merkliste, none from a result list (D59, `$fromList`, which the action
+ * keeps); after a refused POST the guest's own ticks are kept where still offered.
  */
 final readonly class BriefFormFactory
 {
@@ -32,7 +33,7 @@ final readonly class BriefFormFactory
      * @param list<int>            $numbers the `nr` the page was asked for, kept in the action
      * @param list<int>|null       $ticked  null ticks the first five
      */
-    public function create(array $offered, array $numbers, ?InquiryData $data = null, ?array $ticked = null): FormInterface
+    public function create(array $offered, array $numbers, ?InquiryData $data = null, ?array $ticked = null, bool $fromList = false): FormInterface
     {
         if (null === $data) {
             $data = new InquiryData();
@@ -48,7 +49,7 @@ final readonly class BriefFormFactory
             : array_values(array_intersect($ticked, $offeredNumbers));
 
         return $this->forms->createBuilder(InquiryType::class, $data, [
-            'action' => $this->urls->generate('inquiry_brief', ['nr' => implode(',', $numbers)]),
+            'action' => $this->urls->generate('inquiry_brief', ['nr' => implode(',', $numbers)] + ($fromList ? ['quelle' => 'liste'] : [])),
         ])
             ->add('venues', ChoiceType::class, [
                 'mapped' => false,

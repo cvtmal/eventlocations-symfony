@@ -291,7 +291,27 @@ final class InquiryBriefPageTest extends WebTestCase
         $crawler = $this->client->request('GET', '/eventlokale');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('a[href^="/sammelanfrage?nr="]'));
+        $links = $crawler->filter('a[href^="/sammelanfrage?nr="]');
+        self::assertCount(1, $links);
+        self::assertStringContainsString('quelle=liste', (string) $links->attr('href'));
+    }
+
+    public function test_a_brief_from_a_result_list_ticks_nothing_and_refuses_a_submit_without_a_pick(): void
+    {
+        $nr = implode(',', [$this->venue('erst-saal', 'Erst Saal')->number(), $this->venue('zweit-haus', 'Zweit Haus')->number(), $this->venue('dritt-hof', 'Dritt Hof')->number()]);
+
+        $crawler = $this->client->request('GET', '/sammelanfrage?nr='.$nr.'&quelle=liste');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(3, $crawler->filter('input[name="inquiry[venues][]"]'));
+        self::assertCount(0, $crawler->filter('input[name="inquiry[venues][]"][checked]'), 'D59: from a result list the organizer picks');
+        self::assertStringContainsString('quelle=liste', (string) $crawler->filter('form.inquiry-form__form')->attr('action'));
+
+        $this->client->request('POST', '/sammelanfrage?nr='.$nr.'&quelle=liste', InquiryFormFields::valid(), [], ['HTTP_SEC_FETCH_SITE' => 'same-origin']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Bitte hake zwei bis fünf Locations an.');
+        $this->assertNothingStored();
     }
 
     /**
