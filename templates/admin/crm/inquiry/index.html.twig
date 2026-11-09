@@ -37,7 +37,7 @@
     <div class="crm-inbox">
         {{ include('admin/crm/inquiry/_list.html.twig', {tab: tab, list: list, detail: detail}, with_context = false) }}
         {% if detail %}
-            {{ include('admin/crm/inquiry/_detail.html.twig', {detail: detail, return_to: app.request.requestUri}, with_context = false) }}
+            {{ include('admin/crm/inquiry/_detail.html.twig', {detail: detail, feedback: feedback, return_to: app.request.requestUri}, with_context = false) }}
         {% endif %}
     </div>
 {% endblock %}

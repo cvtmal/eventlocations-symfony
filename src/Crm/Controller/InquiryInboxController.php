@@ -9,6 +9,7 @@ use App\Crm\ReadModel\InquiryBadge;
 use App\Crm\ReadModel\InquiryDetail;
 use App\Crm\ReadModel\InquiryInboxQuery;
 use App\Crm\ValueObject\InquiryStatus;
+use App\Inquiries\ReadModel\InquiryFeedbackQuery;
 use App\Shared\Translation\LocalizedRoutes;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,6 +32,7 @@ final class InquiryInboxController extends AbstractController
     public function __construct(
         private readonly InquiryInboxQuery $inbox,
         private readonly InquiryBadge $badge,
+        private readonly InquiryFeedbackQuery $feedback,
     ) {
     }
 
@@ -67,6 +69,7 @@ final class InquiryInboxController extends AbstractController
             'counts' => $counts,
             'list' => $list,
             'detail' => $detail,
+            'feedback' => null === $detail ? null : $this->feedback->forInquiry($detail->id),
         ]);
     }
 }

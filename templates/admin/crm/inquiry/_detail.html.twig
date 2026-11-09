@@ -95,6 +95,22 @@
         </div>
     </div>
 
+    {# G16: the guest's answer to the feedback mail, for staff only (the venue sees a count). #}
+    {% if feedback %}
+        <div class="crm-inbox__block">
+            <h3>{{ 'inquiry.detail.feedback'|trans({}, 'crm') }}</h3>
+            {% if not feedback.mailed %}
+                <p>{{ 'inquiry.feedback.skipped'|trans({}, 'crm') }}</p>
+            {% elseif feedback.answered %}
+                <p>{{ 'inquiry.feedback.venue_replied'|trans({answer: feedback.venueReplied ? 'yes' : 'no'}, 'crm') }}</p>
+                <p>{{ 'inquiry.feedback.outcome'|trans({answer: feedback.outcome.value}, 'crm') }}</p>
+            {% else %}
+                <p>{{ 'inquiry.feedback.none'|trans({}, 'crm') }}</p>
+            {% endif %}
+            {% if feedback.optedOut and feedback.mailed %}<p>{{ 'inquiry.feedback.opted_out'|trans({}, 'crm') }}</p>{% endif %}
+        </div>
+    {% endif %}
+
     <form class="crm-inbox__status" method="post" action="{{ path('admin_crm_inquiries_status', {id: detail.id}) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('submit') }}">
         <input type="hidden" name="return_to" value="{{ return_to }}">

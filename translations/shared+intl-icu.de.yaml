@@ -47,6 +47,9 @@ legal:
             purpose: Wir leiten sie per E-Mail an die angefragte Location weiter, damit sie dir antworten kann, und schicken dir eine Kopie an die angegebene E-Mail-Adresse. Die Location bearbeitet deine Anfrage danach in eigener Verantwortung.
             # TODO owner: #20 must schedule app:inquiries:purge daily, or this sentence is false (T6).
             retention: 'Wir speichern Anfragen zusammen mit dem Versandstatus und löschen sie {months, plural, one {# Monat} other {# Monate}} nach dem Eingang. E-Mails, die eine Location erhalten hat, liegen bei der Location und werden davon nicht berührt.'
+            # G16: the one feedback mail (app:inquiries:request-feedback, FeedbackRequestsDue::DELAY_DAYS).
+            # The first two sentences are the PO's (D58), word for word.
+            feedback: 'Etwa eine Woche nach deiner Anfrage fragen wir dich einmal per E-Mail, ob es geklappt hat. Den Link zum Abmelden findest du in dieser E-Mail. Antworten ist freiwillig. Die Location erfährt nur, wie viele Rückmeldungen sie bekommen hat, nicht deine Antworten. Deine Antwort löschen wir zusammen mit der Anfrage.'
         crm:
             title: Kontakte von Locations
             # Since #55 a contact is a row on its Location's card: a removal deletes that row only. venues.contact_person and venues.inquiry_email stay, because Crm writes no venue data; staff remove that copy by hand in the CMS.

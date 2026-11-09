@@ -9,7 +9,9 @@ use App\Crm\Command\IngestInquiry;
 use App\Crm\Exception\InquiryNotFound;
 use App\Crm\ValueObject\InquiryStatus;
 use App\Factory\InquiryFactory;
+use App\Factory\InquiryFeedbackFactory;
 use App\Factory\VenueFactory;
+use App\Inquiries\ValueObject\FeedbackOutcome;
 use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\AdminSession;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -238,6 +240,33 @@ final class InquiryInboxTest extends WebTestCase
         self::assertSame('Done Paar', $crawler->filter('#anfrage-detail h2')->text());
         self::assertSame(['Neu Paar'], $crawler->filter('.crm-inbox__name')->each(static fn (Crawler $name): string => $name->text()));
         self::assertSelectorNotExists('.crm-inbox__row[aria-current="true"]');
+    }
+
+    public function test_the_detail_shows_the_guests_feedback_only_to_staff(): void
+    {
+        $this->logInAs(AdminRole::Editor);
+        $unanswered = $this->inquiry();
+        InquiryFeedbackFactory::createOne(['inquiry' => InquiryFactory::find($unanswered)]);
+        $answered = $this->inquiry('2026-10-02 10:00:00');
+        InquiryFeedbackFactory::new()
+            ->answered(false, FeedbackOutcome::Open, new \DateTimeImmutable('2026-10-10 10:00:00 UTC'))
+            ->optedOut()
+            ->create(['inquiry' => InquiryFactory::find($answered)]);
+        $none = $this->inquiry('2026-10-03 10:00:00');
+        $skipped = $this->inquiry('2026-10-04 10:00:00');
+        InquiryFeedbackFactory::new()->optedOut(skipped: true)->create(['inquiry' => InquiryFactory::find($skipped)]);
+
+        $crawler = $this->client->request('GET', self::LIST.'/'.$answered);
+        self::assertSame(
+            ['Rückmeldung des Veranstalters', 'Location hat sich gemeldet: Nein', 'Hat geklappt: Noch offen', 'Der Veranstalter möchte keine solchen Rückfragen mehr.'],
+            $crawler->filter('.crm-inbox__block')->reduce(static fn (Crawler $block): bool => str_starts_with($block->text(), 'Rückmeldung'))->filter('h3, p')->each(static fn (Crawler $node): string => $node->text()),
+        );
+        $crawler = $this->client->request('GET', self::LIST.'/'.$unanswered);
+        self::assertStringContainsString('Rückfrage gesendet, noch keine Antwort.', $crawler->filter('#anfrage-detail')->text());
+        $crawler = $this->client->request('GET', self::LIST.'/'.$skipped);
+        self::assertStringContainsString('Keine Rückfrage gesendet, der Veranstalter hat sie abbestellt.', $crawler->filter('#anfrage-detail')->text());
+        $crawler = $this->client->request('GET', self::LIST.'/'.$none);
+        self::assertStringNotContainsString('Rückmeldung des Veranstalters', $crawler->filter('#anfrage-detail')->text());
     }
 
     public function test_an_unknown_or_unlinked_inquiry_is_404(): void
@@ -593,8 +622,8 @@ final class InquiryInboxTest extends WebTestCase
     }
 
     /**
-     * The counts, the rows, the inquiry and the task badge: the inquiry badge reads the counts' figure. One GET each, as
-     * a second one on this client also refreshes the user.
+     * The counts, the rows, the inquiry, its feedback (G16) and the task badge: the inquiry badge reads the counts'
+     * figure. One GET each, as a second one on this client also refreshes the user.
      */
     public function test_the_list_stays_within_its_statements(): void
     {
@@ -602,7 +631,7 @@ final class InquiryInboxTest extends WebTestCase
         $this->qualified($this->inquiry());
         $this->inquiry();
 
-        self::assertSame(5, $this->queriesOf(self::LIST));
+        self::assertSame(6, $this->queriesOf(self::LIST));
         self::assertSame('2', $this->client->getCrawler()->filter('.sidebar__badge')->text());
     }
 
@@ -613,7 +642,7 @@ final class InquiryInboxTest extends WebTestCase
         $this->qualified($id);
         $this->inquiry();
 
-        self::assertSame(5, $this->queriesOf(self::LIST.'/'.$id));
+        self::assertSame(6, $this->queriesOf(self::LIST.'/'.$id));
         self::assertSame('2', $this->client->getCrawler()->filter('.sidebar__badge')->text());
     }
 

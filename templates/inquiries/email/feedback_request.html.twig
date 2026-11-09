@@ -1,0 +1,22 @@
+{#
+    G16: the one feedback mail a week after a delivered inquiry, to the guest. One button per inquiry of this address
+    due in the run. Not transactional: the footer carries the opt-out link (also `List-Unsubscribe`, FeedbackMailer);
+    its hl-btn class puts the URL into the text part.
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_blocks.html.twig' as blocks %}
+
+{% block preheader %}{{ 'email.feedback.preheader'|trans({}, 'inquiries') }}{% endblock %}
+
+{% block content %}
+{{ blocks.greeting('email.feedback.greeting'|trans({name: first_name}, 'inquiries')) }}
+{{ blocks.p('email.feedback.intro'|trans({count: venues|length, venue: venues[0].name}, 'inquiries')) }}
+{{ blocks.p('email.feedback.questions'|trans({}, 'inquiries')) }}
+{% for venue in venues %}
+{{ blocks.button(venues|length == 1 ? 'email.feedback.button'|trans({}, 'inquiries') : 'email.feedback.button_for'|trans({venue: venue.name}, 'inquiries'), venue.url) }}
+{% endfor %}
+{{ blocks.rule() }}
+{{ blocks.note('email.feedback.note'|trans({}, 'inquiries')) }}
+{% endblock %}
+
+{% block footer %}{{ parent() }}<br>{{ 'email.feedback.opt_out_lead'|trans({}, 'inquiries') }} <a class="hl-btn" href="{{ opt_out_url }}" style="color:#5a6078;text-decoration:underline;">{{ 'email.feedback.opt_out_link'|trans({}, 'inquiries') }}</a>{% endblock %}
