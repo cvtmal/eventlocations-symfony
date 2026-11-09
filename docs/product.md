@@ -49,7 +49,7 @@ The code is the wedding site's, renamed and stripped (cycle `fork-baseline`, 202
 
 ## Facts the owner holds
 
-Every product decision is settled (D23 to D57). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
+Every product decision is settled (D23 to D58). Only facts and the owner's own production steps are left, each with a placeholder or a runbook:
 
 | Fact | Until it arrives |
 |---|---|
