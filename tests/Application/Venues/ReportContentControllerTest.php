@@ -131,7 +131,9 @@ final class ReportContentControllerTest extends WebTestCase
         $notice = (string) $byRecipient[$staff]->getHtmlBody();
         self::assertStringContainsString('Gasthaus zur Linde, Bern', $notice);
         self::assertStringContainsString('Die Öffnungszeiten stimmen nicht.', $notice);
+        self::assertCount(1, $byRecipient[$staff]->getReplyTo());
         self::assertSame('anna@example.ch', $byRecipient[$staff]->getReplyTo()[0]->getAddress());
+        self::assertSame('Anna Muster', $byRecipient[$staff]->getReplyTo()[0]->getName(), 'staff answer the complainant by name');
 
         self::assertSame(
             ['kind' => 'correction', 'venue_id' => null, 'venue_reference' => 'Gasthaus zur Linde, Bern', 'complainant_name' => 'Anna Muster', 'status' => 'open'],

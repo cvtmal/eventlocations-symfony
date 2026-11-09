@@ -103,6 +103,19 @@ final class ReportStuckInquiriesCommandTest extends KernelTestCase
         self::assertSame(2, $this->alerted());
     }
 
+    public function test_the_alert_has_no_person_behind_it_and_so_no_reply_to(): void
+    {
+        $this->stuck('2026-06-01 10:30:00 UTC');
+
+        $this->runCommand([]);
+
+        self::assertEmailCount(1);
+        $mail = self::getMailerMessage();
+        self::assertInstanceOf(Email::class, $mail);
+        self::assertSame('hallo@deine-eventlocation.ch', $mail->getTo()[0]->getAddress());
+        self::assertSame([], $mail->getReplyTo());
+    }
+
     public function test_a_second_run_sends_and_writes_nothing(): void
     {
         $this->stuck('2026-06-01 11:59:00 UTC', failed: true);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venues\Mailer;
 
+use App\Shared\Mailer\ReplyTo;
 use App\Venues\ReadModel\ModerationCaseView;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -66,9 +67,13 @@ final class ModerationMailer
             return false;
         }
 
-        return $this->send($case, (new TemplatedEmail())
-            ->to($this->contactEmail)
-            ->replyTo($case->complainantEmail)
+        $message = (new TemplatedEmail())->to($this->contactEmail);
+        $complainant = ReplyTo::person($case->complainantEmail, $case->complainantName);
+        if (null !== $complainant) {
+            $message->replyTo($complainant);
+        }
+
+        return $this->send($case, $message
             ->subject($this->translator->trans('report.mail.notice.subject', [
                 'kind' => $case->kind->value,
                 'venue' => $case->venueName ?? $case->venueReference ?? '',

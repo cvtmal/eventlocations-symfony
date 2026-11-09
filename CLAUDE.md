@@ -95,6 +95,7 @@ Three layers, each catching what the previous one cannot: **forms** validate inp
 - `Messenger\CommandHandlerInterface`: marker that registers a handler on `command.bus`.
 - `Controller\HealthController`: `GET /health`, checks the database.
 - `Mailer\EmailHtmlToTextConverter`: derives every mail's text part. `templates/emails/layout.html.twig` + `_blocks.html.twig` (macros `greeting`, `p`, `button`, `note`, `rule`, `facts`, `quote`, `rich`): the inline-styled mail layout, free of module wording, class prefix `hl-`.
+- `Mailer\ReplyTo::person()`: the Reply-To of a staff notice about a person (manager, complainant); null for an empty or invalid address.
 - `Validator\CleanText`: refuses a NUL and invalid UTF-8 without naming the value (PDO truncates at a NUL; the `+intl-icu` formatter throws on invalid UTF-8). `Admin\Form\AdminTextConstraintExtension` adds it to every back-office text field; a JSON DTO puts `#[CleanText]` on its string properties.
 
 ## German copy
