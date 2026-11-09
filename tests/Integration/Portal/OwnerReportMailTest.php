@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Portal;
 use App\Factory\PortalUserFactory;
 use App\Factory\PortalVenueAccessFactory;
 use App\Factory\RecordedFunnelEventFactory;
+use App\Factory\SubscriptionFactory;
 use App\Factory\VenueFactory;
 use App\Portal\Security\ReportOptOutToken;
 use App\Shared\Funnel\FunnelEvent;
@@ -14,6 +15,7 @@ use App\Shared\Uid\EntityId;
 use App\Tests\Support\Admin\RollsBackDatabase;
 use App\Venues\Entity\Venue;
 use App\Venues\ValueObject\KnownTiers;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
@@ -102,6 +104,28 @@ final class OwnerReportMailTest extends KernelTestCase
             self::assertSame(0, substr_count($body, 'Pro anfragen'), 'Pro gets no advertising');
         }
         $this->assertHonest($mail, $venue);
+    }
+
+    /**
+     * @return iterable<string, array{bool, string}>
+     */
+    public static function terms(): iterable
+    {
+        yield 'free of charge' => [false, 'Dein Tarif Pro: Kostenlos bis 31. März 2027.'];
+        yield 'cancelled' => [true, 'Dein Tarif Pro: Gekündigt, läuft bis 31. März 2027.'];
+    }
+
+    #[DataProvider('terms')]
+    public function test_the_plan_line_names_the_term(bool $cancelled, string $line): void
+    {
+        $venue = $this->venue(KnownTiers::PRO);
+        $this->connection->executeStatement('DELETE FROM subscriptions WHERE venue_id = ?', [$venue->id()]);
+        ($cancelled ? SubscriptionFactory::new()->cancelled() : SubscriptionFactory::new()->freeOfCharge())->create(['venue' => $venue, 'startsOn' => new \DateTimeImmutable('2026-04-01'), 'endsOn' => new \DateTimeImmutable('2027-03-31')]);
+
+        $sections = $this->sections($this->send());
+
+        self::assertContains($line, $sections);
+        self::assertNotContains('Dein Tarif Pro: Bezahlt bis 31. März 2027.', $sections);
     }
 
     public function test_a_report_without_data_says_so_and_puts_the_suggestion_first(): void

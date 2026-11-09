@@ -7,8 +7,8 @@ namespace App\Stats\ReadModel;
 /**
  * One venue's figures over one calendar month (Europe/Zurich), for the monthly report of G10. `deliveredInquiries`
  * counts `funnel_events` `inquiry_delivered` (the `inquiries` rows are purged, the funnel rows are not).
- * `qualifiedInquiries` is filled by G7's qualification (D19) and is null until then; the report shows no row for it
- * while it is null.
+ * `qualifiedInquiries` stays null in this cycle: D52 keeps the qualified figure out of the monthly mail, which shows
+ * no row for a null. A follow-up that wants it fills it with G7's `QualifiedInquirySql::where()`.
  */
 final readonly class VenueMonth
 {

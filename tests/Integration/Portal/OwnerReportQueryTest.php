@@ -30,8 +30,9 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * Which monthly reports are due and what each says (G10): published venues without a report for the month and without
- * an opt-out; the gaps behind the suggestion; the recipients (active managers only, D52 as settled by the lead); Pro.
+ * Which monthly reports are due and what each says (G10): published venues with an active manager, without a report
+ * for the month and without an opt-out; the gaps behind the suggestion; the recipients (active managers only, D52 as
+ * settled by the lead); Pro.
  */
 final class OwnerReportQueryTest extends KernelTestCase
 {
@@ -44,13 +45,19 @@ final class OwnerReportQueryTest extends KernelTestCase
     {
         $month = self::october();
         $due = VenueFactory::new()->withoutLocation()->create();
+        $this->manager($due, 'anna@example.ch', 'Anna');
         $draft = VenueFactory::new()->withoutLocation()->create(['status' => VenueStatus::Unpublished]);
         $optedOut = VenueFactory::new()->withoutLocation()->create();
         ReportOptOutFactory::createOne(['venue' => $optedOut]);
         $sent = VenueFactory::new()->withoutLocation()->create();
         OwnerReportFactory::createOne(['venue' => $sent, 'reportMonth' => $month->firstDay()]);
+        // Each has a manager, so only the named reason keeps it out.
+        $this->manager($draft, 'carl@example.ch', 'Carl');
+        $this->manager($optedOut, 'dora@example.ch', 'Dora');
+        $this->manager($sent, 'eva@example.ch', 'Eva');
         $sentBefore = VenueFactory::new()->withoutLocation()->create();
         OwnerReportFactory::createOne(['venue' => $sentBefore, 'reportMonth' => $month->previous()->firstDay()]);
+        $this->manager($sentBefore, 'beat@example.ch', 'Beat');
 
         $ids = $this->query()->due($month);
 
@@ -68,6 +75,7 @@ final class OwnerReportQueryTest extends KernelTestCase
     public function test_a_bare_entry_has_every_gap(): void
     {
         $venue = VenueFactory::new()->withoutLocation()->create(['name' => 'Leer']);
+        $this->manager($venue, 'anna@example.ch', 'Anna');
         $this->connection->executeStatement('UPDATE venues SET inquiry_email = NULL, price_level = NULL, capacity_seated = NULL, capacity_standing = NULL WHERE id = ?', [$venue->id()]);
 
         $report = $this->query()->report($venue->id(), self::october(), self::now());
@@ -93,6 +101,7 @@ final class OwnerReportQueryTest extends KernelTestCase
     public function test_the_gaps_read_the_entry(): void
     {
         $venue = VenueFactory::new()->withoutLocation()->create();
+        $this->manager($venue, 'anna@example.ch', 'Anna');
         $this->connection->executeStatement("UPDATE venues SET inquiry_email = 'anfrage@example.ch', price_level = 'medium', capacity_seated = 80 WHERE id = ?", [$venue->id()]);
         VenueTranslationFactory::createOne(['venue' => $venue, 'locale' => 'de']);
         RoomFactory::createOne(['venue' => $venue]);
@@ -120,21 +129,40 @@ final class OwnerReportQueryTest extends KernelTestCase
         self::assertSame([['email' => 'anna@example.ch', 'name' => 'Anna'], ['email' => 'beat@example.ch', 'name' => 'Beat']], $report->recipients);
     }
 
-    public function test_without_a_manager_nobody_gets_it_while_the_fallback_is_off(): void
+    public function test_without_a_manager_a_venue_is_not_due_while_the_fallback_is_off(): void
     {
         // D52 as settled by the lead: OwnerReportQuery::INQUIRY_ADDRESS_FALLBACK is off, managers only.
-        $venue = $this->venueWithInquiryAddress();
+        $unclaimed = $this->venueWithInquiryAddress();
+        $pending = $this->venueWithInquiryAddress();
+        PortalVenueAccessFactory::createOne(['user' => PortalUserFactory::createOne(['email' => 'neu@example.ch']), 'venue' => $pending]);
+        $inactive = $this->venueWithInquiryAddress();
+        $this->manager($inactive, 'weg@example.ch', 'Weg');
+        $this->connection->executeStatement("UPDATE portal_users SET is_active = false WHERE email = 'weg@example.ch'");
 
-        $report = $this->query()->report($venue->id(), self::october(), self::now());
+        $ids = $this->query()->due(self::october());
 
-        self::assertNotNull($report);
-        self::assertSame([], $report->recipients);
+        foreach ([$unclaimed, $pending, $inactive] as $venue) {
+            self::assertNotContains($venue->id(), $ids);
+            self::assertNull($this->query()->report($venue->id(), self::october(), self::now()), 'no figures without a recipient');
+        }
+    }
+
+    public function test_a_manager_who_left_after_due_gets_no_report(): void
+    {
+        $venue = VenueFactory::new()->withoutLocation()->create();
+        $this->manager($venue, 'anna@example.ch', 'Anna');
+        self::assertContains($venue->id(), $this->query()->due(self::october()));
+
+        $this->connection->executeStatement('DELETE FROM portal_venue_access WHERE venue_id = ?', [$venue->id()]);
+
+        self::assertNull($this->query()->report($venue->id(), self::october(), self::now()));
     }
 
     public function test_the_fallback_switched_on_takes_the_inquiry_address(): void
     {
         $venue = $this->venueWithInquiryAddress();
 
+        self::assertContains($venue->id(), $this->query(inquiryAddressFallback: true)->due(self::october()));
         $report = $this->query(inquiryAddressFallback: true)->report($venue->id(), self::october(), self::now());
 
         self::assertNotNull($report);
@@ -144,6 +172,7 @@ final class OwnerReportQueryTest extends KernelTestCase
     public function test_a_pro_entry_gets_the_detailed_report(): void
     {
         $venue = VenueFactory::new()->withoutLocation()->create(['tier' => KnownTiers::PRO]);
+        $this->manager($venue, 'anna@example.ch', 'Anna');
 
         $report = $this->query()->report($venue->id(), self::october(), self::now());
 

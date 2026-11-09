@@ -7,6 +7,7 @@ namespace App\Portal\Console;
 use App\Portal\Command\PurgeOwnerReports;
 use App\Portal\Command\SendOwnerReport;
 use App\Portal\ReadModel\OwnerReportQuery;
+use App\Portal\ValueObject\OwnerReportOutcome;
 use App\Portal\ValueObject\ReportMonth;
 use App\Stats\ReadModel\SiteStatsQuery;
 use Psr\Clock\ClockInterface;
@@ -21,10 +22,11 @@ use Symfony\Component\Messenger\Stamp\HandledStamp;
 
 /**
  * Run daily by `bin/cron-daily` with `--quiet`, after `stats-ingest` (G10, Wave G §4a.5): last month's report mail per
- * published venue, from the 1st up to the 7th of the month (Zurich), and only once the stats ingest has run past the
- * month's last day. One dispatch per venue, so one failure costs one (`<id>: <reason>` prints under `--quiet`, exit
- * 1). A venue with nobody to mail, or whose mail did not go out, is skipped; a sent one has its row, so a second run
- * sends nothing. The same step purges send-log rows older than 24 months.
+ * published venue with an active manager, from the 1st up to the 7th of the month (Zurich), and only once the stats
+ * ingest has run past the month's last day. One dispatch per venue, so one failure costs one (`<id>: <reason>` prints
+ * under `--quiet`, exit 1). A mail that did not go out writes no row and counts as failed too, but prints one line
+ * under `--quiet` and exits 0: the next night retries (as G16's feedback mails). A sent venue has its row, so a second run sends
+ * nothing. The same step purges send-log rows older than 24 months.
  *
  * `--month=YYYY-MM` names a month outside the window: an operator's resend after an outage, or the demo data after
  * `make seed`. It still honours the send log, the opt-outs and the ingest check.
@@ -58,6 +60,7 @@ final class SendOwnerReportsCommand
         $sent = 0;
         $skipped = 0;
         $failed = 0;
+        $mailFailed = 0;
         if (null !== $month || ReportMonth::catchUpOpen($now)) {
             $ingest = $this->siteStats->lastIngestAt();
             if (null === $ingest || $ingest < $reportMonth->next()->firstDay()) {
@@ -72,7 +75,11 @@ final class SendOwnerReportsCommand
                 foreach ($due as $venueId) {
                     try {
                         $result = $this->commandBus->dispatch(new SendOwnerReport($venueId, $reportMonth->sql()))->last(HandledStamp::class)?->getResult();
-                        true === $result ? ++$sent : ++$skipped;
+                        match ($result) {
+                            OwnerReportOutcome::Sent => ++$sent,
+                            OwnerReportOutcome::MailFailed => ++$mailFailed,
+                            default => ++$skipped,
+                        };
                     } catch (\Exception $failure) {
                         ++$failed;
                         $io->writeln(\sprintf('%s: %s', $venueId, self::reason($failure)), OutputInterface::VERBOSITY_QUIET);
@@ -85,7 +92,10 @@ final class SendOwnerReportsCommand
         }
 
         $purged = $this->commandBus->dispatch(new PurgeOwnerReports())->last(HandledStamp::class)?->getResult();
-        $io->writeln(\sprintf('%d reports sent, %d skipped, %d failed, %d old rows purged.', $sent, $skipped, $failed, \is_int($purged) ? $purged : 0));
+        $io->writeln(\sprintf('%d reports sent, %d skipped, %d failed, %d old rows purged.', $sent, $skipped, $failed + $mailFailed, \is_int($purged) ? $purged : 0));
+        if ($mailFailed > 0) {
+            $io->writeln(\sprintf('%d monthly reports failed; they are retried next night.', $mailFailed), OutputInterface::VERBOSITY_QUIET);
+        }
 
         return 0 === $failed ? Command::SUCCESS : Command::FAILURE;
     }

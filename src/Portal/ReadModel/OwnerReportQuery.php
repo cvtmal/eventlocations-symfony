@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Portal\ReadModel;
 
+use App\Portal\ValueObject\PortalVenueAccessStatus;
 use App\Portal\ValueObject\ReportGaps;
 use App\Portal\ValueObject\ReportMonth;
 use App\Portal\ValueObject\ReportSuggestion;
@@ -16,8 +17,9 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Which monthly reports are due and what each says (G10). Due: a published venue without a report for that month
- * (`portal_owner_reports`) and without an opt-out (`portal_report_opt_outs`). Whether it has anyone to mail is the
- * handler's question, as in G9.
+ * (`portal_owner_reports`), without an opt-out (`portal_report_opt_outs`) and with someone to mail: an active manager
+ * who is an active user (`VenueMailRecipients`' rule), or with the fallback on, an inquiry address. So an unclaimed
+ * venue never has its figures built, and `report()` checks the recipients before it computes any.
  */
 final class OwnerReportQuery
 {
@@ -32,6 +34,13 @@ final class OwnerReportQuery
         WHERE v.status = 'published'
           AND NOT EXISTS (SELECT 1 FROM portal_owner_reports r WHERE r.venue_id = v.id AND r.report_month = CAST(:month AS date))
           AND NOT EXISTS (SELECT 1 FROM portal_report_opt_outs o WHERE o.venue_id = v.id)
+        SQL;
+
+    private const string HAS_MANAGER = <<<'SQL'
+        EXISTS (
+            SELECT 1 FROM portal_venue_access a JOIN portal_users u ON u.id = a.portal_user_id
+            WHERE a.venue_id = v.id AND a.status = :active AND u.is_active
+        )
         SQL;
 
     public function __construct(
@@ -54,12 +63,12 @@ final class OwnerReportQuery
     {
         return array_map(
             static fn (mixed $id): string => (string) $id,
-            $this->connection->fetchFirstColumn('SELECT v.id '.self::DUE.' ORDER BY v.number', ['month' => $month->sql()]),
+            $this->connection->fetchFirstColumn('SELECT v.id '.$this->dueSql().' ORDER BY v.number', $this->dueParameters($month)),
         );
     }
 
     /**
-     * What the mail needs, or null when the venue is no longer due (sent, opted out, offline, gone).
+     * What the mail needs, or null when the venue is no longer due (sent, opted out, offline, gone, nobody to mail).
      */
     public function report(string $venueId, ReportMonth $month, \DateTimeImmutable $now): ?OwnerReport
     {
@@ -75,15 +84,20 @@ final class OwnerReportQuery
                        (SELECT count(*) FROM venue_photos p WHERE p.venue_id = v.id AND p.room_id IS NULL) AS gallery_photos,
                        (SELECT count(*) FROM rooms r WHERE r.venue_id = v.id) AS rooms,
                        (SELECT count(*) FROM venue_terms vt WHERE vt.venue_id = v.id AND vt.term_group = 'suitable_for') AS event_types
-                SQL.' '.self::DUE.' AND v.id = :id',
-            ['month' => $month->sql(), 'id' => $venueId, 'locale' => $this->locales->default()],
+                SQL.' '.$this->dueSql().' AND v.id = :id',
+            $this->dueParameters($month) + ['id' => $venueId, 'locale' => $this->locales->default()],
         );
         if (false === $row) {
             return null;
         }
+        $inquiryEmail = \is_string($row['inquiry_email']) && '' !== $row['inquiry_email'] ? $row['inquiry_email'] : null;
+        // Checked again before the figures: a manager may have left since `due()`.
+        $recipients = $this->recipients->forVenue($venueId, $this->inquiryAddressFallback ? $inquiryEmail : null);
+        if ([] === $recipients) {
+            return null;
+        }
 
         $plan = $this->plans->forVenue($venueId, $now);
-        $inquiryEmail = \is_string($row['inquiry_email']) && '' !== $row['inquiry_email'] ? $row['inquiry_email'] : null;
         $gaps = new ReportGaps(
             null !== $inquiryEmail,
             (int) $row['gallery_photos'],
@@ -113,8 +127,23 @@ final class OwnerReportQuery
             $plan,
             $pro,
             $this->siteStats->lastIngestAt(),
-            $this->recipients->forVenue($venueId, $this->inquiryAddressFallback ? $inquiryEmail : null),
+            $recipients,
         );
+    }
+
+    private function dueSql(): string
+    {
+        return self::DUE.' AND '.($this->inquiryAddressFallback
+            ? '('.self::HAS_MANAGER." OR coalesce(v.inquiry_email, '') <> '')"
+            : self::HAS_MANAGER);
+    }
+
+    /**
+     * @return array{month: string, active: string}
+     */
+    private function dueParameters(ReportMonth $month): array
+    {
+        return ['month' => $month->sql(), 'active' => PortalVenueAccessStatus::Active->value];
     }
 
     /**

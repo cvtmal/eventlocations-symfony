@@ -10,6 +10,7 @@ use App\Portal\Mailer\PortalMailer;
 use App\Portal\ReadModel\OwnerReportQuery;
 use App\Portal\Security\ReportOptOutToken;
 use App\Portal\ValueObject\OwnerReportLinks;
+use App\Portal\ValueObject\OwnerReportOutcome;
 use App\Portal\ValueObject\ReportMonth;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Venues\Entity\Venue;
@@ -34,7 +35,7 @@ final class SendOwnerReportHandler implements CommandHandlerInterface
     ) {
     }
 
-    public function __invoke(SendOwnerReport $command): bool
+    public function __invoke(SendOwnerReport $command): OwnerReportOutcome
     {
         $month = ReportMonth::fromString(substr($command->month, 0, 7));
         if (null === $month || $month->sql() !== $command->month) {
@@ -44,7 +45,7 @@ final class SendOwnerReportHandler implements CommandHandlerInterface
         $report = $this->reports->report($command->venueId, $month, $now);
         $venue = null === $report ? null : $this->em->find(Venue::class, $report->venueId);
         if (null === $report || null === $venue || [] === $report->recipients) {
-            return false;
+            return OwnerReportOutcome::Skipped;
         }
 
         $number = ['number' => $report->venueNumber];
@@ -61,11 +62,11 @@ final class SendOwnerReportHandler implements CommandHandlerInterface
             $sent = $this->mailer->sendOwnerReport($recipient['email'], $recipient['name'], $report, $links) || $sent;
         }
         if (!$sent) {
-            return false;
+            return OwnerReportOutcome::MailFailed;
         }
         $this->em->persist(new OwnerReport($venue, $month->firstDay(), $now));
         $this->em->flush();
 
-        return true;
+        return OwnerReportOutcome::Sent;
     }
 }

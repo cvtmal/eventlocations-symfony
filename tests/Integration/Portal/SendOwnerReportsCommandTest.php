@@ -25,8 +25,8 @@ use Zenstruck\Foundry\Test\Factories;
 /**
  * `app:portal:owner-reports` (G10, Wave G §4a.5, §4a.6), driven by the clock: last month's report goes once to each
  * published venue's active managers from the 1st to the 7th, after the stats ingest ran past the month; the second
- * run sends nothing; an opt-out is honoured; a venue without a manager gets nothing (D52 as settled by the lead); old
- * send-log rows are purged.
+ * run sends nothing; an opt-out is honoured; a venue without a manager is not even due (D52 as settled by the lead); a
+ * mail that did not go out prints one line under `--quiet` and is retried; old send-log rows are purged.
  */
 final class SendOwnerReportsCommandTest extends KernelTestCase
 {
@@ -89,7 +89,8 @@ final class SendOwnerReportsCommandTest extends KernelTestCase
         $pending = $this->venue('Nur beantragt');
         PortalVenueAccessFactory::createOne(['user' => PortalUserFactory::createOne(['email' => 'neu@example.ch']), 'venue' => $pending]);
 
-        self::assertSame('0 reports sent, 2 skipped, 0 failed, 0 old rows purged.', trim($this->report()[1]));
+        self::assertSame('0 reports due for 2026-10.', trim($this->report(['--dry-run' => true])[1]), 'an unclaimed venue is not due');
+        self::assertSame('0 reports sent, 0 skipped, 0 failed, 0 old rows purged.', trim($this->report()[1]));
         self::assertEmailCount(0);
         self::assertSame([], $this->rows($unclaimed), 'the inquiry address is no recipient while the fallback is off');
         self::assertSame([], $this->rows($pending), 'a pending request is no manager');
@@ -140,7 +141,9 @@ final class SendOwnerReportsCommandTest extends KernelTestCase
         $this->manager($venue, 'anna@example.ch', 'Anna');
         OwnerReportFactory::createOne(['venue' => $this->venue('Alt'), 'reportMonth' => new \DateTimeImmutable('2024-10-01')]);
 
-        self::assertSame('2 reports due for 2026-10.', trim($this->report(['--dry-run' => true])[1]));
+        $this->venue('Ohne Konto');
+
+        self::assertSame('1 reports due for 2026-10.', trim($this->report(['--dry-run' => true])[1]), 'only the venue with a manager');
         self::assertEmailCount(0);
         self::assertSame([], $this->rows($venue));
         self::assertSame(1, (int) $this->connection->fetchOne('SELECT count(*) FROM portal_owner_reports'), 'a dry run purges nothing');
@@ -182,9 +185,20 @@ final class SendOwnerReportsCommandTest extends KernelTestCase
         $venue = $this->venue('Kaputt');
         $this->manager($venue, 'anna..falsch@example.ch', 'Anna');
 
-        self::assertSame('0 reports sent, 1 skipped, 0 failed, 0 old rows purged.', trim($this->report()[1]));
+        [$status, $output] = $this->report();
+
+        self::assertSame(Command::SUCCESS, $status, 'the next night retries; no cron failure');
+        self::assertSame(
+            "0 reports sent, 0 skipped, 1 failed, 0 old rows purged.\n1 monthly reports failed; they are retried next night.",
+            trim($output),
+        );
         self::assertEmailCount(0);
         self::assertSame([], $this->rows($venue), 'no row: the next night tries again');
+        self::assertSame(
+            '1 monthly reports failed; they are retried next night.',
+            trim($this->report([], OutputInterface::VERBOSITY_QUIET)[1]),
+            'one line under --quiet',
+        );
     }
 
     private function venue(string $name): Venue
