@@ -34,7 +34,7 @@ final class InquiryMailerTest extends KernelTestCase
     use Factories;
     use ImportsTownDataset;
 
-    private const OVERRIDE = 'override@hochzeitslocation.test';
+    private const OVERRIDE = 'override@deine-eventlocation.test';
 
     private Connection $connection;
     private EntityManagerInterface $em;

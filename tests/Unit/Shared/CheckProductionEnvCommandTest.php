@@ -85,6 +85,10 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'MEDIA_PUBLIC_DIR relative' => ['MEDIA_PUBLIC_DIR', ['MEDIA_PUBLIC_DIR' => 'public/media-marker'], 'public/media-marker'];
         yield 'GOOGLE_MAPS_MAP_ID demo with a key' => ['GOOGLE_MAPS_MAP_ID', ['GOOGLE_MAPS_JS_KEY' => 'maps-key-marker', 'GOOGLE_MAPS_MAP_ID' => 'DEMO_MAP_ID'], 'maps-key-marker'];
         yield 'GOOGLE_MAPS_MAP_ID empty with a key' => ['GOOGLE_MAPS_MAP_ID', ['GOOGLE_MAPS_JS_KEY' => 'maps-key-marker', 'GOOGLE_MAPS_MAP_ID' => ''], 'maps-key-marker'];
+        // F16 S2: placeholders of deploy/env.local.example inside values that pass their own rule.
+        yield 'DATABASE_URL a Neon placeholder' => ['DATABASE_URL', ['DATABASE_URL' => 'postgresql://site:'.self::DATABASE_PASSWORD.'@__NEON_ENDPOINT__.eu-central-1.aws.neon.tech/site?sslmode=require'], '__NEON_ENDPOINT__'];
+        yield 'MAILER_DSN a password placeholder' => ['MAILER_DSN', ['MAILER_DSN' => 'smtp://hallo%40deine-eventlocation.ch:__MAILER_PASSWORD__@mail.infomaniak.com:587'], '__MAILER_PASSWORD__'];
+        yield 'a variable no rule knows' => ['MEDIA_BACKUP_SECRET_ACCESS_KEY', ['MEDIA_BACKUP_SECRET_ACCESS_KEY' => '__MEDIA_BACKUP_SECRET_ACCESS_KEY__'], '__MEDIA'];
     }
 
     public function test_the_database_url_is_named_only_once_for_both_dead_options(): void
@@ -133,6 +137,16 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'optional SENTRY_DSN' => [['SENTRY_DSN' => 'https://key@o1.ingest.de.sentry.io/1']];
         yield 'optional SYMFONY_TRUSTED_PROXIES' => [['SYMFONY_TRUSTED_PROXIES' => '127.0.0.1']];
         yield 'a clean url with more options' => [['DATABASE_URL' => self::DATABASE_URL.'&application_name=site']];
+        yield 'double underscores around lower case' => [['MEDIA_BACKUP_REPOSITORY' => 's3:https://s3.example.ch/__bucket__/site']];
+        yield 'a lone double underscore' => [['SENTRY_DSN' => 'https://key__@o1.ingest.de.sentry.io/1']];
+        yield 'a run of underscores in a password' => [['MAILER_DSN' => 'smtp://fake:pass_____word@mail.example.ch:587']];
+    }
+
+    public function test_the_non_string_values_of_server_are_skipped(): void
+    {
+        $env = ['argv' => ['bin/console', '__NOT_A_VALUE__'], 'argc' => 2, 'REQUEST_TIME' => 1] + self::validEnv();
+
+        self::assertSame([], CheckProductionEnvCommand::problems($env, self::COMMITTED_KEY));
     }
 
     public function test_a_key_with_a_real_map_id_and_no_key_at_all_are_fine(): void
@@ -188,6 +202,19 @@ final class CheckProductionEnvCommandTest extends TestCase
         self::assertStringContainsString('__ADMIN_TOTP_KEY__', $example['ADMIN_TOTP_KEY']);
         self::assertStringContainsString('__NEON_PASSWORD__', $example['DATABASE_URL']);
         self::assertStringContainsString('__MAILER_PASSWORD__', $example['MAILER_DSN']);
+    }
+
+    public function test_the_unfilled_template_names_every_variable_with_a_placeholder(): void
+    {
+        $example = (new Dotenv())->parse(self::projectFile('deploy/env.local.example'));
+        $problems = implode("\n", CheckProductionEnvCommand::problems($example + self::dotenv(), self::dotenv()['ADMIN_TOTP_KEY']));
+
+        $withPlaceholder = array_keys(array_filter($example, static fn (string $value): bool => str_contains($value, '__')));
+        self::assertContains('MEDIA_BACKUP_REPOSITORY', $withPlaceholder);
+        foreach ($withPlaceholder as $name) {
+            self::assertStringContainsString($name.' still holds a __PLACEHOLDER__', $problems);
+        }
+        self::assertDoesNotMatchRegularExpression('/__(?!PLACEHOLDER__)[A-Z_]+__/', $problems, 'A line never quotes the placeholder itself.');
     }
 
     public function test_the_template_sends_channel_binding_through_the_process_variable(): void

@@ -29,7 +29,7 @@ final class SubmitInquiryMailErrorTest extends WebTestCase
     use SubmitsInquiries;
 
     private const SLUG = DetailVenues::FULL_SLUG;
-    private const OVERRIDE = 'override@hochzeitslocation.test';
+    private const OVERRIDE = 'override@deine-eventlocation.test';
     private const GUEST = 'anna@example.ch';
     private const IN_THE_BUS = false;
     private const BEFORE_THE_BUS = true;

@@ -1027,6 +1027,55 @@ rsync -rlnc --itemize-changes site@host.example:/var/www/deine-eventlocation.ch/
     expect_failure "a pull refuses without BACKUP_DIR"
 }
 
+probe() { # probe <app dir> <checks...>: deploy/probe.sh with a stub restic and without PHP
+    dir="$1"
+    shift
+    env PATH="$work/probe-tools:$PATH" PROBE_APP_DIR="$dir" PROBE_PHP=false PROBE_ENV_FILE="$work/no-probe.env" \
+        sh "$ROOT/deploy/probe.sh" "$@"
+}
+
+probe_media_backup() {
+    mkdir -p "$work/probe-tools" "$work/probe/current/bin" "$work/probe/current/var/log"
+    cat > "$work/probe-tools/restic" <<'STUB'
+#!/bin/sh
+printf 'stub restic %s\n' "$*"
+STUB
+    chmod +x "$work/probe-tools/restic"
+
+    run probe "$work/probe-none" 14
+    expect_exit "the probe exits 0 without a release" 0
+    expect_output "check 14 says that there is no release yet" "skipped: no release in $work/probe-none/current yet"
+    case "$out" in
+        *"=== check 1:"* | *"=== check 13:"*) fail "a probe naming check 14 ran other checks" ;;
+    esac
+    ok "a probe naming check 14 runs that check alone"
+
+    cp "$ROOT/bin/cron-media-backup" "$work/probe/current/bin/cron-media-backup"
+    cat > "$work/probe/current/.env.local" <<'ENV'
+MEDIA_BACKUP_REPOSITORY='s3:https://s3.example.ch/fake-bucket/site'
+MEDIA_BACKUP_PASSWORD='fake-backup-password'
+MEDIA_BACKUP_ACCESS_KEY_ID='fake-backup-key'
+MEDIA_BACKUP_SECRET_ACCESS_KEY='fake-backup-secret'
+ENV
+    run probe "$work/probe" 14
+    expect_output "check 14 lists the newest snapshot, without a lock" "stub restic --no-lock --no-cache snapshots --latest 1"
+    expect_output "check 14 says that no backup has finished yet" "no backup has finished yet"
+    expect_output "a missing backup fails check 14" "check 14: ended with exit 1"
+
+    echo 2026-11-08T03:30:00Z > "$work/probe/current/var/log/media-backup.ok"
+    run probe "$work/probe" 14
+    expect_output "a fresh backup passes check 14" "the last backup finished at 2026-11-08T03:30:00Z"
+    case "$out" in
+        *"ended with exit"*) fail "a fresh backup failed check 14" ;;
+    esac
+    ok "a fresh backup ends check 14 without an exit code"
+
+    touch -t 202001010000 "$work/probe/current/var/log/media-backup.ok"
+    run probe "$work/probe" 14
+    expect_output "a backup older than 26 hours says so" "more than 26 hours ago"
+    expect_output "and fails check 14" "check 14: ended with exit 1"
+}
+
 prepare() {
     mkdir -p "$work" "$work/checkout/bin" "$work/checkout/var/prod-media/originals/content" "$work/checkout/var/prod-media/public" \
         "$work/checkout/content/owner"
@@ -1058,6 +1107,7 @@ main() {
     prod_import_refusals
     prod_import_commands
     pull_media_backup
+    probe_media_backup
     printf '%s\n' "run.sh: all cases passed"
 }
 

@@ -2,8 +2,9 @@
 # Read-only check of the VPS, run by hand once as the deploy user after the first-time setup (#20, F15):
 #
 #   sh ~/probe/probe.sh | tee probe-cli.txt
+#   sh ~/probe/probe.sh 14               only the checks named, here the media backup's age (F16)
 #
-# Prints the thirteen checks in order, one labelled block each. A failing check never stops the next.
+# Prints the fourteen checks in order, one labelled block each. A failing check never stops the next.
 # Leaves nothing on the server: only the flock check writes, and it removes its file. It never prints
 # the Neon connection string or any part of it, so the output may go into the changes log as it is.
 #
@@ -19,7 +20,11 @@ APP_DIR="${PROBE_APP_DIR:-/var/www/deine-eventlocation.ch}"
 SMTP_HOST="${PROBE_SMTP_HOST:-mail.infomaniak.com}"
 SMTP_PORT="${PROBE_SMTP_PORT:-587}"
 
-run() { # run <number> <title> <function>
+run() { # run <number> <title> <function>: skipped unless named on the command line, or none was
+    case "$only" in
+        "  " | *" $1 "*) ;;
+        *) return 0 ;;
+    esac
     printf '\n=== check %s: %s\n' "$1" "$2"
     "$3" || printf 'check %s: ended with exit %s\n' "$1" "$?"
 }
@@ -200,7 +205,21 @@ echo $locked ? ($enforced ? "works\n" : "NOT ENFORCED: a second handle got the s
 CODE
 }
 
+# F16: the last media backup finished less than 26 hours ago. The stamp is written only after restic
+# succeeded; the repository's newest snapshot shows the backup arrived. --no-lock and --no-cache keep restic
+# read-only, here and in the repository.
+media_backup() {
+    script="$APP_DIR/current/bin/cron-media-backup"
+    if [ ! -f "$script" ]; then
+        printf 'skipped: no release in %s/current yet\n' "$APP_DIR"
+        return 0
+    fi
+    bounded sh "$script" restic --no-lock --no-cache snapshots --latest 1 || printf 'restic: the snapshot list failed\n'
+    sh "$script" status
+}
+
 main() {
+    only=" $* "
     run 1 'PHP version' php_version
     run 2 'PHP binaries' php_paths
     run 3 'pdo_pgsql' php_pgsql
@@ -214,6 +233,7 @@ main() {
     run 11 'outbound SMTP and EHLO' smtp
     run 12 'CLI limits' php_limits
     run 13 'flock on the app filesystem' flock_works
+    run 14 'media backup age' media_backup
 }
 
 main "$@"

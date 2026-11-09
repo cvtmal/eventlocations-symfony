@@ -33,7 +33,7 @@ final class SubmitInquiryConcurrencyTest extends KernelTestCase
 
     private const SLUG = 'haus-nebenlaeufig';
     private const NAME = 'Haus Nebenläufig';
-    private const VENUE_MAIL_RECIPIENT = 'override@hochzeitslocation.test';
+    private const VENUE_MAIL_RECIPIENT = 'override@deine-eventlocation.test';
     private const GUEST = 'anna@example.ch';
     private const DEAD_DSN = 'smtp://127.0.0.1:1';
     private const WAIT_SECONDS = 60;

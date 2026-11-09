@@ -33,7 +33,7 @@ Never run `composer` or `bin/console` on the host. The host has a different PHP 
 | `make lint` | `cs-check` + `phpstan` + `lint-translations` + `admin-lint` (the CI gate) |
 | `make admin-install` / `make admin-build` / `make admin-watch` | `npm ci` for `admin-ui/` / build the Vue islands into `public/admin-build/` / rebuild on change. Every `/admin` page needs the build (and the install) in a fresh worktree or after a pull; `make init` does it |
 | `make admin-test` / `make admin-lint` | Vitest / ESLint on `admin-ui/` |
-| `make lighthouse URL=/path` / `make validate-html URL=/path` | Lighthouse (mobile) / W3C validator on the local app; `ADMIN=1` logs in as the dev admin, `PORTAL=1` as the dev manager (dev only, after `make seed`) |
+| `make lighthouse URL=/path` / `make validate-html URL=/path` | Lighthouse (mobile) / W3C validator on the local app; `ADMIN=1` logs in as the dev admin, `PORTAL=1` as the dev manager (dev only, after `make seed`); `ALLOW_STATUS=1` lets `validate-html` check a 4xx/5xx page |
 | `make perf-check` | Byte budgets of S11 through `phpunit --group budget`; needs no perf stack, runs in CI |
 | `make perf-up` ... `make perf-down` | Prod-mode perf stack on :8096 (one shared Compose project, one lane at a time); method and figures: `docs/performance-baseline.md` |
 | `make release-check` / `make deploy-test` / `make workflow-lint` | Release tarball booted with `APP_ENV=prod` / deploy, cron and import scripts against a throwaway tree / actionlint (CI jobs `release` and `ops-lint`) |

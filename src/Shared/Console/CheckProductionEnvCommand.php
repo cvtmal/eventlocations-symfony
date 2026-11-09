@@ -26,6 +26,8 @@ final class CheckProductionEnvCommand
     private const array DATABASE_URL_DEAD_OPTIONS = ['connect_timeout', 'channel_binding'];
     /** D27: the marker of an operator fact the owner has not supplied yet (`config/services.yaml`). */
     public const string PLACEHOLDER = 'TODO(owner)';
+    /** A `__NAME__` of `deploy/env.local.example` that was never replaced (F16 S2). */
+    private const string TEMPLATE_PLACEHOLDER = '/__[A-Z][A-Z0-9_]*__/';
 
     /**
      * @param array<string, string> $operatorFacts parameter name => value, the `site.operator_*` facts of D27
@@ -136,6 +138,14 @@ final class CheckProductionEnvCommand
         $mapId = $value('GOOGLE_MAPS_MAP_ID');
         if ('' !== $value('GOOGLE_MAPS_JS_KEY') && ('' === $mapId || 'DEMO_MAP_ID' === $mapId)) {
             $problems[] = 'GOOGLE_MAPS_MAP_ID must be the production Map ID when GOOGLE_MAPS_JS_KEY is set, not empty and not DEMO_MAP_ID.';
+        }
+
+        // Every variable, not only the ones above: a placeholder can sit inside a value that passes its own
+        // rule (a Neon host, a mail password, a backup key), and the template may grow lines.
+        foreach ($env as $name => $raw) {
+            if (\is_string($raw) && 1 === preg_match(self::TEMPLATE_PLACEHOLDER, $raw)) {
+                $problems[] = \sprintf('%s still holds a __PLACEHOLDER__ of deploy/env.local.example.', $name);
+            }
         }
 
         return $problems;

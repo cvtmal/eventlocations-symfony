@@ -113,6 +113,37 @@ final class HostingFilesTest extends TestCase
         self::assertStringContainsString('/etc/php/8.5/fpm/pool.d/', $pool);
     }
 
+    public function test_nginx_answers_its_own_server_errors_with_the_static_page(): void
+    {
+        $page = self::firstMatch('/^\s*error_page 502 503 504 (\/\S+);$/m', self::nginx());
+
+        self::assertSame('/50x.html', $page);
+        self::assertFileExists(\dirname(__DIR__, 3).'/public'.$page);
+        self::assertMatchesRegularExpression('/location = \/50x\.html \{\s*internal;/', self::nginx(), 'Only error_page may serve it, so it is never a 200 page of its own.');
+        self::assertDoesNotMatchRegularExpression('/^\s*fastcgi_intercept_errors\s+on/m', self::nginx(), 'The app renders its own error pages.');
+    }
+
+    /**
+     * F16 N8: shown while PHP is down, so it can use nothing PHP renders. Small, because it is the one page sent during an outage.
+     */
+    public function test_the_server_error_page_stands_alone(): void
+    {
+        $html = self::file('public/50x.html');
+
+        self::assertLessThanOrEqual(3 * 1024, \strlen($html));
+        self::assertStringContainsString('<html lang="de">', $html);
+        self::assertStringContainsString('<meta name="robots" content="noindex">', $html);
+        self::assertStringNotContainsString('{{', $html);
+        self::assertStringNotContainsString('<script', $html);
+        self::assertSame(0, preg_match('/(?:src|href)="(?:https?:)?\/\//', $html), 'No other origin: the page must load during an outage.');
+        preg_match_all('/(?:src|href)="(\/[^"]+)"/', $html, $paths);
+        self::assertNotSame([], $paths[1]);
+        foreach ($paths[1] as $path) {
+            self::assertStringStartsWith('/brand/', $path, 'Only static files nginx serves without PHP.');
+            self::assertFileExists(\dirname(__DIR__, 3).'/public'.$path);
+        }
+    }
+
     public function test_the_crontab_has_exactly_the_five_jobs(): void
     {
         self::assertSame([
