@@ -63,3 +63,7 @@ The 12 messages that print "Kanton {canton}" (`CantonWordingTest::messages()` li
 ## G14 `last-minute-offers` (current state)
 
 - `PagesSitemap` lists `last_minute` after `nearby`, without `lastmod`, only while `LastMinutePageQuery::hasAny()`; the empty page is `noindex, follow`.
+
+## `brief-noindex` (current state)
+
+- The F13 pages `inquiry_brief`, `inquiry_brief_sent` and `inquiry_brief_opt_out` (`/sammelanfrage…`) are **not indexable** like the Merkliste (robots meta + `X-Robots-Tag: noindex, nofollow`, no canonical, every state), absent from the sitemaps and deliberately not in `RobotsController::DISALLOW` (a disallowed page hides its `noindex`); Lighthouse SEO there stays 54 by design (`is-crawlable` + no meta description, PO: no description). Pinned by `InquiryBriefPageTest::test_every_brief_page_is_noindex_and_left_out_of_the_sitemap`.
