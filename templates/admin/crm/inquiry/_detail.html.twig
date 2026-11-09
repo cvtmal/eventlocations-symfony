@@ -96,16 +96,18 @@
     </div>
 
     {# G16: the guest's answer to the feedback mail, for staff only (the venue sees a count). #}
-    {% if feedback and feedback.mailed %}
+    {% if feedback %}
         <div class="crm-inbox__block">
             <h3>{{ 'inquiry.detail.feedback'|trans({}, 'crm') }}</h3>
-            {% if feedback.answered %}
+            {% if not feedback.mailed %}
+                <p>{{ 'inquiry.feedback.skipped'|trans({}, 'crm') }}</p>
+            {% elseif feedback.answered %}
                 <p>{{ 'inquiry.feedback.venue_replied'|trans({answer: feedback.venueReplied ? 'yes' : 'no'}, 'crm') }}</p>
                 <p>{{ 'inquiry.feedback.outcome'|trans({answer: feedback.outcome.value}, 'crm') }}</p>
             {% else %}
                 <p>{{ 'inquiry.feedback.none'|trans({}, 'crm') }}</p>
             {% endif %}
-            {% if feedback.optedOut %}<p>{{ 'inquiry.feedback.opted_out'|trans({}, 'crm') }}</p>{% endif %}
+            {% if feedback.optedOut and feedback.mailed %}<p>{{ 'inquiry.feedback.opted_out'|trans({}, 'crm') }}</p>{% endif %}
         </div>
     {% endif %}
 

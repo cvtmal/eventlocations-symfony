@@ -88,11 +88,11 @@ email:
         subject: '{count, plural, one {Hat es mit {venue} geklappt?} other {Hat es mit deinen Anfragen geklappt?}}'
         preheader: Zwei kurze Fragen zu deiner Anfrage, freiwillig und in einer Minute beantwortet.
         greeting: 'Hallo {name}'
-        intro: '{count, plural, one {Vor einer Woche hast du über deine-eventlocation.ch eine Anfrage an {venue} geschickt.} other {Vor einer Woche hast du über deine-eventlocation.ch # Locations angefragt.}}'
+        intro: '{count, plural, one {Vor kurzem hast du über deine-eventlocation.ch eine Anfrage an {venue} geschickt.} other {Vor kurzem hast du über deine-eventlocation.ch # Locations angefragt.}}'
         questions: Hat sich die Location bei dir gemeldet, und hat es geklappt? Deine Antwort ist freiwillig und hilft uns, die Locations auf deine-eventlocation.ch zu verbessern.
         button: Rückmeldung geben
         button_for: 'Rückmeldung zu {venue}'
-        note: Wir fragen dich nur dieses eine Mal. Die Location erfährt nur, wie viele Rückmeldungen sie bekommen hat, nicht was du geantwortet hast.
+        note: Wir fragen zu jeder Anfrage nur einmal. Die Location erfährt nur, wie viele Rückmeldungen sie bekommen hat, nicht was du geantwortet hast.
         opt_out_lead: Keine solchen Fragen mehr nach einer Anfrage?
         opt_out_link: Hier abmelden
 # G16: the feedback page (InquiryFeedbackController, templates/inquiries/feedback.html.twig), one block per state.

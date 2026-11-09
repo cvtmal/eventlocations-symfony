@@ -253,6 +253,8 @@ final class InquiryInboxTest extends WebTestCase
             ->optedOut()
             ->create(['inquiry' => InquiryFactory::find($answered)]);
         $none = $this->inquiry('2026-10-03 10:00:00');
+        $skipped = $this->inquiry('2026-10-04 10:00:00');
+        InquiryFeedbackFactory::new()->optedOut(skipped: true)->create(['inquiry' => InquiryFactory::find($skipped)]);
 
         $crawler = $this->client->request('GET', self::LIST.'/'.$answered);
         self::assertSame(
@@ -261,6 +263,8 @@ final class InquiryInboxTest extends WebTestCase
         );
         $crawler = $this->client->request('GET', self::LIST.'/'.$unanswered);
         self::assertStringContainsString('Rückfrage gesendet, noch keine Antwort.', $crawler->filter('#anfrage-detail')->text());
+        $crawler = $this->client->request('GET', self::LIST.'/'.$skipped);
+        self::assertStringContainsString('Keine Rückfrage gesendet, der Veranstalter hat sie abbestellt.', $crawler->filter('#anfrage-detail')->text());
         $crawler = $this->client->request('GET', self::LIST.'/'.$none);
         self::assertStringNotContainsString('Rückmeldung des Veranstalters', $crawler->filter('#anfrage-detail')->text());
     }

@@ -39,10 +39,11 @@ final class RequestInquiryFeedbackHandler implements CommandHandlerInterface
      */
     public function __invoke(RequestInquiryFeedback $command): bool
     {
-        $inquiries = array_values(array_map(
-            $this->inquiries->get(...),
-            array_filter($command->inquiryIds, fn (string $id): bool => !$this->feedback->has($id)),
-        ));
+        // An inquiry purged since the read is skipped, not an error that would stop the run.
+        $inquiries = array_values(array_filter(array_map(
+            fn (string $id): ?Inquiry => $this->feedback->has($id) ? null : $this->inquiries->find($id),
+            $command->inquiryIds,
+        )));
         if ([] === $inquiries) {
             return true;
         }

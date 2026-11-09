@@ -18,8 +18,9 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zenstruck\Foundry\Test\Factories;
 
 /**
- * G16: which inquiries get the feedback mail. Delivered, counted qualified (never spam or test), the venue mail 7 to
- * 14 days ago, not handled before; grouped by address, case-insensitive.
+ * G16: which inquiries get the feedback mail. Delivered, counted qualified (never spam or test), not handled before,
+ * the venue mail less than 14 days ago; grouped by address, case-insensitive, and a group is due once its oldest
+ * inquiry is 7 days old, taking the younger ones along.
  */
 final class FeedbackRequestsDueTest extends KernelTestCase
 {
@@ -86,6 +87,17 @@ final class FeedbackRequestsDueTest extends KernelTestCase
             new FeedbackRequest([$older->id(), $newer->id()], false),
             new FeedbackRequest([$other->id()], false),
         ], $requests);
+    }
+
+    public function test_a_due_address_takes_its_younger_inquiries_along_and_a_young_address_waits(): void
+    {
+        $old = $this->delivered('2026-06-07 10:00:00 UTC', ['email' => 'anna@example.ch']);
+        $young = $this->delivered('2026-06-13 10:00:00 UTC', ['email' => 'anna@example.ch']);
+        $this->delivered('2026-06-13 10:00:00 UTC', ['email' => 'beat@example.ch']);
+        $this->delivered('2026-05-30 10:00:00 UTC', ['email' => 'carla@example.ch']);
+        $this->delivered('2026-06-12 10:00:00 UTC', ['email' => 'carla@example.ch']);
+
+        self::assertEquals([new FeedbackRequest([$old->id(), $young->id()], false)], $this->due->due(new \DateTimeImmutable(self::NOW)));
     }
 
     public function test_an_address_that_opted_out_on_any_inquiry_is_marked(): void

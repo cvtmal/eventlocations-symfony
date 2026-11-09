@@ -25,12 +25,14 @@ use Symfony\Component\Routing\Attribute\Route;
  * the address on POST, which is also RFC 8058's one-click target, so it has no CSRF token: the signed URL is the
  * proof. A GET never writes, because mail scanners open links.
  *
- * Private like the CRM opt-out page: `no-store`, `noindex`, no referrer, no stats beacon, no canonical, no session.
+ * Private like the CRM opt-out page: `no-store`, `noindex`, no stats beacon, no canonical, no session. The opt-out page
+ * sends no referrer; the answer page sends it to its own origin only (`same-origin`): with `no-referrer` a browser
+ * without `Sec-Fetch-Site` posts `Origin: null` and the stateless CSRF check would refuse every answer.
  * Any method and any segment land here, so a near miss gets this page and never the cacheable error page.
  */
 final class InquiryFeedbackController extends AbstractController
 {
-    private const array HEADERS = ['X-Robots-Tag' => 'noindex, nofollow', 'Referrer-Policy' => 'no-referrer'];
+    private const array HEADERS = ['X-Robots-Tag' => 'noindex, nofollow'];
 
     public function __construct(
         private readonly FeedbackToken $tokens,
@@ -62,12 +64,12 @@ final class InquiryFeedbackController extends AbstractController
             \assert(null !== $data->venueReplied && $data->outcome instanceof FeedbackOutcome);
             $this->commandBus->dispatch(new AnswerInquiryFeedback($state->inquiryId, $data->venueReplied, $data->outcome));
 
-            return $this->page('done', Response::HTTP_OK, $token, $state);
+            return $this->page('done', Response::HTTP_OK, $token, $state, referrer: 'same-origin');
         }
 
         $status = $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK;
 
-        return $this->page('form', $status, $token, $state, $form);
+        return $this->page('form', $status, $token, $state, $form, 'same-origin');
     }
 
     #[Route(path: ['de' => '/rueckmeldung/{token}/abmelden'], name: 'inquiry_feedback_opt_out', requirements: ['token' => '[^/]+'])]
@@ -110,7 +112,7 @@ final class InquiryFeedbackController extends AbstractController
         return $response;
     }
 
-    private function page(string $state, int $status, string $token, ?FeedbackState $feedback = null, ?FormInterface $form = null): Response
+    private function page(string $state, int $status, string $token, ?FeedbackState $feedback = null, ?FormInterface $form = null, string $referrer = 'no-referrer'): Response
     {
         $response = $this->render('inquiries/feedback.html.twig', [
             'state' => $state,
@@ -119,6 +121,7 @@ final class InquiryFeedbackController extends AbstractController
             'form' => $form?->createView(),
         ], new Response(status: $status));
         $response->headers->add(self::HEADERS);
+        $response->headers->set('Referrer-Policy', $referrer);
         $response->setPrivate();
         $response->headers->addCacheControlDirective('no-store');
 

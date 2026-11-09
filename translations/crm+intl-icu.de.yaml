@@ -635,6 +635,7 @@ inquiry:
         venue_replied: "Location hat sich gemeldet: {answer, select, yes {Ja} other {Nein}}"
         outcome: "Hat geklappt: {answer, select, yes {Ja} no {Nein} other {Noch offen}}"
         none: Rückfrage gesendet, noch keine Antwort.
+        skipped: Keine Rückfrage gesendet, der Veranstalter hat sie abbestellt.
         opted_out: Der Veranstalter möchte keine solchen Rückfragen mehr.
     flash:
         status_changed: Status gespeichert.

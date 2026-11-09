@@ -355,8 +355,9 @@ only tidies the rows. A second run deletes and sends nothing, a missed night is 
 next, and `--dry-run` prints how many would go.
 
 `inquiry-feedback` (`app:inquiries:request-feedback`, G16) mails each guest whose delivered and
-qualified inquiry (never spam or test) went to its venue 7 to 14 days ago, once per inquiry and one
-mail per address per night, unless the address opted out through the mail's link. A second run sends
+qualified inquiry (never spam or test) went to its venue 7 days ago, one mail per address that also
+asks about the address's younger open inquiries, once per inquiry, unless the address opted out
+through the mail's link. Inquiries older than 14 days are never asked about. A second run sends
 nothing; a failed mail is retried the next night while the inquiry is inside the 14 days.
 
 `moderation-erase` (D36) erases the complainant of a report three years after the decision in the

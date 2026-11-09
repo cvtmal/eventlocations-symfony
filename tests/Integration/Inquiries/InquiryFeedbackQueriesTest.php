@@ -10,6 +10,7 @@ use App\Inquiries\ReadModel\FeedbackState;
 use App\Inquiries\ReadModel\InquiryFeedbackCounts;
 use App\Inquiries\ReadModel\InquiryFeedbackQuery;
 use App\Inquiries\ValueObject\FeedbackOutcome;
+use App\Inquiries\ValueObject\InquiryOverride;
 use App\Tests\Integration\Geo\ImportsTownDataset;
 use App\Tests\Support\Inquiries\StoresDeliveredInquiries;
 use Doctrine\DBAL\Connection;
@@ -19,7 +20,7 @@ use Zenstruck\Foundry\Test\Factories;
 
 /**
  * G16's read side: one inquiry's feedback (answer page, CRM) and «x Rückmeldungen» of a venue's month (G10), which
- * counts answers by the Zurich month of the first answer, whatever they say.
+ * counts answers by the Zurich month of the first answer, whatever they say, of qualified inquiries only.
  */
 final class InquiryFeedbackQueriesTest extends KernelTestCase
 {
@@ -75,6 +76,10 @@ final class InquiryFeedbackQueriesTest extends KernelTestCase
                 ->create(['inquiry' => $this->delivered('2026-05-20 10:00:00 UTC', ['venue' => $venue]), 'at' => new \DateTimeImmutable('2026-05-27 03:15:00 UTC')]);
         }
         InquiryFeedbackFactory::createOne(['inquiry' => $this->delivered('2026-06-01 10:00:00 UTC', ['venue' => $venue]), 'at' => new \DateTimeImmutable('2026-06-08 03:15:00 UTC')]);
+        // Marked spam after the answer: it leaves the count like every qualified figure (D56).
+        InquiryFeedbackFactory::new()
+            ->answered(true, FeedbackOutcome::Yes, new \DateTimeImmutable('2026-06-10 10:00:00 UTC'))
+            ->create(['inquiry' => $this->delivered('2026-06-01 10:00:00 UTC', ['venue' => $venue], mark: InquiryOverride::Spam), 'at' => new \DateTimeImmutable('2026-06-08 03:15:00 UTC')]);
         InquiryFeedbackFactory::new()
             ->answered(true, FeedbackOutcome::Yes, new \DateTimeImmutable('2026-06-10 10:00:00 UTC'))
             ->create(['inquiry' => $this->delivered('2026-06-01 10:00:00 UTC'), 'at' => new \DateTimeImmutable('2026-06-08 03:15:00 UTC')]);

@@ -56,7 +56,7 @@ final class InquiryFeedbackPageTest extends WebTestCase
         self::assertCount(0, $crawler->filter('input[type="radio"][checked]'));
         self::assertCount(1, $crawler->filter('a[href="'.$this->url($inquiry).'/abmelden"]'));
         self::assertNull($this->answer($inquiry));
-        $this->assertPrivate();
+        $this->assertPrivate('same-origin');
     }
 
     public function test_an_answer_is_stored_and_can_be_changed_without_moving_its_month(): void
@@ -68,7 +68,7 @@ final class InquiryFeedbackPageTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame('Danke für deine Rückmeldung!', trim($this->client->getCrawler()->filter('h1')->text()));
-        $this->assertPrivate();
+        $this->assertPrivate('same-origin');
         $first = $this->answer($inquiry);
         self::assertNotNull($first);
         self::assertSame([true, 'yes'], [$first['venue_replied'], $first['outcome']]);
@@ -90,6 +90,24 @@ final class InquiryFeedbackPageTest extends WebTestCase
         self::assertResponseStatusCodeSame(422);
         self::assertSame(['Bitte wähle Ja oder Nein.', 'Bitte wähle eine Antwort.'], $this->client->getCrawler()->filter('.feedback-form__error')->each(static fn ($error): string => trim($error->text())));
         self::assertNull($this->answer($inquiry));
+    }
+
+    /**
+     * A browser without Sec-Fetch-Site (older Safari and Firefox) proves the origin with the Origin header, which the
+     * page's `same-origin` referrer policy keeps; another site's post is refused.
+     */
+    public function test_an_answer_with_only_the_origin_header_counts_and_a_cross_site_post_does_not(): void
+    {
+        $inquiry = $this->mailed();
+        $fields = ['feedback' => ['venueReplied' => '1', 'outcome' => 'no', '_token' => 'csrf-token']];
+
+        $this->client->request('POST', $this->url($inquiry), $fields, [], ['HTTP_SEC_FETCH_SITE' => 'cross-site']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->answer($inquiry));
+
+        $this->client->request('POST', $this->url($inquiry), $fields, [], ['HTTP_ORIGIN' => 'http://localhost']);
+        self::assertResponseIsSuccessful();
+        self::assertSame([true, 'no'], \array_slice(array_values($this->answer($inquiry) ?? []), 0, 2));
     }
 
     public function test_the_opt_out_asks_then_stops_the_mails_once(): void
@@ -164,12 +182,12 @@ final class InquiryFeedbackPageTest extends WebTestCase
         return (bool) $this->connection()->fetchOne('SELECT opted_out_at IS NOT NULL FROM inquiry_feedback WHERE inquiry_id = ?', [$inquiry->id()]);
     }
 
-    private function assertPrivate(): void
+    private function assertPrivate(string $referrer = 'no-referrer'): void
     {
         $response = $this->client->getResponse();
         self::assertSame('no-store, private', $response->headers->get('Cache-Control'));
         self::assertSame('noindex, nofollow', $response->headers->get('X-Robots-Tag'));
-        self::assertSame('no-referrer', $response->headers->get('Referrer-Policy'));
+        self::assertSame($referrer, $response->headers->get('Referrer-Policy'));
         self::assertSame([], $response->headers->getCookies());
         self::assertStringNotContainsString('data-stats-url', (string) $response->getContent());
         self::assertStringNotContainsString('rel="canonical"', (string) $response->getContent());
