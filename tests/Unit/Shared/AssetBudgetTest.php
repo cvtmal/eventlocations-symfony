@@ -10,8 +10,9 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * S11 budgets for the shipped assets (#1): CSS ≤ 25 KB gzip, JS ≤ 15 KB gzip per page, carousel.js ≤ 2 KB gzip,
- * the Region overlay's JS ≤ 6 KB gzip (#10), near-me.js ≤ 4 KB gzip (#52), google-rating.js ≤ 2 KB gzip (#53), at most
- * two font files, and self-contained JS modules. Reads the CSS `make sass` builds (a prerequisite of `make test`).
+ * the Region overlay's JS ≤ 6 KB gzip (#10), near-me.js ≤ 4 KB gzip (#52), google-rating.js ≤ 2 KB gzip (#53),
+ * inquiry.js ≤ 1 KB gzip (F16), at most two font files, and self-contained JS modules. Reads the CSS `make sass`
+ * builds (a prerequisite of `make test`).
  *
  * The JS budget is per page, as S11 words it (#47): a page loads base.html.twig's scripts plus its own template's.
  * Every public script must be referenced by base, one of PAGES, the back office's scripts or the styleguide, so a
@@ -28,6 +29,7 @@ final class AssetBudgetTest extends TestCase
         'venues/detail/show.html.twig',
         'favorites/merkliste.html.twig',
         'search/nearby.html.twig',
+        'inquiries/brief.html.twig',
     ];
 
     /** Templates outside PAGES that load public scripts, which count as measured there. */
@@ -72,6 +74,12 @@ final class AssetBudgetTest extends TestCase
     {
         // D12, places-photos: it fetches our own fragment; no Google script is involved.
         self::assertLessThanOrEqual(1024, self::gzipSize((string) file_get_contents(self::root().'/assets/js/google-photos.js')));
+    }
+
+    public function test_inquiry_js_is_within_1_kb_gzip(): void
+    {
+        // F16 N4/N5: a caret and a focus, nothing more.
+        self::assertLessThanOrEqual(1024, self::gzipSize((string) file_get_contents(self::root().'/assets/js/inquiry.js')));
     }
 
     public function test_region_overlay_javascript_is_within_6_kb_gzip(): void

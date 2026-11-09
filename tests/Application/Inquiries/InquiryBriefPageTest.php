@@ -73,6 +73,8 @@ final class InquiryBriefPageTest extends WebTestCase
         self::assertStringContainsString('Nur Einzeln', $single->text());
         self::assertCount(1, $single->filter('a[href="/eventlokal/nur-einzeln#anfrage"]'));
         self::assertStringNotContainsString('Nur Einzeln', $crawler->filter('form')->text());
+        self::assertStringStartsWith('Hallo zusammen', $crawler->filter('textarea[data-inquiry-message]')->text());
+        self::assertCount(1, $crawler->filter('script[src*="/js/inquiry"]'), 'inquiry.js moves the caret of the prefilled message (F16 N4)');
     }
 
     public function test_fewer_than_two_offered_venues_show_no_form(): void
@@ -86,6 +88,7 @@ final class InquiryBriefPageTest extends WebTestCase
         $this->assertPrivate();
         self::assertSelectorTextContains('h2', 'Zu wenige Locations');
         self::assertSelectorNotExists('form');
+        self::assertSelectorNotExists('script[src*="/js/inquiry"]', 'no message, no caret to move');
     }
 
     public function test_without_numbers_shows_no_form(): void

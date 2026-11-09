@@ -70,7 +70,7 @@ final class InquiryType extends AbstractType
                 'attr' => ['min' => 1, 'max' => 1_000_000, 'inputmode' => 'numeric'],
                 'invalid_message' => 'inquiry.budget.invalid',
             ])
-            ->add('message', TextareaType::class, ['attr' => ['rows' => 7]])
+            ->add('message', TextareaType::class, ['attr' => ['rows' => 7, 'data-inquiry-message' => true]])
             ->add('firstName', TextType::class, ['attr' => ['autocomplete' => 'given-name']])
             ->add('lastName', TextType::class, ['attr' => ['autocomplete' => 'family-name']])
             ->add('company', TextType::class, ['required' => false, 'attr' => ['autocomplete' => 'organization']])

@@ -1,7 +1,7 @@
-{# The confirmation state of DP-13, on the signed ?anfrage=gesendet URL. Constant per venue: no personal data, so it stays cacheable. Params: venue. #}
+{# The confirmation state of DP-13, on the signed ?anfrage=gesendet URL. Constant per venue: no personal data, so it stays cacheable. The heading is the redirect's focusable fragment target and inquiry.js focuses it too (F16 N5). Params: venue, anchor. #}
 <div class="inquiry-form inquiry-form--sent venue-section">
     <span class="inquiry-form__sent-icon">{{ icon('check') }}</span>
-    <h2 class="venue-section__title">{{ 'confirmation.heading'|trans({}, 'inquiries') }}</h2>
+    <h2 class="venue-section__title" id="{{ anchor }}" tabindex="-1" data-inquiry-focus>{{ 'confirmation.heading'|trans({}, 'inquiries') }}</h2>
     <p>{{ 'confirmation.text'|trans({name: venue.name}, 'inquiries') }}</p>
     <p><a href="{{ path('venue_show', {slug: venue.slug}) }}#anfrage">{{ 'confirmation.again'|trans({}, 'inquiries') }}</a></p>
 </div>

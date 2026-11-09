@@ -29,6 +29,12 @@ final class InquiryFormExtension
     private const FLAG = 'anfrage';
     private const FLAG_SENT = 'gesendet';
 
+    /**
+     * The redirect's fragment and the id of the confirmation's heading (F16 N5). A fragment whose target cannot take
+     * the focus makes the browser clear it after load; a focusable target gets it, so a screen reader reads it.
+     */
+    public const CONFIRMATION_ANCHOR = 'anfrage-gesendet';
+
     public function __construct(
         private readonly InquiryFormFactory $forms,
         private readonly RequestStack $requests,
@@ -48,7 +54,7 @@ final class InquiryFormExtension
         }
 
         if ($this->isConfirmation()) {
-            return $twig->render('inquiries/_confirmation.html.twig', ['venue' => $venue]);
+            return $twig->render('inquiries/_confirmation.html.twig', ['venue' => $venue, 'anchor' => self::CONFIRMATION_ANCHOR]);
         }
 
         return $twig->render('inquiries/_form.html.twig', [

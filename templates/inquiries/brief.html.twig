@@ -78,3 +78,5 @@
         </div>
     </div>
 {% endblock %}
+
+{% block scripts %}{% if form is not null %}<script type="module" src="{{ asset('js/inquiry.js') }}"></script>{% endif %}{% endblock %}

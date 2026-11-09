@@ -88,6 +88,8 @@ final class InquiryFormRenderingTest extends WebTestCase
         $message = $crawler->filter('#inquiry_message')->text(normalizeWhitespace: false);
         self::assertStringStartsWith('Liebes Schloss Seeblick-Team', $message);
         self::assertStringNotContainsString('Hochzeit', $message);
+        self::assertNotNull($crawler->filter('#inquiry_message')->attr('data-inquiry-message'), 'inquiry.js moves its caret (F16 N4)');
+        self::assertCount(1, $crawler->filter('script[src*="/js/inquiry"]'));
     }
 
     public function test_the_spam_fields_are_there_and_the_honeypot_is_out_of_the_tab_order(): void
@@ -182,6 +184,10 @@ final class InquiryFormRenderingTest extends WebTestCase
         self::assertSelectorNotExists('#anfrage form');
         self::assertSelectorExists('.inquiry-form--sent .inquiry-form__sent-icon');
         self::assertSelectorTextContains('#anfrage h2', 'Danke');
+        self::assertSame('-1', $crawler->filter('#anfrage h2#anfrage-gesendet')->attr('tabindex'), 'the redirect lands on it and it takes the focus (F16 N5)');
+        self::assertNotNull($crawler->filter('#anfrage h2')->attr('data-inquiry-focus'), 'inquiry.js focuses it on load');
+        self::assertCount(1, $crawler->filter('[data-inquiry-focus]'));
+        self::assertCount(1, $crawler->filter('script[src*="/js/inquiry"]'));
         self::assertSelectorTextContains('#anfrage', 'Schloss Seeblick');
         self::assertSame(self::PAGE.'#anfrage', $crawler->filter('#anfrage a')->attr('href'));
         self::assertFalse($this->client->getResponse()->headers->has('Set-Cookie'));

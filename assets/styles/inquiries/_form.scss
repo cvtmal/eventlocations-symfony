@@ -207,6 +207,8 @@ textarea.inquiry-form__control {
 .inquiry-form--sent {
     .venue-section__title {
         margin-bottom: var(--space-8);
+        // The redirect's fragment target (F16 N5): keep the check icon above it in view.
+        scroll-margin-top: calc(3.5rem + 2 * var(--space-24));
     }
 
     p {
