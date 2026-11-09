@@ -72,6 +72,7 @@
     <script type="module" src="{{ asset('js/phone-reveal.js') }}"></script>
     <script type="module" src="{{ asset('js/venue-map.js') }}"></script>
     {% if venue.videos is not empty %}<script type="module" src="{{ asset('js/venue-video.js') }}"></script>{% endif %}
-    <script type="module" src="{{ asset('js/google-rating.js') }}"></script>
-    <script type="module" src="{{ asset('js/google-photos.js') }}"></script>
+    {# D48: both Google features are off by default, so their loaders ship only while they have something to do (f16). #}
+    {% if venue_google_rating_live() %}<script type="module" src="{{ asset('js/google-rating.js') }}"></script>{% endif %}
+    {% if venue_google_photos_enabled() %}<script type="module" src="{{ asset('js/google-photos.js') }}"></script>{% endif %}
 {% endblock %}

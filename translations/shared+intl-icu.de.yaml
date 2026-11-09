@@ -87,8 +87,8 @@ legal:
             infomaniak: Hosting der Website und Versand der E-Mails
             neon: Datenbank mit Anfragen und Kontakten
             sentry: Meldungen technischer Fehler
-            # D48: names the rating and the photos only while their switch is on (`shows`, datenschutz.html.twig).
-            google: '{shows, select, both {Karten, Bewertungen und Fotos von Google Maps} rating {Karten und Bewertungen von Google Maps} photos {Karten und Fotos von Google Maps} other {Karten von Google Maps}}, Videos von YouTube'
+            # D48, f16: names only what Google delivers (`shows`: map, rating, photos joined by "_", or none; datenschutz.html.twig).
+            google: '{shows, select, map_rating_photos {Karten, Bewertungen und Fotos von Google Maps, } map_rating {Karten und Bewertungen von Google Maps, } map_photos {Karten und Fotos von Google Maps, } rating_photos {Bewertungen und Fotos von Google Maps, } rating {Bewertungen von Google Maps, } photos {Fotos von Google Maps, } map {Karten von Google Maps, } other {}}Videos von YouTube'
             vimeo: Videos von Vimeo
         hosting:
             title: Hosting und Datenbank
@@ -102,12 +102,15 @@ legal:
             errors: Technische Fehler melden wir an Sentry, einen Dienst der Functional Software, Inc. (USA). Die Fehlerberichte liegen in der EU (Frankfurt) und enthalten die aufgerufene Seite, aber weder IP-Adresse noch Cookies noch Formularinhalte. Die Kontodaten unseres Sentry-Zugangs liegen in den USA.
         maps:
             # D48: as processors.google.
-            title: '{shows, select, both {Karten, Bewertungen und Fotos von Google Maps} rating {Karten und Bewertungen von Google Maps} photos {Karten und Fotos von Google Maps} other {Karten von Google Maps}}'
+            title: '{shows, select, map_rating_photos {Karten, Bewertungen und Fotos von Google Maps} map_rating {Karten und Bewertungen von Google Maps} map_photos {Karten und Fotos von Google Maps} rating_photos {Bewertungen und Fotos von Google Maps} rating {Bewertungen von Google Maps} photos {Fotos von Google Maps} other {Karten von Google Maps}}'
             # TODO owner: check Google's controller and address against policies.google.com/privacy before go-live (T8, #15).
-            text: Auf der Seite einer Location kann eine Karte von Google Maps erscheinen, ein Dienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. Die Karte laden wir erst, wenn du auf «Karte laden» klickst; für die Karte wird vorher nichts an Google übertragen. Mit dem Klick ruft dein Browser die Karte direkt bei Google ab; dabei erhält Google deine IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen.
-            # #52: the near-me page loads Google Maps on view (owner Q6); quotes the nav link and the button, pinned by LegalPagesTest.
+            # f16: whenever the section renders, whichever of its paragraphs follow.
+            intro: Google Maps ist ein Dienst der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland.
+            # f16: the detail page's "Karte laden", so only with GOOGLE_MAPS_EMBED_KEY.
+            text: Auf der Seite einer Location kann eine Karte von Google Maps erscheinen. Die Karte laden wir erst, wenn du auf «Karte laden» klickst; für die Karte wird vorher nichts an Google übertragen. Mit dem Klick ruft dein Browser die Karte direkt bei Google ab; dabei erhält Google deine IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen.
+            # #52: the near-me page loads Google Maps on view (owner Q6); quotes the nav link and the button, pinned by LegalPagesTest. f16: only with GOOGLE_MAPS_JS_KEY.
             nearby: 'Die Seite «In der Nähe» lädt die Karte von Google Maps sofort beim Aufruf. Dabei erhält Google deine IP-Adresse, die Adresse unserer Website und den angezeigten Kartenausschnitt, und Google kann Cookies setzen. Wenn du «Meinen Standort verwenden» wählst, fragt dein Browser nach deinem Standort. Wir erhalten ihn nur auf etwa 1 km gerundet als Teil der aufgerufenen Adresse; wir speichern ihn nicht in unserer Datenbank, und wie jede aufgerufene Adresse erscheint er in den Server-Protokollen des Hostings.'
-            # #53: the detail page's Google rating loads on view; pinned by LegalPagesTest. D48: only while GOOGLE_RATING_ENABLED.
+            # #53: the detail page's Google rating loads on view; pinned by LegalPagesTest. D48: only while GOOGLE_RATING_ENABLED; f16: and with GOOGLE_MAPS_JS_KEY (else links.rating).
             rating: 'Auf der Seite einer Location kann die Google-Bewertung erscheinen: Sterne und Anzahl Bewertungen von Google Maps. Dein Browser lädt sie ohne Klick direkt bei Google, sobald dieser Teil der Seite sichtbar wird. Dabei erhält Google deine IP-Adresse und die Adresse unserer Website, und Google kann Cookies setzen. Wir speichern keine Bewertungen von Google.'
             # D12, places-photos: our server fetches the photos, the visitor's browser never contacts Google; pinned by LegalPagesTest. D48: only with GOOGLE_PLACES_PHOTOS_KEY.
             photos: 'Hat eine Location noch keine eigenen Fotos, kann ihre Seite Fotos von Google Maps zeigen, jedes mit dem Namen der Person, die es hochgeladen hat. Diese Fotos ruft unser Server bei Google ab und reicht sie direkt an deinen Browser weiter; dein Browser verbindet sich dafür nicht mit Google. Google erhält die Anfragen von unserem Server, nicht von deinem Browser, und damit weder deine IP-Adresse noch die Adresse der Seite, die du ansiehst; Google erfährt nur, zu welcher Location wir Fotos abrufen. Wir speichern die Fotos nicht. Erst wenn du bei einem Foto auf «Google Maps» oder auf den Namen klickst, öffnet sich Google Maps; ab dann gelten die Datenschutzbestimmungen von Google.'
@@ -125,6 +128,8 @@ legal:
         links:
             title: Links zu anderen Anbietern
             text: 'Die Seiten der Locations verlinken auf deren Websites und Instagram-Profile, das Teilen über WhatsApp führt zu WhatsApp. Der Link «Auf Google Maps öffnen» auf der Seite einer Location führt zu Google Maps, die Links «Auf YouTube ansehen» und «Auf Vimeo ansehen» führen zu YouTube und Vimeo. Diese Dienste werden erst geladen, wenn du den Link anklickst; ab dann gelten ihre Datenschutzbestimmungen.'
+            # f16: the rating switched on without GOOGLE_MAPS_JS_KEY is only this link (VenueGoogleRatingExtension); quotes detail.google_rating.link, pinned by DatenschutzGoogleSwitchesTest.
+            rating: 'Ebenso führt der Link «Bewertungen auf Google Maps ansehen» zu den Bewertungen der Location auf Google Maps; auch hier wird Google erst mit dem Klick geladen.'
         staff:
             title: Interner Bereich
             text: Unser interner Bereich ist nur für unsere Mitarbeitenden. Nur dort und im Konto für Locations gibt es eine Anmeldung und ein Sitzungs-Cookie.
