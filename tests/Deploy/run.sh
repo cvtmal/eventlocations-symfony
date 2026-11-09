@@ -870,7 +870,8 @@ prod_import_refusals() {
         "consents content/../../sheet.csv" "consents content/owner/notes.txt" "consents --dry-run" \
         "consents content/owner/sheet.csv extra" "contacts-dry content/owner/contacts.csv --force" "contacts -x.csv" \
         "withdraw" "withdraw abc" "withdraw 7 --on=gestern" "withdraw 7 --path=/tmp" "withdraw 7 --on=2026-11-09 extra" \
-        "withdraw-dry --dry-run" "withdraw-dry 7;rm"; do
+        "withdraw-dry --dry-run" "withdraw-dry 7;rm" "withdraw 07" "withdraw-dry 007" "withdraw 0" \
+        "withdraw-media" "withdraw-media 07" "withdraw-media abc" "withdraw-media 7 --on=2026-11-09" "withdraw-media 7 8"; do
         # shellcheck disable=SC2086 # Each string is several arguments.
         run prod_import $arguments
         [ "$rc" != 0 ] || fail "prod-import accepted '$arguments'"
@@ -1041,6 +1042,17 @@ prod_import_onboarding() { # The CRM commands of the onboarding runbook (F14), o
 remove-media
 purge" ] || fail "prod-import withdraw ran another order: $steps"
     ok "withdraw deletes the entry, then its public media on the server, then purges"
+
+    clear_log
+    run prod_import withdraw-media 7
+    expect_exit "prod-import withdraw-media exits 0" 0
+    if grep -q '^docker ' "$STUB_LOG"; then
+        fail "withdraw-media ran the local container against Neon"
+    fi
+    steps="$(sed -n 's/^ssh .*rm -rf \/var\/www\/deine-eventlocation.ch\/current\/public\/media\/7$/remove-media/p; s/^ssh .*app:http-cache:clear.*/purge/p' "$STUB_LOG")"
+    [ "$steps" = "remove-media
+purge" ] || fail "prod-import withdraw-media ran another order: $steps"
+    ok "withdraw-media retries only the media removal and the purge"
 }
 
 pull_backup() { # pull_backup <args...>

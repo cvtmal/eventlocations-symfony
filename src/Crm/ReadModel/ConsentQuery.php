@@ -7,7 +7,7 @@ namespace App\Crm\ReadModel;
 use Doctrine\DBAL\Connection;
 
 /**
- * Whether a Location's timeline holds a consent entry (F14, `RecordConsent`: payload `{"consent": {…}}`), for the
+ * Whether a Location's timeline holds a consent entry, and the addresses its yeses came from (F14, `RecordConsent`: payload `{"consent": {…}}`), for the
  * consent and withdrawal handlers and the dry run of `app:crm:record-consents`.
  */
 final readonly class ConsentQuery
@@ -34,5 +34,26 @@ final readonly class ConsentQuery
                 SQL,
             ['company' => $companyId, 'from' => $from, 'on' => $on],
         );
+    }
+
+    /**
+     * Every address a yes of the Location came from, lower-case and without duplicates (the withdrawal suppresses them).
+     *
+     * @return list<string>
+     */
+    public function fromAddresses(string $companyId): array
+    {
+        /** @var list<string> $addresses */
+        $addresses = $this->connection->fetchFirstColumn(
+            <<<'SQL'
+                SELECT DISTINCT LOWER(a.payload->'consent'->>'from') FROM crm_activities a
+                JOIN crm_activity_companies l ON l.activity_id = a.id
+                WHERE l.company_id = :company
+                  AND a.payload->'consent'->>'from' IS NOT NULL
+                SQL,
+            ['company' => $companyId],
+        );
+
+        return $addresses;
     }
 }

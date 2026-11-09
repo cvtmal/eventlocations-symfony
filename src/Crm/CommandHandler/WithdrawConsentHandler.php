@@ -17,6 +17,7 @@ use App\Crm\Exception\VenueNotLinked;
 use App\Crm\ReadModel\ConsentQuery;
 use App\Crm\Repository\CompanyRepository;
 use App\Crm\Repository\ContactRepository;
+use App\Crm\Repository\SuppressionRepository;
 use App\Crm\ValueObject\SuppressionReason;
 use App\Shared\Messenger\CommandHandlerInterface;
 use App\Shared\Translation\EnabledLocale;
@@ -34,7 +35,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * 1. Refuses unless the venue belongs to the Location and the Location holds a consent entry (`NoConsentRecorded`).
  * 2. Suppresses the Location with the reason objection (Open Decision 4), first, so the addresses it holds now go on
- *    the list too before they are cleared.
+ *    the list too before they are cleared, and each address a yes came from (`consent.from`), which it may not hold.
  * 3. Takes the venue offline and deletes it; DeleteVenue leaves a tombstone of the content key, so the import never
  *    brings it back.
  * 4. Removes the Location's contacts and clears the website, phone, e-mail and address copied from the entry.
@@ -48,6 +49,7 @@ final class WithdrawConsentHandler implements CommandHandlerInterface
         private readonly CompanyRepository $companies,
         private readonly ContactRepository $contacts,
         private readonly ConsentQuery $consents,
+        private readonly SuppressionRepository $suppressions,
         private readonly VenueKeyQuery $venues,
         private readonly MessageBusInterface $commandBus,
         private readonly EntityManagerInterface $em,
@@ -78,6 +80,12 @@ final class WithdrawConsentHandler implements CommandHandlerInterface
         }
 
         $this->commandBus->dispatch(new SuppressCompany($company->id(), SuppressionReason::Objection));
+        // The address a yes came from may be none the Location holds; without its own row, a contact list naming it
+        // would bring the Location back past G11.
+        $now = $this->clock->now();
+        foreach ($this->consents->fromAddresses($company->id()) as $email) {
+            $this->suppressions->addEmail($email, SuppressionReason::Objection, $now);
+        }
 
         if ($venue->isPublished) {
             $this->commandBus->dispatch(new UnpublishVenue($venue->number));
@@ -93,7 +101,7 @@ final class WithdrawConsentHandler implements CommandHandlerInterface
         $company->changeEmail(null);
         $company->changeAddress(null);
 
-        $now = $this->clock->now()->setTimezone($zone);
+        $now = $now->setTimezone($zone);
         $activity = new Activity(
             EntityId::generate(),
             $this->em->getReference(ActivityType::class, ActivityType::NOTE) ?? throw new \LogicException('ActivityType has no subclass, so a reference always resolves.'),

@@ -327,7 +327,7 @@ make sf c="app:venues:convert-sheet <csv> [path] [--dry-run]"
 | `event_types` | `terms.suitable_for` | Our codes, separated by `\|`. More than Free shows is noted, not cut. |
 | `building` | `main_terms.building` + `terms.building` | Optional code. |
 | `phone`, `inquiry_email`, `website`, `contact_person`, `instagram` | same names | A Swiss phone number is written as `+41…`. |
-| `summary`, `description` | `translations.de.*` | Optional; without a `summary` the folder has no texts (a draft may). A `description` needs a `summary`. |
+| `summary`, `description` | `translations.de.*` | Optional, and for `source = owner` only: a row of another source with a text is refused (D1(c), D11, D12: a text is never copied; staff write it). Without a `summary` the folder has no texts (a draft may). A `description` needs a `summary`. |
 | `consent_on`, `consent_from` | — (CRM) | Required for `source = hochzeitslocation` and refused for the others: the date of the yes (`YYYY-MM-DD`, not in the future) and the address it came from. `app:crm:record-consents` puts them on the Location's timeline. |
 
 Every folder the sheet makes is a draft; it goes online by [the draft rule](#the-draft-rule).

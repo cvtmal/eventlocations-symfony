@@ -10,8 +10,10 @@ use App\Crm\Command\WithdrawConsent;
 use App\Crm\Exception\NoConsentRecorded;
 use App\Shared\Uid\EntityId;
 use App\Tests\Integration\Venues\RunsContentImport;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Tester\CommandTester;
 
 /**
  * F14, D29: a withdrawn yes takes down the entry (with a tombstone, so the folder does not bring it back), the
@@ -61,6 +63,31 @@ final class WithdrawConsentTest extends KernelTestCase
         self::assertSame(Command::SUCCESS, $this->import(), $this->display());
         self::assertStringContainsString('cms_edited  '.self::KEY, $this->display());
         self::assertFalse($this->venueRow(self::KEY));
+    }
+
+    public function test_the_address_the_yes_came_from_goes_on_the_list_even_when_the_location_never_held_it(): void
+    {
+        $companyId = $this->importWithLocation();
+        $this->dispatch(new RecordConsent($companyId, 'Anna.Privat@Erfunden-Mail.example', '2026-10-12'));
+
+        $this->dispatch(new WithdrawConsent($companyId, $this->venueNumber(self::KEY), '2026-11-02'));
+
+        self::assertSame('objection', $this->connection->fetchOne('SELECT reason FROM suppressions WHERE email = ?', ['anna.privat@erfunden-mail.example']));
+
+        // A later contact list naming that address does not bring the Location back.
+        $csv = tempnam(sys_get_temp_dir(), 'contacts') ?: throw new \RuntimeException('No temporary file.');
+        try {
+            file_put_contents($csv, "location,address,email,phone,website,first_name,last_name,position,contact_email,contact_phone,cohort,channel,basis,campaign,venue\n"
+                ."Anderer Name Erfunden,,anna.privat@erfunden-mail.example,,,,,,,,,,,,\n");
+            $import = new CommandTester((new Application(self::$kernel ?? self::bootKernel()))->find('app:crm:import-contacts'));
+            self::assertSame(Command::SUCCESS, $import->execute(['csv' => $csv]), $import->getDisplay(true));
+            $display = $import->getDisplay(true);
+        } finally {
+            unlink($csv);
+        }
+        self::assertStringContainsString('suppressed  row 2', $display);
+        self::assertStringContainsString('Locations: 0 created, 0 exist, 1 suppressed, 0 failed.', $display);
+        self::assertSame(0, $this->rows('crm_companies WHERE name = ?', ['Anderer Name Erfunden']));
     }
 
     public function test_without_a_recorded_yes_nothing_is_touched(): void

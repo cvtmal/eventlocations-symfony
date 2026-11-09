@@ -92,6 +92,22 @@ final class VenueSheetTest extends TestCase
         }
     }
 
+    public function test_a_text_is_refused_unless_the_row_is_the_owners(): void
+    {
+        $facts = ['name' => 'Gutshof Erfunden', 'town' => 'Bern', 'capacity_max' => '80', 'summary' => 'Ein erfundener Text.', 'description' => 'Noch ein erfundener Text.'];
+        $consent = ['consent_on' => '2026-10-12', 'consent_from' => 'info@gutshof-erfunden.example'];
+
+        self::assertSame([
+            'row 3: summary: only for source owner, a text is never copied',
+            'row 3: description: only for source owner, a text is never copied',
+        ], $this->sheet()->check(new VenueSheetRow(3, ['source' => 'hochzeitslocation', ...$facts, ...$consent])));
+        self::assertSame(
+            ['row 4: summary: only for source owner, a text is never copied'],
+            $this->sheet()->check(new VenueSheetRow(4, ['source' => 'eventlokale', ...$facts, 'description' => ''])),
+        );
+        self::assertSame([], $this->sheet()->check(new VenueSheetRow(5, ['source' => 'owner', ...$facts])));
+    }
+
     public function test_a_yes_from_the_future_is_refused(): void
     {
         $row = new VenueSheetRow(2, ['source' => 'hochzeitslocation', 'name' => 'Gutshof Erfunden', 'town' => 'Bern', 'capacity_max' => '80', 'consent_on' => '2026-12-01', 'consent_from' => 'info@gutshof-erfunden.example']);

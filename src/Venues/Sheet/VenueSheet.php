@@ -16,7 +16,7 @@ use Psr\Clock\ClockInterface;
  *
  * read() takes the CSV as `SheetFile` reads it (`,` or `;`, byte order mark, columns by name, a missing or unknown
  * column refuses the file). check() applies the row rules
- * (source, consent, key) and then the content schema to the document the row builds.
+ * (source, key, texts, consent) and then the content schema to the document the row builds.
  */
 final class VenueSheet
 {
@@ -30,6 +30,12 @@ final class VenueSheet
     public const array SOURCES = ['owner', 'hochzeitslocation', 'eventlokale'];
 
     public const string SOURCE_CONSENT = 'hochzeitslocation';
+
+    /** The only source whose texts may come in: the owner's own (D1(c), D11, D12: a text of another site is never copied). */
+    public const string SOURCE_OWN_TEXTS = 'owner';
+
+    /** @var list<string> */
+    private const array TEXT_COLUMNS = ['summary', 'description'];
 
     public function __construct(
         private readonly ContentSchema $schema,
@@ -67,6 +73,13 @@ final class VenueSheet
         }
         if ('' === $row->cell('summary') && ('' !== $row->cell('description') || '' !== $row->cell('region'))) {
             $errors[] = 'summary: needed when description or region is written';
+        }
+        if (self::SOURCE_OWN_TEXTS !== $row->source()) {
+            foreach (self::TEXT_COLUMNS as $column) {
+                if ('' !== $row->cell($column)) {
+                    $errors[] = \sprintf('%s: only for source %s, a text is never copied', $column, self::SOURCE_OWN_TEXTS);
+                }
+            }
         }
         $errors = [...$errors, ...$this->consentErrors($row)];
         foreach ($this->schema->validate($row->toDocument()) as $error) {
