@@ -383,6 +383,7 @@ managers panel and an invitation do not. Four sources (D1), each a path into dra
    which does only those two steps and may run again when nothing is left. Then delete the row
    from the sheet, as the command says.
    Withdrawn photos remain in the media backup until its retention ages them out (F15b: 365 days); no restore of a withdrawn venue.
+   Nach einem Widerruf löscht der Owner die Ordner cms/<Nr> und content/<Key> auch in seiner externen Kopie (bin/pull-media-backup löscht nie); Nummer und Key stehen in der Widerrufsnotiz.
 4. **The eventlokale crawl** (D11, D12, D32; owner-run, internal only):
    `make sf c="app:crm:crawl-eventlokale"` (every category, several hours, resumable) writes
    the private `CONTENT_ROOT/owner/eventlokale.csv` and the facts-only draft sheet
