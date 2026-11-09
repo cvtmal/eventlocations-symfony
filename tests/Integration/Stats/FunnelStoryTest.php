@@ -47,7 +47,10 @@ final class FunnelStoryTest extends KernelTestCase
         self::assertSame(2, $card->totals->of(FunnelEvent::BriefSent));
         self::assertSame(2, $card->paying->paying);
         self::assertSame(1, $card->paying->withDeliveredInquiry, 'one paid venue got an inquiry after paying, the other only before');
-        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM funnel_events WHERE occurred_at > CURRENT_TIMESTAMP'), 'nothing in the future');
+        // The story caps this week's later slots at its own «now», stored to the second. CURRENT_TIMESTAMP is the start of
+        // the transaction setUp() opened before the venues were made, so a second boundary in between made the cap look
+        // future (about 1 run in 5, Monday to Wednesday). clock_timestamp() is the time of this query.
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT count(*) FROM funnel_events WHERE occurred_at > clock_timestamp()'), 'nothing in the future');
         self::assertSame(0, (int) $this->connection->fetchOne("SELECT count(*) FROM funnel_events e WHERE e::text LIKE '%@%'"));
     }
 
