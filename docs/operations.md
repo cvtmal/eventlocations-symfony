@@ -801,3 +801,45 @@ CU-hours.
   version (below 13 ignores channel binding silently, below 14 has no SNI and needs the `endpoint=`
   form); a worker's persistent connection opened before the setting keeps its old state, and
   `bin/prod-import` runs with `sslmode=require` only.
+
+## Review demo for the operator
+
+The operator clicks through everything (public site, `/admin`, `/konto`) on the **demo data**, from the owner's Mac,
+through a Cloudflare quick tunnel: a random `https://<words>.trycloudflare.com` link, no Cloudflare account. It never
+touches the server, Neon or the lane's own database.
+
+**Start**, from any checkout on the Mac (needs Docker and `brew install cloudflared`; `make review-up` stops with that
+hint when it is missing and never installs anything):
+
+```sh
+make review-up          # about 5 minutes: build, prod-mode stack, fresh demo data, both tunnels
+caffeinate -dimsu       # in a second terminal, while the operator works: keeps the Mac and the tunnel awake
+```
+
+It prints the site's link, `/admin` and `/konto` with the login **`admin` / `admin`** for both (no 2FA), a second link
+for Mailpit (every mail the demo sends) and `http://localhost:8098`. Each start gives new links and fresh demo data;
+what the operator changed is gone. Send the link only to the operator.
+
+**Stop:** `make review-down` ends both tunnels and deletes the stack with its data. Closing the lid or a sleeping Mac
+breaks the tunnel; `make review-up` again gives a new link.
+
+**The risk the owner accepted:** anyone who has the link can log in as admin, without a second factor, and change
+or delete the demo data, send mails into the demo's Mailpit and read them through its link. The data is fake; no real
+account, key or customer is on that stack.
+
+**What review mode blocks** (`APP_REVIEW_MODE=1`, `compose.review.yaml`):
+- The app refuses to boot with the flag unless `APP_ENV=prod`, the database is the review stack's own (`review` on its
+  Compose host `database`), `MAILER_DSN` is Mailpit or `null://`, and every Google key, `GOOGLE_RATING_ENABLED` and
+  `SENTRY_DSN` are empty or off. So no mail leaves the Mac, Google is never called with a key, and nothing reaches
+  Sentry. YouTube and Vimeo players still load in the operator's browser after a click, as on the live site.
+- `app:prod:check-env`, `bin/deploy`, `bin/deploy-gate` and `make release-check` refuse the flag; the release's `.env`
+  sets `APP_REVIEW_MODE=0`. After this change, copy `bin/deploy-gate` to the server once more
+  ([step 7](#7-deploy-key-and-gate)).
+- Every response says `X-Robots-Tag: noindex, nofollow` (the app, and the stack's edge nginx for files nginx serves
+  itself) and `/robots.txt` disallows everything. Cloudflare puts its own managed robots.txt in front of ours on a
+  quick tunnel; the noindex header is what keeps the pages out of search engines. Plain http on the tunnel is sent to
+  https.
+- Only `127.0.0.1:8098` (the site) and `127.0.0.1:8099` (Mailpit) are published, for `cloudflared` on the same Mac.
+
+It is the perf stack's prod settings (`compose.perf.yaml`: OPcache, HTTP cache, 2 cores) in its own Compose project
+`deine-eventlocation-review`, so the operator sees production speed and `make perf-up` keeps working beside it.

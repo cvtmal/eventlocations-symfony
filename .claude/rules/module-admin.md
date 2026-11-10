@@ -54,3 +54,7 @@ Back office at `/admin` (S12): staff login, shell, extension points, audit, UI k
 - **Add one:** a line in `admin-ui/src/islands.js` (hotspot), the file `admin-ui/src/islands/<Pascal>Island.vue` (`<script setup>`, no `<style>`, no bare strings).
 - **Kit:** `admin-ui/src/components/Ui*.vue`, imported only by islands, same classes and markup as the Twig twins (parity: `admin-ui/tests/fixtures/markup/`). ESLint forbids `<style>` and static inline styles. Plain forms double-POST on a double click; only islands guard (`saving`).
 - **Guards:** `AdminAssetBudgetTest` (JS 60 KB gzip shared, 30 KB per island; CSS 30 KB); `PublicPagesLoadNoAdminAssetsTest` (no admin marker on public pages, no `admin_*` call in public templates, no `--a-*` token in the public CSS). `MarkdownRenderer`'s options are security settings.
+
+## Review demo (`review-demo`)
+
+- `make review-up` / `make review-down` (docs/operations.md «Review demo for the operator»): with `APP_REVIEW_MODE=1` (`Shared\Security\ReviewMode`, review stack only, `App\Kernel` refuses it elsewhere) `ReviewModeTwoFactorCondition` (scheb `two_factor_condition`) and `RequireTotpEnrolmentListener` skip 2FA, and `AdminUserProvider` maps the login name `admin` to `ReviewMode::ADMIN_EMAIL`; the login input is `type="text"` there (`review_mode()`). Flag off, nothing changes (`Application\Admin\ReviewModeLoginTest`).
