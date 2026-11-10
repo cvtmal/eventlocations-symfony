@@ -6,6 +6,7 @@ namespace App\Admin\EventListener;
 
 use App\Admin\Security\AdminArea;
 use App\Admin\Security\AdminIdentity;
+use App\Shared\Security\ReviewMode;
 use Scheb\TwoFactorBundle\Security\Authentication\Token\TwoFactorTokenInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,13 +32,15 @@ final class RequireTotpEnrolmentListener
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly AdminArea $adminArea,
+        private readonly ReviewMode $reviewMode,
     ) {
     }
 
     public function __invoke(RequestEvent $event): void
     {
         $request = $event->getRequest();
-        if (!$event->isMainRequest() || !$this->adminArea->contains($request)) {
+        // review-demo: the operator's demo asks for no TOTP at all (ReviewModeTwoFactorCondition).
+        if (!$event->isMainRequest() || $this->reviewMode->isOn() || !$this->adminArea->contains($request)) {
             return;
         }
 

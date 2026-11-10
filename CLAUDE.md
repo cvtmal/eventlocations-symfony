@@ -37,6 +37,7 @@ Never run `composer` or `bin/console` on the host. The host has a different PHP 
 | `make perf-check` | Byte budgets of S11 through `phpunit --group budget`; needs no perf stack, runs in CI |
 | `make perf-up` ... `make perf-down` | Prod-mode perf stack on :8096 (one shared Compose project, one lane at a time); method and figures: `docs/performance-baseline.md` |
 | `make release-check` / `make deploy-test` / `make workflow-lint` | Release tarball booted with `APP_ENV=prod` / deploy, cron and import scripts against a throwaway tree / actionlint (CI jobs `release` and `ops-lint`) |
+| `make review-up` / `make review-down` | The operator's review demo: prod-mode stack on demo data behind a Cloudflare quick tunnel, `admin` / `admin` on `/admin` and `/konto`, no 2FA (`APP_REVIEW_MODE=1`, refused everywhere else); `docs/operations.md` «Review demo for the operator» |
 
 `make help` lists every target. App: http://localhost:8080 (`/health` returns `{"status":"ok"}`), Mail UI: http://localhost:8025, on the Compose default ports; this project's own ports are under "Local ports and parallel lanes".
 

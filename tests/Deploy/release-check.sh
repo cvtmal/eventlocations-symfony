@@ -65,7 +65,7 @@ check_contents() {
         [ -e "$CHECK/$file" ] || fail "the tarball lacks $file"
     done
     ok "the tarball holds what production runs on"
-    for path in .env.local .env.dev .env.test tests var content docs deploy admin-ui compose.yaml CLAUDE.md; do
+    for path in .env.local .env.dev .env.test tests var content docs deploy docker admin-ui compose.yaml compose.perf.yaml compose.review.yaml CLAUDE.md; do
         [ ! -e "$CHECK/$path" ] || fail "the tarball must not ship $path"
     done
     ok "the tarball holds nothing that must not ship"
@@ -116,6 +116,23 @@ check_env_guard() {
         fail "app:prod:check-env named $placeholders operator placeholders, config/services.yaml holds $wanted (D27)"
     }
     ok "the env guard runs in the release and names exactly DATABASE_URL, MAILER_DSN and the $wanted operator placeholders"
+}
+
+# review-demo: the release's .env keeps the demo flag off, and with it on in .env.local the release refuses to run:
+# App\Kernel refuses the flag on any database but the review stack's, app:prod:check-env refuses it outright.
+check_review_mode_refused() {
+    [ "$(sed -n 's/^APP_REVIEW_MODE=//p' "$CHECK/.env")" = 0 ] || fail "the release's .env must set APP_REVIEW_MODE=0"
+    cp "$CHECK/.env.local" "$CHECK/.env.local.saved"
+    printf 'APP_REVIEW_MODE=1\n' >> "$CHECK/.env.local"
+    rc=0
+    console app:prod:check-env > "$CHECK/var-output" 2>&1 || rc=$?
+    mv "$CHECK/.env.local.saved" "$CHECK/.env.local"
+    [ "$rc" != 0 ] || fail "app:prod:check-env passed with APP_REVIEW_MODE=1"
+    grep -q 'Refusing to boot: .*APP_REVIEW_MODE' "$CHECK/var-output" || {
+        cat "$CHECK/var-output" >&2
+        fail "the release booted with APP_REVIEW_MODE=1 or did not name it"
+    }
+    ok "the release ships APP_REVIEW_MODE=0 and refuses to boot with APP_REVIEW_MODE=1 outside the review stack"
 }
 
 boot() {
@@ -207,6 +224,7 @@ main() {
     check_contents
     write_env
     check_env_guard
+    check_review_mode_refused
     boot
     check_config
     serve

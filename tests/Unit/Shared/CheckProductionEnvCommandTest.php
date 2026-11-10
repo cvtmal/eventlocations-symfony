@@ -60,6 +60,8 @@ final class CheckProductionEnvCommandTest extends TestCase
         yield 'ADMIN_TOTP_KEY wrong length' => ['ADMIN_TOTP_KEY', ['ADMIN_TOTP_KEY' => base64_encode(str_repeat("\x01", 31))], base64_encode(str_repeat("\x01", 31))];
         yield 'ADMIN_TOTP_KEY the committed key' => ['ADMIN_TOTP_KEY', ['ADMIN_TOTP_KEY' => self::COMMITTED_KEY], self::COMMITTED_KEY];
         yield 'INQUIRY_RECIPIENT_OVERRIDE set' => ['INQUIRY_RECIPIENT_OVERRIDE', ['INQUIRY_RECIPIENT_OVERRIDE' => 'someone@example.ch'], 'someone@example.ch'];
+        yield 'APP_REVIEW_MODE 1' => ['APP_REVIEW_MODE', ['APP_REVIEW_MODE' => '1'], self::DATABASE_PASSWORD];
+        yield 'APP_REVIEW_MODE true' => ['APP_REVIEW_MODE', ['APP_REVIEW_MODE' => 'true'], self::DATABASE_PASSWORD];
         yield 'ADMIN_DEV_AUTOLOGIN set' => ['ADMIN_DEV_AUTOLOGIN', ['ADMIN_DEV_AUTOLOGIN' => 'autologin-marker'], 'autologin-marker'];
         yield 'DEFAULT_URI local' => ['DEFAULT_URI', ['DEFAULT_URI' => 'http://localhost:8080'], 'localhost'];
         yield 'DEFAULT_URI with a slash' => ['DEFAULT_URI', ['DEFAULT_URI' => 'https://deine-eventlocation.ch/'], 'deine-eventlocation.ch/'];
@@ -341,6 +343,7 @@ final class CheckProductionEnvCommandTest extends TestCase
             'ADMIN_TOTP_KEY' => base64_encode(str_repeat("\x05", \SODIUM_CRYPTO_SECRETBOX_KEYBYTES)),
             'INQUIRY_RECIPIENT_OVERRIDE' => '',
             'ADMIN_DEV_AUTOLOGIN' => '',
+            'APP_REVIEW_MODE' => '0',
             'DEFAULT_URI' => 'https://deine-eventlocation.ch',
             'DATABASE_URL' => self::DATABASE_URL,
             'MAILER_DSN' => 'smtp://fake:fake@mail.example.ch:587',

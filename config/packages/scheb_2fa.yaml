@@ -6,6 +6,8 @@ scheb_two_factor:
     # Replay protection: a code that was accepted once is refused for the rest of its window.
     code_reuse_cache: cache.app
     code_reuse_cache_duration: 60
+    # review-demo: no challenge while APP_REVIEW_MODE is on (the review stack only; App\Kernel refuses it elsewhere).
+    two_factor_condition: App\Admin\Security\ReviewModeTwoFactorCondition
     totp:
         enabled: true
         issuer: 'deine-eventlocation.ch Backoffice'

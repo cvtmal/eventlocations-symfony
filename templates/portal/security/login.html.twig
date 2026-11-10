@@ -10,7 +10,7 @@
         {% endif %}
         <div class="field">
             <label class="field__label" for="login-email">{{ 'login.email'|trans({}, 'portal') }}</label>
-            <input class="field__input" id="login-email" type="email" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus{% if error_key %} aria-invalid="true" aria-describedby="login-error"{% endif %}>
+            <input class="field__input" id="login-email" type="{{ review_mode() ? 'text' : 'email' }}" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus{% if error_key %} aria-invalid="true" aria-describedby="login-error"{% endif %}>
         </div>
         <div class="field">
             <label class="field__label" for="login-password">{{ 'login.password'|trans({}, 'portal') }}</label>

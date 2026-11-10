@@ -6,6 +6,7 @@ namespace App\Admin\Security;
 
 use App\Admin\Entity\AdminUser;
 use App\Admin\Repository\AdminUserRepository;
+use App\Shared\Security\ReviewMode;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -23,12 +24,14 @@ final class AdminUserProvider implements UserProviderInterface
     public function __construct(
         private readonly AdminUserRepository $users,
         private readonly TotpSecretCipher $cipher,
+        private readonly ReviewMode $reviewMode,
     ) {
     }
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
-        $user = $this->users->findOneByEmail($identifier);
+        // review-demo: `admin` stands for the seeded review account, in review mode only.
+        $user = $this->users->findOneByEmail($this->reviewMode->adminIdentifier($identifier));
         if (null === $user) {
             $exception = new UserNotFoundException();
             $exception->setUserIdentifier($identifier);

@@ -14,6 +14,7 @@ THIRD_SHA=3333333333333333333333333333333333333333
 FOURTH_SHA=4444444444444444444444444444444444444444
 FIFTH_SHA=5555555555555555555555555555555555555555
 NEW_SHA=abcdefabcdefabcdefabcdefabcdefabcdefabcd
+REVIEW_SHA=6666666666666666666666666666666666666666
 PORT=18097
 
 work="$ROOT/var/deploy-test/$$-$(od -An -N4 -tx4 /dev/urandom | tr -d ' ')"
@@ -528,6 +529,45 @@ current app:prod:check-env"
     run gate /dev/null check
     unset STUB_FAIL
     expect_failure "check fails on a failing guard"
+}
+
+# review-demo: APP_REVIEW_MODE (make review-up's demo flag) skips 2FA; the gate and bin/deploy refuse it, from the
+# environment or from shared/.env.local, before anything runs. 0 passes.
+review_mode_refusals() {
+    remember_tree
+    clear_log
+    run env APP_REVIEW_MODE=1 SSH_ORIGINAL_COMMAND="deploy $REVIEW_SHA" sh "$ROOT/bin/deploy-gate" < "$work/release.tgz"
+    expect_exit "the gate refuses a deploy with APP_REVIEW_MODE in the environment, with exit 2" 2
+    expect_output "the gate names APP_REVIEW_MODE" "APP_REVIEW_MODE"
+    expect_no_calls "a deploy refused for review mode runs nothing"
+    expect_tree_unchanged "a deploy refused for review mode leaves the server tree"
+    expect_clean_gate "a deploy refused for review mode cleans up"
+    run env APP_REVIEW_MODE=true sh "$APP/bin/deploy" check
+    expect_exit "bin/deploy refuses APP_REVIEW_MODE in the environment" 1
+    expect_no_calls "bin/deploy refused for review mode runs nothing"
+
+    cp "$SHARED/.env.local" "$work/env.local.saved"
+    printf 'APP_REVIEW_MODE=0\nexport APP_REVIEW_MODE="1"\n' >> "$SHARED/.env.local"
+    for command in "deploy $REVIEW_SHA" check purge rollback; do
+        run gate "$work/release.tgz" "$command"
+        [ "$rc" = 2 ] || fail "the gate let '$command' through with APP_REVIEW_MODE in .env.local: exit $rc"
+    done
+    ok "the gate refuses every command with APP_REVIEW_MODE in .env.local, with exit 2"
+    for command in check purge rollback "install $REVIEW_SHA"; do
+        # shellcheck disable=SC2086 # the command and its argument are two words on purpose
+        run sh "$APP/bin/deploy" $command
+        [ "$rc" = 1 ] || fail "bin/deploy let '$command' through with APP_REVIEW_MODE in .env.local: exit $rc"
+    done
+    ok "bin/deploy refuses every command with APP_REVIEW_MODE in .env.local"
+    expect_output "bin/deploy names APP_REVIEW_MODE" "APP_REVIEW_MODE is set in shared/.env.local"
+    expect_no_calls "a command refused for review mode in .env.local runs nothing"
+    cp "$work/env.local.saved" "$SHARED/.env.local"
+    expect_tree_unchanged "a refusal for review mode leaves the server tree"
+
+    printf 'APP_REVIEW_MODE="0"\n' >> "$SHARED/.env.local"
+    run gate /dev/null check
+    expect_exit "APP_REVIEW_MODE=0 in .env.local passes" 0
+    cp "$work/env.local.saved" "$SHARED/.env.local"
 }
 
 cron_midnight() {
@@ -1288,6 +1328,7 @@ main() {
     deploy_failure_after_the_switch
     broken_boot_never_reads_as_skipped
     purge_and_check
+    review_mode_refusals
     cron_midnight
     cron_lock
     cron_daily

@@ -1,0 +1,67 @@
+# The operator's review demo (review-demo; docs/operations.md «Review demo for the operator»). Always its own Compose
+# project on top of the perf stack's prod settings, without the lane's compose.override.yaml:
+#   docker compose -p deine-eventlocation-review -f compose.yaml -f compose.perf.yaml -f compose.review.yaml …
+# `make review-up` / `make review-down` are the entry point. APP_REVIEW_MODE=1 skips 2FA and lets `admin` log in, so
+# App\Kernel boots it only on this stack's database (`review` on host `database`), with Mailpit, no Google key and no
+# Sentry; everything below is what that guard checks. Only the edge nginx is published, on 127.0.0.1 (cloudflared
+# runs on the same Mac), so the forwarded headers the app trusts can only come from the tunnel or this machine.
+services:
+  php:
+    environment:
+      APP_REVIEW_MODE: "1"
+      # A new random value per `make review-up` (the repository is public): signed links of one run die with it.
+      APP_SECRET: ${REVIEW_APP_SECRET:?run it through make review-up}
+      DATABASE_URL: "postgresql://app:app@database:5432/review?serverVersion=18&charset=utf8"
+      MAILER_DSN: smtp://mailpit:1025
+      DEFAULT_URI: http://localhost:8098
+      SYMFONY_TRUSTED_PROXIES: private_ranges
+      INQUIRY_RECIPIENT_OVERRIDE: ""
+      ADMIN_DEV_AUTOLOGIN: ""
+      GOOGLE_MAPS_EMBED_KEY: ""
+      GOOGLE_MAPS_JS_KEY: ""
+      GOOGLE_PLACES_API_KEY: ""
+      GOOGLE_PLACES_PHOTOS_KEY: ""
+      GOOGLE_RATING_ENABLED: "0"
+      SENTRY_DSN: ""
+    volumes:
+      # Read-only: anyone with the link is admin, so the stack never writes to the owner's checkout (.git, .env.local).
+      # Everything it writes is a named volume: vendor/, var/, public/assets/ (compose.perf.yaml), public/media/.
+      - .:/var/www/html:ro
+      # Same target as the perf stack's docker/perf/config, which it replaces.
+      - ./docker/review/config:/var/www/html/config/packages/prod:ro
+      # The demo photos' variants, written by the seed and served by nginx; the lane's public/media stays untouched.
+      - review_media:/var/www/html/public/media
+
+  nginx:
+    ports: !reset []
+    volumes:
+      - review_media:/var/www/html/public/media:ro
+
+  database:
+    environment:
+      POSTGRES_DB: review
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "app", "-d", "review"]
+    ports: !reset []
+
+  mailpit:
+    ports: !override
+      - "127.0.0.1:8099:8025"
+
+  edge:
+    image: nginx:stable-alpine
+    ports:
+      - "127.0.0.1:8098:80"
+    volumes:
+      - ./docker/review/edge.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - nginx
+
+networks:
+  default:
+    ipam:
+      config: !override
+        - subnet: 172.16.98.0/24
+
+volumes:
+  review_media:

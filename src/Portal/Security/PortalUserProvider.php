@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Portal\Security;
 
 use App\Portal\Repository\PortalUserRepository;
+use App\Shared\Security\ReviewMode;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -20,12 +21,14 @@ final class PortalUserProvider implements UserProviderInterface
 {
     public function __construct(
         private readonly PortalUserRepository $users,
+        private readonly ReviewMode $reviewMode,
     ) {
     }
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
-        $user = $this->users->findOneByEmail($identifier);
+        // review-demo: `admin` stands for the seeded review account, in review mode only.
+        $user = $this->users->findOneByEmail($this->reviewMode->managerIdentifier($identifier));
         if (null === $user) {
             $exception = new UserNotFoundException();
             $exception->setUserIdentifier($identifier);
