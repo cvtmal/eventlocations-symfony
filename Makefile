@@ -229,8 +229,10 @@ perf-down: ## Stop the perf stack and delete its volumes
 .PHONY: review-up review-down
 # Its own Compose project on the perf stack's prod settings (compose.review.yaml); perf-up/perf-down are untouched.
 # Only the edge nginx (127.0.0.1:8098) and Mailpit (127.0.0.1:8099) are published, for the two quick tunnels.
-# One random APP_SECRET per make run (the repository is public); compose.review.yaml refuses to start without it.
-REVIEW := REVIEW_APP_SECRET=$(shell openssl rand -hex 32) docker compose -p deine-eventlocation-review -f compose.yaml -f compose.perf.yaml -f compose.review.yaml
+# One random APP_SECRET per make run (the repository is public), exported so no command line prints it;
+# compose.review.yaml refuses to start without it.
+export REVIEW_APP_SECRET := $(shell openssl rand -hex 32)
+REVIEW := docker compose -p deine-eventlocation-review -f compose.yaml -f compose.perf.yaml -f compose.review.yaml
 REVIEW_PHP := $(REVIEW) exec -T php
 REVIEW_DB := $(REVIEW) exec -T database psql -U app -v ON_ERROR_STOP=1 -d postgres
 REVIEW_PORT := 8098
