@@ -3,6 +3,7 @@
 #
 #   sh docker/review/tunnel.sh start <app port> <mail port>   one tunnel each, then the links and the logins
 #   sh docker/review/tunnel.sh stop                           ends both
+#   sh docker/review/tunnel.sh check <app port> <mail port>   before any build: cloudflared there, both ports free
 #
 # A quick tunnel needs no Cloudflare account; its https://<random>.trycloudflare.com link dies with the process.
 # PIDs and logs live in var/review/ of this checkout, so stop from the checkout that started them. Never installs
@@ -15,6 +16,32 @@ require_cloudflared() {
         printf '%s\n' "review: cloudflared is not installed. Install it with: brew install cloudflared" >&2
         exit 1
     }
+}
+
+# A listener on the port, found without connecting to it (the owner's own port-forwards stay untouched). The review
+# stack's own edge and Mailpit hold theirs while it runs, and `make review-up` again is fine then.
+taken() { # taken <port>
+    if command -v lsof > /dev/null 2>&1; then
+        lsof -nP -iTCP:"$1" -sTCP:LISTEN > /dev/null 2>&1 || return 1
+    else
+        nc -z -w 1 127.0.0.1 "$1" > /dev/null 2>&1 || return 1
+    fi
+    ! docker ps --filter label=com.docker.compose.project=deine-eventlocation-review --format '{{.Ports}}' 2> /dev/null |
+        grep -q "127\.0\.0\.1:$1->"
+}
+
+check() { # check <app port> <mail port>: one line naming the taken port(s) and the override, before anything is built
+    app=$1 mail=$2 busy=""
+    if taken "$1"; then busy="port $1 is" app=$(($1 + 100)); fi
+    if taken "$2"; then
+        if [ -n "$busy" ]; then busy="ports $1 and $2 are"; else busy="port $2 is"; fi
+        mail=$(($2 + 100))
+    fi
+    if [ -n "$busy" ]; then
+        printf '%s\n' "review: $busy taken by another process. Start with: make review-up REVIEW_PORT=$app REVIEW_MAIL_PORT=$mail" >&2
+        exit 1
+    fi
+    require_cloudflared
 }
 
 stop() {
@@ -75,9 +102,9 @@ TEXT
 case "${1:-}" in
     start) start "${2:?app port}" "${3:?mail port}" ;;
     stop) stop ;;
-    check) require_cloudflared ;;
+    check) check "${2:?app port}" "${3:?mail port}" ;;
     *)
-        printf '%s\n' "usage: sh docker/review/tunnel.sh start <app port> <mail port> | stop | check" >&2
+        printf '%s\n' "usage: sh docker/review/tunnel.sh start <app port> <mail port> | stop | check <app port> <mail port>" >&2
         exit 2
         ;;
 esac

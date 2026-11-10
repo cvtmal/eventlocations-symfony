@@ -136,10 +136,11 @@ release-check: ## Build the release tarball and boot it with APP_ENV=prod (CI jo
 	sh bin/build-release
 	sh tests/Deploy/release-check.sh
 
-deploy-test: ## Run the deploy, cron and import scripts against a throwaway tree, the nginx server block against php-fpm, and the media backup against a local S3
+deploy-test: ## Run the deploy, cron and import scripts against a throwaway tree, the nginx server block against php-fpm, the media backup against a local S3, and the review demo's start checks
 	docker compose exec -T php sh tests/Deploy/run.sh
 	sh tests/Deploy/nginx-check.sh
 	sh tests/Deploy/media-backup-check.sh
+	sh tests/Deploy/review-check.sh
 
 workflow-lint: ## actionlint on .github/workflows
 	docker run --rm -v "$(CURDIR):/repo" -w /repo $(ACTIONLINT_IMAGE)
@@ -228,25 +229,27 @@ perf-down: ## Stop the perf stack and delete its volumes
 ## —— Review demo for the operator (review-demo, docs/operations.md) ——
 .PHONY: review-up review-down
 # Its own Compose project on the perf stack's prod settings (compose.review.yaml); perf-up/perf-down are untouched.
-# Only the edge nginx (127.0.0.1:8098) and Mailpit (127.0.0.1:8099) are published, for the two quick tunnels.
+# Only the edge nginx (127.0.0.1:8098) and Mailpit (127.0.0.1:8099) are published, for the two quick tunnels; another
+# process on one of them: `make review-up REVIEW_PORT=8198 REVIEW_MAIL_PORT=8199` (compose.review.yaml reads both).
 # One random APP_SECRET per make run (the repository is public), exported so no command line prints it;
 # compose.review.yaml refuses to start without it.
 export REVIEW_APP_SECRET := $(shell openssl rand -hex 32)
 REVIEW := docker compose -p deine-eventlocation-review -f compose.yaml -f compose.perf.yaml -f compose.review.yaml
 REVIEW_PHP := $(REVIEW) exec -T php
 REVIEW_DB := $(REVIEW) exec -T database psql -U app -v ON_ERROR_STOP=1 -d postgres
-REVIEW_PORT := 8098
-REVIEW_MAIL_PORT := 8099
+REVIEW_PORT ?= 8098
+REVIEW_MAIL_PORT ?= 8099
+export REVIEW_PORT REVIEW_MAIL_PORT
 
 # Every run starts from a fresh `review` database: demo data (DemoStory and friends, photos included, through Foundry,
 # which exists in dev only: hence the one dev-mode console call, with the flag off), then the two review accounts.
 # Composer keeps the dev packages for that call; prod mode never loads them. The restart empties OPcache.
 review-up: ## Operator demo: prod-mode stack on demo data + Cloudflare quick tunnel; prints the link and admin/admin
-	@sh docker/review/tunnel.sh check
+	@sh docker/review/tunnel.sh check $(REVIEW_PORT) $(REVIEW_MAIL_PORT)
 	test -d admin-ui/node_modules || $(MAKE) admin-install
 	$(MAKE) admin-build
-	@# The checkout is mounted read-only, so the named volumes' mount points must exist beforehand.
-	mkdir -p vendor var public/assets public/media
+	@# The checkout is mounted read-only, so every mount point inside it must exist beforehand (tests/Deploy/review-check.sh).
+	mkdir -p vendor var public/assets public/media config/packages/prod
 	$(REVIEW) up -d --wait php nginx database mailpit edge
 	$(REVIEW_PHP) composer install --classmap-authoritative --no-scripts --no-interaction
 	$(REVIEW_PHP) php bin/console cache:clear

@@ -820,6 +820,10 @@ It prints the site's link, `/admin` and `/konto` with the login **`admin` / `adm
 for Mailpit (every mail the demo sends) and `http://localhost:8098`. Each start gives new links and fresh demo data;
 what the operator changed is gone. Send the link only to the operator.
 
+When another process already listens on 8098 or 8099 (a `kubectl port-forward`, say), `make review-up` stops before
+building with one line naming the port; start it on two free ones instead, e.g.
+`make review-up REVIEW_PORT=8198 REVIEW_MAIL_PORT=8199` (the printed links follow; `make review-down` needs no ports).
+
 **Stop:** `make review-down` ends both tunnels and deletes the stack with its data. Closing the lid or a sleeping Mac
 breaks the tunnel; `make review-up` again gives a new link.
 
@@ -839,7 +843,8 @@ account, key or customer is on that stack.
   itself) and `/robots.txt` disallows everything. Cloudflare puts its own managed robots.txt in front of ours on a
   quick tunnel; the noindex header is what keeps the pages out of search engines. Plain http on the tunnel is sent to
   https.
-- Only `127.0.0.1:8098` (the site) and `127.0.0.1:8099` (Mailpit) are published, for `cloudflared` on the same Mac.
+- Only `127.0.0.1:8098` (the site) and `127.0.0.1:8099` (Mailpit), or the two override ports, are published, for
+  `cloudflared` on the same Mac.
 
 It is the perf stack's prod settings (`compose.perf.yaml`: OPcache, HTTP cache, 2 cores) in its own Compose project
 `deine-eventlocation-review`, so the operator sees production speed and `make perf-up` keeps working beside it.
