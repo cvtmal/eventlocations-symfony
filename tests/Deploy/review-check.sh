@@ -12,9 +12,11 @@ set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 work="$(mktemp -d)"
 listener=""
+listener2=""
 
 cleanup() {
     [ -z "$listener" ] || kill "$listener" 2>/dev/null || true
+    [ -z "$listener2" ] || kill "$listener2" 2>/dev/null || true
     rm -rf "$work"
 }
 trap cleanup EXIT
@@ -96,6 +98,39 @@ if check "$free" "$busy"; then fail "check let the taken mail port $busy through
 grep -q "REVIEW_PORT=$free REVIEW_MAIL_PORT=$((busy + 100))\$" "$work/out" \
     || fail "the message does not give the mail override: $(cat "$work/out")"
 ok "a taken mail port stops review-up with one line and the override"
+
+# Both taken: one line naming both.
+python3 -c '
+import socket, time
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+s.listen()
+print(s.getsockname()[1], flush=True)
+time.sleep(120)
+' > "$work/busy2" &
+listener2=$!
+i=0
+until [ -s "$work/busy2" ]; do
+    i=$((i + 1))
+    [ "$i" -lt 50 ] || fail "the second throwaway listener did not start"
+    sleep 0.1
+done
+busy2="$(cat "$work/busy2")"
+if check "$busy" "$busy2"; then fail "check let two taken ports through"; fi
+[ "$(wc -l < "$work/out" | tr -d ' ')" = 1 ] || fail "the two-port message is not one line: $(cat "$work/out")"
+grep -q "ports $busy and $busy2 are taken" "$work/out" || fail "the message does not name both ports: $(cat "$work/out")"
+kill "$listener2" 2>/dev/null || true
+wait "$listener2" 2>/dev/null || true
+listener2=""
+ok "two taken ports are named in one line"
+
+# The review stack's own edge on the port (make review-up again while it runs): a stub docker reports it.
+mkdir -p "$work/own"
+printf '#!/bin/sh\necho "127.0.0.1:%s->80/tcp"\n' "$busy" > "$work/own/docker"
+chmod +x "$work/own/docker"
+PATH="$work/own:$work/bin:$PATH" sh "$ROOT/docker/review/tunnel.sh" check "$busy" "$free" > "$work/out" 2>&1 \
+    || fail "check refused the review stack's own port: $(cat "$work/out")"
+ok "the review stack's own port passes"
 
 kill "$listener" 2>/dev/null || true
 wait "$listener" 2>/dev/null || true

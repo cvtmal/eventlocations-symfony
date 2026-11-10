@@ -43,7 +43,8 @@ The pieces in the repository: `bin/deploy` (install, purge, check, rollback), `b
 `deploy/crontab.txt`, `deploy/env.local.example`, `deploy/authorized_keys.example`,
 `deploy/probe.sh`, `public/.user.ini` (PHP's per-request limits, shipped with each release).
 `make deploy-test` runs the scripts against a throwaway tree and the nginx file in a real nginx in
-front of php-fpm; `make release-check` boots the tarball with `APP_ENV=prod`.
+front of php-fpm (and the review demo's start checks, which need `jq`, `python3` and `lsof` on the host);
+`make release-check` boots the tarball with `APP_ENV=prod`.
 
 ## First-time setup
 
@@ -817,11 +818,11 @@ caffeinate -dimsu       # in a second terminal, while the operator works: keeps 
 ```
 
 It prints the site's link, `/admin` and `/konto` with the login **`admin` / `admin`** for both (no 2FA), a second link
-for Mailpit (every mail the demo sends) and `http://localhost:8098`. Each start gives new links and fresh demo data;
-what the operator changed is gone. Send the link only to the operator.
+for Mailpit (every mail the demo sends) and `http://localhost:8098` (or `REVIEW_PORT`). Each start gives new links
+and fresh demo data; what the operator changed is gone. Send the link only to the operator.
 
-When another process already listens on 8098 or 8099 (a `kubectl port-forward`, say), `make review-up` stops before
-building with one line naming the port; start it on two free ones instead, e.g.
+When another process already listens on 8098 or 8099, `make review-up` stops before building with one line naming
+the port and the override; start it on two free ports instead, e.g.
 `make review-up REVIEW_PORT=8198 REVIEW_MAIL_PORT=8199` (the printed links follow; `make review-down` needs no ports).
 
 **Stop:** `make review-down` ends both tunnels and deletes the stack with its data. Closing the lid or a sleeping Mac
