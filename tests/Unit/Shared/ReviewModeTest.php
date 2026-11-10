@@ -138,8 +138,10 @@ final class ReviewModeTest extends TestCase
 
         self::assertSame('1', $environment['APP_REVIEW_MODE']);
         self::assertSame([], ReviewMode::problems($environment, 'prod'));
-        self::assertSame(['127.0.0.1:8098:80'], $compose['services']['edge']['ports']);
-        self::assertSame(['127.0.0.1:8099:8025'], $compose['services']['mailpit']['ports']->getValue());
+        // Both ports move together with `make review-up REVIEW_PORT=… REVIEW_MAIL_PORT=…`; always on 127.0.0.1.
+        self::assertSame(['127.0.0.1:${REVIEW_PORT:-8098}:80'], $compose['services']['edge']['ports']);
+        self::assertSame(['127.0.0.1:${REVIEW_MAIL_PORT:-8099}:8025'], $compose['services']['mailpit']['ports']->getValue());
+        self::assertSame('http://localhost:${REVIEW_PORT:-8098}', $environment['DEFAULT_URI']);
         // Anyone with the link is admin: the stack must not write to the owner's checkout (.git, .env.local).
         self::assertContains('.:/var/www/html:ro', $compose['services']['php']['volumes']);
     }

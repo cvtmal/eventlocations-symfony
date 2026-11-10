@@ -5,6 +5,7 @@
 # App\Kernel boots it only on this stack's database (`review` on host `database`), with Mailpit, no Google key and no
 # Sentry; everything below is what that guard checks. Only the edge nginx is published, on 127.0.0.1 (cloudflared
 # runs on the same Mac), so the forwarded headers the app trusts can only come from the tunnel or this machine.
+# REVIEW_PORT / REVIEW_MAIL_PORT (default 8098 / 8099) move both published ports when another process holds one.
 services:
   php:
     environment:
@@ -13,7 +14,7 @@ services:
       APP_SECRET: ${REVIEW_APP_SECRET:?run it through make review-up}
       DATABASE_URL: "postgresql://app:app@database:5432/review?serverVersion=18&charset=utf8"
       MAILER_DSN: smtp://mailpit:1025
-      DEFAULT_URI: http://localhost:8098
+      DEFAULT_URI: http://localhost:${REVIEW_PORT:-8098}
       SYMFONY_TRUSTED_PROXIES: private_ranges
       INQUIRY_RECIPIENT_OVERRIDE: ""
       ADMIN_DEV_AUTOLOGIN: ""
@@ -27,7 +28,8 @@ services:
       # Read-only: anyone with the link is admin, so the stack never writes to the owner's checkout (.git, .env.local).
       # Everything it writes is a named volume: vendor/, var/, public/assets/ (compose.perf.yaml), public/media/.
       - .:/var/www/html:ro
-      # Same target as the perf stack's docker/perf/config, which it replaces.
+      # Same target as the perf stack's docker/perf/config, which it replaces. Its mount point is tracked
+      # (config/packages/prod/.gitkeep): Docker cannot create it inside the read-only checkout.
       - ./docker/review/config:/var/www/html/config/packages/prod:ro
       # The demo photos' variants, written by the seed and served by nginx; the lane's public/media stays untouched.
       - review_media:/var/www/html/public/media
@@ -46,12 +48,12 @@ services:
 
   mailpit:
     ports: !override
-      - "127.0.0.1:8099:8025"
+      - "127.0.0.1:${REVIEW_MAIL_PORT:-8099}:8025"
 
   edge:
     image: nginx:stable-alpine
     ports:
-      - "127.0.0.1:8098:80"
+      - "127.0.0.1:${REVIEW_PORT:-8098}:80"
     volumes:
       - ./docker/review/edge.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:

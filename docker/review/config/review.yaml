@@ -1,5 +1,6 @@
 # Review stack only (compose.review.yaml mounts this folder as config/packages/prod/, in place of docker/perf/config):
 # APP_ENV=prod answers only its own hosts, and the operator comes in through a Cloudflare quick tunnel
-# (https://<random>.trycloudflare.com) or on http://localhost:8098. These entries add to production's list.
+# (https://<random>.trycloudflare.com) or on http://localhost:8098 (or REVIEW_PORT: trusted_hosts ignore the port).
+# These entries add to production's list.
 framework:
     trusted_hosts: ['^localhost$', '^[a-z0-9-]+\.trycloudflare\.com$']
