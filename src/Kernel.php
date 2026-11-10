@@ -18,7 +18,8 @@ class Kernel extends BaseKernel
      */
     public function boot(): void
     {
-        $problems = ReviewMode::problems($_SERVER + $_ENV, $this->environment);
+        // $_ENV first, as the container's env processor reads it.
+        $problems = ReviewMode::problems($_ENV + $_SERVER, $this->environment);
         if ([] !== $problems) {
             throw new \LogicException('Refusing to boot: '.implode(' ', $problems));
         }

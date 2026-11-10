@@ -128,11 +128,11 @@ check_review_mode_refused() {
     console app:prod:check-env > "$CHECK/var-output" 2>&1 || rc=$?
     mv "$CHECK/.env.local.saved" "$CHECK/.env.local"
     [ "$rc" != 0 ] || fail "app:prod:check-env passed with APP_REVIEW_MODE=1"
-    grep -q 'APP_REVIEW_MODE' "$CHECK/var-output" || {
+    grep -q 'Refusing to boot: .*APP_REVIEW_MODE' "$CHECK/var-output" || {
         cat "$CHECK/var-output" >&2
-        fail "the refusal of APP_REVIEW_MODE=1 does not name it"
+        fail "the release booted with APP_REVIEW_MODE=1 or did not name it"
     }
-    ok "the release ships APP_REVIEW_MODE=0 and refuses to run with APP_REVIEW_MODE=1"
+    ok "the release ships APP_REVIEW_MODE=0 and refuses to boot with APP_REVIEW_MODE=1 outside the review stack"
 }
 
 boot() {

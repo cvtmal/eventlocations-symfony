@@ -35,6 +35,9 @@ final readonly class ReviewMode
 
     private const array MAILER_DSNS = ['smtp://mailpit:1025', 'null://null'];
 
+    /** DBAL merges the query over host and path (`?host=`, `?dbname=`, `?unix_socket=` …): only these may stay. */
+    private const array DATABASE_URL_QUERY_KEYS = ['serverVersion', 'charset'];
+
     /** Every outside service with a key or a switch: Google (D48), Sentry. */
     private const array MUST_BE_EMPTY = [
         'GOOGLE_MAPS_EMBED_KEY',
@@ -58,13 +61,19 @@ final readonly class ReviewMode
     /** The e-mail address a back-office login name stands for: {@see self::LOGIN} only in review mode. */
     public function adminIdentifier(string $typed): string
     {
-        return $this->on && self::LOGIN === $typed ? self::ADMIN_EMAIL : $typed;
+        return $this->on && self::isLogin($typed) ? self::ADMIN_EMAIL : $typed;
     }
 
     /** The e-mail address a /konto login name stands for: {@see self::LOGIN} only in review mode. */
     public function managerIdentifier(string $typed): string
     {
-        return $this->on && self::LOGIN === $typed ? self::MANAGER_EMAIL : $typed;
+        return $this->on && self::isLogin($typed) ? self::MANAGER_EMAIL : $typed;
+    }
+
+    /** A phone keyboard may capitalise it or add a space. */
+    private static function isLogin(string $typed): bool
+    {
+        return self::LOGIN === mb_strtolower(trim($typed));
     }
 
     /** Symfony's `bool:` env processor, so the shell guards and the container read the same value as on. */
@@ -102,11 +111,17 @@ final readonly class ReviewMode
         if ('prod' !== $environment) {
             $problems[] = 'APP_REVIEW_MODE runs only with APP_ENV=prod.';
         }
+        // Dotenv::bootEnv()'s own reading, as app:prod:check-env: a debug page through a public tunnel shows the env.
+        if ((int) $value('APP_DEBUG') || filter_var($value('APP_DEBUG'), \FILTER_VALIDATE_BOOL)) {
+            $problems[] = 'APP_REVIEW_MODE needs APP_DEBUG to be off.';
+        }
 
         $database = parse_url($value('DATABASE_URL'));
+        parse_str(\is_array($database) ? ($database['query'] ?? '') : '', $query);
         if (!\is_array($database)
             || self::DATABASE_HOST !== ($database['host'] ?? '')
-            || '/'.self::DATABASE_NAME !== ($database['path'] ?? '')) {
+            || '/'.self::DATABASE_NAME !== ($database['path'] ?? '')
+            || [] !== array_diff(array_keys($query), self::DATABASE_URL_QUERY_KEYS)) {
             $problems[] = \sprintf('APP_REVIEW_MODE needs DATABASE_URL on the review stack\'s database (%s on host %s).', self::DATABASE_NAME, self::DATABASE_HOST);
         }
 

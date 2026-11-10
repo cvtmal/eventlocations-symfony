@@ -55,6 +55,9 @@ final class ReviewModeTest extends TestCase
         yield 'the dev database' => ['DATABASE_URL', ['DATABASE_URL' => 'postgresql://app:app@database:5432/app?serverVersion=18'], 'prod'];
         yield 'Neon' => ['DATABASE_URL', ['DATABASE_URL' => 'postgresql://site:secret-pw@ep-fake.eu-central-1.aws.neon.tech/review?sslmode=require'], 'prod'];
         yield 'another host named review' => ['DATABASE_URL', ['DATABASE_URL' => 'postgresql://app:app@db.example.ch:5432/review'], 'prod'];
+        yield 'the review database with a host in the query' => ['DATABASE_URL', ['DATABASE_URL' => 'postgresql://app:app@database:5432/review?host=ep-fake.neon.tech&dbname=site'], 'prod'];
+        yield 'the review database with a socket in the query' => ['DATABASE_URL', ['DATABASE_URL' => 'postgresql://app:app@database:5432/review?unix_socket=/run/pg'], 'prod'];
+        yield 'debug' => ['APP_DEBUG', ['APP_DEBUG' => '1'], 'prod'];
         yield 'no database' => ['DATABASE_URL', ['DATABASE_URL' => ''], 'prod'];
         yield 'a real mailer' => ['MAILER_DSN', ['MAILER_DSN' => 'smtp://user:secret-pw@mail.infomaniak.com:587'], 'prod'];
         yield 'Maps key' => ['GOOGLE_MAPS_JS_KEY', ['GOOGLE_MAPS_JS_KEY' => 'AIza-fake-key'], 'prod'];
@@ -97,13 +100,14 @@ final class ReviewModeTest extends TestCase
         self::assertSame('admin', $off->adminIdentifier('admin'));
         self::assertSame('admin', $off->managerIdentifier('admin'));
         self::assertSame('andrea@example.ch', $on->adminIdentifier('andrea@example.ch'));
-        self::assertSame('Admin', $on->managerIdentifier('Admin'));
+        self::assertSame(ReviewMode::MANAGER_EMAIL, $on->managerIdentifier(' Admin'));
+        self::assertSame('Admin', $off->managerIdentifier('Admin'));
     }
 
     public function test_the_kernel_refuses_to_boot_with_the_flag_on_the_test_database(): void
     {
-        $saved = $_SERVER['APP_REVIEW_MODE'] ?? null;
-        $_SERVER['APP_REVIEW_MODE'] = '1';
+        $saved = [$_SERVER['APP_REVIEW_MODE'] ?? null, $_ENV['APP_REVIEW_MODE'] ?? null];
+        $_SERVER['APP_REVIEW_MODE'] = $_ENV['APP_REVIEW_MODE'] = '1';
         try {
             (new Kernel('test', false))->boot();
             self::fail('The kernel booted in review mode outside the review stack.');
@@ -111,10 +115,16 @@ final class ReviewModeTest extends TestCase
             self::assertStringStartsWith('Refusing to boot: APP_REVIEW_MODE runs only with APP_ENV=prod.', $refused->getMessage());
             self::assertStringContainsString('DATABASE_URL', $refused->getMessage());
         } finally {
-            if (null === $saved) {
+            [$server, $env] = $saved;
+            if (null === $server) {
                 unset($_SERVER['APP_REVIEW_MODE']);
             } else {
-                $_SERVER['APP_REVIEW_MODE'] = $saved;
+                $_SERVER['APP_REVIEW_MODE'] = $server;
+            }
+            if (null === $env) {
+                unset($_ENV['APP_REVIEW_MODE']);
+            } else {
+                $_ENV['APP_REVIEW_MODE'] = $env;
             }
         }
     }
@@ -130,6 +140,23 @@ final class ReviewModeTest extends TestCase
         self::assertSame([], ReviewMode::problems($environment, 'prod'));
         self::assertSame(['127.0.0.1:8098:80'], $compose['services']['edge']['ports']);
         self::assertSame(['127.0.0.1:8099:8025'], $compose['services']['mailpit']['ports']->getValue());
+        // Anyone with the link is admin: the stack must not write to the owner's checkout (.git, .env.local).
+        self::assertContains('.:/var/www/html:ro', $compose['services']['php']['volumes']);
+    }
+
+    public function test_the_review_stack_trusts_only_tunnel_hosts_besides_localhost(): void
+    {
+        $config = Yaml::parse(self::file('docker/review/config/review.yaml'));
+        self::assertIsArray($config);
+        $patterns = $config['framework']['trusted_hosts'];
+        self::assertIsArray($patterns);
+        $trusted = static fn (string $host): bool => [] !== array_filter($patterns, static fn (string $pattern): bool => 1 === preg_match('{'.$pattern.'}i', $host));
+
+        self::assertTrue($trusted('localhost'));
+        self::assertTrue($trusted('xhtml-freeze-dennis-mls.trycloudflare.com'));
+        self::assertFalse($trusted('trycloudflare.com.evil.ch'));
+        self::assertFalse($trusted('x.trycloudflare.com.evil.ch'));
+        self::assertFalse($trusted('evil.ch'));
     }
 
     public function test_the_edge_marks_every_response_noindex_and_sends_tunnel_http_to_https(): void

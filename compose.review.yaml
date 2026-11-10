@@ -9,7 +9,8 @@ services:
   php:
     environment:
       APP_REVIEW_MODE: "1"
-      APP_SECRET: review-only-not-a-secret
+      # A new random value per `make review-up` (the repository is public): signed links of one run die with it.
+      APP_SECRET: ${REVIEW_APP_SECRET:?run it through make review-up}
       DATABASE_URL: "postgresql://app:app@database:5432/review?serverVersion=18&charset=utf8"
       MAILER_DSN: smtp://mailpit:1025
       DEFAULT_URI: http://localhost:8098
@@ -23,6 +24,9 @@ services:
       GOOGLE_RATING_ENABLED: "0"
       SENTRY_DSN: ""
     volumes:
+      # Read-only: anyone with the link is admin, so the stack never writes to the owner's checkout (.git, .env.local).
+      # Everything it writes is a named volume: vendor/, var/, public/assets/ (compose.perf.yaml), public/media/.
+      - .:/var/www/html:ro
       # Same target as the perf stack's docker/perf/config, which it replaces.
       - ./docker/review/config:/var/www/html/config/packages/prod:ro
       # The demo photos' variants, written by the seed and served by nginx; the lane's public/media stays untouched.
@@ -36,6 +40,8 @@ services:
   database:
     environment:
       POSTGRES_DB: review
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "app", "-d", "review"]
     ports: !reset []
 
   mailpit:

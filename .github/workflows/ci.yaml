@@ -64,7 +64,7 @@ jobs:
       - name: ShellCheck and a dash syntax check of the deploy, cron and import scripts
         run: |
           set -- bin/build-release bin/deploy bin/deploy-gate bin/warm-cache bin/cron-lock.sh \
-            bin/cron-midnight bin/cron-cache-guard bin/cron-daily bin/cron-hourly bin/cron-media-backup bin/prod-import bin/pull-media-backup \
+            bin/cron-midnight bin/cron-cache-guard bin/cron-daily bin/cron-hourly bin/cron-media-backup bin/prod-import bin/pull-media-backup docker/review/tunnel.sh \
             deploy/probe.sh tests/Deploy/*.sh
           shellcheck --shell=sh -x "$@"
           for script in "$@"; do dash -n "$script"; done

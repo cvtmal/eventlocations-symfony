@@ -229,7 +229,8 @@ perf-down: ## Stop the perf stack and delete its volumes
 .PHONY: review-up review-down
 # Its own Compose project on the perf stack's prod settings (compose.review.yaml); perf-up/perf-down are untouched.
 # Only the edge nginx (127.0.0.1:8098) and Mailpit (127.0.0.1:8099) are published, for the two quick tunnels.
-REVIEW := docker compose -p deine-eventlocation-review -f compose.yaml -f compose.perf.yaml -f compose.review.yaml
+# One random APP_SECRET per make run (the repository is public); compose.review.yaml refuses to start without it.
+REVIEW := REVIEW_APP_SECRET=$(shell openssl rand -hex 32) docker compose -p deine-eventlocation-review -f compose.yaml -f compose.perf.yaml -f compose.review.yaml
 REVIEW_PHP := $(REVIEW) exec -T php
 REVIEW_DB := $(REVIEW) exec -T database psql -U app -v ON_ERROR_STOP=1 -d postgres
 REVIEW_PORT := 8098
@@ -242,6 +243,8 @@ review-up: ## Operator demo: prod-mode stack on demo data + Cloudflare quick tun
 	@sh docker/review/tunnel.sh check
 	test -d admin-ui/node_modules || $(MAKE) admin-install
 	$(MAKE) admin-build
+	@# The checkout is mounted read-only, so the named volumes' mount points must exist beforehand.
+	mkdir -p vendor var public/assets public/media
 	$(REVIEW) up -d --wait php nginx database mailpit edge
 	$(REVIEW_PHP) composer install --classmap-authoritative --no-scripts --no-interaction
 	$(REVIEW_PHP) php bin/console cache:clear
@@ -256,7 +259,7 @@ review-up: ## Operator demo: prod-mode stack on demo data + Cloudflare quick tun
 	$(REVIEW_PHP) php bin/console cache:pool:clear cache.global_clearer --no-interaction
 	$(REVIEW_PHP) php bin/console app:http-cache:clear
 	$(REVIEW_PHP) chown -R www-data:www-data var public/media
-	$(REVIEW) restart php nginx
+	$(REVIEW) restart php nginx edge
 	@sh docker/review/tunnel.sh start $(REVIEW_PORT) $(REVIEW_MAIL_PORT)
 
 review-down: ## Stop the review demo: both tunnels, the stack, and its data

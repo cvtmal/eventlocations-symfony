@@ -5,7 +5,8 @@
 #   sh docker/review/tunnel.sh stop                           ends both
 #
 # A quick tunnel needs no Cloudflare account; its https://<random>.trycloudflare.com link dies with the process.
-# PIDs and logs live in var/review/. Never installs anything: without cloudflared it says how and stops.
+# PIDs and logs live in var/review/ of this checkout, so stop from the checkout that started them. Never installs
+# anything: without cloudflared it says how and stops. The Mailpit link is a convenience: without it the demo still runs.
 set -eu
 DIR=var/review
 
@@ -19,7 +20,11 @@ require_cloudflared() {
 stop() {
     for name in app mail; do
         [ -f "$DIR/$name.pid" ] || continue
-        kill "$(cat "$DIR/$name.pid")" 2> /dev/null || true
+        pid="$(cat "$DIR/$name.pid")"
+        # After a reboot the number may belong to another process.
+        if ps -p "$pid" -o comm= 2> /dev/null | grep -q cloudflared; then
+            kill "$pid" 2> /dev/null || true
+        fi
         rm -f "$DIR/$name.pid"
     done
 }
@@ -31,14 +36,14 @@ start_one() { # start_one <name> <port>
 
 link() { # link <name>: the tunnel's https link, once cloudflared has printed it (60 s at most)
     i=0
-    while [ "$i" -lt 120 ]; do
+    while [ "$i" -lt 60 ]; do
         url="$(grep -Eo 'https://[a-z0-9-]+\.trycloudflare\.com' "$DIR/$1.log" | head -n 1 || true)"
         if [ -n "$url" ]; then
             printf '%s\n' "$url"
             return 0
         fi
         kill -0 "$(cat "$DIR/$1.pid")" 2> /dev/null || break
-        sleep 0.5
+        sleep 1
         i=$((i + 1))
     done
     printf '%s\n' "review: the $1 tunnel gave no link, see $DIR/$1.log" >&2
@@ -52,7 +57,7 @@ start() { # start <app port> <mail port>
     start_one app "$1"
     start_one mail "$2"
     app="$(link app)"
-    mail="$(link mail)"
+    mail="$(link mail || printf '%s' "no link (http://localhost:$2 on this Mac)")"
     cat <<TEXT
 
 Review demo is up: prod mode, demo data, no 2FA, every page noindex.
