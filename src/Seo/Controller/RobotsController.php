@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Seo\Controller;
 
 use App\Shared\Http\PublicCache;
+use App\Shared\Security\ReviewMode;
 use App\Shared\Translation\LocalizedRoutes;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -36,6 +37,7 @@ final class RobotsController extends AbstractController
         // Pre-launch, temporary: true keeps Googlebot off the whole site; other crawlers are unaffected.
         #[Autowire('%seo.robots_block_google%')]
         private readonly bool $blockGoogle,
+        private readonly ReviewMode $reviewMode,
     ) {
     }
 
@@ -43,6 +45,11 @@ final class RobotsController extends AbstractController
     #[Cache(public: true, smaxage: PublicCache::PAGE_TTL, staleWhileRevalidate: PublicCache::STALE_TTL, staleIfError: PublicCache::STALE_TTL)]
     public function __invoke(): Response
     {
+        // review-demo: the operator's demo behind a tunnel is closed to every crawler.
+        if ($this->reviewMode->isOn()) {
+            return new Response("User-agent: *\nDisallow: /\n", headers: ['Content-Type' => 'text/plain; charset=UTF-8']);
+        }
+
         // Googlebot obeys only its own group once one exists, so it never reads the `*` rules below.
         $lines = $this->blockGoogle ? ['User-agent: Googlebot', 'Disallow: /', ''] : [];
         $lines[] = 'User-agent: *';

@@ -224,3 +224,41 @@ perf-lighthouse: ## Lighthouse (mobile) 3 times against the perf stack's URL=/pa
 
 perf-down: ## Stop the perf stack and delete its volumes
 	$(PERF) down -v
+
+## —— Review demo for the operator (review-demo, docs/operations.md) ——
+.PHONY: review-up review-down
+# Its own Compose project on the perf stack's prod settings (compose.review.yaml); perf-up/perf-down are untouched.
+# Only the edge nginx (127.0.0.1:8098) and Mailpit (127.0.0.1:8099) are published, for the two quick tunnels.
+REVIEW := docker compose -p deine-eventlocation-review -f compose.yaml -f compose.perf.yaml -f compose.review.yaml
+REVIEW_PHP := $(REVIEW) exec -T php
+REVIEW_DB := $(REVIEW) exec -T database psql -U app -v ON_ERROR_STOP=1 -d postgres
+REVIEW_PORT := 8098
+REVIEW_MAIL_PORT := 8099
+
+# Every run starts from a fresh `review` database: demo data (DemoStory and friends, photos included, through Foundry,
+# which exists in dev only: hence the one dev-mode console call, with the flag off), then the two review accounts.
+# Composer keeps the dev packages for that call; prod mode never loads them. The restart empties OPcache.
+review-up: ## Operator demo: prod-mode stack on demo data + Cloudflare quick tunnel; prints the link and admin/admin
+	@sh docker/review/tunnel.sh check
+	test -d admin-ui/node_modules || $(MAKE) admin-install
+	$(MAKE) admin-build
+	$(REVIEW) up -d --wait php nginx database mailpit edge
+	$(REVIEW_PHP) composer install --classmap-authoritative --no-scripts --no-interaction
+	$(REVIEW_PHP) php bin/console cache:clear
+	$(REVIEW_PHP) php bin/console sass:build
+	$(REVIEW_PHP) php bin/console asset-map:compile
+	$(REVIEW_DB) -c 'DROP DATABASE IF EXISTS review WITH (FORCE)'
+	$(REVIEW_DB) -c 'CREATE DATABASE review'
+	$(REVIEW_PHP) php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+	$(REVIEW_PHP) php bin/console app:geo:import-towns --no-interaction
+	$(REVIEW) exec -T -e APP_ENV=dev -e APP_DEBUG=0 -e APP_REVIEW_MODE=0 php php bin/console foundry:load-fixtures main --append --no-interaction
+	$(REVIEW_PHP) php bin/console app:review:seed-accounts --no-interaction
+	$(REVIEW_PHP) php bin/console cache:pool:clear cache.global_clearer --no-interaction
+	$(REVIEW_PHP) php bin/console app:http-cache:clear
+	$(REVIEW_PHP) chown -R www-data:www-data var public/media
+	$(REVIEW) restart php nginx
+	@sh docker/review/tunnel.sh start $(REVIEW_PORT) $(REVIEW_MAIL_PORT)
+
+review-down: ## Stop the review demo: both tunnels, the stack, and its data
+	sh docker/review/tunnel.sh stop
+	$(REVIEW) down -v

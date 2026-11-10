@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\Seo;
 
 use App\Seo\Controller\RobotsController;
+use App\Shared\Security\ReviewMode;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Container;
 
@@ -43,13 +44,21 @@ final class RobotsTxtTest extends WebTestCase
         self::bootKernel();
         $services = new Container();
         $services->set('router', self::getContainer()->get('router'));
-        $controller = new RobotsController(false);
+        $controller = new RobotsController(false, new ReviewMode(false));
         $controller->setContainer($services);
 
         $body = (string) $controller()->getContent();
 
         self::assertStringStartsWith("User-agent: *\nDisallow: /_search/\n", $body);
         self::assertStringNotContainsString('Googlebot', $body);
+    }
+
+    public function test_review_mode_disallows_everything(): void
+    {
+        self::bootKernel();
+        $controller = new RobotsController(false, new ReviewMode(true));
+
+        self::assertSame("User-agent: *\nDisallow: /\n", (string) $controller()->getContent());
     }
 
     public function test_the_sitemap_line_takes_the_scheme_of_the_request(): void

@@ -54,8 +54,24 @@ deploy() {
     sh "$WORK/stage/bin/deploy" install "$sha"
 }
 
+# review-demo: the operator's demo flag (make review-up) skips 2FA; the server never runs it. bin/deploy checks the
+# same, this refuses before a tarball is even read. Only an unset, empty or 0 value passes.
+refuse_review_mode() {
+    case "${APP_REVIEW_MODE:-0}" in
+        0) ;;
+        *) refuse "APP_REVIEW_MODE is set in the environment, review mode never runs on the server" ;;
+    esac
+    [ -f "$ROOT/shared/.env.local" ] || return 0
+    value="$(sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}APP_REVIEW_MODE=//p' "$ROOT/shared/.env.local" | tail -n 1 | tr -d "\"' \r")"
+    case "$value" in
+        "" | 0) ;;
+        *) refuse "APP_REVIEW_MODE is set in shared/.env.local, review mode never runs on the server" ;;
+    esac
+}
+
 main() {
     mkdir -p "$WORK"
+    refuse_review_mode
     cmd="${SSH_ORIGINAL_COMMAND:-}"
     case "$cmd" in
         "deploy "*) deploy "${cmd#deploy }" ;;

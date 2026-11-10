@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Console;
 
+use App\Shared\Security\ReviewMode;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -106,6 +107,11 @@ final class CheckProductionEnvCommand
 
         if ('' !== $value('INQUIRY_RECIPIENT_OVERRIDE')) {
             $problems[] = 'INQUIRY_RECIPIENT_OVERRIDE must be empty: otherwise no venue gets its inquiries and no CRM mail reaches its recipient.';
+        }
+        // review-demo: the operator's demo flag skips 2FA and lets `admin` log in; App\Kernel already refuses it on
+        // any database but the review stack's, and production refuses it outright.
+        if (ReviewMode::flagIsOn($value(ReviewMode::FLAG))) {
+            $problems[] = 'APP_REVIEW_MODE must be off: review mode is for the review stack only (make review-up).';
         }
         if ('' !== $value('ADMIN_DEV_AUTOLOGIN')) {
             $problems[] = 'ADMIN_DEV_AUTOLOGIN must be empty.';

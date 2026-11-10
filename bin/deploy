@@ -71,6 +71,21 @@ no_boot() { # no_boot <dir>
     printf '%s\n' "deploy: the console in $1 does not boot, often a malformed .env.local; its output is withheld because it can quote a secret, read it over SSH with: cd $1 && $PHP bin/console about" >&2
 }
 
+# review-demo: APP_REVIEW_MODE is the operator's demo flag (make review-up); it skips 2FA, so the server never runs
+# it. The release's app:prod:check-env refuses it too; this check needs no PHP and reads .env.local without sourcing
+# it. Only an unset, empty or 0 value passes (the last line wins, as in Dotenv).
+refuse_review_mode() {
+    case "${APP_REVIEW_MODE:-0}" in
+        0) ;;
+        *) die "APP_REVIEW_MODE is set in the environment, review mode never runs on the server; nothing was changed" ;;
+    esac
+    [ -f "$ROOT/shared/.env.local" ] || return 0
+    value="$(sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}APP_REVIEW_MODE=//p' "$ROOT/shared/.env.local" | tail -n 1 | tr -d "\"' \r")"
+    case "$value" in
+        "" | 0) ;;
+        *) die "APP_REVIEW_MODE is set in shared/.env.local, review mode never runs on the server; nothing was changed" ;;
+    esac
+}
 guard_env() { # runs the release's own guard against the server's real .env.local
     found=0
     has_command "$1" app:prod:check-env || found=$?
@@ -220,6 +235,7 @@ check_app() {
 
 main() {
     cmd="${1:-}"
+    refuse_review_mode
     case "$cmd" in
         install) install_release "${2:-}" ;;
         purge) require_current && purge_cache "$ROOT/current" ;;

@@ -75,7 +75,7 @@ admin_islands() {
 slim() {
     # Not needed at runtime. assets/ stays (sprites, the canton map), data/ stays (towns.csv).
     (cd "$SRC" && rm -rf .git .github .claude tests docker admin-ui node_modules var content docs deploy \
-        compose.yaml Makefile phpunit.dist.xml phpstan.neon.dist .php-cs-fixer.dist.php \
+        compose.yaml compose.perf.yaml compose.review.yaml Makefile phpunit.dist.xml phpstan.neon.dist .php-cs-fixer.dist.php \
         .pre-commit-config.yaml .gitignore .gitattributes .editorconfig .env.dev .env.test \
         CLAUDE.md README.md)
     # A release never ships a local override or a dev cache.
